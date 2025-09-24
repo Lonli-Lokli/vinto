@@ -1,4 +1,4 @@
-
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import twoSrc from '../images/2.svg';
 import threeSrc from '../images/3.svg';
@@ -15,13 +15,24 @@ import kSrc from '../images/K.svg';
 import aSrc from '../images/A.svg';
 import jokerSrc from '../images/Joker.svg';
 
-type ImgProps = React.ImgHTMLAttributes<HTMLImageElement>;
-const wrap = (src: string, altFallback: string) =>
+type ImgProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'width' | 'height' | 'src'>;
+
+type StaticImportLike = { src?: string } | string | undefined | null;
+
+function resolveSrc(input: StaticImportLike): string {
+	if (!input) return '';
+	if (typeof input === 'string') return input;
+	// Next.js may export an object with a 'src' property for static assets
+	return typeof input.src === 'string' ? input.src : '';
+}
+
+const wrap = (srcLike: StaticImportLike, altFallback: string) =>
 	function WrappedImg(props: ImgProps) {
 		const { alt, className, ...rest } = props;
+	const src = resolveSrc(srcLike);
 		return (
 			<img
-				src={src as unknown as string}
+				src={src}
 				alt={alt ?? altFallback}
 				className={className ?? 'w-10 h-10 object-contain'}
 				{...rest}
