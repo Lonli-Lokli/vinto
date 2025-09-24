@@ -63,7 +63,7 @@ export function Card({
       {revealed && card ? (
         <>
           <RankComponent rank={card.rank} />
-          <span className="mt-0.5 text-[10px] text-gray-600 font-medium">({card.value})</span>
+          <span className="mt-0.5 text-[10px] text-gray-600 font-medium">{card.rank}</span>
         </>
       ) : (
         <span className={`font-bold ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-lg'}`}>

@@ -393,12 +393,12 @@ export class GameToastService {
     );
   }
 
-  static oracleConnected() {
-    this.success('🌩️ Oracle Cloud Connected', 2000);
+  static cloudConnected() {
+    this.success('🌩️ Cloud Connected', 2000);
   }
 
-  static oracleError(error: string) {
-    this.error('Oracle Cloud Error', error, 6000);
+  static cloudError(error: string) {
+    this.error('Cloud Error', error, 6000);
   }
 
   static cardPeeked(position: number) {

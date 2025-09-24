@@ -8,7 +8,7 @@ export class OracleVintoClient {
   private playerId: string | null = null;
 
   async createGameSession(humanPlayerId: string): Promise<string> {
-    const loadingToast = GameToastService.loading('🌩️ Connecting to Oracle Cloud...');
+    const loadingToast = GameToastService.loading('🌩️ Connecting to Cloud...');
     
     try {
       // Simulate Oracle connection delay
@@ -19,14 +19,14 @@ export class OracleVintoClient {
       this.playerId = humanPlayerId;
       
       toast.dismiss(loadingToast);
-      GameToastService.oracleConnected();
+      GameToastService.cloudConnected();
       GameToastService.gameStarted();
       
       return gameId;
       
     } catch {
       toast.dismiss(loadingToast);
-      GameToastService.oracleError('Failed to create session');
+      GameToastService.cloudError('Failed to create session');
       throw new Error('Failed to create session');
     }
   }
@@ -74,7 +74,7 @@ export class OracleVintoClient {
         type: 'draw',
         confidence,
         expectedValue: -1.5 + Math.random() * 2,
-        reasoning: `${difficulty.toUpperCase()} Oracle: ${thinkTime > 1200 ? 'Deep MCTS analysis suggests' : 'Quick analysis shows'} drawing is optimal`,
+        reasoning: `${difficulty.toUpperCase()} Cloud: ${thinkTime > 1200 ? 'Deep MCTS analysis suggests' : 'Quick analysis shows'} drawing is optimal`,
         thinkingTime: Date.now() - startTime,
         networkTime: Date.now() - startTime
       };
@@ -98,14 +98,14 @@ export class OracleVintoClient {
       
     } catch {
       toast.dismiss(thinkingToast);
-      GameToastService.oracleError(`${aiPlayer.name} computation failed`);
+      GameToastService.cloudError(`${aiPlayer.name} computation failed`);
       
       // Return fallback move to keep game playable
       return {
         type: 'draw',
         confidence: 0.25,
         expectedValue: -3,
-        reasoning: 'Fallback move due to Oracle error',
+        reasoning: 'Fallback move due to cloud error',
         thinkingTime: 0,
         error: true
       };

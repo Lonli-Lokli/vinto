@@ -37,53 +37,54 @@ export function GameControls({
   }
 
   return (
-    <div className="mt-4 sm:mt-6 max-w-lg mx-auto px-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-xl">
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Turn
-          </h3>
-          <p className="text-sm text-gray-600">Choose one option:</p>
+    <div className="mt-3 sm:mt-4 max-w-lg mx-auto px-2">
+      <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-3 sm:p-4 shadow-md">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-800">Your turn</h3>
+          <div className="text-[11px] sm:text-xs text-gray-500">Choose one</div>
         </div>
 
-        <div className="space-y-3">
-          {/* Option A: Draw from Draw Pile */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          {/* Draw from Deck */}
           <button
             onClick={onDrawCard}
             disabled={drawPileLength === 0}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg shadow transition-colors"
+            aria-label="Draw from deck"
+            title="Draw from deck"
           >
-            <div className="text-left">
-              <div className="text-lg">🎯 Option A: Draw from Deck</div>
-              <div className="text-sm opacity-90">
-                Draw card → Choose to play action or swap
-              </div>
-            </div>
+            <span className="text-base sm:text-lg">🎯</span>
+            <span className="text-sm sm:text-base">Draw</span>
           </button>
 
-          {/* Option B: Take from Discard Pile */}
+          {/* Take from Discard */}
           <button
             onClick={onTakeFromDiscard}
             disabled={!discardPile.length || !discardPile[0]?.action}
-            className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg shadow transition-colors"
+            aria-label="Take from discard"
+            title="Take from discard"
           >
-            <div className="text-left">
-              <div className="text-lg">♻️ Option B: Take from Discard</div>
-              <div className="text-sm opacity-90">
-                {discardPile[0]?.action
-                  ? `Take ${discardPile[0].rank} → Use its action immediately`
-                  : 'Only action cards (7-K) can be taken'}
-              </div>
-            </div>
+            <span className="text-base sm:text-lg">♻️</span>
+            <span className="text-sm sm:text-base">Take</span>
           </button>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        {/* Hint row (condensed) */}
+        <div className="mt-2 text-[11px] sm:text-xs text-gray-500 text-center">
+          {discardPile[0]?.action
+            ? `Top discard: ${discardPile[0].rank} • ${discardPile[0].action}`
+            : 'Only action cards (7–K) can be taken'}
+        </div>
+
+        <div className="mt-3 sm:mt-4">
           <button
             onClick={onCallVinto}
-            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg shadow transition-colors"
+            aria-label="Call Vinto"
+            title="Call Vinto"
           >
-            🏆 CALL VINTO!
+            🏆 Call Vinto
           </button>
         </div>
       </div>

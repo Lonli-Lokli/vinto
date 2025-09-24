@@ -64,10 +64,7 @@ export const useGameStore = create<GameStore>()(
                 id: 'oracle-alpha',
                 name: 'Player α',
                 cards: deck.slice(5, 10),
-                knownCardPositions: new Set(
-                  Array.from({length: 5}, (_, i) => i)
-                    .filter(() => Math.random() < aiKnowledge)
-                ),
+                knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'left',
                 avatar: '🤖',
@@ -77,10 +74,7 @@ export const useGameStore = create<GameStore>()(
                 id: 'oracle-beta',
                 name: 'Player β',
                 cards: deck.slice(10, 15),
-                knownCardPositions: new Set(
-                  Array.from({length: 5}, (_, i) => i)
-                    .filter(() => Math.random() < aiKnowledge)
-                ),
+                knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'top',
                 avatar: '🎯',
@@ -90,10 +84,7 @@ export const useGameStore = create<GameStore>()(
                 id: 'oracle-gamma',
                 name: 'Player γ',
                 cards: deck.slice(15, 20),
-                knownCardPositions: new Set(
-                  Array.from({length: 5}, (_, i) => i)
-                    .filter(() => Math.random() < aiKnowledge)
-                ),
+                knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'right',
                 avatar: '⚡',
@@ -110,6 +101,16 @@ export const useGameStore = create<GameStore>()(
 
             // All players start with no known cards - they must memorize during setup
             // This matches official rules: peek at 2 cards once, memorize, then hide
+            state.players.forEach(p => {
+              if (!p.isHuman) {
+                const knowledge = new Set<number>(
+                  Array.from({ length: p.cards.length }, (_, i) => i).filter(
+                    () => Math.random() < aiKnowledge
+                  )
+                );
+                p.knownCardPositions = knowledge;
+              }
+            });
           });
 
         } catch (error) {
@@ -128,13 +129,13 @@ export const useGameStore = create<GameStore>()(
             
             // Generate new knowledge set based on difficulty
             const newKnownSet = new Set(
-              Array.from({length: 5}, (_, i) => i)
+              Array.from({ length: player.cards.length }, (_, i) => i)
                 .filter(() => Math.random() < aiKnowledge)
             );
             
             // Keep some previously known cards for consistency (70% chance)
             currentKnown.forEach(pos => {
-              if (Math.random() < 0.7) {
+              if (pos < player.cards.length && Math.random() < 0.7) {
                 newKnownSet.add(pos);
               }
             });
@@ -164,9 +165,9 @@ export const useGameStore = create<GameStore>()(
 
         state.players.forEach(player => {
           if (!player.isHuman) {
-            // Reset and give AI knowledge
+            // Reset and give AI knowledge based on current hand size
             player.knownCardPositions.clear();
-            Array.from({length: 5}, (_, i) => i)
+            Array.from({ length: player.cards.length }, (_, i) => i)
               .filter(() => Math.random() < aiKnowledge)
               .forEach(pos => player.knownCardPositions.add(pos));
           }
@@ -263,12 +264,23 @@ export const useGameStore = create<GameStore>()(
 
         if (!player || !topDiscard) return;
 
-        const tossedCard = player.cards[position];
+  if (position < 0 || position >= player.cards.length) return;
+  const tossedCard = player.cards[position];
 
         // Check if cards match rank (correct toss-in)
-        if (tossedCard.rank === topDiscard.rank) {
-          // Correct toss-in: place card on discard pile and perform action
-          player.cards = player.cards.filter((_, p) => p !== position);
+        if (tossedCard && tossedCard.rank === topDiscard.rank) {
+          // Correct toss-in: remove card from hand and adjust known positions
+          const updatedKnown = new Set<number>();
+          player.knownCardPositions.forEach((idx) => {
+            if (idx === position) return;
+            updatedKnown.add(idx > position ? idx - 1 : idx);
+          });
+          player.knownCardPositions = updatedKnown;
+
+          // Remove the card from the hand
+          player.cards.splice(position, 1);
+
+          // Place the card on the discard pile
           state.discardPile = [tossedCard, ...state.discardPile];
 
           // TODO: Perform the card's action

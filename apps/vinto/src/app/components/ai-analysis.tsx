@@ -19,7 +19,7 @@ export function AIAnalysis({ currentMove, currentPlayer }: AIAnalysisProps) {
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
           <span className="text-2xl">{currentPlayer.avatar}</span>
-          <span className="font-semibold text-gray-700">Oracle Analysis</span>
+          <span className="font-semibold text-gray-700">AI Analysis</span>
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm mb-3">
