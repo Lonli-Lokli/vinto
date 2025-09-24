@@ -1,0 +1,425 @@
+// stores/game-store.ts
+'use client';
+
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
+import { shuffleDeck, createDeck, getAIKnowledgeByDifficulty } from '../lib/game-helpers';
+import { OracleVintoClient } from '../lib/oracle-client';
+import { GameToastService } from '../lib/toast-service';
+import { GameStore, Difficulty } from '../shapes';
+
+// Enable Immer MapSet plugin for Set objects
+enableMapSet();
+
+const oracleClient = new OracleVintoClient();
+
+export const useGameStore = create<GameStore>()(
+  devtools(
+    immer((set, get) => ({
+      // Game State
+      players: [],
+      currentPlayerIndex: 0,
+      drawPile: [],
+      discardPile: [],
+      phase: 'setup',
+      gameId: '',
+      roundNumber: 1,
+      turnCount: 0,
+      maxTurns: 40, // Each player gets ~10 turns
+      finalTurnTriggered: false,
+      
+      // UI State
+      oracle: oracleClient,
+      aiThinking: false,
+      currentMove: null,
+      sessionActive: false,
+      pendingCard: null,
+      isSelectingSwapPosition: false,
+      setupPeeksRemaining: 2,
+      waitingForTossIn: false,
+      tossInTimer: 0,
+
+      // Actions
+      initGame: async () => {
+        try {
+          const gameId = await oracleClient.createGameSession('human');
+          const deck = shuffleDeck(createDeck());
+          const aiKnowledge = getAIKnowledgeByDifficulty('medium'); // Default difficulty
+
+          set((state) => {
+            state.players = [
+              {
+                id: 'human',
+                name: 'You',
+                cards: deck.slice(0, 5),
+                knownCardPositions: new Set(), // Start with no known cards
+                isHuman: true,
+                position: 'bottom',
+                avatar: '👤',
+                coalitionWith: new Set()
+              },
+              {
+                id: 'oracle-alpha',
+                name: 'Player α',
+                cards: deck.slice(5, 10),
+                knownCardPositions: new Set(
+                  Array.from({length: 5}, (_, i) => i)
+                    .filter(() => Math.random() < aiKnowledge)
+                ),
+                isHuman: false,
+                position: 'left',
+                avatar: '🤖',
+                coalitionWith: new Set()
+              },
+              {
+                id: 'oracle-beta',
+                name: 'Player β',
+                cards: deck.slice(10, 15),
+                knownCardPositions: new Set(
+                  Array.from({length: 5}, (_, i) => i)
+                    .filter(() => Math.random() < aiKnowledge)
+                ),
+                isHuman: false,
+                position: 'top',
+                avatar: '🎯',
+                coalitionWith: new Set()
+              },
+              {
+                id: 'oracle-gamma',
+                name: 'Player γ',
+                cards: deck.slice(15, 20),
+                knownCardPositions: new Set(
+                  Array.from({length: 5}, (_, i) => i)
+                    .filter(() => Math.random() < aiKnowledge)
+                ),
+                isHuman: false,
+                position: 'right',
+                avatar: '⚡',
+                coalitionWith: new Set()
+              }
+            ];
+
+            state.drawPile = deck.slice(20);
+            state.discardPile = [];
+            state.phase = 'setup'; // Start in setup phase for initial card memorization
+            state.gameId = gameId;
+            state.currentPlayerIndex = 0;
+            state.sessionActive = true;
+
+            // All players start with no known cards - they must memorize during setup
+            // This matches official rules: peek at 2 cards once, memorize, then hide
+          });
+
+        } catch (error) {
+          GameToastService.error('Failed to start game', 'Please try again');
+        }
+      },
+
+      updateDifficulty: (newDifficulty: Difficulty) => set((state) => {
+        const aiKnowledge = getAIKnowledgeByDifficulty(newDifficulty);
+        
+        // Update AI knowledge based on new difficulty
+        state.players.forEach((player) => {
+          if (!player.isHuman) {
+            // Get current known positions
+            const currentKnown = Array.from(player.knownCardPositions);
+            
+            // Generate new knowledge set based on difficulty
+            const newKnownSet = new Set(
+              Array.from({length: 5}, (_, i) => i)
+                .filter(() => Math.random() < aiKnowledge)
+            );
+            
+            // Keep some previously known cards for consistency (70% chance)
+            currentKnown.forEach(pos => {
+              if (Math.random() < 0.7) {
+                newKnownSet.add(pos);
+              }
+            });
+            
+            player.knownCardPositions = newKnownSet;
+          }
+        });
+        
+        GameToastService.difficultyChanged(newDifficulty);
+      }),
+
+      peekCard: (playerId: string, position: number) => set((state) => {
+        const player = state.players.find(p => p.id === playerId);
+        if (player && position >= 0 && position < player.cards.length) {
+          player.knownCardPositions.add(position);
+
+          if (player.isHuman && state.phase === 'setup') {
+            state.setupPeeksRemaining--;
+            GameToastService.cardPeeked(position);
+          }
+        }
+      }),
+
+      finishSetup: () => set((state) => {
+        // AI players automatically "memorize" some cards based on difficulty
+        const aiKnowledge = getAIKnowledgeByDifficulty('medium');
+
+        state.players.forEach(player => {
+          if (!player.isHuman) {
+            // Reset and give AI knowledge
+            player.knownCardPositions.clear();
+            Array.from({length: 5}, (_, i) => i)
+              .filter(() => Math.random() < aiKnowledge)
+              .forEach(pos => player.knownCardPositions.add(pos));
+          }
+        });
+
+        // Move to playing phase and start first discard
+        state.phase = 'playing';
+        if (state.drawPile.length > 0) {
+          state.discardPile = [state.drawPile[0]];
+          state.drawPile = state.drawPile.slice(1);
+        }
+      }),
+
+      drawCard: () => set((state) => {
+        if (state.drawPile.length === 0) return;
+
+        const drawnCard = state.drawPile[0];
+        state.pendingCard = drawnCard;
+        state.drawPile = state.drawPile.slice(1);
+
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer && currentPlayer.isHuman) {
+          state.isSelectingSwapPosition = true;
+        }
+      }),
+
+      takeFromDiscard: () => set((state) => {
+        if (state.discardPile.length === 0) return;
+
+        const topCard = state.discardPile[0];
+        // Can only take action cards (7-K) whose action hasn't been used
+        if (!topCard.action) return;
+
+        state.pendingCard = topCard;
+        state.discardPile = state.discardPile.slice(1);
+
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer && currentPlayer.isHuman) {
+          // For taking from discard, we use the action immediately, no swapping
+          // This matches the rules: "immediately play its action"
+          state.pendingCard = null;
+          // Move to next player
+          state.turnCount++;
+          state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        }
+      }),
+
+      swapCard: (position: number) => set((state) => {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        const pendingCard = state.pendingCard;
+        
+        if (!currentPlayer || !pendingCard) return;
+
+        // Perform the swap
+        const discardedCard = currentPlayer.cards[position];
+        currentPlayer.cards[position] = pendingCard;
+        currentPlayer.knownCardPositions.add(position);
+        state.discardPile = [discardedCard, ...state.discardPile];
+        
+        // Clean up
+        state.pendingCard = null;
+        state.isSelectingSwapPosition = false;
+
+        // Start toss-in waiting period (5 seconds for others to play matching cards)
+        state.waitingForTossIn = true;
+        state.tossInTimer = 5;
+
+        // Advance turn and check game phase transitions after toss-in period
+        setTimeout(() => {
+          set((draft) => {
+            draft.waitingForTossIn = false;
+            draft.tossInTimer = 0;
+            draft.turnCount++;
+            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+            // Check game phase transitions
+            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
+              draft.finalTurnTriggered = true;
+              draft.phase = 'final';
+            }
+
+            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+              draft.phase = 'scoring';
+            }
+          });
+        }, 5000);
+      }),
+
+      tossInCard: (playerId: string, position: number) => set((state) => {
+        if (!state.waitingForTossIn) return;
+
+        const player = state.players.find(p => p.id === playerId);
+        const topDiscard = state.discardPile[0];
+
+        if (!player || !topDiscard) return;
+
+        const tossedCard = player.cards[position];
+
+        // Check if cards match rank (correct toss-in)
+        if (tossedCard.rank === topDiscard.rank) {
+          // Correct toss-in: place card on discard pile and perform action
+          player.cards[position] = { id: 'empty', rank: '', value: 0 }; // Remove card from hand
+          state.discardPile = [tossedCard, ...state.discardPile];
+
+          // TODO: Perform the card's action
+          GameToastService.success(`${player.name} tossed in ${tossedCard.rank}!`);
+        } else {
+          // Incorrect toss-in: penalty card
+          if (state.drawPile.length > 0) {
+            const penaltyCard = state.drawPile[0];
+            player.cards.push(penaltyCard); // Add penalty card
+            state.drawPile = state.drawPile.slice(1);
+
+            GameToastService.error(`${player.name}'s toss-in failed - penalty card drawn`);
+          }
+        }
+      }),
+
+      makeAIMove: async (difficulty: string) => {
+        const state = get();
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        
+        if (!currentPlayer || currentPlayer.isHuman) return;
+
+        set((draft) => {
+          draft.aiThinking = true;
+          draft.currentMove = null;
+        });
+
+        try {
+          const move = await oracleClient.requestAIMove(
+            state, 
+            currentPlayer.id, 
+            difficulty as Difficulty
+          );
+          
+          set((draft) => {
+            draft.currentMove = move;
+            draft.aiThinking = false;
+            
+            // Apply AI move logic
+            if (draft.drawPile.length > 0) {
+              const drawnCard = draft.drawPile[0];
+              draft.drawPile = draft.drawPile.slice(1);
+              
+              // Find worst known card to potentially swap
+              let worstPosition = 0;
+              let worstValue = -10;
+              
+              currentPlayer.cards.forEach((card, index) => {
+                if (currentPlayer.knownCardPositions.has(index) && card.value > worstValue) {
+                  worstValue = card.value;
+                  worstPosition = index;
+                }
+              });
+              
+              // Smart AI decision: swap if drawn card is better
+              if (drawnCard.value < worstValue && worstValue > 3) {
+                const discardedCard = currentPlayer.cards[worstPosition];
+                currentPlayer.cards[worstPosition] = drawnCard;
+                draft.discardPile = [discardedCard, ...draft.discardPile];
+                currentPlayer.knownCardPositions.add(worstPosition);
+              } else {
+                // Just discard the drawn card
+                draft.discardPile = [drawnCard, ...draft.discardPile];
+              }
+            }
+            
+            // Advance turn and check game phase transitions
+            draft.turnCount++;
+            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+            // Check if final turn should be triggered
+            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
+              draft.finalTurnTriggered = true;
+              draft.phase = 'final';
+            }
+
+            // If we've completed final turn, move to scoring
+            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+              draft.phase = 'scoring';
+            }
+          });
+
+        } catch (error) {
+          set((draft) => {
+            draft.aiThinking = false;
+            draft.turnCount++;
+            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+            // Check if final turn should be triggered even on error
+            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
+              draft.finalTurnTriggered = true;
+              draft.phase = 'final';
+            }
+
+            // If we've completed final turn, move to scoring
+            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+              draft.phase = 'scoring';
+            }
+          });
+        }
+      },
+
+      // Coalition management
+      formCoalition: (playerId1: string, playerId2: string) => set((state) => {
+        const player1 = state.players.find(p => p.id === playerId1);
+        const player2 = state.players.find(p => p.id === playerId2);
+
+        if (player1 && player2) {
+          player1.coalitionWith.add(playerId2);
+          player2.coalitionWith.add(playerId1);
+        }
+      }),
+
+      breakCoalition: (playerId1: string, playerId2: string) => set((state) => {
+        const player1 = state.players.find(p => p.id === playerId1);
+        const player2 = state.players.find(p => p.id === playerId2);
+
+        if (player1 && player2) {
+          player1.coalitionWith.delete(playerId2);
+          player2.coalitionWith.delete(playerId1);
+        }
+      }),
+
+      // Game ending
+      callVinto: () => set((state) => {
+        state.finalTurnTriggered = true;
+        state.phase = 'final';
+      }),
+
+      calculateFinalScores: () => {
+        const state = get();
+        const scores: { [playerId: string]: number } = {};
+
+        state.players.forEach(player => {
+          scores[player.id] = player.cards.reduce((total, card) => total + card.value, 0);
+        });
+
+        return scores;
+      },
+
+      // Cancel card swap and put card back in discard pile
+      cancelSwap: () => set((state) => {
+        if (state.pendingCard) {
+          state.discardPile = [state.pendingCard, ...state.discardPile];
+          state.pendingCard = null;
+          state.isSelectingSwapPosition = false;
+          // Move to next player
+          state.turnCount++;
+          state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        }
+      })
+    }))
+  )
+);
