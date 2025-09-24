@@ -24,10 +24,10 @@ export class OracleVintoClient {
       
       return gameId;
       
-    } catch (error) {
+    } catch {
       toast.dismiss(loadingToast);
       GameToastService.oracleError('Failed to create session');
-      throw error;
+      throw new Error('Failed to create session');
     }
   }
 
@@ -48,15 +48,27 @@ export class OracleVintoClient {
       const startTime = Date.now();
       
       // Difficulty affects thinking time and decision quality
-      const baseTime = difficulty === 'easy' ? 500 : difficulty === 'medium' ? 1000 : 1500;
+      const baseTimeByDiff: Record<Difficulty, number> = {
+        basic: 500,
+        moderate: 1000,
+        hard: 1500,
+        ultimate: 2000,
+      };
+      const baseTime = baseTimeByDiff[difficulty];
       const thinkTime = baseTime + Math.random() * 800;
       
       // Simulate Oracle AI computation
       await new Promise(resolve => setTimeout(resolve, thinkTime));
       
       // Difficulty affects AI confidence
-      const baseConfidence = difficulty === 'easy' ? 0.4 : difficulty === 'medium' ? 0.65 : 0.85;
-      const confidence = baseConfidence + Math.random() * 0.15;
+      const baseConfidenceByDiff: Record<Difficulty, number> = {
+        basic: 0.4,
+        moderate: 0.65,
+        hard: 0.85,
+        ultimate: 0.95,
+      };
+      const confidenceRaw = baseConfidenceByDiff[difficulty] + Math.random() * 0.15;
+      const confidence = Math.min(0.99, confidenceRaw);
       
       const result: AIMove = {
         type: 'draw',
@@ -76,7 +88,7 @@ export class OracleVintoClient {
       );
 
       // Show reasoning for higher difficulties with good confidence
-      if (difficulty !== 'easy' && result.confidence > 0.75) {
+      if (difficulty !== 'basic' && result.confidence > 0.75) {
         setTimeout(() => {
           GameToastService.info(`💭 ${result.reasoning}`, 3000);
         }, 800);
@@ -84,7 +96,7 @@ export class OracleVintoClient {
 
       return result;
       
-    } catch (error) {
+    } catch {
       toast.dismiss(thinkingToast);
       GameToastService.oracleError(`${aiPlayer.name} computation failed`);
       
@@ -111,7 +123,7 @@ export class OracleVintoClient {
       this.gameId = null;
       this.playerId = null;
       
-    } catch (error) {
+    } catch {
       GameToastService.warning('Session cleanup incomplete - this is usually fine');
     }
   }

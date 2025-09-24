@@ -46,7 +46,7 @@ export const useGameStore = create<GameStore>()(
         try {
           const gameId = await oracleClient.createGameSession('human');
           const deck = shuffleDeck(createDeck());
-          const aiKnowledge = getAIKnowledgeByDifficulty('medium'); // Default difficulty
+          const aiKnowledge = getAIKnowledgeByDifficulty('moderate'); // Default difficulty
 
           set((state) => {
             state.players = [
@@ -160,7 +160,7 @@ export const useGameStore = create<GameStore>()(
 
       finishSetup: () => set((state) => {
         // AI players automatically "memorize" some cards based on difficulty
-        const aiKnowledge = getAIKnowledgeByDifficulty('medium');
+        const aiKnowledge = getAIKnowledgeByDifficulty('moderate');
 
         state.players.forEach(player => {
           if (!player.isHuman) {
@@ -268,7 +268,7 @@ export const useGameStore = create<GameStore>()(
         // Check if cards match rank (correct toss-in)
         if (tossedCard.rank === topDiscard.rank) {
           // Correct toss-in: place card on discard pile and perform action
-          player.cards[position] = { id: 'empty', rank: '', value: 0 }; // Remove card from hand
+          player.cards = player.cards.filter((_, p) => p !== position);
           state.discardPile = [tossedCard, ...state.discardPile];
 
           // TODO: Perform the card's action

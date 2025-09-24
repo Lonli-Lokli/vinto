@@ -1,11 +1,26 @@
 // types/game.ts
 export interface Card {
   id: string;
-  rank: string;
+  rank: Rank;
   value: number;
   action?: string;
-  suit?: '♠' | '♥' | '♦' | '♣';
 }
+
+export type Rank =
+  | '2'
+  | '3'
+  | '4'
+  | '5'
+  | '6'
+  | '7'
+  | '8'
+  | '9'
+  | '10'
+  | 'J'
+  | 'Q'
+  | 'K'
+  | 'A'
+  | 'Joker';
 
 export interface Player {
   id: string;
@@ -41,7 +56,7 @@ export interface AIMove {
   error?: boolean;
 }
 
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 'basic' | 'moderate' | 'hard' | 'ultimate';
 
 export interface GameStore extends GameState {
   oracle: any; // Will be typed properly in the client
@@ -68,4 +83,10 @@ export interface GameStore extends GameState {
   breakCoalition: (playerId1: string, playerId2: string) => void;
   callVinto: () => void;
   calculateFinalScores: () => { [playerId: string]: number };
+}
+
+export class NeverError extends Error {
+  constructor(value: never) {
+    super(`NeverError: Unexpected value ${value}`);
+  }
 }

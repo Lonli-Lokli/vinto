@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useGameStore } from './stores/game-store';
 import { Difficulty } from './shapes';
 import { ToastProvider } from './components/toast-provider';
-import { calculatePlayerScore, getWinnerInfo } from './lib/game-helpers';
+import { getWinnerInfo } from './lib/game-helpers';
 import { GameHeader } from './components/game-header';
 import { GameTable } from './components/game-table';
 import { GameControls } from './components/game-controls';
@@ -46,7 +46,7 @@ export default function VintoGame() {
     calculateFinalScores,
   } = useGameStore();
 
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [difficulty, setDifficulty] = useState<Difficulty>('moderate');
 
   // Initialize game on mount
   useEffect(() => {
@@ -136,8 +136,6 @@ export default function VintoGame() {
 
   const currentPlayer = players[currentPlayerIndex];
   const humanPlayer = players.find((p) => p.isHuman)!;
-  const humanKnownCards = humanPlayer.knownCardPositions.size;
-  const humanScore = calculatePlayerScore(humanPlayer);
 
   // Calculate final scores if in scoring phase
   const finalScores = phase === 'scoring' ? calculateFinalScores() : undefined;
