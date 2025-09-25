@@ -36,10 +36,10 @@ export function RankDeclaration() {
             🎯 Declare Card Rank
           </h3>
           <p className="text-xs text-yellow-700 mt-1">
-            Declare the rank of the card you're replacing at position {swapPosition + 1}
+            Declare the rank of the card you&apos;re replacing at position {swapPosition + 1}
           </p>
           <div className="text-[10px] text-yellow-600 mt-1 bg-yellow-100 rounded px-2 py-1">
-            ✅ Correct = Use card's action • ❌ Wrong = Get penalty card
+            ✅ Correct = Use card&apos;s action • ❌ Wrong = Get penalty card
           </div>
         </div>
 
