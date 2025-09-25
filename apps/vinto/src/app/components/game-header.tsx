@@ -16,7 +16,6 @@ export function GameHeader() {
     difficulty,
     tossInTimeConfig,
     updateDifficulty,
-    updateTossInTime,
   } = useGameStore();
 
   const currentPlayer = players[currentPlayerIndex];

@@ -46,6 +46,8 @@ export const useGameStore = create<GameStore>()(
       selectedSwapPosition: null,
       swapTargets: [],
       peekTargets: [],
+      isDeclaringRank: false,
+      swapPosition: null,
       setupPeeksRemaining: 2,
       waitingForTossIn: false,
       tossInTimer: 0,
@@ -296,35 +298,12 @@ export const useGameStore = create<GameStore>()(
 
           if (!currentPlayer || !pendingCard) return;
 
-          // Perform the swap immediately
-          const discardedCard = currentPlayer.cards[position];
-          currentPlayer.cards[position] = pendingCard;
-          currentPlayer.knownCardPositions.add(position);
-          state.discardPile = [discardedCard, ...state.discardPile];
-
-          // Clean up
-          state.pendingCard = null;
+          // Store the swap position and move to declaration phase
+          state.swapPosition = position;
           state.isSelectingSwapPosition = false;
+          state.isDeclaringRank = true;
 
-          // Start toss-in waiting period (configurable seconds for others to play matching cards)
-          state.waitingForTossIn = true;
-          state.tossInTimer = state.tossInTimeConfig;
-
-          // Advance turn and check game phase transitions after toss-in period
-          setTimeout(() => {
-            set((draft) => {
-              draft.waitingForTossIn = false;
-              draft.tossInTimer = 0;
-              draft.turnCount++;
-              draft.currentPlayerIndex =
-                (draft.currentPlayerIndex + 1) % draft.players.length;
-
-              // Scoring begins only after a called Vinto final round completes
-              if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
-                draft.phase = 'scoring';
-              }
-            });
-          }, state.tossInTimeConfig * 1000);
+          GameToastService.info('Choose to declare the card rank or skip declaration');
         }),
 
       // Execute card actions (7, 8, 9, 10, J, Q, K, A)
@@ -879,6 +858,156 @@ export const useGameStore = create<GameStore>()(
             (state.currentPlayerIndex + 1) % state.players.length;
 
           GameToastService.info('Action cancelled');
+        }),
+
+      // Declare rank during card swap
+      declareRank: (rank: Rank) =>
+        set((state) => {
+          const currentPlayer = state.players[state.currentPlayerIndex];
+          const pendingCard = state.pendingCard;
+          const swapPosition = state.swapPosition;
+
+          if (!currentPlayer || !pendingCard || swapPosition === null) return;
+
+          // Get the actual card being replaced
+          const actualCard = currentPlayer.cards[swapPosition];
+
+          // Check if declaration is correct
+          const isCorrectDeclaration = actualCard && actualCard.rank === rank;
+
+          if (isCorrectDeclaration) {
+            GameToastService.success(`Correct declaration! ${rank} matches the card. You can use its action.`);
+
+            // Perform the swap
+            currentPlayer.cards[swapPosition] = pendingCard;
+            state.discardPile = [actualCard!, ...state.discardPile];
+
+            // If the declared card has an action, execute it
+            if (actualCard!.action) {
+              state.actionContext = {
+                action: actualCard!.action,
+                playerId: currentPlayer.id,
+                targetType: (() => {
+                  switch (rank) {
+                    case '7':
+                    case '8':
+                      return 'own-card' as const;
+                    case '9':
+                    case '10':
+                      return 'opponent-card' as const;
+                    case 'J':
+                      return 'swap-cards' as const;
+                    case 'Q':
+                      return 'peek-then-swap' as const;
+                    case 'K':
+                      return 'declare-action' as const;
+                    case 'A':
+                      return 'force-draw' as const;
+                    default:
+                      return 'own-card' as const;
+                  }
+                })()
+              };
+              state.isAwaitingActionTarget = true;
+            } else {
+              // No action to execute, just advance turn
+              state.waitingForTossIn = true;
+              state.tossInTimer = state.tossInTimeConfig;
+
+              setTimeout(() => {
+                set((draft) => {
+                  draft.waitingForTossIn = false;
+                  draft.tossInTimer = 0;
+                  draft.turnCount++;
+                  draft.currentPlayerIndex =
+                    (draft.currentPlayerIndex + 1) % draft.players.length;
+
+                  if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+                    draft.phase = 'scoring';
+                  }
+                });
+              }, state.tossInTimeConfig * 1000);
+            }
+          } else {
+            GameToastService.error(`Wrong declaration! ${rank} doesn't match the card. Drawing penalty card.`);
+
+            // Perform the swap
+            currentPlayer.cards[swapPosition] = pendingCard;
+            state.discardPile = [actualCard!, ...state.discardPile];
+
+            // Add penalty card if available
+            if (state.drawPile.length > 0) {
+              const penaltyCard = state.drawPile[0];
+              currentPlayer.cards.push(penaltyCard);
+              state.drawPile = state.drawPile.slice(1);
+            }
+
+            // Advance turn
+            state.waitingForTossIn = true;
+            state.tossInTimer = state.tossInTimeConfig;
+
+            setTimeout(() => {
+              set((draft) => {
+                draft.waitingForTossIn = false;
+                draft.tossInTimer = 0;
+                draft.turnCount++;
+                draft.currentPlayerIndex =
+                  (draft.currentPlayerIndex + 1) % draft.players.length;
+
+                if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+                  draft.phase = 'scoring';
+                }
+              });
+            }, state.tossInTimeConfig * 1000);
+          }
+
+          // Clean up declaration state
+          state.isDeclaringRank = false;
+          state.swapPosition = null;
+          state.pendingCard = null;
+        }),
+
+      // Skip rank declaration during card swap
+      skipDeclaration: () =>
+        set((state) => {
+          const currentPlayer = state.players[state.currentPlayerIndex];
+          const pendingCard = state.pendingCard;
+          const swapPosition = state.swapPosition;
+
+          if (!currentPlayer || !pendingCard || swapPosition === null) return;
+
+          GameToastService.info('Skipped declaration. Card swapped without action.');
+
+          // Perform the swap without declaration
+          const replacedCard = currentPlayer.cards[swapPosition];
+          currentPlayer.cards[swapPosition] = pendingCard;
+
+          if (replacedCard) {
+            state.discardPile = [replacedCard, ...state.discardPile];
+          }
+
+          // Clean up declaration state
+          state.isDeclaringRank = false;
+          state.swapPosition = null;
+          state.pendingCard = null;
+
+          // Advance turn
+          state.waitingForTossIn = true;
+          state.tossInTimer = state.tossInTimeConfig;
+
+          setTimeout(() => {
+            set((draft) => {
+              draft.waitingForTossIn = false;
+              draft.tossInTimer = 0;
+              draft.turnCount++;
+              draft.currentPlayerIndex =
+                (draft.currentPlayerIndex + 1) % draft.players.length;
+
+              if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+                draft.phase = 'scoring';
+              }
+            });
+          }, state.tossInTimeConfig * 1000);
         }),
 
       tossInCard: (playerId: string, position: number) =>

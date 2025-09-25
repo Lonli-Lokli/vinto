@@ -72,7 +72,7 @@ export function GameTable() {
     // During action target selection for opponent cards
     if (
       isAwaitingActionTarget &&
-      actionContext?.targetType === 'opponent-card'
+      (actionContext?.targetType === 'opponent-card' || actionContext?.targetType === 'force-draw')
     ) {
       selectActionTarget(playerId, position);
       return;

@@ -8,6 +8,7 @@ import { GamePhaseIndicators } from './components/game-phase-indicators';
 import { FinalScores } from './components/final-scores';
 import { CardActionChoice } from './components/card-action-choice';
 import { ActionTargetSelector } from './components/action-target-selector';
+import { RankDeclaration } from './components/rank-declaration';
 import { GameInitializer } from './components/game-initializer';
 
 export default function VintoGame() {
@@ -21,6 +22,7 @@ export default function VintoGame() {
       <GamePhaseIndicators />
       <CardActionChoice />
       <ActionTargetSelector />
+      <RankDeclaration />
       <GameControls />
     </div>
   );

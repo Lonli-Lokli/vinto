@@ -78,6 +78,8 @@ export interface GameStore extends GameState {
   selectedSwapPosition: number | null;
   swapTargets: { playerId: string; position: number }[];
   peekTargets: { playerId: string; position: number; card?: Card }[];
+  isDeclaringRank: boolean;
+  swapPosition: number | null;
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
   tossInTimer: number;
@@ -99,6 +101,8 @@ export interface GameStore extends GameState {
   executeQueenSwap: () => void;
   skipQueenSwap: () => void;
   declareKingAction: (rank: Rank) => void;
+  declareRank: (rank: Rank) => void;
+  skipDeclaration: () => void;
   cancelAction: () => void;
   cancelSwap: () => void;
   tossInCard: (playerId: string, position: number) => void;
