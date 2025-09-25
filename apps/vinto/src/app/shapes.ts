@@ -72,10 +72,12 @@ export interface GameStore extends GameState {
   actionContext: {
     action: string;
     playerId: string;
-    targetType?: 'own-card' | 'opponent-card' | 'swap-cards';
+    targetType?: 'own-card' | 'opponent-card' | 'swap-cards' | 'peek-then-swap' | 'declare-action' | 'force-draw';
+    declaredCard?: Rank;
   } | null;
   selectedSwapPosition: number | null;
   swapTargets: { playerId: string; position: number }[];
+  peekTargets: { playerId: string; position: number; card?: Card }[];
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
   tossInTimer: number;
@@ -94,6 +96,9 @@ export interface GameStore extends GameState {
   swapCard: (pos: number) => void;
   executeCardAction: (card: Card, playerId: string) => void;
   selectActionTarget: (playerId: string, position: number) => void;
+  executeQueenSwap: () => void;
+  skipQueenSwap: () => void;
+  declareKingAction: (rank: Rank) => void;
   cancelAction: () => void;
   cancelSwap: () => void;
   tossInCard: (playerId: string, position: number) => void;
