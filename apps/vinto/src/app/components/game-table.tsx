@@ -15,6 +15,7 @@ export function GameTable() {
     isSelectingSwapPosition,
     isChoosingCardAction,
     isAwaitingActionTarget,
+    isDeclaringRank,
     actionContext,
     setupPeeksRemaining,
     waitingForTossIn,
@@ -62,17 +63,25 @@ export function GameTable() {
     }
 
     // During action target selection, allow selecting target
-    if (isAwaitingActionTarget && actionContext?.targetType === 'own-card') {
+    if (
+      isAwaitingActionTarget &&
+      (actionContext?.targetType === 'own-card' ||
+       actionContext?.targetType === 'peek-then-swap' ||
+       actionContext?.targetType === 'swap-cards')
+    ) {
       selectActionTarget(humanPlayer.id, position);
       return;
     }
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
-    // During action target selection for opponent cards
+    // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
       isAwaitingActionTarget &&
-      (actionContext?.targetType === 'opponent-card' || actionContext?.targetType === 'force-draw')
+      (actionContext?.targetType === 'opponent-card' ||
+       actionContext?.targetType === 'force-draw' ||
+       actionContext?.targetType === 'peek-then-swap' ||
+       actionContext?.targetType === 'swap-cards')
     ) {
       selectActionTarget(playerId, position);
       return;
@@ -156,6 +165,9 @@ export function GameTable() {
                   clickable={
                     currentPlayer?.isHuman &&
                     !isSelectingSwapPosition &&
+                    !isChoosingCardAction &&
+                    !isAwaitingActionTarget &&
+                    !isDeclaringRank &&
                     phase === 'playing'
                   }
                   onClick={handleDrawCard}
@@ -351,6 +363,9 @@ export function GameTable() {
                   clickable={
                     currentPlayer?.isHuman &&
                     !isSelectingSwapPosition &&
+                    !isChoosingCardAction &&
+                    !isAwaitingActionTarget &&
+                    !isDeclaringRank &&
                     phase === 'playing'
                   }
                   onClick={handleDrawCard}

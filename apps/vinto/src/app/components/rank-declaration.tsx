@@ -12,7 +12,7 @@ export function RankDeclaration() {
     players,
     currentPlayerIndex,
     declareRank,
-    skipDeclaration
+    skipDeclaration,
   } = useGameStore();
 
   if (!isDeclaringRank || swapPosition === null) {
@@ -22,7 +22,21 @@ export function RankDeclaration() {
   const currentPlayer = players[currentPlayerIndex];
   if (!currentPlayer) return null;
 
-  const ranks: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+  const ranks: Rank[] = [
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K',
+    'A',
+  ];
 
   const handleRankClick = (rank: Rank) => {
     declareRank(rank);
@@ -36,7 +50,8 @@ export function RankDeclaration() {
             🎯 Declare Card Rank
           </h3>
           <p className="text-xs text-yellow-700 mt-1">
-            Declare the rank of the card you&apos;re replacing at position {swapPosition + 1}
+            Declare the rank of the card you&apos;re replacing at position
+            {swapPosition + 1}
           </p>
           <div className="text-[10px] text-yellow-600 mt-1 bg-yellow-100 rounded px-2 py-1">
             ✅ Correct = Use card&apos;s action • ❌ Wrong = Get penalty card
@@ -69,7 +84,7 @@ export function RankDeclaration() {
         </div>
 
         <div className="text-center text-[9px] text-yellow-600 mt-2">
-          Choose wisely! Wrong declarations result in penalty cards.
+          Choose wisely! Wrong declaration results in penalty card.
         </div>
       </div>
     </div>
