@@ -60,7 +60,7 @@ export function GameHeader() {
             </div>
             {/* Toss-in Time Selector */}
             <div className="flex gap-1">
-              {([3, 5, 7, 10] as const).map((time) => (
+              {([5, 7, 10] as const).map((time) => (
                 <button
                   key={time}
                   onClick={() => updateTossInTime(time)}

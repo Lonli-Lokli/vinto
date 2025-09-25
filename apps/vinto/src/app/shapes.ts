@@ -58,7 +58,7 @@ export interface AIMove {
 
 export type Difficulty = 'basic' | 'moderate' | 'hard' | 'ultimate';
 
-export type TossInTime = 3 | 5 | 7 | 10;
+export type TossInTime = 5 | 7 | 10;
 
 export interface GameStore extends GameState {
   oracle: any; // Will be typed properly in the client

@@ -48,7 +48,7 @@ export function ActionTargetSelector() {
           )}
           {targetType === 'opponent-card' && (
             <p className="text-xs text-gray-500 mt-1">
-              Click on an opponent's card to peek at it
+              Click on an opponent&apos;s card to peek at it
             </p>
           )}
           {targetType === 'swap-cards' && (
@@ -77,7 +77,7 @@ export function ActionTargetSelector() {
               👁️ <strong>Opponent Peek</strong>
               <br />
               <span className="text-xs text-orange-600">
-                Select an opponent's card to reveal its value
+                Select an opponent&apos;s card to reveal its value
               </span>
             </div>
             {/* Show clickable opponent cards */}

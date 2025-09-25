@@ -44,7 +44,7 @@ export const useGameStore = create<GameStore>()(
       setupPeeksRemaining: 2,
       waitingForTossIn: false,
       tossInTimer: 0,
-      tossInTimeConfig: 5,
+      tossInTimeConfig: 7,
       difficulty: 'moderate',
 
       // Actions

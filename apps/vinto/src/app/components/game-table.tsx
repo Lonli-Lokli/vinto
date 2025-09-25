@@ -68,7 +68,10 @@ export function GameTable() {
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
     // During action target selection for opponent cards
-    if (isAwaitingActionTarget && actionContext?.targetType === 'opponent-card') {
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'opponent-card'
+    ) {
       selectActionTarget(playerId, position);
       return;
     }
@@ -101,7 +104,9 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) => handleOpponentCardClick(playersById.top!.id, position)}
+                onCardClick={(position) =>
+                  handleOpponentCardClick(playersById.top!.id, position)
+                }
               />
             </div>
           )}
@@ -119,7 +124,9 @@ export function GameTable() {
                   }
                   gamePhase={phase}
                   finalScores={finalScores}
-                  onCardClick={(position) => handleOpponentCardClick(playersById.left!.id, position)}
+                  onCardClick={(position) =>
+                    handleOpponentCardClick(playersById.left!.id, position)
+                  }
                 />
               )}
             </div>
@@ -186,7 +193,9 @@ export function GameTable() {
                   }
                   gamePhase={phase}
                   finalScores={finalScores}
-                  onCardClick={(position) => handleOpponentCardClick(playersById.right!.id, position)}
+                  onCardClick={(position) =>
+                    handleOpponentCardClick(playersById.right!.id, position)
+                  }
                 />
               )}
             </div>
@@ -221,7 +230,9 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) => handleOpponentCardClick(playersById.top!.id, position)}
+                onCardClick={(position) =>
+                  handleOpponentCardClick(playersById.top!.id, position)
+                }
               />
             </div>
           )}
@@ -237,7 +248,9 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) => handleOpponentCardClick(playersById.left!.id, position)}
+                onCardClick={(position) =>
+                  handleOpponentCardClick(playersById.left!.id, position)
+                }
               />
             </div>
           )}
@@ -253,7 +266,9 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) => handleOpponentCardClick(playersById.right!.id, position)}
+                onCardClick={(position) =>
+                  handleOpponentCardClick(playersById.right!.id, position)
+                }
               />
             </div>
           )}
