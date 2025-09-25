@@ -2,14 +2,12 @@
 'use client';
 
 import React from 'react';
-import { AIMove, Player } from '../shapes';
+import { useGameStore } from '../stores/game-store';
 
-interface AIAnalysisProps {
-  currentMove: AIMove | null;
-  currentPlayer: Player | undefined;
-}
+export function AIAnalysis() {
+  const { currentMove, players, currentPlayerIndex } = useGameStore();
 
-export function AIAnalysis({ currentMove, currentPlayer }: AIAnalysisProps) {
+  const currentPlayer = players[currentPlayerIndex];
   if (!currentMove || !currentPlayer || currentPlayer.isHuman) {
     return null;
   }

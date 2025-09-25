@@ -14,6 +14,7 @@ export const createDeck = (): Card[] => {
         id: `${rank}${no}`,
         rank: `${rank}`,
         value: rank,
+        played: false,
       });
     });
   }
@@ -26,7 +27,7 @@ export const createDeck = (): Card[] => {
     { rank: '10' as const, value: 10, action: 'Peek 1 opponent card' },
     { rank: 'J' as const, value: 10, action: 'Swap 2 face-down cards' },
     { rank: 'Q' as const, value: 10, action: 'Peek 2 cards, swap optional' },
-    { rank: 'K' as const, value: 0, action: 'Declare any card\'s action' },
+    { rank: 'K' as const, value: 0, action: "Declare any card's action" },
     { rank: 'A' as const, value: 1, action: 'Force opponent to draw' },
   ];
 
@@ -37,14 +38,15 @@ export const createDeck = (): Card[] => {
         rank: card.rank,
         value: card.value,
         action: card.action,
+        played: false,
       });
     });
   });
 
   // Jokers
   deck.push(
-    { id: 'Joker1', rank: 'Joker', value: -1 },
-    { id: 'Joker2', rank: 'Joker', value: -1 }
+    { id: 'Joker1', rank: 'Joker', value: -1, played: false },
+    { id: 'Joker2', rank: 'Joker', value: -1, played: false }
   );
 
   return deck;

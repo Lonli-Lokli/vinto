@@ -87,13 +87,6 @@ export class OracleVintoClient {
         Math.round(result.confidence * 100)
       );
 
-      // Show reasoning for higher difficulties with good confidence
-      if (difficulty !== 'basic' && result.confidence > 0.75) {
-        setTimeout(() => {
-          GameToastService.info(`💭 ${result.reasoning}`, 3000);
-        }, 800);
-      }
-
       return result;
       
     } catch {

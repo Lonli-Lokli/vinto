@@ -2,56 +2,87 @@
 'use client';
 
 import React from 'react';
-import { Player, Card as CardType } from '../shapes';
+import { useGameStore } from '../stores/game-store';
 import { PlayerArea } from './player-area';
 import { Card } from './card';
 
-interface GameTableProps {
-  players: Player[];
-  currentPlayer?: Player;
-  humanPlayer: Player;
-  aiThinking: boolean;
-  gamePhase: 'setup' | 'playing' | 'final' | 'scoring';
-  finalScores?: { [playerId: string]: number };
-  isSelectingSwapPosition: boolean;
-  pendingCard: CardType | null;
-  discardPile: CardType[];
-  onCardClick: (position: number) => void;
-  onDrawCard: () => void;
-}
+export function GameTable() {
+  const {
+    players,
+    currentPlayerIndex,
+    aiThinking,
+    phase,
+    isSelectingSwapPosition,
+    setupPeeksRemaining,
+    waitingForTossIn,
+    pendingCard,
+    discardPile,
+    drawCard,
+    peekCard,
+    swapCard,
+    tossInCard,
+    calculateFinalScores,
+  } = useGameStore();
 
-export function GameTable({
-  players,
-  currentPlayer,
-  humanPlayer,
-  aiThinking,
-  gamePhase,
-  finalScores,
-  isSelectingSwapPosition,
-  pendingCard,
-  discardPile,
-  onCardClick,
-  onDrawCard
-}: GameTableProps) {
+  const currentPlayer = players[currentPlayerIndex];
+  const humanPlayer = players.find((p) => p.isHuman);
+
+  // Calculate final scores if in scoring phase
+  const finalScores = phase === 'scoring' ? calculateFinalScores() : undefined;
+
+  const handleCardClick = (position: number) => {
+    if (!humanPlayer) return;
+
+    // During setup phase, allow peeking at cards for memorization
+    if (phase === 'setup') {
+      if (
+        setupPeeksRemaining > 0 &&
+        !humanPlayer.knownCardPositions.has(position)
+      ) {
+        peekCard(humanPlayer.id, position);
+      }
+      return;
+    }
+
+    // If selecting swap position, perform the swap
+    if (isSelectingSwapPosition) {
+      swapCard(position);
+      return;
+    }
+
+    // During toss-in period, allow tossing in cards
+    if (waitingForTossIn) {
+      tossInCard(humanPlayer.id, position);
+      return;
+    }
+  };
+
+  const handleDrawCard = () => {
+    if (currentPlayer && currentPlayer.isHuman) {
+      drawCard();
+    }
+  };
   const playersById = {
-    top: players.find(p => p.position === 'top'),
-    left: players.find(p => p.position === 'left'),
-    right: players.find(p => p.position === 'right')
+    top: players.find((p) => p.position === 'top'),
+    left: players.find((p) => p.position === 'left'),
+    right: players.find((p) => p.position === 'right'),
   };
 
   return (
     <div className="p-2 sm:p-4">
       <div className="max-w-lg mx-auto">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
-  <div className="md:hidden flex flex-col gap-3 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl border-4 border-emerald-800 shadow-2xl p-3">
+        <div className="md:hidden flex flex-col gap-3 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl border-4 border-emerald-800 shadow-2xl p-3">
           {/* Row 1: Top player */}
           {playersById.top && (
             <div className="flex justify-center">
               <PlayerArea
                 player={playersById.top}
                 isCurrentPlayer={currentPlayer?.id === playersById.top.id}
-                isThinking={aiThinking && currentPlayer?.id === playersById.top.id}
-                gamePhase={gamePhase}
+                isThinking={
+                  aiThinking && currentPlayer?.id === playersById.top.id
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
               />
             </div>
@@ -65,8 +96,10 @@ export function GameTable({
                 <PlayerArea
                   player={playersById.left}
                   isCurrentPlayer={currentPlayer?.id === playersById.left.id}
-                  isThinking={aiThinking && currentPlayer?.id === playersById.left.id}
-                  gamePhase={gamePhase}
+                  isThinking={
+                    aiThinking && currentPlayer?.id === playersById.left.id
+                  }
+                  gamePhase={phase}
                   finalScores={finalScores}
                 />
               )}
@@ -78,8 +111,12 @@ export function GameTable({
               <div className="text-center">
                 <Card
                   size="md"
-                  clickable={currentPlayer?.isHuman && !isSelectingSwapPosition && gamePhase === 'playing'}
-                  onClick={onDrawCard}
+                  clickable={
+                    currentPlayer?.isHuman &&
+                    !isSelectingSwapPosition &&
+                    phase === 'playing'
+                  }
+                  onClick={handleDrawCard}
                 />
                 <div className="mt-1 text-[10px] text-white font-semibold bg-black/20 rounded px-2 py-0.5">
                   DRAW
@@ -125,8 +162,10 @@ export function GameTable({
                 <PlayerArea
                   player={playersById.right}
                   isCurrentPlayer={currentPlayer?.id === playersById.right.id}
-                  isThinking={aiThinking && currentPlayer?.id === playersById.right.id}
-                  gamePhase={gamePhase}
+                  isThinking={
+                    aiThinking && currentPlayer?.id === playersById.right.id
+                  }
+                  gamePhase={phase}
                   finalScores={finalScores}
                 />
               )}
@@ -135,29 +174,32 @@ export function GameTable({
 
           {/* Row 3: Human player */}
           <div className="flex justify-center">
-            <PlayerArea
-              player={humanPlayer}
-              isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-              isThinking={false}
-              onCardClick={onCardClick}
-              gamePhase={gamePhase}
-              finalScores={finalScores}
-              isSelectingSwapPosition={isSelectingSwapPosition}
-            />
+            {humanPlayer && (
+              <PlayerArea
+                player={humanPlayer}
+                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                isThinking={false}
+                onCardClick={handleCardClick}
+                gamePhase={phase}
+                finalScores={finalScores}
+                isSelectingSwapPosition={isSelectingSwapPosition}
+              />
+            )}
           </div>
         </div>
 
         {/* Desktop/Tablet square board */}
         <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl aspect-square border-4 border-emerald-800 shadow-2xl p-3 sm:p-6">
-
           {/* Top Player */}
           {playersById.top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">
               <PlayerArea
                 player={playersById.top}
                 isCurrentPlayer={currentPlayer?.id === playersById.top.id}
-                isThinking={aiThinking && currentPlayer?.id === playersById.top.id}
-                gamePhase={gamePhase}
+                isThinking={
+                  aiThinking && currentPlayer?.id === playersById.top.id
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
               />
             </div>
@@ -169,8 +211,10 @@ export function GameTable({
               <PlayerArea
                 player={playersById.left}
                 isCurrentPlayer={currentPlayer?.id === playersById.left.id}
-                isThinking={aiThinking && currentPlayer?.id === playersById.left.id}
-                gamePhase={gamePhase}
+                isThinking={
+                  aiThinking && currentPlayer?.id === playersById.left.id
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
               />
             </div>
@@ -182,8 +226,10 @@ export function GameTable({
               <PlayerArea
                 player={playersById.right}
                 isCurrentPlayer={currentPlayer?.id === playersById.right.id}
-                isThinking={aiThinking && currentPlayer?.id === playersById.right.id}
-                gamePhase={gamePhase}
+                isThinking={
+                  aiThinking && currentPlayer?.id === playersById.right.id
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
               />
             </div>
@@ -196,8 +242,12 @@ export function GameTable({
               <div className="text-center">
                 <Card
                   size="lg"
-                  clickable={currentPlayer?.isHuman && !isSelectingSwapPosition && gamePhase === 'playing'}
-                  onClick={onDrawCard}
+                  clickable={
+                    currentPlayer?.isHuman &&
+                    !isSelectingSwapPosition &&
+                    phase === 'playing'
+                  }
+                  onClick={handleDrawCard}
                 />
                 <div className="mt-2 text-xs text-white font-semibold bg-black/20 rounded px-2 py-1">
                   DRAW
@@ -240,15 +290,17 @@ export function GameTable({
 
           {/* Human Player */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <PlayerArea
-              player={humanPlayer}
-              isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-              isThinking={false}
-              onCardClick={onCardClick}
-              gamePhase={gamePhase}
-              finalScores={finalScores}
-              isSelectingSwapPosition={isSelectingSwapPosition}
-            />
+            {humanPlayer && (
+              <PlayerArea
+                player={humanPlayer}
+                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                isThinking={false}
+                onCardClick={handleCardClick}
+                gamePhase={phase}
+                finalScores={finalScores}
+                isSelectingSwapPosition={isSelectingSwapPosition}
+              />
+            )}
           </div>
         </div>
       </div>

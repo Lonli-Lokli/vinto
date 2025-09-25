@@ -2,31 +2,25 @@
 'use client';
 
 import React from 'react';
-import { Difficulty } from '../shapes';
+import { useGameStore } from '../stores/game-store';
 
-interface GameHeaderProps {
-  phase: 'setup' | 'playing' | 'final' | 'scoring';
-  roundNumber: number;
-  turnCount: number;
-  maxTurns: number;
-  finalTurnTriggered: boolean;
-  drawPileCount: number;
-  currentPlayer: any;
-  difficulty: Difficulty;
-  onDifficultyChange: (diff: Difficulty) => void;
-}
+export function GameHeader() {
+  const {
+    phase,
+    roundNumber,
+    turnCount,
+    maxTurns,
+    finalTurnTriggered,
+    drawPile,
+    players,
+    currentPlayerIndex,
+    difficulty,
+    tossInTimeConfig,
+    updateDifficulty,
+    updateTossInTime,
+  } = useGameStore();
 
-export function GameHeader({
-  phase,
-  roundNumber,
-  turnCount,
-  maxTurns,
-  finalTurnTriggered,
-  drawPileCount,
-  currentPlayer,
-  difficulty,
-  onDifficultyChange,
-}: GameHeaderProps) {
+  const currentPlayer = players[currentPlayerIndex];
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
     if (finalTurnTriggered) return `Final • ${phase}`;
@@ -41,14 +35,16 @@ export function GameHeader({
 
   return (
     <div className="sticky top-0 z-10 bg-white/70 backdrop-blur-md border-b border-gray-200">
-      <div className="max-w-lg mx-auto px-3 py-1.5">
+      <div className="max-w-2xl mx-auto px-3 py-1.5">
         <div className="grid grid-cols-3 items-center">
-          {/* Difficulty Selector */}
-          <div className="flex gap-1">
+          {/* Controls */}
+          <div className="flex flex-col gap-1">
+            {/* Difficulty Selector */}
+            <div className="flex gap-1">
             {(['basic', 'moderate', 'hard', 'ultimate'] as const).map((level) => (
               <button
                 key={level}
-                onClick={() => onDifficultyChange(level)}
+                onClick={() => updateDifficulty(level)}
                 className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
                   difficulty === level
                     ? 'bg-blue-500 text-white'
@@ -62,6 +58,26 @@ export function GameHeader({
                 <span className="md:hidden">{level[0].toUpperCase()}</span>
               </button>
             ))}
+            </div>
+            {/* Toss-in Time Selector */}
+            <div className="flex gap-1">
+              {([3, 5, 7, 10] as const).map((time) => (
+                <button
+                  key={time}
+                  onClick={() => updateTossInTime(time)}
+                  className={`px-1.5 py-0.5 rounded-md text-[9px] font-medium transition-colors ${
+                    tossInTimeConfig === time
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                  }`}
+                  aria-pressed={tossInTimeConfig === time}
+                  aria-label={`Set toss-in time to ${time} seconds`}
+                  title={`Toss-in time: ${time}s`}
+                >
+                  {time}s
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Title + Phase + Current Player */}
@@ -82,7 +98,7 @@ export function GameHeader({
           {/* Game Info */}
           <div className="text-right">
             <div className="text-sm md:text-base font-semibold text-gray-700 leading-tight">
-              {drawPileCount}
+              {drawPile.length}
             </div>
             <div className="text-[10px] md:text-xs text-gray-500 leading-tight">cards left</div>
           </div>

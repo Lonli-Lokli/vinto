@@ -8,7 +8,7 @@ import { enableMapSet } from 'immer';
 import { shuffleDeck, createDeck, getAIKnowledgeByDifficulty } from '../lib/game-helpers';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
-import { GameStore, Difficulty } from '../shapes';
+import { GameStore, Difficulty, TossInTime } from '../shapes';
 
 // Enable Immer MapSet plugin for Set objects
 enableMapSet();
@@ -37,9 +37,13 @@ export const useGameStore = create<GameStore>()(
       sessionActive: false,
       pendingCard: null,
       isSelectingSwapPosition: false,
+      isDeclaringRank: false,
+      selectedSwapPosition: null,
       setupPeeksRemaining: 2,
       waitingForTossIn: false,
       tossInTimer: 0,
+      tossInTimeConfig: 5,
+      difficulty: 'moderate',
 
       // Actions
       initGame: async () => {
@@ -53,7 +57,7 @@ export const useGameStore = create<GameStore>()(
               {
                 id: 'human',
                 name: 'You',
-                cards: deck.slice(0, 5),
+                cards: deck.splice(0, 5),
                 knownCardPositions: new Set(), // Start with no known cards
                 isHuman: true,
                 position: 'bottom',
@@ -63,7 +67,7 @@ export const useGameStore = create<GameStore>()(
               {
                 id: 'oracle-alpha',
                 name: 'Player α',
-                cards: deck.slice(5, 10),
+                cards: deck.splice(0, 5),
                 knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'left',
@@ -73,7 +77,7 @@ export const useGameStore = create<GameStore>()(
               {
                 id: 'oracle-beta',
                 name: 'Player β',
-                cards: deck.slice(10, 15),
+                cards: deck.splice(0, 5),
                 knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'top',
@@ -83,7 +87,7 @@ export const useGameStore = create<GameStore>()(
               {
                 id: 'oracle-gamma',
                 name: 'Player γ',
-                cards: deck.slice(15, 20),
+                cards: deck.splice(0, 5),
                 knownCardPositions: new Set(),
                 isHuman: false,
                 position: 'right',
@@ -92,7 +96,7 @@ export const useGameStore = create<GameStore>()(
               }
             ];
 
-            state.drawPile = deck.slice(20);
+            state.drawPile = deck;
             state.discardPile = [];
             state.phase = 'setup'; // Start in setup phase for initial card memorization
             state.gameId = gameId;
@@ -119,32 +123,39 @@ export const useGameStore = create<GameStore>()(
       },
 
       updateDifficulty: (newDifficulty: Difficulty) => set((state) => {
+        state.difficulty = newDifficulty;
+
         const aiKnowledge = getAIKnowledgeByDifficulty(newDifficulty);
-        
+
         // Update AI knowledge based on new difficulty
         state.players.forEach((player) => {
           if (!player.isHuman) {
             // Get current known positions
             const currentKnown = Array.from(player.knownCardPositions);
-            
+
             // Generate new knowledge set based on difficulty
             const newKnownSet = new Set(
               Array.from({ length: player.cards.length }, (_, i) => i)
                 .filter(() => Math.random() < aiKnowledge)
             );
-            
+
             // Keep some previously known cards for consistency (70% chance)
             currentKnown.forEach(pos => {
               if (pos < player.cards.length && Math.random() < 0.7) {
                 newKnownSet.add(pos);
               }
             });
-            
+
             player.knownCardPositions = newKnownSet;
           }
         });
-        
+
         GameToastService.difficultyChanged(newDifficulty);
+      }),
+
+      updateTossInTime: (newTossInTime: TossInTime) => set((state) => {
+        state.tossInTimeConfig = newTossInTime;
+        GameToastService.info(`Toss-in time set to ${newTossInTime} seconds`);
       }),
 
       peekCard: (playerId: string, position: number) => set((state) => {
@@ -175,10 +186,6 @@ export const useGameStore = create<GameStore>()(
 
         // Move to playing phase and start first discard
         state.phase = 'playing';
-        if (state.drawPile.length > 0) {
-          state.discardPile = [state.drawPile[0]];
-          state.drawPile = state.drawPile.slice(1);
-        }
       }),
 
       drawCard: () => set((state) => {
@@ -199,7 +206,7 @@ export const useGameStore = create<GameStore>()(
 
         const topCard = state.discardPile[0];
         // Can only take action cards (7-K) whose action hasn't been used
-        if (!topCard.action) return;
+        if (topCard.played) return;
 
         state.pendingCard = topCard;
         state.discardPile = state.discardPile.slice(1);
@@ -218,22 +225,63 @@ export const useGameStore = create<GameStore>()(
       swapCard: (position: number) => set((state) => {
         const currentPlayer = state.players[state.currentPlayerIndex];
         const pendingCard = state.pendingCard;
-        
-        if (!currentPlayer || !pendingCard) return;
+
+        if (!currentPlayer || !pendingCard || !currentPlayer.isHuman) return;
+
+        // Store the swap position and move to rank declaration phase
+        state.selectedSwapPosition = position;
+        state.isSelectingSwapPosition = false;
+        state.isDeclaringRank = true;
+      }),
+
+      declareRank: (declaredRank: Rank) => set((state) => {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        const pendingCard = state.pendingCard;
+        const position = state.selectedSwapPosition;
+
+        if (!currentPlayer || !pendingCard || position === null) return;
 
         // Perform the swap
         const discardedCard = currentPlayer.cards[position];
         currentPlayer.cards[position] = pendingCard;
         currentPlayer.knownCardPositions.add(position);
-        state.discardPile = [discardedCard, ...state.discardPile];
-        
+
+        // Check if declaration is correct
+        const declarationCorrect = discardedCard.rank === declaredRank;
+
+        if (declarationCorrect) {
+          // Correct declaration: execute action if card has one
+          state.discardPile = [discardedCard, ...state.discardPile];
+
+          if (discardedCard.action) {
+            GameToastService.success(`Correct! ${discardedCard.rank} declared - Action: ${discardedCard.action}`);
+            // TODO: Execute card action
+          } else {
+            GameToastService.success(`Correct! ${discardedCard.rank} declared`);
+          }
+        } else {
+          // Incorrect declaration: penalty card
+          state.discardPile = [discardedCard, ...state.discardPile];
+
+          // Draw penalty card if deck has cards
+          if (state.drawPile.length > 0) {
+            const penaltyCard = state.drawPile[0];
+            currentPlayer.cards.push(penaltyCard);
+            state.drawPile = state.drawPile.slice(1);
+            GameToastService.error(`Wrong! Declared ${declaredRank}, but was ${discardedCard.rank} - Penalty card drawn`);
+          } else {
+            GameToastService.error(`Wrong! Declared ${declaredRank}, but was ${discardedCard.rank} - No penalty (deck empty)`);
+          }
+        }
+
         // Clean up
         state.pendingCard = null;
-        state.isSelectingSwapPosition = false;
+        state.isDeclaringRank = false;
+        state.selectedSwapPosition = null;
 
-        // Start toss-in waiting period (5 seconds for others to play matching cards)
+        // Start toss-in waiting period (configurable seconds for others to play matching cards)
         state.waitingForTossIn = true;
-        state.tossInTimer = 5;
+        state.tossInTimer = state.tossInTimeConfig;
 
         // Advance turn and check game phase transitions after toss-in period
         setTimeout(() => {
@@ -253,7 +301,7 @@ export const useGameStore = create<GameStore>()(
               draft.phase = 'scoring';
             }
           });
-        }, 5000);
+        }, state.tossInTimeConfig * 1000);
       }),
 
       tossInCard: (playerId: string, position: number) => set((state) => {
@@ -341,26 +389,39 @@ export const useGameStore = create<GameStore>()(
                 currentPlayer.cards[worstPosition] = drawnCard;
                 draft.discardPile = [discardedCard, ...draft.discardPile];
                 currentPlayer.knownCardPositions.add(worstPosition);
+
+                // Start toss-in waiting period (configurable seconds for others to play matching cards)
+                draft.waitingForTossIn = true;
+                draft.tossInTimer = draft.tossInTimeConfig;
               } else {
                 // Just discard the drawn card
                 draft.discardPile = [drawnCard, ...draft.discardPile];
+
+                // Start toss-in waiting period (configurable seconds for others to play matching cards)
+                draft.waitingForTossIn = true;
+                draft.tossInTimer = draft.tossInTimeConfig;
               }
             }
-            
-            // Advance turn and check game phase transitions
-            draft.turnCount++;
-            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
 
-            // Check if final turn should be triggered
-            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
-              draft.finalTurnTriggered = true;
-              draft.phase = 'final';
-            }
+            // Advance turn and check game phase transitions after toss-in period
+            setTimeout(() => {
+              set((draftTimeout) => {
+                draftTimeout.waitingForTossIn = false;
+                draftTimeout.tossInTimer = 0;
+                draftTimeout.turnCount++;
+                draftTimeout.currentPlayerIndex = (draftTimeout.currentPlayerIndex + 1) % draftTimeout.players.length;
 
-            // If we've completed final turn, move to scoring
-            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
-              draft.phase = 'scoring';
-            }
+                // Check game phase transitions
+                if (draftTimeout.turnCount >= draftTimeout.maxTurns && !draftTimeout.finalTurnTriggered) {
+                  draftTimeout.finalTurnTriggered = true;
+                  draftTimeout.phase = 'final';
+                }
+
+                if (draftTimeout.finalTurnTriggered && draftTimeout.currentPlayerIndex === 0) {
+                  draftTimeout.phase = 'scoring';
+                }
+              });
+            }, draft.tossInTimeConfig * 1000);
           });
 
         } catch (error) {
@@ -427,6 +488,8 @@ export const useGameStore = create<GameStore>()(
           state.discardPile = [state.pendingCard, ...state.discardPile];
           state.pendingCard = null;
           state.isSelectingSwapPosition = false;
+          state.isDeclaringRank = false;
+          state.selectedSwapPosition = null;
           // Move to next player
           state.turnCount++;
           state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;

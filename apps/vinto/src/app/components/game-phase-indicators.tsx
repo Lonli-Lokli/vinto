@@ -2,29 +2,19 @@
 'use client';
 
 import React from 'react';
-import { Card as CardType } from '../shapes';
+import { useGameStore } from '../stores/game-store';
 
-interface GamePhaseIndicatorsProps {
-  phase: 'setup' | 'playing' | 'final' | 'scoring';
-  setupPeeksRemaining: number;
-  isSelectingSwapPosition: boolean;
-  waitingForTossIn: boolean;
-  tossInTimer: number;
-  discardPile: CardType[];
-  onFinishSetup: () => void;
-  onCancelSwap: () => void;
-}
-
-export function GamePhaseIndicators({
-  phase,
-  setupPeeksRemaining,
-  isSelectingSwapPosition,
-  waitingForTossIn,
-  tossInTimer,
-  discardPile,
-  onFinishSetup,
-  onCancelSwap
-}: GamePhaseIndicatorsProps) {
+export function GamePhaseIndicators() {
+  const {
+    phase,
+    setupPeeksRemaining,
+    isSelectingSwapPosition,
+    waitingForTossIn,
+    tossInTimer,
+    discardPile,
+    finishSetup,
+    cancelSwap,
+  } = useGameStore();
   return (
     <>
       {/* Setup Phase Instructions */}
@@ -42,7 +32,7 @@ export function GamePhaseIndicators({
             </div>
             {setupPeeksRemaining === 0 && (
               <button
-                onClick={onFinishSetup}
+                onClick={finishSetup}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
               >
                 Start Game
@@ -80,7 +70,7 @@ export function GamePhaseIndicators({
               Click on one of your cards to swap it with the drawn card
             </div>
             <button
-              onClick={onCancelSwap}
+              onClick={cancelSwap}
               className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               Cancel & Discard

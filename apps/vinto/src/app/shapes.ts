@@ -4,6 +4,7 @@ export interface Card {
   rank: Rank;
   value: number;
   action?: string;
+  played: boolean;
 }
 
 export type Rank =
@@ -58,6 +59,8 @@ export interface AIMove {
 
 export type Difficulty = 'basic' | 'moderate' | 'hard' | 'ultimate';
 
+export type TossInTime = 3 | 5 | 7 | 10;
+
 export interface GameStore extends GameState {
   oracle: any; // Will be typed properly in the client
   aiThinking: boolean;
@@ -65,17 +68,23 @@ export interface GameStore extends GameState {
   sessionActive: boolean;
   pendingCard: Card | null;
   isSelectingSwapPosition: boolean;
+  isDeclaringRank: boolean;
+  selectedSwapPosition: number | null;
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
   tossInTimer: number;
+  tossInTimeConfig: TossInTime;
+  difficulty: Difficulty;
 
   initGame: () => Promise<void>;
   updateDifficulty: (diff: Difficulty) => void;
+  updateTossInTime: (time: TossInTime) => void;
   peekCard: (playerId: string, pos: number) => void;
   finishSetup: () => void;
   drawCard: () => void;
   takeFromDiscard: () => void;
   swapCard: (pos: number) => void;
+  declareRank: (declaredRank: Rank) => void;
   cancelSwap: () => void;
   tossInCard: (playerId: string, position: number) => void;
   makeAIMove: (diff: string) => Promise<void>;

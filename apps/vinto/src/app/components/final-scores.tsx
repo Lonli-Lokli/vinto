@@ -2,22 +2,17 @@
 'use client';
 
 import React from 'react';
-import { Player } from '../shapes';
+import { useGameStore } from '../stores/game-store';
+import { getWinnerInfo } from '../lib/game-helpers';
 
-interface WinnerInfo {
-  winners: string[];
-  score: number;
-  isMultipleWinners: boolean;
-}
+export function FinalScores() {
+  const { phase, players, calculateFinalScores } = useGameStore();
 
-interface FinalScoresProps {
-  phase: 'setup' | 'playing' | 'final' | 'scoring';
-  winnerInfo: WinnerInfo | undefined;
-  finalScores: { [playerId: string]: number } | undefined;
-  players: Player[];
-}
-
-export function FinalScores({ phase, winnerInfo, finalScores, players }: FinalScoresProps) {
+  // Calculate final scores if in scoring phase
+  const finalScores = phase === 'scoring' ? calculateFinalScores() : undefined;
+  const winnerInfo = finalScores
+    ? getWinnerInfo(finalScores, players)
+    : undefined;
   if (phase !== 'scoring' || !winnerInfo || !finalScores) {
     return null;
   }

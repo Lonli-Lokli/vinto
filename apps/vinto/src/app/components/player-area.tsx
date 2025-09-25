@@ -44,6 +44,41 @@ export function PlayerArea({
     return false;
   };
 
+  // Extracted desktop info card for clarity and reuse
+  const DesktopPlayerInfoCard: React.FC<{
+    player: Player;
+    isCurrentPlayer: boolean;
+    isThinking: boolean;
+    displayScore: string | null;
+  }> = ({ player, isCurrentPlayer, isThinking, displayScore }) => (
+    <div
+      className={`
+          bg-white/90 backdrop-blur-sm rounded-lg p-2 border-2
+          ${isCurrentPlayer
+            ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-300'
+            : 'border-gray-200'}
+          transition-all duration-300
+        `}
+    >
+      <div className="text-center">
+        <div className="text-base mb-1">{player.avatar}</div>
+        <div className={`text-xs font-medium ${isCurrentPlayer ? 'text-blue-600' : 'text-gray-700'}`}>
+          {player.name}
+        </div>
+        {displayScore && <div className="text-xs text-gray-500 mt-1">{displayScore} pts</div>}
+        {isCurrentPlayer && (
+          <div className="mt-1">
+            {isThinking ? (
+              <div className="animate-spin text-blue-500 text-sm">⏳</div>
+            ) : (
+              <div className="text-blue-500 animate-pulse text-sm">⭐</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const getDisplayScore = (): string | null => {
     // During scoring phase, show real scores
     if (gamePhase === 'scoring' && finalScores) {
@@ -69,9 +104,9 @@ export function PlayerArea({
   // Mobile info card was removed to save space and avoid visual clutter
 
   // Mobile: group info card and cards together, add spacing and show player name near border
-  const MobilePlayerGroup = () => {
+  const MobilePlayerGroup: React.FC = () => {
     // helper to render a single card with orientation tweaks for mobile
-  const renderMobileCard = (card: CardType | undefined, index: number) => {
+    const renderMobileCard = (card: CardType | undefined, index: number) => {
       const cardEl = (
         <Card
           key={`${card?.id ?? 'card'}-${index}`}
@@ -123,49 +158,21 @@ export function PlayerArea({
     );
 
     // Add extra gap for mobile
-  const mobileCardGap = player.position === 'left' || player.position === 'right' ? 'flex flex-col gap-2' : 'flex gap-2';
+    const isSide = player.position === 'left' || player.position === 'right';
+    const wrapper = isSide
+      ? 'md:hidden relative flex flex-row items-center w-full gap-3 my-1'
+      : 'md:hidden relative flex flex-col items-center w-full gap-1';
 
-    if (player.position === 'top') {
-      return (
-        <div className="md:hidden relative flex flex-col items-center w-full gap-1">
-          {nameLabel}
-          <div className={mobileCardGap}>
-            {player.cards.map((card, index) => renderMobileCard(card, index))}
-          </div>
+    const mobileCardGap = isSide ? 'flex flex-col gap-2' : 'flex gap-2';
+
+    return (
+      <div className={wrapper}>
+        {nameLabel}
+        <div className={mobileCardGap}>
+          {player.cards.map((card, index) => renderMobileCard(card, index))}
         </div>
-      );
-    }
-    if (player.position === 'bottom') {
-      return (
-        <div className="md:hidden relative flex flex-col items-center w-full gap-1">
-          {nameLabel}
-          <div className={mobileCardGap}>
-            {player.cards.map((card, index) => renderMobileCard(card, index))}
-          </div>
-        </div>
-      );
-    }
-    if (player.position === 'left') {
-      return (
-        <div className="md:hidden relative flex flex-row items-center w-full gap-3 my-1">
-          {nameLabel}
-          <div className={mobileCardGap}>
-            {player.cards.map((card, index) => renderMobileCard(card, index))}
-          </div>
-        </div>
-      );
-    }
-    if (player.position === 'right') {
-      return (
-        <div className="md:hidden relative flex flex-row items-center w-full gap-3 my-1">
-          {nameLabel}
-          <div className={mobileCardGap}>
-            {player.cards.map((card, index) => renderMobileCard(card, index))}
-          </div>
-        </div>
-      );
-    }
-    return null;
+      </div>
+    );
   };
 
   return (
@@ -174,37 +181,12 @@ export function PlayerArea({
 
       {/* Desktop: Player Info Card in the middle */}
       <div className="hidden md:block">
-        <div className={`
-          bg-white/90 backdrop-blur-sm rounded-lg p-2 border-2
-          ${isCurrentPlayer
-            ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-300'
-            : 'border-gray-200'
-          }
-          transition-all duration-300
-        `}>
-          <div className="text-center">
-            <div className="text-base mb-1">{player.avatar}</div>
-            <div className={`text-xs font-medium ${
-              isCurrentPlayer ? 'text-blue-600' : 'text-gray-700'
-            }`}>
-              {player.name}
-            </div>
-            {getDisplayScore() && (
-              <div className="text-xs text-gray-500 mt-1">
-                {getDisplayScore()} pts
-              </div>
-            )}
-            {isCurrentPlayer && (
-              <div className="mt-1">
-                {isThinking ? (
-                  <div className="animate-spin text-blue-500 text-sm">⏳</div>
-                ) : (
-                  <div className="text-blue-500 animate-pulse text-sm">⭐</div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <DesktopPlayerInfoCard
+          player={player}
+          isCurrentPlayer={isCurrentPlayer}
+          isThinking={isThinking}
+          displayScore={getDisplayScore()}
+        />
       </div>
 
       {/* Mobile: Cards and Info Card grouped by position */}
