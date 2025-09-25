@@ -13,10 +13,12 @@ export function GameTable() {
     aiThinking,
     phase,
     isSelectingSwapPosition,
+    isChoosingCardAction,
     isAwaitingActionTarget,
     actionContext,
     setupPeeksRemaining,
     waitingForTossIn,
+    tossInTimer,
     pendingCard,
     discardPile,
     drawCard,
@@ -96,18 +98,25 @@ export function GameTable() {
           {/* Row 1: Top player */}
           {playersById.top && (
             <div className="flex justify-center">
-              <PlayerArea
-                player={playersById.top}
-                isCurrentPlayer={currentPlayer?.id === playersById.top.id}
-                isThinking={
-                  aiThinking && currentPlayer?.id === playersById.top.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(playersById.top!.id, position)
-                }
-              />
+              <div className="relative">
+                {currentPlayer?.id === playersById.top.id && (
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
+                <PlayerArea
+                  player={playersById.top}
+                  isCurrentPlayer={currentPlayer?.id === playersById.top.id}
+                  isThinking={
+                    aiThinking && currentPlayer?.id === playersById.top.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={(position) =>
+                    handleOpponentCardClick(playersById.top!.id, position)
+                  }
+                />
+              </div>
             </div>
           )}
 
@@ -116,18 +125,25 @@ export function GameTable() {
             {/* Left Player */}
             <div className="flex-1 flex justify-start">
               {playersById.left && (
-                <PlayerArea
-                  player={playersById.left}
-                  isCurrentPlayer={currentPlayer?.id === playersById.left.id}
-                  isThinking={
-                    aiThinking && currentPlayer?.id === playersById.left.id
-                  }
-                  gamePhase={phase}
-                  finalScores={finalScores}
-                  onCardClick={(position) =>
-                    handleOpponentCardClick(playersById.left!.id, position)
-                  }
-                />
+                <div className="relative">
+                  {currentPlayer?.id === playersById.left.id && (
+                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                      <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                    </div>
+                  )}
+                  <PlayerArea
+                    player={playersById.left}
+                    isCurrentPlayer={currentPlayer?.id === playersById.left.id}
+                    isThinking={
+                      aiThinking && currentPlayer?.id === playersById.left.id
+                    }
+                    gamePhase={phase}
+                    finalScores={finalScores}
+                    onCardClick={(position) =>
+                      handleOpponentCardClick(playersById.left!.id, position)
+                    }
+                  />
+                </div>
               )}
             </div>
 
@@ -149,8 +165,8 @@ export function GameTable() {
                 </div>
               </div>
 
-              {/* Drawn Card (when selecting swap position) */}
-              {pendingCard && isSelectingSwapPosition && (
+              {/* Drawn Card (when choosing action or selecting swap position) */}
+              {pendingCard && (isChoosingCardAction || isSelectingSwapPosition) && (
                 <div className="text-center">
                   <div className="relative">
                     <Card
@@ -166,6 +182,11 @@ export function GameTable() {
                   <div className="mt-1 text-[10px] text-white font-semibold bg-yellow-500/80 rounded px-2 py-0.5">
                     DRAWN
                   </div>
+                  {isChoosingCardAction && pendingCard.action && (
+                    <div className="mt-1 text-[9px] text-white bg-blue-500/80 rounded px-1 py-0.5">
+                      {pendingCard.action}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -182,9 +203,128 @@ export function GameTable() {
               </div>
             </div>
 
+            {/* Toss-in Timer */}
+            {waitingForTossIn && tossInTimer > 0 && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="bg-yellow-500 text-white font-bold px-3 py-2 rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
+                  <div className="text-center">
+                    <div className="text-lg font-black">{tossInTimer}</div>
+                    <div className="text-[10px] leading-tight">TOSS IN</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Right Player */}
             <div className="flex-1 flex justify-end">
               {playersById.right && (
+                <div className="relative">
+                  {currentPlayer?.id === playersById.right.id && (
+                    <div className="absolute -top-2 -left-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                      <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                    </div>
+                  )}
+                  <PlayerArea
+                    player={playersById.right}
+                    isCurrentPlayer={currentPlayer?.id === playersById.right.id}
+                    isThinking={
+                      aiThinking && currentPlayer?.id === playersById.right.id
+                    }
+                    gamePhase={phase}
+                    finalScores={finalScores}
+                    onCardClick={(position) =>
+                      handleOpponentCardClick(playersById.right!.id, position)
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Human player */}
+          <div className="flex justify-center">
+            {humanPlayer && (
+              <div className="relative">
+                {currentPlayer?.id === humanPlayer.id && (
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
+                <PlayerArea
+                  player={humanPlayer}
+                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  isThinking={false}
+                  onCardClick={handleCardClick}
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  isSelectingSwapPosition={isSelectingSwapPosition}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop/Tablet square board */}
+        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl aspect-square border-4 border-emerald-800 shadow-2xl p-3 sm:p-6">
+          {/* Top Player */}
+          {playersById.top && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2">
+              <div className="relative">
+                {currentPlayer?.id === playersById.top.id && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
+                <PlayerArea
+                  player={playersById.top}
+                  isCurrentPlayer={currentPlayer?.id === playersById.top.id}
+                  isThinking={
+                    aiThinking && currentPlayer?.id === playersById.top.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={(position) =>
+                    handleOpponentCardClick(playersById.top!.id, position)
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Left Player */}
+          {playersById.left && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <div className="relative">
+                {currentPlayer?.id === playersById.left.id && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
+                <PlayerArea
+                  player={playersById.left}
+                  isCurrentPlayer={currentPlayer?.id === playersById.left.id}
+                  isThinking={
+                    aiThinking && currentPlayer?.id === playersById.left.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={(position) =>
+                    handleOpponentCardClick(playersById.left!.id, position)
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Right Player */}
+          {playersById.right && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <div className="relative">
+                {currentPlayer?.id === playersById.right.id && (
+                  <div className="absolute -top-2 -left-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
                 <PlayerArea
                   player={playersById.right}
                   isCurrentPlayer={currentPlayer?.id === playersById.right.id}
@@ -197,79 +337,7 @@ export function GameTable() {
                     handleOpponentCardClick(playersById.right!.id, position)
                   }
                 />
-              )}
-            </div>
-          </div>
-
-          {/* Row 3: Human player */}
-          <div className="flex justify-center">
-            {humanPlayer && (
-              <PlayerArea
-                player={humanPlayer}
-                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-                isThinking={false}
-                onCardClick={handleCardClick}
-                gamePhase={phase}
-                finalScores={finalScores}
-                isSelectingSwapPosition={isSelectingSwapPosition}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Desktop/Tablet square board */}
-        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl aspect-square border-4 border-emerald-800 shadow-2xl p-3 sm:p-6">
-          {/* Top Player */}
-          {playersById.top && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2">
-              <PlayerArea
-                player={playersById.top}
-                isCurrentPlayer={currentPlayer?.id === playersById.top.id}
-                isThinking={
-                  aiThinking && currentPlayer?.id === playersById.top.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(playersById.top!.id, position)
-                }
-              />
-            </div>
-          )}
-
-          {/* Left Player */}
-          {playersById.left && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2">
-              <PlayerArea
-                player={playersById.left}
-                isCurrentPlayer={currentPlayer?.id === playersById.left.id}
-                isThinking={
-                  aiThinking && currentPlayer?.id === playersById.left.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(playersById.left!.id, position)
-                }
-              />
-            </div>
-          )}
-
-          {/* Right Player */}
-          {playersById.right && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <PlayerArea
-                player={playersById.right}
-                isCurrentPlayer={currentPlayer?.id === playersById.right.id}
-                isThinking={
-                  aiThinking && currentPlayer?.id === playersById.right.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(playersById.right!.id, position)
-                }
-              />
+              </div>
             </div>
           )}
 
@@ -292,8 +360,8 @@ export function GameTable() {
                 </div>
               </div>
 
-              {/* Drawn Card (when selecting swap position) */}
-              {pendingCard && isSelectingSwapPosition && (
+              {/* Drawn Card (when choosing action or selecting swap position) */}
+              {pendingCard && (isChoosingCardAction || isSelectingSwapPosition) && (
                 <div className="text-center">
                   <div className="relative">
                     <Card
@@ -309,6 +377,11 @@ export function GameTable() {
                   <div className="mt-2 text-xs text-white font-semibold bg-yellow-500/80 rounded px-2 py-1">
                     DRAWN
                   </div>
+                  {isChoosingCardAction && pendingCard.action && (
+                    <div className="mt-1 text-[10px] text-white bg-blue-500/80 rounded px-2 py-0.5">
+                      {pendingCard.action}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -324,20 +397,39 @@ export function GameTable() {
                 </div>
               </div>
             </div>
+
+            {/* Toss-in Timer (Desktop) */}
+            {waitingForTossIn && tossInTimer > 0 && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="bg-yellow-500 text-white font-bold px-4 py-3 rounded-xl shadow-xl border-2 border-yellow-600 animate-pulse">
+                  <div className="text-center">
+                    <div className="text-2xl font-black">{tossInTimer}</div>
+                    <div className="text-xs leading-tight">TOSS IN</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Human Player */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             {humanPlayer && (
-              <PlayerArea
-                player={humanPlayer}
-                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-                isThinking={false}
-                onCardClick={handleCardClick}
-                gamePhase={phase}
-                finalScores={finalScores}
-                isSelectingSwapPosition={isSelectingSwapPosition}
-              />
+              <div className="relative">
+                {currentPlayer?.id === humanPlayer.id && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
+                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
+                  </div>
+                )}
+                <PlayerArea
+                  player={humanPlayer}
+                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  isThinking={false}
+                  onCardClick={handleCardClick}
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  isSelectingSwapPosition={isSelectingSwapPosition}
+                />
+              </div>
             )}
           </div>
         </div>
