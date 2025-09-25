@@ -3,11 +3,7 @@
 
 import React from 'react';
 
-interface OwnCardPeekProps {
-  action: string;
-}
-
-export function OwnCardPeek({ action }: OwnCardPeekProps) {
+export function OwnCardPeek() {
   return (
     <div className="bg-blue-50 rounded-lg p-3 mb-3">
       <div className="text-center text-sm text-blue-800">

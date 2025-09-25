@@ -388,10 +388,6 @@ export class GameToastService {
     );
   }
 
-  static cloudConnected() {
-    this.success('🌩️ Cloud Connected', 2000);
-  }
-
   static cloudError(error: string) {
     this.error('Cloud Error', error, 6000);
   }

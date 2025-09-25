@@ -19,7 +19,6 @@ export class OracleVintoClient {
       this.playerId = humanPlayerId;
       
       toast.dismiss(loadingToast);
-      GameToastService.cloudConnected();
       
       return gameId;
       

@@ -24,7 +24,7 @@ interface CardProps {
   card?: CardType;
   revealed?: boolean;
   position?: number;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   clickable?: boolean;
   highlighted?: boolean;
   onClick?: () => void;
@@ -43,6 +43,7 @@ export function Card({
     sm: 'w-8 h-12 text-xs',
     md: 'w-12 h-18 text-sm',
     lg: 'w-16 h-24 text-base',
+    xl: 'w-20 h-30 text-lg',
   } as const;
 
   return (
@@ -66,7 +67,7 @@ export function Card({
           <span className="mt-0.5 text-[10px] text-gray-600 font-medium">{card.rank}</span>
         </>
       ) : (
-        <span className={`font-bold ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-lg'}`}>
+        <span className={`font-bold ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : size === 'xl' ? 'text-3xl' : 'text-lg'}`}>
           ?
         </span>
       )}

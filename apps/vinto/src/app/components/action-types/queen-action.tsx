@@ -5,7 +5,6 @@ import React from 'react';
 import { Player } from '../../shapes';
 
 interface QueenActionProps {
-  action: string;
   players: Player[];
   peekTargets: { playerId: string; position: number; card?: any }[];
   onCardClick: (playerId: string, position: number) => void;
@@ -14,7 +13,6 @@ interface QueenActionProps {
 }
 
 export function QueenAction({
-  action,
   players,
   peekTargets,
   onCardClick,

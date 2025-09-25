@@ -101,18 +101,12 @@ export function GameTable() {
 
   return (
     <div className="p-2 sm:p-4">
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-lg md:max-w-6xl mx-auto">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
         <div className="md:hidden flex flex-col gap-3 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl border-4 border-emerald-800 shadow-2xl p-3">
           {/* Row 1: Top player */}
           {playersById.top && (
             <div className="flex justify-center">
-              <div className="relative">
-                {currentPlayer?.id === playersById.top.id && (
-                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={playersById.top}
                   isCurrentPlayer={currentPlayer?.id === playersById.top.id}
@@ -125,7 +119,6 @@ export function GameTable() {
                     handleOpponentCardClick(playersById.top!.id, position)
                   }
                 />
-              </div>
             </div>
           )}
 
@@ -134,12 +127,7 @@ export function GameTable() {
             {/* Left Player */}
             <div className="flex-1 flex justify-start">
               {playersById.left && (
-                <div className="relative">
-                  {currentPlayer?.id === playersById.left.id && (
-                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                      <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                    </div>
-                  )}
+                 <div className="relative">
                   <PlayerArea
                     player={playersById.left}
                     isCurrentPlayer={currentPlayer?.id === playersById.left.id}
@@ -231,11 +219,6 @@ export function GameTable() {
             <div className="flex-1 flex justify-end">
               {playersById.right && (
                 <div className="relative">
-                  {currentPlayer?.id === playersById.right.id && (
-                    <div className="absolute -top-2 -left-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                      <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                    </div>
-                  )}
                   <PlayerArea
                     player={playersById.right}
                     isCurrentPlayer={currentPlayer?.id === playersById.right.id}
@@ -256,12 +239,6 @@ export function GameTable() {
           {/* Row 3: Human player */}
           <div className="flex justify-center">
             {humanPlayer && (
-              <div className="relative">
-                {currentPlayer?.id === humanPlayer.id && (
-                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={humanPlayer}
                   isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
@@ -271,22 +248,15 @@ export function GameTable() {
                   finalScores={finalScores}
                   isSelectingSwapPosition={isSelectingSwapPosition}
                 />
-              </div>
             )}
           </div>
         </div>
 
-        {/* Desktop/Tablet square board */}
-        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl aspect-square border-4 border-emerald-800 shadow-2xl p-3 sm:p-6">
+        {/* Desktop/Tablet wide board */}
+        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl border-4 border-emerald-800 shadow-2xl p-6 max-h-[70vh]" style={{ aspectRatio: '16/10' }}>
           {/* Top Player */}
           {playersById.top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">
-              <div className="relative">
-                {currentPlayer?.id === playersById.top.id && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={playersById.top}
                   isCurrentPlayer={currentPlayer?.id === playersById.top.id}
@@ -299,19 +269,12 @@ export function GameTable() {
                     handleOpponentCardClick(playersById.top!.id, position)
                   }
                 />
-              </div>
             </div>
           )}
 
           {/* Left Player */}
           {playersById.left && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2">
-              <div className="relative">
-                {currentPlayer?.id === playersById.left.id && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={playersById.left}
                   isCurrentPlayer={currentPlayer?.id === playersById.left.id}
@@ -324,19 +287,12 @@ export function GameTable() {
                     handleOpponentCardClick(playersById.left!.id, position)
                   }
                 />
-              </div>
             </div>
           )}
 
           {/* Right Player */}
           {playersById.right && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="relative">
-                {currentPlayer?.id === playersById.right.id && (
-                  <div className="absolute -top-2 -left-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={playersById.right}
                   isCurrentPlayer={currentPlayer?.id === playersById.right.id}
@@ -349,17 +305,16 @@ export function GameTable() {
                     handleOpponentCardClick(playersById.right!.id, position)
                   }
                 />
-              </div>
             </div>
           )}
 
           {/* Center - Draw & Discard Piles */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex gap-8">
+            <div className="flex gap-12 items-center">
               {/* Draw Pile */}
               <div className="text-center">
                 <Card
-                  size="lg"
+                  size="xl"
                   clickable={
                     currentPlayer?.isHuman &&
                     !isSelectingSwapPosition &&
@@ -382,7 +337,7 @@ export function GameTable() {
                     <Card
                       card={pendingCard}
                       revealed={true}
-                      size="lg"
+                      size="xl"
                       highlighted={true}
                     />
                     <div className="absolute -top-2 -left-2 w-6 h-6 bg-yellow-400 text-black rounded-full text-sm font-bold flex items-center justify-center animate-pulse">
@@ -405,7 +360,7 @@ export function GameTable() {
                 <Card
                   card={discardPile[0]}
                   revealed={discardPile.length > 0}
-                  size="lg"
+                  size="xl"
                 />
                 <div className="mt-2 text-xs text-white font-semibold bg-black/20 rounded px-2 py-1">
                   DISCARD
@@ -429,12 +384,6 @@ export function GameTable() {
           {/* Human Player */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             {humanPlayer && (
-              <div className="relative">
-                {currentPlayer?.id === humanPlayer.id && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-                    <div className="absolute inset-0 bg-green-300 rounded-full animate-ping"></div>
-                  </div>
-                )}
                 <PlayerArea
                   player={humanPlayer}
                   isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
@@ -444,7 +393,6 @@ export function GameTable() {
                   finalScores={finalScores}
                   isSelectingSwapPosition={isSelectingSwapPosition}
                 />
-              </div>
             )}
           </div>
         </div>

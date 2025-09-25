@@ -5,11 +5,10 @@ import React from 'react';
 import { Rank } from '../../shapes';
 
 interface KingDeclarationProps {
-  action: string;
   onDeclareAction: (rank: Rank) => void;
 }
 
-export function KingDeclaration({ action, onDeclareAction }: KingDeclarationProps) {
+export function KingDeclaration({ onDeclareAction }: KingDeclarationProps) {
   return (
     <div className="bg-yellow-50 rounded-lg p-3 mb-3">
       <div className="text-center text-sm text-yellow-800">

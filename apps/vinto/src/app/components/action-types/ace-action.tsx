@@ -5,12 +5,11 @@ import React from 'react';
 import { Player } from '../../shapes';
 
 interface AceActionProps {
-  action: string;
   opponentPlayers: Player[];
   onCardClick: (playerId: string, position: number) => void;
 }
 
-export function AceAction({ action, opponentPlayers, onCardClick }: AceActionProps) {
+export function AceAction({ opponentPlayers, onCardClick }: AceActionProps) {
   return (
     <div className="bg-red-50 rounded-lg p-3 mb-3">
       <div className="text-center text-sm text-red-800">

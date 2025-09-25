@@ -46,12 +46,11 @@ export function ActionTargetSelector() {
   const renderActionContent = () => {
     switch (targetType) {
       case 'own-card':
-        return <OwnCardPeek action={action} />;
+        return <OwnCardPeek />;
 
       case 'opponent-card':
         return (
           <OpponentCardPeek
-            action={action}
             opponentPlayers={opponentPlayers}
             onCardClick={handleCardClick}
           />
@@ -60,7 +59,6 @@ export function ActionTargetSelector() {
       case 'swap-cards':
         return (
           <CardSwap
-            action={action}
             players={players}
             swapTargets={swapTargets}
             onCardClick={handleCardClick}
@@ -70,7 +68,6 @@ export function ActionTargetSelector() {
       case 'peek-then-swap':
         return (
           <QueenAction
-            action={action}
             players={players}
             peekTargets={peekTargets}
             onCardClick={handleCardClick}
@@ -82,7 +79,6 @@ export function ActionTargetSelector() {
       case 'declare-action':
         return (
           <KingDeclaration
-            action={action}
             onDeclareAction={declareKingAction}
           />
         );
@@ -90,7 +86,6 @@ export function ActionTargetSelector() {
       case 'force-draw':
         return (
           <AceAction
-            action={action}
             opponentPlayers={opponentPlayers}
             onCardClick={handleCardClick}
           />

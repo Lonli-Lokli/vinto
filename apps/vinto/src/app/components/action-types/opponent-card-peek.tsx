@@ -5,12 +5,11 @@ import React from 'react';
 import { Player } from '../../shapes';
 
 interface OpponentCardPeekProps {
-  action: string;
   opponentPlayers: Player[];
   onCardClick: (playerId: string, position: number) => void;
 }
 
-export function OpponentCardPeek({ action, opponentPlayers, onCardClick }: OpponentCardPeekProps) {
+export function OpponentCardPeek({ opponentPlayers, onCardClick }: OpponentCardPeekProps) {
   return (
     <div className="bg-orange-50 rounded-lg p-3 mb-3">
       <div className="text-center text-sm text-orange-800">

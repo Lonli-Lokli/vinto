@@ -31,9 +31,9 @@ export function PlayerArea({
       return true;
     }
 
-    // During gameplay (playing/final), NO cards are visible - must rely on memory
-    if (gamePhase === 'playing' || gamePhase === 'final') {
-      return false;
+    // During gameplay, human can see their own cards if they've peeked at them (7/8 actions)
+    if ((gamePhase === 'playing' || gamePhase === 'final') && player.isHuman && player.knownCardPositions.has(cardIndex)) {
+      return true;
     }
 
     // During scoring phase, ALL cards are revealed
@@ -113,7 +113,7 @@ export function PlayerArea({
           card={card}
           revealed={canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)}
           position={player.isHuman ? index + 1 : 0}
-          size={player.position === 'left' || player.position === 'right' ? 'sm' : 'md'}
+          size={player.position === 'left' || player.position === 'right' ? 'md' : 'lg'}
           clickable={player.isHuman && !!onCardClick}
           highlighted={player.isHuman && isSelectingSwapPosition}
           onClick={() => onCardClick?.(index)}
@@ -176,7 +176,9 @@ export function PlayerArea({
   };
 
   return (
-    <div className={`flex gap-2 ${positionClasses[player.position]}`}>
+    <div className={`flex gap-2 ${positionClasses[player.position]} ${
+      isCurrentPlayer ? 'p-1 rounded-lg border-2 border-yellow-400 bg-yellow-400/10' : ''
+    }`}>
       {/* Mobile: Do NOT show player name & avatar */}
 
       {/* Desktop: Player Info Card in the middle */}
@@ -200,7 +202,7 @@ export function PlayerArea({
             card={card}
             revealed={canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)}
             position={player.isHuman ? index + 1 : 0}
-            size={player.position === 'left' || player.position === 'right' ? 'sm' : 'md'}
+            size={player.position === 'left' || player.position === 'right' ? 'md' : 'lg'}
             clickable={player.isHuman && !!onCardClick}
             highlighted={player.isHuman && isSelectingSwapPosition}
             onClick={() => onCardClick?.(index)}

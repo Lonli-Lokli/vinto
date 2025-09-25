@@ -16,6 +16,7 @@ export function GameHeader() {
     difficulty,
     tossInTimeConfig,
     updateDifficulty,
+    updateTossInTime,
   } = useGameStore();
 
   const currentPlayer = players[currentPlayerIndex];
@@ -55,9 +56,23 @@ export function GameHeader() {
               ))}
             </div>
 
-            {/* Toss-in settings moved to a settings icon/menu later */}
+            {/* Toss-in time settings */}
             <div className="hidden sm:flex items-center gap-1 ml-2">
-              <span className="text-xs text-gray-500">Toss: {tossInTimeConfig}s</span>
+              <span className="text-xs text-gray-500 mr-1">Toss:</span>
+              {([5, 7, 10] as const).map((time) => (
+                <button
+                  key={time}
+                  onClick={() => updateTossInTime(time)}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-semibold transition-colors ${
+                    tossInTimeConfig === time
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                  title={`Toss-in time: ${time}s`}
+                >
+                  {time}s
+                </button>
+              ))}
             </div>
           </div>
 

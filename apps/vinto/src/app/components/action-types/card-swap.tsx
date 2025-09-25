@@ -5,13 +5,12 @@ import React from 'react';
 import { Player } from '../../shapes';
 
 interface CardSwapProps {
-  action: string;
   players: Player[];
   swapTargets: { playerId: string; position: number }[];
   onCardClick: (playerId: string, position: number) => void;
 }
 
-export function CardSwap({ action, players, swapTargets, onCardClick }: CardSwapProps) {
+export function CardSwap({ players, swapTargets, onCardClick }: CardSwapProps) {
   return (
     <div className="bg-purple-50 rounded-lg p-3 mb-3">
       <div className="text-center text-sm text-purple-800">
