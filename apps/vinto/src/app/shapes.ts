@@ -68,7 +68,7 @@ export interface GameStore extends GameState {
   sessionActive: boolean;
   pendingCard: Card | null;
   isSelectingSwapPosition: boolean;
-  isDeclaringRank: boolean;
+  isChoosingCardAction: boolean;
   selectedSwapPosition: number | null;
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
@@ -83,8 +83,9 @@ export interface GameStore extends GameState {
   finishSetup: () => void;
   drawCard: () => void;
   takeFromDiscard: () => void;
+  chooseSwap: () => void;
+  choosePlayCard: () => void;
   swapCard: (pos: number) => void;
-  declareRank: (declaredRank: Rank) => void;
   cancelSwap: () => void;
   tossInCard: (playerId: string, position: number) => void;
   makeAIMove: (diff: string) => Promise<void>;

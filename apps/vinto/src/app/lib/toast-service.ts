@@ -377,11 +377,6 @@ export class GameToastService {
     );
   }
 
-  // Game-specific notifications
-  static gameStarted() {
-    this.success('🎮 Game Started Successfully!', 3000);
-  }
-
   static aiThinking(playerName: string) {
     return this.loading(`🧠 ${playerName} analyzing...`);
   }

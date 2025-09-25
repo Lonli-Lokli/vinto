@@ -10,7 +10,7 @@ export function GameControls() {
     currentPlayerIndex,
     phase,
     isSelectingSwapPosition,
-    isDeclaringRank,
+    isChoosingCardAction,
     waitingForTossIn,
     drawPile,
     discardPile,
@@ -31,7 +31,7 @@ export function GameControls() {
     !currentPlayer?.isHuman ||
     phase !== 'playing' ||
     isSelectingSwapPosition ||
-    isDeclaringRank ||
+    isChoosingCardAction ||
     waitingForTossIn
   ) {
     return null;

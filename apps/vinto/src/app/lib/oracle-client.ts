@@ -20,7 +20,6 @@ export class OracleVintoClient {
       
       toast.dismiss(loadingToast);
       GameToastService.cloudConnected();
-      GameToastService.gameStarted();
       
       return gameId;
       

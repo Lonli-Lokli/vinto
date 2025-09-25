@@ -10,6 +10,7 @@ export function GameInitializer() {
     currentPlayerIndex,
     aiThinking,
     sessionActive,
+    tossInTimeConfig,
     difficulty,
     initGame,
     makeAIMove,
@@ -33,7 +34,7 @@ export function GameInitializer() {
     ) {
       const timer = setTimeout(() => {
         makeAIMove(difficulty);
-      }, 1000);
+      }, tossInTimeConfig * 1_000); // as its in seconds
       return () => clearTimeout(timer);
     }
     return () => {
@@ -42,6 +43,7 @@ export function GameInitializer() {
   }, [
     currentPlayerIndex,
     aiThinking,
+    tossInTimeConfig,
     makeAIMove,
     difficulty,
     players,
