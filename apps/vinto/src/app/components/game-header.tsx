@@ -9,7 +9,6 @@ export function GameHeader() {
     phase,
     roundNumber,
     turnCount,
-    maxTurns,
     finalTurnTriggered,
     drawPile,
     players,
@@ -24,7 +23,7 @@ export function GameHeader() {
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
     if (finalTurnTriggered) return `Final • ${phase}`;
-    return `R${roundNumber} • ${phase} • T${turnCount}/${maxTurns}`;
+    return `R${roundNumber} • ${phase} • T${turnCount}`;
   };
 
   const getCurrentPlayerDisplay = () => {

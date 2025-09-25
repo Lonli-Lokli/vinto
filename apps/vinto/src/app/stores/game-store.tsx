@@ -8,7 +8,7 @@ import { enableMapSet } from 'immer';
 import { shuffleDeck, createDeck, getAIKnowledgeByDifficulty } from '../lib/game-helpers';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
-import { GameStore, Difficulty, TossInTime, Rank } from '../shapes';
+import { GameStore, Difficulty, TossInTime,  Card } from '../shapes';
 
 // Enable Immer MapSet plugin for Set objects
 enableMapSet();
@@ -26,8 +26,7 @@ export const useGameStore = create<GameStore>()(
       phase: 'setup',
       gameId: '',
       roundNumber: 1,
-      turnCount: 0,
-      maxTurns: 40, // Each player gets ~10 turns
+  turnCount: 0,
       finalTurnTriggered: false,
       
       // UI State
@@ -38,7 +37,10 @@ export const useGameStore = create<GameStore>()(
       pendingCard: null,
       isSelectingSwapPosition: false,
       isChoosingCardAction: false,
+      isAwaitingActionTarget: false,
+      actionContext: null,
       selectedSwapPosition: null,
+      swapTargets: [],
       setupPeeksRemaining: 2,
       waitingForTossIn: false,
       tossInTimer: 0,
@@ -235,43 +237,38 @@ export const useGameStore = create<GameStore>()(
 
         if (!currentPlayer || !pendingCard) return;
 
-        // Directly discard the drawn card and execute action if it has one
+        // Directly discard the drawn card
         state.discardPile = [pendingCard, ...state.discardPile];
 
         if (pendingCard.action) {
-          GameToastService.success(`Played ${pendingCard.rank} - Action: ${pendingCard.action}`);
-          // TODO: Execute card action
+          // Execute the card action
+          get().executeCardAction(pendingCard, currentPlayer.id);
         } else {
           GameToastService.info(`Discarded ${pendingCard.rank}`);
+
+          // Clean up and advance turn for non-action cards
+          state.pendingCard = null;
+          state.isChoosingCardAction = false;
+
+          // Start toss-in waiting period
+          state.waitingForTossIn = true;
+          state.tossInTimer = state.tossInTimeConfig;
+
+          // Advance turn after toss-in period
+          setTimeout(() => {
+            set((draft) => {
+              draft.waitingForTossIn = false;
+              draft.tossInTimer = 0;
+              draft.turnCount++;
+              draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+              // Scoring begins only after a called Vinto final round completes
+              if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+                draft.phase = 'scoring';
+              }
+            });
+          }, state.tossInTimeConfig * 1000);
         }
-
-        // Clean up
-        state.pendingCard = null;
-        state.isChoosingCardAction = false;
-
-        // Start toss-in waiting period
-        state.waitingForTossIn = true;
-        state.tossInTimer = state.tossInTimeConfig;
-
-        // Advance turn after toss-in period
-        setTimeout(() => {
-          set((draft) => {
-            draft.waitingForTossIn = false;
-            draft.tossInTimer = 0;
-            draft.turnCount++;
-            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
-
-            // Check game phase transitions
-            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
-              draft.finalTurnTriggered = true;
-              draft.phase = 'final';
-            }
-
-            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
-              draft.phase = 'scoring';
-            }
-          });
-        }, state.tossInTimeConfig * 1000);
       }),
 
       swapCard: (position: number) => set((state) => {
@@ -302,12 +299,7 @@ export const useGameStore = create<GameStore>()(
             draft.turnCount++;
             draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
 
-            // Check game phase transitions
-            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
-              draft.finalTurnTriggered = true;
-              draft.phase = 'final';
-            }
-
+            // Scoring begins only after a called Vinto final round completes
             if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
               draft.phase = 'scoring';
             }
@@ -315,6 +307,203 @@ export const useGameStore = create<GameStore>()(
         }, state.tossInTimeConfig * 1000);
       }),
 
+      // Execute card actions (7, 8, 9, 10, J, Q, K, A)
+      executeCardAction: (card: Card, playerId: string) => set((state) => {
+        if (!card.action) return;
+
+        const player = state.players.find(p => p.id === playerId);
+        if (!player) return;
+
+        GameToastService.success(`${player.name} played ${card.rank} - ${card.action}`);
+
+        // Handle different card actions
+        if (card.rank === '7' || card.rank === '8') {
+          // "Peek 1 of your cards"
+          state.actionContext = {
+            action: card.action,
+            playerId: playerId,
+            targetType: 'own-card'
+          };
+          state.isAwaitingActionTarget = true;
+          state.pendingCard = null;
+          state.isChoosingCardAction = false;
+        } else if (card.rank === '9' || card.rank === '10') {
+          // "Peek 1 opponent card"
+          state.actionContext = {
+            action: card.action,
+            playerId: playerId,
+            targetType: 'opponent-card'
+          };
+          state.isAwaitingActionTarget = true;
+          state.pendingCard = null;
+          state.isChoosingCardAction = false;
+        } else if (card.rank === 'J') {
+          // "Swap any two facedown cards on the table"
+          state.actionContext = {
+            action: card.action,
+            playerId: playerId,
+            targetType: 'swap-cards'
+          };
+          state.isAwaitingActionTarget = true;
+          state.pendingCard = null;
+          state.isChoosingCardAction = false;
+        } else {
+          // TODO: Implement other actions (Q, K, A)
+          GameToastService.info(`${card.rank} action not yet implemented`);
+
+          // For now, just clean up and advance turn
+          state.pendingCard = null;
+          state.isChoosingCardAction = false;
+
+          // Start toss-in waiting period
+          state.waitingForTossIn = true;
+          state.tossInTimer = state.tossInTimeConfig;
+
+          // Advance turn after toss-in period
+          setTimeout(() => {
+            set((draft) => {
+              draft.waitingForTossIn = false;
+              draft.tossInTimer = 0;
+              draft.turnCount++;
+              draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+              // Scoring begins only after a called Vinto final round completes
+              if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+                draft.phase = 'scoring';
+              }
+            });
+          }, state.tossInTimeConfig * 1000);
+        }
+      }),
+
+      // Select target for card action (e.g., which card to peek)
+      selectActionTarget: (targetPlayerId: string, position: number) => set((state) => {
+        if (!state.isAwaitingActionTarget || !state.actionContext) return;
+
+        const { playerId, targetType } = state.actionContext;
+        const actionPlayer = state.players.find(p => p.id === playerId);
+        const targetPlayer = state.players.find(p => p.id === targetPlayerId);
+
+        if (!actionPlayer || !targetPlayer) return;
+
+        // Handle "Peek 1 of your cards" (7 and 8)
+        if (targetType === 'own-card' && targetPlayerId === playerId) {
+          if (position >= 0 && position < targetPlayer.cards.length) {
+            const peekedCard = targetPlayer.cards[position];
+            targetPlayer.knownCardPositions.add(position);
+
+            GameToastService.success(
+              `${actionPlayer.name} peeked at position ${position + 1}: ${peekedCard.rank} (value ${peekedCard.value})`
+            );
+          }
+        }
+
+        // Handle "Peek 1 opponent card" (9 and 10)
+        if (targetType === 'opponent-card' && targetPlayerId !== playerId) {
+          if (position >= 0 && position < targetPlayer.cards.length) {
+            const peekedCard = targetPlayer.cards[position];
+
+            // The action player learns about the opponent's card, but we don't track this
+            // in knownCardPositions since that's for their own cards only
+
+            GameToastService.success(
+              `${actionPlayer.name} peeked at ${targetPlayer.name}'s position ${position + 1}: ${peekedCard.rank} (value ${peekedCard.value})`
+            );
+          }
+        }
+
+        // Handle "Swap any two facedown cards on the table" (J)
+        if (targetType === 'swap-cards') {
+          // Check if this card is already selected (to allow deselection)
+          const existingIndex = state.swapTargets.findIndex(
+            target => target.playerId === targetPlayerId && target.position === position
+          );
+
+          if (existingIndex !== -1) {
+            // Card is already selected, remove it (deselect)
+            state.swapTargets.splice(existingIndex, 1);
+            GameToastService.info(`${actionPlayer.name} deselected ${targetPlayer.name}'s card ${position + 1}`);
+            return; // Don't continue with swap logic
+          }
+
+          // Don't allow more than 2 selections
+          if (state.swapTargets.length >= 2) {
+            GameToastService.info('Already have 2 cards selected. Deselect one to choose a different card.');
+            return;
+          }
+
+          // Add this target to the swap targets list
+          const newTarget = { playerId: targetPlayerId, position };
+          state.swapTargets.push(newTarget);
+
+          // If we have both targets, perform the swap
+          if (state.swapTargets.length === 2) {
+            const [target1, target2] = state.swapTargets;
+            const player1 = state.players.find(p => p.id === target1.playerId);
+            const player2 = state.players.find(p => p.id === target2.playerId);
+
+            if (player1 && player2 &&
+                target1.position >= 0 && target1.position < player1.cards.length &&
+                target2.position >= 0 && target2.position < player2.cards.length) {
+
+              // Perform the swap
+              const card1 = player1.cards[target1.position];
+              const card2 = player2.cards[target2.position];
+
+              player1.cards[target1.position] = card2;
+              player2.cards[target2.position] = card1;
+
+              GameToastService.success(
+                `${actionPlayer.name} swapped ${player1.name}'s card ${target1.position + 1} with ${player2.name}'s card ${target2.position + 1}`
+              );
+            }
+
+            // Clear swap targets after performing swap
+            state.swapTargets = [];
+          } else {
+            // Still need one more target
+            GameToastService.info(`${actionPlayer.name} selected first card. Choose second card to swap with.`);
+            return; // Don't clean up yet, still need second target
+          }
+        }
+
+        // Clean up and advance turn
+        state.isAwaitingActionTarget = false;
+        state.actionContext = null;
+        state.swapTargets = [];
+
+        // Start toss-in waiting period
+        state.waitingForTossIn = true;
+        state.tossInTimer = state.tossInTimeConfig;
+
+        // Advance turn after toss-in period
+        setTimeout(() => {
+          set((draft) => {
+            draft.waitingForTossIn = false;
+            draft.tossInTimer = 0;
+            draft.turnCount++;
+            draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
+
+            // Scoring begins only after a called Vinto final round completes
+            if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
+              draft.phase = 'scoring';
+            }
+          });
+        }, state.tossInTimeConfig * 1000);
+      }),
+
+      // Cancel action selection
+      cancelAction: () => set((state) => {
+        state.isAwaitingActionTarget = false;
+        state.actionContext = null;
+        state.swapTargets = []; // Clear any partially selected swap targets
+
+        // Advance turn without executing action
+        state.turnCount++;
+        state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+
+        GameToastService.info('Action cancelled');
+      }),
 
       tossInCard: (playerId: string, position: number) => set((state) => {
         if (!state.waitingForTossIn) return;
@@ -415,39 +604,25 @@ export const useGameStore = create<GameStore>()(
               }
             }
 
-            // Advance turn and check game phase transitions after toss-in period
+            // Advance turn after toss-in period
             setTimeout(() => {
               set((draftTimeout) => {
                 draftTimeout.waitingForTossIn = false;
                 draftTimeout.tossInTimer = 0;
                 draftTimeout.turnCount++;
                 draftTimeout.currentPlayerIndex = (draftTimeout.currentPlayerIndex + 1) % draftTimeout.players.length;
-
-                // Check game phase transitions
-                if (draftTimeout.turnCount >= draftTimeout.maxTurns && !draftTimeout.finalTurnTriggered) {
-                  draftTimeout.finalTurnTriggered = true;
-                  draftTimeout.phase = 'final';
-                }
-
+                // Scoring begins only after a called Vinto final round completes
                 if (draftTimeout.finalTurnTriggered && draftTimeout.currentPlayerIndex === 0) {
                   draftTimeout.phase = 'scoring';
                 }
               });
             }, draft.tossInTimeConfig * 1000);
           });
-
-        } catch (error) {
+        } catch {
           set((draft) => {
             draft.aiThinking = false;
             draft.turnCount++;
             draft.currentPlayerIndex = (draft.currentPlayerIndex + 1) % draft.players.length;
-
-            // Check if final turn should be triggered even on error
-            if (draft.turnCount >= draft.maxTurns && !draft.finalTurnTriggered) {
-              draft.finalTurnTriggered = true;
-              draft.phase = 'final';
-            }
-
             // If we've completed final turn, move to scoring
             if (draft.finalTurnTriggered && draft.currentPlayerIndex === 0) {
               draft.phase = 'scoring';
@@ -501,6 +676,8 @@ export const useGameStore = create<GameStore>()(
           state.pendingCard = null;
           state.isSelectingSwapPosition = false;
           state.isChoosingCardAction = false;
+          state.isAwaitingActionTarget = false;
+          state.actionContext = null;
           state.selectedSwapPosition = null;
           // Move to next player
           state.turnCount++;

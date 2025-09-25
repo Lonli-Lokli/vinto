@@ -5,9 +5,9 @@ import { GameHeader } from './components/game-header';
 import { GameTable } from './components/game-table';
 import { GameControls } from './components/game-controls';
 import { GamePhaseIndicators } from './components/game-phase-indicators';
-import { AIAnalysis } from './components/ai-analysis';
 import { FinalScores } from './components/final-scores';
 import { CardActionChoice } from './components/card-action-choice';
+import { ActionTargetSelector } from './components/action-target-selector';
 import { GameInitializer } from './components/game-initializer';
 
 export default function VintoGame() {
@@ -17,10 +17,10 @@ export default function VintoGame() {
       <GameInitializer />
       <GameHeader />
       <GameTable />
-      <AIAnalysis />
       <FinalScores />
       <GamePhaseIndicators />
       <CardActionChoice />
+      <ActionTargetSelector />
       <GameControls />
     </div>
   );

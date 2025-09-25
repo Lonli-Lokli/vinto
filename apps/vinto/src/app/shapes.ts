@@ -43,7 +43,6 @@ export interface GameState {
   gameId: string;
   roundNumber: number;
   turnCount: number;
-  maxTurns: number;
   finalTurnTriggered: boolean;
 }
 
@@ -69,7 +68,14 @@ export interface GameStore extends GameState {
   pendingCard: Card | null;
   isSelectingSwapPosition: boolean;
   isChoosingCardAction: boolean;
+  isAwaitingActionTarget: boolean;
+  actionContext: {
+    action: string;
+    playerId: string;
+    targetType?: 'own-card' | 'opponent-card' | 'swap-cards';
+  } | null;
   selectedSwapPosition: number | null;
+  swapTargets: { playerId: string; position: number }[];
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
   tossInTimer: number;
@@ -86,6 +92,9 @@ export interface GameStore extends GameState {
   chooseSwap: () => void;
   choosePlayCard: () => void;
   swapCard: (pos: number) => void;
+  executeCardAction: (card: Card, playerId: string) => void;
+  selectActionTarget: (playerId: string, position: number) => void;
+  cancelAction: () => void;
   cancelSwap: () => void;
   tossInCard: (playerId: string, position: number) => void;
   makeAIMove: (diff: string) => Promise<void>;

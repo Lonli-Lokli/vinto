@@ -13,6 +13,8 @@ export function GameTable() {
     aiThinking,
     phase,
     isSelectingSwapPosition,
+    isAwaitingActionTarget,
+    actionContext,
     setupPeeksRemaining,
     waitingForTossIn,
     pendingCard,
@@ -21,6 +23,7 @@ export function GameTable() {
     peekCard,
     swapCard,
     tossInCard,
+    selectActionTarget,
     calculateFinalScores,
   } = useGameStore();
 
@@ -55,6 +58,20 @@ export function GameTable() {
       tossInCard(humanPlayer.id, position);
       return;
     }
+
+    // During action target selection, allow selecting target
+    if (isAwaitingActionTarget && actionContext?.targetType === 'own-card') {
+      selectActionTarget(humanPlayer.id, position);
+      return;
+    }
+  };
+
+  const handleOpponentCardClick = (playerId: string, position: number) => {
+    // During action target selection for opponent cards
+    if (isAwaitingActionTarget && actionContext?.targetType === 'opponent-card') {
+      selectActionTarget(playerId, position);
+      return;
+    }
   };
 
   const handleDrawCard = () => {
@@ -84,6 +101,7 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
+                onCardClick={(position) => handleOpponentCardClick(playersById.top!.id, position)}
               />
             </div>
           )}
@@ -101,6 +119,7 @@ export function GameTable() {
                   }
                   gamePhase={phase}
                   finalScores={finalScores}
+                  onCardClick={(position) => handleOpponentCardClick(playersById.left!.id, position)}
                 />
               )}
             </div>
@@ -167,6 +186,7 @@ export function GameTable() {
                   }
                   gamePhase={phase}
                   finalScores={finalScores}
+                  onCardClick={(position) => handleOpponentCardClick(playersById.right!.id, position)}
                 />
               )}
             </div>
@@ -201,6 +221,7 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
+                onCardClick={(position) => handleOpponentCardClick(playersById.top!.id, position)}
               />
             </div>
           )}
@@ -216,6 +237,7 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
+                onCardClick={(position) => handleOpponentCardClick(playersById.left!.id, position)}
               />
             </div>
           )}
@@ -231,6 +253,7 @@ export function GameTable() {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
+                onCardClick={(position) => handleOpponentCardClick(playersById.right!.id, position)}
               />
             </div>
           )}
