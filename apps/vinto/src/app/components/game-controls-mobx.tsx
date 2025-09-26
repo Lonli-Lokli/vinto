@@ -17,7 +17,8 @@ export const GameControls = observer(() => {
   // Show toss-in skip controls when processing toss-in queue for human
   const isHumanTossInAction =
     gameStore.isProcessingTossInQueue &&
-    gameStore.actionContext?.playerId === gameStore.players.find(p => p.isHuman)?.id;
+    gameStore.actionContext?.playerId ===
+      gameStore.players.find((p) => p.isHuman)?.id;
 
   if (isHumanTossInAction) {
     return (
@@ -25,7 +26,8 @@ export const GameControls = observer(() => {
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-2 sm:p-3 shadow-md">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-800">
-              Toss-in Action: {gameStore.tossInQueue[0]?.card.rank} ({gameStore.tossInQueue[0]?.card.action})
+              Toss-in Action: {gameStore.tossInQueue[0]?.card.rank} (
+              {gameStore.tossInQueue[0]?.card.action})
             </h3>
           </div>
 
@@ -47,7 +49,8 @@ export const GameControls = observer(() => {
   }
 
   // Hide controls during special game states
-  const shouldHide = gameStore.phase !== 'playing' ||
+  const shouldHide =
+    gameStore.phase !== 'playing' ||
     gameStore.isSelectingSwapPosition ||
     gameStore.isChoosingCardAction ||
     gameStore.isDeclaringRank ||

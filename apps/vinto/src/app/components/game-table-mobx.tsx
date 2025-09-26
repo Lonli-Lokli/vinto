@@ -76,7 +76,9 @@ export const GameTable = observer(() => {
       gameStore.selectActionTarget(playerId, position);
       return;
     } else {
-      console.log('DEBUG Q action - conditions not met, not calling selectActionTarget');
+      console.log(
+        'DEBUG Q action - conditions not met, not calling selectActionTarget'
+      );
     }
   };
 

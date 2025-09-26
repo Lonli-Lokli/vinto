@@ -89,7 +89,6 @@ export class GameStore implements GameState {
         sessionActive: this.sessionActive,
       }),
       ({ currentPlayer }) => {
-
         // Update vinto call availability whenever turn state changes
         this.updateVintoCallAvailability();
 
@@ -305,7 +304,7 @@ export class GameStore implements GameState {
     this.pendingCard = drawnCard;
     this.isChoosingCardAction = true;
 
-    GameToastService.success(`Drew ${drawnCard.rank}`);
+    // Removed toast - drawing cards is visual enough
   }
 
   // Action: Take from discard pile
@@ -558,7 +557,6 @@ export class GameStore implements GameState {
       this.tossInInterval = null;
     }
 
-
     this.updateVintoCallAvailability();
 
     // Scoring begins only after a called Vinto final round completes
@@ -706,7 +704,7 @@ export class GameStore implements GameState {
     }
 
     const { playerId, card } = this.tossInQueue[0];
-    const player = this.players.find(p => p.id === playerId);
+    const player = this.players.find((p) => p.id === playerId);
 
     if (!player) {
       // Invalid player, skip this action
@@ -721,8 +719,12 @@ export class GameStore implements GameState {
       playerId: playerId,
     };
 
-    // Show notification about the current toss-in action
-    GameToastService.info(`${player.name} can execute ${card.rank} action (${card.action})`);
+    // Show notification about the current toss-in action (only for human players)
+    if (player.isHuman) {
+      GameToastService.info(
+        `You can execute ${card.rank} action (${card.action})`
+      );
+    }
 
     // For AI players, automatically decide whether to use or skip the action
     if (!player.isHuman) {
@@ -741,7 +743,7 @@ export class GameStore implements GameState {
 
   // Execute a specific toss-in card action
   executeTossInCardAction(card: Card, playerId: string) {
-    const player = this.players.find(p => p.id === playerId);
+    const player = this.players.find((p) => p.id === playerId);
     if (!player) return;
 
     switch (card.rank) {
@@ -843,8 +845,12 @@ export class GameStore implements GameState {
     if (!this.isProcessingTossInQueue || this.tossInQueue.length === 0) return;
 
     const { playerId, card } = this.tossInQueue[0];
-    const player = this.players.find(p => p.id === playerId);
-    GameToastService.info(`${player?.name || 'Player'} skipped ${card.rank} action`);
+    const player = this.players.find((p) => p.id === playerId);
+
+    // Only show skip message for human players
+    if (player?.isHuman) {
+      GameToastService.info(`You skipped ${card.rank} action`);
+    }
 
     // Remove current action from queue and clear state
     this.tossInQueue.shift();
@@ -892,7 +898,7 @@ export class GameStore implements GameState {
 
   // Execute AI toss-in action automatically
   executeAITossInAction(rank: Rank, playerId: string) {
-    const player = this.players.find(p => p.id === playerId);
+    const player = this.players.find((p) => p.id === playerId);
     if (!player || player.isHuman || !this.actionContext) return;
 
     switch (rank) {
@@ -906,9 +912,12 @@ export class GameStore implements GameState {
       case '9':
       case '10':
         // AI peeks at one opponent card
-        const opponents = this.players.filter(p => p.id !== playerId);
-        const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
-        const opponentCardIndex = Math.floor(Math.random() * randomOpponent.cards.length);
+        const opponents = this.players.filter((p) => p.id !== playerId);
+        const randomOpponent =
+          opponents[Math.floor(Math.random() * opponents.length)];
+        const opponentCardIndex = Math.floor(
+          Math.random() * randomOpponent.cards.length
+        );
         this.selectActionTarget(randomOpponent.id, opponentCardIndex);
         break;
 
@@ -916,14 +925,16 @@ export class GameStore implements GameState {
         // AI swaps two random cards
         const allPlayers = this.players;
         const availableTargets = [];
-        allPlayers.forEach(p => {
+        allPlayers.forEach((p) => {
           for (let i = 0; i < p.cards.length; i++) {
             availableTargets.push({ playerId: p.id, position: i });
           }
         });
 
         if (availableTargets.length >= 2) {
-          const shuffled = [...availableTargets].sort(() => Math.random() - 0.5);
+          const shuffled = [...availableTargets].sort(
+            () => Math.random() - 0.5
+          );
           this.selectActionTarget(shuffled[0].playerId, shuffled[0].position);
           // Auto-select second target after first
           setTimeout(() => {
@@ -935,17 +946,25 @@ export class GameStore implements GameState {
       case 'Q':
         // AI peeks at two random cards
         const allTargets = [];
-        this.players.forEach(p => {
+        this.players.forEach((p) => {
           for (let i = 0; i < p.cards.length; i++) {
             allTargets.push({ playerId: p.id, position: i });
           }
         });
 
         if (allTargets.length >= 2) {
-          const shuffledTargets = [...allTargets].sort(() => Math.random() - 0.5);
-          this.selectActionTarget(shuffledTargets[0].playerId, shuffledTargets[0].position);
+          const shuffledTargets = [...allTargets].sort(
+            () => Math.random() - 0.5
+          );
+          this.selectActionTarget(
+            shuffledTargets[0].playerId,
+            shuffledTargets[0].position
+          );
           setTimeout(() => {
-            this.selectActionTarget(shuffledTargets[1].playerId, shuffledTargets[1].position);
+            this.selectActionTarget(
+              shuffledTargets[1].playerId,
+              shuffledTargets[1].position
+            );
             // AI randomly decides whether to swap after peeking
             setTimeout(() => {
               if (Math.random() < 0.5) {
@@ -960,8 +979,9 @@ export class GameStore implements GameState {
 
       case 'A':
         // AI forces random opponent to draw
-        const targetOpponents = this.players.filter(p => p.id !== playerId);
-        const randomTarget = targetOpponents[Math.floor(Math.random() * targetOpponents.length)];
+        const targetOpponents = this.players.filter((p) => p.id !== playerId);
+        const randomTarget =
+          targetOpponents[Math.floor(Math.random() * targetOpponents.length)];
         this.selectActionTarget(randomTarget.id, 0); // Position doesn't matter for force draw
         break;
 
@@ -1046,7 +1066,10 @@ export class GameStore implements GameState {
       }
 
       // Check if trying to select second card from same player
-      if (this.swapTargets.length === 1 && this.swapTargets[0].playerId === targetPlayerId) {
+      if (
+        this.swapTargets.length === 1 &&
+        this.swapTargets[0].playerId === targetPlayerId
+      ) {
         GameToastService.warning('Cannot swap two cards from the same player!');
         return;
       }
@@ -1122,7 +1145,10 @@ export class GameStore implements GameState {
       }
 
       // Check if trying to select second card from same player
-      if (this.peekTargets.length === 1 && this.peekTargets[0].playerId === targetPlayerId) {
+      if (
+        this.peekTargets.length === 1 &&
+        this.peekTargets[0].playerId === targetPlayerId
+      ) {
         GameToastService.warning('Cannot peek two cards from the same player!');
         return;
       }
@@ -1357,7 +1383,6 @@ export class GameStore implements GameState {
   async makeAIMove(difficulty: string) {
     try {
       const currentPlayer = this.players[this.currentPlayerIndex];
-
 
       if (!currentPlayer || currentPlayer.isHuman) return;
 
