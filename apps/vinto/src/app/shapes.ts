@@ -27,7 +27,8 @@ export interface Player {
   id: string;
   name: string;
   cards: Card[];
-  knownCardPositions: Set<number>;
+  knownCardPositions: Set<number>; // Permanently known cards (setup phase)
+  temporarilyVisibleCards: Set<number>; // Cards visible during current action only
   isHuman: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
   avatar: string;
@@ -60,8 +61,10 @@ export type Difficulty = 'basic' | 'moderate' | 'hard' | 'ultimate';
 
 export type TossInTime = 5 | 7 | 10;
 
+import type { OracleVintoClient } from './lib/oracle-client';
+
 export interface GameStore extends GameState {
-  oracle: any; // Will be typed properly in the client
+  oracle: OracleVintoClient; // Client used by the store
   aiThinking: boolean;
   currentMove: AIMove | null;
   sessionActive: boolean;
@@ -72,7 +75,13 @@ export interface GameStore extends GameState {
   actionContext: {
     action: string;
     playerId: string;
-    targetType?: 'own-card' | 'opponent-card' | 'swap-cards' | 'peek-then-swap' | 'declare-action' | 'force-draw';
+    targetType?:
+      | 'own-card'
+      | 'opponent-card'
+      | 'swap-cards'
+      | 'peek-then-swap'
+      | 'declare-action'
+      | 'force-draw';
     declaredCard?: Rank;
   } | null;
   selectedSwapPosition: number | null;
@@ -85,6 +94,7 @@ export interface GameStore extends GameState {
   tossInTimer: number;
   tossInTimeConfig: TossInTime;
   difficulty: Difficulty;
+  canCallVintoAfterHumanTurn: boolean;
 
   initGame: () => Promise<void>;
   updateDifficulty: (diff: Difficulty) => void;
@@ -104,13 +114,16 @@ export interface GameStore extends GameState {
   declareRank: (rank: Rank) => void;
   skipDeclaration: () => void;
   cancelAction: () => void;
-  cancelSwap: () => void;
+  discardCard: () => void;
   tossInCard: (playerId: string, position: number) => void;
   makeAIMove: (diff: string) => Promise<void>;
   formCoalition: (playerId1: string, playerId2: string) => void;
   breakCoalition: (playerId1: string, playerId2: string) => void;
   callVinto: () => void;
   calculateFinalScores: () => { [playerId: string]: number };
+  updateVintoCallAvailability: () => void;
+  startTossInPeriod: () => void;
+  clearTemporaryCardVisibility: () => void;
 }
 
 export class NeverError extends Error {

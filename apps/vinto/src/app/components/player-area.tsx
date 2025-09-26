@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { observer } from 'mobx-react-lite';
 import { Player, Card as CardType } from '../shapes';
 import { Card } from './card';
 
@@ -13,26 +14,42 @@ interface PlayerAreaProps {
   gamePhase: 'setup' | 'playing' | 'final' | 'scoring';
   finalScores?: { [playerId: string]: number };
   isSelectingSwapPosition?: boolean;
+  isDeclaringRank?: boolean;
+  swapPosition?: number | null;
 }
 
-export function PlayerArea({
+export const PlayerArea = observer(function PlayerArea({
   player,
   isCurrentPlayer,
   isThinking,
   onCardClick,
   gamePhase,
   finalScores,
-  isSelectingSwapPosition = false
+  isSelectingSwapPosition = false,
+  isDeclaringRank = false,
+  swapPosition = null,
 }: PlayerAreaProps) {
   // Determine if we can see this player's cards based on official Vinto rules
   const canSeeCards = (cardIndex: number): boolean => {
     // During setup phase, human can see their own cards for memorization
-    if (gamePhase === 'setup' && player.isHuman && player.knownCardPositions.has(cardIndex)) {
+    if (
+      gamePhase === 'setup' &&
+      player.isHuman &&
+      (player.knownCardPositions.has(cardIndex) ||
+        player.temporarilyVisibleCards.has(cardIndex))
+    ) {
       return true;
     }
 
-    // During gameplay, human can see their own cards if they've peeked at them (7/8 actions)
-    if ((gamePhase === 'playing' || gamePhase === 'final') && player.isHuman && player.knownCardPositions.has(cardIndex)) {
+    // During gameplay, human can see their own cards if:
+    // 1. They've permanently learned them during setup (knownCardPositions)
+    // 2. They're temporarily visible from current action (temporarilyVisibleCards)
+    if (
+      (gamePhase === 'playing' || gamePhase === 'final') &&
+      player.isHuman &&
+      (player.knownCardPositions.has(cardIndex) ||
+        player.temporarilyVisibleCards.has(cardIndex))
+    ) {
       return true;
     }
 
@@ -54,18 +71,26 @@ export function PlayerArea({
     <div
       className={`
           bg-white/90 backdrop-blur-sm rounded-lg p-2 border-2
-          ${isCurrentPlayer
-            ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-300'
-            : 'border-gray-200'}
+          ${
+            isCurrentPlayer
+              ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-300'
+              : 'border-gray-200'
+          }
           transition-all duration-300
         `}
     >
       <div className="text-center">
         <div className="text-base mb-1">{player.avatar}</div>
-        <div className={`text-xs font-medium ${isCurrentPlayer ? 'text-blue-600' : 'text-gray-700'}`}>
+        <div
+          className={`text-xs font-medium ${
+            isCurrentPlayer ? 'text-blue-600' : 'text-gray-700'
+          }`}
+        >
           {player.name}
         </div>
-        {displayScore && <div className="text-xs text-gray-500 mt-1">{displayScore} pts</div>}
+        {displayScore && (
+          <div className="text-xs text-gray-500 mt-1">{displayScore} pts</div>
+        )}
         {isCurrentPlayer && (
           <div className="mt-1">
             {isThinking ? (
@@ -89,16 +114,16 @@ export function PlayerArea({
 
   const positionClasses = {
     bottom: 'flex-col items-center',
-    top: 'flex-col-reverse items-center', 
+    top: 'flex-col-reverse items-center',
     left: 'flex-row-reverse items-center',
-    right: 'flex-row items-center'
+    right: 'flex-row items-center',
   };
 
   const cardContainerClasses = {
     bottom: 'flex gap-1',
     top: 'flex gap-1',
     left: 'flex flex-col gap-1',
-    right: 'flex flex-col gap-1'
+    right: 'flex flex-col gap-1',
   };
 
   // Mobile info card was removed to save space and avoid visual clutter
@@ -111,11 +136,21 @@ export function PlayerArea({
         <Card
           key={`${card?.id ?? 'card'}-${index}`}
           card={card}
-          revealed={canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)}
+          revealed={
+            canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
+          }
           position={player.isHuman ? index + 1 : 0}
-          size={player.position === 'left' || player.position === 'right' ? 'md' : 'lg'}
-          clickable={player.isHuman && !!onCardClick}
-          highlighted={player.isHuman && isSelectingSwapPosition}
+          size={
+            player.position === 'left' || player.position === 'right'
+              ? 'md'
+              : 'lg'
+          }
+          clickable={!!onCardClick}
+          highlighted={
+            player.isHuman &&
+            (isSelectingSwapPosition ||
+              (isDeclaringRank && swapPosition === index))
+          }
           onClick={() => onCardClick?.(index)}
         />
       );
@@ -123,14 +158,20 @@ export function PlayerArea({
       // Rotate side players' cards to save vertical space
       if (player.position === 'left') {
         return (
-          <div key={`wrap-${card?.id ?? 'card'}-${index}`} className="transform-gpu rotate-90 origin-center">
+          <div
+            key={`wrap-${card?.id ?? 'card'}-${index}`}
+            className="transform-gpu rotate-90 origin-center"
+          >
             {cardEl}
           </div>
         );
       }
       if (player.position === 'right') {
         return (
-          <div key={`wrap-${card?.id ?? 'card'}-${index}`} className="transform-gpu -rotate-90 origin-center">
+          <div
+            key={`wrap-${card?.id ?? 'card'}-${index}`}
+            className="transform-gpu -rotate-90 origin-center"
+          >
             {cardEl}
           </div>
         );
@@ -153,7 +194,9 @@ export function PlayerArea({
         style={{ pointerEvents: 'none' }}
       >
         <span className="text-xs leading-none">{player.avatar}</span>
-        <span className={isCurrentPlayer ? 'text-blue-200' : 'text-white'}>{player.name}</span>
+        <span className={isCurrentPlayer ? 'text-blue-200' : 'text-white'}>
+          {player.name}
+        </span>
       </div>
     );
 
@@ -176,9 +219,13 @@ export function PlayerArea({
   };
 
   return (
-    <div className={`flex gap-2 ${positionClasses[player.position]} ${
-      isCurrentPlayer ? 'p-1 rounded-lg border-2 border-yellow-400 bg-yellow-400/10' : ''
-    }`}>
+    <div
+      className={`flex gap-2 ${positionClasses[player.position]} ${
+        isCurrentPlayer
+          ? 'p-1 rounded-lg border-2 border-yellow-400 bg-yellow-400/10'
+          : ''
+      }`}
+    >
       {/* Mobile: Do NOT show player name & avatar */}
 
       {/* Desktop: Player Info Card in the middle */}
@@ -195,20 +242,32 @@ export function PlayerArea({
       <MobilePlayerGroup />
 
       {/* Desktop: Cards */}
-      <div className={`hidden md:flex ${cardContainerClasses[player.position]}`}> 
+      <div
+        className={`hidden md:flex ${cardContainerClasses[player.position]}`}
+      >
         {player.cards.map((card, index) => (
           <Card
             key={`${card.id}-${index}`}
             card={card}
-            revealed={canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)}
+            revealed={
+              canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
+            }
             position={player.isHuman ? index + 1 : 0}
-            size={player.position === 'left' || player.position === 'right' ? 'md' : 'lg'}
-            clickable={player.isHuman && !!onCardClick}
-            highlighted={player.isHuman && isSelectingSwapPosition}
+            size={
+              player.position === 'left' || player.position === 'right'
+                ? 'md'
+                : 'lg'
+            }
+            clickable={!!onCardClick}
+            highlighted={
+              player.isHuman &&
+              (isSelectingSwapPosition ||
+                (isDeclaringRank && swapPosition === index))
+            }
             onClick={() => onCardClick?.(index)}
           />
         ))}
       </div>
     </div>
   );
-}
+});

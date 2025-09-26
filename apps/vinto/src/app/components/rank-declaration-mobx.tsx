@@ -2,24 +2,16 @@
 'use client';
 
 import React from 'react';
-import { useGameStore } from '../stores/game-store';
+import { observer } from 'mobx-react-lite';
+import { gameStore } from '../stores/game-store-mobx';
 import { Rank } from '../shapes';
 
-export function RankDeclaration() {
-  const {
-    isDeclaringRank,
-    swapPosition,
-    players,
-    currentPlayerIndex,
-    declareRank,
-    skipDeclaration,
-  } = useGameStore();
-
-  if (!isDeclaringRank || swapPosition === null) {
+export const RankDeclaration = observer(() => {
+  if (!gameStore.isDeclaringRank || gameStore.swapPosition === null) {
     return null;
   }
 
-  const currentPlayer = players[currentPlayerIndex];
+  const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
   if (!currentPlayer) return null;
 
   const ranks: Rank[] = [
@@ -39,7 +31,7 @@ export function RankDeclaration() {
   ];
 
   const handleRankClick = (rank: Rank) => {
-    declareRank(rank);
+    gameStore.declareRank(rank);
   };
 
   return (
@@ -50,11 +42,17 @@ export function RankDeclaration() {
             🎯 Declare Card Rank
           </h3>
           <p className="text-xs text-yellow-700 mt-1">
-            Declare the rank of the card you&apos;re replacing at position
-            {swapPosition + 1}
+            You drew <strong>{gameStore.pendingCard?.rank}</strong> and are
+            swapping it with your card at position{' '}
+            <strong>{gameStore.swapPosition + 1}</strong>
+          </p>
+          <p className="text-xs text-yellow-700 mt-1">
+            Declare what rank you think your position{' '}
+            {gameStore.swapPosition + 1} card is:
           </p>
           <div className="text-[10px] text-yellow-600 mt-1 bg-yellow-100 rounded px-2 py-1">
-            ✅ Correct = Use card&apos;s action • ❌ Wrong = Get penalty card
+            ✅ Correct = Use {gameStore.pendingCard?.rank}&apos;s action • ❌
+            Wrong = Get penalty card
           </div>
         </div>
 
@@ -75,7 +73,7 @@ export function RankDeclaration() {
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={skipDeclaration}
+            onClick={() => gameStore.skipDeclaration()}
             className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium py-2 px-3 rounded-lg shadow transition-colors text-xs sm:text-sm"
             title="Skip declaration and just swap the card"
           >
@@ -89,4 +87,4 @@ export function RankDeclaration() {
       </div>
     </div>
   );
-}
+});

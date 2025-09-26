@@ -40,16 +40,7 @@ export default function RootLayout({
         */}
 
         {/* The `children` prop will be the content of our `app/page.tsx` file. */}
-        <main className="min-h-screen flex flex-col">
-          <div className="flex-1">
-            {children}
-          </div>
-
-          {/* You could place a site-wide footer here */}
-          <footer className="text-center py-2 text-xs text-gray-500">
-            Vinto Game Engine &copy; 2025
-          </footer>
-        </main>
+        {children}
       </body>
     </html>
   );

@@ -4,17 +4,19 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run vinto:build",
-    "start": "nx dev vinto"
+    "start": "nx dev vinto",
+    "format": "nx format:write"
   },
   "private": true,
   "dependencies": {
     "immer": "^10.1.3",
     "lucide-react": "^0.544.0",
+    "mobx": "^6.15.0",
+    "mobx-react-lite": "^4.1.0",
     "next": "~15.2.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-hot-toast": "^2.6.0",
-    "zustand": "^5.0.8"
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.1.1",
