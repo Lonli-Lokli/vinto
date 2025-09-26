@@ -1,7 +1,7 @@
 // stores/game-store-mobx.ts
 'use client';
 
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction, reaction } from 'mobx';
 import {
   shuffleDeck,
   createDeck,
@@ -65,6 +65,7 @@ export class GameStore implements GameState {
   canCallVintoAfterHumanTurn = false;
 
   private tossInInterval: NodeJS.Timeout | null = null;
+  private aiTurnReaction: (() => void) | null = null;
 
   constructor() {
     // Make this store observable
@@ -72,6 +73,58 @@ export class GameStore implements GameState {
 
     // Initialize Oracle client
     this.oracle = new OracleVintoClient();
+
+    // Set up AI turn handling
+    this.setupAITurnReaction();
+  }
+
+  // Set up MobX reaction to handle AI turns
+  private setupAITurnReaction() {
+    this.aiTurnReaction = reaction(
+      () => ({
+        currentPlayerIndex: this.currentPlayerIndex,
+        currentPlayer: this.players[this.currentPlayerIndex],
+        sessionActive: this.sessionActive,
+      }),
+      ({ currentPlayer }) => {
+
+        // Update vinto call availability whenever turn state changes
+        this.updateVintoCallAvailability();
+
+        // Clear temporary card visibility on each turn change
+        this.clearTemporaryCardVisibility();
+
+        if (
+          currentPlayer &&
+          !currentPlayer.isHuman &&
+          !this.aiThinking &&
+          this.sessionActive
+        ) {
+          // Schedule AI move after delay
+          setTimeout(() => {
+            if (
+              this.players[this.currentPlayerIndex] === currentPlayer &&
+              !this.aiThinking &&
+              this.sessionActive
+            ) {
+              this.makeAIMove(this.difficulty);
+            }
+          }, this.tossInTimeConfig * 1000);
+        }
+      }
+    );
+  }
+
+  // Cleanup method
+  dispose() {
+    if (this.aiTurnReaction) {
+      this.aiTurnReaction();
+      this.aiTurnReaction = null;
+    }
+    if (this.tossInInterval) {
+      clearInterval(this.tossInInterval);
+      this.tossInInterval = null;
+    }
   }
 
   // Helper method to update vinto call availability
@@ -122,8 +175,8 @@ export class GameStore implements GameState {
         this.players = [
           {
             id: 'human',
-            name: 'You',
-            cards: deck.slice(0, 6),
+            name: 'Leornardo',
+            cards: deck.splice(0, 5),
             knownCardPositions: new Set(),
             temporarilyVisibleCards: new Set(),
             isHuman: true,
@@ -133,8 +186,8 @@ export class GameStore implements GameState {
           },
           {
             id: 'bot1',
-            name: 'Alice',
-            cards: deck.slice(6, 12),
+            name: 'Michelangelo',
+            cards: deck.splice(0, 5),
             knownCardPositions: new Set(),
             temporarilyVisibleCards: new Set(),
             isHuman: false,
@@ -144,8 +197,8 @@ export class GameStore implements GameState {
           },
           {
             id: 'bot2',
-            name: 'Bob',
-            cards: deck.slice(12, 18),
+            name: 'Donatello',
+            cards: deck.splice(0, 5),
             knownCardPositions: new Set(),
             temporarilyVisibleCards: new Set(),
             isHuman: false,
@@ -155,8 +208,8 @@ export class GameStore implements GameState {
           },
           {
             id: 'bot3',
-            name: 'Carol',
-            cards: deck.slice(18, 24),
+            name: 'Raphael',
+            cards: deck.splice(0, 5),
             knownCardPositions: new Set(),
             temporarilyVisibleCards: new Set(),
             isHuman: false,
@@ -166,7 +219,7 @@ export class GameStore implements GameState {
           },
         ];
 
-        this.drawPile = deck.slice(24);
+        this.drawPile = deck;
         this.discardPile = [];
         this.phase = 'setup';
         this.gameId = `game-${Date.now()}`;
@@ -448,9 +501,27 @@ export class GameStore implements GameState {
 
   // Helper method to advance turn
   private advanceTurn() {
+    // Don't advance turn if an AI move is currently in progress
+    if (this.aiThinking) {
+      return;
+    }
+
     this.turnCount++;
     this.currentPlayerIndex =
       (this.currentPlayerIndex + 1) % this.players.length;
+
+    // Ensure clean state for the new player's turn
+    this.waitingForTossIn = false;
+    this.tossInTimer = 0;
+    this.aiThinking = false;
+
+    // Clear any existing toss-in interval
+    if (this.tossInInterval) {
+      clearInterval(this.tossInInterval);
+      this.tossInInterval = null;
+    }
+
+
     this.updateVintoCallAvailability();
 
     // Scoring begins only after a called Vinto final round completes
@@ -462,13 +533,6 @@ export class GameStore implements GameState {
   // Action: Start toss-in period
   startTossInPeriod() {
     try {
-      const tossInDuration = this.tossInTimeConfig;
-
-      console.log('DEBUG: Starting toss-in period', {
-        tossInDuration,
-        discardTop: this.discardPile[0]?.rank,
-      });
-
       this.waitingForTossIn = true;
       this.tossInTimer = this.tossInTimeConfig;
 
@@ -634,6 +698,12 @@ export class GameStore implements GameState {
         return;
       }
 
+      // Check if trying to select second card from same player
+      if (this.swapTargets.length === 1 && this.swapTargets[0].playerId === targetPlayerId) {
+        GameToastService.warning('Cannot swap two cards from the same player!');
+        return;
+      }
+
       // Add this target to the swap targets list
       const newTarget = { playerId: targetPlayerId, position };
       this.swapTargets.push(newTarget);
@@ -701,6 +771,12 @@ export class GameStore implements GameState {
         GameToastService.info(
           'Already have 2 cards selected. Deselect one to choose a different card.'
         );
+        return;
+      }
+
+      // Check if trying to select second card from same player
+      if (this.peekTargets.length === 1 && this.peekTargets[0].playerId === targetPlayerId) {
+        GameToastService.warning('Cannot peek two cards from the same player!');
         return;
       }
 
@@ -930,7 +1006,13 @@ export class GameStore implements GameState {
     try {
       const currentPlayer = this.players[this.currentPlayerIndex];
 
+
       if (!currentPlayer || currentPlayer.isHuman) return;
+
+      // Prevent multiple simultaneous AI moves
+      if (this.aiThinking) {
+        return;
+      }
 
       this.aiThinking = true;
       this.currentMove = null;
@@ -943,50 +1025,55 @@ export class GameStore implements GameState {
           difficulty as Difficulty
         );
 
-        this.currentMove = move;
-        this.aiThinking = false;
-        console.log('DEBUG: AI move completed, aiThinking set to false');
+        runInAction(() => {
+          this.currentMove = move;
+          this.aiThinking = false;
 
-        // Apply AI move logic
-        if (this.drawPile.length > 0) {
-          const drawnCard = this.drawPile[0];
-          this.drawPile = this.drawPile.slice(1);
+          // Apply AI move logic
+          if (this.drawPile.length > 0) {
+            const drawnCard = this.drawPile[0];
+            this.drawPile = this.drawPile.slice(1);
 
-          // Find worst known card to potentially swap
-          let worstPosition = 0;
-          let worstValue = -10;
+            // Find worst known card to potentially swap
+            let worstPosition = 0;
+            let worstValue = -10;
 
-          currentPlayer.cards.forEach((card, index) => {
-            if (
-              currentPlayer.knownCardPositions.has(index) &&
-              card.value > worstValue
-            ) {
-              worstValue = card.value;
-              worstPosition = index;
+            currentPlayer.cards.forEach((card, index) => {
+              if (
+                currentPlayer.knownCardPositions.has(index) &&
+                card.value > worstValue
+              ) {
+                worstValue = card.value;
+                worstPosition = index;
+              }
+            });
+
+            // Smart AI decision: swap if drawn card is better
+            if (drawnCard.value < worstValue && worstValue > 3) {
+              const discardedCard = currentPlayer.cards[worstPosition];
+              currentPlayer.cards[worstPosition] = drawnCard;
+              this.discardPile = [discardedCard, ...this.discardPile];
+              currentPlayer.knownCardPositions.add(worstPosition);
+            } else {
+              // Just discard the drawn card
+              this.discardPile = [drawnCard, ...this.discardPile];
             }
-          });
-
-          // Smart AI decision: swap if drawn card is better
-          if (drawnCard.value < worstValue && worstValue > 3) {
-            const discardedCard = currentPlayer.cards[worstPosition];
-            currentPlayer.cards[worstPosition] = drawnCard;
-            this.discardPile = [discardedCard, ...this.discardPile];
-            currentPlayer.knownCardPositions.add(worstPosition);
-          } else {
-            // Just discard the drawn card
-            this.discardPile = [drawnCard, ...this.discardPile];
           }
-        }
 
-        // Start toss-in period after AI move
-        this.startTossInPeriod();
+          // Start toss-in period after AI move (turn will advance when toss-in ends)
+          this.startTossInPeriod();
+        });
       } catch {
-        this.aiThinking = false;
-        this.advanceTurn();
+        runInAction(() => {
+          this.aiThinking = false;
+          this.advanceTurn();
+        });
       }
     } catch (error) {
       console.error('Error in makeAIMove:', error);
-      this.aiThinking = false;
+      runInAction(() => {
+        this.aiThinking = false;
+      });
     }
   }
 
@@ -1065,24 +1152,6 @@ export class GameStore implements GameState {
     });
 
     return scores;
-  }
-
-  // Public method to update vinto call availability (for external calls like GameInitializer)
-  updateVintoCallAvailabilityPublic() {
-    this.updateVintoCallAvailability();
-  }
-
-  // Public method to clear temporary card visibility (for external calls like GameInitializer)
-  clearTemporaryCardVisibilityPublic() {
-    this.clearTemporaryCardVisibility();
-  }
-
-  // Method to cleanup intervals
-  dispose() {
-    if (this.tossInInterval) {
-      clearInterval(this.tossInInterval);
-      this.tossInInterval = null;
-    }
   }
 }
 

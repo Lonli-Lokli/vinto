@@ -11,40 +11,8 @@ export const GameInitializer = observer(() => {
     if (gameStore.players.length === 0) {
       gameStore.initGame();
     }
-  }, [gameStore.players.length]);
+  }, []);
 
-  // Handle AI turns
-  useEffect(() => {
-    const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
-
-    // Update vinto call availability whenever turn state changes
-    gameStore.updateVintoCallAvailabilityPublic();
-
-    // Clear temporary card visibility on each turn change
-    gameStore.clearTemporaryCardVisibilityPublic();
-
-    if (
-      currentPlayer &&
-      !currentPlayer.isHuman &&
-      !gameStore.aiThinking &&
-      gameStore.sessionActive
-    ) {
-      const timer = setTimeout(() => {
-        gameStore.makeAIMove(gameStore.difficulty);
-      }, gameStore.tossInTimeConfig * 1_000); // as its in seconds
-      return () => clearTimeout(timer);
-    }
-    return () => {
-      /* empty */
-    };
-  }, [
-    gameStore.currentPlayerIndex,
-    gameStore.aiThinking,
-    gameStore.tossInTimeConfig,
-    gameStore.difficulty,
-    gameStore.players,
-    gameStore.sessionActive,
-  ]);
 
   // Loading state
   if (!gameStore.sessionActive || gameStore.players.length === 0) {

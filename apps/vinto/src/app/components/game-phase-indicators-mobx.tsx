@@ -6,41 +6,9 @@ import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store-mobx';
 
 export const GamePhaseIndicators = observer(() => {
-  // DEBUG: Log toss-in state
-  React.useEffect(() => {
-    if (gameStore.waitingForTossIn || gameStore.tossInTimer > 0) {
-      const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
-      console.log('DEBUG Toss-in state:', {
-        waitingForTossIn: gameStore.waitingForTossIn,
-        tossInTimer: gameStore.tossInTimer,
-        discardTop: gameStore.discardPile[0]?.rank,
-        aiThinking: gameStore.aiThinking,
-        currentPlayer: currentPlayer?.name,
-        isCurrentHuman: currentPlayer?.isHuman,
-      });
-    }
-  }, [
-    gameStore.waitingForTossIn,
-    gameStore.tossInTimer,
-    gameStore.discardPile,
-    gameStore.aiThinking,
-    gameStore.currentPlayerIndex,
-    gameStore.players,
-  ]);
 
   return (
     <>
-      {/* DEBUG: Show toss-in state */}
-      {(gameStore.waitingForTossIn || gameStore.tossInTimer > 0) && (
-        <div className="mt-2 mx-auto max-w-lg bg-red-100 border border-red-400 rounded p-2 text-xs">
-          DEBUG: waitingForTossIn={String(gameStore.waitingForTossIn)},
-          tossInTimer={gameStore.tossInTimer}, discardTop=
-          {gameStore.discardPile[0]?.rank || 'none'}, aiThinking=
-          {String(gameStore.aiThinking)}, currentPlayer=
-          {gameStore.players[gameStore.currentPlayerIndex]?.name}
-        </div>
-      )}
-
       {/* Setup Phase Instructions */}
       {gameStore.phase === 'setup' && (
         <div className="mt-4 sm:mt-6 mx-auto max-w-lg bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 shadow-lg mx-2">

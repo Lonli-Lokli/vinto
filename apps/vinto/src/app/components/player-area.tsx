@@ -41,14 +41,13 @@ export const PlayerArea = observer(function PlayerArea({
       return true;
     }
 
-    // During gameplay, human can see their own cards if:
-    // 1. They've permanently learned them during setup (knownCardPositions)
-    // 2. They're temporarily visible from current action (temporarilyVisibleCards)
+    // During gameplay, human can see their own cards ONLY if:
+    // They're temporarily visible from current action (temporarilyVisibleCards)
+    // Note: knownCardPositions from setup are NOT visible during gameplay
     if (
       (gamePhase === 'playing' || gamePhase === 'final') &&
       player.isHuman &&
-      (player.knownCardPositions.has(cardIndex) ||
-        player.temporarilyVisibleCards.has(cardIndex))
+      player.temporarilyVisibleCards.has(cardIndex)
     ) {
       return true;
     }

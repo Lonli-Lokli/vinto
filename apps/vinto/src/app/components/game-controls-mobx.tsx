@@ -15,14 +15,15 @@ export const GameControls = observer(() => {
   };
 
   // Hide controls during special game states
-  if (
-    gameStore.phase !== 'playing' ||
+  const shouldHide = gameStore.phase !== 'playing' ||
     gameStore.isSelectingSwapPosition ||
     gameStore.isChoosingCardAction ||
     gameStore.isDeclaringRank ||
     gameStore.waitingForTossIn ||
-    gameStore.finalTurnTriggered
-  ) {
+    gameStore.finalTurnTriggered ||
+    gameStore.isAwaitingActionTarget;
+
+  if (shouldHide) {
     return null;
   }
 
