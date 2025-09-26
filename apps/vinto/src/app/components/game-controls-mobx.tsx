@@ -14,6 +14,38 @@ export const GameControls = observer(() => {
     }
   };
 
+  // Show toss-in skip controls when processing toss-in queue for human
+  const isHumanTossInAction =
+    gameStore.isProcessingTossInQueue &&
+    gameStore.actionContext?.playerId === gameStore.players.find(p => p.isHuman)?.id;
+
+  if (isHumanTossInAction) {
+    return (
+      <div className="max-w-lg mx-auto px-2">
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-2 sm:p-3 shadow-md">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-800">
+              Toss-in Action: {gameStore.tossInQueue[0]?.card.rank} ({gameStore.tossInQueue[0]?.card.action})
+            </h3>
+          </div>
+
+          <div className="text-xs text-gray-600 mb-3 text-center">
+            You can execute this action or skip it
+          </div>
+
+          <button
+            onClick={() => gameStore.skipCurrentTossInAction()}
+            className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors text-sm"
+            aria-label="Skip toss-in action"
+            title="Skip this toss-in action and continue to next"
+          >
+            ⏭️ Skip Action
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Hide controls during special game states
   const shouldHide = gameStore.phase !== 'playing' ||
     gameStore.isSelectingSwapPosition ||
@@ -21,7 +53,8 @@ export const GameControls = observer(() => {
     gameStore.isDeclaringRank ||
     gameStore.waitingForTossIn ||
     gameStore.finalTurnTriggered ||
-    gameStore.isAwaitingActionTarget;
+    gameStore.isAwaitingActionTarget ||
+    gameStore.isProcessingTossInQueue; // Also hide during toss-in processing
 
   if (shouldHide) {
     return null;

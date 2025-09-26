@@ -56,6 +56,14 @@ export const GameTable = observer(() => {
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
+    console.log('DEBUG Q action - handleOpponentCardClick:', {
+      playerId,
+      position,
+      isAwaitingActionTarget: gameStore.isAwaitingActionTarget,
+      targetType: gameStore.actionContext?.targetType,
+      peekTargets: gameStore.peekTargets?.length,
+    });
+
     // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
       gameStore.isAwaitingActionTarget &&
@@ -64,8 +72,11 @@ export const GameTable = observer(() => {
         gameStore.actionContext?.targetType === 'peek-then-swap' ||
         gameStore.actionContext?.targetType === 'swap-cards')
     ) {
+      console.log('DEBUG Q action - calling selectActionTarget');
       gameStore.selectActionTarget(playerId, position);
       return;
+    } else {
+      console.log('DEBUG Q action - conditions not met, not calling selectActionTarget');
     }
   };
 

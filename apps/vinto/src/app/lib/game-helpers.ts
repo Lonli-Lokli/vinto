@@ -91,10 +91,6 @@ export const calculatePlayerScore = (player: Player): number => {
   return Math.round(knownScore + unknownCards * 4.5);
 };
 
-export const getSuitColor = (suit?: string): string => {
-  return suit === '♥' || suit === '♦' ? 'text-red-500' : 'text-gray-900';
-};
-
 export const calculateActualScore = (player: Player): number => {
   return player.cards.reduce((total, card) => total + card.value, 0);
 };

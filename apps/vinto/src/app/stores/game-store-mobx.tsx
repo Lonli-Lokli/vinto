@@ -63,6 +63,8 @@ export class GameStore implements GameState {
   tossInTimeConfig: TossInTime = 7;
   difficulty: Difficulty = 'moderate';
   canCallVintoAfterHumanTurn = false;
+  tossInQueue: { playerId: string; card: Card }[] = [];
+  isProcessingTossInQueue = false;
 
   private tossInInterval: NodeJS.Timeout | null = null;
   private aiTurnReaction: (() => void) | null = null;
@@ -401,6 +403,13 @@ export class GameStore implements GameState {
           targetType: 'own-card',
         };
         this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
         break;
 
       case '9':
@@ -415,6 +424,13 @@ export class GameStore implements GameState {
           targetType: 'opponent-card',
         };
         this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
         break;
 
       case 'J':
@@ -456,6 +472,13 @@ export class GameStore implements GameState {
           targetType: 'declare-action',
         };
         this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
         break;
 
       case 'A':
@@ -469,6 +492,13 @@ export class GameStore implements GameState {
           targetType: 'force-draw',
         };
         this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
         break;
 
       default:
@@ -506,6 +536,11 @@ export class GameStore implements GameState {
       return;
     }
 
+    // Don't advance turn if we're still processing toss-in queue
+    if (this.isProcessingTossInQueue || this.tossInQueue.length > 0) {
+      return;
+    }
+
     this.turnCount++;
     this.currentPlayerIndex =
       (this.currentPlayerIndex + 1) % this.players.length;
@@ -514,6 +549,8 @@ export class GameStore implements GameState {
     this.waitingForTossIn = false;
     this.tossInTimer = 0;
     this.aiThinking = false;
+    this.isProcessingTossInQueue = false;
+    this.tossInQueue = [];
 
     // Clear any existing toss-in interval
     if (this.tossInInterval) {
@@ -549,12 +586,19 @@ export class GameStore implements GameState {
             this.tossInInterval = null;
           }
 
-          // If timer expired, advance turn
+          // If timer expired, start executing toss-in actions or advance turn
           if (this.tossInTimer <= 0) {
             runInAction(() => {
               this.waitingForTossIn = false;
               this.tossInTimer = 0;
-              this.advanceTurn();
+
+              // If there are action cards in the toss-in queue, start processing them
+              if (this.tossInQueue.length > 0) {
+                this.processTossInQueue();
+              } else {
+                // No action cards tossed in, advance turn normally
+                this.advanceTurn();
+              }
             });
           }
           return;
@@ -615,6 +659,14 @@ export class GameStore implements GameState {
       // Remove the card from the hand
       player.cards.splice(position, 1);
 
+      // Add to toss-in queue if card has an action
+      if (tossedCard.action) {
+        this.tossInQueue.push({
+          playerId: playerId,
+          card: tossedCard,
+        });
+      }
+
       // Place the card on the discard pile
       this.discardPile = [tossedCard, ...this.discardPile];
 
@@ -630,6 +682,301 @@ export class GameStore implements GameState {
           `${player.name}'s toss-in failed - penalty card drawn`
         );
       }
+    }
+  }
+
+  // Start processing the toss-in queue
+  processTossInQueue() {
+    if (this.tossInQueue.length === 0) {
+      // Queue is empty, advance turn
+      this.advanceTurn();
+      return;
+    }
+
+    this.isProcessingTossInQueue = true;
+    this.processNextTossInAction();
+  }
+
+  // Process the next action in the toss-in queue
+  processNextTossInAction() {
+    if (this.tossInQueue.length === 0) {
+      // Queue is empty, finish processing
+      this.finishTossInQueueProcessing();
+      return;
+    }
+
+    const { playerId, card } = this.tossInQueue[0];
+    const player = this.players.find(p => p.id === playerId);
+
+    if (!player) {
+      // Invalid player, skip this action
+      this.tossInQueue.shift();
+      this.processNextTossInAction();
+      return;
+    }
+
+    // Set up action context for this toss-in card
+    this.actionContext = {
+      action: card.action,
+      playerId: playerId,
+    };
+
+    // Show notification about the current toss-in action
+    GameToastService.info(`${player.name} can execute ${card.rank} action (${card.action})`);
+
+    // For AI players, automatically decide whether to use or skip the action
+    if (!player.isHuman) {
+      // AI decides randomly (30% chance to skip, 70% to use)
+      if (Math.random() < 0.3) {
+        setTimeout(() => {
+          this.skipCurrentTossInAction();
+        }, 1000); // Brief delay for visual feedback
+        return;
+      }
+    }
+
+    // Execute the action based on card rank
+    this.executeTossInCardAction(card, playerId);
+  }
+
+  // Execute a specific toss-in card action
+  executeTossInCardAction(card: Card, playerId: string) {
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    switch (card.rank) {
+      case '7':
+      case '8':
+        // "Peek 1 of your cards"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'own-card',
+        };
+        this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
+        break;
+
+      case '9':
+      case '10':
+        // "Peek 1 opponent card"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'opponent-card',
+        };
+        this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
+        break;
+
+      case 'J':
+        // "Swap any two facedown cards on the table"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'swap-cards',
+        };
+        this.isAwaitingActionTarget = true;
+        this.swapTargets = [];
+        break;
+
+      case 'Q':
+        // "Peek any two cards, then optionally swap them"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'peek-then-swap',
+        };
+        this.isAwaitingActionTarget = true;
+        this.peekTargets = [];
+        break;
+
+      case 'K':
+        // "Declare any card action and execute it"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'declare-action',
+        };
+        this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
+        break;
+
+      case 'A':
+        // "Force opponent to draw"
+        this.actionContext = {
+          ...this.actionContext!,
+          targetType: 'force-draw',
+        };
+        this.isAwaitingActionTarget = true;
+
+        // For AI players, automatically execute action after delay
+        if (!player.isHuman) {
+          setTimeout(() => {
+            this.executeAITossInAction(card.rank, playerId);
+          }, 1500);
+        }
+        break;
+
+      default:
+        // No action for this card, skip
+        this.skipCurrentTossInAction();
+        break;
+    }
+  }
+
+  // Skip the current toss-in action
+  skipCurrentTossInAction() {
+    if (!this.isProcessingTossInQueue || this.tossInQueue.length === 0) return;
+
+    const { playerId, card } = this.tossInQueue[0];
+    const player = this.players.find(p => p.id === playerId);
+    GameToastService.info(`${player?.name || 'Player'} skipped ${card.rank} action`);
+
+    // Remove current action from queue and clear state
+    this.tossInQueue.shift();
+    this.actionContext = null;
+    this.isAwaitingActionTarget = false;
+    this.swapTargets = [];
+    this.peekTargets = [];
+
+    // Process next action
+    this.processNextTossInAction();
+  }
+
+  // Finish processing toss-in queue and advance turn
+  finishTossInQueueProcessing() {
+    this.isProcessingTossInQueue = false;
+    this.tossInQueue = []; // Clear queue
+    this.actionContext = null;
+    this.isAwaitingActionTarget = false;
+    this.swapTargets = [];
+    this.peekTargets = [];
+
+    // Now advance the turn
+    this.advanceTurn();
+  }
+
+  // Complete the current toss-in action and move to next
+  completeTossInAction() {
+    if (!this.isProcessingTossInQueue) {
+      // Not processing toss-in queue, use normal flow
+      this.startTossInPeriod();
+      return;
+    }
+
+    // Remove completed action from queue and clear state
+    this.tossInQueue.shift();
+    this.actionContext = null;
+    this.isAwaitingActionTarget = false;
+    this.swapTargets = [];
+    this.peekTargets = [];
+    this.clearTemporaryCardVisibility();
+
+    // Process next action in queue
+    this.processNextTossInAction();
+  }
+
+  // Execute AI toss-in action automatically
+  executeAITossInAction(rank: Rank, playerId: string) {
+    const player = this.players.find(p => p.id === playerId);
+    if (!player || player.isHuman || !this.actionContext) return;
+
+    switch (rank) {
+      case '7':
+      case '8':
+        // AI peeks at one of their own cards
+        const ownCardIndex = Math.floor(Math.random() * player.cards.length);
+        this.selectActionTarget(playerId, ownCardIndex);
+        break;
+
+      case '9':
+      case '10':
+        // AI peeks at one opponent card
+        const opponents = this.players.filter(p => p.id !== playerId);
+        const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+        const opponentCardIndex = Math.floor(Math.random() * randomOpponent.cards.length);
+        this.selectActionTarget(randomOpponent.id, opponentCardIndex);
+        break;
+
+      case 'J':
+        // AI swaps two random cards
+        const allPlayers = this.players;
+        const availableTargets = [];
+        allPlayers.forEach(p => {
+          for (let i = 0; i < p.cards.length; i++) {
+            availableTargets.push({ playerId: p.id, position: i });
+          }
+        });
+
+        if (availableTargets.length >= 2) {
+          const shuffled = [...availableTargets].sort(() => Math.random() - 0.5);
+          this.selectActionTarget(shuffled[0].playerId, shuffled[0].position);
+          // Auto-select second target after first
+          setTimeout(() => {
+            this.selectActionTarget(shuffled[1].playerId, shuffled[1].position);
+          }, 500);
+        }
+        break;
+
+      case 'Q':
+        // AI peeks at two random cards
+        const allTargets = [];
+        this.players.forEach(p => {
+          for (let i = 0; i < p.cards.length; i++) {
+            allTargets.push({ playerId: p.id, position: i });
+          }
+        });
+
+        if (allTargets.length >= 2) {
+          const shuffledTargets = [...allTargets].sort(() => Math.random() - 0.5);
+          this.selectActionTarget(shuffledTargets[0].playerId, shuffledTargets[0].position);
+          setTimeout(() => {
+            this.selectActionTarget(shuffledTargets[1].playerId, shuffledTargets[1].position);
+            // AI randomly decides whether to swap after peeking
+            setTimeout(() => {
+              if (Math.random() < 0.5) {
+                this.executeQueenSwap();
+              } else {
+                this.skipQueenSwap();
+              }
+            }, 500);
+          }, 500);
+        }
+        break;
+
+      case 'A':
+        // AI forces random opponent to draw
+        const targetOpponents = this.players.filter(p => p.id !== playerId);
+        const randomTarget = targetOpponents[Math.floor(Math.random() * targetOpponents.length)];
+        this.selectActionTarget(randomTarget.id, 0); // Position doesn't matter for force draw
+        break;
+
+      case 'K':
+        // AI declares a random rank and action (simplified)
+        const ranks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
+        const randomRank = ranks[Math.floor(Math.random() * ranks.length)];
+        // For simplicity, just complete the action
+        this.completeTossInAction();
+        break;
+
+      default:
+        // Unknown action, skip
+        this.skipCurrentTossInAction();
+        break;
     }
   }
 
@@ -790,6 +1137,11 @@ export class GameStore implements GameState {
         };
         this.peekTargets.push(newTarget);
 
+        // Make the peeked card temporarily visible to the human player
+        if (actionPlayer.isHuman) {
+          targetPlayer.temporarilyVisibleCards.add(position);
+        }
+
         GameToastService.success(
           `${actionPlayer.name} peeked at ${targetPlayer.name}'s position ${
             position + 1
@@ -840,8 +1192,8 @@ export class GameStore implements GameState {
     // Clear temporary card visibility since action is complete
     this.clearTemporaryCardVisibility();
 
-    // Start toss-in period
-    this.startTossInPeriod();
+    // Complete action (either start toss-in or continue toss-in actions)
+    this.completeTossInAction();
   }
 
   // Action: Execute Queen's optional swap
@@ -877,8 +1229,8 @@ export class GameStore implements GameState {
     this.actionContext = null;
     this.peekTargets = [];
 
-    // Start toss-in period
-    this.startTossInPeriod();
+    // Complete action (either start toss-in or continue toss-in actions)
+    this.completeTossInAction();
   }
 
   // Action: Skip Queen's optional swap
@@ -890,8 +1242,8 @@ export class GameStore implements GameState {
     this.actionContext = null;
     this.peekTargets = [];
 
-    // Start toss-in period
-    this.startTossInPeriod();
+    // Complete action (either start toss-in or continue toss-in actions)
+    this.completeTossInAction();
   }
 
   // Action: Declare rank during card swap
