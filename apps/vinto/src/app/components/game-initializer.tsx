@@ -3,7 +3,7 @@
 
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store-mobx';
+import { gameStore } from '../stores/game-store';
 
 export const GameInitializer = observer(() => {
   // Initialize game on mount

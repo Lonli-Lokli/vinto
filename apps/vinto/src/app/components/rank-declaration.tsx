@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store-mobx';
+import { gameStore } from '../stores/game-store';
 import { Rank } from '../shapes';
 
 export const RankDeclaration = observer(() => {

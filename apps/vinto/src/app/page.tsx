@@ -1,15 +1,15 @@
 // app/page.tsx
 import React from 'react';
 import { ToastProvider } from './components/toast-provider';
-import { GameHeader } from './components/game-header-mobx';
-import { FinalScores } from './components/final-scores-mobx';
-import { GameInitializer } from './components/game-initializer-mobx';
-import { GamePhaseIndicators as GamePhaseIndicatorsMobX } from './components/game-phase-indicators-mobx';
-import { CardActionChoice as CardActionChoiceMobX } from './components/card-action-choice-mobx';
-import { RankDeclaration as RankDeclarationMobX } from './components/rank-declaration-mobx';
-import { GameTable as GameTableMobX } from './components/game-table-mobx';
-import { GameControls as GameControlsMobX } from './components/game-controls-mobx';
-import { ActionTargetSelector as ActionTargetSelectorMobX } from './components/action-target-selector-mobx';
+import { GameHeader } from './components/game-header';
+import { FinalScores } from './components/final-scores';
+import { GameInitializer } from './components/game-initializer';
+import { GamePhaseIndicators } from './components/game-phase-indicators';
+import { CardActionChoice } from './components/card-action-choice';
+import { RankDeclaration } from './components/rank-declaration';
+import { GameTable } from './components/game-table';
+import { GameControls } from './components/game-controls';
+import { ActionTargetSelector } from './components/action-target-selector';
 
 export default function VintoGame() {
   return (
@@ -23,13 +23,13 @@ export default function VintoGame() {
       {/* Main content area - takes remaining height - stacked vertically for all screen sizes */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 md:p-4 space-y-2 md:space-y-4">
-          <GameTableMobX />
+          <GameTable />
           <FinalScores />
-          <GamePhaseIndicatorsMobX />
-          <CardActionChoiceMobX />
-          <ActionTargetSelectorMobX />
-          <RankDeclarationMobX />
-          <GameControlsMobX />
+          <GamePhaseIndicators />
+          <CardActionChoice />
+          <ActionTargetSelector />
+          <RankDeclaration />
+          <GameControls />
         </div>
       </div>
     </div>
