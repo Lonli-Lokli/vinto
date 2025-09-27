@@ -6,7 +6,6 @@ import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 
 export const GamePhaseIndicators = observer(() => {
-
   return (
     <>
       {/* Setup Phase Instructions */}

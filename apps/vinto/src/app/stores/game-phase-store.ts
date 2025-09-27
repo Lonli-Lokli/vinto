@@ -14,7 +14,6 @@ export type GameSubPhase =
   | 'declaring_rank'
   | 'ai_thinking';
 
-
 export class GamePhaseStore {
   phase: GamePhase = 'setup';
   subPhase: GameSubPhase = 'idle';
@@ -34,24 +33,70 @@ export class GamePhaseStore {
       // Define valid transitions based on game flow
       const validTransitions: Record<string, string[]> = {
         'setup.idle': ['playing.idle'],
-        'playing.idle': ['playing.drawing', 'final.idle', 'scoring.idle'],
+        'playing.idle': [
+          'playing.drawing',
+          'playing.choosing',
+          'playing.ai_thinking',
+          'playing.tossing',
+          'playing.processing',
+          'playing.awaiting_action',
+          'playing.idle',
+          'final.idle',
+          'scoring.idle',
+        ],
         'playing.drawing': ['playing.choosing'],
-        'playing.choosing': ['playing.selecting', 'playing.tossing', 'playing.awaiting_action'],
-        'playing.selecting': ['playing.declaring_rank', 'playing.tossing'],
-        'playing.declaring_rank': ['playing.tossing'],
+        'playing.choosing': [
+          'playing.selecting',
+          'playing.tossing',
+          'playing.awaiting_action',
+          'playing.idle',
+        ],
+        'playing.selecting': [
+          'playing.declaring_rank',
+          'playing.tossing',
+          'playing.idle',
+        ],
+        'playing.declaring_rank': ['playing.tossing', 'playing.idle'],
         'playing.tossing': ['playing.processing', 'playing.idle'],
         'playing.processing': ['playing.awaiting_action', 'playing.idle'],
         'playing.awaiting_action': ['playing.tossing', 'playing.idle'],
-        'playing.ai_thinking': ['playing.tossing'],
-        'final.idle': ['final.drawing', 'scoring.idle'],
+        'playing.ai_thinking': ['playing.tossing', 'playing.idle'],
+        'final.idle': [
+          'final.drawing',
+          'final.choosing',
+          'final.ai_thinking',
+          'final.tossing',
+          'final.processing',
+          'final.awaiting_action',
+          'final.idle',
+          'scoring.idle',
+        ],
         'final.drawing': ['final.choosing'],
-        'final.choosing': ['final.selecting', 'final.tossing', 'final.awaiting_action'],
-        'final.selecting': ['final.declaring_rank', 'final.tossing'],
-        'final.declaring_rank': ['final.tossing'],
-        'final.tossing': ['final.processing', 'scoring.idle'],
-        'final.processing': ['final.awaiting_action', 'scoring.idle'],
-        'final.awaiting_action': ['final.tossing', 'scoring.idle'],
-        'scoring.idle': []
+        'final.choosing': [
+          'final.selecting',
+          'final.tossing',
+          'final.awaiting_action',
+          'final.idle',
+        ],
+        'final.selecting': [
+          'final.declaring_rank',
+          'final.tossing',
+          'final.idle',
+        ],
+        'final.declaring_rank': ['final.tossing', 'final.idle'],
+        'final.tossing': ['final.processing', 'final.idle', 'scoring.idle'],
+        'final.processing': [
+          'final.awaiting_action',
+          'final.idle',
+          'scoring.idle',
+        ],
+        'final.awaiting_action': [
+          'final.tossing',
+          'final.idle',
+          'scoring.idle',
+        ],
+        'final.ai_thinking': ['final.tossing', 'final.idle'],
+        'scoring.idle': [],
       };
 
       return validTransitions[currentState]?.includes(newState) ?? false;
@@ -63,7 +108,9 @@ export class GamePhaseStore {
       this.phase = newPhase;
       this.subPhase = newSubPhase;
     } else {
-      console.warn(`Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`);
+      console.warn(
+        `Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
+      );
     }
   }
 

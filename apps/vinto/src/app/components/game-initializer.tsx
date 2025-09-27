@@ -13,7 +13,6 @@ export const GameInitializer = observer(() => {
     }
   }, []);
 
-
   // Loading state
   if (!gameStore.sessionActive || gameStore.players.length === 0) {
     return (

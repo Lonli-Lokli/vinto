@@ -8,7 +8,14 @@ import { ActionStore } from './action-store';
 import { CardActionHandler } from './card-action-handler';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
-import { GameState, AIMove, Difficulty, TossInTime, Card, Rank } from '../shapes';
+import {
+  GameState,
+  AIMove,
+  Difficulty,
+  TossInTime,
+  Card,
+  Rank,
+} from '../shapes';
 
 export class GameStore implements GameState {
   // Individual stores
@@ -160,16 +167,18 @@ export class GameStore implements GameState {
       const humanPlayerIndex = this.playerStore.humanPlayerIndex;
       const prevIndex = this.playerStore.previousPlayerIndex;
 
-      return this.phaseStore.isGameActive &&
-             !this.phaseStore.finalTurnTriggered &&
-             !this.playerStore.isCurrentPlayerHuman &&
-             !this.aiThinking &&
-             !this.phaseStore.isWaitingForTossIn &&
-             !this.phaseStore.isSelectingSwapPosition &&
-             !this.phaseStore.isChoosingCardAction &&
-             !this.phaseStore.isAwaitingActionTarget &&
-             !this.phaseStore.isDeclaringRank &&
-             prevIndex === humanPlayerIndex;
+      return (
+        this.phaseStore.isGameActive &&
+        !this.phaseStore.finalTurnTriggered &&
+        !this.playerStore.isCurrentPlayerHuman &&
+        !this.aiThinking &&
+        !this.phaseStore.isWaitingForTossIn &&
+        !this.phaseStore.isSelectingSwapPosition &&
+        !this.phaseStore.isChoosingCardAction &&
+        !this.phaseStore.isAwaitingActionTarget &&
+        !this.phaseStore.isDeclaringRank &&
+        prevIndex === humanPlayerIndex
+      );
     }).get();
   }
 
@@ -190,16 +199,20 @@ export class GameStore implements GameState {
         this.playerStore.clearTemporaryCardVisibility();
 
         // Handle AI turns
-        if (currentPlayer &&
-            !currentPlayer.isHuman &&
-            !this.aiThinking &&
-            this.sessionActive &&
-            this.phaseStore.isIdle) {
+        if (
+          currentPlayer &&
+          !currentPlayer.isHuman &&
+          !this.aiThinking &&
+          this.sessionActive &&
+          this.phaseStore.isIdle
+        ) {
           // Schedule AI move after delay
           setTimeout(() => {
-            if (this.playerStore.currentPlayer === currentPlayer &&
-                !this.aiThinking &&
-                this.sessionActive) {
+            if (
+              this.playerStore.currentPlayer === currentPlayer &&
+              !this.aiThinking &&
+              this.sessionActive
+            ) {
               this.makeAIMove(this.difficulty);
             }
           }, this.tossInTimeConfig * 1000);
@@ -215,6 +228,7 @@ export class GameStore implements GameState {
 
       // Initialize players with dealt cards
       this.playerStore.initializePlayers(deck, this.difficulty);
+      this.deckStore.setDrawPileAfterDealing(deck);
 
       // Set initial game state
       this.gameId = `game-${Date.now()}`;
@@ -320,7 +334,9 @@ export class GameStore implements GameState {
     this.actionStore.setSwapPosition(position);
     this.phaseStore.startDeclaringRank();
 
-    GameToastService.info('Choose to declare the card rank or skip declaration');
+    GameToastService.info(
+      'Choose to declare the card rank or skip declaration'
+    );
   }
 
   // Action execution
@@ -361,7 +377,11 @@ export class GameStore implements GameState {
       );
 
       // Perform the swap
-      const replacedCard = this.playerStore.replaceCard(currentPlayer.id, swapPosition, pendingCard);
+      const replacedCard = this.playerStore.replaceCard(
+        currentPlayer.id,
+        swapPosition,
+        pendingCard
+      );
       if (replacedCard) {
         this.deckStore.discardCard(replacedCard);
 
@@ -378,7 +398,11 @@ export class GameStore implements GameState {
       );
 
       // Perform swap and add penalty
-      const replacedCard = this.playerStore.replaceCard(currentPlayer.id, swapPosition, pendingCard);
+      const replacedCard = this.playerStore.replaceCard(
+        currentPlayer.id,
+        swapPosition,
+        pendingCard
+      );
       if (replacedCard) {
         this.deckStore.discardCard(replacedCard);
       }
@@ -409,7 +433,11 @@ export class GameStore implements GameState {
 
     GameToastService.info('Skipped declaration. Card swapped without action.');
 
-    const replacedCard = this.playerStore.replaceCard(currentPlayer.id, swapPosition, pendingCard);
+    const replacedCard = this.playerStore.replaceCard(
+      currentPlayer.id,
+      swapPosition,
+      pendingCard
+    );
     if (replacedCard) {
       this.deckStore.discardCard(replacedCard);
     }
@@ -441,7 +469,10 @@ export class GameStore implements GameState {
     }
 
     this.tossInInterval = setInterval(() => {
-      if (!this.phaseStore.isWaitingForTossIn || this.actionStore.tossInTimer <= 0) {
+      if (
+        !this.phaseStore.isWaitingForTossIn ||
+        this.actionStore.tossInTimer <= 0
+      ) {
         if (this.tossInInterval) {
           clearInterval(this.tossInInterval);
           this.tossInInterval = null;
@@ -465,8 +496,9 @@ export class GameStore implements GameState {
       // Bot participation logic
       const discardedRank = this.deckStore.peekTopDiscard()?.rank;
       if (discardedRank) {
-        this.playerStore.botPlayers.forEach(player => {
-          if (Math.random() < 0.3) { // 30% chance bot tosses in
+        this.playerStore.botPlayers.forEach((player) => {
+          if (Math.random() < 0.3) {
+            // 30% chance bot tosses in
             player.cards.forEach((card, position) => {
               if (card.rank === discardedRank && Math.random() < 0.5) {
                 this.tossInCard(player.id, position);
@@ -484,7 +516,12 @@ export class GameStore implements GameState {
     const player = this.playerStore.getPlayer(playerId);
     const topDiscard = this.deckStore.peekTopDiscard();
 
-    if (!player || !topDiscard || !this.playerStore.isValidCardPosition(playerId, position)) return;
+    if (
+      !player ||
+      !topDiscard ||
+      !this.playerStore.isValidCardPosition(playerId, position)
+    )
+      return;
 
     const tossedCard = player.cards[position];
     if (!this.deckStore.canTossIn(tossedCard)) {
@@ -493,14 +530,19 @@ export class GameStore implements GameState {
         const penaltyCard = this.deckStore.drawCard();
         if (penaltyCard) {
           this.playerStore.addCardToPlayer(playerId, penaltyCard);
-          GameToastService.error(`${player.name}'s toss-in failed - penalty card drawn`);
+          GameToastService.error(
+            `${player.name}'s toss-in failed - penalty card drawn`
+          );
         }
       }
       return;
     }
 
     // Correct toss-in
-    const removedCard = this.playerStore.removeCardFromPlayer(playerId, position);
+    const removedCard = this.playerStore.removeCardFromPlayer(
+      playerId,
+      position
+    );
     if (removedCard) {
       this.deckStore.discardCard(removedCard);
 
@@ -539,7 +581,9 @@ export class GameStore implements GameState {
     }
 
     if (player.isHuman) {
-      GameToastService.info(`You can execute ${card.rank} action (${card.action})`);
+      GameToastService.info(
+        `You can execute ${card.rank} action (${card.action})`
+      );
     }
 
     // For AI players, decide whether to use the action
@@ -579,9 +623,17 @@ export class GameStore implements GameState {
     this.updateVintoCallAvailability();
 
     // Check for game end
-    if (this.phaseStore.finalTurnTriggered && this.playerStore.currentPlayerIndex === 0) {
+    if (
+      this.phaseStore.finalTurnTriggered &&
+      this.playerStore.currentPlayerIndex === 0
+    ) {
       this.phaseStore.startScoring();
     }
+  }
+
+  // MobX actions for AI state
+  setAIThinking(thinking: boolean) {
+    this.aiThinking = thinking;
   }
 
   // AI moves
@@ -590,12 +642,16 @@ export class GameStore implements GameState {
       const currentPlayer = this.playerStore.currentPlayer;
       if (!currentPlayer || currentPlayer.isHuman || this.aiThinking) return;
 
-      this.aiThinking = true;
+      this.setAIThinking(true);
       this.phaseStore.startAIThinking();
       this.updateVintoCallAvailability();
 
       try {
-        const move = await this.oracle.requestAIMove(this, currentPlayer.id, difficulty as Difficulty);
+        const move = await this.oracle.requestAIMove(
+          this,
+          currentPlayer.id,
+          difficulty as Difficulty
+        );
         this.currentMove = move;
 
         // Execute AI move logic
@@ -604,9 +660,15 @@ export class GameStore implements GameState {
           if (drawnCard) {
             const worstCard = this.playerStore.getCurrentPlayerWorstKnownCard();
 
-            if (worstCard && drawnCard.value < worstCard.value && worstCard.value > 3) {
+            if (
+              worstCard &&
+              drawnCard.value < worstCard.value &&
+              worstCard.value > 3
+            ) {
               const replacedCard = this.playerStore.replaceCard(
-                currentPlayer.id, worstCard.position, drawnCard
+                currentPlayer.id,
+                worstCard.position,
+                drawnCard
               );
               if (replacedCard) {
                 this.deckStore.discardCard(replacedCard);
@@ -621,12 +683,12 @@ export class GameStore implements GameState {
       } catch {
         this.advanceTurn();
       } finally {
-        this.aiThinking = false;
+        this.setAIThinking(false);
         this.phaseStore.returnToIdle();
       }
     } catch (error) {
       console.error('Error in makeAIMove:', error);
-      this.aiThinking = false;
+      this.setAIThinking(false);
       this.phaseStore.returnToIdle();
     }
   }

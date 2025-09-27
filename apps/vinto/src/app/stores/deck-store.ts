@@ -15,9 +15,13 @@ export class DeckStore {
   // Deck initialization
   initializeDeck(): Card[] {
     const deck = shuffleDeck(createDeck());
-    this.drawPile = deck;
     this.discardPile = [];
-    return [...deck]; // Return copy for player distribution
+    return deck; // Return for player distribution, drawPile will be set after dealing
+  }
+
+  // Set the remaining cards as draw pile after dealing to players
+  setDrawPileAfterDealing(remainingCards: Card[]) {
+    this.drawPile = remainingCards;
   }
 
   // Draw pile operations
@@ -61,7 +65,7 @@ export class DeckStore {
   }
 
   discardCards(cards: Card[]) {
-    cards.forEach(card => this.discardCard(card));
+    cards.forEach((card) => this.discardCard(card));
   }
 
   takeFromDiscard(): Card | null {
@@ -97,7 +101,7 @@ export class DeckStore {
     const cardsToShuffle = [...this.discardPile];
 
     // Reset played status for reshuffled cards
-    cardsToShuffle.forEach(card => {
+    cardsToShuffle.forEach((card) => {
       card.played = false;
     });
 
@@ -124,12 +128,14 @@ export class DeckStore {
   }
 
   findCard(cardId: string): { pile: 'draw' | 'discard'; index: number } | null {
-    const drawIndex = this.drawPile.findIndex(card => card.id === cardId);
+    const drawIndex = this.drawPile.findIndex((card) => card.id === cardId);
     if (drawIndex !== -1) {
       return { pile: 'draw', index: drawIndex };
     }
 
-    const discardIndex = this.discardPile.findIndex(card => card.id === cardId);
+    const discardIndex = this.discardPile.findIndex(
+      (card) => card.id === cardId
+    );
     if (discardIndex !== -1) {
       return { pile: 'discard', index: discardIndex };
     }
@@ -161,14 +167,16 @@ export class DeckStore {
 
   // Debugging helpers
   getDiscardHistory(): string[] {
-    return this.discardPile.map(card => `${card.rank}${card.action ? '*' : ''}`);
+    return this.discardPile.map(
+      (card) => `${card.rank}${card.action ? '*' : ''}`
+    );
   }
 
   getPileStats(): { draw: number; discard: number; total: number } {
     return {
       draw: this.drawPile.length,
       discard: this.discardPile.length,
-      total: this.getTotalCardCount()
+      total: this.getTotalCardCount(),
     };
   }
 
@@ -181,7 +189,7 @@ export class DeckStore {
   // Validation
   validateDeckIntegrity(): boolean {
     const allCards = this.getAllCards();
-    const uniqueIds = new Set(allCards.map(card => card.id));
+    const uniqueIds = new Set(allCards.map((card) => card.id));
 
     // Check for duplicates
     if (uniqueIds.size !== allCards.length) {

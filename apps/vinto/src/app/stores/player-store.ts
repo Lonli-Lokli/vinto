@@ -20,19 +20,21 @@ export class PlayerStore {
   }
 
   get humanPlayer(): Player | null {
-    return this.players.find(p => p.isHuman) || null;
+    return this.players.find((p) => p.isHuman) || null;
   }
 
   get botPlayers(): Player[] {
-    return this.players.filter(p => !p.isHuman);
+    return this.players.filter((p) => !p.isHuman);
   }
 
   get humanPlayerIndex(): number {
-    return this.players.findIndex(p => p.isHuman);
+    return this.players.findIndex((p) => p.isHuman);
   }
 
   get previousPlayerIndex(): number {
-    return (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
+    return (
+      (this.currentPlayerIndex - 1 + this.players.length) % this.players.length
+    );
   }
 
   get previousPlayer(): Player | null {
@@ -101,11 +103,11 @@ export class PlayerStore {
     ];
 
     // Give bots initial knowledge based on difficulty
-    this.botPlayers.forEach(player => {
+    this.botPlayers.forEach((player) => {
       const aiKnowledge = getAIKnowledgeByDifficulty(difficulty);
       Array.from({ length: player.cards.length }, (_, i) => i)
         .filter(() => Math.random() < aiKnowledge)
-        .forEach(pos => player.knownCardPositions.add(pos));
+        .forEach((pos) => player.knownCardPositions.add(pos));
     });
 
     this.currentPlayerIndex = 0;
@@ -115,7 +117,7 @@ export class PlayerStore {
 
   // Player management
   getPlayer(playerId: string): Player | null {
-    return this.players.find(p => p.id === playerId) || null;
+    return this.players.find((p) => p.id === playerId) || null;
   }
 
   getPlayerByIndex(index: number): Player | null {
@@ -123,17 +125,18 @@ export class PlayerStore {
   }
 
   getOpponents(playerId: string): Player[] {
-    return this.players.filter(p => p.id !== playerId);
+    return this.players.filter((p) => p.id !== playerId);
   }
 
   // Turn management
   advancePlayer() {
     this.turnCount++;
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+    this.currentPlayerIndex =
+      (this.currentPlayerIndex + 1) % this.players.length;
   }
 
   setCurrentPlayer(playerId: string) {
-    const index = this.players.findIndex(p => p.id === playerId);
+    const index = this.players.findIndex((p) => p.id === playerId);
     if (index !== -1) {
       this.currentPlayerIndex = index;
     }
@@ -160,7 +163,7 @@ export class PlayerStore {
   }
 
   clearTemporaryCardVisibility() {
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       player.temporarilyVisibleCards.clear();
     });
   }
@@ -188,7 +191,7 @@ export class PlayerStore {
 
     // Update known positions when removing a card
     const updatedKnown = new Set<number>();
-    player.knownCardPositions.forEach(idx => {
+    player.knownCardPositions.forEach((idx) => {
       if (idx === position) return;
       updatedKnown.add(idx > position ? idx - 1 : idx);
     });
@@ -197,13 +200,23 @@ export class PlayerStore {
     return player.cards.splice(position, 1)[0];
   }
 
-  swapCards(player1Id: string, pos1: number, player2Id: string, pos2: number): boolean {
+  swapCards(
+    player1Id: string,
+    pos1: number,
+    player2Id: string,
+    pos2: number
+  ): boolean {
     const player1 = this.getPlayer(player1Id);
     const player2 = this.getPlayer(player2Id);
 
-    if (!player1 || !player2 ||
-        pos1 < 0 || pos1 >= player1.cards.length ||
-        pos2 < 0 || pos2 >= player2.cards.length) {
+    if (
+      !player1 ||
+      !player2 ||
+      pos1 < 0 ||
+      pos1 >= player1.cards.length ||
+      pos2 < 0 ||
+      pos2 >= player2.cards.length
+    ) {
       return false;
     }
 
@@ -261,8 +274,11 @@ export class PlayerStore {
   calculatePlayerScores(): Record<string, number> {
     const scores: Record<string, number> = {};
 
-    this.players.forEach(player => {
-      const totalValue = player.cards.reduce((sum, card) => sum + card.value, 0);
+    this.players.forEach((player) => {
+      const totalValue = player.cards.reduce(
+        (sum, card) => sum + card.value,
+        0
+      );
       scores[player.id] = totalValue;
     });
 
@@ -284,7 +300,9 @@ export class PlayerStore {
       }
     });
 
-    return worstPosition !== -1 ? { position: worstPosition, value: worstValue } : null;
+    return worstPosition !== -1
+      ? { position: worstPosition, value: worstValue }
+      : null;
   }
 
   // Validation and utility

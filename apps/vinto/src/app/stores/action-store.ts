@@ -100,7 +100,7 @@ export class ActionStore {
   addSwapTarget(playerId: string, position: number): boolean {
     // Check if already selected (for deselection)
     const existingIndex = this.swapTargets.findIndex(
-      target => target.playerId === playerId && target.position === position
+      (target) => target.playerId === playerId && target.position === position
     );
 
     if (existingIndex !== -1) {
@@ -114,7 +114,10 @@ export class ActionStore {
     }
 
     // Check if trying to select second card from same player
-    if (this.swapTargets.length === 1 && this.swapTargets[0].playerId === playerId) {
+    if (
+      this.swapTargets.length === 1 &&
+      this.swapTargets[0].playerId === playerId
+    ) {
       return false;
     }
 
@@ -134,7 +137,7 @@ export class ActionStore {
   addPeekTarget(playerId: string, position: number, card?: Card): boolean {
     // Check if already selected (for deselection)
     const existingIndex = this.peekTargets.findIndex(
-      target => target.playerId === playerId && target.position === position
+      (target) => target.playerId === playerId && target.position === position
     );
 
     if (existingIndex !== -1) {
@@ -148,7 +151,10 @@ export class ActionStore {
     }
 
     // Check if trying to select second card from same player
-    if (this.peekTargets.length === 1 && this.peekTargets[0].playerId === playerId) {
+    if (
+      this.peekTargets.length === 1 &&
+      this.peekTargets[0].playerId === playerId
+    ) {
       return false;
     }
 
@@ -242,9 +248,11 @@ export class ActionStore {
   }
 
   get needsTargetSelection(): boolean {
-    return this.actionContext !== null &&
-           this.actionContext.targetType !== undefined &&
-           !this.hasRequiredTargets();
+    return (
+      this.actionContext !== null &&
+      this.actionContext.targetType !== undefined &&
+      !this.hasRequiredTargets()
+    );
   }
 
   private hasRequiredTargets(): boolean {
