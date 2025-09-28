@@ -15,11 +15,11 @@ export interface TossInAction {
 
 export class TossInStore {
   queue: TossInAction[] = [];
-  timer: number = 0;
+  timer = 0;
   timeConfig: TossInTime = 7;
-  isActive: boolean = false;
-  currentQueueIndex: number = 0;
-  originalCurrentPlayer: string = ''; // Track who's "real" turn it is
+  isActive = false;
+  currentQueueIndex = 0;
+  originalCurrentPlayer = ''; // Track who's "real" turn it is
 
   private interval: NodeJS.Timeout | null = null;
   private onCompleteCallback: (() => void) | null = null;
@@ -88,7 +88,8 @@ export class TossInStore {
     if (!discardedRank) return;
 
     this.playerStore.botPlayers.forEach((player) => {
-      if (Math.random() < 0.3) { // 30% chance bot tosses in
+      if (Math.random() < 0.3) {
+        // 30% chance bot tosses in
         player.cards.forEach((card, position) => {
           if (card.rank === discardedRank && Math.random() < 0.5) {
             this.tossInCard(player.id, position);
@@ -120,7 +121,10 @@ export class TossInStore {
     }
 
     // Correct toss-in
-    const removedCard = this.playerStore.removeCardFromPlayer(playerId, position);
+    const removedCard = this.playerStore.removeCardFromPlayer(
+      playerId,
+      position
+    );
     if (!removedCard) return false;
 
     this.deckStore.discardCard(removedCard);
@@ -138,7 +142,9 @@ export class TossInStore {
       const penaltyCard = this.deckStore.drawCard();
       if (penaltyCard) {
         this.playerStore.addCardToPlayer(playerId, penaltyCard);
-        GameToastService.error(`${playerName}'s toss-in failed - penalty card drawn`);
+        GameToastService.error(
+          `${playerName}'s toss-in failed - penalty card drawn`
+        );
       }
     }
   }
@@ -179,7 +185,9 @@ export class TossInStore {
     }
 
     if (player.isHuman) {
-      GameToastService.info(`You can execute ${card.rank} action (${card.action})`);
+      GameToastService.info(
+        `You can execute ${card.rank} action (${card.action})`
+      );
     }
 
     // For AI players, decide whether to use the action

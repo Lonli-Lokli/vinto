@@ -57,10 +57,20 @@ export class GamePhaseStore {
         ],
         'playing.declaring_rank': ['playing.toss_queue_active', 'playing.idle'],
         'playing.tossing': ['playing.toss_queue_active', 'playing.idle'], // Legacy support
-        'playing.toss_queue_active': ['playing.toss_queue_processing', 'playing.idle'],
-        'playing.toss_queue_processing': ['playing.awaiting_action', 'playing.toss_queue_active', 'playing.idle'],
+        'playing.toss_queue_active': [
+          'playing.toss_queue_processing',
+          'playing.idle',
+        ],
+        'playing.toss_queue_processing': [
+          'playing.awaiting_action',
+          'playing.toss_queue_active',
+          'playing.idle',
+        ],
         'playing.processing': ['playing.awaiting_action', 'playing.idle'], // Legacy support
-        'playing.awaiting_action': ['playing.toss_queue_processing', 'playing.idle'],
+        'playing.awaiting_action': [
+          'playing.toss_queue_processing',
+          'playing.idle',
+        ],
         'playing.ai_thinking': ['playing.toss_queue_active', 'playing.idle'],
         'final.idle': [
           'final.drawing',
@@ -157,7 +167,10 @@ export class GamePhaseStore {
   }
 
   get isProcessingTossInQueue() {
-    return this.subPhase === 'processing' || this.subPhase === 'toss_queue_processing';
+    return (
+      this.subPhase === 'processing' ||
+      this.subPhase === 'toss_queue_processing'
+    );
   }
 
   get isTossQueueActive() {
@@ -169,7 +182,12 @@ export class GamePhaseStore {
   }
 
   get isInTossPhase() {
-    return this.isTossQueueActive || this.isTossQueueProcessing || this.isWaitingForTossIn || this.isProcessingTossInQueue;
+    return (
+      this.isTossQueueActive ||
+      this.isTossQueueProcessing ||
+      this.isWaitingForTossIn ||
+      this.isProcessingTossInQueue
+    );
   }
 
   get isAIThinking() {
