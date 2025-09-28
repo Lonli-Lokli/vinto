@@ -6,6 +6,7 @@ import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
 import { ActionStore } from './action-store';
 import { CardActionHandler } from './card-action-handler';
+import { TossInStore } from './toss-in-store';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
 import {
@@ -24,6 +25,7 @@ export class GameStore implements GameState {
   deckStore: DeckStore;
   actionStore: ActionStore;
   actionHandler: CardActionHandler;
+  tossInStore: TossInStore;
 
   // Game state properties from original interface
   gameId = '';
@@ -42,8 +44,7 @@ export class GameStore implements GameState {
   // Vinto call availability
   canCallVintoAfterHumanTurn = false;
 
-  // Intervals and reactions
-  private tossInInterval: NodeJS.Timeout | null = null;
+  // Reactions
   private aiTurnReaction: (() => void) | null = null;
 
   constructor() {
@@ -60,6 +61,19 @@ export class GameStore implements GameState {
       this.deckStore,
       this.phaseStore
     );
+
+    // Initialize toss-in store
+    this.tossInStore = new TossInStore(
+      this.playerStore,
+      this.deckStore,
+      this.phaseStore,
+      this.actionHandler
+    );
+
+    // Set callback for when toss-in processing completes
+    this.tossInStore.setCompleteCallback(() => {
+      this.advanceTurn();
+    });
 
     // Initialize Oracle client
     this.oracle = new OracleVintoClient();
@@ -146,19 +160,19 @@ export class GameStore implements GameState {
   }
 
   get waitingForTossIn() {
-    return this.phaseStore.isWaitingForTossIn;
+    return this.tossInStore.isActive;
   }
 
   get tossInTimer() {
-    return this.actionStore.tossInTimer;
+    return this.tossInStore.timer;
   }
 
   get tossInQueue() {
-    return this.actionStore.tossInQueue;
+    return this.tossInStore.queue;
   }
 
   get isProcessingTossInQueue() {
-    return this.phaseStore.isProcessingTossInQueue;
+    return this.tossInStore.isProcessingQueue;
   }
 
   // Computed values for Vinto call availability
@@ -172,7 +186,7 @@ export class GameStore implements GameState {
         !this.phaseStore.finalTurnTriggered &&
         !this.playerStore.isCurrentPlayerHuman &&
         !this.aiThinking &&
-        !this.phaseStore.isWaitingForTossIn &&
+        this.phaseStore.canCallVinto && // Use phase store's Vinto restriction logic
         !this.phaseStore.isSelectingSwapPosition &&
         !this.phaseStore.isChoosingCardAction &&
         !this.phaseStore.isAwaitingActionTarget &&
@@ -237,6 +251,7 @@ export class GameStore implements GameState {
 
       this.phaseStore.reset();
       this.actionStore.reset();
+      this.tossInStore.reset();
 
       GameToastService.success('New game started! Memorize 2 of your cards.');
     } catch (error) {
@@ -252,6 +267,7 @@ export class GameStore implements GameState {
 
   updateTossInTime(time: TossInTime) {
     this.tossInTimeConfig = time;
+    this.tossInStore.setTimeConfig(time);
   }
 
   // Game phase transitions
@@ -286,6 +302,7 @@ export class GameStore implements GameState {
       return;
     }
 
+    this.phaseStore.startDrawing();
     const drawnCard = this.deckStore.drawCard();
     if (drawnCard) {
       this.actionStore.pendingCard = drawnCard;
@@ -461,163 +478,36 @@ export class GameStore implements GameState {
 
   // Toss-in mechanics
   startTossInPeriod() {
-    this.phaseStore.startTossIn();
-    this.actionStore.setTossInTimer(this.tossInTimeConfig);
-
-    if (this.tossInInterval) {
-      clearInterval(this.tossInInterval);
+    const currentPlayer = this.playerStore.currentPlayer;
+    if (currentPlayer) {
+      this.tossInStore.startTossInPeriod(currentPlayer.id);
     }
-
-    this.tossInInterval = setInterval(() => {
-      if (
-        !this.phaseStore.isWaitingForTossIn ||
-        this.actionStore.tossInTimer <= 0
-      ) {
-        if (this.tossInInterval) {
-          clearInterval(this.tossInInterval);
-          this.tossInInterval = null;
-        }
-
-        if (this.actionStore.tossInTimer <= 0) {
-          this.phaseStore.returnToIdle();
-          this.actionStore.setTossInTimer(0);
-
-          if (this.actionStore.hasTossInActions) {
-            this.processTossInQueue();
-          } else {
-            this.advanceTurn();
-          }
-        }
-        return;
-      }
-
-      this.actionStore.decrementTossInTimer();
-
-      // Bot participation logic
-      const discardedRank = this.deckStore.peekTopDiscard()?.rank;
-      if (discardedRank) {
-        this.playerStore.botPlayers.forEach((player) => {
-          if (Math.random() < 0.3) {
-            // 30% chance bot tosses in
-            player.cards.forEach((card, position) => {
-              if (card.rank === discardedRank && Math.random() < 0.5) {
-                this.tossInCard(player.id, position);
-              }
-            });
-          }
-        });
-      }
-    }, 1000);
   }
 
   tossInCard(playerId: string, position: number) {
-    if (!this.phaseStore.isWaitingForTossIn) return;
-
-    const player = this.playerStore.getPlayer(playerId);
-    const topDiscard = this.deckStore.peekTopDiscard();
-
-    if (
-      !player ||
-      !topDiscard ||
-      !this.playerStore.isValidCardPosition(playerId, position)
-    )
-      return;
-
-    const tossedCard = player.cards[position];
-    if (!this.deckStore.canTossIn(tossedCard)) {
-      // Incorrect toss-in: penalty card
-      if (this.deckStore.hasDrawCards) {
-        const penaltyCard = this.deckStore.drawCard();
-        if (penaltyCard) {
-          this.playerStore.addCardToPlayer(playerId, penaltyCard);
-          GameToastService.error(
-            `${player.name}'s toss-in failed - penalty card drawn`
-          );
-        }
-      }
-      return;
-    }
-
-    // Correct toss-in
-    const removedCard = this.playerStore.removeCardFromPlayer(
-      playerId,
-      position
-    );
-    if (removedCard) {
-      this.deckStore.discardCard(removedCard);
-
-      if (removedCard.action) {
-        this.actionStore.addToTossInQueue(playerId, removedCard);
-      }
-
-      GameToastService.success(`${player.name} tossed in ${removedCard.rank}!`);
-    }
+    return this.tossInStore.tossInCard(playerId, position);
   }
 
   processTossInQueue() {
-    if (!this.actionStore.hasTossInActions) {
-      this.advanceTurn();
-      return;
-    }
-
-    this.phaseStore.startProcessingTossIn();
-    this.processNextTossInAction();
+    // This method is now handled internally by TossInStore
+    // No longer need to manually call advanceTurn as it's handled by callback
   }
 
   processNextTossInAction() {
-    const currentAction = this.actionStore.currentTossInAction;
-    if (!currentAction) {
-      this.finishTossInQueueProcessing();
-      return;
-    }
-
-    const { playerId, card } = currentAction;
-    const player = this.playerStore.getPlayer(playerId);
-
-    if (!player) {
-      this.actionStore.removeFromTossInQueue();
-      this.processNextTossInAction();
-      return;
-    }
-
-    if (player.isHuman) {
-      GameToastService.info(
-        `You can execute ${card.rank} action (${card.action})`
-      );
-    }
-
-    // For AI players, decide whether to use the action
-    if (!player.isHuman && Math.random() < 0.3) {
-      this.skipCurrentTossInAction();
-      return;
-    }
-
-    this.actionHandler.executeCardAction(card, playerId);
+    this.tossInStore.processNextAction();
   }
 
   skipCurrentTossInAction() {
-    const currentAction = this.actionStore.currentTossInAction;
-    if (!currentAction) return;
-
-    const player = this.playerStore.getPlayer(currentAction.playerId);
-    if (player?.isHuman) {
-      GameToastService.info(`You skipped ${currentAction.card.rank} action`);
-    }
-
-    this.actionStore.removeFromTossInQueue();
-    this.processNextTossInAction();
+    this.tossInStore.skipCurrentAction();
   }
 
   finishTossInQueueProcessing() {
-    this.phaseStore.returnToIdle();
-    this.actionStore.clearTossInQueue();
-    this.actionStore.clearAction();
-    this.advanceTurn();
+    this.tossInStore.completeCurrentAction();
   }
 
   // Turn management
   private advanceTurn() {
-    if (this.aiThinking || this.actionStore.hasTossInActions) return;
+    if (this.aiThinking || this.tossInStore.hasTossInActions) return;
 
     this.playerStore.advancePlayer();
     this.updateVintoCallAvailability();
@@ -714,10 +604,7 @@ export class GameStore implements GameState {
       this.aiTurnReaction();
       this.aiTurnReaction = null;
     }
-    if (this.tossInInterval) {
-      clearInterval(this.tossInInterval);
-      this.tossInInterval = null;
-    }
+    this.tossInStore.dispose();
   }
 }
 

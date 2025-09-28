@@ -12,7 +12,9 @@ export type GameSubPhase =
   | 'processing'
   | 'awaiting_action'
   | 'declaring_rank'
-  | 'ai_thinking';
+  | 'ai_thinking'
+  | 'toss_queue_active'
+  | 'toss_queue_processing';
 
 export class GamePhaseStore {
   phase: GamePhase = 'setup';
@@ -35,11 +37,7 @@ export class GamePhaseStore {
         'setup.idle': ['playing.idle'],
         'playing.idle': [
           'playing.drawing',
-          'playing.choosing',
           'playing.ai_thinking',
-          'playing.tossing',
-          'playing.processing',
-          'playing.awaiting_action',
           'playing.idle',
           'final.idle',
           'scoring.idle',
@@ -55,12 +53,15 @@ export class GamePhaseStore {
           'playing.declaring_rank',
           'playing.tossing',
           'playing.idle',
+          'playing.choosing', // Allow return to choosing when user changes mind
         ],
-        'playing.declaring_rank': ['playing.tossing', 'playing.idle'],
-        'playing.tossing': ['playing.processing', 'playing.idle'],
-        'playing.processing': ['playing.awaiting_action', 'playing.idle'],
-        'playing.awaiting_action': ['playing.tossing', 'playing.idle'],
-        'playing.ai_thinking': ['playing.tossing', 'playing.idle'],
+        'playing.declaring_rank': ['playing.toss_queue_active', 'playing.idle'],
+        'playing.tossing': ['playing.toss_queue_active', 'playing.idle'], // Legacy support
+        'playing.toss_queue_active': ['playing.toss_queue_processing', 'playing.idle'],
+        'playing.toss_queue_processing': ['playing.awaiting_action', 'playing.toss_queue_active', 'playing.idle'],
+        'playing.processing': ['playing.awaiting_action', 'playing.idle'], // Legacy support
+        'playing.awaiting_action': ['playing.toss_queue_processing', 'playing.idle'],
+        'playing.ai_thinking': ['playing.toss_queue_active', 'playing.idle'],
         'final.idle': [
           'final.drawing',
           'final.choosing',
@@ -156,11 +157,28 @@ export class GamePhaseStore {
   }
 
   get isProcessingTossInQueue() {
-    return this.subPhase === 'processing';
+    return this.subPhase === 'processing' || this.subPhase === 'toss_queue_processing';
+  }
+
+  get isTossQueueActive() {
+    return this.subPhase === 'toss_queue_active';
+  }
+
+  get isTossQueueProcessing() {
+    return this.subPhase === 'toss_queue_processing';
+  }
+
+  get isInTossPhase() {
+    return this.isTossQueueActive || this.isTossQueueProcessing || this.isWaitingForTossIn || this.isProcessingTossInQueue;
   }
 
   get isAIThinking() {
     return this.subPhase === 'ai_thinking';
+  }
+
+  get canCallVinto() {
+    // Vinto can only be called during normal turn progression, not during any toss-in processing
+    return this.isIdle && !this.isInTossPhase;
   }
 
   // State update methods
@@ -198,6 +216,14 @@ export class GamePhaseStore {
 
   startProcessingTossIn() {
     this.transitionTo(this.phase, 'processing');
+  }
+
+  startTossQueueActive() {
+    this.transitionTo(this.phase, 'toss_queue_active');
+  }
+
+  startTossQueueProcessing() {
+    this.transitionTo(this.phase, 'toss_queue_processing');
   }
 
   startAIThinking() {
