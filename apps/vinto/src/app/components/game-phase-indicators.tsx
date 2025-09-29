@@ -9,7 +9,7 @@ export const GamePhaseIndicators = observer(() => {
   return (
     <>
       {/* Setup Phase Instructions */}
-      {gameStore.phase === 'setup' && (
+      {gameStore.phase === 'setup' && gameStore.sessionActive && (
         <div className="mt-4 sm:mt-6 mx-auto max-w-lg bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 shadow-lg mx-2">
           <div className="text-center">
             <div className="text-lg font-semibold text-blue-800 mb-2">

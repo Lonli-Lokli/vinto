@@ -6,7 +6,8 @@ import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
 import { ActionStore } from './action-store';
 import { CardActionHandler } from './card-action-handler';
-import { TossInStore } from './toss-in-store';
+import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
+import { timerService } from '../services/timer-service';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
 import {
@@ -63,17 +64,31 @@ export class GameStore implements GameState {
     );
 
     // Initialize toss-in store
-    this.tossInStore = new TossInStore(
-      this.playerStore,
-      this.deckStore,
-      this.phaseStore,
-      this.actionHandler
-    );
+    this.tossInStore = new TossInStore();
 
-    // Set callback for when toss-in processing completes
-    this.tossInStore.setCompleteCallback(() => {
-      this.advanceTurn();
-    });
+    // Set up toss-in store callbacks
+    const tossInCallbacks: TossInStoreCallbacks = {
+      onTimerTick: () => this.handleTossInTimerTick(),
+      onComplete: () => this.handleTossInComplete(),
+      onActionExecute: (playerId, card) =>
+        this.actionHandler.executeCardAction(card, playerId),
+      onToastMessage: (type, message) => {
+        switch (type) {
+          case 'success':
+            GameToastService.success(message);
+            break;
+          case 'error':
+            GameToastService.error(message);
+            break;
+          case 'info':
+            GameToastService.info(message);
+            break;
+        }
+      },
+      onPenaltyCard: (playerId) => this.handleTossInPenalty(playerId),
+    };
+
+    this.tossInStore.setCallbacks(tossInCallbacks);
 
     // Initialize Oracle client
     this.oracle = new OracleVintoClient();
@@ -112,6 +127,19 @@ export class GameStore implements GameState {
 
   get finalTurnTriggered() {
     return this.phaseStore.finalTurnTriggered;
+  }
+
+  get isCurrentPlayerWaiting() {
+    return (
+      !this.isChoosingCardAction &&
+      !this.isAwaitingActionTarget &&
+      !this.isDeclaringRank &&
+      this.phase === 'playing' &&
+      this.players.find((p) => p.isHuman)?.id !==
+        this.players[this.currentPlayerIndex]?.id &&
+      !this.canCallVintoAfterHumanTurn &&
+      !this.isProcessingTossInQueue
+    );
   }
 
   // Derived state based on new stores
@@ -252,8 +280,6 @@ export class GameStore implements GameState {
       this.phaseStore.reset();
       this.actionStore.reset();
       this.tossInStore.reset();
-
-      GameToastService.success('New game started! Memorize 2 of your cards.');
     } catch (error) {
       console.error('Error initializing game:', error);
       GameToastService.error('Failed to start game. Please try again.');
@@ -480,12 +506,55 @@ export class GameStore implements GameState {
   startTossInPeriod() {
     const currentPlayer = this.playerStore.currentPlayer;
     if (currentPlayer) {
+      this.phaseStore.startTossQueueActive();
       this.tossInStore.startTossInPeriod(currentPlayer.id);
+
+      // Start external timer
+      timerService.startTimer(
+        'toss-in',
+        () => {
+          this.tossInStore.tick();
+        },
+        1000
+      );
     }
   }
 
   tossInCard(playerId: string, position: number) {
-    return this.tossInStore.tossInCard(playerId, position);
+    const player = this.playerStore.getPlayer(playerId);
+    const topDiscard = this.deckStore.peekTopDiscard();
+
+    if (
+      !player ||
+      !topDiscard ||
+      !this.playerStore.isValidCardPosition(playerId, position)
+    ) {
+      return false;
+    }
+
+    const tossedCard = player.cards[position];
+    const validation = this.tossInStore.canTossIn(
+      playerId,
+      tossedCard,
+      topDiscard.rank
+    );
+
+    if (!validation.canToss) {
+      this.tossInStore.recordIncorrectTossIn(playerId);
+      return false;
+    }
+
+    // Remove card from player and discard it
+    const removedCard = this.playerStore.removeCardFromPlayer(
+      playerId,
+      position
+    );
+    if (!removedCard) return false;
+
+    this.deckStore.discardCard(removedCard);
+
+    // Record the successful toss-in
+    return this.tossInStore.recordTossIn(playerId, removedCard);
   }
 
   processTossInQueue() {
@@ -593,6 +662,46 @@ export class GameStore implements GameState {
     return this.playerStore.calculatePlayerScores();
   }
 
+  // Toss-in callback handlers
+  private handleTossInTimerTick() {
+    // Handle bot participation
+    this.handleBotTossInParticipation();
+  }
+
+  private handleTossInComplete() {
+    timerService.stopTimer('toss-in');
+    this.phaseStore.returnToIdle();
+    this.advanceTurn();
+  }
+
+  private handleTossInPenalty(playerId: string) {
+    if (this.deckStore.hasDrawCards) {
+      const penaltyCard = this.deckStore.drawCard();
+      if (penaltyCard) {
+        this.playerStore.addCardToPlayer(playerId, penaltyCard);
+      }
+    }
+  }
+
+  private handleBotTossInParticipation() {
+    const discardedRank = this.deckStore.peekTopDiscard()?.rank;
+    if (!discardedRank) return;
+
+    this.playerStore.botPlayers.forEach((player) => {
+      if (
+        Math.random() < 0.3 &&
+        !this.tossInStore.hasPlayerTossedIn(player.id)
+      ) {
+        // 30% chance bot tosses in
+        player.cards.forEach((card, position) => {
+          if (card.rank === discardedRank && Math.random() < 0.5) {
+            this.tossInCard(player.id, position);
+          }
+        });
+      }
+    });
+  }
+
   // Helper methods
   updateVintoCallAvailability() {
     this.canCallVintoAfterHumanTurn = this.canCallVinto;
@@ -604,7 +713,8 @@ export class GameStore implements GameState {
       this.aiTurnReaction();
       this.aiTurnReaction = null;
     }
-    this.tossInStore.dispose();
+    timerService.stopAllTimers();
+    this.tossInStore.reset();
   }
 }
 

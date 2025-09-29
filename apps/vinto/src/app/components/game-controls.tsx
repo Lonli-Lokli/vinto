@@ -22,8 +22,8 @@ export const GameControls = observer(() => {
 
   if (isHumanTossInAction) {
     return (
-      <div className="max-w-lg mx-auto px-2">
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-2 sm:p-3 shadow-md">
+      <div className="max-w-lg mx-auto px-3 py-2">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-800">
               Toss-in Action: {gameStore.tossInQueue[0]?.card.rank} (
@@ -88,8 +88,8 @@ export const GameControls = observer(() => {
   // Show vinto-only controls during bot delay
   if (showVintoOnly) {
     return (
-      <div className="max-w-lg mx-auto px-2">
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-2 sm:p-3 shadow-md">
+      <div className="max-w-lg mx-auto px-3 py-2">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg">
           <div className="flex items-center justify-center mb-2">
             <h3 className="text-sm font-semibold text-gray-800">
               Call Vinto before next player&apos;s turn
@@ -112,8 +112,8 @@ export const GameControls = observer(() => {
 
   // Show full controls for human player's turn
   return (
-    <div className="max-w-lg mx-auto px-2">
-      <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-2 sm:p-3 shadow-md">
+    <div className="max-w-lg mx-auto px-3 py-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-800">Your turn</h3>
           <div className="text-[10px] text-gray-500">Choose one</div>

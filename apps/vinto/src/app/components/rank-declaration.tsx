@@ -5,6 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 import { Rank } from '../shapes';
+import { ALL_RANKS } from '../lib/game-helpers';
 
 export const RankDeclaration = observer(() => {
   if (!gameStore.isDeclaringRank || gameStore.swapPosition === null) {
@@ -14,21 +15,7 @@ export const RankDeclaration = observer(() => {
   const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
   if (!currentPlayer) return null;
 
-  const ranks: Rank[] = [
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    'J',
-    'Q',
-    'K',
-    'A',
-  ];
+
 
   const handleRankClick = (rank: Rank) => {
     gameStore.declareRank(rank);
@@ -58,7 +45,7 @@ export const RankDeclaration = observer(() => {
 
         {/* Rank Selection Grid */}
         <div className="grid grid-cols-4 gap-1.5 mb-3">
-          {ranks.map((rank) => (
+          {ALL_RANKS.map((rank) => (
             <button
               key={rank}
               onClick={() => handleRankClick(rank)}

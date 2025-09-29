@@ -1,22 +1,22 @@
 // components/action-types/OwnCardPeek.tsx
 'use client';
 
+import { gameStore } from '@/app/stores/game-store';
 import React from 'react';
 
 export function OwnCardPeek() {
+  const { action } = gameStore.actionContext ?? {};
   return (
-    <div className="bg-blue-50 rounded-lg p-3 mb-3">
-      <div className="text-center text-sm text-blue-800">
-        🔍 <strong>Peek Action</strong>
-        <br />
-        <span className="text-xs text-blue-600">
-          Select a card from your hand to reveal its value
-        </span>
-      </div>
-      <div className="text-center">
-        <p className="text-xs text-gray-500 mt-2">
-          Click on one of your cards to peek at it
-        </p>
+    <div className="max-w-lg mx-auto px-3">
+      <div className="bg-blue-50 border border-blue-300 rounded-lg p-3 shadow-md">
+        <div className="text-center">
+          <h3 className="text-sm font-semibold text-blue-800 mb-1">
+            👁️ {action}
+          </h3>
+          <p className="text-xs text-blue-600">
+            Click on one of your cards to peek at it
+          </p>
+        </div>
       </div>
     </div>
   );

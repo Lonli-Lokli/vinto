@@ -3,6 +3,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Viewport handling for mobile devices */
+@layer base {
+  html {
+    /* Prevent zoom on double tap */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+
+    /* Hide scrollbars but allow scrolling - but override for custom scrollbar below */
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+
+  body {
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior: none;
+    /* Prevent text selection for game elements */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Optimize for mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Allow text selection for specific elements */
+  .select-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
 /* Toast animations */
 @keyframes enter {
   0% { 
@@ -34,10 +76,38 @@
   animation: leave 0.35s ease-in forwards;
 }
 
-/* Custom card heights for Tailwind */
+/* Custom utilities */
 @layer utilities {
   .h-18 {
     height: 4.5rem; /* 72px */
+  }
+
+  /* Mobile viewport utilities */
+  .h-screen-dynamic {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .min-h-screen-dynamic {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Safe area support */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -148,6 +218,13 @@
 
 .glow:hover {
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+}
+
+/* Smooth transitions for layout changes */
+@layer components {
+  .smooth-layout {
+    transition: height 0.2s ease-out, max-height 0.2s ease-out;
+  }
 }
 
 /* Responsive text scaling */

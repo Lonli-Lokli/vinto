@@ -1,11 +1,20 @@
 // app/layout.tsx
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './global.css'; // This is where you import your global Tailwind CSS styles
 
 // Optimize fonts using next/font
 const inter = Inter({ subsets: ['latin'] });
+
+// Define viewport configuration
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+};
 
 // Define metadata for SEO and the browser tab
 export const metadata: Metadata = {

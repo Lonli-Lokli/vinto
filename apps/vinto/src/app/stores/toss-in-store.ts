@@ -2,15 +2,18 @@
 
 import { makeAutoObservable } from 'mobx';
 import { Card, TossInTime } from '../shapes';
-import { PlayerStore } from './player-store';
-import { DeckStore } from './deck-store';
-import { GamePhaseStore } from './game-phase-store';
-import { CardActionHandler } from './card-action-handler';
-import { GameToastService } from '../lib/toast-service';
 
 export interface TossInAction {
   playerId: string;
   card: Card;
+}
+
+export interface TossInStoreCallbacks {
+  onTimerTick?: () => void;
+  onComplete?: () => void;
+  onActionExecute?: (playerId: string, card: Card) => void;
+  onToastMessage?: (type: 'success' | 'error' | 'info', message: string) => void;
+  onPenaltyCard?: (playerId: string) => void;
 }
 
 export class TossInStore {
@@ -21,15 +24,12 @@ export class TossInStore {
   currentQueueIndex = 0;
   originalCurrentPlayer = ''; // Track who's "real" turn it is
 
-  private interval: NodeJS.Timeout | null = null;
-  private onCompleteCallback: (() => void) | null = null;
+  // Players who have already tossed in this round (prevent multiple toss-ins)
+  private playersWhoTossedIn = new Set<string>();
 
-  constructor(
-    private playerStore: PlayerStore,
-    private deckStore: DeckStore,
-    private phaseStore: GamePhaseStore,
-    private cardActionHandler: CardActionHandler
-  ) {
+  private callbacks: TossInStoreCallbacks = {};
+
+  constructor() {
     makeAutoObservable(this);
   }
 
@@ -45,12 +45,16 @@ export class TossInStore {
     return this.hasTossInActions && this.currentQueueIndex < this.queue.length;
   }
 
+  get hasPlayerTossedIn(): (playerId: string) => boolean {
+    return (playerId: string) => this.playersWhoTossedIn.has(playerId);
+  }
+
   setTimeConfig(time: TossInTime) {
     this.timeConfig = time;
   }
 
-  setCompleteCallback(callback: () => void) {
-    this.onCompleteCallback = callback;
+  setCallbacks(callbacks: TossInStoreCallbacks) {
+    this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
   startTossInPeriod(currentPlayerId: string) {
@@ -59,94 +63,75 @@ export class TossInStore {
     this.timer = this.timeConfig;
     this.queue = [];
     this.currentQueueIndex = 0;
+    this.playersWhoTossedIn.clear();
+  }
 
-    this.phaseStore.startTossQueueActive();
-
-    if (this.interval) {
-      clearInterval(this.interval);
+  // External timer control - to be called by GameStore or timer service
+  tick(): void {
+    if (!this.isActive || this.timer <= 0) {
+      return;
     }
 
-    this.interval = setInterval(() => {
-      if (!this.isActive || this.timer <= 0) {
-        this.stopTimer();
+    this.timer--;
 
-        if (this.timer <= 0) {
-          this.finishTossInPeriod();
-        }
-        return;
-      }
+    // Notify external systems about timer tick
+    this.callbacks.onTimerTick?.();
 
-      this.timer--;
-
-      // Bot participation logic
-      this.handleBotParticipation();
-    }, 1000);
+    if (this.timer <= 0) {
+      this.finishTossInPeriod();
+    }
   }
 
-  private handleBotParticipation() {
-    const discardedRank = this.deckStore.peekTopDiscard()?.rank;
-    if (!discardedRank) return;
-
-    this.playerStore.botPlayers.forEach((player) => {
-      if (Math.random() < 0.3) {
-        // 30% chance bot tosses in
-        player.cards.forEach((card, position) => {
-          if (card.rank === discardedRank && Math.random() < 0.5) {
-            this.tossInCard(player.id, position);
-          }
-        });
-      }
-    });
+  forceFinish(): void {
+    this.timer = 0;
+    this.finishTossInPeriod();
   }
 
-  tossInCard(playerId: string, position: number): boolean {
-    if (!this.isActive) return false;
+  // Pure validation method - external systems provide the data
+  canTossIn(playerId: string, card: Card, discardedRank: string): {
+    canToss: boolean;
+    reason?: string
+  } {
+    if (!this.isActive) {
+      return { canToss: false, reason: 'Toss-in period is not active' };
+    }
 
-    const player = this.playerStore.getPlayer(playerId);
-    const topDiscard = this.deckStore.peekTopDiscard();
+    if (this.playersWhoTossedIn.has(playerId)) {
+      return { canToss: false, reason: 'Player has already tossed in this round' };
+    }
 
-    if (
-      !player ||
-      !topDiscard ||
-      !this.playerStore.isValidCardPosition(playerId, position)
-    ) {
+    if (playerId === this.originalCurrentPlayer) {
+      return { canToss: false, reason: 'Cannot toss in during your own turn' };
+    }
+
+    if (card.rank !== discardedRank) {
+      return { canToss: false, reason: 'Card rank does not match discarded card' };
+    }
+
+    return { canToss: true };
+  }
+
+  // Pure action method - external systems handle the consequences
+  recordTossIn(playerId: string, card: Card): boolean {
+    if (this.playersWhoTossedIn.has(playerId)) {
       return false;
     }
 
-    const tossedCard = player.cards[position];
-    if (!this.deckStore.canTossIn(tossedCard)) {
-      // Incorrect toss-in: penalty card
-      this.handleIncorrectTossIn(playerId, player.name);
-      return false;
+    this.playersWhoTossedIn.add(playerId);
+
+    if (card.action) {
+      this.addToQueue(playerId, card);
     }
 
-    // Correct toss-in
-    const removedCard = this.playerStore.removeCardFromPlayer(
-      playerId,
-      position
-    );
-    if (!removedCard) return false;
-
-    this.deckStore.discardCard(removedCard);
-
-    if (removedCard.action) {
-      this.addToQueue(playerId, removedCard);
-    }
-
-    GameToastService.success(`${player.name} tossed in ${removedCard.rank}!`);
+    this.callbacks.onToastMessage?.('success', `Player tossed in ${card.rank}!`);
     return true;
   }
 
-  private handleIncorrectTossIn(playerId: string, playerName: string) {
-    if (this.deckStore.hasDrawCards) {
-      const penaltyCard = this.deckStore.drawCard();
-      if (penaltyCard) {
-        this.playerStore.addCardToPlayer(playerId, penaltyCard);
-        GameToastService.error(
-          `${playerName}'s toss-in failed - penalty card drawn`
-        );
-      }
-    }
+  // Handle incorrect toss-in attempts
+  recordIncorrectTossIn(playerId: string): void {
+    this.playersWhoTossedIn.add(playerId);
+    this.callbacks.onPenaltyCard?.(playerId);
+    this.callbacks.onToastMessage?.('error', 'Toss-in failed - penalty card drawn');
   }
 
   private addToQueue(playerId: string, card: Card) {
@@ -165,56 +150,47 @@ export class TossInStore {
   }
 
   private startProcessingQueue() {
-    this.phaseStore.startTossQueueProcessing();
+    // Reset index to ensure we start from the beginning
+    this.currentQueueIndex = 0;
     this.processNextAction();
   }
 
-  processNextAction() {
+  processNextAction(): boolean {
     const currentAction = this.currentTossInAction;
     if (!currentAction) {
       this.finishQueueProcessing();
-      return;
+      return false;
     }
 
     const { playerId, card } = currentAction;
-    const player = this.playerStore.getPlayer(playerId);
 
-    if (!player) {
-      this.skipCurrentAction();
-      return;
-    }
+    // Notify external system to execute the action
+    this.callbacks.onActionExecute?.(playerId, card);
+    this.callbacks.onToastMessage?.('info', `${card.rank} action available`);
 
-    if (player.isHuman) {
-      GameToastService.info(
-        `You can execute ${card.rank} action (${card.action})`
-      );
-    }
-
-    // For AI players, decide whether to use the action
-    if (!player.isHuman && Math.random() < 0.3) {
-      this.skipCurrentAction();
-      return;
-    }
-
-    this.cardActionHandler.executeCardAction(card, playerId);
+    return true;
   }
 
-  skipCurrentAction() {
+  skipCurrentAction(): boolean {
     const currentAction = this.currentTossInAction;
-    if (!currentAction) return;
+    if (!currentAction) return false;
 
-    const player = this.playerStore.getPlayer(currentAction.playerId);
-    if (player?.isHuman) {
-      GameToastService.info(`You skipped ${currentAction.card.rank} action`);
+    this.callbacks.onToastMessage?.('info', `Skipped ${currentAction.card.rank} action`);
+    return this.advanceQueue();
+  }
+
+  completeCurrentAction(): boolean {
+    return this.advanceQueue();
+  }
+
+  private advanceQueue(): boolean {
+    if (this.currentQueueIndex >= this.queue.length - 1) {
+      this.finishQueueProcessing();
+      return false;
     }
 
     this.currentQueueIndex++;
-    this.processNextAction();
-  }
-
-  completeCurrentAction() {
-    this.currentQueueIndex++;
-    this.processNextAction();
+    return this.processNextAction();
   }
 
   private finishQueueProcessing() {
@@ -223,34 +199,32 @@ export class TossInStore {
   }
 
   private returnToNormalFlow() {
-    this.phaseStore.returnToIdle();
-    // Notify GameStore that toss-in processing is complete
-    if (this.onCompleteCallback) {
-      this.onCompleteCallback();
-    }
-  }
-
-  private stopTimer() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
+    // Notify external system that processing is complete
+    this.callbacks.onComplete?.();
   }
 
   clearQueue() {
     this.queue = [];
     this.currentQueueIndex = 0;
     this.originalCurrentPlayer = '';
+    this.playersWhoTossedIn.clear();
   }
 
   reset() {
-    this.stopTimer();
     this.clearQueue();
     this.isActive = false;
     this.timer = 0;
   }
 
-  dispose() {
-    this.stopTimer();
+  // Readonly access to internal state for debugging/testing
+  getState() {
+    return {
+      queue: [...this.queue],
+      timer: this.timer,
+      isActive: this.isActive,
+      currentQueueIndex: this.currentQueueIndex,
+      originalCurrentPlayer: this.originalCurrentPlayer,
+      playersWhoTossedIn: new Set(this.playersWhoTossedIn)
+    };
   }
 }

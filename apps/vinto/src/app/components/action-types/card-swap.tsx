@@ -2,61 +2,34 @@
 'use client';
 
 import React from 'react';
-import { Player } from '../../shapes';
+import { gameStore } from '@/app/stores/game-store';
 
-interface CardSwapProps {
-  players: Player[];
-  swapTargets: { playerId: string; position: number }[];
-  onCardClick: (playerId: string, position: number) => void;
-}
-
-export function CardSwap({ players, swapTargets, onCardClick }: CardSwapProps) {
+export function CardSwap() {
+  if (!gameStore.actionContext) return null;
+  const { action } = gameStore.actionContext;
+  const swapTargets = gameStore.swapTargets;
   return (
-    <div className="bg-purple-50 rounded-lg p-3 mb-3">
-      <div className="text-center text-sm text-purple-800">
-        🔄 <strong>Card Swap</strong>
-        <br />
-        <span className="text-xs text-purple-600">
-          Select any two cards from the table to swap them
-        </span>
-      </div>
-
-      <div className="text-center">
-        <p className="text-xs text-gray-500 mt-2 mb-3">
-          Select two cards to swap {swapTargets.length > 0 && `(${swapTargets.length}/2 selected)`}
-        </p>
-      </div>
-
-      {/* Show all players and their cards for selection */}
-      <div className="mt-3 space-y-2">
-        {players.map(player => (
-          <div key={player.id} className="text-center">
-            <div className="text-xs font-semibold text-gray-700 mb-1">
-              {player.name} {player.isHuman && '(You)'}
+    <div className="max-w-lg mx-auto px-3">
+      <div className="bg-purple-50 border border-purple-300 rounded-lg p-3 shadow-md">
+        <div className="text-center">
+          <h3 className="text-sm font-semibold text-purple-800 mb-1">
+            🔄 {action}
+          </h3>
+          <p className="text-xs text-purple-600 mb-2">
+            Select two cards to swap ({swapTargets.length}/2 selected)
+          </p>
+          {swapTargets.length > 0 && (
+            <div className="text-xs text-purple-500">
+              Selected:
+              {swapTargets
+                .map(
+                  (target) =>
+                    `P${target.playerId.slice(-1)} pos ${target.position + 1}`
+                )
+                .join(', ')}
             </div>
-            <div className="flex gap-1 justify-center">
-              {player.cards.map((_, position) => {
-                const isSelected = swapTargets.some(
-                  target => target.playerId === player.id && target.position === position
-                );
-                return (
-                  <button
-                    key={position}
-                    onClick={() => onCardClick(player.id, position)}
-                    className={`w-8 h-8 text-white text-xs font-bold rounded border-2 transition-colors ${
-                      isSelected
-                        ? 'bg-purple-600 border-purple-800'
-                        : 'bg-purple-500 hover:bg-purple-600 border-purple-700'
-                    }`}
-                    title={`${isSelected ? 'Deselect' : 'Select'} ${player.name}'s card ${position + 1}`}
-                  >
-                    {position + 1}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          )}
+        </div>
       </div>
     </div>
   );

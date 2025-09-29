@@ -98,13 +98,13 @@ export const GameTable = observer(() => {
   const right = playersById.right;
 
   return (
-    <div className="p-1 sm:p-2">
-      <div className="w-full max-w-lg md:max-w-full mx-auto">
+    <div className="h-full flex flex-col">
+      <div className="w-full h-full max-w-lg md:max-w-full mx-auto flex flex-col">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
-        <div className="md:hidden flex flex-col gap-3 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl border-4 border-emerald-800 shadow-2xl p-3">
+        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl sm:rounded-3xl border-2 sm:border-4 border-emerald-800 shadow-2xl p-2 sm:p-3 overflow-hidden">
           {/* Row 1: Top player */}
           {top && (
-            <div className="flex justify-center">
+            <div className="flex justify-center flex-shrink-0 pb-2">
               <PlayerArea
                 player={top}
                 isCurrentPlayer={currentPlayer?.id === top.id}
@@ -121,7 +121,7 @@ export const GameTable = observer(() => {
           )}
 
           {/* Row 2: Left | Center piles | Right */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 min-h-0">
             {/* Left Player */}
             <div className="flex-1 flex justify-start">
               {left && (
@@ -143,7 +143,7 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Center draw/discard */}
-            <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
               {/* Draw Pile */}
               <div className="text-center">
                 <Card
@@ -207,13 +207,13 @@ export const GameTable = observer(() => {
 
             {/* Toss-in Timer */}
             {gameStore.waitingForTossIn && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="bg-yellow-500 text-white font-bold px-3 py-2 rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <div className="bg-yellow-500 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
                   <div className="text-center">
-                    <div className="text-lg font-black">
+                    <div className="text-sm sm:text-lg font-black">
                       {gameStore.tossInTimer}
                     </div>
-                    <div className="text-[10px] leading-tight">TOSS IN</div>
+                    <div className="text-[8px] sm:text-[10px] leading-tight">TOSS IN</div>
                   </div>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export const GameTable = observer(() => {
           </div>
 
           {/* Row 3: Human player */}
-          <div className="flex justify-center">
+          <div className="flex justify-center flex-shrink-0 pt-2">
             {humanPlayer && (
               <PlayerArea
                 player={humanPlayer}
@@ -259,10 +259,7 @@ export const GameTable = observer(() => {
         </div>
 
         {/* Desktop/Tablet wide board */}
-        <div
-          className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl border-4 border-emerald-800 shadow-2xl p-4 w-full"
-          style={{ aspectRatio: '16/10', maxHeight: '70vh' }}
-        >
+        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl border-4 border-emerald-800 shadow-2xl p-4 w-full h-full min-h-0">
           {/* Top Player */}
           {top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">

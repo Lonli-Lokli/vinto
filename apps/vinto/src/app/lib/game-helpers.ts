@@ -1,6 +1,6 @@
 // lib/game-helpers.ts
 
-import { Card, Difficulty, Player } from '../shapes';
+import { Card, Difficulty, Player, Rank } from '../shapes';
 
 export const createDeck = (): Card[] => {
   const deck: Card[] = [];
@@ -120,3 +120,21 @@ export const getWinnerInfo = (
     isMultipleWinners: winners.length > 1,
   };
 };
+
+
+  export const ALL_RANKS: Rank[] = [
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K',
+    'A',
+    'Joker'
+  ];

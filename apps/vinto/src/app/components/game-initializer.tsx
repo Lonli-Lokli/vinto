@@ -22,7 +22,6 @@ export const GameInitializer = observer(() => {
           <div className="text-xl font-semibold text-gray-700 mb-2">
             Setting up Vinto game...
           </div>
-          <div className="text-sm text-gray-500">Connecting to AI servers</div>
         </div>
       </div>
     );

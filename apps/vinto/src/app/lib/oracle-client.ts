@@ -12,8 +12,6 @@ export class OracleVintoClient {
     
     try {
       // Simulate Oracle connection delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       const gameId = `vinto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       this.gameId = gameId;
       this.playerId = humanPlayerId;
