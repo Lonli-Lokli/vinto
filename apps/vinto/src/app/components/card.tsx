@@ -53,10 +53,16 @@ export function Card({
         relative rounded border
         flex flex-col items-center justify-center
         transition-all duration-150 select-none
-        ${revealed && card
-          ? 'bg-white border-gray-300 shadow-sm'
-          : 'bg-gradient-to-br from-poker-green-700 to-poker-green-800 border-poker-green-600 text-white'}
-        ${clickable ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md' : ''}
+        ${
+          revealed && card
+            ? 'bg-white border-gray-300 shadow-sm'
+            : 'bg-gradient-to-br from-poker-green-700 to-poker-green-800 border-poker-green-600 text-white'
+        }
+        ${
+          clickable
+            ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md'
+            : ''
+        }
         ${highlighted ? 'ring-2 ring-yellow-400 animate-pulse' : ''}
       `}
       onClick={clickable ? onClick : undefined}
@@ -64,10 +70,22 @@ export function Card({
       {revealed && card ? (
         <>
           <RankComponent rank={card.rank} />
-          <span className="mt-0.5 text-2xs text-gray-600 font-medium">{card.rank}</span>
+          <span className="mt-0.5 text-2xs text-gray-600 font-medium">
+            {card.rank}
+          </span>
         </>
       ) : (
-        <span className={`font-bold ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : size === 'xl' ? 'text-3xl' : 'text-lg'}`}>
+        <span
+          className={`font-bold ${
+            size === 'sm'
+              ? 'text-sm'
+              : size === 'lg'
+              ? 'text-2xl'
+              : size === 'xl'
+              ? 'text-3xl'
+              : 'text-lg'
+          }`}
+        >
           ?
         </span>
       )}
@@ -85,7 +103,7 @@ export function Card({
   );
 }
 
-const RankComponent: FC<{rank: Rank}> = ({ rank }) => {
+const RankComponent: FC<{ rank: Rank }> = ({ rank }) => {
   switch (rank) {
     case '2':
       return <Image_2 />;
@@ -118,4 +136,4 @@ const RankComponent: FC<{rank: Rank}> = ({ rank }) => {
     default:
       throw new NeverError(rank);
   }
-}
+};
