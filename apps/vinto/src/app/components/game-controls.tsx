@@ -116,14 +116,14 @@ export const GameControls = observer(() => {
   // Single consistent container for all states
   return (
     <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 md:p-4 shadow-lg h-full flex flex-col">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Header - consistent across all states */}
-        <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-800">
             {controlContent.title}
           </h3>
           {controlContent.subtitle && (
-            <div className="text-xs md:text-sm text-gray-500 hidden sm:block">
+            <div className="text-2xs md:text-xs text-gray-500 hidden sm:block">
               {controlContent.subtitle}
             </div>
           )}
@@ -170,9 +170,9 @@ const PeekConfirmControls = () => {
     <button
       onClick={() => hasRevealedCard && gameStore.confirmPeekCompletion()}
       disabled={!hasRevealedCard}
-      className={`w-full font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base ${
+      className={`w-full font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm ${
         hasRevealedCard
-          ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+          ? 'bg-blue-600 hover:bg-blue-700 text-white'
           : 'bg-gray-200 text-gray-600 cursor-not-allowed'
       }`}
       aria-label={
@@ -187,13 +187,13 @@ const PeekConfirmControls = () => {
 };
 
 const TossInControls = () => (
-  <div className="space-y-3">
-    <div className="text-base text-gray-600 text-center">
+  <div className="space-y-2">
+    <div className="text-sm text-gray-600 text-center">
       Execute the action or skip to continue
     </div>
     <button
       onClick={() => gameStore.skipCurrentTossInAction()}
-      className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
+      className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
       aria-label="Skip toss-in action"
     >
       ⏭️ Skip Action
@@ -202,10 +202,10 @@ const TossInControls = () => (
 );
 
 const VintoOnlyControls = () => (
-  <div className="space-y-3">
+  <div className="space-y-2">
     <button
       onClick={() => gameStore.callVinto()}
-      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
+      className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
       aria-label="Call Vinto"
     >
       🏆 Call Vinto
@@ -232,17 +232,17 @@ const FullTurnControls = ({
     !isFirstHumanTurn;
 
   return (
-    <div className="space-y-3 md:space-y-4">
+    <div className="space-y-2">
       {/* Mobile: Stack vertically, Desktop: 2-column grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {/* Draw from Deck */}
         <button
           onClick={handleDrawCard}
           disabled={drawPile.length === 0}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors text-base"
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm"
           aria-label="Draw new card from deck"
         >
-          <span className="text-sm md:text-base">🎯</span>
+          <span>🎯</span>
           <span>Draw New</span>
         </button>
 
@@ -250,16 +250,16 @@ const FullTurnControls = ({
         <button
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!canTakeFromDiscard}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors text-base"
+          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm"
           aria-label="Take unplayed card from discard pile"
         >
-          <span className="text-sm md:text-base">♻️</span>
+          <span>♻️</span>
           <span>Play Card</span>
         </button>
       </div>
 
       {/* Hint text - more prominent */}
-      <div className="text-base text-gray-500 text-center px-2">
+      <div className="text-xs text-gray-500 text-center px-2">
         {isFirstHumanTurn
           ? 'First turn: must draw from deck'
           : topDiscardCard?.action
@@ -272,7 +272,7 @@ const FullTurnControls = ({
       {/* Call Vinto - always available during turn */}
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
+        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto

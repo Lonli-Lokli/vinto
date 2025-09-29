@@ -183,14 +183,14 @@ export const GameHeader = observer(() => {
 
           {/* Center: Title + Game Info */}
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
+            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-blue-600">
               VINTO
             </h1>
-            <div className="text-sm text-gray-600 font-medium">
+            <div className="text-xs text-gray-600 font-medium">
               {getPhaseDisplay()}
             </div>
             {getCurrentPlayerDisplay() && (
-              <div className="text-sm font-medium text-blue-600 hidden sm:block">
+              <div className="text-xs font-medium text-blue-600 hidden sm:block">
                 {getCurrentPlayerDisplay()}
               </div>
             )}
@@ -198,10 +198,10 @@ export const GameHeader = observer(() => {
 
           {/* Right: Cards Left */}
           <div className="flex items-center gap-1">
-            <div className="text-base font-semibold text-gray-700">
+            <div className="text-sm font-semibold text-gray-700">
               {drawPile.length}
             </div>
-            <div className="text-xs text-gray-500">cards</div>
+            <div className="text-2xs text-gray-500">cards</div>
           </div>
         </div>
       </div>

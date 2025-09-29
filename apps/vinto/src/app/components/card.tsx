@@ -40,23 +40,23 @@ export function Card({
   onClick,
 }: CardProps) {
   const sizeClasses = {
-    sm: 'w-8 h-12 text-2xs',
-    md: 'w-12 h-18 text-sm',
-    lg: 'w-16 h-24 text-base',
-    xl: 'w-20 h-30 text-lg',
+    sm: 'w-7 h-10 text-2xs',
+    md: 'w-10 h-14 text-2xs',
+    lg: 'w-12 h-17 text-xs',
+    xl: 'w-14 h-20 text-sm',
   } as const;
 
   return (
     <div
       className={`
         ${sizeClasses[size]}
-        relative rounded-lg border-2
+        relative rounded border
         flex flex-col items-center justify-center
         transition-all duration-150 select-none
         ${revealed && card
-          ? 'bg-neutral-50 border-gray-300 shadow-md'
-          : 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500 text-white'}
-        ${clickable ? 'cursor-pointer hover:scale-105 active:scale-95 hover:shadow-lg' : ''}
+          ? 'bg-white border-gray-300 shadow-sm'
+          : 'bg-slate-700 border-slate-600 text-white'}
+        ${clickable ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md' : ''}
         ${highlighted ? 'ring-2 ring-yellow-400 animate-pulse' : ''}
       `}
       onClick={clickable ? onClick : undefined}
@@ -73,13 +73,13 @@ export function Card({
       )}
 
       {position > 0 && (
-        <div className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-400 text-black rounded-full text-xs font-bold flex items-center justify-center">
+        <div className="absolute -top-2 -right-2 w-4 h-4 bg-slate-600 text-white rounded-full text-2xs font-bold flex items-center justify-center">
           {position}
         </div>
       )}
 
       {card?.action && revealed && (
-        <div className="absolute -top-1 -left-1 w-3 h-3 bg-orange-400 rounded-full shadow-sm" />
+        <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full shadow-sm" />
       )}
     </div>
   );

@@ -131,7 +131,7 @@ export const GameTable = observer(() => {
     <div className="h-full flex flex-col">
       <div className="w-full h-full max-w-lg md:max-w-full mx-auto flex flex-col">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
-        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl sm:rounded-3xl border-2 border-emerald-800 shadow-lg p-2 sm:p-3 overflow-hidden">
+        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg border border-slate-900 shadow-lg p-2 overflow-hidden">
           {/* Row 1: Top player */}
           {top && (
             <div className="flex justify-center flex-shrink-0 pb-2">
@@ -195,7 +195,7 @@ export const GameTable = observer(() => {
                   }
                   onClick={handleDrawCard}
                 />
-                <div className="mt-1 text-2xs text-white font-semibold bg-black/20 rounded px-2 py-0.5">
+                <div className="mt-1 text-2xs text-white font-medium bg-black/30 rounded px-2 py-0.5">
                   DRAW
                 </div>
               </div>
@@ -213,15 +213,15 @@ export const GameTable = observer(() => {
                         size="md"
                         highlighted={true}
                       />
-                      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-yellow-400 text-black rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
+                      <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-2xs font-bold flex items-center justify-center animate-pulse">
                         !
                       </div>
                     </div>
-                    <div className="mt-1 text-2xs text-white font-semibold bg-yellow-500/80 rounded px-2 py-0.5">
+                    <div className="mt-1 text-2xs text-white font-medium bg-amber-600/80 rounded px-2 py-0.5">
                       DRAWN
                     </div>
                     {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-2xs text-white bg-blue-500/80 rounded px-1 py-0.5">
+                      <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-1 py-0.5">
                         {pendingCard.action}
                       </div>
                     )}
@@ -235,7 +235,7 @@ export const GameTable = observer(() => {
                   revealed={discardPile.length > 0}
                   size="md"
                 />
-                <div className="mt-1 text-2xs text-white font-semibold bg-black/20 rounded px-2 py-0.5">
+                <div className="mt-1 text-2xs text-white font-medium bg-black/30 rounded px-2 py-0.5">
                   DISCARD
                 </div>
               </div>
@@ -244,9 +244,9 @@ export const GameTable = observer(() => {
             {/* Toss-in Timer */}
             {waitingForTossIn && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="bg-yellow-500 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
+                <div className="bg-amber-600 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg shadow-lg border border-amber-700 animate-pulse">
                   <div className="text-center">
-                    <div className="text-lg font-black">
+                    <div className="text-base font-black">
                       {tossInTimer}
                     </div>
                     <div className="text-2xs leading-tight">
@@ -304,7 +304,7 @@ export const GameTable = observer(() => {
         </div>
 
         {/* Desktop/Tablet wide board */}
-        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl border-2 border-emerald-800 shadow-lg p-4 w-full h-full min-h-0">
+        <div className="hidden md:block relative bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg border border-slate-900 shadow-lg p-3 w-full h-full min-h-0">
           {/* Top Player */}
           {top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">
@@ -381,7 +381,7 @@ export const GameTable = observer(() => {
                   }
                   onClick={handleDrawCard}
                 />
-                <div className="mt-2 text-xs text-white font-semibold bg-black/20 rounded px-2 py-1">
+                <div className="mt-2 text-xs text-white font-medium bg-black/30 rounded px-2 py-1">
                   DRAW
                 </div>
               </div>
@@ -399,15 +399,15 @@ export const GameTable = observer(() => {
                         size="xl"
                         highlighted={true}
                       />
-                      <div className="absolute -top-2 -left-2 w-6 h-6 bg-yellow-400 text-black rounded-full text-sm font-bold flex items-center justify-center animate-pulse">
+                      <div className="absolute -top-2 -left-2 w-5 h-5 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
                         !
                       </div>
                     </div>
-                    <div className="mt-2 text-xs text-white font-semibold bg-yellow-500/80 rounded px-2 py-1">
+                    <div className="mt-2 text-xs text-white font-medium bg-amber-600/80 rounded px-2 py-1">
                       DRAWN
                     </div>
                     {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-2xs text-white bg-blue-500/80 rounded px-2 py-0.5">
+                      <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-2 py-0.5">
                         {pendingCard.action}
                       </div>
                     )}
@@ -421,7 +421,7 @@ export const GameTable = observer(() => {
                   revealed={discardPile.length > 0}
                   size="xl"
                 />
-                <div className="mt-2 text-xs text-white font-semibold bg-black/20 rounded px-2 py-1">
+                <div className="mt-2 text-xs text-white font-medium bg-black/30 rounded px-2 py-1">
                   DISCARD
                 </div>
               </div>
@@ -430,9 +430,9 @@ export const GameTable = observer(() => {
             {/* Toss-in Timer (Desktop) */}
             {waitingForTossIn && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="bg-yellow-500 text-white font-bold px-4 py-3 rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
+                <div className="bg-amber-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg border border-amber-700 animate-pulse">
                   <div className="text-center">
-                    <div className="text-2xl font-black">
+                    <div className="text-xl font-black">
                       {tossInTimer}
                     </div>
                     <div className="text-xs leading-tight">TOSS IN</div>
