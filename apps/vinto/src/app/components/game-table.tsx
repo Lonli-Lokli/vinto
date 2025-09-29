@@ -17,6 +17,26 @@ export const GameTable = observer(() => {
       ? gameStore.calculateFinalScores()
       : undefined;
 
+  // Determine if card interactions should be enabled
+  const shouldAllowCardInteractions = () => {
+    if (!humanPlayer) return false;
+
+    // Only allow interactions when it's relevant for the human player
+    return (
+      // During setup phase for memorization
+      (gameStore.phase === 'setup' && gameStore.setupPeeksRemaining > 0) ||
+      // When selecting swap position after drawing
+      gameStore.isSelectingSwapPosition ||
+      // During toss-in period
+      gameStore.waitingForTossIn ||
+      // During action target selection for own cards
+      (gameStore.isAwaitingActionTarget &&
+        (gameStore.actionContext?.targetType === 'own-card' ||
+         gameStore.actionContext?.targetType === 'peek-then-swap' ||
+         gameStore.actionContext?.targetType === 'swap-cards'))
+    );
+  };
+
   const handleCardClick = (position: number) => {
     if (!humanPlayer) return;
 
@@ -53,6 +73,17 @@ export const GameTable = observer(() => {
       gameStore.selectActionTarget(humanPlayer.id, position);
       return;
     }
+  };
+
+  // Determine if opponent card interactions should be enabled
+  const shouldAllowOpponentCardInteractions = () => {
+    return (
+      gameStore.isAwaitingActionTarget &&
+      (gameStore.actionContext?.targetType === 'opponent-card' ||
+       gameStore.actionContext?.targetType === 'force-draw' ||
+       gameStore.actionContext?.targetType === 'peek-then-swap' ||
+       gameStore.actionContext?.targetType === 'swap-cards')
+    );
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
@@ -113,8 +144,8 @@ export const GameTable = observer(() => {
                 }
                 gamePhase={gameStore.phase}
                 finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(top.id, position)
+                onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
+                  handleOpponentCardClick(top.id, position) : undefined
                 }
               />
             </div>
@@ -134,8 +165,8 @@ export const GameTable = observer(() => {
                     }
                     gamePhase={gameStore.phase}
                     finalScores={finalScores}
-                    onCardClick={(position) =>
-                      handleOpponentCardClick(left.id, position)
+                    onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
+                      handleOpponentCardClick(left.id, position) : undefined
                     }
                   />
                 </div>
@@ -231,8 +262,8 @@ export const GameTable = observer(() => {
                     }
                     gamePhase={gameStore.phase}
                     finalScores={finalScores}
-                    onCardClick={(position) =>
-                      handleOpponentCardClick(right.id, position)
+                    onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
+                      handleOpponentCardClick(right.id, position) : undefined
                     }
                   />
                 </div>
@@ -247,7 +278,7 @@ export const GameTable = observer(() => {
                 player={humanPlayer}
                 isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
                 isThinking={false}
-                onCardClick={handleCardClick}
+                onCardClick={shouldAllowCardInteractions() ? handleCardClick : undefined}
                 gamePhase={gameStore.phase}
                 finalScores={finalScores}
                 isSelectingSwapPosition={gameStore.isSelectingSwapPosition}
@@ -271,8 +302,8 @@ export const GameTable = observer(() => {
                 }
                 gamePhase={gameStore.phase}
                 finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(top.id, position)
+                onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
+                  handleOpponentCardClick(top.id, position) : undefined
                 }
               />
             </div>
@@ -400,7 +431,7 @@ export const GameTable = observer(() => {
                 player={humanPlayer}
                 isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
                 isThinking={false}
-                onCardClick={handleCardClick}
+                onCardClick={shouldAllowCardInteractions() ? handleCardClick : undefined}
                 gamePhase={gameStore.phase}
                 finalScores={finalScores}
                 isSelectingSwapPosition={gameStore.isSelectingSwapPosition}

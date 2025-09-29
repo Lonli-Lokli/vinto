@@ -22,8 +22,8 @@ export const RankDeclaration = observer(() => {
   };
 
   return (
-    <div className="mt-2 max-w-lg mx-auto px-2">
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-3 shadow-lg">
+    <div className="mt-2 max-w-lg mx-auto px-2 min-h-[140px]">
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-3 shadow-lg h-full flex flex-col justify-between">
         <div className="text-center mb-3">
           <h3 className="text-sm sm:text-base font-bold text-yellow-800">
             🎯 Declare Card Rank

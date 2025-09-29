@@ -11,8 +11,8 @@ export const CardActionChoice = observer(() => {
   }
 
   return (
-    <div className="mt-2 max-w-lg mx-auto px-2">
-      <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-md">
+    <div className="mt-2 max-w-lg mx-auto px-2 min-h-[140px]">
+      <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-md h-full flex flex-col justify-between">
         <div className="text-center mb-3">
           <h3 className="text-sm sm:text-base font-semibold text-gray-800">
             Choose Action

@@ -6,8 +6,8 @@ import { gameStore } from '@/app/stores/game-store';
 
 export function KingDeclaration() {
   return (
-    <div className="max-w-lg mx-auto px-3">
-      <div className="bg-indigo-50 border border-indigo-300 rounded-lg p-3 shadow-md">
+    <div className="max-w-lg mx-auto px-3 min-h-[140px]">
+      <div className="bg-indigo-50 border border-indigo-300 rounded-lg p-3 shadow-md h-full flex flex-col justify-center">
         <div className="text-center mb-2">
           <h3 className="text-sm font-semibold text-indigo-800 mb-1">
             👑 King Declaration

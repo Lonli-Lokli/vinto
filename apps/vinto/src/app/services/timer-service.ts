@@ -7,7 +7,7 @@ export interface TimerCallback {
 export class TimerService {
   private intervals = new Map<string, NodeJS.Timeout>();
 
-  startTimer(id: string, callback: TimerCallback, intervalMs: number = 1000): void {
+  startTimer(id: string, callback: TimerCallback, intervalMs = 1000): void {
     this.stopTimer(id); // Clear any existing timer with this ID
 
     const interval = setInterval(callback, intervalMs);

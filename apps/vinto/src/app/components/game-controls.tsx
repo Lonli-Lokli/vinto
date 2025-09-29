@@ -22,8 +22,8 @@ export const GameControls = observer(() => {
 
   if (isHumanTossInAction) {
     return (
-      <div className="max-w-lg mx-auto px-3 py-2">
-        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg">
+      <div className="max-w-lg mx-auto px-3 py-2 min-h-[140px]">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg h-full flex flex-col justify-center">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-800">
               Toss-in Action: {gameStore.tossInQueue[0]?.card.rank} (
@@ -88,8 +88,8 @@ export const GameControls = observer(() => {
   // Show vinto-only controls during bot delay
   if (showVintoOnly) {
     return (
-      <div className="max-w-lg mx-auto px-3 py-2">
-        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg">
+      <div className="max-w-lg mx-auto px-3 py-2 min-h-[140px]">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 shadow-lg h-full flex flex-col justify-center">
           <div className="flex items-center justify-center mb-2">
             <h3 className="text-sm font-semibold text-gray-800">
               Call Vinto before next player&apos;s turn
