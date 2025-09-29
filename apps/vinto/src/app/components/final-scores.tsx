@@ -5,17 +5,21 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 import { getWinnerInfo } from '../lib/game-helpers';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getPlayerStore } from '../stores/player-store';
 
 export const FinalScores = observer(() => {
+  const gamePhaseStore = getGamePhaseStore();
+  const { players} = getPlayerStore();
   // Calculate final scores if in scoring phase
   const finalScores =
-    gameStore.phase === 'scoring'
+    gamePhaseStore.phase === 'scoring'
       ? gameStore.calculateFinalScores()
       : undefined;
   const winnerInfo = finalScores
-    ? getWinnerInfo(finalScores, gameStore.players)
+    ? getWinnerInfo(finalScores, players)
     : undefined;
-  if (gameStore.phase !== 'scoring' || !winnerInfo || !finalScores) {
+  if (gamePhaseStore.phase !== 'scoring' || !winnerInfo || !finalScores) {
     return null;
   }
 
@@ -40,7 +44,7 @@ export const FinalScores = observer(() => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {gameStore.players.map((player) => (
+        {players.map((player) => (
           <div
             key={player.id}
             className={`p-3 rounded-lg text-center ${

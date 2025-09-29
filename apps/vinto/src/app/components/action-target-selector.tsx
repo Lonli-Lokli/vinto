@@ -3,7 +3,6 @@
 
 import React, { FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
 import { OwnCardPeek } from './action-types/own-card-peek';
 import { OpponentCardPeek } from './action-types/opponent-card-peek';
 import { CardSwap } from './action-types/card-swap';
@@ -11,16 +10,22 @@ import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
 import { NeverError } from '../shapes';
-import { TargetType } from '../stores/action-store';
+import { getActionStore, TargetType } from '../stores/action-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getPlayerStore } from '../stores/player-store';
 
 export const ActionTargetSelector = observer(() => {
-  if (!gameStore.isAwaitingActionTarget || !gameStore.actionContext) {
+  const gamePhaseStore  = getGamePhaseStore();
+  const actionStore = getActionStore();
+  const playerStore = getPlayerStore();
+
+  if (!gamePhaseStore.isAwaitingActionTarget || !actionStore.actionContext) {
     return null;
   }
 
-  const { playerId, targetType } = gameStore.actionContext;
-  const actionPlayer = gameStore.players.find((p) => p.id === playerId);
-  const humanPlayer = gameStore.players.find((p) => p.isHuman);
+  const { playerId, targetType } = actionStore.actionContext;
+  const actionPlayer = playerStore.players.find((p) => p.id === playerId);
+  const humanPlayer = playerStore.humanPlayer;
 
   if (!actionPlayer || !humanPlayer) {
     return null;

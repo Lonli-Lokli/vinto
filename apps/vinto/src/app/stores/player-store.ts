@@ -5,13 +5,26 @@ import { Player, Card, Difficulty } from '../shapes';
 import { getAIKnowledgeByDifficulty } from '../lib/game-helpers';
 
 export class PlayerStore {
+  private static instance: PlayerStore | null = null;
+
   players: Player[] = [];
   currentPlayerIndex = 0;
   turnCount = 0;
   setupPeeksRemaining = 2;
 
-  constructor() {
+  private constructor() {
     makeAutoObservable(this);
+  }
+
+  static getInstance(): PlayerStore {
+    if (!PlayerStore.instance) {
+      PlayerStore.instance = new PlayerStore();
+    }
+    return PlayerStore.instance;
+  }
+
+  static resetInstance(): void {
+    PlayerStore.instance = null;
   }
 
   // Computed getters
@@ -285,6 +298,7 @@ export class PlayerStore {
     return scores;
   }
 
+
   // AI helpers for the current player
   getCurrentPlayerWorstKnownCard(): { position: number; value: number } | null {
     const player = this.currentPlayer;
@@ -327,3 +341,5 @@ export class PlayerStore {
     this.setupPeeksRemaining = 2;
   }
 }
+
+export const getPlayerStore = () => PlayerStore.getInstance();

@@ -6,25 +6,66 @@ import { Popover } from 'react-tiny-popover';
 import { gameStore } from '../stores/game-store';
 import { Rank } from '../shapes';
 import { ALL_RANKS } from '../lib/game-helpers';
+import { getPlayerStore } from '../stores/player-store';
+import { getActionStore } from '../stores/action-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
 
 export const RankDeclaration = observer(() => {
+  const {currentPlayer} = getPlayerStore();
+  const {pendingCard, swapPosition} = getActionStore();
+  const {isDeclaringRank} = getGamePhaseStore();
+
   const [showHelp, setShowHelp] = useState(false);
 
-  if (!gameStore.isDeclaringRank || gameStore.swapPosition === null) {
+  if (!isDeclaringRank || swapPosition === null) {
     return null;
   }
 
-  const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
   if (!currentPlayer) return null;
 
   const handleRankClick = (rank: Rank) => {
     gameStore.declareRank(rank);
   };
 
+  const helpContent = (isMobile: boolean) => (
+    <div className={`bg-white border border-yellow-300 rounded-lg ${isMobile ? 'p-3 max-w-xs' : 'p-4 max-w-sm'} shadow-2xl`} style={{ zIndex: 9999 }}>
+      <div className={`${isMobile ? 'text-sm' : 'text-base'} text-gray-700 space-y-2`}>
+        <p>
+          <strong>Current situation:</strong> You drew{' '}
+          <span className="font-semibold text-yellow-700">
+            {pendingCard?.rank}
+          </span>{' '}
+          and are swapping with position{' '}
+          <span className="font-semibold text-yellow-700">
+            {(swapPosition ?? 0) + 1}
+          </span>
+        </p>
+        <p>
+          <strong>Your task:</strong> Declare what rank you think your
+          position {(swapPosition ?? 0) + 1} card is.
+        </p>
+        <div className={`bg-yellow-50 rounded p-2 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+          <div className="text-green-700">
+            ✅ <strong>Correct:</strong> Use {pendingCard?.rank}&apos;s action
+          </div>
+          <div className="text-red-700">
+            ❌ <strong>Wrong:</strong> Get penalty card
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => setShowHelp(false)}
+        className={`${isMobile ? 'mt-2 text-sm' : 'mt-3 text-base'} text-gray-500 hover:text-gray-700`}
+      >
+        Close
+      </button>
+    </div>
+  );
+
   return (
     <div className="relative w-full max-w-4xl mx-auto px-2 mb-4" style={{ zIndex: 100 }}>
       <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 md:p-6 shadow-sm overflow-visible">
-        
+
         {/* Mobile Layout: 3 rows stacked */}
         <div className="block md:hidden">
           {/* Row 1: Header with help */}
@@ -36,40 +77,7 @@ export const RankDeclaration = observer(() => {
               isOpen={showHelp}
               positions={['top', 'bottom', 'left', 'right']}
               align='center'
-              content={
-                <div className="bg-white border border-yellow-300 rounded-lg p-3 shadow-2xl max-w-xs" style={{ zIndex: 9999 }}>
-                  <div className="text-sm text-gray-700 space-y-2">
-                    <p>
-                      <strong>Current situation:</strong> You drew{' '}
-                      <span className="font-semibold text-yellow-700">
-                        {gameStore.pendingCard?.rank}
-                      </span>{' '}
-                      and are swapping with position{' '}
-                      <span className="font-semibold text-yellow-700">
-                        {(gameStore.swapPosition ?? 0) + 1}
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Your task:</strong> Declare what rank you think your
-                      position {(gameStore.swapPosition ?? 0) + 1} card is.
-                    </p>
-                    <div className="bg-yellow-50 rounded p-2 text-[10px]">
-                      <div className="text-green-700">
-                        ✅ <strong>Correct:</strong> Use {gameStore.pendingCard?.rank}&apos;s action
-                      </div>
-                      <div className="text-red-700">
-                        ❌ <strong>Wrong:</strong> Get penalty card
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowHelp(false)}
-                    className="mt-2 text-sm text-gray-500 hover:text-gray-700"
-                  >
-                    Close
-                  </button>
-                </div>
-              }
+              content={helpContent(true)}
             >
               <button
                 onClick={() => setShowHelp(!showHelp)}
@@ -114,40 +122,7 @@ export const RankDeclaration = observer(() => {
             <Popover
               isOpen={showHelp}
               positions={['bottom', 'top', 'left', 'right']}
-              content={
-                <div className="bg-white border border-yellow-300 rounded-lg p-4 shadow-2xl max-w-sm" style={{ zIndex: 9999 }}>
-                  <div className="text-base text-gray-700 space-y-2">
-                    <p>
-                      <strong>Current situation:</strong> You drew{' '}
-                      <span className="font-semibold text-yellow-700">
-                        {gameStore.pendingCard?.rank}
-                      </span>{' '}
-                      and are swapping with position{' '}
-                      <span className="font-semibold text-yellow-700">
-                        {(gameStore.swapPosition ?? 0) + 1}
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Your task:</strong> Declare what rank you think your
-                      position {(gameStore.swapPosition ?? 0) + 1} card is.
-                    </p>
-                    <div className="bg-yellow-50 rounded p-2 text-sm">
-                      <div className="text-green-700">
-                        ✅ <strong>Correct:</strong> Use {gameStore.pendingCard?.rank}&apos;s action
-                      </div>
-                      <div className="text-red-700">
-                        ❌ <strong>Wrong:</strong> Get penalty card
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowHelp(false)}
-                    className="mt-3 text-base text-gray-500 hover:text-gray-700"
-                  >
-                    Close
-                  </button>
-                </div>
-              }
+              content={helpContent(false)}
             >
               <button
                 onClick={() => setShowHelp(!showHelp)}

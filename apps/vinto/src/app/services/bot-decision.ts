@@ -1,5 +1,5 @@
 // services/bot-decision.ts
-import { Card, Rank, Difficulty, GameState, Player } from '../shapes';
+import { Card, Rank, Difficulty, GameState, Player, NeverError } from '../shapes';
 
 export interface BotDecisionContext {
   botId: string;
@@ -12,7 +12,11 @@ export interface BotDecisionContext {
   currentAction?: {
     targetType: string;
     card: Card;
-    peekTargets?: Array<{playerId: string, position: number, card: Card | undefined}>;
+    peekTargets?: Array<{
+      playerId: string;
+      position: number;
+      card: Card | undefined;
+    }>;
   };
 }
 
@@ -44,16 +48,24 @@ export interface BotDecisionService {
   selectActionTargets(context: BotDecisionContext): BotActionDecision;
 
   // Specific action decisions
-  shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean;
+  shouldSwapAfterPeek(
+    peekedCards: Card[],
+    context: BotDecisionContext
+  ): boolean;
   selectKingDeclaration(context: BotDecisionContext): Rank;
 
   // Utility decisions
-  shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean;
-  selectBestSwapPosition(drawnCard: Card, context: BotDecisionContext): number | null;
+  shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean;
+  selectBestSwapPosition(
+    drawnCard: Card,
+    context: BotDecisionContext
+  ): number | null;
 }
 
 export class StandardBotDecisionService implements BotDecisionService {
-
   decideTurnAction(context: BotDecisionContext): BotTurnDecision {
     const { discardTop } = context;
 
@@ -65,23 +77,25 @@ export class StandardBotDecisionService implements BotDecisionService {
     return { action: 'draw' };
   }
 
-  private shouldTakeFromDiscard(topCard: Card | undefined, context: BotDecisionContext): boolean {
+  private shouldTakeFromDiscard(
+    topCard: Card | undefined,
+    context: BotDecisionContext
+  ): boolean {
     if (!topCard || topCard.played || !topCard.action) return false;
 
     const { difficulty } = context;
 
     // Difficulty-based heuristics
     const baseChance = {
-      basic: 0.3,
+      easy: 0.3,
       moderate: 0.5,
-      hard: 0.7,
-      ultimate: 0.8
+      hard: 0.8,
     }[difficulty];
 
     // Prefer high-value action cards
     const valueBonus = topCard.value >= 10 ? 0.3 : 0;
 
-    return Math.random() < (baseChance + valueBonus);
+    return Math.random() < baseChance + valueBonus;
   }
 
   shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
@@ -91,26 +105,25 @@ export class StandardBotDecisionService implements BotDecisionService {
 
     // Base probabilities by difficulty
     const difficultyMultiplier = {
-      basic: 0.6,
+      easy: 0.6,
       moderate: 0.7,
-      hard: 0.8,
-      ultimate: 0.9
+      hard: 0.9,
     }[difficulty];
 
     // Card-specific base chances (only action cards have actions)
     const baseChances: Partial<Record<Rank, number>> = {
-      '7': 0.9,  // Peek own card - almost always useful
-      '8': 0.7,  // Peek opponent - useful for information
-      '9': 0.5,  // Swap two cards - situational
+      '7': 0.9, // Peek own card - almost always useful
+      '8': 0.7, // Peek opponent - useful for information
+      '9': 0.5, // Swap two cards - situational
       '10': 0.8, // Peek then swap - powerful action
-      'J': 0.4,  // Blind swap - risky
-      'Q': 0.9,  // Peek then swap - very useful
-      'K': 0.3,  // Declare rank - only if confident
-      'A': 0.6   // Force draw - tactical
+      J: 0.4, // Blind swap - risky
+      Q: 0.9, // Peek then swap - very useful
+      K: 0.3, // Declare rank - only if confident
+      A: 0.6, // Force draw - tactical
     };
     const baseChance = baseChances[drawnCard.rank] || 0.5;
 
-    return Math.random() < (baseChance * difficultyMultiplier);
+    return Math.random() < baseChance * difficultyMultiplier;
   }
 
   selectActionTargets(context: BotDecisionContext): BotActionDecision {
@@ -136,7 +149,7 @@ export class StandardBotDecisionService implements BotDecisionService {
       case 'declare-action':
         return {
           targets: [],
-          declaredRank: this.selectKingDeclaration(context)
+          declaredRank: this.selectKingDeclaration(context),
         };
 
       default:
@@ -150,25 +163,31 @@ export class StandardBotDecisionService implements BotDecisionService {
     // Prefer unknown cards, fall back to any card
     const unknownPositions = botPlayer.cards
       .map((_, i) => i)
-      .filter(i => !botPlayer.knownCardPositions.has(i));
+      .filter((i) => !botPlayer.knownCardPositions.has(i));
 
-    const targetPosition = unknownPositions.length > 0
-      ? unknownPositions[Math.floor(Math.random() * unknownPositions.length)]
-      : Math.floor(Math.random() * botPlayer.cards.length);
+    const targetPosition =
+      unknownPositions.length > 0
+        ? unknownPositions[Math.floor(Math.random() * unknownPositions.length)]
+        : Math.floor(Math.random() * botPlayer.cards.length);
 
     return { playerId: botPlayer.id, position: targetPosition };
   }
 
-  private selectOpponentCardTarget(context: BotDecisionContext): BotActionTarget {
+  private selectOpponentCardTarget(
+    context: BotDecisionContext
+  ): BotActionTarget {
     const { botId, allPlayers } = context;
-    const opponents = allPlayers.filter(p => p.id !== botId);
+    const opponents = allPlayers.filter((p) => p.id !== botId);
 
     if (opponents.length === 0) {
       return { playerId: botId, position: 0 }; // Fallback
     }
 
-    const targetPlayer = opponents[Math.floor(Math.random() * opponents.length)];
-    const targetPosition = Math.floor(Math.random() * targetPlayer.cards.length);
+    const targetPlayer =
+      opponents[Math.floor(Math.random() * opponents.length)];
+    const targetPosition = Math.floor(
+      Math.random() * targetPlayer.cards.length
+    );
 
     return { playerId: targetPlayer.id, position: targetPosition };
   }
@@ -178,7 +197,7 @@ export class StandardBotDecisionService implements BotDecisionService {
 
     // Collect all possible targets
     const allTargets: BotActionTarget[] = [];
-    allPlayers.forEach(player => {
+    allPlayers.forEach((player) => {
       player.cards.forEach((_, position) => {
         allTargets.push({ playerId: player.id, position });
       });
@@ -191,37 +210,40 @@ export class StandardBotDecisionService implements BotDecisionService {
     return [shuffled[0], shuffled[1]];
   }
 
-  private selectPeekThenSwapTargets(context: BotDecisionContext): BotActionDecision {
+  private selectPeekThenSwapTargets(
+    context: BotDecisionContext
+  ): BotActionDecision {
     const { botId, allPlayers } = context;
-    const opponents = allPlayers.filter(p => p.id !== botId);
+    const opponents = allPlayers.filter((p) => p.id !== botId);
 
     if (opponents.length < 2) return { targets: [] };
 
     // Select two different opponents
     const firstPlayer = opponents[Math.floor(Math.random() * opponents.length)];
-    const remainingOpponents = opponents.filter(p => p.id !== firstPlayer.id);
+    const remainingOpponents = opponents.filter((p) => p.id !== firstPlayer.id);
 
     if (remainingOpponents.length === 0) return { targets: [] };
 
-    const secondPlayer = remainingOpponents[Math.floor(Math.random() * remainingOpponents.length)];
+    const secondPlayer =
+      remainingOpponents[Math.floor(Math.random() * remainingOpponents.length)];
 
     return {
       targets: [
         {
           playerId: firstPlayer.id,
-          position: Math.floor(Math.random() * firstPlayer.cards.length)
+          position: Math.floor(Math.random() * firstPlayer.cards.length),
         },
         {
           playerId: secondPlayer.id,
-          position: Math.floor(Math.random() * secondPlayer.cards.length)
-        }
-      ]
+          position: Math.floor(Math.random() * secondPlayer.cards.length),
+        },
+      ],
     };
   }
 
   private selectForceDrawTarget(context: BotDecisionContext): BotActionTarget {
     const { botId, allPlayers } = context;
-    const opponents = allPlayers.filter(p => p.id !== botId);
+    const opponents = allPlayers.filter((p) => p.id !== botId);
 
     if (opponents.length === 0) {
       return { playerId: botId, position: -1 }; // Fallback
@@ -235,7 +257,10 @@ export class StandardBotDecisionService implements BotDecisionService {
     return { playerId: targetPlayer.id, position: -1 };
   }
 
-  shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean {
+  shouldSwapAfterPeek(
+    peekedCards: Card[],
+    context: BotDecisionContext
+  ): boolean {
     if (peekedCards.length !== 2) return false;
 
     const { difficulty } = context;
@@ -245,10 +270,9 @@ export class StandardBotDecisionService implements BotDecisionService {
     const valueDiff = Math.abs(card1.value - card2.value);
 
     const swapThreshold = {
-      basic: 2,
+      easy: 2,
       moderate: 3,
-      hard: 4,
-      ultimate: 5
+      hard: 5,
     }[difficulty];
 
     return valueDiff >= swapThreshold;
@@ -259,18 +283,23 @@ export class StandardBotDecisionService implements BotDecisionService {
     const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
 
     // Higher difficulty bots make smarter choices
-    if (difficulty === 'ultimate' || difficulty === 'hard') {
+    if (difficulty === 'hard') {
       // Prefer more powerful actions
       const preferredRanks: Rank[] = ['Q', '10', '7', 'A'];
       if (Math.random() < 0.7) {
-        return preferredRanks[Math.floor(Math.random() * preferredRanks.length)];
+        return preferredRanks[
+          Math.floor(Math.random() * preferredRanks.length)
+        ];
       }
     }
 
     return actionRanks[Math.floor(Math.random() * actionRanks.length)];
   }
 
-  shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean {
+  shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean {
     const { botPlayer, difficulty } = context;
 
     // Check if bot actually has matching cards
@@ -282,16 +311,18 @@ export class StandardBotDecisionService implements BotDecisionService {
 
     // Difficulty affects confidence in toss-in
     const participationChance = {
-      basic: 0.3,
+      easy: 0.3,
       moderate: 0.5,
-      hard: 0.7,
-      ultimate: 0.9
+      hard: 0.9,
     }[difficulty];
 
     return Math.random() < participationChance;
   }
 
-  selectBestSwapPosition(drawnCard: Card, context: BotDecisionContext): number | null {
+  selectBestSwapPosition(
+    drawnCard: Card,
+    context: BotDecisionContext
+  ): number | null {
     const { botPlayer } = context;
 
     // Find the worst known card to replace
@@ -311,25 +342,31 @@ export class StandardBotDecisionService implements BotDecisionService {
 
 // Specialized bot implementations for different difficulties
 export class BasicBotDecisionService extends StandardBotDecisionService {
-  override shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
+  override shouldUseAction(
+    drawnCard: Card,
+    context: BotDecisionContext
+  ): boolean {
     if (!drawnCard.action) return false;
 
     // Basic bots are more conservative and make simpler decisions
     const baseChances: Partial<Record<Rank, number>> = {
-      '7': 0.5,  // Less likely to peek own cards
-      '8': 0.3,  // Rarely peek opponents
-      '9': 0.2,  // Avoid complex swaps
+      '7': 0.5, // Less likely to peek own cards
+      '8': 0.3, // Rarely peek opponents
+      '9': 0.2, // Avoid complex swaps
       '10': 0.4, // Sometimes use peek-then-swap
-      'J': 0.1,  // Avoid risky blind swaps
-      'Q': 0.5,  // Moderate use of Queen
-      'K': 0.1,  // Rarely declare ranks
-      'A': 0.3   // Sometimes force draws
+      J: 0.1, // Avoid risky blind swaps
+      Q: 0.5, // Moderate use of Queen
+      K: 0.1, // Rarely declare ranks
+      A: 0.3, // Sometimes force draws
     };
 
     return Math.random() < (baseChances[drawnCard.rank] || 0.3);
   }
 
-  override shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean {
+  override shouldSwapAfterPeek(
+    peekedCards: Card[],
+    context: BotDecisionContext
+  ): boolean {
     if (peekedCards.length !== 2) return false;
 
     // Basic bots need large value differences to swap
@@ -338,11 +375,16 @@ export class BasicBotDecisionService extends StandardBotDecisionService {
     return valueDiff >= 4; // High threshold
   }
 
-  override shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean {
+  override shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean {
     const { botPlayer } = context;
 
     // Check if bot actually has matching cards
-    const hasMatchingCard = botPlayer.cards.some(card => card.rank === discardedRank);
+    const hasMatchingCard = botPlayer.cards.some(
+      (card) => card.rank === discardedRank
+    );
     if (!hasMatchingCard) return false;
 
     // Basic bots are very conservative with toss-ins
@@ -352,10 +394,15 @@ export class BasicBotDecisionService extends StandardBotDecisionService {
 
 export class ModerateBotDecisionService extends StandardBotDecisionService {
   // Uses the standard implementation but with moderate adjustments
-  override shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean {
+  override shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean {
     const { botPlayer } = context;
 
-    const hasMatchingCard = botPlayer.cards.some(card => card.rank === discardedRank);
+    const hasMatchingCard = botPlayer.cards.some(
+      (card) => card.rank === discardedRank
+    );
     if (!hasMatchingCard) return false;
 
     return Math.random() < 0.5; // Moderate participation
@@ -363,60 +410,10 @@ export class ModerateBotDecisionService extends StandardBotDecisionService {
 }
 
 export class HardBotDecisionService extends StandardBotDecisionService {
-  override shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
-    if (!drawnCard.action) return false;
-
-    // Hard bots are more aggressive and strategic
-    const baseChances: Partial<Record<Rank, number>> = {
-      '7': 0.95, // Almost always peek own cards
-      '8': 0.8,  // Frequently peek opponents
-      '9': 0.7,  // Use swaps strategically
-      '10': 0.9, // High use of peek-then-swap
-      'J': 0.6,  // More willing to take risks
-      'Q': 0.95, // Almost always use Queen
-      'K': 0.5,  // More confident in declarations
-      'A': 0.8   // Strategic force draws
-    };
-
-    return Math.random() < (baseChances[drawnCard.rank] || 0.7);
-  }
-
-  override shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean {
-    if (peekedCards.length !== 2) return false;
-
-    // Hard bots are more strategic about swaps
-    const [card1, card2] = peekedCards;
-    const valueDiff = Math.abs(card1.value - card2.value);
-
-    // Consider swapping even with smaller differences
-    return valueDiff >= 2 || Math.random() < 0.3; // Strategic swaps
-  }
-
-  override selectKingDeclaration(context: BotDecisionContext): Rank {
-    // Hard bots prefer powerful actions
-    const strategicRanks: Rank[] = ['Q', '10', 'A', '7'];
-
-    if (Math.random() < 0.8) {
-      return strategicRanks[Math.floor(Math.random() * strategicRanks.length)];
-    }
-
-    // Fallback to random
-    const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
-    return actionRanks[Math.floor(Math.random() * actionRanks.length)];
-  }
-
-  override shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean {
-    const { botPlayer } = context;
-
-    const hasMatchingCard = botPlayer.cards.some(card => card.rank === discardedRank);
-    if (!hasMatchingCard) return false;
-
-    return Math.random() < 0.7; // Aggressive participation
-  }
-}
-
-export class UltimateBotDecisionService extends StandardBotDecisionService {
-  override shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
+  override shouldUseAction(
+    drawnCard: Card,
+    context: BotDecisionContext
+  ): boolean {
     if (!drawnCard.action) return false;
 
     // Ultimate bots make near-optimal decisions
@@ -427,24 +424,27 @@ export class UltimateBotDecisionService extends StandardBotDecisionService {
     // Adapt strategy based on game phase
     let multiplier = 1.0;
     if (isEarlyGame) multiplier = 1.2; // More action usage early
-    if (isLateGame) multiplier = 0.8;  // More conservative late
+    if (isLateGame) multiplier = 0.8; // More conservative late
 
     const baseChances: Partial<Record<Rank, number>> = {
       '7': 0.98, // Nearly always peek own cards
-      '8': 0.9,  // Very high opponent peeking
-      '9': 0.8,  // Strategic swaps
+      '8': 0.9, // Very high opponent peeking
+      '9': 0.8, // Strategic swaps
       '10': 0.95, // High peek-then-swap usage
-      'J': 0.7,  // Calculated risks
-      'Q': 0.98, // Nearly always use Queen
-      'K': 0.6,  // Confident declarations
-      'A': 0.9   // Strategic force draws
+      J: 0.7, // Calculated risks
+      Q: 0.98, // Nearly always use Queen
+      K: 0.6, // Confident declarations
+      A: 0.9, // Strategic force draws
     };
 
     const chance = (baseChances[drawnCard.rank] || 0.8) * multiplier;
     return Math.random() < Math.min(0.99, chance);
   }
 
-  override shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean {
+  override shouldSwapAfterPeek(
+    peekedCards: Card[],
+    context: BotDecisionContext
+  ): boolean {
     if (peekedCards.length !== 2) return false;
 
     const [card1, card2] = peekedCards;
@@ -476,7 +476,9 @@ export class UltimateBotDecisionService extends StandardBotDecisionService {
       // Early/mid game: prefer powerful control actions
       const earlyGameRanks: Rank[] = ['Q', '10', '9'];
       if (Math.random() < 0.9) {
-        return earlyGameRanks[Math.floor(Math.random() * earlyGameRanks.length)];
+        return earlyGameRanks[
+          Math.floor(Math.random() * earlyGameRanks.length)
+        ];
       }
     }
 
@@ -485,20 +487,31 @@ export class UltimateBotDecisionService extends StandardBotDecisionService {
     return actionRanks[Math.floor(Math.random() * actionRanks.length)];
   }
 
-  override shouldParticipateInTossIn(discardedRank: Rank, context: BotDecisionContext): boolean {
+  override shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean {
     const { botPlayer } = context;
 
-    const matchingCards = botPlayer.cards.filter(card => card.rank === discardedRank);
+    const matchingCards = botPlayer.cards.filter(
+      (card) => card.rank === discardedRank
+    );
     if (matchingCards.length === 0) return false;
 
     // Ultimate bots consider strategic value of toss-ins
     const actionValues: Partial<Record<Rank, number>> = {
-      '7': 0.9, '8': 0.8, '9': 0.7, '10': 0.9,
-      'J': 0.6, 'Q': 0.95, 'K': 0.5, 'A': 0.8
+      '7': 0.9,
+      '8': 0.8,
+      '9': 0.7,
+      '10': 0.9,
+      J: 0.6,
+      Q: 0.95,
+      K: 0.5,
+      A: 0.8,
     };
     const actionValue = actionValues[discardedRank] || 0.5;
 
-    return Math.random() < (0.8 * actionValue); // Strategic participation
+    return Math.random() < 0.8 * actionValue; // Strategic participation
   }
 }
 
@@ -506,16 +519,14 @@ export class UltimateBotDecisionService extends StandardBotDecisionService {
 export class BotDecisionServiceFactory {
   static create(difficulty: Difficulty): BotDecisionService {
     switch (difficulty) {
-      case 'basic':
+      case 'easy':
         return new BasicBotDecisionService();
       case 'moderate':
         return new ModerateBotDecisionService();
       case 'hard':
         return new HardBotDecisionService();
-      case 'ultimate':
-        return new UltimateBotDecisionService();
       default:
-        return new StandardBotDecisionService();
+        throw new NeverError(difficulty);
     }
   }
 
@@ -526,7 +537,10 @@ export class BotDecisionServiceFactory {
   }): BotDecisionService {
     // Create a customized bot based on personality traits
     class CustomBotDecisionService extends StandardBotDecisionService {
-      override shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
+      override shouldUseAction(
+        drawnCard: Card,
+        context: BotDecisionContext
+      ): boolean {
         if (!drawnCard.action) return false;
 
         const baseResult = super.shouldUseAction(drawnCard, context);
@@ -534,14 +548,18 @@ export class BotDecisionServiceFactory {
 
         // Adjust based on aggression level
         const aggressionAdjustment = (aggression - 0.5) * 0.4; // ±0.2 max adjustment
-        const adjustedChance = Math.max(0, Math.min(1,
-          (baseResult ? 0.7 : 0.3) + aggressionAdjustment
-        ));
+        const adjustedChance = Math.max(
+          0,
+          Math.min(1, (baseResult ? 0.7 : 0.3) + aggressionAdjustment)
+        );
 
         return Math.random() < adjustedChance;
       }
 
-      override shouldSwapAfterPeek(peekedCards: Card[], context: BotDecisionContext): boolean {
+      override shouldSwapAfterPeek(
+        peekedCards: Card[],
+        context: BotDecisionContext
+      ): boolean {
         if (peekedCards.length !== 2) return false;
 
         const riskTolerance = config.riskTolerance || 0.5;

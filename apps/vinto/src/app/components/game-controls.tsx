@@ -4,9 +4,15 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
+import { getPlayerStore } from '../stores/player-store';
+import { getActionStore } from '../stores/action-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getDeckStore } from '../stores/deck-store';
+import { getTossInStore } from '../stores/toss-in-store';
 
 export const GameControls = observer(() => {
-  const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
+  const playerStore = getPlayerStore();
+  const currentPlayer = playerStore.players[playerStore.currentPlayerIndex];
 
   const handleDrawCard = () => {
     if (currentPlayer && currentPlayer.isHuman) {
@@ -16,30 +22,60 @@ export const GameControls = observer(() => {
 
   // Determine what content to show but always use same container
   const getControlContent = () => {
+    // Show peek confirmation controls when human has peeked and needs to confirm
+    const { players, humanPlayer } = getPlayerStore();
+    const {
+      isSelectingSwapPosition,
+      isAwaitingActionTarget,
+      isProcessingTossInQueue,
+      phase,
+      isChoosingCardAction,
+      isDeclaringRank,
+      finalTurnTriggered
+    } = getGamePhaseStore();
+    const { actionContext, tossInQueue } = getActionStore();
+    const {waitingForTossIn} = getTossInStore();
+    const isPeekConfirmation =
+      actionContext?.playerId === humanPlayer?.id &&
+      (actionContext?.targetType === 'own-card' ||
+        actionContext?.targetType === 'opponent-card') &&
+      isAwaitingActionTarget;
+
+    if (isPeekConfirmation) {
+      const hasRevealedCard =
+        humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
+
+      return {
+        type: 'peek-confirm',
+        title: hasRevealedCard ? 'Card Revealed' : 'Select a card',
+        subtitle: '',
+      };
+    }
+
     // Show toss-in skip controls when processing toss-in queue for human
     const isHumanTossInAction =
-      gameStore.isProcessingTossInQueue &&
-      gameStore.actionContext?.playerId ===
-        gameStore.players.find((p) => p.isHuman)?.id;
+      isProcessingTossInQueue &&
+      actionContext?.playerId === players.find((p) => p.isHuman)?.id;
 
     if (isHumanTossInAction) {
       return {
         type: 'toss-in',
-        title: `Toss-in Action: ${gameStore.tossInQueue[0]?.card.rank} (${gameStore.tossInQueue[0]?.card.action})`,
-        subtitle: 'You can execute this action or skip it'
+        title: `Toss-in Action: ${tossInQueue[0]?.card.rank} (${tossInQueue[0]?.card.action})`,
+        subtitle: 'You can execute this action or skip it',
       };
     }
 
-    // Hide controls during special game states
+    // Hide controls during special game states (but allow peek confirmation through)
     const shouldHide =
-      gameStore.phase !== 'playing' ||
-      gameStore.isSelectingSwapPosition ||
-      gameStore.isChoosingCardAction ||
-      gameStore.isDeclaringRank ||
-      gameStore.waitingForTossIn ||
-      gameStore.finalTurnTriggered ||
-      gameStore.isAwaitingActionTarget ||
-      gameStore.isProcessingTossInQueue;
+      (phase !== 'playing' && phase !== 'final') ||
+      isSelectingSwapPosition ||
+      isChoosingCardAction ||
+      isDeclaringRank ||
+      waitingForTossIn ||
+      finalTurnTriggered ||
+      (isAwaitingActionTarget && !isPeekConfirmation) ||
+      isProcessingTossInQueue ||
+      !currentPlayer?.isHuman;
 
     if (shouldHide) {
       return { type: 'hidden' };
@@ -51,8 +87,8 @@ export const GameControls = observer(() => {
     if (showVintoOnly) {
       return {
         type: 'vinto-only',
-        title: 'Call Vinto before next player\'s turn',
-        subtitle: 'End the game and start final scoring'
+        title: "Call Vinto before next player's turn",
+        subtitle: 'End the game and start final scoring',
       };
     }
 
@@ -63,7 +99,7 @@ export const GameControls = observer(() => {
       return {
         type: 'full-controls',
         title: 'Your turn',
-        subtitle: 'Choose one action'
+        subtitle: 'Choose one action',
       };
     }
 
@@ -81,7 +117,6 @@ export const GameControls = observer(() => {
   return (
     <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">
       <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-3 md:p-4 shadow-lg h-full flex flex-col">
-
         {/* Header - consistent across all states */}
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="text-sm md:text-base font-semibold text-gray-800">
@@ -96,19 +131,14 @@ export const GameControls = observer(() => {
 
         {/* Main content area - responsive to content type */}
         <div className="flex-1 flex flex-col justify-center">
-          {controlContent.type === 'toss-in' && (
-            <TossInControls />
-          )}
+          {controlContent.type === 'peek-confirm' && <PeekConfirmControls />}
 
-          {controlContent.type === 'vinto-only' && (
-            <VintoOnlyControls />
-          )}
+          {controlContent.type === 'toss-in' && <TossInControls />}
+
+          {controlContent.type === 'vinto-only' && <VintoOnlyControls />}
 
           {controlContent.type === 'full-controls' && (
-            <FullTurnControls
-              currentPlayer={currentPlayer!}
-              handleDrawCard={handleDrawCard}
-            />
+            <FullTurnControls handleDrawCard={handleDrawCard} />
           )}
         </div>
       </div>
@@ -117,6 +147,45 @@ export const GameControls = observer(() => {
 });
 
 // Sub-components for different control states
+const PeekConfirmControls = () => {
+  const { humanPlayer } = getPlayerStore();
+  const hasRevealedCard =
+    humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
+  const actionStore = getActionStore();
+  const actionContext = actionStore.actionContext;
+
+  // Determine instruction message based on action type
+  const getInstructionMessage = () => {
+    if (!actionContext) return 'Select a card to peek';
+
+    if (actionContext.targetType === 'own-card') {
+      return 'Peek 1 of your cards';
+    } else if (actionContext.targetType === 'opponent-card') {
+      return 'Peek 1 opponent card';
+    }
+    return 'Select a card to peek';
+  };
+
+  return (
+    <button
+      onClick={() => hasRevealedCard && gameStore.confirmPeekCompletion()}
+      disabled={!hasRevealedCard}
+      className={`w-full font-semibold py-2 md:py-3 px-4 rounded-lg shadow transition-colors text-sm md:text-base ${
+        hasRevealedCard
+          ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+          : 'bg-gray-200 text-gray-600 cursor-not-allowed'
+      }`}
+      aria-label={
+        hasRevealedCard
+          ? 'Continue after peeking'
+          : 'Waiting for card selection'
+      }
+    >
+      {hasRevealedCard ? 'Continue' : getInstructionMessage()}
+    </button>
+  );
+};
+
 const TossInControls = () => (
   <div className="space-y-3">
     <div className="text-xs md:text-sm text-gray-600 text-center">
@@ -134,9 +203,6 @@ const TossInControls = () => (
 
 const VintoOnlyControls = () => (
   <div className="space-y-3">
-    <div className="text-xs md:text-sm text-gray-600 text-center">
-      Last chance to end the game
-    </div>
     <button
       onClick={() => gameStore.callVinto()}
       className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 md:py-3 px-4 rounded-lg shadow transition-colors text-sm md:text-base"
@@ -147,12 +213,18 @@ const VintoOnlyControls = () => (
   </div>
 );
 
-const FullTurnControls = ({ currentPlayer, handleDrawCard }: { currentPlayer: any, handleDrawCard: () => void }) => {
+const FullTurnControls = ({
+  handleDrawCard,
+}: {
+  handleDrawCard: () => void;
+}) => {
+  const playerStore = getPlayerStore();
+  const { discardPile, drawPile } = getDeckStore();
   // Check if this is the first human turn
-  const isFirstHumanTurn = gameStore.turnCount === 0;
+  const isFirstHumanTurn = playerStore.turnCount === 0;
 
   // Check if discard pile top card can be taken
-  const topDiscardCard = gameStore.discardPile[0];
+  const topDiscardCard = discardPile[0];
   const canTakeFromDiscard =
     topDiscardCard &&
     topDiscardCard.action &&
@@ -166,7 +238,7 @@ const FullTurnControls = ({ currentPlayer, handleDrawCard }: { currentPlayer: an
         {/* Draw from Deck */}
         <button
           onClick={handleDrawCard}
-          disabled={gameStore.drawPile.length === 0}
+          disabled={drawPile.length === 0}
           className="flex items-center justify-center gap-1.5 md:gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 md:py-3 px-3 md:px-4 rounded-lg shadow transition-colors text-sm md:text-base"
           aria-label="Draw new card from deck"
         >

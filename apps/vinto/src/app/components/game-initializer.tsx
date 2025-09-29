@@ -4,17 +4,19 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
+import { getPlayerStore } from '../stores/player-store';
 
 export const GameInitializer = observer(() => {
+  const { players } = getPlayerStore();
   // Initialize game on mount
   useEffect(() => {
-    if (gameStore.players.length === 0) {
+    if (players.length === 0) {
       gameStore.initGame();
     }
   }, []);
 
   // Loading state
-  if (!gameStore.sessionActive || gameStore.players.length === 0) {
+  if (!gameStore.sessionActive || players.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">

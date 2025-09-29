@@ -199,12 +199,19 @@ export class CardActionHandler {
       if (player.isHuman) {
         // For humans, make card temporarily visible (shown in UI)
         this.playerStore.makeCardTemporarilyVisible(playerId, position);
+
+        const card = player.cards[position];
+        GameToastService.success(
+          `You peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
+        );
+
+        // User must confirm to complete action - no automatic timeout
       } else {
         // For bots, permanently add to known cards for AI decision-making
         this.playerStore.addKnownCardPosition(playerId, position);
+        this.completeAction();
       }
 
-      this.completeAction();
       return true;
     }
 
@@ -227,13 +234,22 @@ export class CardActionHandler {
     if (position >= 0 && position < targetPlayer.cards.length) {
       const peekedCard = targetPlayer.cards[position];
 
+      // Make the card temporarily visible
+      if (actionPlayer.isHuman) {
+        this.playerStore.makeCardTemporarilyVisible(targetPlayerId, position);
+      }
+
       GameToastService.success(
         `${actionPlayer.name} peeked at ${targetPlayer.name}'s position ${
           position + 1
         }: ${peekedCard.rank} (value ${peekedCard.value})`
       );
 
-      this.completeAction();
+      // User must confirm to complete action - no automatic timeout
+      if (!actionPlayer.isHuman) {
+        this.completeAction();
+      }
+
       return true;
     }
 
@@ -557,6 +573,25 @@ export class CardActionHandler {
   }
 
   // Action completion
+  confirmPeekCompletion(): boolean {
+    const context = this.actionStore.actionContext;
+    if (!context) return false;
+
+    const actionPlayer = this.playerStore.getPlayer(context.playerId);
+    if (!actionPlayer?.isHuman) return false;
+
+    // Only allow confirmation for peek actions that are waiting
+    if (
+      context.targetType !== 'own-card' &&
+      context.targetType !== 'opponent-card'
+    ) {
+      return false;
+    }
+
+    this.completeAction();
+    return true;
+  }
+
   private completeAction() {
     this.playerStore.clearTemporaryCardVisibility();
     this.cleanupAction();

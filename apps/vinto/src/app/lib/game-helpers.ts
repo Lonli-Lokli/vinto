@@ -1,6 +1,6 @@
 // lib/game-helpers.ts
 
-import { Card, Difficulty, Player, Rank } from '../shapes';
+import { Card, Difficulty, NeverError, Player, Rank } from '../shapes';
 
 export const createDeck = (): Card[] => {
   const deck: Card[] = [];
@@ -68,16 +68,14 @@ export const shuffleDeck = (deck: Card[]): Card[] => {
 
 export const getAIKnowledgeByDifficulty = (difficulty: Difficulty): number => {
   switch (difficulty) {
-    case 'basic':
+    case 'easy':
       return 0.3;
     case 'moderate':
-      return 0.6;
+      return 0.7;
     case 'hard':
-      return 0.8;
-    case 'ultimate':
-      return 1.0;
+      return 1;
     default:
-      return 0.6;
+      throw new NeverError(difficulty);
   }
 };
 

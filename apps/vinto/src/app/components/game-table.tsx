@@ -6,16 +6,24 @@ import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 import { PlayerArea } from './player-area';
 import { Card } from './card';
+import { getPlayerStore } from '../stores/player-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getActionStore } from '../stores/action-store';
+import { getTossInStore } from '../stores/toss-in-store';
+import { getDeckStore } from '../stores/deck-store';
 
 export const GameTable = observer(() => {
-  const currentPlayer = gameStore.players[gameStore.currentPlayerIndex];
-  const humanPlayer = gameStore.players.find((p) => p.isHuman);
+  const { currentPlayer, humanPlayer, players, setupPeeksRemaining } =
+    getPlayerStore();
+  const { phase, isSelectingSwapPosition, isChoosingCardAction , isDeclaringRank, isAwaitingActionTarget} =
+    getGamePhaseStore();
+  const { actionContext , pendingCard, tossInTimer, swapPosition} = getActionStore();
+  const { waitingForTossIn} = getTossInStore();
+  const { discardPile} = getDeckStore()
 
   // Calculate final scores if in scoring phase
   const finalScores =
-    gameStore.phase === 'scoring'
-      ? gameStore.calculateFinalScores()
-      : undefined;
+    phase === 'scoring' ? gameStore.calculateFinalScores() : undefined;
 
   // Determine if card interactions should be enabled
   const shouldAllowCardInteractions = () => {
@@ -24,16 +32,16 @@ export const GameTable = observer(() => {
     // Only allow interactions when it's relevant for the human player
     return (
       // During setup phase for memorization
-      (gameStore.phase === 'setup' && gameStore.setupPeeksRemaining > 0) ||
+      (phase === 'setup' && setupPeeksRemaining > 0) ||
       // When selecting swap position after drawing
-      gameStore.isSelectingSwapPosition ||
+      isSelectingSwapPosition ||
       // During toss-in period
-      gameStore.waitingForTossIn ||
+      waitingForTossIn ||
       // During action target selection for own cards
-      (gameStore.isAwaitingActionTarget &&
-        (gameStore.actionContext?.targetType === 'own-card' ||
-         gameStore.actionContext?.targetType === 'peek-then-swap' ||
-         gameStore.actionContext?.targetType === 'swap-cards'))
+      (isAwaitingActionTarget &&
+        (actionContext?.targetType === 'own-card' ||
+          actionContext?.targetType === 'peek-then-swap' ||
+          actionContext?.targetType === 'swap-cards'))
     );
   };
 
@@ -41,9 +49,9 @@ export const GameTable = observer(() => {
     if (!humanPlayer) return;
 
     // During setup phase, allow peeking at cards for memorization
-    if (gameStore.phase === 'setup') {
+    if (phase === 'setup') {
       if (
-        gameStore.setupPeeksRemaining > 0 &&
+        setupPeeksRemaining > 0 &&
         !humanPlayer.knownCardPositions.has(position)
       ) {
         gameStore.peekCard(humanPlayer.id, position);
@@ -52,23 +60,23 @@ export const GameTable = observer(() => {
     }
 
     // If selecting swap position, perform the swap
-    if (gameStore.isSelectingSwapPosition) {
+    if (isSelectingSwapPosition) {
       gameStore.swapCard(position);
       return;
     }
 
     // During toss-in period, allow tossing in cards
-    if (gameStore.waitingForTossIn) {
+    if (waitingForTossIn) {
       gameStore.tossInCard(humanPlayer.id, position);
       return;
     }
 
     // During action target selection, allow selecting target
     if (
-      gameStore.isAwaitingActionTarget &&
-      (gameStore.actionContext?.targetType === 'own-card' ||
-        gameStore.actionContext?.targetType === 'peek-then-swap' ||
-        gameStore.actionContext?.targetType === 'swap-cards')
+      isAwaitingActionTarget &&
+      (actionContext?.targetType === 'own-card' ||
+        actionContext?.targetType === 'peek-then-swap' ||
+        actionContext?.targetType === 'swap-cards')
     ) {
       gameStore.selectActionTarget(humanPlayer.id, position);
       return;
@@ -78,32 +86,23 @@ export const GameTable = observer(() => {
   // Determine if opponent card interactions should be enabled
   const shouldAllowOpponentCardInteractions = () => {
     return (
-      gameStore.isAwaitingActionTarget &&
-      (gameStore.actionContext?.targetType === 'opponent-card' ||
-       gameStore.actionContext?.targetType === 'force-draw' ||
-       gameStore.actionContext?.targetType === 'peek-then-swap' ||
-       gameStore.actionContext?.targetType === 'swap-cards')
+      isAwaitingActionTarget &&
+      (actionContext?.targetType === 'opponent-card' ||
+        actionContext?.targetType === 'force-draw' ||
+        actionContext?.targetType === 'peek-then-swap' ||
+        actionContext?.targetType === 'swap-cards')
     );
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
-    console.log('DEBUG Q action - handleOpponentCardClick:', {
-      playerId,
-      position,
-      isAwaitingActionTarget: gameStore.isAwaitingActionTarget,
-      targetType: gameStore.actionContext?.targetType,
-      peekTargets: gameStore.peekTargets?.length,
-    });
-
     // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
-      gameStore.isAwaitingActionTarget &&
-      (gameStore.actionContext?.targetType === 'opponent-card' ||
-        gameStore.actionContext?.targetType === 'force-draw' ||
-        gameStore.actionContext?.targetType === 'peek-then-swap' ||
-        gameStore.actionContext?.targetType === 'swap-cards')
+      isAwaitingActionTarget &&
+      (actionContext?.targetType === 'opponent-card' ||
+        actionContext?.targetType === 'force-draw' ||
+        actionContext?.targetType === 'peek-then-swap' ||
+        actionContext?.targetType === 'swap-cards')
     ) {
-      console.log('DEBUG Q action - calling selectActionTarget');
       gameStore.selectActionTarget(playerId, position);
       return;
     } else {
@@ -120,9 +119,9 @@ export const GameTable = observer(() => {
   };
 
   const playersById = {
-    top: gameStore.players.find((p) => p.position === 'top'),
-    left: gameStore.players.find((p) => p.position === 'left'),
-    right: gameStore.players.find((p) => p.position === 'right'),
+    top: players.find((p) => p.position === 'top'),
+    left: players.find((p) => p.position === 'left'),
+    right: players.find((p) => p.position === 'right'),
   };
   const top = playersById.top;
   const left = playersById.left;
@@ -142,11 +141,14 @@ export const GameTable = observer(() => {
                 isThinking={
                   gameStore.aiThinking && currentPlayer?.id === top.id
                 }
-                gamePhase={gameStore.phase}
+                gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
-                  handleOpponentCardClick(top.id, position) : undefined
+                onCardClick={
+                  shouldAllowOpponentCardInteractions()
+                    ? (position) => handleOpponentCardClick(top.id, position)
+                    : undefined
                 }
+                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />
             </div>
           )}
@@ -163,11 +165,15 @@ export const GameTable = observer(() => {
                     isThinking={
                       gameStore.aiThinking && currentPlayer?.id === left.id
                     }
-                    gamePhase={gameStore.phase}
+                    gamePhase={phase}
                     finalScores={finalScores}
-                    onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
-                      handleOpponentCardClick(left.id, position) : undefined
+                    onCardClick={
+                      shouldAllowOpponentCardInteractions()
+                        ? (position) =>
+                            handleOpponentCardClick(left.id, position)
+                        : undefined
                     }
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
                   />
                 </div>
               )}
@@ -181,11 +187,11 @@ export const GameTable = observer(() => {
                   size="md"
                   clickable={
                     currentPlayer?.isHuman &&
-                    !gameStore.isSelectingSwapPosition &&
-                    !gameStore.isChoosingCardAction &&
-                    !gameStore.isAwaitingActionTarget &&
-                    !gameStore.isDeclaringRank &&
-                    gameStore.phase === 'playing'
+                    !isSelectingSwapPosition &&
+                    !isChoosingCardAction &&
+                    !isAwaitingActionTarget &&
+                    !isDeclaringRank &&
+                    phase === 'playing'
                   }
                   onClick={handleDrawCard}
                 />
@@ -195,14 +201,14 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Drawn Card (when choosing action, selecting swap position, or declaring rank) */}
-              {gameStore.pendingCard &&
-                (gameStore.isChoosingCardAction ||
-                  gameStore.isSelectingSwapPosition ||
-                  gameStore.isDeclaringRank) && (
+              {pendingCard &&
+                (isChoosingCardAction ||
+                  isSelectingSwapPosition ||
+                  isDeclaringRank) && (
                   <div className="text-center">
                     <div className="relative">
                       <Card
-                        card={gameStore.pendingCard}
+                        card={pendingCard}
                         revealed={true}
                         size="md"
                         highlighted={true}
@@ -214,20 +220,19 @@ export const GameTable = observer(() => {
                     <div className="mt-1 text-[10px] text-white font-semibold bg-yellow-500/80 rounded px-2 py-0.5">
                       DRAWN
                     </div>
-                    {gameStore.isChoosingCardAction &&
-                      gameStore.pendingCard.action && (
-                        <div className="mt-1 text-[9px] text-white bg-blue-500/80 rounded px-1 py-0.5">
-                          {gameStore.pendingCard.action}
-                        </div>
-                      )}
+                    {isChoosingCardAction && pendingCard.action && (
+                      <div className="mt-1 text-[9px] text-white bg-blue-500/80 rounded px-1 py-0.5">
+                        {pendingCard.action}
+                      </div>
+                    )}
                   </div>
                 )}
 
               {/* Discard Pile */}
               <div className="text-center">
                 <Card
-                  card={gameStore.discardPile[0]}
-                  revealed={gameStore.discardPile.length > 0}
+                  card={discardPile[0]}
+                  revealed={discardPile.length > 0}
                   size="md"
                 />
                 <div className="mt-1 text-[10px] text-white font-semibold bg-black/20 rounded px-2 py-0.5">
@@ -237,14 +242,16 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Toss-in Timer */}
-            {gameStore.waitingForTossIn && (
+            {waitingForTossIn && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="bg-yellow-500 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
                   <div className="text-center">
                     <div className="text-sm sm:text-lg font-black">
-                      {gameStore.tossInTimer}
+                      {tossInTimer}
                     </div>
-                    <div className="text-[8px] sm:text-[10px] leading-tight">TOSS IN</div>
+                    <div className="text-[8px] sm:text-[10px] leading-tight">
+                      TOSS IN
+                    </div>
                   </div>
                 </div>
               </div>
@@ -260,11 +267,15 @@ export const GameTable = observer(() => {
                     isThinking={
                       gameStore.aiThinking && currentPlayer?.id === right.id
                     }
-                    gamePhase={gameStore.phase}
+                    gamePhase={phase}
                     finalScores={finalScores}
-                    onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
-                      handleOpponentCardClick(right.id, position) : undefined
+                    onCardClick={
+                      shouldAllowOpponentCardInteractions()
+                        ? (position) =>
+                            handleOpponentCardClick(right.id, position)
+                        : undefined
                     }
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
                   />
                 </div>
               )}
@@ -278,12 +289,15 @@ export const GameTable = observer(() => {
                 player={humanPlayer}
                 isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
                 isThinking={false}
-                onCardClick={shouldAllowCardInteractions() ? handleCardClick : undefined}
-                gamePhase={gameStore.phase}
+                onCardClick={
+                  shouldAllowCardInteractions() ? handleCardClick : undefined
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
-                isSelectingSwapPosition={gameStore.isSelectingSwapPosition}
-                isDeclaringRank={gameStore.isDeclaringRank}
-                swapPosition={gameStore.swapPosition}
+                isSelectingSwapPosition={isSelectingSwapPosition}
+                isDeclaringRank={isDeclaringRank}
+                swapPosition={swapPosition}
+                isSelectingActionTarget={shouldAllowCardInteractions()}
               />
             )}
           </div>
@@ -300,11 +314,14 @@ export const GameTable = observer(() => {
                 isThinking={
                   gameStore.aiThinking && currentPlayer?.id === top.id
                 }
-                gamePhase={gameStore.phase}
+                gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={shouldAllowOpponentCardInteractions() ? (position) =>
-                  handleOpponentCardClick(top.id, position) : undefined
+                onCardClick={
+                  shouldAllowOpponentCardInteractions()
+                    ? (position) => handleOpponentCardClick(top.id, position)
+                    : undefined
                 }
+                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />
             </div>
           )}
@@ -318,11 +335,12 @@ export const GameTable = observer(() => {
                 isThinking={
                   gameStore.aiThinking && currentPlayer?.id === left.id
                 }
-                gamePhase={gameStore.phase}
+                gamePhase={phase}
                 finalScores={finalScores}
                 onCardClick={(position) =>
                   handleOpponentCardClick(left.id, position)
                 }
+                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />
             </div>
           )}
@@ -336,11 +354,12 @@ export const GameTable = observer(() => {
                 isThinking={
                   gameStore.aiThinking && currentPlayer?.id === right.id
                 }
-                gamePhase={gameStore.phase}
+                gamePhase={phase}
                 finalScores={finalScores}
                 onCardClick={(position) =>
                   handleOpponentCardClick(right.id, position)
                 }
+                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />
             </div>
           )}
@@ -354,11 +373,11 @@ export const GameTable = observer(() => {
                   size="xl"
                   clickable={
                     currentPlayer?.isHuman &&
-                    !gameStore.isSelectingSwapPosition &&
-                    !gameStore.isChoosingCardAction &&
-                    !gameStore.isAwaitingActionTarget &&
-                    !gameStore.isDeclaringRank &&
-                    gameStore.phase === 'playing'
+                    !isSelectingSwapPosition &&
+                    !isChoosingCardAction &&
+                    !isAwaitingActionTarget &&
+                    !isDeclaringRank &&
+                    phase === 'playing'
                   }
                   onClick={handleDrawCard}
                 />
@@ -368,14 +387,14 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Drawn Card (when choosing action, selecting swap position, or declaring rank) */}
-              {gameStore.pendingCard &&
-                (gameStore.isChoosingCardAction ||
-                  gameStore.isSelectingSwapPosition ||
-                  gameStore.isDeclaringRank) && (
+              {pendingCard &&
+                (isChoosingCardAction ||
+                  isSelectingSwapPosition ||
+                  isDeclaringRank) && (
                   <div className="text-center">
                     <div className="relative">
                       <Card
-                        card={gameStore.pendingCard}
+                        card={pendingCard}
                         revealed={true}
                         size="xl"
                         highlighted={true}
@@ -387,20 +406,19 @@ export const GameTable = observer(() => {
                     <div className="mt-2 text-xs text-white font-semibold bg-yellow-500/80 rounded px-2 py-1">
                       DRAWN
                     </div>
-                    {gameStore.isChoosingCardAction &&
-                      gameStore.pendingCard.action && (
-                        <div className="mt-1 text-[10px] text-white bg-blue-500/80 rounded px-2 py-0.5">
-                          {gameStore.pendingCard.action}
-                        </div>
-                      )}
+                    {isChoosingCardAction && pendingCard.action && (
+                      <div className="mt-1 text-[10px] text-white bg-blue-500/80 rounded px-2 py-0.5">
+                        {pendingCard.action}
+                      </div>
+                    )}
                   </div>
                 )}
 
               {/* Discard Pile */}
               <div className="text-center">
                 <Card
-                  card={gameStore.discardPile[0]}
-                  revealed={gameStore.discardPile.length > 0}
+                  card={discardPile[0]}
+                  revealed={discardPile.length > 0}
                   size="xl"
                 />
                 <div className="mt-2 text-xs text-white font-semibold bg-black/20 rounded px-2 py-1">
@@ -410,12 +428,12 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Toss-in Timer (Desktop) */}
-            {gameStore.waitingForTossIn && (
+            {waitingForTossIn && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                 <div className="bg-yellow-500 text-white font-bold px-4 py-3 rounded-xl shadow-xl border-2 border-yellow-600 animate-pulse">
                   <div className="text-center">
                     <div className="text-2xl font-black">
-                      {gameStore.tossInTimer}
+                      {tossInTimer}
                     </div>
                     <div className="text-xs leading-tight">TOSS IN</div>
                   </div>
@@ -431,12 +449,15 @@ export const GameTable = observer(() => {
                 player={humanPlayer}
                 isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
                 isThinking={false}
-                onCardClick={shouldAllowCardInteractions() ? handleCardClick : undefined}
-                gamePhase={gameStore.phase}
+                onCardClick={
+                  shouldAllowCardInteractions() ? handleCardClick : undefined
+                }
+                gamePhase={phase}
                 finalScores={finalScores}
-                isSelectingSwapPosition={gameStore.isSelectingSwapPosition}
-                isDeclaringRank={gameStore.isDeclaringRank}
-                swapPosition={gameStore.swapPosition}
+                isSelectingSwapPosition={isSelectingSwapPosition}
+                isDeclaringRank={isDeclaringRank}
+                swapPosition={swapPosition}
+                isSelectingActionTarget={shouldAllowCardInteractions()}
               />
             )}
           </div>

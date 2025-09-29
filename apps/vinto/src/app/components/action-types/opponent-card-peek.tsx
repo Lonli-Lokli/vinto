@@ -2,11 +2,13 @@
 'use client';
 
 import React from 'react';
-import { gameStore } from '@/app/stores/game-store';
+import { getActionStore } from '@/app/stores/action-store';
 
 export function OpponentCardPeek() {
-  if (!gameStore.actionContext) return null;
-  const { action } = gameStore.actionContext;
+  const actionStore = getActionStore();
+
+  if (!actionStore.actionContext) return null;
+  const { action } = actionStore.actionContext;
   return (
     <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
       <div className="bg-red-50 border border-red-300 rounded-lg p-3 md:p-4 shadow-md h-full flex flex-col justify-center">

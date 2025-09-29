@@ -1,13 +1,15 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
+import { getActionStore } from '@/app/stores/action-store';
 import React from 'react';
-import { gameStore } from '@/app/stores/game-store';
+
 
 export function CardSwap() {
-  if (!gameStore.actionContext) return null;
-  const { action } = gameStore.actionContext;
-  const swapTargets = gameStore.swapTargets;
+  const actionStore = getActionStore();
+  if (!actionStore.actionContext) return null;
+  const { action } = actionStore.actionContext;
+  const swapTargets = actionStore.swapTargets;
   return (
     <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
       <div className="bg-purple-50 border border-purple-300 rounded-lg p-3 md:p-4 shadow-md h-full flex flex-col justify-center">

@@ -3,12 +3,11 @@
     "allow": [
       "mcp__ide__getDiagnostics",
       "Bash(npm run build:*)",
-      "Bash(npm run typecheck:*)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(find:*)"
     ],
-    "deny": ["Bash(npx tsc:*)"],
+    "deny": ["Bash(npx tsc:*)",       "Bash(npm run typecheck:*)"],
     "ask": []
   }
 }

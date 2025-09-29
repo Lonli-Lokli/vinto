@@ -45,10 +45,9 @@ export class OracleVintoClient {
       
       // Difficulty affects thinking time and decision quality
       const baseTimeByDiff: Record<Difficulty, number> = {
-        basic: 500,
+        easy: 500,
         moderate: 1000,
-        hard: 1500,
-        ultimate: 2000,
+        hard: 1500
       };
       const baseTime = baseTimeByDiff[difficulty];
       const thinkTime = baseTime + Math.random() * 800;
@@ -58,10 +57,9 @@ export class OracleVintoClient {
       
       // Difficulty affects AI confidence
       const baseConfidenceByDiff: Record<Difficulty, number> = {
-        basic: 0.4,
+        easy: 0.4,
         moderate: 0.65,
-        hard: 0.85,
-        ultimate: 0.95,
+        hard: 0.95,
       };
       const confidenceRaw = baseConfidenceByDiff[difficulty] + Math.random() * 0.15;
       const confidence = Math.min(0.99, confidenceRaw);

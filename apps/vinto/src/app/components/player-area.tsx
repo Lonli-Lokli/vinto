@@ -16,6 +16,7 @@ interface PlayerAreaProps {
   isSelectingSwapPosition?: boolean;
   isDeclaringRank?: boolean;
   swapPosition?: number | null;
+  isSelectingActionTarget?: boolean;
 }
 
 export const PlayerArea = observer(function PlayerArea({
@@ -28,6 +29,7 @@ export const PlayerArea = observer(function PlayerArea({
   isSelectingSwapPosition = false,
   isDeclaringRank = false,
   swapPosition = null,
+  isSelectingActionTarget = false,
 }: PlayerAreaProps) {
   // Determine if we can see this player's cards based on official Vinto rules
   const canSeeCards = (cardIndex: number): boolean => {
@@ -41,12 +43,10 @@ export const PlayerArea = observer(function PlayerArea({
       return true;
     }
 
-    // During gameplay, human can see their own cards ONLY if:
-    // They're temporarily visible from current action (temporarilyVisibleCards)
-    // Note: knownCardPositions from setup are NOT visible during gameplay
+    // During gameplay, show temporarily visible cards (from actions like peek)
+    // This works for both human and bot cards when they're being peeked
     if (
       (gamePhase === 'playing' || gamePhase === 'final') &&
-      player.isHuman &&
       player.temporarilyVisibleCards.has(cardIndex)
     ) {
       return true;
@@ -146,9 +146,9 @@ export const PlayerArea = observer(function PlayerArea({
           }
           clickable={!!onCardClick}
           highlighted={
-            player.isHuman &&
-            (isSelectingSwapPosition ||
-              (isDeclaringRank && swapPosition === index))
+            isSelectingSwapPosition ||
+            (isDeclaringRank && swapPosition === index) ||
+            isSelectingActionTarget
           }
           onClick={() => onCardClick?.(index)}
         />
@@ -259,9 +259,9 @@ export const PlayerArea = observer(function PlayerArea({
             }
             clickable={!!onCardClick}
             highlighted={
-              player.isHuman &&
-              (isSelectingSwapPosition ||
-                (isDeclaringRank && swapPosition === index))
+              isSelectingSwapPosition ||
+              (isDeclaringRank && swapPosition === index) ||
+              isSelectingActionTarget
             }
             onClick={() => onCardClick?.(index)}
           />

@@ -1,12 +1,13 @@
 // components/action-types/AceAction.tsx
 'use client';
 
-import { gameStore } from '@/app/stores/game-store';
+import { getActionStore } from '@/app/stores/action-store';
 import React from 'react';
 
 export function AceAction() {
-  if (!gameStore.actionContext) return null;
-  const { action } = gameStore.actionContext;
+  const actionStore = getActionStore();
+  if (!actionStore.actionContext) return null;
+  const { action } = actionStore.actionContext;
   return (
     <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
       <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 md:p-4 shadow-md h-full flex flex-col justify-center">

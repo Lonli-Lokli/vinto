@@ -17,6 +17,8 @@ export interface TossInStoreCallbacks {
 }
 
 export class TossInStore {
+  private static instance: TossInStore | null = null;
+
   queue: TossInAction[] = [];
   timer = 0;
   timeConfig: TossInTime = 7;
@@ -29,8 +31,19 @@ export class TossInStore {
 
   private callbacks: TossInStoreCallbacks = {};
 
-  constructor() {
+  private constructor() {
     makeAutoObservable(this);
+  }
+
+  static getInstance(): TossInStore {
+    if (!TossInStore.instance) {
+      TossInStore.instance = new TossInStore();
+    }
+    return TossInStore.instance;
+  }
+
+  static resetInstance(): void {
+    TossInStore.instance = null;
   }
 
   get hasTossInActions(): boolean {
@@ -96,14 +109,6 @@ export class TossInStore {
       return { canToss: false, reason: 'Toss-in period is not active' };
     }
 
-    if (this.playersWhoTossedIn.has(playerId)) {
-      return { canToss: false, reason: 'Player has already tossed in this round' };
-    }
-
-    if (playerId === this.originalCurrentPlayer) {
-      return { canToss: false, reason: 'Cannot toss in during your own turn' };
-    }
-
     if (card.rank !== discardedRank) {
       return { canToss: false, reason: 'Card rank does not match discarded card' };
     }
@@ -113,12 +118,6 @@ export class TossInStore {
 
   // Pure action method - external systems handle the consequences
   recordTossIn(playerId: string, card: Card): boolean {
-    if (this.playersWhoTossedIn.has(playerId)) {
-      return false;
-    }
-
-    this.playersWhoTossedIn.add(playerId);
-
     if (card.action) {
       this.addToQueue(playerId, card);
     }
@@ -129,9 +128,12 @@ export class TossInStore {
 
   // Handle incorrect toss-in attempts
   recordIncorrectTossIn(playerId: string): void {
-    this.playersWhoTossedIn.add(playerId);
     this.callbacks.onPenaltyCard?.(playerId);
     this.callbacks.onToastMessage?.('error', 'Toss-in failed - penalty card drawn');
+  }
+
+  get waitingForTossIn() {
+    return this.isActive;
   }
 
   private addToQueue(playerId: string, card: Card) {
@@ -227,3 +229,6 @@ export class TossInStore {
     };
   }
 }
+
+
+export const getTossInStore = () => TossInStore.getInstance();

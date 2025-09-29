@@ -1,11 +1,12 @@
 // components/action-types/OwnCardPeek.tsx
 'use client';
 
-import { gameStore } from '@/app/stores/game-store';
+import { getActionStore } from '@/app/stores/action-store';
 import React from 'react';
 
 export function OwnCardPeek() {
-  const { action } = gameStore.actionContext ?? {};
+  const actionStore = getActionStore();
+  const { action } = actionStore.actionContext ?? {};
   return (
     <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
       <div className="bg-blue-50 border border-blue-300 rounded-lg p-3 md:p-4 shadow-md h-full flex flex-col justify-center">

@@ -5,11 +5,24 @@ import { Card } from '../shapes';
 import { shuffleDeck, createDeck } from '../lib/game-helpers';
 
 export class DeckStore {
+  private static instance: DeckStore | null = null;
+
   drawPile: Card[] = [];
   discardPile: Card[] = [];
 
-  constructor() {
+  private constructor() {
     makeAutoObservable(this);
+  }
+
+  static getInstance(): DeckStore {
+    if (!DeckStore.instance) {
+      DeckStore.instance = new DeckStore();
+    }
+    return DeckStore.instance;
+  }
+
+  static resetInstance(): void {
+    DeckStore.instance = null;
   }
 
   // Deck initialization
@@ -200,3 +213,5 @@ export class DeckStore {
     return true;
   }
 }
+
+export const getDeckStore = () => DeckStore.getInstance();

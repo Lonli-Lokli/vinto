@@ -1,26 +1,26 @@
 'use client';
 
 import { makeAutoObservable, reaction, computed } from 'mobx';
-import { GamePhaseStore } from './game-phase-store';
-import { PlayerStore } from './player-store';
-import { DeckStore } from './deck-store';
-import { ActionStore } from './action-store';
+import { GamePhaseStore, getGamePhaseStore } from './game-phase-store';
+import { getPlayerStore, PlayerStore } from './player-store';
+import { DeckStore, getDeckStore } from './deck-store';
+import { ActionStore, getActionStore } from './action-store';
 import { CardActionHandler } from './card-action-handler';
-import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
+import { getTossInStore, TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { timerService } from '../services/timer-service';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
 import { BotDecisionService, BotDecisionServiceFactory, BotDecisionContext } from '../services/bot-decision';
 import {
-  GameState,
   AIMove,
   Difficulty,
   TossInTime,
   Card,
   Rank,
+  TempState,
 } from '../shapes';
 
-export class GameStore implements GameState {
+class GameStore implements TempState {
   // Individual stores
   phaseStore: GamePhaseStore;
   playerStore: PlayerStore;
@@ -52,10 +52,10 @@ export class GameStore implements GameState {
 
   constructor() {
     // Initialize stores
-    this.phaseStore = new GamePhaseStore();
-    this.playerStore = new PlayerStore();
-    this.deckStore = new DeckStore();
-    this.actionStore = new ActionStore();
+    this.phaseStore = getGamePhaseStore();
+    this.playerStore = getPlayerStore();
+    this.deckStore = getDeckStore();
+    this.actionStore = getActionStore();
 
     // Initialize action handler with store dependencies
     this.actionHandler = new CardActionHandler(
@@ -66,7 +66,7 @@ export class GameStore implements GameState {
     );
 
     // Initialize toss-in store
-    this.tossInStore = new TossInStore();
+    this.tossInStore = getTossInStore();
 
     // Set up toss-in store callbacks
     const tossInCallbacks: TossInStoreCallbacks = {
@@ -103,107 +103,16 @@ export class GameStore implements GameState {
     this.setupReactions();
   }
 
-  // Computed properties to maintain compatibility with original interface
-  get players() {
-    return this.playerStore.players;
-  }
-
-  get currentPlayerIndex() {
-    return this.playerStore.currentPlayerIndex;
-  }
-
-  get drawPile() {
-    return this.deckStore.drawPile;
-  }
-
-  get discardPile() {
-    return this.deckStore.discardPile;
-  }
-
-  get phase() {
-    return this.phaseStore.phase;
-  }
-
-  get turnCount() {
-    return this.playerStore.turnCount;
-  }
-
-  get finalTurnTriggered() {
-    return this.phaseStore.finalTurnTriggered;
-  }
-
   get isCurrentPlayerWaiting() {
     return (
-      !this.isChoosingCardAction &&
-      !this.isAwaitingActionTarget &&
-      !this.isDeclaringRank &&
-      this.phase === 'playing' &&
-      this.players.find((p) => p.isHuman)?.id !==
-        this.players[this.currentPlayerIndex]?.id &&
+      !this.phaseStore.isChoosingCardAction &&
+      !this.phaseStore.isAwaitingActionTarget &&
+      !this.phaseStore.isDeclaringRank &&
+      this.phaseStore.phase === 'playing' &&
+      this.playerStore.currentPlayer !== this.playerStore.humanPlayer &&
       !this.canCallVintoAfterHumanTurn &&
-      !this.isProcessingTossInQueue
+      !this.tossInStore.hasPlayerTossedIn(this.playerStore.currentPlayer?.id || '')
     );
-  }
-
-  // Derived state based on new stores
-  get pendingCard() {
-    return this.actionStore.pendingCard;
-  }
-
-  get isSelectingSwapPosition() {
-    return this.phaseStore.isSelectingSwapPosition;
-  }
-
-  get isChoosingCardAction() {
-    return this.phaseStore.isChoosingCardAction;
-  }
-
-  get isAwaitingActionTarget() {
-    return this.phaseStore.isAwaitingActionTarget;
-  }
-
-  get actionContext() {
-    return this.actionStore.actionContext;
-  }
-
-  get selectedSwapPosition() {
-    return this.actionStore.selectedSwapPosition;
-  }
-
-  get swapTargets() {
-    return this.actionStore.swapTargets;
-  }
-
-  get peekTargets() {
-    return this.actionStore.peekTargets;
-  }
-
-  get isDeclaringRank() {
-    return this.phaseStore.isDeclaringRank;
-  }
-
-  get swapPosition() {
-    return this.actionStore.swapPosition;
-  }
-
-  get setupPeeksRemaining() {
-    return this.playerStore.setupPeeksRemaining;
-  }
-
-  get waitingForTossIn() {
-    return this.tossInStore.isActive;
-  }
-
-  get tossInTimer() {
-    return this.tossInStore.timer;
-  }
-
-  get tossInQueue() {
-    return this.tossInStore.queue;
-  }
-
-  get isProcessingTossInQueue() {
-    return this.tossInStore.isProcessingQueue;
   }
 
   // Computed values for Vinto call availability
@@ -251,16 +160,8 @@ export class GameStore implements GameState {
           this.sessionActive &&
           this.phaseStore.isIdle
         ) {
-          // Schedule AI move after delay
-          setTimeout(() => {
-            if (
-              this.playerStore.currentPlayer === currentPlayer &&
-              !this.aiThinking &&
-              this.sessionActive
-            ) {
-              this.makeAIMove(this.difficulty);
-            }
-          }, this.tossInTimeConfig * 1000);
+          // Trigger AI move immediately
+          this.makeAIMove(this.difficulty);
         }
       }
     );
@@ -394,6 +295,15 @@ export class GameStore implements GameState {
 
   selectActionTarget(playerId: string, position: number) {
     return this.actionHandler.selectActionTarget(playerId, position);
+  }
+
+  confirmPeekCompletion() {
+    const result = this.actionHandler.confirmPeekCompletion();
+    if (result) {
+      // After completing peek action, start toss-in period
+      this.startTossInPeriod();
+    }
+    return result;
   }
 
   executeQueenSwap() {
@@ -545,7 +455,18 @@ export class GameStore implements GameState {
     );
 
     if (!validation.canToss) {
-      this.tossInStore.recordIncorrectTossIn(playerId);
+      // Reveal the incorrect card temporarily for human players
+      if (player.isHuman) {
+        this.playerStore.makeCardTemporarilyVisible(playerId, position);
+
+        // Auto-hide after 3 seconds and apply penalty
+        setTimeout(() => {
+          this.playerStore.clearTemporaryCardVisibility();
+          this.tossInStore.recordIncorrectTossIn(playerId);
+        }, 3000);
+      } else {
+        this.tossInStore.recordIncorrectTossIn(playerId);
+      }
       return false;
     }
 
@@ -612,7 +533,17 @@ export class GameStore implements GameState {
 
       try {
         const move = await this.oracle.requestAIMove(
-          this,
+          {
+            players: this.playerStore.players,
+            currentPlayerIndex: this.playerStore.currentPlayerIndex,
+            drawPile: this.deckStore.drawPile,
+            discardPile: this.deckStore.discardPile,
+            phase: this.phaseStore.phase,
+            gameId: this.gameId,
+            roundNumber: this.roundNumber,
+            turnCount: this.playerStore.turnCount,
+            finalTurnTriggered: this.phaseStore.finalTurnTriggered,
+          },
           currentPlayer.id,
           difficulty as Difficulty
         );
@@ -660,7 +591,17 @@ export class GameStore implements GameState {
       difficulty: this.difficulty,
       botPlayer,
       allPlayers: this.playerStore.players,
-      gameState: this,
+      gameState: {
+        players: this.playerStore.players,
+        currentPlayerIndex: this.playerStore.currentPlayerIndex,
+        drawPile: this.deckStore.drawPile,
+        discardPile: this.deckStore.discardPile,
+        phase: this.phaseStore.phase,
+        gameId: this.gameId,
+        roundNumber: this.roundNumber,
+        turnCount: this.playerStore.turnCount,
+        finalTurnTriggered: this.phaseStore.finalTurnTriggered,
+      },
       discardTop: this.deckStore.peekTopDiscard() || undefined,
       pendingCard: this.actionStore.pendingCard || undefined,
       currentAction: this.actionStore.actionContext && this.actionStore.pendingCard ? {

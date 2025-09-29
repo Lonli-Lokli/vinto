@@ -4,9 +4,13 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getActionStore } from '../stores/action-store';
 
 export const CardActionChoice = observer(() => {
-  if (!gameStore.isChoosingCardAction || !gameStore.pendingCard) {
+  const gamePhaseStore = getGamePhaseStore();
+  const { pendingCard } = getActionStore();
+  if (!gamePhaseStore.isChoosingCardAction || !pendingCard) {
     return null;
   }
 
@@ -40,19 +44,17 @@ export const CardActionChoice = observer(() => {
             onClick={() => gameStore.choosePlayCard()}
             className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-3 rounded-lg shadow transition-colors flex-1"
             aria-label={
-              gameStore.pendingCard.action ? 'Play action card' : 'Discard card'
+              pendingCard.action ? 'Play action card' : 'Discard card'
             }
             title={
-              gameStore.pendingCard.action
-                ? `Play ${gameStore.pendingCard.rank} action: ${gameStore.pendingCard.action}`
-                : `Discard ${gameStore.pendingCard.rank}`
+              pendingCard.action
+                ? `Play ${pendingCard.rank} action: ${pendingCard.action}`
+                : `Discard ${pendingCard.rank}`
             }
           >
-            <span className="text-sm">
-              {gameStore.pendingCard.action ? '⚡' : '🗑️'}
-            </span>
+            <span className="text-sm">{pendingCard.action ? '⚡' : '🗑️'}</span>
             <span className="text-xs sm:text-sm">
-              {gameStore.pendingCard.action ? 'Play' : 'Discard'}
+              {pendingCard.action ? 'Play' : 'Discard'}
             </span>
           </button>
         </div>
@@ -60,8 +62,8 @@ export const CardActionChoice = observer(() => {
         {/* Help text */}
         <div className="text-center text-[10px] text-gray-500 mb-2">
           <strong>Swap:</strong> Replace one of your cards •{' '}
-          <strong>{gameStore.pendingCard.action ? 'Play' : 'Discard'}:</strong>{' '}
-          {gameStore.pendingCard.action ? 'Use action' : 'Discard directly'}
+          <strong>{pendingCard.action ? 'Play' : 'Discard'}:</strong>{' '}
+          {pendingCard.action ? 'Use action' : 'Discard directly'}
         </div>
 
         {/* Discard Button */}

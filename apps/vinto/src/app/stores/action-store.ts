@@ -35,6 +35,8 @@ export interface TossInItem {
 }
 
 export class ActionStore {
+  private static instance: ActionStore | null = null;
+
   // Current action being executed
   actionContext: ActionContext | null = null;
   pendingCard: Card | null = null;
@@ -51,8 +53,15 @@ export class ActionStore {
   tossInQueue: TossInItem[] = [];
   tossInTimer = 0;
 
-  constructor() {
+  private constructor() {
     makeAutoObservable(this);
+  }
+
+  static getInstance(): ActionStore {
+    if (!ActionStore.instance) {
+      ActionStore.instance = new ActionStore();
+    }
+    return ActionStore.instance;
   }
 
   // Action context management
@@ -312,3 +321,5 @@ export class ActionStore {
     this.tossInTimer = 0;
   }
 }
+
+export const getActionStore = () => ActionStore.getInstance();

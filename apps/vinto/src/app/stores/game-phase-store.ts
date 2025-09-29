@@ -1,6 +1,7 @@
 'use client';
 
 import { makeAutoObservable } from 'mobx';
+import { GameToastService } from '../lib/toast-service';
 
 export type GamePhase = 'setup' | 'playing' | 'final' | 'scoring';
 export type GameSubPhase =
@@ -17,14 +18,27 @@ export type GameSubPhase =
   | 'toss_queue_processing';
 
 export class GamePhaseStore {
+  private static instance: GamePhaseStore | null = null;
+
   phase: GamePhase = 'setup';
   subPhase: GameSubPhase = 'idle';
 
   // Derived from boolean flags in original store
   finalTurnTriggered = false;
 
-  constructor() {
+  private constructor() {
     makeAutoObservable(this);
+  }
+
+  static getInstance(): GamePhaseStore {
+    if (!GamePhaseStore.instance) {
+      GamePhaseStore.instance = new GamePhaseStore();
+    }
+    return GamePhaseStore.instance;
+  }
+
+  static resetInstance(): void {
+    GamePhaseStore.instance = null;
   }
 
   get canTransitionTo() {
@@ -38,6 +52,8 @@ export class GamePhaseStore {
         'playing.idle': [
           'playing.drawing',
           'playing.ai_thinking',
+          'playing.awaiting_action',
+          'playing.toss_queue_active',
           'playing.idle',
           'final.idle',
           'scoring.idle',
@@ -71,7 +87,14 @@ export class GamePhaseStore {
           'playing.toss_queue_processing',
           'playing.idle',
         ],
-        'playing.ai_thinking': ['playing.toss_queue_active', 'playing.idle'],
+        'playing.ai_thinking': [
+          'playing.choosing',
+          'playing.selecting',
+          'playing.declaring_rank',
+          'playing.awaiting_action',
+          'playing.toss_queue_active',
+          'playing.idle',
+        ],
         'final.idle': [
           'final.drawing',
           'final.choosing',
@@ -106,7 +129,14 @@ export class GamePhaseStore {
           'final.idle',
           'scoring.idle',
         ],
-        'final.ai_thinking': ['final.tossing', 'final.idle'],
+        'final.ai_thinking': [
+          'final.choosing',
+          'final.selecting',
+          'final.declaring_rank',
+          'final.awaiting_action',
+          'final.tossing',
+          'final.idle',
+        ],
         'scoring.idle': [],
       };
 
@@ -119,9 +149,7 @@ export class GamePhaseStore {
       this.phase = newPhase;
       this.subPhase = newSubPhase;
     } else {
-      console.warn(
-        `Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
-      );
+      GameToastService.warning(`Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`);
     }
   }
 
@@ -269,3 +297,5 @@ export class GamePhaseStore {
     this.finalTurnTriggered = false;
   }
 }
+
+export const getGamePhaseStore = () => GamePhaseStore.getInstance();

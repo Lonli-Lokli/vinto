@@ -4,12 +4,22 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
+import { getGamePhaseStore } from '../stores/game-phase-store';
+import { getPlayerStore } from '../stores/player-store';
+import { getTossInStore } from '../stores/toss-in-store';
+import { getActionStore } from '../stores/action-store';
+import { getDeckStore } from '../stores/deck-store';
 
 export const GamePhaseIndicators = observer(() => {
+  const { phase, isSelectingSwapPosition } = getGamePhaseStore();
+  const { setupPeeksRemaining } = getPlayerStore();
+  const { waitingForTossIn } = getTossInStore();
+  const { tossInTimer } = getActionStore();
+  const { discardPile } = getDeckStore();
   return (
     <div className="w-full max-w-lg md:max-w-full mx-auto">
       {/* Setup Phase Instructions */}
-      {gameStore.phase === 'setup' && gameStore.sessionActive && (
+      {phase === 'setup' && gameStore.sessionActive && (
         <div className="mt-4 sm:mt-6 bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 shadow-lg mx-2">
           <div className="text-center">
             <div className="text-xl font-semibold text-blue-800 mb-2">
@@ -20,30 +30,30 @@ export const GamePhaseIndicators = observer(() => {
               during the game!
             </div>
             <div className="text-base font-medium text-blue-600 mb-3">
-              Peeks remaining: {gameStore.setupPeeksRemaining}
+              Peeks remaining: {setupPeeksRemaining}
             </div>
-            
-              <button
-                disabled={gameStore.setupPeeksRemaining > 0}
-                onClick={() => gameStore.finishSetup()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                Start Game
-              </button>
+
+            <button
+              disabled={setupPeeksRemaining > 0}
+              onClick={() => gameStore.finishSetup()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+              Start Game
+            </button>
           </div>
         </div>
       )}
 
       {/* Toss-in Period */}
-      {gameStore.waitingForTossIn && (
+      {waitingForTossIn && (
         <div className="mt-4 sm:mt-6 bg-orange-50 border-2 border-orange-300 rounded-2xl p-4 shadow-lg mx-2">
           <div className="text-center">
             <div className="text-xl font-semibold text-orange-800 mb-2">
-              ⚡ Toss-in Time! ({gameStore.tossInTimer}s)
+              ⚡ Toss-in Time! ({tossInTimer}s)
             </div>
             <div className="text-base text-orange-700 mb-2">
-              If you have a matching card ({gameStore.discardPile[0]?.rank}),
-              click it to toss-in!
+              If you have a matching card ({discardPile[0]?.rank}), click it to
+              toss-in!
             </div>
             <div className="text-sm text-orange-600">
               Warning: Wrong guess = penalty card
@@ -53,7 +63,7 @@ export const GamePhaseIndicators = observer(() => {
       )}
 
       {/* Card Selection Instructions */}
-      {gameStore.isSelectingSwapPosition && (
+      {isSelectingSwapPosition && (
         <div className="mt-4 sm:mt-6 bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 shadow-lg mx-2">
           <div className="text-center">
             <div className="text-xl font-semibold text-yellow-800 mb-2">

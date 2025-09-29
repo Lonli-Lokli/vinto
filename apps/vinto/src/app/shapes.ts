@@ -35,6 +35,10 @@ export interface Player {
   coalitionWith: Set<string>;
 }
 
+export interface TempState {
+  gameId: string;
+  roundNumber: number;
+}
 export interface GameState {
   players: Player[];
   currentPlayerIndex: number;
@@ -57,7 +61,7 @@ export interface AIMove {
   error?: boolean;
 }
 
-export type Difficulty = 'basic' | 'moderate' | 'hard' | 'ultimate';
+export type Difficulty = 'easy' | 'moderate' | 'hard' ;
 
 export type TossInTime = 5 | 7 | 10;
 
