@@ -8,7 +8,7 @@
       "Bash(npm run:*)",
       "Bash(find:*)"
     ],
-    "deny": [],
+    "deny": ["Bash(npx tsc:*)"],
     "ask": []
   }
 }

@@ -8,8 +8,8 @@ export function OpponentCardPeek() {
   if (!gameStore.actionContext) return null;
   const { action } = gameStore.actionContext;
   return (
-    <div className="max-w-lg mx-auto px-3 min-h-[140px]">
-      <div className="bg-red-50 border border-red-300 rounded-lg p-3 shadow-md h-full flex flex-col justify-center">
+    <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
+      <div className="bg-red-50 border border-red-300 rounded-lg p-3 md:p-4 shadow-md h-full flex flex-col justify-center">
         <div className="text-center">
           <h3 className="text-sm font-semibold text-red-800 mb-1">
             🔍 {action}

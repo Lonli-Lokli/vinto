@@ -392,10 +392,6 @@ export class GameToastService {
     this.error('Cloud Error', error, 6000);
   }
 
-  static cardPeeked(position: number) {
-    this.info(`👁️ Peeked at card position ${position + 1}`, 2000);
-  }
-
   static difficultyChanged(difficulty: string) {
     this.info(`🎯 Difficulty changed to ${difficulty.toUpperCase()}`, 2000);
   }

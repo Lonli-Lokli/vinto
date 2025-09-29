@@ -166,7 +166,6 @@ export class TossInStore {
 
     // Notify external system to execute the action
     this.callbacks.onActionExecute?.(playerId, card);
-    this.callbacks.onToastMessage?.('info', `${card.rank} action available`);
 
     return true;
   }

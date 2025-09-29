@@ -196,14 +196,13 @@ export class CardActionHandler {
     if (!player || !context || context.playerId !== playerId) return false;
 
     if (position >= 0 && position < player.cards.length) {
-      const peekedCard = player.cards[position];
-      this.playerStore.makeCardTemporarilyVisible(playerId, position);
-
-      GameToastService.success(
-        `${player.name} peeked at position ${position + 1}: ${
-          peekedCard.rank
-        } (value ${peekedCard.value})`
-      );
+      if (player.isHuman) {
+        // For humans, make card temporarily visible (shown in UI)
+        this.playerStore.makeCardTemporarilyVisible(playerId, position);
+      } else {
+        // For bots, permanently add to known cards for AI decision-making
+        this.playerStore.addKnownCardPosition(playerId, position);
+      }
 
       this.completeAction();
       return true;
@@ -342,9 +341,11 @@ export class CardActionHandler {
         return false;
       }
 
+      // For Queen actions (peek-then-swap), prevent selecting cards from same player
       if (
         this.actionStore.peekTargets.length === 1 &&
-        this.actionStore.peekTargets[0].playerId === targetPlayerId
+        this.actionStore.peekTargets[0].playerId === targetPlayerId &&
+        context.targetType === 'peek-then-swap'
       ) {
         GameToastService.warning('Cannot peek two cards from the same player!');
         this.actionStore.clearPeekTargets();
@@ -356,11 +357,15 @@ export class CardActionHandler {
         this.playerStore.makeCardTemporarilyVisible(targetPlayerId, position);
       }
 
-      GameToastService.success(
-        `${actionPlayer.name} peeked at ${targetPlayer.name}'s position ${
-          position + 1
-        }: ${peekedCard.rank} (value ${peekedCard.value})`
-      );
+      // Only show toast if peeking at opponent's card OR if it's a bot action
+      // (Human peeking own cards can see them visually)
+      if (targetPlayerId !== context.playerId || !actionPlayer.isHuman) {
+        GameToastService.success(
+          `${actionPlayer.name} peeked at ${targetPlayer.name}'s position ${
+            position + 1
+          }`
+        );
+      }
 
       if (this.actionStore.hasCompletePeekSelection) {
         const [peek1, peek2] = this.actionStore.peekTargets;
@@ -459,6 +464,11 @@ export class CardActionHandler {
 
     // Execute the declared action
     return this.executeByRank(rank, context.playerId);
+  }
+
+  // Alias for consistency with bot calls
+  handleKingDeclaration(rank: Rank): boolean {
+    return this.declareKingAction(rank);
   }
 
   // AI execution methods

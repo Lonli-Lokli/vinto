@@ -1,0 +1,6 @@
+pre-commit:
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,jsx}'
+      run: npx nx format:write --files='{staged_files}'
+      staged_fixed: true

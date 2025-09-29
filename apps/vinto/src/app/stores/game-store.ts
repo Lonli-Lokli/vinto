@@ -10,6 +10,7 @@ import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { timerService } from '../services/timer-service';
 import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
+import { BotDecisionService, BotDecisionServiceFactory, BotDecisionContext } from '../services/bot-decision';
 import {
   GameState,
   AIMove,
@@ -34,6 +35,7 @@ export class GameStore implements GameState {
 
   // AI and session state
   oracle: OracleVintoClient;
+  botDecisionService: BotDecisionService;
   aiThinking = false;
   currentMove: AIMove | null = null;
   sessionActive = false;
@@ -92,6 +94,7 @@ export class GameStore implements GameState {
 
     // Initialize Oracle client
     this.oracle = new OracleVintoClient();
+    this.botDecisionService = BotDecisionServiceFactory.create(this.difficulty);
 
     // Make this store observable
     makeAutoObservable(this);
@@ -300,9 +303,13 @@ export class GameStore implements GameState {
   peekCard(playerId: string, position: number) {
     const card = this.playerStore.peekCard(playerId, position);
     if (card) {
-      GameToastService.success(
-        `Peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
-      );
+      const player = this.playerStore.getPlayer(playerId);
+      // Only show toast for bots - humans can see the card on screen
+      if (player && !player.isHuman) {
+        GameToastService.success(
+          `${player.name} peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
+        );
+      }
     }
   }
 
@@ -317,8 +324,6 @@ export class GameStore implements GameState {
     this.phaseStore.finishSetup();
     this.playerStore.clearTemporaryCardVisibility();
     this.updateVintoCallAvailability();
-
-    GameToastService.success('Game started! Draw a card or take from discard.');
   }
 
   // Card actions
@@ -613,28 +618,22 @@ export class GameStore implements GameState {
         );
         this.currentMove = move;
 
-        // Execute AI move logic
+        // Create bot decision context
+        const context = this.createBotDecisionContext(currentPlayer.id);
+
+        // Let bot decide turn action
+        const turnDecision = this.botDecisionService.decideTurnAction(context);
+
+        if (turnDecision.action === 'take-discard') {
+          this.takeFromDiscard();
+          return;
+        }
+
+        // Draw new card and make decision
         if (this.deckStore.hasDrawCards) {
           const drawnCard = this.deckStore.drawCard();
           if (drawnCard) {
-            const worstCard = this.playerStore.getCurrentPlayerWorstKnownCard();
-
-            if (
-              worstCard &&
-              drawnCard.value < worstCard.value &&
-              worstCard.value > 3
-            ) {
-              const replacedCard = this.playerStore.replaceCard(
-                currentPlayer.id,
-                worstCard.position,
-                drawnCard
-              );
-              if (replacedCard) {
-                this.deckStore.discardCard(replacedCard);
-              }
-            } else {
-              this.deckStore.discardCard(drawnCard);
-            }
+            await this.executeBotCardDecision(drawnCard, currentPlayer);
           }
         }
 
@@ -649,6 +648,120 @@ export class GameStore implements GameState {
       console.error('Error in makeAIMove:', error);
       this.setAIThinking(false);
       this.phaseStore.returnToIdle();
+    }
+  }
+
+  private createBotDecisionContext(botId: string): BotDecisionContext {
+    const botPlayer = this.playerStore.getPlayer(botId);
+    if (!botPlayer) throw new Error(`Bot player ${botId} not found`);
+
+    return {
+      botId,
+      difficulty: this.difficulty,
+      botPlayer,
+      allPlayers: this.playerStore.players,
+      gameState: this,
+      discardTop: this.deckStore.peekTopDiscard() || undefined,
+      pendingCard: this.actionStore.pendingCard || undefined,
+      currentAction: this.actionStore.actionContext && this.actionStore.pendingCard ? {
+        targetType: this.actionStore.actionContext.targetType || 'unknown',
+        card: this.actionStore.pendingCard,
+        peekTargets: this.actionStore.peekTargets.map(pt => ({
+          playerId: pt.playerId,
+          position: pt.position,
+          card: pt.card
+        }))
+      } : undefined
+    };
+  }
+
+  private async executeBotCardDecision(drawnCard: Card, currentPlayer: any) {
+    this.actionStore.pendingCard = drawnCard;
+    this.phaseStore.startChoosingAction();
+
+    // Short delay to simulate decision making
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const context = this.createBotDecisionContext(currentPlayer.id);
+
+    if (drawnCard.action) {
+      // Use bot service to decide whether to use action
+      const shouldUseAction = this.botDecisionService.shouldUseAction(drawnCard, context);
+
+      if (shouldUseAction) {
+        await this.executeBotAction(drawnCard, currentPlayer.id);
+        return;
+      }
+    }
+
+    // If not using action, decide between swap and discard using bot service
+    const swapPosition = this.botDecisionService.selectBestSwapPosition(drawnCard, context);
+
+    if (swapPosition !== null) {
+      // Swap with selected position
+      this.phaseStore.startSelectingPosition();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      this.swapCard(swapPosition);
+    } else {
+      // Discard the drawn card
+      this.discardCard();
+    }
+  }
+
+  private async executeBotAction(drawnCard: Card, playerId: string) {
+    // Execute the action and handle target selection automatically
+    this.actionHandler.executeCardAction(drawnCard, playerId);
+
+    // Wait a bit and then handle target selection if needed
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (this.phaseStore.isAwaitingActionTarget) {
+      await this.handleBotActionTargets(playerId);
+    }
+  }
+
+  private async handleBotActionTargets(playerId: string) {
+    const botContext = this.createBotDecisionContext(playerId);
+    const decision = this.botDecisionService.selectActionTargets(botContext);
+
+    if (!decision.targets || decision.targets.length === 0) {
+      console.warn('Bot decision service returned no targets');
+      return;
+    }
+
+    // Apply the decision targets with timing delays
+    for (let i = 0; i < decision.targets.length; i++) {
+      const target = decision.targets[i];
+
+      // Add delay between target selections
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      this.actionHandler.selectActionTarget(target.playerId, target.position);
+    }
+
+    // Handle special decision types
+    if (decision.declaredRank) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      this.actionHandler.handleKingDeclaration(decision.declaredRank);
+    }
+
+    // Handle peek-then-swap decisions
+    if (botContext.currentAction?.targetType === 'peek-then-swap' &&
+        this.actionStore.hasCompletePeekSelection) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const shouldSwap = this.botDecisionService.shouldSwapAfterPeek(
+        this.actionStore.peekTargets.map(t => t.card!),
+        botContext
+      );
+
+      if (shouldSwap) {
+        this.actionHandler.executeQueenSwap();
+      } else {
+        this.actionHandler.skipQueenSwap();
+      }
     }
   }
 
@@ -688,16 +801,17 @@ export class GameStore implements GameState {
     if (!discardedRank) return;
 
     this.playerStore.botPlayers.forEach((player) => {
-      if (
-        Math.random() < 0.3 &&
-        !this.tossInStore.hasPlayerTossedIn(player.id)
-      ) {
-        // 30% chance bot tosses in
-        player.cards.forEach((card, position) => {
-          if (card.rank === discardedRank && Math.random() < 0.5) {
-            this.tossInCard(player.id, position);
-          }
-        });
+      if (!this.tossInStore.hasPlayerTossedIn(player.id)) {
+        const context = this.createBotDecisionContext(player.id);
+
+        if (this.botDecisionService.shouldParticipateInTossIn(discardedRank, context)) {
+          // Find matching cards and toss one in
+          player.cards.forEach((card, position) => {
+            if (card.rank === discardedRank && Math.random() < 0.5) {
+              this.tossInCard(player.id, position);
+            }
+          });
+        }
       }
     });
   }
