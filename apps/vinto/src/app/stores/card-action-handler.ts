@@ -588,7 +588,11 @@ export class CardActionHandler {
       return false;
     }
 
-    this.completeAction();
+    // Clear visibility and action context, but don't return to idle yet
+    // The caller (game-store) will handle the phase transition to toss-in
+    this.playerStore.clearTemporaryCardVisibility();
+    this.actionStore.clearAction();
+    // Note: NOT calling phaseStore.returnToIdle() here - let caller handle it
     return true;
   }
 
