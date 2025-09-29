@@ -18,6 +18,9 @@ module.exports = {
   ],
     theme: {
     extend: {
+      fontSize: {
+        '2xs': '0.625rem', // 10px
+      },
       colors: {
         emerald: {
           50: '#ecfdf5',

@@ -15,7 +15,7 @@ import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getPlayerStore } from '../stores/player-store';
 
 export const ActionTargetSelector = observer(() => {
-  const gamePhaseStore  = getGamePhaseStore();
+  const gamePhaseStore = getGamePhaseStore();
   const actionStore = getActionStore();
   const playerStore = getPlayerStore();
 

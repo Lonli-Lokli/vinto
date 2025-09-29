@@ -179,7 +179,7 @@ export const PlayerArea = observer(function PlayerArea({
     };
     const nameLabel = (
       <div
-        className={`md:hidden absolute z-10 flex items-center gap-1 text-[10px] font-semibold leading-none whitespace-nowrap px-1.5 py-0.5 rounded-md bg-emerald-950/40 text-white shadow-sm border border-white/20 ${
+        className={`md:hidden absolute z-10 flex items-center gap-1 text-2xs font-semibold leading-none whitespace-nowrap px-1.5 py-0.5 rounded-md bg-emerald-950/40 text-white shadow-sm border border-white/20 ${
           player.position === 'left'
             ? '-rotate-90 left-0 top-1/2 -translate-y-1/2 -translate-x-2'
             : player.position === 'right'

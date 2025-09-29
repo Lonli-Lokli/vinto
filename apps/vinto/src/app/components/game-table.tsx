@@ -195,7 +195,7 @@ export const GameTable = observer(() => {
                   }
                   onClick={handleDrawCard}
                 />
-                <div className="mt-1 text-[10px] text-white font-semibold bg-black/20 rounded px-2 py-0.5">
+                <div className="mt-1 text-2xs text-white font-semibold bg-black/20 rounded px-2 py-0.5">
                   DRAW
                 </div>
               </div>
@@ -217,11 +217,11 @@ export const GameTable = observer(() => {
                         !
                       </div>
                     </div>
-                    <div className="mt-1 text-[10px] text-white font-semibold bg-yellow-500/80 rounded px-2 py-0.5">
+                    <div className="mt-1 text-2xs text-white font-semibold bg-yellow-500/80 rounded px-2 py-0.5">
                       DRAWN
                     </div>
                     {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-[9px] text-white bg-blue-500/80 rounded px-1 py-0.5">
+                      <div className="mt-1 text-2xs text-white bg-blue-500/80 rounded px-1 py-0.5">
                         {pendingCard.action}
                       </div>
                     )}
@@ -235,7 +235,7 @@ export const GameTable = observer(() => {
                   revealed={discardPile.length > 0}
                   size="md"
                 />
-                <div className="mt-1 text-[10px] text-white font-semibold bg-black/20 rounded px-2 py-0.5">
+                <div className="mt-1 text-2xs text-white font-semibold bg-black/20 rounded px-2 py-0.5">
                   DISCARD
                 </div>
               </div>
@@ -249,7 +249,7 @@ export const GameTable = observer(() => {
                     <div className="text-sm sm:text-lg font-black">
                       {tossInTimer}
                     </div>
-                    <div className="text-[8px] sm:text-[10px] leading-tight">
+                    <div className="text-2xs leading-tight">
                       TOSS IN
                     </div>
                   </div>
@@ -407,7 +407,7 @@ export const GameTable = observer(() => {
                       DRAWN
                     </div>
                     {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-[10px] text-white bg-blue-500/80 rounded px-2 py-0.5">
+                      <div className="mt-1 text-2xs text-white bg-blue-500/80 rounded px-2 py-0.5">
                         {pendingCard.action}
                       </div>
                     )}

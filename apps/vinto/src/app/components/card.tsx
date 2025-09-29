@@ -40,7 +40,7 @@ export function Card({
   onClick,
 }: CardProps) {
   const sizeClasses = {
-    sm: 'w-8 h-12 text-xs',
+    sm: 'w-8 h-12 text-2xs',
     md: 'w-12 h-18 text-sm',
     lg: 'w-16 h-24 text-base',
     xl: 'w-20 h-30 text-lg',
@@ -64,7 +64,7 @@ export function Card({
       {revealed && card ? (
         <>
           <RankComponent rank={card.rank} />
-          <span className="mt-0.5 text-[10px] text-gray-600 font-medium">{card.rank}</span>
+          <span className="mt-0.5 text-2xs text-gray-600 font-medium">{card.rank}</span>
         </>
       ) : (
         <span className={`font-bold ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : size === 'xl' ? 'text-3xl' : 'text-lg'}`}>

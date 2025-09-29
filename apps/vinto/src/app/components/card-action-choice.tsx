@@ -31,7 +31,7 @@ export const CardActionChoice = observer(() => {
           {/* Swap Option */}
           <button
             onClick={() => gameStore.chooseSwap()}
-            className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 px-3 rounded-lg shadow transition-colors flex-1"
+            className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors flex-1"
             aria-label="Swap with existing card"
             title="Replace one of your cards with this drawn card"
           >
@@ -42,7 +42,7 @@ export const CardActionChoice = observer(() => {
           {/* Play/Discard Option */}
           <button
             onClick={() => gameStore.choosePlayCard()}
-            className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-3 rounded-lg shadow transition-colors flex-1"
+            className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors flex-1"
             aria-label={
               pendingCard.action ? 'Play action card' : 'Discard card'
             }
@@ -60,7 +60,7 @@ export const CardActionChoice = observer(() => {
         </div>
 
         {/* Help text */}
-        <div className="text-center text-[10px] text-gray-500 mb-2">
+        <div className="text-center text-2xs text-gray-500 mb-2">
           <strong>Swap:</strong> Replace one of your cards •{' '}
           <strong>{pendingCard.action ? 'Play' : 'Discard'}:</strong>{' '}
           {pendingCard.action ? 'Use action' : 'Discard directly'}
@@ -69,7 +69,7 @@ export const CardActionChoice = observer(() => {
         {/* Discard Button */}
         <button
           onClick={() => gameStore.discardCard()}
-          className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-1.5 px-4 rounded-lg shadow transition-colors text-xs sm:text-sm"
+          className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2 px-4 rounded-lg shadow transition-colors text-base"
           aria-label="Discard drawn card"
           title="Discard drawn card without using action"
         >

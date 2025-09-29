@@ -44,7 +44,7 @@ export const RankDeclaration = observer(() => {
           <strong>Your task:</strong> Declare what rank you think your
           position {(swapPosition ?? 0) + 1} card is.
         </p>
-        <div className={`bg-yellow-50 rounded p-2 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+        <div className={`bg-yellow-50 rounded p-2 ${isMobile ? 'text-2xs' : 'text-sm'}`}>
           <div className="text-green-700">
             ✅ <strong>Correct:</strong> Use {pendingCard?.rank}&apos;s action
           </div>
@@ -95,7 +95,7 @@ export const RankDeclaration = observer(() => {
               <button
                 key={rank}
                 onClick={() => handleRankClick(rank)}
-                className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-1.5 px-1 rounded text-sm transition-colors"
+                className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded text-base transition-colors"
                 title={`Declare ${rank}`}
               >
                 {rank}
@@ -140,7 +140,7 @@ export const RankDeclaration = observer(() => {
               <button
                 key={rank}
                 onClick={() => handleRankClick(rank)}
-                className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg min-h-[3rem]"
+                className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg min-h-[3rem]"
                 title={`Declare ${rank}`}
               >
                 {rank}
