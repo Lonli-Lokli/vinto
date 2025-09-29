@@ -28,7 +28,7 @@ export const RankDeclaration = observer(() => {
   };
 
   const helpContent = (isMobile: boolean) => (
-    <div className={`bg-white border border-yellow-300 rounded-lg ${isMobile ? 'p-3 max-w-xs' : 'p-4 max-w-sm'} shadow-2xl`} style={{ zIndex: 9999 }}>
+    <div className={`bg-white border border-yellow-300 rounded-lg ${isMobile ? 'p-3 max-w-xs' : 'p-4 max-w-sm'} shadow-lg`} style={{ zIndex: 9999 }}>
       <div className={`${isMobile ? 'text-sm' : 'text-base'} text-gray-700 space-y-2`}>
         <p>
           <strong>Current situation:</strong> You drew{' '}
@@ -64,7 +64,7 @@ export const RankDeclaration = observer(() => {
 
   return (
     <div className="relative w-full max-w-4xl mx-auto px-2 mb-4" style={{ zIndex: 100 }}>
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 md:p-6 shadow-sm overflow-visible">
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-300 rounded-lg p-4 md:p-6 shadow-lg overflow-visible">
 
         {/* Mobile Layout: 3 rows stacked */}
         <div className="block md:hidden">

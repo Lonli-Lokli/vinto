@@ -170,7 +170,7 @@ const PeekConfirmControls = () => {
     <button
       onClick={() => hasRevealedCard && gameStore.confirmPeekCompletion()}
       disabled={!hasRevealedCard}
-      className={`w-full font-semibold py-3 px-6 rounded-lg shadow transition-colors text-base ${
+      className={`w-full font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base ${
         hasRevealedCard
           ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
           : 'bg-gray-200 text-gray-600 cursor-not-allowed'
@@ -193,7 +193,7 @@ const TossInControls = () => (
     </div>
     <button
       onClick={() => gameStore.skipCurrentTossInAction()}
-      className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-lg shadow transition-colors text-base"
+      className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
       aria-label="Skip toss-in action"
     >
       ⏭️ Skip Action
@@ -205,7 +205,7 @@ const VintoOnlyControls = () => (
   <div className="space-y-3">
     <button
       onClick={() => gameStore.callVinto()}
-      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow transition-colors text-base"
+      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
       aria-label="Call Vinto"
     >
       🏆 Call Vinto
@@ -239,7 +239,7 @@ const FullTurnControls = ({
         <button
           onClick={handleDrawCard}
           disabled={drawPile.length === 0}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors text-base"
+          className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors text-base"
           aria-label="Draw new card from deck"
         >
           <span className="text-sm md:text-base">🎯</span>
@@ -250,7 +250,7 @@ const FullTurnControls = ({
         <button
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!canTakeFromDiscard}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors text-base"
+          className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors text-base"
           aria-label="Take unplayed card from discard pile"
         >
           <span className="text-sm md:text-base">♻️</span>
@@ -272,7 +272,7 @@ const FullTurnControls = ({
       {/* Call Vinto - always available during turn */}
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow transition-colors text-base"
+        className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-base"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto

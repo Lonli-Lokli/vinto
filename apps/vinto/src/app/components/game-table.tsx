@@ -131,7 +131,7 @@ export const GameTable = observer(() => {
     <div className="h-full flex flex-col">
       <div className="w-full h-full max-w-lg md:max-w-full mx-auto flex flex-col">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
-        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl sm:rounded-3xl border-2 sm:border-4 border-emerald-800 shadow-2xl p-2 sm:p-3 overflow-hidden">
+        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl sm:rounded-3xl border-2 border-emerald-800 shadow-lg p-2 sm:p-3 overflow-hidden">
           {/* Row 1: Top player */}
           {top && (
             <div className="flex justify-center flex-shrink-0 pb-2">
@@ -246,7 +246,7 @@ export const GameTable = observer(() => {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="bg-yellow-500 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
                   <div className="text-center">
-                    <div className="text-sm sm:text-lg font-black">
+                    <div className="text-lg font-black">
                       {tossInTimer}
                     </div>
                     <div className="text-2xs leading-tight">
@@ -304,7 +304,7 @@ export const GameTable = observer(() => {
         </div>
 
         {/* Desktop/Tablet wide board */}
-        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl border-4 border-emerald-800 shadow-2xl p-4 w-full h-full min-h-0">
+        <div className="hidden md:block relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl border-2 border-emerald-800 shadow-lg p-4 w-full h-full min-h-0">
           {/* Top Player */}
           {top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">
@@ -430,7 +430,7 @@ export const GameTable = observer(() => {
             {/* Toss-in Timer (Desktop) */}
             {waitingForTossIn && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="bg-yellow-500 text-white font-bold px-4 py-3 rounded-xl shadow-xl border-2 border-yellow-600 animate-pulse">
+                <div className="bg-yellow-500 text-white font-bold px-4 py-3 rounded-xl shadow-lg border-2 border-yellow-600 animate-pulse">
                   <div className="text-center">
                     <div className="text-2xl font-black">
                       {tossInTimer}

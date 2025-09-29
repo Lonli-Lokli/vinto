@@ -52,7 +52,7 @@ export function Card({
         ${sizeClasses[size]}
         relative rounded-lg border-2
         flex flex-col items-center justify-center
-        transition-all duration-200 select-none
+        transition-all duration-150 select-none
         ${revealed && card
           ? 'bg-neutral-50 border-gray-300 shadow-md'
           : 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500 text-white'}

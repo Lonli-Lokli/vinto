@@ -24,7 +24,7 @@ export const FinalScores = observer(() => {
   }
 
   return (
-    <div className="mt-4 sm:mt-6 mx-auto max-w-lg bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-xl mx-2">
+    <div className="mt-4 sm:mt-6 mx-auto max-w-lg bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg mx-2">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Game Over!</h2>
         <div className="text-lg">
