@@ -59,7 +59,7 @@ const SettingsPopover = observer(
                     onClick={() => gameStore.updateDifficulty(level)}
                     className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
                       gameStore.difficulty === level
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-emerald-500 text-white'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
@@ -149,7 +149,7 @@ export const GameHeader = observer(() => {
                       onClick={() => gameStore.updateDifficulty(level)}
                       className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
                         gameStore.difficulty === level
-                          ? 'bg-blue-500 text-white'
+                          ? 'bg-emerald-500 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                       }`}
                       title={`Difficulty: ${level}`}
@@ -183,14 +183,14 @@ export const GameHeader = observer(() => {
 
           {/* Center: Title + Game Info */}
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-blue-600">
+            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-poker-green-700 to-emerald-600">
               VINTO
             </h1>
             <div className="text-xs text-gray-600 font-medium">
               {getPhaseDisplay()}
             </div>
             {getCurrentPlayerDisplay() && (
-              <div className="text-xs font-medium text-blue-600 hidden sm:block">
+              <div className="text-xs font-medium text-emerald-600 hidden sm:block">
                 {getCurrentPlayerDisplay()}
               </div>
             )}

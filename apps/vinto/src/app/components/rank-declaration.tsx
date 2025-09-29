@@ -44,11 +44,11 @@ export const RankDeclaration = observer(() => {
           <strong>Your task:</strong> Declare what rank you think your
           position {(swapPosition ?? 0) + 1} card is.
         </p>
-        <div className={`bg-gray-50 rounded p-2 ${isMobile ? 'text-2xs' : 'text-xs'}`}>
-          <div className="text-emerald-700">
+        <div className={`bg-poker-green-50 rounded p-2 ${isMobile ? 'text-2xs' : 'text-xs'}`}>
+          <div className="text-poker-green-700">
             ✅ <strong>Correct:</strong> Use {pendingCard?.rank}&apos;s action
           </div>
-          <div className="text-red-700">
+          <div className="text-amber-700">
             ❌ <strong>Wrong:</strong> Get penalty card
           </div>
         </div>

@@ -131,7 +131,7 @@ export const GameTable = observer(() => {
     <div className="h-full flex flex-col">
       <div className="w-full h-full max-w-lg md:max-w-full mx-auto flex flex-col">
         {/* Mobile stacked layout: 3 rows (no overlap) */}
-        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg border border-slate-900 shadow-lg p-2 overflow-hidden">
+        <div className="md:hidden h-full flex flex-col bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-2 overflow-hidden">
           {/* Row 1: Top player */}
           {top && (
             <div className="flex justify-center flex-shrink-0 pb-2">
@@ -304,7 +304,7 @@ export const GameTable = observer(() => {
         </div>
 
         {/* Desktop/Tablet wide board */}
-        <div className="hidden md:block relative bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg border border-slate-900 shadow-lg p-3 w-full h-full min-h-0">
+        <div className="hidden md:block relative bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-3 w-full h-full min-h-0">
           {/* Top Player */}
           {top && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2">

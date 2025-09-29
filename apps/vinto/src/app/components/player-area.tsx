@@ -72,7 +72,7 @@ export const PlayerArea = observer(function PlayerArea({
           bg-white/90 backdrop-blur-sm rounded-lg p-2 border-2
           ${
             isCurrentPlayer
-              ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-300'
+              ? 'border-emerald-500 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-300'
               : 'border-gray-200'
           }
           transition-all duration-300
@@ -82,7 +82,7 @@ export const PlayerArea = observer(function PlayerArea({
         <div className="text-base mb-1">{player.avatar}</div>
         <div
           className={`text-xs font-medium ${
-            isCurrentPlayer ? 'text-blue-600' : 'text-gray-700'
+            isCurrentPlayer ? 'text-emerald-600' : 'text-gray-700'
           }`}
         >
           {player.name}
@@ -93,9 +93,9 @@ export const PlayerArea = observer(function PlayerArea({
         {isCurrentPlayer && (
           <div className="mt-1">
             {isThinking ? (
-              <div className="animate-spin text-blue-500 text-sm">⏳</div>
+              <div className="animate-spin text-emerald-500 text-sm">⏳</div>
             ) : (
-              <div className="text-blue-500 animate-pulse text-sm">⭐</div>
+              <div className="text-emerald-500 animate-pulse text-sm">⭐</div>
             )}
           </div>
         )}
@@ -179,7 +179,7 @@ export const PlayerArea = observer(function PlayerArea({
     };
     const nameLabel = (
       <div
-        className={`md:hidden absolute z-10 flex items-center gap-1 text-2xs font-semibold leading-none whitespace-nowrap px-1.5 py-0.5 rounded-md bg-emerald-950/40 text-white shadow-sm border border-white/20 ${
+        className={`md:hidden absolute z-10 flex items-center gap-1 text-2xs font-semibold leading-none whitespace-nowrap px-1.5 py-0.5 rounded-md bg-poker-green-900/60 text-white shadow-sm border border-white/20 ${
           player.position === 'left'
             ? '-rotate-90 left-0 top-1/2 -translate-y-1/2 -translate-x-2'
             : player.position === 'right'
@@ -193,7 +193,7 @@ export const PlayerArea = observer(function PlayerArea({
         style={{ pointerEvents: 'none' }}
       >
         <span className="text-xs leading-none">{player.avatar}</span>
-        <span className={isCurrentPlayer ? 'text-blue-200' : 'text-white'}>
+        <span className={isCurrentPlayer ? 'text-emerald-200' : 'text-white'}>
           {player.name}
         </span>
       </div>
@@ -221,7 +221,7 @@ export const PlayerArea = observer(function PlayerArea({
     <div
       className={`flex gap-2 ${positionClasses[player.position]} ${
         isCurrentPlayer
-          ? 'p-1 rounded-lg border-2 border-yellow-400 bg-yellow-400/10'
+          ? 'p-1 rounded-lg border-2 border-emerald-400 bg-emerald-400/10'
           : ''
       }`}
     >

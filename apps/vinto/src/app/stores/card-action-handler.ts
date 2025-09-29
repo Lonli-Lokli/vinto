@@ -202,7 +202,9 @@ export class CardActionHandler {
 
         const card = player.cards[position];
         GameToastService.success(
-          `You peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
+          `You peeked at position ${position + 1}: ${card.rank} (value ${
+            card.value
+          })`
         );
 
         // User must confirm to complete action - no automatic timeout

@@ -55,7 +55,7 @@ export function Card({
         transition-all duration-150 select-none
         ${revealed && card
           ? 'bg-white border-gray-300 shadow-sm'
-          : 'bg-slate-700 border-slate-600 text-white'}
+          : 'bg-gradient-to-br from-poker-green-700 to-poker-green-800 border-poker-green-600 text-white'}
         ${clickable ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md' : ''}
         ${highlighted ? 'ring-2 ring-yellow-400 animate-pulse' : ''}
       `}

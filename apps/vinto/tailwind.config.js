@@ -22,6 +22,31 @@ module.exports = {
         '2xs': '0.625rem', // 10px
       },
       colors: {
+        // Warm poker green - friendly and inviting
+        'poker-green': {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',  // Main table color
+          600: '#16a34a',
+          700: '#15803d',  // Darker variant
+          800: '#166534',
+          900: '#14532d',
+        },
+        // Warm felted green (traditional poker table)
+        'felt': {
+          light: '#2d5a3d',
+          DEFAULT: '#1e4129',
+          dark: '#15301f',
+        },
+        // Warm wood tones for borders/accents
+        'wood': {
+          light: '#8b6f47',
+          DEFAULT: '#6b5436',
+          dark: '#4a3822',
+        },
         emerald: {
           50: '#ecfdf5',
           100: '#d1fae5',
