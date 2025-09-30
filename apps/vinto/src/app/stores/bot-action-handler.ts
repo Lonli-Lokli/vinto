@@ -79,7 +79,7 @@ export class BotActionHandler {
    * TODO: Replace this with actual AI calculation that returns a promise.
    */
   private async simulateBotThinking(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 1500));
+    return new Promise((resolve) => setTimeout(resolve, 10_000));
   }
 
   // Execution methods with bot decision logic

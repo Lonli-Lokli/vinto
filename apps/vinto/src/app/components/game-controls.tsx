@@ -100,22 +100,22 @@ export const GameControls = observer(() => {
 
   // Single consistent container for all states
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full mx-auto px-3 py-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col">
         {/* Header - consistent across all states */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800">
+          <h3 className="text-sm md:text-base font-semibold text-gray-800">
             {controlContent.title}
           </h3>
           {controlContent.subtitle && (
-            <div className="text-2xs md:text-xs text-gray-500 hidden sm:block">
+            <div className="text-xs md:text-sm text-gray-500 hidden sm:block">
               {controlContent.subtitle}
             </div>
           )}
         </div>
 
         {/* Main content area - responsive to content type */}
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex flex-col justify-center">
           {controlContent.type === 'toss-in' && <TossInControls />}
 
           {controlContent.type === 'vinto-only' && <VintoOnlyControls />}

@@ -19,7 +19,7 @@ export const GameTable = observer(() => {
     getGamePhaseStore();
   const { actionContext , pendingCard, swapPosition} = getActionStore();
   const tossInStore = getTossInStore();
-  const { waitingForTossIn, timer: tossInTimer } = tossInStore;
+  const { waitingForTossIn } = tossInStore;
   const { discardPile} = getDeckStore()
 
   // Calculate final scores if in scoring phase
@@ -242,22 +242,6 @@ export const GameTable = observer(() => {
               </div>
             </div>
 
-            {/* Toss-in Timer */}
-            {waitingForTossIn && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="bg-amber-600 text-white font-bold px-2 py-1 sm:px-3 sm:py-2 rounded-lg shadow-lg border border-amber-700 animate-pulse">
-                  <div className="text-center">
-                    <div className="text-base font-black">
-                      {tossInTimer}
-                    </div>
-                    <div className="text-2xs leading-tight">
-                      TOSS IN
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Right Player */}
             <div className="flex-1 flex justify-end">
               {right && (
@@ -427,20 +411,6 @@ export const GameTable = observer(() => {
                 </div>
               </div>
             </div>
-
-            {/* Toss-in Timer (Desktop) */}
-            {waitingForTossIn && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="bg-amber-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg border border-amber-700 animate-pulse">
-                  <div className="text-center">
-                    <div className="text-xl font-black">
-                      {tossInTimer}
-                    </div>
-                    <div className="text-xs leading-tight">TOSS IN</div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Human Player */}
