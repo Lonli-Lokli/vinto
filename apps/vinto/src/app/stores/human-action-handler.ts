@@ -4,10 +4,12 @@ import { Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { GameToastService } from '../lib/toast-service';
+import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
 
 export interface ActionHandlerDependencies {
   playerStore: PlayerStore;
   actionStore: ActionStore;
+  commandFactory: CommandFactory;
 }
 
 /**
@@ -20,10 +22,14 @@ export interface ActionHandlerDependencies {
 export class HumanActionHandler {
   private playerStore: PlayerStore;
   private actionStore: ActionStore;
+  private commandFactory: CommandFactory;
+  private commandHistory: CommandHistory;
 
   constructor(deps: ActionHandlerDependencies) {
     this.playerStore = deps.playerStore;
     this.actionStore = deps.actionStore;
+    this.commandFactory = deps.commandFactory;
+    this.commandHistory = getCommandHistory();
   }
 
   // Action initiation - waits for user input
@@ -101,11 +107,11 @@ export class HumanActionHandler {
     return false;
   }
 
-  handleSwapTargetSelection(
+  async handleSwapTargetSelection(
     actionPlayerId: string,
     targetPlayerId: string,
     position: number
-  ): boolean {
+  ): Promise<boolean> {
     const actionPlayer = this.playerStore.getPlayer(actionPlayerId);
     const targetPlayer = this.playerStore.getPlayer(targetPlayerId);
 
@@ -130,14 +136,14 @@ export class HumanActionHandler {
     }
 
     if (this.actionStore.hasCompleteSwapSelection) {
-      return this.executeSwapCards(actionPlayerId);
+      return await this.executeSwapCards(actionPlayerId);
     } else {
       GameToastService.info('Selected first card. Choose second card to swap with.');
       return true;
     }
   }
 
-  executeSwapCards(actionPlayerId: string): boolean {
+  async executeSwapCards(actionPlayerId: string): Promise<boolean> {
     const targets = this.actionStore.swapTargets;
     if (targets.length !== 2) return false;
 
@@ -147,14 +153,16 @@ export class HumanActionHandler {
 
     if (!player1 || !player2) return false;
 
-    const success = this.playerStore.swapCards(
+    // Execute swap using command
+    const swapCommand = this.commandFactory.swapCards(
       target1.playerId,
       target1.position,
       target2.playerId,
       target2.position
     );
+    const result = await this.commandHistory.executeCommand(swapCommand);
 
-    if (success) {
+    if (result.success) {
       GameToastService.success(
         `Swapped ${player1.name}'s card ${target1.position + 1} with ${player2.name}'s card ${target2.position + 1}`
       );
@@ -218,25 +226,28 @@ export class HumanActionHandler {
     return false;
   }
 
-  executeQueenSwap(): boolean {
+  async executeQueenSwap(): Promise<boolean> {
     const targets = this.actionStore.peekTargets;
     if (targets.length !== 2) return false;
 
     const [target1, target2] = targets;
-    const success = this.playerStore.swapCards(
+
+    // Execute swap using command
+    const swapCommand = this.commandFactory.swapCards(
       target1.playerId,
       target1.position,
       target2.playerId,
       target2.position
     );
+    const result = await this.commandHistory.executeCommand(swapCommand);
 
-    if (success) {
+    if (result.success) {
       GameToastService.success(
         `Queen action: Swapped ${target1.card!.rank} with ${target2.card!.rank}`
       );
     }
 
-    return success;
+    return result.success;
   }
 
   skipQueenSwap(): boolean {

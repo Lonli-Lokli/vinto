@@ -7,6 +7,7 @@ import { gameStore } from '../stores/game-store';
 import { getPlayerStore } from '../stores/player-store';
 import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getDeckStore } from '../stores/deck-store';
+import { GameToastService } from '../lib/toast-service';
 
 const SettingsPopover = observer(
   ({
@@ -103,6 +104,7 @@ export const GameHeader = observer(() => {
   const { drawPile } = getDeckStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
@@ -114,6 +116,50 @@ export const GameHeader = observer(() => {
     if (!currentPlayer || phase === 'scoring') return null;
     if (currentPlayer.isHuman) return `${currentPlayer.avatar} Your turn!`;
     return `${currentPlayer.avatar} ${currentPlayer.name}`;
+  };
+
+  const handleExportCommands = () => {
+    try {
+      const history = gameStore.exportGameHistory();
+      const blob = new Blob([history], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vinto-commands-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      GameToastService.success('Command history exported successfully');
+    } catch (error) {
+      console.error('Failed to export commands:', error);
+      GameToastService.error('Failed to export command history');
+    }
+  };
+
+  const handleImportCommands = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+        console.log('Imported command history:', data);
+        // TODO: Implement replay functionality
+        GameToastService.info(`Imported ${data.length || 0} commands. Replay functionality coming soon!`);
+      } catch (error) {
+        console.error('Failed to import commands:', error);
+        GameToastService.error('Failed to import commands. Invalid file format.');
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -196,12 +242,42 @@ export const GameHeader = observer(() => {
             )}
           </div>
 
-          {/* Right: Cards Left */}
-          <div className="flex items-center gap-1">
-            <div className="text-sm font-semibold text-gray-700">
-              {drawPile.length}
+          {/* Right: Cards Left + Command History */}
+          <div className="flex items-center gap-2">
+            {/* Command History Import/Export */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleExportCommands}
+                className="px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold text-xs transition-colors"
+                title="Export command history"
+              >
+                <span className="hidden sm:inline">💾 Export</span>
+                <span className="sm:hidden">💾</span>
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-2 py-1 rounded bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold text-xs transition-colors"
+                title="Import command history"
+              >
+                <span className="hidden sm:inline">📂 Import</span>
+                <span className="sm:hidden">📂</span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportCommands}
+                className="hidden"
+              />
             </div>
-            <div className="text-2xs text-gray-500">cards</div>
+
+            {/* Cards Left */}
+            <div className="flex items-center gap-1">
+              <div className="text-sm font-semibold text-gray-700">
+                {drawPile.length}
+              </div>
+              <div className="text-2xs text-gray-500 hidden sm:block">cards</div>
+            </div>
           </div>
         </div>
       </div>

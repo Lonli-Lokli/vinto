@@ -9,6 +9,7 @@ import { GameToastService } from '../lib/toast-service';
 import { HumanActionHandler } from './human-action-handler';
 import { BotActionHandler } from './bot-action-handler';
 import { BotDecisionService } from '../services/bot-decision';
+import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
 
 /**
  * ActionCoordinator - Routes actions to appropriate handlers (Human vs Bot).
@@ -22,6 +23,8 @@ export class ActionCoordinator {
   private actionStore: ActionStore;
   private deckStore: DeckStore;
   private phaseStore: GamePhaseStore;
+  private commandFactory: CommandFactory;
+  private commandHistory: CommandHistory;
   private onActionComplete?: () => void;
 
   constructor(
@@ -29,17 +32,21 @@ export class ActionCoordinator {
     actionStore: ActionStore,
     deckStore: DeckStore,
     phaseStore: GamePhaseStore,
-    botDecisionService: BotDecisionService
+    botDecisionService: BotDecisionService,
+    commandFactory: CommandFactory
   ) {
     this.playerStore = playerStore;
     this.actionStore = actionStore;
     this.deckStore = deckStore;
     this.phaseStore = phaseStore;
+    this.commandFactory = commandFactory;
+    this.commandHistory = getCommandHistory();
 
     // Initialize handlers
     this.humanHandler = new HumanActionHandler({
       playerStore,
       actionStore,
+      commandFactory,
     });
 
     this.botHandler = new BotActionHandler({
@@ -47,6 +54,7 @@ export class ActionCoordinator {
       actionStore,
       deckStore,
       botDecisionService,
+      commandFactory,
     });
   }
 
@@ -67,7 +75,10 @@ export class ActionCoordinator {
 
     // Start the action
     this.actionStore.startAction(card, playerId);
-    this.deckStore.discardCard(card);
+
+    // Discard card using command
+    const discardCommand = this.commandFactory.discardCard(card);
+    await this.commandHistory.executeCommand(discardCommand);
 
     // Set appropriate phase
     this.phaseStore.startAwaitingAction();
@@ -124,7 +135,7 @@ export class ActionCoordinator {
   }
 
   // Target selection - route to appropriate handler
-  selectActionTarget(targetPlayerId: string, position: number): boolean {
+  async selectActionTarget(targetPlayerId: string, position: number): Promise<boolean> {
     const context = this.actionStore.actionContext;
     if (!context) return false;
 
@@ -148,7 +159,7 @@ export class ActionCoordinator {
           position
         );
       case 'swap-cards':
-        return this.executeTargetSwapCards(
+        return await this.executeTargetSwapCards(
           actionPlayer.isHuman,
           context.playerId,
           targetPlayerId,
@@ -162,7 +173,7 @@ export class ActionCoordinator {
           position
         );
       case 'force-draw':
-        return this.executeTargetForceDraw(
+        return await this.executeTargetForceDraw(
           actionPlayer.isHuman,
           context.playerId,
           targetPlayerId
@@ -208,14 +219,14 @@ export class ActionCoordinator {
     return result;
   }
 
-  private executeTargetSwapCards(
+  private async executeTargetSwapCards(
     isHuman: boolean,
     actionPlayerId: string,
     targetPlayerId: string,
     position: number
-  ): boolean {
+  ): Promise<boolean> {
     // Use human handler for swap target selection (bot uses different flow)
-    const result = this.humanHandler.handleSwapTargetSelection(
+    const result = await this.humanHandler.handleSwapTargetSelection(
       actionPlayerId,
       targetPlayerId,
       position
@@ -242,20 +253,21 @@ export class ActionCoordinator {
     );
   }
 
-  private executeTargetForceDraw(
+  private async executeTargetForceDraw(
     isHuman: boolean,
     actionPlayerId: string,
     targetPlayerId: string
-  ): boolean {
+  ): Promise<boolean> {
     // Execute force draw through deck store
     if (!this.deckStore.hasDrawCards) {
       this.deckStore.ensureDrawCards();
     }
 
-    const drawnCard = this.deckStore.drawCard();
-    if (!drawnCard) return false;
+    // Add penalty card using command
+    const penaltyCommand = this.commandFactory.addPenaltyCard(targetPlayerId);
+    const result = await this.commandHistory.executeCommand(penaltyCommand);
 
-    this.playerStore.addCardToPlayer(targetPlayerId, drawnCard);
+    if (!result.success) return false;
 
     // Show appropriate message based on player type
     if (isHuman) {
@@ -276,7 +288,7 @@ export class ActionCoordinator {
   }
 
   // Queen-specific methods
-  executeQueenSwap(): boolean {
+  async executeQueenSwap(): Promise<boolean> {
     const context = this.actionStore.actionContext;
     if (!context) return false;
 
@@ -285,32 +297,35 @@ export class ActionCoordinator {
 
     // Use appropriate handler
     const result = actionPlayer.isHuman
-      ? this.humanHandler.executeQueenSwap()
-      : this.executeQueenSwapInternal();
+      ? await this.humanHandler.executeQueenSwap()
+      : await this.executeQueenSwapInternal();
 
     this.completeAction();
     return result;
   }
 
-  private executeQueenSwapInternal(): boolean {
+  private async executeQueenSwapInternal(): Promise<boolean> {
     const targets = this.actionStore.peekTargets;
     if (targets.length !== 2) return false;
 
     const [target1, target2] = targets;
-    const success = this.playerStore.swapCards(
+
+    // Execute swap using command
+    const swapCommand = this.commandFactory.swapCards(
       target1.playerId,
       target1.position,
       target2.playerId,
       target2.position
     );
+    const result = await this.commandHistory.executeCommand(swapCommand);
 
-    if (success) {
+    if (result.success) {
       GameToastService.success(
         `Queen action: Swapped ${target1.card!.rank} with ${target2.card!.rank}`
       );
     }
 
-    return success;
+    return result.success;
   }
 
   skipQueenSwap(): boolean {

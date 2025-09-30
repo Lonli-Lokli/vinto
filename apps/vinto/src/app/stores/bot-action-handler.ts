@@ -9,12 +9,14 @@ import {
   BotDecisionService,
   BotDecisionContext,
 } from '../services/bot-decision';
+import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
 
 export interface BotActionHandlerDependencies {
   playerStore: PlayerStore;
   actionStore: ActionStore;
   deckStore: DeckStore;
   botDecisionService: BotDecisionService;
+  commandFactory: CommandFactory;
 }
 
 /**
@@ -29,12 +31,16 @@ export class BotActionHandler {
   private actionStore: ActionStore;
   private deckStore: DeckStore;
   private botDecisionService: BotDecisionService;
+  private commandFactory: CommandFactory;
+  private commandHistory: CommandHistory;
 
   constructor(deps: BotActionHandlerDependencies) {
     this.playerStore = deps.playerStore;
     this.actionStore = deps.actionStore;
     this.deckStore = deps.deckStore;
     this.botDecisionService = deps.botDecisionService;
+    this.commandFactory = deps.commandFactory;
+    this.commandHistory = getCommandHistory();
   }
 
   // Action initiation - async execution (will be replaced with actual AI calculation)
@@ -53,13 +59,13 @@ export class BotActionHandler {
   async handleSwapCards(playerId: string): Promise<boolean> {
     // Mock delay - will be replaced with actual AI calculation
     await this.simulateBotThinking();
-    return this.executeSwapCards(playerId);
+    return await this.executeSwapCards(playerId);
   }
 
   async handlePeekAndSwap(playerId: string): Promise<boolean> {
     // Mock delay - will be replaced with actual AI calculation
     await this.simulateBotThinking();
-    return this.executePeekAndSwap(playerId);
+    return await this.executePeekAndSwap(playerId);
   }
 
   async handleDeclareAction(playerId: string): Promise<boolean> {
@@ -71,7 +77,7 @@ export class BotActionHandler {
   async handleForceDraw(playerId: string): Promise<boolean> {
     // Mock delay - will be replaced with actual AI calculation
     await this.simulateBotThinking();
-    return this.executeForceDraw(playerId);
+    return await this.executeForceDraw(playerId);
   }
 
   /**
@@ -133,7 +139,7 @@ export class BotActionHandler {
     return false;
   }
 
-  private executeSwapCards(playerId: string): boolean {
+  private async executeSwapCards(playerId: string): Promise<boolean> {
     const allPlayers = this.playerStore.players;
     const availableTargets: Array<{ playerId: string; position: number }> = [];
 
@@ -171,14 +177,16 @@ export class BotActionHandler {
           this.playerStore.highlightCard(target1.playerId, target1.position);
           this.playerStore.highlightCard(target2.playerId, target2.position);
 
-          const success = this.playerStore.swapCards(
+          // Execute swap using command
+          const swapCommand = this.commandFactory.swapCards(
             target1.playerId,
             target1.position,
             target2.playerId,
             target2.position
           );
+          const result = await this.commandHistory.executeCommand(swapCommand);
 
-          if (success) {
+          if (result.success) {
             GameToastService.success(
               `${botPlayer.name} swapped ${player1.name}'s card ${
                 target1.position + 1
@@ -186,14 +194,14 @@ export class BotActionHandler {
             );
           }
 
-          return success;
+          return result.success;
         }
       }
     }
     return false;
   }
 
-  private executePeekAndSwap(playerId: string): boolean {
+  private async executePeekAndSwap(playerId: string): Promise<boolean> {
     const allPlayers = this.playerStore.players;
     const availableTargets: Array<{ playerId: string; position: number }> = [];
 
@@ -253,14 +261,16 @@ export class BotActionHandler {
           const targets = this.actionStore.peekTargets;
           const [peek1, peek2] = targets;
 
-          const success = this.playerStore.swapCards(
+          // Execute swap using command
+          const swapCommand = this.commandFactory.swapCards(
             peek1.playerId,
             peek1.position,
             peek2.playerId,
             peek2.position
           );
+          const result = await this.commandHistory.executeCommand(swapCommand);
 
-          if (success) {
+          if (result.success) {
             GameToastService.success(
               `${botPlayer.name}: Queen action - Swapped ${
                 peek1.card!.rank
@@ -297,7 +307,7 @@ export class BotActionHandler {
     return true;
   }
 
-  private executeForceDraw(playerId: string): boolean {
+  private async executeForceDraw(playerId: string): Promise<boolean> {
     const opponents = this.playerStore.getOpponents(playerId);
     if (opponents.length === 0) return false;
 
@@ -311,10 +321,11 @@ export class BotActionHandler {
       this.deckStore.ensureDrawCards();
     }
 
-    const drawnCard = this.deckStore.drawCard();
-    if (drawnCard) {
-      this.playerStore.addCardToPlayer(randomOpponent.id, drawnCard);
+    // Add penalty card using command
+    const penaltyCommand = this.commandFactory.addPenaltyCard(randomOpponent.id);
+    const result = await this.commandHistory.executeCommand(penaltyCommand);
 
+    if (result.success) {
       GameToastService.success(
         `${player.name} forced ${randomOpponent.name} to draw a card. ${randomOpponent.name} now has ${randomOpponent.cards.length} cards.`
       );
@@ -374,14 +385,16 @@ export class BotActionHandler {
         const targets = this.actionStore.peekTargets;
         const [peek1, peek2] = targets;
 
-        const success = this.playerStore.swapCards(
+        // Execute swap using command
+        const swapCommand = this.commandFactory.swapCards(
           peek1.playerId,
           peek1.position,
           peek2.playerId,
           peek2.position
         );
+        const result = await this.commandHistory.executeCommand(swapCommand);
 
-        if (success && botPlayer) {
+        if (result.success && botPlayer) {
           GameToastService.success(
             `${botPlayer.name}: Queen action - Swapped ${
               peek1.card!.rank

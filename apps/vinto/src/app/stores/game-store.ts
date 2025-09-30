@@ -10,6 +10,7 @@ import { getTossInStore, TossInStore, TossInStoreCallbacks } from './toss-in-sto
 import { timerService } from '../services/timer-service';
 import { GameToastService } from '../lib/toast-service';
 import { BotDecisionService, BotDecisionServiceFactory, BotDecisionContext } from '../services/bot-decision';
+import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
 import {
   Difficulty,
   TossInTime,
@@ -26,6 +27,10 @@ class GameStore implements TempState {
   actionStore: ActionStore;
   actionCoordinator: ActionCoordinator;
   tossInStore: TossInStore;
+
+  // Command Pattern infrastructure
+  private commandFactory: CommandFactory;
+  private commandHistory: CommandHistory;
 
   // Game state properties from original interface
   gameId = '';
@@ -56,13 +61,22 @@ class GameStore implements TempState {
     // Initialize bot decision service
     this.botDecisionService = BotDecisionServiceFactory.create(this.difficulty);
 
+    // Initialize command system
+    this.commandFactory = new CommandFactory(
+      this.playerStore,
+      this.deckStore,
+      this.actionStore
+    );
+    this.commandHistory = getCommandHistory();
+
     // Initialize action coordinator with store dependencies
     this.actionCoordinator = new ActionCoordinator(
       this.playerStore,
       this.actionStore,
       this.deckStore,
       this.phaseStore,
-      this.botDecisionService
+      this.botDecisionService,
+      this.commandFactory
     );
 
     // Set action complete callback for handling toss-in queue continuation
@@ -241,13 +255,21 @@ class GameStore implements TempState {
   }
 
   // Card actions
-  drawCard() {
+  async drawCard() {
     if (!this.deckStore.hasDrawCards) {
       GameToastService.error('No cards left in draw pile!');
       return;
     }
 
+    const currentPlayer = this.playerStore.currentPlayer;
+    if (!currentPlayer) return;
+
     this.phaseStore.startDrawing();
+
+    // Execute draw command
+    const command = this.commandFactory.drawCard(currentPlayer.id);
+    await this.commandHistory.executeCommand(command);
+
     const drawnCard = this.deckStore.drawCard();
     if (drawnCard) {
       this.actionStore.pendingCard = drawnCard;
@@ -273,7 +295,7 @@ class GameStore implements TempState {
     this.phaseStore.startSelectingPosition();
   }
 
-  choosePlayCard() {
+  async choosePlayCard() {
     const currentPlayer = this.playerStore.currentPlayer;
     const pendingCard = this.actionStore.pendingCard;
 
@@ -282,8 +304,10 @@ class GameStore implements TempState {
     if (pendingCard.action) {
       this.actionCoordinator.executeCardAction(pendingCard, currentPlayer.id);
     } else {
-      // Discard non-action cards directly
-      this.deckStore.discardCard(pendingCard);
+      // Discard non-action cards using command
+      const command = this.commandFactory.discardCard(pendingCard);
+      await this.commandHistory.executeCommand(command);
+
       GameToastService.info(`Discarded ${pendingCard.rank}`);
 
       this.actionStore.pendingCard = null;
@@ -323,7 +347,7 @@ class GameStore implements TempState {
   }
 
   // Rank declaration during swap
-  declareRank(rank: Rank) {
+  async declareRank(rank: Rank) {
     const currentPlayer = this.playerStore.currentPlayer;
     const pendingCard = this.actionStore.pendingCard;
     const swapPosition = this.actionStore.swapPosition;
@@ -338,20 +362,28 @@ class GameStore implements TempState {
         `Correct declaration! ${rank} matches the card. You can use its action.`
       );
 
-      // Perform the swap
-      const replacedCard = this.playerStore.replaceCard(
+      // Perform the swap using command
+      const replaceCommand = this.commandFactory.replaceCard(
         currentPlayer.id,
         swapPosition,
         pendingCard
       );
-      if (replacedCard) {
-        this.deckStore.discardCard(replacedCard);
+      const replaceResult = await this.commandHistory.executeCommand(replaceCommand);
 
-        // Execute action if available
-        if (replacedCard.action) {
-          this.actionCoordinator.executeCardAction(replacedCard, currentPlayer.id);
-        } else {
-          this.startTossInPeriod();
+      if (replaceResult.success) {
+        const replacedCard = replaceResult.command.toData().payload.oldCard;
+
+        if (replacedCard) {
+          // Discard old card using command
+          const discardCommand = this.commandFactory.discardCard(replacedCard);
+          await this.commandHistory.executeCommand(discardCommand);
+
+          // Execute action if available
+          if (replacedCard.action) {
+            this.actionCoordinator.executeCardAction(replacedCard, currentPlayer.id);
+          } else {
+            this.startTossInPeriod();
+          }
         }
       }
     } else {
@@ -359,22 +391,28 @@ class GameStore implements TempState {
         `Wrong declaration! ${rank} doesn't match the card. Drawing penalty card.`
       );
 
-      // Perform swap and add penalty
-      const replacedCard = this.playerStore.replaceCard(
+      // Perform swap using command
+      const replaceCommand = this.commandFactory.replaceCard(
         currentPlayer.id,
         swapPosition,
         pendingCard
       );
-      if (replacedCard) {
-        this.deckStore.discardCard(replacedCard);
+      const replaceResult = await this.commandHistory.executeCommand(replaceCommand);
+
+      if (replaceResult.success) {
+        const replacedCard = replaceResult.command.toData().payload.oldCard;
+
+        if (replacedCard) {
+          // Discard old card using command
+          const discardCommand = this.commandFactory.discardCard(replacedCard);
+          await this.commandHistory.executeCommand(discardCommand);
+        }
       }
 
-      // Add penalty card
+      // Add penalty card using command
       if (this.deckStore.hasDrawCards) {
-        const penaltyCard = this.deckStore.drawCard();
-        if (penaltyCard) {
-          this.playerStore.addCardToPlayer(currentPlayer.id, penaltyCard);
-        }
+        const penaltyCommand = this.commandFactory.addPenaltyCard(currentPlayer.id);
+        await this.commandHistory.executeCommand(penaltyCommand);
       }
 
       this.startTossInPeriod();
@@ -386,20 +424,29 @@ class GameStore implements TempState {
     this.phaseStore.returnToIdle();
   }
 
-  skipDeclaration() {
+  async skipDeclaration() {
     const currentPlayer = this.playerStore.currentPlayer;
     const pendingCard = this.actionStore.pendingCard;
     const swapPosition = this.actionStore.swapPosition;
 
     if (!currentPlayer || !pendingCard || swapPosition === null) return;
 
-    const replacedCard = this.playerStore.replaceCard(
+    // Perform swap using command
+    const replaceCommand = this.commandFactory.replaceCard(
       currentPlayer.id,
       swapPosition,
       pendingCard
     );
-    if (replacedCard) {
-      this.deckStore.discardCard(replacedCard);
+    const replaceResult = await this.commandHistory.executeCommand(replaceCommand);
+
+    if (replaceResult.success) {
+      const replacedCard = replaceResult.command.toData().payload.oldCard;
+
+      if (replacedCard) {
+        // Discard old card using command
+        const discardCommand = this.commandFactory.discardCard(replacedCard);
+        await this.commandHistory.executeCommand(discardCommand);
+      }
     }
 
     // Clean up
@@ -410,9 +457,12 @@ class GameStore implements TempState {
     this.startTossInPeriod();
   }
 
-  discardCard() {
+  async discardCard() {
     if (this.actionStore.pendingCard) {
-      this.deckStore.discardCard(this.actionStore.pendingCard);
+      // Discard using command
+      const command = this.commandFactory.discardCard(this.actionStore.pendingCard);
+      await this.commandHistory.executeCommand(command);
+
       this.actionStore.clearAction();
       this.phaseStore.returnToIdle();
       this.startTossInPeriod();
@@ -448,10 +498,16 @@ class GameStore implements TempState {
   }
 
   // Turn management
-  private advanceTurn() {
+  private async advanceTurn() {
     if (this.aiThinking || this.tossInStore.hasTossInActions) return;
 
-    this.playerStore.advancePlayer();
+    const currentPlayer = this.playerStore.currentPlayer;
+    if (!currentPlayer) return;
+
+    // Execute advance turn command
+    const command = this.commandFactory.advanceTurn(currentPlayer.id);
+    await this.commandHistory.executeCommand(command);
+
     this.updateVintoCallAvailability();
 
     // Check for game end
@@ -620,12 +676,11 @@ class GameStore implements TempState {
     this.advanceTurn();
   }
 
-  private handleTossInPenalty(playerId: string) {
+  private async handleTossInPenalty(playerId: string) {
     if (this.deckStore.hasDrawCards) {
-      const penaltyCard = this.deckStore.drawCard();
-      if (penaltyCard) {
-        this.playerStore.addCardToPlayer(playerId, penaltyCard);
-      }
+      // Add penalty card using command
+      const command = this.commandFactory.addPenaltyCard(playerId);
+      await this.commandHistory.executeCommand(command);
     }
   }
 
@@ -633,6 +688,42 @@ class GameStore implements TempState {
   // Helper methods
   updateVintoCallAvailability() {
     this.canCallVintoAfterHumanTurn = this.canCallVinto;
+  }
+
+  // Command history debug methods
+  get commandLog() {
+    return this.commandHistory.getCommandLog();
+  }
+
+  get commandStats() {
+    return this.commandHistory.getStats();
+  }
+
+  exportGameHistory() {
+    return this.commandHistory.exportHistory();
+  }
+
+  debugRecentCommands(count: number = 20) {
+    const log = this.commandHistory.getCommandLog();
+    console.log('=== Recent Commands ===');
+    console.log(log.slice(-count).join('\n'));
+  }
+
+  exportBugReport() {
+    return {
+      gameState: {
+        phase: this.phaseStore.phase,
+        turnCount: this.playerStore.turnCount,
+        players: this.playerStore.players.map(p => ({
+          id: p.id,
+          name: p.name,
+          cardCount: p.cards.length,
+        })),
+      },
+      commandHistory: this.commandHistory.exportHistory(),
+      stats: this.commandHistory.getStats(),
+      timestamp: Date.now(),
+    };
   }
 
   // Cleanup
