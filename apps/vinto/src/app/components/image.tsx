@@ -29,14 +29,19 @@ function resolveSrc(input: StaticImportLike): string {
 const wrap = (srcLike: StaticImportLike, altFallback: string) =>
 	function WrappedImg(props: ImgProps) {
 		const { alt, className, ...rest } = props;
-	const src = resolveSrc(srcLike);
+		const src = resolveSrc(srcLike);
 		return (
-			<img
-				src={src}
-				alt={alt ?? altFallback}
-				className={className ?? 'w-10 h-10 object-contain'}
-				{...rest}
-			/>
+			<div className="relative flex items-center justify-center">
+				<img
+					src={src}
+					alt={alt ?? altFallback}
+					className={className ?? 'w-10 h-10 object-contain'}
+					{...rest}
+				/>
+				<span className="absolute bottom-0 text-xs font-bold text-gray-900 bg-white/90 px-1 py-0.5 rounded shadow-sm border border-gray-200">
+					{altFallback}
+				</span>
+			</div>
 		);
 	};
 

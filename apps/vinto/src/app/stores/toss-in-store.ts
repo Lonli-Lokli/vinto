@@ -1,7 +1,7 @@
 'use client';
 
 import { makeAutoObservable } from 'mobx';
-import { Card, TossInTime } from '../shapes';
+import { Card, Player, TossInTime } from '../shapes';
 import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
 import { BotDecisionService } from '../services/bot-decision';
@@ -16,7 +16,10 @@ export interface TossInStoreCallbacks {
   onTimerStop?: () => void;
   onComplete?: () => void;
   onActionExecute?: (playerId: string, card: Card) => Promise<void>;
-  onToastMessage?: (type: 'success' | 'error' | 'info', message: string) => void;
+  onToastMessage?: (
+    type: 'success' | 'error' | 'info',
+    message: string
+  ) => void;
   onPenaltyCard?: (playerId: string) => void;
 }
 
@@ -148,7 +151,7 @@ export class TossInStore {
     deckStore.discardCard(removedCard);
 
     // Record the successful toss-in
-    return this.recordTossIn(playerId, removedCard);
+    return this.recordTossIn(player, removedCard);
   }
 
   /**
@@ -173,7 +176,8 @@ export class TossInStore {
   handleBotParticipation(): void {
     if (!this.deps) return;
 
-    const { playerStore, deckStore, botDecisionService, createBotContext } = this.deps;
+    const { playerStore, deckStore, botDecisionService, createBotContext } =
+      this.deps;
     const discardedRank = deckStore.peekTopDiscard()?.rank;
     if (!discardedRank) return;
 
@@ -181,7 +185,9 @@ export class TossInStore {
       if (!this.hasPlayerTossedIn(player.id)) {
         const context = createBotContext(player.id);
 
-        if (botDecisionService.shouldParticipateInTossIn(discardedRank, context)) {
+        if (
+          botDecisionService.shouldParticipateInTossIn(discardedRank, context)
+        ) {
           // Find matching cards and toss one in
           player.cards.forEach((card, position) => {
             if (card.rank === discardedRank && Math.random() < 0.5) {
@@ -218,35 +224,51 @@ export class TossInStore {
   }
 
   // Pure validation method - external systems provide the data
-  canTossIn(playerId: string, card: Card, discardedRank: string): {
+  canTossIn(
+    playerId: string,
+    card: Card,
+    discardedRank: string
+  ): {
     canToss: boolean;
-    reason?: string
+    reason?: string;
   } {
     if (!this.isActive) {
       return { canToss: false, reason: 'Toss-in period is not active' };
     }
 
     if (card.rank !== discardedRank) {
-      return { canToss: false, reason: 'Card rank does not match discarded card' };
+      return {
+        canToss: false,
+        reason: 'Card rank does not match discarded card',
+      };
     }
 
     return { canToss: true };
   }
 
   // Pure action method - external systems handle the consequences
-  recordTossIn(playerId: string, card: Card): boolean {
+  recordTossIn(player: Player, card: Card): boolean {
     if (card.action) {
-      this.addToQueue(playerId, card);
+      this.addToQueue(player.id, card);
     }
 
-    this.callbacks.onToastMessage?.('success', `Player tossed in ${card.rank}!`);
+    if (!player.isHuman) {
+      this.callbacks.onToastMessage?.(
+        'success',
+        `Player ${player.name} tossed in ${card.rank}!`
+      );
+    }
+
     return true;
   }
 
   // Handle incorrect toss-in attempts
   recordIncorrectTossIn(playerId: string): void {
     this.callbacks.onPenaltyCard?.(playerId);
-    this.callbacks.onToastMessage?.('error', 'Toss-in failed - penalty card drawn');
+    this.callbacks.onToastMessage?.(
+      'error',
+      'Toss-in failed - penalty card drawn'
+    );
   }
 
   get waitingForTossIn() {
@@ -296,7 +318,10 @@ export class TossInStore {
     const currentAction = this.currentTossInAction;
     if (!currentAction) return false;
 
-    this.callbacks.onToastMessage?.('info', `Skipped ${currentAction.card.rank} action`);
+    this.callbacks.onToastMessage?.(
+      'info',
+      `Skipped ${currentAction.card.rank} action`
+    );
     return await this.advanceQueue();
   }
 
@@ -345,10 +370,9 @@ export class TossInStore {
       isActive: this.isActive,
       currentQueueIndex: this.currentQueueIndex,
       originalCurrentPlayer: this.originalCurrentPlayer,
-      playersWhoTossedIn: new Set(this.playersWhoTossedIn)
+      playersWhoTossedIn: new Set(this.playersWhoTossedIn),
     };
   }
 }
-
 
 export const getTossInStore = () => TossInStore.getInstance();

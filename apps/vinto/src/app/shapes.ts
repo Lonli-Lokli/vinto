@@ -30,6 +30,7 @@ export interface Player {
   knownCardPositions: Set<number>; // Permanently known cards (setup phase)
   temporarilyVisibleCards: Set<number>; // Cards visible during current action only
   isHuman: boolean;
+  isBot: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
   avatar: string;
   coalitionWith: Set<string>;

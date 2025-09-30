@@ -37,7 +37,7 @@ export class PlayerStore {
   }
 
   get botPlayers(): Player[] {
-    return this.players.filter((p) => !p.isHuman);
+    return this.players.filter((p) => p.isBot);
   }
 
   get humanPlayerIndex(): number {
@@ -76,6 +76,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         isHuman: true,
+        isBot: false,
         position: 'bottom',
         avatar: '👤',
         coalitionWith: new Set(),
@@ -87,6 +88,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         isHuman: false,
+        isBot: true,
         position: 'left',
         avatar: '🤖',
         coalitionWith: new Set(),
@@ -98,6 +100,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         isHuman: false,
+        isBot: true,
         position: 'top',
         avatar: '🤖',
         coalitionWith: new Set(),
@@ -109,6 +112,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         isHuman: false,
+        isBot: true,
         position: 'right',
         avatar: '🤖',
         coalitionWith: new Set(),

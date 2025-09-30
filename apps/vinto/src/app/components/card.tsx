@@ -42,10 +42,10 @@ export function Card({
   rotated = false,
 }: CardProps) {
   const sizeClasses = {
-    sm: 'w-7 h-10 text-2xs',
-    md: 'w-10 h-14 text-2xs',
-    lg: 'w-12 h-17 text-xs',
-    xl: 'w-14 h-20 text-sm',
+    sm: 'w-6 h-9 text-2xs',
+    md: 'w-8 h-12 text-2xs', 
+    lg: 'w-10 h-14 text-xs',
+    xl: 'w-12 h-16 text-sm',
   } as const;
 
   return (
@@ -105,10 +105,10 @@ export function Card({
 const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({ rank, size }) => {
   // Size classes that fit within card containers with proper aspect ratio
   const sizeClass = {
-    sm: 'w-6 h-8',    // fits in w-7 h-10
-    md: 'w-8 h-12',   // fits in w-10 h-14
-    lg: 'w-10 h-14',  // fits in w-12 h-17
-    xl: 'w-12 h-17',  // fits in w-14 h-20
+    sm: 'w-5 h-7',    // fits in w-6 h-9
+    md: 'w-7 h-10',   // fits in w-8 h-12
+    lg: 'w-9 h-12',   // fits in w-10 h-14
+    xl: 'w-11 h-14',  // fits in w-12 h-16
   }[size];
 
   const className = `${sizeClass} object-contain`;

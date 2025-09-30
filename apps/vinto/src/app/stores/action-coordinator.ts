@@ -83,7 +83,7 @@ export class ActionCoordinator {
 
     // For bot players, all actions complete immediately (no user confirmation needed)
     // Exception: King requires declaration first, which is handled separately
-    if (!player.isHuman && card.rank !== 'K') {
+    if (player.isBot && card.rank !== 'K') {
       this.completeAction();
     }
 
@@ -369,7 +369,7 @@ export class ActionCoordinator {
     if (!context) return false;
 
     const actionPlayer = this.playerStore.getPlayer(context.playerId);
-    if (!actionPlayer?.isHuman) return false;
+    if (actionPlayer?.isBot) return false;
 
     const result = this.humanHandler.confirmPeekCompletion(context.playerId);
 

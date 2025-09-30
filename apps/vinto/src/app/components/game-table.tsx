@@ -185,7 +185,7 @@ export const GameTable = observer(() => {
               {/* Draw Pile */}
               <div className="text-center">
                 <Card
-                  size="md"
+                  size="lg"
                   clickable={
                     currentPlayer?.isHuman &&
                     !isSelectingSwapPosition &&
@@ -211,7 +211,7 @@ export const GameTable = observer(() => {
                       <Card
                         card={pendingCard}
                         revealed={true}
-                        size="md"
+                        size="lg"
                         highlighted={true}
                       />
                       <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-2xs font-bold flex items-center justify-center animate-pulse">
@@ -234,7 +234,7 @@ export const GameTable = observer(() => {
                 <Card
                   card={discardPile[0]}
                   revealed={discardPile.length > 0}
-                  size="md"
+                  size="lg"
                 />
                 <div className="mt-1 text-2xs text-white font-medium bg-black/30 rounded px-2 py-0.5">
                   DISCARD
@@ -371,7 +371,7 @@ export const GameTable = observer(() => {
               {/* Draw Pile */}
               <div className="text-center">
                 <Card
-                  size="xl"
+                  size="lg"
                   clickable={
                     currentPlayer?.isHuman &&
                     !isSelectingSwapPosition &&
@@ -397,7 +397,7 @@ export const GameTable = observer(() => {
                       <Card
                         card={pendingCard}
                         revealed={true}
-                        size="xl"
+                        size="lg"
                         highlighted={true}
                       />
                       <div className="absolute -top-2 -left-2 w-5 h-5 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
@@ -420,7 +420,7 @@ export const GameTable = observer(() => {
                 <Card
                   card={discardPile[0]}
                   revealed={discardPile.length > 0}
-                  size="xl"
+                  size="lg"
                 />
                 <div className="mt-2 text-xs text-white font-medium bg-black/30 rounded px-2 py-1">
                   DISCARD

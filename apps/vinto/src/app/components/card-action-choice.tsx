@@ -14,7 +14,7 @@ export const CardActionChoice = observer(() => {
   const { currentPlayer } = getPlayerStore();
 
   // Only show for human players
-  if (!gamePhaseStore.isChoosingCardAction || !pendingCard || !currentPlayer?.isHuman) {
+  if (!gamePhaseStore.isChoosingCardAction || !pendingCard || currentPlayer?.isBot) {
     return null;
   }
 

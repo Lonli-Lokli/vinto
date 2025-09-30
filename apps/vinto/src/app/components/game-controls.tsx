@@ -82,7 +82,7 @@ export const GameControls = observer(() => {
       finalTurnTriggered ||
       (isAwaitingActionTarget && !isPeekConfirmation) ||
       isTossQueueProcessing ||
-      !currentPlayer?.isHuman;
+      currentPlayer?.isBot;
 
     if (shouldHide) {
       return { type: 'hidden' };

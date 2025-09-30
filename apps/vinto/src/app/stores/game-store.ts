@@ -166,7 +166,7 @@ class GameStore implements TempState {
         // Handle AI turns (but not during toss-in queue processing)
         if (
           currentPlayer &&
-          !currentPlayer.isHuman &&
+          currentPlayer.isBot &&
           !this.aiThinking &&
           this.sessionActive &&
           this.phaseStore.isIdle &&
@@ -218,9 +218,9 @@ class GameStore implements TempState {
     if (card) {
       const player = this.playerStore.getPlayer(playerId);
       // Only show toast for bots - humans can see the card on screen
-      if (player && !player.isHuman) {
+      if (player && player.isBot) {
         GameToastService.success(
-          `${player.name} peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
+          `${player.name} peeked at position ${position + 1}`
         );
       }
     }
@@ -391,10 +391,6 @@ class GameStore implements TempState {
     const swapPosition = this.actionStore.swapPosition;
 
     if (!currentPlayer || !pendingCard || swapPosition === null) return;
-
-    if (currentPlayer.isHuman) {
-      GameToastService.info('Skipped declaration. Card swapped without action.');
-    }
 
     const replacedCard = this.playerStore.replaceCard(
       currentPlayer.id,

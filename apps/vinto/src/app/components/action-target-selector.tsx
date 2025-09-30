@@ -28,7 +28,7 @@ export const ActionTargetSelector = observer(() => {
   const humanPlayer = playerStore.humanPlayer;
 
   // Only show for human players - bot actions should not display UI
-  if (!actionPlayer || !humanPlayer || !actionPlayer.isHuman) {
+  if (!actionPlayer || !humanPlayer || actionPlayer.isBot) {
     return null;
   }
 

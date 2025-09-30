@@ -196,21 +196,18 @@ export class HumanActionHandler {
         peekedCard
       );
 
-      if (!selected && this.actionStore.peekTargets.length >= 2) {
-        GameToastService.info(
-          'Already have 2 cards selected. Deselect one to choose a different card.'
-        );
-        return false;
-      }
-
-      // For Queen actions (peek-then-swap), prevent selecting cards from same player
-      if (
-        this.actionStore.peekTargets.length === 1 &&
-        this.actionStore.peekTargets[0].playerId === targetPlayerId &&
-        context.targetType === 'peek-then-swap'
-      ) {
-        GameToastService.warning('Cannot peek two cards from the same player!');
-        this.actionStore.clearPeekTargets();
+      // Handle selection failure
+      if (!selected) {
+        if (this.actionStore.peekTargets.length >= 2) {
+          GameToastService.info(
+            'You have already selected 2 cards. Use the buttons below to swap or skip.'
+          );
+        } else if (
+          this.actionStore.peekTargets.length === 1 &&
+          this.actionStore.peekTargets[0].playerId === targetPlayerId
+        ) {
+          GameToastService.warning('Cannot peek two cards from the same player!');
+        }
         return false;
       }
 
