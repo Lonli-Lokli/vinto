@@ -17,7 +17,8 @@ export const GameTable = observer(() => {
     getPlayerStore();
   const { phase, isSelectingSwapPosition, isChoosingCardAction , isDeclaringRank, isAwaitingActionTarget} =
     getGamePhaseStore();
-  const { actionContext , pendingCard, swapPosition} = getActionStore();
+  const actionStore = getActionStore();
+  const { actionContext , pendingCard, swapPosition} = actionStore;
   const tossInStore = getTossInStore();
   const { waitingForTossIn } = tossInStore;
   const { discardPile} = getDeckStore()
@@ -29,6 +30,15 @@ export const GameTable = observer(() => {
   // Determine if card interactions should be enabled
   const shouldAllowCardInteractions = () => {
     if (!humanPlayer) return false;
+
+    // For Queen action (peek-then-swap), disable when 2 cards already selected
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'peek-then-swap' &&
+      actionStore.hasCompletePeekSelection
+    ) {
+      return false;
+    }
 
     // Only allow interactions when it's relevant for the human player
     return (
@@ -86,6 +96,15 @@ export const GameTable = observer(() => {
 
   // Determine if opponent card interactions should be enabled
   const shouldAllowOpponentCardInteractions = () => {
+    // For Queen action (peek-then-swap), disable when 2 cards already selected
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'peek-then-swap' &&
+      actionStore.hasCompletePeekSelection
+    ) {
+      return false;
+    }
+
     return (
       isAwaitingActionTarget &&
       (actionContext?.targetType === 'opponent-card' ||

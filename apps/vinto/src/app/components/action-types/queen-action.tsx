@@ -30,23 +30,12 @@ export const QueenAction = observer(() => {
           </div>
         </div>
 
-        {/* Instructions or Peeked Cards Info */}
+        {/* Instructions - only show when cards not yet selected */}
         <div className="flex-1 flex flex-col justify-center mb-2">
-          {!hasBothCards ? (
+          {!hasBothCards && (
             <p className="text-xs text-gray-600 text-center">
               Select two cards from different players to peek at
             </p>
-          ) : (
-            <div className="text-xs text-gray-600 text-center">
-              <div className="mb-1">Peeked cards:</div>
-              <div className="text-sm font-medium text-gray-800">
-                {peekTargets
-                  .map(
-                    (target) => `${target.card?.rank} (${target.card?.value})`
-                  )
-                  .join(' • ')}
-              </div>
-            </div>
           )}
         </div>
 
