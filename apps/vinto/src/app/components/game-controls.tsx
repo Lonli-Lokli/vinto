@@ -5,14 +5,13 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 import { getPlayerStore } from '../stores/player-store';
-import { getActionStore } from '../stores/action-store';
 import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getDeckStore } from '../stores/deck-store';
 import { getTossInStore } from '../stores/toss-in-store';
 
 export const GameControls = observer(() => {
   const playerStore = getPlayerStore();
-  const { players, humanPlayer, currentPlayer } = playerStore;
+  const { players, currentPlayer } = playerStore;
   const {
     isSelectingSwapPosition,
     isAwaitingActionTarget,
@@ -22,7 +21,6 @@ export const GameControls = observer(() => {
     isDeclaringRank,
     finalTurnTriggered,
   } = getGamePhaseStore();
-  const { actionContext } = getActionStore();
   const tossInStore = getTossInStore();
   const { waitingForTossIn } = tossInStore;
 
@@ -34,25 +32,6 @@ export const GameControls = observer(() => {
 
   // Determine what content to show but always use same container
   const getControlContent = () => {
-    // Show peek confirmation controls when human has peeked and needs to confirm
-
-    const isPeekConfirmation =
-      actionContext?.playerId === humanPlayer?.id &&
-      (actionContext?.targetType === 'own-card' ||
-        actionContext?.targetType === 'opponent-card') &&
-      isAwaitingActionTarget;
-
-    if (isPeekConfirmation) {
-      const hasRevealedCard =
-        humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
-
-      return {
-        type: 'peek-confirm',
-        title: hasRevealedCard ? 'Card Revealed' : 'Select a card',
-        subtitle: '',
-      };
-    }
-
     // Show toss-in skip controls when executing toss-in action for human
     // Check if there's a toss-in action in queue and it's the human's action
     const currentTossInAction = tossInStore.currentTossInAction;
@@ -61,8 +40,7 @@ export const GameControls = observer(() => {
       currentTossInAction.playerId === players.find((p) => p.isHuman)?.id;
 
     const isHumanTossInAction =
-      hasHumanTossInAction &&
-      (isTossQueueProcessing || isAwaitingActionTarget);
+      hasHumanTossInAction && (isTossQueueProcessing || isAwaitingActionTarget);
 
     if (isHumanTossInAction) {
       return {
@@ -72,7 +50,7 @@ export const GameControls = observer(() => {
       };
     }
 
-    // Hide controls during special game states (but allow peek confirmation through)
+    // Hide controls during special game states
     const shouldHide =
       (phase !== 'playing' && phase !== 'final') ||
       isSelectingSwapPosition ||
@@ -80,7 +58,7 @@ export const GameControls = observer(() => {
       isDeclaringRank ||
       waitingForTossIn ||
       finalTurnTriggered ||
-      (isAwaitingActionTarget && !isPeekConfirmation) ||
+      isAwaitingActionTarget ||
       isTossQueueProcessing ||
       currentPlayer?.isBot;
 
@@ -138,8 +116,6 @@ export const GameControls = observer(() => {
 
         {/* Main content area - responsive to content type */}
         <div className="flex-1 flex flex-col justify-center">
-          {controlContent.type === 'peek-confirm' && <PeekConfirmControls />}
-
           {controlContent.type === 'toss-in' && <TossInControls />}
 
           {controlContent.type === 'vinto-only' && <VintoOnlyControls />}
@@ -154,45 +130,6 @@ export const GameControls = observer(() => {
 });
 
 // Sub-components for different control states
-const PeekConfirmControls = () => {
-  const { humanPlayer } = getPlayerStore();
-  const hasRevealedCard =
-    humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
-  const actionStore = getActionStore();
-  const actionContext = actionStore.actionContext;
-
-  // Determine instruction message based on action type
-  const getInstructionMessage = () => {
-    if (!actionContext) return 'Select a card to peek';
-
-    if (actionContext.targetType === 'own-card') {
-      return 'Peek 1 of your cards';
-    } else if (actionContext.targetType === 'opponent-card') {
-      return 'Peek 1 opponent card';
-    }
-    return 'Select a card to peek';
-  };
-
-  return (
-    <button
-      onClick={() => hasRevealedCard && gameStore.confirmPeekCompletion()}
-      disabled={!hasRevealedCard}
-      className={`w-full font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm ${
-        hasRevealedCard
-          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-          : 'bg-gray-200 text-gray-600 cursor-not-allowed'
-      }`}
-      aria-label={
-        hasRevealedCard
-          ? 'Continue after peeking'
-          : 'Waiting for card selection'
-      }
-    >
-      {hasRevealedCard ? 'Continue' : getInstructionMessage()}
-    </button>
-  );
-};
-
 const TossInControls = () => {
   const tossInStore = getTossInStore();
   return (

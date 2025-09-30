@@ -73,12 +73,6 @@ export class HumanActionHandler {
     if (position >= 0 && position < player.cards.length) {
       // For humans, make card temporarily visible (shown in UI)
       this.playerStore.makeCardTemporarilyVisible(playerId, position);
-
-      const card = player.cards[position];
-      GameToastService.success(
-        `You peeked at position ${position + 1}: ${card.rank} (value ${card.value})`
-      );
-
       // User must confirm to complete action - no automatic timeout
       return true;
     }
@@ -98,15 +92,8 @@ export class HumanActionHandler {
       return false;
 
     if (position >= 0 && position < targetPlayer.cards.length) {
-      const peekedCard = targetPlayer.cards[position];
-
       // Make the card temporarily visible
       this.playerStore.makeCardTemporarilyVisible(targetPlayerId, position);
-
-      GameToastService.success(
-        `You peeked at ${targetPlayer.name}'s position ${position + 1}: ${peekedCard.rank} (value ${peekedCard.value})`
-      );
-
       // User must confirm to complete action
       return true;
     }
@@ -213,10 +200,6 @@ export class HumanActionHandler {
 
       // Make the peeked card temporarily visible
       this.playerStore.makeCardTemporarilyVisible(targetPlayerId, position);
-
-      GameToastService.success(
-        `Peeked at ${targetPlayer.name}'s position ${position + 1}`
-      );
 
       if (this.actionStore.hasCompletePeekSelection) {
         const [peek1, peek2] = this.actionStore.peekTargets;

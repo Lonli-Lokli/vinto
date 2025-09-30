@@ -29,6 +29,7 @@ export interface Player {
   cards: Card[];
   knownCardPositions: Set<number>; // Permanently known cards (setup phase)
   temporarilyVisibleCards: Set<number>; // Cards visible during current action only
+  highlightedCards: Set<number>; // Cards highlighted during bot peek actions (not revealed)
   isHuman: boolean;
   isBot: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';

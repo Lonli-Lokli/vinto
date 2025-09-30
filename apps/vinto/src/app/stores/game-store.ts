@@ -160,8 +160,9 @@ class GameStore implements TempState {
         // Update vinto call availability
         this.updateVintoCallAvailability();
 
-        // Clear temporary card visibility on turn changes
+        // Clear temporary card visibility and highlights on turn changes
         this.playerStore.clearTemporaryCardVisibility();
+        this.playerStore.clearHighlightedCards();
 
         // Handle AI turns (but not during toss-in queue processing)
         if (

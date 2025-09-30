@@ -75,6 +75,7 @@ export class PlayerStore {
         cards: deck.splice(0, 5),
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
+        highlightedCards: new Set(),
         isHuman: true,
         isBot: false,
         position: 'bottom',
@@ -87,6 +88,7 @@ export class PlayerStore {
         cards: deck.splice(0, 5),
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
+        highlightedCards: new Set(),
         isHuman: false,
         isBot: true,
         position: 'left',
@@ -99,6 +101,7 @@ export class PlayerStore {
         cards: deck.splice(0, 5),
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
+        highlightedCards: new Set(),
         isHuman: false,
         isBot: true,
         position: 'top',
@@ -111,6 +114,7 @@ export class PlayerStore {
         cards: deck.splice(0, 5),
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
+        highlightedCards: new Set(),
         isHuman: false,
         isBot: true,
         position: 'right',
@@ -182,6 +186,19 @@ export class PlayerStore {
   clearTemporaryCardVisibility() {
     this.players.forEach((player) => {
       player.temporarilyVisibleCards.clear();
+    });
+  }
+
+  highlightCard(playerId: string, position: number) {
+    const player = this.getPlayer(playerId);
+    if (player && position >= 0 && position < player.cards.length) {
+      player.highlightedCards.add(position);
+    }
+  }
+
+  clearHighlightedCards() {
+    this.players.forEach((player) => {
+      player.highlightedCards.clear();
     });
   }
 

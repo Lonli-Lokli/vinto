@@ -148,6 +148,7 @@ export const PlayerArea = observer(function PlayerArea({
             (isDeclaringRank && swapPosition === index) ||
             isSelectingActionTarget
           }
+          botPeeking={player.highlightedCards.has(index)}
           onClick={() => onCardClick?.(index)}
           rotated={isSidePlayer}
         />
@@ -237,6 +238,7 @@ export const PlayerArea = observer(function PlayerArea({
                 (isDeclaringRank && swapPosition === index) ||
                 isSelectingActionTarget
               }
+              botPeeking={player.highlightedCards.has(index)}
               onClick={() => onCardClick?.(index)}
               rotated={isSidePlayer}
             />

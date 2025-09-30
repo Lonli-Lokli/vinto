@@ -5,7 +5,10 @@ import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { DeckStore } from './deck-store';
 import { GameToastService } from '../lib/toast-service';
-import { BotDecisionService, BotDecisionContext } from '../services/bot-decision';
+import {
+  BotDecisionService,
+  BotDecisionContext,
+} from '../services/bot-decision';
 
 export interface BotActionHandlerDependencies {
   playerStore: PlayerStore;
@@ -76,7 +79,7 @@ export class BotActionHandler {
    * TODO: Replace this with actual AI calculation that returns a promise.
    */
   private async simulateBotThinking(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 1500));
+    return new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
   // Execution methods with bot decision logic
@@ -87,13 +90,16 @@ export class BotActionHandler {
     const randomPosition = Math.floor(Math.random() * player.cards.length);
 
     if (randomPosition >= 0 && randomPosition < player.cards.length) {
+      // Highlight the card being peeked
+      this.playerStore.highlightCard(playerId, randomPosition);
+
       // For bots, permanently add to known cards for AI decision-making
       this.playerStore.addKnownCardPosition(playerId, randomPosition);
 
-      const card = player.cards[randomPosition];
       GameToastService.success(
-        `${player.name} peeked at position ${randomPosition + 1}: ${card.rank} (value ${card.value})`
+        `${player.name} peeked at position ${randomPosition + 1}`
       );
+
       return true;
     }
     return false;
@@ -113,13 +119,15 @@ export class BotActionHandler {
     );
 
     if (randomPosition >= 0 && randomPosition < randomOpponent.cards.length) {
-      const peekedCard = randomOpponent.cards[randomPosition];
+      // Highlight the card being peeked
+      this.playerStore.highlightCard(randomOpponent.id, randomPosition);
 
       GameToastService.success(
         `${player.name} peeked at ${randomOpponent.name}'s position ${
           randomPosition + 1
-        }: ${peekedCard.rank} (value ${peekedCard.value})`
+        }`
       );
+
       return true;
     }
     return false;
@@ -139,10 +147,16 @@ export class BotActionHandler {
       const shuffled = [...availableTargets].sort(() => Math.random() - 0.5);
 
       // Select first target
-      this.actionStore.addSwapTarget(shuffled[0].playerId, shuffled[0].position);
+      this.actionStore.addSwapTarget(
+        shuffled[0].playerId,
+        shuffled[0].position
+      );
 
       // Select second target
-      this.actionStore.addSwapTarget(shuffled[1].playerId, shuffled[1].position);
+      this.actionStore.addSwapTarget(
+        shuffled[1].playerId,
+        shuffled[1].position
+      );
 
       // Execute the swap
       if (this.actionStore.hasCompleteSwapSelection) {
@@ -153,6 +167,10 @@ export class BotActionHandler {
         const botPlayer = this.playerStore.getPlayer(playerId);
 
         if (player1 && player2 && botPlayer) {
+          // Highlight both cards being swapped
+          this.playerStore.highlightCard(target1.playerId, target1.position);
+          this.playerStore.highlightCard(target2.playerId, target2.position);
+
           const success = this.playerStore.swapCards(
             target1.playerId,
             target1.position,
@@ -166,8 +184,9 @@ export class BotActionHandler {
                 target1.position + 1
               } with ${player2.name}'s card ${target2.position + 1}`
             );
-            return true;
           }
+
+          return success;
         }
       }
     }
@@ -193,7 +212,11 @@ export class BotActionHandler {
       const card1 = player1?.cards[target1.position];
 
       if (card1) {
-        this.actionStore.addPeekTarget(target1.playerId, target1.position, card1);
+        this.actionStore.addPeekTarget(
+          target1.playerId,
+          target1.position,
+          card1
+        );
       }
 
       // Peek second card
@@ -202,13 +225,25 @@ export class BotActionHandler {
       const card2 = player2?.cards[target2.position];
 
       if (card2) {
-        this.actionStore.addPeekTarget(target2.playerId, target2.position, card2);
+        this.actionStore.addPeekTarget(
+          target2.playerId,
+          target2.position,
+          card2
+        );
       }
 
       const botPlayer = this.playerStore.getPlayer(playerId);
       if (botPlayer && card1 && card2) {
+        // Highlight both peeked cards
+        this.playerStore.highlightCard(target1.playerId, target1.position);
+        this.playerStore.highlightCard(target2.playerId, target2.position);
+
         GameToastService.info(
-          `${botPlayer.name} peeked at two cards: ${card1.rank} and ${card2.rank}`
+          `${botPlayer.name} peeked at two cards: Player ${
+            player1.name
+          } (position ${target1.position + 1}) and Player ${
+            player2.name
+          } (position ${target2.position + 1})`
         );
 
         // AI decides whether to swap - for now use simple random, can be enhanced
@@ -227,16 +262,18 @@ export class BotActionHandler {
 
           if (success) {
             GameToastService.success(
-              `${botPlayer.name}: Queen action - Swapped ${peek1.card!.rank} with ${peek2.card!.rank}`
+              `${botPlayer.name}: Queen action - Swapped ${
+                peek1.card!.rank
+              } with ${peek2.card!.rank}`
             );
-            return true;
           }
         } else {
           GameToastService.info(
             `${botPlayer.name}: Queen action - Chose not to swap the peeked cards`
           );
-          return true;
         }
+
+        return true;
       }
     }
     return false;
@@ -310,7 +347,11 @@ export class BotActionHandler {
         const targetPlayer = this.playerStore.getPlayer(target.playerId);
         const targetCard = targetPlayer?.cards[target.position];
         if (targetCard) {
-          this.actionStore.addPeekTarget(target.playerId, target.position, targetCard);
+          this.actionStore.addPeekTarget(
+            target.playerId,
+            target.position,
+            targetCard
+          );
         }
       }
     }
@@ -322,9 +363,8 @@ export class BotActionHandler {
 
     // Handle peek-then-swap decisions
     if (card.rank === 'Q' && this.actionStore.hasCompletePeekSelection) {
-
       const shouldSwap = this.botDecisionService.shouldSwapAfterPeek(
-        this.actionStore.peekTargets.map(t => t.card!),
+        this.actionStore.peekTargets.map((t) => t.card!),
         context
       );
 
@@ -343,7 +383,9 @@ export class BotActionHandler {
 
         if (success && botPlayer) {
           GameToastService.success(
-            `${botPlayer.name}: Queen action - Swapped ${peek1.card!.rank} with ${peek2.card!.rank}`
+            `${botPlayer.name}: Queen action - Swapped ${
+              peek1.card!.rank
+            } with ${peek2.card!.rank}`
           );
         }
       } else if (botPlayer) {

@@ -27,6 +27,7 @@ interface CardProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   clickable?: boolean;
   highlighted?: boolean;
+  botPeeking?: boolean;
   onClick?: () => void;
   rotated?: boolean;
 }
@@ -38,6 +39,7 @@ export function Card({
   size = 'md',
   clickable = false,
   highlighted = false,
+  botPeeking = false,
   onClick,
   rotated = false,
 }: CardProps) {
@@ -59,6 +61,8 @@ export function Card({
         ${
           revealed && card
             ? 'bg-white border-gray-300 shadow-sm'
+            : botPeeking
+            ? 'bg-gradient-to-br from-amber-600 to-amber-700 border-amber-500 text-white shadow-lg'
             : 'bg-gradient-to-br from-poker-green-700 to-poker-green-800 border-poker-green-600 text-white'
         }
         ${

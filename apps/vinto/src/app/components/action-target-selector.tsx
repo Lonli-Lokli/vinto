@@ -14,6 +14,11 @@ import { getActionStore, TargetType } from '../stores/action-store';
 import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getPlayerStore } from '../stores/player-store';
 
+/**
+ * ActionTargetSelector: Renders action-specific controls during action execution.
+ * Each action component is now self-contained with its own instructions,
+ * progress tracking, and action buttons (swap, skip, continue, cancel).
+ */
 export const ActionTargetSelector = observer(() => {
   const gamePhaseStore = getGamePhaseStore();
   const actionStore = getActionStore();
@@ -32,11 +37,7 @@ export const ActionTargetSelector = observer(() => {
     return null;
   }
 
-  return (
-    <div className="max-w-lg mx-auto px-3">
-      <ActionContent targetType={targetType} />
-    </div>
-  );
+  return <ActionContent targetType={targetType} />;
 });
 
 const ActionContent: FC<{ targetType: TargetType | undefined }> = ({
