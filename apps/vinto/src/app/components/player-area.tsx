@@ -131,7 +131,9 @@ export const PlayerArea = observer(function PlayerArea({
   const MobilePlayerGroup: React.FC = () => {
     // helper to render a single card with orientation tweaks for mobile
     const renderMobileCard = (card: CardType | undefined, index: number) => {
-      const cardEl = (
+      const isSidePlayer = player.position === 'left' || player.position === 'right';
+
+      return (
         <Card
           key={`${card?.id ?? 'card'}-${index}`}
           card={card}
@@ -139,11 +141,7 @@ export const PlayerArea = observer(function PlayerArea({
             canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
           }
           position={player.isHuman ? index + 1 : 0}
-          size={
-            player.position === 'left' || player.position === 'right'
-              ? 'md'
-              : 'lg'
-          }
+          size="lg"
           clickable={!!onCardClick}
           highlighted={
             isSelectingSwapPosition ||
@@ -151,31 +149,9 @@ export const PlayerArea = observer(function PlayerArea({
             isSelectingActionTarget
           }
           onClick={() => onCardClick?.(index)}
+          rotated={isSidePlayer}
         />
       );
-
-      // Rotate side players' cards to save vertical space
-      if (player.position === 'left') {
-        return (
-          <div
-            key={`wrap-${card?.id ?? 'card'}-${index}`}
-            className="transform-gpu rotate-90 origin-center"
-          >
-            {cardEl}
-          </div>
-        );
-      }
-      if (player.position === 'right') {
-        return (
-          <div
-            key={`wrap-${card?.id ?? 'card'}-${index}`}
-            className="transform-gpu -rotate-90 origin-center"
-          >
-            {cardEl}
-          </div>
-        );
-      }
-      return cardEl;
     };
     const nameLabel = (
       <div
@@ -244,28 +220,28 @@ export const PlayerArea = observer(function PlayerArea({
       <div
         className={`hidden md:flex ${cardContainerClasses[player.position]}`}
       >
-        {player.cards.map((card, index) => (
-          <Card
-            key={`${card.id}-${index}`}
-            card={card}
-            revealed={
-              canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
-            }
-            position={player.isHuman ? index + 1 : 0}
-            size={
-              player.position === 'left' || player.position === 'right'
-                ? 'md'
-                : 'lg'
-            }
-            clickable={!!onCardClick}
-            highlighted={
-              isSelectingSwapPosition ||
-              (isDeclaringRank && swapPosition === index) ||
-              isSelectingActionTarget
-            }
-            onClick={() => onCardClick?.(index)}
-          />
-        ))}
+        {player.cards.map((card, index) => {
+          const isSidePlayer = player.position === 'left' || player.position === 'right';
+          return (
+            <Card
+              key={`${card.id}-${index}`}
+              card={card}
+              revealed={
+                canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
+              }
+              position={player.isHuman ? index + 1 : 0}
+              size="lg"
+              clickable={!!onCardClick}
+              highlighted={
+                isSelectingSwapPosition ||
+                (isDeclaringRank && swapPosition === index) ||
+                isSelectingActionTarget
+              }
+              onClick={() => onCardClick?.(index)}
+              rotated={isSidePlayer}
+            />
+          );
+        })}
       </div>
     </div>
   );

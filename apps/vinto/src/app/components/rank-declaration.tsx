@@ -21,7 +21,8 @@ export const RankDeclaration = observer(() => {
     return null;
   }
 
-  if (!currentPlayer) return null;
+  // Only show for human players - bot declarations should not display UI
+  if (!currentPlayer || !currentPlayer.isHuman) return null;
 
   const handleRankClick = (rank: Rank) => {
     gameStore.declareRank(rank);

@@ -17,8 +17,9 @@ export const GameTable = observer(() => {
     getPlayerStore();
   const { phase, isSelectingSwapPosition, isChoosingCardAction , isDeclaringRank, isAwaitingActionTarget} =
     getGamePhaseStore();
-  const { actionContext , pendingCard, tossInTimer, swapPosition} = getActionStore();
-  const { waitingForTossIn} = getTossInStore();
+  const { actionContext , pendingCard, swapPosition} = getActionStore();
+  const tossInStore = getTossInStore();
+  const { waitingForTossIn, timer: tossInTimer } = tossInStore;
   const { discardPile} = getDeckStore()
 
   // Calculate final scores if in scoring phase

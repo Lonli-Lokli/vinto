@@ -200,14 +200,6 @@ export class ActionStore {
     return this.tossInQueue[0] || null;
   }
 
-  setTossInTimer(time: number) {
-    this.tossInTimer = time;
-  }
-
-  decrementTossInTimer() {
-    this.tossInTimer = Math.max(0, this.tossInTimer - 1);
-  }
-
   // Helper methods
   private getTargetType(rank: Rank): TargetType {
     switch (rank) {

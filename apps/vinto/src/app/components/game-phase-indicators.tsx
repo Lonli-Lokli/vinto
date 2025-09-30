@@ -7,14 +7,13 @@ import { gameStore } from '../stores/game-store';
 import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getPlayerStore } from '../stores/player-store';
 import { getTossInStore } from '../stores/toss-in-store';
-import { getActionStore } from '../stores/action-store';
 import { getDeckStore } from '../stores/deck-store';
 
 export const GamePhaseIndicators = observer(() => {
   const { phase, isSelectingSwapPosition } = getGamePhaseStore();
   const { setupPeeksRemaining } = getPlayerStore();
-  const { waitingForTossIn } = getTossInStore();
-  const { tossInTimer } = getActionStore();
+  const tossInStore = getTossInStore();
+  const { waitingForTossIn, timer: tossInTimer } = tossInStore;
   const { discardPile } = getDeckStore();
   return (
     <div className="w-full max-w-lg md:max-w-full mx-auto">

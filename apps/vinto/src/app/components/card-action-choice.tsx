@@ -6,11 +6,15 @@ import { observer } from 'mobx-react-lite';
 import { gameStore } from '../stores/game-store';
 import { getGamePhaseStore } from '../stores/game-phase-store';
 import { getActionStore } from '../stores/action-store';
+import { getPlayerStore } from '../stores/player-store';
 
 export const CardActionChoice = observer(() => {
   const gamePhaseStore = getGamePhaseStore();
   const { pendingCard } = getActionStore();
-  if (!gamePhaseStore.isChoosingCardAction || !pendingCard) {
+  const { currentPlayer } = getPlayerStore();
+
+  // Only show for human players
+  if (!gamePhaseStore.isChoosingCardAction || !pendingCard || !currentPlayer?.isHuman) {
     return null;
   }
 

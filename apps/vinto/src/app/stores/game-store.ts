@@ -5,14 +5,12 @@ import { GamePhaseStore, getGamePhaseStore } from './game-phase-store';
 import { getPlayerStore, PlayerStore } from './player-store';
 import { DeckStore, getDeckStore } from './deck-store';
 import { ActionStore, getActionStore } from './action-store';
-import { CardActionHandler } from './card-action-handler';
+import { ActionCoordinator } from './action-coordinator';
 import { getTossInStore, TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { timerService } from '../services/timer-service';
-import { OracleVintoClient } from '../lib/oracle-client';
 import { GameToastService } from '../lib/toast-service';
 import { BotDecisionService, BotDecisionServiceFactory, BotDecisionContext } from '../services/bot-decision';
 import {
-  AIMove,
   Difficulty,
   TossInTime,
   Card,
@@ -26,7 +24,7 @@ class GameStore implements TempState {
   playerStore: PlayerStore;
   deckStore: DeckStore;
   actionStore: ActionStore;
-  actionHandler: CardActionHandler;
+  actionCoordinator: ActionCoordinator;
   tossInStore: TossInStore;
 
   // Game state properties from original interface
@@ -34,10 +32,8 @@ class GameStore implements TempState {
   roundNumber = 1;
 
   // AI and session state
-  oracle: OracleVintoClient;
   botDecisionService: BotDecisionService;
   aiThinking = false;
-  currentMove: AIMove | null = null;
   sessionActive = false;
 
   // Configuration
@@ -57,13 +53,22 @@ class GameStore implements TempState {
     this.deckStore = getDeckStore();
     this.actionStore = getActionStore();
 
-    // Initialize action handler with store dependencies
-    this.actionHandler = new CardActionHandler(
+    // Initialize bot decision service
+    this.botDecisionService = BotDecisionServiceFactory.create(this.difficulty);
+
+    // Initialize action coordinator with store dependencies
+    this.actionCoordinator = new ActionCoordinator(
       this.playerStore,
       this.actionStore,
       this.deckStore,
-      this.phaseStore
+      this.phaseStore,
+      this.botDecisionService
     );
+
+    // Set action complete callback for handling toss-in queue continuation
+    this.actionCoordinator.setActionCompleteCallback(() => {
+      this.handleActionComplete();
+    });
 
     // Initialize toss-in store
     this.tossInStore = getTossInStore();
@@ -71,9 +76,11 @@ class GameStore implements TempState {
     // Set up toss-in store callbacks
     const tossInCallbacks: TossInStoreCallbacks = {
       onTimerTick: () => this.handleTossInTimerTick(),
+      onTimerStop: () => timerService.stopTimer('toss-in'),
       onComplete: () => this.handleTossInComplete(),
-      onActionExecute: (playerId, card) =>
-        this.actionHandler.executeCardAction(card, playerId),
+      onActionExecute: async (playerId, card) => {
+        await this.actionCoordinator.executeCardAction(card, playerId);
+      },
       onToastMessage: (type, message) => {
         switch (type) {
           case 'success':
@@ -92,9 +99,13 @@ class GameStore implements TempState {
 
     this.tossInStore.setCallbacks(tossInCallbacks);
 
-    // Initialize Oracle client
-    this.oracle = new OracleVintoClient();
-    this.botDecisionService = BotDecisionServiceFactory.create(this.difficulty);
+    // Set up toss-in store dependencies
+    this.tossInStore.setDependencies({
+      playerStore: this.playerStore,
+      deckStore: this.deckStore,
+      botDecisionService: this.botDecisionService,
+      createBotContext: (playerId: string) => this.createBotDecisionContext(playerId),
+    });
 
     // Make this store observable
     makeAutoObservable(this);
@@ -152,13 +163,14 @@ class GameStore implements TempState {
         // Clear temporary card visibility on turn changes
         this.playerStore.clearTemporaryCardVisibility();
 
-        // Handle AI turns
+        // Handle AI turns (but not during toss-in queue processing)
         if (
           currentPlayer &&
           !currentPlayer.isHuman &&
           !this.aiThinking &&
           this.sessionActive &&
-          this.phaseStore.isIdle
+          this.phaseStore.isIdle &&
+          !this.tossInStore.isProcessingQueue
         ) {
           // Trigger AI move immediately
           this.makeAIMove(this.difficulty);
@@ -252,7 +264,7 @@ class GameStore implements TempState {
     const currentPlayer = this.playerStore.currentPlayer;
     if (currentPlayer?.isHuman && takenCard.action) {
       // Use action immediately for discard pile cards
-      this.actionHandler.executeCardAction(takenCard, currentPlayer.id);
+      this.actionCoordinator.executeCardAction(takenCard, currentPlayer.id);
     }
   }
 
@@ -267,7 +279,7 @@ class GameStore implements TempState {
     if (!currentPlayer || !pendingCard) return;
 
     if (pendingCard.action) {
-      this.actionHandler.executeCardAction(pendingCard, currentPlayer.id);
+      this.actionCoordinator.executeCardAction(pendingCard, currentPlayer.id);
     } else {
       // Discard non-action cards directly
       this.deckStore.discardCard(pendingCard);
@@ -282,40 +294,31 @@ class GameStore implements TempState {
   swapCard(position: number) {
     this.actionStore.setSwapPosition(position);
     this.phaseStore.startDeclaringRank();
-
-    GameToastService.info(
-      'Choose to declare the card rank or skip declaration'
-    );
   }
 
-  // Action execution
+  // Action execution - delegates to coordinator
   executeCardAction(card: Card, playerId: string) {
-    return this.actionHandler.executeCardAction(card, playerId);
+    return this.actionCoordinator.executeCardAction(card, playerId);
   }
 
   selectActionTarget(playerId: string, position: number) {
-    return this.actionHandler.selectActionTarget(playerId, position);
+    return this.actionCoordinator.selectActionTarget(playerId, position);
   }
 
   confirmPeekCompletion() {
-    const result = this.actionHandler.confirmPeekCompletion();
-    if (result) {
-      // After completing peek action, start toss-in period
-      this.startTossInPeriod();
-    }
-    return result;
+    return this.actionCoordinator.confirmPeekCompletion();
   }
 
   executeQueenSwap() {
-    return this.actionHandler.executeQueenSwap();
+    return this.actionCoordinator.executeQueenSwap();
   }
 
   skipQueenSwap() {
-    return this.actionHandler.skipQueenSwap();
+    return this.actionCoordinator.skipQueenSwap();
   }
 
   declareKingAction(rank: Rank) {
-    return this.actionHandler.declareKingAction(rank);
+    return this.actionCoordinator.declareKingAction(rank);
   }
 
   // Rank declaration during swap
@@ -345,7 +348,7 @@ class GameStore implements TempState {
 
         // Execute action if available
         if (replacedCard.action) {
-          this.actionHandler.executeCardAction(replacedCard, currentPlayer.id);
+          this.actionCoordinator.executeCardAction(replacedCard, currentPlayer.id);
         } else {
           this.startTossInPeriod();
         }
@@ -389,7 +392,9 @@ class GameStore implements TempState {
 
     if (!currentPlayer || !pendingCard || swapPosition === null) return;
 
-    GameToastService.info('Skipped declaration. Card swapped without action.');
+    if (currentPlayer.isHuman) {
+      GameToastService.info('Skipped declaration. Card swapped without action.');
+    }
 
     const replacedCard = this.playerStore.replaceCard(
       currentPlayer.id,
@@ -419,6 +424,11 @@ class GameStore implements TempState {
 
   // Toss-in mechanics
   startTossInPeriod() {
+    // Don't start a new toss-in period if we're already in one
+    if (this.tossInStore.isActive || this.phaseStore.isTossQueueActive) {
+      return;
+    }
+
     const currentPlayer = this.playerStore.currentPlayer;
     if (currentPlayer) {
       this.phaseStore.startTossQueueActive();
@@ -436,68 +446,8 @@ class GameStore implements TempState {
   }
 
   tossInCard(playerId: string, position: number) {
-    const player = this.playerStore.getPlayer(playerId);
-    const topDiscard = this.deckStore.peekTopDiscard();
-
-    if (
-      !player ||
-      !topDiscard ||
-      !this.playerStore.isValidCardPosition(playerId, position)
-    ) {
-      return false;
-    }
-
-    const tossedCard = player.cards[position];
-    const validation = this.tossInStore.canTossIn(
-      playerId,
-      tossedCard,
-      topDiscard.rank
-    );
-
-    if (!validation.canToss) {
-      // Reveal the incorrect card temporarily for human players
-      if (player.isHuman) {
-        this.playerStore.makeCardTemporarilyVisible(playerId, position);
-
-        // Auto-hide after 3 seconds and apply penalty
-        setTimeout(() => {
-          this.playerStore.clearTemporaryCardVisibility();
-          this.tossInStore.recordIncorrectTossIn(playerId);
-        }, 3000);
-      } else {
-        this.tossInStore.recordIncorrectTossIn(playerId);
-      }
-      return false;
-    }
-
-    // Remove card from player and discard it
-    const removedCard = this.playerStore.removeCardFromPlayer(
-      playerId,
-      position
-    );
-    if (!removedCard) return false;
-
-    this.deckStore.discardCard(removedCard);
-
-    // Record the successful toss-in
-    return this.tossInStore.recordTossIn(playerId, removedCard);
-  }
-
-  processTossInQueue() {
-    // This method is now handled internally by TossInStore
-    // No longer need to manually call advanceTurn as it's handled by callback
-  }
-
-  processNextTossInAction() {
-    this.tossInStore.processNextAction();
-  }
-
-  skipCurrentTossInAction() {
-    this.tossInStore.skipCurrentAction();
-  }
-
-  finishTossInQueueProcessing() {
-    this.tossInStore.completeCurrentAction();
+    // Delegate to TossInStore
+    return this.tossInStore.tossInCard(playerId, position);
   }
 
   // Turn management
@@ -532,23 +482,6 @@ class GameStore implements TempState {
       this.updateVintoCallAvailability();
 
       try {
-        const move = await this.oracle.requestAIMove(
-          {
-            players: this.playerStore.players,
-            currentPlayerIndex: this.playerStore.currentPlayerIndex,
-            drawPile: this.deckStore.drawPile,
-            discardPile: this.deckStore.discardPile,
-            phase: this.phaseStore.phase,
-            gameId: this.gameId,
-            roundNumber: this.roundNumber,
-            turnCount: this.playerStore.turnCount,
-            finalTurnTriggered: this.phaseStore.finalTurnTriggered,
-          },
-          currentPlayer.id,
-          difficulty as Difficulty
-        );
-        this.currentMove = move;
-
         // Create bot decision context
         const context = this.createBotDecisionContext(currentPlayer.id);
 
@@ -620,9 +553,6 @@ class GameStore implements TempState {
     this.actionStore.pendingCard = drawnCard;
     this.phaseStore.startChoosingAction();
 
-    // Short delay to simulate decision making
-    await new Promise(resolve => setTimeout(resolve, 800));
-
     const context = this.createBotDecisionContext(currentPlayer.id);
 
     if (drawnCard.action) {
@@ -641,7 +571,6 @@ class GameStore implements TempState {
     if (swapPosition !== null) {
       // Swap with selected position
       this.phaseStore.startSelectingPosition();
-      await new Promise(resolve => setTimeout(resolve, 500));
       this.swapCard(swapPosition);
     } else {
       // Discard the drawn card
@@ -650,60 +579,8 @@ class GameStore implements TempState {
   }
 
   private async executeBotAction(drawnCard: Card, playerId: string) {
-    // Execute the action and handle target selection automatically
-    this.actionHandler.executeCardAction(drawnCard, playerId);
-
-    // Wait a bit and then handle target selection if needed
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (this.phaseStore.isAwaitingActionTarget) {
-      await this.handleBotActionTargets(playerId);
-    }
-  }
-
-  private async handleBotActionTargets(playerId: string) {
-    const botContext = this.createBotDecisionContext(playerId);
-    const decision = this.botDecisionService.selectActionTargets(botContext);
-
-    if (!decision.targets || decision.targets.length === 0) {
-      console.warn('Bot decision service returned no targets');
-      return;
-    }
-
-    // Apply the decision targets with timing delays
-    for (let i = 0; i < decision.targets.length; i++) {
-      const target = decision.targets[i];
-
-      // Add delay between target selections
-      if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-
-      this.actionHandler.selectActionTarget(target.playerId, target.position);
-    }
-
-    // Handle special decision types
-    if (decision.declaredRank) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      this.actionHandler.handleKingDeclaration(decision.declaredRank);
-    }
-
-    // Handle peek-then-swap decisions
-    if (botContext.currentAction?.targetType === 'peek-then-swap' &&
-        this.actionStore.hasCompletePeekSelection) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const shouldSwap = this.botDecisionService.shouldSwapAfterPeek(
-        this.actionStore.peekTargets.map(t => t.card!),
-        botContext
-      );
-
-      if (shouldSwap) {
-        this.actionHandler.executeQueenSwap();
-      } else {
-        this.actionHandler.skipQueenSwap();
-      }
-    }
+    // Execute the action - the coordinator will route to bot handler
+    this.actionCoordinator.executeCardAction(drawnCard, playerId);
   }
 
   // Vinto and scoring
@@ -716,14 +593,32 @@ class GameStore implements TempState {
     return this.playerStore.calculatePlayerScores();
   }
 
+  // Action completion handler
+  private handleActionComplete() {
+    // Clear pending card if it exists (from regular turn)
+    if (this.actionStore.pendingCard) {
+      this.actionStore.pendingCard = null;
+    }
+
+    // Check if we're processing toss-in queue or in regular turn
+    if (this.tossInStore.isProcessingQueue) {
+      // Continue processing toss-in queue
+      this.tossInStore.completeCurrentAction();
+    } else {
+      // After completing action during regular turn, start toss-in period
+      this.startTossInPeriod();
+    }
+  }
+
   // Toss-in callback handlers
   private handleTossInTimerTick() {
-    // Handle bot participation
-    this.handleBotTossInParticipation();
+    // Bot participation is now handled in TossInStore.tick()
+    // This callback is kept for future extensibility
   }
 
   private handleTossInComplete() {
-    timerService.stopTimer('toss-in');
+    // Don't stop timer here - it should have already completed naturally
+    // Stopping it here can cause race conditions if a new toss-in period has started
     this.phaseStore.returnToIdle();
     this.advanceTurn();
   }
@@ -737,25 +632,6 @@ class GameStore implements TempState {
     }
   }
 
-  private handleBotTossInParticipation() {
-    const discardedRank = this.deckStore.peekTopDiscard()?.rank;
-    if (!discardedRank) return;
-
-    this.playerStore.botPlayers.forEach((player) => {
-      if (!this.tossInStore.hasPlayerTossedIn(player.id)) {
-        const context = this.createBotDecisionContext(player.id);
-
-        if (this.botDecisionService.shouldParticipateInTossIn(discardedRank, context)) {
-          // Find matching cards and toss one in
-          player.cards.forEach((card, position) => {
-            if (card.rank === discardedRank && Math.random() < 0.5) {
-              this.tossInCard(player.id, position);
-            }
-          });
-        }
-      }
-    });
-  }
 
   // Helper methods
   updateVintoCallAvailability() {

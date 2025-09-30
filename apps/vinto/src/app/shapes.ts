@@ -51,26 +51,12 @@ export interface GameState {
   finalTurnTriggered: boolean;
 }
 
-export interface AIMove {
-  type: 'draw' | 'discard' | 'swap';
-  confidence: number;
-  expectedValue: number;
-  reasoning: string;
-  thinkingTime: number;
-  networkTime?: number;
-  error?: boolean;
-}
-
 export type Difficulty = 'easy' | 'moderate' | 'hard' ;
 
 export type TossInTime = 5 | 7 | 10;
 
-import type { OracleVintoClient } from './lib/oracle-client';
-
 export interface GameStore extends GameState {
-  oracle: OracleVintoClient; // Client used by the store
   aiThinking: boolean;
-  currentMove: AIMove | null;
   sessionActive: boolean;
   pendingCard: Card | null;
   isSelectingSwapPosition: boolean;

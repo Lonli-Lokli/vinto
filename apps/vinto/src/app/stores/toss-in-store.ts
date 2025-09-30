@@ -2,6 +2,9 @@
 
 import { makeAutoObservable } from 'mobx';
 import { Card, TossInTime } from '../shapes';
+import { PlayerStore } from './player-store';
+import { DeckStore } from './deck-store';
+import { BotDecisionService } from '../services/bot-decision';
 
 export interface TossInAction {
   playerId: string;
@@ -10,10 +13,18 @@ export interface TossInAction {
 
 export interface TossInStoreCallbacks {
   onTimerTick?: () => void;
+  onTimerStop?: () => void;
   onComplete?: () => void;
-  onActionExecute?: (playerId: string, card: Card) => void;
+  onActionExecute?: (playerId: string, card: Card) => Promise<void>;
   onToastMessage?: (type: 'success' | 'error' | 'info', message: string) => void;
   onPenaltyCard?: (playerId: string) => void;
+}
+
+export interface TossInStoreDependencies {
+  playerStore: PlayerStore;
+  deckStore: DeckStore;
+  botDecisionService: BotDecisionService;
+  createBotContext: (playerId: string) => any;
 }
 
 export class TossInStore {
@@ -30,6 +41,7 @@ export class TossInStore {
   private playersWhoTossedIn = new Set<string>();
 
   private callbacks: TossInStoreCallbacks = {};
+  private deps: TossInStoreDependencies | null = null;
 
   private constructor() {
     makeAutoObservable(this);
@@ -70,6 +82,10 @@ export class TossInStore {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
+  setDependencies(deps: TossInStoreDependencies) {
+    this.deps = deps;
+  }
+
   startTossInPeriod(currentPlayerId: string) {
     this.originalCurrentPlayer = currentPlayerId;
     this.isActive = true;
@@ -79,6 +95,104 @@ export class TossInStore {
     this.playersWhoTossedIn.clear();
   }
 
+  /**
+   * Handles a player tossing in a card during the toss-in period.
+   * This method:
+   * 1. Validates the card can be tossed in
+   * 2. Removes the card from the player
+   * 3. Discards it to the pile
+   * 4. Records the toss-in action if it has an action
+   * 5. Handles penalties for incorrect toss-ins
+   */
+  tossInCard(playerId: string, position: number): boolean {
+    if (!this.deps) {
+      console.error('TossInStore dependencies not set');
+      return false;
+    }
+
+    const { playerStore, deckStore } = this.deps;
+    const player = playerStore.getPlayer(playerId);
+    const topDiscard = deckStore.peekTopDiscard();
+
+    if (
+      !player ||
+      !topDiscard ||
+      !playerStore.isValidCardPosition(playerId, position)
+    ) {
+      return false;
+    }
+
+    const tossedCard = player.cards[position];
+    const validation = this.canTossIn(playerId, tossedCard, topDiscard.rank);
+
+    if (!validation.canToss) {
+      // Reveal the incorrect card temporarily for human players
+      if (player.isHuman) {
+        playerStore.makeCardTemporarilyVisible(playerId, position);
+
+        // Auto-hide after 3 seconds and apply penalty
+        setTimeout(() => {
+          playerStore.clearTemporaryCardVisibility();
+          this.applyPenalty(playerId);
+        }, 3000);
+      } else {
+        this.applyPenalty(playerId);
+      }
+      return false;
+    }
+
+    // Remove card from player and discard it
+    const removedCard = playerStore.removeCardFromPlayer(playerId, position);
+    if (!removedCard) return false;
+
+    deckStore.discardCard(removedCard);
+
+    // Record the successful toss-in
+    return this.recordTossIn(playerId, removedCard);
+  }
+
+  /**
+   * Apply penalty card to player for incorrect toss-in
+   */
+  private applyPenalty(playerId: string): void {
+    if (!this.deps) return;
+
+    const { playerStore, deckStore } = this.deps;
+    if (deckStore.hasDrawCards) {
+      const penaltyCard = deckStore.drawCard();
+      if (penaltyCard) {
+        playerStore.addCardToPlayer(playerId, penaltyCard);
+      }
+    }
+    this.recordIncorrectTossIn(playerId);
+  }
+
+  /**
+   * Handle bot participation in toss-in period during each timer tick
+   */
+  handleBotParticipation(): void {
+    if (!this.deps) return;
+
+    const { playerStore, deckStore, botDecisionService, createBotContext } = this.deps;
+    const discardedRank = deckStore.peekTopDiscard()?.rank;
+    if (!discardedRank) return;
+
+    playerStore.botPlayers.forEach((player) => {
+      if (!this.hasPlayerTossedIn(player.id)) {
+        const context = createBotContext(player.id);
+
+        if (botDecisionService.shouldParticipateInTossIn(discardedRank, context)) {
+          // Find matching cards and toss one in
+          player.cards.forEach((card, position) => {
+            if (card.rank === discardedRank && Math.random() < 0.5) {
+              this.tossInCard(player.id, position);
+            }
+          });
+        }
+      }
+    });
+  }
+
   // External timer control - to be called by GameStore or timer service
   tick(): void {
     if (!this.isActive || this.timer <= 0) {
@@ -86,6 +200,9 @@ export class TossInStore {
     }
 
     this.timer--;
+
+    // Handle bot participation during each tick
+    this.handleBotParticipation();
 
     // Notify external systems about timer tick
     this.callbacks.onTimerTick?.();
@@ -144,6 +261,9 @@ export class TossInStore {
     this.isActive = false;
     this.timer = 0;
 
+    // Stop the timer service
+    this.callbacks.onTimerStop?.();
+
     if (this.hasTossInActions) {
       this.startProcessingQueue();
     } else {
@@ -157,7 +277,7 @@ export class TossInStore {
     this.processNextAction();
   }
 
-  processNextAction(): boolean {
+  async processNextAction(): Promise<boolean> {
     const currentAction = this.currentTossInAction;
     if (!currentAction) {
       this.finishQueueProcessing();
@@ -166,32 +286,32 @@ export class TossInStore {
 
     const { playerId, card } = currentAction;
 
-    // Notify external system to execute the action
-    this.callbacks.onActionExecute?.(playerId, card);
+    // Notify external system to execute the action (await if async)
+    await this.callbacks.onActionExecute?.(playerId, card);
 
     return true;
   }
 
-  skipCurrentAction(): boolean {
+  async skipCurrentAction(): Promise<boolean> {
     const currentAction = this.currentTossInAction;
     if (!currentAction) return false;
 
     this.callbacks.onToastMessage?.('info', `Skipped ${currentAction.card.rank} action`);
-    return this.advanceQueue();
+    return await this.advanceQueue();
   }
 
-  completeCurrentAction(): boolean {
-    return this.advanceQueue();
+  async completeCurrentAction(): Promise<boolean> {
+    return await this.advanceQueue();
   }
 
-  private advanceQueue(): boolean {
+  private async advanceQueue(): Promise<boolean> {
     if (this.currentQueueIndex >= this.queue.length - 1) {
       this.finishQueueProcessing();
       return false;
     }
 
     this.currentQueueIndex++;
-    return this.processNextAction();
+    return await this.processNextAction();
   }
 
   private finishQueueProcessing() {

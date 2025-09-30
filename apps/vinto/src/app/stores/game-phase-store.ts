@@ -9,13 +9,12 @@ export type GameSubPhase =
   | 'drawing'
   | 'choosing'
   | 'selecting'
-  | 'tossing'
-  | 'processing'
   | 'awaiting_action'
   | 'declaring_rank'
   | 'ai_thinking'
   | 'toss_queue_active'
   | 'toss_queue_processing';
+export type FullGameState = `${GamePhase}.${GameSubPhase}`;
 
 export class GamePhaseStore {
   private static instance: GamePhaseStore | null = null;
@@ -43,102 +42,8 @@ export class GamePhaseStore {
 
   get canTransitionTo() {
     return (newPhase: GamePhase, newSubPhase: GameSubPhase): boolean => {
-      const currentState = `${this.phase}.${this.subPhase}`;
-      const newState = `${newPhase}.${newSubPhase}`;
-
-      // Define valid transitions based on game flow
-      const validTransitions: Record<string, string[]> = {
-        'setup.idle': ['playing.idle'],
-        'playing.idle': [
-          'playing.drawing',
-          'playing.ai_thinking',
-          'playing.awaiting_action',
-          'playing.toss_queue_active',
-          'playing.idle',
-          'final.idle',
-          'scoring.idle',
-        ],
-        'playing.drawing': ['playing.choosing'],
-        'playing.choosing': [
-          'playing.selecting',
-          'playing.tossing',
-          'playing.awaiting_action',
-          'playing.idle',
-        ],
-        'playing.selecting': [
-          'playing.declaring_rank',
-          'playing.tossing',
-          'playing.idle',
-          'playing.choosing', // Allow return to choosing when user changes mind
-        ],
-        'playing.declaring_rank': ['playing.toss_queue_active', 'playing.idle'],
-        'playing.tossing': ['playing.toss_queue_active', 'playing.idle'], // Legacy support
-        'playing.toss_queue_active': [
-          'playing.toss_queue_processing',
-          'playing.idle',
-        ],
-        'playing.toss_queue_processing': [
-          'playing.awaiting_action',
-          'playing.toss_queue_active',
-          'playing.idle',
-        ],
-        'playing.processing': ['playing.awaiting_action', 'playing.idle'], // Legacy support
-        'playing.awaiting_action': [
-          'playing.toss_queue_processing',
-          'playing.idle',
-        ],
-        'playing.ai_thinking': [
-          'playing.choosing',
-          'playing.selecting',
-          'playing.declaring_rank',
-          'playing.awaiting_action',
-          'playing.toss_queue_active',
-          'playing.idle',
-        ],
-        'final.idle': [
-          'final.drawing',
-          'final.choosing',
-          'final.ai_thinking',
-          'final.tossing',
-          'final.processing',
-          'final.awaiting_action',
-          'final.idle',
-          'scoring.idle',
-        ],
-        'final.drawing': ['final.choosing'],
-        'final.choosing': [
-          'final.selecting',
-          'final.tossing',
-          'final.awaiting_action',
-          'final.idle',
-        ],
-        'final.selecting': [
-          'final.declaring_rank',
-          'final.tossing',
-          'final.idle',
-        ],
-        'final.declaring_rank': ['final.tossing', 'final.idle'],
-        'final.tossing': ['final.processing', 'final.idle', 'scoring.idle'],
-        'final.processing': [
-          'final.awaiting_action',
-          'final.idle',
-          'scoring.idle',
-        ],
-        'final.awaiting_action': [
-          'final.tossing',
-          'final.idle',
-          'scoring.idle',
-        ],
-        'final.ai_thinking': [
-          'final.choosing',
-          'final.selecting',
-          'final.declaring_rank',
-          'final.awaiting_action',
-          'final.tossing',
-          'final.idle',
-        ],
-        'scoring.idle': [],
-      };
+      const currentState: FullGameState = `${this.phase}.${this.subPhase}`;
+      const newState: FullGameState = `${newPhase}.${newSubPhase}`;
 
       return validTransitions[currentState]?.includes(newState) ?? false;
     };
@@ -146,10 +51,14 @@ export class GamePhaseStore {
 
   transitionTo(newPhase: GamePhase, newSubPhase: GameSubPhase) {
     if (this.canTransitionTo(newPhase, newSubPhase)) {
+      console.log(`Transitioning from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`);
       this.phase = newPhase;
       this.subPhase = newSubPhase;
     } else {
-      GameToastService.warning(`Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`);
+      console.warn(`Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`)
+      GameToastService.warning(
+        `Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
+      );
     }
   }
 
@@ -190,17 +99,6 @@ export class GamePhaseStore {
     return this.subPhase === 'declaring_rank';
   }
 
-  get isWaitingForTossIn() {
-    return this.subPhase === 'tossing';
-  }
-
-  get isProcessingTossInQueue() {
-    return (
-      this.subPhase === 'processing' ||
-      this.subPhase === 'toss_queue_processing'
-    );
-  }
-
   get isTossQueueActive() {
     return this.subPhase === 'toss_queue_active';
   }
@@ -210,12 +108,7 @@ export class GamePhaseStore {
   }
 
   get isInTossPhase() {
-    return (
-      this.isTossQueueActive ||
-      this.isTossQueueProcessing ||
-      this.isWaitingForTossIn ||
-      this.isProcessingTossInQueue
-    );
+    return this.isTossQueueActive || this.isTossQueueProcessing;
   }
 
   get isAIThinking() {
@@ -256,14 +149,6 @@ export class GamePhaseStore {
     this.transitionTo(this.phase, 'declaring_rank');
   }
 
-  startTossIn() {
-    this.transitionTo(this.phase, 'tossing');
-  }
-
-  startProcessingTossIn() {
-    this.transitionTo(this.phase, 'processing');
-  }
-
   startTossQueueActive() {
     this.transitionTo(this.phase, 'toss_queue_active');
   }
@@ -298,4 +183,146 @@ export class GamePhaseStore {
   }
 }
 
+// Define valid transitions based on game flow
+const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
+  // SETUP PHASE
+  'setup.idle': [
+    'playing.idle', // When: Human finishes peeking at their 2 cards
+  ],
+
+  // PLAYING PHASE - IDLE
+  'playing.idle': [
+    'playing.drawing', // When: Human clicks draw pile to start their turn
+    'playing.ai_thinking', // When: Bot's turn begins
+    'playing.awaiting_action', // When: Player takes card from discard pile with action
+    'playing.toss_queue_active', // When: Toss-in period starts after card played
+    'playing.idle', // When: Self-loop for state refresh
+    'final.idle', // When: Vinto is called, triggering final round
+    'scoring.idle', // When: Final round completes and all turns are done
+  ],
+
+  // PLAYING PHASE - DRAWING
+  'playing.drawing': [
+    'playing.choosing', // When: Card is drawn, player must choose action
+  ],
+
+  // PLAYING PHASE - CHOOSING
+  'playing.choosing': [
+    'playing.selecting', // When: Player chooses to swap drawn card
+    'playing.awaiting_action', // When: Player plays action card
+    'playing.idle', // When: Player discards card without swap
+  ],
+
+  // PLAYING PHASE - SELECTING (swap position)
+  'playing.selecting': [
+    'playing.declaring_rank', // When: Player selects position to swap and must declare rank
+    'playing.idle', // When: Player cancels swap
+  ],
+
+  // PLAYING PHASE - DECLARING RANK
+  'playing.declaring_rank': [
+    'playing.toss_queue_active', // When: Rank declared/skipped, swap complete, toss-in starts
+    'playing.idle', // When: Declaration cancelled or action completes without toss-in
+  ],
+
+  // PLAYING PHASE - TOSS QUEUE ACTIVE
+  'playing.toss_queue_active': [
+    'playing.toss_queue_processing', // When: Timer expires, start processing queued toss-ins
+    'playing.awaiting_action', // When: Player tosses in card with action during toss-in period
+    'playing.idle', // When: No toss-ins occurred, advance turn
+  ],
+
+  // PLAYING PHASE - TOSS QUEUE PROCESSING
+  'playing.toss_queue_processing': [
+    'playing.awaiting_action', // When: Processing tossed card with action
+    'playing.idle', // When: All toss-ins processed, advance turn
+  ],
+
+  // PLAYING PHASE - AWAITING ACTION
+  'playing.awaiting_action': [
+    'playing.toss_queue_active', // When: Action completes during toss-in, return to toss-in period
+    'playing.idle', // When: Action completes normally, return to idle
+  ],
+
+  // PLAYING PHASE - AI THINKING
+  'playing.ai_thinking': [
+    'playing.choosing', // When: Bot draws card and decides action
+    'playing.selecting', // When: Bot chooses to swap
+    'playing.declaring_rank', // When: Bot selects swap position
+    'playing.awaiting_action', // When: Bot plays action card
+    'playing.toss_queue_active', // When: Bot's turn completes, toss-in starts
+    'playing.idle', // When: Bot's turn completes without toss-in
+  ],
+
+  // FINAL PHASE - IDLE (same as playing but can transition to scoring)
+  'final.idle': [
+    'final.drawing', // When: Human draws card in final round
+    'final.ai_thinking', // When: Bot's turn in final round
+    'final.awaiting_action', // When: Action card played in final round
+    'final.toss_queue_active', // When: Toss-in period starts in final round
+    'final.idle', // When: Self-loop for state refresh
+    'scoring.idle', // When: Final turn completes at human player
+  ],
+
+  // FINAL PHASE - DRAWING
+  'final.drawing': [
+    'final.choosing', // When: Card drawn in final round
+  ],
+
+  // FINAL PHASE - CHOOSING
+  'final.choosing': [
+    'final.selecting', // When: Player chooses to swap in final round
+    'final.awaiting_action', // When: Player plays action in final round
+    'final.idle', // When: Player discards without action
+  ],
+
+  // FINAL PHASE - SELECTING
+  'final.selecting': [
+    'final.declaring_rank', // When: Position selected, must declare
+    'final.idle', // When: Swap cancelled
+  ],
+
+  // FINAL PHASE - DECLARING RANK
+  'final.declaring_rank': [
+    'final.toss_queue_active', // When: Declaration completes, toss-in starts
+    'final.idle', // When: Declaration completes without toss-in
+  ],
+
+  // FINAL PHASE - TOSS QUEUE ACTIVE
+  'final.toss_queue_active': [
+    'final.toss_queue_processing', // When: Timer expires, start processing queued toss-ins
+    'final.awaiting_action', // When: Player tosses in card with action during toss-in period
+    'final.idle', // When: No toss-ins occurred, advance turn
+    'scoring.idle', // When: Toss-in completes and game ends
+  ],
+
+  // FINAL PHASE - TOSS QUEUE PROCESSING
+  'final.toss_queue_processing': [
+    'final.awaiting_action', // When: Processing tossed card with action
+    'final.idle', // When: All toss-ins processed, advance turn
+    'scoring.idle', // When: Processing completes and game ends
+  ],
+
+  // FINAL PHASE - AWAITING ACTION
+  'final.awaiting_action': [
+    'final.toss_queue_active', // When: Action completes during toss-in, return to toss-in period
+    'final.idle', // When: Action completes in final round
+    'scoring.idle', // When: Action completes and game ends
+  ],
+
+  // FINAL PHASE - AI THINKING
+  'final.ai_thinking': [
+    'final.choosing', // When: Bot draws in final round
+    'final.selecting', // When: Bot chooses swap in final round
+    'final.declaring_rank', // When: Bot declares rank in final round
+    'final.awaiting_action', // When: Bot plays action in final round
+    'final.toss_queue_active', // When: Bot's turn completes, toss-in starts
+    'final.idle', // When: Bot's turn ends in final round
+  ],
+
+  // SCORING PHASE - Terminal state
+  'scoring.idle': [
+    // No transitions allowed - game is over
+  ],
+};
 export const getGamePhaseStore = () => GamePhaseStore.getInstance();

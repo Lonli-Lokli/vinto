@@ -28,6 +28,7 @@ interface CardProps {
   clickable?: boolean;
   highlighted?: boolean;
   onClick?: () => void;
+  rotated?: boolean;
 }
 
 export function Card({
@@ -38,6 +39,7 @@ export function Card({
   clickable = false,
   highlighted = false,
   onClick,
+  rotated = false,
 }: CardProps) {
   const sizeClasses = {
     sm: 'w-7 h-10 text-2xs',
@@ -53,6 +55,7 @@ export function Card({
         relative rounded border
         flex flex-col items-center justify-center
         transition-all duration-150 select-none
+        ${rotated ? 'transform-gpu' : ''}
         ${
           revealed && card
             ? 'bg-white border-gray-300 shadow-sm'
@@ -65,15 +68,11 @@ export function Card({
         }
         ${highlighted ? 'ring-2 ring-yellow-400 animate-pulse' : ''}
       `}
+      style={rotated ? { transform: 'rotate(90deg)' } : undefined}
       onClick={clickable ? onClick : undefined}
     >
       {revealed && card ? (
-        <>
-          <RankComponent rank={card.rank} />
-          <span className="mt-0.5 text-2xs text-gray-600 font-medium">
-            {card.rank}
-          </span>
-        </>
+        <RankComponent rank={card.rank} size={size} />
       ) : (
         <span
           className={`font-bold ${
@@ -103,36 +102,46 @@ export function Card({
   );
 }
 
-const RankComponent: FC<{ rank: Rank }> = ({ rank }) => {
+const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({ rank, size }) => {
+  // Size classes that fit within card containers with proper aspect ratio
+  const sizeClass = {
+    sm: 'w-6 h-8',    // fits in w-7 h-10
+    md: 'w-8 h-12',   // fits in w-10 h-14
+    lg: 'w-10 h-14',  // fits in w-12 h-17
+    xl: 'w-12 h-17',  // fits in w-14 h-20
+  }[size];
+
+  const className = `${sizeClass} object-contain`;
+
   switch (rank) {
     case '2':
-      return <Image_2 />;
+      return <Image_2 className={className} />;
     case '3':
-      return <Image_3 />;
+      return <Image_3 className={className} />;
     case '4':
-      return <Image_4 />;
+      return <Image_4 className={className} />;
     case '5':
-      return <Image_5 />;
+      return <Image_5 className={className} />;
     case '6':
-      return <Image_6 />;
+      return <Image_6 className={className} />;
     case '7':
-      return <Image_7 />;
+      return <Image_7 className={className} />;
     case '8':
-      return <Image_8 />;
+      return <Image_8 className={className} />;
     case '9':
-      return <Image_9 />;
+      return <Image_9 className={className} />;
     case '10':
-      return <Image_10 />;
+      return <Image_10 className={className} />;
     case 'J':
-      return <Image_J />;
+      return <Image_J className={className} />;
     case 'Q':
-      return <Image_Q />;
+      return <Image_Q className={className} />;
     case 'K':
-      return <Image_K />;
+      return <Image_K className={className} />;
     case 'A':
-      return <Image_A />;
+      return <Image_A className={className} />;
     case 'Joker':
-      return <Image_Joker />;
+      return <Image_Joker className={className} />;
     default:
       throw new NeverError(rank);
   }

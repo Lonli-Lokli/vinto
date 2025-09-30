@@ -12,7 +12,19 @@ import { getTossInStore } from '../stores/toss-in-store';
 
 export const GameControls = observer(() => {
   const playerStore = getPlayerStore();
-  const currentPlayer = playerStore.players[playerStore.currentPlayerIndex];
+  const { players, humanPlayer, currentPlayer } = playerStore;
+  const {
+    isSelectingSwapPosition,
+    isAwaitingActionTarget,
+    isTossQueueProcessing,
+    phase,
+    isChoosingCardAction,
+    isDeclaringRank,
+    finalTurnTriggered,
+  } = getGamePhaseStore();
+  const { actionContext } = getActionStore();
+  const tossInStore = getTossInStore();
+  const { waitingForTossIn } = tossInStore;
 
   const handleDrawCard = () => {
     if (currentPlayer && currentPlayer.isHuman) {
@@ -23,18 +35,7 @@ export const GameControls = observer(() => {
   // Determine what content to show but always use same container
   const getControlContent = () => {
     // Show peek confirmation controls when human has peeked and needs to confirm
-    const { players, humanPlayer } = getPlayerStore();
-    const {
-      isSelectingSwapPosition,
-      isAwaitingActionTarget,
-      isProcessingTossInQueue,
-      phase,
-      isChoosingCardAction,
-      isDeclaringRank,
-      finalTurnTriggered
-    } = getGamePhaseStore();
-    const { actionContext, tossInQueue } = getActionStore();
-    const {waitingForTossIn} = getTossInStore();
+
     const isPeekConfirmation =
       actionContext?.playerId === humanPlayer?.id &&
       (actionContext?.targetType === 'own-card' ||
@@ -52,15 +53,21 @@ export const GameControls = observer(() => {
       };
     }
 
-    // Show toss-in skip controls when processing toss-in queue for human
+    // Show toss-in skip controls when executing toss-in action for human
+    // Check if there's a toss-in action in queue and it's the human's action
+    const currentTossInAction = tossInStore.currentTossInAction;
+    const hasHumanTossInAction =
+      currentTossInAction &&
+      currentTossInAction.playerId === players.find((p) => p.isHuman)?.id;
+
     const isHumanTossInAction =
-      isProcessingTossInQueue &&
-      actionContext?.playerId === players.find((p) => p.isHuman)?.id;
+      hasHumanTossInAction &&
+      (isTossQueueProcessing || isAwaitingActionTarget);
 
     if (isHumanTossInAction) {
       return {
         type: 'toss-in',
-        title: `Toss-in Action: ${tossInQueue[0]?.card.rank} (${tossInQueue[0]?.card.action})`,
+        title: `Toss-in Action: ${currentTossInAction.card.rank} (${currentTossInAction.card.action})`,
         subtitle: 'You can execute this action or skip it',
       };
     }
@@ -74,7 +81,7 @@ export const GameControls = observer(() => {
       waitingForTossIn ||
       finalTurnTriggered ||
       (isAwaitingActionTarget && !isPeekConfirmation) ||
-      isProcessingTossInQueue ||
+      isTossQueueProcessing ||
       !currentPlayer?.isHuman;
 
     if (shouldHide) {
@@ -186,20 +193,23 @@ const PeekConfirmControls = () => {
   );
 };
 
-const TossInControls = () => (
-  <div className="space-y-2">
-    <div className="text-sm text-gray-600 text-center">
-      Execute the action or skip to continue
+const TossInControls = () => {
+  const tossInStore = getTossInStore();
+  return (
+    <div className="space-y-2">
+      <div className="text-sm text-gray-600 text-center">
+        Execute the action or skip to continue
+      </div>
+      <button
+        onClick={() => tossInStore.skipCurrentAction()}
+        className="w-full bg-poker-green-700 hover:bg-poker-green-800 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+        aria-label="Skip toss-in action"
+      >
+        ⏭️ Skip Action
+      </button>
     </div>
-    <button
-      onClick={() => gameStore.skipCurrentTossInAction()}
-      className="w-full bg-poker-green-700 hover:bg-poker-green-800 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-      aria-label="Skip toss-in action"
-    >
-      ⏭️ Skip Action
-    </button>
-  </div>
-);
+  );
+};
 
 const VintoOnlyControls = () => (
   <div className="space-y-2">
