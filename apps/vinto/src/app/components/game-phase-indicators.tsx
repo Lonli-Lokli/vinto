@@ -3,18 +3,21 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getPlayerStore } from '../stores/player-store';
-import { getTossInStore } from '../stores/toss-in-store';
-import { getDeckStore } from '../stores/deck-store';
+import {
+  useGameStore,
+  useGamePhaseStore,
+  usePlayerStore,
+  useTossInStore,
+  useDeckStore,
+} from './di-provider';
 
 export const GamePhaseIndicators = observer(() => {
-  const { phase, isSelectingSwapPosition } = getGamePhaseStore();
-  const { setupPeeksRemaining } = getPlayerStore();
-  const tossInStore = getTossInStore();
+  const gameStore = useGameStore();
+  const { phase, isSelectingSwapPosition } = useGamePhaseStore();
+  const { setupPeeksRemaining } = usePlayerStore();
+  const tossInStore = useTossInStore();
   const { waitingForTossIn, timer: tossInTimer } = tossInStore;
-  const { discardPile } = getDeckStore();
+  const { discardPile } = useDeckStore();
   return (
     <div className="w-full max-w-lg md:max-w-full mx-auto">
       {/* Setup Phase Instructions */}

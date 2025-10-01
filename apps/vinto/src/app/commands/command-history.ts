@@ -1,4 +1,5 @@
 // commands/command-history.ts
+import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { ICommand, CommandResult, CommandData } from './command';
 
@@ -6,6 +7,7 @@ import { ICommand, CommandResult, CommandData } from './command';
  * Command History Manager
  * Tracks all executed commands and provides replay/undo functionality
  */
+@injectable()
 export class CommandHistory {
   private history: CommandResult[] = [];
   private maxHistorySize = 1000; // Prevent memory issues
@@ -28,7 +30,11 @@ export class CommandHistory {
     } catch (e) {
       success = false;
       error = e instanceof Error ? e : new Error(String(e));
-      console.error('Command execution failed:', command.getDescription(), error);
+      console.error(
+        'Command execution failed:',
+        command.getDescription(),
+        error
+      );
     }
 
     const result: CommandResult = {
@@ -120,11 +126,7 @@ export class CommandHistory {
    * Export history for debugging
    */
   exportHistory(): string {
-    return JSON.stringify(
-      this.getCommandDataHistory(),
-      null,
-      2
-    );
+    return JSON.stringify(this.getCommandDataHistory(), null, 2);
   }
 
   /**
@@ -138,18 +140,4 @@ export class CommandHistory {
       return `${index + 1}. [${time}] ${status} ${desc}`;
     });
   }
-}
-
-// Singleton instance
-let commandHistoryInstance: CommandHistory | null = null;
-
-export function getCommandHistory(): CommandHistory {
-  if (!commandHistoryInstance) {
-    commandHistoryInstance = new CommandHistory();
-  }
-  return commandHistoryInstance;
-}
-
-export function resetCommandHistory() {
-  commandHistoryInstance = null;
 }

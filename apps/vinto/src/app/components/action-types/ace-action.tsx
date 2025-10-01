@@ -1,12 +1,12 @@
 // components/action-types/AceAction.tsx
 'use client';
 
-import { getActionStore } from '@/app/stores/action-store';
+import { useActionStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 
 export const AceAction = observer(() => {
-  const actionStore = getActionStore();
+  const actionStore = useActionStore();
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
 

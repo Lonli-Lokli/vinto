@@ -3,11 +3,11 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { getActionStore } from '@/app/stores/action-store';
-import { gameStore } from '@/app/stores/game-store';
+import { useActionStore, useGameStore } from '../di-provider';
 
 export const QueenAction = observer(() => {
-  const actionStore = getActionStore();
+  const gameStore = useGameStore();
+  const actionStore = useActionStore();
   if (!actionStore.actionContext) return null;
   const {
     peekTargets,

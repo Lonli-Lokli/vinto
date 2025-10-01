@@ -1,14 +1,13 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
-import { getActionStore } from '@/app/stores/action-store';
-import { getPlayerStore } from '@/app/stores/player-store';
+import { useActionStore, usePlayerStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 
 export const CardSwap = observer(() => {
-  const actionStore = getActionStore();
-  const playerStore = getPlayerStore();
+  const actionStore = useActionStore();
+  const playerStore = usePlayerStore();
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
   const swapTargets = actionStore.swapTargets;

@@ -7,9 +7,10 @@
 
 export { Command } from './command';
 export type { ICommand, CommandData, CommandResult } from './command';
-export { CommandHistory, getCommandHistory, resetCommandHistory } from './command-history';
+export { CommandHistory } from './command-history';
 export { CommandFactory } from './command-factory';
 export {
+  InitializeGameCommand,
   DrawCardCommand,
   SwapCardsCommand,
   PeekCardCommand,
@@ -20,3 +21,11 @@ export {
   TossInCardCommand,
   AddPenaltyCardCommand,
 } from './game-commands';
+export {
+  GameStateSerializer,
+  getGameStateSerializer,
+  resetGameStateSerializer,
+} from './game-state-serializer';
+export type { SerializedGameState } from './game-state-serializer';
+export { CommandReplayer, createCommandReplayer } from './command-replayer';
+export { GameStateManager } from './game-state-manager';

@@ -3,14 +3,17 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
-import { getPlayerStore } from '../stores/player-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getDeckStore } from '../stores/deck-store';
-import { getTossInStore } from '../stores/toss-in-store';
+import {
+  useGameStore,
+  usePlayerStore,
+  useGamePhaseStore,
+  useDeckStore,
+  useTossInStore,
+} from './di-provider';
 
 export const GameControls = observer(() => {
-  const playerStore = getPlayerStore();
+  const gameStore = useGameStore();
+  const playerStore = usePlayerStore();
   const { players, currentPlayer } = playerStore;
   const {
     isSelectingSwapPosition,
@@ -20,8 +23,8 @@ export const GameControls = observer(() => {
     isChoosingCardAction,
     isDeclaringRank,
     finalTurnTriggered,
-  } = getGamePhaseStore();
-  const tossInStore = getTossInStore();
+  } = useGamePhaseStore();
+  const tossInStore = useTossInStore();
   const { waitingForTossIn } = tossInStore;
 
   const handleDrawCard = () => {
@@ -131,7 +134,7 @@ export const GameControls = observer(() => {
 
 // Sub-components for different control states
 const TossInControls = () => {
-  const tossInStore = getTossInStore();
+  const tossInStore = useTossInStore();
   return (
     <div className="space-y-2">
       <div className="text-sm text-gray-600 text-center">
@@ -148,25 +151,29 @@ const TossInControls = () => {
   );
 };
 
-const VintoOnlyControls = () => (
-  <div className="space-y-2">
-    <button
-      onClick={() => gameStore.callVinto()}
-      className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-      aria-label="Call Vinto"
-    >
-      🏆 Call Vinto
-    </button>
-  </div>
-);
+const VintoOnlyControls = () => {
+  const gameStore = useGameStore();
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={() => gameStore.callVinto()}
+        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+        aria-label="Call Vinto"
+      >
+        🏆 Call Vinto
+      </button>
+    </div>
+  );
+};
 
 const FullTurnControls = ({
   handleDrawCard,
 }: {
   handleDrawCard: () => void;
 }) => {
-  const playerStore = getPlayerStore();
-  const { discardPile, drawPile } = getDeckStore();
+  const gameStore = useGameStore();
+  const playerStore = usePlayerStore();
+  const { discardPile, drawPile } = useDeckStore();
   // Check if this is the first human turn
   const isFirstHumanTurn = playerStore.turnCount === 0;
 

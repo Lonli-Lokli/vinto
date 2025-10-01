@@ -1,5 +1,6 @@
 'use client';
 
+import { injectable, inject } from 'tsyringe';
 import { Card, Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
@@ -8,14 +9,15 @@ import { GamePhaseStore } from './game-phase-store';
 import { GameToastService } from '../lib/toast-service';
 import { HumanActionHandler } from './human-action-handler';
 import { BotActionHandler } from './bot-action-handler';
-import { BotDecisionService } from '../services/bot-decision';
-import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
+import type { BotDecisionService } from '../services/bot-decision';
+import { CommandFactory, CommandHistory } from '../commands';
 
 /**
  * ActionCoordinator - Routes actions to appropriate handlers (Human vs Bot).
  * Acts as a thin router/mediator between game logic and player-specific handlers.
  * Does NOT contain game logic itself.
  */
+@injectable()
 export class ActionCoordinator {
   private humanHandler: HumanActionHandler;
   private botHandler: BotActionHandler;
@@ -28,25 +30,27 @@ export class ActionCoordinator {
   private onActionComplete?: () => void;
 
   constructor(
-    playerStore: PlayerStore,
-    actionStore: ActionStore,
-    deckStore: DeckStore,
-    phaseStore: GamePhaseStore,
-    botDecisionService: BotDecisionService,
-    commandFactory: CommandFactory
+    @inject(PlayerStore) playerStore: PlayerStore,
+    @inject(ActionStore) actionStore: ActionStore,
+    @inject(DeckStore) deckStore: DeckStore,
+    @inject(GamePhaseStore) phaseStore: GamePhaseStore,
+    @inject('BotDecisionService') botDecisionService: BotDecisionService,
+    @inject(CommandFactory) commandFactory: CommandFactory,
+    @inject(CommandHistory) commandHistory: CommandHistory
   ) {
     this.playerStore = playerStore;
     this.actionStore = actionStore;
     this.deckStore = deckStore;
     this.phaseStore = phaseStore;
     this.commandFactory = commandFactory;
-    this.commandHistory = getCommandHistory();
+    this.commandHistory = commandHistory;
 
     // Initialize handlers
     this.humanHandler = new HumanActionHandler({
       playerStore,
       actionStore,
       commandFactory,
+      commandHistory,
     });
 
     this.botHandler = new BotActionHandler({
@@ -55,6 +59,7 @@ export class ActionCoordinator {
       deckStore,
       botDecisionService,
       commandFactory,
+      commandHistory,
     });
   }
 
@@ -84,7 +89,11 @@ export class ActionCoordinator {
     this.phaseStore.startAwaitingAction();
 
     // Route based on card rank
-    const executed = await this.routeActionByRank(card.rank, playerId, player.isHuman);
+    const executed = await this.routeActionByRank(
+      card.rank,
+      playerId,
+      player.isHuman
+    );
 
     if (!executed) {
       GameToastService.error(`Failed to execute ${card.rank} action`);
@@ -102,7 +111,11 @@ export class ActionCoordinator {
   }
 
   // Route action to human or bot handler
-  private async routeActionByRank(rank: Rank, playerId: string, isHuman: boolean): Promise<boolean> {
+  private async routeActionByRank(
+    rank: Rank,
+    playerId: string,
+    isHuman: boolean
+  ): Promise<boolean> {
     // For human players, return synchronously since they wait for user input
     if (isHuman) {
       const handlers: Record<string, () => boolean> = {
@@ -135,7 +148,10 @@ export class ActionCoordinator {
   }
 
   // Target selection - route to appropriate handler
-  async selectActionTarget(targetPlayerId: string, position: number): Promise<boolean> {
+  async selectActionTarget(
+    targetPlayerId: string,
+    position: number
+  ): Promise<boolean> {
     const context = this.actionStore.actionContext;
     if (!context) return false;
 
@@ -363,14 +379,19 @@ export class ActionCoordinator {
     } else {
       // For bots, just update the action store
       this.actionStore.declareKingAction(rank);
-      const declaredAction = this.actionStore.actionContext?.action || 'Unknown action';
+      const declaredAction =
+        this.actionStore.actionContext?.action || 'Unknown action';
       GameToastService.success(
         `${actionPlayer.name} declared King as ${rank} - ${declaredAction}`
       );
     }
 
     // Execute the declared action
-    return await this.routeActionByRank(rank, context.playerId, actionPlayer.isHuman);
+    return await this.routeActionByRank(
+      rank,
+      context.playerId,
+      actionPlayer.isHuman
+    );
   }
 
   // Alias for consistency

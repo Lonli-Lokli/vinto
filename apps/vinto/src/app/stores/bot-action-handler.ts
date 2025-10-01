@@ -9,7 +9,7 @@ import {
   BotDecisionService,
   BotDecisionContext,
 } from '../services/bot-decision';
-import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
+import { CommandFactory, CommandHistory } from '../commands';
 
 export interface BotActionHandlerDependencies {
   playerStore: PlayerStore;
@@ -17,6 +17,7 @@ export interface BotActionHandlerDependencies {
   deckStore: DeckStore;
   botDecisionService: BotDecisionService;
   commandFactory: CommandFactory;
+  commandHistory: CommandHistory;
 }
 
 /**
@@ -40,7 +41,7 @@ export class BotActionHandler {
     this.deckStore = deps.deckStore;
     this.botDecisionService = deps.botDecisionService;
     this.commandFactory = deps.commandFactory;
-    this.commandHistory = getCommandHistory();
+    this.commandHistory = deps.commandHistory;
   }
 
   // Action initiation - async execution (will be replaced with actual AI calculation)
@@ -322,7 +323,9 @@ export class BotActionHandler {
     }
 
     // Add penalty card using command
-    const penaltyCommand = this.commandFactory.addPenaltyCard(randomOpponent.id);
+    const penaltyCommand = this.commandFactory.addPenaltyCard(
+      randomOpponent.id
+    );
     const result = await this.commandHistory.executeCommand(penaltyCommand);
 
     if (result.success) {

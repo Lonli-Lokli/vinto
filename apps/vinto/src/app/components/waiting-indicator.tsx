@@ -1,10 +1,10 @@
-import { gameStore } from '../stores/game-store';
-import { getPlayerStore } from '../stores/player-store';
+'use client';
+import { useGameStore, usePlayerStore } from './di-provider';
 
 export function WaitingIndicator() {
-  const { isCurrentPlayerWaiting } = gameStore;
-  const { currentPlayer } = getPlayerStore();
-  
+  const { isCurrentPlayerWaiting } = useGameStore();
+  const { currentPlayer } = usePlayerStore();
+
   if (!isCurrentPlayerWaiting) return null;
 
   return (

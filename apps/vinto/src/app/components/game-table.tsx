@@ -3,25 +3,33 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
+import {
+  useGameStore,
+  usePlayerStore,
+  useGamePhaseStore,
+  useActionStore,
+  useTossInStore,
+  useDeckStore,
+} from './di-provider';
 import { PlayerArea } from './player-area';
 import { Card } from './card';
-import { getPlayerStore } from '../stores/player-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getActionStore } from '../stores/action-store';
-import { getTossInStore } from '../stores/toss-in-store';
-import { getDeckStore } from '../stores/deck-store';
 
 export const GameTable = observer(() => {
+  const gameStore = useGameStore();
   const { currentPlayer, humanPlayer, players, setupPeeksRemaining } =
-    getPlayerStore();
-  const { phase, isSelectingSwapPosition, isChoosingCardAction , isDeclaringRank, isAwaitingActionTarget} =
-    getGamePhaseStore();
-  const actionStore = getActionStore();
-  const { actionContext , pendingCard, swapPosition} = actionStore;
-  const tossInStore = getTossInStore();
+    usePlayerStore();
+  const {
+    phase,
+    isSelectingSwapPosition,
+    isChoosingCardAction,
+    isDeclaringRank,
+    isAwaitingActionTarget,
+  } = useGamePhaseStore();
+  const actionStore = useActionStore();
+  const { actionContext, pendingCard, swapPosition } = actionStore;
+  const tossInStore = useTossInStore();
   const { waitingForTossIn } = tossInStore;
-  const { discardPile} = getDeckStore()
+  const { discardPile } = useDeckStore();
 
   // Calculate final scores if in scoring phase
   const finalScores =

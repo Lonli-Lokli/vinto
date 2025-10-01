@@ -4,12 +4,13 @@ import { Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { GameToastService } from '../lib/toast-service';
-import { CommandFactory, getCommandHistory, CommandHistory } from '../commands';
+import { CommandFactory, CommandHistory } from '../commands';
 
 export interface ActionHandlerDependencies {
   playerStore: PlayerStore;
   actionStore: ActionStore;
   commandFactory: CommandFactory;
+  commandHistory: CommandHistory;
 }
 
 /**
@@ -29,7 +30,7 @@ export class HumanActionHandler {
     this.playerStore = deps.playerStore;
     this.actionStore = deps.actionStore;
     this.commandFactory = deps.commandFactory;
-    this.commandHistory = getCommandHistory();
+    this.commandHistory = deps.commandHistory;
   }
 
   // Action initiation - waits for user input
@@ -138,7 +139,9 @@ export class HumanActionHandler {
     if (this.actionStore.hasCompleteSwapSelection) {
       return await this.executeSwapCards(actionPlayerId);
     } else {
-      GameToastService.info('Selected first card. Choose second card to swap with.');
+      GameToastService.info(
+        'Selected first card. Choose second card to swap with.'
+      );
       return true;
     }
   }
@@ -164,7 +167,9 @@ export class HumanActionHandler {
 
     if (result.success) {
       GameToastService.success(
-        `Swapped ${player1.name}'s card ${target1.position + 1} with ${player2.name}'s card ${target2.position + 1}`
+        `Swapped ${player1.name}'s card ${target1.position + 1} with ${
+          player2.name
+        }'s card ${target2.position + 1}`
       );
       return true;
     }
@@ -201,7 +206,9 @@ export class HumanActionHandler {
           this.actionStore.peekTargets.length === 1 &&
           this.actionStore.peekTargets[0].playerId === targetPlayerId
         ) {
-          GameToastService.warning('Cannot peek two cards from the same player!');
+          GameToastService.warning(
+            'Cannot peek two cards from the same player!'
+          );
         }
         return false;
       }
@@ -218,7 +225,9 @@ export class HumanActionHandler {
         );
         return true;
       } else {
-        GameToastService.info('Peeked at first card. Choose second card to peek at.');
+        GameToastService.info(
+          'Peeked at first card. Choose second card to peek at.'
+        );
         return true;
       }
     }
@@ -263,7 +272,9 @@ export class HumanActionHandler {
       return false;
 
     GameToastService.success(
-      `You forced ${targetPlayer.name} to draw a card. ${targetPlayer.name} now has ${targetPlayer.cards.length + 1} cards.`
+      `You forced ${targetPlayer.name} to draw a card. ${
+        targetPlayer.name
+      } now has ${targetPlayer.cards.length + 1} cards.`
     );
 
     return true;

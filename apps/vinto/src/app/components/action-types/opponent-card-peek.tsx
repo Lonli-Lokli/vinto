@@ -3,19 +3,19 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { getActionStore } from '@/app/stores/action-store';
-import { getPlayerStore } from '@/app/stores/player-store';
-import { gameStore } from '@/app/stores/game-store';
+import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 
 export const OpponentCardPeek = observer(() => {
-  const actionStore = getActionStore();
-  const playerStore = getPlayerStore();
+  const gameStore = useGameStore();
+  const actionStore = useActionStore();
+  const playerStore = usePlayerStore();
 
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
 
   const humanPlayer = playerStore.humanPlayer;
-  const hasRevealedCard = humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
+  const hasRevealedCard =
+    humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
 
   return (
     <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">

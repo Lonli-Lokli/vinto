@@ -3,17 +3,20 @@
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Popover } from 'react-tiny-popover';
-import { gameStore } from '../stores/game-store';
+import {
+  useGameStore,
+  usePlayerStore,
+  useActionStore,
+  useGamePhaseStore,
+} from './di-provider';
 import { Rank } from '../shapes';
 import { ALL_RANKS } from '../lib/game-helpers';
-import { getPlayerStore } from '../stores/player-store';
-import { getActionStore } from '../stores/action-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
 
 export const RankDeclaration = observer(() => {
-  const {currentPlayer} = getPlayerStore();
-  const {pendingCard, swapPosition} = getActionStore();
-  const {isDeclaringRank} = getGamePhaseStore();
+  const gameStore = useGameStore();
+  const { currentPlayer } = usePlayerStore();
+  const { pendingCard, swapPosition } = useActionStore();
+  const { isDeclaringRank } = useGamePhaseStore();
 
   const [showHelp, setShowHelp] = useState(false);
 
@@ -29,8 +32,17 @@ export const RankDeclaration = observer(() => {
   };
 
   const helpContent = (isMobile: boolean) => (
-    <div className={`bg-white border border-gray-300 rounded ${isMobile ? 'p-2 max-w-xs' : 'p-3 max-w-sm'} shadow-lg`} style={{ zIndex: 9999 }}>
-      <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-700 space-y-2`}>
+    <div
+      className={`bg-white border border-gray-300 rounded ${
+        isMobile ? 'p-2 max-w-xs' : 'p-3 max-w-sm'
+      } shadow-lg`}
+      style={{ zIndex: 9999 }}
+    >
+      <div
+        className={`${
+          isMobile ? 'text-xs' : 'text-sm'
+        } text-gray-700 space-y-2`}
+      >
         <p>
           <strong>Current situation:</strong> You drew{' '}
           <span className="font-semibold text-gray-800">
@@ -42,10 +54,14 @@ export const RankDeclaration = observer(() => {
           </span>
         </p>
         <p>
-          <strong>Your task:</strong> Declare what rank you think your
-          position {(swapPosition ?? 0) + 1} card is.
+          <strong>Your task:</strong> Declare what rank you think your position{' '}
+          {(swapPosition ?? 0) + 1} card is.
         </p>
-        <div className={`bg-poker-green-50 rounded p-2 ${isMobile ? 'text-2xs' : 'text-xs'}`}>
+        <div
+          className={`bg-poker-green-50 rounded p-2 ${
+            isMobile ? 'text-2xs' : 'text-xs'
+          }`}
+        >
           <div className="text-poker-green-700">
             ✅ <strong>Correct:</strong> Use {pendingCard?.rank}&apos;s action
           </div>
@@ -56,7 +72,9 @@ export const RankDeclaration = observer(() => {
       </div>
       <button
         onClick={() => setShowHelp(false)}
-        className={`${isMobile ? 'mt-2 text-xs' : 'mt-2 text-sm'} text-gray-500 hover:text-gray-700`}
+        className={`${
+          isMobile ? 'mt-2 text-xs' : 'mt-2 text-sm'
+        } text-gray-500 hover:text-gray-700`}
       >
         Close
       </button>
@@ -64,9 +82,11 @@ export const RankDeclaration = observer(() => {
   );
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto px-2 mb-4" style={{ zIndex: 100 }}>
+    <div
+      className="relative w-full max-w-4xl mx-auto px-2 mb-4"
+      style={{ zIndex: 100 }}
+    >
       <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm overflow-visible">
-
         {/* Mobile Layout: 3 rows stacked */}
         <div className="block md:hidden">
           {/* Row 1: Header with help */}
@@ -77,7 +97,7 @@ export const RankDeclaration = observer(() => {
             <Popover
               isOpen={showHelp}
               positions={['top', 'bottom', 'left', 'right']}
-              align='center'
+              align="center"
               content={helpContent(true)}
             >
               <button
@@ -157,8 +177,6 @@ export const RankDeclaration = observer(() => {
             Skip Declaration
           </button>
         </div>
-
-
       </div>
     </div>
   );

@@ -3,18 +3,25 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getActionStore } from '../stores/action-store';
-import { getPlayerStore } from '../stores/player-store';
+import {
+  useGameStore,
+  useGamePhaseStore,
+  useActionStore,
+  usePlayerStore,
+} from './di-provider';
 
 export const CardActionChoice = observer(() => {
-  const gamePhaseStore = getGamePhaseStore();
-  const { pendingCard } = getActionStore();
-  const { currentPlayer } = getPlayerStore();
+  const gameStore = useGameStore();
+  const gamePhaseStore = useGamePhaseStore();
+  const { pendingCard } = useActionStore();
+  const { currentPlayer } = usePlayerStore();
 
   // Only show for human players
-  if (!gamePhaseStore.isChoosingCardAction || !pendingCard || currentPlayer?.isBot) {
+  if (
+    !gamePhaseStore.isChoosingCardAction ||
+    !pendingCard ||
+    currentPlayer?.isBot
+  ) {
     return null;
   }
 
@@ -22,9 +29,7 @@ export const CardActionChoice = observer(() => {
     <div className="mt-2 w-full max-w-4xl mx-auto px-2 min-h-[140px]">
       <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col justify-between">
         <div className="text-center mb-2">
-          <h3 className="text-sm font-semibold text-gray-800">
-            Choose Action
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-800">Choose Action</h3>
           <p className="text-xs text-gray-600 mt-1">
             What would you like to do with the drawn card?
           </p>
@@ -57,9 +62,7 @@ export const CardActionChoice = observer(() => {
             }
           >
             <span>{pendingCard.action ? '⚡' : '🗑️'}</span>
-            <span>
-              {pendingCard.action ? 'Play' : 'Discard'}
-            </span>
+            <span>{pendingCard.action ? 'Play' : 'Discard'}</span>
           </button>
         </div>
 

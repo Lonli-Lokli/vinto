@@ -1,5 +1,6 @@
 // app/layout.tsx
 
+import './reflect-metadata-client-side';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './global.css'; // This is where you import your global Tailwind CSS styles

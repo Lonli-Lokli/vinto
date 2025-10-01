@@ -2,9 +2,10 @@
 'use client';
 
 import React from 'react';
-import { gameStore } from '@/app/stores/game-store';
+import { useGameStore } from '../di-provider';
 
 export function KingDeclaration() {
+  const gameStore = useGameStore();
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const;
   const nonActionCards = ['2', '3', '4', '5', '6', 'Joker'] as const;
 

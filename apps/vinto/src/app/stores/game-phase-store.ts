@@ -1,5 +1,6 @@
 'use client';
 
+import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { GameToastService } from '../lib/toast-service';
 
@@ -16,28 +17,16 @@ export type GameSubPhase =
   | 'toss_queue_processing';
 export type FullGameState = `${GamePhase}.${GameSubPhase}`;
 
+@injectable()
 export class GamePhaseStore {
-  private static instance: GamePhaseStore | null = null;
-
   phase: GamePhase = 'setup';
   subPhase: GameSubPhase = 'idle';
 
   // Derived from boolean flags in original store
   finalTurnTriggered = false;
 
-  private constructor() {
+  constructor() {
     makeAutoObservable(this);
-  }
-
-  static getInstance(): GamePhaseStore {
-    if (!GamePhaseStore.instance) {
-      GamePhaseStore.instance = new GamePhaseStore();
-    }
-    return GamePhaseStore.instance;
-  }
-
-  static resetInstance(): void {
-    GamePhaseStore.instance = null;
   }
 
   get canTransitionTo() {
@@ -51,11 +40,15 @@ export class GamePhaseStore {
 
   transitionTo(newPhase: GamePhase, newSubPhase: GameSubPhase) {
     if (this.canTransitionTo(newPhase, newSubPhase)) {
-      console.log(`Transitioning from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`);
+      console.log(
+        `Transitioning from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
+      );
       this.phase = newPhase;
       this.subPhase = newSubPhase;
     } else {
-      console.warn(`Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`)
+      console.warn(
+        `Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
+      );
       GameToastService.warning(
         `Invalid transition from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
       );
@@ -325,4 +318,3 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
     // No transitions allowed - game is over
   ],
 };
-export const getGamePhaseStore = () => GamePhaseStore.getInstance();

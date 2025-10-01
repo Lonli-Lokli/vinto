@@ -3,14 +3,13 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
+import { useGameStore, useGamePhaseStore, usePlayerStore } from './di-provider';
 import { getWinnerInfo } from '../lib/game-helpers';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getPlayerStore } from '../stores/player-store';
 
 export const FinalScores = observer(() => {
-  const gamePhaseStore = getGamePhaseStore();
-  const { players} = getPlayerStore();
+  const gameStore = useGameStore();
+  const gamePhaseStore = useGamePhaseStore();
+  const { players } = usePlayerStore();
   // Calculate final scores if in scoring phase
   const finalScores =
     gamePhaseStore.phase === 'scoring'

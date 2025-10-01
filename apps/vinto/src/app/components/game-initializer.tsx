@@ -3,11 +3,11 @@
 
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { gameStore } from '../stores/game-store';
-import { getPlayerStore } from '../stores/player-store';
+import { useGameStore, usePlayerStore } from './di-provider';
 
 export const GameInitializer = observer(() => {
-  const { players } = getPlayerStore();
+  const gameStore = useGameStore();
+  const { players } = usePlayerStore();
   // Initialize game on mount
   useEffect(() => {
     if (players.length === 0) {

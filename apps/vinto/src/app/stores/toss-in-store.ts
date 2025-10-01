@@ -1,5 +1,6 @@
 'use client';
 
+import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { Card, Player, TossInTime } from '../shapes';
 import { PlayerStore } from './player-store';
@@ -30,9 +31,8 @@ export interface TossInStoreDependencies {
   createBotContext: (playerId: string) => any;
 }
 
+@injectable()
 export class TossInStore {
-  private static instance: TossInStore | null = null;
-
   queue: TossInAction[] = [];
   timer = 0;
   timeConfig: TossInTime = 7;
@@ -46,19 +46,8 @@ export class TossInStore {
   private callbacks: TossInStoreCallbacks = {};
   private deps: TossInStoreDependencies | null = null;
 
-  private constructor() {
+  constructor() {
     makeAutoObservable(this);
-  }
-
-  static getInstance(): TossInStore {
-    if (!TossInStore.instance) {
-      TossInStore.instance = new TossInStore();
-    }
-    return TossInStore.instance;
-  }
-
-  static resetInstance(): void {
-    TossInStore.instance = null;
   }
 
   get hasTossInActions(): boolean {
@@ -374,5 +363,3 @@ export class TossInStore {
     };
   }
 }
-
-export const getTossInStore = () => TossInStore.getInstance();

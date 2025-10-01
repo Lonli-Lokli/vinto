@@ -4,15 +4,202 @@
  */
 
 import { Command, CommandData } from './command';
-import { PlayerStore } from '../stores/player-store';
-import { DeckStore } from '../stores/deck-store';
-import { ActionStore } from '../stores/action-store';
-import { Card, Rank } from '../shapes';
+import {
+  PlayerStore,
+  DeckStore,
+  ActionStore,
+  GamePhaseStore,
+  GamePhase,
+  GameSubPhase,
+  TossInStore,
+} from '../stores';
+import { Card, Rank, Difficulty, TossInTime } from '../shapes';
+
+/**
+ * Serialized card data
+ */
+interface SerializedCard {
+  id: string;
+  rank: Rank;
+  value: number;
+  action?: string;
+  played: boolean;
+}
+
+/**
+ * Serialized player data
+ */
+interface SerializedPlayer {
+  id: string;
+  name: string;
+  cards: SerializedCard[];
+  knownCardPositions: number[];
+  isHuman: boolean;
+  position: 'bottom' | 'left' | 'top' | 'right';
+  avatar: string;
+}
+
+/**
+ * Initialize game command - captures complete game state including all stores
+ */
+export class InitializeGameCommand extends Command {
+  constructor(
+    private playerStore: PlayerStore,
+    private deckStore: DeckStore,
+    private gamePhaseStore: GamePhaseStore,
+    private actionStore: ActionStore,
+    private tossInStore: TossInStore,
+    private difficulty: Difficulty,
+    private tossInTimeConfig: TossInTime
+  ) {
+    super();
+  }
+
+  execute(): boolean {
+    // This command doesn't modify state, it just captures it
+    return true;
+  }
+
+  toData(): CommandData {
+    // Serialize all players with their complete state
+    const players: SerializedPlayer[] = this.playerStore.players.map(
+      (player) => ({
+        id: player.id,
+        name: player.name,
+        cards: player.cards.map((card) => ({
+          id: card.id,
+          rank: card.rank,
+          value: card.value,
+          action: card.action,
+          played: card.played,
+        })),
+        knownCardPositions: Array.from(player.knownCardPositions),
+        isHuman: player.isHuman,
+        position: player.position,
+        avatar: player.avatar,
+      })
+    );
+
+    // Serialize deck state
+    const drawPile: SerializedCard[] = this.deckStore.drawPile.map((card) => ({
+      id: card.id,
+      rank: card.rank,
+      value: card.value,
+      action: card.action,
+      played: card.played,
+    }));
+
+    const discardPile: SerializedCard[] = this.deckStore.discardPile.map(
+      (card) => ({
+        id: card.id,
+        rank: card.rank,
+        value: card.value,
+        action: card.action,
+        played: card.played,
+      })
+    );
+
+    // Serialize game phase state
+    const gamePhase: {
+      phase: GamePhase;
+      subPhase: GameSubPhase;
+      finalTurnTriggered: boolean;
+    } = {
+      phase: this.gamePhaseStore.phase,
+      subPhase: this.gamePhaseStore.subPhase,
+      finalTurnTriggered: this.gamePhaseStore.finalTurnTriggered,
+    };
+
+    // Serialize action store state
+    const actionState: {
+      pendingCard: SerializedCard | null;
+      actionContext: any;
+      selectedSwapPosition: number | null;
+      swapPosition: number | null;
+      swapTargets: Array<{ playerId: string; position: number }>;
+      peekTargets: Array<{
+        playerId: string;
+        position: number;
+        card?: SerializedCard;
+      }>;
+    } = {
+      pendingCard: this.actionStore.pendingCard
+        ? {
+            id: this.actionStore.pendingCard.id,
+            rank: this.actionStore.pendingCard.rank,
+            value: this.actionStore.pendingCard.value,
+            action: this.actionStore.pendingCard.action,
+            played: this.actionStore.pendingCard.played,
+          }
+        : null,
+      actionContext: this.actionStore.actionContext,
+      selectedSwapPosition: this.actionStore.selectedSwapPosition,
+      swapPosition: this.actionStore.swapPosition,
+      swapTargets: [...this.actionStore.swapTargets],
+      peekTargets: this.actionStore.peekTargets.map((pt) => ({
+        playerId: pt.playerId,
+        position: pt.position,
+        card: pt.card
+          ? {
+              id: pt.card.id,
+              rank: pt.card.rank,
+              value: pt.card.value,
+              action: pt.card.action,
+              played: pt.card.played,
+            }
+          : undefined,
+      })),
+    };
+
+    // Serialize toss-in state
+    const tossInState = this.tossInStore.getState();
+    const tossInData = {
+      queue: tossInState.queue.map((item) => ({
+        playerId: item.playerId,
+        card: {
+          id: item.card.id,
+          rank: item.card.rank,
+          value: item.card.value,
+          action: item.card.action,
+          played: item.card.played,
+        },
+      })),
+      timer: tossInState.timer,
+      isActive: tossInState.isActive,
+      currentQueueIndex: tossInState.currentQueueIndex,
+      originalCurrentPlayer: tossInState.originalCurrentPlayer,
+      playersWhoTossedIn: Array.from(tossInState.playersWhoTossedIn),
+    };
+
+    return this.createCommandData('INITIALIZE_GAME', {
+      version: '2.0.0', // Bumped version for full state capture
+      players,
+      drawPile,
+      discardPile,
+      difficulty: this.difficulty,
+      tossInTimeConfig: this.tossInTimeConfig,
+      currentPlayerIndex: this.playerStore.currentPlayerIndex,
+      setupPeeksRemaining: this.playerStore.setupPeeksRemaining,
+      turnCount: this.playerStore.turnCount,
+      gamePhase,
+      actionState,
+      tossInState: tossInData,
+    });
+  }
+
+  getDescription(): string {
+    const playerCount = this.playerStore.players.length;
+    const deckSize = this.deckStore.drawPile.length;
+    return `Game initialized: ${playerCount} players, ${deckSize} cards in deck, ${this.gamePhaseStore.phase}.${this.gamePhaseStore.subPhase}, difficulty: ${this.difficulty}`;
+  }
+}
 
 /**
  * Draw card command
  */
 export class DrawCardCommand extends Command {
+  private drawnCard: Card | null = null;
+
   constructor(
     private playerStore: PlayerStore,
     private deckStore: DeckStore,
@@ -25,19 +212,30 @@ export class DrawCardCommand extends Command {
     const card = this.deckStore.drawCard();
     if (!card) return false;
 
-    // Store the drawn card for potential swap/discard
+    // Store the drawn card for potential swap/discard and for serialization
+    this.drawnCard = card;
     return true;
   }
 
   toData(): CommandData {
     return this.createCommandData('DRAW_CARD', {
       playerId: this.playerId,
+      card: this.drawnCard
+        ? {
+            id: this.drawnCard.id,
+            rank: this.drawnCard.rank,
+            value: this.drawnCard.value,
+            action: this.drawnCard.action,
+            played: this.drawnCard.played,
+          }
+        : null,
     });
   }
 
   getDescription(): string {
     const player = this.playerStore.getPlayer(this.playerId);
-    return `${player?.name || this.playerId} drew a card`;
+    const cardRank = this.drawnCard?.rank || '?';
+    return `${player?.name || this.playerId} drew ${cardRank}`;
   }
 }
 
@@ -45,6 +243,9 @@ export class DrawCardCommand extends Command {
  * Swap cards command
  */
 export class SwapCardsCommand extends Command {
+  private card1: Card | null = null;
+  private card2: Card | null = null;
+
   constructor(
     private playerStore: PlayerStore,
     private player1Id: string,
@@ -56,6 +257,17 @@ export class SwapCardsCommand extends Command {
   }
 
   execute(): boolean {
+    const player1 = this.playerStore.getPlayer(this.player1Id);
+    const player2 = this.playerStore.getPlayer(this.player2Id);
+
+    if (!player1 || !player2) {
+      return false;
+    }
+
+    // Capture the cards being swapped before the swap
+    this.card1 = player1.cards[this.position1];
+    this.card2 = player2.cards[this.position2];
+
     return this.playerStore.swapCards(
       this.player1Id,
       this.position1,
@@ -70,13 +282,33 @@ export class SwapCardsCommand extends Command {
       position1: this.position1,
       player2Id: this.player2Id,
       position2: this.position2,
+      card1: this.card1
+        ? {
+            id: this.card1.id,
+            rank: this.card1.rank,
+            value: this.card1.value,
+            action: this.card1.action,
+            played: this.card1.played,
+          }
+        : null,
+      card2: this.card2
+        ? {
+            id: this.card2.id,
+            rank: this.card2.rank,
+            value: this.card2.value,
+            action: this.card2.action,
+            played: this.card2.played,
+          }
+        : null,
     });
   }
 
   getDescription(): string {
     const player1 = this.playerStore.getPlayer(this.player1Id);
     const player2 = this.playerStore.getPlayer(this.player2Id);
-    return `Swapped ${player1?.name}[${this.position1}] ↔ ${player2?.name}[${this.position2}]`;
+    const card1Rank = this.card1?.rank || '?';
+    const card2Rank = this.card2?.rank || '?';
+    return `Swapped ${player1?.name}[${this.position1}:${card1Rank}] ↔ ${player2?.name}[${this.position2}:${card2Rank}]`;
   }
 }
 
@@ -84,6 +316,8 @@ export class SwapCardsCommand extends Command {
  * Peek card command
  */
 export class PeekCardCommand extends Command {
+  private peekedCard: Card | null = null;
+
   constructor(
     private playerStore: PlayerStore,
     private playerId: string,
@@ -99,6 +333,9 @@ export class PeekCardCommand extends Command {
       return false;
     }
 
+    // Capture the actual card that was peeked
+    this.peekedCard = player.cards[this.position];
+
     if (this.isPermanent) {
       this.playerStore.addKnownCardPosition(this.playerId, this.position);
     } else {
@@ -113,13 +350,24 @@ export class PeekCardCommand extends Command {
       playerId: this.playerId,
       position: this.position,
       isPermanent: this.isPermanent,
+      card: this.peekedCard
+        ? {
+            id: this.peekedCard.id,
+            rank: this.peekedCard.rank,
+            value: this.peekedCard.value,
+            action: this.peekedCard.action,
+            played: this.peekedCard.played,
+          }
+        : null,
     });
   }
 
   getDescription(): string {
     const player = this.playerStore.getPlayer(this.playerId);
-    const card = player?.cards[this.position];
-    return `${player?.name || this.playerId} peeked at ${card?.rank || '?'}[${this.position}]`;
+    const card = this.peekedCard || player?.cards[this.position];
+    return `${player?.name || this.playerId} peeked at ${card?.rank || '?'}[${
+      this.position
+    }]`;
   }
 }
 
@@ -127,10 +375,7 @@ export class PeekCardCommand extends Command {
  * Discard card command
  */
 export class DiscardCardCommand extends Command {
-  constructor(
-    private deckStore: DeckStore,
-    private card: Card
-  ) {
+  constructor(private deckStore: DeckStore, private card: Card) {
     super();
   }
 
@@ -179,11 +424,7 @@ export class ReplaceCardCommand extends Command {
   override undo(): boolean {
     if (!this.oldCard) return false;
 
-    this.playerStore.replaceCard(
-      this.playerId,
-      this.position,
-      this.oldCard
-    );
+    this.playerStore.replaceCard(this.playerId, this.position, this.oldCard);
     return true;
   }
 
@@ -191,11 +432,13 @@ export class ReplaceCardCommand extends Command {
     return this.createCommandData('REPLACE_CARD', {
       playerId: this.playerId,
       position: this.position,
-      oldCard: this.oldCard ? {
-        id: this.oldCard.id,
-        rank: this.oldCard.rank,
-        value: this.oldCard.value,
-      } : null,
+      oldCard: this.oldCard
+        ? {
+            id: this.oldCard.id,
+            rank: this.oldCard.rank,
+            value: this.oldCard.value,
+          }
+        : null,
       newCard: {
         id: this.newCard.id,
         rank: this.newCard.rank,
@@ -206,7 +449,9 @@ export class ReplaceCardCommand extends Command {
 
   getDescription(): string {
     const player = this.playerStore.getPlayer(this.playerId);
-    return `${player?.name || this.playerId} replaced ${this.oldCard?.rank || '?'} with ${this.newCard.rank}[${this.position}]`;
+    return `${player?.name || this.playerId} replaced ${
+      this.oldCard?.rank || '?'
+    } with ${this.newCard.rank}[${this.position}]`;
   }
 }
 
@@ -214,10 +459,7 @@ export class ReplaceCardCommand extends Command {
  * Advance turn command
  */
 export class AdvanceTurnCommand extends Command {
-  constructor(
-    private playerStore: PlayerStore,
-    private fromPlayerId: string
-  ) {
+  constructor(private playerStore: PlayerStore, private fromPlayerId: string) {
     super();
   }
 
@@ -236,7 +478,9 @@ export class AdvanceTurnCommand extends Command {
   getDescription(): string {
     const fromPlayer = this.playerStore.getPlayer(this.fromPlayerId);
     const toPlayer = this.playerStore.currentPlayer;
-    return `Turn: ${fromPlayer?.name || this.fromPlayerId} → ${toPlayer?.name || 'Unknown'}`;
+    return `Turn: ${fromPlayer?.name || this.fromPlayerId} → ${
+      toPlayer?.name || 'Unknown'
+    }`;
   }
 }
 
@@ -244,10 +488,7 @@ export class AdvanceTurnCommand extends Command {
  * Declare King action command
  */
 export class DeclareKingActionCommand extends Command {
-  constructor(
-    private actionStore: ActionStore,
-    private rank: Rank
-  ) {
+  constructor(private actionStore: ActionStore, private rank: Rank) {
     super();
   }
 
@@ -264,7 +505,9 @@ export class DeclareKingActionCommand extends Command {
   }
 
   getDescription(): string {
-    return `King declared as ${this.rank} → ${this.actionStore.actionContext?.action || 'Unknown'}`;
+    return `King declared as ${this.rank} → ${
+      this.actionStore.actionContext?.action || 'Unknown'
+    }`;
   }
 }
 
@@ -310,7 +553,9 @@ export class TossInCardCommand extends Command {
   getDescription(): string {
     const player = this.playerStore.getPlayer(this.playerId);
     const status = this.wasCorrect ? '✓' : '✗';
-    return `${player?.name || this.playerId} tossed-in [${this.position}] ${status}`;
+    return `${player?.name || this.playerId} tossed-in [${
+      this.position
+    }] ${status}`;
   }
 }
 

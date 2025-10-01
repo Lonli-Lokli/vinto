@@ -10,9 +10,12 @@ import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
 import { NeverError } from '../shapes';
-import { getActionStore, TargetType } from '../stores/action-store';
-import { getGamePhaseStore } from '../stores/game-phase-store';
-import { getPlayerStore } from '../stores/player-store';
+import {
+  useActionStore,
+  useGamePhaseStore,
+  usePlayerStore,
+} from './di-provider';
+import { TargetType } from '../stores';
 
 /**
  * ActionTargetSelector: Renders action-specific controls during action execution.
@@ -20,9 +23,9 @@ import { getPlayerStore } from '../stores/player-store';
  * progress tracking, and action buttons (swap, skip, continue, cancel).
  */
 export const ActionTargetSelector = observer(() => {
-  const gamePhaseStore = getGamePhaseStore();
-  const actionStore = getActionStore();
-  const playerStore = getPlayerStore();
+  const gamePhaseStore = useGamePhaseStore();
+  const actionStore = useActionStore();
+  const playerStore = usePlayerStore();
 
   if (!gamePhaseStore.isAwaitingActionTarget || !actionStore.actionContext) {
     return null;
