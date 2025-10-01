@@ -185,6 +185,8 @@ export const PlayerArea = observer(function PlayerArea({
               botPeeking={player.highlightedCards.has(index)}
               onClick={() => onCardClick?.(index)}
               rotated={isSidePlayer}
+              playerId={player.id}
+              cardIndex={index}
             />
           );
         })}

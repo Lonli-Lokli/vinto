@@ -14,6 +14,7 @@ export { GamePhaseStore } from './game-phase-store';
 export { ActionStore } from './action-store';
 export { TossInStore } from './toss-in-store';
 export { ReplayStore } from './replay-store';
+export { CardAnimationStore } from './card-animation-store';
 export { GameStore } from './game-store';
 
 // Export types
@@ -33,3 +34,7 @@ export type {
   TossInStoreCallbacks,
   TossInStoreDependencies,
 } from './toss-in-store';
+export type {
+  AnimationType,
+  CardAnimationState,
+} from './card-animation-store';

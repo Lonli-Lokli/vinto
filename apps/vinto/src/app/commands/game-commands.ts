@@ -4,7 +4,7 @@
  */
 
 import { Command, CommandData } from './command';
-import {
+import type {
   PlayerStore,
   DeckStore,
   ActionStore,
@@ -12,6 +12,7 @@ import {
   GamePhase,
   GameSubPhase,
   TossInStore,
+  CardAnimationStore,
 } from '../stores';
 import { Card, Rank, Difficulty, TossInTime } from '../shapes';
 
@@ -403,6 +404,7 @@ export class ReplaceCardCommand extends Command {
 
   constructor(
     private playerStore: PlayerStore,
+    private cardAnimationStore: CardAnimationStore,
     private playerId: string,
     private position: number,
     private newCard: Card
@@ -411,6 +413,31 @@ export class ReplaceCardCommand extends Command {
   }
 
   execute(): boolean {
+    // Get the old card BEFORE replacing so we can animate it
+    const player = this.playerStore.getPlayer(this.playerId);
+    const oldCardToDiscard = player?.cards[this.position];
+
+    if (this.cardAnimationStore) {
+      // Animation 1: Drawn card (newCard) moving from deck/center to player's hand
+      this.cardAnimationStore.startSwapAnimation(
+        this.playerId,
+        -1, // Special position for pending/drawn card
+        this.playerId,
+        this.position, // Target position in hand
+        1500 // Animation duration in ms
+      );
+
+      // Animation 2: Old card from hand moving to discard pile (if it exists)
+      if (oldCardToDiscard) {
+        this.cardAnimationStore.startDiscardAnimation(
+          oldCardToDiscard,
+          this.playerId,
+          this.position,
+          1500 // Same duration for synchronized animation
+        );
+      }
+    }
+
     this.oldCard = this.playerStore.replaceCard(
       this.playerId,
       this.position,

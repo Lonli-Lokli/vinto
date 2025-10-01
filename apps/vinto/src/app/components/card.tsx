@@ -30,6 +30,10 @@ interface CardProps {
   botPeeking?: boolean;
   onClick?: () => void;
   rotated?: boolean;
+  // For animation tracking
+  playerId?: string;
+  cardIndex?: number; // The actual array index (0-based)
+  isPending?: boolean;
 }
 
 export function Card({
@@ -42,13 +46,26 @@ export function Card({
   botPeeking = false,
   onClick,
   rotated = false,
+  playerId,
+  cardIndex,
+  isPending = false,
 }: CardProps) {
   const sizeClasses = {
     sm: 'w-6 h-9 text-2xs',
-    md: 'w-8 h-12 text-2xs', 
+    md: 'w-8 h-12 text-2xs',
     lg: 'w-10 h-14 text-xs',
     xl: 'w-12 h-16 text-sm',
   } as const;
+
+  // Build data attributes for animation tracking
+  const dataAttributes: Record<string, string> = {};
+  if (playerId && cardIndex !== undefined && cardIndex >= 0) {
+    dataAttributes['data-player-id'] = playerId;
+    dataAttributes['data-card-position'] = cardIndex.toString();
+  }
+  if (isPending) {
+    dataAttributes['data-pending-card'] = 'true';
+  }
 
   return (
     <div
@@ -74,6 +91,7 @@ export function Card({
       `}
       style={rotated ? { transform: 'rotate(90deg)' } : undefined}
       onClick={clickable ? onClick : undefined}
+      {...dataAttributes}
     >
       {revealed && card ? (
         <RankComponent rank={card.rank} size={size} />

@@ -11,6 +11,7 @@ import {
   ActionStore,
   TossInStore,
   ReplayStore,
+  CardAnimationStore,
 } from '../stores';
 import { GameStateManager } from '../commands';
 
@@ -25,6 +26,7 @@ interface StoreContextValue {
   actionStore: ActionStore;
   tossInStore: TossInStore;
   replayStore: ReplayStore;
+  cardAnimationStore: CardAnimationStore;
   gameStateManager: GameStateManager;
 }
 
@@ -50,6 +52,7 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
       actionStore: getInstance<ActionStore>(ActionStore),
       tossInStore: getInstance<TossInStore>(TossInStore),
       replayStore: getInstance<ReplayStore>(ReplayStore),
+      cardAnimationStore: getInstance<CardAnimationStore>(CardAnimationStore),
       gameStateManager: getInstance<GameStateManager>(GameStateManager),
     };
   }, []);
@@ -123,4 +126,11 @@ export function useGameStateManager(): GameStateManager {
  */
 export function useReplayStore(): ReplayStore {
   return useStores().replayStore;
+}
+
+/**
+ * Hook to access cardAnimationStore
+ */
+export function useCardAnimationStore(): CardAnimationStore {
+  return useStores().cardAnimationStore;
 }

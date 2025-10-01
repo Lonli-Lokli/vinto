@@ -5,6 +5,7 @@ import React from 'react';
 import { useViewport } from '../hooks/use-viewport';
 import { DIProvider } from './di-provider';
 import { ReplayControls } from './replay-controls';
+import { AnimatedCardOverlay } from './animated-card';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export function GameLayout({ children }: GameLayoutProps) {
       >
         {children}
         <ReplayControls />
+        <AnimatedCardOverlay />
       </div>
     </DIProvider>
   );

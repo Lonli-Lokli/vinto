@@ -15,6 +15,7 @@ import {
   ActionStore,
   TossInStore,
   ReplayStore,
+  CardAnimationStore,
   GameStore,
 } from '../stores';
 
@@ -40,6 +41,7 @@ export function setupDIContainer(
   container.registerSingleton(ActionStore);
   container.registerSingleton(TossInStore);
   container.registerSingleton(ReplayStore);
+  container.registerSingleton(CardAnimationStore);
 
   // Register command system as singletons
   container.registerSingleton(CommandHistory);

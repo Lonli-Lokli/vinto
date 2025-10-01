@@ -24,6 +24,7 @@ import {
   ActionStore,
   GamePhaseStore,
   TossInStore,
+  CardAnimationStore,
 } from '../stores';
 import { Card, Rank, Difficulty, TossInTime, NeverError } from '../shapes';
 
@@ -34,7 +35,8 @@ export class CommandFactory {
     @inject(DeckStore) private deckStore: DeckStore,
     @inject(ActionStore) private actionStore: ActionStore,
     @inject(GamePhaseStore) private gamePhaseStore: GamePhaseStore,
-    @inject(TossInStore) private tossInStore: TossInStore
+    @inject(TossInStore) private tossInStore: TossInStore,
+    @inject(CardAnimationStore) private cardAnimationStore: CardAnimationStore
   ) {}
 
   initializeGame(
@@ -87,6 +89,7 @@ export class CommandFactory {
   replaceCard(playerId: string, position: number, newCard: Card): ICommand {
     return new ReplaceCardCommand(
       this.playerStore,
+      this.cardAnimationStore,
       playerId,
       position,
       newCard

@@ -240,7 +240,7 @@ export const GameTable = observer(() => {
             {/* Center draw/discard */}
             <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
               {/* Draw Pile */}
-              <div className="text-center">
+              <div className="text-center" data-deck-pile="true">
                 <Card
                   size="lg"
                   clickable={
@@ -287,7 +287,7 @@ export const GameTable = observer(() => {
                 )}
 
               {/* Discard Pile */}
-              <div className="text-center">
+              <div className="text-center" data-discard-pile="true">
                 <Card
                   card={discardPile[0]}
                   revealed={discardPile.length > 0}
