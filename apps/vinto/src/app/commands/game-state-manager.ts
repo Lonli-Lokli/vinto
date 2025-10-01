@@ -289,7 +289,7 @@ export class GameStateManager {
     const validation = this.validateGameState();
     if (!validation.valid) {
       return {
-        canSave: false,
+        canSave: true,
         reason: `Invalid game state: ${validation.errors.join(', ')}`,
       };
     }

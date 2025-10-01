@@ -378,17 +378,17 @@ export class GameStore implements TempState {
         const replacedCard = replaceResult.command.toData().payload.oldCard;
 
         if (replacedCard) {
-          // Discard old card using command
-          const discardCommand = this.commandFactory.discardCard(replacedCard);
-          await this.commandHistory.executeCommand(discardCommand);
-
           // Execute action if available
           if (replacedCard.action) {
+            // executeCardAction will discard the card, so don't discard it here
             this.actionCoordinator.executeCardAction(
               replacedCard,
               currentPlayer.id
             );
           } else {
+            // Discard non-action cards using command
+            const discardCommand = this.commandFactory.discardCard(replacedCard);
+            await this.commandHistory.executeCommand(discardCommand);
             this.startTossInPeriod();
           }
         }
@@ -523,6 +523,9 @@ export class GameStore implements TempState {
 
     const currentPlayer = this.playerStore.currentPlayer;
     if (!currentPlayer) return;
+
+    // Clear action state before advancing turn to ensure clean slate for next player
+    this.actionStore.clearAction();
 
     // Execute advance turn command
     const command = this.commandFactory.advanceTurn(currentPlayer.id);

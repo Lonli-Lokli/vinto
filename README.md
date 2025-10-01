@@ -117,7 +117,7 @@ The game implements a complete command pattern that allows:
 - **Debugging**: Inspect game state at any point
 
 ### Dependency Injection
-Uses Inversify for clean dependency management:
+Uses `tsyringe` for clean dependency management:
 - All stores are registered as singletons
 - Components use React hooks to access DI container
 - Easy testing and mocking

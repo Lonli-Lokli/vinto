@@ -133,11 +133,15 @@ export class TossInStore {
       return false;
     }
 
-    // Remove card from player and discard it
+    // Remove card from player
     const removedCard = playerStore.removeCardFromPlayer(playerId, position);
     if (!removedCard) return false;
 
-    deckStore.discardCard(removedCard);
+    // Discard the card only if it has no action
+    // Action cards will be discarded when their action is executed
+    if (!removedCard.action) {
+      deckStore.discardCard(removedCard);
+    }
 
     // Record the successful toss-in
     return this.recordTossIn(player, removedCard);
