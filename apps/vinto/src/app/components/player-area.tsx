@@ -3,8 +3,9 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Player, Card as CardType } from '../shapes';
+import { Player } from '../shapes';
 import { Card } from './card';
+import { Avatar } from './avatar';
 
 interface PlayerAreaProps {
   player: Player;
@@ -60,166 +61,109 @@ export const PlayerArea = observer(function PlayerArea({
     return false;
   };
 
-  // Extracted desktop info card for clarity and reuse
-  const DesktopPlayerInfoCard: React.FC<{
-    player: Player;
-    isCurrentPlayer: boolean;
-    isThinking: boolean;
-    displayScore: string | null;
-  }> = ({ player, isCurrentPlayer, isThinking, displayScore }) => (
-    <div
-      className={`
-          bg-white/90 backdrop-blur-sm rounded-lg p-2 border-2
-          ${
-            isCurrentPlayer
-              ? 'border-emerald-500 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-300'
-              : 'border-gray-200'
-          }
-          transition-all duration-300
-        `}
-    >
-      <div className="text-center">
-        <div className="text-base mb-1">{player.avatar}</div>
-        <div
-          className={`text-xs font-medium ${
-            isCurrentPlayer ? 'text-emerald-600' : 'text-gray-700'
-          }`}
-        >
-          {player.name}
-        </div>
-        {displayScore && (
-          <div className="text-xs text-gray-500 mt-1">{displayScore} pts</div>
-        )}
-        {isCurrentPlayer && (
-          <div className="mt-1">
-            {isThinking ? (
-              <div className="animate-spin text-emerald-500 text-sm">⏳</div>
-            ) : (
-              <div className="text-emerald-500 animate-pulse text-sm">⭐</div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
-  const getDisplayScore = (): string | null => {
-    // During scoring phase, show real scores
-    if (gamePhase === 'scoring' && finalScores) {
-      return finalScores[player.id].toString();
-    }
-    return null;
-  };
 
-  const positionClasses = {
-    bottom: 'flex-col items-center',
-    top: 'flex-col-reverse items-center',
-    left: 'flex-row-reverse items-center',
-    right: 'flex-row items-center',
+  // Dynamic card size based on number of cards
+  const getCardSize = (): 'sm' | 'md' | 'lg' => {
+    const cardCount = player.cards.length;
+    if (cardCount > 7) return 'sm';
+    if (cardCount > 5) return 'md';
+    return player.isHuman ? 'lg' : 'md';
   };
 
   const cardContainerClasses = {
-    bottom: 'flex gap-1',
-    top: 'flex gap-1',
-    left: 'flex flex-col gap-1',
-    right: 'flex flex-col gap-1',
+    bottom: 'flex flex-wrap gap-1 justify-center max-w-full',
+    top: 'flex flex-wrap gap-1 justify-center max-w-full',
+    left: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
+    right: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
   };
 
-  // Mobile info card was removed to save space and avoid visual clutter
 
-  // Mobile: group info card and cards together, add spacing and show player name near border
-  const MobilePlayerGroup: React.FC = () => {
-    // helper to render a single card with orientation tweaks for mobile
-    const renderMobileCard = (card: CardType | undefined, index: number) => {
-      const isSidePlayer = player.position === 'left' || player.position === 'right';
-
-      return (
-        <Card
-          key={`${card?.id ?? 'card'}-${index}`}
-          card={card}
-          revealed={
-            canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
-          }
-          position={player.isHuman ? index + 1 : 0}
-          size="lg"
-          clickable={!!onCardClick}
-          highlighted={
-            isSelectingSwapPosition ||
-            (isDeclaringRank && swapPosition === index) ||
-            isSelectingActionTarget
-          }
-          botPeeking={player.highlightedCards.has(index)}
-          onClick={() => onCardClick?.(index)}
-          rotated={isSidePlayer}
-        />
-      );
-    };
-    const nameLabel = (
-      <div
-        className={`md:hidden absolute z-10 flex items-center gap-1 text-2xs font-semibold leading-none whitespace-nowrap px-1.5 py-0.5 rounded-md bg-poker-green-900/60 text-white shadow-sm border border-white/20 ${
-          player.position === 'left'
-            ? '-rotate-90 left-0 top-1/2 -translate-y-1/2 -translate-x-2'
-            : player.position === 'right'
-            ? 'rotate-90 right-0 top-1/2 -translate-y-1/2 translate-x-2'
-            : player.position === 'top'
-            ? 'top-0 left-1/2 -translate-x-1/2 -translate-y-2'
-            : player.position === 'bottom'
-            ? 'bottom-0 left-1/2 -translate-x-1/2 translate-y-2'
-            : ''
-        }`}
-        style={{ pointerEvents: 'none' }}
-      >
-        <span className="text-xs leading-none">{player.avatar}</span>
-        <span className={isCurrentPlayer ? 'text-emerald-200' : 'text-white'}>
-          {player.name}
-        </span>
-      </div>
-    );
-
-    // Add extra gap for mobile
-    const isSide = player.position === 'left' || player.position === 'right';
-    const wrapper = isSide
-      ? 'md:hidden relative flex flex-row items-center w-full gap-3 my-1'
-      : 'md:hidden relative flex flex-col items-center w-full gap-1';
-
-    const mobileCardGap = isSide ? 'flex flex-col gap-2' : 'flex gap-2';
-
-    return (
-      <div className={wrapper}>
-        {nameLabel}
-        <div className={mobileCardGap}>
-          {player.cards.map((card, index) => renderMobileCard(card, index))}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div
-      className={`flex gap-2 ${positionClasses[player.position]} ${
-        isCurrentPlayer
-          ? 'p-1 rounded-lg border-2 border-emerald-400 bg-emerald-400/10'
-          : ''
+      className={`flex items-center ${
+        player.position === 'bottom' || player.position === 'top'
+          ? 'flex-row gap-2 md:gap-4'
+          : 'flex-col gap-1 md:gap-2'
       }`}
     >
-      {/* Mobile: Do NOT show player name & avatar */}
+      {/* Avatar comes BEFORE cards for bottom/left */}
+      {(player.position === 'bottom' || player.position === 'left') && (
+        <div className="flex flex-col items-center justify-center gap-1 md:gap-2">
+          {/* Mobile: Combined avatar + name in rounded box */}
+          <div
+            className={`
+              md:hidden
+              flex items-center gap-2
+              bg-white/95 backdrop-blur-sm
+              px-2 py-1
+              rounded-full
+              shadow-lg border-2
+              ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+            `}
+            style={isCurrentPlayer ? {
+              animation: 'border-flash 1s ease-in-out infinite',
+            } : undefined}
+          >
+            <div className="w-8 h-8">
+              <Avatar player={player} size="sm" />
+            </div>
+            <div
+              className={`
+                text-xs
+                font-extrabold
+                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+              `}
+            >
+              {player.name}
+            </div>
+          </div>
 
-      {/* Desktop: Player Info Card in the middle */}
-      <div className="hidden md:block">
-        <DesktopPlayerInfoCard
-          player={player}
-          isCurrentPlayer={isCurrentPlayer}
-          isThinking={isThinking}
-          displayScore={getDisplayScore()}
-        />
-      </div>
+          {/* Desktop: Separate avatar and name */}
+          <div className="hidden md:flex md:flex-col md:items-center md:justify-center md:gap-2">
+            <div
+              className={`
+                w-32 h-32
+                ${isCurrentPlayer ? 'scale-110' : 'scale-100'}
+                transition-all duration-300
+                drop-shadow-2xl
+              `}
+              style={{
+                filter: isCurrentPlayer ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))' : undefined
+              }}
+            >
+              <Avatar player={player} size="lg" />
+            </div>
 
-      {/* Mobile: Cards and Info Card grouped by position */}
-      <MobilePlayerGroup />
+            <div
+              className={`
+                text-lg
+                font-extrabold
+                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                bg-white/95 backdrop-blur-sm
+                px-4 py-2
+                rounded-full
+                shadow-lg border-2
+                ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+              `}
+              style={isCurrentPlayer ? {
+                animation: 'border-flash 1s ease-in-out infinite',
+              } : undefined}
+            >
+              {player.name}
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Desktop: Cards */}
+      {/* Cards container with responsive styling and wrapping */}
       <div
-        className={`hidden md:flex ${cardContainerClasses[player.position]}`}
+        className={`${cardContainerClasses[player.position]} ${
+          isCurrentPlayer
+            ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-emerald-400 md:border-2 bg-emerald-400/10 animate-pulse'
+            : ''
+        }`}
       >
         {player.cards.map((card, index) => {
           const isSidePlayer = player.position === 'left' || player.position === 'right';
@@ -231,7 +175,7 @@ export const PlayerArea = observer(function PlayerArea({
                 canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
               }
               position={player.isHuman ? index + 1 : 0}
-              size="lg"
+              size={getCardSize()}
               clickable={!!onCardClick}
               highlighted={
                 isSelectingSwapPosition ||
@@ -245,6 +189,75 @@ export const PlayerArea = observer(function PlayerArea({
           );
         })}
       </div>
+
+      {/* Avatar comes AFTER cards for top/right */}
+      {(player.position === 'top' || player.position === 'right') && (
+        <div className="flex flex-col items-center justify-center gap-1 md:gap-2">
+          {/* Mobile: Combined avatar + name in rounded box */}
+          <div
+            className={`
+              md:hidden
+              flex items-center gap-2
+              bg-white/95 backdrop-blur-sm
+              px-2 py-1
+              rounded-full
+              shadow-lg border-2
+              ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+            `}
+            style={isCurrentPlayer ? {
+              animation: 'border-flash 1s ease-in-out infinite',
+            } : undefined}
+          >
+            <div className="w-8 h-8">
+              <Avatar player={player} size="sm" />
+            </div>
+            <div
+              className={`
+                text-xs
+                font-extrabold
+                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+              `}
+            >
+              {player.name}
+            </div>
+          </div>
+
+          {/* Desktop: Separate avatar and name */}
+          <div className="hidden md:flex md:flex-col md:items-center md:justify-center md:gap-2">
+            <div
+              className={`
+                w-32 h-32
+                ${isCurrentPlayer ? 'scale-110' : 'scale-100'}
+                transition-all duration-300
+                drop-shadow-2xl
+              `}
+              style={{
+                filter: isCurrentPlayer ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))' : undefined
+              }}
+            >
+              <Avatar player={player} size="lg" />
+            </div>
+
+            <div
+              className={`
+                text-lg
+                font-extrabold
+                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                bg-white/95 backdrop-blur-sm
+                px-4 py-2
+                rounded-full
+                shadow-lg border-2
+                ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+              `}
+              style={isCurrentPlayer ? {
+                animation: 'border-flash 1s ease-in-out infinite',
+              } : undefined}
+            >
+              {player.name}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

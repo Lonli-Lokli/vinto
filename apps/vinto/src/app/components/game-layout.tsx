@@ -24,7 +24,7 @@ export function GameLayout({ children }: GameLayoutProps) {
   return (
     <DIProvider>
       <div
-        className="bg-gradient-to-br from-emerald-50 to-blue-50 overflow-hidden flex flex-col"
+        className="bg-gradient-to-br from-emerald-50 to-blue-50 overflow-y-auto flex flex-col"
         style={{
           ...style,
           height:

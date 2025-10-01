@@ -1,13 +1,14 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
-import { useActionStore, usePlayerStore } from '../di-provider';
+import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 
 export const CardSwap = observer(() => {
   const actionStore = useActionStore();
   const playerStore = usePlayerStore();
+  const gameStore = useGameStore();
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
   const swapTargets = actionStore.swapTargets;
@@ -18,8 +19,8 @@ export const CardSwap = observer(() => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full px-3 py-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-gray-800">
@@ -64,15 +65,28 @@ export const CardSwap = observer(() => {
           )}
         </div>
 
-        {/* Action Buttons - only show reset when selections made */}
-        {swapTargets.length > 0 && (
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          {swapTargets.length > 0 && (
+            <button
+              onClick={() => actionStore.clearSwapTargets()}
+              className="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            >
+              🔄 Reset
+            </button>
+          )}
           <button
-            onClick={() => actionStore.clearSwapTargets()}
-            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            onClick={() => {
+              actionStore.clearSwapTargets();
+              gameStore.confirmPeekCompletion();
+            }}
+            className={`bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm ${
+              swapTargets.length === 0 ? 'col-span-2' : ''
+            }`}
           >
-            🔄 Reset Selection
+            ⏭️ Skip
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

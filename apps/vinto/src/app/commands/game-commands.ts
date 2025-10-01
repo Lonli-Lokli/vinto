@@ -36,7 +36,6 @@ interface SerializedPlayer {
   knownCardPositions: number[];
   isHuman: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
-  avatar: string;
 }
 
 /**
@@ -76,7 +75,6 @@ export class InitializeGameCommand extends Command {
         knownCardPositions: Array.from(player.knownCardPositions),
         isHuman: player.isHuman,
         position: player.position,
-        avatar: player.avatar,
       })
     );
 

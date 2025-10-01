@@ -11,7 +11,7 @@ export const createDeck = (): Card[] => {
   for (const rank of noActionRanks) {
     cardSet.forEach((no) => {
       deck.push({
-        id: `${rank}${no}`,
+        id: `${rank}_${no}`,
         rank: `${rank}`,
         value: rank,
         played: false,
@@ -34,7 +34,7 @@ export const createDeck = (): Card[] => {
   actionCards.forEach((card) => {
     cardSet.forEach((no) => {
       deck.push({
-        id: `${card.rank}${no}`,
+        id: `${card.rank}_${no}`,
         rank: card.rank,
         value: card.value,
         action: card.action,

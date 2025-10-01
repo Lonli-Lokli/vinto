@@ -48,6 +48,15 @@ export const GameTable = observer(() => {
       return false;
     }
 
+    // For own-card peek (7/8), disable after one card is revealed
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'own-card' &&
+      humanPlayer.temporarilyVisibleCards.size > 0
+    ) {
+      return false;
+    }
+
     // Only allow interactions when it's relevant for the human player
     return (
       // During setup phase for memorization
@@ -113,6 +122,16 @@ export const GameTable = observer(() => {
       return false;
     }
 
+    // For opponent-card peek (9/10), disable after one card is revealed
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'opponent-card' &&
+      humanPlayer &&
+      humanPlayer.temporarilyVisibleCards.size > 0
+    ) {
+      return false;
+    }
+
     return (
       isAwaitingActionTarget &&
       (actionContext?.targetType === 'opponent-card' ||
@@ -123,6 +142,13 @@ export const GameTable = observer(() => {
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
+    console.log('handleOpponentCardClick called:', {
+      playerId,
+      position,
+      isAwaitingActionTarget,
+      targetType: actionContext?.targetType,
+    });
+
     // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
       isAwaitingActionTarget &&
@@ -131,11 +157,17 @@ export const GameTable = observer(() => {
         actionContext?.targetType === 'peek-then-swap' ||
         actionContext?.targetType === 'swap-cards')
     ) {
-      gameStore.selectActionTarget(playerId, position);
+      console.log('Calling selectActionTarget');
+      const result = gameStore.selectActionTarget(playerId, position);
+      console.log('selectActionTarget result:', result);
       return;
     } else {
       console.log(
-        'DEBUG Q action - conditions not met, not calling selectActionTarget'
+        'DEBUG - conditions not met, not calling selectActionTarget',
+        {
+          isAwaitingActionTarget,
+          targetType: actionContext?.targetType,
+        }
       );
     }
   };
@@ -184,26 +216,24 @@ export const GameTable = observer(() => {
           {/* Row 2: Left | Center piles | Right */}
           <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 min-h-0">
             {/* Left Player */}
-            <div className="flex-1 flex justify-start">
+            <div className="flex-1 flex justify-start items-start">
               {left && (
-                <div className="relative">
-                  <PlayerArea
-                    player={left}
-                    isCurrentPlayer={currentPlayer?.id === left.id}
-                    isThinking={
-                      gameStore.aiThinking && currentPlayer?.id === left.id
-                    }
-                    gamePhase={phase}
-                    finalScores={finalScores}
-                    onCardClick={
-                      shouldAllowOpponentCardInteractions()
-                        ? (position) =>
-                            handleOpponentCardClick(left.id, position)
-                        : undefined
-                    }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-                  />
-                </div>
+                <PlayerArea
+                  player={left}
+                  isCurrentPlayer={currentPlayer?.id === left.id}
+                  isThinking={
+                    gameStore.aiThinking && currentPlayer?.id === left.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={
+                    shouldAllowOpponentCardInteractions()
+                      ? (position) =>
+                          handleOpponentCardClick(left.id, position)
+                      : undefined
+                  }
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                />
               )}
             </div>
 
@@ -270,26 +300,24 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Right Player */}
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end items-start">
               {right && (
-                <div className="relative">
-                  <PlayerArea
-                    player={right}
-                    isCurrentPlayer={currentPlayer?.id === right.id}
-                    isThinking={
-                      gameStore.aiThinking && currentPlayer?.id === right.id
-                    }
-                    gamePhase={phase}
-                    finalScores={finalScores}
-                    onCardClick={
-                      shouldAllowOpponentCardInteractions()
-                        ? (position) =>
-                            handleOpponentCardClick(right.id, position)
-                        : undefined
-                    }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-                  />
-                </div>
+                <PlayerArea
+                  player={right}
+                  isCurrentPlayer={currentPlayer?.id === right.id}
+                  isThinking={
+                    gameStore.aiThinking && currentPlayer?.id === right.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={
+                    shouldAllowOpponentCardInteractions()
+                      ? (position) =>
+                          handleOpponentCardClick(right.id, position)
+                      : undefined
+                  }
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                />
               )}
             </div>
           </div>
@@ -349,8 +377,10 @@ export const GameTable = observer(() => {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(left.id, position)
+                onCardClick={
+                  shouldAllowOpponentCardInteractions()
+                    ? (position) => handleOpponentCardClick(left.id, position)
+                    : undefined
                 }
                 isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />
@@ -368,8 +398,10 @@ export const GameTable = observer(() => {
                 }
                 gamePhase={phase}
                 finalScores={finalScores}
-                onCardClick={(position) =>
-                  handleOpponentCardClick(right.id, position)
+                onCardClick={
+                  shouldAllowOpponentCardInteractions()
+                    ? (position) => handleOpponentCardClick(right.id, position)
+                    : undefined
                 }
                 isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
               />

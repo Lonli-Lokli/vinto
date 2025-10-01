@@ -18,8 +18,8 @@ export const OpponentCardPeek = observer(() => {
     humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 py-2 min-h-[140px]">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full px-3 py-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-gray-800">
@@ -45,13 +45,24 @@ export const OpponentCardPeek = observer(() => {
           )}
         </div>
 
-        {/* Confirmation Button */}
-        {hasRevealedCard && (
+        {/* Action Buttons */}
+        {hasRevealedCard ? (
           <button
             onClick={() => gameStore.confirmPeekCompletion()}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
           >
             Continue
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              // Skip the peek action
+              playerStore.clearTemporaryCardVisibility();
+              gameStore.confirmPeekCompletion();
+            }}
+            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+          >
+            Skip
           </button>
         )}
       </div>

@@ -14,6 +14,10 @@ import qSrc from '../images/Q.svg';
 import kSrc from '../images/K.svg';
 import aSrc from '../images/A.svg';
 import jokerSrc from '../images/Joker.svg';
+import youSrc from '../images/You.png';
+import michelangeloSrc from '../images/Michelangelo.png';
+import donatelloSrc from '../images/Donatello.png';
+import raphaelSrc from '../images/Raphael.png';
 
 type ImgProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'width' | 'height' | 'src'>;
 
@@ -26,7 +30,7 @@ function resolveSrc(input: StaticImportLike): string {
 	return typeof input.src === 'string' ? input.src : '';
 }
 
-const wrap = (srcLike: StaticImportLike, altFallback: string) =>
+const wrap = (srcLike: StaticImportLike, altFallback?: string) =>
 	function WrappedImg(props: ImgProps) {
 		const { alt, className, ...rest } = props;
 		const src = resolveSrc(srcLike);
@@ -38,9 +42,11 @@ const wrap = (srcLike: StaticImportLike, altFallback: string) =>
 					className={className ?? 'w-10 h-10 object-contain'}
 					{...rest}
 				/>
-				<span className="absolute bottom-0 text-xs font-bold text-gray-900 bg-white/90 px-1 py-0.5 rounded shadow-sm border border-gray-200">
-					{altFallback}
-				</span>
+				{altFallback && (
+					<span className="absolute bottom-0 text-xs font-bold text-gray-900 bg-white/90 px-1 py-0.5 rounded shadow-sm border border-gray-200">
+						{altFallback}
+					</span>
+				)}
 			</div>
 		);
 	};
@@ -60,5 +66,8 @@ export const Image_K = wrap(kSrc as unknown as string, 'K');
 export const Image_A = wrap(aSrc as unknown as string, 'A');
 export const Image_Joker = wrap(jokerSrc as unknown as string, 'Joker');
 
-
+export const Image_You = wrap(youSrc as unknown as string);
+export const Image_Michelangelo = wrap(michelangeloSrc as unknown as string);
+export const Image_Donatello = wrap(donatelloSrc as unknown as string);
+export const Image_Raphael = wrap(raphaelSrc as unknown as string);
 // Named exports above provide React components that render <img src=...>

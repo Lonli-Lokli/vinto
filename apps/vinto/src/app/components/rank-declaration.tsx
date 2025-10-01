@@ -83,10 +83,10 @@ export const RankDeclaration = observer(() => {
 
   return (
     <div
-      className="relative w-full max-w-4xl mx-auto px-2 mb-4"
+      className="w-full h-full px-3 py-2"
       style={{ zIndex: 100 }}
     >
-      <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm overflow-visible">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm overflow-visible flex flex-col">
         {/* Mobile Layout: 3 rows stacked */}
         <div className="block md:hidden">
           {/* Row 1: Header with help */}

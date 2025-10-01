@@ -5,6 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStore, useGamePhaseStore, usePlayerStore } from './di-provider';
 import { getWinnerInfo } from '../lib/game-helpers';
+import { Avatar } from './avatar';
 
 export const FinalScores = observer(() => {
   const gameStore = useGameStore();
@@ -52,7 +53,7 @@ export const FinalScores = observer(() => {
                 : 'bg-gray-50 border border-gray-200'
             }`}
           >
-            <div className="text-lg">{player.avatar}</div>
+           <Avatar player={player} />
             <div className="font-medium text-gray-700">{player.name}</div>
             <div
               className={`text-xl font-bold ${
@@ -69,3 +70,5 @@ export const FinalScores = observer(() => {
     </div>
   );
 });
+
+

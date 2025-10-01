@@ -15,5 +15,5 @@ export function formatGamePhase(phase: string, turnCount: number, roundNumber: n
 
 export function getCurrentPlayerName(currentPlayer: any): string {
   if (!currentPlayer) return '';
-  return `${currentPlayer.avatar} ${currentPlayer.name}'s Turn${currentPlayer.isHuman ? ' (Your turn!)' : ''}`;
+  return `${currentPlayer.name}'s Turn${currentPlayer.isHuman ? ' (Your turn!)' : ''}`;
 }

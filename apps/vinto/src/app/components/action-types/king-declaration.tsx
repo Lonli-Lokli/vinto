@@ -10,8 +10,8 @@ export function KingDeclaration() {
   const nonActionCards = ['2', '3', '4', '5', '6', 'Joker'] as const;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 min-h-[140px]">
-      <div className="bg-white border border-gray-300 rounded p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full px-3 py-2">
+      <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
         <div className="text-center mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-1">
             👑 King Declaration

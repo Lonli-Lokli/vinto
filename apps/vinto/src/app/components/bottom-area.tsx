@@ -8,27 +8,22 @@ import { WaitingIndicator } from './waiting-indicator';
 export function BottomArea() {
   return (
     <div
-      className="sticky bottom-0 z-50 flex-shrink-0 bg-gradient-to-t from-white/95 to-transparent backdrop-blur-sm overflow-visible"
+      className="sticky bottom-0 z-50 flex-shrink-0 bg-gradient-to-t from-white/95 to-transparent backdrop-blur-sm"
       style={{
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-        minHeight: '200px', // Fixed minimum height to prevent jumps
+        height: '25vh', // Fixed height as percentage of viewport
+        minHeight: '100px', // Minimum height for usability
+        maxHeight: '200px', // Maximum height to prevent taking too much space
       }}
     >
-      <div className="h-full flex flex-col justify-end overflow-visible">
-        <div className="space-y-2 overflow-visible">
-          {/* Game Phase Indicators */}
-          <GamePhaseIndicators />
-
-          {/* Action UI Components - stacked vertically */}
-          <CardActionChoice />
-          <ActionTargetSelector />
-          <RankDeclaration />
-
-          {/* Main Game Controls */}
-          <GameControls />
-
-          <WaitingIndicator />
-        </div>
+      <div className="h-full w-full">
+        {/* Only one of these components will be visible at a time, each takes full space */}
+        <GamePhaseIndicators />
+        <CardActionChoice />
+        <ActionTargetSelector />
+        <RankDeclaration />
+        <GameControls />
+        <WaitingIndicator />
       </div>
     </div>
   );

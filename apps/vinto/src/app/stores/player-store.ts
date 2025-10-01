@@ -3,7 +3,6 @@
 import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { Player, Card, Difficulty } from '../shapes';
-import { getAIKnowledgeByDifficulty } from '../lib/game-helpers';
 
 @injectable()
 export class PlayerStore {
@@ -60,7 +59,7 @@ export class PlayerStore {
     this.players = [
       {
         id: 'human',
-        name: 'Leonardo',
+        name: 'You',
         cards: deck.splice(0, 5),
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
@@ -68,7 +67,6 @@ export class PlayerStore {
         isHuman: true,
         isBot: false,
         position: 'bottom',
-        avatar: '👤',
         coalitionWith: new Set(),
       },
       {
@@ -81,7 +79,6 @@ export class PlayerStore {
         isHuman: false,
         isBot: true,
         position: 'left',
-        avatar: '🤖',
         coalitionWith: new Set(),
       },
       {
@@ -94,7 +91,6 @@ export class PlayerStore {
         isHuman: false,
         isBot: true,
         position: 'top',
-        avatar: '🤖',
         coalitionWith: new Set(),
       },
       {
@@ -107,17 +103,14 @@ export class PlayerStore {
         isHuman: false,
         isBot: true,
         position: 'right',
-        avatar: '🤖',
         coalitionWith: new Set(),
       },
     ];
 
     // Give bots initial knowledge based on difficulty
     this.botPlayers.forEach((player) => {
-      const aiKnowledge = getAIKnowledgeByDifficulty(difficulty);
-      Array.from({ length: player.cards.length }, (_, i) => i)
-        .filter(() => Math.random() < aiKnowledge)
-        .forEach((pos) => player.knownCardPositions.add(pos));
+      player.knownCardPositions.add(0);
+      player.knownCardPositions.add(1);
     });
 
     this.currentPlayerIndex = 0;

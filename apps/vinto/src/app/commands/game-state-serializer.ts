@@ -174,7 +174,6 @@ export class GameStateSerializer {
       isHuman: p.isHuman,
       isBot: !p.isHuman,
       position: p.position,
-      avatar: p.avatar,
       coalitionWith: new Set(),
     }));
 

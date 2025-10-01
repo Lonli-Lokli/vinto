@@ -26,8 +26,8 @@ export const CardActionChoice = observer(() => {
   }
 
   return (
-    <div className="mt-2 w-full max-w-4xl mx-auto px-2 min-h-[140px]">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col justify-between">
+    <div className="w-full h-full px-3 py-2">
+      <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm flex flex-col justify-between">
         <div className="text-center mb-2">
           <h3 className="text-sm font-semibold text-gray-800">Choose Action</h3>
           <p className="text-xs text-gray-600 mt-1">
@@ -67,21 +67,11 @@ export const CardActionChoice = observer(() => {
         </div>
 
         {/* Help text */}
-        <div className="text-center text-2xs text-gray-500 mb-2">
+        <div className="text-center text-2xs text-gray-500">
           <strong>Swap:</strong> Replace one of your cards •{' '}
           <strong>{pendingCard.action ? 'Play' : 'Discard'}:</strong>{' '}
-          {pendingCard.action ? 'Use action' : 'Discard directly'}
+          {pendingCard.action ? 'Execute the action' : 'Discard without action'}
         </div>
-
-        {/* Discard Button */}
-        <button
-          onClick={() => gameStore.discardCard()}
-          className="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-1.5 px-3 rounded shadow-sm transition-colors text-sm"
-          aria-label="Discard drawn card"
-          title="Discard drawn card without using action"
-        >
-          Discard
-        </button>
       </div>
     </div>
   );

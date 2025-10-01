@@ -35,24 +35,6 @@ export const GameControls = observer(() => {
 
   // Determine what content to show but always use same container
   const getControlContent = () => {
-    // Show toss-in skip controls when executing toss-in action for human
-    // Check if there's a toss-in action in queue and it's the human's action
-    const currentTossInAction = tossInStore.currentTossInAction;
-    const hasHumanTossInAction =
-      currentTossInAction &&
-      currentTossInAction.playerId === players.find((p) => p.isHuman)?.id;
-
-    const isHumanTossInAction =
-      hasHumanTossInAction && (isTossQueueProcessing || isAwaitingActionTarget);
-
-    if (isHumanTossInAction) {
-      return {
-        type: 'toss-in',
-        title: `Toss-in Action: ${currentTossInAction.card.rank} (${currentTossInAction.card.action})`,
-        subtitle: 'You can execute this action or skip it',
-      };
-    }
-
     // Hide controls during special game states
     const shouldHide =
       (phase !== 'playing' && phase !== 'final') ||
@@ -103,8 +85,8 @@ export const GameControls = observer(() => {
 
   // Single consistent container for all states
   return (
-    <div className="w-full mx-auto px-3 py-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col">
+    <div className="w-full h-full px-3 py-2">
+      <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col">
         {/* Header - consistent across all states */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm md:text-base font-semibold text-gray-800">
@@ -119,8 +101,6 @@ export const GameControls = observer(() => {
 
         {/* Main content area - responsive to content type */}
         <div className="flex flex-col justify-center">
-          {controlContent.type === 'toss-in' && <TossInControls />}
-
           {controlContent.type === 'vinto-only' && <VintoOnlyControls />}
 
           {controlContent.type === 'full-controls' && (
@@ -133,24 +113,6 @@ export const GameControls = observer(() => {
 });
 
 // Sub-components for different control states
-const TossInControls = () => {
-  const tossInStore = useTossInStore();
-  return (
-    <div className="space-y-2">
-      <div className="text-sm text-gray-600 text-center">
-        Execute the action or skip to continue
-      </div>
-      <button
-        onClick={() => tossInStore.skipCurrentAction()}
-        className="w-full bg-poker-green-700 hover:bg-poker-green-800 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-        aria-label="Skip toss-in action"
-      >
-        ⏭️ Skip Action
-      </button>
-    </div>
-  );
-};
-
 const VintoOnlyControls = () => {
   const gameStore = useGameStore();
   return (

@@ -33,7 +33,6 @@ export interface Player {
   isHuman: boolean;
   isBot: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
-  avatar: string;
   coalitionWith: Set<string>;
 }
 

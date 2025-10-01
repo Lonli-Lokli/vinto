@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager } from './di-provider';
 import { GameToastService } from '../lib/toast-service';
+import { DownloadIcon, UploadIcon } from 'lucide-react';
 
 export const SaveLoadButtons = observer(() => {
   const gameStateManager = useGameStateManager();
@@ -54,16 +55,16 @@ export const SaveLoadButtons = observer(() => {
         className="px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold text-xs transition-colors"
         title="Export command history"
       >
-        <span className="hidden sm:inline">💾 Export</span>
-        <span className="sm:hidden">💾</span>
+        <DownloadIcon className="inline w-3 h-3 mr-1" />
+        <span className="hidden sm:inline">Export</span>
       </button>
       <button
         onClick={() => fileInputRef.current?.click()}
         className="px-2 py-1 rounded bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold text-xs transition-colors"
         title="Import command history"
       >
-        <span className="hidden sm:inline">📂 Import</span>
-        <span className="sm:hidden">📂</span>
+        <UploadIcon className="inline w-3 h-3 mr-1" />
+        <span className="hidden sm:inline">Import</span>
       </button>
       <input
         ref={fileInputRef}
