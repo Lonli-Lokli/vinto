@@ -195,7 +195,15 @@ export class DeckStore {
 
     // Check for duplicates
     if (uniqueIds.size !== allCards.length) {
+      // Find and log the duplicate IDs
+      const cardIds = allCards.map((card) => card.id);
+      const duplicates = cardIds.filter((id, index) => cardIds.indexOf(id) !== index);
+      const duplicateCards = allCards.filter((card) => duplicates.includes(card.id));
+      
       console.error('Deck integrity error: Duplicate card IDs found');
+      console.error('Duplicate IDs:', [...new Set(duplicates)]);
+      console.error('Duplicate cards:', duplicateCards.map(card => ({ id: card.id, rank: card.rank, value: card.value })));
+      console.error('Total cards:', allCards.length, 'Unique IDs:', uniqueIds.size);
       return false;
     }
 

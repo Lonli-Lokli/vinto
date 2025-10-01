@@ -14,7 +14,7 @@ import {
 export const GameControls = observer(() => {
   const gameStore = useGameStore();
   const playerStore = usePlayerStore();
-  const { players, currentPlayer } = playerStore;
+  const { currentPlayer } = playerStore;
   const {
     isSelectingSwapPosition,
     isAwaitingActionTarget,
