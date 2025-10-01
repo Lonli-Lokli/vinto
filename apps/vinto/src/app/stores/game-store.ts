@@ -519,7 +519,8 @@ export class GameStore implements TempState {
 
   // Turn management
   private async advanceTurn() {
-    if (this.aiThinking || this.tossInStore.hasTossInActions) return;
+    // Don't advance turn if AI is thinking, toss-in is active, or there are queued toss-in actions
+    if (this.aiThinking || this.tossInStore.waitingForTossIn || this.tossInStore.hasTossInActions) return;
 
     const currentPlayer = this.playerStore.currentPlayer;
     if (!currentPlayer) return;
