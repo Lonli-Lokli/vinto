@@ -320,7 +320,7 @@ export class PeekCardCommand extends Command {
     private playerStore: PlayerStore,
     private playerId: string,
     private position: number,
-    private isPermanent: boolean = false
+    private isPermanent = false
   ) {
     super();
   }
@@ -513,7 +513,7 @@ export class DeclareKingActionCommand extends Command {
  * Toss-in card command
  */
 export class TossInCardCommand extends Command {
-  private wasCorrect: boolean = false;
+  private wasCorrect = false;
 
   constructor(
     private playerStore: PlayerStore,

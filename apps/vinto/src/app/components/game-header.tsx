@@ -9,7 +9,6 @@ import {
   useGamePhaseStore,
   useDeckStore,
 } from './di-provider';
-import { GameToastService } from '../lib/toast-service';
 import { SaveLoadButtons } from './save-load-buttons';
 
 const SettingsPopover = observer(
@@ -117,8 +116,8 @@ export const GameHeader = observer(() => {
 
   const getCurrentPlayerDisplay = () => {
     if (!currentPlayer || phase === 'scoring') return null;
-    if (currentPlayer.isHuman) return `${currentPlayer.avatar} Your turn!`;
-    return `${currentPlayer.avatar} ${currentPlayer.name}`;
+    if (currentPlayer.isHuman) return `Your turn!`;
+    return `${currentPlayer.name}`;
   };
 
   return (

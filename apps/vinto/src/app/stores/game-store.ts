@@ -732,7 +732,7 @@ export class GameStore implements TempState {
     return this.commandHistory.exportHistory();
   }
 
-  debugRecentCommands(count: number = 20) {
+  debugRecentCommands(count = 20) {
     const log = this.commandHistory.getCommandLog();
     console.log('=== Recent Commands ===');
     console.log(log.slice(-count).join('\n'));
