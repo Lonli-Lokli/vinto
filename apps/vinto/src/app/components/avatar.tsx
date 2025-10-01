@@ -14,6 +14,7 @@ export const Avatar: FC<AvatarProps> = ({ player, size = 'md' }) => {
     lg: 'w-full h-full',
   };
 
+  const test = '';
   const renderImg = () => {
     const className = imageSizeClasses[size];
     switch (player.id) {
