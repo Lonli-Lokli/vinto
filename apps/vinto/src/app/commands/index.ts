@@ -6,7 +6,7 @@
  */
 
 export { Command } from './command';
-export type { ICommand, CommandData, CommandResult } from './command';
+export type { ICommand, CommandData, CommandResult, CommandKind } from './command';
 export { CommandHistory } from './command-history';
 export { CommandFactory } from './command-factory';
 export {

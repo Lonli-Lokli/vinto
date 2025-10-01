@@ -11,10 +11,25 @@
  */
 
 /**
+ * Union type of all possible command types
+ */
+export type CommandKind =
+  | 'INITIALIZE_GAME'
+  | 'DRAW_CARD'
+  | 'SWAP_CARDS'
+  | 'PEEK_CARD'
+  | 'DISCARD_CARD'
+  | 'REPLACE_CARD'
+  | 'ADVANCE_TURN'
+  | 'DECLARE_KING_ACTION'
+  | 'TOSS_IN'
+  | 'ADD_PENALTY_CARD';
+
+/**
  * Serializable command data that can be saved/restored
  */
 export interface CommandData {
-  type: string;
+  type: CommandKind;
   timestamp: number;
   playerId?: string;
   payload: Record<string, any>;
@@ -65,7 +80,7 @@ export abstract class Command implements ICommand {
 
   abstract getDescription(): string;
 
-  protected createCommandData(type: string, payload: Record<string, any>): CommandData {
+  protected createCommandData(type: CommandKind, payload: Record<string, any>): CommandData {
     return {
       type,
       timestamp: this.timestamp,

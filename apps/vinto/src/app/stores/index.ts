@@ -13,6 +13,7 @@ export { DeckStore } from './deck-store';
 export { GamePhaseStore } from './game-phase-store';
 export { ActionStore } from './action-store';
 export { TossInStore } from './toss-in-store';
+export { ReplayStore } from './replay-store';
 export { GameStore } from './game-store';
 
 // Export types

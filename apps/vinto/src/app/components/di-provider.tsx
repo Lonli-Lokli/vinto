@@ -10,6 +10,7 @@ import {
   GamePhaseStore,
   ActionStore,
   TossInStore,
+  ReplayStore,
 } from '../stores';
 import { GameStateManager } from '../commands';
 
@@ -23,6 +24,7 @@ interface StoreContextValue {
   gamePhaseStore: GamePhaseStore;
   actionStore: ActionStore;
   tossInStore: TossInStore;
+  replayStore: ReplayStore;
   gameStateManager: GameStateManager;
 }
 
@@ -47,6 +49,7 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
       gamePhaseStore: getInstance<GamePhaseStore>(GamePhaseStore),
       actionStore: getInstance<ActionStore>(ActionStore),
       tossInStore: getInstance<TossInStore>(TossInStore),
+      replayStore: getInstance<ReplayStore>(ReplayStore),
       gameStateManager: getInstance<GameStateManager>(GameStateManager),
     };
   }, []);
@@ -113,4 +116,11 @@ export function useTossInStore(): TossInStore {
 
 export function useGameStateManager(): GameStateManager {
   return useStores().gameStateManager;
+}
+
+/**
+ * Hook to access replayStore
+ */
+export function useReplayStore(): ReplayStore {
+  return useStores().replayStore;
 }

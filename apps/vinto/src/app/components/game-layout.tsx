@@ -4,6 +4,7 @@
 import React from 'react';
 import { useViewport } from '../hooks/use-viewport';
 import { DIProvider } from './di-provider';
+import { ReplayControls } from './replay-controls';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ export function GameLayout({ children }: GameLayoutProps) {
         }}
       >
         {children}
+        <ReplayControls />
       </div>
     </DIProvider>
   );

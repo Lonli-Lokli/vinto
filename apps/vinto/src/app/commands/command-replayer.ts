@@ -104,9 +104,9 @@ export class CommandReplayer {
         command = this.commandFactory.addPenaltyCard(data.payload.playerId);
         break;
 
+        
       default:
-        console.warn(`Unknown command type: ${data.type}`);
-        return false;
+        throw new Error(`Unknown command type: ${data.type}`);
     }
 
     // Execute the command through the history manager

@@ -18,6 +18,7 @@ import {
   GamePhaseStore,
   ActionStore,
   TossInStore,
+  ReplayStore,
 } from '../stores';
 import { Difficulty, TossInTime } from '../shapes';
 
@@ -38,6 +39,7 @@ export class GameStateManager {
     @inject(GamePhaseStore) private gamePhaseStore: GamePhaseStore,
     @inject(ActionStore) private actionStore: ActionStore,
     @inject(TossInStore) private tossInStore: TossInStore,
+    @inject(ReplayStore) private replayStore: ReplayStore,
     @inject(CommandFactory) commandFactory: CommandFactory,
     @inject(CommandHistory) commandHistory: CommandHistory
   ) {
@@ -150,6 +152,43 @@ export class GameStateManager {
   }
 
   /**
+   * Load game in replay mode (step-by-step)
+   */
+  async loadGameInReplayMode(json: string): Promise<{
+    success: boolean;
+    commandCount: number;
+  }> {
+    try {
+      // Parse the saved state
+      const savedState = this.gameStateSerializer.loadGameState(json);
+
+      // Reset all stores
+      this.resetAllStores();
+
+      // Restore initial state
+      await this.gameStateSerializer.restoreGameState(
+        savedState,
+        this.playerStore,
+        this.deckStore,
+        this.gamePhaseStore,
+        this.actionStore,
+        this.tossInStore
+      );
+
+      // Enter replay mode with commands
+      this.replayStore.startReplay(savedState.commands);
+
+      return {
+        success: true,
+        commandCount: savedState.commands.length,
+      };
+    } catch (error) {
+      console.error('Failed to load game in replay mode:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Load game from uploaded file
    */
   async loadGameFromFile(file: File): Promise<{
@@ -189,6 +228,81 @@ export class GameStateManager {
       console.error('Failed to load game from file:', error);
       throw error;
     }
+  }
+
+  /**
+   * Load game from file in replay mode (step-by-step)
+   */
+  async loadGameFromFileInReplayMode(file: File): Promise<{
+    success: boolean;
+    commandCount: number;
+  }> {
+    try {
+      const savedState = await this.gameStateSerializer.loadGameStateFromFile(
+        file
+      );
+
+      // Reset all stores
+      this.resetAllStores();
+
+      // Restore initial state
+      await this.gameStateSerializer.restoreGameState(
+        savedState,
+        this.playerStore,
+        this.deckStore,
+        this.gamePhaseStore,
+        this.actionStore,
+        this.tossInStore
+      );
+
+      // Enter replay mode with commands
+      this.replayStore.startReplay(savedState.commands);
+
+      return {
+        success: true,
+        commandCount: savedState.commands.length,
+      };
+    } catch (error) {
+      console.error('Failed to load game from file in replay mode:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute next command in replay mode
+   */
+  async executeNextReplayCommand(): Promise<{
+    success: boolean;
+    hasMore: boolean;
+  }> {
+    if (!this.replayStore.isReplayMode) {
+      return { success: false, hasMore: false };
+    }
+
+    const commandData = this.replayStore.nextCommand();
+    if (!commandData) {
+      return { success: false, hasMore: false };
+    }
+
+    try {
+      const command = this.commandFactory.fromCommandData(commandData);
+      await command.execute();
+
+      return {
+        success: true,
+        hasMore: this.replayStore.hasNextCommand,
+      };
+    } catch (error) {
+      console.error('Failed to execute replay command:', error);
+      return { success: false, hasMore: this.replayStore.hasNextCommand };
+    }
+  }
+
+  /**
+   * Exit replay mode
+   */
+  exitReplayMode(): void {
+    this.replayStore.exitReplay();
   }
 
   /**

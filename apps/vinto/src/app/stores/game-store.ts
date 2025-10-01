@@ -8,6 +8,7 @@ import { DeckStore } from './deck-store';
 import { ActionStore } from './action-store';
 import { ActionCoordinator } from './action-coordinator';
 import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
+import { ReplayStore } from './replay-store';
 import { timerService } from '../services/timer-service';
 import { GameToastService } from '../lib/toast-service';
 import {
@@ -29,6 +30,7 @@ export class GameStore implements TempState {
   actionStore: ActionStore;
   actionCoordinator: ActionCoordinator;
   tossInStore: TossInStore;
+  replayStore: ReplayStore;
   gameStateManager: GameStateManager;
 
   // Command Pattern infrastructure
@@ -60,6 +62,7 @@ export class GameStore implements TempState {
     @inject(DeckStore) deckStore: DeckStore,
     @inject(ActionStore) actionStore: ActionStore,
     @inject(TossInStore) tossInStore: TossInStore,
+    @inject(ReplayStore) replayStore: ReplayStore,
     @inject(CommandFactory) commandFactory: CommandFactory,
     @inject(CommandHistory) commandHistory: CommandHistory,
     @inject(ActionCoordinator) actionCoordinator: ActionCoordinator,
@@ -71,6 +74,7 @@ export class GameStore implements TempState {
     this.deckStore = deckStore;
     this.actionStore = actionStore;
     this.tossInStore = tossInStore;
+    this.replayStore = replayStore;
     this.commandFactory = commandFactory;
     this.commandHistory = commandHistory;
     this.actionCoordinator = actionCoordinator;
@@ -178,14 +182,15 @@ export class GameStore implements TempState {
         this.playerStore.clearTemporaryCardVisibility();
         this.playerStore.clearHighlightedCards();
 
-        // Handle AI turns (but not during toss-in queue processing)
+        // Handle AI turns (but not during toss-in queue processing or replay mode)
         if (
           currentPlayer &&
           currentPlayer.isBot &&
           !this.aiThinking &&
           this.sessionActive &&
           this.phaseStore.isIdle &&
-          !this.tossInStore.isProcessingQueue
+          !this.tossInStore.isProcessingQueue &&
+          !this.replayStore.isReplayMode
         ) {
           // Trigger AI move immediately
           this.makeAIMove(this.difficulty);
@@ -212,7 +217,10 @@ export class GameStore implements TempState {
       this.actionStore.reset();
       this.tossInStore.reset();
 
-      await this.gameStateManager.initializeGame(this.difficulty, this.tossInTimeConfig);
+      await this.gameStateManager.initializeGame(
+        this.difficulty,
+        this.tossInTimeConfig
+      );
     } catch (error) {
       console.error('Error initializing game:', error);
       GameToastService.error('Failed to start game. Please try again.');
@@ -387,7 +395,8 @@ export class GameStore implements TempState {
             );
           } else {
             // Discard non-action cards using command
-            const discardCommand = this.commandFactory.discardCard(replacedCard);
+            const discardCommand =
+              this.commandFactory.discardCard(replacedCard);
             await this.commandHistory.executeCommand(discardCommand);
             this.startTossInPeriod();
           }
@@ -486,8 +495,8 @@ export class GameStore implements TempState {
 
   // Toss-in mechanics
   startTossInPeriod() {
-    // Don't start a new toss-in period if we're already in one
-    if (this.tossInStore.isActive || this.phaseStore.isTossQueueActive) {
+    // Don't start a new toss-in period if we're already in one or in replay mode
+    if (this.tossInStore.isActive || this.phaseStore.isTossQueueActive || this.replayStore.isReplayMode) {
       return;
     }
 
@@ -519,8 +528,14 @@ export class GameStore implements TempState {
 
   // Turn management
   private async advanceTurn() {
-    // Don't advance turn if AI is thinking, toss-in is active, or there are queued toss-in actions
-    if (this.aiThinking || this.tossInStore.waitingForTossIn || this.tossInStore.hasTossInActions) return;
+    // Don't advance turn if AI is thinking, toss-in is active, there are queued toss-in actions, or in replay mode
+    if (
+      this.aiThinking ||
+      this.tossInStore.waitingForTossIn ||
+      this.tossInStore.hasTossInActions ||
+      this.replayStore.isReplayMode
+    )
+      return;
 
     const currentPlayer = this.playerStore.currentPlayer;
     if (!currentPlayer) return;

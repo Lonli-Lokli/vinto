@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from 'tsyringe';
-import { ICommand } from './command';
+import { ICommand, CommandData } from './command';
 import {
   InitializeGameCommand,
   DrawCardCommand,
@@ -25,7 +25,7 @@ import {
   GamePhaseStore,
   TossInStore,
 } from '../stores';
-import { Card, Rank, Difficulty, TossInTime } from '../shapes';
+import { Card, Rank, Difficulty, TossInTime, NeverError } from '../shapes';
 
 @injectable()
 export class CommandFactory {
@@ -120,5 +120,67 @@ export class CommandFactory {
       this.deckStore,
       playerId
     );
+  }
+
+  /**
+   * Reconstruct a command from serialized command data
+   */
+  fromCommandData(data: CommandData): ICommand {
+    const { type, payload } = data;
+
+    switch (type) {
+      case 'INITIALIZE_GAME':
+        return this.initializeGame(
+          payload.difficulty as Difficulty,
+          payload.tossInTimeConfig as TossInTime
+        );
+
+      case 'DRAW_CARD':
+        return this.drawCard(payload.playerId as string);
+
+      case 'SWAP_CARDS':
+        return this.swapCards(
+          payload.player1Id as string,
+          payload.position1 as number,
+          payload.player2Id as string,
+          payload.position2 as number
+        );
+
+      case 'PEEK_CARD':
+        return this.peekCard(
+          payload.playerId as string,
+          payload.position as number,
+          payload.isPermanent as boolean
+        );
+
+      case 'DISCARD_CARD':
+        return this.discardCard(payload.card as Card);
+
+      case 'REPLACE_CARD':
+        return this.replaceCard(
+          payload.playerId as string,
+          payload.position as number,
+          payload.newCard as Card
+        );
+
+      case 'ADVANCE_TURN':
+        return this.advanceTurn(payload.fromPlayerId as string);
+
+      case 'DECLARE_KING_ACTION':
+        return this.declareKingAction(payload.rank as Rank);
+
+      case 'TOSS_IN':
+        return this.tossInCard(
+          payload.playerId as string,
+          payload.position as number,
+          payload.matchingRank as Rank
+        );
+
+      case 'ADD_PENALTY_CARD':
+        return this.addPenaltyCard(payload.playerId as string);
+
+      default:
+        throw new NeverError(type);
+    }
   }
 }

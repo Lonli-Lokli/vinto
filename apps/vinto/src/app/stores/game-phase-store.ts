@@ -40,9 +40,6 @@ export class GamePhaseStore {
 
   transitionTo(newPhase: GamePhase, newSubPhase: GameSubPhase) {
     if (this.canTransitionTo(newPhase, newSubPhase)) {
-      console.log(
-        `Transitioning from ${this.phase}.${this.subPhase} to ${newPhase}.${newSubPhase}`
-      );
       this.phase = newPhase;
       this.subPhase = newSubPhase;
     } else {
