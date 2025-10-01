@@ -1,101 +1,184 @@
-# Vinto
+# Vinto Card Game
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A multiplayer card game implementation built with Next.js, TypeScript, and MobX. Vinto is a strategic card game where players compete to achieve the lowest score by managing their cards and using action cards tactically.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Features
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/next?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- **4-Player Game**: One human player vs three AI opponents
+- **Strategic Gameplay**: Action cards (7-K) with special abilities
+- **Command Pattern**: Complete game state replay and undo functionality
+- **Responsive Design**: Optimized for both mobile and desktop
+- **State Management**: MobX with dependency injection
+- **Type-Safe**: Full TypeScript implementation
 
-## Run tasks
+## Game Rules
 
-To run the dev server for your app, use:
+### Setup
+- Each player starts with 4 cards
+- Players get to peek at 2 of their own cards
+- Goal: Achieve the lowest total score
+
+### Gameplay
+On your turn, you can either:
+1. **Draw from deck** - Draw a new card and choose to swap or play
+2. **Take from discard** - Take an unplayed action card (7-K) from discard pile
+3. **Call Vinto** - End the game when you think you have the lowest score
+
+### Action Cards
+- **7 (Peek Own)**: Look at one of your own cards
+- **8 (Peek Own)**: Look at one of your own cards
+- **9 (Peek Opponent)**: Look at one opponent's card
+- **10 (Peek Opponent)**: Look at one opponent's card
+- **Jack (Swap Cards)**: Swap any two cards between players
+- **Queen (Peek & Swap)**: Peek at two cards, then optionally swap them
+- **King (Declare Rank)**: All players must toss in cards of declared rank
+
+### Scoring
+- Number cards (1-6): Face value
+- Action cards (7-K): 10 points each
+- Pairs in same column: 0 points
+- Game ends when someone calls Vinto - all cards revealed and scored
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **State Management**: MobX with decorators
+- **Dependency Injection**: Inversify
+- **Styling**: Tailwind CSS
+- **Build Tool**: Nx monorepo
+
+## Project Structure
+
+```
+apps/vinto/src/app/
+├── commands/          # Command pattern implementation
+│   ├── command-factory.ts
+│   ├── command-history.ts
+│   ├── command-replayer.ts
+│   ├── game-commands.ts
+│   ├── game-state-manager.ts
+│   └── game-state-serializer.ts
+├── components/        # React components
+│   ├── action-types/  # Action card UI components
+│   ├── di-provider.tsx
+│   ├── game-layout.tsx
+│   ├── game-table.tsx
+│   └── ...
+├── di/               # Dependency injection setup
+│   ├── container.ts
+│   └── setup.ts
+├── stores/           # MobX stores
+│   ├── game-store.ts
+│   ├── player-store.ts
+│   ├── deck-store.ts
+│   ├── action-store.ts
+│   └── ...
+└── lib/              # Utilities and helpers
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```sh
+npm install
+```
+
+### Development
+
+Run the dev server:
 
 ```sh
 npx nx dev vinto
 ```
 
-To create a production bundle:
+Open [http://localhost:4200](http://localhost:4200) in your browser.
+
+### Build
+
+Create a production bundle:
 
 ```sh
 npx nx build vinto
 ```
 
-To see all available targets to run for a project, run:
+## Key Features
 
+### Command Pattern Integration
+The game implements a complete command pattern that allows:
+- **Save/Load**: Export and import game state as JSON
+- **Replay**: Step through entire game history
+- **Undo/Redo**: Navigate through game states
+- **Debugging**: Inspect game state at any point
+
+### Dependency Injection
+Uses Inversify for clean dependency management:
+- All stores are registered as singletons
+- Components use React hooks to access DI container
+- Easy testing and mocking
+
+### State Machine
+Game phases managed through explicit state transitions:
+- `setup`: Initial card memorization
+- `playing`: Main game loop
+- `final`: Final round after Vinto call
+- `scoring`: Score calculation and display
+
+### Responsive Design
+- Mobile-first approach
+- Different layouts for phone/tablet/desktop
+- Touch-optimized controls
+- Dynamic card sizing based on hand size
+
+## Development Notes
+
+### State Management
+The app uses MobX for reactive state management with the following stores:
+- `GameStore`: Main game logic and orchestration
+- `PlayerStore`: Player data and turn management
+- `DeckStore`: Draw pile and discard pile
+- `ActionStore`: Action card execution state
+- `GamePhaseStore`: Game phase state machine
+- `TossInStore`: King action toss-in period
+
+### Component Architecture
+- Server components for static layout
+- Client components with `'use client'` directive
+- Observer pattern for reactive updates
+- Hooks-based DI access via `di-provider.tsx`
+
+## Nx Workspace
+
+This project uses Nx for build optimization and task running.
+
+View project graph:
+```sh
+npx nx graph
+```
+
+Show available tasks:
 ```sh
 npx nx show project vinto
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## Contributing
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## Add new projects
+## License
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+MIT
 
-Use the plugin's generator to create new projects.
+## Links
 
-To generate a new application, use:
-
-```sh
-npx nx g @nx/next:app demo
-```
-
-To generate a new library, use:
-
-```sh
-npx nx g @nx/react:lib mylib
-```
-
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/next?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- [Nx Documentation](https://nx.dev)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [MobX Documentation](https://mobx.js.org)
