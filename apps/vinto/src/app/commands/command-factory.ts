@@ -71,11 +71,7 @@ export class CommandFactory {
     );
   }
 
-  peekCard(
-    playerId: string,
-    position: number,
-    isPermanent = false
-  ): ICommand {
+  peekCard(playerId: string, position: number, isPermanent = false): ICommand {
     return new PeekCardCommand(
       this.playerStore,
       playerId,

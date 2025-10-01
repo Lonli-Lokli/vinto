@@ -9,7 +9,7 @@ import {
   useGamePhaseStore,
   useDeckStore,
 } from './di-provider';
-import { SaveLoadButtons } from './save-load-buttons';
+import { GameCommandGroup } from './game-command-group';
 
 const SettingsPopover = observer(
   ({
@@ -201,8 +201,7 @@ export const GameHeader = observer(() => {
 
             {/* Right: Cards Left + Command History */}
             <div className="flex items-center gap-2">
-              {/* Command History Import/Export */}
-              <SaveLoadButtons />
+              <GameCommandGroup />
 
               {/* Cards Left */}
               <div className="flex items-center gap-1">

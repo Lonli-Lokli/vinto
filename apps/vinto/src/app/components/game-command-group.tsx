@@ -6,7 +6,7 @@ import { useGameStateManager, useReplayStore } from './di-provider';
 import { GameToastService } from '../lib/toast-service';
 import { DownloadIcon, PlayIcon } from 'lucide-react';
 
-export const SaveLoadButtons = observer(() => {
+export const GameCommandGroup = observer(() => {
   const gameStateManager = useGameStateManager();
   const replayStore = useReplayStore();
 
