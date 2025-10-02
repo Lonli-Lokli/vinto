@@ -63,7 +63,7 @@ export class CommandFactory {
     position1: number,
     player2Id: string,
     position2: number,
-    revealed: boolean = false
+    revealed = false
   ): ICommand {
     return new SwapCardsCommand(
       this.playerStore,
@@ -86,7 +86,11 @@ export class CommandFactory {
   }
 
   discardCard(card: Card): ICommand {
-    return new DiscardCardCommand(this.deckStore, card);
+    return new DiscardCardCommand(
+      this.deckStore,
+      this.cardAnimationStore,
+      card
+    );
   }
 
   replaceCard(playerId: string, position: number, newCard: Card): ICommand {
@@ -110,6 +114,7 @@ export class CommandFactory {
   tossInCard(playerId: string, position: number, matchingRank: Rank): ICommand {
     return new TossInCardCommand(
       this.playerStore,
+      this.cardAnimationStore,
       playerId,
       position,
       matchingRank

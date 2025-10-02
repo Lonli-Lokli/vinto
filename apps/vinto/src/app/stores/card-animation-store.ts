@@ -11,17 +11,32 @@ import { AnimationPositionCapture } from '../services/animation-position-capture
 
 export type AnimationType = 'swap' | 'draw' | 'discard' | 'peek' | 'toss-in';
 
+export type AnimationActor = 'draw' | 'discard' | 'drawn' | 'player';
+export type AnimationDrawTarget = {
+  type: 'draw';
+};
+export type AnimationDiscardTarget = {
+  type: 'discard';
+};
+export type AnimationPlayerTarget = {
+  type: 'player';
+  playerId: string;
+  position: number;
+};
+export type AnimationDrawnTarget = {
+  type: 'drawn';
+};
+
+export type AnimationTarget =
+  | AnimationDrawTarget
+  | AnimationDiscardTarget
+  | AnimationPlayerTarget
+  | AnimationDrawnTarget;
+
 export interface CardAnimationState {
   id: string;
   type: AnimationType;
   card?: Card;
-  fromPlayerId?: string;
-  fromPosition?: number;
-  toPlayerId?: string;
-  toPosition?: number;
-  // For drawing/discarding
-  fromDeck?: boolean;
-  toDeck?: boolean;
   // Pre-captured positions (for immediate measurement)
   fromX?: number;
   fromY?: number;
@@ -64,33 +79,38 @@ export class CardAnimationStore {
 
   /**
    * Start a swap animation - card moving from one position to another
-   * fromPosition: -1 means from pending card, otherwise from player's hand
    * revealed: whether to show the card face during animation (default: true)
    */
   startSwapAnimation(
     card: Card,
-    fromPlayerId: string,
-    fromPosition: number,
-    toPlayerId: string,
-    toPosition: number,
+    from: AnimationTarget,
+    to: AnimationTarget,
     duration = 1500,
-    revealed = true
+    revealed: boolean
   ): string {
     const id = `swap-${this.animationCounter++}`;
 
     // Capture positions immediately
     const fromPos =
-      fromPosition === -1
+      from.type === 'drawn'
         ? this.positionCapture.getPendingCardPosition()
+        : from.type === 'discard'
+        ? this.positionCapture.getDiscardPilePosition()
+        : from.type === 'draw'
+        ? this.positionCapture.getDeckPilePosition()
         : this.positionCapture.getPlayerCardPosition(
-            fromPlayerId,
-            fromPosition
+            from.playerId,
+            from.position
           );
 
-    const toPos = this.positionCapture.getPlayerCardPosition(
-      toPlayerId,
-      toPosition
-    );
+    const toPos =
+      to.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : to.type === 'discard'
+        ? this.positionCapture.getDiscardPilePosition()
+        : to.type === 'draw'
+        ? this.positionCapture.getDeckPilePosition()
+        : this.positionCapture.getPlayerCardPosition(to.playerId, to.position);
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -103,10 +123,6 @@ export class CardAnimationStore {
       id,
       type: 'swap' as const,
       card,
-      fromPlayerId,
-      fromPosition,
-      toPlayerId,
-      toPosition,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -127,30 +143,33 @@ export class CardAnimationStore {
   }
 
   /**
-   * Start a draw animation from deck to player
+   * Start a draw animation from deck/drawn position to player
    */
   startDrawAnimation(
     card: Card,
-    toPlayerId: string,
-    toPosition: number,
+    from: AnimationDrawTarget | AnimationDrawnTarget,
+    to: AnimationPlayerTarget,
     duration = 1500,
     revealed = true
   ): string {
     const id = `draw-${this.animationCounter++}`;
 
     // Capture positions immediately
-    const fromPos = this.positionCapture.getDeckPilePosition();
+    const fromPos =
+      from.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getDeckPilePosition();
     const toPos = this.positionCapture.getPlayerCardPosition(
-      toPlayerId,
-      toPosition
+      to.playerId,
+      to.position
     );
 
     console.log('[CardAnimationStore] Draw animation positions:', {
       id,
       fromPos,
       toPos,
-      toPlayerId,
-      toPosition,
+      from,
+      to,
     });
 
     if (!fromPos || !toPos) {
@@ -164,9 +183,6 @@ export class CardAnimationStore {
       id,
       type: 'draw',
       card,
-      fromDeck: true,
-      toPlayerId,
-      toPosition,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -182,29 +198,32 @@ export class CardAnimationStore {
   }
 
   /**
-   * Start a discard animation from player to discard pile
+   * Start a discard animation from player/drawn to discard pile
    */
   startDiscardAnimation(
     card: Card,
-    fromPlayerId: string,
-    fromPosition: number,
+    from: AnimationPlayerTarget | AnimationDrawnTarget,
+    to: AnimationDiscardTarget,
     duration = 1500
   ): string {
     const id = `discard-${this.animationCounter++}`;
 
     // Capture positions immediately
-    const fromPos = this.positionCapture.getPlayerCardPosition(
-      fromPlayerId,
-      fromPosition
-    );
+    const fromPos =
+      from.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getPlayerCardPosition(
+            from.playerId,
+            from.position
+          );
     const toPos = this.positionCapture.getDiscardPilePosition();
 
     console.log('[CardAnimationStore] Discard animation positions:', {
       id,
       fromPos,
       toPos,
-      fromPlayerId,
-      fromPosition,
+      from,
+      to,
     });
 
     if (!fromPos || !toPos) {
@@ -218,15 +237,13 @@ export class CardAnimationStore {
       id,
       type: 'discard',
       card,
-      fromPlayerId,
-      fromPosition,
-      toDeck: true,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
       toY: toPos.y,
       startTime: Date.now(),
       duration,
+      revealed: true, // Discard animations always show the card
       completed: false,
     });
 
@@ -244,27 +261,6 @@ export class CardAnimationStore {
       '[CardAnimationStore] Remaining animations:',
       this.activeAnimations.size
     );
-  }
-
-  /**
-   * Get animation state for a specific card position
-   */
-  getAnimationForPosition(
-    playerId: string,
-    position: number
-  ): CardAnimationState | undefined {
-    return Array.from(this.activeAnimations.values()).find(
-      (anim) =>
-        (anim.fromPlayerId === playerId && anim.fromPosition === position) ||
-        (anim.toPlayerId === playerId && anim.toPosition === position)
-    );
-  }
-
-  /**
-   * Check if a specific position is currently animating
-   */
-  isPositionAnimating(playerId: string, position: number): boolean {
-    return this.getAnimationForPosition(playerId, position) !== undefined;
   }
 
   /**

@@ -252,7 +252,7 @@ export class SwapCardsCommand extends Command {
     private position1: number,
     private player2Id: string,
     private position2: number,
-    private revealed: boolean = false
+    private revealed = false
   ) {
     super();
   }
@@ -274,10 +274,8 @@ export class SwapCardsCommand extends Command {
       // Card1: position1 -> position2
       this.cardAnimationStore.startSwapAnimation(
         this.card1,
-        this.player1Id,
-        this.position1,
-        this.player2Id,
-        this.position2,
+        { type: 'player', playerId: this.player1Id, position: this.position1 },
+        { type: 'player', playerId: this.player2Id, position: this.position2 },
         1500,
         this.revealed
       );
@@ -285,10 +283,8 @@ export class SwapCardsCommand extends Command {
       // Card2: position2 -> position1
       this.cardAnimationStore.startSwapAnimation(
         this.card2,
-        this.player2Id,
-        this.position2,
-        this.player1Id,
-        this.position1,
+        { type: 'player', playerId: this.player2Id, position: this.position2 },
+        { type: 'player', playerId: this.player1Id, position: this.position1 },
         1500,
         this.revealed
       );
@@ -401,11 +397,24 @@ export class PeekCardCommand extends Command {
  * Discard card command
  */
 export class DiscardCardCommand extends Command {
-  constructor(private deckStore: DeckStore, private card: Card) {
+  constructor(
+    private deckStore: DeckStore,
+    private cardAnimationStore: CardAnimationStore,
+    private card: Card
+  ) {
     super();
   }
 
   execute(): boolean {
+    // Trigger animation from pending card position to discard pile (revealed)
+    if (this.cardAnimationStore) {
+      this.cardAnimationStore.startDiscardAnimation(
+        this.card,
+        { type: 'drawn' },
+        { type: 'discard' }
+      );
+    }
+
     this.deckStore.discardCard(this.card);
     return true;
   }
@@ -445,19 +454,21 @@ export class ReplaceCardCommand extends Command {
     const oldCardToDiscard = player?.cards[this.position];
 
     if (this.cardAnimationStore) {
-      // Animation 1: Drawn card (newCard) moving from deck to player's hand
+      // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       this.cardAnimationStore.startDrawAnimation(
         this.newCard,
-        this.playerId,
-        this.position
+        { type: 'drawn' },
+        { type: 'player', playerId: this.playerId, position: this.position },
+        1500,
+        true
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
       if (oldCardToDiscard) {
         this.cardAnimationStore.startDiscardAnimation(
           oldCardToDiscard,
-          this.playerId,
-          this.position
+          { type: 'player', playerId: this.playerId, position: this.position },
+          { type: 'discard' }
         );
       }
     }
@@ -568,6 +579,7 @@ export class TossInCardCommand extends Command {
 
   constructor(
     private playerStore: PlayerStore,
+    private cardAnimationStore: CardAnimationStore,
     private playerId: string,
     private position: number,
     private matchingRank: Rank
@@ -583,6 +595,15 @@ export class TossInCardCommand extends Command {
     if (!card) return false;
 
     this.wasCorrect = card.rank === this.matchingRank;
+
+    // Trigger animation from player's hand to discard pile (revealed)
+    if (this.cardAnimationStore) {
+      this.cardAnimationStore.startDiscardAnimation(
+        card,
+        { type: 'player', playerId: this.playerId, position: this.position },
+        { type: 'discard' }
+      );
+    }
 
     // Remove card from player's hand
     this.playerStore.removeCardFromPlayer(this.playerId, this.position);
@@ -635,8 +656,8 @@ export class AddPenaltyCardCommand extends Command {
     if (this.cardAnimationStore) {
       this.cardAnimationStore.startDrawAnimation(
         card,
-        this.playerId,
-        targetPosition,
+        { type: 'draw' },
+        { type: 'player', playerId: this.playerId, position: targetPosition },
         1500,
         false // Don't reveal penalty card during animation
       );

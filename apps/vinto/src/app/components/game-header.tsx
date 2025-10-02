@@ -186,9 +186,20 @@ export const GameHeader = observer(() => {
 
             {/* Center: Title + Game Info */}
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-poker-green-700 to-emerald-600">
-                VINTO
-              </h1>
+              <div className="flex items-center gap-1">
+                <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-poker-green-700 to-emerald-600">
+                  VINTO
+                </h1>
+                <a
+                  href="/VintoRules.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                  title="View game rules"
+                >
+                  📖
+                </a>
+              </div>
               <div className="text-xs text-gray-600 font-medium">
                 {getPhaseDisplay()}
               </div>
