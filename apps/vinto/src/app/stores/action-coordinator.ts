@@ -325,13 +325,16 @@ export class ActionCoordinator {
     if (targets.length !== 2) return false;
 
     const [target1, target2] = targets;
+    const context = this.actionStore.actionContext;
+    const actionPlayer = context ? this.playerStore.getPlayer(context.playerId) : null;
 
-    // Execute swap using command
+    // Execute swap using command - only reveal if action player is human
     const swapCommand = this.commandFactory.swapCards(
       target1.playerId,
       target1.position,
       target2.playerId,
-      target2.position
+      target2.position,
+      actionPlayer?.isHuman ?? false // Reveal only if human player
     );
     const result = await this.commandHistory.executeCommand(swapCommand);
 

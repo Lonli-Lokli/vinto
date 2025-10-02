@@ -265,12 +265,13 @@ export class HumanActionHandler {
 
     const [target1, target2] = targets;
 
-    // Execute swap using command
+    // Execute swap using command - revealed since Queen action shows the cards
     const swapCommand = this.commandFactory.swapCards(
       target1.playerId,
       target1.position,
       target2.playerId,
-      target2.position
+      target2.position,
+      true // Reveal cards during animation for Queen action
     );
     const result = await this.commandHistory.executeCommand(swapCommand);
 

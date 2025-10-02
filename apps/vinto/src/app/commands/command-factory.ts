@@ -62,14 +62,17 @@ export class CommandFactory {
     player1Id: string,
     position1: number,
     player2Id: string,
-    position2: number
+    position2: number,
+    revealed: boolean = false
   ): ICommand {
     return new SwapCardsCommand(
       this.playerStore,
+      this.cardAnimationStore,
       player1Id,
       position1,
       player2Id,
-      position2
+      position2,
+      revealed
     );
   }
 
@@ -117,6 +120,7 @@ export class CommandFactory {
     return new AddPenaltyCardCommand(
       this.playerStore,
       this.deckStore,
+      this.cardAnimationStore,
       playerId
     );
   }

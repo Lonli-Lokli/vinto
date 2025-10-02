@@ -19,6 +19,7 @@ interface VirtualCard {
   fromY: number;
   toX: number;
   toY: number;
+  revealed: boolean;
 }
 
 /**
@@ -70,6 +71,7 @@ export const AnimatedCardOverlay = observer(() => {
         fromY: animation.fromY,
         toX: animation.toX,
         toY: animation.toY,
+        revealed: animation.revealed ?? true,
       });
     });
 
@@ -130,7 +132,7 @@ export const AnimatedCardOverlay = observer(() => {
           >
             <Card
               card={virtualCard.card}
-              revealed={true}
+              revealed={virtualCard.revealed}
               size="lg"
               clickable={false}
             />

@@ -30,6 +30,8 @@ export interface CardAnimationState {
   // Animation timing
   startTime: number;
   duration: number;
+  // Reveal card during animation
+  revealed?: boolean;
   // Status
   completed: boolean;
 }
@@ -63,6 +65,7 @@ export class CardAnimationStore {
   /**
    * Start a swap animation - card moving from one position to another
    * fromPosition: -1 means from pending card, otherwise from player's hand
+   * revealed: whether to show the card face during animation (default: true)
    */
   startSwapAnimation(
     card: Card,
@@ -70,7 +73,8 @@ export class CardAnimationStore {
     fromPosition: number,
     toPlayerId: string,
     toPosition: number,
-    duration = 1500
+    duration = 1500,
+    revealed = true
   ): string {
     const id = `swap-${this.animationCounter++}`;
 
@@ -109,6 +113,7 @@ export class CardAnimationStore {
       toY: toPos.y,
       startTime: Date.now(),
       duration,
+      revealed,
       completed: false,
     };
 
@@ -128,9 +133,32 @@ export class CardAnimationStore {
     card: Card,
     toPlayerId: string,
     toPosition: number,
-    duration = 1500
+    duration = 1500,
+    revealed = true
   ): string {
     const id = `draw-${this.animationCounter++}`;
+
+    // Capture positions immediately
+    const fromPos = this.positionCapture.getDeckPilePosition();
+    const toPos = this.positionCapture.getPlayerCardPosition(
+      toPlayerId,
+      toPosition
+    );
+
+    console.log('[CardAnimationStore] Draw animation positions:', {
+      id,
+      fromPos,
+      toPos,
+      toPlayerId,
+      toPosition,
+    });
+
+    if (!fromPos || !toPos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture positions for draw animation'
+      );
+      return id; // Return id but don't add to animations
+    }
 
     this.activeAnimations.set(id, {
       id,
@@ -139,11 +167,17 @@ export class CardAnimationStore {
       fromDeck: true,
       toPlayerId,
       toPosition,
+      fromX: fromPos.x,
+      fromY: fromPos.y,
+      toX: toPos.x,
+      toY: toPos.y,
       startTime: Date.now(),
       duration,
+      revealed,
       completed: false,
     });
 
+    console.log('[CardAnimationStore] Starting draw animation:', id);
     return id;
   }
 
@@ -164,6 +198,14 @@ export class CardAnimationStore {
       fromPosition
     );
     const toPos = this.positionCapture.getDiscardPilePosition();
+
+    console.log('[CardAnimationStore] Discard animation positions:', {
+      id,
+      fromPos,
+      toPos,
+      fromPlayerId,
+      fromPosition,
+    });
 
     if (!fromPos || !toPos) {
       console.warn(

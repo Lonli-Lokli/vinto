@@ -247,10 +247,12 @@ export class SwapCardsCommand extends Command {
 
   constructor(
     private playerStore: PlayerStore,
+    private cardAnimationStore: CardAnimationStore,
     private player1Id: string,
     private position1: number,
     private player2Id: string,
-    private position2: number
+    private position2: number,
+    private revealed: boolean = false
   ) {
     super();
   }
@@ -266,6 +268,31 @@ export class SwapCardsCommand extends Command {
     // Capture the cards being swapped before the swap
     this.card1 = player1.cards[this.position1];
     this.card2 = player2.cards[this.position2];
+
+    // Trigger animations - cards swap positions
+    if (this.cardAnimationStore && this.card1 && this.card2) {
+      // Card1: position1 -> position2
+      this.cardAnimationStore.startSwapAnimation(
+        this.card1,
+        this.player1Id,
+        this.position1,
+        this.player2Id,
+        this.position2,
+        1500,
+        this.revealed
+      );
+
+      // Card2: position2 -> position1
+      this.cardAnimationStore.startSwapAnimation(
+        this.card2,
+        this.player2Id,
+        this.position2,
+        this.player1Id,
+        this.position1,
+        1500,
+        this.revealed
+      );
+    }
 
     return this.playerStore.swapCards(
       this.player1Id,
@@ -418,11 +445,9 @@ export class ReplaceCardCommand extends Command {
     const oldCardToDiscard = player?.cards[this.position];
 
     if (this.cardAnimationStore) {
-      // Animation 1: Drawn card (newCard) moving from pending to player's hand
-      this.cardAnimationStore.startSwapAnimation(
+      // Animation 1: Drawn card (newCard) moving from deck to player's hand
+      this.cardAnimationStore.startDrawAnimation(
         this.newCard,
-        this.playerId,
-        -1, // Special position for pending/drawn card
         this.playerId,
         this.position
       );
@@ -590,6 +615,7 @@ export class AddPenaltyCardCommand extends Command {
   constructor(
     private playerStore: PlayerStore,
     private deckStore: DeckStore,
+    private cardAnimationStore: CardAnimationStore,
     private playerId: string
   ) {
     super();
@@ -598,6 +624,23 @@ export class AddPenaltyCardCommand extends Command {
   execute(): boolean {
     const card = this.deckStore.drawCard();
     if (!card) return false;
+
+    const player = this.playerStore.getPlayer(this.playerId);
+    if (!player) return false;
+
+    // Calculate the position where the card will be added (last position)
+    const targetPosition = player.cards.length;
+
+    // Trigger animation from draw pile to player's last position (not revealed)
+    if (this.cardAnimationStore) {
+      this.cardAnimationStore.startDrawAnimation(
+        card,
+        this.playerId,
+        targetPosition,
+        1500,
+        false // Don't reveal penalty card during animation
+      );
+    }
 
     this.playerStore.addCardToPlayer(this.playerId, card);
     return true;

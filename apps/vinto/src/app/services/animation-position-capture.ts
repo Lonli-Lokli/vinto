@@ -30,16 +30,18 @@ export class AnimationPositionCapture {
    * Get position of a player's card slot
    */
   getPlayerCardPosition(playerId: string, position: number): Position | null {
-    const el = document.querySelector(
-      `[data-player-id="${playerId}"][data-card-position="${position}"]`
-    );
+    const selector = `[data-player-id="${playerId}"][data-card-position="${position}"]`;
+    const el = document.querySelector(selector);
+
     if (!el) {
       console.warn('[AnimationPositionCapture] Player card slot not found:', {
         playerId,
         position,
+        selector,
       });
       return null;
     }
+
     const rect = el.getBoundingClientRect();
     return { x: rect.left, y: rect.top };
   }
@@ -53,6 +55,7 @@ export class AnimationPositionCapture {
       console.warn('[AnimationPositionCapture] Discard pile element not found');
       return null;
     }
+
     const rect = el.getBoundingClientRect();
     return { x: rect.left, y: rect.top };
   }
@@ -66,6 +69,7 @@ export class AnimationPositionCapture {
       console.warn('[AnimationPositionCapture] Deck pile element not found');
       return null;
     }
+
     const rect = el.getBoundingClientRect();
     return { x: rect.left, y: rect.top };
   }
