@@ -295,15 +295,17 @@ export class SwapCardsCommand extends Command {
         this.cardAnimationStore.waitForAnimation(anim2Id),
       ]).then(() => {
         // Card1 is now at position2 in player2's hand
-        this.cardAnimationStore.startHighlightAnimation(
-          this.card1!,
-          { type: 'player', playerId: this.player2Id, position: this.position2 }
-        );
+        this.cardAnimationStore.startHighlightAnimation(this.card1!, {
+          type: 'player',
+          playerId: this.player2Id,
+          position: this.position2,
+        });
         // Card2 is now at position1 in player1's hand
-        this.cardAnimationStore.startHighlightAnimation(
-          this.card2!,
-          { type: 'player', playerId: this.player1Id, position: this.position1 }
-        );
+        this.cardAnimationStore.startHighlightAnimation(this.card2!, {
+          type: 'player',
+          playerId: this.player1Id,
+          position: this.position1,
+        });
       });
     }
 
@@ -487,7 +489,11 @@ export class ReplaceCardCommand extends Command {
       const discardAnimId = oldCardToDiscard
         ? this.cardAnimationStore.startDiscardAnimation(
             oldCardToDiscard,
-            { type: 'player', playerId: this.playerId, position: this.position },
+            {
+              type: 'player',
+              playerId: this.playerId,
+              position: this.position,
+            },
             { type: 'discard' }
           )
         : null;
@@ -495,7 +501,9 @@ export class ReplaceCardCommand extends Command {
       // After animations complete, highlight the new card at its position
       const animations = [this.cardAnimationStore.waitForAnimation(drawAnimId)];
       if (discardAnimId) {
-        animations.push(this.cardAnimationStore.waitForAnimation(discardAnimId));
+        animations.push(
+          this.cardAnimationStore.waitForAnimation(discardAnimId)
+        );
       }
 
       Promise.all(animations).then(() => {
