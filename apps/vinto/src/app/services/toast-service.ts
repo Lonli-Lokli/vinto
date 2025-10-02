@@ -241,6 +241,25 @@ export class GameToastService {
                 ),
               ]
             ),
+            React.createElement(
+              'div',
+              {
+                key: 'dismiss',
+                className: 'flex border-l border-gray-200',
+              },
+              [
+                React.createElement(
+                  'button',
+                  {
+                    key: 'btn',
+                    onClick: () => toast.dismiss(t.id),
+                    className:
+                      'w-full border border-transparent rounded-none rounded-r-xl p-4 flex items-center justify-center text-sm font-medium text-yellow-600 hover:text-yellow-500',
+                  },
+                  '✕'
+                ),
+              ]
+            ),
           ]
         ),
       { duration, position: 'top-center' }
@@ -303,6 +322,25 @@ export class GameToastService {
                       ]
                     ),
                   ]
+                ),
+              ]
+            ),
+            React.createElement(
+              'div',
+              {
+                key: 'dismiss',
+                className: 'flex border-l border-gray-200',
+              },
+              [
+                React.createElement(
+                  'button',
+                  {
+                    key: 'btn',
+                    onClick: () => toast.dismiss(t.id),
+                    className:
+                      'w-full border border-transparent rounded-none rounded-r-xl p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500',
+                  },
+                  '✕'
                 ),
               ]
             ),

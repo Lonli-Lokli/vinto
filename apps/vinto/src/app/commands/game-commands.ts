@@ -272,7 +272,7 @@ export class SwapCardsCommand extends Command {
     // Trigger animations - cards swap positions
     if (this.cardAnimationStore && this.card1 && this.card2) {
       // Card1: position1 -> position2
-      this.cardAnimationStore.startSwapAnimation(
+      const anim1Id = this.cardAnimationStore.startSwapAnimation(
         this.card1,
         { type: 'player', playerId: this.player1Id, position: this.position1 },
         { type: 'player', playerId: this.player2Id, position: this.position2 },
@@ -281,13 +281,30 @@ export class SwapCardsCommand extends Command {
       );
 
       // Card2: position2 -> position1
-      this.cardAnimationStore.startSwapAnimation(
+      const anim2Id = this.cardAnimationStore.startSwapAnimation(
         this.card2,
         { type: 'player', playerId: this.player2Id, position: this.position2 },
         { type: 'player', playerId: this.player1Id, position: this.position1 },
         1500,
         this.revealed
       );
+
+      // After swap animations complete, highlight the cards at their new positions
+      Promise.all([
+        this.cardAnimationStore.waitForAnimation(anim1Id),
+        this.cardAnimationStore.waitForAnimation(anim2Id),
+      ]).then(() => {
+        // Card1 is now at position2 in player2's hand
+        this.cardAnimationStore.startHighlightAnimation(
+          this.card1!,
+          { type: 'player', playerId: this.player2Id, position: this.position2 }
+        );
+        // Card2 is now at position1 in player1's hand
+        this.cardAnimationStore.startHighlightAnimation(
+          this.card2!,
+          { type: 'player', playerId: this.player1Id, position: this.position1 }
+        );
+      });
     }
 
     return this.playerStore.swapCards(
@@ -458,7 +475,7 @@ export class ReplaceCardCommand extends Command {
     if (this.cardAnimationStore) {
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       // Revealed during animation, but will be hidden once it lands
-      this.cardAnimationStore.startDrawAnimation(
+      const drawAnimId = this.cardAnimationStore.startDrawAnimation(
         this.newCard,
         { type: 'drawn' },
         { type: 'player', playerId: this.playerId, position: this.position },
@@ -467,13 +484,28 @@ export class ReplaceCardCommand extends Command {
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
-      if (oldCardToDiscard) {
-        this.cardAnimationStore.startDiscardAnimation(
-          oldCardToDiscard,
-          { type: 'player', playerId: this.playerId, position: this.position },
-          { type: 'discard' }
-        );
+      const discardAnimId = oldCardToDiscard
+        ? this.cardAnimationStore.startDiscardAnimation(
+            oldCardToDiscard,
+            { type: 'player', playerId: this.playerId, position: this.position },
+            { type: 'discard' }
+          )
+        : null;
+
+      // After animations complete, highlight the new card at its position
+      const animations = [this.cardAnimationStore.waitForAnimation(drawAnimId)];
+      if (discardAnimId) {
+        animations.push(this.cardAnimationStore.waitForAnimation(discardAnimId));
       }
+
+      Promise.all(animations).then(() => {
+        // Highlight the new card that was just placed
+        this.cardAnimationStore.startHighlightAnimation(this.newCard, {
+          type: 'player',
+          playerId: this.playerId,
+          position: this.position,
+        });
+      });
     }
 
     this.oldCard = this.playerStore.replaceCard(

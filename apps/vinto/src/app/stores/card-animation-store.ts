@@ -9,7 +9,7 @@ import { inject, injectable } from 'tsyringe';
 import { Card } from '../shapes';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 
-export type AnimationType = 'swap' | 'draw' | 'discard' | 'peek' | 'toss-in';
+export type AnimationType = 'swap' | 'draw' | 'discard' | 'peek' | 'toss-in' | 'highlight';
 
 export type AnimationActor = 'draw' | 'discard' | 'drawn' | 'player';
 export type AnimationDrawTarget = {
@@ -68,6 +68,7 @@ export class CardAnimationStore {
       startSwapAnimation: action,
       startDrawAnimation: action,
       startDiscardAnimation: action,
+      startHighlightAnimation: action,
       removeAnimation: action,
       reset: action,
     });
@@ -248,6 +249,47 @@ export class CardAnimationStore {
     });
 
     console.log('[CardAnimationStore] Starting discard animation:', id);
+    return id;
+  }
+
+  /**
+   * Start a highlight animation - card pulses at its current position
+   */
+  startHighlightAnimation(
+    card: Card,
+    target: AnimationPlayerTarget,
+    duration = 2000
+  ): string {
+    const id = `highlight-${this.animationCounter++}`;
+
+    // Capture position
+    const pos = this.positionCapture.getPlayerCardPosition(
+      target.playerId,
+      target.position
+    );
+
+    if (!pos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture position for highlight animation'
+      );
+      return id;
+    }
+
+    this.activeAnimations.set(id, {
+      id,
+      type: 'highlight',
+      card,
+      fromX: pos.x,
+      fromY: pos.y,
+      toX: pos.x,
+      toY: pos.y,
+      startTime: Date.now(),
+      duration,
+      revealed: false,
+      completed: false,
+    });
+
+    console.log('[CardAnimationStore] Starting highlight animation:', id);
     return id;
   }
 
