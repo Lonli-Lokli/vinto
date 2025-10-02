@@ -425,15 +425,20 @@ export class DiscardCardCommand extends Command {
     super();
   }
 
-  execute(): boolean {
+  async execute(): Promise<boolean> {
     // Trigger animation from pending card position to discard pile (revealed)
     // Skip animation if this discard is part of a swap (animation already started by ReplaceCardCommand)
     if (this.cardAnimationStore && !this.skipAnimation) {
-      this.cardAnimationStore.startDiscardAnimation(
+      const animId = this.cardAnimationStore.startDiscardAnimation(
         this.card,
         { type: 'drawn' },
         { type: 'discard' }
       );
+
+      // Wait for animation to complete before discarding
+      if (animId) {
+        await this.cardAnimationStore.waitForAnimation(animId);
+      }
     }
 
     this.deckStore.discardCard(this.card);
@@ -469,7 +474,7 @@ export class ReplaceCardCommand extends Command {
     super();
   }
 
-  execute(): boolean {
+  async execute(): Promise<boolean> {
     // Get the old card BEFORE replacing so we can animate it
     const player = this.playerStore.getPlayer(this.playerId);
     const oldCardToDiscard = player?.cards[this.position];
@@ -498,7 +503,7 @@ export class ReplaceCardCommand extends Command {
           )
         : null;
 
-      // After animations complete, highlight the new card at its position
+      // Wait for both animations to complete before replacing card
       const animations = [this.cardAnimationStore.waitForAnimation(drawAnimId)];
       if (discardAnimId) {
         animations.push(
@@ -506,21 +511,30 @@ export class ReplaceCardCommand extends Command {
         );
       }
 
-      Promise.all(animations).then(() => {
-        // Highlight the new card that was just placed
-        this.cardAnimationStore.startHighlightAnimation(this.newCard, {
-          type: 'player',
-          playerId: this.playerId,
-          position: this.position,
-        });
+      await Promise.all(animations);
+
+      // After animations complete, replace the card
+      this.oldCard = this.playerStore.replaceCard(
+        this.playerId,
+        this.position,
+        this.newCard
+      );
+
+      // Then highlight the new card at its position
+      this.cardAnimationStore.startHighlightAnimation(this.newCard, {
+        type: 'player',
+        playerId: this.playerId,
+        position: this.position,
       });
+    } else {
+      // No animation, just replace immediately
+      this.oldCard = this.playerStore.replaceCard(
+        this.playerId,
+        this.position,
+        this.newCard
+      );
     }
 
-    this.oldCard = this.playerStore.replaceCard(
-      this.playerId,
-      this.position,
-      this.newCard
-    );
     return this.oldCard !== null;
   }
 
@@ -630,7 +644,7 @@ export class TossInCardCommand extends Command {
     super();
   }
 
-  execute(): boolean {
+  async execute(): Promise<boolean> {
     const player = this.playerStore.getPlayer(this.playerId);
     if (!player) return false;
 
@@ -640,15 +654,21 @@ export class TossInCardCommand extends Command {
     this.wasCorrect = card.rank === this.matchingRank;
 
     // Trigger animation from player's hand to discard pile (revealed)
+    let animId: string | undefined;
     if (this.cardAnimationStore) {
-      this.cardAnimationStore.startDiscardAnimation(
+      animId = this.cardAnimationStore.startDiscardAnimation(
         card,
         { type: 'player', playerId: this.playerId, position: this.position },
         { type: 'discard' }
       );
+
+      // Wait for animation to complete before removing card
+      if (animId) {
+        await this.cardAnimationStore.waitForAnimation(animId);
+      }
     }
 
-    // Remove card from player's hand
+    // Remove card from player's hand after animation completes
     this.playerStore.removeCardFromPlayer(this.playerId, this.position);
 
     return true;
@@ -685,7 +705,7 @@ export class AddPenaltyCardCommand extends Command {
     super();
   }
 
-  execute(): boolean {
+  async execute(): Promise<boolean> {
     const card = this.deckStore.drawCard();
     if (!card) return false;
 
@@ -695,18 +715,28 @@ export class AddPenaltyCardCommand extends Command {
     // Calculate the position where the card will be added (last position)
     const targetPosition = player.cards.length;
 
-    // Trigger animation from draw pile to player's last position (not revealed)
+    // Add the card first so the DOM slot exists for animation
+    this.playerStore.addCardToPlayer(this.playerId, card);
+
+    // Wait for DOM to update, then trigger animation from draw pile to player's last position (not revealed)
     if (this.cardAnimationStore) {
-      this.cardAnimationStore.startDrawAnimation(
+      // Wait for next frame to ensure DOM is updated
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const animId = this.cardAnimationStore.startDrawAnimation(
         card,
         { type: 'draw' },
         { type: 'player', playerId: this.playerId, position: targetPosition },
         1500,
         false // Don't reveal penalty card during animation
       );
+
+      // Wait for animation to complete
+      if (animId) {
+        await this.cardAnimationStore.waitForAnimation(animId);
+      }
     }
 
-    this.playerStore.addCardToPlayer(this.playerId, card);
     return true;
   }
 
