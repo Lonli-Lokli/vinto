@@ -27,11 +27,18 @@ export class CommandHistory {
     try {
       const result = await command.execute();
       success = result !== false;
+
+      if (!success) {
+        console.warn(
+          '[CommandHistory] Command returned false:',
+          command.getDescription()
+        );
+      }
     } catch (e) {
       success = false;
       error = e instanceof Error ? e : new Error(String(e));
       console.error(
-        'Command execution failed:',
+        '[CommandHistory] Command execution failed:',
         command.getDescription(),
         error
       );
@@ -45,6 +52,11 @@ export class CommandHistory {
     };
 
     this.addToHistory(result);
+
+    console.log(
+      `[CommandHistory] ${success ? '✓' : '✗'} ${command.getDescription()} (total: ${this.history.length})`
+    );
+
     return result;
   }
 

@@ -39,6 +39,11 @@ export class GameStateSerializer {
   saveGameState(): string {
     const history = this.commandHistory.getCommandDataHistory();
 
+    console.log('[GameStateSerializer] Exporting game state:', {
+      totalCommands: history.length,
+      commandTypes: history.map((c) => c.type),
+    });
+
     if (history.length === 0) {
       throw new Error('Cannot save game state: No commands in history');
     }
@@ -57,6 +62,11 @@ export class GameStateSerializer {
       initialState,
       commands: history.slice(1), // All commands after initialization
     };
+
+    console.log('[GameStateSerializer] Export complete:', {
+      totalCommands: gameState.commands.length,
+      commandTypes: gameState.commands.map((c) => c.type),
+    });
 
     return JSON.stringify(gameState, null, 2);
   }

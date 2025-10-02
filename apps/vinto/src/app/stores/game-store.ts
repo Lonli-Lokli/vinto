@@ -282,12 +282,15 @@ export class GameStore implements TempState {
 
     // Execute draw command
     const command = this.commandFactory.drawCard(currentPlayer.id);
-    await this.commandHistory.executeCommand(command);
+    const result = await this.commandHistory.executeCommand(command);
 
-    const drawnCard = this.deckStore.drawCard();
-    if (drawnCard) {
-      this.actionStore.setPendingCard(drawnCard);
-      this.phaseStore.startChoosingAction();
+    // Get the drawn card from the command (don't draw again!)
+    if (result.success) {
+      const drawnCard = command.getDrawnCard();
+      if (drawnCard) {
+        this.actionStore.setPendingCard(drawnCard);
+        this.phaseStore.startChoosingAction();
+      }
     }
   }
 
@@ -605,11 +608,16 @@ export class GameStore implements TempState {
           return;
         }
 
-        // Draw new card and make decision
+        // Draw new card and make decision using command system
         if (this.deckStore.hasDrawCards) {
-          const drawnCard = this.deckStore.drawCard();
-          if (drawnCard) {
-            await this.executeBotCardDecision(drawnCard, currentPlayer);
+          const command = this.commandFactory.drawCard(currentPlayer.id);
+          const result = await this.commandHistory.executeCommand(command);
+
+          if (result.success) {
+            const drawnCard = command.getDrawnCard();
+            if (drawnCard) {
+              await this.executeBotCardDecision(drawnCard, currentPlayer);
+            }
           }
         }
 

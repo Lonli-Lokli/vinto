@@ -216,6 +216,13 @@ export class DrawCardCommand extends Command {
     return true;
   }
 
+  /**
+   * Get the card that was drawn
+   */
+  getDrawnCard(): Card | null {
+    return this.drawnCard;
+  }
+
   toData(): CommandData {
     return this.createCommandData('DRAW_CARD', {
       playerId: this.playerId,
