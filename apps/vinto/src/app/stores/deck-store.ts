@@ -81,6 +81,10 @@ export class DeckStore {
     return this.discardPile[0] || null;
   }
 
+  peekTopDraw(): Card | null {
+    return this.drawPile[this.drawPile.length - 1] || null;
+  }
+
   get discardPileSize(): number {
     return this.discardPile.length;
   }

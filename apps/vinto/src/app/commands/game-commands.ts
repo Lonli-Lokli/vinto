@@ -211,16 +211,9 @@ export class DrawCardCommand extends Command {
     const card = this.deckStore.drawCard();
     if (!card) return false;
 
-    // Store the drawn card for potential swap/discard and for serialization
+    // Store the drawn card for serialization
     this.drawnCard = card;
     return true;
-  }
-
-  /**
-   * Get the card that was drawn
-   */
-  getDrawnCard(): Card | null {
-    return this.drawnCard;
   }
 
   toData(): CommandData {

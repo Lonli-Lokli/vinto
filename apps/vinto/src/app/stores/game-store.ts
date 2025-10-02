@@ -280,17 +280,17 @@ export class GameStore implements TempState {
 
     this.phaseStore.startDrawing();
 
-    // Execute draw command
+    // Store the top card before drawing (to set as pending after command executes)
+    const drawnCard = this.deckStore.peekTopDraw();
+
+    // Execute draw command (which will actually draw the card from the deck)
     const command = this.commandFactory.drawCard(currentPlayer.id);
     const result = await this.commandHistory.executeCommand(command);
 
-    // Get the drawn card from the command (don't draw again!)
-    if (result.success && 'getDrawnCard' in command) {
-      const drawnCard = (command as any).getDrawnCard();
-      if (drawnCard) {
-        this.actionStore.setPendingCard(drawnCard);
-        this.phaseStore.startChoosingAction();
-      }
+    // Set the drawn card as pending
+    if (result.success && drawnCard) {
+      this.actionStore.setPendingCard(drawnCard);
+      this.phaseStore.startChoosingAction();
     }
   }
 
@@ -610,14 +610,15 @@ export class GameStore implements TempState {
 
         // Draw new card and make decision using command system
         if (this.deckStore.hasDrawCards) {
+          // Peek at the top card before drawing
+          const drawnCard = this.deckStore.peekTopDraw();
+
+          // Execute draw command (which will actually draw the card from the deck)
           const command = this.commandFactory.drawCard(currentPlayer.id);
           const result = await this.commandHistory.executeCommand(command);
 
-          if (result.success && 'getDrawnCard' in command) {
-            const drawnCard = (command as any).getDrawnCard();
-            if (drawnCard) {
-              await this.executeBotCardDecision(drawnCard, currentPlayer);
-            }
+          if (result.success && drawnCard) {
+            await this.executeBotCardDecision(drawnCard, currentPlayer);
           }
         }
 
