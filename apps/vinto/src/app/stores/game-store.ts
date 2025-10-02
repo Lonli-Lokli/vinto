@@ -285,8 +285,8 @@ export class GameStore implements TempState {
     const result = await this.commandHistory.executeCommand(command);
 
     // Get the drawn card from the command (don't draw again!)
-    if (result.success) {
-      const drawnCard = command.getDrawnCard();
+    if (result.success && 'getDrawnCard' in command) {
+      const drawnCard = (command as any).getDrawnCard();
       if (drawnCard) {
         this.actionStore.setPendingCard(drawnCard);
         this.phaseStore.startChoosingAction();
@@ -613,8 +613,8 @@ export class GameStore implements TempState {
           const command = this.commandFactory.drawCard(currentPlayer.id);
           const result = await this.commandHistory.executeCommand(command);
 
-          if (result.success) {
-            const drawnCard = command.getDrawnCard();
+          if (result.success && 'getDrawnCard' in command) {
+            const drawnCard = (command as any).getDrawnCard();
             if (drawnCard) {
               await this.executeBotCardDecision(drawnCard, currentPlayer);
             }

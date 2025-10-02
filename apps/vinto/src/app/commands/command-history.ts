@@ -54,7 +54,9 @@ export class CommandHistory {
     this.addToHistory(result);
 
     console.log(
-      `[CommandHistory] ${success ? '✓' : '✗'} ${command.getDescription()} (total: ${this.history.length})`
+      `[CommandHistory] ${
+        success ? '✓' : '✗'
+      } ${command.getDescription()} (total: ${this.history.length})`
     );
 
     return result;
