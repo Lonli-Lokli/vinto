@@ -418,13 +418,13 @@ export class ReplaceCardCommand extends Command {
     const oldCardToDiscard = player?.cards[this.position];
 
     if (this.cardAnimationStore) {
-      // Animation 1: Drawn card (newCard) moving from deck/center to player's hand
+      // Animation 1: Drawn card (newCard) moving from pending to player's hand
       this.cardAnimationStore.startSwapAnimation(
+        this.newCard,
         this.playerId,
         -1, // Special position for pending/drawn card
         this.playerId,
-        this.position, // Target position in hand
-        1500 // Animation duration in ms
+        this.position
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
@@ -432,8 +432,7 @@ export class ReplaceCardCommand extends Command {
         this.cardAnimationStore.startDiscardAnimation(
           oldCardToDiscard,
           this.playerId,
-          this.position,
-          1500 // Same duration for synchronized animation
+          this.position
         );
       }
     }

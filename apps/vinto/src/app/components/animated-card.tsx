@@ -1,20 +1,20 @@
 // components/animated-card.tsx
 'use client';
 
-import React, { useLayoutEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
-import * as Sentry from '@sentry/nextjs';
 import { Card } from './card';
 import {
   useCardAnimationStore,
   usePlayerStore,
   useActionStore,
 } from './di-provider';
+import { Card as CardType } from '../shapes';
 
-interface AnimatedCardData {
+interface VirtualCard {
   id: string;
-  card: any;
+  card: CardType;
   fromX: number;
   fromY: number;
   toX: number;
@@ -23,192 +23,82 @@ interface AnimatedCardData {
 
 /**
  * Overlay component that renders animated cards during transitions
- * Uses Framer Motion for smooth, declarative animations
+ * Uses completely virtual cards that are cloned and animated independently
  */
 export const AnimatedCardOverlay = observer(() => {
   const animationStore = useCardAnimationStore();
   const playerStore = usePlayerStore();
   const actionStore = useActionStore();
-  const [animatedCards, setAnimatedCards] = useState<AnimatedCardData[]>([]);
+  const [virtualCards, setVirtualCards] = useState<VirtualCard[]>([]);
 
-  // Memoize animations array to prevent unnecessary recalculations
-  const animations = useMemo(
-    () => Array.from(animationStore.activeAnimations.values()),
-    [animationStore.activeAnimations]
-  );
+  useEffect(() => {
+    const animations = Array.from(animationStore.activeAnimations.values());
 
-  // Use layoutEffect to calculate positions synchronously after DOM updates
-  useLayoutEffect(() => {
     if (animations.length === 0) {
-      setAnimatedCards([]);
+      setVirtualCards([]);
       return;
     }
 
-    // Helper function to check if a rect is valid (not all zeros)
-    const isValidRect = (rect: DOMRect): boolean => {
-      return rect.width > 0 && rect.height > 0;
-    };
+    console.log('[AnimatedCard] Processing animations:', animations.length);
 
-    // Function to attempt to get valid positions with retries
-    const calculatePositions = (attempt = 0): void => {
-      const maxAttempts = 5;
-      const cards: AnimatedCardData[] = [];
-      let hasInvalidRects = false;
+    const cards: VirtualCard[] = [];
 
-      animations.forEach((animation) => {
-        // Get positions
-        let fromEl: Element | null = null;
-        let toEl: Element | null = null;
-
-        if (animation.type === 'swap') {
-          // From: pending card (if fromPosition is -1) or deck pile
-          if (animation.fromPosition === -1) {
-            fromEl = document.querySelector('[data-pending-card="true"]');
-          }
-          // If no pending card found or fromPosition is not -1, try deck pile
-          if (!fromEl) {
-            fromEl = document.querySelector('[data-deck-pile="true"]');
-          }
-          // To: player card slot
-          toEl = document.querySelector(
-            `[data-player-id="${animation.toPlayerId}"][data-card-position="${animation.toPosition}"]`
-          );
-        } else if (animation.type === 'discard') {
-          // From: player card slot
-          fromEl = document.querySelector(
-            `[data-player-id="${animation.fromPlayerId}"][data-card-position="${animation.fromPosition}"]`
-          );
-          // To: discard pile
-          toEl = document.querySelector('[data-discard-pile="true"]');
-        }
-
-        if (!fromEl || !toEl) {
-          if (attempt === 0) {
-            console.warn('Could not find elements for animation', {
-              fromEl,
-              toEl,
-              animation,
-            });
-          }
-          hasInvalidRects = true;
-          return;
-        }
-
-        const fromRect = fromEl.getBoundingClientRect();
-        const toRect = toEl.getBoundingClientRect();
-
-        // Check if positions are valid
-        if (!isValidRect(fromRect)) {
-          if (attempt === 0) {
-            console.warn('Invalid from position', fromRect, {
-              element: fromEl,
-              animation,
-            });
-          }
-          hasInvalidRects = true;
-          return;
-        }
-        if (!isValidRect(toRect)) {
-          if (attempt === 0) {
-            console.warn('Invalid to position', toRect, {
-              element: toEl,
-              animation,
-            });
-          }
-          hasInvalidRects = true;
-          return;
-        }
-
-        // Get the card to display
-        let card;
-        if (animation.type === 'swap') {
-          if (animation.fromPosition === -1) {
-            card = actionStore.pendingCard;
-          } else if (animation.fromPlayerId && typeof animation.fromPosition === 'number') {
-            const player = playerStore.getPlayer(animation.fromPlayerId);
-            card = player?.cards[animation.fromPosition];
-          }
-        } else if (animation.type === 'discard') {
-          card = animation.card;
-        }
-
-        if (!card) {
-          console.warn('No card for animation', animation);
-          return;
-        }
-
-        cards.push({
-          id: animation.id,
-          card,
-          fromX: fromRect.left,
-          fromY: fromRect.top,
-          toX: toRect.left,
-          toY: toRect.top,
-        });
-      });
-
-      // If we have invalid rects and haven't exceeded max attempts, retry
-      if (hasInvalidRects && attempt < maxAttempts) {
-        requestAnimationFrame(() => calculatePositions(attempt + 1));
+    animations.forEach((animation) => {
+      // Skip if we don't have pre-captured positions or card
+      if (
+        animation.fromX === undefined ||
+        animation.fromY === undefined ||
+        animation.toX === undefined ||
+        animation.toY === undefined
+      ) {
+        console.warn(
+          '[AnimatedCard] Missing positions for animation:',
+          animation.id
+        );
         return;
       }
 
-      // Only set cards if we have valid positions or we've exhausted retries
-      if (cards.length > 0) {
-        setAnimatedCards(cards);
-      } else if (attempt >= maxAttempts) {
-        const errorMessage = 'Failed to get valid positions after max attempts';
-        console.error(errorMessage, { animations, hasInvalidRects });
-
-        // Log to Sentry with context
-        Sentry.captureMessage(errorMessage, {
-          level: 'warning',
-          contexts: {
-            animation: {
-              attempts: maxAttempts,
-              animationCount: animations.length,
-              animations: animations.map(a => ({
-                id: a.id,
-                type: a.type,
-                fromPlayerId: a.fromPlayerId,
-                fromPosition: a.fromPosition,
-                toPlayerId: a.toPlayerId,
-                toPosition: a.toPosition,
-              })),
-            },
-            dom: {
-              deckPileExists: !!document.querySelector('[data-deck-pile="true"]'),
-              discardPileExists: !!document.querySelector('[data-discard-pile="true"]'),
-              pendingCardExists: !!document.querySelector('[data-pending-card="true"]'),
-            },
-          },
-        });
-
-        // Clear animations since we can't render them
-        animations.forEach(anim => animationStore.removeAnimation(anim.id));
+      if (!animation.card) {
+        console.warn('[AnimatedCard] No card for animation:', animation.id);
+        return;
       }
-    };
 
-    // Start the calculation process
-    calculatePositions();
-  }, [animations, playerStore, actionStore, animationStore]);
+      cards.push({
+        id: animation.id,
+        card: animation.card,
+        fromX: animation.fromX,
+        fromY: animation.fromY,
+        toX: animation.toX,
+        toY: animation.toY,
+      });
+    });
+
+    console.log('[AnimatedCard] Created virtual cards:', cards.length);
+    setVirtualCards(cards);
+  }, [
+    animationStore.hasActiveAnimations,
+    playerStore,
+    actionStore,
+    animationStore.activeAnimations,
+  ]);
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>
-      <AnimatePresence mode="sync">
-        {animatedCards.map((animData) => (
+      <AnimatePresence>
+        {virtualCards.map((virtualCard) => (
           <motion.div
-            key={animData.id}
+            key={virtualCard.id}
+            className="absolute"
             initial={{
-              x: animData.fromX,
-              y: animData.fromY,
+              left: virtualCard.fromX,
+              top: virtualCard.fromY,
               scale: 1,
               rotate: 0,
               opacity: 1,
             }}
             animate={{
-              x: animData.toX,
-              y: animData.toY,
+              left: virtualCard.toX,
+              top: virtualCard.toY,
               scale: [1, 1.2, 1],
               rotate: [0, 10, -10, 0],
               opacity: 1,
@@ -230,17 +120,16 @@ export const AnimatedCardOverlay = observer(() => {
               },
             }}
             onAnimationComplete={() => {
-              // Remove from store when animation completes
-              animationStore.removeAnimation(animData.id);
+              console.log('[AnimatedCard] Animation complete:', virtualCard.id);
+              animationStore.removeAnimation(virtualCard.id);
             }}
-            className="absolute"
             style={{
               filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.4))',
               zIndex: 101,
             }}
           >
             <Card
-              card={animData.card}
+              card={virtualCard.card}
               revealed={true}
               size="lg"
               clickable={false}

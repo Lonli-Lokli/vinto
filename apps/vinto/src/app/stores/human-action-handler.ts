@@ -3,7 +3,7 @@
 import { Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 import { CommandFactory, CommandHistory } from '../commands';
 
 export interface ActionHandlerDependencies {

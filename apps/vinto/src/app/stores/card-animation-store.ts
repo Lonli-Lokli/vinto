@@ -5,8 +5,9 @@
  */
 
 import { makeObservable, observable, action, computed } from 'mobx';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { Card } from '../shapes';
+import { AnimationPositionCapture } from '../services/animation-position-capture';
 
 export type AnimationType = 'swap' | 'draw' | 'discard' | 'peek' | 'toss-in';
 
@@ -21,6 +22,11 @@ export interface CardAnimationState {
   // For drawing/discarding
   fromDeck?: boolean;
   toDeck?: boolean;
+  // Pre-captured positions (for immediate measurement)
+  fromX?: number;
+  fromY?: number;
+  toX?: number;
+  toY?: number;
   // Animation timing
   startTime: number;
   duration: number;
@@ -32,8 +38,13 @@ export interface CardAnimationState {
 export class CardAnimationStore {
   activeAnimations: Map<string, CardAnimationState> = new Map();
   private animationCounter = 0;
+  private positionCapture: AnimationPositionCapture;
 
-  constructor() {
+  constructor(
+    @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture
+  ) {
+    this.positionCapture = positionCapture;
+
     makeObservable(this, {
       activeAnimations: observable,
       hasActiveAnimations: computed,
@@ -50,10 +61,11 @@ export class CardAnimationStore {
   }
 
   /**
-   * Start a swap animation between two cards
-   * Framer Motion handles the animation timing and calls removeAnimation when done
+   * Start a swap animation - card moving from one position to another
+   * fromPosition: -1 means from pending card, otherwise from player's hand
    */
   startSwapAnimation(
+    card: Card,
     fromPlayerId: string,
     fromPosition: number,
     toPlayerId: string,
@@ -62,19 +74,50 @@ export class CardAnimationStore {
   ): string {
     const id = `swap-${this.animationCounter++}`;
 
+    // Capture positions immediately
+    const fromPos =
+      fromPosition === -1
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getPlayerCardPosition(
+            fromPlayerId,
+            fromPosition
+          );
+
+    const toPos = this.positionCapture.getPlayerCardPosition(
+      toPlayerId,
+      toPosition
+    );
+
+    if (!fromPos || !toPos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture positions for swap animation'
+      );
+      return id; // Return id but don't add to animations
+    }
+
     const animation = {
       id,
       type: 'swap' as const,
+      card,
       fromPlayerId,
       fromPosition,
       toPlayerId,
       toPosition,
+      fromX: fromPos.x,
+      fromY: fromPos.y,
+      toX: toPos.x,
+      toY: toPos.y,
       startTime: Date.now(),
       duration,
       completed: false,
     };
 
+    console.log('[CardAnimationStore] Starting swap animation:', animation);
     this.activeAnimations.set(id, animation);
+    console.log(
+      '[CardAnimationStore] Active animations count:',
+      this.activeAnimations.size
+    );
     return id;
   }
 
@@ -115,6 +158,20 @@ export class CardAnimationStore {
   ): string {
     const id = `discard-${this.animationCounter++}`;
 
+    // Capture positions immediately
+    const fromPos = this.positionCapture.getPlayerCardPosition(
+      fromPlayerId,
+      fromPosition
+    );
+    const toPos = this.positionCapture.getDiscardPilePosition();
+
+    if (!fromPos || !toPos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture positions for discard animation'
+      );
+      return id; // Return id but don't add to animations
+    }
+
     this.activeAnimations.set(id, {
       id,
       type: 'discard',
@@ -122,11 +179,16 @@ export class CardAnimationStore {
       fromPlayerId,
       fromPosition,
       toDeck: true,
+      fromX: fromPos.x,
+      fromY: fromPos.y,
+      toX: toPos.x,
+      toY: toPos.y,
       startTime: Date.now(),
       duration,
       completed: false,
     });
 
+    console.log('[CardAnimationStore] Starting discard animation:', id);
     return id;
   }
 
@@ -134,13 +196,21 @@ export class CardAnimationStore {
    * Remove an animation immediately
    */
   removeAnimation(id: string) {
+    console.log('[CardAnimationStore] Removing animation:', id);
     this.activeAnimations.delete(id);
+    console.log(
+      '[CardAnimationStore] Remaining animations:',
+      this.activeAnimations.size
+    );
   }
 
   /**
    * Get animation state for a specific card position
    */
-  getAnimationForPosition(playerId: string, position: number): CardAnimationState | undefined {
+  getAnimationForPosition(
+    playerId: string,
+    position: number
+  ): CardAnimationState | undefined {
     return Array.from(this.activeAnimations.values()).find(
       (anim) =>
         (anim.fromPlayerId === playerId && anim.fromPosition === position) ||
@@ -153,6 +223,45 @@ export class CardAnimationStore {
    */
   isPositionAnimating(playerId: string, position: number): boolean {
     return this.getAnimationForPosition(playerId, position) !== undefined;
+  }
+
+  /**
+   * Wait for a specific animation to complete
+   */
+  async waitForAnimation(id: string, timeoutMs = 2000): Promise<void> {
+    if (!this.activeAnimations.has(id)) {
+      return; // Animation already completed or never started
+    }
+
+    return new Promise((resolve) => {
+      const checkInterval = 50;
+      let elapsed = 0;
+
+      const check = () => {
+        if (!this.activeAnimations.has(id) || elapsed >= timeoutMs) {
+          resolve();
+        } else {
+          elapsed += checkInterval;
+          setTimeout(check, checkInterval);
+        }
+      };
+
+      check();
+    });
+  }
+
+  /**
+   * Wait for all active animations to complete
+   */
+  async waitForAllAnimations(timeoutMs = 2000): Promise<void> {
+    if (this.activeAnimations.size === 0) {
+      return;
+    }
+
+    const animationIds = Array.from(this.activeAnimations.keys());
+    await Promise.all(
+      animationIds.map((id) => this.waitForAnimation(id, timeoutMs))
+    );
   }
 
   /**

@@ -2,7 +2,7 @@
 
 import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 
 export type GamePhase = 'setup' | 'playing' | 'final' | 'scoring';
 export type GameSubPhase =

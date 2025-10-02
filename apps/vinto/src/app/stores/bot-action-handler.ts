@@ -4,7 +4,7 @@ import { Card, Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { DeckStore } from './deck-store';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 import {
   BotDecisionService,
   BotDecisionContext,

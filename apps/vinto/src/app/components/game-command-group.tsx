@@ -3,7 +3,7 @@
 import React, { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 import { DownloadIcon, PlayIcon } from 'lucide-react';
 
 export const GameCommandGroup = observer(() => {

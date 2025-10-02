@@ -228,8 +228,7 @@ export const GameTable = observer(() => {
                   finalScores={finalScores}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
-                      ? (position) =>
-                          handleOpponentCardClick(left.id, position)
+                      ? (position) => handleOpponentCardClick(left.id, position)
                       : undefined
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -259,33 +258,41 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Drawn Card (when choosing action, selecting swap position, or declaring rank) */}
-              {pendingCard &&
-                (isChoosingCardAction ||
-                  isSelectingSwapPosition ||
-                  isDeclaringRank) && (
-                  <div className="text-center">
-                    <div className="relative">
-                      <Card
-                        card={pendingCard}
-                        revealed={true}
-                        size="lg"
-                        highlighted={true}
-                        isPending={true}
-                      />
-                      <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-2xs font-bold flex items-center justify-center animate-pulse">
-                        !
-                      </div>
+              {pendingCard && (
+                <div
+                  className={`text-center ${
+                    !(
+                      isChoosingCardAction ||
+                      isSelectingSwapPosition ||
+                      isDeclaringRank
+                    )
+                      ? 'invisible pointer-events-none'
+                      : ''
+                  }`}
+                  data-pending-card="true"
+                >
+                  <div className="relative">
+                    <Card
+                      card={pendingCard}
+                      revealed={true}
+                      size="lg"
+                      highlighted={true}
+                      isPending={true}
+                    />
+                    <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-2xs font-bold flex items-center justify-center animate-pulse">
+                      !
                     </div>
-                    <div className="mt-1 text-2xs text-white font-medium bg-amber-600/80 rounded px-2 py-0.5">
-                      DRAWN
-                    </div>
-                    {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-1 py-0.5">
-                        {pendingCard.action}
-                      </div>
-                    )}
                   </div>
-                )}
+                  <div className="mt-1 text-2xs text-white font-medium bg-amber-600/80 rounded px-2 py-0.5">
+                    DRAWN
+                  </div>
+                  {isChoosingCardAction && pendingCard.action && (
+                    <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-1 py-0.5">
+                      {pendingCard.action}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Discard Pile */}
               <div className="text-center" data-discard-pile="true">
@@ -432,33 +439,41 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Drawn Card (when choosing action, selecting swap position, or declaring rank) */}
-              {pendingCard &&
-                (isChoosingCardAction ||
-                  isSelectingSwapPosition ||
-                  isDeclaringRank) && (
-                  <div className="text-center">
-                    <div className="relative">
-                      <Card
-                        card={pendingCard}
-                        revealed={true}
-                        size="lg"
-                        highlighted={true}
-                        isPending={true}
-                      />
-                      <div className="absolute -top-2 -left-2 w-5 h-5 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
-                        !
-                      </div>
+              {pendingCard && (
+                <div
+                  className={`text-center ${
+                    !(
+                      isChoosingCardAction ||
+                      isSelectingSwapPosition ||
+                      isDeclaringRank
+                    )
+                      ? 'invisible pointer-events-none'
+                      : ''
+                  }`}
+                  data-pending-card="true"
+                >
+                  <div className="relative">
+                    <Card
+                      card={pendingCard}
+                      revealed={true}
+                      size="lg"
+                      highlighted={true}
+                      isPending={true}
+                    />
+                    <div className="absolute -top-2 -left-2 w-5 h-5 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
+                      !
                     </div>
-                    <div className="mt-2 text-xs text-white font-medium bg-amber-600/80 rounded px-2 py-1">
-                      DRAWN
-                    </div>
-                    {isChoosingCardAction && pendingCard.action && (
-                      <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-2 py-0.5">
-                        {pendingCard.action}
-                      </div>
-                    )}
                   </div>
-                )}
+                  <div className="mt-2 text-xs text-white font-medium bg-amber-600/80 rounded px-2 py-1">
+                    DRAWN
+                  </div>
+                  {isChoosingCardAction && pendingCard.action && (
+                    <div className="mt-1 text-2xs text-white bg-blue-600/80 rounded px-2 py-0.5">
+                      {pendingCard.action}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Discard Pile */}
               <div className="text-center">

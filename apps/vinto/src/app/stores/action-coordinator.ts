@@ -6,7 +6,7 @@ import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { DeckStore } from './deck-store';
 import { GamePhaseStore } from './game-phase-store';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 import { HumanActionHandler } from './human-action-handler';
 import { BotActionHandler } from './bot-action-handler';
 import type { BotDecisionService } from '../services/bot-decision';

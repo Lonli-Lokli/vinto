@@ -1,7 +1,12 @@
 // lib/server-utils.ts
 // Utility functions that can be used in server components
 
-export function formatGamePhase(phase: string, turnCount: number, roundNumber: number, finalTurnTriggered: boolean): string {
+export function formatGamePhase(
+  phase: string,
+  turnCount: number,
+  roundNumber: number,
+  finalTurnTriggered: boolean
+): string {
   if (phase === 'scoring') {
     return 'Final Scores';
   }
@@ -15,5 +20,7 @@ export function formatGamePhase(phase: string, turnCount: number, roundNumber: n
 
 export function getCurrentPlayerName(currentPlayer: any): string {
   if (!currentPlayer) return '';
-  return `${currentPlayer.name}'s Turn${currentPlayer.isHuman ? ' (Your turn!)' : ''}`;
+  return `${currentPlayer.name}'s Turn${
+    currentPlayer.isHuman ? ' (Your turn!)' : ''
+  }`;
 }

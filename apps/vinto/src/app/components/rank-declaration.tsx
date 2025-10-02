@@ -10,7 +10,7 @@ import {
   useGamePhaseStore,
 } from './di-provider';
 import { Rank } from '../shapes';
-import { ALL_RANKS } from '../lib/game-helpers';
+import { ALL_RANKS } from '../utils/game-helpers';
 
 export const RankDeclaration = observer(() => {
   const gameStore = useGameStore();
@@ -82,10 +82,7 @@ export const RankDeclaration = observer(() => {
   );
 
   return (
-    <div
-      className="w-full h-full px-3 py-2"
-      style={{ zIndex: 100 }}
-    >
+    <div className="w-full h-full px-3 py-2" style={{ zIndex: 100 }}>
       <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm overflow-visible flex flex-col">
         {/* Mobile Layout: 3 rows stacked */}
         <div className="block md:hidden">

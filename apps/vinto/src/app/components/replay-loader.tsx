@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 
 /**
  * Replay Loader Component
@@ -40,7 +40,9 @@ export const ReplayLoader = observer(() => {
     } catch (error) {
       console.error('Error loading replay:', error);
       GameToastService.error(
-        `Error loading replay: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error loading replay: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
       );
     } finally {
       setIsLoading(false);

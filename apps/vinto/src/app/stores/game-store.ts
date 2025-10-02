@@ -9,8 +9,9 @@ import { ActionStore } from './action-store';
 import { ActionCoordinator } from './action-coordinator';
 import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { ReplayStore } from './replay-store';
+import { CardAnimationStore } from './card-animation-store';
 import { timerService } from '../services/timer-service';
-import { GameToastService } from '../lib/toast-service';
+import { GameToastService } from '../services/toast-service';
 import {
   BotDecisionService,
   BotDecisionServiceFactory,
@@ -31,6 +32,7 @@ export class GameStore implements TempState {
   actionCoordinator: ActionCoordinator;
   tossInStore: TossInStore;
   replayStore: ReplayStore;
+  cardAnimationStore: CardAnimationStore;
   gameStateManager: GameStateManager;
 
   // Command Pattern infrastructure
@@ -63,6 +65,7 @@ export class GameStore implements TempState {
     @inject(ActionStore) actionStore: ActionStore,
     @inject(TossInStore) tossInStore: TossInStore,
     @inject(ReplayStore) replayStore: ReplayStore,
+    @inject(CardAnimationStore) cardAnimationStore: CardAnimationStore,
     @inject(CommandFactory) commandFactory: CommandFactory,
     @inject(CommandHistory) commandHistory: CommandHistory,
     @inject(ActionCoordinator) actionCoordinator: ActionCoordinator,
@@ -75,6 +78,7 @@ export class GameStore implements TempState {
     this.actionStore = actionStore;
     this.tossInStore = tossInStore;
     this.replayStore = replayStore;
+    this.cardAnimationStore = cardAnimationStore;
     this.commandFactory = commandFactory;
     this.commandHistory = commandHistory;
     this.actionCoordinator = actionCoordinator;
@@ -438,6 +442,9 @@ export class GameStore implements TempState {
       this.startTossInPeriod();
     }
 
+    // Wait for any active animations to complete before cleaning up
+    await this.cardAnimationStore.waitForAllAnimations();
+
     // Clean up
     this.actionStore.setPendingCard(null);
     this.actionStore.setSwapPosition(null);
@@ -471,6 +478,9 @@ export class GameStore implements TempState {
       }
     }
 
+    // Wait for any active animations to complete before cleaning up
+    await this.cardAnimationStore.waitForAllAnimations();
+
     // Clean up
     this.actionStore.setPendingCard(null);
     this.actionStore.setSwapPosition(null);
@@ -496,7 +506,11 @@ export class GameStore implements TempState {
   // Toss-in mechanics
   startTossInPeriod() {
     // Don't start a new toss-in period if we're already in one or in replay mode
-    if (this.tossInStore.isActive || this.phaseStore.isTossQueueActive || this.replayStore.isReplayMode) {
+    if (
+      this.tossInStore.isActive ||
+      this.phaseStore.isTossQueueActive ||
+      this.replayStore.isReplayMode
+    ) {
       return;
     }
 

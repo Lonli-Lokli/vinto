@@ -3,7 +3,7 @@
 import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { Card } from '../shapes';
-import { shuffleDeck, createDeck } from '../lib/game-helpers';
+import { shuffleDeck, createDeck } from '../utils/game-helpers';
 
 @injectable()
 export class DeckStore {
@@ -197,13 +197,29 @@ export class DeckStore {
     if (uniqueIds.size !== allCards.length) {
       // Find and log the duplicate IDs
       const cardIds = allCards.map((card) => card.id);
-      const duplicates = cardIds.filter((id, index) => cardIds.indexOf(id) !== index);
-      const duplicateCards = allCards.filter((card) => duplicates.includes(card.id));
-      
+      const duplicates = cardIds.filter(
+        (id, index) => cardIds.indexOf(id) !== index
+      );
+      const duplicateCards = allCards.filter((card) =>
+        duplicates.includes(card.id)
+      );
+
       console.error('Deck integrity error: Duplicate card IDs found');
       console.error('Duplicate IDs:', [...new Set(duplicates)]);
-      console.error('Duplicate cards:', duplicateCards.map(card => ({ id: card.id, rank: card.rank, value: card.value })));
-      console.error('Total cards:', allCards.length, 'Unique IDs:', uniqueIds.size);
+      console.error(
+        'Duplicate cards:',
+        duplicateCards.map((card) => ({
+          id: card.id,
+          rank: card.rank,
+          value: card.value,
+        }))
+      );
+      console.error(
+        'Total cards:',
+        allCards.length,
+        'Unique IDs:',
+        uniqueIds.size
+      );
       return false;
     }
 
