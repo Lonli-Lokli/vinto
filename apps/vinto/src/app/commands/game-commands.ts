@@ -400,14 +400,16 @@ export class DiscardCardCommand extends Command {
   constructor(
     private deckStore: DeckStore,
     private cardAnimationStore: CardAnimationStore,
-    private card: Card
+    private card: Card,
+    private skipAnimation = false
   ) {
     super();
   }
 
   execute(): boolean {
     // Trigger animation from pending card position to discard pile (revealed)
-    if (this.cardAnimationStore) {
+    // Skip animation if this discard is part of a swap (animation already started by ReplaceCardCommand)
+    if (this.cardAnimationStore && !this.skipAnimation) {
       this.cardAnimationStore.startDiscardAnimation(
         this.card,
         { type: 'drawn' },

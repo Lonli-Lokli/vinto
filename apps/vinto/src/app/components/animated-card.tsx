@@ -28,61 +28,47 @@ interface VirtualCard {
  */
 export const AnimatedCardOverlay = observer(() => {
   const animationStore = useCardAnimationStore();
-  const playerStore = usePlayerStore();
-  const actionStore = useActionStore();
-  const [virtualCards, setVirtualCards] = useState<VirtualCard[]>([]);
 
-  useEffect(() => {
-    const animations = Array.from(animationStore.activeAnimations.values());
+  // Convert MobX observable directly into virtual cards
+  // This will automatically re-render when activeAnimations changes
+  const animations = Array.from(animationStore.activeAnimations.values());
 
-    if (animations.length === 0) {
-      setVirtualCards([]);
+  console.log('[AnimatedCard] Rendering with animations:', animations.length);
+
+  const virtualCards: VirtualCard[] = [];
+
+  animations.forEach((animation) => {
+    // Skip if we don't have pre-captured positions or card
+    if (
+      animation.fromX === undefined ||
+      animation.fromY === undefined ||
+      animation.toX === undefined ||
+      animation.toY === undefined
+    ) {
+      console.warn(
+        '[AnimatedCard] Missing positions for animation:',
+        animation.id
+      );
       return;
     }
 
-    console.log('[AnimatedCard] Processing animations:', animations.length);
+    if (!animation.card) {
+      console.warn('[AnimatedCard] No card for animation:', animation.id);
+      return;
+    }
 
-    const cards: VirtualCard[] = [];
-
-    animations.forEach((animation) => {
-      // Skip if we don't have pre-captured positions or card
-      if (
-        animation.fromX === undefined ||
-        animation.fromY === undefined ||
-        animation.toX === undefined ||
-        animation.toY === undefined
-      ) {
-        console.warn(
-          '[AnimatedCard] Missing positions for animation:',
-          animation.id
-        );
-        return;
-      }
-
-      if (!animation.card) {
-        console.warn('[AnimatedCard] No card for animation:', animation.id);
-        return;
-      }
-
-      cards.push({
-        id: animation.id,
-        card: animation.card,
-        fromX: animation.fromX,
-        fromY: animation.fromY,
-        toX: animation.toX,
-        toY: animation.toY,
-        revealed: animation.revealed ?? true,
-      });
+    virtualCards.push({
+      id: animation.id,
+      card: animation.card,
+      fromX: animation.fromX,
+      fromY: animation.fromY,
+      toX: animation.toX,
+      toY: animation.toY,
+      revealed: animation.revealed ?? true,
     });
+  });
 
-    console.log('[AnimatedCard] Created virtual cards:', cards.length);
-    setVirtualCards(cards);
-  }, [
-    animationStore.hasActiveAnimations,
-    playerStore,
-    actionStore,
-    animationStore.activeAnimations,
-  ]);
+  console.log('[AnimatedCard] Created virtual cards:', virtualCards.length);
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>

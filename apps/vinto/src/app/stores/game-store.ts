@@ -473,18 +473,19 @@ export class GameStore implements TempState {
     this.actionStore.setPendingCard(null);
     this.actionStore.setSwapPosition(null);
 
+    // Wait for animations to complete BEFORE discarding
+    // This ensures the discard pile doesn't update until the animation finishes
+    await this.cardAnimationStore.waitForAllAnimations();
+
     if (replaceResult.success) {
       const replacedCard = replaceResult.command.toData().payload.oldCard;
 
       if (replacedCard) {
-        // Discard old card using command
-        const discardCommand = this.commandFactory.discardCard(replacedCard);
+        // Discard old card using command (skip animation - already completed)
+        const discardCommand = this.commandFactory.discardCard(replacedCard, true);
         await this.commandHistory.executeCommand(discardCommand);
       }
     }
-
-    // Wait for any active animations to complete before continuing
-    await this.cardAnimationStore.waitForAllAnimations();
 
     // Return to idle and start toss-in
     this.phaseStore.returnToIdle();
@@ -665,37 +666,47 @@ export class GameStore implements TempState {
     this.actionStore.setPendingCard(drawnCard);
     this.phaseStore.startChoosingAction();
 
-    const context = this.createBotDecisionContext(currentPlayer.id);
+    // Give React time to render the pending card in DRAWN area before animating
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    if (drawnCard.action) {
-      // Use bot service to decide whether to use action
-      const shouldUseAction = this.botDecisionService.shouldUseAction(
-        drawnCard,
-        context
-      );
+    // TEMPORARY: Force bots to always swap with first card to test animation
+    const swapPosition = 0;
+    this.phaseStore.startSelectingPosition();
+    this.actionStore.setSwapPosition(swapPosition);
+    await this.skipDeclaration();
+    return;
 
-      if (shouldUseAction) {
-        await this.executeBotAction(drawnCard, currentPlayer.id);
-        return;
-      }
-    }
+    // const context = this.createBotDecisionContext(currentPlayer.id);
 
-    // If not using action, decide between swap and discard using bot service
-    const swapPosition = this.botDecisionService.selectBestSwapPosition(
-      drawnCard,
-      context
-    );
+    // if (drawnCard.action) {
+    //   // Use bot service to decide whether to use action
+    //   const shouldUseAction = this.botDecisionService.shouldUseAction(
+    //     drawnCard,
+    //     context
+    //   );
 
-    if (swapPosition !== null) {
-      // Swap with selected position
-      this.phaseStore.startSelectingPosition();
-      this.actionStore.setSwapPosition(swapPosition);
-      // Bots perform swap immediately without declaring rank
-      await this.skipDeclaration();
-    } else {
-      // Discard the drawn card
-      this.discardCard();
-    }
+    //   if (shouldUseAction) {
+    //     await this.executeBotAction(drawnCard, currentPlayer.id);
+    //     return;
+    //   }
+    // }
+
+    // // If not using action, decide between swap and discard using bot service
+    // const swapPosition = this.botDecisionService.selectBestSwapPosition(
+    //   drawnCard,
+    //   context
+    // );
+
+    // if (swapPosition !== null) {
+    //   // Swap with selected position
+    //   this.phaseStore.startSelectingPosition();
+    //   this.actionStore.setSwapPosition(swapPosition);
+    //   // Bots perform swap immediately without declaring rank
+    //   await this.skipDeclaration();
+    // } else {
+    //   // Discard the drawn card
+    //   this.discardCard();
+    // }
   }
 
   private async executeBotAction(drawnCard: Card, playerId: string) {
