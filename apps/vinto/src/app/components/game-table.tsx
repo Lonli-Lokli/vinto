@@ -270,6 +270,7 @@ export const GameTable = observer(() => {
                         revealed={true}
                         size="lg"
                         highlighted={true}
+                        isPending={true}
                       />
                       <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-2xs font-bold flex items-center justify-center animate-pulse">
                         !
@@ -442,6 +443,7 @@ export const GameTable = observer(() => {
                         revealed={true}
                         size="lg"
                         highlighted={true}
+                        isPending={true}
                       />
                       <div className="absolute -top-2 -left-2 w-5 h-5 bg-amber-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-pulse">
                         !

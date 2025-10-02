@@ -6,6 +6,7 @@ import { useViewport } from '../hooks/use-viewport';
 import { DIProvider } from './di-provider';
 import { ReplayControls } from './replay-controls';
 import { AnimatedCardOverlay } from './animated-card';
+import { ErrorBoundary } from './error-boundary';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -24,19 +25,21 @@ export function GameLayout({ children }: GameLayoutProps) {
   } as React.CSSProperties;
 
   return (
-    <DIProvider>
-      <div
-        className="bg-gradient-to-br from-emerald-50 to-blue-50 overflow-y-auto flex flex-col"
-        style={{
-          ...style,
-          height:
-            viewport.visualHeight > 0 ? `${viewport.visualHeight}px` : '100dvh',
-        }}
-      >
-        {children}
-        <ReplayControls />
-        <AnimatedCardOverlay />
-      </div>
-    </DIProvider>
+    <ErrorBoundary>
+      <DIProvider>
+        <div
+          className="bg-gradient-to-br from-emerald-50 to-blue-50 overflow-y-auto flex flex-col"
+          style={{
+            ...style,
+            height:
+              viewport.visualHeight > 0 ? `${viewport.visualHeight}px` : '100dvh',
+          }}
+        >
+          {children}
+          <ReplayControls />
+          <AnimatedCardOverlay />
+        </div>
+      </DIProvider>
+    </ErrorBoundary>
   );
 }

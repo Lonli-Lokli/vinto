@@ -3,6 +3,8 @@
 import './reflect-metadata-client-side';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import * as Sentry from "@sentry/nextjs";
+
 import './global.css'; // This is where you import your global Tailwind CSS styles
 
 // Optimize fonts using next/font
@@ -26,6 +28,9 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
+  other: {
+    ...Sentry.getTraceData()
+  }
 };
 
 /**
