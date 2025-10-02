@@ -87,9 +87,17 @@ export function Card({
             ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md'
             : ''
         }
-        ${highlighted ? 'ring-2 ring-yellow-400 animate-pulse' : ''}
       `}
-      style={rotated ? { transform: 'rotate(90deg)' } : undefined}
+      style={
+        highlighted
+          ? {
+              transform: rotated ? 'rotate(90deg)' : undefined,
+              animation: 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+          : rotated
+          ? { transform: 'rotate(90deg)' }
+          : undefined
+      }
       onClick={clickable ? onClick : undefined}
       {...dataAttributes}
     >

@@ -124,7 +124,7 @@ export const RankDeclaration = observer(() => {
           {/* Row 3: Skip */}
           <button
             onClick={() => gameStore.skipDeclaration()}
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-medium py-1.5 rounded text-xs transition-colors"
+            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
           >
             Skip Declaration
           </button>

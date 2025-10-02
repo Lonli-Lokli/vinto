@@ -161,9 +161,16 @@ export const PlayerArea = observer(function PlayerArea({
       <div
         className={`${cardContainerClasses[player.position]} ${
           isCurrentPlayer
-            ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-emerald-400 md:border-2 bg-emerald-400/10 animate-pulse'
+            ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-emerald-400 md:border-2 bg-emerald-400/10'
             : ''
         }`}
+        style={
+          isCurrentPlayer
+            ? {
+                animation: 'gentle-pulse 2s infinite',
+              }
+            : undefined
+        }
       >
         {player.cards.map((card, index) => {
           const isSidePlayer = player.position === 'left' || player.position === 'right';
@@ -178,7 +185,7 @@ export const PlayerArea = observer(function PlayerArea({
               size={getCardSize()}
               clickable={!!onCardClick}
               highlighted={
-                isSelectingSwapPosition ||
+                (isSelectingSwapPosition && !isDeclaringRank) ||
                 (isDeclaringRank && swapPosition === index) ||
                 isSelectingActionTarget
               }

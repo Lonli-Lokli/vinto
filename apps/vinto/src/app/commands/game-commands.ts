@@ -455,12 +455,13 @@ export class ReplaceCardCommand extends Command {
 
     if (this.cardAnimationStore) {
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
+      // Revealed during animation, but will be hidden once it lands
       this.cardAnimationStore.startDrawAnimation(
         this.newCard,
         { type: 'drawn' },
         { type: 'player', playerId: this.playerId, position: this.position },
         1500,
-        true
+        false // Don't reveal card during swap animation
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)

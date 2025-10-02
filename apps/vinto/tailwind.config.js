@@ -67,14 +67,15 @@ module.exports = {
         'gentle-pulse': 'gentle-pulse 2s infinite',
         'flip-card': 'flip-card 0.6s ease-in-out',
         'float': 'float 3s ease-in-out infinite',
+        'ring-pulse': 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
         'gentle-pulse': {
-          '0%, 100%': { 
-            boxShadow: '0 0 0 0 rgba(59, 130, 246, 0.7)' 
+          '0%, 100%': {
+            boxShadow: '0 0 0 0 rgba(59, 130, 246, 0.7)'
           },
-          '50%': { 
-            boxShadow: '0 0 0 10px rgba(59, 130, 246, 0)' 
+          '50%': {
+            boxShadow: '0 0 0 10px rgba(59, 130, 246, 0)'
           },
         },
         'flip-card': {
@@ -85,6 +86,14 @@ module.exports = {
         'float': {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        'ring-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 0 2px rgb(250 204 21)'
+          },
+          '50%': {
+            boxShadow: '0 0 0 2px rgb(234 179 8 / 0.5)'
+          },
         },
       },
       backdropBlur: {

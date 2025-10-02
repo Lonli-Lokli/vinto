@@ -468,6 +468,11 @@ export class GameStore implements TempState {
       replaceCommand
     );
 
+    // Clear pending card immediately so it disappears from DRAWN area
+    // The animation has already captured the card data and will continue
+    this.actionStore.setPendingCard(null);
+    this.actionStore.setSwapPosition(null);
+
     if (replaceResult.success) {
       const replacedCard = replaceResult.command.toData().payload.oldCard;
 
@@ -478,14 +483,11 @@ export class GameStore implements TempState {
       }
     }
 
-    // Wait for any active animations to complete before cleaning up
+    // Wait for any active animations to complete before continuing
     await this.cardAnimationStore.waitForAllAnimations();
 
-    // Clean up
-    this.actionStore.setPendingCard(null);
-    this.actionStore.setSwapPosition(null);
+    // Return to idle and start toss-in
     this.phaseStore.returnToIdle();
-
     this.startTossInPeriod();
   }
 
@@ -687,7 +689,9 @@ export class GameStore implements TempState {
     if (swapPosition !== null) {
       // Swap with selected position
       this.phaseStore.startSelectingPosition();
-      this.swapCard(swapPosition);
+      this.actionStore.setSwapPosition(swapPosition);
+      // Bots perform swap immediately without declaring rank
+      await this.skipDeclaration();
     } else {
       // Discard the drawn card
       this.discardCard();
