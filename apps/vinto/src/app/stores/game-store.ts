@@ -640,6 +640,12 @@ export class GameStore implements TempState {
     const botPlayer = this.playerStore.getPlayer(botId);
     if (!botPlayer) throw new Error(`Bot player ${botId} not found`);
 
+    // Extract opponent knowledge from bot's opponentKnowledge map
+    const opponentKnowledge = new Map<string, Map<number, Card>>();
+    botPlayer.opponentKnowledge.forEach((knowledge, opponentId) => {
+      opponentKnowledge.set(opponentId, new Map(knowledge.knownCards));
+    });
+
     return {
       botId,
       difficulty: this.difficulty,
@@ -671,6 +677,7 @@ export class GameStore implements TempState {
               })),
             }
           : undefined,
+      opponentKnowledge,
     };
   }
 
@@ -703,6 +710,11 @@ export class GameStore implements TempState {
       // Swap with selected position
       this.phaseStore.startSelectingPosition();
       this.actionStore.setSwapPosition(swapPosition);
+
+      // Bot knows the drawn card and where it's being placed
+      // Record this knowledge BEFORE swapping
+      this.playerStore.addKnownCardPosition(currentPlayer.id, swapPosition);
+
       // Bots perform swap immediately without declaring rank
       await this.skipDeclaration();
     } else {

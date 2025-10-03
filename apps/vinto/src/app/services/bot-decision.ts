@@ -18,6 +18,8 @@ export interface BotDecisionContext {
       card: Card | undefined;
     }>;
   };
+  // Opponent knowledge - what this bot knows about opponents' cards
+  opponentKnowledge: Map<string, Map<number, Card>>; // opponentId -> position -> card
 }
 
 export interface BotActionTarget {
@@ -176,26 +178,117 @@ export class StandardBotDecisionService implements BotDecisionService {
   private selectOpponentCardTarget(
     context: BotDecisionContext
   ): BotActionTarget {
-    const { botId, allPlayers } = context;
+    const { botId, allPlayers, opponentKnowledge, difficulty } = context;
     const opponents = allPlayers.filter((p) => p.id !== botId);
 
     if (opponents.length === 0) {
       return { playerId: botId, position: 0 }; // Fallback
     }
 
-    const targetPlayer =
-      opponents[Math.floor(Math.random() * opponents.length)];
-    const targetPosition = Math.floor(
-      Math.random() * targetPlayer.cards.length
-    );
+    // Try to target known high-value cards for peeking/swapping
+    const knownHighValueTargets: BotActionTarget[] = [];
 
+    opponentKnowledge.forEach((knownCards, opponentId) => {
+      knownCards.forEach((card, position) => {
+        const opponent = allPlayers.find(p => p.id === opponentId);
+        // Only target if card still exists at that position
+        if (opponent && position < opponent.cards.length && card.value >= 8) {
+          knownHighValueTargets.push({ playerId: opponentId, position });
+        }
+      });
+    });
+
+    // High difficulty bots are more likely to use knowledge
+    const useKnowledge = knownHighValueTargets.length > 0 && Math.random() < {
+      easy: 0.3,
+      moderate: 0.6,
+      hard: 0.9,
+    }[difficulty];
+
+    if (useKnowledge) {
+      // Target a known high-value card
+      return knownHighValueTargets[Math.floor(Math.random() * knownHighValueTargets.length)];
+    }
+
+    // Otherwise, target unknown cards (gather information)
+    const unknownTargets: BotActionTarget[] = [];
+    opponents.forEach((opponent) => {
+      const knownPositions = opponentKnowledge.get(opponent.id);
+      opponent.cards.forEach((_, position) => {
+        if (!knownPositions || !knownPositions.has(position)) {
+          unknownTargets.push({ playerId: opponent.id, position });
+        }
+      });
+    });
+
+    if (unknownTargets.length > 0) {
+      return unknownTargets[Math.floor(Math.random() * unknownTargets.length)];
+    }
+
+    // Fallback to random
+    const targetPlayer = opponents[Math.floor(Math.random() * opponents.length)];
+    const targetPosition = Math.floor(Math.random() * targetPlayer.cards.length);
     return { playerId: targetPlayer.id, position: targetPosition };
   }
 
   private selectSwapTargets(context: BotDecisionContext): BotActionTarget[] {
-    const { allPlayers } = context;
+    const { botId, botPlayer, allPlayers, opponentKnowledge, difficulty } = context;
 
-    // Collect all possible targets
+    // Strategy: Swap own high-value known card with opponent's low-value known card
+    // Or swap own high-value known card with unknown opponent card (gamble)
+
+    const ownHighValueCards: BotActionTarget[] = [];
+    const opponentLowValueCards: BotActionTarget[] = [];
+    const opponentUnknownCards: BotActionTarget[] = [];
+
+    // Find own high-value known cards (value >= 7)
+    botPlayer.cards.forEach((card, position) => {
+      if (botPlayer.knownCardPositions.has(position) && card.value >= 7) {
+        ownHighValueCards.push({ playerId: botId, position });
+      }
+    });
+
+    // Find opponent cards
+    allPlayers.forEach((player) => {
+      if (player.id === botId) return; // Skip self
+
+      const knownCards = opponentKnowledge.get(player.id);
+      player.cards.forEach((_, position) => {
+        if (knownCards && knownCards.has(position)) {
+          const card = knownCards.get(position)!;
+          if (card.value <= 4) {
+            opponentLowValueCards.push({ playerId: player.id, position });
+          }
+        } else {
+          opponentUnknownCards.push({ playerId: player.id, position });
+        }
+      });
+    });
+
+    // Smart swap logic based on difficulty
+    const useStrategy = Math.random() < {
+      easy: 0.2,
+      moderate: 0.5,
+      hard: 0.8,
+    }[difficulty];
+
+    if (useStrategy && ownHighValueCards.length > 0) {
+      const ownCard = ownHighValueCards[Math.floor(Math.random() * ownHighValueCards.length)];
+
+      // Prefer swapping with known low-value opponent card
+      if (opponentLowValueCards.length > 0) {
+        const oppCard = opponentLowValueCards[Math.floor(Math.random() * opponentLowValueCards.length)];
+        return [ownCard, oppCard];
+      }
+
+      // Otherwise gamble with unknown opponent card
+      if (opponentUnknownCards.length > 0) {
+        const oppCard = opponentUnknownCards[Math.floor(Math.random() * opponentUnknownCards.length)];
+        return [ownCard, oppCard];
+      }
+    }
+
+    // Fallback: random swap
     const allTargets: BotActionTarget[] = [];
     allPlayers.forEach((player) => {
       player.cards.forEach((_, position) => {
@@ -205,7 +298,6 @@ export class StandardBotDecisionService implements BotDecisionService {
 
     if (allTargets.length < 2) return [];
 
-    // Select two different targets
     const shuffled = [...allTargets].sort(() => Math.random() - 0.5);
     return [shuffled[0], shuffled[1]];
   }
@@ -242,18 +334,59 @@ export class StandardBotDecisionService implements BotDecisionService {
   }
 
   private selectForceDrawTarget(context: BotDecisionContext): BotActionTarget {
-    const { botId, allPlayers } = context;
+    const { botId, allPlayers, opponentKnowledge, difficulty } = context;
     const opponents = allPlayers.filter((p) => p.id !== botId);
 
     if (opponents.length === 0) {
       return { playerId: botId, position: -1 }; // Fallback
     }
 
-    // Target player with fewest cards
-    const targetPlayer = opponents.reduce((min, player) =>
-      player.cards.length < min.cards.length ? player : min
-    );
+    // Strategy: Target player who is doing well (has fewest cards or low total value)
+    // Higher difficulty = smarter targeting
 
+    const playerScores = opponents.map((player) => {
+      const knownCards = opponentKnowledge.get(player.id);
+      let estimatedValue = 0;
+
+      if (knownCards && knownCards.size > 0) {
+        // Calculate known value
+        knownCards.forEach((card) => {
+          estimatedValue += card.value;
+        });
+        // Estimate unknown cards (assume average value of 6)
+        const unknownCount = player.cards.length - knownCards.size;
+        estimatedValue += unknownCount * 6;
+      } else {
+        // No knowledge - estimate all cards at average value
+        estimatedValue = player.cards.length * 6;
+      }
+
+      return {
+        player,
+        cardCount: player.cards.length,
+        estimatedValue,
+      };
+    });
+
+    // Sort by card count (ascending) - fewer cards = doing better
+    playerScores.sort((a, b) => a.cardCount - b.cardCount);
+
+    // Higher difficulty = more likely to target player doing well
+    const targetStrategically = Math.random() < {
+      easy: 0.3,    // Often random
+      moderate: 0.6, // Usually strategic
+      hard: 0.9,     // Almost always strategic
+    }[difficulty];
+
+    if (targetStrategically && playerScores.length > 0) {
+      // Target one of the top 2 players with fewest cards
+      const topPlayers = playerScores.slice(0, Math.min(2, playerScores.length));
+      const targetPlayer = topPlayers[Math.floor(Math.random() * topPlayers.length)].player;
+      return { playerId: targetPlayer.id, position: -1 };
+    }
+
+    // Fallback: random opponent
+    const targetPlayer = opponents[Math.floor(Math.random() * opponents.length)];
     return { playerId: targetPlayer.id, position: -1 };
   }
 
@@ -263,16 +396,50 @@ export class StandardBotDecisionService implements BotDecisionService {
   ): boolean {
     if (peekedCards.length !== 2) return false;
 
-    const { difficulty } = context;
+    const { difficulty, botPlayer } = context;
     const [card1, card2] = peekedCards;
 
-    // Simple heuristic: swap if significant value difference
+    // Calculate value difference
     const valueDiff = Math.abs(card1.value - card2.value);
 
+    // Check if we can identify card ownership from peek targets in context
+    const peekTargets = context.currentAction?.peekTargets;
+    if (peekTargets && peekTargets.length === 2) {
+      const target1 = peekTargets[0];
+      const target2 = peekTargets[1];
+
+      const isBotCard1 = target1.playerId === botPlayer.id;
+      const isBotCard2 = target2.playerId === botPlayer.id;
+
+      // If swapping would give bot the lower card, it's good
+      // If one is bot's high card and other is opponent's low card, swap
+      if (isBotCard1 && !isBotCard2) {
+        // card1 is bot's, card2 is opponent's
+        // Swap if bot's card is higher (get rid of high card)
+        return card1.value > card2.value;
+      } else if (!isBotCard1 && isBotCard2) {
+        // card1 is opponent's, card2 is bot's
+        // Swap if bot's card is higher (get rid of high card)
+        return card2.value > card1.value;
+      } else if (!isBotCard1 && !isBotCard2) {
+        // Both are opponents' cards
+        // Strategic: swap opponents' good cards with their bad cards to mess them up
+        // Higher difficulty = more likely to sabotage
+        const shouldSabotage = Math.random() < {
+          easy: 0.1,
+          moderate: 0.3,
+          hard: 0.6,
+        }[difficulty];
+
+        return shouldSabotage && valueDiff >= 2;
+      }
+    }
+
+    // Fallback: Simple threshold-based decision
     const swapThreshold = {
       easy: 2,
       moderate: 3,
-      hard: 5,
+      hard: 4,
     }[difficulty];
 
     return valueDiff >= swapThreshold;
@@ -330,13 +497,39 @@ export class StandardBotDecisionService implements BotDecisionService {
     let worstValue = drawnCard.value;
 
     botPlayer.cards.forEach((card, index) => {
+      // Only consider cards we know about
       if (botPlayer.knownCardPositions.has(index) && card.value > worstValue) {
         worstValue = card.value;
         worstPosition = index;
       }
     });
 
-    return worstPosition;
+    // If we found a known card worse than drawn card, swap it
+    if (worstPosition !== null) {
+      return worstPosition;
+    }
+
+    // No known card is worse - decide whether to swap with unknown card
+    // Higher difficulty = more likely to gamble on unknown cards
+    const { difficulty } = context;
+    const unknownPositions = botPlayer.cards
+      .map((_, i) => i)
+      .filter((i) => !botPlayer.knownCardPositions.has(i));
+
+    if (unknownPositions.length > 0) {
+      const shouldGamble = Math.random() < {
+        easy: 0.2,    // Rarely gamble
+        moderate: 0.4, // Sometimes gamble
+        hard: 0.6,     // Often gamble
+      }[difficulty];
+
+      if (shouldGamble) {
+        // Select random unknown position
+        return unknownPositions[Math.floor(Math.random() * unknownPositions.length)];
+      }
+    }
+
+    return null;
   }
 }
 

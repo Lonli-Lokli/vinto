@@ -64,6 +64,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         highlightedCards: new Set(),
+        opponentKnowledge: new Map(),
         isHuman: true,
         isBot: false,
         position: 'bottom',
@@ -76,6 +77,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         highlightedCards: new Set(),
+        opponentKnowledge: new Map(),
         isHuman: false,
         isBot: true,
         position: 'left',
@@ -88,6 +90,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         highlightedCards: new Set(),
+        opponentKnowledge: new Map(),
         isHuman: false,
         isBot: true,
         position: 'top',
@@ -100,6 +103,7 @@ export class PlayerStore {
         knownCardPositions: new Set(),
         temporarilyVisibleCards: new Set(),
         highlightedCards: new Set(),
+        opponentKnowledge: new Map(),
         isHuman: false,
         isBot: true,
         position: 'right',
@@ -113,9 +117,25 @@ export class PlayerStore {
       player.knownCardPositions.add(1);
     });
 
+    // Initialize opponent knowledge for all bots
+    this.initializeOpponentKnowledge();
+
     this.currentPlayerIndex = 0;
     this.turnCount = 0;
     this.setupPeeksRemaining = 2;
+  }
+
+  // Initialize opponent knowledge maps for bots
+  private initializeOpponentKnowledge() {
+    this.botPlayers.forEach((bot) => {
+      const opponents = this.getOpponents(bot.id);
+      opponents.forEach((opponent) => {
+        bot.opponentKnowledge.set(opponent.id, {
+          opponentId: opponent.id,
+          knownCards: new Map(),
+        });
+      });
+    });
   }
 
   // Player management
@@ -191,6 +211,75 @@ export class PlayerStore {
     }
   }
 
+  // Opponent knowledge management - only for bots
+  recordOpponentCard(
+    observerId: string,
+    opponentId: string,
+    position: number,
+    card: Card
+  ) {
+    const observer = this.getPlayer(observerId);
+    if (!observer || !observer.isBot) return;
+
+    const knowledge = observer.opponentKnowledge.get(opponentId);
+    if (knowledge) {
+      knowledge.knownCards.set(position, card);
+    }
+  }
+
+  // Clear opponent knowledge for a specific position (e.g., after card is removed)
+  clearOpponentCardKnowledge(
+    observerId: string,
+    opponentId: string,
+    position: number
+  ) {
+    const observer = this.getPlayer(observerId);
+    if (!observer || !observer.isBot) return;
+
+    const knowledge = observer.opponentKnowledge.get(opponentId);
+    if (knowledge) {
+      knowledge.knownCards.delete(position);
+    }
+  }
+
+  // Update all bots' knowledge when positions shift (e.g., card removed)
+  updateOpponentKnowledgeAfterRemoval(opponentId: string, removedPosition: number) {
+    this.botPlayers.forEach((bot) => {
+      const knowledge = bot.opponentKnowledge.get(opponentId);
+      if (knowledge) {
+        const updatedKnownCards = new Map<number, Card>();
+        knowledge.knownCards.forEach((card, pos) => {
+          if (pos === removedPosition) return; // This card was removed
+          const newPos = pos > removedPosition ? pos - 1 : pos;
+          updatedKnownCards.set(newPos, card);
+        });
+        knowledge.knownCards = updatedKnownCards;
+      }
+    });
+  }
+
+  // Get what a bot knows about an opponent's card
+  getOpponentCardKnowledge(
+    observerId: string,
+    opponentId: string,
+    position: number
+  ): Card | null {
+    const observer = this.getPlayer(observerId);
+    if (!observer || !observer.isBot) return null;
+
+    const knowledge = observer.opponentKnowledge.get(opponentId);
+    return knowledge?.knownCards.get(position) || null;
+  }
+
+  // Check if bot knows a specific opponent card
+  knowsOpponentCard(
+    observerId: string,
+    opponentId: string,
+    position: number
+  ): boolean {
+    return this.getOpponentCardKnowledge(observerId, opponentId, position) !== null;
+  }
+
   // Card operations
   addCardToPlayer(playerId: string, card: Card) {
     const player = this.getPlayer(playerId);
@@ -212,6 +301,9 @@ export class PlayerStore {
       updatedKnown.add(idx > position ? idx - 1 : idx);
     });
     player.knownCardPositions = updatedKnown;
+
+    // Update opponent knowledge for all bots
+    this.updateOpponentKnowledgeAfterRemoval(playerId, position);
 
     return player.cards.splice(position, 1)[0];
   }

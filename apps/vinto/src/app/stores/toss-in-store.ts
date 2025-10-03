@@ -181,12 +181,28 @@ export class TossInStore {
         if (
           botDecisionService.shouldParticipateInTossIn(discardedRank, context)
         ) {
-          // Find matching cards and toss one in
-          player.cards.forEach((card, position) => {
-            if (card.rank === discardedRank && Math.random() < 0.5) {
-              this.tossInCard(player.id, position);
-            }
-          });
+          // Find ALL matching cards
+          const matchingPositions = player.cards
+            .map((card, index) => ({ card, position: index }))
+            .filter(({ card }) => card.rank === discardedRank);
+
+          if (matchingPositions.length > 0) {
+            // Select BEST card to toss (prefer unknown cards, then lower value)
+            const bestToToss = matchingPositions.reduce((best, curr) => {
+              const bestKnown = player.knownCardPositions.has(best.position);
+              const currKnown = player.knownCardPositions.has(curr.position);
+
+              // Prefer unknown cards (don't toss cards we know unless necessary)
+              if (!bestKnown && currKnown) return best;
+              if (bestKnown && !currKnown) return curr;
+
+              // If both known or both unknown, prefer lower value
+              return best.card.value <= curr.card.value ? best : curr;
+            });
+
+            // Toss in ONLY ONE card
+            this.tossInCard(player.id, bestToToss.position);
+          }
         }
       }
     });

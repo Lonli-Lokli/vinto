@@ -23,13 +23,19 @@ export type Rank =
   | 'A'
   | 'Joker';
 
+export interface OpponentKnowledge {
+  opponentId: string;
+  knownCards: Map<number, Card>; // position -> Card that bot knows opponent has
+}
+
 export interface Player {
   id: string;
   name: string;
   cards: Card[];
-  knownCardPositions: Set<number>; // Permanently known cards (setup phase)
+  knownCardPositions: Set<number>; // Permanently known cards (own cards known during setup/gameplay)
   temporarilyVisibleCards: Set<number>; // Cards visible during current action only
   highlightedCards: Set<number>; // Cards highlighted during bot peek actions (not revealed)
+  opponentKnowledge: Map<string, OpponentKnowledge>; // Track known opponent cards (bots only)
   isHuman: boolean;
   isBot: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
