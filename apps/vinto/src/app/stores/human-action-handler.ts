@@ -189,16 +189,7 @@ export class HumanActionHandler {
     );
     const result = await this.commandHistory.executeCommand(swapCommand);
 
-    if (result.success) {
-      GameToastService.success(
-        `Swapped ${player1.name}'s card ${target1.position + 1} with ${
-          player2.name
-        }'s card ${target2.position + 1}`
-      );
-      return true;
-    }
-
-    return false;
+    return result.success;
   }
 
   handlePeekTargetSelection(
@@ -274,13 +265,6 @@ export class HumanActionHandler {
       true // Reveal cards during animation for Queen action
     );
     const result = await this.commandHistory.executeCommand(swapCommand);
-
-    if (result.success) {
-      GameToastService.success(
-        `Queen action: Swapped ${target1.card!.rank} with ${target2.card!.rank}`
-      );
-    }
-
     return result.success;
   }
 
@@ -296,12 +280,6 @@ export class HumanActionHandler {
     if (!actionPlayer || !targetPlayer || targetPlayerId === actionPlayerId)
       return false;
 
-    GameToastService.success(
-      `You forced ${targetPlayer.name} to draw a card. ${
-        targetPlayer.name
-      } now has ${targetPlayer.cards.length + 1} cards.`
-    );
-
     return true;
   }
 
@@ -310,14 +288,6 @@ export class HumanActionHandler {
     if (!player) return false;
 
     this.actionStore.declareKingAction(rank);
-
-    const declaredAction =
-      this.actionStore.actionContext?.action || 'Unknown action';
-
-    GameToastService.success(
-      `You declared King as ${rank} - ${declaredAction}`
-    );
-
     return true;
   }
 

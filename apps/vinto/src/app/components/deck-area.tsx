@@ -34,11 +34,6 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
   // Show drawn card whenever there's a pending card
   const isDrawnCardVisible = !!pendingCard;
 
-  // Show interactive elements only when actively choosing
-  const showInteraction =
-    !!pendingCard &&
-    (isChoosingCardAction || isSelectingSwapPosition || isDeclaringRank);
-
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Draw and Discard Piles - Side by Side */}
@@ -60,7 +55,6 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
       <DrawnCard
         card={pendingCard ?? undefined}
         isVisible={isDrawnCardVisible}
-        showAction={showInteraction && isChoosingCardAction}
         size={cardSize}
         isMobile={isMobile}
       />

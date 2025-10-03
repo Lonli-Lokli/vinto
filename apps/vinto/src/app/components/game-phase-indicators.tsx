@@ -54,20 +54,32 @@ export const GamePhaseIndicators = observer(() => {
 
   // Toss-in Period
   if (waitingForTossIn) {
+    const topDiscardRank = discardPile.length > 0 ? discardPile[discardPile.length - 1].rank : '';
+
     return (
       <div className="w-full px-3 py-1">
-        <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
-          <div className="text-center space-y-1">
-            <div className="text-sm font-semibold text-gray-800">
-              ⚡ Toss-in Time!
+        <div className="bg-white border border-gray-300 rounded-lg p-2 sm:p-3 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            {/* Info section */}
+            <div className="flex-1 text-center sm:text-left">
+              <div className="text-sm font-semibold text-gray-800">
+                ⚡ Toss-in Time!
+              </div>
+              <div className="text-xs text-gray-700">
+                {topDiscardRank ? `Toss matching ${topDiscardRank} cards` : 'Toss matching cards'} or continue
+              </div>
+              <div className="text-xs text-gray-600">
+                Wrong guess = penalty card
+              </div>
             </div>
-            <div className="text-xs text-gray-700">
-              If you have a matching card ({discardPile[0]?.rank}), click it to
-              toss-in!
-            </div>
-            <div className="text-xs text-gray-600">
-              Warning: Wrong guess = penalty card
-            </div>
+
+            {/* Continue button */}
+            <button
+              onClick={() => gameStore.finishTossInPeriod()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm whitespace-nowrap"
+            >
+              Continue ▶
+            </button>
           </div>
         </div>
       </div>

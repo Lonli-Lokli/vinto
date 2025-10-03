@@ -8,7 +8,6 @@ import { Card as CardType } from '../shapes';
 interface DrawnCardProps {
   card?: CardType;
   isVisible: boolean;
-  showAction?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isMobile?: boolean;
 }
@@ -16,7 +15,6 @@ interface DrawnCardProps {
 export const DrawnCard: React.FC<DrawnCardProps> = ({
   card,
   isVisible,
-  showAction = false,
   size = 'lg',
   isMobile = false,
 }) => {
@@ -53,16 +51,7 @@ export const DrawnCard: React.FC<DrawnCardProps> = ({
         className={`${labelMargin} ${textSize} text-white font-medium bg-amber-600/80 rounded ${labelPadding}`}
       >
         DRAWN
-      </div>
-      {showAction && card?.action && (
-        <div
-          className={`mt-1 text-2xs text-white bg-blue-600/80 rounded ${
-            isMobile ? 'px-1 py-0.5' : 'px-2 py-0.5'
-          }`}
-        >
-          {card.action}
-        </div>
-      )}
+      </div>     
     </div>
   );
 };

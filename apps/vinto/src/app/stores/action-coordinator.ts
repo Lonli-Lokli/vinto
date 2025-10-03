@@ -74,10 +74,6 @@ export class ActionCoordinator {
     const player = this.playerStore.getPlayer(playerId);
     if (!player) return false;
 
-    GameToastService.success(
-      `${player.name} played ${card.rank} - ${card.action}`
-    );
-
     // Start the action
     this.actionStore.startAction(card, playerId);
 
@@ -288,16 +284,7 @@ export class ActionCoordinator {
     // Show appropriate message based on player type
     if (isHuman) {
       this.humanHandler.executeForceDraw(actionPlayerId, targetPlayerId);
-    } else {
-      // For bot, the toast message is already shown in bot handler
-      const actionPlayer = this.playerStore.getPlayer(actionPlayerId);
-      const targetPlayer = this.playerStore.getPlayer(targetPlayerId);
-      if (actionPlayer && targetPlayer) {
-        GameToastService.success(
-          `${actionPlayer.name} forced ${targetPlayer.name} to draw a card. ${targetPlayer.name} now has ${targetPlayer.cards.length} cards.`
-        );
-      }
-    }
+    } 
 
     this.completeAction();
     return true;
@@ -337,13 +324,6 @@ export class ActionCoordinator {
       actionPlayer?.isHuman ?? false // Reveal only if human player
     );
     const result = await this.commandHistory.executeCommand(swapCommand);
-
-    if (result.success) {
-      GameToastService.success(
-        `Queen action: Swapped ${target1.card!.rank} with ${target2.card!.rank}`
-      );
-    }
-
     return result.success;
   }
 
@@ -382,11 +362,6 @@ export class ActionCoordinator {
     } else {
       // For bots, just update the action store
       this.actionStore.declareKingAction(rank);
-      const declaredAction =
-        this.actionStore.actionContext?.action || 'Unknown action';
-      GameToastService.success(
-        `${actionPlayer.name} declared King as ${rank} - ${declaredAction}`
-      );
     }
 
     // Execute the declared action

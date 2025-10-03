@@ -146,6 +146,20 @@ export class BotActionHandler {
       opponentKnowledge.set(opponentId, new Map(knowledge.knownCards));
     });
 
+    // Get current action context if it exists
+    const actionContext = this.actionStore.actionContext;
+    const currentAction = actionContext
+      ? {
+          targetType: actionContext.targetType || '',
+          card: this.actionStore.pendingCard!,
+          peekTargets: this.actionStore.peekTargets.map(pt => ({
+            playerId: pt.playerId,
+            position: pt.position,
+            card: pt.card || undefined,
+          })),
+        }
+      : undefined;
+
     return {
       botId: playerId,
       difficulty: 'moderate', // Should be passed from game store
@@ -163,6 +177,7 @@ export class BotActionHandler {
         finalTurnTriggered: false,
       },
       opponentKnowledge,
+      currentAction,
     };
   }
 
@@ -177,11 +192,6 @@ export class BotActionHandler {
 
       // For bots, permanently add to known cards for AI decision-making
       this.playerStore.addKnownCardPosition(playerId, position);
-
-      GameToastService.success(
-        `${player.name} peeked at position ${position + 1}`
-      );
-
       return true;
     }
     return false;

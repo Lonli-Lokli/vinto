@@ -262,24 +262,6 @@ export const GameTable = observer(() => {
                   onDrawCard={handleDrawCard}
                   isMobile={true}
                 />
-
-                {/* Toss-in Continue button */}
-                {waitingForTossIn && (
-                  <div className="flex flex-col items-center gap-2 mt-2">
-                    <button
-                      onClick={() => gameStore.finishTossInPeriod()}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
-                    >
-                      Continue ▶
-                    </button>
-                    <p className="text-xs text-white/80 text-center">
-                      {discardPile.length > 0 &&
-                        `Toss in matching ${
-                          discardPile[discardPile.length - 1].rank
-                        } cards or click Continue`}
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* Right Player */}
@@ -393,7 +375,7 @@ export const GameTable = observer(() => {
             )}
 
             {/* Center - Draw & Discard Piles */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="absolute inset-0 flex items-center justify-center">
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard}
@@ -413,24 +395,6 @@ export const GameTable = observer(() => {
                 onDrawCard={handleDrawCard}
                 isMobile={false}
               />
-
-              {/* Toss-in Continue button */}
-              {waitingForTossIn && (
-                <div className="flex flex-col items-center gap-2 mt-2">
-                  <button
-                    onClick={() => gameStore.finishTossInPeriod()}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
-                  >
-                    Continue ▶
-                  </button>
-                  <p className="text-xs text-white/80 text-center">
-                    {discardPile.length > 0 &&
-                      `Toss in matching ${
-                        discardPile[discardPile.length - 1].rank
-                      } cards or click Continue`}
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Human Player */}

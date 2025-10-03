@@ -231,16 +231,7 @@ export class GameStore implements TempState {
 
   // Game phase transitions
   peekCard(playerId: string, position: number) {
-    const card = this.playerStore.peekCard(playerId, position);
-    if (card) {
-      const player = this.playerStore.getPlayer(playerId);
-      // Only show toast for bots - humans can see the card on screen
-      if (player && player.isBot) {
-        GameToastService.success(
-          `${player.name} peeked at position ${position + 1}`
-        );
-      }
-    }
+    this.playerStore.peekCard(playerId, position);
   }
 
   finishSetup() {
