@@ -477,6 +477,12 @@ export class ReplaceCardCommand extends Command {
     const oldCardToDiscard = player?.cards[this.position];
 
     if (this.cardAnimationStore) {
+      // Mark old card as played so it stays revealed in discard pile
+      if (oldCardToDiscard) {
+        oldCardToDiscard.played = true;
+      }
+
+      // Start animations FIRST while cards are still in original positions
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       // Revealed during animation, but will be hidden once it lands
       const drawAnimId = this.cardAnimationStore.startDrawAnimation(
@@ -488,6 +494,7 @@ export class ReplaceCardCommand extends Command {
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
+      // Capture position NOW while old card is still in player's hand
       const discardAnimId = oldCardToDiscard
         ? this.cardAnimationStore.startDiscardAnimation(
             oldCardToDiscard,
@@ -500,29 +507,24 @@ export class ReplaceCardCommand extends Command {
           )
         : null;
 
-      // Wait for both animations to complete before replacing card
-      const animations = [this.cardAnimationStore.waitForAnimation(drawAnimId)];
-      if (discardAnimId) {
-        animations.push(
-          this.cardAnimationStore.waitForAnimation(discardAnimId)
-        );
-      }
-
-      await Promise.all(animations);
-
-      // After animations complete, replace the card
+      // Immediately replace card in store AFTER starting animations
+      // This ensures animations have correct source positions captured
       this.oldCard = this.playerStore.replaceCard(
         this.playerId,
         this.position,
         this.newCard
       );
 
-      // Then highlight the new card at its position
-      this.cardAnimationStore.startHighlightAnimation(this.newCard, {
-        type: 'player',
-        playerId: this.playerId,
-        position: this.position,
-      });
+      // Don't await animations here - let caller handle timing
+      // This allows game-store to clear pendingCard immediately after this command returns
+      // Highlight new card after a delay (animations will still be running)
+      setTimeout(() => {
+        this.cardAnimationStore.startHighlightAnimation(this.newCard, {
+          type: 'player',
+          playerId: this.playerId,
+          position: this.position,
+        });
+      }, 1500); // Match animation duration
     } else {
       // No animation, just replace immediately
       this.oldCard = this.playerStore.replaceCard(
