@@ -196,32 +196,162 @@ export const GameTable = observer(() => {
         {!isDesktop ? (
           /* Mobile stacked layout: 3 rows (no overlap) */
           <div className="h-full flex flex-col bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-2 overflow-hidden">
-          {/* Row 1: Top player */}
-          {top && (
-            <div className="flex justify-center flex-shrink-0 pb-2">
-              <PlayerArea
-                player={top}
-                isCurrentPlayer={currentPlayer?.id === top.id}
-                isThinking={
-                  gameStore.aiThinking && currentPlayer?.id === top.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={
-                  shouldAllowOpponentCardInteractions()
-                    ? (position) => handleOpponentCardClick(top.id, position)
-                    : undefined
-                }
-                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-              />
-            </div>
-          )}
+            {/* Row 1: Top player */}
+            {top && (
+              <div className="flex justify-center flex-shrink-0 pb-2">
+                <PlayerArea
+                  player={top}
+                  isCurrentPlayer={currentPlayer?.id === top.id}
+                  isThinking={
+                    gameStore.aiThinking && currentPlayer?.id === top.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={
+                    shouldAllowOpponentCardInteractions()
+                      ? (position) => handleOpponentCardClick(top.id, position)
+                      : undefined
+                  }
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                />
+              </div>
+            )}
 
-          {/* Row 2: Left | Center piles | Right */}
-          <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 min-h-0">
+            {/* Row 2: Left | Center piles | Right */}
+            <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 min-h-0">
+              {/* Left Player */}
+              <div className="flex-1 flex justify-start items-start">
+                {left && (
+                  <PlayerArea
+                    player={left}
+                    isCurrentPlayer={currentPlayer?.id === left.id}
+                    isThinking={
+                      gameStore.aiThinking && currentPlayer?.id === left.id
+                    }
+                    gamePhase={phase}
+                    finalScores={finalScores}
+                    onCardClick={
+                      shouldAllowOpponentCardInteractions()
+                        ? (position) =>
+                            handleOpponentCardClick(left.id, position)
+                        : undefined
+                    }
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  />
+                )}
+              </div>
+
+              {/* Center draw/discard */}
+              <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
+                <DeckArea
+                  discardPile={discardPile}
+                  pendingCard={pendingCard}
+                  isChoosingCardAction={isChoosingCardAction}
+                  isSelectingSwapPosition={isSelectingSwapPosition}
+                  isDeclaringRank={isDeclaringRank}
+                  canDrawCard={
+                    !!(
+                      currentPlayer?.isHuman &&
+                      !isSelectingSwapPosition &&
+                      !isChoosingCardAction &&
+                      !isAwaitingActionTarget &&
+                      !isDeclaringRank &&
+                      phase === 'playing'
+                    )
+                  }
+                  onDrawCard={handleDrawCard}
+                  isMobile={true}
+                />
+
+                {/* Toss-in Continue button */}
+                {waitingForTossIn && (
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <button
+                      onClick={() => gameStore.finishTossInPeriod()}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                    >
+                      Continue ▶
+                    </button>
+                    <p className="text-xs text-white/80 text-center">
+                      {discardPile.length > 0 &&
+                        `Toss in matching ${
+                          discardPile[discardPile.length - 1].rank
+                        } cards or click Continue`}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Player */}
+              <div className="flex-1 flex justify-end items-start">
+                {right && (
+                  <PlayerArea
+                    player={right}
+                    isCurrentPlayer={currentPlayer?.id === right.id}
+                    isThinking={
+                      gameStore.aiThinking && currentPlayer?.id === right.id
+                    }
+                    gamePhase={phase}
+                    finalScores={finalScores}
+                    onCardClick={
+                      shouldAllowOpponentCardInteractions()
+                        ? (position) =>
+                            handleOpponentCardClick(right.id, position)
+                        : undefined
+                    }
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Row 3: Human player */}
+            <div className="flex justify-center flex-shrink-0 pt-2">
+              {humanPlayer && (
+                <PlayerArea
+                  player={humanPlayer}
+                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  isThinking={false}
+                  onCardClick={
+                    shouldAllowCardInteractions() ? handleCardClick : undefined
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  isSelectingSwapPosition={isSelectingSwapPosition}
+                  isDeclaringRank={isDeclaringRank}
+                  swapPosition={swapPosition}
+                  isSelectingActionTarget={shouldAllowCardInteractions()}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Desktop/Tablet wide board */
+          <div className="relative bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-3 w-full h-full min-h-0">
+            {/* Top Player */}
+            {top && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                <PlayerArea
+                  player={top}
+                  isCurrentPlayer={currentPlayer?.id === top.id}
+                  isThinking={
+                    gameStore.aiThinking && currentPlayer?.id === top.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={
+                    shouldAllowOpponentCardInteractions()
+                      ? (position) => handleOpponentCardClick(top.id, position)
+                      : undefined
+                  }
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                />
+              </div>
+            )}
+
             {/* Left Player */}
-            <div className="flex-1 flex justify-start items-start">
-              {left && (
+            {left && (
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
                 <PlayerArea
                   player={left}
                   isCurrentPlayer={currentPlayer?.id === left.id}
@@ -237,11 +367,33 @@ export const GameTable = observer(() => {
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Center draw/discard */}
-            <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
+            {/* Right Player */}
+            {right && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <PlayerArea
+                  player={right}
+                  isCurrentPlayer={currentPlayer?.id === right.id}
+                  isThinking={
+                    gameStore.aiThinking && currentPlayer?.id === right.id
+                  }
+                  gamePhase={phase}
+                  finalScores={finalScores}
+                  onCardClick={
+                    shouldAllowOpponentCardInteractions()
+                      ? (position) =>
+                          handleOpponentCardClick(right.id, position)
+                      : undefined
+                  }
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                />
+              </div>
+            )}
+
+            {/* Center - Draw & Discard Piles */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard}
@@ -259,162 +411,48 @@ export const GameTable = observer(() => {
                   )
                 }
                 onDrawCard={handleDrawCard}
-                isMobile={true}
+                isMobile={false}
               />
+
+              {/* Toss-in Continue button */}
+              {waitingForTossIn && (
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <button
+                    onClick={() => gameStore.finishTossInPeriod()}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                  >
+                    Continue ▶
+                  </button>
+                  <p className="text-xs text-white/80 text-center">
+                    {discardPile.length > 0 &&
+                      `Toss in matching ${
+                        discardPile[discardPile.length - 1].rank
+                      } cards or click Continue`}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Right Player */}
-            <div className="flex-1 flex justify-end items-start">
-              {right && (
+            {/* Human Player */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+              {humanPlayer && (
                 <PlayerArea
-                  player={right}
-                  isCurrentPlayer={currentPlayer?.id === right.id}
-                  isThinking={
-                    gameStore.aiThinking && currentPlayer?.id === right.id
+                  player={humanPlayer}
+                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  isThinking={false}
+                  onCardClick={
+                    shouldAllowCardInteractions() ? handleCardClick : undefined
                   }
                   gamePhase={phase}
                   finalScores={finalScores}
-                  onCardClick={
-                    shouldAllowOpponentCardInteractions()
-                      ? (position) =>
-                          handleOpponentCardClick(right.id, position)
-                      : undefined
-                  }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  isSelectingSwapPosition={isSelectingSwapPosition}
+                  isDeclaringRank={isDeclaringRank}
+                  swapPosition={swapPosition}
+                  isSelectingActionTarget={shouldAllowCardInteractions()}
                 />
               )}
             </div>
           </div>
-
-          {/* Row 3: Human player */}
-          <div className="flex justify-center flex-shrink-0 pt-2">
-            {humanPlayer && (
-              <PlayerArea
-                player={humanPlayer}
-                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-                isThinking={false}
-                onCardClick={
-                  shouldAllowCardInteractions() ? handleCardClick : undefined
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                isSelectingSwapPosition={isSelectingSwapPosition}
-                isDeclaringRank={isDeclaringRank}
-                swapPosition={swapPosition}
-                isSelectingActionTarget={shouldAllowCardInteractions()}
-              />
-            )}
-          </div>
-        </div>
-        ) : (
-          /* Desktop/Tablet wide board */
-          <div className="relative bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-3 w-full h-full min-h-0">
-          {/* Top Player */}
-          {top && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2">
-              <PlayerArea
-                player={top}
-                isCurrentPlayer={currentPlayer?.id === top.id}
-                isThinking={
-                  gameStore.aiThinking && currentPlayer?.id === top.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={
-                  shouldAllowOpponentCardInteractions()
-                    ? (position) => handleOpponentCardClick(top.id, position)
-                    : undefined
-                }
-                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-              />
-            </div>
-          )}
-
-          {/* Left Player */}
-          {left && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2">
-              <PlayerArea
-                player={left}
-                isCurrentPlayer={currentPlayer?.id === left.id}
-                isThinking={
-                  gameStore.aiThinking && currentPlayer?.id === left.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={
-                  shouldAllowOpponentCardInteractions()
-                    ? (position) => handleOpponentCardClick(left.id, position)
-                    : undefined
-                }
-                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-              />
-            </div>
-          )}
-
-          {/* Right Player */}
-          {right && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <PlayerArea
-                player={right}
-                isCurrentPlayer={currentPlayer?.id === right.id}
-                isThinking={
-                  gameStore.aiThinking && currentPlayer?.id === right.id
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                onCardClick={
-                  shouldAllowOpponentCardInteractions()
-                    ? (position) => handleOpponentCardClick(right.id, position)
-                    : undefined
-                }
-                isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
-              />
-            </div>
-          )}
-
-          {/* Center - Draw & Discard Piles */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <DeckArea
-              discardPile={discardPile}
-              pendingCard={pendingCard}
-              isChoosingCardAction={isChoosingCardAction}
-              isSelectingSwapPosition={isSelectingSwapPosition}
-              isDeclaringRank={isDeclaringRank}
-              canDrawCard={
-                !!(
-                  currentPlayer?.isHuman &&
-                  !isSelectingSwapPosition &&
-                  !isChoosingCardAction &&
-                  !isAwaitingActionTarget &&
-                  !isDeclaringRank &&
-                  phase === 'playing'
-                )
-              }
-              onDrawCard={handleDrawCard}
-              isMobile={false}
-            />
-          </div>
-
-          {/* Human Player */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            {humanPlayer && (
-              <PlayerArea
-                player={humanPlayer}
-                isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
-                isThinking={false}
-                onCardClick={
-                  shouldAllowCardInteractions() ? handleCardClick : undefined
-                }
-                gamePhase={phase}
-                finalScores={finalScores}
-                isSelectingSwapPosition={isSelectingSwapPosition}
-                isDeclaringRank={isDeclaringRank}
-                swapPosition={swapPosition}
-                isSelectingActionTarget={shouldAllowCardInteractions()}
-              />
-            )}
-          </div>
-        </div>
         )}
       </div>
     </div>

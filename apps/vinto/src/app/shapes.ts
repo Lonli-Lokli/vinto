@@ -58,9 +58,7 @@ export interface GameState {
   finalTurnTriggered: boolean;
 }
 
-export type Difficulty = 'easy' | 'moderate' | 'hard' ;
-
-export type TossInTime = 5 | 7 | 10;
+export type Difficulty = 'easy' | 'moderate' | 'hard';
 
 export interface GameStore extends GameState {
   aiThinking: boolean;
@@ -88,14 +86,11 @@ export interface GameStore extends GameState {
   swapPosition: number | null;
   setupPeeksRemaining: number;
   waitingForTossIn: boolean;
-  tossInTimer: number;
-  tossInTimeConfig: TossInTime;
   difficulty: Difficulty;
   canCallVintoAfterHumanTurn: boolean;
 
   initGame: () => Promise<void>;
   updateDifficulty: (diff: Difficulty) => void;
-  updateTossInTime: (time: TossInTime) => void;
   peekCard: (playerId: string, pos: number) => void;
   finishSetup: () => void;
   drawCard: () => void;

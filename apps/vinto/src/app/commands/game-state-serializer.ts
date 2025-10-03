@@ -229,16 +229,10 @@ export class GameStateSerializer {
         playerId: item.playerId,
         card: this.deserializeCard(item.card),
       }));
-      tossInStore.timer = tossData.timer || 0;
       tossInStore.isActive = tossData.isActive || false;
       tossInStore.currentQueueIndex = tossData.currentQueueIndex || 0;
       tossInStore.originalCurrentPlayer = tossData.originalCurrentPlayer || '';
       // Note: playersWhoTossedIn is private, will be reconstructed during replay
-    }
-
-    // Set toss-in time config if available
-    if (payload.tossInTimeConfig) {
-      tossInStore.setTimeConfig(payload.tossInTimeConfig);
     }
   }
 

@@ -20,7 +20,7 @@ import {
   TossInStore,
   ReplayStore,
 } from '../stores';
-import { Difficulty, TossInTime } from '../shapes';
+import { Difficulty } from '../shapes';
 
 /**
  * Complete game state manager
@@ -57,18 +57,12 @@ export class GameStateManager {
   /**
    * Initialize a new game and capture its state
    */
-  async initializeGame(
-    difficulty: Difficulty,
-    tossInTimeConfig: TossInTime
-  ): Promise<boolean> {
+  async initializeGame(difficulty: Difficulty): Promise<boolean> {
     // Clear previous history
     this.commandHistory.clear();
 
     // Execute the initialize command to capture state
-    const initCommand = this.commandFactory.initializeGame(
-      difficulty,
-      tossInTimeConfig
-    );
+    const initCommand = this.commandFactory.initializeGame(difficulty);
     const result = await this.commandHistory.executeCommand(initCommand);
 
     return result.success;

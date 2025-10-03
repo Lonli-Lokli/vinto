@@ -2,7 +2,7 @@
 
 import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
-import { Card, Player, TossInTime } from '../shapes';
+import { Card, Player } from '../shapes';
 import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
 import { BotDecisionService } from '../services/bot-decision';
@@ -13,8 +13,6 @@ export interface TossInAction {
 }
 
 export interface TossInStoreCallbacks {
-  onTimerTick?: () => void;
-  onTimerStop?: () => void;
   onComplete?: () => void;
   onActionExecute?: (playerId: string, card: Card) => Promise<void>;
   onToastMessage?: (
@@ -34,8 +32,6 @@ export interface TossInStoreDependencies {
 @injectable()
 export class TossInStore {
   queue: TossInAction[] = [];
-  timer = 0;
-  timeConfig: TossInTime = 7;
   isActive = false;
   currentQueueIndex = 0;
   originalCurrentPlayer = ''; // Track who's "real" turn it is
@@ -66,10 +62,6 @@ export class TossInStore {
     return (playerId: string) => this.playersWhoTossedIn.has(playerId);
   }
 
-  setTimeConfig(time: TossInTime) {
-    this.timeConfig = time;
-  }
-
   setCallbacks(callbacks: TossInStoreCallbacks) {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
@@ -81,10 +73,57 @@ export class TossInStore {
   startTossInPeriod(currentPlayerId: string) {
     this.originalCurrentPlayer = currentPlayerId;
     this.isActive = true;
-    this.timer = this.timeConfig;
     this.queue = [];
     this.currentQueueIndex = 0;
     this.playersWhoTossedIn.clear();
+
+    // Bots make immediate toss-in decisions
+    this.handleBotTossInDecisions();
+  }
+
+  /**
+   * Bots immediately decide whether to toss in when period starts
+   */
+  private handleBotTossInDecisions(): void {
+    if (!this.deps) return;
+
+    const { playerStore, deckStore, botDecisionService, createBotContext } =
+      this.deps;
+    const discardedRank = deckStore.peekTopDiscard()?.rank;
+    if (!discardedRank) return;
+
+    playerStore.botPlayers.forEach((player) => {
+      if (!this.hasPlayerTossedIn(player.id)) {
+        const context = createBotContext(player.id);
+
+        if (
+          botDecisionService.shouldParticipateInTossIn(discardedRank, context)
+        ) {
+          // Find ALL matching cards
+          const matchingPositions = player.cards
+            .map((card, index) => ({ card, position: index }))
+            .filter(({ card }) => card.rank === discardedRank);
+
+          if (matchingPositions.length > 0) {
+            // Select BEST card to toss (prefer unknown cards, then lower value)
+            const bestToToss = matchingPositions.reduce((best, curr) => {
+              const bestKnown = player.knownCardPositions.has(best.position);
+              const currKnown = player.knownCardPositions.has(curr.position);
+
+              // Prefer unknown cards (don't toss cards we know unless necessary)
+              if (!bestKnown && currKnown) return best;
+              if (bestKnown && !currKnown) return curr;
+
+              // If both known or both unknown, prefer lower value
+              return best.card.value <= curr.card.value ? best : curr;
+            });
+
+            // Toss in ONLY ONE card
+            this.tossInCard(player.id, bestToToss.position);
+          }
+        }
+      }
+    });
   }
 
   /**
@@ -164,72 +203,16 @@ export class TossInStore {
   }
 
   /**
-   * Handle bot participation in toss-in period during each timer tick
+   * Manually finish the toss-in period (called when human clicks "Continue")
    */
-  handleBotParticipation(): void {
-    if (!this.deps) return;
+  finishTossInPeriod() {
+    this.isActive = false;
 
-    const { playerStore, deckStore, botDecisionService, createBotContext } =
-      this.deps;
-    const discardedRank = deckStore.peekTopDiscard()?.rank;
-    if (!discardedRank) return;
-
-    playerStore.botPlayers.forEach((player) => {
-      if (!this.hasPlayerTossedIn(player.id)) {
-        const context = createBotContext(player.id);
-
-        if (
-          botDecisionService.shouldParticipateInTossIn(discardedRank, context)
-        ) {
-          // Find ALL matching cards
-          const matchingPositions = player.cards
-            .map((card, index) => ({ card, position: index }))
-            .filter(({ card }) => card.rank === discardedRank);
-
-          if (matchingPositions.length > 0) {
-            // Select BEST card to toss (prefer unknown cards, then lower value)
-            const bestToToss = matchingPositions.reduce((best, curr) => {
-              const bestKnown = player.knownCardPositions.has(best.position);
-              const currKnown = player.knownCardPositions.has(curr.position);
-
-              // Prefer unknown cards (don't toss cards we know unless necessary)
-              if (!bestKnown && currKnown) return best;
-              if (bestKnown && !currKnown) return curr;
-
-              // If both known or both unknown, prefer lower value
-              return best.card.value <= curr.card.value ? best : curr;
-            });
-
-            // Toss in ONLY ONE card
-            this.tossInCard(player.id, bestToToss.position);
-          }
-        }
-      }
-    });
-  }
-
-  // External timer control - to be called by GameStore or timer service
-  tick(): void {
-    if (!this.isActive || this.timer <= 0) {
-      return;
+    if (this.hasTossInActions) {
+      this.startProcessingQueue();
+    } else {
+      this.returnToNormalFlow();
     }
-
-    this.timer--;
-
-    // Handle bot participation during each tick
-    this.handleBotParticipation();
-
-    // Notify external systems about timer tick
-    this.callbacks.onTimerTick?.();
-
-    if (this.timer <= 0) {
-      this.finishTossInPeriod();
-    }
-  }
-
-  forceFinish(): void {
-    this.timer = 0;
-    this.finishTossInPeriod();
   }
 
   // Pure validation method - external systems provide the data
@@ -286,20 +269,6 @@ export class TossInStore {
 
   private addToQueue(playerId: string, card: Card) {
     this.queue.push({ playerId, card });
-  }
-
-  private finishTossInPeriod() {
-    this.isActive = false;
-    this.timer = 0;
-
-    // Stop the timer service
-    this.callbacks.onTimerStop?.();
-
-    if (this.hasTossInActions) {
-      this.startProcessingQueue();
-    } else {
-      this.returnToNormalFlow();
-    }
   }
 
   private startProcessingQueue() {
@@ -368,14 +337,12 @@ export class TossInStore {
   reset() {
     this.clearQueue();
     this.isActive = false;
-    this.timer = 0;
   }
 
   // Readonly access to internal state for debugging/testing
   getState() {
     return {
       queue: [...this.queue],
-      timer: this.timer,
       isActive: this.isActive,
       currentQueueIndex: this.currentQueueIndex,
       originalCurrentPlayer: this.originalCurrentPlayer,

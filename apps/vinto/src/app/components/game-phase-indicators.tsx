@@ -16,7 +16,7 @@ export const GamePhaseIndicators = observer(() => {
   const { phase, isSelectingSwapPosition } = useGamePhaseStore();
   const { setupPeeksRemaining } = usePlayerStore();
   const tossInStore = useTossInStore();
-  const { waitingForTossIn, timer: tossInTimer } = tossInStore;
+  const { waitingForTossIn } = tossInStore;
   const { discardPile } = useDeckStore();
 
   // Setup Phase Instructions
@@ -29,7 +29,8 @@ export const GamePhaseIndicators = observer(() => {
               🔍 Memory Phase
             </div>
             <div className="text-xs text-gray-700">
-              Click any 2 of your cards to memorize them. They will be hidden during the game!
+              Click any 2 of your cards to memorize them. They will be hidden
+              during the game!
             </div>
             <div className="text-xs font-medium text-gray-600">
               Peeks remaining: {setupPeeksRemaining}
@@ -39,8 +40,8 @@ export const GamePhaseIndicators = observer(() => {
               disabled={setupPeeksRemaining > 0}
               className={`py-1.5 px-3 rounded text-sm font-semibold text-white transition-colors ${
                 setupPeeksRemaining > 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
               }`}
             >
               Start Game
@@ -58,7 +59,7 @@ export const GamePhaseIndicators = observer(() => {
         <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
           <div className="text-center space-y-1">
             <div className="text-sm font-semibold text-gray-800">
-              ⚡ Toss-in Time! ({tossInTimer}s)
+              ⚡ Toss-in Time!
             </div>
             <div className="text-xs text-gray-700">
               If you have a matching card ({discardPile[0]?.rank}), click it to

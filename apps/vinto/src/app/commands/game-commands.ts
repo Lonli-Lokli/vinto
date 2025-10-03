@@ -14,7 +14,7 @@ import type {
   TossInStore,
   CardAnimationStore,
 } from '../stores';
-import { Card, Rank, Difficulty, TossInTime } from '../shapes';
+import { Card, Rank, Difficulty } from '../shapes';
 
 /**
  * Serialized card data
@@ -49,8 +49,7 @@ export class InitializeGameCommand extends Command {
     private gamePhaseStore: GamePhaseStore,
     private actionStore: ActionStore,
     private tossInStore: TossInStore,
-    private difficulty: Difficulty,
-    private tossInTimeConfig: TossInTime
+    private difficulty: Difficulty
   ) {
     super();
   }
@@ -163,7 +162,6 @@ export class InitializeGameCommand extends Command {
           played: item.card.played,
         },
       })),
-      timer: tossInState.timer,
       isActive: tossInState.isActive,
       currentQueueIndex: tossInState.currentQueueIndex,
       originalCurrentPlayer: tossInState.originalCurrentPlayer,
@@ -176,7 +174,6 @@ export class InitializeGameCommand extends Command {
       drawPile,
       discardPile,
       difficulty: this.difficulty,
-      tossInTimeConfig: this.tossInTimeConfig,
       currentPlayerIndex: this.playerStore.currentPlayerIndex,
       setupPeeksRemaining: this.playerStore.setupPeeksRemaining,
       turnCount: this.playerStore.turnCount,

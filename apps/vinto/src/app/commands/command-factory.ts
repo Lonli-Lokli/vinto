@@ -26,7 +26,7 @@ import {
   TossInStore,
   CardAnimationStore,
 } from '../stores';
-import { Card, Rank, Difficulty, TossInTime, NeverError } from '../shapes';
+import { Card, Rank, Difficulty, NeverError } from '../shapes';
 
 @injectable()
 export class CommandFactory {
@@ -39,18 +39,14 @@ export class CommandFactory {
     @inject(CardAnimationStore) private cardAnimationStore: CardAnimationStore
   ) {}
 
-  initializeGame(
-    difficulty: Difficulty,
-    tossInTimeConfig: TossInTime
-  ): ICommand {
+  initializeGame(difficulty: Difficulty): ICommand {
     return new InitializeGameCommand(
       this.playerStore,
       this.deckStore,
       this.gamePhaseStore,
       this.actionStore,
       this.tossInStore,
-      difficulty,
-      tossInTimeConfig
+      difficulty
     );
   }
 
@@ -139,10 +135,7 @@ export class CommandFactory {
 
     switch (type) {
       case 'INITIALIZE_GAME':
-        return this.initializeGame(
-          payload.difficulty as Difficulty,
-          payload.tossInTimeConfig as TossInTime
-        );
+        return this.initializeGame(payload.difficulty as Difficulty);
 
       case 'DRAW_CARD':
         return this.drawCard(payload.playerId as string);

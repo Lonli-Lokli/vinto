@@ -10,7 +10,6 @@ import { ActionCoordinator } from './action-coordinator';
 import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { ReplayStore } from './replay-store';
 import { CardAnimationStore } from './card-animation-store';
-import { timerService } from '../services/timer-service';
 import { GameToastService } from '../services/toast-service';
 import {
   BotDecisionService,
@@ -19,7 +18,7 @@ import {
 } from '../services/bot-decision';
 import { CommandFactory } from '../commands/command-factory';
 import { CommandHistory } from '../commands/command-history';
-import { Difficulty, TossInTime, Card, Rank, TempState } from '../shapes';
+import { Difficulty, Card, Rank, TempState } from '../shapes';
 import { GameStateManager } from '../commands';
 
 @injectable()
@@ -50,7 +49,6 @@ export class GameStore implements TempState {
 
   // Configuration
   difficulty: Difficulty = 'moderate';
-  tossInTimeConfig: TossInTime = 7;
 
   // Vinto call availability
   canCallVintoAfterHumanTurn = false;
@@ -94,8 +92,6 @@ export class GameStore implements TempState {
 
     // Set up toss-in store callbacks
     const tossInCallbacks: TossInStoreCallbacks = {
-      onTimerTick: () => this.handleTossInTimerTick(),
-      onTimerStop: () => timerService.stopTimer('toss-in'),
       onComplete: () => this.handleTossInComplete(),
       onActionExecute: async (playerId, card) => {
         await this.actionCoordinator.executeCardAction(card, playerId);
@@ -221,10 +217,7 @@ export class GameStore implements TempState {
       this.actionStore.reset();
       this.tossInStore.reset();
 
-      await this.gameStateManager.initializeGame(
-        this.difficulty,
-        this.tossInTimeConfig
-      );
+      await this.gameStateManager.initializeGame(this.difficulty);
     } catch (error) {
       console.error('Error initializing game:', error);
       GameToastService.error('Failed to start game. Please try again.');
@@ -234,11 +227,6 @@ export class GameStore implements TempState {
   // Configuration updates
   updateDifficulty(diff: Difficulty) {
     this.difficulty = diff;
-  }
-
-  updateTossInTime(time: TossInTime) {
-    this.tossInTimeConfig = time;
-    this.tossInStore.setTimeConfig(time);
   }
 
   // Game phase transitions
@@ -532,16 +520,13 @@ export class GameStore implements TempState {
     if (currentPlayer) {
       this.phaseStore.startTossQueueActive();
       this.tossInStore.startTossInPeriod(currentPlayer.id);
-
-      // Start external timer
-      timerService.startTimer(
-        'toss-in',
-        () => {
-          this.tossInStore.tick();
-        },
-        1000
-      );
+      // No timer - human clicks "Continue" button to finish
     }
+  }
+
+  // Manual finish toss-in (called when human clicks "Continue")
+  finishTossInPeriod() {
+    this.tossInStore.finishTossInPeriod();
   }
 
   tossInCard(playerId: string, position: number) {
@@ -756,14 +741,7 @@ export class GameStore implements TempState {
   }
 
   // Toss-in callback handlers
-  private handleTossInTimerTick() {
-    // Bot participation is now handled in TossInStore.tick()
-    // This callback is kept for future extensibility
-  }
-
   private handleTossInComplete() {
-    // Don't stop timer here - it should have already completed naturally
-    // Stopping it here can cause race conditions if a new toss-in period has started
     this.phaseStore.returnToIdle();
     this.advanceTurn();
   }
@@ -823,7 +801,6 @@ export class GameStore implements TempState {
       this.aiTurnReaction();
       this.aiTurnReaction = null;
     }
-    timerService.stopAllTimers();
     this.tossInStore.reset();
   }
 }
