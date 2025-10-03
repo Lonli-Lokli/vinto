@@ -24,7 +24,7 @@ interface CardProps {
   card?: CardType;
   revealed?: boolean;
   position?: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'auto';
   clickable?: boolean;
   highlighted?: boolean;
   botPeeking?: boolean;
@@ -55,6 +55,7 @@ export function Card({
     md: 'w-8 h-12 text-2xs',
     lg: 'w-10 h-14 text-xs',
     xl: 'w-12 h-16 text-sm',
+    auto: 'w-full h-full text-xs',
   } as const;
 
   // Build data attributes for animation tracking
@@ -132,13 +133,16 @@ export function Card({
   );
 }
 
-const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({ rank, size }) => {
+const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({
+  rank,
+  size,
+}) => {
   // Size classes that fit within card containers with proper aspect ratio
   const sizeClass = {
-    sm: 'w-5 h-7',    // fits in w-6 h-9
-    md: 'w-7 h-10',   // fits in w-8 h-12
-    lg: 'w-9 h-12',   // fits in w-10 h-14
-    xl: 'w-11 h-14',  // fits in w-12 h-16
+    sm: 'w-5 h-7', // fits in w-6 h-9
+    md: 'w-7 h-10', // fits in w-8 h-12
+    lg: 'w-9 h-12', // fits in w-10 h-14
+    xl: 'w-11 h-14', // fits in w-12 h-16
   }[size];
 
   const className = `${sizeClass} object-contain`;

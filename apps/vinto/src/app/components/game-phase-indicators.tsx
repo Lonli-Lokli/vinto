@@ -1,8 +1,9 @@
 // components/GamePhaseIndicators.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Popover } from 'react-tiny-popover';
 import type { Card, Player } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
 import {
@@ -13,6 +14,7 @@ import {
   useDeckStore,
   useActionStore,
 } from './di-provider';
+import { Card as CardComponent } from './card';
 
 // Setup Phase Component
 const SetupPhaseIndicator = observer(({
@@ -206,64 +208,129 @@ const CardDrawnIndicator = observer(({
   onDiscard: () => void;
 }) => {
   const hasAction = !!pendingCard.action;
+  const [showHelp, setShowHelp] = useState(false);
+
+  const helpContent = (
+    <div
+      className="bg-white border border-gray-300 rounded p-3 max-w-sm shadow-lg"
+      style={{ zIndex: 9999 }}
+    >
+      <div className="text-sm text-gray-700 space-y-2">
+        <p className="font-semibold text-gray-800">Card Actions:</p>
+        <div className="space-y-1 text-xs">
+          <p><strong>⚡ Use Action:</strong> Execute the card&apos;s special ability immediately</p>
+          <p><strong>🔄 Swap:</strong> Replace one of your cards with this drawn card</p>
+          <p><strong>🗑️ Discard:</strong> Discard this card {hasAction ? 'without using its action' : ''}</p>
+        </div>
+        {hasAction && (
+          <div className="bg-emerald-50 rounded p-2 text-xs">
+            <div className="text-emerald-700 font-medium">
+              {pendingCard.rank}: {getActionExplanation(pendingCard.rank)}
+            </div>
+          </div>
+        )}
+      </div>
+      <button
+        onClick={() => setShowHelp(false)}
+        className="mt-2 text-sm text-gray-500 hover:text-gray-700"
+      >
+        Close
+      </button>
+    </div>
+  );
 
   return (
-    <div className="w-full px-3 py-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-3 shadow-sm">
-        {/* Header */}
-        <div className="text-center mb-3">
-          <div className="text-sm font-semibold text-gray-800 mb-1">
-            🎴 Card Drawn: {pendingCard.rank}
+    <div className="w-full px-3 py-1">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
+        <div className="flex gap-3">
+          {/* Card image - first column */}
+          <div className="flex-shrink-0 w-16 h-24">
+            <CardComponent card={pendingCard} revealed={true} size="auto" />
           </div>
-          {hasAction && (
-            <>
-              <div className="text-xs font-medium text-emerald-700 mb-1">
-                Action: {pendingCard.action}
+
+          {/* Content - second column */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Header with title, rank and help */}
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-semibold text-gray-800">
+                    Card Drawn:
+                  </span>
+                  <span className="text-base font-bold text-gray-900">
+                    {pendingCard.rank}
+                  </span>
+                </div>
+                {hasAction ? (
+                  <div className="text-xs text-emerald-700 mt-0.5">
+                    {getActionExplanation(pendingCard.rank)}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    No action available
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-gray-600 bg-emerald-50 rounded px-2 py-1 inline-block">
-                {getActionExplanation(pendingCard.rank)}
+
+              <Popover
+                isOpen={showHelp}
+                positions={['top', 'bottom', 'left', 'right']}
+                content={helpContent}
+                onClickOutside={() => setShowHelp(false)}
+              >
+                <button
+                  onClick={() => setShowHelp(!showHelp)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 flex-shrink-0"
+                  aria-label="Show help"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </Popover>
+            </div>
+
+            {/* Action Buttons - 2 in first row, 1 in second */}
+            <div className="space-y-1.5 mt-auto">
+              <div className="grid grid-cols-2 gap-1.5">
+                {hasAction && (
+                  <button
+                    onClick={onUseAction}
+                    className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+                  >
+                    <span>⚡</span>
+                    <span>Use Action</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={onSwapDiscard}
+                  className={`flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm ${!hasAction ? 'col-span-2' : ''}`}
+                >
+                  <span>🔄</span>
+                  <span>Swap</span>
+                </button>
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-2">
-          {hasAction && (
-            <button
-              onClick={onUseAction}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-              title={`Execute ${pendingCard.action}`}
-            >
-              <span>⚡</span>
-              <span>Use Action</span>
-            </button>
-          )}
-
-          <button
-            onClick={onSwapDiscard}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-            title="Replace one of your cards with this drawn card"
-          >
-            <span>🔄</span>
-            <span>Swap with Hand Card</span>
-          </button>
-
-          <button
-            onClick={onDiscard}
-            className="w-full flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-            title={hasAction ? "Discard without using action" : "Discard this card"}
-          >
-            <span>🗑️</span>
-            <span>{hasAction ? 'Discard (No Action)' : 'Discard'}</span>
-          </button>
-        </div>
-
-        {/* Help Text */}
-        <div className="text-xs text-gray-500 text-center mt-2 pt-2 border-t border-gray-200">
-          {hasAction
-            ? 'Use action, swap with your card, or discard without action'
-            : 'Swap with one of your cards or discard'}
+              <button
+                onClick={onDiscard}
+                className="w-full flex items-center justify-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+              >
+                <span>🗑️</span>
+                <span>Discard</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

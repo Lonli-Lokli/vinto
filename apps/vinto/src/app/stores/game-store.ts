@@ -261,12 +261,28 @@ export class GameStore implements TempState {
 
     // Store the top card before drawing and set as pending BEFORE animation
     // This ensures the drawn area exists as an animation target
-    const drawnCard = this.deckStore.peekTopDraw();
+    // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
+    const drawnCard = this.deckStore.peekTopCard();
     if (drawnCard) {
       this.actionStore.setPendingCard(drawnCard);
     }
 
-    // Execute draw command (which will animate card from draw pile to drawn area)
+    // Animate card from draw pile to drawn area
+    if (drawnCard) {
+      const animId = this.cardAnimationStore.startDrawAnimation(
+        drawnCard,
+        { type: 'draw' },
+        { type: 'drawn' },
+        1000,
+        true // Reveal card during animation
+      );
+
+      if (animId) {
+        await this.cardAnimationStore.waitForAnimation(animId);
+      }
+    }
+
+    // Execute draw command (removes card from deck)
     const command = this.commandFactory.drawCard(currentPlayer.id);
     const result = await this.commandHistory.executeCommand(command);
 
@@ -588,15 +604,37 @@ export class GameStore implements TempState {
         // Draw new card and make decision using command system
         if (this.deckStore.hasDrawCards) {
           // Peek at the top card before drawing
-          const drawnCard = this.deckStore.peekTopDraw();
+          // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
+          const drawnCard = this.deckStore.peekTopCard();
 
-          // Execute draw command (which will actually draw the card from the deck)
+          if (drawnCard) {
+            // Set pending card so drawn area exists for animation
+            this.actionStore.setPendingCard(drawnCard);
+
+            // Animate card from draw pile to drawn area
+            const animId = this.cardAnimationStore.startDrawAnimation(
+              drawnCard,
+              { type: 'draw' },
+              { type: 'drawn' },
+              1000,
+              true // Reveal card during animation
+            );
+
+            if (animId) {
+              await this.cardAnimationStore.waitForAnimation(animId);
+            }
+          }
+
+          // Execute draw command (removes card from deck)
           const command = this.commandFactory.drawCard(currentPlayer.id);
           const result = await this.commandHistory.executeCommand(command);
 
           if (result.success && drawnCard) {
             await this.executeBotCardDecision(drawnCard, currentPlayer);
           }
+
+          // Clear pending card after bot makes decision
+          this.actionStore.setPendingCard(null);
         }
 
         this.startTossInPeriod();
