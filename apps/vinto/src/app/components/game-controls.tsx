@@ -36,6 +36,7 @@ export const GameControls = observer(() => {
   // Determine what content to show but always use same container
   const getControlContent = () => {
     // Hide controls during special game states
+    // Note: isChoosingCardAction is now handled by GamePhaseIndicators (CardDrawnIndicator)
     const shouldHide =
       (phase !== 'playing' && phase !== 'final') ||
       isSelectingSwapPosition ||

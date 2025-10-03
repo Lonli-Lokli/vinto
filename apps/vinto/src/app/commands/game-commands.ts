@@ -485,7 +485,7 @@ export class ReplaceCardCommand extends Command {
       // Start animations FIRST while cards are still in original positions
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       // Revealed during animation, but will be hidden once it lands
-      const drawAnimId = this.cardAnimationStore.startDrawAnimation(
+      this.cardAnimationStore.startDrawAnimation(
         this.newCard,
         { type: 'drawn' },
         { type: 'player', playerId: this.playerId, position: this.position },
@@ -495,17 +495,17 @@ export class ReplaceCardCommand extends Command {
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
       // Capture position NOW while old card is still in player's hand
-      const discardAnimId = oldCardToDiscard
-        ? this.cardAnimationStore.startDiscardAnimation(
-            oldCardToDiscard,
-            {
-              type: 'player',
-              playerId: this.playerId,
-              position: this.position,
-            },
-            { type: 'discard' }
-          )
-        : null;
+      if (oldCardToDiscard) {
+        this.cardAnimationStore.startDiscardAnimation(
+          oldCardToDiscard,
+          {
+            type: 'player',
+            playerId: this.playerId,
+            position: this.position,
+          },
+          { type: 'discard' }
+        );
+      }
 
       // Immediately replace card in store AFTER starting animations
       // This ensures animations have correct source positions captured

@@ -1,5 +1,4 @@
 import { ActionTargetSelector } from './action-target-selector';
-import { CardActionChoice } from './card-action-choice';
 import { GameControls } from './game-controls';
 import { GamePhaseIndicators } from './game-phase-indicators';
 import { RankDeclaration } from './rank-declaration';
@@ -19,7 +18,6 @@ export function BottomArea() {
       <div className="h-full w-full">
         {/* Only one of these components will be visible at a time, each takes full space */}
         <GamePhaseIndicators />
-        <CardActionChoice />
         <ActionTargetSelector />
         <RankDeclaration />
         <GameControls />

@@ -178,48 +178,99 @@ const ActionExecutionIndicator = observer(({
 
 ActionExecutionIndicator.displayName = 'ActionExecutionIndicator';
 
+// Helper function to get action explanation
+const getActionExplanation = (rank: string): string => {
+  const explanations: Record<string, string> = {
+    '7': 'Peek at one of your own cards',
+    '8': 'Peek at an opponent\'s card',
+    '9': 'Peek at an opponent\'s card',
+    '10': 'Swap any two cards (any players)',
+    'J': 'Compare two cards - discard the higher one',
+    'Q': 'Peek at two cards, optionally swap them',
+    'K': 'Declare another card action (7-A)',
+    'A': 'Force an opponent to draw a penalty card',
+  };
+  return explanations[rank] || 'Special card action';
+};
+
 // Card Drawn Indicator Component
 const CardDrawnIndicator = observer(({
   pendingCard,
   onUseAction,
-  onSwapDiscard
+  onSwapDiscard,
+  onDiscard
 }: {
   pendingCard: Card;
   onUseAction: () => void;
   onSwapDiscard: () => void;
-}) => (
-  <div className="w-full px-3 py-1">
-    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-2 sm:p-3 shadow-sm">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex-1 text-center sm:text-left">
-          <div className="text-sm font-semibold text-green-800">
+  onDiscard: () => void;
+}) => {
+  const hasAction = !!pendingCard.action;
+
+  return (
+    <div className="w-full px-3 py-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-3 shadow-sm">
+        {/* Header */}
+        <div className="text-center mb-3">
+          <div className="text-sm font-semibold text-gray-800 mb-1">
             🎴 Card Drawn: {pendingCard.rank}
           </div>
-          <div className="text-xs text-green-700">
-            Action: {pendingCard.action}
-          </div>
-          <div className="text-xs text-green-600">
-            Choose to use the action or swap/discard the card
-          </div>
+          {hasAction && (
+            <>
+              <div className="text-xs font-medium text-emerald-700 mb-1">
+                Action: {pendingCard.action}
+              </div>
+              <div className="text-xs text-gray-600 bg-emerald-50 rounded px-2 py-1 inline-block">
+                {getActionExplanation(pendingCard.rank)}
+              </div>
+            </>
+          )}
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onUseAction}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-sm transition-colors text-xs whitespace-nowrap"
-          >
-            Use Action
-          </button>
+
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {hasAction && (
+            <button
+              onClick={onUseAction}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+              title={`Execute ${pendingCard.action}`}
+            >
+              <span>⚡</span>
+              <span>Use Action</span>
+            </button>
+          )}
+
           <button
             onClick={onSwapDiscard}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition-colors text-xs whitespace-nowrap"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            title="Replace one of your cards with this drawn card"
           >
-            Swap/Discard
+            <span>🔄</span>
+            <span>Swap with Hand Card</span>
           </button>
+
+          {hasAction && (
+            <button
+              onClick={onDiscard}
+              className="w-full flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+              title="Discard without using action"
+            >
+              <span>🗑️</span>
+              <span>Discard (No Action)</span>
+            </button>
+          )}
+        </div>
+
+        {/* Help Text */}
+        <div className="text-xs text-gray-500 text-center mt-2 pt-2 border-t border-gray-200">
+          {hasAction
+            ? 'Use action, swap with your card, or discard without action'
+            : 'Swap with one of your cards or discard'}
         </div>
       </div>
     </div>
-  </div>
-));
+  );
+});
 
 CardDrawnIndicator.displayName = 'CardDrawnIndicator';
 
@@ -298,12 +349,13 @@ export const GamePhaseIndicators = observer(() => {
   }
 
   // Card Drawn - Choosing Action
-  if (isChoosingCardAction && pendingCard?.action) {
+  if (isChoosingCardAction && pendingCard) {
     return (
       <CardDrawnIndicator
         pendingCard={pendingCard}
         onUseAction={() => gameStore.choosePlayCard()}
         onSwapDiscard={() => gameStore.chooseSwap()}
+        onDiscard={() => gameStore.discardCard()}
       />
     );
   }
