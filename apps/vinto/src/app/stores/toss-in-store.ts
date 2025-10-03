@@ -244,13 +244,6 @@ export class TossInStore {
       this.addToQueue(player.id, card);
     }
 
-    if (!player.isHuman) {
-      this.callbacks.onToastMessage?.(
-        'success',
-        `Player ${player.name} tossed in ${card.rank}!`
-      );
-    }
-
     return true;
   }
 

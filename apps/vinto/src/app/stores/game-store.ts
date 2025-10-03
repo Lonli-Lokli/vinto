@@ -304,8 +304,6 @@ export class GameStore implements TempState {
       const command = this.commandFactory.discardCard(pendingCard);
       await this.commandHistory.executeCommand(command);
 
-      GameToastService.info(`Discarded ${pendingCard.rank}`);
-
       this.actionStore.setPendingCard(null);
       this.phaseStore.returnToIdle();
       this.startTossInPeriod();

@@ -44,11 +44,7 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
           size={cardSize}
           isMobile={isMobile}
         />
-        <DiscardPile
-          cards={discardPile}
-          size={cardSize}
-          isMobile={isMobile}
-        />
+        <DiscardPile cards={discardPile} size={cardSize} isMobile={isMobile} />
       </div>
 
       {/* Drawn Card - Below both piles - Always reserves space */}
