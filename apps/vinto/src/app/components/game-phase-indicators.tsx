@@ -249,16 +249,14 @@ const CardDrawnIndicator = observer(({
             <span>Swap with Hand Card</span>
           </button>
 
-          {hasAction && (
-            <button
-              onClick={onDiscard}
-              className="w-full flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-              title="Discard without using action"
-            >
-              <span>🗑️</span>
-              <span>Discard (No Action)</span>
-            </button>
-          )}
+          <button
+            onClick={onDiscard}
+            className="w-full flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            title={hasAction ? "Discard without using action" : "Discard this card"}
+          >
+            <span>🗑️</span>
+            <span>{hasAction ? 'Discard (No Action)' : 'Discard'}</span>
+          </button>
         </div>
 
         {/* Help Text */}

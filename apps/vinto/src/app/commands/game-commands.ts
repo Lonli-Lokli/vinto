@@ -199,17 +199,35 @@ export class DrawCardCommand extends Command {
   constructor(
     private playerStore: PlayerStore,
     private deckStore: DeckStore,
+    private cardAnimationStore: CardAnimationStore,
     private playerId: string
   ) {
     super();
   }
 
-  execute(): boolean {
+  async execute(): Promise<boolean> {
     const card = this.deckStore.drawCard();
     if (!card) return false;
 
     // Store the drawn card for serialization
     this.drawnCard = card;
+
+    // Animate card from draw pile to drawn area
+    if (this.cardAnimationStore) {
+      const animId = this.cardAnimationStore.startDrawAnimation(
+        card,
+        { type: 'draw' },
+        { type: 'drawn' },
+        1000,
+        true // Reveal card during animation
+      );
+
+      // Wait for animation to complete
+      if (animId) {
+        await this.cardAnimationStore.waitForAnimation(animId);
+      }
+    }
+
     return true;
   }
 

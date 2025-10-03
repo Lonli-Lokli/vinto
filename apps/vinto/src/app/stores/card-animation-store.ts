@@ -149,7 +149,7 @@ export class CardAnimationStore {
   startDrawAnimation(
     card: Card,
     from: AnimationDrawTarget | AnimationDrawnTarget,
-    to: AnimationPlayerTarget,
+    to: AnimationPlayerTarget | AnimationDrawnTarget,
     duration = 1500,
     revealed = true
   ): string {
@@ -160,10 +160,13 @@ export class CardAnimationStore {
       from.type === 'drawn'
         ? this.positionCapture.getPendingCardPosition()
         : this.positionCapture.getDeckPilePosition();
-    const toPos = this.positionCapture.getPlayerCardPosition(
-      to.playerId,
-      to.position
-    );
+    const toPos =
+      to.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getPlayerCardPosition(
+            to.playerId,
+            to.position
+          );
 
     console.log('[CardAnimationStore] Draw animation positions:', {
       id,

@@ -51,7 +51,12 @@ export class CommandFactory {
   }
 
   drawCard(playerId: string): ICommand {
-    return new DrawCardCommand(this.playerStore, this.deckStore, playerId);
+    return new DrawCardCommand(
+      this.playerStore,
+      this.deckStore,
+      this.cardAnimationStore,
+      playerId
+    );
   }
 
   swapCards(

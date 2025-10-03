@@ -259,16 +259,19 @@ export class GameStore implements TempState {
 
     this.phaseStore.startDrawing();
 
-    // Store the top card before drawing (to set as pending after command executes)
+    // Store the top card before drawing and set as pending BEFORE animation
+    // This ensures the drawn area exists as an animation target
     const drawnCard = this.deckStore.peekTopDraw();
+    if (drawnCard) {
+      this.actionStore.setPendingCard(drawnCard);
+    }
 
-    // Execute draw command (which will actually draw the card from the deck)
+    // Execute draw command (which will animate card from draw pile to drawn area)
     const command = this.commandFactory.drawCard(currentPlayer.id);
     const result = await this.commandHistory.executeCommand(command);
 
-    // Set the drawn card as pending
-    if (result.success && drawnCard) {
-      this.actionStore.setPendingCard(drawnCard);
+    // Transition to choosing action phase
+    if (result.success) {
       this.phaseStore.startChoosingAction();
     }
   }
