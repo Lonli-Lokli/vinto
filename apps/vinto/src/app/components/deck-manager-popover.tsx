@@ -61,7 +61,7 @@ export const DeckManagerPopover = observer(
     return (
       <div
         ref={popoverRef}
-        className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 w-80"
+        className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 w-[480px] max-w-[90vw]"
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-gray-200 pb-2">
@@ -79,7 +79,7 @@ export const DeckManagerPopover = observer(
           </div>
 
           {/* Card Grid */}
-          <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-1">
             {ALL_RANKS.map((rank) => {
               const cards = availableCards[rank] || [];
               const count = cards.length;
@@ -91,24 +91,24 @@ export const DeckManagerPopover = observer(
                   onClick={() => isAvailable && handleSetNextCard(rank)}
                   disabled={!isAvailable}
                   className={`
-                    relative flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all
+                    relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
                     ${
                       isAvailable
-                        ? 'border-emerald-500 hover:bg-emerald-50 cursor-pointer hover:shadow-md'
+                        ? 'border-emerald-500 hover:bg-emerald-50 cursor-pointer hover:shadow-md hover:scale-105'
                         : 'border-gray-200 opacity-40 cursor-not-allowed bg-gray-50'
                     }
                   `}
                 >
                   {/* Card preview */}
-                  <div className="w-12 h-16">
+                  <div className="w-14 h-20">
                     {isAvailable ? (
                       <CardComponent
                         card={cards[0]}
                         revealed={true}
-                        size="sm"
+                        size="auto"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                      <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm font-semibold">
                         {rank}
                       </div>
                     )}
@@ -116,7 +116,7 @@ export const DeckManagerPopover = observer(
 
                   {/* Count badge */}
                   {isAvailable && (
-                    <div className="text-xs font-semibold text-emerald-600">
+                    <div className="text-sm font-bold text-emerald-600">
                       ×{count}
                     </div>
                   )}
@@ -126,15 +126,15 @@ export const DeckManagerPopover = observer(
           </div>
 
           {/* Current top card */}
-          <div className="border-t border-gray-200 pt-2 mt-2">
-            <div className="text-xs text-gray-600 mb-1">Current next card:</div>
+          <div className="border-t border-gray-200 pt-3 mt-2">
+            <div className="text-xs text-gray-600 mb-2">Current next card:</div>
             {deckStore.drawPile.length > 0 ? (
-              <div className="flex items-center gap-2">
-                <div className="w-12 h-16">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-20">
                   <CardComponent
                     card={deckStore.drawPile[0]}
                     revealed={true}
-                    size="sm"
+                    size="auto"
                   />
                 </div>
                 <div className="text-sm font-semibold text-gray-800">

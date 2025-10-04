@@ -35,7 +35,7 @@ export const CardSwap = observer(() => {
         <div className="flex-1 flex flex-col justify-center mb-2">
           {swapTargets.length === 0 ? (
             <p className="text-xs text-gray-600 text-center">
-              Select two cards from different players to swap
+              Select any two cards to swap (from any players)
             </p>
           ) : swapTargets.length === 1 ? (
             <div className="text-xs text-gray-600 text-center">
@@ -45,7 +45,7 @@ export const CardSwap = observer(() => {
                 {swapTargets[0].position + 1}
               </div>
               <p className="text-2xs text-gray-500 mt-1">
-                Select second card from a different player
+                Select second card to swap
               </p>
             </div>
           ) : (

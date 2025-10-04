@@ -151,15 +151,7 @@ export class HumanActionHandler {
       return false;
     }
 
-    if (
-      this.actionStore.swapTargets.length === 1 &&
-      this.actionStore.swapTargets[0].playerId === targetPlayerId
-    ) {
-      GameToastService.warning('Cannot swap two cards from the same player!');
-      this.actionStore.clearSwapTargets();
-      return false;
-    }
-
+    // Allow swapping any two cards, including from the same player
     if (this.actionStore.hasCompleteSwapSelection) {
       return await this.executeSwapCards(actionPlayerId);
     } else {
@@ -221,11 +213,11 @@ export class HumanActionHandler {
           this.actionStore.peekTargets.length === 1 &&
           this.actionStore.peekTargets[0].playerId === targetPlayerId
         ) {
+          // Don't clear - the validation in action-store already prevents adding
+          // Just show the warning
           GameToastService.warning(
-            'Cannot peek two cards from the same player! Selection cleared, please choose from different players.'
+            'Cannot peek two cards from the same player! Please choose from a different player.'
           );
-          this.actionStore.clearPeekTargets();
-          this.playerStore.clearTemporaryCardVisibility();
         }
         return false;
       }

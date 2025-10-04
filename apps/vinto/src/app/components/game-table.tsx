@@ -115,6 +115,14 @@ export const GameTable = observer(() => {
 
   // Determine if opponent card interactions should be enabled
   const shouldAllowOpponentCardInteractions = () => {
+    // For Ace action (force-draw), disable card interactions - use name buttons instead
+    if (
+      isAwaitingActionTarget &&
+      actionContext?.targetType === 'force-draw'
+    ) {
+      return false;
+    }
+
     // For Queen action (peek-then-swap), disable when 2 cards already selected
     if (
       isAwaitingActionTarget &&
@@ -137,7 +145,6 @@ export const GameTable = observer(() => {
     return (
       isAwaitingActionTarget &&
       (actionContext?.targetType === 'opponent-card' ||
-        actionContext?.targetType === 'force-draw' ||
         actionContext?.targetType === 'peek-then-swap' ||
         actionContext?.targetType === 'swap-cards')
     );

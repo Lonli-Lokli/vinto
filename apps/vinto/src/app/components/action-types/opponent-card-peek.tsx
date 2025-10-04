@@ -13,9 +13,10 @@ export const OpponentCardPeek = observer(() => {
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
 
-  const humanPlayer = playerStore.humanPlayer;
-  const hasRevealedCard =
-    humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
+  // Check if any player has temporarily visible cards (the peeked opponent card)
+  const hasRevealedCard = playerStore.players.some(
+    (p) => p.temporarilyVisibleCards.size > 0
+  );
 
   return (
     <div className="w-full h-full px-3 py-2">

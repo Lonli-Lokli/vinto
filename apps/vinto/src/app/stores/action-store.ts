@@ -119,14 +119,7 @@ export class ActionStore {
       return false;
     }
 
-    // Check if trying to select second card from same player
-    if (
-      this.swapTargets.length === 1 &&
-      this.swapTargets[0].playerId === playerId
-    ) {
-      return false;
-    }
-
+    // Allow swapping any two cards, including from the same player
     this.swapTargets.push({ playerId, position });
     return true; // Selected
   }

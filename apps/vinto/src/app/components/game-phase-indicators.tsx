@@ -255,9 +255,9 @@ const CardDrawnIndicator = observer(({
     <div className="w-full h-full px-3 py-1">
       <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
         <div className="h-full flex gap-3">
-          {/* Card image - first column - larger and responsive */}
-          <div className="flex-shrink-0 w-16 md:w-20 max-h-full">
-            <CardComponent card={pendingCard} revealed={true} size="lg" />
+          {/* Card image - first column - use full height */}
+          <div className="flex-shrink-0 h-full w-auto">
+            <CardComponent card={pendingCard} revealed={true} size="auto" />
           </div>
 
           {/* Content - second column */}
