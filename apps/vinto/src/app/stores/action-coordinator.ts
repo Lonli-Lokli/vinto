@@ -77,9 +77,13 @@ export class ActionCoordinator {
     // Start the action
     this.actionStore.startAction(card, playerId);
 
-    // Discard card using command
-    const discardCommand = this.commandFactory.discardCard(card);
-    await this.commandHistory.executeCommand(discardCommand);
+    // Play action card using command - handles animation and discard
+    // This is shared between human and bot players
+    const playActionCommand = this.commandFactory.playActionCard(
+      card,
+      playerId
+    );
+    await this.commandHistory.executeCommand(playActionCommand);
 
     // Set appropriate phase
     this.phaseStore.startAwaitingAction();
@@ -284,7 +288,7 @@ export class ActionCoordinator {
     // Show appropriate message based on player type
     if (isHuman) {
       this.humanHandler.executeForceDraw(actionPlayerId, targetPlayerId);
-    } 
+    }
 
     this.completeAction();
     return true;
@@ -313,7 +317,9 @@ export class ActionCoordinator {
 
     const [target1, target2] = targets;
     const context = this.actionStore.actionContext;
-    const actionPlayer = context ? this.playerStore.getPlayer(context.playerId) : null;
+    const actionPlayer = context
+      ? this.playerStore.getPlayer(context.playerId)
+      : null;
 
     // Execute swap using command - only reveal if action player is human
     const swapCommand = this.commandFactory.swapCards(

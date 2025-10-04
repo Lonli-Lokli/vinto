@@ -11,6 +11,7 @@ import {
   DrawCardCommand,
   SwapCardsCommand,
   PeekCardCommand,
+  PlayActionCardCommand,
   DiscardCardCommand,
   ReplaceCardCommand,
   AdvanceTurnCommand,
@@ -86,6 +87,16 @@ export class CommandFactory {
     );
   }
 
+  playActionCard(card: Card, playerId: string): ICommand {
+    return new PlayActionCardCommand(
+      this.deckStore,
+      this.actionStore,
+      this.cardAnimationStore,
+      card,
+      playerId
+    );
+  }
+
   discardCard(card: Card, skipAnimation = false): ICommand {
     return new DiscardCardCommand(
       this.deckStore,
@@ -158,6 +169,12 @@ export class CommandFactory {
           payload.playerId as string,
           payload.position as number,
           payload.isPermanent as boolean
+        );
+
+      case 'PLAY_ACTION_CARD':
+        return this.playActionCard(
+          payload.card as Card,
+          payload.playerId as string
         );
 
       case 'DISCARD_CARD':

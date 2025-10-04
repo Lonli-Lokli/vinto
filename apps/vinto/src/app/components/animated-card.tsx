@@ -72,6 +72,7 @@ export const AnimatedCardOverlay = observer(() => {
         {virtualCards.map((virtualCard) => {
           const animation = animationStore.activeAnimations.get(virtualCard.id);
           const isHighlight = animation?.type === 'highlight';
+          const isPlayAction = animation?.type === 'play-action';
 
           return (
             <motion.div
@@ -88,6 +89,14 @@ export const AnimatedCardOverlay = observer(() => {
                 isHighlight
                   ? {
                       scale: [1, 1.15, 1, 1.15, 1],
+                      opacity: 1,
+                    }
+                  : isPlayAction
+                  ? {
+                      left: virtualCard.toX,
+                      top: virtualCard.toY,
+                      scale: [1, 1.4, 1.3],
+                      rotate: [0, 360],
                       opacity: 1,
                     }
                   : {
@@ -109,6 +118,18 @@ export const AnimatedCardOverlay = observer(() => {
                       ease: 'easeInOut',
                       scale: {
                         times: [0, 0.25, 0.5, 0.75, 1],
+                        duration: 2,
+                      },
+                    }
+                  : isPlayAction
+                  ? {
+                      duration: 2,
+                      ease: [0.34, 1.56, 0.64, 1],
+                      scale: {
+                        times: [0, 0.5, 1],
+                        duration: 2,
+                      },
+                      rotate: {
                         duration: 2,
                       },
                     }
@@ -138,6 +159,12 @@ export const AnimatedCardOverlay = observer(() => {
                       filter:
                         'drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))',
                       zIndex: 101,
+                    }
+                  : isPlayAction
+                  ? {
+                      filter:
+                        'drop-shadow(0 0 30px rgba(34, 197, 94, 0.9)) drop-shadow(0 0 60px rgba(34, 197, 94, 0.7)) drop-shadow(0 10px 40px rgba(0,0,0,0.5))',
+                      zIndex: 102,
                     }
                   : {
                       filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.4))',

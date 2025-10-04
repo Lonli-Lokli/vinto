@@ -39,14 +39,12 @@ const wrap = (srcLike: StaticImportLike, altFallback?: string) =>
     const { alt, className, ...rest } = props;
     const src = resolveSrc(srcLike);
     return (
-      <div className="relative flex items-center justify-center">
-        <img
-          src={src}
-          alt={alt ?? altFallback}
-          className={className ?? 'w-10 h-10 object-contain'}
-          {...rest}
-        />
-      </div>
+      <img
+        src={src}
+        alt={alt ?? altFallback}
+        className={className ?? 'w-10 h-10 object-contain'}
+        {...rest}
+      />
     );
   };
 

@@ -34,28 +34,13 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
         className={`text-center ${!shouldShowCard ? 'invisible' : ''}`}
         data-pending-card="true"
       >
-        <div className="relative">
-          <Card
-            card={card}
-            revealed={!!card}
-            size={size}
-            highlighted={!!card}
-            isPending={true}
-          />
-          {card && (
-            <div
-              className={`absolute ${
-                isMobile
-                  ? '-top-1.5 -left-1.5 w-4 h-4'
-                  : '-top-2 -left-2 w-5 h-5'
-              } bg-amber-500 text-white rounded-full ${
-                isMobile ? 'text-2xs' : 'text-xs'
-              } font-bold flex items-center justify-center animate-pulse`}
-            >
-              !
-            </div>
-          )}
-        </div>
+        <Card
+          card={card}
+          revealed={!!card}
+          size={size}
+          highlighted={!!card}
+          isPending={true}
+        />
         <div
           className={`${labelMargin} ${textSize} text-white font-medium bg-amber-600/80 rounded ${labelPadding}`}
         >

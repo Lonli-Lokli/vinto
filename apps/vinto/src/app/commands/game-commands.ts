@@ -430,6 +430,61 @@ export class PeekCardCommand extends Command {
 /**
  * Discard card command
  */
+/**
+ * Play action card command - animates card being used (green glow to center) then discards
+ * This visually shows the player IS using the card's action
+ */
+export class PlayActionCardCommand extends Command {
+  constructor(
+    private deckStore: DeckStore,
+    private actionStore: ActionStore,
+    private cardAnimationStore: CardAnimationStore,
+    private card: Card,
+    private playerId: string
+  ) {
+    super();
+  }
+
+  async execute(): Promise<boolean> {
+    // Animate card being played (action used) - moves to center with green glow
+    const pendingCard = this.actionStore.pendingCard;
+    const animId = this.cardAnimationStore.startPlayActionAnimation(
+      this.card,
+      pendingCard
+        ? { type: 'drawn' }
+        : { type: 'player', playerId: this.playerId, position: 0 }
+    );
+
+    // Clear pending card immediately after animation starts
+    // The animation has captured the card data and will continue
+    // This makes the card disappear from DRAWN area during the animation
+    if (pendingCard) {
+      this.actionStore.setPendingCard(null);
+    }
+
+    if (animId) {
+      await this.cardAnimationStore.waitForAnimation(animId);
+    }
+
+    // Discard card to pile (no additional animation needed)
+    this.deckStore.discardCard(this.card);
+    return true;
+  }
+
+  toData(): CommandData {
+    return this.createCommandData('PLAY_ACTION_CARD', {
+      cardId: this.card.id,
+      rank: this.card.rank,
+      value: this.card.value,
+      playerId: this.playerId,
+    });
+  }
+
+  getDescription(): string {
+    return `Played ${this.card.rank} action`;
+  }
+}
+
 export class DiscardCardCommand extends Command {
   constructor(
     private deckStore: DeckStore,
@@ -670,14 +725,24 @@ export class TossInCardCommand extends Command {
 
     this.wasCorrect = card.rank === this.matchingRank;
 
-    // Trigger animation from player's hand to discard pile (revealed)
+    // Use different animations based on whether card has an action
     let animId: string | undefined;
     if (this.cardAnimationStore) {
-      animId = this.cardAnimationStore.startDiscardAnimation(
-        card,
-        { type: 'player', playerId: this.playerId, position: this.position },
-        { type: 'discard' }
-      );
+      if (card.action) {
+        // Action card: use play-action animation (green glow to center)
+        animId = this.cardAnimationStore.startPlayActionAnimation(card, {
+          type: 'player',
+          playerId: this.playerId,
+          position: this.position,
+        });
+      } else {
+        // Non-action card: use regular discard animation
+        animId = this.cardAnimationStore.startDiscardAnimation(
+          card,
+          { type: 'player', playerId: this.playerId, position: this.position },
+          { type: 'discard' }
+        );
+      }
 
       // Wait for animation to complete before removing card
       if (animId) {

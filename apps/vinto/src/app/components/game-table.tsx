@@ -124,12 +124,12 @@ export const GameTable = observer(() => {
       return false;
     }
 
-    // For opponent-card peek (9/10), disable after one card is revealed
+    // For opponent-card peek (J action), disable after one card is revealed
+    // Check if ANY player has temporarily visible cards (the peeked opponent card)
     if (
       isAwaitingActionTarget &&
       actionContext?.targetType === 'opponent-card' &&
-      humanPlayer &&
-      humanPlayer.temporarilyVisibleCards.size > 0
+      players.some((p) => p.temporarilyVisibleCards.size > 0)
     ) {
       return false;
     }

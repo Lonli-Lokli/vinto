@@ -107,62 +107,73 @@ export function Card({
           {position}
         </div>
       )}
-
-      {card?.action && revealed && (
-        <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full shadow-sm" />
-      )}
     </div>
   );
 }
 
-const CardBackComponent: FC<{ size: CardSize; botPeeking?: boolean }> = ({ size, botPeeking = false }) => {
-  // Always use full height and let width adjust to maintain aspect ratio
-  const className = `h-full w-auto object-contain rounded border shadow-sm ${
+const CardBackComponent: FC<{ size: CardSize; botPeeking?: boolean }> = ({
+  size,
+  botPeeking = false,
+}) => {
+  // Container has border and background, image fills it completely
+  const containerClassName = `h-full w-auto rounded border shadow-sm overflow-hidden ${
     botPeeking
       ? 'border-amber-500 bg-gradient-to-br from-amber-600 to-amber-700'
       : 'border-poker-green-600 bg-gradient-to-br from-poker-green-700 to-poker-green-800'
   }`;
-  
-  return <Image_Cover className={className} />;
+
+  const imageClassName = 'h-full w-full object-cover';
+
+  return (
+    <div className={containerClassName}>
+      <Image_Cover className={imageClassName} />
+    </div>
+  );
 };
 
 const RankComponent: FC<{
   rank: Rank;
   size: CardSize;
 }> = ({ rank, size }) => {
-  // Always use full height and let width adjust to maintain aspect ratio
-  const className = 'h-full w-auto object-contain rounded border border-gray-300 bg-white shadow-sm';
+  // Container has border and background, image fills it completely
+  const containerClassName =
+    'h-full w-auto rounded border border-gray-300 bg-white shadow-sm overflow-hidden';
+  const imageClassName = 'h-full w-full object-cover';
 
-  switch (rank) {
-    case '2':
-      return <Image_2 className={className} />;
-    case '3':
-      return <Image_3 className={className} />;
-    case '4':
-      return <Image_4 className={className} />;
-    case '5':
-      return <Image_5 className={className} />;
-    case '6':
-      return <Image_6 className={className} />;
-    case '7':
-      return <Image_7 className={className} />;
-    case '8':
-      return <Image_8 className={className} />;
-    case '9':
-      return <Image_9 className={className} />;
-    case '10':
-      return <Image_10 className={className} />;
-    case 'J':
-      return <Image_J className={className} />;
-    case 'Q':
-      return <Image_Q className={className} />;
-    case 'K':
-      return <Image_K className={className} />;
-    case 'A':
-      return <Image_A className={className} />;
-    case 'Joker':
-      return <Image_Joker className={className} />;
-    default:
-      throw new NeverError(rank);
-  }
+  const renderImage = () => {
+    switch (rank) {
+      case '2':
+        return <Image_2 className={imageClassName} />;
+      case '3':
+        return <Image_3 className={imageClassName} />;
+      case '4':
+        return <Image_4 className={imageClassName} />;
+      case '5':
+        return <Image_5 className={imageClassName} />;
+      case '6':
+        return <Image_6 className={imageClassName} />;
+      case '7':
+        return <Image_7 className={imageClassName} />;
+      case '8':
+        return <Image_8 className={imageClassName} />;
+      case '9':
+        return <Image_9 className={imageClassName} />;
+      case '10':
+        return <Image_10 className={imageClassName} />;
+      case 'J':
+        return <Image_J className={imageClassName} />;
+      case 'Q':
+        return <Image_Q className={imageClassName} />;
+      case 'K':
+        return <Image_K className={imageClassName} />;
+      case 'A':
+        return <Image_A className={imageClassName} />;
+      case 'Joker':
+        return <Image_Joker className={imageClassName} />;
+      default:
+        throw new NeverError(rank);
+    }
+  };
+
+  return <div className={containerClassName}>{renderImage()}</div>;
 };

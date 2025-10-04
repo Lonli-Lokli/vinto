@@ -9,7 +9,14 @@ import { inject, injectable } from 'tsyringe';
 import { Card } from '../shapes';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 
-export type AnimationType = 'swap' | 'draw' | 'discard' | 'peek' | 'toss-in' | 'highlight';
+export type AnimationType =
+  | 'swap'
+  | 'draw'
+  | 'discard'
+  | 'peek'
+  | 'toss-in'
+  | 'highlight'
+  | 'play-action';
 
 export type AnimationActor = 'draw' | 'discard' | 'drawn' | 'player';
 export type AnimationDrawTarget = {
@@ -68,6 +75,7 @@ export class CardAnimationStore {
       startSwapAnimation: action,
       startDrawAnimation: action,
       startDiscardAnimation: action,
+      startPlayActionAnimation: action,
       startHighlightAnimation: action,
       removeAnimation: action,
       reset: action,
@@ -163,10 +171,7 @@ export class CardAnimationStore {
     const toPos =
       to.type === 'drawn'
         ? this.positionCapture.getPendingCardPosition()
-        : this.positionCapture.getPlayerCardPosition(
-            to.playerId,
-            to.position
-          );
+        : this.positionCapture.getPlayerCardPosition(to.playerId, to.position);
 
     console.log('[CardAnimationStore] Draw animation positions:', {
       id,
@@ -252,6 +257,67 @@ export class CardAnimationStore {
     });
 
     console.log('[CardAnimationStore] Starting discard animation:', id);
+    return id;
+  }
+
+  /**
+   * Start a play-action animation - card moves to center, shows action effect, then to discard
+   * This is a two-stage animation:
+   * 1. Move to center of table with glow effect
+   * 2. Move from center to discard pile
+   */
+  startPlayActionAnimation(
+    card: Card,
+    from: AnimationPlayerTarget | AnimationDrawnTarget,
+    duration = 2000
+  ): string {
+    const id = `play-action-${this.animationCounter++}`;
+
+    // Capture positions immediately
+    const fromPos =
+      from.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getPlayerCardPosition(
+            from.playerId,
+            from.position
+          );
+
+    // For play-action, the "to" position is the center of the viewport
+    // We'll calculate center dynamically in the component
+    const toPos = {
+      x: typeof window !== 'undefined' ? window.innerWidth / 2 - 50 : 0,
+      y: typeof window !== 'undefined' ? window.innerHeight / 2 - 70 : 0,
+    };
+
+    console.log('[CardAnimationStore] Play action animation positions:', {
+      id,
+      fromPos,
+      toPos,
+      from,
+    });
+
+    if (!fromPos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture positions for play-action animation'
+      );
+      return id; // Return id but don't add to animations
+    }
+
+    this.activeAnimations.set(id, {
+      id,
+      type: 'play-action',
+      card,
+      fromX: fromPos.x,
+      fromY: fromPos.y,
+      toX: toPos.x,
+      toY: toPos.y,
+      startTime: Date.now(),
+      duration,
+      revealed: true, // Always show the card during play-action
+      completed: false,
+    });
+
+    console.log('[CardAnimationStore] Starting play-action animation:', id);
     return id;
   }
 
