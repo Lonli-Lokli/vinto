@@ -21,11 +21,20 @@ import {
   Image_Cover,
 } from './image';
 
+type CardSize = 'sm' | 'md' | 'lg' | 'xl' | 'auto';
+const CARD_SIZES: Record<CardSize, string> = {
+  sm: 'w-6 h-9 text-2xs',
+  md: 'w-8 h-12 text-2xs',
+  lg: 'w-10 h-14 text-xs',
+  xl: 'w-12 h-16 text-sm',
+  auto: 'w-full h-full text-xs',
+};
+
 interface CardProps {
   card?: CardType;
   revealed?: boolean;
   position?: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'auto';
+  size?: CardSize;
   clickable?: boolean;
   highlighted?: boolean;
   botPeeking?: boolean;
@@ -51,14 +60,6 @@ export function Card({
   cardIndex,
   isPending = false,
 }: CardProps) {
-  const sizeClasses = {
-    sm: 'w-6 h-9 text-2xs',
-    md: 'w-8 h-12 text-2xs',
-    lg: 'w-10 h-14 text-xs',
-    xl: 'w-12 h-16 text-sm',
-    auto: 'w-full h-full text-xs',
-  } as const;
-
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
   if (playerId && cardIndex !== undefined && cardIndex >= 0) {
@@ -72,7 +73,7 @@ export function Card({
   return (
     <div
       className={`
-        ${sizeClasses[size]}
+        ${CARD_SIZES[size]}
         relative rounded border
         flex flex-col items-center justify-center
         transition-all duration-150 select-none
@@ -122,36 +123,19 @@ export function Card({
   );
 }
 
-const CardBackComponent: FC<{ size: 'sm' | 'md' | 'lg' | 'xl' | 'auto' }> = ({
-  size,
-}) => {
+const CardBackComponent: FC<{ size: CardSize }> = ({ size }) => {
   if (size === 'auto') {
     return <Image_Cover className="w-full h-full object-cover" />;
   }
 
-  const sizeClass = {
-    sm: 'w-5 h-7',
-    md: 'w-7 h-10',
-    lg: 'w-9 h-12',
-    xl: 'w-11 h-14',
-  }[size];
-
-  return <Image_Cover className={`${sizeClass} object-cover`} />;
+  return <Image_Cover className={`${CARD_SIZES[size]} object-cover`} />;
 };
 
-const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({
-  rank,
-  size,
-}) => {
-  // Size classes that fit within card containers with proper aspect ratio
-  const sizeClass = {
-    sm: 'w-5 h-7', // fits in w-6 h-9
-    md: 'w-7 h-10', // fits in w-8 h-12
-    lg: 'w-9 h-12', // fits in w-10 h-14
-    xl: 'w-11 h-14', // fits in w-12 h-16
-  }[size];
-
-  const className = `${sizeClass} object-contain`;
+const RankComponent: FC<{
+  rank: Rank;
+  size: CardSize;
+}> = ({ rank, size }) => {
+  const className = `${CARD_SIZES[size]} object-contain`;
 
   switch (rank) {
     case '2':
