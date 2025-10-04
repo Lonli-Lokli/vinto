@@ -558,12 +558,15 @@ export class ReplaceCardCommand extends Command {
       // Start animations FIRST while cards are still in original positions
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       // Revealed during animation, but will be hidden once it lands
+      // Only apply full rotation for side bots (left/right positions)
+      const isSideBot = player?.isBot && (player?.position === 'left' || player?.position === 'right');
       this.cardAnimationStore.startDrawAnimation(
         this.newCard,
         { type: 'drawn' },
         { type: 'player', playerId: this.playerId, position: this.position },
         1500,
-        false // Don't reveal card during swap animation
+        false, // Don't reveal card during swap animation
+        isSideBot  // Full 360 rotation for side bot players only
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)

@@ -181,7 +181,7 @@ export const PlayerArea = observer(function PlayerArea({
               revealed={
                 canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
               }
-              position={player.isHuman ? index + 1 : 0}
+              position={index + 1}
               size={getCardSize()}
               clickable={!!onCardClick}
               highlighted={

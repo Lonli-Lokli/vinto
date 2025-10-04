@@ -1,14 +1,16 @@
 'use client';
 import { observer } from 'mobx-react-lite';
-import { useGameStore, usePlayerStore, useGamePhaseStore, useActionStore } from './di-provider';
+import { useGameStore, usePlayerStore, useGamePhaseStore, useActionStore, useTossInStore } from './di-provider';
 
 export const WaitingIndicator = observer(function WaitingIndicator() {
   const { isCurrentPlayerWaiting, aiThinking } = useGameStore();
   const { currentPlayer } = usePlayerStore();
   const { isChoosingCardAction, isSelectingSwapPosition, isAwaitingActionTarget, isDeclaringRank } = useGamePhaseStore();
   const { actionContext } = useActionStore();
+  const { waitingForTossIn } = useTossInStore();
 
-  if (!isCurrentPlayerWaiting) return null;
+  // Don't show if toss-in is active (shown inline in TossInIndicator instead)
+  if (!isCurrentPlayerWaiting || waitingForTossIn) return null;
 
   // Determine what the bot is doing
   const getBotActivity = () => {

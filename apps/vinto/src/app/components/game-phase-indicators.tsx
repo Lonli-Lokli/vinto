@@ -57,17 +57,29 @@ SetupPhaseIndicator.displayName = 'SetupPhaseIndicator';
 // Toss-in Period Component
 const TossInIndicator = observer(({
   topDiscardRank,
-  onContinue
+  onContinue,
+  currentPlayer,
+  isCurrentPlayerWaiting
 }: {
   topDiscardRank: string;
   onContinue: () => void;
+  currentPlayer: Player | null;
+  isCurrentPlayerWaiting: boolean;
 }) => (
   <div className="w-full px-3 py-1">
     <div className="bg-white border border-gray-300 rounded-lg p-2 sm:p-3 shadow-sm">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex-1 text-center sm:text-left">
-          <div className="text-sm font-semibold text-gray-800">
-            ⚡ Toss-in Time!
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <div className="text-sm font-semibold text-gray-800">
+              ⚡ Toss-in Time!
+            </div>
+            {isCurrentPlayerWaiting && currentPlayer && (
+              <div className="text-xs text-gray-600 flex items-center gap-1">
+                <span className="animate-spin">⏳</span>
+                <span>{currentPlayer.name}&apos;s turn</span>
+              </div>
+            )}
           </div>
           <div className="text-xs text-gray-700">
             {topDiscardRank ? `Toss matching ${topDiscardRank} cards` : 'Toss matching cards'} or continue
@@ -397,6 +409,8 @@ export const GamePhaseIndicators = observer(() => {
       <TossInIndicator
         topDiscardRank={topDiscardRank}
         onContinue={() => gameStore.finishTossInPeriod()}
+        currentPlayer={currentPlayer}
+        isCurrentPlayerWaiting={gameStore.isCurrentPlayerWaiting}
       />
     );
   }

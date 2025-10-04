@@ -54,6 +54,8 @@ export interface CardAnimationState {
   duration: number;
   // Reveal card during animation
   revealed?: boolean;
+  // Full 360 rotation for bot moves
+  fullRotation?: boolean;
   // Status
   completed: boolean;
 }
@@ -159,7 +161,8 @@ export class CardAnimationStore {
     from: AnimationDrawTarget | AnimationDrawnTarget,
     to: AnimationPlayerTarget | AnimationDrawnTarget,
     duration = 1500,
-    revealed = true
+    revealed = true,
+    fullRotation = false
   ): string {
     const id = `draw-${this.animationCounter++}`;
 
@@ -199,6 +202,7 @@ export class CardAnimationStore {
       startTime: Date.now(),
       duration,
       revealed,
+      fullRotation,
       completed: false,
     });
 

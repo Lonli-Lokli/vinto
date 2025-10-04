@@ -73,6 +73,7 @@ export const AnimatedCardOverlay = observer(() => {
           const animation = animationStore.activeAnimations.get(virtualCard.id);
           const isHighlight = animation?.type === 'highlight';
           const isPlayAction = animation?.type === 'play-action';
+          const hasFullRotation = animation?.fullRotation;
 
           return (
             <motion.div
@@ -96,6 +97,14 @@ export const AnimatedCardOverlay = observer(() => {
                       left: virtualCard.toX,
                       top: virtualCard.toY,
                       scale: [1, 1.4, 1.3],
+                      rotate: [0, 360],
+                      opacity: 1,
+                    }
+                  : hasFullRotation
+                  ? {
+                      left: virtualCard.toX,
+                      top: virtualCard.toY,
+                      scale: [1, 1.2, 1],
                       rotate: [0, 360],
                       opacity: 1,
                     }

@@ -602,6 +602,8 @@ export class GameStore implements TempState {
           const result = await this.commandHistory.executeCommand(command);
 
           if (result.success && drawnCard) {
+            // Wait 4 seconds to allow human to see the drawn card
+            await new Promise((resolve) => setTimeout(resolve, 4000));
             await this.executeBotCardDecision(drawnCard, currentPlayer);
           }
 

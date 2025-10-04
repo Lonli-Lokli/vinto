@@ -81,7 +81,10 @@ export abstract class Command implements ICommand {
 
   abstract getDescription(): string;
 
-  protected createCommandData(type: CommandKind, payload: Record<string, any>): CommandData {
+  protected createCommandData(
+    type: CommandKind,
+    payload: Record<string, any>
+  ): CommandData {
     return {
       type,
       timestamp: this.timestamp,
