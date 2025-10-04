@@ -73,18 +73,10 @@ export function Card({
   return (
     <div
       className={`
-        ${CARD_SIZES[size]}
-        relative rounded border
-        flex flex-col items-center justify-center
+        ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
+        relative flex
         transition-all duration-150 select-none
         ${rotated ? 'transform-gpu' : ''}
-        ${
-          revealed && card
-            ? 'bg-white border-gray-300 shadow-sm'
-            : botPeeking
-            ? 'bg-gradient-to-br from-amber-600 to-amber-700 border-amber-500 text-white shadow-lg'
-            : 'bg-gradient-to-br from-poker-green-700 to-poker-green-800 border-poker-green-600 text-white'
-        }
         ${
           clickable
             ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md'
@@ -107,7 +99,7 @@ export function Card({
       {revealed && card ? (
         <RankComponent rank={card.rank} size={size} />
       ) : (
-        <CardBackComponent size={size} />
+        <CardBackComponent size={size} botPeeking={botPeeking} />
       )}
 
       {position > 0 && (
@@ -123,19 +115,23 @@ export function Card({
   );
 }
 
-const CardBackComponent: FC<{ size: CardSize }> = ({ size }) => {
-  if (size === 'auto') {
-    return <Image_Cover className="w-full h-full object-cover" />;
-  }
-
-  return <Image_Cover className={`${CARD_SIZES[size]} object-cover`} />;
+const CardBackComponent: FC<{ size: CardSize; botPeeking?: boolean }> = ({ size, botPeeking = false }) => {
+  // Always use full height and let width adjust to maintain aspect ratio
+  const className = `h-full w-auto object-contain rounded border shadow-sm ${
+    botPeeking
+      ? 'border-amber-500 bg-gradient-to-br from-amber-600 to-amber-700'
+      : 'border-poker-green-600 bg-gradient-to-br from-poker-green-700 to-poker-green-800'
+  }`;
+  
+  return <Image_Cover className={className} />;
 };
 
 const RankComponent: FC<{
   rank: Rank;
   size: CardSize;
 }> = ({ rank, size }) => {
-  const className = `${CARD_SIZES[size]} object-contain`;
+  // Always use full height and let width adjust to maintain aspect ratio
+  const className = 'h-full w-auto object-contain rounded border border-gray-300 bg-white shadow-sm';
 
   switch (rank) {
     case '2':

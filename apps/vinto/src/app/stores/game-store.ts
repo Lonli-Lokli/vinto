@@ -260,29 +260,14 @@ export class GameStore implements TempState {
     this.phaseStore.startDrawing();
 
     // Store the top card before drawing and set as pending BEFORE animation
-    // This ensures the drawn area exists as an animation target
+    // This ensures the drawn area exists as an animation target for the command
     // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
     const drawnCard = this.deckStore.peekTopCard();
     if (drawnCard) {
       this.actionStore.setPendingCard(drawnCard);
     }
 
-    // Animate card from draw pile to drawn area
-    if (drawnCard) {
-      const animId = this.cardAnimationStore.startDrawAnimation(
-        drawnCard,
-        { type: 'draw' },
-        { type: 'drawn' },
-        1000,
-        true // Reveal card during animation
-      );
-
-      if (animId) {
-        await this.cardAnimationStore.waitForAnimation(animId);
-      }
-    }
-
-    // Execute draw command (removes card from deck)
+    // Execute draw command (removes card from deck and handles animation)
     const command = this.commandFactory.drawCard(currentPlayer.id);
     const result = await this.commandHistory.executeCommand(command);
 
@@ -608,24 +593,11 @@ export class GameStore implements TempState {
           const drawnCard = this.deckStore.peekTopCard();
 
           if (drawnCard) {
-            // Set pending card so drawn area exists for animation
+            // Set pending card so drawn area exists for animation target
             this.actionStore.setPendingCard(drawnCard);
-
-            // Animate card from draw pile to drawn area
-            const animId = this.cardAnimationStore.startDrawAnimation(
-              drawnCard,
-              { type: 'draw' },
-              { type: 'drawn' },
-              1000,
-              true // Reveal card during animation
-            );
-
-            if (animId) {
-              await this.cardAnimationStore.waitForAnimation(animId);
-            }
           }
 
-          // Execute draw command (removes card from deck)
+          // Execute draw command (removes card from deck and handles animation)
           const command = this.commandFactory.drawCard(currentPlayer.id);
           const result = await this.commandHistory.executeCommand(command);
 

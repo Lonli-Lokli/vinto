@@ -240,11 +240,11 @@ const CardDrawnIndicator = observer(({
   );
 
   return (
-    <div className="w-full px-3 py-1">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
-        <div className="flex gap-3">
-          {/* Card image - first column */}
-          <div className="flex-shrink-0 w-16 h-24">
+    <div className="w-full h-full px-3 py-1">
+      <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
+        <div className="h-full flex gap-3">
+          {/* Card image - first column - larger and responsive */}
+          <div className="flex-shrink-0 w-20 h-full md:w-24">
             <CardComponent card={pendingCard} revealed={true} size="auto" />
           </div>
 
