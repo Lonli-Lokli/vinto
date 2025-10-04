@@ -18,6 +18,7 @@ import {
   Image_K,
   Image_A,
   Image_Joker,
+  Image_Cover,
 } from './image';
 
 interface CardProps {
@@ -105,19 +106,7 @@ export function Card({
       {revealed && card ? (
         <RankComponent rank={card.rank} size={size} />
       ) : (
-        <span
-          className={`font-bold ${
-            size === 'sm'
-              ? 'text-sm'
-              : size === 'lg'
-              ? 'text-2xl'
-              : size === 'xl'
-              ? 'text-3xl'
-              : 'text-lg'
-          }`}
-        >
-          ?
-        </span>
+        <CardBackComponent size={size} />
       )}
 
       {position > 0 && (
@@ -132,6 +121,23 @@ export function Card({
     </div>
   );
 }
+
+const CardBackComponent: FC<{ size: 'sm' | 'md' | 'lg' | 'xl' | 'auto' }> = ({
+  size,
+}) => {
+  if (size === 'auto') {
+    return <Image_Cover className="w-full h-full object-cover" />;
+  }
+
+  const sizeClass = {
+    sm: 'w-5 h-7',
+    md: 'w-7 h-10',
+    lg: 'w-9 h-12',
+    xl: 'w-11 h-14',
+  }[size];
+
+  return <Image_Cover className={`${sizeClass} object-cover`} />;
+};
 
 const RankComponent: FC<{ rank: Rank; size: 'sm' | 'md' | 'lg' | 'xl' }> = ({
   rank,
