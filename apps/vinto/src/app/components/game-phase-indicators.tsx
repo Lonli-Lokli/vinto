@@ -256,8 +256,8 @@ const CardDrawnIndicator = observer(({
       <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
         <div className="h-full flex gap-3">
           {/* Card image - first column - larger and responsive */}
-          <div className="flex-shrink-0 w-20 h-full md:w-24">
-            <CardComponent card={pendingCard} revealed={true} size="auto" />
+          <div className="flex-shrink-0 w-16 md:w-20 max-h-full">
+            <CardComponent card={pendingCard} revealed={true} size="lg" />
           </div>
 
           {/* Content - second column */}
@@ -415,8 +415,9 @@ export const GamePhaseIndicators = observer(() => {
     );
   }
 
-  // Action Execution
-  if (isAwaitingActionTarget && actionContext) {
+  // Action Execution - only show for bot players
+  // Human players get detailed instructions in the ActionTargetSelector (bottom area)
+  if (isAwaitingActionTarget && actionContext && currentPlayer && !currentPlayer.isHuman) {
     return (
       <ActionExecutionIndicator
         actionContext={actionContext}

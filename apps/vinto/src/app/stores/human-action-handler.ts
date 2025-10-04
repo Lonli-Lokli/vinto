@@ -222,8 +222,10 @@ export class HumanActionHandler {
           this.actionStore.peekTargets[0].playerId === targetPlayerId
         ) {
           GameToastService.warning(
-            'Cannot peek two cards from the same player!'
+            'Cannot peek two cards from the same player! Selection cleared, please choose from different players.'
           );
+          this.actionStore.clearPeekTargets();
+          this.playerStore.clearTemporaryCardVisibility();
         }
         return false;
       }

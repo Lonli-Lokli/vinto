@@ -74,6 +74,12 @@ export class ActionCoordinator {
     const player = this.playerStore.getPlayer(playerId);
     if (!player) return false;
 
+    console.log('[ActionCoordinator] executeCardAction - START', {
+      card: card.rank,
+      playerId,
+      isHuman: player.isHuman
+    });
+
     // Start the action
     this.actionStore.startAction(card, playerId);
 
@@ -87,6 +93,7 @@ export class ActionCoordinator {
 
     // Set appropriate phase
     this.phaseStore.startAwaitingAction();
+    console.log('[ActionCoordinator] Phase set to awaiting_action');
 
     // Route based on card rank
     const executed = await this.routeActionByRank(
@@ -94,6 +101,8 @@ export class ActionCoordinator {
       playerId,
       player.isHuman
     );
+
+    console.log('[ActionCoordinator] Action executed:', executed);
 
     if (!executed) {
       GameToastService.error(`Failed to execute ${card.rank} action`);
@@ -104,7 +113,10 @@ export class ActionCoordinator {
     // For bot players, all actions complete immediately (no user confirmation needed)
     // Exception: King requires declaration first, which is handled separately
     if (player.isBot && card.rank !== 'K') {
+      console.log('[ActionCoordinator] Bot action - calling completeAction');
       this.completeAction();
+    } else {
+      console.log('[ActionCoordinator] Human action - waiting for user input');
     }
 
     return executed;

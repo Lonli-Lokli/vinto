@@ -138,7 +138,7 @@ const RankComponent: FC<{
   // Container has border and background, image fills it completely
   const containerClassName =
     'h-full w-auto rounded border border-gray-300 bg-white shadow-sm overflow-hidden';
-  const imageClassName = 'h-full w-full object-cover';
+  const imageClassName = 'h-full w-full object-contain';
 
   const renderImage = () => {
     switch (rank) {

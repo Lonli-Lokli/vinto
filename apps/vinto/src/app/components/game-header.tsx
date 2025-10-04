@@ -10,6 +10,7 @@ import {
   useDeckStore,
 } from './di-provider';
 import { GameCommandGroup } from './game-command-group';
+import { DeckManagerPopover } from './deck-manager-popover';
 
 const SettingsPopover = observer(
   ({
@@ -84,7 +85,9 @@ export const GameHeader = observer(() => {
   const { phase, finalTurnTriggered } = useGamePhaseStore();
   const { drawPile } = useDeckStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDeckManagerOpen, setIsDeckManagerOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const deckManagerButtonRef = useRef<HTMLButtonElement>(null);
 
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
@@ -173,14 +176,27 @@ export const GameHeader = observer(() => {
             <div className="flex items-center gap-2">
               <GameCommandGroup />
 
-              {/* Cards Left */}
-              <div className="flex items-center gap-1">
-                <div className="text-sm font-semibold text-gray-700">
-                  {drawPile.length}
-                </div>
-                <div className="text-2xs text-gray-500 hidden sm:block">
-                  cards
-                </div>
+              {/* Cards Left + Deck Manager */}
+              <div className="flex items-center gap-1 relative">
+                <button
+                  ref={deckManagerButtonRef}
+                  onClick={() => setIsDeckManagerOpen(!isDeckManagerOpen)}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 transition-colors group"
+                  title="Manage deck - Set next card to draw"
+                >
+                  <div className="text-sm font-semibold text-emerald-700">
+                    {drawPile.length}
+                  </div>
+                  <div className="text-2xs text-emerald-600 hidden sm:block">
+                    🎴
+                  </div>
+                </button>
+
+                <DeckManagerPopover
+                  isOpen={isDeckManagerOpen}
+                  onClose={() => setIsDeckManagerOpen(false)}
+                  buttonRef={deckManagerButtonRef}
+                />
               </div>
             </div>
           </div>

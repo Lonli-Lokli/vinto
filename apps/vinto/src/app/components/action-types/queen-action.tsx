@@ -33,9 +33,22 @@ export const QueenAction = observer(() => {
         {/* Instructions - only show when cards not yet selected */}
         <div className="flex-1 flex flex-col justify-center mb-4">
           {!hasBothCards && (
-            <p className="text-base text-gray-600 text-center">
-              Select two cards from different players to peek at
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-base text-gray-800 font-medium">
+                👁️ Peek at two cards from different players
+              </p>
+              <p className="text-sm text-gray-600">
+                One card may be yours, one must be from another player
+              </p>
+              <p className="text-xs text-gray-500">
+                Then decide whether to swap them
+              </p>
+              {peekTargets.length === 1 && (
+                <p className="text-xs text-emerald-600 font-semibold">
+                  ✓ First card selected - choose a card from a different player
+                </p>
+              )}
+            </div>
           )}
         </div>
 

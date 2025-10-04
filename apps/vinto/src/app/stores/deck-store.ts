@@ -186,6 +186,16 @@ export class DeckStore {
     };
   }
 
+  // Move card to top of draw pile (for testing/debugging)
+  setNextDrawCard(rank: string) {
+    const cardIndex = this.drawPile.findIndex((card) => card.rank === rank);
+    if (cardIndex !== -1) {
+      const card = this.drawPile[cardIndex];
+      this.drawPile.splice(cardIndex, 1);
+      this.drawPile.unshift(card);
+    }
+  }
+
   // Reset method
   reset() {
     this.drawPile = [];
