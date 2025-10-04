@@ -23,7 +23,8 @@ export type CommandKind =
   | 'ADVANCE_TURN'
   | 'DECLARE_KING_ACTION'
   | 'TOSS_IN'
-  | 'ADD_PENALTY_CARD';
+  | 'ADD_PENALTY_CARD'
+  | 'PLAY_ACTION_CARD';
 
 /**
  * Serializable command data that can be saved/restored
