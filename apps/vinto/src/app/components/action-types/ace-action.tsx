@@ -4,6 +4,7 @@
 import { useActionStore, useGameStore, usePlayerStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { HelpPopover } from '../help-popover';
 
 export const AceAction = observer(() => {
   const actionStore = useActionStore();
@@ -14,7 +15,7 @@ export const AceAction = observer(() => {
   const { action } = actionStore.actionContext;
 
   const humanPlayer = playerStore.humanPlayer;
-  const opponents = playerStore.players.filter(p => p.id !== humanPlayer?.id);
+  const opponents = playerStore.players.filter((p) => p.id !== humanPlayer?.id);
 
   const handleOpponentClick = (opponentId: string) => {
     // Select the first card position (index 0) as a dummy - the action only cares about the player
@@ -29,6 +30,7 @@ export const AceAction = observer(() => {
           <h3 className="text-xs md:text-sm font-semibold text-gray-800">
             🎯 {action}
           </h3>
+          <HelpPopover title="Ace Action" rank="A" />
         </div>
 
         {/* Instructions */}

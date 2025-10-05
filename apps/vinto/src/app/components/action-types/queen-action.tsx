@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { HelpPopover } from '../help-popover';
 import { useActionStore, useGameStore } from '../di-provider';
 
 export const QueenAction = observer(() => {
@@ -25,8 +26,11 @@ export const QueenAction = observer(() => {
           <h3 className="text-xs md:text-sm font-semibold text-gray-800">
             👑 {action}
           </h3>
-          <div className="text-2xs md:text-xs text-gray-500">
-            {peekTargets.length}/2 selected
+          <div className="flex items-center gap-2">
+            <div className="text-2xs md:text-xs text-gray-500">
+              {peekTargets.length}/2 selected
+            </div>
+            <HelpPopover title="Queen Action" rank="Q" />
           </div>
         </div>
 

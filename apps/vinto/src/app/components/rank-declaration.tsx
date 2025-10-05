@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Popover } from 'react-tiny-popover';
+import { HelpPopover } from './help-popover';
 import {
   useGameStore,
   usePlayerStore,
@@ -18,8 +18,6 @@ export const RankDeclaration = observer(() => {
   const { pendingCard, swapPosition } = useActionStore();
   const { isDeclaringRank } = useGamePhaseStore();
 
-  const [showHelp, setShowHelp] = useState(false);
-
   if (!isDeclaringRank || swapPosition === null) {
     return null;
   }
@@ -31,55 +29,18 @@ export const RankDeclaration = observer(() => {
     gameStore.declareRank(rank);
   };
 
-  const helpContent = (isMobile: boolean) => (
-    <div
-      className={`bg-white border border-gray-300 rounded ${
-        isMobile ? 'p-2 max-w-xs' : 'p-3 max-w-sm'
-      } shadow-lg`}
-      style={{ zIndex: 9999 }}
-    >
-      <div
-        className={`${
-          isMobile ? 'text-xs' : 'text-sm'
-        } text-gray-700 space-y-2`}
-      >
-        <p>
-          <strong>Current situation:</strong> You drew{' '}
-          <span className="font-semibold text-gray-800">
-            {pendingCard?.rank}
-          </span>{' '}
-          and are swapping with position{' '}
-          <span className="font-semibold text-gray-800">
-            {(swapPosition ?? 0) + 1}
-          </span>
-        </p>
-        <p>
-          <strong>Your task:</strong> Declare what rank you think your position{' '}
-          {(swapPosition ?? 0) + 1} card is.
-        </p>
-        <div
-          className={`bg-poker-green-50 rounded p-2 ${
-            isMobile ? 'text-2xs' : 'text-xs'
-          }`}
-        >
-          <div className="text-poker-green-700">
-            ✅ <strong>Correct:</strong> Use {pendingCard?.rank}&apos;s action
-          </div>
-          <div className="text-amber-700">
-            ❌ <strong>Wrong:</strong> Get penalty card
-          </div>
-        </div>
-      </div>
-      <button
-        onClick={() => setShowHelp(false)}
-        className={`${
-          isMobile ? 'mt-2 text-xs' : 'mt-2 text-sm'
-        } text-gray-500 hover:text-gray-700`}
-      >
-        Close
-      </button>
-    </div>
-  );
+  const getHelpContent = () => {
+    return `Current situation: You drew ${
+      pendingCard?.rank
+    } and are swapping with position ${(swapPosition ?? 0) + 1}
+
+Your task: Declare what rank you think your position ${
+      (swapPosition ?? 0) + 1
+    } card is.
+
+✅ Correct: Use ${pendingCard?.rank}'s action
+❌ Wrong: Get penalty card`;
+  };
 
   return (
     <div className="w-full h-full px-3 py-2" style={{ zIndex: 100 }}>
@@ -91,20 +52,7 @@ export const RankDeclaration = observer(() => {
             <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1">
               🎯 Declare Rank
             </h3>
-            <Popover
-              isOpen={showHelp}
-              positions={['top', 'bottom', 'left', 'right']}
-              align="center"
-              content={helpContent(true)}
-            >
-              <button
-                onClick={() => setShowHelp(!showHelp)}
-                className="w-5 h-5 bg-gray-200 hover:bg-gray-300 rounded-full text-gray-700 text-xs font-bold transition-colors"
-                title="Show help"
-              >
-                ?
-              </button>
-            </Popover>
+            <HelpPopover title="Declare Rank" content={getHelpContent()} />
           </div>
 
           {/* Row 2: Rank grid (6x2) */}
@@ -137,19 +85,7 @@ export const RankDeclaration = observer(() => {
             <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
               🎯 Declare Rank
             </h3>
-            <Popover
-              isOpen={showHelp}
-              positions={['bottom', 'top', 'left', 'right']}
-              content={helpContent(false)}
-            >
-              <button
-                onClick={() => setShowHelp(!showHelp)}
-                className="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-full text-gray-700 text-sm font-bold transition-colors"
-                title="Show help"
-              >
-                ?
-              </button>
-            </Popover>
+            <HelpPopover title="Declare Rank" content={getHelpContent()} />
           </div>
 
           {/* Ranks grid - using more vertical space */}

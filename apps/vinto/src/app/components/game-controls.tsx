@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { HelpPopover } from './help-popover';
 import {
   useGameStore,
   usePlayerStore,
@@ -84,6 +85,20 @@ export const GameControls = observer(() => {
     return null;
   }
 
+  const getHelpContent = () => {
+    if (controlContent.type === 'full-controls') {
+      return `🎯 Draw New: Draw a new card from the deck
+
+♻️ Play Card: Take an unplayed action card from the discard pile (7-K only, not on first turn)
+
+🏆 Call Vinto: End the game and start final scoring when you think you have the lowest hand`;
+    }
+    if (controlContent.type === 'vinto-only') {
+      return `🏆 Call Vinto: You must call Vinto before the next player's turn to end the game and start final scoring`;
+    }
+    return '';
+  };
+
   // Single consistent container for all states
   return (
     <div className="w-full h-full px-3 py-2">
@@ -93,11 +108,7 @@ export const GameControls = observer(() => {
           <h3 className="text-sm md:text-base font-semibold text-gray-800">
             {controlContent.title}
           </h3>
-          {controlContent.subtitle && (
-            <div className="text-xs md:text-sm text-gray-500 hidden sm:block">
-              {controlContent.subtitle}
-            </div>
-          )}
+          <HelpPopover title="Game Controls" content={getHelpContent()} />
         </div>
 
         {/* Main content area - responsive to content type */}
@@ -135,18 +146,7 @@ const FullTurnControls = ({
   handleDrawCard: () => void;
 }) => {
   const gameStore = useGameStore();
-  const playerStore = usePlayerStore();
   const { discardPile, drawPile } = useDeckStore();
-  // Check if this is the first human turn
-  const isFirstHumanTurn = playerStore.turnCount === 0;
-
-  // Check if discard pile top card can be taken
-  const topDiscardCard = discardPile[0];
-  const canTakeFromDiscard =
-    topDiscardCard &&
-    topDiscardCard.action &&
-    !topDiscardCard.played &&
-    !isFirstHumanTurn;
 
   return (
     <div className="space-y-2">
@@ -156,7 +156,7 @@ const FullTurnControls = ({
         <button
           onClick={handleDrawCard}
           disabled={drawPile.length === 0}
-          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm"
+          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
           aria-label="Draw new card from deck"
         >
           <span>🎯</span>
@@ -166,24 +166,13 @@ const FullTurnControls = ({
         {/* Take from Discard */}
         <button
           onClick={() => gameStore.takeFromDiscard()}
-          disabled={!canTakeFromDiscard}
-          className="flex items-center justify-center gap-2 bg-poker-green-600 hover:bg-poker-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm"
+          disabled={!discardPile[0]?.action || discardPile[0]?.played}
+          className="flex items-center justify-center gap-2 bg-poker-green-600 hover:bg-poker-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
           aria-label="Take unplayed card from discard pile"
         >
           <span>♻️</span>
           <span>Play Card</span>
         </button>
-      </div>
-
-      {/* Hint text - more prominent */}
-      <div className="text-xs text-gray-500 text-center px-2">
-        {isFirstHumanTurn
-          ? 'First turn: must draw from deck'
-          : topDiscardCard?.action
-          ? topDiscardCard.played
-            ? `${topDiscardCard.rank} already played - cannot take`
-            : `Top discard: ${topDiscardCard.rank} • ${topDiscardCard.action}`
-          : 'Only unplayed action cards (7–K) can be taken'}
       </div>
 
       {/* Call Vinto - always available during turn */}

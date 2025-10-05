@@ -1,6 +1,7 @@
 // lib/game-helpers.ts
 
 import { Card, Difficulty, NeverError, Player, Rank } from '../shapes';
+import { getCardConfig } from '../constants/game-setup';
 
 export const createDeck = (): Card[] => {
   const deck: Card[] = [];
@@ -9,44 +10,38 @@ export const createDeck = (): Card[] => {
 
   // Number cards 2-6
   for (const rank of noActionRanks) {
+    const config = getCardConfig(`${rank}` as Rank);
     cardSet.forEach((no) => {
       deck.push({
         id: `${rank}_${no}`,
         rank: `${rank}`,
-        value: rank,
+        value: config.value,
         played: false,
       });
     });
   }
 
   // Action cards
-  const actionCards = [
-    { rank: '7' as const, value: 7, action: 'Peek 1 of your cards' },
-    { rank: '8' as const, value: 8, action: 'Peek 1 of your cards' },
-    { rank: '9' as const, value: 9, action: 'Peek 1 opponent card' },
-    { rank: '10' as const, value: 10, action: 'Peek 1 opponent card' },
-    { rank: 'J' as const, value: 10, action: 'Swap 2 face-down cards' },
-    { rank: 'Q' as const, value: 10, action: 'Peek 2 cards, swap optional' },
-    { rank: 'K' as const, value: 0, action: "Declare any card's action" },
-    { rank: 'A' as const, value: 1, action: 'Force opponent to draw' },
-  ];
+  const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
-  actionCards.forEach((card) => {
+  actionRanks.forEach((rank) => {
+    const config = getCardConfig(rank);
     cardSet.forEach((no) => {
       deck.push({
-        id: `${card.rank}_${no}`,
-        rank: card.rank,
-        value: card.value,
-        action: card.action,
+        id: `${rank}_${no}`,
+        rank: rank,
+        value: config.value,
+        action: config.shortDescription,
         played: false,
       });
     });
   });
 
   // Jokers
+  const jokerConfig = getCardConfig('Joker');
   deck.push(
-    { id: 'Joker1', rank: 'Joker', value: -1, played: false },
-    { id: 'Joker2', rank: 'Joker', value: -1, played: false }
+    { id: 'Joker1', rank: 'Joker', value: jokerConfig.value, played: false },
+    { id: 'Joker2', rank: 'Joker', value: jokerConfig.value, played: false }
   );
 
   return deck;
@@ -119,19 +114,5 @@ export const getWinnerInfo = (
   };
 };
 
-export const ALL_RANKS: Rank[] = [
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '10',
-  'J',
-  'Q',
-  'K',
-  'A',
-  'Joker',
-];
+// Re-export ALL_RANKS from game-setup for backwards compatibility
+export { ALL_RANKS } from '../constants/game-setup';

@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { HelpPopover } from '../help-popover';
 import { useGameStore } from '../di-provider';
 
 export function KingDeclaration() {
@@ -14,10 +15,13 @@ export function KingDeclaration() {
     <div className="w-full h-full px-3 py-2">
       <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
         <div className="text-center mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-1">
-            👑 King Declaration
-          </h3>
-          <p className="text-2xs md:text-xs text-gray-600">
+          <div className="flex items-center justify-center gap-2">
+            <h3 className="text-xs md:text-sm font-semibold text-gray-800">
+              👑 King Declaration
+            </h3>
+            <HelpPopover title="King Declaration" rank="K" />
+          </div>
+          <p className="text-2xs md:text-xs text-gray-600 mt-1">
             Choose which card action to execute
           </p>
         </div>

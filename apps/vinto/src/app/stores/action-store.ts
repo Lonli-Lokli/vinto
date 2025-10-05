@@ -213,24 +213,8 @@ export class ActionStore {
   }
 
   private getActionDescription(rank: Rank): string {
-    switch (rank) {
-      case '7':
-      case '8':
-        return 'Peek 1 of your cards';
-      case '9':
-      case '10':
-        return 'Peek 1 opponent card';
-      case 'J':
-        return 'Swap any two facedown cards on the table';
-      case 'Q':
-        return 'Peek any two cards, then optionally swap them';
-      case 'K':
-        return 'Declare any card action and execute it';
-      case 'A':
-        return 'Force opponent to draw';
-      default:
-        return 'Unknown action';
-    }
+    const { getCardLongDescription } = require('../constants/game-setup');
+    return getCardLongDescription(rank) || 'Unknown action';
   }
 
   // State queries

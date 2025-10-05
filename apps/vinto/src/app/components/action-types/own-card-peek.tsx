@@ -4,6 +4,7 @@
 import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { HelpPopover } from '../help-popover';
 
 export const OwnCardPeek = observer(() => {
   const gameStore = useGameStore();
@@ -23,11 +24,14 @@ export const OwnCardPeek = observer(() => {
           <h3 className="text-xs md:text-sm font-semibold text-gray-800">
             👁️ {action}
           </h3>
-          {hasRevealedCard && (
-            <div className="text-2xs md:text-xs text-green-600 font-medium">
-              ✓ Card Revealed
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {hasRevealedCard && (
+              <div className="text-2xs md:text-xs text-green-600 font-medium">
+                ✓ Card Revealed
+              </div>
+            )}
+            <HelpPopover title="Peek at Own Card" rank="7" />
+          </div>
         </div>
 
         {/* Instructions or Confirmation */}
