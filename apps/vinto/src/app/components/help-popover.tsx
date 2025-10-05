@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Popover } from 'react-tiny-popover';
+import { ArrowContainer, Popover, PopoverState } from 'react-tiny-popover';
 import { Rank } from '../shapes';
 import { getCardHelpText } from '../constants/game-setup';
 
@@ -30,12 +30,6 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
         <p className="font-semibold text-gray-800">{title}</p>
         <div className="text-xs whitespace-pre-line">{helpText}</div>
       </div>
-      <button
-        onClick={() => setShowHelp(false)}
-        className="mt-2 text-sm text-gray-500 hover:text-gray-700"
-      >
-        Close
-      </button>
     </div>
   );
 
@@ -43,7 +37,20 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
     <Popover
       isOpen={showHelp}
       positions={['top', 'bottom', 'left', 'right']}
-      content={helpContent}
+      content={({ position, childRect, popoverRect }: PopoverState) => (
+        <ArrowContainer // if you'd like an arrow, you can import the ArrowContainer!
+          position={position}
+          childRect={childRect}
+          popoverRect={popoverRect}
+          arrowColor={'blue'}
+          arrowSize={10}
+          arrowStyle={{ opacity: 0.7 }}
+          className="popover-arrow-container"
+          arrowClassName="popover-arrow"
+        >
+          {helpContent}
+        </ArrowContainer>
+      )}
       onClickOutside={() => setShowHelp(false)}
     >
       <button

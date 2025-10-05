@@ -14,7 +14,6 @@ export const QueenAction = observer(() => {
     peekTargets,
     actionContext: { action },
   } = actionStore;
-  const { executeQueenSwap, skipQueenSwap } = gameStore;
 
   const hasBothCards = peekTargets.length === 2;
 
@@ -60,13 +59,13 @@ export const QueenAction = observer(() => {
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
             <button
-              onClick={() => executeQueenSwap()}
+              onClick={() => gameStore.executeQueenSwap()}
               className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
             >
               🔄 Swap Cards
             </button>
             <button
-              onClick={() => skipQueenSwap()}
+              onClick={() => gameStore.skipQueenSwap()}
               className="bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
             >
               ⏭️ Skip

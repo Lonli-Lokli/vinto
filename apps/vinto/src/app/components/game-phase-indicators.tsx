@@ -266,26 +266,26 @@ const CardDrawnIndicator = observer(
     return (
       <div className="w-full h-full px-2 py-1.5">
         <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg shadow-sm flex flex-row">
-          <div className="h-full flex flex-row gap-2 w-full p-1.5">
-            {/* Card image - first column - takes full height with no extra spacing */}
-            <div className="flex-shrink-0 h-full flex items-center" style={{ width: '60px' }}>
-              <div className="w-full h-full">
+          <div className="h-full flex flex-row gap-2 w-full p-2">
+            {/* Card image - takes full height, preserves aspect ratio */}
+            <div className="flex-shrink-0 h-full flex items-stretch">
+              <div className="h-full" style={{ aspectRatio: '2.5 / 3.5' }}>
                 <CardComponent card={pendingCard} revealed={true} size="auto" />
               </div>
             </div>
 
             {/* Content - second column */}
-            <div className="flex-1 min-w-0 flex flex-col py-1">
+            <div className="flex-1 min-w-0 flex flex-col">
               {/* Header with title, rank and help */}
               <div className="flex flex-row items-start justify-between mb-1 flex-shrink-0">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-row items-baseline gap-1">
-                    <span className="text-xs font-semibold text-gray-800 leading-tight">
+                    <span className="text-sm font-bold text-gray-900 leading-tight">
                       {pendingCard.rank}
                     </span>
                   </div>
                   {hasAction ? (
-                    <div className="text-xs text-emerald-700 leading-tight line-clamp-1">
+                    <div className="text-xs text-emerald-700 leading-tight line-clamp-2">
                       {getActionExplanation(pendingCard.rank)}
                     </div>
                   ) : (
@@ -304,7 +304,7 @@ const CardDrawnIndicator = observer(
                   {hasAction && (
                     <button
                       onClick={onUseAction}
-                      className="flex flex-row items-center justify-center gap-0.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-1.5 px-1.5 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+                      className="flex flex-row items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
                     >
                       <span>⚡</span>
                       <span>Use</span>
@@ -313,7 +313,7 @@ const CardDrawnIndicator = observer(
 
                   <button
                     onClick={onSwapDiscard}
-                    className={`flex flex-row items-center justify-center gap-0.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-1.5 px-1.5 rounded shadow-sm transition-colors text-xs min-h-[36px] ${
+                    className={`flex flex-row items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px] ${
                       !hasAction ? 'col-span-2' : ''
                     }`}
                   >
@@ -324,7 +324,7 @@ const CardDrawnIndicator = observer(
 
                 <button
                   onClick={onDiscard}
-                  className="w-full flex flex-row items-center justify-center gap-0.5 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-1.5 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+                  className="w-full flex flex-row items-center justify-center gap-1 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
                 >
                   <span>🗑️</span>
                   <span>Discard</span>
