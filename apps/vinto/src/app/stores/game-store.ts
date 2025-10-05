@@ -718,9 +718,18 @@ export class GameStore implements TempState {
   }
 
   // Vinto and scoring
-  callVinto() {
+  async callVinto() {
+    // Close the confirmation modal
+    this.phaseStore.closeVintoConfirmation();
+
+    // Show a 2-second animation/delay for psychological weight
+    GameToastService.warning('⏳ Calling Vinto...');
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Trigger the final turn
     this.phaseStore.triggerFinalTurn();
-    GameToastService.success('VINTO called! Final round begins.');
+    GameToastService.success('🏆 VINTO called! Final round begins.');
   }
 
   calculateFinalScores() {

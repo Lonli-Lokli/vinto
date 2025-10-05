@@ -25,6 +25,9 @@ export class GamePhaseStore {
   // Derived from boolean flags in original store
   finalTurnTriggered = false;
 
+  // Call Vinto confirmation modal state
+  showVintoConfirmation = false;
+
   constructor() {
     makeAutoObservable(this);
   }
@@ -170,6 +173,16 @@ export class GamePhaseStore {
     this.phase = 'setup';
     this.subPhase = 'idle';
     this.finalTurnTriggered = false;
+    this.showVintoConfirmation = false;
+  }
+
+  // Modal control methods
+  openVintoConfirmation() {
+    this.showVintoConfirmation = true;
+  }
+
+  closeVintoConfirmation() {
+    this.showVintoConfirmation = false;
   }
 }
 

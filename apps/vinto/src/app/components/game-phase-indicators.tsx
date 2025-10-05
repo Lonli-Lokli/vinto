@@ -42,7 +42,10 @@ const SetupPhaseIndicator = observer(
           <button
             onClick={onFinishSetup}
             disabled={setupPeeksRemaining > 0}
-            className={`${getButtonClasses('start-game', setupPeeksRemaining > 0)} py-1.5 px-3 text-xs min-h-[36px]`}
+            className={`${getButtonClasses(
+              'start-game',
+              setupPeeksRemaining > 0
+            )} py-1.5 px-3 text-xs min-h-[36px]`}
           >
             Start Game
           </button>
@@ -78,7 +81,9 @@ const TossInIndicator = observer(
               {isCurrentPlayerWaiting && currentPlayer && (
                 <div className="text-xs text-gray-600 flex flex-row items-center gap-1 leading-tight">
                   <span className="animate-spin">⏳</span>
-                  <span className="line-clamp-1">{currentPlayer.name}&apos;s turn</span>
+                  <span className="line-clamp-1">
+                    {currentPlayer.name}&apos;s turn
+                  </span>
                 </div>
               )}
             </div>
@@ -94,7 +99,9 @@ const TossInIndicator = observer(
           </div>
           <button
             onClick={onContinue}
-            className={`${getButtonClasses('continue-toss')} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
+            className={`${getButtonClasses(
+              'continue-toss'
+            )} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
           >
             Continue ▶
           </button>
@@ -230,6 +237,12 @@ const getActionExplanation = (rank: string): string => {
   return getCardLongDescription(rank) || 'Special card action';
 };
 
+// Helper function to get card value
+const getCardValue = (rank: string): number => {
+  const { getCardValue } = require('../constants/game-setup');
+  return getCardValue(rank);
+};
+
 // Card Drawn Indicator Component
 const CardDrawnIndicator = observer(
   ({
@@ -273,20 +286,31 @@ const CardDrawnIndicator = observer(
 
             {/* Content - second column */}
             <div className="flex-1 min-w-0 flex flex-col">
-              {/* Header with title, rank and help */}
-              <div className="flex flex-row items-start justify-between mb-1 flex-shrink-0">
+              {/* Header with title, rank, value and help */}
+              <div className="flex flex-row items-start justify-between mb-2 flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-row items-baseline gap-1">
-                    <span className="text-sm font-bold text-gray-900 leading-tight">
+                  {/* Rank and card name */}
+                  <div className="flex flex-row items-baseline gap-1.5 mb-0.5">
+                    <span className="text-lg md:text-xl font-bold text-gray-900 leading-none">
                       {pendingCard.rank}
                     </span>
+                    <span className="text-sm md:text-base font-semibold text-gray-700 leading-none">
+                      {pendingCard.rank === 'Joker' ? 'Joker' : `Card`}
+                    </span>
                   </div>
+
+                  {/* Point value */}
+                  <div className="text-sm md:text-base text-gray-600 leading-relaxed mb-1">
+                    {getCardValue(pendingCard.rank)} {Math.abs(getCardValue(pendingCard.rank)) === 1 ? 'point' : 'points'}
+                  </div>
+
+                  {/* Action description with better spacing */}
                   {hasAction ? (
-                    <div className="text-xs text-emerald-700 leading-tight line-clamp-2">
+                    <div className="text-sm md:text-base text-emerald-700 leading-relaxed">
                       {getActionExplanation(pendingCard.rank)}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-500 leading-tight">
+                    <div className="text-sm md:text-base text-gray-500 leading-relaxed">
                       No action
                     </div>
                   )}
@@ -304,7 +328,9 @@ const CardDrawnIndicator = observer(
                       {/* Position 1: Use (green) - when available */}
                       <button
                         onClick={onUseAction}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action')} py-1.5 px-2 text-xs min-h-[36px]`}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
+                          'use-action'
+                        )} py-1.5 px-2 text-xs min-h-[36px]`}
                       >
                         <span>⚡</span>
                         <span>Use</span>
@@ -313,7 +339,9 @@ const CardDrawnIndicator = observer(
                       {/* Position 2: Swap (blue) - always available */}
                       <button
                         onClick={onSwapDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px]`}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
+                          'swap'
+                        )} py-1.5 px-2 text-xs min-h-[36px]`}
                       >
                         <span>🔄</span>
                         <span>Swap</span>
@@ -325,7 +353,9 @@ const CardDrawnIndicator = observer(
                       {/* Position 1: Swap (blue) */}
                       <button
                         onClick={onSwapDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px]`}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
+                          'swap'
+                        )} py-1.5 px-2 text-xs min-h-[36px]`}
                       >
                         <span>🔄</span>
                         <span>Swap</span>
@@ -334,7 +364,9 @@ const CardDrawnIndicator = observer(
                       {/* Position 2: Discard (gray) */}
                       <button
                         onClick={onDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
+                          'discard'
+                        )} py-1.5 px-2 text-xs min-h-[36px]`}
                       >
                         <span>🗑️</span>
                         <span>Discard</span>
@@ -347,7 +379,9 @@ const CardDrawnIndicator = observer(
                 {hasAction && (
                   <button
                     onClick={onDiscard}
-                    className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
+                    className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses(
+                      'discard'
+                    )} py-1.5 px-2 text-xs min-h-[36px]`}
                   >
                     <span>🗑️</span>
                     <span>Discard</span>
@@ -380,7 +414,9 @@ const SwapPositionIndicator = observer(
           </div>
           <button
             onClick={onDiscard}
-            className={`${getButtonClasses('discard-instead')} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
+            className={`${getButtonClasses(
+              'discard-instead'
+            )} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
           >
             Discard Instead
           </button>

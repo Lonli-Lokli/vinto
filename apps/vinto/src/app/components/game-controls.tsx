@@ -127,11 +127,11 @@ export const GameControls = observer(() => {
 
 // Sub-components for different control states
 const VintoOnlyControls = () => {
-  const gameStore = useGameStore();
+  const gamePhaseStore = useGamePhaseStore();
   return (
     <div className="space-y-1">
       <button
-        onClick={() => gameStore.callVinto()}
+        onClick={() => gamePhaseStore.openVintoConfirmation()}
         className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
         aria-label="Call Vinto"
       >
@@ -147,6 +147,7 @@ const FullTurnControls = ({
   handleDrawCard: () => void;
 }) => {
   const gameStore = useGameStore();
+  const gamePhaseStore = useGamePhaseStore();
   const { discardPile, drawPile } = useDeckStore();
 
   const topDiscard = discardPile[0];
@@ -192,7 +193,7 @@ const FullTurnControls = ({
 
       {/* Call Vinto - always available during turn */}
       <button
-        onClick={() => gameStore.callVinto()}
+        onClick={() => gamePhaseStore.openVintoConfirmation()}
         className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
         title="End the game - call Vinto if you think you have the lowest score"
       >
