@@ -4,6 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
+import { getButtonClasses } from '../constants/button-colors';
 import type { Card, Player } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
 import {
@@ -41,11 +42,7 @@ const SetupPhaseIndicator = observer(
           <button
             onClick={onFinishSetup}
             disabled={setupPeeksRemaining > 0}
-            className={`py-1.5 px-3 rounded text-xs font-semibold text-white transition-colors min-h-[36px] ${
-              setupPeeksRemaining > 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 cursor-pointer'
-            }`}
+            className={`${getButtonClasses('start-game', setupPeeksRemaining > 0)} py-1.5 px-3 text-xs min-h-[36px]`}
           >
             Start Game
           </button>
@@ -97,7 +94,7 @@ const TossInIndicator = observer(
           </div>
           <button
             onClick={onContinue}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded shadow-sm transition-colors text-xs whitespace-nowrap min-h-[36px] flex-shrink-0"
+            className={`${getButtonClasses('continue-toss')} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
           >
             Continue ▶
           </button>
@@ -304,7 +301,7 @@ const CardDrawnIndicator = observer(
                   {hasAction && (
                     <button
                       onClick={onUseAction}
-                      className="flex flex-row items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+                      className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action')} py-1.5 px-2 text-xs min-h-[36px]`}
                     >
                       <span>⚡</span>
                       <span>Use</span>
@@ -313,7 +310,7 @@ const CardDrawnIndicator = observer(
 
                   <button
                     onClick={onSwapDiscard}
-                    className={`flex flex-row items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px] ${
+                    className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px] ${
                       !hasAction ? 'col-span-2' : ''
                     }`}
                   >
@@ -324,7 +321,7 @@ const CardDrawnIndicator = observer(
 
                 <button
                   onClick={onDiscard}
-                  className="w-full flex flex-row items-center justify-center gap-1 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+                  className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
                 >
                   <span>🗑️</span>
                   <span>Discard</span>
@@ -356,7 +353,7 @@ const SwapPositionIndicator = observer(
           </div>
           <button
             onClick={onDiscard}
-            className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold rounded shadow-sm transition-colors text-xs whitespace-nowrap min-h-[36px] flex-shrink-0"
+            className={`${getButtonClasses('discard-instead')} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
           >
             Discard Instead
           </button>

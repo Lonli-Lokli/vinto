@@ -5,6 +5,7 @@ import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
+import { getButtonClasses } from '../../constants/button-colors';
 
 export const CardSwap = observer(() => {
   const actionStore = useActionStore();
@@ -74,7 +75,7 @@ export const CardSwap = observer(() => {
           {swapTargets.length > 0 && (
             <button
               onClick={() => actionStore.clearSwapTargets()}
-              className="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+              className={`${getButtonClasses('reset')} py-2 px-4 text-sm`}
             >
               🔄 Reset
             </button>
@@ -84,7 +85,7 @@ export const CardSwap = observer(() => {
               actionStore.clearSwapTargets();
               gameStore.confirmPeekCompletion();
             }}
-            className={`bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm ${
+            className={`${getButtonClasses('skip')} py-2 px-4 text-sm ${
               swapTargets.length === 0 ? 'col-span-2' : ''
             }`}
           >

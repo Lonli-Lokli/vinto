@@ -4,6 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
+import { getButtonClasses } from '../constants/button-colors';
 import {
   useGameStore,
   usePlayerStore,
@@ -131,7 +132,7 @@ const VintoOnlyControls = () => {
     <div className="space-y-1">
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+        className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
         aria-label="Call Vinto"
       >
         🏆 Call Vinto
@@ -168,7 +169,7 @@ const FullTurnControls = ({
         <button
           onClick={handleDrawCard}
           disabled={deckEmpty}
-          className="flex flex-row items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+          className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('draw-card', deckEmpty)} py-1.5 px-2 text-xs min-h-[36px]`}
           title={deckEmpty ? 'Deck is empty' : 'Draw a new card from deck'}
         >
           <span>🎴</span>
@@ -179,7 +180,7 @@ const FullTurnControls = ({
         <button
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!canTakeDiscard}
-          className="flex flex-row items-center justify-center gap-1 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+          className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action', !canTakeDiscard)} py-1.5 px-2 text-xs min-h-[36px]`}
           title={getDiscardTooltip()}
         >
           <span>♻️</span>
@@ -192,7 +193,7 @@ const FullTurnControls = ({
       {/* Call Vinto - always available during turn */}
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+        className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
         title="End the game - call Vinto if you think you have the lowest score"
       >
         🏆 Call Vinto

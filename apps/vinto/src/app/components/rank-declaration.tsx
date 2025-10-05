@@ -3,6 +3,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
+import { getButtonClasses } from '../constants/button-colors';
 import {
   useGameStore,
   usePlayerStore,
@@ -63,7 +64,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
             <button
               key={rank}
               onClick={() => handleRankClick(rank)}
-              className="bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold py-1.5 px-1 rounded text-xs transition-colors min-h-[36px] flex items-center justify-center"
+              className={`${getButtonClasses('declare-rank')} font-bold py-1.5 px-1 text-xs min-h-[36px] flex items-center justify-center`}
               title={`Declare ${rank}`}
             >
               {rank}
@@ -74,7 +75,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         {/* Skip button - compact */}
         <button
           onClick={() => gameStore.skipDeclaration()}
-          className="w-full bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px] flex-shrink-0"
+          className={`w-full ${getButtonClasses('skip')} py-1.5 px-3 text-xs min-h-[36px] flex-shrink-0`}
         >
           Skip
         </button>

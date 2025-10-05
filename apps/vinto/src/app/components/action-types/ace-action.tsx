@@ -5,6 +5,7 @@ import { useActionStore, useGameStore, usePlayerStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
+import { getButtonVariantClasses } from '../../constants/button-colors';
 
 export const AceAction = observer(() => {
   const actionStore = useActionStore();
@@ -45,7 +46,7 @@ export const AceAction = observer(() => {
               <button
                 key={opponent.id}
                 onClick={() => handleOpponentClick(opponent.id)}
-                className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors text-base flex flex-row items-center justify-center gap-2 min-h-[44px]"
+                className={`${getButtonVariantClasses('secondary')} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px]`}
               >
                 <span>🎯</span>
                 <span>{opponent.name}</span>
@@ -57,7 +58,7 @@ export const AceAction = observer(() => {
         {/* Skip Button */}
         <button
           onClick={() => gameStore.confirmPeekCompletion()}
-          className="w-full bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm min-h-[44px]"
+          className={`w-full ${getButtonVariantClasses('neutral')} py-2 px-4 text-sm min-h-[44px]`}
         >
           ⏭️ Skip
         </button>

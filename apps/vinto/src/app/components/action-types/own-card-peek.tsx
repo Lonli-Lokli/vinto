@@ -5,6 +5,7 @@ import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
+import { getButtonClasses } from '../../constants/button-colors';
 
 export const OwnCardPeek = observer(() => {
   const gameStore = useGameStore();
@@ -51,7 +52,7 @@ export const OwnCardPeek = observer(() => {
         {hasRevealedCard ? (
           <button
             onClick={() => gameStore.confirmPeekCompletion()}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            className={`w-full ${getButtonClasses('continue')} py-2 px-4 text-sm`}
           >
             Continue
           </button>
@@ -61,7 +62,7 @@ export const OwnCardPeek = observer(() => {
               playerStore.clearTemporaryCardVisibility();
               gameStore.confirmPeekCompletion();
             }}
-            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+            className={`w-full ${getButtonClasses('skip')} py-2 px-4 text-sm`}
           >
             ⏭️ Skip
           </button>

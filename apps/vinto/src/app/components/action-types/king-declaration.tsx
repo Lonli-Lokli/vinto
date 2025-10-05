@@ -3,13 +3,33 @@
 
 import React from 'react';
 import { HelpPopover } from '../help-popover';
-import { useGameStore } from '../di-provider';
+import { getButtonClasses } from '../../constants/button-colors';
+import { useGameStore, useActionStore } from '../di-provider';
 
 export function KingDeclaration() {
   const gameStore = useGameStore();
+  const actionStore = useActionStore();
+
   // K cannot declare itself - only the action cards that can be executed
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
   const nonActionCards = ['2', '3', '4', '5', '6', 'K', 'Joker'] as const;
+
+  // Get the pending card (the King card being played)
+  const pendingCard = actionStore.pendingCard;
+
+  // Function to check if a rank is disabled
+  // King cannot declare itself (K), even though K appears in the UI
+  const isRankDisabled = (rank: string): boolean => {
+    return rank === 'K' && pendingCard?.rank === 'K';
+  };
+
+  // Get explanation for disabled state
+  const getDisabledExplanation = (rank: string): string => {
+    if (rank === 'K' && pendingCard?.rank === 'K') {
+      return 'Cannot declare King from King card';
+    }
+    return '';
+  };
 
   return (
     <div className="w-full h-full px-3 py-2">
@@ -33,16 +53,20 @@ export function KingDeclaration() {
               Action Cards
             </div>
             <div className="grid grid-cols-4 md:grid-cols-7 gap-1 md:gap-2">
-              {actionCards.map((rank) => (
-                <button
-                  key={rank}
-                  onClick={() => gameStore.declareKingAction(rank)}
-                  className="bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold py-1.5 px-3 rounded transition-colors text-sm min-h-[44px] flex items-center justify-center"
-                  title={`Execute ${rank} action`}
-                >
-                  {rank}
-                </button>
-              ))}
+              {actionCards.map((rank) => {
+                const disabled = isRankDisabled(rank);
+                return (
+                  <button
+                    key={rank}
+                    onClick={() => !disabled && gameStore.declareKingAction(rank)}
+                    disabled={disabled}
+                    className={`${getButtonClasses('king-action-card', disabled)} font-bold py-1.5 px-3 text-sm min-h-[44px] flex items-center justify-center`}
+                    title={disabled ? getDisabledExplanation(rank) : `Execute ${rank} action`}
+                  >
+                    {rank}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -52,16 +76,27 @@ export function KingDeclaration() {
               No Action Cards
             </div>
             <div className="grid grid-cols-6 gap-1">
-              {nonActionCards.map((rank) => (
-                <button
-                  key={rank}
-                  onClick={() => gameStore.declareKingAction(rank)}
-                  className="bg-gray-400 hover:bg-gray-500 active:bg-gray-600 text-white font-medium py-1.5 px-2 rounded transition-colors text-xs flex items-center justify-center min-h-[44px]"
-                  title={`Declare ${rank} (no action)`}
-                >
-                  {rank}
-                </button>
-              ))}
+              {nonActionCards.map((rank) => {
+                const disabled = isRankDisabled(rank);
+                const explanation = getDisabledExplanation(rank);
+                return (
+                  <div key={rank} className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => !disabled && gameStore.declareKingAction(rank)}
+                      disabled={disabled}
+                      className={`${getButtonClasses('king-non-action-card', disabled)} font-medium py-1.5 px-2 text-xs flex items-center justify-center min-h-[44px]`}
+                      title={disabled ? explanation : `Declare ${rank} (no action)`}
+                    >
+                      {rank}
+                    </button>
+                    {disabled && explanation && (
+                      <div className="text-2xs text-gray-500 text-center italic px-1 leading-tight">
+                        {explanation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
