@@ -41,7 +41,7 @@ export const ActionTargetSelector = observer(() => {
   }
 
   return (
-    <div className="w-full min-h-[200px] max-h-[300px] h-full">
+    <div className="w-full h-full">
       <ActionContent targetType={targetType} />
     </div>
   );

@@ -102,7 +102,7 @@ export const GameControls = observer(() => {
   // Single consistent container for all states
   return (
     <div className="w-full h-full px-2 py-1.5">
-      <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col overflow-hidden">
+      <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col">
         {/* Header - consistent across all states */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs md:text-sm font-semibold text-gray-800 leading-tight">

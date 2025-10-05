@@ -48,7 +48,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
 
   return (
     <div className="w-full h-full px-2 py-1.5 z-[100] relative">
-      <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col overflow-hidden">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col">
         {/* Header with help */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs font-semibold text-gray-800 leading-tight">
@@ -58,7 +58,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         </div>
 
         {/* Ranks grid - 4 columns = exactly 2 rows for 8 action cards */}
-        <div className="grid grid-cols-4 gap-1 mb-1 flex-1 content-start min-h-0 overflow-auto">
+        <div className="grid grid-cols-4 gap-1 mb-1 flex-1 content-start min-h-0">
           {ACTION_RANKS.map((rank) => (
             <button
               key={rank}
