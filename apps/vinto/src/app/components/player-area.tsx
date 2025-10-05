@@ -163,7 +163,7 @@ export const PlayerArea = observer(function PlayerArea({
           isCurrentPlayer
             ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-emerald-400 md:border-2 bg-emerald-400/10'
             : ''
-        }`}
+        } ${isSelectingActionTarget && !onCardClick ? 'area-dimmed' : ''}`}
         style={
           isCurrentPlayer
             ? {
@@ -174,6 +174,14 @@ export const PlayerArea = observer(function PlayerArea({
       >
         {player.cards.map((card, index) => {
           const isSidePlayer = player.position === 'left' || player.position === 'right';
+
+          // Determine if this card is selectable
+          const isCardSelectable = !!onCardClick && (
+            (isSelectingSwapPosition && !isDeclaringRank) ||
+            (isDeclaringRank && swapPosition === index) ||
+            isSelectingActionTarget
+          );
+
           return (
             <Card
               key={`${card.id}-${index}`}
@@ -183,7 +191,8 @@ export const PlayerArea = observer(function PlayerArea({
               }
               position={index + 1}
               size={getCardSize()}
-              clickable={!!onCardClick}
+              selectable={isCardSelectable}
+              notSelectable={isSelectingActionTarget && !onCardClick}
               highlighted={
                 (isSelectingSwapPosition && !isDeclaringRank) ||
                 (isDeclaringRank && swapPosition === index) ||

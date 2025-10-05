@@ -68,6 +68,8 @@ module.exports = {
         'flip-card': 'flip-card 0.6s ease-in-out',
         'float': 'float 3s ease-in-out infinite',
         'ring-pulse': 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'card-select-pulse': 'card-select-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'card-click': 'card-click-feedback 0.1s ease',
       },
       keyframes: {
         'gentle-pulse': {
@@ -94,6 +96,21 @@ module.exports = {
           '50%': {
             boxShadow: '0 0 0 2px rgb(234 179 8 / 0.5)'
           },
+        },
+        'card-select-pulse': {
+          '0%, 100%': {
+            borderColor: 'rgba(251, 191, 36, 0.8)',
+            boxShadow: '0 0 0 0 rgba(251, 191, 36, 0.7), 0 0 20px 2px rgba(251, 191, 36, 0.4)'
+          },
+          '50%': {
+            borderColor: 'rgba(245, 158, 11, 1)',
+            boxShadow: '0 0 0 4px rgba(251, 191, 36, 0), 0 0 25px 4px rgba(245, 158, 11, 0.6)'
+          },
+        },
+        'card-click-feedback': {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(0.95)' },
+          '100%': { transform: 'scale(1)' },
         },
       },
       backdropBlur: {

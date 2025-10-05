@@ -16,6 +16,7 @@ interface DeckAreaProps {
   canDrawCard: boolean;
   onDrawCard: () => void;
   isMobile?: boolean;
+  isSelectingActionTarget?: boolean;
 }
 
 export const DeckArea: React.FC<DeckAreaProps> = ({
@@ -27,6 +28,7 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
   canDrawCard,
   onDrawCard,
   isMobile = false,
+  isSelectingActionTarget = false,
 }) => {
   const cardSize = 'lg';
   const gap = isMobile ? 'gap-2' : 'gap-12';
@@ -34,8 +36,11 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
   // Show drawn card whenever there's a pending card
   const isDrawnCardVisible = !!pendingCard;
 
+  // Dim deck area when selecting action targets
+  const shouldDimDeckArea = isSelectingActionTarget;
+
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className={`flex flex-col items-center gap-2 ${shouldDimDeckArea ? 'area-dimmed' : ''}`}>
       {/* Draw and Discard Piles - Side by Side */}
       <div className={`flex ${gap} items-center`}>
         <DrawPile

@@ -46,7 +46,9 @@ export const AceAction = observer(() => {
               <button
                 key={opponent.id}
                 onClick={() => handleOpponentClick(opponent.id)}
-                className={`${getButtonVariantClasses('secondary')} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px]`}
+                className={`${getButtonVariantClasses(
+                  'secondary'
+                )} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px]`}
               >
                 <span>🎯</span>
                 <span>{opponent.name}</span>
@@ -58,7 +60,9 @@ export const AceAction = observer(() => {
         {/* Skip Button */}
         <button
           onClick={() => gameStore.confirmPeekCompletion()}
-          className={`w-full ${getButtonVariantClasses('neutral')} py-2 px-4 text-sm min-h-[44px]`}
+          className={`w-full ${getButtonVariantClasses(
+            'neutral'
+          )} py-2 px-4 text-sm min-h-[44px]`}
         >
           ⏭️ Skip
         </button>

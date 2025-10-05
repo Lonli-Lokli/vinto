@@ -44,6 +44,9 @@ interface CardProps {
   playerId?: string;
   cardIndex?: number; // The actual array index (0-based)
   isPending?: boolean;
+  // New selection states
+  selectable?: boolean; // Card can be selected (shows pulsing border)
+  notSelectable?: boolean; // Card cannot be selected (dimmed)
 }
 
 export function Card({
@@ -59,6 +62,8 @@ export function Card({
   playerId,
   cardIndex,
   isPending = false,
+  selectable = false,
+  notSelectable = false,
 }: CardProps) {
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
@@ -70,6 +75,14 @@ export function Card({
     dataAttributes['data-pending-card'] = 'true';
   }
 
+  // Determine visual state classes
+  const getCardStateClasses = () => {
+    if (notSelectable) return 'card-not-selectable';
+    if (selectable) return 'card-selectable animate-card-select-pulse';
+    if (clickable) return 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md';
+    return '';
+  };
+
   return (
     <div
       className={`
@@ -77,14 +90,10 @@ export function Card({
         relative flex
         transition-all duration-150 select-none
         ${rotated ? 'transform-gpu' : ''}
-        ${
-          clickable
-            ? 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md'
-            : ''
-        }
+        ${getCardStateClasses()}
       `}
       style={
-        highlighted
+        highlighted && !selectable
           ? {
               transform: rotated ? 'rotate(90deg)' : undefined,
               animation: 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -93,7 +102,7 @@ export function Card({
           ? { transform: 'rotate(90deg)' }
           : undefined
       }
-      onClick={clickable ? onClick : undefined}
+      onClick={(clickable || selectable) && !notSelectable ? onClick : undefined}
       {...dataAttributes}
     >
       {revealed && card ? (

@@ -268,6 +268,7 @@ export const GameTable = observer(() => {
                   }
                   onDrawCard={handleDrawCard}
                   isMobile={true}
+                  isSelectingActionTarget={isAwaitingActionTarget}
                 />
               </div>
 
@@ -401,6 +402,7 @@ export const GameTable = observer(() => {
                 }
                 onDrawCard={handleDrawCard}
                 isMobile={false}
+                isSelectingActionTarget={isAwaitingActionTarget}
               />
             </div>
 
