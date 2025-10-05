@@ -128,10 +128,10 @@ export const GameControls = observer(() => {
 const VintoOnlyControls = () => {
   const gameStore = useGameStore();
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[36px]"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto
@@ -149,14 +149,14 @@ const FullTurnControls = ({
   const { discardPile, drawPile } = useDeckStore();
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {/* Mobile: Stack vertically, Desktop: 2-column grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
         {/* Draw from Deck */}
         <button
           onClick={handleDrawCard}
           disabled={drawPile.length === 0}
-          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+          className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-sm min-h-[36px]"
           aria-label="Draw new card from deck"
         >
           <span>🎯</span>
@@ -167,7 +167,7 @@ const FullTurnControls = ({
         <button
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!discardPile[0]?.action || discardPile[0]?.played}
-          className="flex items-center justify-center gap-2 bg-poker-green-600 hover:bg-poker-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+          className="flex items-center justify-center gap-1.5 bg-poker-green-600 hover:bg-poker-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-sm min-h-[36px]"
           aria-label="Take unplayed card from discard pile"
         >
           <span>♻️</span>
@@ -178,7 +178,7 @@ const FullTurnControls = ({
       {/* Call Vinto - always available during turn */}
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[36px]"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto

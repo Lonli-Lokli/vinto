@@ -25,8 +25,8 @@ const SetupPhaseIndicator = observer(
     setupPeeksRemaining: number;
     onFinishSetup: () => void;
   }) => (
-    <div className="w-full px-3 py-1">
-      <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
+    <div className="w-full h-full px-3 py-2">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col justify-center">
         <div className="text-center space-y-2">
           <div className="text-sm font-semibold text-gray-800">
             🔍 Memory Phase
@@ -70,9 +70,9 @@ const TossInIndicator = observer(
     currentPlayer: Player | null;
     isCurrentPlayerWaiting: boolean;
   }) => (
-    <div className="w-full px-3 py-1">
-      <div className="bg-white border border-gray-300 rounded-lg p-2 sm:p-3 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+    <div className="w-full h-full px-3 py-2">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm flex items-center">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center gap-2 justify-center sm:justify-start">
               <div className="text-sm font-semibold text-gray-800">
@@ -97,7 +97,7 @@ const TossInIndicator = observer(
           </div>
           <button
             onClick={onContinue}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm whitespace-nowrap"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition-colors text-sm whitespace-nowrap min-h-[36px]"
           >
             Continue ▶
           </button>
@@ -264,11 +264,11 @@ const CardDrawnIndicator = observer(
     };
 
     return (
-      <div className="w-full h-full px-3 py-1">
-        <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-2.5 shadow-sm">
-          <div className="h-full flex gap-3">
+      <div className="w-full h-full px-3 py-2">
+        <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg shadow-sm flex">
+          <div className="h-full flex gap-3 w-full p-2.5">
             {/* Card image - first column - fixed width for Safari compatibility */}
-            <div className="flex-shrink-0 h-full" style={{ width: '80px' }}>
+            <div className="flex-shrink-0" style={{ width: '80px', height: '100%' }}>
               <CardComponent card={pendingCard} revealed={true} size="auto" />
             </div>
 

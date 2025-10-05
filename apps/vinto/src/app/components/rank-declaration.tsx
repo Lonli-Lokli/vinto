@@ -10,7 +10,9 @@ import {
   useGamePhaseStore,
 } from './di-provider';
 import { Rank } from '../shapes';
-import { ALL_RANKS } from '../utils/game-helpers';
+
+// Only show action cards (7-K, A) since 2-6 and Joker have no actions
+const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 export const RankDeclaration = observer(() => {
   const gameStore = useGameStore();
@@ -38,78 +40,44 @@ Your task: Declare what rank you think your position ${
       (swapPosition ?? 0) + 1
     } card is.
 
-✅ Correct: Use ${pendingCard?.rank}'s action
-❌ Wrong: Get penalty card`;
+✅ Correct: Use the card's action
+❌ Wrong: Get penalty card
+
+Note: 2-6 and Joker are not shown because they have no actions. Declaring them correctly provides no benefit, while declaring them incorrectly still results in a penalty.`;
   };
 
   return (
     <div className="w-full h-full px-3 py-2" style={{ zIndex: 100 }}>
-      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm overflow-visible flex flex-col">
-        {/* Mobile Layout: 3 rows stacked */}
-        <div className="block md:hidden">
-          {/* Row 1: Header with help */}
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1">
-              🎯 Declare Rank
-            </h3>
-            <HelpPopover title="Declare Rank" content={getHelpContent()} />
-          </div>
-
-          {/* Row 2: Rank grid (6x2) */}
-          <div className="grid grid-cols-6 gap-1 mb-2">
-            {ALL_RANKS.map((rank) => (
-              <button
-                key={rank}
-                onClick={() => handleRankClick(rank)}
-                className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-1.5 px-3 rounded text-sm transition-colors"
-                title={`Declare ${rank}`}
-              >
-                {rank}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 3: Skip */}
-          <button
-            onClick={() => gameStore.skipDeclaration()}
-            className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
-          >
-            Skip Declaration
-          </button>
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-2.5 shadow-sm flex flex-col">
+        {/* Header with help */}
+        <div className="flex items-center justify-between mb-1.5">
+          <h3 className="text-sm font-semibold text-gray-800">
+            🎯 Declare Rank
+          </h3>
+          <HelpPopover title="Declare Rank" content={getHelpContent()} />
         </div>
 
-        {/* Desktop Layout: Utilize full height and width */}
-        <div className="hidden md:block">
-          {/* Header row */}
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-              🎯 Declare Rank
-            </h3>
-            <HelpPopover title="Declare Rank" content={getHelpContent()} />
-          </div>
-
-          {/* Ranks grid - using more vertical space */}
-          <div className="grid grid-cols-7 gap-2 mb-3">
-            {ALL_RANKS.map((rank) => (
-              <button
-                key={rank}
-                onClick={() => handleRankClick(rank)}
-                className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded transition-colors text-base min-h-[2.5rem]"
-                title={`Declare ${rank}`}
-              >
-                {rank}
-              </button>
-            ))}
-          </div>
-
-          {/* Skip button row */}
-          <button
-            onClick={() => gameStore.skipDeclaration()}
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 rounded transition-colors text-sm"
-          >
-            Skip Declaration
-          </button>
+        {/* Ranks grid - 4 columns = exactly 2 rows for 8 action cards */}
+        <div className="grid grid-cols-4 gap-1 mb-1.5 flex-1 content-start">
+          {ACTION_RANKS.map((rank) => (
+            <button
+              key={rank}
+              onClick={() => handleRankClick(rank)}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-1 px-1 rounded text-xs transition-colors min-h-[32px] flex items-center justify-center"
+              title={`Declare ${rank}`}
+            >
+              {rank}
+            </button>
+          ))}
         </div>
+
+        {/* Skip button - compact */}
+        <button
+          onClick={() => gameStore.skipDeclaration()}
+          className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[36px]"
+        >
+          Skip
+        </button>
       </div>
     </div>
   );
