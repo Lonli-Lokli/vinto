@@ -101,18 +101,18 @@ export const GameControls = observer(() => {
 
   // Single consistent container for all states
   return (
-    <div className="w-full h-full px-3 py-2">
-      <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col">
+    <div className="w-full h-full px-2 py-1.5">
+      <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col overflow-hidden">
         {/* Header - consistent across all states */}
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800">
+        <div className="flex items-center justify-between mb-1 flex-shrink-0">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-800 leading-tight">
             {controlContent.title}
           </h3>
           <HelpPopover title="Game Controls" content={getHelpContent()} />
         </div>
 
         {/* Main content area - responsive to content type */}
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center flex-1 min-h-0">
           {controlContent.type === 'vinto-only' && <VintoOnlyControls />}
 
           {controlContent.type === 'full-controls' && (
@@ -128,10 +128,10 @@ export const GameControls = observer(() => {
 const VintoOnlyControls = () => {
   const gameStore = useGameStore();
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px]"
+        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px]"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto
@@ -149,14 +149,14 @@ const FullTurnControls = ({
   const { discardPile, drawPile } = useDeckStore();
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       {/* Mobile: Stack vertically, Desktop: 2-column grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
         {/* Draw from Deck */}
         <button
           onClick={handleDrawCard}
           disabled={drawPile.length === 0}
-          className="flex flex-row items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-sm min-h-[44px]"
+          className="flex flex-row items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
           aria-label="Draw new card from deck"
         >
           <span>🎯</span>
@@ -167,7 +167,7 @@ const FullTurnControls = ({
         <button
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!discardPile[0]?.action || discardPile[0]?.played}
-          className="flex flex-row items-center justify-center gap-1.5 bg-poker-green-600 hover:bg-poker-green-700 active:bg-poker-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-sm min-h-[44px]"
+          className="flex flex-row items-center justify-center gap-1 bg-poker-green-600 hover:bg-poker-green-700 active:bg-poker-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
           aria-label="Take unplayed card from discard pile"
         >
           <span>♻️</span>
@@ -178,7 +178,7 @@ const FullTurnControls = ({
       {/* Call Vinto - always available during turn */}
       <button
         onClick={() => gameStore.callVinto()}
-        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px]"
+        className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px]"
         aria-label="Call Vinto"
       >
         🏆 Call Vinto
