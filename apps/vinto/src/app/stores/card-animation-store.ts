@@ -8,6 +8,7 @@ import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
 import { Card } from '../shapes';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
+import { PlayerStore } from './player-store';
 
 export type AnimationType =
   | 'swap'
@@ -56,6 +57,8 @@ export interface CardAnimationState {
   revealed?: boolean;
   // Full 360 rotation for bot moves
   fullRotation?: boolean;
+  // Target rotation angle (0 for normal, 90 for left/right players)
+  targetRotation?: number;
   // Status
   completed: boolean;
 }
@@ -65,11 +68,14 @@ export class CardAnimationStore {
   activeAnimations: Map<string, CardAnimationState> = new Map();
   private animationCounter = 0;
   private positionCapture: AnimationPositionCapture;
+  private playerStore: PlayerStore;
 
   constructor(
-    @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture
+    @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture,
+    @inject(PlayerStore) playerStore: PlayerStore
   ) {
     this.positionCapture = positionCapture;
+    this.playerStore = playerStore;
 
     makeObservable(this, {
       activeAnimations: observable,
@@ -82,6 +88,20 @@ export class CardAnimationStore {
       removeAnimation: action,
       reset: action,
     });
+  }
+
+  /**
+   * Get the target rotation for a player based on their position
+   * Returns 90 for left/right players, 0 for top/bottom
+   */
+  private getTargetRotation(target: AnimationTarget): number {
+    if (target.type === 'player') {
+      const player = this.playerStore.getPlayer(target.playerId);
+      if (player && (player.position === 'left' || player.position === 'right')) {
+        return 90;
+      }
+    }
+    return 0;
   }
 
   get hasActiveAnimations(): boolean {
@@ -141,6 +161,7 @@ export class CardAnimationStore {
       startTime: Date.now(),
       duration,
       revealed,
+      targetRotation: this.getTargetRotation(to),
       completed: false,
     };
 
@@ -203,6 +224,7 @@ export class CardAnimationStore {
       duration,
       revealed,
       fullRotation,
+      targetRotation: this.getTargetRotation(to),
       completed: false,
     });
 

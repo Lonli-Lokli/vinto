@@ -148,6 +148,18 @@ const FullTurnControls = ({
   const gameStore = useGameStore();
   const { discardPile, drawPile } = useDeckStore();
 
+  const topDiscard = discardPile[0];
+  const canTakeDiscard = topDiscard?.action && !topDiscard?.played;
+  const deckEmpty = drawPile.length === 0;
+
+  // Get reason why discard is disabled
+  const getDiscardTooltip = () => {
+    if (!topDiscard) return 'Discard pile is empty';
+    if (!topDiscard.action) return `${topDiscard.rank} has no action to play`;
+    if (topDiscard.played) return `${topDiscard.rank} action already used`;
+    return `Play ${topDiscard.rank} action from discard`;
+  };
+
   return (
     <div className="space-y-1">
       {/* Mobile: Stack vertically, Desktop: 2-column grid */}
@@ -155,23 +167,25 @@ const FullTurnControls = ({
         {/* Draw from Deck */}
         <button
           onClick={handleDrawCard}
-          disabled={drawPile.length === 0}
+          disabled={deckEmpty}
           className="flex flex-row items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
-          aria-label="Draw new card from deck"
+          title={deckEmpty ? 'Deck is empty' : 'Draw a new card from deck'}
         >
-          <span>🎯</span>
-          <span>Draw New</span>
+          <span>🎴</span>
+          <span>Draw Card</span>
         </button>
 
         {/* Take from Discard */}
         <button
           onClick={() => gameStore.takeFromDiscard()}
-          disabled={!discardPile[0]?.action || discardPile[0]?.played}
-          className="flex flex-row items-center justify-center gap-1 bg-poker-green-600 hover:bg-poker-green-700 active:bg-poker-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
-          aria-label="Take unplayed card from discard pile"
+          disabled={!canTakeDiscard}
+          className="flex flex-row items-center justify-center gap-1 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
+          title={getDiscardTooltip()}
         >
           <span>♻️</span>
-          <span>Play Card</span>
+          <span>
+            {topDiscard?.rank ? `Use ${topDiscard.rank}` : 'Use Discard'}
+          </span>
         </button>
       </div>
 
@@ -179,7 +193,7 @@ const FullTurnControls = ({
       <button
         onClick={() => gameStore.callVinto()}
         className="w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-xs min-h-[36px]"
-        aria-label="Call Vinto"
+        title="End the game - call Vinto if you think you have the lowest score"
       >
         🏆 Call Vinto
       </button>
