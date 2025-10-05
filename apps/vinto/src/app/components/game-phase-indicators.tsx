@@ -427,8 +427,8 @@ export const GamePhaseIndicators = observer(() => {
     );
   }
 
-  // Card Drawn - Choosing Action
-  if (isChoosingCardAction && pendingCard) {
+  // Card Drawn - Choosing Action (only for human players)
+  if (isChoosingCardAction && pendingCard && currentPlayer?.isHuman) {
     return (
       <CardDrawnIndicator
         pendingCard={pendingCard}
@@ -439,8 +439,8 @@ export const GamePhaseIndicators = observer(() => {
     );
   }
 
-  // Card Selection for Swap
-  if (isSelectingSwapPosition) {
+  // Card Selection for Swap (only for human players)
+  if (isSelectingSwapPosition && currentPlayer?.isHuman) {
     return <SwapPositionIndicator onDiscard={() => gameStore.discardCard()} />;
   }
 
