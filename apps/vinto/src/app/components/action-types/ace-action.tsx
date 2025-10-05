@@ -24,10 +24,10 @@ export const AceAction = observer(() => {
 
   return (
     <div className="w-full h-full px-3 py-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
+      <div className="bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800">
+        <div className="flex flex-row items-center justify-between mb-2">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-800 leading-tight">
             🎯 {action}
           </h3>
           <HelpPopover title="Ace Action" rank="A" />
@@ -35,7 +35,7 @@ export const AceAction = observer(() => {
 
         {/* Instructions */}
         <div className="flex-1 flex flex-col justify-center mb-4">
-          <p className="text-sm text-gray-600 text-center mb-3">
+          <p className="text-sm text-gray-600 text-center mb-3 leading-normal">
             Select an opponent to force them to draw a penalty card
           </p>
 
@@ -45,7 +45,7 @@ export const AceAction = observer(() => {
               <button
                 key={opponent.id}
                 onClick={() => handleOpponentClick(opponent.id)}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors text-base flex items-center justify-center gap-2"
+                className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors text-base flex flex-row items-center justify-center gap-2 min-h-[44px]"
               >
                 <span>🎯</span>
                 <span>{opponent.name}</span>
@@ -57,7 +57,7 @@ export const AceAction = observer(() => {
         {/* Skip Button */}
         <button
           onClick={() => gameStore.confirmPeekCompletion()}
-          className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm"
+          className="w-full bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors text-sm min-h-[44px]"
         >
           ⏭️ Skip
         </button>

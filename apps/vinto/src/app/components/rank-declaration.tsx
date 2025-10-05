@@ -47,7 +47,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
   };
 
   return (
-    <div className="w-full h-full px-3 py-2" style={{ zIndex: 100 }}>
+    <div className="w-full h-full px-3 py-2 z-[100] relative">
       <div className="h-full bg-white border border-gray-300 rounded-lg p-2.5 shadow-sm flex flex-col">
         {/* Header with help */}
         <div className="flex items-center justify-between mb-1.5">
@@ -58,12 +58,12 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         </div>
 
         {/* Ranks grid - 4 columns = exactly 2 rows for 8 action cards */}
-        <div className="grid grid-cols-4 gap-1 mb-1.5 flex-1 content-start">
+        <div className="grid grid-cols-4 gap-1 mb-1.5 flex-1 content-start min-h-0">
           {ACTION_RANKS.map((rank) => (
             <button
               key={rank}
               onClick={() => handleRankClick(rank)}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-1 px-1 rounded text-xs transition-colors min-h-[32px] flex items-center justify-center"
+              className="bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold py-1 px-1 rounded text-xs transition-colors min-h-[44px] flex items-center justify-center"
               title={`Declare ${rank}`}
             >
               {rank}
@@ -74,7 +74,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         {/* Skip button - compact */}
         <button
           onClick={() => gameStore.skipDeclaration()}
-          className="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[36px]"
+          className="w-full bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px]"
         >
           Skip
         </button>

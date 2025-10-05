@@ -28,23 +28,23 @@ const SetupPhaseIndicator = observer(
     <div className="w-full h-full px-3 py-2">
       <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm flex flex-col justify-center">
         <div className="text-center space-y-2">
-          <div className="text-sm font-semibold text-gray-800">
+          <div className="text-sm font-semibold text-gray-800 leading-tight">
             🔍 Memory Phase
           </div>
-          <div className="text-xs text-gray-700">
+          <div className="text-xs text-gray-700 leading-normal">
             Click any 2 of your cards to memorize them. They will be hidden
             during the game!
           </div>
-          <div className="text-xs font-medium text-gray-600">
+          <div className="text-xs font-medium text-gray-600 leading-normal">
             Peeks remaining: {setupPeeksRemaining}
           </div>
           <button
             onClick={onFinishSetup}
             disabled={setupPeeksRemaining > 0}
-            className={`py-1.5 px-3 rounded text-sm font-semibold text-white transition-colors ${
+            className={`py-1.5 px-3 rounded text-sm font-semibold text-white transition-colors min-h-[44px] ${
               setupPeeksRemaining > 0
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 cursor-pointer'
             }`}
           >
             Start Game
@@ -71,33 +71,33 @@ const TossInIndicator = observer(
     isCurrentPlayerWaiting: boolean;
   }) => (
     <div className="w-full h-full px-3 py-2">
-      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm flex items-center">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-3 shadow-sm flex flex-row items-center">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
           <div className="flex-1 text-center sm:text-left">
-            <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <div className="text-sm font-semibold text-gray-800">
+            <div className="flex flex-row items-center gap-2 justify-center sm:justify-start">
+              <div className="text-sm font-semibold text-gray-800 leading-tight">
                 ⚡ Toss-in Time!
               </div>
               {isCurrentPlayerWaiting && currentPlayer && (
-                <div className="text-xs text-gray-600 flex items-center gap-1">
+                <div className="text-xs text-gray-600 flex flex-row items-center gap-1 leading-normal">
                   <span className="animate-spin">⏳</span>
                   <span>{currentPlayer.name}&apos;s turn</span>
                 </div>
               )}
             </div>
-            <div className="text-xs text-gray-700">
+            <div className="text-xs text-gray-700 leading-normal">
               {topDiscardRank
                 ? `Toss matching ${topDiscardRank} cards`
                 : 'Toss matching cards'}{' '}
               or continue
             </div>
-            <div className="text-xs text-gray-600">
+            <div className="text-xs text-gray-600 leading-normal">
               Wrong guess = penalty card
             </div>
           </div>
           <button
             onClick={onContinue}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition-colors text-sm whitespace-nowrap min-h-[36px]"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded shadow-sm transition-colors text-sm whitespace-nowrap min-h-[44px]"
           >
             Continue ▶
           </button>
@@ -265,8 +265,8 @@ const CardDrawnIndicator = observer(
 
     return (
       <div className="w-full h-full px-3 py-2">
-        <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg shadow-sm flex">
-          <div className="h-full flex gap-3 w-full p-2.5">
+        <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg shadow-sm flex flex-row">
+          <div className="h-full flex flex-row gap-3 w-full p-2.5">
             {/* Card image - first column - fixed width for Safari compatibility */}
             <div className="flex-shrink-0" style={{ width: '80px', height: '100%' }}>
               <CardComponent card={pendingCard} revealed={true} size="auto" />
@@ -275,22 +275,22 @@ const CardDrawnIndicator = observer(
             {/* Content - second column */}
             <div className="flex-1 min-w-0 flex flex-col">
               {/* Header with title, rank and help */}
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex flex-row items-start justify-between mb-2">
                 <div className="flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-semibold text-gray-800">
+                  <div className="flex flex-row items-baseline gap-2">
+                    <span className="text-sm font-semibold text-gray-800 leading-tight">
                       Card Drawn:
                     </span>
-                    <span className="text-base font-bold text-gray-900">
+                    <span className="text-base font-bold text-gray-900 leading-tight">
                       {pendingCard.rank}
                     </span>
                   </div>
                   {hasAction ? (
-                    <div className="text-xs text-emerald-700 mt-0.5">
+                    <div className="text-xs text-emerald-700 mt-0.5 leading-normal">
                       {getActionExplanation(pendingCard.rank)}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs text-gray-500 mt-0.5 leading-normal">
                       No action available
                     </div>
                   )}
@@ -305,7 +305,7 @@ const CardDrawnIndicator = observer(
                   {hasAction && (
                     <button
                       onClick={onUseAction}
-                      className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+                      className="flex flex-row items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px]"
                     >
                       <span>⚡</span>
                       <span>Use Action</span>
@@ -314,7 +314,7 @@ const CardDrawnIndicator = observer(
 
                   <button
                     onClick={onSwapDiscard}
-                    className={`flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm ${
+                    className={`flex flex-row items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px] ${
                       !hasAction ? 'col-span-2' : ''
                     }`}
                   >
@@ -325,7 +325,7 @@ const CardDrawnIndicator = observer(
 
                 <button
                   onClick={onDiscard}
-                  className="w-full flex items-center justify-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm"
+                  className="w-full flex flex-row items-center justify-center gap-1.5 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-2 px-3 rounded shadow-sm transition-colors text-sm min-h-[44px]"
                 >
                   <span>🗑️</span>
                   <span>Discard</span>
@@ -348,16 +348,16 @@ const SwapPositionIndicator = observer(
       <div className="bg-white border border-gray-300 rounded-lg p-2 sm:p-3 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex-1 text-center sm:text-left">
-            <div className="text-sm font-semibold text-gray-800">
+            <div className="text-sm font-semibold text-gray-800 leading-tight">
               🔄 Select a card to replace
             </div>
-            <div className="text-xs text-gray-700">
+            <div className="text-xs text-gray-700 leading-normal">
               Click on one of your cards to swap it with the drawn card
             </div>
           </div>
           <button
             onClick={onDiscard}
-            className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded shadow-sm transition-colors text-sm whitespace-nowrap"
+            className="px-4 py-2 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold rounded shadow-sm transition-colors text-sm whitespace-nowrap min-h-[44px]"
           >
             Discard Instead
           </button>
