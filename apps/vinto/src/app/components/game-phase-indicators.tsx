@@ -295,37 +295,64 @@ const CardDrawnIndicator = observer(
                 <HelpPopover title="Card Actions" content={getHelpContent()} />
               </div>
 
-              {/* Action Buttons - 2 in first row, 1 in second */}
+              {/* Action Buttons - Fixed order: Use (if available), Swap, Discard */}
               <div className="space-y-1 mt-auto flex-shrink-0">
+                {/* Row 1: Use and Swap (or just Swap and Discard if no action) */}
                 <div className="grid grid-cols-2 gap-1">
-                  {hasAction && (
-                    <button
-                      onClick={onUseAction}
-                      className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action')} py-1.5 px-2 text-xs min-h-[36px]`}
-                    >
-                      <span>⚡</span>
-                      <span>Use</span>
-                    </button>
-                  )}
+                  {hasAction ? (
+                    <>
+                      {/* Position 1: Use (green) - when available */}
+                      <button
+                        onClick={onUseAction}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action')} py-1.5 px-2 text-xs min-h-[36px]`}
+                      >
+                        <span>⚡</span>
+                        <span>Use</span>
+                      </button>
 
-                  <button
-                    onClick={onSwapDiscard}
-                    className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px] ${
-                      !hasAction ? 'col-span-2' : ''
-                    }`}
-                  >
-                    <span>🔄</span>
-                    <span>Swap</span>
-                  </button>
+                      {/* Position 2: Swap (blue) - always available */}
+                      <button
+                        onClick={onSwapDiscard}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px]`}
+                      >
+                        <span>🔄</span>
+                        <span>Swap</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* When no action: Swap and Discard shift left */}
+                      {/* Position 1: Swap (blue) */}
+                      <button
+                        onClick={onSwapDiscard}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('swap')} py-1.5 px-2 text-xs min-h-[36px]`}
+                      >
+                        <span>🔄</span>
+                        <span>Swap</span>
+                      </button>
+
+                      {/* Position 2: Discard (gray) */}
+                      <button
+                        onClick={onDiscard}
+                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
+                      >
+                        <span>🗑️</span>
+                        <span>Discard</span>
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                <button
-                  onClick={onDiscard}
-                  className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
-                >
-                  <span>🗑️</span>
-                  <span>Discard</span>
-                </button>
+                {/* Row 2: Discard (only when Use is available) */}
+                {hasAction && (
+                  <button
+                    onClick={onDiscard}
+                    className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses('discard')} py-1.5 px-2 text-xs min-h-[36px]`}
+                  >
+                    <span>🗑️</span>
+                    <span>Discard</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

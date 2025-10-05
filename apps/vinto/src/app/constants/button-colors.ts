@@ -50,9 +50,9 @@ export const BUTTON_COLORS = {
   // Disabled state - Light Gray
   disabled: {
     bg: '#BDC3C7',
-    text: '#7F8C8D',
-    opacity: 0.5,
-    classes: 'bg-[#BDC3C7] text-[#7F8C8D] opacity-50 cursor-not-allowed',
+    text: '#FFFFFF',
+    opacity: 0.6,
+    classes: 'bg-[#95A5A6] text-white opacity-60 cursor-not-allowed',
   },
 } as const;
 
