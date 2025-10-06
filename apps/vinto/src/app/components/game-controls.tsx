@@ -11,7 +11,7 @@ import {
   useDeckStore,
   useTossInStore,
 } from './di-provider';
-import { DrawCardButton, UseActionButton, CallVintoButton } from './ui/button';
+import { DrawCardButton, UseActionButton } from './ui/button';
 
 export const GameControls = observer(() => {
   const gameStore = useGameStore();
