@@ -7,14 +7,10 @@ import {
   Repeat,
   Trash2,
   Trophy,
-  Play,
   ChevronRight,
   Settings,
-  Crown,
   Target,
   RotateCcw,
-  X,
-  HelpCircle,
   Sparkles,
   ArrowRight
 } from 'lucide-react';
