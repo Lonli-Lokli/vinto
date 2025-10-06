@@ -40,6 +40,8 @@ export interface Player {
   isBot: boolean;
   position: 'bottom' | 'left' | 'top' | 'right';
   coalitionWith: Set<string>;
+  isVintoCaller?: boolean; // True if this player called Vinto
+  isCoalitionLeader?: boolean; // True if this player is leading the coalition
 }
 
 export interface TempState {

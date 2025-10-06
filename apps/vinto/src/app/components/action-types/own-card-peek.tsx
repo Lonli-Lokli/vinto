@@ -5,7 +5,7 @@ import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { ContinueButton, SkipButton } from '../ui/button';
+import { ContinueButton, SkipButton } from '../buttons';
 
 export const OwnCardPeek = observer(() => {
   const gameStore = useGameStore();

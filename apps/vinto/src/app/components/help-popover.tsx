@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { ArrowContainer, Popover, PopoverState } from 'react-tiny-popover';
 import { Rank } from '../shapes';
 import { getCardHelpText } from '../constants/game-setup';
-import { HelpButton } from './ui/button';
+import { HelpButton } from './buttons';
 
 interface HelpPopoverProps {
   title: string;

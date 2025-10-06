@@ -4,7 +4,7 @@
 import React from 'react';
 import { HelpPopover } from '../help-popover';
 import { useGameStore, useActionStore } from '../di-provider';
-import { KingActionCardButton, KingNonActionCardButton } from '../ui/button';
+import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
 
 export function KingDeclaration() {
   const gameStore = useGameStore();

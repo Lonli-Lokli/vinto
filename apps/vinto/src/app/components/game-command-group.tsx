@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
 import { GameToastService } from '../services/toast-service';
 import { DownloadIcon, PlayIcon } from 'lucide-react';
-import { ExportButton, ReplayButton } from './ui/button';
+import { ExportButton, ReplayButton } from './buttons';
 
 export const GameCommandGroup = observer(() => {
   const gameStateManager = useGameStateManager();

@@ -10,7 +10,7 @@ import {
   useGamePhaseStore,
 } from './di-provider';
 import { Rank } from '../shapes';
-import { RankDeclarationButton, SkipButton } from './ui/button';
+import { RankDeclarationButton, SkipButton } from './buttons';
 
 // Only show action cards (7-K, A) since 2-6 and Joker have no actions
 const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];

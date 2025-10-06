@@ -102,15 +102,67 @@ export const getWinnerInfo = (
     (id) => finalScores[id] === lowestScore
   );
 
-  const winnerNames = winners.map((id) => {
-    const player = players.find((p) => p.id === id);
-    return player ? player.name : 'Unknown';
+  // Detect if winners are in a coalition
+  const processedPlayers = new Set<string>();
+  const coalitionGroups: string[][] = [];
+  const soloWinners: string[] = [];
+
+  winners.forEach((winnerId) => {
+    if (processedPlayers.has(winnerId)) return;
+
+    const winner = players.find((p) => p.id === winnerId);
+    if (!winner) return;
+
+    // Check if winner is in a coalition
+    if (winner.coalitionWith.size > 0) {
+      // Get all coalition members among winners
+      const coalitionMembers = winners.filter((id) => {
+        const player = players.find((p) => p.id === id);
+        return (
+          player &&
+          (player.id === winnerId ||
+            winner.coalitionWith.has(id) ||
+            player.coalitionWith.has(winnerId))
+        );
+      });
+
+      coalitionMembers.forEach((id) => processedPlayers.add(id));
+      coalitionGroups.push(coalitionMembers);
+    } else {
+      soloWinners.push(winnerId);
+      processedPlayers.add(winnerId);
+    }
   });
 
+  // Build winner display
+  const winnerDisplays: string[] = [];
+
+  // Add coalition teams
+  coalitionGroups.forEach((group) => {
+    const names = group
+      .map((id) => players.find((p) => p.id === id)?.name || 'Unknown')
+      .join(' & ');
+    winnerDisplays.push(names);
+  });
+
+  // Add solo winners
+  soloWinners.forEach((id) => {
+    const name = players.find((p) => p.id === id)?.name || 'Unknown';
+    winnerDisplays.push(name);
+  });
+
+  const isCoalitionWin = coalitionGroups.length > 0;
+  const isMultipleWinners = winners.length > 1 && !isCoalitionWin;
+
   return {
-    winners: winnerNames,
+    winners: winnerDisplays,
+    winnerIds: winners,
     score: lowestScore,
-    isMultipleWinners: winners.length > 1,
+    isMultipleWinners,
+    isCoalitionWin,
+    coalitionGroups: coalitionGroups.map((group) =>
+      group.map((id) => players.find((p) => p.id === id)?.name || 'Unknown')
+    ),
   };
 };
 

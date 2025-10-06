@@ -7,8 +7,9 @@ import { useViewport } from '../hooks/use-viewport';
 import { DIProvider, useGamePhaseStore, useGameStore } from './di-provider';
 import { ReplayControls } from './replay-controls';
 import { AnimatedCardOverlay } from './animated-card';
-import { VintoConfirmationModal } from './vinto-confirmation-modal';
 import { ErrorBoundary } from './error-boundary';
+import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
+import { CoalitionTurnIndicator } from './coalition-turn-indicator';
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -40,6 +41,8 @@ const GameLayoutInner = observer(({ children }: GameLayoutProps) => {
       {children}
       <ReplayControls />
       <AnimatedCardOverlay />
+      <CoalitionLeaderModal />
+      <CoalitionTurnIndicator />
 
       {/* Vinto Confirmation Modal */}
       <VintoConfirmationModal

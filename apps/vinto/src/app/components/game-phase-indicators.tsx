@@ -34,7 +34,7 @@ import {
   ContinueButton,
   DiscardInsteadButton,
   CallVintoButton,
-} from './ui/button';
+} from './buttons';
 import {
   getActionExplanation,
   getCardName,

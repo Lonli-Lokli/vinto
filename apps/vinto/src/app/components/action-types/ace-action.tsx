@@ -5,7 +5,7 @@ import { useActionStore, useGameStore, usePlayerStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { OpponentSelectButton, SkipButton } from '../ui/button';
+import { OpponentSelectButton, SkipButton } from '../buttons';
 
 export const AceAction = observer(() => {
   const actionStore = useActionStore();

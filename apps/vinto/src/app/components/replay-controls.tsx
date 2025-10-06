@@ -3,7 +3,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
-import { ExitReplayButton, NextCommandButton } from './ui/button';
+import { ExitReplayButton, NextCommandButton } from './buttons';
 
 /**
  * Replay Controls Component

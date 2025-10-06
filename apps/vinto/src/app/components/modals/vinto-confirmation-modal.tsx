@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { CallVintoButton, CancelButton } from './ui/button';
+import { CallVintoButton, CancelButton } from '../buttons';
 
 interface VintoConfirmationModalProps {
   isOpen: boolean;

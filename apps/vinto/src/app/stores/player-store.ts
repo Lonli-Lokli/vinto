@@ -243,7 +243,10 @@ export class PlayerStore {
   }
 
   // Update all bots' knowledge when positions shift (e.g., card removed)
-  updateOpponentKnowledgeAfterRemoval(opponentId: string, removedPosition: number) {
+  updateOpponentKnowledgeAfterRemoval(
+    opponentId: string,
+    removedPosition: number
+  ) {
     this.botPlayers.forEach((bot) => {
       const knowledge = bot.opponentKnowledge.get(opponentId);
       if (knowledge) {
@@ -277,7 +280,9 @@ export class PlayerStore {
     opponentId: string,
     position: number
   ): boolean {
-    return this.getOpponentCardKnowledge(observerId, opponentId, position) !== null;
+    return (
+      this.getOpponentCardKnowledge(observerId, opponentId, position) !== null
+    );
   }
 
   // Card operations
@@ -378,19 +383,125 @@ export class PlayerStore {
     return player1?.coalitionWith.has(playerId2) ?? false;
   }
 
+  setVintoCaller(playerId: string) {
+    // Clear any existing Vinto caller
+    this.players.forEach((p) => {
+      p.isVintoCaller = false;
+    });
+
+    // Set new Vinto caller
+    const player = this.getPlayer(playerId);
+    if (player) {
+      player.isVintoCaller = true;
+    }
+  }
+
+  setCoalitionLeader(playerId: string) {
+    // Clear any existing coalition leader
+    this.players.forEach((p) => {
+      p.isCoalitionLeader = false;
+    });
+
+    // Set new coalition leader
+    const player = this.getPlayer(playerId);
+    if (player) {
+      player.isCoalitionLeader = true;
+    }
+  }
+
+  get vintoCaller(): Player | null {
+    return this.players.find((p) => p.isVintoCaller) || null;
+  }
+
+  get coalitionLeader(): Player | null {
+    return this.players.find((p) => p.isCoalitionLeader) || null;
+  }
+
+  get coalitionMembers(): Player[] {
+    return this.players.filter((p) => !p.isVintoCaller);
+  }
+
   // Scoring
   calculatePlayerScores(): Record<string, number> {
     const scores: Record<string, number> = {};
 
-    this.players.forEach((player) => {
-      const totalValue = player.cards.reduce(
+    // Check if there's a Vinto caller (coalition mode)
+    const vintoCaller = this.vintoCaller;
+
+    if (vintoCaller) {
+      // Coalition scoring: Coalition wins if ANY member has lower score than Vinto caller
+      // For display/comparison purposes, we use the BEST (lowest) score from any coalition member
+
+      // Calculate Vinto caller's score
+      const vintoScore = vintoCaller.cards.reduce(
         (sum, card) => sum + card.value,
         0
       );
-      scores[player.id] = totalValue;
-    });
+      scores[vintoCaller.id] = vintoScore;
+
+      // Calculate best coalition score (lowest individual score among members)
+      let bestCoalitionScore = Infinity;
+      this.coalitionMembers.forEach((member) => {
+        const memberScore = member.cards.reduce(
+          (sum, card) => sum + card.value,
+          0
+        );
+        bestCoalitionScore = Math.min(bestCoalitionScore, memberScore);
+      });
+
+      // Assign best coalition score to all coalition members
+      this.coalitionMembers.forEach((member) => {
+        scores[member.id] = bestCoalitionScore;
+      });
+    } else {
+      // Normal scoring: each player gets their individual score
+      this.players.forEach((player) => {
+        const individualScore = player.cards.reduce(
+          (sum, card) => sum + card.value,
+          0
+        );
+        scores[player.id] = individualScore;
+      });
+    }
 
     return scores;
+  }
+
+  /**
+   * Get all members of a player's coalition (including the player)
+   */
+  getCoalitionMembers(playerId: string): string[] {
+    const player = this.getPlayer(playerId);
+    if (!player) return [playerId];
+
+    const members = new Set<string>([playerId]);
+
+    // Add direct coalition partners
+    player.coalitionWith.forEach((partnerId) => {
+      members.add(partnerId);
+    });
+
+    // Recursively add coalition partners of partners (transitive coalitions)
+    const toProcess = Array.from(player.coalitionWith);
+    const processed = new Set<string>([playerId]);
+
+    while (toProcess.length > 0) {
+      const currentId = toProcess.pop()!;
+      if (processed.has(currentId)) continue;
+      processed.add(currentId);
+
+      const currentPlayer = this.getPlayer(currentId);
+      if (currentPlayer) {
+        currentPlayer.coalitionWith.forEach((partnerId) => {
+          if (!processed.has(partnerId)) {
+            members.add(partnerId);
+            toProcess.push(partnerId);
+          }
+        });
+      }
+    }
+
+    return Array.from(members);
   }
 
   // AI helpers for the current player

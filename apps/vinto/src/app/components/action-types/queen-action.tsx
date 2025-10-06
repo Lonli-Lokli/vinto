@@ -5,7 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { useActionStore, useGameStore } from '../di-provider';
-import { QueenSwapButton, SkipButton } from '../ui/button';
+import { QueenSwapButton, SkipButton } from '../buttons';
 
 export const QueenAction = observer(() => {
   const gameStore = useGameStore();

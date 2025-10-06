@@ -5,7 +5,7 @@ import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { ResetButton, SkipButton } from '../ui/button';
+import { ResetButton, SkipButton } from '../buttons';
 
 export const CardSwap = observer(() => {
   const actionStore = useActionStore();

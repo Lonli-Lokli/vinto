@@ -1,7 +1,7 @@
 'use client';
 import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
-import { ReloadButton } from './components/ui/button';
+import { ReloadButton } from './components/buttons/reload-button';
 
 export default function GlobalError({
   error,

@@ -3,9 +3,11 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { Users, Crown } from 'lucide-react';
 import { Player } from '../shapes';
 import { Card } from './card';
 import { Avatar } from './avatar';
+import { usePlayerStore } from './di-provider';
 
 interface PlayerAreaProps {
   player: Player;
@@ -32,6 +34,9 @@ export const PlayerArea = observer(function PlayerArea({
   swapPosition = null,
   isSelectingActionTarget = false,
 }: PlayerAreaProps) {
+  // Import stores to check coalition leader status
+  const { humanPlayer, coalitionLeader } = usePlayerStore();
+
   // Determine if we can see this player's cards based on official Vinto rules
   const canSeeCards = (cardIndex: number): boolean => {
     // During setup phase, human can see their own cards for memorization
@@ -53,6 +58,19 @@ export const PlayerArea = observer(function PlayerArea({
       return true;
     }
 
+    // Coalition leader sees ALL coalition member cards during final phase
+    if (
+      (gamePhase === 'playing' || gamePhase === 'final') &&
+      coalitionLeader &&
+      humanPlayer &&
+      coalitionLeader.id === humanPlayer.id &&
+      player.coalitionWith.size > 0 &&
+      !player.isVintoCaller
+    ) {
+      // Human is coalition leader and this player is a coalition member
+      return true;
+    }
+
     // During scoring phase, ALL cards are revealed
     if (gamePhase === 'scoring') {
       return true;
@@ -60,8 +78,6 @@ export const PlayerArea = observer(function PlayerArea({
 
     return false;
   };
-
-
 
   // Dynamic card size based on number of cards
   const getCardSize = (): 'sm' | 'md' | 'lg' => {
@@ -77,8 +93,6 @@ export const PlayerArea = observer(function PlayerArea({
     left: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
     right: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
   };
-
-
 
   return (
     <div
@@ -102,9 +116,13 @@ export const PlayerArea = observer(function PlayerArea({
               shadow-lg border-2
               ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
             `}
-            style={isCurrentPlayer ? {
-              animation: 'border-flash 1s ease-in-out infinite',
-            } : undefined}
+            style={
+              isCurrentPlayer
+                ? {
+                    animation: 'border-flash 1s ease-in-out infinite',
+                  }
+                : undefined
+            }
           >
             <div className="w-8 h-8">
               <Avatar player={player} size="sm" />
@@ -118,6 +136,22 @@ export const PlayerArea = observer(function PlayerArea({
             >
               {player.name}
             </div>
+            {player.coalitionWith.size > 0 && (
+              <div
+                className="bg-blue-500 text-white rounded-full p-0.5"
+                title="Coalition Member"
+              >
+                <Users size={10} />
+              </div>
+            )}
+            {player.isCoalitionLeader && (
+              <div
+                className="bg-yellow-500 text-white rounded-full p-0.5"
+                title="Coalition Leader"
+              >
+                <Crown size={10} />
+              </div>
+            )}
           </div>
 
           {/* Desktop: Separate avatar and name */}
@@ -130,28 +164,54 @@ export const PlayerArea = observer(function PlayerArea({
                 drop-shadow-2xl
               `}
               style={{
-                filter: isCurrentPlayer ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))' : undefined
+                filter: isCurrentPlayer
+                  ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))'
+                  : undefined,
               }}
             >
               <Avatar player={player} size="lg" />
             </div>
 
-            <div
-              className={`
-                text-lg
-                font-extrabold
-                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
-                bg-white/95 backdrop-blur-sm
-                px-4 py-2
-                rounded-full
-                shadow-lg border-2
-                ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
-              `}
-              style={isCurrentPlayer ? {
-                animation: 'border-flash 1s ease-in-out infinite',
-              } : undefined}
-            >
-              {player.name}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`
+                  text-lg
+                  font-extrabold
+                  ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                  bg-white/95 backdrop-blur-sm
+                  px-4 py-2
+                  rounded-full
+                  shadow-lg border-2
+                  ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+                `}
+                style={
+                  isCurrentPlayer
+                    ? {
+                        animation: 'border-flash 1s ease-in-out infinite',
+                      }
+                    : undefined
+                }
+              >
+                {player.name}
+              </div>
+              {player.coalitionWith.size > 0 && (
+                <div
+                  className="flex items-center gap-1 bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  title="Coalition Member"
+                >
+                  <Users size={14} />
+                  <span>Team</span>
+                </div>
+              )}
+              {player.isCoalitionLeader && (
+                <div
+                  className="flex items-center gap-1 bg-yellow-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  title="Coalition Leader"
+                >
+                  <Crown size={14} />
+                  <span>Leader</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -173,21 +233,23 @@ export const PlayerArea = observer(function PlayerArea({
         }
       >
         {player.cards.map((card, index) => {
-          const isSidePlayer = player.position === 'left' || player.position === 'right';
+          const isSidePlayer =
+            player.position === 'left' || player.position === 'right';
 
           // Determine if this card is selectable
-          const isCardSelectable = !!onCardClick && (
-            (isSelectingSwapPosition && !isDeclaringRank) ||
-            (isDeclaringRank && swapPosition === index) ||
-            isSelectingActionTarget
-          );
+          const isCardSelectable =
+            !!onCardClick &&
+            ((isSelectingSwapPosition && !isDeclaringRank) ||
+              (isDeclaringRank && swapPosition === index) ||
+              isSelectingActionTarget);
 
           return (
             <Card
               key={`${card.id}-${index}`}
               card={card}
               revealed={
-                canSeeCards(index) && !(player.isHuman && isSelectingSwapPosition)
+                canSeeCards(index) &&
+                !(player.isHuman && isSelectingSwapPosition)
               }
               position={index + 1}
               size={getCardSize()}
@@ -222,9 +284,13 @@ export const PlayerArea = observer(function PlayerArea({
               shadow-lg border-2
               ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
             `}
-            style={isCurrentPlayer ? {
-              animation: 'border-flash 1s ease-in-out infinite',
-            } : undefined}
+            style={
+              isCurrentPlayer
+                ? {
+                    animation: 'border-flash 1s ease-in-out infinite',
+                  }
+                : undefined
+            }
           >
             <div className="w-8 h-8">
               <Avatar player={player} size="sm" />
@@ -238,6 +304,22 @@ export const PlayerArea = observer(function PlayerArea({
             >
               {player.name}
             </div>
+            {player.coalitionWith.size > 0 && (
+              <div
+                className="bg-blue-500 text-white rounded-full p-0.5"
+                title="Coalition Member"
+              >
+                <Users size={10} />
+              </div>
+            )}
+            {player.isCoalitionLeader && (
+              <div
+                className="bg-yellow-500 text-white rounded-full p-0.5"
+                title="Coalition Leader"
+              >
+                <Crown size={10} />
+              </div>
+            )}
           </div>
 
           {/* Desktop: Separate avatar and name */}
@@ -250,28 +332,54 @@ export const PlayerArea = observer(function PlayerArea({
                 drop-shadow-2xl
               `}
               style={{
-                filter: isCurrentPlayer ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))' : undefined
+                filter: isCurrentPlayer
+                  ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))'
+                  : undefined,
               }}
             >
               <Avatar player={player} size="lg" />
             </div>
 
-            <div
-              className={`
-                text-lg
-                font-extrabold
-                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
-                bg-white/95 backdrop-blur-sm
-                px-4 py-2
-                rounded-full
-                shadow-lg border-2
-                ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
-              `}
-              style={isCurrentPlayer ? {
-                animation: 'border-flash 1s ease-in-out infinite',
-              } : undefined}
-            >
-              {player.name}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`
+                  text-lg
+                  font-extrabold
+                  ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                  bg-white/95 backdrop-blur-sm
+                  px-4 py-2
+                  rounded-full
+                  shadow-lg border-2
+                  ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+                `}
+                style={
+                  isCurrentPlayer
+                    ? {
+                        animation: 'border-flash 1s ease-in-out infinite',
+                      }
+                    : undefined
+                }
+              >
+                {player.name}
+              </div>
+              {player.coalitionWith.size > 0 && (
+                <div
+                  className="flex items-center gap-1 bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  title="Coalition Member"
+                >
+                  <Users size={14} />
+                  <span>Team</span>
+                </div>
+              )}
+              {player.isCoalitionLeader && (
+                <div
+                  className="flex items-center gap-1 bg-yellow-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  title="Coalition Leader"
+                >
+                  <Crown size={14} />
+                  <span>Leader</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

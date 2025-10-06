@@ -92,7 +92,7 @@ export class GameStore implements TempState {
 
     // Set up toss-in store callbacks
     const tossInCallbacks: TossInStoreCallbacks = {
-      onComplete: () => this.handleTossInComplete(),
+      onComplete: async () => await this.handleTossInComplete(),
       onActionExecute: async (playerId, card) => {
         await this.actionCoordinator.executeCardAction(card, playerId);
       },
@@ -128,6 +128,30 @@ export class GameStore implements TempState {
 
     // Set up reactions
     this.setupReactions();
+  }
+
+  // Check if current player's turn should be controlled by coalition leader
+  get isCoalitionLeaderPlaying(): boolean {
+    const currentPlayer = this.playerStore.currentPlayer;
+    const leader = this.playerStore.coalitionLeader;
+
+    if (!currentPlayer || !leader) return false;
+
+    // If current player is in coalition and is NOT the Vinto caller
+    // AND there is a coalition leader, the leader plays
+    return (
+      currentPlayer.coalitionWith.size > 0 &&
+      !currentPlayer.isVintoCaller &&
+      leader.id !== currentPlayer.id
+    );
+  }
+
+  // Get the effective player (who actually plays - might be leader instead of current)
+  get effectivePlayer() {
+    if (this.isCoalitionLeaderPlaying) {
+      return this.playerStore.coalitionLeader;
+    }
+    return this.playerStore.currentPlayer;
   }
 
   get isCurrentPlayerWaiting() {
@@ -722,14 +746,67 @@ export class GameStore implements TempState {
     // Close the confirmation modal
     this.phaseStore.closeVintoConfirmation();
 
-    // Show a 2-second animation/delay for psychological weight
-    GameToastService.warning('⏳ Calling Vinto...');
+    // Get the current player (who called Vinto)
+    const vintoPlayer = this.playerStore.currentPlayer;
+    if (!vintoPlayer) return;
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Show a 2-second animation/delay for psychological weight
+    GameToastService.warning(`${vintoPlayer.name} is calling Vinto...`);
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Mark this player as the Vinto caller
+    this.playerStore.setVintoCaller(vintoPlayer.id);
+
+    // Form automatic coalition: All players EXCEPT the Vinto caller form a team
+    const otherPlayers = this.playerStore.players.filter(
+      (p) => p.id !== vintoPlayer.id
+    );
+
+    // Break any existing coalitions first
+    this.playerStore.players.forEach((p1) => {
+      this.playerStore.players.forEach((p2) => {
+        if (p1.id !== p2.id) {
+          this.playerStore.breakCoalition(p1.id, p2.id);
+        }
+      });
+    });
+
+    // Form coalition between all non-Vinto players
+    for (let i = 0; i < otherPlayers.length; i++) {
+      for (let j = i + 1; j < otherPlayers.length; j++) {
+        this.playerStore.formCoalition(otherPlayers[i].id, otherPlayers[j].id);
+      }
+    }
+
+    // If human is in coalition, set them as default leader (can be changed in UI)
+    const humanInCoalition = otherPlayers.find((p) => p.isHuman);
+    if (humanInCoalition) {
+      this.playerStore.setCoalitionLeader(humanInCoalition.id);
+    } else {
+      // If human is Vinto caller, automatically select first bot as leader
+      this.playerStore.setCoalitionLeader(otherPlayers[0].id);
+    }
 
     // Trigger the final turn
     this.phaseStore.triggerFinalTurn();
-    GameToastService.success('🏆 VINTO called! Final round begins.');
+
+    // Announce coalition formation
+    const coalitionNames = otherPlayers.map((p) => p.name).join(', ');
+    GameToastService.success(
+      `${vintoPlayer.name} called VINTO! ${coalitionNames} form a coalition!`
+    );
+  }
+
+  // Set coalition leader - called from UI
+  setCoalitionLeader(playerId: string) {
+    this.playerStore.setCoalitionLeader(playerId);
+    this.phaseStore.closeCoalitionLeaderSelection();
+    GameToastService.success(
+      `${
+        this.playerStore.getPlayer(playerId)?.name
+      } is now the coalition leader!`
+    );
   }
 
   calculateFinalScores() {
@@ -754,8 +831,79 @@ export class GameStore implements TempState {
   }
 
   // Toss-in callback handlers
-  private handleTossInComplete() {
+  private async handleTossInComplete() {
     this.phaseStore.returnToIdle();
+
+    // Check if a bot should call Vinto before advancing turn
+    const currentPlayer = this.playerStore.currentPlayer;
+    if (
+      currentPlayer &&
+      currentPlayer.isBot &&
+      !this.phaseStore.finalTurnTriggered &&
+      this.phaseStore.isGameActive
+    ) {
+      // Create bot decision context
+      const context = this.createBotDecisionContext(currentPlayer.id);
+
+      // Check if bot should call Vinto
+      if (this.botDecisionService.shouldCallVinto(context)) {
+        // Bot calls Vinto!
+        GameToastService.warning(`${currentPlayer.name} is calling Vinto!`);
+
+        // Wait 2 seconds for dramatic effect
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Mark this player as the Vinto caller
+        this.playerStore.setVintoCaller(currentPlayer.id);
+
+        // Form automatic coalition: All players EXCEPT the Vinto caller form a team
+        const otherPlayers = this.playerStore.players.filter(
+          (p) => p.id !== currentPlayer.id
+        );
+
+        // Break any existing coalitions first
+        this.playerStore.players.forEach((p1) => {
+          this.playerStore.players.forEach((p2) => {
+            if (p1.id !== p2.id) {
+              this.playerStore.breakCoalition(p1.id, p2.id);
+            }
+          });
+        });
+
+        // Form coalition between all non-Vinto players
+        for (let i = 0; i < otherPlayers.length; i++) {
+          for (let j = i + 1; j < otherPlayers.length; j++) {
+            this.playerStore.formCoalition(
+              otherPlayers[i].id,
+              otherPlayers[j].id
+            );
+          }
+        }
+
+        // Human must select coalition leader
+        const humanInCoalition = otherPlayers.find((p) => p.isHuman);
+        if (humanInCoalition) {
+          // Default to human as leader, but show UI to let them choose
+          this.playerStore.setCoalitionLeader(humanInCoalition.id);
+          this.phaseStore.openCoalitionLeaderSelection();
+        } else {
+          // If human called Vinto, they must choose bot leader
+          // Show leader selection UI
+          this.phaseStore.openCoalitionLeaderSelection();
+        }
+
+        // Trigger final turn
+        this.phaseStore.triggerFinalTurn();
+
+        // Announce coalition formation
+        const coalitionNames = otherPlayers.map((p) => p.name).join(', ');
+        GameToastService.success(
+          `${currentPlayer.name} called VINTO! ${coalitionNames} form a coalition!`
+        );
+        return; // Don't advance turn yet, let the final round begin
+      }
+    }
+
     this.advanceTurn();
   }
 

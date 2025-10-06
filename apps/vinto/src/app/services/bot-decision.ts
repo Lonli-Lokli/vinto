@@ -72,6 +72,9 @@ export interface BotDecisionService {
     drawnCard: Card,
     context: BotDecisionContext
   ): number | null;
+
+  // Game-ending decision
+  shouldCallVinto(context: BotDecisionContext): boolean;
 }
 
 export class StandardBotDecisionService implements BotDecisionService {
@@ -568,6 +571,177 @@ export class StandardBotDecisionService implements BotDecisionService {
     }
 
     return null;
+  }
+
+  /**
+   * Decides whether the bot should call Vinto (end game)
+   * Bot calls Vinto if it believes it has the lowest score
+   * NOTE: When Vinto is called, all other players form a coalition, so bot must
+   * consider it will be 1 vs coalition
+   */
+  shouldCallVinto(context: BotDecisionContext): boolean {
+    const { botPlayer, allPlayers, difficulty, opponentKnowledge } = context;
+
+    // Never call Vinto in the first few turns (let game develop)
+    if (context.gameState.turnCount < allPlayers.length * 2) {
+      return false;
+    }
+
+    // Calculate bot's estimated score (solo)
+    const botEstimatedScore = this.estimatePlayerScore(
+      botPlayer,
+      botPlayer.knownCardPositions,
+      true
+    );
+
+    // Calculate coalition score (all other players combined)
+    // When bot calls Vinto, all other players will form a coalition
+    const coalitionPlayerIds = allPlayers
+      .filter((p) => p.id !== botPlayer.id)
+      .map((p) => p.id);
+
+    const coalitionEstimatedScore = this.estimateCoalitionScore(
+      coalitionPlayerIds,
+      allPlayers,
+      botPlayer,
+      opponentKnowledge
+    );
+
+    // For comparison, also calculate individual opponent scores
+    const opponentEstimates: { playerId: string; estimatedScore: number }[] =
+      [];
+
+    for (const opponent of allPlayers) {
+      if (opponent.id === botPlayer.id) continue;
+
+      const knownCards = opponentKnowledge.get(opponent.id) || new Map();
+      const estimatedScore = this.estimatePlayerScore(
+        opponent,
+        new Set(knownCards.keys()),
+        false
+      );
+
+      opponentEstimates.push({
+        playerId: opponent.id,
+        estimatedScore,
+      });
+    }
+
+    // Calculate minimum opponent score (if playing without coalitions)
+    const minOpponentScore = Math.min(
+      ...opponentEstimates.map((e) => e.estimatedScore)
+    );
+
+    // Calculate confidence based on knowledge
+    const botKnowledgeRatio =
+      botPlayer.knownCardPositions.size / botPlayer.cards.length;
+    const avgOpponentKnowledgeRatio =
+      opponentEstimates.reduce((sum, opp) => {
+        const opponent = allPlayers.find((p) => p.id === opp.playerId);
+        const knownCards = opponentKnowledge.get(opp.playerId)?.size || 0;
+        return sum + knownCards / (opponent?.cards.length || 4);
+      }, 0) / opponentEstimates.length;
+
+    // Difficulty-based risk tolerance
+    const riskTolerance = {
+      easy: 0.3, // Very conservative - needs big lead
+      moderate: 0.5, // Balanced
+      hard: 0.7, // Aggressive - calls with small lead
+    }[difficulty];
+
+    // Decision logic:
+    // 1. Bot must believe it has lower score than all opponents
+    // 2. The margin must be significant enough based on difficulty
+    // 3. Higher confidence (more known cards) = more likely to call
+
+    // CRITICAL: Bot must beat the COALITION SCORE, not individual scores
+    // When Vinto is called, it's bot vs coalition
+
+    const scoreDifference = minOpponentScore - botEstimatedScore;
+    const confidenceBonus = (botKnowledgeRatio + avgOpponentKnowledgeRatio) / 2;
+
+    // Threshold varies by difficulty
+    const baseThreshold = {
+      easy: 5, // Needs 5+ point lead
+      moderate: 3, // Needs 3+ point lead
+      hard: 1, // Needs 1+ point lead
+    }[difficulty];
+
+    // Adjust threshold based on confidence
+    const adjustedThreshold = baseThreshold * (1 - confidenceBonus * 0.5);
+
+    // Bot must have lower score than the coalition
+    const shouldCall =
+      botEstimatedScore < coalitionEstimatedScore &&
+      scoreDifference >= adjustedThreshold;
+
+    // Add some randomness based on risk tolerance
+    // Make it harder to call (reduce chance) since it's 1 vs all
+    if (shouldCall) {
+      return Math.random() < 0.3 + riskTolerance * 0.3; // 30-60% chance if conditions met
+    }
+
+    return false;
+  }
+
+  /**
+   * Estimates a player's total score based on known and unknown cards
+   */
+  private estimatePlayerScore(
+    player: Player,
+    knownPositions: Set<number>,
+    isBot: boolean
+  ): number {
+    let knownScore = 0;
+    let unknownCardCount = 0;
+
+    for (let i = 0; i < player.cards.length; i++) {
+      if (knownPositions.has(i)) {
+        // We know this card's value
+        knownScore += player.cards[i].value;
+      } else {
+        // Unknown card - estimate
+        unknownCardCount++;
+      }
+    }
+
+    // Estimate unknown cards based on average card value
+    // Average card value in the game is around 5-6
+    const estimatedAverageValue = isBot ? 6 : 5; // Assume opponents have slightly better cards
+    const unknownScore = unknownCardCount * estimatedAverageValue;
+
+    return knownScore + unknownScore;
+  }
+
+  /**
+   * Estimates team score for coalition members
+   */
+  private estimateCoalitionScore(
+    coalitionMemberIds: string[],
+    allPlayers: Player[],
+    botPlayer: Player,
+    opponentKnowledge: Map<string, Map<number, Card>>
+  ): number {
+    let totalScore = 0;
+
+    coalitionMemberIds.forEach((memberId) => {
+      const member = allPlayers.find((p) => p.id === memberId);
+      if (!member) return;
+
+      const isCurrentBot = member.id === botPlayer.id;
+      const knownCards = isCurrentBot
+        ? member.knownCardPositions
+        : new Set((opponentKnowledge.get(memberId) || new Map()).keys());
+
+      const memberScore = this.estimatePlayerScore(
+        member,
+        knownCards,
+        isCurrentBot
+      );
+      totalScore += memberScore;
+    });
+
+    return totalScore;
   }
 }
 

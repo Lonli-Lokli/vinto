@@ -28,6 +28,9 @@ export class GamePhaseStore {
   // Call Vinto confirmation modal state
   showVintoConfirmation = false;
 
+  // Coalition leader selection state
+  showCoalitionLeaderSelection = false;
+
   constructor() {
     makeAutoObservable(this);
   }
@@ -174,6 +177,7 @@ export class GamePhaseStore {
     this.subPhase = 'idle';
     this.finalTurnTriggered = false;
     this.showVintoConfirmation = false;
+    this.showCoalitionLeaderSelection = false;
   }
 
   // Modal control methods
@@ -183,6 +187,14 @@ export class GamePhaseStore {
 
   closeVintoConfirmation() {
     this.showVintoConfirmation = false;
+  }
+
+  openCoalitionLeaderSelection() {
+    this.showCoalitionLeaderSelection = true;
+  }
+
+  closeCoalitionLeaderSelection() {
+    this.showCoalitionLeaderSelection = false;
   }
 }
 
@@ -233,18 +245,21 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
     'playing.toss_queue_processing', // When: Timer expires, start processing queued toss-ins
     'playing.awaiting_action', // When: Player tosses in card with action during toss-in period
     'playing.idle', // When: No toss-ins occurred, advance turn
+    'final.toss_queue_active', // When: Vinto is called during toss-in period
   ],
 
   // PLAYING PHASE - TOSS QUEUE PROCESSING
   'playing.toss_queue_processing': [
     'playing.awaiting_action', // When: Processing tossed card with action
     'playing.idle', // When: All toss-ins processed, advance turn
+    'final.toss_queue_processing', // When: Vinto is called during toss-in processing
   ],
 
   // PLAYING PHASE - AWAITING ACTION
   'playing.awaiting_action': [
     'playing.toss_queue_active', // When: Action completes during toss-in, return to toss-in period
     'playing.idle', // When: Action completes normally, return to idle
+    'final.awaiting_action', // When: Vinto is called during action execution
   ],
 
   // PLAYING PHASE - AI THINKING

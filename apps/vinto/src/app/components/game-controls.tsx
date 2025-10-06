@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Zap } from 'lucide-react';
 import { HelpPopover } from './help-popover';
 import {
   useGameStore,
@@ -12,7 +11,7 @@ import {
   useDeckStore,
   useTossInStore,
 } from './di-provider';
-import { DrawCardButton } from './ui/button';
+import { DrawCardButton, UseDiscardButton } from './buttons';
 
 export const GameControls = observer(() => {
   const gameStore = useGameStore();
@@ -158,26 +157,13 @@ const FullTurnControls = ({
         <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 
         {/* Take from Discard */}
-        <button
+        <UseDiscardButton
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!canTakeDiscard}
           title={discardInfo.tooltip}
-          className={`${
-            canTakeDiscard
-              ? 'bg-[#2ECC71] hover:bg-[#27AE60] active:bg-[#229954] text-white'
-              : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-          } font-semibold rounded shadow-sm transition-colors flex flex-col items-center justify-center py-1.5 px-2 text-xs min-h-[36px]`}
-        >
-          <div className="flex items-center gap-1">
-            <Zap size={14} />
-            <span>{discardInfo.text}</span>
-          </div>
-          {!canTakeDiscard && discardInfo.subtitle && (
-            <div className="text-[10px] opacity-75 mt-0.5">
-              {discardInfo.subtitle}
-            </div>
-          )}
-        </button>
+          text={discardInfo.text}
+          subtitle={discardInfo.subtitle}
+        />
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { useDeckStore } from './di-provider';
 import { Card as CardComponent } from './card';
 import { Card, Rank } from '../shapes';
-import { ClosePopoverButton, DeckCardSelectButton } from './ui/button';
+import { ClosePopoverButton, DeckCardSelectButton } from './buttons';
 
 const ALL_RANKS: Rank[] = [
   '2',

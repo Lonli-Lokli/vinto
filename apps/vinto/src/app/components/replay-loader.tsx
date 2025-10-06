@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
 import { GameToastService } from '../services/toast-service';
-import { LoadReplayButton } from './ui/button';
+import { LoadReplayButton } from './buttons';
 
 /**
  * Replay Loader Component

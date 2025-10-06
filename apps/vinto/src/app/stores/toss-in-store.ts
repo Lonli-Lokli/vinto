@@ -13,7 +13,7 @@ export interface TossInAction {
 }
 
 export interface TossInStoreCallbacks {
-  onComplete?: () => void;
+  onComplete?: () => Promise<void>;
   onActionExecute?: (playerId: string, card: Card) => Promise<void>;
   onToastMessage?: (
     type: 'success' | 'error' | 'info',
@@ -302,7 +302,7 @@ export class TossInStore {
 
   private async advanceQueue(): Promise<boolean> {
     if (this.currentQueueIndex >= this.queue.length - 1) {
-      this.finishQueueProcessing();
+      await this.finishQueueProcessing();
       return false;
     }
 
@@ -310,14 +310,14 @@ export class TossInStore {
     return await this.processNextAction();
   }
 
-  private finishQueueProcessing() {
+  private async finishQueueProcessing() {
     this.clearQueue();
     this.returnToNormalFlow();
   }
 
-  private returnToNormalFlow() {
+  private async returnToNormalFlow() {
     // Notify external system that processing is complete
-    this.callbacks.onComplete?.();
+    await this.callbacks.onComplete?.();
   }
 
   clearQueue() {

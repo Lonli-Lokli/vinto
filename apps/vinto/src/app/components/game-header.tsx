@@ -15,7 +15,7 @@ import {
   DifficultyButton,
   SettingsButton,
   DeckManagerButton,
-} from './ui/button';
+} from './buttons';
 
 const SettingsPopover = observer(
   ({
