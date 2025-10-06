@@ -11,6 +11,11 @@ import {
 } from './di-provider';
 import { GameCommandGroup } from './game-command-group';
 import { DeckManagerPopover } from './deck-manager-popover';
+import {
+  DifficultyButton,
+  SettingsButton,
+  DeckManagerButton,
+} from './ui/button';
 
 const SettingsPopover = observer(
   ({
@@ -59,17 +64,13 @@ const SettingsPopover = observer(
             </label>
             <div className="grid grid-cols-2 gap-2">
               {(['easy', 'moderate', 'hard'] as const).map((level) => (
-                <button
+                <DifficultyButton
                   key={level}
+                  level={level}
+                  isActive={gameStore.difficulty === level}
                   onClick={() => gameStore.updateDifficulty(level)}
-                  className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                    gameStore.difficulty === level
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </button>
+                  className="px-3 py-2 text-sm"
+                />
               ))}
             </div>
           </div>
@@ -109,14 +110,11 @@ export const GameHeader = observer(() => {
             {/* Left: Settings */}
             <div className="flex items-center gap-2 relative">
               {/* Mobile: Settings Button */}
-              <button
+              <SettingsButton
                 ref={settingsButtonRef}
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="sm:hidden px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition-colors"
-                title="Settings"
-              >
-                ⚙️
-              </button>
+                className="sm:hidden"
+              />
 
               <SettingsPopover
                 isOpen={isSettingsOpen}
@@ -129,18 +127,12 @@ export const GameHeader = observer(() => {
                 {/* Difficulty */}
                 <div className="flex items-center gap-1">
                   {(['easy', 'moderate', 'hard'] as const).map((level) => (
-                    <button
+                    <DifficultyButton
                       key={level}
+                      level={level}
+                      isActive={gameStore.difficulty === level}
                       onClick={() => gameStore.updateDifficulty(level)}
-                      className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
-                        gameStore.difficulty === level
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                      title={`Difficulty: ${level}`}
-                    >
-                      {level[0].toUpperCase()}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>
@@ -178,19 +170,11 @@ export const GameHeader = observer(() => {
 
               {/* Cards Left + Deck Manager */}
               <div className="flex items-center gap-1 relative">
-                <button
+                <DeckManagerButton
                   ref={deckManagerButtonRef}
+                  cardCount={drawPile.length}
                   onClick={() => setIsDeckManagerOpen(!isDeckManagerOpen)}
-                  className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 transition-colors group"
-                  title="Manage deck - Set next card to draw"
-                >
-                  <div className="text-sm font-semibold text-emerald-700">
-                    {drawPile.length}
-                  </div>
-                  <div className="text-2xs text-emerald-600 hidden sm:block">
-                    🎴
-                  </div>
-                </button>
+                />
 
                 <DeckManagerPopover
                   isOpen={isDeckManagerOpen}

@@ -4,8 +4,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { getButtonClasses } from '../../constants/button-colors';
 import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
+import { ContinueButton, SkipButton } from '../ui/button';
 
 export const OpponentCardPeek = observer(() => {
   const gameStore = useGameStore();
@@ -53,23 +53,21 @@ export const OpponentCardPeek = observer(() => {
 
         {/* Action Buttons */}
         {hasRevealedCard ? (
-          <button
+          <ContinueButton
             onClick={() => gameStore.confirmPeekCompletion()}
-            className={`w-full ${getButtonClasses('continue')} py-2 px-4 text-sm`}
-          >
-            Continue
-          </button>
+            className="w-full py-2 px-4 text-sm"
+          />
         ) : (
-          <button
+          <SkipButton
             onClick={() => {
               // Skip the peek action
               playerStore.clearTemporaryCardVisibility();
               gameStore.confirmPeekCompletion();
             }}
-            className={`w-full ${getButtonClasses('skip')} py-2 px-4 text-sm`}
+            className="w-full py-2 px-4 text-sm"
           >
             Skip
-          </button>
+          </SkipButton>
         )}
       </div>
     </div>

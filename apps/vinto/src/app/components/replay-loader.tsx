@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
 import { GameToastService } from '../services/toast-service';
+import { LoadReplayButton } from './ui/button';
 
 /**
  * Replay Loader Component
@@ -66,17 +67,9 @@ export const ReplayLoader = observer(() => {
         onChange={handleFileSelect}
         className="hidden"
       />
-      <button
-        onClick={handleClick}
-        disabled={isLoading}
-        className={`px-4 py-2 rounded-lg font-semibold text-sm shadow-lg transition-all ${
-          isLoading
-            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl'
-        }`}
-      >
+      <LoadReplayButton onClick={handleClick} disabled={isLoading}>
         {isLoading ? 'Loading...' : '📂 Load Replay'}
-      </button>
+      </LoadReplayButton>
     </div>
   );
 });

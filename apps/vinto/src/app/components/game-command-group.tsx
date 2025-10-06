@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
 import { GameToastService } from '../services/toast-service';
 import { DownloadIcon, PlayIcon } from 'lucide-react';
+import { ExportButton, ReplayButton } from './ui/button';
 
 export const GameCommandGroup = observer(() => {
   const gameStateManager = useGameStateManager();
@@ -49,23 +50,15 @@ export const GameCommandGroup = observer(() => {
 
   return (
     <div className="flex items-center gap-1">
-      <button
-        onClick={handleExportCommands}
-        className="px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold text-xs transition-colors"
-        title="Export command history"
-      >
+      <ExportButton onClick={handleExportCommands}>
         <DownloadIcon className="inline w-3 h-3 mr-1" />
         <span className="hidden sm:inline">Export</span>
-      </button>
+      </ExportButton>
       {!replayStore.isReplayMode && (
-        <button
-          onClick={() => replayInputRef.current?.click()}
-          className="px-2 py-1 rounded bg-green-100 hover:bg-green-200 text-green-700 font-semibold text-xs transition-colors"
-          title="Load game in replay mode"
-        >
+        <ReplayButton onClick={() => replayInputRef.current?.click()}>
           <PlayIcon className="inline w-3 h-3 mr-1" />
           <span className="hidden sm:inline">Replay</span>
-        </button>
+        </ReplayButton>
       )}
       <input
         ref={replayInputRef}

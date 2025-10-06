@@ -3,8 +3,8 @@
 
 import React from 'react';
 import { HelpPopover } from '../help-popover';
-import { getButtonClasses } from '../../constants/button-colors';
 import { useGameStore, useActionStore } from '../di-provider';
+import { KingActionCardButton, KingNonActionCardButton } from '../ui/button';
 
 export function KingDeclaration() {
   const gameStore = useGameStore();
@@ -23,81 +23,45 @@ export function KingDeclaration() {
     return rank === 'K' && pendingCard?.rank === 'K';
   };
 
-  // Get explanation for disabled state
-  const getDisabledExplanation = (rank: string): string => {
-    if (rank === 'K' && pendingCard?.rank === 'K') {
-      return 'Cannot declare King from King card';
-    }
-    return '';
-  };
-
   return (
-    <div className="w-full h-full px-3 py-2">
-      <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
-        <div className="text-center mb-2">
-          <div className="flex flex-row items-center justify-center gap-2">
-            <h3 className="text-xs md:text-sm font-semibold text-gray-800 leading-tight">
-              👑 King Declaration
-            </h3>
-            <HelpPopover title="King Declaration" rank="K" />
-          </div>
-          <p className="text-xs md:text-sm text-gray-600 mt-1 leading-normal">
-            Choose which card action to execute
-          </p>
+    <div className="w-full h-full px-2 py-1">
+      <div className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+        {/* Compact header - single line */}
+        <div className="flex flex-row items-center justify-between mb-1.5">
+          <h3 className="text-xs font-semibold text-gray-800 leading-tight">
+            👑 King: Choose action
+          </h3>
+          <HelpPopover title="King Declaration" rank="K" />
         </div>
 
-        <div className="flex-1 flex flex-col justify-center space-y-2">
-          {/* Action cards - primary focus */}
-          <div>
-            <div className="text-xs md:text-sm font-medium text-gray-600 mb-1 text-center leading-tight">
-              Action Cards
-            </div>
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-1 md:gap-2">
-              {actionCards.map((rank) => {
-                const disabled = isRankDisabled(rank);
-                return (
-                  <button
-                    key={rank}
-                    onClick={() => !disabled && gameStore.declareKingAction(rank)}
-                    disabled={disabled}
-                    className={`${getButtonClasses('king-action-card', disabled)} font-bold py-1.5 px-3 text-sm min-h-[44px] flex items-center justify-center`}
-                    title={disabled ? getDisabledExplanation(rank) : `Execute ${rank} action`}
-                  >
-                    {rank}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* Single unified grid for all cards */}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="grid grid-cols-7 gap-1">
+            {/* Action cards with visual distinction */}
+            {actionCards.map((rank) => {
+              const disabled = isRankDisabled(rank);
+              return (
+                <KingActionCardButton
+                  key={rank}
+                  rank={rank}
+                  onClick={() => gameStore.declareKingAction(rank)}
+                  disabled={disabled}
+                />
+              );
+            })}
 
-          {/* Non-action cards - secondary, smaller */}
-          <div>
-            <div className="text-xs font-medium text-gray-500 mb-1 text-center leading-tight">
-              No Action Cards
-            </div>
-            <div className="grid grid-cols-6 gap-1">
-              {nonActionCards.map((rank) => {
-                const disabled = isRankDisabled(rank);
-                const explanation = getDisabledExplanation(rank);
-                return (
-                  <div key={rank} className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => !disabled && gameStore.declareKingAction(rank)}
-                      disabled={disabled}
-                      className={`${getButtonClasses('king-non-action-card', disabled)} font-medium py-1.5 px-2 text-xs flex items-center justify-center min-h-[44px]`}
-                      title={disabled ? explanation : `Declare ${rank} (no action)`}
-                    >
-                      {rank}
-                    </button>
-                    {disabled && explanation && (
-                      <div className="text-2xs text-gray-500 text-center italic px-1 leading-tight">
-                        {explanation}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {/* Non-action cards in same grid */}
+            {nonActionCards.map((rank) => {
+              const disabled = isRankDisabled(rank);
+              return (
+                <KingNonActionCardButton
+                  key={rank}
+                  rank={rank}
+                  onClick={() => gameStore.declareKingAction(rank)}
+                  disabled={disabled}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

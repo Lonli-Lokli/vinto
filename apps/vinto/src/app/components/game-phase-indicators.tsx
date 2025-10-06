@@ -4,7 +4,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import { getButtonClasses } from '../constants/button-colors';
 import type { Card, Player } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
 import {
@@ -16,6 +15,19 @@ import {
   useActionStore,
 } from './di-provider';
 import { Card as CardComponent } from './card';
+import {
+  UseActionButton,
+  SwapButton,
+  DiscardButton,
+  StartGameButton,
+  ContinueButton,
+  DiscardInsteadButton,
+} from './ui/button';
+import {
+  getActionExplanation,
+  getCardName,
+  getCardValue,
+} from '../utils/card-helper';
 
 // Setup Phase Component
 const SetupPhaseIndicator = observer(
@@ -39,16 +51,12 @@ const SetupPhaseIndicator = observer(
           <div className="text-xs font-medium text-gray-600 leading-tight">
             Peeks remaining: {setupPeeksRemaining}
           </div>
-          <button
-            onClick={onFinishSetup}
-            disabled={setupPeeksRemaining > 0}
-            className={`${getButtonClasses(
-              'start-game',
-              setupPeeksRemaining > 0
-            )} py-1.5 px-3 text-xs min-h-[36px]`}
-          >
-            Start Game
-          </button>
+          <div className="flex justify-center">
+            <StartGameButton
+              onClick={onFinishSetup}
+              disabled={setupPeeksRemaining > 0}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -97,14 +105,7 @@ const TossInIndicator = observer(
               Wrong guess = penalty card
             </div>
           </div>
-          <button
-            onClick={onContinue}
-            className={`${getButtonClasses(
-              'continue-toss'
-            )} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
-          >
-            Continue ▶
-          </button>
+          <ContinueButton onClick={onContinue} />
         </div>
       </div>
     </div>
@@ -112,6 +113,79 @@ const TossInIndicator = observer(
 );
 
 TossInIndicator.displayName = 'TossInIndicator';
+
+// Utility function to get action information
+const getActionInfo = (
+  actionContext: any,
+  actionPlayer: string,
+  isHuman: boolean,
+  peekTargetsLength: number
+) => {
+  switch (actionContext.targetType) {
+    case 'own-card':
+      return {
+        icon: '👁️',
+        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} peeking at own card`,
+        description: isHuman
+          ? 'Click one of your cards to peek at it'
+          : 'Bot is selecting a card...',
+      };
+    case 'opponent-card':
+      return {
+        icon: '🔍',
+        title: `${actionPlayer} ${
+          isHuman ? 'are' : 'is'
+        } peeking at opponent card`,
+        description: isHuman
+          ? "Click an opponent's card to peek at it"
+          : 'Bot is selecting a target...',
+      };
+    case 'swap-cards':
+      return {
+        icon: '🔀',
+        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} swapping cards`,
+        description: isHuman
+          ? 'Click two cards to swap them (any player)'
+          : 'Bot is selecting cards to swap...',
+      };
+    case 'peek-then-swap':
+      return {
+        icon: '👑',
+        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} using Queen action`,
+        description: isHuman
+          ? peekTargetsLength < 2
+            ? 'Click two cards to peek at them'
+            : 'Choose whether to swap the peeked cards'
+          : 'Bot is making a decision...',
+      };
+    case 'force-draw':
+      return {
+        icon: '🎯',
+        title: `${actionPlayer} ${
+          isHuman ? 'are' : 'is'
+        } forcing a player to draw`,
+        description: isHuman
+          ? 'Click an opponent to force them to draw a card'
+          : 'Bot is selecting a target...',
+      };
+    case 'declare-action':
+      return {
+        icon: '👑',
+        title: `${actionPlayer} ${
+          isHuman ? 'are' : 'is'
+        } declaring King action`,
+        description: isHuman
+          ? 'Choose which card action to use (7-10, J, Q, A)'
+          : 'Bot is declaring...',
+      };
+    default:
+      return {
+        icon: '🎴',
+        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} performing an action`,
+        description: actionContext.action || 'Action in progress...',
+      };
+  }
+};
 
 // Action Execution Indicator Component
 const ActionExecutionIndicator = observer(
@@ -130,98 +204,25 @@ const ActionExecutionIndicator = observer(
       actionContext.playerId === currentPlayer?.id
         ? 'You'
         : currentPlayer?.name || 'Player';
-    const isHuman = currentPlayer?.isHuman;
+    const isHuman = currentPlayer?.isHuman ?? false;
 
-    const getActionInfo = () => {
-      switch (actionContext.targetType) {
-        case 'own-card':
-          return {
-            icon: '👁️',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } peeking at own card`,
-            description: isHuman
-              ? 'Click one of your cards to peek at it'
-              : 'Bot is selecting a card...',
-          };
-        case 'opponent-card':
-          return {
-            icon: '🔍',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } peeking at opponent card`,
-            description: isHuman
-              ? "Click an opponent's card to peek at it"
-              : 'Bot is selecting a target...',
-          };
-        case 'swap-cards':
-          return {
-            icon: '🔀',
-            title: `${actionPlayer} ${isHuman ? 'are' : 'is'} swapping cards`,
-            description: isHuman
-              ? 'Click two cards to swap them (any player)'
-              : 'Bot is selecting cards to swap...',
-          };
-        case 'peek-then-swap':
-          return {
-            icon: '👑',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } using Queen action`,
-            description: isHuman
-              ? actionStore.peekTargets.length < 2
-                ? 'Click two cards to peek at them'
-                : 'Choose whether to swap the peeked cards'
-              : 'Bot is making a decision...',
-          };
-        case 'force-draw':
-          return {
-            icon: '🎯',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } forcing a player to draw`,
-            description: isHuman
-              ? 'Click an opponent to force them to draw a card'
-              : 'Bot is selecting a target...',
-          };
-        case 'declare-action':
-          return {
-            icon: '👑',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } declaring King action`,
-            description: isHuman
-              ? 'Choose which card action to use (7-10, J, Q, A)'
-              : 'Bot is declaring...',
-          };
-        default:
-          return {
-            icon: '🎴',
-            title: `${actionPlayer} ${
-              isHuman ? 'are' : 'is'
-            } performing an action`,
-            description: actionContext.action || 'Action in progress...',
-          };
-      }
-    };
-
-    const actionInfo = getActionInfo();
+    const actionInfo = getActionInfo(
+      actionContext,
+      actionPlayer,
+      isHuman,
+      actionStore.peekTargets.length
+    );
 
     return (
-      <div className="w-full px-3 py-1">
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 sm:p-3 shadow-sm">
-          <div className="text-center space-y-1">
-            <div className="text-sm font-semibold text-purple-800">
+      <div className="w-full px-2 py-1">
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 shadow-sm">
+          <div className="text-center">
+            <div className="text-xs font-semibold text-purple-800 leading-tight">
               {actionInfo.icon} {actionInfo.title}
             </div>
-            <div className="text-xs text-purple-700">
+            <div className="text-xs text-purple-700 leading-tight mt-0.5">
               {actionInfo.description}
             </div>
-            {pendingCard && (
-              <div className="text-xs font-medium text-purple-600 mt-1">
-                Card: {pendingCard.rank} - {pendingCard.action}
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -231,17 +232,73 @@ const ActionExecutionIndicator = observer(
 
 ActionExecutionIndicator.displayName = 'ActionExecutionIndicator';
 
-// Helper function to get action explanation
-const getActionExplanation = (rank: string): string => {
-  const { getCardLongDescription } = require('../constants/game-setup');
-  return getCardLongDescription(rank) || 'Special card action';
-};
+// Card Drawn Header Component
+const CardDrawnHeader = ({
+  pendingCard,
+  hasAction,
+  getHelpContent,
+}: {
+  pendingCard: Card;
+  hasAction: boolean;
+  getHelpContent: () => string;
+}) => (
+  <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
+    <div className="flex-1 min-w-0">
+      {/* Compact single line with all info */}
+      <div className="flex flex-row items-baseline gap-1 flex-wrap">
+        <span className="text-sm font-bold text-gray-900 leading-tight">
+          {getCardName(pendingCard.rank)}
+        </span>
+        <span className="text-xs text-gray-600 leading-tight">
+          {getCardValue(pendingCard.rank)}{' '}
+          {Math.abs(getCardValue(pendingCard.rank)) === 1
+            ? ' point'
+            : ' points'}
+        </span>
+        {hasAction && (
+          <span className="text-xs text-emerald-700 leading-tight">
+            • {getActionExplanation(pendingCard.rank)}
+          </span>
+        )}
+      </div>
+    </div>
 
-// Helper function to get card value
-const getCardValue = (rank: string): number => {
-  const { getCardValue } = require('../constants/game-setup');
-  return getCardValue(rank);
-};
+    <HelpPopover title="Card Actions" content={getHelpContent()} />
+  </div>
+);
+
+// Card Action Buttons Component
+const CardActionButtons = ({
+  hasAction,
+  onUseAction,
+  onSwapDiscard,
+  onDiscard,
+}: {
+  hasAction: boolean;
+  onUseAction: () => void;
+  onSwapDiscard: () => void;
+  onDiscard: () => void;
+}) => (
+  <div className="space-y-1 mt-auto flex-shrink-0">
+    {/* Row 1: Use and Swap (or just Swap and Discard if no action) */}
+    <div className="grid grid-cols-2 gap-1">
+      {hasAction ? (
+        <>
+          <UseActionButton onClick={onUseAction} />
+          <SwapButton onClick={onSwapDiscard} />
+        </>
+      ) : (
+        <>
+          <SwapButton onClick={onSwapDiscard} />
+          <DiscardButton onClick={onDiscard} />
+        </>
+      )}
+    </div>
+
+    {/* Row 2: Discard (only when Use is available) */}
+    {hasAction && <DiscardButton onClick={onDiscard} fullWidth />}
+  </div>
+);
 
 // Card Drawn Indicator Component
 const CardDrawnIndicator = observer(
@@ -286,108 +343,18 @@ const CardDrawnIndicator = observer(
 
             {/* Content - second column */}
             <div className="flex-1 min-w-0 flex flex-col">
-              {/* Header with title, rank, value and help */}
-              <div className="flex flex-row items-start justify-between mb-2 flex-shrink-0">
-                <div className="flex-1 min-w-0">
-                  {/* Rank and card name */}
-                  <div className="flex flex-row items-baseline gap-1.5 mb-0.5">
-                    <span className="text-lg md:text-xl font-bold text-gray-900 leading-none">
-                      {pendingCard.rank}
-                    </span>
-                    <span className="text-sm md:text-base font-semibold text-gray-700 leading-none">
-                      {pendingCard.rank === 'Joker' ? 'Joker' : `Card`}
-                    </span>
-                  </div>
+              <CardDrawnHeader
+                pendingCard={pendingCard}
+                hasAction={hasAction}
+                getHelpContent={getHelpContent}
+              />
 
-                  {/* Point value */}
-                  <div className="text-sm md:text-base text-gray-600 leading-relaxed mb-1">
-                    {getCardValue(pendingCard.rank)} {Math.abs(getCardValue(pendingCard.rank)) === 1 ? 'point' : 'points'}
-                  </div>
-
-                  {/* Action description with better spacing */}
-                  {hasAction ? (
-                    <div className="text-sm md:text-base text-emerald-700 leading-relaxed">
-                      {getActionExplanation(pendingCard.rank)}
-                    </div>
-                  ) : (
-                    <div className="text-sm md:text-base text-gray-500 leading-relaxed">
-                      No action
-                    </div>
-                  )}
-                </div>
-
-                <HelpPopover title="Card Actions" content={getHelpContent()} />
-              </div>
-
-              {/* Action Buttons - Fixed order: Use (if available), Swap, Discard */}
-              <div className="space-y-1 mt-auto flex-shrink-0">
-                {/* Row 1: Use and Swap (or just Swap and Discard if no action) */}
-                <div className="grid grid-cols-2 gap-1">
-                  {hasAction ? (
-                    <>
-                      {/* Position 1: Use (green) - when available */}
-                      <button
-                        onClick={onUseAction}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
-                          'use-action'
-                        )} py-1.5 px-2 text-xs min-h-[36px]`}
-                      >
-                        <span>⚡</span>
-                        <span>Use</span>
-                      </button>
-
-                      {/* Position 2: Swap (blue) - always available */}
-                      <button
-                        onClick={onSwapDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
-                          'swap'
-                        )} py-1.5 px-2 text-xs min-h-[36px]`}
-                      >
-                        <span>🔄</span>
-                        <span>Swap</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* When no action: Swap and Discard shift left */}
-                      {/* Position 1: Swap (blue) */}
-                      <button
-                        onClick={onSwapDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
-                          'swap'
-                        )} py-1.5 px-2 text-xs min-h-[36px]`}
-                      >
-                        <span>🔄</span>
-                        <span>Swap</span>
-                      </button>
-
-                      {/* Position 2: Discard (gray) */}
-                      <button
-                        onClick={onDiscard}
-                        className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses(
-                          'discard'
-                        )} py-1.5 px-2 text-xs min-h-[36px]`}
-                      >
-                        <span>🗑️</span>
-                        <span>Discard</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Row 2: Discard (only when Use is available) */}
-                {hasAction && (
-                  <button
-                    onClick={onDiscard}
-                    className={`w-full flex flex-row items-center justify-center gap-1 ${getButtonClasses(
-                      'discard'
-                    )} py-1.5 px-2 text-xs min-h-[36px]`}
-                  >
-                    <span>🗑️</span>
-                    <span>Discard</span>
-                  </button>
-                )}
-              </div>
+              <CardActionButtons
+                hasAction={hasAction}
+                onUseAction={onUseAction}
+                onSwapDiscard={onSwapDiscard}
+                onDiscard={onDiscard}
+              />
             </div>
           </div>
         </div>
@@ -401,26 +368,14 @@ CardDrawnIndicator.displayName = 'CardDrawnIndicator';
 // Swap Position Selector Component
 const SwapPositionIndicator = observer(
   ({ onDiscard }: { onDiscard: () => void }) => (
-    <div className="w-full px-2 py-1.5">
-      <div className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="text-xs font-semibold text-gray-800 leading-tight">
-              🔄 Select a card to replace
-            </div>
-            <div className="text-xs text-gray-700 leading-tight">
-              Click on one of your cards to swap it with the drawn card
-            </div>
+    <div className="w-full px-2 py-1">
+      <div className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-row items-center gap-2">
+        <div className="flex-1 text-center sm:text-left min-w-0">
+          <div className="text-xs font-semibold text-gray-800 leading-tight">
+            🔄 Click your card to swap
           </div>
-          <button
-            onClick={onDiscard}
-            className={`${getButtonClasses(
-              'discard-instead'
-            )} px-3 py-1.5 text-xs whitespace-nowrap min-h-[36px] flex-shrink-0`}
-          >
-            Discard Instead
-          </button>
         </div>
+        <DiscardInsteadButton onClick={onDiscard} />
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ import React from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import * as Sentry from '@sentry/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { TryAgainButton } from './ui/button';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -27,16 +28,16 @@ function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
         </div>
 
         <div className="text-sm text-gray-600">
-          <p>We&apos;ve been notified and are looking into it. Please try refreshing the page.</p>
+          <p>
+            We&apos;ve been notified and are looking into it. Please try
+            refreshing the page.
+          </p>
         </div>
 
-        <button
-          onClick={resetErrorBoundary}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-        >
+        <TryAgainButton onClick={resetErrorBoundary}>
           <RefreshCw className="w-4 h-4" />
           Try Again
-        </button>
+        </TryAgainButton>
 
         {process.env.NODE_ENV === 'development' && error.stack && (
           <details className="mt-4">

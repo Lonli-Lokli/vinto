@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { ArrowContainer, Popover, PopoverState } from 'react-tiny-popover';
 import { Rank } from '../shapes';
 import { getCardHelpText } from '../constants/game-setup';
+import { HelpButton } from './ui/button';
 
 interface HelpPopoverProps {
   title: string;
@@ -21,6 +22,10 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
 
   const helpText = rank ? getCardHelpText(rank) : content;
 
+  const handleToggle = () => {
+    setShowHelp(!showHelp);
+  };
+
   const helpContent = (
     <div
       className="bg-white border border-gray-300 rounded p-3 max-w-sm shadow-lg"
@@ -36,15 +41,19 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
   return (
     <Popover
       isOpen={showHelp}
-      positions={['top', 'bottom', 'left', 'right']}
+      positions={['top', 'right', 'bottom', 'left']}
+      align="center"
+      padding={8}
+      reposition={true}
+      containerStyle={{ zIndex: '9999' }}
       content={({ position, childRect, popoverRect }: PopoverState) => (
-        <ArrowContainer // if you'd like an arrow, you can import the ArrowContainer!
+        <ArrowContainer
           position={position}
           childRect={childRect}
           popoverRect={popoverRect}
-          arrowColor={'blue'}
-          arrowSize={10}
-          arrowStyle={{ opacity: 0.7 }}
+          arrowColor={'white'}
+          arrowSize={8}
+          arrowStyle={{ opacity: 1 }}
           className="popover-arrow-container"
           arrowClassName="popover-arrow"
         >
@@ -53,25 +62,7 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
       )}
       onClickOutside={() => setShowHelp(false)}
     >
-      <button
-        onClick={() => setShowHelp(!showHelp)}
-        className="text-gray-400 hover:text-gray-600 transition-colors p-1 flex-shrink-0"
-        aria-label="Show help"
-      >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </button>
+      <HelpButton onClick={handleToggle} />
     </Popover>
   );
 };

@@ -3,7 +3,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import { getButtonClasses } from '../constants/button-colors';
 import {
   useGameStore,
   usePlayerStore,
@@ -11,6 +10,7 @@ import {
   useGamePhaseStore,
 } from './di-provider';
 import { Rank } from '../shapes';
+import { RankDeclarationButton, SkipButton } from './ui/button';
 
 // Only show action cards (7-K, A) since 2-6 and Joker have no actions
 const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -61,24 +61,21 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         {/* Ranks grid - 4 columns = exactly 2 rows for 8 action cards */}
         <div className="grid grid-cols-4 gap-1 mb-1 flex-1 content-start min-h-0">
           {ACTION_RANKS.map((rank) => (
-            <button
+            <RankDeclarationButton
               key={rank}
+              rank={rank}
               onClick={() => handleRankClick(rank)}
-              className={`${getButtonClasses('declare-rank')} font-bold py-1.5 px-1 text-xs min-h-[36px] flex items-center justify-center`}
-              title={`Declare ${rank}`}
-            >
-              {rank}
-            </button>
+            />
           ))}
         </div>
 
         {/* Skip button - compact */}
-        <button
+        <SkipButton
           onClick={() => gameStore.skipDeclaration()}
-          className={`w-full ${getButtonClasses('skip')} py-1.5 px-3 text-xs min-h-[36px] flex-shrink-0`}
+          className="w-full py-1.5 px-3 flex-shrink-0"
         >
           Skip
-        </button>
+        </SkipButton>
       </div>
     </div>
   );

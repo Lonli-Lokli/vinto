@@ -6,6 +6,9 @@
 /* Viewport handling for mobile devices */
 @layer base {
   html {
+    /* Base font size - mobile first */
+    font-size: 16px;
+
     /* Prevent zoom on double tap */
     touch-action: manipulation;
     -webkit-touch-callout: none;
@@ -21,6 +24,20 @@
     /* Hide scrollbars but allow scrolling - but override for custom scrollbar below */
     scrollbar-width: thin;
     -ms-overflow-style: auto;
+  }
+
+  /* Scale up base font size for tablets and larger */
+  @media (min-width: 768px) {
+    html {
+      font-size: 18px;
+    }
+  }
+
+  /* Scale up more for desktop */
+  @media (min-width: 1024px) {
+    html {
+      font-size: 20px;
+    }
   }
 
   body {
@@ -47,24 +64,24 @@
 
 /* Toast animations */
 @keyframes enter {
-  0% { 
-    transform: translate3d(0, -200%, 0) scale(0.6); 
-    opacity: 0.5; 
+  0% {
+    transform: translate3d(0, -200%, 0) scale(0.6);
+    opacity: 0.5;
   }
-  100% { 
-    transform: translate3d(0, 0, 0) scale(1); 
-    opacity: 1; 
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
   }
 }
 
 @keyframes leave {
-  0% { 
-    transform: translate3d(0, 0, -1px) scale(1); 
-    opacity: 1; 
+  0% {
+    transform: translate3d(0, 0, -1px) scale(1);
+    opacity: 1;
   }
-  100% { 
-    transform: translate3d(0, -150%, -1px) scale(0.6); 
-    opacity: 0; 
+  100% {
+    transform: translate3d(0, -150%, -1px) scale(0.6);
+    opacity: 0;
   }
 }
 
@@ -170,14 +187,18 @@
 
 /* Game table felt texture */
 .felt-texture {
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 0
+  );
   background-size: 20px 20px;
 }
 
 /* Pulsing animation for current player */
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
   }
   50% {
@@ -191,7 +212,8 @@
 
 /* Border flash animation for active player's name */
 @keyframes border-flash {
-  0%, 100% {
+  0%,
+  100% {
     border-color: rgb(146, 64, 14); /* orange-900 - dark wood */
     box-shadow: 0 0 12px 4px rgba(180, 83, 9, 0.8);
   }
@@ -203,9 +225,15 @@
 
 /* Card flip animation */
 @keyframes flip-card {
-  0% { transform: rotateY(0deg); }
-  50% { transform: rotateY(90deg); }
-  100% { transform: rotateY(0deg); }
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
 }
 
 .flip-card {
@@ -214,8 +242,13 @@
 
 /* Floating animation for game elements */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .float {

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { getButtonClasses } from '../constants/button-colors';
+import { CallVintoButton, CancelButton } from './ui/button';
 
 interface VintoConfirmationModalProps {
   isOpen: boolean;
@@ -46,21 +46,20 @@ export const VintoConfirmationModal = observer(
             {/* Buttons - Vertical stack */}
             <div className="space-y-3">
               {/* Confirm button - Orange, top */}
-              <button
+              <CallVintoButton
                 onClick={onConfirm}
-                className={`w-full ${getButtonClasses('call-vinto')} py-3 px-4 text-base font-bold min-h-[48px]`}
-                autoFocus
+                fullWidth
+                className="py-3 px-4 text-base font-bold min-h-[48px]"
               >
-                🏆 Yes, Call Vinto
-              </button>
+                Yes, Call Vinto
+              </CallVintoButton>
 
               {/* Cancel button - Gray, bottom */}
-              <button
+              <CancelButton
                 onClick={onCancel}
-                className={`w-full ${getButtonClasses('cancel')} py-3 px-4 text-base font-bold min-h-[48px]`}
-              >
-                Cancel
-              </button>
+                fullWidth
+                className="py-3 px-4 text-base font-bold min-h-[48px]"
+              />
             </div>
           </div>
         </div>

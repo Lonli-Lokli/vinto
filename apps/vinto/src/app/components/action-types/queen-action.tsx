@@ -5,15 +5,13 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { useActionStore, useGameStore } from '../di-provider';
+import { QueenSwapButton, SkipButton } from '../ui/button';
 
 export const QueenAction = observer(() => {
   const gameStore = useGameStore();
   const actionStore = useActionStore();
   if (!actionStore.actionContext) return null;
-  const {
-    peekTargets,
-    actionContext: { action },
-  } = actionStore;
+  const { peekTargets } = actionStore;
 
   const hasBothCards = peekTargets.length === 2;
 
@@ -23,7 +21,7 @@ export const QueenAction = observer(() => {
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs font-semibold text-gray-800 leading-tight">
-            👑 {action}
+            👑 Queen Action
           </h3>
           <div className="flex flex-row items-center gap-1">
             <div className="text-xs text-gray-500 leading-tight">
@@ -58,18 +56,8 @@ export const QueenAction = observer(() => {
         {/* Action Buttons - only show when both cards selected */}
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-            <button
-              onClick={() => gameStore.executeQueenSwap()}
-              className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
-            >
-              🔄 Swap Cards
-            </button>
-            <button
-              onClick={() => gameStore.skipQueenSwap()}
-              className="bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white font-semibold py-1.5 px-2 rounded shadow-sm transition-colors text-xs min-h-[36px]"
-            >
-              ⏭️ Skip
-            </button>
+            <QueenSwapButton onClick={() => gameStore.executeQueenSwap()} />
+            <SkipButton onClick={() => gameStore.skipQueenSwap()} />
           </div>
         )}
       </div>

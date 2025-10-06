@@ -4,7 +4,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import { getButtonClasses } from '../constants/button-colors';
 import {
   useGameStore,
   usePlayerStore,
@@ -12,6 +11,7 @@ import {
   useDeckStore,
   useTossInStore,
 } from './di-provider';
+import { DrawCardButton, UseActionButton, CallVintoButton } from './ui/button';
 
 export const GameControls = observer(() => {
   const gameStore = useGameStore();
@@ -44,7 +44,6 @@ export const GameControls = observer(() => {
       isSelectingSwapPosition ||
       isChoosingCardAction ||
       isDeclaringRank ||
-      waitingForTossIn ||
       finalTurnTriggered ||
       isAwaitingActionTarget ||
       isTossQueueProcessing ||
@@ -54,8 +53,10 @@ export const GameControls = observer(() => {
       return { type: 'hidden' };
     }
 
-    // Show vinto-only controls when business logic allows it
-    const showVintoOnly = gameStore.canCallVintoAfterHumanTurn;
+    // Show vinto-only controls during toss-in phase after human turn
+    // or when business logic specifically allows it
+    const showVintoOnly =
+      waitingForTossIn || gameStore.canCallVintoAfterHumanTurn;
 
     if (showVintoOnly) {
       return {
@@ -92,10 +93,12 @@ export const GameControls = observer(() => {
 
 ♻️ Play Card: Take an unplayed action card from the discard pile (7-K only, not on first turn)
 
-🏆 Call Vinto: End the game and start final scoring when you think you have the lowest hand`;
+Note: Call Vinto option will be available after you complete your turn during the toss-in phase`;
     }
     if (controlContent.type === 'vinto-only') {
-      return `🏆 Call Vinto: You must call Vinto before the next player's turn to end the game and start final scoring`;
+      return `🏆 Call Vinto: Call Vinto before the next player's turn to end the game and start final scoring
+
+You can also toss in matching cards or click Continue to proceed to the next player's turn`;
     }
     return '';
   };
@@ -130,13 +133,11 @@ const VintoOnlyControls = () => {
   const gamePhaseStore = useGamePhaseStore();
   return (
     <div className="space-y-1">
-      <button
+      <CallVintoButton
         onClick={() => gamePhaseStore.openVintoConfirmation()}
-        className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
-        aria-label="Call Vinto"
-      >
-        🏆 Call Vinto
-      </button>
+        fullWidth
+        className="py-1.5 px-3"
+      />
     </div>
   );
 };
@@ -147,58 +148,27 @@ const FullTurnControls = ({
   handleDrawCard: () => void;
 }) => {
   const gameStore = useGameStore();
-  const gamePhaseStore = useGamePhaseStore();
   const { discardPile, drawPile } = useDeckStore();
 
   const topDiscard = discardPile[0];
   const canTakeDiscard = topDiscard?.action && !topDiscard?.played;
   const deckEmpty = drawPile.length === 0;
 
-  // Get reason why discard is disabled
-  const getDiscardTooltip = () => {
-    if (!topDiscard) return 'Discard pile is empty';
-    if (!topDiscard.action) return `${topDiscard.rank} has no action to play`;
-    if (topDiscard.played) return `${topDiscard.rank} action already used`;
-    return `Play ${topDiscard.rank} action from discard`;
-  };
-
   return (
     <div className="space-y-1">
       {/* Mobile: Stack vertically, Desktop: 2-column grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
         {/* Draw from Deck */}
-        <button
-          onClick={handleDrawCard}
-          disabled={deckEmpty}
-          className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('draw-card', deckEmpty)} py-1.5 px-2 text-xs min-h-[36px]`}
-          title={deckEmpty ? 'Deck is empty' : 'Draw a new card from deck'}
-        >
-          <span>🎴</span>
-          <span>Draw Card</span>
-        </button>
+        <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 
         {/* Take from Discard */}
-        <button
+        <UseActionButton
           onClick={() => gameStore.takeFromDiscard()}
           disabled={!canTakeDiscard}
-          className={`flex flex-row items-center justify-center gap-1 ${getButtonClasses('use-action', !canTakeDiscard)} py-1.5 px-2 text-xs min-h-[36px]`}
-          title={getDiscardTooltip()}
         >
-          <span>♻️</span>
-          <span>
-            {topDiscard?.rank ? `Use ${topDiscard.rank}` : 'Use Discard'}
-          </span>
-        </button>
+          {topDiscard?.rank ? `Use ${topDiscard.rank}` : 'Use Discard'}
+        </UseActionButton>
       </div>
-
-      {/* Call Vinto - always available during turn */}
-      <button
-        onClick={() => gamePhaseStore.openVintoConfirmation()}
-        className={`w-full ${getButtonClasses('call-vinto')} py-1.5 px-3 text-xs min-h-[36px]`}
-        title="End the game - call Vinto if you think you have the lowest score"
-      >
-        🏆 Call Vinto
-      </button>
     </div>
   );
 };

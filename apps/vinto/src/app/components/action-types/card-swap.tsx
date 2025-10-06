@@ -5,7 +5,7 @@ import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { getButtonClasses } from '../../constants/button-colors';
+import { ResetButton, SkipButton } from '../ui/button';
 
 export const CardSwap = observer(() => {
   const actionStore = useActionStore();
@@ -73,24 +73,20 @@ export const CardSwap = observer(() => {
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2">
           {swapTargets.length > 0 && (
-            <button
+            <ResetButton
               onClick={() => actionStore.clearSwapTargets()}
-              className={`${getButtonClasses('reset')} py-2 px-4 text-sm`}
-            >
-              🔄 Reset
-            </button>
+              className="py-2 px-4 text-sm"
+            />
           )}
-          <button
+          <SkipButton
             onClick={() => {
               actionStore.clearSwapTargets();
               gameStore.confirmPeekCompletion();
             }}
-            className={`${getButtonClasses('skip')} py-2 px-4 text-sm ${
+            className={`py-2 px-4 text-sm ${
               swapTargets.length === 0 ? 'col-span-2' : ''
             }`}
-          >
-            ⏭️ Skip
-          </button>
+          />
         </div>
       </div>
     </div>

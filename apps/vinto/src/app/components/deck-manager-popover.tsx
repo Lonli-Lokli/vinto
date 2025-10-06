@@ -6,8 +6,23 @@ import { observer } from 'mobx-react-lite';
 import { useDeckStore } from './di-provider';
 import { Card as CardComponent } from './card';
 import { Card, Rank } from '../shapes';
+import { ClosePopoverButton, DeckCardSelectButton } from './ui/button';
 
-const ALL_RANKS: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const ALL_RANKS: Rank[] = [
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+  'J',
+  'Q',
+  'K',
+  'A',
+];
 
 export const DeckManagerPopover = observer(
   ({
@@ -65,13 +80,10 @@ export const DeckManagerPopover = observer(
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-            <h3 className="text-sm font-bold text-gray-800">Set Next Draw Card</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
-            >
-              ×
-            </button>
+            <h3 className="text-sm font-bold text-gray-800">
+              Set Next Draw Card
+            </h3>
+            <ClosePopoverButton onClick={onClose} />
           </div>
 
           <div className="text-xs text-gray-600">
@@ -86,18 +98,10 @@ export const DeckManagerPopover = observer(
               const isAvailable = count > 0;
 
               return (
-                <button
+                <DeckCardSelectButton
                   key={rank}
-                  onClick={() => isAvailable && handleSetNextCard(rank)}
+                  onClick={() => handleSetNextCard(rank)}
                   disabled={!isAvailable}
-                  className={`
-                    relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
-                    ${
-                      isAvailable
-                        ? 'border-emerald-500 hover:bg-emerald-50 cursor-pointer hover:shadow-md hover:scale-105'
-                        : 'border-gray-200 opacity-40 cursor-not-allowed bg-gray-50'
-                    }
-                  `}
                 >
                   {/* Card preview */}
                   <div className="w-14 h-20">
@@ -120,7 +124,7 @@ export const DeckManagerPopover = observer(
                       ×{count}
                     </div>
                   )}
-                </button>
+                </DeckCardSelectButton>
               );
             })}
           </div>

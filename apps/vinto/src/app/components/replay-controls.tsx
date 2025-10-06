@@ -3,6 +3,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGameStateManager, useReplayStore } from './di-provider';
+import { ExitReplayButton, NextCommandButton } from './ui/button';
 
 /**
  * Replay Controls Component
@@ -41,15 +42,8 @@ export const ReplayControls = observer(() => {
         <div className="flex flex-col gap-3">
           {/* Header */}
           <div className="flex items-center justify-between gap-4">
-            <div className="text-yellow-100 font-bold text-sm">
-              REPLAY MODE
-            </div>
-            <button
-              onClick={handleExit}
-              className="px-2 py-1 bg-red-700 hover:bg-red-600 text-white text-xs rounded transition-colors"
-            >
-              Exit
-            </button>
+            <div className="text-yellow-100 font-bold text-sm">REPLAY MODE</div>
+            <ExitReplayButton onClick={handleExit} />
           </div>
 
           {/* Progress */}
@@ -66,17 +60,12 @@ export const ReplayControls = observer(() => {
 
           {/* Controls */}
           <div className="flex gap-2">
-            <button
+            <NextCommandButton
               onClick={handleNext}
               disabled={!hasNext || isExecuting}
-              className={`flex-1 px-6 py-3 rounded-lg font-bold text-lg transition-all ${
-                hasNext && !isExecuting
-                  ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg hover:shadow-xl'
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {isExecuting ? 'Executing...' : hasNext ? 'Next →' : 'Finished'}
-            </button>
+              isExecuting={isExecuting}
+              hasNext={hasNext}
+            />
           </div>
         </div>
       </div>

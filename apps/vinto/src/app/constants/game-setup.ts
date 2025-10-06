@@ -5,6 +5,7 @@ import { Rank } from '../shapes';
 
 export interface CardConfig {
   rank: Rank;
+  name: string;
   value: number;
   shortDescription: string;
   longDescription: string;
@@ -31,6 +32,7 @@ export const ALL_RANKS: Rank[] = [
 export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   '2': {
     rank: '2',
+    name: 'Two',
     value: 2,
     shortDescription: '',
     longDescription: '',
@@ -38,6 +40,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '3': {
     rank: '3',
+    name: 'Three',
     value: 3,
     shortDescription: '',
     longDescription: '',
@@ -45,6 +48,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '4': {
     rank: '4',
+    name: 'Four',
     value: 4,
     shortDescription: '',
     longDescription: '',
@@ -52,6 +56,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '5': {
     rank: '5',
+    name: 'Five',
     value: 5,
     shortDescription: '',
     longDescription: '',
@@ -59,6 +64,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '6': {
     rank: '6',
+    name: 'Six',
     value: 6,
     shortDescription: '',
     longDescription: '',
@@ -66,6 +72,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '7': {
     rank: '7',
+    name: 'Seven',
     value: 7,
     shortDescription: 'Peek 1 of your cards',
     longDescription: 'Peek at one of your own cards',
@@ -74,6 +81,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '8': {
     rank: '8',
+    name: 'Eight',
     value: 8,
     shortDescription: 'Peek 1 of your cards',
     longDescription: 'Peek at one of your own cards',
@@ -82,6 +90,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '9': {
     rank: '9',
+    name: 'Nine',
     value: 9,
     shortDescription: 'Peek 1 opponent card',
     longDescription: 'Peek at one card of another player',
@@ -90,6 +99,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   '10': {
     rank: '10',
+    name: 'Ten',
     value: 10,
     shortDescription: 'Peek 1 opponent card',
     longDescription: 'Peek at one card of another player',
@@ -98,6 +108,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   J: {
     rank: 'J',
+    name: 'Jack',
     value: 10,
     shortDescription: 'Swap 2 face-down cards',
     longDescription: 'Swap any two facedown cards on the table',
@@ -106,6 +117,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   Q: {
     rank: 'Q',
+    name: 'Queen',
     value: 10,
     shortDescription: 'Peek 2 cards, swap optional',
     longDescription:
@@ -115,6 +127,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   K: {
     rank: 'K',
+    name: 'King',
     value: 0,
     shortDescription: "Declare any card's action",
     longDescription: 'Declare another card action from any player (7-A)',
@@ -123,6 +136,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   A: {
     rank: 'A',
+    name: 'Ace',
     value: 1,
     shortDescription: 'Force opponent to draw',
     longDescription: 'Force an opponent to draw a penalty card',
@@ -131,6 +145,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
   },
   Joker: {
     rank: 'Joker',
+    name: 'Joker',
     value: -1,
     shortDescription: '',
     longDescription: '',
@@ -159,6 +174,9 @@ export function getCardValue(rank: Rank): number {
   return CARD_CONFIGS[rank].value;
 }
 
+export function getCardName(rank: Rank): string {
+  return CARD_CONFIGS[rank].name;
+}
 export function hasAction(rank: Rank): boolean {
   return CARD_CONFIGS[rank].shortDescription !== '';
 }
