@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { Eye, Search, Repeat, Crown, Target, Sparkles, Zap, Trash2, Trophy, Hourglass } from 'lucide-react';
 import { HelpPopover } from './help-popover';
 import type { Card, Player, Rank } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
@@ -42,8 +43,9 @@ const SetupPhaseIndicator = observer(
     <div className="w-full h-full px-2 py-1.5">
       <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col justify-center">
         <div className="text-center space-y-1">
-          <div className="text-xs font-semibold text-gray-800 leading-tight">
-            🔍 Memory Phase
+          <div className="text-xs font-semibold text-gray-800 leading-tight flex items-center justify-center gap-1">
+            <Eye size={14} />
+            <span>Memory Phase</span>
           </div>
           <div className="text-xs text-gray-700 leading-tight">
             Click any 2 of your cards to memorize them. They will be hidden
@@ -102,11 +104,12 @@ Skip toss-in and proceed to next player's turn`;
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <h3 className="text-xs font-semibold text-gray-800 leading-tight">
-                ⚡ Toss-in Time!
+              <h3 className="text-xs font-semibold text-gray-800 leading-tight flex items-center gap-1">
+                <Zap size={14} />
+                <span>Toss-in Time!</span>
                 {isCurrentPlayerWaiting && currentPlayer && (
-                  <span className="text-gray-600 ml-1">
-                    <span className="animate-spin inline-block">⏳</span>{' '}
+                  <span className="text-gray-600 ml-1 flex items-center gap-1">
+                    <Hourglass size={12} className="animate-spin" />
                     {currentPlayer.name}
                   </span>
                 )}
@@ -143,8 +146,9 @@ Skip toss-in and proceed to next player's turn`;
 
                 {/* Call Vinto - Special Action */}
                 <div className="space-y-1">
-                  <div className="text-xs text-center text-orange-700 font-semibold leading-tight">
-                    🏆 Special Action
+                  <div className="text-xs text-center text-orange-700 font-semibold leading-tight flex items-center justify-center gap-1">
+                    <Trophy size={14} />
+                    <span>Special Action</span>
                   </div>
                   <CallVintoButton
                     onClick={() => gamePhaseStore.openVintoConfirmation()}
@@ -173,7 +177,7 @@ const getActionInfo = (
   switch (actionContext.targetType) {
     case 'own-card':
       return {
-        icon: '👁️',
+        icon: <Eye size={14} />,
         title: `${actionPlayer} ${isHuman ? 'are' : 'is'} peeking at own card`,
         description: isHuman
           ? 'Click one of your cards to peek at it'
@@ -181,7 +185,7 @@ const getActionInfo = (
       };
     case 'opponent-card':
       return {
-        icon: '🔍',
+        icon: <Search size={14} />,
         title: `${actionPlayer} ${
           isHuman ? 'are' : 'is'
         } peeking at opponent card`,
@@ -191,7 +195,7 @@ const getActionInfo = (
       };
     case 'swap-cards':
       return {
-        icon: '🔀',
+        icon: <Repeat size={14} />,
         title: `${actionPlayer} ${isHuman ? 'are' : 'is'} swapping cards`,
         description: isHuman
           ? 'Click two cards to swap them (any player)'
@@ -199,7 +203,7 @@ const getActionInfo = (
       };
     case 'peek-then-swap':
       return {
-        icon: '👑',
+        icon: <Crown size={14} />,
         title: `${actionPlayer} ${isHuman ? 'are' : 'is'} using Queen action`,
         description: isHuman
           ? peekTargetsLength < 2
@@ -209,7 +213,7 @@ const getActionInfo = (
       };
     case 'force-draw':
       return {
-        icon: '🎯',
+        icon: <Target size={14} />,
         title: `${actionPlayer} ${
           isHuman ? 'are' : 'is'
         } forcing a player to draw`,
@@ -219,7 +223,7 @@ const getActionInfo = (
       };
     case 'declare-action':
       return {
-        icon: '👑',
+        icon: <Crown size={14} />,
         title: `${actionPlayer} ${
           isHuman ? 'are' : 'is'
         } declaring King action`,
@@ -229,7 +233,7 @@ const getActionInfo = (
       };
     default:
       return {
-        icon: '🎴',
+        icon: <Sparkles size={14} />,
         title: `${actionPlayer} ${isHuman ? 'are' : 'is'} performing an action`,
         description: actionContext.action || 'Action in progress...',
       };
@@ -266,8 +270,9 @@ const ActionExecutionIndicator = observer(
       <div className="w-full px-2 py-1">
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 shadow-sm">
           <div className="text-center">
-            <div className="text-xs font-semibold text-purple-800 leading-tight">
-              {actionInfo.icon} {actionInfo.title}
+            <div className="text-xs font-semibold text-purple-800 leading-tight flex items-center justify-center gap-1">
+              {actionInfo.icon}
+              <span>{actionInfo.title}</span>
             </div>
             <div className="text-xs text-purple-700 leading-tight mt-0.5">
               {actionInfo.description}
@@ -436,8 +441,9 @@ const SwapPositionIndicator = observer(
           {/* Header with help button */}
           <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-gray-800 leading-tight">
-                🔄 Click your card to swap
+              <div className="text-xs font-semibold text-gray-800 leading-tight flex items-center gap-1">
+                <Repeat size={14} />
+                <span>Click your card to swap</span>
               </div>
             </div>
             <HelpPopover title="Swap Card" content={getHelpContent()} />

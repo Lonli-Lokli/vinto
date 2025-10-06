@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(find:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cat:*)"
     ],
     "deny": [
       "Bash(npx tsc:*)",

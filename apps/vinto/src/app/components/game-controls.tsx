@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
+import { Zap } from 'lucide-react';
 import { HelpPopover } from './help-popover';
 import {
   useGameStore,
@@ -11,7 +12,7 @@ import {
   useDeckStore,
   useTossInStore,
 } from './di-provider';
-import { DrawCardButton, UseActionButton } from './ui/button';
+import { DrawCardButton } from './ui/button';
 
 export const GameControls = observer(() => {
   const gameStore = useGameStore();
@@ -168,7 +169,7 @@ const FullTurnControls = ({
           } font-semibold rounded shadow-sm transition-colors flex flex-col items-center justify-center py-1.5 px-2 text-xs min-h-[36px]`}
         >
           <div className="flex items-center gap-1">
-            <span>⚡</span>
+            <Zap size={14} />
             <span>{discardInfo.text}</span>
           </div>
           {!canTakeDiscard && discardInfo.subtitle && (

@@ -2,6 +2,22 @@
 'use client';
 
 import React from 'react';
+import {
+  Zap,
+  Repeat,
+  Trash2,
+  Trophy,
+  Play,
+  ChevronRight,
+  Settings,
+  Crown,
+  Target,
+  RotateCcw,
+  X,
+  HelpCircle,
+  Sparkles,
+  ArrowRight
+} from 'lucide-react';
 import { getButtonClasses, ButtonAction } from '../../constants/button-colors';
 import { Avatar } from '../avatar';
 
@@ -76,7 +92,7 @@ export const DrawCardButton = ({
 }) => (
   <Button
     variant="draw-card"
-    icon="🎴"
+    icon={<Sparkles size={14} />}
     onClick={onClick}
     disabled={disabled}
     className={className}
@@ -99,7 +115,7 @@ export const UseActionButton = ({
 }) => (
   <Button
     variant="use-action"
-    icon="⚡"
+    icon={<Zap size={14} />}
     onClick={onClick}
     disabled={disabled}
     className={className}
@@ -121,7 +137,7 @@ export const SwapButton = ({
 }) => (
   <Button
     variant="swap"
-    icon="🔄"
+    icon={<Repeat size={14} />}
     onClick={onClick}
     disabled={disabled}
     className={className}
@@ -145,7 +161,7 @@ export const DiscardButton = ({
 }) => (
   <Button
     variant="discard"
-    icon="🗑️"
+    icon={<Trash2 size={14} />}
     onClick={onClick}
     disabled={disabled}
     fullWidth={fullWidth}
@@ -170,7 +186,7 @@ export const CallVintoButton = ({
 }) => (
   <Button
     variant="call-vinto"
-    icon="🏆"
+    icon={<Trophy size={14} />}
     onClick={onClick}
     disabled={disabled}
     fullWidth={fullWidth}
@@ -222,7 +238,10 @@ export const ContinueButton = ({
     fullWidth={fullWidth}
     className={`px-3 whitespace-nowrap ${fullWidth ? '' : 'flex-shrink-0'} ${className}`}
   >
-    {children} ▶
+    <span className="flex items-center gap-1">
+      {children}
+      <ChevronRight size={14} />
+    </span>
   </Button>
 );
 
@@ -260,7 +279,7 @@ export const SkipButton = ({
 }) => (
   <Button
     variant="skip"
-    icon="⏭️"
+    icon={<ArrowRight size={14} />}
     onClick={onClick}
     disabled={disabled}
     fullWidth={fullWidth}
@@ -283,7 +302,7 @@ export const ResetButton = ({
 }) => (
   <Button
     variant="reset"
-    icon="🔄"
+    icon={<RotateCcw size={14} />}
     onClick={onClick}
     disabled={disabled}
     className={className}
@@ -327,7 +346,7 @@ export const QueenSwapButton = ({
 }) => (
   <Button
     variant="swap"
-    icon="🔄"
+    icon={<Repeat size={14} />}
     onClick={onClick}
     disabled={disabled}
     className={className}
@@ -378,10 +397,10 @@ export const SettingsButton = React.forwardRef<
   <button
     ref={ref}
     onClick={onClick}
-    className={`px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition-colors ${className}`}
+    className={`px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition-colors flex items-center justify-center ${className}`}
     title="Settings"
   >
-    ⚙️
+    <Settings size={16} />
   </button>
 ));
 
@@ -551,7 +570,7 @@ export const OpponentSelectButton = ({
         'swap'
       )} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px] ${className}`}
     >
-      <span>🎯</span>
+      <Target size={18} />
       <span>{opponentName}</span>
     </button>
   );
