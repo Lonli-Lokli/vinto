@@ -11,6 +11,7 @@ import { ICommand, CommandResult, CommandData } from './command';
 export class CommandHistory {
   private history: CommandResult[] = [];
   private maxHistorySize = 1000; // Prevent memory issues
+  private currentTurnStartIndex = 0; // Track where the current turn starts
 
   constructor() {
     makeAutoObservable(this);
@@ -156,13 +157,22 @@ export class CommandHistory {
   }
 
   /**
-   * Get recent player actions with their details for display in UI
+   * Get player actions from the current turn (since last turn boundary)
    * Returns actions with playerId and description so component can filter by bot/human
    */
-  getRecentPlayerActions(count = 10): Array<{ playerId: string | undefined; description: string }> {
-   
+  getRecentPlayerActions(): Array<{
+    playerId: string | undefined;
+    description: string;
+  }> {
+    console.log('[CommandHistory] Getting actions from turn start:', {
+      currentTurnStartIndex: this.currentTurnStartIndex,
+      totalHistory: this.history.length,
+    });
 
-    const filtered = this.history.filter((result) => {
+    // Get commands from current turn start to end
+    const currentTurnCommands = this.history.slice(this.currentTurnStartIndex);
+
+    const filtered = currentTurnCommands.filter((result) => {
       if (!result.success) {
         return false;
       }
@@ -170,40 +180,73 @@ export class CommandHistory {
       // Check both top-level playerId and payload.playerId
       const playerId = data.playerId || data.payload?.playerId;
       const hasPlayerId = !!playerId;
+      console.log('[CommandHistory] Checking command:', {
+        type: data.type,
+        playerId,
+        hasPlayerId,
+      });
       // Only include commands that have a playerId (player-initiated actions)
       return hasPlayerId;
     });
 
-    const actions = filtered
-      .slice(-count) // Get last N actions
-      .map((result) => {
-        const data = result.command.toData();
-        // Check both top-level playerId and payload.playerId
-        const playerId = data.playerId || data.payload?.playerId;
+    const actions = filtered.map((result) => {
+      const data = result.command.toData();
+      // Check both top-level playerId and payload.playerId
+      const playerId = data.playerId || data.payload?.playerId;
 
-        // Use detailed description if available, otherwise fall back to basic description
-        const description = result.command.getDetailedDescription
-          ? result.command.getDetailedDescription()
-          : result.command.getDescription();
+      // Use detailed description if available, otherwise fall back to basic description
+      const description = result.command.getDetailedDescription
+        ? result.command.getDetailedDescription()
+        : result.command.getDescription();
 
-        return {
-          playerId,
-          description,
-        };
+      console.log('[CommandHistory] Action from current turn:', {
+        playerId,
+        description,
       });
 
-    console.log('[CommandHistory] Returning actions:', actions);
+      return {
+        playerId,
+        description,
+      };
+    });
+
+    console.log(
+      '[CommandHistory] Returning actions from current turn:',
+      actions
+    );
     return actions;
   }
 
   /**
-   * Clear recent actions (useful when starting new toss-in period)
+   * Mark turn boundary - called when a new turn starts
+   * Sets the index where the current turn begins in history
+   */
+  markTurnBoundary() {
+    this.currentTurnStartIndex = this.history.length;
+    console.log(
+      '[CommandHistory] Marked turn boundary at index:',
+      this.currentTurnStartIndex
+    );
+
+    // Keep only the last 50 commands to prevent memory bloat
+    if (this.history.length > 100) {
+      const removed = this.history.length - 50;
+      this.history = this.history.slice(-50);
+      this.currentTurnStartIndex = Math.max(
+        0,
+        this.currentTurnStartIndex - removed
+      );
+      console.log(
+        '[CommandHistory] Trimmed history, new turn start index:',
+        this.currentTurnStartIndex
+      );
+    }
+  }
+
+  /**
+   * @deprecated Use markTurnBoundary() instead
    */
   clearRecentActions() {
-    // Keep only the last 50 commands to prevent memory bloat
-    // This effectively "clears" old actions while preserving recent history
-    if (this.history.length > 50) {
-      this.history = this.history.slice(-50);
-    }
+    this.markTurnBoundary();
   }
 }

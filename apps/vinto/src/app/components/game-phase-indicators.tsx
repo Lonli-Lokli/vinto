@@ -96,20 +96,26 @@ const TossInIndicator = observer(
     const commandHistory = useCommandHistory();
     const playerStore = usePlayerStore();
 
-    // Get recent actions and filter for bot actions only
-    const recentActions = commandHistory.getRecentPlayerActions(10);
+    // Get actions from current turn and filter for bot actions only
+    const recentActions = commandHistory.getRecentPlayerActions();
+    console.log('[TossInIndicator] Actions from current turn:', recentActions);
 
     const recentBotActions = recentActions
       .filter((action) => {
         if (!action.playerId) return false;
         const player = playerStore.getPlayer(action.playerId);
         const isBot = player && player.isBot;
-        
+        console.log('[TossInIndicator] Filtering action:', {
+          playerId: action.playerId,
+          playerName: player?.name,
+          isBot,
+          description: action.description,
+        });
         return isBot;
       })
-      .slice(-3) // Get last 3 bot actions
       .map((action) => action.description);
 
+    console.log('[TossInIndicator] Bot actions to display:', recentBotActions);
 
     const getHelpContent = () => {
       return `⚡ Toss-in Phase: After a card is discarded, all players can toss in matching cards from their hand.

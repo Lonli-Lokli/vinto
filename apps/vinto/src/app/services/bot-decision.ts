@@ -1,12 +1,5 @@
 // services/bot-decision.ts
-import {
-  Card,
-  Rank,
-  Difficulty,
-  GameState,
-  Player,
-  NeverError,
-} from '../shapes';
+import { Card, Rank, Difficulty, GameState, Player } from '../shapes';
 
 export interface BotDecisionContext {
   botId: string;
@@ -923,16 +916,22 @@ export class HardBotDecisionService extends StandardBotDecisionService {
 // Factory for creating bot decision services
 export class BotDecisionServiceFactory {
   static create(difficulty: Difficulty): BotDecisionService {
-    switch (difficulty) {
-      case 'easy':
-        return new BasicBotDecisionService();
-      case 'moderate':
-        return new ModerateBotDecisionService();
-      case 'hard':
-        return new HardBotDecisionService();
-      default:
-        throw new NeverError(difficulty);
-    }
+    // Use MCTS bot for all difficulties
+    // Difficulty controls memory accuracy and MCTS iterations, not decision quality
+    const { MCTSBotDecisionService } = require('./mcts-bot-decision');
+    return new MCTSBotDecisionService(difficulty);
+
+    // Legacy heuristic bots (kept for reference)
+    // switch (difficulty) {
+    //   case 'easy':
+    //     return new BasicBotDecisionService();
+    //   case 'moderate':
+    //     return new ModerateBotDecisionService();
+    //   case 'hard':
+    //     return new HardBotDecisionService();
+    //   default:
+    //     throw new NeverError(difficulty);
+    // }
   }
 
   static createCustom(config: {
