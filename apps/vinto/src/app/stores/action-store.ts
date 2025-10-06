@@ -3,6 +3,7 @@
 import { injectable } from 'tsyringe';
 import { makeAutoObservable } from 'mobx';
 import { Card, Rank } from '../shapes';
+import { getActionExplanation } from '../utils/card-helper';
 
 export type TargetType =
   | 'own-card'
@@ -90,7 +91,7 @@ export class ActionStore {
     if (this.actionContext) {
       this.actionContext.declaredCard = rank;
       this.actionContext.targetType = this.getTargetType(rank);
-      this.actionContext.action = this.getActionDescription(rank);
+      this.actionContext.action = getActionExplanation(rank);
     }
   }
 
@@ -210,11 +211,6 @@ export class ActionStore {
       default:
         return 'own-card';
     }
-  }
-
-  private getActionDescription(rank: Rank): string {
-    const { getCardLongDescription } = require('../constants/game-setup');
-    return getCardLongDescription(rank) || 'Unknown action';
   }
 
   // State queries

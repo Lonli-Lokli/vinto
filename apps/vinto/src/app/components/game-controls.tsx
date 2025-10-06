@@ -39,6 +39,7 @@ export const GameControls = observer(() => {
   const getControlContent = () => {
     // Hide controls during special game states
     // Note: isChoosingCardAction is now handled by GamePhaseIndicators (CardDrawnIndicator)
+    // Note: waitingForTossIn is now handled by GamePhaseIndicators (TossInIndicator)
     const shouldHide =
       (phase !== 'playing' && phase !== 'final') ||
       isSelectingSwapPosition ||
@@ -47,23 +48,11 @@ export const GameControls = observer(() => {
       finalTurnTriggered ||
       isAwaitingActionTarget ||
       isTossQueueProcessing ||
+      waitingForTossIn ||
       currentPlayer?.isBot;
 
     if (shouldHide) {
       return { type: 'hidden' };
-    }
-
-    // Show vinto-only controls during toss-in phase after human turn
-    // or when business logic specifically allows it
-    const showVintoOnly =
-      waitingForTossIn || gameStore.canCallVintoAfterHumanTurn;
-
-    if (showVintoOnly) {
-      return {
-        type: 'vinto-only',
-        title: "Call Vinto before next player's turn",
-        subtitle: 'End the game and start final scoring',
-      };
     }
 
     // Show full controls only for human player's turn
@@ -88,19 +77,11 @@ export const GameControls = observer(() => {
   }
 
   const getHelpContent = () => {
-    if (controlContent.type === 'full-controls') {
-      return `🎯 Draw New: Draw a new card from the deck
+    return `🎯 Draw New: Draw a new card from the deck
 
 ♻️ Play Card: Take an unplayed action card from the discard pile (7-K only, not on first turn)
 
 Note: Call Vinto option will be available after you complete your turn during the toss-in phase`;
-    }
-    if (controlContent.type === 'vinto-only') {
-      return `🏆 Call Vinto: Call Vinto before the next player's turn to end the game and start final scoring
-
-You can also toss in matching cards or click Continue to proceed to the next player's turn`;
-    }
-    return '';
   };
 
   // Single consistent container for all states
@@ -117,30 +98,12 @@ You can also toss in matching cards or click Continue to proceed to the next pla
 
         {/* Main content area - responsive to content type */}
         <div className="flex flex-col justify-center flex-1 min-h-0">
-          {controlContent.type === 'vinto-only' && <VintoOnlyControls />}
-
-          {controlContent.type === 'full-controls' && (
-            <FullTurnControls handleDrawCard={handleDrawCard} />
-          )}
+          <FullTurnControls handleDrawCard={handleDrawCard} />
         </div>
       </div>
     </div>
   );
 });
-
-// Sub-components for different control states
-const VintoOnlyControls = () => {
-  const gamePhaseStore = useGamePhaseStore();
-  return (
-    <div className="space-y-1">
-      <CallVintoButton
-        onClick={() => gamePhaseStore.openVintoConfirmation()}
-        fullWidth
-        className="py-1.5 px-3"
-      />
-    </div>
-  );
-};
 
 const FullTurnControls = ({
   handleDrawCard,

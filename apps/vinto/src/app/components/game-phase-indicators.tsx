@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import type { Card, Player } from '../shapes';
+import type { Card, Player, Rank } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
 import {
   useGameStore,
@@ -22,6 +22,7 @@ import {
   StartGameButton,
   ContinueButton,
   DiscardInsteadButton,
+  CallVintoButton,
 } from './ui/button';
 import {
   getActionExplanation,
@@ -73,43 +74,88 @@ const TossInIndicator = observer(
     currentPlayer,
     isCurrentPlayerWaiting,
   }: {
-    topDiscardRank: string;
+    topDiscardRank?: Rank;
     onContinue: () => void;
     currentPlayer: Player | null;
     isCurrentPlayerWaiting: boolean;
-  }) => (
-    <div className="w-full h-full px-2 py-1.5">
-      <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-row items-center">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full min-w-0">
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="flex flex-row items-center gap-1 justify-center sm:justify-start">
-              <div className="text-xs font-semibold text-gray-800 leading-tight">
+  }) => {
+    const gamePhaseStore = useGamePhaseStore();
+
+    const getHelpContent = () => {
+      return `⚡ Toss-in Phase: After a card is discarded, all players can toss in matching cards from their hand.
+
+🎯 How it works:
+• Click matching cards to toss them in
+• Wrong card = penalty card draw
+• Click Continue when done
+
+🏆 Call Vinto:
+A special action to end the game if you think you have the lowest score. Use carefully - if you don't have the lowest score, you get penalty points!
+
+⏭️ Continue:
+Skip toss-in and proceed to next player's turn`;
+    };
+
+    return (
+      <div className="w-full h-full px-2 py-1">
+        <div className="bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xs font-semibold text-gray-800 leading-tight">
                 ⚡ Toss-in Time!
-              </div>
-              {isCurrentPlayerWaiting && currentPlayer && (
-                <div className="text-xs text-gray-600 flex flex-row items-center gap-1 leading-tight">
-                  <span className="animate-spin">⏳</span>
-                  <span className="line-clamp-1">
-                    {currentPlayer.name}&apos;s turn
+                {isCurrentPlayerWaiting && currentPlayer && (
+                  <span className="text-gray-600 ml-1">
+                    <span className="animate-spin inline-block">⏳</span>{' '}
+                    {currentPlayer.name}
                   </span>
-                </div>
-              )}
+                )}
+              </h3>
+              <div className="text-xs text-gray-600 leading-tight">
+                Toss matching{' '}
+                {topDiscardRank ? (
+                  <span className="text-sm font-bold text-gray-900 leading-tight">
+                    {getCardName(topDiscardRank)}
+                  </span>
+                ) : (
+                  'cards'
+                )}{' '}
+                • Wrong = penalty
+              </div>
             </div>
-            <div className="text-xs text-gray-700 leading-tight">
-              {topDiscardRank
-                ? `Toss matching ${topDiscardRank} cards`
-                : 'Toss matching cards'}{' '}
-              or continue
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">
-              Wrong guess = penalty card
-            </div>
+            <HelpPopover title="Toss-in Phase" content={getHelpContent()} />
           </div>
-          <ContinueButton onClick={onContinue} />
+
+          {/* Main Actions */}
+          {isCurrentPlayerWaiting && currentPlayer && currentPlayer.isHuman && (
+            <div className="flex-1 flex flex-col justify-center min-h-0 space-y-1.5">
+              {/* Continue Button */}
+              <ContinueButton onClick={onContinue} fullWidth />
+
+              {/* Divider */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 border-t border-gray-300"></div>
+                <span className="text-xs text-gray-500 font-medium">or</span>
+                <div className="flex-1 border-t border-gray-300"></div>
+              </div>
+
+              {/* Call Vinto - Special Action */}
+              <div className="space-y-1">
+                <div className="text-xs text-center text-orange-700 font-semibold leading-tight">
+                  🏆 Special Action
+                </div>
+                <CallVintoButton
+                  onClick={() => gamePhaseStore.openVintoConfirmation()}
+                  fullWidth
+                  className="py-1.5 px-2"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  )
+    );
+  }
 );
 
 TossInIndicator.displayName = 'TossInIndicator';
@@ -412,7 +458,9 @@ export const GamePhaseIndicators = observer(() => {
   // Toss-in Period
   if (waitingForTossIn) {
     const topDiscardRank =
-      discardPile.length > 0 ? discardPile[discardPile.length - 1].rank : '';
+      discardPile.length > 0
+        ? discardPile[discardPile.length - 1].rank
+        : undefined;
     return (
       <TossInIndicator
         topDiscardRank={topDiscardRank}

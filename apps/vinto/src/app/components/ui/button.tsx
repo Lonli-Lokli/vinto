@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { getButtonClasses, ButtonAction } from '../../constants/button-colors';
+import { Avatar } from '../avatar';
 
 /**
  * Button Design System
@@ -204,11 +205,13 @@ export const StartGameButton = ({
 export const ContinueButton = ({
   onClick,
   disabled = false,
+  fullWidth = false,
   className = '',
   children = 'Continue',
 }: {
   onClick: () => void;
   disabled?: boolean;
+  fullWidth?: boolean;
   className?: string;
   children?: React.ReactNode;
 }) => (
@@ -216,7 +219,8 @@ export const ContinueButton = ({
     variant="continue-toss"
     onClick={onClick}
     disabled={disabled}
-    className={`px-3 whitespace-nowrap flex-shrink-0 ${className}`}
+    fullWidth={fullWidth}
+    className={`px-3 whitespace-nowrap ${fullWidth ? '' : 'flex-shrink-0'} ${className}`}
   >
     {children} ▶
   </Button>
@@ -244,11 +248,13 @@ export const DiscardInsteadButton = ({
 export const SkipButton = ({
   onClick,
   disabled = false,
+  fullWidth = false,
   className = '',
   children = 'Skip',
 }: {
   onClick: () => void;
   disabled?: boolean;
+  fullWidth?: boolean;
   className?: string;
   children?: React.ReactNode;
 }) => (
@@ -257,6 +263,7 @@ export const SkipButton = ({
     icon="⏭️"
     onClick={onClick}
     disabled={disabled}
+    fullWidth={fullWidth}
     className={className}
   >
     {children}
@@ -503,24 +510,52 @@ export const TryAgainButton = ({
 export const OpponentSelectButton = ({
   opponentName,
   onClick,
-  icon = '🎯',
+  showAvatar = false,
+  player,
+  isSelected = false,
   className = '',
 }: {
   opponentName: string;
   onClick: () => void;
-  icon?: string;
+  showAvatar?: boolean;
+  player?: any; // Player object for Avatar component
+  isSelected?: boolean;
   className?: string;
-}) => (
-  <button
-    onClick={onClick}
-    className={`${getButtonClasses(
-      'swap'
-    )} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px] ${className}`}
-  >
-    <span>{icon}</span>
-    <span>{opponentName}</span>
-  </button>
-);
+}) => {
+  if (showAvatar && player) {
+    const borderClass = isSelected
+      ? 'border-2 border-blue-400 bg-blue-50'
+      : 'border-2 border-gray-200 bg-transparent hover:bg-gray-50';
+
+    return (
+      <button
+        onClick={onClick}
+        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg ${borderClass} transition-all active:scale-95 ${className}`}
+      >
+        {/* Avatar Image - md size */}
+        <div className="flex items-center justify-center">
+          <Avatar player={player} size="md" />
+        </div>
+        {/* Player Name */}
+        <div className="text-xs font-medium text-gray-800 text-center line-clamp-1 w-full">
+          {opponentName}
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={`${getButtonClasses(
+        'swap'
+      )} py-3 px-4 rounded-lg text-base flex flex-row items-center justify-center gap-2 min-h-[44px] ${className}`}
+    >
+      <span>🎯</span>
+      <span>{opponentName}</span>
+    </button>
+  );
+};
 
 /**
  * Rank Declaration Button

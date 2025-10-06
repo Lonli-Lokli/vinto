@@ -292,10 +292,11 @@ export class HumanActionHandler {
     const player = this.playerStore.getPlayer(playerId);
     if (!player) return false;
 
-    // Only allow confirmation for peek actions that are waiting
+    // Only allow confirmation for peek actions and force-draw that are waiting
     if (
       context.targetType !== 'own-card' &&
-      context.targetType !== 'opponent-card'
+      context.targetType !== 'opponent-card' &&
+      context.targetType !== 'force-draw'
     ) {
       return false;
     }
