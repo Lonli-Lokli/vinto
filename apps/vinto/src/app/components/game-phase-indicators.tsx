@@ -127,31 +127,34 @@ Skip toss-in and proceed to next player's turn`;
           </div>
 
           {/* Main Actions */}
-          {isCurrentPlayerWaiting && currentPlayer && currentPlayer.isHuman && (
-            <div className="flex-1 flex flex-col justify-center min-h-0 space-y-1.5">
-              {/* Continue Button */}
-              <ContinueButton onClick={onContinue} fullWidth />
 
-              {/* Divider */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 border-t border-gray-300"></div>
-                <span className="text-xs text-gray-500 font-medium">or</span>
-                <div className="flex-1 border-t border-gray-300"></div>
-              </div>
+          <div className="flex-1 flex flex-col justify-center min-h-0 space-y-1.5">
+            {/* Continue Button */}
+            <ContinueButton onClick={onContinue} fullWidth />
 
-              {/* Call Vinto - Special Action */}
-              <div className="space-y-1">
-                <div className="text-xs text-center text-orange-700 font-semibold leading-tight">
-                  🏆 Special Action
+            {currentPlayer && currentPlayer.isHuman && (
+              <>
+                {/* Divider */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 border-t border-gray-300"></div>
+                  <span className="text-xs text-gray-500 font-medium">or</span>
+                  <div className="flex-1 border-t border-gray-300"></div>
                 </div>
-                <CallVintoButton
-                  onClick={() => gamePhaseStore.openVintoConfirmation()}
-                  fullWidth
-                  className="py-1.5 px-2"
-                />
-              </div>
-            </div>
-          )}
+
+                {/* Call Vinto - Special Action */}
+                <div className="space-y-1">
+                  <div className="text-xs text-center text-orange-700 font-semibold leading-tight">
+                    🏆 Special Action
+                  </div>
+                  <CallVintoButton
+                    onClick={() => gamePhaseStore.openVintoConfirmation()}
+                    fullWidth
+                    className="py-1.5 px-2"
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -413,18 +416,41 @@ CardDrawnIndicator.displayName = 'CardDrawnIndicator';
 
 // Swap Position Selector Component
 const SwapPositionIndicator = observer(
-  ({ onDiscard }: { onDiscard: () => void }) => (
-    <div className="w-full px-2 py-1">
-      <div className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-row items-center gap-2">
-        <div className="flex-1 text-center sm:text-left min-w-0">
-          <div className="text-xs font-semibold text-gray-800 leading-tight">
-            🔄 Click your card to swap
+  ({ onDiscard }: { onDiscard: () => void }) => {
+    const getHelpContent = () => {
+      return `🔄 Swap Card: Replace one of your cards with the drawn card
+
+🎯 How it works:
+• Click any of your 4 cards to replace it
+• The replaced card goes to the discard pile
+• The drawn card takes its place in your hand
+
+🗑️ Discard Instead:
+• Discard the drawn card without swapping
+• Keep all your current cards`;
+    };
+
+    return (
+      <div className="w-full h-full px-2 py-1">
+        <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col">
+          {/* Header with help button */}
+          <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-gray-800 leading-tight">
+                🔄 Click your card to swap
+              </div>
+            </div>
+            <HelpPopover title="Swap Card" content={getHelpContent()} />
+          </div>
+
+          {/* Action button */}
+          <div className="flex items-center justify-center flex-1 min-h-0">
+            <DiscardInsteadButton onClick={onDiscard} />
           </div>
         </div>
-        <DiscardInsteadButton onClick={onDiscard} />
       </div>
-    </div>
-  )
+    );
+  }
 );
 
 SwapPositionIndicator.displayName = 'SwapPositionIndicator';
@@ -459,7 +485,7 @@ export const GamePhaseIndicators = observer(() => {
   if (waitingForTossIn) {
     const topDiscardRank =
       discardPile.length > 0
-        ? discardPile[discardPile.length - 1].rank
+        ? discardPile[0].rank
         : undefined;
     return (
       <TossInIndicator

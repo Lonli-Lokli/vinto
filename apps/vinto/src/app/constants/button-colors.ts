@@ -52,7 +52,7 @@ export const BUTTON_COLORS = {
     bg: '#BDC3C7',
     text: '#FFFFFF',
     opacity: 0.6,
-    classes: 'bg-[#95A5A6] text-white opacity-60 cursor-not-allowed',
+    classes: 'bg-gray-300 text-gray-600 cursor-not-allowed',
   },
 } as const;
 
