@@ -14,6 +14,7 @@ import {
   CardAnimationStore,
 } from '../stores';
 import { GameStateManager } from '../commands';
+import { CommandHistory } from '../commands/command-history';
 
 /**
  * Store context for accessing DI-managed stores
@@ -28,6 +29,7 @@ interface StoreContextValue {
   replayStore: ReplayStore;
   cardAnimationStore: CardAnimationStore;
   gameStateManager: GameStateManager;
+  commandHistory: CommandHistory;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -54,6 +56,7 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
       replayStore: getInstance<ReplayStore>(ReplayStore),
       cardAnimationStore: getInstance<CardAnimationStore>(CardAnimationStore),
       gameStateManager: getInstance<GameStateManager>(GameStateManager),
+      commandHistory: getInstance<CommandHistory>(CommandHistory),
     };
   }, []);
 
@@ -133,4 +136,11 @@ export function useReplayStore(): ReplayStore {
  */
 export function useCardAnimationStore(): CardAnimationStore {
   return useStores().cardAnimationStore;
+}
+
+/**
+ * Hook to access commandHistory
+ */
+export function useCommandHistory(): CommandHistory {
+  return useStores().commandHistory;
 }

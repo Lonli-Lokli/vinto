@@ -92,43 +92,20 @@ export class HumanActionHandler {
     targetPlayerId: string,
     position: number
   ): boolean {
-    console.log('executePeekOpponentCard called:', {
-      actionPlayerId,
-      targetPlayerId,
-      position,
-    });
-
     const actionPlayer = this.playerStore.getPlayer(actionPlayerId);
     const targetPlayer = this.playerStore.getPlayer(targetPlayerId);
 
-    console.log('Players found:', {
-      actionPlayer: actionPlayer?.id,
-      targetPlayer: targetPlayer?.id,
-      isSamePlayer: targetPlayerId === actionPlayerId,
-    });
-
     if (!actionPlayer || !targetPlayer || targetPlayerId === actionPlayerId) {
-      console.log('executePeekOpponentCard: validation failed');
       return false;
     }
 
     if (position >= 0 && position < targetPlayer.cards.length) {
-      console.log('Making card temporarily visible:', {
-        targetPlayerId,
-        position,
-        card: targetPlayer.cards[position],
-      });
       // Make the card temporarily visible
       this.playerStore.makeCardTemporarilyVisible(targetPlayerId, position);
-      console.log(
-        'temporarilyVisibleCards after:',
-        targetPlayer.temporarilyVisibleCards
-      );
       // User must confirm to complete action
       return true;
     }
 
-    console.log('executePeekOpponentCard: position out of range');
     return false;
   }
 

@@ -165,12 +165,7 @@ export class CardAnimationStore {
       completed: false,
     };
 
-    console.log('[CardAnimationStore] Starting swap animation:', animation);
     this.activeAnimations.set(id, animation);
-    console.log(
-      '[CardAnimationStore] Active animations count:',
-      this.activeAnimations.size
-    );
     return id;
   }
 
@@ -197,13 +192,6 @@ export class CardAnimationStore {
         ? this.positionCapture.getPendingCardPosition()
         : this.positionCapture.getPlayerCardPosition(to.playerId, to.position);
 
-    console.log('[CardAnimationStore] Draw animation positions:', {
-      id,
-      fromPos,
-      toPos,
-      from,
-      to,
-    });
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -228,7 +216,6 @@ export class CardAnimationStore {
       completed: false,
     });
 
-    console.log('[CardAnimationStore] Starting draw animation:', id);
     return id;
   }
 
@@ -253,13 +240,6 @@ export class CardAnimationStore {
           );
     const toPos = this.positionCapture.getDiscardPilePosition();
 
-    console.log('[CardAnimationStore] Discard animation positions:', {
-      id,
-      fromPos,
-      toPos,
-      from,
-      to,
-    });
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -282,7 +262,6 @@ export class CardAnimationStore {
       completed: false,
     });
 
-    console.log('[CardAnimationStore] Starting discard animation:', id);
     return id;
   }
 
@@ -315,12 +294,7 @@ export class CardAnimationStore {
       y: typeof window !== 'undefined' ? window.innerHeight / 2 - 70 : 0,
     };
 
-    console.log('[CardAnimationStore] Play action animation positions:', {
-      id,
-      fromPos,
-      toPos,
-      from,
-    });
+  
 
     if (!fromPos) {
       console.warn(
@@ -343,7 +317,6 @@ export class CardAnimationStore {
       completed: false,
     });
 
-    console.log('[CardAnimationStore] Starting play-action animation:', id);
     return id;
   }
 
@@ -384,7 +357,6 @@ export class CardAnimationStore {
       completed: false,
     });
 
-    console.log('[CardAnimationStore] Starting highlight animation:', id);
     return id;
   }
 
@@ -392,12 +364,7 @@ export class CardAnimationStore {
    * Remove an animation immediately
    */
   removeAnimation(id: string) {
-    console.log('[CardAnimationStore] Removing animation:', id);
     this.activeAnimations.delete(id);
-    console.log(
-      '[CardAnimationStore] Remaining animations:',
-      this.activeAnimations.size
-    );
   }
 
   /**

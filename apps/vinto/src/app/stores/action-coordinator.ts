@@ -74,26 +74,24 @@ export class ActionCoordinator {
     const player = this.playerStore.getPlayer(playerId);
     if (!player) return false;
 
-    console.log('[ActionCoordinator] executeCardAction - START', {
-      card: card.rank,
-      playerId,
-      isHuman: player.isHuman
-    });
 
     // Start the action
     this.actionStore.startAction(card, playerId);
+
+    // Determine action type from card rank
+    const actionType = this.getActionType(card.rank);
 
     // Play action card using command - handles animation and discard
     // This is shared between human and bot players
     const playActionCommand = this.commandFactory.playActionCard(
       card,
-      playerId
+      playerId,
+      { type: actionType }
     );
     await this.commandHistory.executeCommand(playActionCommand);
 
     // Set appropriate phase
     this.phaseStore.startAwaitingAction();
-    console.log('[ActionCoordinator] Phase set to awaiting_action');
 
     // Route based on card rank
     const executed = await this.routeActionByRank(
@@ -102,7 +100,6 @@ export class ActionCoordinator {
       player.isHuman
     );
 
-    console.log('[ActionCoordinator] Action executed:', executed);
 
     if (!executed) {
       GameToastService.error(`Failed to execute ${card.rank} action`);
@@ -113,13 +110,24 @@ export class ActionCoordinator {
     // For bot players, all actions complete immediately (no user confirmation needed)
     // Exception: King requires declaration first, which is handled separately
     if (player.isBot && card.rank !== 'K') {
-      console.log('[ActionCoordinator] Bot action - calling completeAction');
       this.completeAction();
-    } else {
-      console.log('[ActionCoordinator] Human action - waiting for user input');
     }
-
     return executed;
+  }
+
+  // Map card rank to action type string
+  private getActionType(rank: Rank): string {
+    const actionTypes: Record<string, string> = {
+      '7': 'peek-own',
+      '8': 'peek-opponent',
+      '9': 'swap-cards',
+      '10': 'peek-and-swap',
+      J: 'swap-cards',
+      Q: 'peek-and-swap',
+      K: 'declare-action',
+      A: 'force-draw',
+    };
+    return actionTypes[rank] || 'unknown';
   }
 
   // Route action to human or bot handler

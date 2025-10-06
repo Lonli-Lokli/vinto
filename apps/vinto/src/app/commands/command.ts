@@ -61,6 +61,12 @@ export interface ICommand {
    * Get human-readable description for debugging
    */
   getDescription(): string;
+
+  /**
+   * Get detailed human-readable description for UI display
+   * Includes player names, targets, and action results
+   */
+  getDetailedDescription?(): string;
 }
 
 /**

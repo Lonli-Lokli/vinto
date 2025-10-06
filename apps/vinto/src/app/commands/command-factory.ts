@@ -87,13 +87,22 @@ export class CommandFactory {
     );
   }
 
-  playActionCard(card: Card, playerId: string): ICommand {
+  playActionCard(
+    card: Card,
+    playerId: string,
+    actionDetails?: { type: string; targets?: any[] }
+  ): ICommand {
+    const player = this.playerStore.getPlayer(playerId);
+    const playerName = player?.name || 'Unknown';
+
     return new PlayActionCardCommand(
       this.deckStore,
       this.actionStore,
       this.cardAnimationStore,
       card,
-      playerId
+      playerId,
+      playerName,
+      actionDetails
     );
   }
 

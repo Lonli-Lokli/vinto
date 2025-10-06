@@ -568,6 +568,9 @@ export class GameStore implements TempState {
     // Clear action state before advancing turn to ensure clean slate for next player
     this.actionStore.clearAction();
 
+    // Clear recent actions so the new turn shows fresh bot actions
+    this.commandHistory.clearRecentActions();
+
     // Execute advance turn command
     const command = this.commandFactory.advanceTurn(currentPlayer.id);
     await this.commandHistory.executeCommand(command);

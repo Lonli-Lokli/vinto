@@ -154,4 +154,56 @@ export class CommandHistory {
       return `${index + 1}. [${time}] ${status} ${desc}`;
     });
   }
+
+  /**
+   * Get recent player actions with their details for display in UI
+   * Returns actions with playerId and description so component can filter by bot/human
+   */
+  getRecentPlayerActions(count = 10): Array<{ playerId: string | undefined; description: string }> {
+   
+
+    const filtered = this.history.filter((result) => {
+      if (!result.success) {
+        return false;
+      }
+      const data = result.command.toData();
+      // Check both top-level playerId and payload.playerId
+      const playerId = data.playerId || data.payload?.playerId;
+      const hasPlayerId = !!playerId;
+      // Only include commands that have a playerId (player-initiated actions)
+      return hasPlayerId;
+    });
+
+    const actions = filtered
+      .slice(-count) // Get last N actions
+      .map((result) => {
+        const data = result.command.toData();
+        // Check both top-level playerId and payload.playerId
+        const playerId = data.playerId || data.payload?.playerId;
+
+        // Use detailed description if available, otherwise fall back to basic description
+        const description = result.command.getDetailedDescription
+          ? result.command.getDetailedDescription()
+          : result.command.getDescription();
+
+        return {
+          playerId,
+          description,
+        };
+      });
+
+    console.log('[CommandHistory] Returning actions:', actions);
+    return actions;
+  }
+
+  /**
+   * Clear recent actions (useful when starting new toss-in period)
+   */
+  clearRecentActions() {
+    // Keep only the last 50 commands to prevent memory bloat
+    // This effectively "clears" old actions while preserving recent history
+    if (this.history.length > 50) {
+      this.history = this.history.slice(-50);
+    }
+  }
 }

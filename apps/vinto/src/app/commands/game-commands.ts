@@ -440,7 +440,9 @@ export class PlayActionCardCommand extends Command {
     private actionStore: ActionStore,
     private cardAnimationStore: CardAnimationStore,
     private card: Card,
-    private playerId: string
+    private playerId: string,
+    private playerName?: string,
+    private actionDetails?: { type: string; targets?: any[] }
   ) {
     super();
   }
@@ -482,6 +484,25 @@ export class PlayActionCardCommand extends Command {
 
   getDescription(): string {
     return `Played ${this.card.rank} action`;
+  }
+
+  getDetailedDescription(): string {
+
+    if (!this.playerName || !this.actionDetails) {
+      return this.getDescription();
+    }
+
+    const {
+      formatActionDescription,
+    } = require('../utils/action-description-helper');
+    const formatted = formatActionDescription(
+      this.playerName,
+      this.card.rank,
+      this.actionDetails.type,
+      this.actionDetails.targets
+    );
+
+    return formatted;
   }
 }
 
@@ -559,14 +580,16 @@ export class ReplaceCardCommand extends Command {
       // Animation 1: Pending card (newCard) moving from DRAWN area to player's hand
       // Revealed during animation, but will be hidden once it lands
       // Only apply full rotation for side bots (left/right positions)
-      const isSideBot = player?.isBot && (player?.position === 'left' || player?.position === 'right');
+      const isSideBot =
+        player?.isBot &&
+        (player?.position === 'left' || player?.position === 'right');
       this.cardAnimationStore.startDrawAnimation(
         this.newCard,
         { type: 'drawn' },
         { type: 'player', playerId: this.playerId, position: this.position },
         1500,
         false, // Don't reveal card during swap animation
-        isSideBot  // Full 360 rotation for side bot players only
+        isSideBot // Full 360 rotation for side bot players only
       );
 
       // Animation 2: Old card from hand moving to discard pile (if it exists)
@@ -643,7 +666,7 @@ export class ReplaceCardCommand extends Command {
     const player = this.playerStore.getPlayer(this.playerId);
     return `${player?.name || this.playerId} replaced ${
       this.oldCard?.rank || '?'
-    } with ${this.newCard.rank}[${this.position}]`;
+    } with ${this.newCard.rank} [position ${this.position + 1}]`;
   }
 }
 
@@ -774,6 +797,20 @@ export class TossInCardCommand extends Command {
     return `${player?.name || this.playerId} tossed-in [${
       this.position
     }] ${status}`;
+  }
+
+  getDetailedDescription(): string {
+    const player = this.playerStore.getPlayer(this.playerId);
+    const playerName = player?.name || 'Unknown';
+
+    const {
+      formatTossInDescription,
+    } = require('../utils/action-description-helper');
+    return formatTossInDescription(
+      playerName,
+      this.matchingRank,
+      this.wasCorrect
+    );
   }
 }
 

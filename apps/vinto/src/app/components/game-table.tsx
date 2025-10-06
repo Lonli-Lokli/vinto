@@ -151,13 +151,6 @@ export const GameTable = observer(() => {
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
-    console.log('handleOpponentCardClick called:', {
-      playerId,
-      position,
-      isAwaitingActionTarget,
-      targetType: actionContext?.targetType,
-    });
-
     // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
       isAwaitingActionTarget &&
@@ -166,19 +159,8 @@ export const GameTable = observer(() => {
         actionContext?.targetType === 'peek-then-swap' ||
         actionContext?.targetType === 'swap-cards')
     ) {
-      console.log('Calling selectActionTarget');
-      const result = gameStore.selectActionTarget(playerId, position);
-      console.log('selectActionTarget result:', result);
-      return;
-    } else {
-      console.log(
-        'DEBUG - conditions not met, not calling selectActionTarget',
-        {
-          isAwaitingActionTarget,
-          targetType: actionContext?.targetType,
-        }
-      );
-    }
+      gameStore.selectActionTarget(playerId, position);
+    } 
   };
 
   const handleDrawCard = () => {

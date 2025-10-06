@@ -24,6 +24,7 @@ import {
   useTossInStore,
   useDeckStore,
   useActionStore,
+  useCommandHistory,
 } from './di-provider';
 import { Card as CardComponent } from './card';
 import {
@@ -92,6 +93,23 @@ const TossInIndicator = observer(
     isCurrentPlayerWaiting: boolean;
   }) => {
     const gamePhaseStore = useGamePhaseStore();
+    const commandHistory = useCommandHistory();
+    const playerStore = usePlayerStore();
+
+    // Get recent actions and filter for bot actions only
+    const recentActions = commandHistory.getRecentPlayerActions(10);
+
+    const recentBotActions = recentActions
+      .filter((action) => {
+        if (!action.playerId) return false;
+        const player = playerStore.getPlayer(action.playerId);
+        const isBot = player && player.isBot;
+        
+        return isBot;
+      })
+      .slice(-3) // Get last 3 bot actions
+      .map((action) => action.description);
+
 
     const getHelpContent = () => {
       return `⚡ Toss-in Phase: After a card is discarded, all players can toss in matching cards from their hand.
@@ -138,6 +156,22 @@ Skip toss-in and proceed to next player's turn`;
             </div>
             <HelpPopover title="Toss-in Phase" content={getHelpContent()} />
           </div>
+
+          {/* Bot Actions Section */}
+          {recentBotActions.length > 0 && (
+            <div className="mb-2 p-2 bg-blue-50 rounded border border-blue-200 flex-shrink-0">
+              <div className="font-semibold text-gray-700 mb-1 text-xs">
+                Recent Actions:
+              </div>
+              <div className="space-y-0.5">
+                {recentBotActions.map((action, idx) => (
+                  <div key={idx} className="text-gray-600 text-xs">
+                    • {action}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Main Actions */}
 

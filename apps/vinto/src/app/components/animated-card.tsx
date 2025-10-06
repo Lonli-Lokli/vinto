@@ -29,8 +29,6 @@ export const AnimatedCardOverlay = observer(() => {
   // This will automatically re-render when activeAnimations changes
   const animations = Array.from(animationStore.activeAnimations.values());
 
-  console.log('[AnimatedCard] Rendering with animations:', animations.length);
-
   const virtualCards: VirtualCard[] = [];
 
   animations.forEach((animation) => {
@@ -63,8 +61,6 @@ export const AnimatedCardOverlay = observer(() => {
       revealed: animation.revealed ?? true,
     });
   });
-
-  console.log('[AnimatedCard] Created virtual cards:', virtualCards.length);
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>
@@ -158,10 +154,6 @@ export const AnimatedCardOverlay = observer(() => {
                     }
               }
               onAnimationComplete={() => {
-                console.log(
-                  '[AnimatedCard] Animation complete:',
-                  virtualCard.id
-                );
                 animationStore.removeAnimation(virtualCard.id);
               }}
               style={
