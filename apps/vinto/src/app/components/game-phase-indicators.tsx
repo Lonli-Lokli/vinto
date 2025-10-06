@@ -3,7 +3,17 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Eye, Search, Repeat, Crown, Target, Sparkles, Zap, Trash2, Trophy, Hourglass } from 'lucide-react';
+import {
+  Eye,
+  Search,
+  Repeat,
+  Crown,
+  Target,
+  Sparkles,
+  Zap,
+  Trophy,
+  Hourglass,
+} from 'lucide-react';
 import { HelpPopover } from './help-popover';
 import type { Card, Player, Rank } from '../shapes';
 import type { ActionStore } from '../stores/action-store';
@@ -490,9 +500,7 @@ export const GamePhaseIndicators = observer(() => {
   // Toss-in Period
   if (waitingForTossIn) {
     const topDiscardRank =
-      discardPile.length > 0
-        ? discardPile[0].rank
-        : undefined;
+      discardPile.length > 0 ? discardPile[0].rank : undefined;
     return (
       <TossInIndicator
         topDiscardRank={topDiscardRank}
