@@ -1,9 +1,69 @@
 # Vinto — Official Rules (Markdown Extraction)
 
 ## Objective
-Players aim to minimize the total value of their hand.  
-The game is played over multiple rounds.  
+Players aim to minimize the total value of their hand.
+The game is played over multiple rounds.
 The winner is the player with the **highest game points** at the end of the session.
+
+---
+
+## Game Turn Flow
+
+```mermaid
+flowchart TD
+    Start([PLAYER'S TURN START]) --> DrawChoice{Choose Draw Source}
+
+    DrawChoice -->|Draw from Deck| DrawDeck[Draw from Deck<br/>reveal card]
+    DrawChoice -->|Take from Discard| TakeDiscard[Take Discard Top Card<br/>unused action 7-K, A only<br/>MUST use action]
+
+    DrawDeck --> IsAction{Is Action Card?}
+
+    IsAction -->|Yes| ActionChoice{Use Action or<br/>Swap/Discard?}
+    IsAction -->|No| SwapOrDiscard{Choose:<br/>Swap or Discard}
+
+    SwapOrDiscard -->|Swap| DeclareRank{Declare Card Rank?<br/>optional}
+    SwapOrDiscard -->|Discard| CardDiscarded
+
+    DeclareRank -->|Correct Declaration| UseSwappedAction[Use Swapped Card Action]
+    DeclareRank -->|Wrong Declaration| Penalty[Draw Penalty Card]
+    DeclareRank -->|Skip Declaration| CardDiscarded[Card Discarded<br/>action remains unused]
+
+    UseSwappedAction --> CardDiscarded
+    Penalty --> CardDiscarded
+
+    ActionChoice -->|Use Action| ExecuteAction[Execute Action]
+    ActionChoice -->|Swap/Discard| SwapOrDiscard
+
+    TakeDiscard --> ExecuteAction
+
+    ExecuteAction --> CardDiscarded[Card Discarded]
+
+    CardDiscarded --> TossIn[Toss-In Period<br/>Any player including<br/>current player can<br/>toss in matching cards]
+
+    TossIn --> CallVinto{Call Vinto?}
+
+    CallVinto -->|Yes| FinalRound[Final Round]
+    CallVinto -->|No| NextPlayer[Next Player]
+
+    style Start fill:#e1f5ff
+    style CardDiscarded fill:#ffe1e1
+    style ExecuteAction fill:#e1ffe1
+    style TossIn fill:#fff5e1
+    style CallVinto fill:#f5e1ff
+```
+
+### Key Decision Points:
+1. **Draw Source**: Draw from deck (see card) OR take from discard pile
+   - Discard option only available if top card is **unused action card (7-K, A)**
+   - Taking from discard **requires** using the action immediately
+2. **Action Cards (7-K, A)** from deck: Choose to use action immediately OR swap/discard
+3. **Swap Decision**: If not using action, choose to swap into hand or discard
+4. **Rank Declaration** (optional): When swapping, optionally declare the rank of swapped-out card
+   - Correct → Use that card's action (if it has one)
+   - Wrong → Draw penalty card
+   - Skip → Card discarded with action unused (available for next player to take from discard)
+5. **Toss-In**: After discard, **any player** (including the current player) may toss in matching rank cards
+6. **Call Vinto**: At turn end, optionally declare Vinto to trigger final round
 
 ---
 

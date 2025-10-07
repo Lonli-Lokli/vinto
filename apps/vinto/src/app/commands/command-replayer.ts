@@ -104,7 +104,6 @@ export class CommandReplayer {
         command = this.commandFactory.addPenaltyCard(data.payload.playerId);
         break;
 
-        
       default:
         throw new Error(`Unknown command type: ${data.type}`);
     }

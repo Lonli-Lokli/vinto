@@ -400,12 +400,13 @@ export class GameStore implements TempState {
 
         if (replacedCard) {
           // Execute action if available
-          if (replacedCard.action) {
+          if (replacedCard.actionText) {
             // executeCardAction will discard the card, so don't discard it here
-            this.actionCoordinator.executeCardAction(
+            await this.actionCoordinator.executeCardAction(
               replacedCard,
               currentPlayer.id
             );
+            this.startTossInPeriod();
           } else {
             // Discard non-action cards using command
             const discardCommand =
