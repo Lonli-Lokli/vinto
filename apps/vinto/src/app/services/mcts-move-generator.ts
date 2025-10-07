@@ -49,17 +49,8 @@ export class MCTSMoveGenerator {
       });
     }
 
-    // If discard pile has action card, can take it
-    if (state.discardPileTop && state.discardPileTop.actionText) {
-      moves.push({
-        type: 'take-discard',
-        playerId: currentPlayer.id,
-        actionCard: state.discardPileTop,
-      });
-    }
-
-    // If discard pile has non-action card, can take it too (but less desirable)
-    if (state.discardPileTop && !state.discardPileTop.actionText) {
+    // Can take from discard ONLY if top card has unused action (7-K, A)
+    if (state.discardPileTop && state.discardPileTop.actionText && !state.discardPileTop.played) {
       moves.push({
         type: 'take-discard',
         playerId: currentPlayer.id,

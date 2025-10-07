@@ -733,8 +733,25 @@ export class GameStore implements TempState {
       // Record this knowledge BEFORE swapping
       this.playerStore.addKnownCardPosition(currentPlayer.id, swapPosition);
 
-      // Bots perform swap immediately without declaring rank
-      await this.skipDeclaration();
+      // Bot declares rank if card at swap position is known
+      if (currentPlayer.knownCardPositions.has(swapPosition)) {
+        const cardAtPosition = currentPlayer.cards[swapPosition];
+        if (cardAtPosition) {
+          console.log(
+            `[Bot] ${currentPlayer.name} knows card at position ${swapPosition} is ${cardAtPosition.rank}, declaring it`
+          );
+          await this.declareRank(cardAtPosition.rank);
+        } else {
+          // Fallback: skip if card doesn't exist
+          await this.skipDeclaration();
+        }
+      } else {
+        // Bot doesn't know the card, skip declaration
+        console.log(
+          `[Bot] ${currentPlayer.name} doesn't know card at position ${swapPosition}, skipping declaration`
+        );
+        await this.skipDeclaration();
+      }
     } else {
       // Discard the drawn card
       this.discardCard();
