@@ -302,7 +302,7 @@ export class GameStore implements TempState {
     }
   }
 
-  takeFromDiscard() {
+  async takeFromDiscard() {
     const topCard = this.deckStore.peekTopDiscard();
     if (!topCard || topCard.played) return;
 
@@ -310,9 +310,9 @@ export class GameStore implements TempState {
     if (!takenCard) return;
 
     const currentPlayer = this.playerStore.currentPlayer;
-    if (currentPlayer?.isHuman && takenCard.action) {
-      // Use action immediately for discard pile cards
-      this.actionCoordinator.executeCardAction(takenCard, currentPlayer.id);
+    if (currentPlayer && takenCard.actionText) {
+      // Use action immediately for discard pile cards (both human and bot)
+      await this.actionCoordinator.executeCardAction(takenCard, currentPlayer.id);
     }
   }
 
@@ -326,7 +326,7 @@ export class GameStore implements TempState {
 
     if (!currentPlayer || !pendingCard) return;
 
-    if (pendingCard.action) {
+    if (pendingCard.actionText) {
       this.actionCoordinator.executeCardAction(pendingCard, currentPlayer.id);
     } else {
       // Discard non-action cards using command
@@ -610,36 +610,36 @@ export class GameStore implements TempState {
         const turnDecision = this.botDecisionService.decideTurnAction(context);
 
         if (turnDecision.action === 'take-discard') {
-          this.takeFromDiscard();
-          return;
-        }
+          await this.takeFromDiscard();
+          this.startTossInPeriod();
+        } else {
+          // Draw new card and make decision using command system
+          if (this.deckStore.hasDrawCards) {
+            // Peek at the top card before drawing
+            // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
+            const drawnCard = this.deckStore.peekTopCard();
 
-        // Draw new card and make decision using command system
-        if (this.deckStore.hasDrawCards) {
-          // Peek at the top card before drawing
-          // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
-          const drawnCard = this.deckStore.peekTopCard();
+            if (drawnCard) {
+              // Set pending card so drawn area exists for animation target
+              this.actionStore.setPendingCard(drawnCard);
+            }
 
-          if (drawnCard) {
-            // Set pending card so drawn area exists for animation target
-            this.actionStore.setPendingCard(drawnCard);
+            // Execute draw command (removes card from deck and handles animation)
+            const command = this.commandFactory.drawCard(currentPlayer.id);
+            const result = await this.commandHistory.executeCommand(command);
+
+            if (result.success && drawnCard) {
+              // Wait 4 seconds to allow human to see the drawn card
+              await new Promise((resolve) => setTimeout(resolve, 4000));
+              await this.executeBotCardDecision(drawnCard, currentPlayer);
+            }
+
+            // Clear pending card after bot makes decision
+            this.actionStore.setPendingCard(null);
           }
 
-          // Execute draw command (removes card from deck and handles animation)
-          const command = this.commandFactory.drawCard(currentPlayer.id);
-          const result = await this.commandHistory.executeCommand(command);
-
-          if (result.success && drawnCard) {
-            // Wait 4 seconds to allow human to see the drawn card
-            await new Promise((resolve) => setTimeout(resolve, 4000));
-            await this.executeBotCardDecision(drawnCard, currentPlayer);
-          }
-
-          // Clear pending card after bot makes decision
-          this.actionStore.setPendingCard(null);
+          this.startTossInPeriod();
         }
-
-        this.startTossInPeriod();
       } catch {
         this.advanceTurn();
       } finally {
@@ -704,7 +704,7 @@ export class GameStore implements TempState {
 
     const context = this.createBotDecisionContext(currentPlayer.id);
 
-    if (drawnCard.action) {
+    if (drawnCard.actionText) {
       // Use bot service to decide whether to use action
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,

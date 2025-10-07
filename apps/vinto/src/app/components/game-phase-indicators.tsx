@@ -417,7 +417,7 @@ const CardDrawnIndicator = observer(
     onSwapDiscard: () => void;
     onDiscard: () => void;
   }) => {
-    const hasAction = !!pendingCard.action;
+    const hasAction = !!pendingCard.actionText;
 
     const getHelpContent = () => {
       let content = `⚡ Use Action: Execute the card's special ability immediately

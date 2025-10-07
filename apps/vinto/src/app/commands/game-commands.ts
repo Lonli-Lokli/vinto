@@ -15,7 +15,10 @@ import type {
   CardAnimationStore,
 } from '../stores';
 import { Card, Rank, Difficulty } from '../shapes';
-import { formatActionDescription, formatTossInDescription } from '../utils/action-description-helper';
+import {
+  formatActionDescription,
+  formatTossInDescription,
+} from '../utils/action-description-helper';
 
 /**
  * Serialized card data
@@ -70,7 +73,7 @@ export class InitializeGameCommand extends Command {
           id: card.id,
           rank: card.rank,
           value: card.value,
-          action: card.action,
+          action: card.actionText,
           played: card.played,
         })),
         knownCardPositions: Array.from(player.knownCardPositions),
@@ -84,7 +87,7 @@ export class InitializeGameCommand extends Command {
       id: card.id,
       rank: card.rank,
       value: card.value,
-      action: card.action,
+      action: card.actionText,
       played: card.played,
     }));
 
@@ -93,7 +96,7 @@ export class InitializeGameCommand extends Command {
         id: card.id,
         rank: card.rank,
         value: card.value,
-        action: card.action,
+        action: card.actionText,
         played: card.played,
       })
     );
@@ -127,7 +130,7 @@ export class InitializeGameCommand extends Command {
             id: this.actionStore.pendingCard.id,
             rank: this.actionStore.pendingCard.rank,
             value: this.actionStore.pendingCard.value,
-            action: this.actionStore.pendingCard.action,
+            action: this.actionStore.pendingCard.actionText,
             played: this.actionStore.pendingCard.played,
           }
         : null,
@@ -143,7 +146,7 @@ export class InitializeGameCommand extends Command {
               id: pt.card.id,
               rank: pt.card.rank,
               value: pt.card.value,
-              action: pt.card.action,
+              action: pt.card.actionText,
               played: pt.card.played,
             }
           : undefined,
@@ -159,7 +162,7 @@ export class InitializeGameCommand extends Command {
           id: item.card.id,
           rank: item.card.rank,
           value: item.card.value,
-          action: item.card.action,
+          action: item.card.actionText,
           played: item.card.played,
         },
       })),
@@ -240,7 +243,7 @@ export class DrawCardCommand extends Command {
             id: this.drawnCard.id,
             rank: this.drawnCard.rank,
             value: this.drawnCard.value,
-            action: this.drawnCard.action,
+            action: this.drawnCard.actionText,
             played: this.drawnCard.played,
           }
         : null,
@@ -344,7 +347,7 @@ export class SwapCardsCommand extends Command {
             id: this.card1.id,
             rank: this.card1.rank,
             value: this.card1.value,
-            action: this.card1.action,
+            action: this.card1.actionText,
             played: this.card1.played,
           }
         : null,
@@ -353,7 +356,7 @@ export class SwapCardsCommand extends Command {
             id: this.card2.id,
             rank: this.card2.rank,
             value: this.card2.value,
-            action: this.card2.action,
+            action: this.card2.actionText,
             played: this.card2.played,
           }
         : null,
@@ -412,7 +415,7 @@ export class PeekCardCommand extends Command {
             id: this.peekedCard.id,
             rank: this.peekedCard.rank,
             value: this.peekedCard.value,
-            action: this.peekedCard.action,
+            action: this.peekedCard.actionText,
             played: this.peekedCard.played,
           }
         : null,
@@ -488,12 +491,10 @@ export class PlayActionCardCommand extends Command {
   }
 
   getDetailedDescription(): string {
-
     if (!this.playerName || !this.actionDetails) {
       return this.getDescription();
     }
 
-    
     const formatted = formatActionDescription(
       this.playerName,
       this.card.rank,
@@ -753,7 +754,7 @@ export class TossInCardCommand extends Command {
     // Use different animations based on whether card has an action
     let animId: string | undefined;
     if (this.cardAnimationStore) {
-      if (card.action) {
+      if (card.actionText) {
         // Action card: use play-action animation (green glow to center)
         animId = this.cardAnimationStore.startPlayActionAnimation(card, {
           type: 'player',
@@ -802,7 +803,6 @@ export class TossInCardCommand extends Command {
     const player = this.playerStore.getPlayer(this.playerId);
     const playerName = player?.name || 'Unknown';
 
-    
     return formatTossInDescription(
       playerName,
       this.matchingRank,

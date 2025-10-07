@@ -60,7 +60,7 @@ export class DeckStore {
   // Discard pile operations
   discardCard(card: Card) {
     // Mark the card as played if it's an action card being discarded after use
-    if (card.action) {
+    if (card.actionText) {
       card.played = true;
     }
     this.discardPile.unshift(card);
@@ -174,7 +174,7 @@ export class DeckStore {
   // Debugging helpers
   getDiscardHistory(): string[] {
     return this.discardPile.map(
-      (card) => `${card.rank}${card.action ? '*' : ''}`
+      (card) => `${card.rank}${card.actionText ? '*' : ''}`
     );
   }
 

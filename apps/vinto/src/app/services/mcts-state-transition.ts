@@ -1,4 +1,5 @@
 // services/mcts-state-transition.ts
+import { CARD_CONFIGS } from '../constants/game-setup';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
 /**
@@ -91,11 +92,10 @@ export class MCTSStateTransition {
   ): MCTSGameState {
     // Action effects depend on the action type
     if (move.actionCard) {
-      const actionType = move.actionCard.action;
+      const actionType = CARD_CONFIGS[move.actionCard.rank].action;
 
       switch (actionType) {
-        case 'swap':
-        case 'blind-swap':
+        case 'swap-cards':
           // Swap two cards
           if (move.targets && move.targets.length === 2) {
             const target1 = move.targets[0];
@@ -155,7 +155,7 @@ export class MCTSStateTransition {
           }
           break;
 
-        case 'declare':
+        case 'declare-action':
           // King - declare action (simulated as giving information)
           // No state change in simulation
           break;

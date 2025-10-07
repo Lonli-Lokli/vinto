@@ -3,7 +3,7 @@ export interface Card {
   id: string;
   rank: Rank;
   value: number;
-  action?: string;
+  actionText?: string;
   played: boolean;
 }
 
@@ -22,7 +22,8 @@ export type Rank =
   | 'K'
   | 'A'
   | 'Joker';
-
+export type CardAction =   'peek-own' | 'peek-opponent' | 'peek-and-swap' | 'swap-cards' | 'force-draw' | 'declare-action';
+      
 export interface OpponentKnowledge {
   opponentId: string;
   knownCards: Map<number, Card>; // position -> Card that bot knows opponent has

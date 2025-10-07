@@ -114,7 +114,7 @@ const FullTurnControls = ({
   const { discardPile, drawPile } = useDeckStore();
 
   const topDiscard = discardPile[0];
-  const canTakeDiscard = topDiscard?.action && !topDiscard?.played;
+  const canTakeDiscard = topDiscard?.actionText && !topDiscard?.played;
   const deckEmpty = drawPile.length === 0;
 
   // Get discard button info
@@ -133,7 +133,7 @@ const FullTurnControls = ({
         tooltip: `${topDiscard.rank} action has already been played`,
       };
     }
-    if (!topDiscard.action) {
+    if (!topDiscard.actionText) {
       return {
         text: `Use ${topDiscard.rank}`,
         subtitle: 'No action',

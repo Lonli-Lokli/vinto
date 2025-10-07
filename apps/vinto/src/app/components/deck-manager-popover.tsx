@@ -143,9 +143,9 @@ export const DeckManagerPopover = observer(
                 </div>
                 <div className="text-sm font-semibold text-gray-800">
                   {deckStore.drawPile[0].rank}
-                  {deckStore.drawPile[0].action && (
+                  {deckStore.drawPile[0].actionText && (
                     <span className="text-xs text-emerald-600 ml-1">
-                      ({deckStore.drawPile[0].action})
+                      ({deckStore.drawPile[0].actionText})
                     </span>
                   )}
                 </div>

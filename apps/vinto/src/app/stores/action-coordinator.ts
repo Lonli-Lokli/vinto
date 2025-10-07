@@ -1,7 +1,7 @@
 'use client';
 
 import { injectable, inject } from 'tsyringe';
-import { Card, Rank } from '../shapes';
+import { Card, CardAction, Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
 import { DeckStore } from './deck-store';
@@ -11,6 +11,7 @@ import { HumanActionHandler } from './human-action-handler';
 import { BotActionHandler } from './bot-action-handler';
 import type { BotDecisionService } from '../services/mcts-bot-decision';
 import { CommandFactory, CommandHistory } from '../commands';
+import { CARD_CONFIGS } from '../constants/game-setup';
 
 /**
  * ActionCoordinator - Routes actions to appropriate handlers (Human vs Bot).
@@ -69,7 +70,7 @@ export class ActionCoordinator {
 
   // Main entry point - routes to appropriate handler
   async executeCardAction(card: Card, playerId: string): Promise<boolean> {
-    if (!card.action) return false;
+    if (!card.actionText) return false;
 
     const player = this.playerStore.getPlayer(playerId);
     if (!player) return false;
@@ -79,14 +80,14 @@ export class ActionCoordinator {
     this.actionStore.startAction(card, playerId);
 
     // Determine action type from card rank
-    const actionType = this.getActionType(card.rank);
+    const actionType = this.getActionType(card.rank) 
 
     // Play action card using command - handles animation and discard
     // This is shared between human and bot players
     const playActionCommand = this.commandFactory.playActionCard(
       card,
       playerId,
-      { type: actionType }
+      { type: actionType ?? '' }
     );
     await this.commandHistory.executeCommand(playActionCommand);
 
@@ -116,18 +117,8 @@ export class ActionCoordinator {
   }
 
   // Map card rank to action type string
-  private getActionType(rank: Rank): string {
-    const actionTypes: Record<string, string> = {
-      '7': 'peek-own',
-      '8': 'peek-opponent',
-      '9': 'swap-cards',
-      '10': 'peek-and-swap',
-      J: 'swap-cards',
-      Q: 'peek-and-swap',
-      K: 'declare-action',
-      A: 'force-draw',
-    };
-    return actionTypes[rank] || 'unknown';
+  private getActionType(rank: Rank): CardAction | undefined {
+   return CARD_CONFIGS[rank].action;
   }
 
   // Route action to human or bot handler

@@ -31,7 +31,7 @@ export const createDeck = (): Card[] => {
         id: `${rank}_${no}`,
         rank: rank,
         value: config.value,
-        action: config.shortDescription,
+        actionText: config.shortDescription,
         played: false,
       });
     });

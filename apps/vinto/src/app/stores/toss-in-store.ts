@@ -178,7 +178,7 @@ export class TossInStore {
 
     // Discard the card only if it has no action
     // Action cards will be discarded when their action is executed
-    if (!removedCard.action) {
+    if (!removedCard.actionText) {
       deckStore.discardCard(removedCard);
     }
 
@@ -240,7 +240,7 @@ export class TossInStore {
 
   // Pure action method - external systems handle the consequences
   recordTossIn(player: Player, card: Card): boolean {
-    if (card.action) {
+    if (card.actionText) {
       this.addToQueue(player.id, card);
     }
 

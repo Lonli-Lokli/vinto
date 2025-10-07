@@ -244,7 +244,7 @@ export class GameStateSerializer {
       id: data.id,
       rank: data.rank,
       value: data.value,
-      action: data.action,
+      actionText: data.action,
       played: data.played || false,
     };
   }

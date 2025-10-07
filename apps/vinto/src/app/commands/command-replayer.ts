@@ -60,7 +60,7 @@ export class CommandReplayer {
           id: data.payload.cardId,
           rank: data.payload.rank,
           value: data.payload.value,
-          action: data.payload.action,
+          actionText: data.payload.action,
           played: data.payload.played || false,
         };
         command = this.commandFactory.discardCard(discardCard);
@@ -72,7 +72,7 @@ export class CommandReplayer {
           id: data.payload.newCard.id,
           rank: data.payload.newCard.rank,
           value: data.payload.newCard.value,
-          action: data.payload.newCard.action,
+          actionText: data.payload.newCard.action,
           played: data.payload.newCard.played || false,
         };
         command = this.commandFactory.replaceCard(

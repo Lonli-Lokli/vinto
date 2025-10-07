@@ -61,7 +61,7 @@ export class ActionStore {
   // Action context management
   startAction(card: Card, playerId: string) {
     this.actionContext = {
-      action: card.action || '',
+      action: card.actionText || '',
       playerId,
       targetType: this.getTargetType(card.rank),
     };

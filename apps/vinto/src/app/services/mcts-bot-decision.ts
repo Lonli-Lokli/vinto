@@ -1,5 +1,6 @@
 // services/mcts-bot-decision.ts
-import { Card, Rank, Difficulty, GameState, Player } from '../shapes';
+import { Card, Rank, Difficulty, GameState, Player, CardAction } from '../shapes';
+import copy from 'fast-copy';
 import { BotMemory } from './bot-memory';
 import { MCTSMoveGenerator } from './mcts-move-generator';
 import { MCTSStateTransition } from './mcts-state-transition';
@@ -11,6 +12,7 @@ import {
   MCTSConfig,
   MCTS_DIFFICULTY_CONFIGS,
 } from './mcts-types';
+import { CARD_CONFIGS } from '../constants/game-setup';
 
 export interface BotDecisionContext {
   botId: string;
@@ -127,7 +129,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
 
-    if (!drawnCard.action) return false;
+    if (!drawnCard.actionText) return false;
 
     console.log(
       `[MCTS] ${this.botId} deciding whether to use ${drawnCard.rank} action`
@@ -357,7 +359,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
     // Determinize: sample hidden information
     const deterministicState = this.determinize(state);
 
-    let currentState = { ...deterministicState };
+    // Deep copy the deterministic state to ensure independence
+    let currentState = this.deepCopyGameState(deterministicState);
     let depth = 0;
 
     // Fast rollout
@@ -374,6 +377,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     // Evaluate final state
     return this.evaluateState(currentState);
+  }
+
+  /**
+   * Deep copy a game state to prevent shared references
+   */
+  private deepCopyGameState(state: MCTSGameState): MCTSGameState {
+    return copy(state);
   }
 
   // ========== Helper Methods ==========
@@ -486,9 +496,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const newState = { ...state };
     newState.hiddenCards = new Map();
 
-    // Track which ranks have been sampled to maintain consistency
-    const availableRanks: Rank[] = [];
-
     // Build deck of available ranks (standard 52-card deck + 2 Jokers)
     const standardRanks: Rank[] = [
       'A',
@@ -547,6 +554,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
       'Joker', // 2 Jokers
     ];
 
+    // Build availableRanks pool from standardRanks
+    const availableRanks: Rank[] = [...standardRanks];
+
     // Remove cards we know about from available pool
     for (const player of state.players) {
       for (let pos = 0; pos < player.cardCount; pos++) {
@@ -561,11 +571,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
       }
     }
 
-    // If we removed too many, start fresh
-    if (availableRanks.length < 10) {
-      availableRanks.push(...standardRanks);
-    }
-
     // Sample cards for each player position
     for (const player of state.players) {
       for (let pos = 0; pos < player.cardCount; pos++) {
@@ -576,10 +581,10 @@ export class MCTSBotDecisionService implements BotDecisionService {
           let sampledRank: Rank;
 
           if (availableRanks.length > 0) {
-            // Sample from available ranks
+            // Sample from available ranks and remove to prevent duplicates
             const idx = Math.floor(Math.random() * availableRanks.length);
             sampledRank = availableRanks[idx];
-            // Don't remove to allow duplicates in simulation
+            availableRanks.splice(idx, 1); // Remove sampled rank to maintain consistency
           } else {
             // Fallback: use bot memory distribution
             sampledRank = state.botMemory.sampleCardFromDistribution() || '6';
@@ -590,7 +595,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
             id: `${player.id}-${pos}-sampled`,
             rank: sampledRank,
             value: this.getRankValue(sampledRank),
-            action: this.getRankAction(sampledRank),
+            actionText: this.getRankAction(sampledRank),
             played: false,
           };
           newState.hiddenCards.set(`${player.id}-${pos}`, card);
@@ -677,11 +682,10 @@ export class MCTSBotDecisionService implements BotDecisionService {
     let actionCardCount = 0;
     for (let pos = 0; pos < botCardCount; pos++) {
       const card = state.hiddenCards.get(`${state.botPlayerId}-${pos}`);
-      if (card && card.action) {
+      if (card && card.actionText) {
         actionCardCount++;
       }
     }
-    const actionCardBonus = actionCardCount * 2;
 
     // 5. High value card detection - knowing you have high cards is bad
     let knownHighCardPenalty = 0;
@@ -697,11 +701,20 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const isLateGame = state.finalTurnTriggered || state.turnCount > 40;
 
     let phaseMultiplier = 1.0;
+    let actionCardMultiplier = 1.0;
+    let penaltyMultiplier = 1.0;
+
     if (isEarlyGame) {
-      phaseMultiplier = 0.7; // Early game: prioritize information gathering
+      phaseMultiplier = 0.7; // Early game: score advantage less critical
+      actionCardMultiplier = 1.5; // Action cards more valuable early
+      penaltyMultiplier = 0.8; // High card penalty less severe early
     } else if (isLateGame) {
       phaseMultiplier = 1.5; // Late game: score matters most
+      actionCardMultiplier = 0.5; // Action cards less valuable late
+      penaltyMultiplier = 1.3; // High card penalty more severe late
     }
+
+    const actionCardBonus = actionCardCount * 2 * actionCardMultiplier;
 
     // 7. Terminal state bonus
     let terminalBonus = 0;
@@ -719,14 +732,14 @@ export class MCTSBotDecisionService implements BotDecisionService {
       vintoReadinessBonus = 5; // Bonus for being in good position to call Vinto
     }
 
-    // Weighted combination
+    // Weighted combination with phase-adaptive multipliers
     const reward =
-      scoreAdvantage * 2.5 * phaseMultiplier + // Score difference vs average
+      scoreAdvantage * 2.5 * phaseMultiplier + // Score difference vs average (phase-adjusted)
       competitiveAdvantage * 0.5 + // Score vs best opponent
       cardCountAdvantage * 1.0 + // Fewer cards is better
       knowledgeAdvantage * (isEarlyGame ? 2.0 : 0.5) + // Info valuable early
-      actionCardBonus + // Action cards are useful
-      -knownHighCardPenalty + // Penalty for known high cards
+      actionCardBonus + // Action cards (phase-adjusted)
+      -knownHighCardPenalty * penaltyMultiplier + // Penalty for known high cards (phase-adjusted)
       vintoReadinessBonus + // Ready to win
       terminalBonus; // Terminal state bonus
 
@@ -745,39 +758,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Helper: get value for rank
    */
   private getRankValue(rank: Rank): number {
-    const values: Record<Rank, number> = {
-      A: 1,
-      '2': 2,
-      '3': 3,
-      '4': 4,
-      '5': 5,
-      '6': 6,
-      '7': 7,
-      '8': 8,
-      '9': 9,
-      '10': 10,
-      J: 11,
-      Q: 12,
-      K: 0,
-      Joker: 0, // Joker not used but required by Rank type
-    };
-    return values[rank];
+    return CARD_CONFIGS[rank].value;
   }
 
   /**
    * Helper: get action for rank
    */
-  private getRankAction(rank: Rank): string | undefined {
-    const actions: Partial<Record<Rank, string>> = {
-      '7': 'peek-own',
-      '8': 'peek-opponent',
-      '9': 'swap',
-      '10': 'peek-and-swap',
-      J: 'blind-swap',
-      Q: 'peek-and-swap',
-      K: 'declare',
-      A: 'force-draw',
-    };
-    return actions[rank];
+  private getRankAction(rank: Rank): CardAction | undefined {
+    return CARD_CONFIGS[rank].action;
   }
 }

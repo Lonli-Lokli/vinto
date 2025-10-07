@@ -1,5 +1,5 @@
 // services/mcts-move-generator.ts
-import { Rank } from '../shapes';
+import { CardAction, Rank } from '../shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -50,7 +50,7 @@ export class MCTSMoveGenerator {
     }
 
     // If discard pile has action card, can take it
-    if (state.discardPileTop && state.discardPileTop.action) {
+    if (state.discardPileTop && state.discardPileTop.actionText) {
       moves.push({
         type: 'take-discard',
         playerId: currentPlayer.id,
@@ -59,7 +59,7 @@ export class MCTSMoveGenerator {
     }
 
     // If discard pile has non-action card, can take it too (but less desirable)
-    if (state.discardPileTop && !state.discardPileTop.action) {
+    if (state.discardPileTop && !state.discardPileTop.actionText) {
       moves.push({
         type: 'take-discard',
         playerId: currentPlayer.id,
@@ -93,7 +93,7 @@ export class MCTSMoveGenerator {
    */
   static generateActionMoves(
     state: MCTSGameState,
-    actionType: string
+    actionType: CardAction
   ): MCTSMove[] {
     const moves: MCTSMove[] = [];
     const currentPlayer = state.players[state.currentPlayerIndex];
@@ -127,8 +127,7 @@ export class MCTSMoveGenerator {
         }
         break;
 
-      case 'swap':
-      case 'blind-swap':
+      case 'swap-cards':
         // Generate swap moves (any two cards)
         const allPositions: MCTSActionTarget[] = [];
 
@@ -206,7 +205,7 @@ export class MCTSMoveGenerator {
         }
         break;
 
-      case 'declare':
+      case 'declare-action':
         // King: declare each possible action rank
         const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
 

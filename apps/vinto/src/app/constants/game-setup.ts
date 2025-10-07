@@ -1,7 +1,7 @@
 // constants/game-setup.ts
 // Shared game configuration and constants
 
-import { Rank } from '../shapes';
+import { CardAction, Rank } from '../shapes';
 
 export interface CardConfig {
   rank: Rank;
@@ -10,6 +10,7 @@ export interface CardConfig {
   shortDescription: string;
   longDescription: string;
   helpText: string;
+  action?: CardAction;
 }
 
 export const ALL_RANKS: Rank[] = [
@@ -74,6 +75,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: '7',
     name: 'Seven',
     value: 7,
+    action: 'peek-own',
     shortDescription: 'Peek 1 of your cards',
     longDescription: 'Peek at one of your own cards',
     helpText:
@@ -83,6 +85,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: '8',
     name: 'Eight',
     value: 8,
+    action: 'peek-own',
     shortDescription: 'Peek 1 of your cards',
     longDescription: 'Peek at one of your own cards',
     helpText:
@@ -92,6 +95,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: '9',
     name: 'Nine',
     value: 9,
+    action: 'peek-opponent',
     shortDescription: 'Peek 1 opponent card',
     longDescription: 'Peek at one card of another player',
     helpText:
@@ -101,6 +105,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: '10',
     name: 'Ten',
     value: 10,
+    action: 'peek-opponent',
     shortDescription: 'Peek 1 opponent card',
     longDescription: 'Peek at one card of another player',
     helpText:
@@ -110,6 +115,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: 'J',
     name: 'Jack',
     value: 10,
+    action: 'swap-cards',
     shortDescription: 'Swap 2 face-down cards',
     longDescription: 'Swap any two facedown cards on the table',
     helpText:
@@ -119,6 +125,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: 'Q',
     name: 'Queen',
     value: 10,
+    action: 'peek-and-swap',
     shortDescription: 'Peek 2 cards, swap optional',
     longDescription:
       'Peek at any two cards from two different players, then optionally swap them',
@@ -129,6 +136,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: 'K',
     name: 'King',
     value: 0,
+    action: 'declare-action',
     shortDescription: "Declare any card's action",
     longDescription: 'Declare another card action from any player (7-A)',
     helpText:
@@ -138,6 +146,7 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     rank: 'A',
     name: 'Ace',
     value: 1,
+    action: 'force-draw',
     shortDescription: 'Force opponent to draw',
     longDescription: 'Force an opponent to draw a penalty card',
     helpText:
