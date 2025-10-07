@@ -7,6 +7,7 @@ import { Crown, Users } from 'lucide-react';
 import { useGameStore, useGamePhaseStore, usePlayerStore } from './di-provider';
 import { getWinnerInfo, calculateActualScore } from '../utils/game-helpers';
 import { Avatar } from './avatar';
+import { HelpPopover } from './help-popover';
 
 export const FinalScores = observer(() => {
   const gameStore = useGameStore();
@@ -31,99 +32,107 @@ export const FinalScores = observer(() => {
   const vintoCaller = playerStore.vintoCaller;
   const hasCoalition = !!vintoCaller;
 
+  const getWinnerText = () => {
+    if (winnerInfo.isCoalitionWin) {
+      return `🎉 Coalition Victory!`;
+    } else if (winnerInfo.isMultipleWinners) {
+      return `🎉 Tie: ${winnerInfo.winners.join(', ')}`;
+    } else {
+      return `🎉 Winner: ${winnerInfo.winners[0]}`;
+    }
+  };
+
+  const getHelpContent = () => {
+    return `🏆 Final Scores & Scoring Rules
+
+👑 Crown icon: Vinto caller
+👥 Users icon: Coalition member
+
+${hasCoalition ? `🤝 Coalition Game Scoring:
+The Vinto caller's score is compared to the lowest Coalition score:
+
+• If Vinto < Coalition lowest → Vinto +3 points; each Coalition −1
+• If Coalition lowest < Vinto → Vinto −1; each Coalition +3  
+• If tie → Vinto +3; Coalition 0
+
+Displayed scores show the actual card totals from the round.` : 
+`📊 Regular Game Scoring:
+Scores reflect the total points from cards in each player's hand at round end.
+Lower card totals are better during the round, but game points are awarded by final ranking.`}`;
+  };
+
   return (
-    <div className="mt-4 sm:mt-6 mx-auto max-w-lg bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg mx-2">
-      <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Game Over!</h2>
-        <div className="text-lg">
-          {winnerInfo.isCoalitionWin ? (
-            <div>
-              <span className="text-green-600 font-semibold">
-                Coalition Victory!
-              </span>
-              <div className="text-base mt-1">
-                Team: {winnerInfo.winners.join(', ')}
+    <div className="w-full h-full px-2 py-1">
+      <div className="h-full bg-white border border-gray-300 rounded-lg p-1.5 shadow-sm flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-1 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xs md:text-sm font-semibold text-gray-800 leading-tight truncate">
+              {getWinnerText()}
+            </h3>
+            {hasCoalition && (
+              <div className="text-xs text-gray-500 leading-tight">
+                {(() => {
+                  const vintoScore = calculateActualScore(vintoCaller);
+                  const coalitionLowest = winnerInfo.score;
+                  
+                  if (winnerInfo.isCoalitionWin) {
+                    return `Coalition wins: Vinto ${vintoScore} vs Coalition lowest ${coalitionLowest}`;
+                  } else {
+                    return `Vinto wins: Vinto ${vintoScore} vs Coalition lowest ${coalitionLowest}`;
+                  }
+                })()}
               </div>
-            </div>
-          ) : winnerInfo.isMultipleWinners ? (
-            <span className="text-green-600 font-semibold">
-              Tie between: {winnerInfo.winners.join(', ')}
-            </span>
-          ) : (
-            <span className="text-green-600 font-semibold">
-              Winner: {winnerInfo.winners[0]}
-            </span>
-          )}
-        </div>
-        <div className="text-sm text-gray-600">
-          with {winnerInfo.score} points
-        </div>
-
-        {hasCoalition && (
-          <div className="text-xs text-blue-600 mt-2">
-            Coalition wins if ANY member beats the Vinto caller
+            )}
           </div>
-        )}
-      </div>
+          <HelpPopover title="Final Scores" content={getHelpContent()} />
+        </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {players.map((player) => {
-          const actualScore = calculateActualScore(player);
-          const displayScore = finalScores[player.id];
-          const showBothScores = hasCoalition && actualScore !== displayScore;
+        {/* Scores layout - 2x2 grid with horizontal cards */}
+        <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
+          {players.map((player) => {
+            const actualScore = calculateActualScore(player);
+            const isWinner = winnerInfo.winnerIds?.includes(player.id);
 
-          return (
-            <div
-              key={player.id}
-              className={`p-3 rounded-lg text-center relative ${
-                winnerInfo.winnerIds?.includes(player.id)
-                  ? 'bg-green-100 border-2 border-green-300'
-                  : 'bg-gray-50 border border-gray-200'
-              }`}
-            >
-              {player.isVintoCaller && (
-                <div className="absolute top-1 right-1">
-                  <Crown className="text-yellow-500" size={16} />
+            return (
+              <div
+                key={player.id}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded border transition-colors ${
+                  actualScore === winnerInfo.score
+                    ? 'bg-green-50 border-green-300 ring-1 ring-green-200'
+                    : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                {/* Avatar - clean without badges */}
+                <div className="flex-shrink-0">
+                  <Avatar player={player} size="sm" />
                 </div>
-              )}
-              {player.coalitionWith.size > 0 && (
-                <div className="absolute top-1 left-1">
-                  <Users className="text-blue-500" size={16} />
-                </div>
-              )}
 
-              <Avatar player={player} />
-              <div className="font-medium text-gray-700">{player.name}</div>
-
-              {showBothScores ? (
-                <div>
-                  <div
-                    className={`text-xl font-bold ${
-                      winnerInfo.winners.includes(player.name)
-                        ? 'text-green-600'
-                        : 'text-gray-800'
-                    }`}
-                  >
-                    {displayScore} pts
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    (Actual: {actualScore})
+                {/* Player info - flexible width with better overflow handling */}
+                <div className="flex-1 min-w-0 mr-1">
+                  <div className="text-xs font-medium text-gray-800 truncate">
+                    {player.name}
                   </div>
                 </div>
-              ) : (
-                <div
-                  className={`text-xl font-bold ${
-                    winnerInfo.winners.includes(player.name)
-                      ? 'text-green-600'
-                      : 'text-gray-800'
-                  }`}
-                >
-                  {displayScore} pts
+
+                {/* Score with role indicators - more compact */}
+                <div className="flex-shrink-0 flex items-center gap-1">
+                  {player.isVintoCaller && (
+                    <Crown className="text-yellow-500 flex-shrink-0" size={16} />
+                  )}
+                  {player.coalitionWith.size > 0 && (
+                    <Users className="text-blue-500 flex-shrink-0" size={16} />
+                  )}
+                  <div className={`text-sm font-bold leading-none min-w-[1.5rem] text-right ${
+                    isWinner ? 'text-green-600' : 'text-gray-800'
+                  }`}>
+                    {actualScore}
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

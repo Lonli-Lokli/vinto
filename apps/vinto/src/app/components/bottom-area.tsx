@@ -1,4 +1,5 @@
 import { ActionTargetSelector } from './action-target-selector';
+import { FinalScores } from './final-scores';
 import { GameControls } from './game-controls';
 import { GamePhaseIndicators } from './game-phase-indicators';
 import { RankDeclaration } from './rank-declaration';
@@ -22,6 +23,7 @@ export function BottomArea() {
         <RankDeclaration />
         <GameControls />
         <WaitingIndicator />
+        <FinalScores />
       </div>
     </div>
   );

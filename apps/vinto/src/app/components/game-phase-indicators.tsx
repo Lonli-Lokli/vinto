@@ -11,7 +11,6 @@ import {
   Target,
   Sparkles,
   Zap,
-  Trophy,
   Hourglass,
 } from 'lucide-react';
 import { HelpPopover } from './help-popover';
@@ -196,10 +195,6 @@ Skip toss-in and proceed to next player's turn`;
 
                 {/* Call Vinto - Special Action */}
                 <div className="space-y-1">
-                  <div className="text-xs text-center text-orange-700 font-semibold leading-tight flex items-center justify-center gap-1">
-                    <Trophy size={14} />
-                    <span>Special Action</span>
-                  </div>
                   <CallVintoButton
                     onClick={() => gamePhaseStore.openVintoConfirmation()}
                     fullWidth

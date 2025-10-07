@@ -291,7 +291,7 @@ export const GameTable = observer(() => {
           <div className="relative bg-gradient-to-br from-poker-green-600 to-poker-green-700 rounded-lg border border-poker-green-800 shadow-lg p-3 w-full h-full min-h-0">
             {/* Top Player */}
             {top && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2">
+              <div className="absolute top-4 left-1/2 translate-x-8">
                 <PlayerArea
                   player={top}
                   isCurrentPlayer={currentPlayer?.id === top.id}
@@ -351,7 +351,7 @@ export const GameTable = observer(() => {
             )}
 
             {/* Center - Draw & Discard Piles */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-16 flex items-center justify-center">
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard}
@@ -372,7 +372,7 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Human Player */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <div className="absolute bottom-4 left-1/3">
               {humanPlayer && (
                 <PlayerArea
                   player={humanPlayer}

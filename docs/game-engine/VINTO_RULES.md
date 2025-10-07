@@ -127,7 +127,7 @@ flowchart TD
 2. Compute totals (sum of values).  
 3. Compare the Vinto caller’s total vs the **lowest Coalition total**:
 
-- **If Vinto ≤ Coalition lowest** → Vinto +3 points; each Coalition −1.  
+- **If Vinto < Coalition lowest** → Vinto +3 points; each Coalition −1.  
 - **If Coalition lowest < Vinto** → Vinto −1; each Coalition +3.  
 - **If tie** → Vinto +3; Coalition 0.
 

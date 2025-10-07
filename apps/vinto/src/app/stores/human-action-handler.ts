@@ -36,37 +36,31 @@ export class HumanActionHandler {
   // Action initiation - waits for user input
   handlePeekOwnCard(_playerId: string): boolean {
     // Human player selects which card to peek via UI
-    GameToastService.info('Select one of your cards to peek');
     return true; // Action continues with user selection
   }
 
   handlePeekOpponentCard(_playerId: string): boolean {
     // Human player selects which opponent card to peek via UI
-    GameToastService.info('Select an opponent card to peek');
     return true; // Action continues with user selection
   }
 
   handleSwapCards(_playerId: string): boolean {
     // Human player selects which cards to swap via UI
-    GameToastService.info('Select first card to swap');
     return true; // Action continues with user selection
   }
 
   handlePeekAndSwap(_playerId: string): boolean {
     // Human player selects which cards to peek via UI
-    GameToastService.info('Select first card to peek');
     return true; // Action continues with user selection
   }
 
   handleDeclareAction(_playerId: string): boolean {
     // Human player declares which action to execute via UI
-    GameToastService.info('Declare which card action you want to execute');
     return true; // Action continues with user selection
   }
 
   handleForceDraw(_playerId: string): boolean {
     // Human player selects which opponent to force draw via UI
-    GameToastService.info('Select an opponent to force draw a card');
     return true; // Action continues with user selection
   }
 

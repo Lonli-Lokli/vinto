@@ -9,11 +9,12 @@ import { Player } from '../shapes';
 
 interface AvatarProps {
   player: Player;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export const Avatar: FC<AvatarProps> = ({ player, size = 'md' }) => {
   const imageSizeClasses = {
+    xs: 'w-6 h-6',
     sm: 'w-8 h-8',
     md: 'w-16 h-16',
     lg: 'w-full h-full',
