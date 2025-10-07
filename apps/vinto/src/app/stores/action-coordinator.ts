@@ -9,7 +9,7 @@ import { GamePhaseStore } from './game-phase-store';
 import { GameToastService } from '../services/toast-service';
 import { HumanActionHandler } from './human-action-handler';
 import { BotActionHandler } from './bot-action-handler';
-import type { BotDecisionService } from '../services/bot-decision';
+import type { BotDecisionService } from '../services/mcts-bot-decision';
 import { CommandFactory, CommandHistory } from '../commands';
 
 /**

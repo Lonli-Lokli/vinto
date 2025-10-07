@@ -1,12 +1,8 @@
 // services/mcts-bot-decision.ts
-import { Card, Rank, Difficulty } from '../shapes';
-import {
-  BotDecisionService,
-  BotDecisionContext,
-  BotTurnDecision,
-  BotActionDecision,
-} from './bot-decision';
+import { Card, Rank, Difficulty, GameState, Player } from '../shapes';
 import { BotMemory } from './bot-memory';
+import { MCTSMoveGenerator } from './mcts-move-generator';
+import { MCTSStateTransition } from './mcts-state-transition';
 import {
   MCTSNode,
   MCTSGameState,
@@ -15,6 +11,84 @@ import {
   MCTSConfig,
   MCTS_DIFFICULTY_CONFIGS,
 } from './mcts-types';
+
+export interface BotDecisionContext {
+  botId: string;
+  difficulty: Difficulty;
+  botPlayer: Player;
+  allPlayers: Player[];
+  gameState: GameState;
+  discardTop?: Card;
+  pendingCard?: Card;
+  currentAction?: {
+    targetType: string;
+    card: Card;
+    peekTargets?: Array<{
+      playerId: string;
+      position: number;
+      card: Card | undefined;
+    }>;
+  };
+  // Opponent knowledge - what this bot knows about opponents' cards
+  opponentKnowledge: Map<string, Map<number, Card>>; // opponentId -> position -> card
+}
+
+export interface BotActionTarget {
+  playerId: string;
+  position: number; // -1 for player-level targeting
+}
+
+export interface BotActionDecision {
+  targets: BotActionTarget[];
+  shouldSwap?: boolean; // For peek-then-swap decisions
+  declaredRank?: Rank; // For King declarations
+}
+
+export interface BotTurnDecision {
+  action: 'draw' | 'take-discard';
+  cardChoice?: 'use-action' | 'swap' | 'discard'; // If drawing
+  swapPosition?: number; // If swapping
+}
+
+export interface BotDecisionService {
+  // Main turn decisions
+  decideTurnAction(context: BotDecisionContext): BotTurnDecision;
+
+  // Card action decisions
+  shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean;
+
+  // Action target selections
+  selectActionTargets(context: BotDecisionContext): BotActionDecision;
+
+  // Specific action decisions
+  shouldSwapAfterPeek(
+    peekedCards: Card[],
+    context: BotDecisionContext
+  ): boolean;
+  selectKingDeclaration(context: BotDecisionContext): Rank;
+
+  // Utility decisions
+  shouldParticipateInTossIn(
+    discardedRank: Rank,
+    context: BotDecisionContext
+  ): boolean;
+  selectBestSwapPosition(
+    drawnCard: Card,
+    context: BotDecisionContext
+  ): number | null;
+
+  // Game-ending decision
+  shouldCallVinto(context: BotDecisionContext): boolean;
+}
+
+// Factory for creating bot decision services
+export class BotDecisionServiceFactory {
+  static create(difficulty: Difficulty): BotDecisionService {
+    // Use MCTS bot for all difficulties
+    // Difficulty controls memory accuracy and MCTS iterations, not decision quality
+    return new MCTSBotDecisionService(difficulty);
+  }
+}
 
 /**
  * MCTS-based Bot Decision Service
@@ -534,7 +608,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Generate possible moves from current state
    */
   private generatePossibleMoves(state: MCTSGameState): MCTSMove[] {
-    const { MCTSMoveGenerator } = require('./mcts-move-generator');
     const moves = MCTSMoveGenerator.generateMoves(state);
     return MCTSMoveGenerator.pruneMoves(state, moves);
   }
@@ -543,7 +616,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Apply a move to the state and return new state
    */
   private applyMove(state: MCTSGameState, move: MCTSMove): MCTSGameState {
-    const { MCTSStateTransition } = require('./mcts-state-transition');
     return MCTSStateTransition.applyMove(state, move);
   }
 
@@ -666,7 +738,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Check if state is terminal
    */
   private isTerminal(state: MCTSGameState): boolean {
-    const { MCTSStateTransition } = require('./mcts-state-transition');
     return MCTSStateTransition.isTerminal(state);
   }
 

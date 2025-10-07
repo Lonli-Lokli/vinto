@@ -11,15 +11,16 @@ import { TossInStore, TossInStoreCallbacks } from './toss-in-store';
 import { ReplayStore } from './replay-store';
 import { CardAnimationStore } from './card-animation-store';
 import { GameToastService } from '../services/toast-service';
-import {
-  BotDecisionService,
-  BotDecisionServiceFactory,
-  BotDecisionContext,
-} from '../services/bot-decision';
+
 import { CommandFactory } from '../commands/command-factory';
 import { CommandHistory } from '../commands/command-history';
 import { Difficulty, Card, Rank, TempState } from '../shapes';
 import { GameStateManager } from '../commands';
+import {
+  BotDecisionService,
+  BotDecisionServiceFactory,
+  BotDecisionContext,
+} from '../services/mcts-bot-decision';
 
 @injectable()
 export class GameStore implements TempState {

@@ -25,8 +25,8 @@ import { CommandHistory } from '../commands/command-history';
 import { GameStateManager } from '../commands/game-state-manager';
 
 // Services
-import { BotDecisionServiceFactory } from '../services/bot-decision';
 import { ActionCoordinator } from '../stores/action-coordinator';
+import { BotDecisionServiceFactory } from '../services/mcts-bot-decision';
 
 /**
  * Configure the DI container with all dependencies

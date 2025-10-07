@@ -15,6 +15,7 @@ import type {
   CardAnimationStore,
 } from '../stores';
 import { Card, Rank, Difficulty } from '../shapes';
+import { formatActionDescription, formatTossInDescription } from '../utils/action-description-helper';
 
 /**
  * Serialized card data
@@ -492,9 +493,7 @@ export class PlayActionCardCommand extends Command {
       return this.getDescription();
     }
 
-    const {
-      formatActionDescription,
-    } = require('../utils/action-description-helper');
+    
     const formatted = formatActionDescription(
       this.playerName,
       this.card.rank,
@@ -803,9 +802,7 @@ export class TossInCardCommand extends Command {
     const player = this.playerStore.getPlayer(this.playerId);
     const playerName = player?.name || 'Unknown';
 
-    const {
-      formatTossInDescription,
-    } = require('../utils/action-description-helper');
+    
     return formatTossInDescription(
       playerName,
       this.matchingRank,

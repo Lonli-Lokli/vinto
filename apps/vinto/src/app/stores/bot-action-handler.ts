@@ -9,7 +9,7 @@ import {
   BotDecisionService,
   BotDecisionContext,
   BotActionTarget,
-} from '../services/bot-decision';
+} from '../services/mcts-bot-decision';
 import { CommandFactory, CommandHistory } from '../commands';
 
 export interface BotActionHandlerDependencies {

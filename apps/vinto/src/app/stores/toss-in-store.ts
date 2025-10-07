@@ -5,7 +5,7 @@ import { makeAutoObservable } from 'mobx';
 import { Card, Player } from '../shapes';
 import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
-import { BotDecisionService } from '../services/bot-decision';
+import { BotDecisionService } from '../services/mcts-bot-decision';
 
 export interface TossInAction {
   playerId: string;
