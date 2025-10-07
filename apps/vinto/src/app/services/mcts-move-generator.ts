@@ -50,7 +50,11 @@ export class MCTSMoveGenerator {
     }
 
     // Can take from discard ONLY if top card has unused action (7-K, A)
-    if (state.discardPileTop && state.discardPileTop.actionText && !state.discardPileTop.played) {
+    if (
+      state.discardPileTop &&
+      state.discardPileTop.actionText &&
+      !state.discardPileTop.played
+    ) {
       moves.push({
         type: 'take-discard',
         playerId: currentPlayer.id,

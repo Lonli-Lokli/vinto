@@ -106,11 +106,12 @@ export class CommandFactory {
     );
   }
 
-  discardCard(card: Card, skipAnimation = false): ICommand {
+  discardCard(card: Card, playerId?: string, skipAnimation = false): ICommand {
     return new DiscardCardCommand(
       this.deckStore,
       this.cardAnimationStore,
       card,
+      playerId,
       skipAnimation
     );
   }

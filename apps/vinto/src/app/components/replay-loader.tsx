@@ -64,7 +64,7 @@ export const ReplayLoader = observer(() => {
         ref={fileInputRef}
         type="file"
         accept=".json"
-        onChange={handleFileSelect}
+        onChange={(e) => void handleFileSelect(e)}
         className="hidden"
       />
       <LoadReplayButton onClick={handleClick} disabled={isLoading}>

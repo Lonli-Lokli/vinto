@@ -5,7 +5,7 @@ import { makeAutoObservable } from 'mobx';
 import { Card, Player } from '../shapes';
 import { PlayerStore } from './player-store';
 import { DeckStore } from './deck-store';
-import { BotDecisionService } from '../services/mcts-bot-decision';
+import { BotDecisionContext, BotDecisionService } from '../services/mcts-bot-decision';
 
 export interface TossInAction {
   playerId: string;
@@ -26,7 +26,7 @@ export interface TossInStoreDependencies {
   playerStore: PlayerStore;
   deckStore: DeckStore;
   botDecisionService: BotDecisionService;
-  createBotContext: (playerId: string) => any;
+  createBotContext: (playerId: string) => BotDecisionContext;
 }
 
 @injectable()
@@ -209,9 +209,9 @@ export class TossInStore {
     this.isActive = false;
 
     if (this.hasTossInActions) {
-      this.startProcessingQueue();
+      void this.startProcessingQueue();
     } else {
-      this.returnToNormalFlow();
+      void this.returnToNormalFlow();
     }
   }
 
@@ -267,13 +267,13 @@ export class TossInStore {
   private startProcessingQueue() {
     // Reset index to ensure we start from the beginning
     this.currentQueueIndex = 0;
-    this.processNextAction();
+    void this.processNextAction();
   }
 
   async processNextAction(): Promise<boolean> {
     const currentAction = this.currentTossInAction;
     if (!currentAction) {
-      this.finishQueueProcessing();
+      void this.finishQueueProcessing();
       return false;
     }
 
@@ -312,7 +312,7 @@ export class TossInStore {
 
   private async finishQueueProcessing() {
     this.clearQueue();
-    this.returnToNormalFlow();
+    await this.returnToNormalFlow();
   }
 
   private async returnToNormalFlow() {

@@ -61,7 +61,7 @@ export const ReplayControls = observer(() => {
           {/* Controls */}
           <div className="flex gap-2">
             <NextCommandButton
-              onClick={handleNext}
+              onClick={() => void handleNext()}
               disabled={!hasNext || isExecuting}
               isExecuting={isExecuting}
               hasNext={hasNext}

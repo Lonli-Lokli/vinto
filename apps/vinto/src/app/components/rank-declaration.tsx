@@ -29,7 +29,7 @@ export const RankDeclaration = observer(() => {
   if (!currentPlayer || currentPlayer.isBot) return null;
 
   const handleRankClick = (rank: Rank) => {
-    gameStore.declareRank(rank);
+    void gameStore.declareRank(rank);
   };
 
   const getHelpContent = () => {
@@ -71,7 +71,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
 
         {/* Skip button - compact */}
         <SkipButton
-          onClick={() => gameStore.skipDeclaration()}
+          onClick={() => void gameStore.skipDeclaration()}
           className="w-full py-1.5 px-3 flex-shrink-0"
         >
           Skip

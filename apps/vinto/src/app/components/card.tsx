@@ -106,9 +106,9 @@ export function Card({
       {...dataAttributes}
     >
       {revealed && card ? (
-        <RankComponent rank={card.rank} size={size} />
+        <RankComponent rank={card.rank} />
       ) : (
-        <CardBackComponent size={size} botPeeking={botPeeking} />
+        <CardBackComponent botPeeking={botPeeking} />
       )}
 
       {position > 0 && (
@@ -120,8 +120,7 @@ export function Card({
   );
 }
 
-const CardBackComponent: FC<{ size: CardSize; botPeeking?: boolean }> = ({
-  size,
+const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
   botPeeking = false,
 }) => {
   // Container has border and background, image fills it completely
@@ -142,8 +141,7 @@ const CardBackComponent: FC<{ size: CardSize; botPeeking?: boolean }> = ({
 
 const RankComponent: FC<{
   rank: Rank;
-  size: CardSize;
-}> = ({ rank, size }) => {
+}> = ({ rank }) => {
   // Container has border and background, image fills it completely
   const containerClassName =
     'h-full w-auto rounded border border-gray-300 bg-white shadow-sm overflow-hidden';

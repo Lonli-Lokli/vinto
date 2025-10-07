@@ -44,7 +44,7 @@ export function KingDeclaration() {
                 <KingActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => gameStore.declareKingAction(rank)}
+                  onClick={() => void gameStore.declareKingAction(rank)}
                   disabled={disabled}
                 />
               );
@@ -57,7 +57,7 @@ export function KingDeclaration() {
                 <KingNonActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => gameStore.declareKingAction(rank)}
+                  onClick={() => void gameStore.declareKingAction(rank)}
                   disabled={disabled}
                 />
               );

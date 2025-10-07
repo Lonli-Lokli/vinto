@@ -64,7 +64,7 @@ export const GameCommandGroup = observer(() => {
         ref={replayInputRef}
         type="file"
         accept=".json"
-        onChange={handleReplayMode}
+        onChange={(e) => void handleReplayMode(e)}
         className="hidden"
       />
     </div>

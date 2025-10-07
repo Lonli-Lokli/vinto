@@ -325,6 +325,8 @@ export class SwapCardsCommand extends Command {
           playerId: this.player1Id,
           position: this.position1,
         });
+      }).catch((error) => {
+        console.error('Error waiting for swap animations:', error);
       });
     }
 
@@ -511,6 +513,7 @@ export class DiscardCardCommand extends Command {
     private deckStore: DeckStore,
     private cardAnimationStore: CardAnimationStore,
     private card: Card,
+    private playerId?: string,
     private skipAnimation = false
   ) {
     super();
@@ -541,6 +544,7 @@ export class DiscardCardCommand extends Command {
       cardId: this.card.id,
       rank: this.card.rank,
       value: this.card.value,
+      playerId: this.playerId,
     });
   }
 
@@ -565,7 +569,7 @@ export class ReplaceCardCommand extends Command {
     super();
   }
 
-  async execute(): Promise<boolean> {
+  execute(): boolean {
     // Get the old card BEFORE replacing so we can animate it
     const player = this.playerStore.getPlayer(this.playerId);
     const oldCardToDiscard = player?.cards[this.position];

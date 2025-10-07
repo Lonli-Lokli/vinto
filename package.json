@@ -6,7 +6,7 @@
     "build": "nx run vinto:build",
     "start": "nx dev vinto",
     "format": "nx format:write",
-    "lint": "nx run-many --all --target=lint --fix=true"
+    "lint": "nx run-many --all --target=lint --fix=true --verbose"
   },
   "private": true,
   "dependencies": {

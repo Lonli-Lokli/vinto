@@ -11,7 +11,7 @@ export const GameInitializer = observer(() => {
   // Initialize game on mount
   useEffect(() => {
     if (players.length === 0) {
-      gameStore.initGame();
+      void gameStore.initGame();
     }
   }, [gameStore, players.length]);
 

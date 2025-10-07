@@ -295,12 +295,10 @@ const ActionExecutionIndicator = observer(
   ({
     actionContext,
     currentPlayer,
-    pendingCard,
     actionStore,
   }: {
     actionContext: any;
     currentPlayer: Player | null;
-    pendingCard: Card | null;
     actionStore: ActionStore;
   }) => {
     const actionPlayer =
@@ -563,7 +561,6 @@ export const GamePhaseIndicators = observer(() => {
       <ActionExecutionIndicator
         actionContext={actionContext}
         currentPlayer={currentPlayer}
-        pendingCard={pendingCard}
         actionStore={actionStore}
       />
     );
@@ -574,16 +571,16 @@ export const GamePhaseIndicators = observer(() => {
     return (
       <CardDrawnIndicator
         pendingCard={pendingCard}
-        onUseAction={() => gameStore.choosePlayCard()}
+        onUseAction={() => void gameStore.choosePlayCard()}
         onSwapDiscard={() => gameStore.chooseSwap()}
-        onDiscard={() => gameStore.discardCard()}
+        onDiscard={() => void gameStore.discardCard()}
       />
     );
   }
 
   // Card Selection for Swap (only for human players)
   if (isSelectingSwapPosition && currentPlayer?.isHuman) {
-    return <SwapPositionIndicator onDiscard={() => gameStore.discardCard()} />;
+    return <SwapPositionIndicator onDiscard={() => void gameStore.discardCard()} />;
   }
 
   return null;

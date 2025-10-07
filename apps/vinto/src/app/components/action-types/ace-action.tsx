@@ -23,7 +23,7 @@ export const AceAction = observer(() => {
   const handleOpponentClick = (opponentId: string) => {
     setSelectedOpponentId(opponentId);
     // Select the first card position (index 0) as a dummy - the action only cares about the player
-    gameStore.selectActionTarget(opponentId, 0);
+    void gameStore.selectActionTarget(opponentId, 0);
   };
 
   return (
@@ -56,7 +56,7 @@ export const AceAction = observer(() => {
         {/* Skip Button */}
         <div className="mt-2 flex-shrink-0">
           <SkipButton
-            onClick={() => gameStore.confirmPeekCompletion()}
+            onClick={() => void gameStore.confirmPeekCompletion()}
             fullWidth
           />
         </div>

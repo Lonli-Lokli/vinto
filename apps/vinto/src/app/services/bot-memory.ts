@@ -201,7 +201,7 @@ export class BotMemory {
     if (playerId === this.botId) {
       return new Map(this.ownCards);
     } else {
-      return new Map(this.opponentCards.get(playerId) || new Map());
+      return new Map(this.opponentCards.get(playerId) || new Map<number, CardMemory>());
     }
   }
 

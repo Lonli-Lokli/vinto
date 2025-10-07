@@ -55,7 +55,7 @@ export class PlayerStore {
   }
 
   // Player creation and initialization
-  initializePlayers(deck: Card[], difficulty: Difficulty) {
+  initializePlayers(deck: Card[], _difficulty: Difficulty) {
     this.players = [
       {
         id: 'human',

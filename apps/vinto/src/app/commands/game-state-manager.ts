@@ -120,7 +120,7 @@ export class GameStateManager {
       this.resetAllStores();
 
       // Restore initial state
-      await this.gameStateSerializer.restoreGameState(
+      this.gameStateSerializer.restoreGameState(
         savedState,
         this.playerStore,
         this.deckStore,
@@ -148,10 +148,10 @@ export class GameStateManager {
   /**
    * Load game in replay mode (step-by-step)
    */
-  async loadGameInReplayMode(json: string): Promise<{
+  loadGameInReplayMode(json: string): {
     success: boolean;
     commandCount: number;
-  }> {
+  } {
     try {
       // Parse the saved state
       const savedState = this.gameStateSerializer.loadGameState(json);
@@ -160,7 +160,7 @@ export class GameStateManager {
       this.resetAllStores();
 
       // Restore initial state
-      await this.gameStateSerializer.restoreGameState(
+      this.gameStateSerializer.restoreGameState(
         savedState,
         this.playerStore,
         this.deckStore,
@@ -199,7 +199,7 @@ export class GameStateManager {
       this.resetAllStores();
 
       // Restore initial state
-      await this.gameStateSerializer.restoreGameState(
+      this.gameStateSerializer.restoreGameState(
         savedState,
         this.playerStore,
         this.deckStore,
@@ -240,7 +240,7 @@ export class GameStateManager {
       this.resetAllStores();
 
       // Restore initial state
-      await this.gameStateSerializer.restoreGameState(
+      this.gameStateSerializer.restoreGameState(
         savedState,
         this.playerStore,
         this.deckStore,

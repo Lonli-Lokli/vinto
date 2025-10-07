@@ -49,7 +49,7 @@ export class MCTSStateTransition {
    */
   private static applyDraw(
     state: MCTSGameState,
-    move: MCTSMove
+    _move: MCTSMove
   ): MCTSGameState {
     // Decrease deck size
     if (state.deckSize > 0) {
@@ -69,7 +69,7 @@ export class MCTSStateTransition {
    */
   private static applyTakeDiscard(
     state: MCTSGameState,
-    move: MCTSMove
+    _move: MCTSMove
   ): MCTSGameState {
     // Card is now in player's hand (tracked elsewhere)
     // Discard pile top is removed
@@ -232,7 +232,7 @@ export class MCTSStateTransition {
    */
   private static applyDiscard(
     state: MCTSGameState,
-    move: MCTSMove
+    _move: MCTSMove
   ): MCTSGameState {
     // Card goes to discard pile (but we don't track it in simplified simulation)
     // Discarding means the player chose not to swap the drawn card
@@ -279,7 +279,7 @@ export class MCTSStateTransition {
    */
   private static applyPass(
     state: MCTSGameState,
-    move: MCTSMove
+    _move: MCTSMove
   ): MCTSGameState {
     // Exit toss-in phase
     state.isTossInPhase = false;
@@ -297,7 +297,7 @@ export class MCTSStateTransition {
    */
   private static applyCallVinto(
     state: MCTSGameState,
-    move: MCTSMove
+    _move: MCTSMove
   ): MCTSGameState {
     // Game ends
     state.isTerminal = true;

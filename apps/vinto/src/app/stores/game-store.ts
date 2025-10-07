@@ -14,7 +14,7 @@ import { GameToastService } from '../services/toast-service';
 
 import { CommandFactory } from '../commands/command-factory';
 import { CommandHistory } from '../commands/command-history';
-import { Difficulty, Card, Rank, TempState } from '../shapes';
+import { Difficulty, Card, Rank, TempState, Player } from '../shapes';
 import { GameStateManager } from '../commands';
 import {
   BotDecisionService,
@@ -110,7 +110,7 @@ export class GameStore implements TempState {
             break;
         }
       },
-      onPenaltyCard: (playerId) => this.handleTossInPenalty(playerId),
+      onPenaltyCard: (playerId) => void this.handleTossInPenalty(playerId),
     };
 
     this.tossInStore.setCallbacks(tossInCallbacks);
@@ -217,8 +217,8 @@ export class GameStore implements TempState {
           !this.tossInStore.isProcessingQueue &&
           !this.replayStore.isReplayMode
         ) {
-          // Trigger AI move immediately
-          this.makeAIMove(this.difficulty);
+          // Trigger AI move immediately (fire-and-forget from reaction)
+          void this.makeAIMove(this.difficulty);
         }
       }
     );
@@ -273,6 +273,7 @@ export class GameStore implements TempState {
   }
 
   // Card actions
+  // SHARED: Used by both humans and bots
   async drawCard() {
     if (!this.deckStore.hasDrawCards) {
       GameToastService.error('No cards left in draw pile!');
@@ -302,6 +303,7 @@ export class GameStore implements TempState {
     }
   }
 
+  // SHARED: Used by both humans and bots
   async takeFromDiscard() {
     const topCard = this.deckStore.peekTopDiscard();
     if (!topCard || topCard.played) return;
@@ -312,7 +314,10 @@ export class GameStore implements TempState {
     const currentPlayer = this.playerStore.currentPlayer;
     if (currentPlayer && takenCard.actionText) {
       // Use action immediately for discard pile cards (both human and bot)
-      await this.actionCoordinator.executeCardAction(takenCard, currentPlayer.id);
+      await this.actionCoordinator.executeCardAction(
+        takenCard,
+        currentPlayer.id
+      );
     }
   }
 
@@ -327,10 +332,10 @@ export class GameStore implements TempState {
     if (!currentPlayer || !pendingCard) return;
 
     if (pendingCard.actionText) {
-      this.actionCoordinator.executeCardAction(pendingCard, currentPlayer.id);
+      await this.actionCoordinator.executeCardAction(pendingCard, currentPlayer.id);
     } else {
       // Discard non-action cards using command
-      const command = this.commandFactory.discardCard(pendingCard);
+      const command = this.commandFactory.discardCard(pendingCard, currentPlayer.id);
       await this.commandHistory.executeCommand(command);
 
       this.actionStore.setPendingCard(null);
@@ -370,6 +375,7 @@ export class GameStore implements TempState {
   }
 
   // Rank declaration during swap
+  // SHARED: Used by both humans and bots (humans via UI, bots automatically when card is known)
   async declareRank(rank: Rank) {
     const currentPlayer = this.playerStore.currentPlayer;
     const pendingCard = this.actionStore.pendingCard;
@@ -410,7 +416,7 @@ export class GameStore implements TempState {
           } else {
             // Discard non-action cards using command
             const discardCommand =
-              this.commandFactory.discardCard(replacedCard);
+              this.commandFactory.discardCard(replacedCard, currentPlayer.id);
             await this.commandHistory.executeCommand(discardCommand);
             this.startTossInPeriod();
           }
@@ -436,7 +442,7 @@ export class GameStore implements TempState {
 
         if (replacedCard) {
           // Discard old card using command
-          const discardCommand = this.commandFactory.discardCard(replacedCard);
+          const discardCommand = this.commandFactory.discardCard(replacedCard, currentPlayer.id);
           await this.commandHistory.executeCommand(discardCommand);
         }
       }
@@ -493,7 +499,7 @@ export class GameStore implements TempState {
       if (replacedCard) {
         // Discard old card using command (skip animation - already completed)
         const discardCommand = this.commandFactory.discardCard(
-          replacedCard,
+          replacedCard,currentPlayer.id,
           true
         );
         await this.commandHistory.executeCommand(discardCommand);
@@ -506,16 +512,18 @@ export class GameStore implements TempState {
   }
 
   async discardCard() {
-    if (this.actionStore.pendingCard) {
+    const currentPlayer = this.playerStore.currentPlayer;
+    if (this.actionStore.pendingCard && currentPlayer) {
       // Discard using command
       const command = this.commandFactory.discardCard(
-        this.actionStore.pendingCard
+        this.actionStore.pendingCard,
+        currentPlayer.id
       );
       await this.commandHistory.executeCommand(command);
 
+      this.actionStore.setPendingCard(null);
       this.actionStore.clearAction();
       this.phaseStore.returnToIdle();
-      this.startTossInPeriod();
     }
   }
 
@@ -594,7 +602,7 @@ export class GameStore implements TempState {
   }
 
   // AI moves
-  async makeAIMove(difficulty: string) {
+  async makeAIMove(_difficulty: string) {
     try {
       const currentPlayer = this.playerStore.currentPlayer;
       if (!currentPlayer || currentPlayer.isHuman || this.aiThinking) return;
@@ -614,35 +622,22 @@ export class GameStore implements TempState {
           await this.takeFromDiscard();
           this.startTossInPeriod();
         } else {
-          // Draw new card and make decision using command system
-          if (this.deckStore.hasDrawCards) {
-            // Peek at the top card before drawing
-            // Use peekTopCard() which looks at index 0 (matches drawCard which uses shift())
-            const drawnCard = this.deckStore.peekTopCard();
+          // SHARED: Use same drawCard method as humans
+          await this.drawCard();
 
-            if (drawnCard) {
-              // Set pending card so drawn area exists for animation target
-              this.actionStore.setPendingCard(drawnCard);
-            }
+          // Get the drawn card from actionStore (set by drawCard)
+          const drawnCard = this.actionStore.pendingCard;
 
-            // Execute draw command (removes card from deck and handles animation)
-            const command = this.commandFactory.drawCard(currentPlayer.id);
-            const result = await this.commandHistory.executeCommand(command);
-
-            if (result.success && drawnCard) {
-              // Wait 4 seconds to allow human to see the drawn card
-              await new Promise((resolve) => setTimeout(resolve, 4000));
-              await this.executeBotCardDecision(drawnCard, currentPlayer);
-            }
-
-            // Clear pending card after bot makes decision
-            this.actionStore.setPendingCard(null);
+          if (drawnCard) {
+            // Bot thinking delay - allow human players to see what bot drew
+            await new Promise((resolve) => setTimeout(resolve, 4000));
+            await this.executeBotCardDecision(drawnCard, currentPlayer);
           }
 
           this.startTossInPeriod();
         }
       } catch {
-        this.advanceTurn();
+        await this.advanceTurn();
       } finally {
         this.setAIThinking(false);
         this.phaseStore.returnToIdle();
@@ -699,7 +694,9 @@ export class GameStore implements TempState {
     };
   }
 
-  private async executeBotCardDecision(drawnCard: Card, currentPlayer: any) {
+  // SPLIT: Bot-only decision logic (humans use UI controls)
+  // TODO: Refactor to use shared CardDecisionService interface
+  private async executeBotCardDecision(drawnCard: Card, currentPlayer: Player) {
     this.actionStore.setPendingCard(drawnCard);
     this.phaseStore.startChoosingAction();
 
@@ -731,6 +728,7 @@ export class GameStore implements TempState {
 
       // Bot knows the drawn card and where it's being placed
       // Record this knowledge BEFORE swapping
+      // Note: addKnownCardPosition is synchronous, not async
       this.playerStore.addKnownCardPosition(currentPlayer.id, swapPosition);
 
       // Bot declares rank if card at swap position is known
@@ -754,13 +752,13 @@ export class GameStore implements TempState {
       }
     } else {
       // Discard the drawn card
-      this.discardCard();
+      await this.discardCard();
     }
   }
 
   private async executeBotAction(drawnCard: Card, playerId: string) {
     // Execute the action - the coordinator will route to bot handler
-    this.actionCoordinator.executeCardAction(drawnCard, playerId);
+    await this.actionCoordinator.executeCardAction(drawnCard, playerId);
   }
 
   // Vinto and scoring
@@ -845,7 +843,7 @@ export class GameStore implements TempState {
     // Check if we're processing toss-in queue or in regular turn
     if (this.tossInStore.isProcessingQueue) {
       // Continue processing toss-in queue
-      this.tossInStore.completeCurrentAction();
+      void this.tossInStore.completeCurrentAction();
     } else {
       // After completing action during regular turn, start toss-in period
       this.startTossInPeriod();
@@ -926,7 +924,7 @@ export class GameStore implements TempState {
       }
     }
 
-    this.advanceTurn();
+    await this.advanceTurn();
   }
 
   private async handleTossInPenalty(playerId: string) {

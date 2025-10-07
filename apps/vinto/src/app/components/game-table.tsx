@@ -33,10 +33,6 @@ export const GameTable = observer(() => {
   const { waitingForTossIn } = tossInStore;
   const { discardPile } = useDeckStore();
 
-  // Calculate final scores if in scoring phase
-  const finalScores =
-    phase === 'scoring' ? gameStore.calculateFinalScores() : undefined;
-
   // Determine if card interactions should be enabled
   const shouldAllowCardInteractions = () => {
     if (!humanPlayer) return false;
@@ -108,7 +104,7 @@ export const GameTable = observer(() => {
         actionContext?.targetType === 'peek-then-swap' ||
         actionContext?.targetType === 'swap-cards')
     ) {
-      gameStore.selectActionTarget(humanPlayer.id, position);
+      void gameStore.selectActionTarget(humanPlayer.id, position);
       return;
     }
   };
@@ -159,13 +155,13 @@ export const GameTable = observer(() => {
         actionContext?.targetType === 'peek-then-swap' ||
         actionContext?.targetType === 'swap-cards')
     ) {
-      gameStore.selectActionTarget(playerId, position);
-    } 
+      void gameStore.selectActionTarget(playerId, position);
+    }
   };
 
   const handleDrawCard = () => {
     if (currentPlayer && currentPlayer.isHuman) {
-      gameStore.drawCard();
+      void gameStore.drawCard();
     }
   };
 
@@ -195,7 +191,6 @@ export const GameTable = observer(() => {
                     gameStore.aiThinking && currentPlayer?.id === top.id
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
                       ? (position) => handleOpponentCardClick(top.id, position)
@@ -218,7 +213,6 @@ export const GameTable = observer(() => {
                       gameStore.aiThinking && currentPlayer?.id === left.id
                     }
                     gamePhase={phase}
-                    finalScores={finalScores}
                     onCardClick={
                       shouldAllowOpponentCardInteractions()
                         ? (position) =>
@@ -235,9 +229,6 @@ export const GameTable = observer(() => {
                 <DeckArea
                   discardPile={discardPile}
                   pendingCard={pendingCard}
-                  isChoosingCardAction={isChoosingCardAction}
-                  isSelectingSwapPosition={isSelectingSwapPosition}
-                  isDeclaringRank={isDeclaringRank}
                   canDrawCard={
                     !!(
                       currentPlayer?.isHuman &&
@@ -264,7 +255,6 @@ export const GameTable = observer(() => {
                       gameStore.aiThinking && currentPlayer?.id === right.id
                     }
                     gamePhase={phase}
-                    finalScores={finalScores}
                     onCardClick={
                       shouldAllowOpponentCardInteractions()
                         ? (position) =>
@@ -288,7 +278,6 @@ export const GameTable = observer(() => {
                     shouldAllowCardInteractions() ? handleCardClick : undefined
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   isSelectingSwapPosition={isSelectingSwapPosition}
                   isDeclaringRank={isDeclaringRank}
                   swapPosition={swapPosition}
@@ -310,7 +299,6 @@ export const GameTable = observer(() => {
                     gameStore.aiThinking && currentPlayer?.id === top.id
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
                       ? (position) => handleOpponentCardClick(top.id, position)
@@ -331,7 +319,6 @@ export const GameTable = observer(() => {
                     gameStore.aiThinking && currentPlayer?.id === left.id
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
                       ? (position) => handleOpponentCardClick(left.id, position)
@@ -352,7 +339,6 @@ export const GameTable = observer(() => {
                     gameStore.aiThinking && currentPlayer?.id === right.id
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
                       ? (position) =>
@@ -369,9 +355,6 @@ export const GameTable = observer(() => {
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard}
-                isChoosingCardAction={isChoosingCardAction}
-                isSelectingSwapPosition={isSelectingSwapPosition}
-                isDeclaringRank={isDeclaringRank}
                 canDrawCard={
                   !!(
                     currentPlayer?.isHuman &&
@@ -399,7 +382,6 @@ export const GameTable = observer(() => {
                     shouldAllowCardInteractions() ? handleCardClick : undefined
                   }
                   gamePhase={phase}
-                  finalScores={finalScores}
                   isSelectingSwapPosition={isSelectingSwapPosition}
                   isDeclaringRank={isDeclaringRank}
                   swapPosition={swapPosition}

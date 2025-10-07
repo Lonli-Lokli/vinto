@@ -31,7 +31,7 @@ export const GameControls = observer(() => {
 
   const handleDrawCard = () => {
     if (currentPlayer && currentPlayer.isHuman) {
-      gameStore.drawCard();
+      void gameStore.drawCard();
     }
   };
 
@@ -158,7 +158,7 @@ const FullTurnControls = ({
 
         {/* Take from Discard */}
         <UseDiscardButton
-          onClick={() => gameStore.takeFromDiscard()}
+          onClick={() => void gameStore.takeFromDiscard()}
           disabled={!canTakeDiscard}
           title={discardInfo.tooltip}
           text={discardInfo.text}

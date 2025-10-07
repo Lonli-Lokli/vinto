@@ -16,7 +16,6 @@ export function formatActionDescription(
   cardRank: Rank,
   actionType: string,
   targets?: ActionTarget[],
-  result?: string
 ): string {
   const cardName = getCardName(cardRank);
 

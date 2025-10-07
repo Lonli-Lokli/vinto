@@ -15,7 +15,6 @@ interface PlayerAreaProps {
   isThinking: boolean;
   onCardClick?: (index: number) => void;
   gamePhase: 'setup' | 'playing' | 'final' | 'scoring';
-  finalScores?: { [playerId: string]: number };
   isSelectingSwapPosition?: boolean;
   isDeclaringRank?: boolean;
   swapPosition?: number | null;
@@ -25,10 +24,8 @@ interface PlayerAreaProps {
 export const PlayerArea = observer(function PlayerArea({
   player,
   isCurrentPlayer,
-  isThinking,
   onCardClick,
   gamePhase,
-  finalScores,
   isSelectingSwapPosition = false,
   isDeclaringRank = false,
   swapPosition = null,

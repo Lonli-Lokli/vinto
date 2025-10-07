@@ -123,6 +123,7 @@ export interface GameStore extends GameState {
 
 export class NeverError extends Error {
   constructor(value: never) {
+     
     super(`NeverError: Unexpected value ${value}`);
   }
 }

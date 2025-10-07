@@ -34,37 +34,37 @@ export class HumanActionHandler {
   }
 
   // Action initiation - waits for user input
-  handlePeekOwnCard(playerId: string): boolean {
+  handlePeekOwnCard(_playerId: string): boolean {
     // Human player selects which card to peek via UI
     GameToastService.info('Select one of your cards to peek');
     return true; // Action continues with user selection
   }
 
-  handlePeekOpponentCard(playerId: string): boolean {
+  handlePeekOpponentCard(_playerId: string): boolean {
     // Human player selects which opponent card to peek via UI
     GameToastService.info('Select an opponent card to peek');
     return true; // Action continues with user selection
   }
 
-  handleSwapCards(playerId: string): boolean {
+  handleSwapCards(_playerId: string): boolean {
     // Human player selects which cards to swap via UI
     GameToastService.info('Select first card to swap');
     return true; // Action continues with user selection
   }
 
-  handlePeekAndSwap(playerId: string): boolean {
+  handlePeekAndSwap(_playerId: string): boolean {
     // Human player selects which cards to peek via UI
     GameToastService.info('Select first card to peek');
     return true; // Action continues with user selection
   }
 
-  handleDeclareAction(playerId: string): boolean {
+  handleDeclareAction(_playerId: string): boolean {
     // Human player declares which action to execute via UI
     GameToastService.info('Declare which card action you want to execute');
     return true; // Action continues with user selection
   }
 
-  handleForceDraw(playerId: string): boolean {
+  handleForceDraw(_playerId: string): boolean {
     // Human player selects which opponent to force draw via UI
     GameToastService.info('Select an opponent to force draw a card');
     return true; // Action continues with user selection
@@ -139,7 +139,7 @@ export class HumanActionHandler {
     }
   }
 
-  async executeSwapCards(actionPlayerId: string): Promise<boolean> {
+  async executeSwapCards(_actionPlayerId: string): Promise<boolean> {
     const targets = this.actionStore.swapTargets;
     if (targets.length !== 2) return false;
 

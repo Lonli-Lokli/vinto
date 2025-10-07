@@ -47,7 +47,7 @@ const GameLayoutInner = observer(({ children }: GameLayoutProps) => {
       {/* Vinto Confirmation Modal */}
       <VintoConfirmationModal
         isOpen={gamePhaseStore.showVintoConfirmation}
-        onConfirm={() => gameStore.callVinto()}
+        onConfirm={() => void gameStore.callVinto()}
         onCancel={() => gamePhaseStore.closeVintoConfirmation()}
       />
     </div>

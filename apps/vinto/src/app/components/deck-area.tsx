@@ -10,9 +10,6 @@ import { DrawnCard } from './drawn-card';
 interface DeckAreaProps {
   discardPile: CardType[];
   pendingCard: CardType | null;
-  isChoosingCardAction: boolean;
-  isSelectingSwapPosition: boolean;
-  isDeclaringRank: boolean;
   canDrawCard: boolean;
   onDrawCard: () => void;
   isMobile?: boolean;
@@ -22,9 +19,6 @@ interface DeckAreaProps {
 export const DeckArea: React.FC<DeckAreaProps> = ({
   discardPile,
   pendingCard,
-  isChoosingCardAction,
-  isSelectingSwapPosition,
-  isDeclaringRank,
   canDrawCard,
   onDrawCard,
   isMobile = false,

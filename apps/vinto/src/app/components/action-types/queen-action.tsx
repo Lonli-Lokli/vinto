@@ -56,8 +56,8 @@ export const QueenAction = observer(() => {
         {/* Action Buttons - only show when both cards selected */}
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-            <QueenSwapButton onClick={() => gameStore.executeQueenSwap()} />
-            <SkipButton onClick={() => gameStore.skipQueenSwap()} />
+            <QueenSwapButton onClick={() => void gameStore.executeQueenSwap()} />
+            <SkipButton onClick={() => void gameStore.skipQueenSwap()} />
           </div>
         )}
       </div>

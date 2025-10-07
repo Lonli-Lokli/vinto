@@ -136,14 +136,14 @@ export class GameStateSerializer {
   /**
    * Restore game state by replaying commands
    */
-  async restoreGameState(
+  restoreGameState(
     state: SerializedGameState,
     playerStore: PlayerStore,
     deckStore: DeckStore,
     gamePhaseStore: GamePhaseStore,
     actionStore: ActionStore,
     tossInStore: TossInStore
-  ): Promise<void> {
+  ): void {
     // First, restore the initial state
     const initialData = state.initialState;
     this.restoreInitialState(
