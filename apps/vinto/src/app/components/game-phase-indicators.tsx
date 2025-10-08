@@ -173,7 +173,9 @@ Skip toss-in and proceed to next player's turn`;
               <div className="flex flex-wrap gap-1 items-center">
                 <ReactJoin separator={<CircleArrowRight size={14} />}>
                   {recentBotActions.map((action, idx) => (
-                    <span key={idx} className="text-secondary text-xs">{action}</span>
+                    <span key={idx} className="text-secondary text-xs">
+                      {action}
+                    </span>
                   ))}
                 </ReactJoin>
               </div>

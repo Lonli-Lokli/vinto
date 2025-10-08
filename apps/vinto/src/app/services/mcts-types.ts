@@ -59,6 +59,7 @@ export interface MCTSGameState {
   botPlayerId: string;
 
   discardPileTop: Card | null;
+  discardPile: Card[]; // Full discard pile history
   deckSize: number;
 
   // Bot's belief state (imperfect information)

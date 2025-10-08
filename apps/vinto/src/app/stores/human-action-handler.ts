@@ -3,12 +3,14 @@
 import { Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
+import { DeckStore } from './deck-store';
 import { GameToastService } from '../services/toast-service';
 import { CommandFactory, CommandHistory } from '../commands';
 
 export interface ActionHandlerDependencies {
   playerStore: PlayerStore;
   actionStore: ActionStore;
+  deckStore: DeckStore;
   commandFactory: CommandFactory;
   commandHistory: CommandHistory;
 }
@@ -23,12 +25,14 @@ export interface ActionHandlerDependencies {
 export class HumanActionHandler {
   private playerStore: PlayerStore;
   private actionStore: ActionStore;
+  private deckStore: DeckStore;
   private commandFactory: CommandFactory;
   private commandHistory: CommandHistory;
 
   constructor(deps: ActionHandlerDependencies) {
     this.playerStore = deps.playerStore;
     this.actionStore = deps.actionStore;
+    this.deckStore = deps.deckStore;
     this.commandFactory = deps.commandFactory;
     this.commandHistory = deps.commandHistory;
   }
@@ -238,12 +242,27 @@ export class HumanActionHandler {
     return true;
   }
 
-  executeForceDraw(actionPlayerId: string, targetPlayerId: string): boolean {
+  async executeForceDraw(actionPlayerId: string, targetPlayerId: string): Promise<boolean> {
     const actionPlayer = this.playerStore.getPlayer(actionPlayerId);
     const targetPlayer = this.playerStore.getPlayer(targetPlayerId);
 
     if (!actionPlayer || !targetPlayer || targetPlayerId === actionPlayerId)
       return false;
+
+    // Ensure deck has cards
+    if (!this.deckStore.hasDrawCards) {
+      this.deckStore.ensureDrawCards();
+    }
+
+    // Add penalty card using command
+    const penaltyCommand = this.commandFactory.addPenaltyCard(targetPlayerId);
+    const result = await this.commandHistory.executeCommand(penaltyCommand);
+
+    if (!result.success) return false;
+
+    GameToastService.success(
+      `${actionPlayer.name} forced ${targetPlayer.name} to draw a penalty card!`
+    );
 
     return true;
   }

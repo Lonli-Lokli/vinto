@@ -1,4 +1,5 @@
 // services/mcts-state-transition.ts
+import copy from 'fast-copy';
 import { CARD_CONFIGS } from '../constants/game-setup';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
@@ -321,26 +322,16 @@ export class MCTSStateTransition {
 
   /**
    * Clone game state (deep copy)
+   * Uses fast-copy library to ensure complete state isolation and prevent reference bugs
    */
   private static cloneState(state: MCTSGameState): MCTSGameState {
-    return {
-      players: state.players.map((p) => ({
-        ...p,
-        knownCards: new Map(p.knownCards),
-      })),
-      currentPlayerIndex: state.currentPlayerIndex,
-      botPlayerId: state.botPlayerId,
-      discardPileTop: state.discardPileTop ? { ...state.discardPileTop } : null,
-      deckSize: state.deckSize,
-      botMemory: state.botMemory, // Keep reference (don't clone)
-      hiddenCards: new Map(state.hiddenCards),
-      pendingCard: state.pendingCard ? { ...state.pendingCard } : null,
-      isTossInPhase: state.isTossInPhase,
-      turnCount: state.turnCount,
-      finalTurnTriggered: state.finalTurnTriggered,
-      isTerminal: state.isTerminal,
-      winner: state.winner,
-    };
+    // Use fast-copy for robust deep cloning
+    const cloned = copy(state);
+
+    // Important: Keep botMemory as a shared reference (intentional - it's shared state)
+    cloned.botMemory = state.botMemory;
+
+    return cloned;
   }
 
   /**

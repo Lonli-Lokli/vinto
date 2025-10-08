@@ -103,6 +103,9 @@ export class BotMemory {
       distribution.set(rank, 4);
     });
 
+    // Add 2 Jokers
+    distribution.set('Joker', 2);
+
     return distribution;
   }
 
@@ -251,8 +254,16 @@ export class BotMemory {
       }
     }
 
-    // Remove forgotten cards
-    toDelete.forEach((pos) => memoryMap.delete(pos));
+    // Remove forgotten cards and return them to distribution
+    toDelete.forEach((pos) => {
+      const memory = memoryMap.get(pos);
+      if (memory && memory.card) {
+        // Return card to distribution
+        const count = this.cardDistribution.get(memory.card.rank) || 0;
+        this.cardDistribution.set(memory.card.rank, count + 1);
+      }
+      memoryMap.delete(pos);
+    });
   }
 
   /**

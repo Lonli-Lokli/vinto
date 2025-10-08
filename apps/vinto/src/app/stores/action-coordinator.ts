@@ -50,6 +50,7 @@ export class ActionCoordinator {
     this.humanHandler = new HumanActionHandler({
       playerStore,
       actionStore,
+      deckStore,
       commandFactory,
       commandHistory,
     });
@@ -285,24 +286,16 @@ export class ActionCoordinator {
     actionPlayerId: string,
     targetPlayerId: string
   ): Promise<boolean> {
-    // Execute force draw through deck store
-    if (!this.deckStore.hasDrawCards) {
-      this.deckStore.ensureDrawCards();
+    // Delegate to appropriate handler - they contain the full implementation
+    const result = isHuman
+      ? await this.humanHandler.executeForceDraw(actionPlayerId, targetPlayerId)
+      : await this.botHandler.executeForceDraw(actionPlayerId, targetPlayerId);
+
+    if (result) {
+      this.completeAction();
     }
 
-    // Add penalty card using command
-    const penaltyCommand = this.commandFactory.addPenaltyCard(targetPlayerId);
-    const result = await this.commandHistory.executeCommand(penaltyCommand);
-
-    if (!result.success) return false;
-
-    // Show appropriate message based on player type
-    if (isHuman) {
-      this.humanHandler.executeForceDraw(actionPlayerId, targetPlayerId);
-    }
-
-    this.completeAction();
-    return true;
+    return result;
   }
 
   // Queen-specific methods

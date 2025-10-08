@@ -223,6 +223,7 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
 
   // PLAYING PHASE - CHOOSING
   'playing.choosing': [
+    'playing.choosing', // When: Self-loop for state refresh (shouldn't happen often)
     'playing.selecting', // When: Player chooses to swap drawn card
     'playing.awaiting_action', // When: Player plays action card
     'playing.idle', // When: Player discards card without swap
@@ -264,12 +265,10 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
 
   // PLAYING PHASE - AI THINKING
   'playing.ai_thinking': [
-    'playing.choosing', // When: Bot draws card and decides action
-    'playing.selecting', // When: Bot chooses to swap
-    'playing.declaring_rank', // When: Bot selects swap position
-    'playing.awaiting_action', // When: Bot plays action card
-    'playing.toss_queue_active', // When: Bot's turn completes, toss-in starts
-    'playing.idle', // When: Bot's turn completes without toss-in
+    'playing.drawing', // When: Bot starts drawing animation (needed for humans to see)
+    'playing.awaiting_action', // When: Bot takes from discard with action card
+    'playing.toss_queue_active', // When: Bot completes turn, toss-in starts
+    'playing.idle', // When: Bot completes turn without toss-in
   ],
 
   // FINAL PHASE - IDLE (same as playing but can transition to scoring)
@@ -289,6 +288,7 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
 
   // FINAL PHASE - CHOOSING
   'final.choosing': [
+    'final.choosing', // When: Self-loop for state refresh (shouldn't happen often)
     'final.selecting', // When: Player chooses to swap in final round
     'final.awaiting_action', // When: Player plays action in final round
     'final.idle', // When: Player discards without action
@@ -330,12 +330,11 @@ const validTransitions: Partial<Record<FullGameState, FullGameState[]>> = {
 
   // FINAL PHASE - AI THINKING
   'final.ai_thinking': [
-    'final.choosing', // When: Bot draws in final round
-    'final.selecting', // When: Bot chooses swap in final round
-    'final.declaring_rank', // When: Bot declares rank in final round
-    'final.awaiting_action', // When: Bot plays action in final round
+    'final.drawing', // When: Bot starts drawing animation in final round
+    'final.awaiting_action', // When: Bot takes from discard with action
     'final.toss_queue_active', // When: Bot's turn completes, toss-in starts
     'final.idle', // When: Bot's turn ends in final round
+    'scoring.idle', // When: Bot's final turn triggers game end
   ],
 
   // SCORING PHASE - Terminal state

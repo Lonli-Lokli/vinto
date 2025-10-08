@@ -176,6 +176,8 @@ export class BotActionHandler {
         turnCount: 0,
         finalTurnTriggered: false,
       },
+      discardTop: this.deckStore.peekTopDiscard() || undefined,
+      discardPile: this.deckStore.discardPile, // Pass full discard pile history
       opponentKnowledge,
       currentAction,
     };

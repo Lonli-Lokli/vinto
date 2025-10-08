@@ -21,6 +21,7 @@ export interface BotDecisionContext {
   allPlayers: Player[];
   gameState: GameState;
   discardTop?: Card;
+  discardPile: Card[]; // Full discard pile history for tracking removed cards
   pendingCard?: Card;
   currentAction?: {
     targetType: string;
@@ -447,7 +448,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
       ),
       botPlayerId: context.botId,
       discardPileTop: context.discardTop || null,
-      deckSize: 52, // Approximate
+      discardPile: context.discardPile,
+      deckSize: 54, // Standard deck with 2 Jokers
       botMemory: this.botMemory,
       hiddenCards: new Map(),
       pendingCard: context.pendingCard || null,
@@ -493,7 +495,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Creates a consistent possible world for simulation
    */
   private determinize(state: MCTSGameState): MCTSGameState {
-    const newState = { ...state };
+    // Use fast-copy for proper deep cloning to prevent state bleeding
+    const newState = copy(state);
     newState.hiddenCards = new Map();
 
     // Build deck of available ranks (standard 52-card deck + 2 Jokers)
@@ -556,6 +559,14 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     // Build availableRanks pool from standardRanks
     const availableRanks: Rank[] = [...standardRanks];
+
+    // Remove discarded cards from available pool (cards permanently out of play)
+    for (const discardedCard of state.discardPile) {
+      const idx = availableRanks.indexOf(discardedCard.rank);
+      if (idx >= 0) {
+        availableRanks.splice(idx, 1);
+      }
+    }
 
     // Remove cards we know about from available pool
     for (const player of state.players) {

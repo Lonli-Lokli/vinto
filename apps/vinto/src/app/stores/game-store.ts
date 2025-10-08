@@ -217,8 +217,13 @@ export class GameStore implements TempState {
           !this.tossInStore.isProcessingQueue &&
           !this.replayStore.isReplayMode
         ) {
-          // Trigger AI move immediately (fire-and-forget from reaction)
-          void this.makeAIMove(this.difficulty);
+          // Trigger AI move with proper error handling to prevent unhandled rejections
+          this.makeAIMove(this.difficulty).catch((error) => {
+            console.error('Unhandled error in AI move reaction:', error);
+            // Ensure state is always cleaned up even on unexpected errors
+            this.setAIThinking(false);
+            this.phaseStore.returnToIdle();
+          });
         }
       }
     );
@@ -676,6 +681,7 @@ export class GameStore implements TempState {
         finalTurnTriggered: this.phaseStore.finalTurnTriggered,
       },
       discardTop: this.deckStore.peekTopDiscard() || undefined,
+      discardPile: this.deckStore.discardPile, // Pass full discard pile history
       pendingCard: this.actionStore.pendingCard || undefined,
       currentAction:
         this.actionStore.actionContext && this.actionStore.pendingCard
@@ -697,8 +703,8 @@ export class GameStore implements TempState {
   // SPLIT: Bot-only decision logic (humans use UI controls)
   // TODO: Refactor to use shared CardDecisionService interface
   private async executeBotCardDecision(drawnCard: Card, currentPlayer: Player) {
+    // Note: Phase already set to 'choosing' by drawCard() - no need to set again
     this.actionStore.setPendingCard(drawnCard);
-    this.phaseStore.startChoosingAction();
 
     const context = this.createBotDecisionContext(currentPlayer.id);
 
