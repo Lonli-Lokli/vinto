@@ -86,7 +86,7 @@ Note: Call Vinto option will be available after you complete your turn during th
 
   // Single consistent container for all states
   return (
-    <div className="w-full h-full py-1.5">
+    <div className="w-full h-full py-1">
       <div className="h-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm flex flex-col">
         {/* Header - consistent across all states */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">

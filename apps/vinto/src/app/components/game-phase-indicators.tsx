@@ -50,7 +50,7 @@ const SetupPhaseIndicator = observer(
     setupPeeksRemaining: number;
     onFinishSetup: () => void;
   }) => (
-    <div className="w-full h-full py-1.5">
+    <div className="w-full h-full py-1">
       <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-theme-sm flex flex-col justify-center">
         <div className="text-center space-y-1">
           <div className="text-xs font-semibold text-primary leading-tight flex items-center justify-center gap-1">

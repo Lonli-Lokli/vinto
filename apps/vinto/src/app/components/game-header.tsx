@@ -101,7 +101,7 @@ export const GameHeader = observer(() => {
 
   return (
     <div className="sticky top-0 z-50 flex-shrink-0">
-      <div className="bg-surface-primary/70 backdrop-blur-md border-b border-primary flex-shrink-0">
+      <div className="bg-surface-primary/70 backdrop-blur-md border-b border-primary flex-shrink-0  rounded-lg border-2">
         <div className="max-w-6xl mx-auto px-3 py-1">
           <div className="flex items-center justify-between gap-4">
             {/* Left: Settings */}
