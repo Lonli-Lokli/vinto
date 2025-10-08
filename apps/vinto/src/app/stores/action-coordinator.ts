@@ -4,7 +4,6 @@ import { injectable, inject } from 'tsyringe';
 import { Card, CardAction, Rank } from '../shapes';
 import { PlayerStore } from './player-store';
 import { ActionStore } from './action-store';
-import { DeckStore } from './deck-store';
 import { GamePhaseStore } from './game-phase-store';
 import { GameToastService } from '../services/toast-service';
 import { HumanActionHandler } from './human-action-handler';
@@ -24,7 +23,6 @@ export class ActionCoordinator {
   private botHandler: BotActionHandler;
   private playerStore: PlayerStore;
   private actionStore: ActionStore;
-  private deckStore: DeckStore;
   private phaseStore: GamePhaseStore;
   private commandFactory: CommandFactory;
   private commandHistory: CommandHistory;
