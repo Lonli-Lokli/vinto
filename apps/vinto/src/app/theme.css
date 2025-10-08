@@ -117,10 +117,10 @@
   --color-text-primary: 248 250 252; /* slate-50 - main text on dark */
   --color-text-secondary: 203 213 225; /* slate-300 - secondary text on dark */
   --color-text-tertiary: 148 163 184; /* slate-400 - muted text on dark */
-  --color-text-quaternary: 100 116 139; /* slate-500 - disabled text on dark */
+  /* --- FIX: Adjusted disabled text color for legibility --- */
+  --color-text-quaternary: 100 116 139; /* slate-500 - A legible but clearly disabled text color */
   --color-text-on-surface: 248 250 252; /* slate-50 - text on dark surfaces */
-  /* --- FIX: Redefined text-on-primary for dark theme to ensure high contrast on bright green buttons --- */
-  --color-text-on-primary: 17 24 39; /* gray-900 */
+  --color-text-on-primary: 17 24 39; /* gray-900 - for high contrast on bright green buttons */
 
   /* Border Colors - Dark Mode */
   --color-border-primary: 71 85 105; /* slate-600 */
@@ -150,7 +150,8 @@
   --color-coalition-bg: 30 58 138; /* darker blue background */
 
   /* Additional Colors - Dark Mode */
-  --color-muted: 51 65 85; /* slate-700 - muted backgrounds in dark mode */
+  /* --- FIX: Adjusted muted background for a clearer disabled state --- */
+  --color-muted: 30 41 59; /* slate-800 - Match the panel for a "ghosted" look */
   --color-accent: 251 191 36; /* amber-400 - brighter accent for dark mode */
   --color-accent-dark: 245 158 11; /* amber-500 */
   --color-accent-darker: 217 119 6; /* amber-600 */
@@ -212,9 +213,8 @@
   border-color: rgb(var(--color-border-focus));
 }
 
-/* --- FIX: Added a robust, universal rule for any disabled element --- */
+/* Universal Disabled State Attribute */
 [disabled] {
-  opacity: 0.5;
   cursor: not-allowed !important;
   pointer-events: none;
 }

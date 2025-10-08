@@ -59,7 +59,7 @@ const SettingsPopover = observer(
             <label className="block text-sm font-medium text-primary mb-2">
               Difficulty
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-2">
               {(['easy', 'moderate', 'hard'] as const).map((level) => (
                 <DifficultyButton
                   key={level}

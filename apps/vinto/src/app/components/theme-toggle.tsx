@@ -29,13 +29,11 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       className="
-        p-2 rounded-lg 
+        px-2 py-1 rounded 
         bg-surface-secondary hover:bg-surface-tertiary
-        border border-primary
         text-secondary hover:text-primary
-        transition-colors duration-200
-        shadow-theme-sm hover:shadow-theme
-        flex items-center gap-2
+        transition-colors
+        flex items-center gap-1
       "
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}

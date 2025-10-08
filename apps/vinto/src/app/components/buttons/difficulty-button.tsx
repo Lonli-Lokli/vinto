@@ -11,7 +11,7 @@ export const DifficultyButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+    className={`px-2 py-1 rounded text-xs font-semibold capitalize transition-colors ${
       isActive
         ? 'bg-success text-white'
         : 'bg-surface-secondary hover:bg-surface-tertiary text-primary'
