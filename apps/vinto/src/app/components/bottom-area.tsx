@@ -8,7 +8,7 @@ import { WaitingIndicator } from './waiting-indicator';
 export function BottomArea() {
   return (
     <div
-      className="sticky bottom-0 z-50 flex-shrink-0 from-white/95 to-transparent backdrop-blur-sm"
+      className="sticky bottom-0 z-40 flex-shrink-0 from-white/95 to-transparent backdrop-blur-sm"
       style={{
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
         height: '25vh', // Fixed height as percentage of viewport

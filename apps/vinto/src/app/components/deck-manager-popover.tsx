@@ -76,7 +76,8 @@ export const DeckManagerPopover = observer(
     return (
       <div
         ref={popoverRef}
-        className="absolute top-full right-0 mt-2 bg-surface-primary rounded-lg shadow-xl border border-primary p-4 z-50 w-[480px] max-w-[90vw]"
+        className="absolute top-full right-0 mt-2 bg-surface-primary rounded-lg shadow-xl border border-primary p-4 z-[60] w-[480px] max-w-[90vw]"
+        style={{ bottom: 'auto' }}
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-primary pb-2">

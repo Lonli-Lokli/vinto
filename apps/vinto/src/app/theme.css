@@ -98,6 +98,8 @@
   --color-success-darker: 15 118 110; /* teal-700 - darkest success */
   --color-warning-darker: 180 83 9; /* amber-700 - darkest warning */
   --color-info-darker: 29 78 216; /* blue-700 - darkest info */
+
+  --color-scrollbar-thumb: 0, 0, 0; /* scrollbar thumb - black */
 }
 
 /* Dark Theme */
@@ -155,6 +157,8 @@
   --color-accent: 251 191 36; /* amber-400 - brighter accent for dark mode */
   --color-accent-dark: 245 158 11; /* amber-500 */
   --color-accent-darker: 217 119 6; /* amber-600 */
+
+  --color-scrollbar-thumb: 255, 255,  255; /* scrollbar thumb - white */
 }
 
 /* === UTILITY CLASSES FOR USING CSS VARIABLES === */

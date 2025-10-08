@@ -131,23 +131,25 @@
   }
 }
 
-/* Custom scrollbar for better UX */
+/* Custom scrollbar for WebKit browsers (Chrome, Safari) */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 2px;
+  background: rgba(var(--color-scrollbar-thumb), 0.2);
+  border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: rgba(var(--color-scrollbar-thumb), 0.4);
 }
+
 
 /* Smooth focus styles */
 *:focus {
