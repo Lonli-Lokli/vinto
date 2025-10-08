@@ -1,11 +1,22 @@
 'use client';
 import { observer } from 'mobx-react-lite';
-import { useGameStore, usePlayerStore, useGamePhaseStore, useActionStore, useTossInStore } from './di-provider';
+import {
+  useGameStore,
+  usePlayerStore,
+  useGamePhaseStore,
+  useActionStore,
+  useTossInStore,
+} from './di-provider';
 
 export const WaitingIndicator = observer(function WaitingIndicator() {
   const { isCurrentPlayerWaiting, aiThinking } = useGameStore();
   const { currentPlayer } = usePlayerStore();
-  const { isChoosingCardAction, isSelectingSwapPosition, isAwaitingActionTarget, isDeclaringRank } = useGamePhaseStore();
+  const {
+    isChoosingCardAction,
+    isSelectingSwapPosition,
+    isAwaitingActionTarget,
+    isDeclaringRank,
+  } = useGamePhaseStore();
   const { actionContext } = useActionStore();
   const { waitingForTossIn } = useTossInStore();
 
@@ -54,12 +65,12 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
 
   return (
     <div className="w-full h-full px-3 py-2">
-      <div className="h-full bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm flex flex-col justify-center">
+      <div className="h-full bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm flex flex-col justify-center">
         <div className="text-center">
-          <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-2">
+          <h3 className="text-sm md:text-base font-semibold text-primary mb-2">
             {currentPlayer?.name}&apos;s turn
           </h3>
-          <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-gray-600">
+          <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-secondary">
             <div className="animate-spin">⏳</div>
             <span>{getBotActivity()}</span>
           </div>

@@ -24,7 +24,7 @@ export const DiscardPile: React.FC<DiscardPileProps> = ({
     <div className="text-center" data-discard-pile="true">
       <Card card={cards[0]} revealed={cards.length > 0} size={size} />
       <div
-        className={`${labelMargin} ${textSize} text-white font-medium bg-black/30 rounded ${labelPadding}`}
+        className={`${labelMargin} ${textSize} text-white font-medium bg-overlay rounded ${labelPadding}`}
       >
         DISCARD
       </div>

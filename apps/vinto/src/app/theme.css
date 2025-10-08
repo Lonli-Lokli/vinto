@@ -1,0 +1,492 @@
+/* Theme Variables for Vinto Game */
+/* This file defines CSS custom properties for consistent theming across light and dark modes */
+
+:root {
+  /* === SEMANTIC COLOR TOKENS === */
+
+  /* Primary Game Colors */
+  --color-primary: 22 163 74; /* green-600 - main game color */
+  --color-primary-hover: 21 128 61; /* green-700 */
+  --color-primary-light: 187 247 208; /* green-200 */
+  --color-primary-dark: 20 83 45; /* green-800 */
+
+  /* Secondary Colors */
+  --color-secondary: 107 114 128; /* gray-500 */
+  --color-secondary-hover: 75 85 99; /* gray-600 */
+  --color-secondary-light: 229 231 235; /* gray-200 */
+  --color-secondary-dark: 55 65 81; /* gray-700 */
+
+  /* Surface Colors */
+  --color-surface-primary: 255 255 255; /* white - main backgrounds */
+  --color-surface-secondary: 249 250 251; /* gray-50 - secondary backgrounds */
+  --color-surface-tertiary: 243 244 246; /* gray-100 - subtle backgrounds */
+  --color-surface-elevated: 255 255 255; /* white - elevated surfaces like modals */
+
+  /* Game Table Colors */
+  --color-table-primary: 22 163 74; /* poker-green-600 */
+  --color-table-secondary: 21 128 61; /* poker-green-700 */
+  --color-table-tertiary: 20 83 45; /* poker-green-800 */
+  --color-table-border: 22 101 52; /* poker-green-800 */
+
+  /* Card Colors */
+  --color-card-back: 22 163 74; /* poker-green-600 */
+  --color-card-back-dark: 21 128 61; /* poker-green-700 */
+  --color-card-revealed: 245 158 11; /* amber-600 */
+  --color-card-revealed-dark: 217 119 6; /* amber-700 */
+  --color-card-border: 22 101 52; /* poker-green-800 */
+  --color-card-border-revealed: 245 158 11; /* amber-500 */
+
+  /* Text Colors */
+  --color-text-primary: 17 24 39; /* gray-900 - main text */
+  --color-text-secondary: 75 85 99; /* gray-600 - secondary text */
+  --color-text-tertiary: 107 114 128; /* gray-500 - muted text */
+  --color-text-quaternary: 156 163 175; /* gray-400 - disabled text */
+  --color-text-on-primary: 255 255 255; /* white - text on primary backgrounds */
+  --color-text-on-surface: 17 24 39; /* gray-900 - text on light surfaces */
+
+  /* Border Colors */
+  --color-border-primary: 209 213 219; /* gray-300 */
+  --color-border-secondary: 229 231 235; /* gray-200 */
+  --color-border-accent: 245 158 11; /* amber-500 - highlighted borders */
+  --color-border-focus: 59 130 246; /* blue-500 - focus states */
+
+  /* Status Colors */
+  --color-success: 34 197 94; /* green-500 */
+  --color-success-light: 220 252 231; /* green-100 */
+  --color-success-dark: 21 128 61; /* green-700 */
+  --color-warning: 245 158 11; /* amber-500 */
+  --color-warning-light: 254 243 199; /* amber-100 */
+  --color-warning-dark: 217 119 6; /* amber-700 */
+  --color-error: 239 68 68; /* red-500 */
+  --color-error-light: 254 226 226; /* red-100 */
+  --color-error-dark: 185 28 28; /* red-700 */
+  --color-info: 59 130 246; /* blue-500 */
+  --color-info-light: 219 234 254; /* blue-100 */
+  --color-info-dark: 29 78 216; /* blue-700 */
+
+  /* Player Role Colors */
+  --color-vinto-caller: 234 179 8; /* yellow-600 - Vinto caller ring */
+  --color-vinto-caller-bg: 254 249 195; /* yellow-100 - Vinto caller background */
+  --color-coalition: 37 99 235; /* blue-600 - Coalition member ring */
+  --color-coalition-bg: 219 234 254; /* blue-100 - Coalition background */
+  --color-coalition-leader: 234 179 8; /* yellow-600 - Coalition leader */
+
+  /* Current Player Indicators */
+  --color-current-player: 16 185 129; /* emerald-500 */
+  --color-current-player-border: 194 65 12; /* orange-700 */
+  --color-current-player-glow: 251 191 36; /* amber-400 */
+
+  /* Interactive States */
+  --color-hover-overlay: 0 0 0; /* black with opacity */
+  --color-active-overlay: 0 0 0; /* black with opacity */
+  --color-disabled-overlay: 156 163 175; /* gray-400 */
+
+  /* Shadow Colors */
+  --color-shadow-light: 0 0 0; /* black with low opacity */
+  --color-shadow-medium: 0 0 0; /* black with medium opacity */
+  --color-shadow-heavy: 0 0 0; /* black with higher opacity */
+
+  /* Backdrop Colors */
+  --color-backdrop: 0 0 0; /* black with opacity for modals/overlays */
+  --color-backdrop-blur: 255 255 255; /* white with opacity for glass effects */
+
+  /* Additional Colors */
+  --color-muted: 229 231 235; /* gray-200 - muted backgrounds */
+  --color-accent: 245 158 11; /* amber-500 - accent color */
+  --color-accent-dark: 217 119 6; /* amber-600 - darker accent */
+  --color-accent-darker: 180 83 9; /* amber-700 - darkest accent */
+  --color-success-darker: 15 118 110; /* teal-700 - darkest success */
+  --color-warning-darker: 180 83 9; /* amber-700 - darkest warning */
+  --color-info-darker: 29 78 216; /* blue-700 - darkest info */
+}
+
+/* Dark Theme */
+.dark {
+  /* Primary Game Colors - Dark Mode (brighter for contrast) */
+  --color-primary: 34 197 94; /* green-500 - brighter main game color */
+  --color-primary-hover: 22 163 74; /* green-600 */
+  --color-success: 52 211 153; /* emerald-400 - brighter success for dark mode */
+
+  /* Surface Colors - Dark Mode */
+  --color-surface-primary: 15 23 42; /* slate-900 - main dark backgrounds */
+  --color-surface-secondary: 30 41 59; /* slate-800 - secondary dark backgrounds */
+  --color-surface-tertiary: 51 65 85; /* slate-700 - subtle dark backgrounds */
+  --color-surface-elevated: 30 41 59; /* slate-800 - elevated surfaces */
+
+  /* Text Colors - Dark Mode */
+  --color-text-primary: 248 250 252; /* slate-50 - main text on dark */
+  --color-text-secondary: 203 213 225; /* slate-300 - secondary text on dark */
+  --color-text-tertiary: 148 163 184; /* slate-400 - muted text on dark */
+  --color-text-quaternary: 100 116 139; /* slate-500 - disabled text on dark */
+  --color-text-on-surface: 248 250 252; /* slate-50 - text on dark surfaces */
+  /* --- FIX: Redefined text-on-primary for dark theme to ensure high contrast on bright green buttons --- */
+  --color-text-on-primary: 17 24 39; /* gray-900 */
+
+  /* Border Colors - Dark Mode */
+  --color-border-primary: 71 85 105; /* slate-600 */
+  --color-border-secondary: 51 65 85; /* slate-700 */
+
+  /* Game Table Colors - Dark Mode (slightly adjusted for contrast) */
+  --color-table-primary: 15 58 31; /* darker poker-green for dark mode */
+  --color-table-secondary: 20 83 45; /* poker-green-800 */
+  --color-table-tertiary: 22 101 52; /* poker-green-700 */
+  --color-table-border: 34 197 94; /* lighter border for contrast */
+
+  /* Card Colors - Dark Mode */
+  --color-card-back: 15 58 31; /* darker green for card backs */
+  --color-card-back-dark: 20 83 45; /* poker-green-800 */
+
+  /* Backdrop Colors - Dark Mode */
+  --color-backdrop-blur: 15 23 42; /* dark with opacity for glass effects */
+
+  /* Status Colors - Dark Mode (keep vibrant but adjust backgrounds) */
+  --color-success-light: 15 58 31; /* darker success background */
+  --color-warning-light: 120 53 15; /* darker warning background */
+  --color-error-light: 127 29 29; /* darker error background */
+  --color-info-light: 30 58 138; /* darker info background */
+
+  /* Player Role Colors - Dark Mode */
+  --color-vinto-caller-bg: 120 53 15; /* darker yellow background */
+  --color-coalition-bg: 30 58 138; /* darker blue background */
+
+  /* Additional Colors - Dark Mode */
+  --color-muted: 51 65 85; /* slate-700 - muted backgrounds in dark mode */
+  --color-accent: 251 191 36; /* amber-400 - brighter accent for dark mode */
+  --color-accent-dark: 245 158 11; /* amber-500 */
+  --color-accent-darker: 217 119 6; /* amber-600 */
+}
+
+/* === UTILITY CLASSES FOR USING CSS VARIABLES === */
+
+/* Background Colors */
+.bg-surface-primary {
+  background-color: rgb(var(--color-surface-primary));
+}
+.bg-surface-secondary {
+  background-color: rgb(var(--color-surface-secondary));
+}
+.bg-surface-tertiary {
+  background-color: rgb(var(--color-surface-tertiary));
+}
+.bg-surface-elevated {
+  background-color: rgb(var(--color-surface-elevated));
+}
+.bg-primary {
+  background-color: rgb(var(--color-primary));
+}
+.bg-table-primary {
+  background-color: rgb(var(--color-table-primary));
+}
+.bg-table-secondary {
+  background-color: rgb(var(--color-table-secondary));
+}
+
+/* Text Colors */
+.text-primary {
+  color: rgb(var(--color-text-primary));
+}
+.text-secondary {
+  color: rgb(var(--color-text-secondary));
+}
+.text-tertiary {
+  color: rgb(var(--color-text-tertiary));
+}
+.text-on-primary {
+  color: rgb(var(--color-text-on-primary));
+}
+.text-on-surface {
+  color: rgb(var(--color-text-on-surface));
+}
+
+/* Border Colors */
+.border-primary {
+  border-color: rgb(var(--color-border-primary));
+}
+.border-secondary {
+  border-color: rgb(var(--color-border-secondary));
+}
+.border-accent {
+  border-color: rgb(var(--color-border-accent));
+}
+.border-focus {
+  border-color: rgb(var(--color-border-focus));
+}
+
+/* --- FIX: Added a robust, universal rule for any disabled element --- */
+[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Status Colors */
+.bg-success {
+  background-color: rgb(var(--color-success));
+}
+.bg-success-light {
+  background-color: rgb(var(--color-success-light));
+}
+.text-success {
+  color: rgb(var(--color-success));
+}
+.border-success {
+  border-color: rgb(var(--color-success));
+}
+
+.bg-warning {
+  background-color: rgb(var(--color-warning));
+}
+.bg-warning-light {
+  background-color: rgb(var(--color-warning-light));
+}
+.text-warning {
+  color: rgb(var(--color-warning));
+}
+.border-warning {
+  border-color: rgb(var(--color-warning));
+}
+
+.bg-error {
+  background-color: rgb(var(--color-error));
+}
+.bg-error-light {
+  background-color: rgb(var(--color-error-light));
+}
+.text-error {
+  color: rgb(var(--color-error));
+}
+.border-error {
+  border-color: rgb(var(--color-error));
+}
+
+.bg-info {
+  background-color: rgb(var(--color-info));
+}
+.bg-info-light {
+  background-color: rgb(var(--color-info-light));
+}
+.text-info {
+  color: rgb(var(--color-info));
+}
+.border-info {
+  border-color: rgb(var(--color-info));
+}
+
+/* Player Role Colors */
+.bg-vinto-caller {
+  background-color: rgb(var(--color-vinto-caller-bg));
+}
+.border-vinto-caller {
+  border-color: rgb(var(--color-vinto-caller));
+}
+.ring-vinto-caller {
+  --tw-ring-color: rgb(var(--color-vinto-caller));
+}
+
+.bg-coalition {
+  background-color: rgb(var(--color-coalition-bg));
+}
+.border-coalition {
+  border-color: rgb(var(--color-coalition));
+}
+.ring-coalition {
+  --tw-ring-color: rgb(var(--color-coalition));
+}
+
+/* Current Player */
+.text-current-player {
+  color: rgb(var(--color-current-player));
+}
+.border-current-player {
+  border-color: rgb(var(--color-current-player-border));
+}
+
+/* Interactive States */
+.hover-overlay:hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(var(--color-hover-overlay), 0.05);
+  pointer-events: none;
+}
+
+.active-overlay:active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(var(--color-active-overlay), 0.1);
+  pointer-events: none;
+}
+
+/* Game-specific gradients */
+.bg-table-gradient {
+  background: radial-gradient(
+    ellipse at center,
+    rgb(var(--color-table-secondary)) 0%,
+    rgb(var(--color-table-primary)) 100%
+  );
+}
+
+.bg-card-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-card-back)),
+    rgb(var(--color-card-back-dark))
+  );
+}
+
+.bg-card-revealed-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-card-revealed)),
+    rgb(var(--color-card-revealed-dark))
+  );
+}
+
+/* Title gradient that adapts to theme */
+.bg-title-gradient {
+  background: linear-gradient(
+    to right,
+    rgb(var(--color-primary)),
+    rgb(var(--color-success))
+  );
+}
+
+/* Page background gradient */
+.bg-page-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-surface-secondary)),
+    rgb(var(--color-surface-tertiary))
+  );
+}
+
+/* Coalition indicator gradient */
+.bg-coalition-gradient {
+  background: linear-gradient(
+    to right,
+    rgb(var(--color-coalition)),
+    rgb(var(--color-info))
+  );
+}
+
+/* Backdrop utilities with CSS variables */
+.backdrop-theme {
+  background-color: rgba(var(--color-backdrop-blur), 0.95);
+  backdrop-filter: blur(8px);
+}
+
+/* Shadow utilities */
+.shadow-theme-sm {
+  box-shadow: 0 1px 2px 0 rgba(var(--color-shadow-light), 0.05);
+}
+
+.shadow-theme {
+  box-shadow: 0 4px 6px -1px rgba(var(--color-shadow-medium), 0.1),
+    0 2px 4px -1px rgba(var(--color-shadow-light), 0.06);
+}
+
+.shadow-theme-md {
+  box-shadow: 0 4px 6px -1px rgba(var(--color-shadow-medium), 0.1),
+    0 2px 4px -1px rgba(var(--color-shadow-light), 0.06);
+}
+
+.shadow-theme-lg {
+  box-shadow: 0 10px 15px -3px rgba(var(--color-shadow-heavy), 0.1),
+    0 4px 6px -2px rgba(var(--color-shadow-medium), 0.05);
+}
+
+/* Additional utility classes we used */
+.bg-muted {
+  background-color: rgb(var(--color-muted));
+}
+.text-muted {
+  color: rgb(var(--color-text-tertiary));
+}
+.text-muted-foreground {
+  color: rgb(var(--color-text-quaternary));
+}
+
+.bg-accent {
+  background-color: rgb(var(--color-accent));
+}
+.bg-accent-dark {
+  background-color: rgb(var(--color-accent-dark));
+}
+.bg-accent-darker {
+  background-color: rgb(var(--color-accent-darker));
+}
+.text-accent {
+  color: rgb(var(--color-accent));
+}
+
+.bg-success-dark {
+  background-color: rgb(var(--color-success-dark));
+}
+.bg-success-darker {
+  background-color: rgb(var(--color-success-darker));
+}
+.bg-warning-dark {
+  background-color: rgb(var(--color-warning-dark));
+}
+.bg-warning-darker {
+  background-color: rgb(var(--color-warning-darker));
+}
+.bg-info-dark {
+  background-color: rgb(var(--color-info-dark));
+}
+.bg-info-darker {
+  background-color: rgb(var(--color-info-darker));
+}
+
+.bg-overlay {
+  background-color: rgba(var(--color-backdrop), 0.6);
+}
+
+/* Custom animations with CSS variables */
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-info), 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(var(--color-info), 0);
+  }
+}
+
+@keyframes ring-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(var(--color-current-player-glow), 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(var(--color-current-player-glow), 0);
+  }
+}
+
+@keyframes card-select-pulse {
+  0%,
+  100% {
+    border-color: rgba(var(--color-accent), 0.8);
+    box-shadow: 0 0 0 0 rgba(var(--color-accent), 0.7),
+      0 0 20px 2px rgba(var(--color-accent), 0.4);
+  }
+  50% {
+    border-color: rgb(var(--color-accent));
+    box-shadow: 0 0 0 4px rgba(var(--color-accent), 0),
+      0 0 25px 4px rgba(var(--color-accent), 0.6);
+  }
+}
+
+/* Animation utility classes */
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s infinite;
+}
+
+.animate-ring-pulse {
+  animation: ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-card-select-pulse {
+  animation: card-select-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

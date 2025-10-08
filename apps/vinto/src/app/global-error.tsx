@@ -16,8 +16,8 @@ export default function GlobalError({
     <html>
       <body>
         <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 space-y-4">
-            <div className="flex items-center gap-3 text-red-600">
+          <div className="max-w-md w-full bg-surface-primary rounded-lg shadow-lg p-6 space-y-4">
+            <div className="flex items-center gap-3 text-error">
               <svg
                 className="w-8 h-8 flex-shrink-0"
                 fill="none"
@@ -34,18 +34,18 @@ export default function GlobalError({
               <h1 className="text-xl font-semibold">Something went wrong</h1>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded p-3">
-              <p className="text-sm text-red-800 font-mono break-words">
+            <div className="bg-error-light border border-error rounded p-3">
+              <p className="text-sm text-error-dark font-mono break-words">
                 {error.message || 'An unexpected error occurred'}
               </p>
               {error.digest && (
-                <p className="text-xs text-red-600 mt-2">
+                <p className="text-xs text-error mt-2">
                   Error ID: {error.digest}
                 </p>
               )}
             </div>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-secondary">
               <p>
                 We&apos;ve been notified and are looking into it. Please try
                 refreshing the page.

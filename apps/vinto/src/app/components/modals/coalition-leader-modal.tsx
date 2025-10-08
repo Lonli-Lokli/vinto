@@ -4,7 +4,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown } from 'lucide-react';
-import { useGamePhaseStore, useGameStore, usePlayerStore } from '../di-provider';
+import {
+  useGamePhaseStore,
+  useGameStore,
+  usePlayerStore,
+} from '../di-provider';
 import { ContinueButton, OpponentSelectButton } from '../buttons';
 
 export const CoalitionLeaderModal = observer(() => {
@@ -25,20 +29,20 @@ export const CoalitionLeaderModal = observer(() => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-surface-primary rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-in fade-in zoom-in duration-200">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Crown className="text-yellow-500" size={32} />
-            <h2 className="text-2xl font-bold text-gray-800">
+            <Crown className="text-warning" size={32} />
+            <h2 className="text-2xl font-bold text-primary">
               Select Coalition Leader
             </h2>
           </div>
-          <p className="text-gray-600">
+          <p className="text-secondary">
             {vintoCaller?.name} called Vinto! Choose who will lead the
             coalition.
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-secondary mt-2">
             The leader will see all coalition cards and play for the team.
           </p>
         </div>
@@ -51,8 +55,8 @@ export const CoalitionLeaderModal = observer(() => {
                 relative p-2 rounded-xl border-2 transition-all
                 ${
                   player.isCoalitionLeader
-                    ? 'border-yellow-500 bg-yellow-50'
-                    : 'border-gray-300 bg-white'
+                    ? 'border-warning bg-warning-light'
+                    : 'border-primary bg-surface-primary'
                 }
               `}
             >
@@ -65,7 +69,7 @@ export const CoalitionLeaderModal = observer(() => {
                 className="w-full"
               />
               {player.isCoalitionLeader && (
-                <div className="absolute top-0 right-0 flex items-center gap-1 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-bl-lg rounded-tr-lg">
+                <div className="absolute top-0 right-0 flex items-center gap-1 bg-warning text-white text-xs font-semibold px-2 py-1 rounded-bl-lg rounded-tr-lg">
                   <Crown size={12} />
                   <span>Leader</span>
                 </div>

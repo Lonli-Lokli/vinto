@@ -79,7 +79,8 @@ export function Card({
   const getCardStateClasses = () => {
     if (notSelectable) return 'card-not-selectable';
     if (selectable) return 'card-selectable animate-card-select-pulse';
-    if (clickable) return 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md';
+    if (clickable)
+      return 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md';
     return '';
   };
 
@@ -102,7 +103,9 @@ export function Card({
           ? { transform: 'rotate(90deg)' }
           : undefined
       }
-      onClick={(clickable || selectable) && !notSelectable ? onClick : undefined}
+      onClick={
+        (clickable || selectable) && !notSelectable ? onClick : undefined
+      }
       {...dataAttributes}
     >
       {revealed && card ? (
@@ -112,7 +115,7 @@ export function Card({
       )}
 
       {position > 0 && (
-        <div className="absolute -top-2 -right-2 w-4 h-4 bg-slate-600 text-white rounded-full text-2xs font-bold flex items-center justify-center">
+        <div className="absolute -top-2 -right-2 w-4 h-4 bg-secondary text-on-primary rounded-full text-2xs font-bold flex items-center justify-center">
           {position}
         </div>
       )}
@@ -124,10 +127,10 @@ const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
   botPeeking = false,
 }) => {
   // Container has border and background, image fills it completely
-  const containerClassName = `h-full w-auto rounded border shadow-sm overflow-hidden ${
+  const containerClassName = `h-full w-auto rounded border shadow-theme-sm overflow-hidden ${
     botPeeking
-      ? 'border-amber-500 bg-gradient-to-br from-amber-600 to-amber-700'
-      : 'border-poker-green-600 bg-gradient-to-br from-poker-green-700 to-poker-green-800'
+      ? 'border-warning bg-card-revealed-gradient'
+      : 'border-primary bg-card-gradient'
   }`;
 
   const imageClassName = 'h-full w-full object-cover';
@@ -144,7 +147,7 @@ const RankComponent: FC<{
 }> = ({ rank }) => {
   // Container has border and background, image fills it completely
   const containerClassName =
-    'h-full w-auto rounded border border-gray-300 bg-white shadow-sm overflow-hidden';
+    'h-full w-auto rounded border border-primary bg-surface-primary shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
 
   const renderImage = () => {

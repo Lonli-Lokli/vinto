@@ -28,11 +28,11 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
 
   const helpContent = (
     <div
-      className="bg-white border border-gray-300 rounded p-3 max-w-sm shadow-lg"
+      className="bg-surface-primary border border-primary rounded p-3 max-w-sm shadow-lg"
       style={{ zIndex: 9999 }}
     >
-      <div className="text-sm text-gray-700 space-y-2">
-        <p className="font-semibold text-gray-800">{title}</p>
+      <div className="text-sm text-secondary space-y-2">
+        <p className="font-semibold text-primary">{title}</p>
         <div className="text-xs whitespace-pre-line">{helpText}</div>
       </div>
     </div>

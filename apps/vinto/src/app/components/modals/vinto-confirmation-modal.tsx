@@ -19,26 +19,26 @@ export const VintoConfirmationModal = observer(
       <>
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-overlay backdrop-blur-sm z-[200] animate-in fade-in duration-200"
           onClick={onCancel}
         />
 
         {/* Modal */}
         <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none">
           <div
-            className="bg-white rounded-lg shadow-2xl border-2 border-orange-400 max-w-sm w-full p-6 pointer-events-auto animate-in zoom-in-95 duration-200"
+            className="bg-surface-primary rounded-lg shadow-2xl border-2 border-warning max-w-sm w-full p-6 pointer-events-auto animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Title */}
             <div className="flex items-center justify-center gap-2 mb-4">
               <span className="text-3xl">⚠️</span>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+              <h2 className="text-xl md:text-2xl font-bold text-primary">
                 Call Vinto?
               </h2>
             </div>
 
             {/* Message */}
-            <p className="text-base md:text-lg text-gray-700 text-center leading-relaxed mb-6">
+            <p className="text-base md:text-lg text-secondary text-center leading-relaxed mb-6">
               This ends the round immediately. All other players get one final
               turn.
             </p>

@@ -14,8 +14,8 @@ export const LoadReplayButton = ({
     disabled={disabled}
     className={`px-4 py-2 rounded-lg font-semibold text-sm shadow-lg transition-all ${
       disabled
-        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-        : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl'
+        ? 'bg-muted text-muted-foreground cursor-not-allowed'
+        : 'bg-info hover:bg-info-dark text-white hover:shadow-xl'
     } ${className}`}
   >
     {children}

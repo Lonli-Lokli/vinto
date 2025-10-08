@@ -2,14 +2,13 @@
 
 import React, { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGameStateManager, useReplayStore } from './di-provider';
+import { useGameStateManager } from './di-provider';
 import { GameToastService } from '../services/toast-service';
-import { DownloadIcon, PlayIcon } from 'lucide-react';
-import { ExportButton, ReplayButton } from './buttons';
+import { DownloadIcon } from 'lucide-react';
+import { ExportButton } from './buttons';
 
 export const GameCommandGroup = observer(() => {
   const gameStateManager = useGameStateManager();
-  const replayStore = useReplayStore();
 
   const replayInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,12 +53,12 @@ export const GameCommandGroup = observer(() => {
         <DownloadIcon className="inline w-3 h-3 mr-1" />
         <span className="hidden sm:inline">Export</span>
       </ExportButton>
-      {!replayStore.isReplayMode && (
+      {/* {!replayStore.isReplayMode && (
         <ReplayButton onClick={() => replayInputRef.current?.click()}>
           <PlayIcon className="inline w-3 h-3 mr-1" />
           <span className="hidden sm:inline">Replay</span>
         </ReplayButton>
-      )}
+      )} */}
       <input
         ref={replayInputRef}
         type="file"

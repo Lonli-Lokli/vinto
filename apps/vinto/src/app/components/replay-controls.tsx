@@ -38,7 +38,7 @@ export const ReplayControls = observer(() => {
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="bg-orange-900/95 border-2 border-yellow-600 rounded-lg shadow-2xl p-4">
+      <div className="bg-warning/95 border-2 border-warning rounded-lg shadow-2xl p-4">
         <div className="flex flex-col gap-3">
           {/* Header */}
           <div className="flex items-center justify-between gap-4">

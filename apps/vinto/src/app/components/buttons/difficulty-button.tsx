@@ -13,11 +13,11 @@ export const DifficultyButton = ({
     onClick={onClick}
     className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
       isActive
-        ? 'bg-emerald-500 text-white'
-        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+        ? 'bg-success text-white'
+        : 'bg-surface-secondary hover:bg-surface-tertiary text-primary'
     } ${className}`}
     title={`Difficulty: ${level}`}
   >
-    {level[0].toUpperCase()}
+    {level}
   </button>
 );

@@ -27,11 +27,11 @@ export const AceAction = observer(() => {
   };
 
   return (
-    <div className="w-full h-full px-2 py-1">
-      <div className="bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full py-1">
+      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Compact Header */}
         <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
-          <h3 className="text-xs font-semibold text-gray-800 leading-tight">
+          <h3 className="text-xs font-semibold text-primary leading-tight">
             🎯 Ace: Force opponent to draw
           </h3>
           <HelpPopover title="Ace Action" rank="A" />

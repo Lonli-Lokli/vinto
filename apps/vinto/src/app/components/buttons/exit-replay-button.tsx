@@ -7,7 +7,7 @@ export const ExitReplayButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-2 py-1 bg-red-700 hover:bg-red-600 text-white text-xs rounded transition-colors ${className}`}
+    className={`px-2 py-1 bg-error hover:bg-error-dark text-white text-xs rounded transition-colors ${className}`}
   >
     Exit
   </button>

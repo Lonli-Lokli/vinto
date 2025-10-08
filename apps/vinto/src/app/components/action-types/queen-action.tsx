@@ -16,15 +16,15 @@ export const QueenAction = observer(() => {
   const hasBothCards = peekTargets.length === 2;
 
   return (
-    <div className="w-full h-full px-2 py-1.5">
-      <div className="bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full py-1.5">
+      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
-          <h3 className="text-xs font-semibold text-gray-800 leading-tight">
+          <h3 className="text-xs font-semibold text-primary leading-tight">
             👑 Queen Action
           </h3>
           <div className="flex flex-row items-center gap-1">
-            <div className="text-xs text-gray-500 leading-tight">
+            <div className="text-xs text-secondary leading-tight">
               {peekTargets.length}/2 selected
             </div>
             <HelpPopover title="Queen Action" rank="Q" />
@@ -35,17 +35,17 @@ export const QueenAction = observer(() => {
         <div className="flex-1 flex flex-col justify-center mb-1 min-h-0">
           {!hasBothCards && (
             <div className="text-center space-y-1">
-              <p className="text-xs text-gray-800 font-medium leading-tight">
+              <p className="text-xs text-primary font-medium leading-tight">
                 👁️ Peek at two cards from different players
               </p>
-              <p className="text-xs text-gray-600 leading-tight">
+              <p className="text-xs text-secondary leading-tight">
                 One card may be yours, one must be from another player
               </p>
-              <p className="text-xs text-gray-500 leading-tight">
+              <p className="text-xs text-secondary leading-tight">
                 Then decide whether to swap them
               </p>
               {peekTargets.length === 1 && (
-                <p className="text-xs text-emerald-600 font-semibold leading-tight">
+                <p className="text-xs text-success font-semibold leading-tight">
                   ✓ First card selected - choose a card from a different player
                 </p>
               )}
@@ -56,7 +56,9 @@ export const QueenAction = observer(() => {
         {/* Action Buttons - only show when both cards selected */}
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-            <QueenSwapButton onClick={() => void gameStore.executeQueenSwap()} />
+            <QueenSwapButton
+              onClick={() => void gameStore.executeQueenSwap()}
+            />
             <SkipButton onClick={() => void gameStore.skipQueenSwap()} />
           </div>
         )}

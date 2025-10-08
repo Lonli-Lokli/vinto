@@ -22,14 +22,14 @@ export const CardSwap = observer(() => {
 
   return (
     <div className="w-full h-full px-3 py-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
+      <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800">
+          <h3 className="text-xs md:text-sm font-semibold text-primary">
             🔄 {action}
           </h3>
           <div className="flex items-center gap-2">
-            <div className="text-2xs md:text-xs text-gray-500">
+            <div className="text-2xs md:text-xs text-secondary">
               {swapTargets.length}/2 selected
             </div>
             <HelpPopover title="Swap Cards" rank="J" />
@@ -39,24 +39,24 @@ export const CardSwap = observer(() => {
         {/* Instructions or Selected Cards Info */}
         <div className="flex-1 flex flex-col justify-center mb-2">
           {swapTargets.length === 0 ? (
-            <p className="text-xs text-gray-600 text-center">
+            <p className="text-xs text-secondary text-center">
               Select any two cards to swap (from any players)
             </p>
           ) : swapTargets.length === 1 ? (
-            <div className="text-xs text-gray-600 text-center">
+            <div className="text-xs text-secondary text-center">
               <div className="mb-1">First card selected:</div>
-              <div className="text-sm font-medium text-gray-800">
+              <div className="text-sm font-medium text-primary">
                 {getPlayerName(swapTargets[0].playerId)} • Position{' '}
                 {swapTargets[0].position + 1}
               </div>
-              <p className="text-2xs text-gray-500 mt-1">
+              <p className="text-2xs text-secondary mt-1">
                 Select second card to swap
               </p>
             </div>
           ) : (
-            <div className="text-xs text-gray-600 text-center">
+            <div className="text-xs text-secondary text-center">
               <div className="mb-1">Cards will be swapped:</div>
-              <div className="text-sm font-medium text-gray-800">
+              <div className="text-sm font-medium text-primary">
                 {swapTargets
                   .map(
                     (target) =>

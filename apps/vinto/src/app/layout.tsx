@@ -3,9 +3,10 @@
 import './reflect-metadata-client-side';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 import './global.css'; // This is where you import your global Tailwind CSS styles
+import { Providers } from './providers';
 
 // Optimize fonts using next/font
 const inter = Inter({ subsets: ['latin'] });
@@ -29,8 +30,8 @@ export const metadata: Metadata = {
     apple: '/favicon.png',
   },
   other: {
-    ...Sentry.getTraceData()
-  }
+    ...Sentry.getTraceData(),
+  },
 };
 
 /**
@@ -43,19 +44,21 @@ export default function RootLayout({
   children: React.ReactNode; // This prop is mandatory
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-gray-900 text-white`}>
-        {/* 
-          You could place a site-wide header or navigation bar here.
-          For example:
-          <nav>
-            <a href="/">Home</a>
-            <a href="/rules">Rules</a>
-          </nav>
-        */}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-surface-primary text-on-surface`}>
+        <Providers>
+          {/* 
+            You could place a site-wide header or navigation bar here.
+            For example:
+            <nav>
+              <a href="/">Home</a>
+              <a href="/rules">Rules</a>
+            </nav>
+          */}
 
-        {/* The `children` prop will be the content of our `app/page.tsx` file. */}
-        {children}
+          {/* The `children` prop will be the content of our `app/page.tsx` file. */}
+          {children}
+        </Providers>
       </body>
     </html>
   );

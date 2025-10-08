@@ -4,55 +4,59 @@
 export const BUTTON_COLORS = {
   // Primary action (recommended/most common) - Green
   primary: {
-    bg: '#2ECC71',
-    hover: '#27AE60',
-    active: '#229954',
+    bg: 'var(--color-success)',
+    hover: 'var(--color-success-dark)',
+    active: 'var(--color-success-darker)',
     text: '#FFFFFF',
-    classes: 'bg-[#2ECC71] hover:bg-[#27AE60] active:bg-[#229954] text-white',
+    classes:
+      'bg-success hover:bg-success-dark active:bg-success-darker text-white',
   },
 
   // Secondary action (alternative option) - Blue
   secondary: {
-    bg: '#3498DB',
-    hover: '#2980B9',
-    active: '#21618C',
+    bg: 'var(--color-info)',
+    hover: 'var(--color-info-dark)',
+    active: 'var(--color-info-darker)',
     text: '#FFFFFF',
-    classes: 'bg-[#3498DB] hover:bg-[#2980B9] active:bg-[#21618C] text-white',
+    classes: 'bg-info hover:bg-info-dark active:bg-info-darker text-white',
   },
 
   // Neutral action (passive choices) - Dark Slate
   neutral: {
-    bg: '#34495E',
-    hover: '#2C3E50',
-    active: '#1C2833',
+    bg: 'var(--color-surface-secondary)',
+    hover: 'var(--color-surface-tertiary)',
+    active: 'var(--color-surface-quaternary)',
     text: '#FFFFFF',
-    classes: 'bg-[#34495E] hover:bg-[#2C3E50] active:bg-[#1C2833] text-white',
+    classes:
+      'bg-surface-secondary hover:bg-surface-tertiary active:bg-surface-quaternary text-white',
   },
 
   // High-stakes action (game-changing) - Orange
   warning: {
-    bg: '#E67E22',
-    hover: '#D35400',
-    active: '#BA4A00',
+    bg: 'var(--color-warning)',
+    hover: 'var(--color-warning-dark)',
+    active: 'var(--color-warning-darker)',
     text: '#FFFFFF',
-    classes: 'bg-[#E67E22] hover:bg-[#D35400] active:bg-[#BA4A00] text-white',
+    classes:
+      'bg-warning hover:bg-warning-dark active:bg-warning-darker text-white',
   },
 
   // Declare rank options - Amber
   declare: {
-    bg: '#F39C12',
-    hover: '#E67E22',
-    active: '#CA6F1E',
+    bg: 'var(--color-accent)',
+    hover: 'var(--color-accent-dark)',
+    active: 'var(--color-accent-darker)',
     text: '#FFFFFF',
-    classes: 'bg-[#F39C12] hover:bg-[#E67E22] active:bg-[#CA6F1E] text-white',
+    classes:
+      'bg-accent hover:bg-accent-dark active:bg-accent-darker text-white',
   },
 
   // Disabled state - Light Gray
   disabled: {
-    bg: '#BDC3C7',
-    text: '#FFFFFF',
+    bg: 'var(--color-muted)',
+    text: 'var(--color-muted-foreground)',
     opacity: 0.6,
-    classes: 'bg-gray-300 text-gray-600 cursor-not-allowed',
+    classes: 'bg-muted text-muted-foreground cursor-not-allowed',
   },
 } as const;
 
@@ -63,19 +67,19 @@ export const BUTTON_ACTION_VARIANTS = {
   // Primary actions (green)
   'draw-card': 'primary',
   'use-action': 'primary',
-  'continue': 'primary',
+  continue: 'primary',
 
   // Secondary actions (blue)
-  'swap': 'secondary',
+  swap: 'secondary',
   'start-game': 'secondary',
   'continue-toss': 'secondary',
 
   // Neutral actions (dark slate)
-  'discard': 'neutral',
+  discard: 'neutral',
   'discard-instead': 'neutral',
-  'skip': 'neutral',
-  'cancel': 'neutral',
-  'reset': 'neutral',
+  skip: 'neutral',
+  cancel: 'neutral',
+  reset: 'neutral',
 
   // High-stakes (orange)
   'call-vinto': 'warning',

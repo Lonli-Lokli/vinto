@@ -7,7 +7,7 @@ export const ClosePopoverButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`text-gray-400 hover:text-gray-600 text-lg leading-none ${className}`}
+    className={`text-muted hover:text-secondary text-lg leading-none ${className}`}
   >
     ×
   </button>

@@ -25,7 +25,7 @@ export const DrawPile: React.FC<DrawPileProps> = ({
     <div className="text-center" data-deck-pile="true">
       <Card size={size} clickable={clickable} onClick={onClick} />
       <div
-        className={`${labelMargin} ${textSize} text-white font-medium bg-black/30 rounded ${labelPadding}`}
+        className={`${labelMargin} ${textSize} text-white font-medium bg-surface-tertiary/30 rounded ${labelPadding}`}
       >
         DRAW
       </div>

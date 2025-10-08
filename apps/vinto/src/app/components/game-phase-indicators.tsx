@@ -50,18 +50,18 @@ const SetupPhaseIndicator = observer(
     setupPeeksRemaining: number;
     onFinishSetup: () => void;
   }) => (
-    <div className="w-full h-full px-2 py-1.5">
-      <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col justify-center">
+    <div className="w-full h-full py-1.5">
+      <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-theme-sm flex flex-col justify-center">
         <div className="text-center space-y-1">
-          <div className="text-xs font-semibold text-gray-800 leading-tight flex items-center justify-center gap-1">
+          <div className="text-xs font-semibold text-primary leading-tight flex items-center justify-center gap-1">
             <Eye size={14} />
             <span>Memory Phase</span>
           </div>
-          <div className="text-xs text-gray-700 leading-tight">
+          <div className="text-xs text-secondary leading-tight">
             Click any 2 of your cards to memorize them. They will be hidden
             during the game!
           </div>
-          <div className="text-xs font-medium text-gray-600 leading-tight">
+          <div className="text-xs font-medium text-tertiary leading-tight">
             Peeks remaining: {setupPeeksRemaining}
           </div>
           <div className="flex justify-center">
@@ -132,25 +132,25 @@ Skip toss-in and proceed to next player's turn`;
     };
 
     return (
-      <div className="w-full h-full px-2 py-1">
-        <div className="bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+      <div className="w-full h-full py-1">
+        <div className="backdrop-theme border border-primary rounded-lg p-2 shadow-theme-sm h-full flex flex-col">
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <h3 className="text-xs font-semibold text-gray-800 leading-tight flex items-center gap-1">
+              <h3 className="text-xs font-semibold text-primary leading-tight flex items-center gap-1">
                 <Zap size={14} />
                 <span>Toss-in Time!</span>
                 {isCurrentPlayerWaiting && currentPlayer && (
-                  <span className="text-gray-600 ml-1 flex items-center gap-1">
+                  <span className="text-secondary ml-1 flex items-center gap-1">
                     <Hourglass size={12} className="animate-spin" />
                     {currentPlayer.name}
                   </span>
                 )}
               </h3>
-              <div className="text-xs text-gray-600 leading-tight">
+              <div className="text-xs text-secondary leading-tight">
                 Toss matching{' '}
                 {topDiscardRank ? (
-                  <span className="text-sm font-bold text-gray-900 leading-tight">
+                  <span className="text-sm font-bold text-primary leading-tight">
                     {getCardName(topDiscardRank)}
                   </span>
                 ) : (
@@ -164,13 +164,13 @@ Skip toss-in and proceed to next player's turn`;
 
           {/* Bot Actions Section */}
           {recentBotActions.length > 0 && (
-            <div className="mb-2 p-2 bg-blue-50 rounded border border-blue-200 flex-shrink-0">
-              <div className="font-semibold text-gray-700 mb-1 text-xs">
+            <div className="mb-2 p-2 bg-info-light rounded border border-info flex-shrink-0">
+              <div className="font-semibold text-secondary mb-1 text-xs">
                 Recent Actions:
               </div>
               <div className="space-y-0.5">
                 {recentBotActions.map((action, idx) => (
-                  <div key={idx} className="text-gray-600 text-xs">
+                  <div key={idx} className="text-secondary text-xs">
                     • {action}
                   </div>
                 ))}
@@ -188,9 +188,9 @@ Skip toss-in and proceed to next player's turn`;
               <>
                 {/* Divider */}
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 border-t border-gray-300"></div>
-                  <span className="text-xs text-gray-500 font-medium">or</span>
-                  <div className="flex-1 border-t border-gray-300"></div>
+                  <div className="flex-1 border-t border-primary"></div>
+                  <span className="text-xs text-secondary font-medium">or</span>
+                  <div className="flex-1 border-t border-primary"></div>
                 </div>
 
                 {/* Call Vinto - Special Action */}
@@ -343,10 +343,10 @@ const CardDrawnHeader = ({
     <div className="flex-1 min-w-0">
       {/* Compact single line with all info */}
       <div className="flex flex-row items-baseline gap-1 flex-wrap">
-        <span className="text-sm font-bold text-gray-900 leading-tight">
+        <span className="text-sm font-bold text-primary leading-tight">
           {getCardName(pendingCard.rank)}
         </span>
-        <span className="text-xs text-gray-600 leading-tight">
+        <span className="text-xs text-secondary leading-tight">
           {getCardValue(pendingCard.rank)}{' '}
           {Math.abs(getCardValue(pendingCard.rank)) === 1
             ? ' point'
@@ -428,8 +428,8 @@ const CardDrawnIndicator = observer(
     };
 
     return (
-      <div className="w-full h-full px-2 py-1.5">
-        <div className="h-full bg-white/98 backdrop-blur-sm supports-[backdrop-filter]:bg-white/95 border border-gray-300 rounded-lg shadow-sm flex flex-row">
+      <div className="w-full h-full py-1.5">
+        <div className="h-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg shadow-sm flex flex-row">
           <div className="h-full flex flex-row gap-2 w-full p-2">
             {/* Card image - takes full height, preserves aspect ratio */}
             <div className="flex-shrink-0 h-full flex items-stretch">
@@ -479,12 +479,12 @@ const SwapPositionIndicator = observer(
     };
 
     return (
-      <div className="w-full h-full px-2 py-1">
-        <div className="h-full bg-white border border-gray-300 rounded-lg p-2 shadow-sm flex flex-col">
+      <div className="w-full h-full py-1">
+        <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-sm flex flex-col">
           {/* Header with help button */}
           <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-gray-800 leading-tight flex items-center gap-1">
+              <div className="text-xs font-semibold text-primary leading-tight flex items-center gap-1">
                 <Repeat size={14} />
                 <span>Click your card to swap</span>
               </div>
@@ -575,7 +575,9 @@ export const GamePhaseIndicators = observer(() => {
 
   // Card Selection for Swap (only for human players)
   if (isSelectingSwapPosition && currentPlayer?.isHuman) {
-    return <SwapPositionIndicator onDiscard={() => void gameStore.discardCard()} />;
+    return (
+      <SwapPositionIndicator onDiscard={() => void gameStore.discardCard()} />
+    );
   }
 
   return null;

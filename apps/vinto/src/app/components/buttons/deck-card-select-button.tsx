@@ -16,8 +16,8 @@ export const DeckCardSelectButton = ({
       relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
       ${
         !disabled
-          ? 'border-emerald-500 hover:bg-emerald-50 cursor-pointer hover:shadow-md hover:scale-105'
-          : 'border-gray-200 opacity-40 cursor-not-allowed bg-gray-50'
+          ? 'border-success hover:bg-success-light cursor-pointer hover:shadow-md hover:scale-105'
+          : 'border-primary opacity-40 cursor-not-allowed bg-surface-primary'
       }
       ${className}
     `}

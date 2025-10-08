@@ -10,7 +10,7 @@ export const HelpButton = React.forwardRef<
   <button
     ref={ref}
     onClick={onClick}
-    className={`text-gray-400 hover:text-gray-600 transition-colors p-1 flex-shrink-0 ${className}`}
+    className={`text-muted hover:text-secondary transition-colors p-1 flex-shrink-0 ${className}`}
     aria-label="Show help"
     type="button"
   >

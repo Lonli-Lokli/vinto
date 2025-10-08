@@ -21,7 +21,7 @@ export const CoalitionTurnIndicator = observer(() => {
 
   return (
     <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top duration-300">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-2xl px-6 py-3 border-2 border-blue-300">
+      <div className="bg-coalition-gradient text-on-primary rounded-xl shadow-2xl px-6 py-3 border-2 border-coalition">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Crown className="text-yellow-300" size={20} />

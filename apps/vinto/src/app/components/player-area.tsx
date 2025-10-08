@@ -107,11 +107,11 @@ export const PlayerArea = observer(function PlayerArea({
             className={`
               md:hidden
               flex items-center gap-2
-              bg-white/95 backdrop-blur-sm
+              bg-surface-primary/95 backdrop-blur-sm
               px-2 py-1
               rounded-full
-              shadow-lg border-2
-              ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+              shadow-theme-lg border-2
+              ${isCurrentPlayer ? 'border-accent' : 'border-primary'}
             `}
             style={
               isCurrentPlayer
@@ -128,14 +128,14 @@ export const PlayerArea = observer(function PlayerArea({
               className={`
                 text-xs
                 font-extrabold
-                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                ${isCurrentPlayer ? 'text-success' : 'text-primary'}
               `}
             >
               {player.name}
             </div>
             {player.coalitionWith.size > 0 && (
               <div
-                className="bg-blue-500 text-white rounded-full p-0.5"
+                className="bg-info text-white rounded-full p-0.5"
                 title="Coalition Member"
               >
                 <Users size={10} />
@@ -143,7 +143,7 @@ export const PlayerArea = observer(function PlayerArea({
             )}
             {player.isCoalitionLeader && (
               <div
-                className="bg-yellow-500 text-white rounded-full p-0.5"
+                className="bg-warning text-white rounded-full p-0.5"
                 title="Coalition Leader"
               >
                 <Crown size={10} />
@@ -174,12 +174,12 @@ export const PlayerArea = observer(function PlayerArea({
                 className={`
                   text-lg
                   font-extrabold
-                  ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
-                  bg-white/95 backdrop-blur-sm
+                  ${isCurrentPlayer ? 'text-success' : 'text-primary'}
+                  bg-surface-primary/95 backdrop-blur-sm
                   px-4 py-2
                   rounded-full
-                  shadow-lg border-2
-                  ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+                  shadow-theme-lg border-2
+                  ${isCurrentPlayer ? 'border-accent' : 'border-primary'}
                 `}
                 style={
                   isCurrentPlayer
@@ -193,7 +193,7 @@ export const PlayerArea = observer(function PlayerArea({
               </div>
               {player.coalitionWith.size > 0 && (
                 <div
-                  className="flex items-center gap-1 bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  className="flex items-center gap-1 bg-info text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Member"
                 >
                   <Users size={14} />
@@ -202,7 +202,7 @@ export const PlayerArea = observer(function PlayerArea({
               )}
               {player.isCoalitionLeader && (
                 <div
-                  className="flex items-center gap-1 bg-yellow-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  className="flex items-center gap-1 bg-warning text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Leader"
                 >
                   <Crown size={14} />
@@ -218,7 +218,7 @@ export const PlayerArea = observer(function PlayerArea({
       <div
         className={`${cardContainerClasses[player.position]} ${
           isCurrentPlayer
-            ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-emerald-400 md:border-2 bg-emerald-400/10'
+            ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-success md:border-2 bg-success-light/20'
             : ''
         } ${isSelectingActionTarget && !onCardClick ? 'area-dimmed' : ''}`}
         style={
@@ -275,11 +275,11 @@ export const PlayerArea = observer(function PlayerArea({
             className={`
               md:hidden
               flex items-center gap-2
-              bg-white/95 backdrop-blur-sm
+              bg-surface-primary/95 backdrop-blur-sm
               px-2 py-1
               rounded-full
-              shadow-lg border-2
-              ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+              shadow-theme-lg border-2
+              ${isCurrentPlayer ? 'border-accent' : 'border-primary'}
             `}
             style={
               isCurrentPlayer
@@ -296,14 +296,14 @@ export const PlayerArea = observer(function PlayerArea({
               className={`
                 text-xs
                 font-extrabold
-                ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
+                ${isCurrentPlayer ? 'text-success' : 'text-primary'}
               `}
             >
               {player.name}
             </div>
             {player.coalitionWith.size > 0 && (
               <div
-                className="bg-blue-500 text-white rounded-full p-0.5"
+                className="bg-info text-white rounded-full p-0.5"
                 title="Coalition Member"
               >
                 <Users size={10} />
@@ -311,7 +311,7 @@ export const PlayerArea = observer(function PlayerArea({
             )}
             {player.isCoalitionLeader && (
               <div
-                className="bg-yellow-500 text-white rounded-full p-0.5"
+                className="bg-warning text-white rounded-full p-0.5"
                 title="Coalition Leader"
               >
                 <Crown size={10} />
@@ -342,12 +342,12 @@ export const PlayerArea = observer(function PlayerArea({
                 className={`
                   text-lg
                   font-extrabold
-                  ${isCurrentPlayer ? 'text-emerald-600' : 'text-gray-900'}
-                  bg-white/95 backdrop-blur-sm
+                  ${isCurrentPlayer ? 'text-success' : 'text-primary'}
+                  bg-surface-primary/95 backdrop-blur-sm
                   px-4 py-2
                   rounded-full
-                  shadow-lg border-2
-                  ${isCurrentPlayer ? 'border-orange-900' : 'border-gray-300'}
+                  shadow-theme-lg border-2
+                  ${isCurrentPlayer ? 'border-accent' : 'border-primary'}
                 `}
                 style={
                   isCurrentPlayer
@@ -361,7 +361,7 @@ export const PlayerArea = observer(function PlayerArea({
               </div>
               {player.coalitionWith.size > 0 && (
                 <div
-                  className="flex items-center gap-1 bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  className="flex items-center gap-1 bg-info text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Member"
                 >
                   <Users size={14} />
@@ -370,7 +370,7 @@ export const PlayerArea = observer(function PlayerArea({
               )}
               {player.isCoalitionLeader && (
                 <div
-                  className="flex items-center gap-1 bg-yellow-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md"
+                  className="flex items-center gap-1 bg-warning text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Leader"
                 >
                   <Crown size={14} />

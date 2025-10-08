@@ -19,8 +19,8 @@ export const OpponentSelectButton = ({
 }) => {
   if (showAvatar && player) {
     const borderClass = isSelected
-      ? 'border-2 border-blue-400 bg-blue-50'
-      : 'border-2 border-gray-200 bg-transparent hover:bg-gray-50';
+      ? 'border-2 border-info bg-info-light'
+      : 'border-2 border-primary bg-transparent hover:bg-surface-primary';
 
     return (
       <button
@@ -32,7 +32,7 @@ export const OpponentSelectButton = ({
           <Avatar player={player} size="md" />
         </div>
         {/* Player Name */}
-        <div className="text-xs font-medium text-gray-800 text-center line-clamp-1 w-full">
+        <div className="text-xs font-medium text-primary text-center line-clamp-1 w-full">
           {opponentName}
         </div>
       </button>

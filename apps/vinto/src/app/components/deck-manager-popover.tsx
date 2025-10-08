@@ -76,17 +76,17 @@ export const DeckManagerPopover = observer(
     return (
       <div
         ref={popoverRef}
-        className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 w-[480px] max-w-[90vw]"
+        className="absolute top-full right-0 mt-2 bg-surface-primary rounded-lg shadow-xl border border-primary p-4 z-50 w-[480px] max-w-[90vw]"
       >
         <div className="space-y-3">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-            <h3 className="text-sm font-bold text-gray-800">
+          <div className="flex items-center justify-between border-b border-primary pb-2">
+            <h3 className="text-sm font-bold text-primary">
               Set Next Draw Card
             </h3>
             <ClosePopoverButton onClick={onClose} />
           </div>
 
-          <div className="text-xs text-gray-600">
+          <div className="text-xs text-secondary">
             Select a card to place it at the top of the draw pile
           </div>
 
@@ -112,7 +112,7 @@ export const DeckManagerPopover = observer(
                         size="auto"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm font-semibold">
+                      <div className="w-full h-full bg-muted rounded flex items-center justify-center text-muted text-sm font-semibold">
                         {rank}
                       </div>
                     )}
@@ -120,7 +120,7 @@ export const DeckManagerPopover = observer(
 
                   {/* Count badge */}
                   {isAvailable && (
-                    <div className="text-sm font-bold text-emerald-600">
+                    <div className="text-sm font-bold text-success">
                       ×{count}
                     </div>
                   )}
@@ -130,8 +130,10 @@ export const DeckManagerPopover = observer(
           </div>
 
           {/* Current top card */}
-          <div className="border-t border-gray-200 pt-3 mt-2">
-            <div className="text-xs text-gray-600 mb-2">Current next card:</div>
+          <div className="border-t border-primary pt-3 mt-2">
+            <div className="text-xs text-secondary mb-2">
+              Current next card:
+            </div>
             {deckStore.drawPile.length > 0 ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
@@ -141,17 +143,17 @@ export const DeckManagerPopover = observer(
                     size="auto"
                   />
                 </div>
-                <div className="text-sm font-semibold text-gray-800">
+                <div className="text-sm font-semibold text-primary">
                   {deckStore.drawPile[0].rank}
                   {deckStore.drawPile[0].actionText && (
-                    <span className="text-xs text-emerald-600 ml-1">
+                    <span className="text-xs text-success ml-1">
                       ({deckStore.drawPile[0].actionText})
                     </span>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-400">No cards in deck</div>
+              <div className="text-sm text-muted">No cards in deck</div>
             )}
           </div>
         </div>

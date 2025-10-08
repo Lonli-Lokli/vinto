@@ -11,11 +11,8 @@ import {
 } from './di-provider';
 import { GameCommandGroup } from './game-command-group';
 import { DeckManagerPopover } from './deck-manager-popover';
-import {
-  DifficultyButton,
-  SettingsButton,
-  DeckManagerButton,
-} from './buttons';
+import { ThemeToggle } from './theme-toggle';
+import { DifficultyButton, SettingsButton, DeckManagerButton } from './buttons';
 
 const SettingsPopover = observer(
   ({
@@ -54,12 +51,12 @@ const SettingsPopover = observer(
     return (
       <div
         ref={popoverRef}
-        className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]"
+        className="absolute top-full left-0 mt-2 bg-surface-primary rounded-lg shadow-lg border border-primary p-4 z-50 min-w-[280px]"
       >
         <div className="space-y-4">
           {/* Difficulty */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-primary mb-2">
               Difficulty
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -104,7 +101,7 @@ export const GameHeader = observer(() => {
 
   return (
     <div className="sticky top-0 z-50 flex-shrink-0">
-      <div className="bg-white/70 backdrop-blur-md border-b border-gray-200 flex-shrink-0">
+      <div className="bg-surface-primary/70 backdrop-blur-md border-b border-primary flex-shrink-0">
         <div className="max-w-6xl mx-auto px-3 py-1">
           <div className="flex items-center justify-between gap-4">
             {/* Left: Settings */}
@@ -124,6 +121,9 @@ export const GameHeader = observer(() => {
 
               {/* Desktop: Inline Settings */}
               <div className="hidden sm:flex items-center gap-2">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
                 {/* Difficulty */}
                 <div className="flex items-center gap-1">
                   {(['easy', 'moderate', 'hard'] as const).map((level) => (
@@ -141,24 +141,29 @@ export const GameHeader = observer(() => {
             {/* Center: Title + Game Info */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-poker-green-700 to-emerald-600">
+                {/* Theme Toggle - visible on mobile next to VINTO */}
+                <div className="sm:hidden">
+                  <ThemeToggle />
+                </div>
+                <h1 className="text-lg font-bold text-transparent bg-clip-text bg-title-gradient">
                   VINTO
                 </h1>
+
                 <a
                   href="/VintoRules.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                  className="text-xs text-secondary hover:text-success transition-colors"
                   title="View game rules"
                 >
                   📖
                 </a>
               </div>
-              <div className="text-xs text-gray-600 font-medium">
+              <div className="text-xs text-secondary font-medium">
                 {getPhaseDisplay()}
               </div>
               {getCurrentPlayerDisplay() && (
-                <div className="text-xs font-medium text-emerald-600 hidden sm:block">
+                <div className="text-xs font-medium text-success hidden sm:block">
                   {getCurrentPlayerDisplay()}
                 </div>
               )}

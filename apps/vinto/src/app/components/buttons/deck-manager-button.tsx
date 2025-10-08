@@ -11,11 +11,11 @@ export const DeckManagerButton = React.forwardRef<
   <button
     ref={ref}
     onClick={onClick}
-    className={`flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 transition-colors group ${className}`}
+    className={`flex items-center gap-1 px-2 py-1 rounded bg-success-light hover:bg-success transition-colors group ${className}`}
     title="Manage deck - Set next card to draw"
   >
-    <div className="text-sm font-semibold text-emerald-700">{cardCount}</div>
-    <div className="text-2xs text-emerald-600 hidden sm:block">🎴</div>
+    <div className="text-sm font-semibold text-success">{cardCount}</div>
+    <div className="text-2xs text-success hidden sm:block">🎴</div>
   </button>
 ));
 

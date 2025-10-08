@@ -19,15 +19,15 @@ export const OwnCardPeek = observer(() => {
 
   return (
     <div className="w-full h-full px-3 py-2">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg p-4 shadow-sm h-full flex flex-col">
+      <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800">
+          <h3 className="text-xs md:text-sm font-semibold text-primary">
             👁️ {action}
           </h3>
           <div className="flex items-center gap-2">
             {hasRevealedCard && (
-              <div className="text-2xs md:text-xs text-green-600 font-medium">
+              <div className="text-2xs md:text-xs text-success font-medium">
                 ✓ Card Revealed
               </div>
             )}
@@ -38,11 +38,11 @@ export const OwnCardPeek = observer(() => {
         {/* Instructions or Confirmation */}
         <div className="flex-1 flex flex-col justify-center mb-2">
           {!hasRevealedCard ? (
-            <p className="text-xs text-gray-600 text-center">
+            <p className="text-xs text-secondary text-center">
               Click on one of your cards to peek at it
             </p>
           ) : (
-            <p className="text-xs text-gray-600 text-center">
+            <p className="text-xs text-secondary text-center">
               You have peeked at your card
             </p>
           )}

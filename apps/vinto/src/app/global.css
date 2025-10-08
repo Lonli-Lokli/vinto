@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import theme variables */
+@import './theme.css';
+
 /* Viewport handling for mobile devices */
 @layer base {
   html {

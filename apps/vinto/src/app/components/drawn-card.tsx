@@ -42,7 +42,7 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
           isPending={true}
         />
         <div
-          className={`${labelMargin} ${textSize} text-white font-medium bg-amber-600/80 rounded ${labelPadding}`}
+          className={`${labelMargin} ${textSize} text-white font-medium bg-warning/80 rounded ${labelPadding}`}
         >
           DRAWN
         </div>

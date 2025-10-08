@@ -24,11 +24,11 @@ export function KingDeclaration() {
   };
 
   return (
-    <div className="w-full h-full px-2 py-1">
-      <div className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm h-full flex flex-col">
+    <div className="w-full h-full py-1">
+      <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Compact header - single line */}
         <div className="flex flex-row items-center justify-between mb-1.5">
-          <h3 className="text-xs font-semibold text-gray-800 leading-tight">
+          <h3 className="text-xs font-semibold text-primary leading-tight">
             👑 King: Choose action
           </h3>
           <HelpPopover title="King Declaration" rank="K" />
