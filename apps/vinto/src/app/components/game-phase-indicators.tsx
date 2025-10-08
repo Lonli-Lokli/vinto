@@ -12,6 +12,7 @@ import {
   Sparkles,
   Zap,
   Hourglass,
+  CircleArrowRight,
 } from 'lucide-react';
 import { HelpPopover } from './help-popover';
 import type { Card, Player, Rank } from '../shapes';
@@ -40,6 +41,7 @@ import {
   getCardName,
   getCardValue,
 } from '../utils/card-helper';
+import { ReactJoin } from '../utils/react-join';
 
 // Setup Phase Component
 const SetupPhaseIndicator = observer(
@@ -168,12 +170,12 @@ Skip toss-in and proceed to next player's turn`;
               <div className="font-semibold text-secondary mb-1 text-xs">
                 Recent Actions:
               </div>
-              <div className="space-y-0.5">
-                {recentBotActions.map((action, idx) => (
-                  <div key={idx} className="text-secondary text-xs">
-                    • {action}
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-1 items-center">
+                <ReactJoin separator={<CircleArrowRight size={14} />}>
+                  {recentBotActions.map((action, idx) => (
+                    <span key={idx} className="text-secondary text-xs">{action}</span>
+                  ))}
+                </ReactJoin>
               </div>
             </div>
           )}
