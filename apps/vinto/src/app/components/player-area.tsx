@@ -7,7 +7,7 @@ import { Users, Crown } from 'lucide-react';
 import { Player } from '../shapes';
 import { Card } from './card';
 import { Avatar } from './avatar';
-import { usePlayerStore } from './di-provider';
+import { useGameClient } from '../../client/GameClientContext';
 
 interface PlayerAreaProps {
   player: Player;
@@ -31,8 +31,10 @@ export const PlayerArea = observer(function PlayerArea({
   swapPosition = null,
   isSelectingActionTarget = false,
 }: PlayerAreaProps) {
-  // Import stores to check coalition leader status
-  const { humanPlayer, coalitionLeader } = usePlayerStore();
+  // Get coalition leader status from GameClient
+  const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const coalitionLeader = gameClient.coalitionLeader;
 
   // Determine if we can see this player's cards based on official Vinto rules
   const canSeeCards = (cardIndex: number): boolean => {

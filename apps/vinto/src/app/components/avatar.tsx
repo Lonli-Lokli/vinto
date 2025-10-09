@@ -6,9 +6,10 @@ import {
   Image_You,
 } from './image';
 import { Player } from '../shapes';
+import type { PlayerState } from '../../engine/types';
 
 interface AvatarProps {
-  player: Player;
+  player: Player | PlayerState | { id: string };
   size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 

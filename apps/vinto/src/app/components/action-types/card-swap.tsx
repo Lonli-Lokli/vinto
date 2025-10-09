@@ -1,22 +1,23 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
-import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
+import { useActionStore, useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { ResetButton, SkipButton } from '../buttons';
 
 export const CardSwap = observer(() => {
-  const actionStore = useActionStore();
-  const playerStore = usePlayerStore();
-  const gameStore = useGameStore();
+  const actionStore = useActionStore(); // Keep for swapTargets
+  const gameStore = useGameStore(); // Keep for actions
+  const gameClient = useGameClient();
   if (!actionStore.actionContext) return null;
   const { action } = actionStore.actionContext;
   const swapTargets = actionStore.swapTargets;
 
   const getPlayerName = (playerId: string) => {
-    const player = playerStore.getPlayer(playerId);
+    const player = gameClient.state.players.find(p => p.id === playerId);
     return player?.name || 'Unknown';
   };
 

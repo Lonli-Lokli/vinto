@@ -1,17 +1,18 @@
 // components/action-types/OwnCardPeek.tsx
 'use client';
 
-import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
+import { usePlayerStore, useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { ContinueButton, SkipButton } from '../buttons';
 
 export const OwnCardPeek = observer(() => {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
-  const playerStore = usePlayerStore();
-  const { action } = actionStore.actionContext ?? {};
+  const gameStore = useGameStore(); // Keep for actions
+  const playerStore = usePlayerStore(); // Keep for temporarilyVisibleCards (not in GameState yet)
+  const gameClient = useGameClient();
+  const action = gameClient.state.pendingAction?.card.rank;
 
   const humanPlayer = playerStore.humanPlayer;
   const hasRevealedCard =

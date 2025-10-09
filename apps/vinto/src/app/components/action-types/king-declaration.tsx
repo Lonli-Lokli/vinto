@@ -3,19 +3,20 @@
 
 import React from 'react';
 import { HelpPopover } from '../help-popover';
-import { useGameStore, useActionStore } from '../di-provider';
+import { useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
 
 export function KingDeclaration() {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
+  const gameStore = useGameStore(); // Keep for actions
+  const gameClient = useGameClient();
 
   // K cannot declare itself - only the action cards that can be executed
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
   const nonActionCards = ['2', '3', '4', '5', '6', 'K', 'Joker'] as const;
 
   // Get the pending card (the King card being played)
-  const pendingCard = actionStore.pendingCard;
+  const pendingCard = gameClient.state.pendingAction?.card;
 
   // Function to check if a rank is disabled
   // King cannot declare itself (K), even though K appears in the UI

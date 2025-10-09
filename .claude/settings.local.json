@@ -7,7 +7,14 @@
       "Bash(npm run:*)",
       "Bash(find:*)",
       "WebSearch",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm test:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx eslint:*)",
+      "Bash(for file in apps/vinto/src/app/components/*.tsx)",
+      "Bash(done)",
+      "Bash(paste:*)",
+      "Bash(sort:*)"
     ],
     "deny": [
       "Bash(npx tsc:*)",

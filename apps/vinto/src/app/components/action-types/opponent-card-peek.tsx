@@ -4,16 +4,17 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
+import { usePlayerStore, useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import { ContinueButton, SkipButton } from '../buttons';
 
 export const OpponentCardPeek = observer(() => {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
-  const playerStore = usePlayerStore();
+  const gameStore = useGameStore(); // Keep for actions
+  const playerStore = usePlayerStore(); // Keep for temporarilyVisibleCards (not in GameState yet)
+  const gameClient = useGameClient();
 
-  if (!actionStore.actionContext) return null;
-  const { action } = actionStore.actionContext;
+  if (!gameClient.state.pendingAction) return null;
+  const action = gameClient.state.pendingAction.card.rank;
 
   // Check if any player has temporarily visible cards (the peeked opponent card)
   const hasRevealedCard = playerStore.players.some(

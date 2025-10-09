@@ -3,12 +3,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useGameStore,
-  usePlayerStore,
-  useGamePhaseStore,
-  useDeckStore,
-} from './di-provider';
+import { useGameStore } from './di-provider';
+import { useGameClient } from '../../client/GameClientContext';
 import { GameCommandGroup } from './game-command-group';
 import { DeckManagerPopover } from './deck-manager-popover';
 import { ThemeToggle } from './theme-toggle';
@@ -24,7 +20,8 @@ const SettingsPopover = observer(
     onClose: () => void;
     buttonRef: React.RefObject<HTMLButtonElement | null>;
   }) => {
-    const gameStore = useGameStore();
+    const gameStore = useGameStore(); // Keep for updateDifficulty action
+    const gameClient = useGameClient();
     const popoverRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -64,7 +61,7 @@ const SettingsPopover = observer(
                 <DifficultyButton
                   key={level}
                   level={level}
-                  isActive={gameStore.difficulty === level}
+                  isActive={gameClient.state.difficulty === level}
                   onClick={() => gameStore.updateDifficulty(level)}
                   className="px-3 py-2 text-sm"
                 />
@@ -78,19 +75,25 @@ const SettingsPopover = observer(
 );
 
 export const GameHeader = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer, turnCount } = usePlayerStore();
-  const { phase, finalTurnTriggered } = useGamePhaseStore();
-  const { drawPile } = useDeckStore();
+  const gameStore = useGameStore(); // Keep for updateDifficulty action
+  const gameClient = useGameClient();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDeckManagerOpen, setIsDeckManagerOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const deckManagerButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Get values from GameClient
+  const currentPlayer = gameClient.currentPlayer;
+  const turnCount = gameClient.state.turnCount;
+  const phase = gameClient.state.phase;
+  const finalTurnTriggered = gameClient.state.finalTurnTriggered;
+  const drawPile = gameClient.state.drawPile;
+  const roundNumber = gameClient.state.roundNumber;
+
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
     if (finalTurnTriggered) return `Final • ${phase}`;
-    return `R${gameStore.roundNumber} • ${phase} • T${turnCount}`;
+    return `R${roundNumber} • ${phase} • T${turnCount}`;
   };
 
   const getCurrentPlayerDisplay = () => {
@@ -130,7 +133,7 @@ export const GameHeader = observer(() => {
                     <DifficultyButton
                       key={level}
                       level={level}
-                      isActive={gameStore.difficulty === level}
+                      isActive={gameClient.state.difficulty === level}
                       onClick={() => gameStore.updateDifficulty(level)}
                     />
                   ))}

@@ -24,7 +24,6 @@ export class ActionCoordinator {
   private botHandler: BotActionHandler;
   private playerStore: PlayerStore;
   private actionStore: ActionStore;
-  private deckStore: DeckStore;
   private phaseStore: GamePhaseStore;
   private commandFactory: CommandFactory;
   private commandHistory: CommandHistory;
@@ -41,7 +40,6 @@ export class ActionCoordinator {
   ) {
     this.playerStore = playerStore;
     this.actionStore = actionStore;
-    this.deckStore = deckStore;
     this.phaseStore = phaseStore;
     this.commandFactory = commandFactory;
     this.commandHistory = commandHistory;

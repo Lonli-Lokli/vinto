@@ -4,18 +4,23 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { useGameStore, usePlayerStore } from './di-provider';
+import { useGameClient } from '../../client/GameClientContext';
 import { Avatar } from './avatar';
 
 export const CoalitionTurnIndicator = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer, coalitionLeader } = usePlayerStore();
+  const gameClient = useGameClient();
 
-  if (
-    !gameStore.isCoalitionLeaderPlaying ||
-    !currentPlayer ||
-    !coalitionLeader
-  ) {
+  // Get current player and coalition leader
+  const currentPlayer = gameClient.currentPlayer;
+  const coalitionLeader = gameClient.coalitionLeader;
+
+  // Check if coalition leader is playing
+  const isCoalitionLeaderPlaying =
+    gameClient.state.phase === 'playing' &&
+    coalitionLeader &&
+    currentPlayer.id === coalitionLeader.id;
+
+  if (!isCoalitionLeaderPlaying || !currentPlayer || !coalitionLeader) {
     return null;
   }
 

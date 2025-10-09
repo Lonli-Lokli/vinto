@@ -12,8 +12,29 @@ import {
   useTossInStore,
 } from './di-provider';
 import { DrawCardButton, UseDiscardButton } from './buttons';
+import { isFeatureEnabled } from '../utils/featureFlags';
+import { GameControlsNew } from './game-controls-new';
 
-export const GameControls = observer(() => {
+/**
+ * GameControls - Main entry point for game controls
+ *
+ * Switches between old and new architecture based on feature flag.
+ * This allows gradual migration and easy rollback if needed.
+ */
+export const GameControls = () => {
+  // Use new architecture if feature flag is enabled
+  if (isFeatureEnabled('gameControls')) {
+    return <GameControlsNew />;
+  }
+
+  // Otherwise use old architecture
+  return <GameControlsOld />;
+};
+
+/**
+ * GameControlsOld - Original implementation using MobX stores
+ */
+const GameControlsOld = observer(() => {
   const gameStore = useGameStore();
   const playerStore = usePlayerStore();
   const { currentPlayer } = playerStore;
@@ -105,6 +126,9 @@ Note: Call Vinto option will be available after you complete your turn during th
   );
 });
 
+/**
+ * FullTurnControls - Old implementation
+ */
 const FullTurnControls = ({
   handleDrawCard,
 }: {

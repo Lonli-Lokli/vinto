@@ -1,24 +1,24 @@
 // components/action-types/AceAction.tsx
 'use client';
 
-import { useActionStore, useGameStore, usePlayerStore } from '../di-provider';
+import { useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { OpponentSelectButton, SkipButton } from '../buttons';
 
 export const AceAction = observer(() => {
-  const actionStore = useActionStore();
-  const gameStore = useGameStore();
-  const playerStore = usePlayerStore();
+  const gameStore = useGameStore(); // Keep for actions
+  const gameClient = useGameClient();
   const [selectedOpponentId, setSelectedOpponentId] = React.useState<
     string | null
   >(null);
 
-  if (!actionStore.actionContext) return null;
+  if (!gameClient.state.pendingAction) return null;
 
-  const humanPlayer = playerStore.humanPlayer;
-  const opponents = playerStore.players.filter((p) => p.id !== humanPlayer?.id);
+  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const opponents = gameClient.state.players.filter((p) => p.id !== humanPlayer?.id);
 
   const handleOpponentClick = (opponentId: string) => {
     setSelectedOpponentId(opponentId);

@@ -5,12 +5,14 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { useActionStore, useGameStore } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
 import { QueenSwapButton, SkipButton } from '../buttons';
 
 export const QueenAction = observer(() => {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
-  if (!actionStore.actionContext) return null;
+  const gameStore = useGameStore(); // Keep for actions
+  const actionStore = useActionStore(); // Keep for peekTargets
+  const gameClient = useGameClient();
+  if (!gameClient.state.pendingAction) return null;
   const { peekTargets } = actionStore;
 
   const hasBothCards = peekTargets.length === 2;
