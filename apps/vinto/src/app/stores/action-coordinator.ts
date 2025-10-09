@@ -11,6 +11,7 @@ import { BotActionHandler } from './bot-action-handler';
 import type { BotDecisionService } from '../services/mcts-bot-decision';
 import { CommandFactory, CommandHistory } from '../commands';
 import { CARD_CONFIGS } from '../constants/game-setup';
+import { DeckStore } from './deck-store';
 
 /**
  * ActionCoordinator - Routes actions to appropriate handlers (Human vs Bot).
@@ -39,7 +40,6 @@ export class ActionCoordinator {
   ) {
     this.playerStore = playerStore;
     this.actionStore = actionStore;
-    this.deckStore = deckStore;
     this.phaseStore = phaseStore;
     this.commandFactory = commandFactory;
     this.commandHistory = commandHistory;

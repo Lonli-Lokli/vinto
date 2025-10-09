@@ -371,7 +371,7 @@ export class BotActionHandler {
     return true;
   }
 
-  private async executeForceDraw(playerId: string, targetId: string): Promise<boolean> {
+  public async executeForceDraw(playerId: string, targetId: string): Promise<boolean> {
     const player = this.playerStore.getPlayer(playerId);
     const target = this.playerStore.getPlayer(targetId);
 
