@@ -199,7 +199,7 @@ export class BotAIAdapter {
 
     if (shouldUseAction && cardInHand.rank !== '2' && cardInHand.rank !== '3') {
       // Has action - use it
-      this.gameClient.dispatch(GameActions.doUseCardAction(botId, cardInHand));
+      this.gameClient.dispatch(GameActions.playCardAction(botId, cardInHand));
       console.log(`[BotAI] ${botId} using ${cardInHand.rank} action`);
       // State will update and MobX reaction will trigger target selection
     } else {

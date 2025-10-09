@@ -3,13 +3,14 @@
 
 import React from 'react';
 import { HelpPopover } from '../help-popover';
-import { useGameStore } from '../di-provider';
 import { useGameClient } from '../../../client/GameClientContext';
+import { GameActions } from '../../../engine/types';
 import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
+import type { Rank } from '../../../app/shapes';
 
 export function KingDeclaration() {
-  const gameStore = useGameStore(); // Keep for actions
   const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
 
   // K cannot declare itself - only the action cards that can be executed
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
@@ -45,7 +46,10 @@ export function KingDeclaration() {
                 <KingActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => void gameStore.declareKingAction(rank)}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(GameActions.declareKingAction(humanPlayer.id, rank as Rank));
+                  }}
                   disabled={disabled}
                 />
               );
@@ -58,7 +62,10 @@ export function KingDeclaration() {
                 <KingNonActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => void gameStore.declareKingAction(rank)}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(GameActions.declareKingAction(humanPlayer.id, rank as Rank));
+                  }}
                   disabled={disabled}
                 />
               );

@@ -5,27 +5,28 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown } from 'lucide-react';
 import {
-  useGamePhaseStore,
-  useGameStore,
-  usePlayerStore,
+  useUIStore,
 } from '../di-provider';
+import { useGameClient } from '../../../client/GameClientContext';
+import { GameActions } from '../../../engine/types';
 import { ContinueButton, OpponentSelectButton } from '../buttons';
 
 export const CoalitionLeaderModal = observer(() => {
-  const gameStore = useGameStore();
-  const phaseStore = useGamePhaseStore();
-  const { players } = usePlayerStore();
+  const gameClient = useGameClient();
+  const uiStore = useUIStore();
 
-  if (!phaseStore.showCoalitionLeaderSelection) {
+  if (!uiStore.showCoalitionLeaderSelection) {
     return null;
   }
 
   // Get coalition members (everyone except Vinto caller)
+  const players = gameClient.state.players;
   const coalitionMembers = players.filter((p) => !p.isVintoCaller);
   const vintoCaller = players.find((p) => p.isVintoCaller);
+  const coalitionLeaderId = gameClient.state.coalitionLeaderId;
 
   const handleSelectLeader = (playerId: string) => {
-    gameStore.setCoalitionLeader(playerId);
+    gameClient.dispatch(GameActions.setCoalitionLeader(playerId));
   };
 
   return (
@@ -48,40 +49,43 @@ export const CoalitionLeaderModal = observer(() => {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-          {coalitionMembers.map((player) => (
-            <div
-              key={player.id}
-              className={`
-                relative p-2 rounded-xl border-2 transition-all
-                ${
-                  player.isCoalitionLeader
-                    ? 'border-warning bg-warning-light'
-                    : 'border-primary bg-surface-primary'
-                }
-              `}
-            >
-              <OpponentSelectButton
-                opponentName={`${player.name}${player.isHuman ? ' (You)' : ''}`}
-                onClick={() => handleSelectLeader(player.id)}
-                showAvatar={true}
-                player={player}
-                isSelected={player.isCoalitionLeader}
-                className="w-full"
-              />
-              {player.isCoalitionLeader && (
-                <div className="absolute top-0 right-0 flex items-center gap-1 bg-warning text-white text-xs font-semibold px-2 py-1 rounded-bl-lg rounded-tr-lg">
-                  <Crown size={12} />
-                  <span>Leader</span>
-                </div>
-              )}
-            </div>
-          ))}
+          {coalitionMembers.map((player) => {
+            const isCoalitionLeader = coalitionLeaderId === player.id;
+            return (
+              <div
+                key={player.id}
+                className={`
+                  relative p-2 rounded-xl border-2 transition-all
+                  ${
+                    isCoalitionLeader
+                      ? 'border-warning bg-warning-light'
+                      : 'border-primary bg-surface-primary'
+                  }
+                `}
+              >
+                <OpponentSelectButton
+                  opponentName={`${player.name}${player.isHuman ? ' (You)' : ''}`}
+                  onClick={() => handleSelectLeader(player.id)}
+                  showAvatar={true}
+                  player={player}
+                  isSelected={isCoalitionLeader}
+                  className="w-full"
+                />
+                {isCoalitionLeader && (
+                  <div className="absolute top-0 right-0 flex items-center gap-1 bg-warning text-white text-xs font-semibold px-2 py-1 rounded-bl-lg rounded-tr-lg">
+                    <Crown size={12} />
+                    <span>Leader</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex justify-center">
           <ContinueButton
-            onClick={() => phaseStore.closeCoalitionLeaderSelection()}
-            disabled={!coalitionMembers.some((p) => p.isCoalitionLeader)}
+            onClick={() => uiStore.closeCoalitionLeaderSelection()}
+            disabled={!coalitionLeaderId}
           >
             Confirm Leader
           </ContinueButton>

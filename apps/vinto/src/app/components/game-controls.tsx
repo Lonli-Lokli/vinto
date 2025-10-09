@@ -1,99 +1,64 @@
-// components/GameControls.tsx
+// components/game-controls-new.tsx
 'use client';
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import {
-  useGameStore,
-  usePlayerStore,
-  useGamePhaseStore,
-  useDeckStore,
-  useTossInStore,
-} from './di-provider';
 import { DrawCardButton, UseDiscardButton } from './buttons';
-import { isFeatureEnabled } from '../utils/featureFlags';
-import { GameControlsNew } from './game-controls-new';
+import { useGameClient, useDispatch } from '../../client/GameClientContext';
+import { GameActions } from '../../engine/types';
 
 /**
- * GameControls - Main entry point for game controls
+ * GameControls using NEW GameClient architecture
  *
- * Switches between old and new architecture based on feature flag.
- * This allows gradual migration and easy rollback if needed.
+ * Compare to old version (game-controls.tsx):
+ * - OLD: Uses multiple store hooks (gameStore, playerStore, gamePhaseStore, deckStore, tossInStore)
+ * - NEW: Uses single useGameClient() hook with computed properties
+ *
+ * - OLD: Calls gameStore.drawCard() (store mutation)
+ * - NEW: Dispatches GameActions.drawCard() (pure action)
+ *
+ * Benefits:
+ * - Simpler: One hook instead of five
+ * - Clearer: Computed properties express intent
+ * - Type-safe: Actions are discriminated unions
+ * - Testable: Pure state updates
  */
-export const GameControls = () => {
-  // Use new architecture if feature flag is enabled
-  if (isFeatureEnabled('gameControls')) {
-    return <GameControlsNew />;
-  }
+export const GameControls = observer(() => {
+  const gameClient = useGameClient();
+  const dispatch = useDispatch();
 
-  // Otherwise use old architecture
-  return <GameControlsOld />;
-};
+  const currentPlayer = gameClient.currentPlayer;
+  const isMyTurn = gameClient.isCurrentPlayerHuman;
+  const subPhase = gameClient.state.subPhase;
+  const phase = gameClient.state.phase;
 
-/**
- * GameControlsOld - Original implementation using MobX stores
- */
-const GameControlsOld = observer(() => {
-  const gameStore = useGameStore();
-  const playerStore = usePlayerStore();
-  const { currentPlayer } = playerStore;
-  const {
-    isSelectingSwapPosition,
-    isAwaitingActionTarget,
-    isTossQueueProcessing,
-    phase,
-    isChoosingCardAction,
-    isDeclaringRank,
-    finalTurnTriggered,
-  } = useGamePhaseStore();
-  const tossInStore = useTossInStore();
-  const { waitingForTossIn } = tossInStore;
+  // Consolidated game state checks
+  const shouldHideControls =
+    (phase !== 'playing' && phase !== 'final') ||
+    subPhase === 'choosing' || // Selecting swap position
+    subPhase === 'selecting' || // Choosing card action
+    subPhase === 'declaring_rank' || // Declaring king rank
+    subPhase === 'awaiting_action' || // Awaiting action target
+    subPhase === 'toss_queue_processing' || // Processing toss-in
+    subPhase === 'toss_queue_active' || // Waiting for toss-in
+    gameClient.state.finalTurnTriggered ||
+    !isMyTurn;
 
+  // Action handlers using dispatch
   const handleDrawCard = () => {
-    if (currentPlayer && currentPlayer.isHuman) {
-      void gameStore.drawCard();
+    if (isMyTurn) {
+      dispatch(GameActions.drawCard(currentPlayer.id));
     }
   };
 
-  // Determine what content to show but always use same container
-  const getControlContent = () => {
-    // Hide controls during special game states
-    // Note: isChoosingCardAction is now handled by GamePhaseIndicators (CardDrawnIndicator)
-    // Note: waitingForTossIn is now handled by GamePhaseIndicators (TossInIndicator)
-    const shouldHide =
-      (phase !== 'playing' && phase !== 'final') ||
-      isSelectingSwapPosition ||
-      isChoosingCardAction ||
-      isDeclaringRank ||
-      finalTurnTriggered ||
-      isAwaitingActionTarget ||
-      isTossQueueProcessing ||
-      waitingForTossIn ||
-      currentPlayer?.isBot;
-
-    if (shouldHide) {
-      return { type: 'hidden' };
+  const handleTakeDiscard = () => {
+    if (isMyTurn) {
+      dispatch(GameActions.takeDiscard(currentPlayer.id));
     }
-
-    // Show full controls only for human player's turn
-    const showFullControls = currentPlayer?.isHuman;
-
-    if (showFullControls) {
-      return {
-        type: 'full-controls',
-        title: 'Your turn',
-        subtitle: 'Choose one action',
-      };
-    }
-
-    return { type: 'hidden' };
   };
 
-  const controlContent = getControlContent();
-
-  // Always return null when hidden to prevent layout jumps
-  if (controlContent.type === 'hidden') {
+  if (shouldHideControls) {
     return null;
   }
 
@@ -105,41 +70,42 @@ const GameControlsOld = observer(() => {
 Note: Call Vinto option will be available after you complete your turn during the toss-in phase`;
   };
 
-  // Single consistent container for all states
   return (
     <div className="w-full h-full py-1">
       <div className="h-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm flex flex-col">
-        {/* Header - consistent across all states */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs md:text-sm font-semibold text-primary leading-tight">
-            {controlContent.title}
+            Your turn
           </h3>
           <HelpPopover title="Game Controls" content={getHelpContent()} />
         </div>
 
-        {/* Main content area - responsive to content type */}
+        {/* Main controls */}
         <div className="flex flex-col justify-center flex-1 min-h-0">
-          <FullTurnControls handleDrawCard={handleDrawCard} />
+          <FullTurnControls
+            handleDrawCard={handleDrawCard}
+            handleTakeDiscard={handleTakeDiscard}
+          />
         </div>
       </div>
     </div>
   );
 });
 
-/**
- * FullTurnControls - Old implementation
- */
-const FullTurnControls = ({
+const FullTurnControls = observer(({
   handleDrawCard,
+  handleTakeDiscard,
 }: {
   handleDrawCard: () => void;
+  handleTakeDiscard: () => void;
 }) => {
-  const gameStore = useGameStore();
-  const { discardPile, drawPile } = useDeckStore();
+  const gameClient = useGameClient();
 
-  const topDiscard = discardPile[0];
+  // Simple computed values from GameClient
+  const deckEmpty = gameClient.drawPileCount === 0;
+  const topDiscard = gameClient.topDiscardCard;
   const canTakeDiscard = topDiscard?.actionText && !topDiscard?.played;
-  const deckEmpty = drawPile.length === 0;
 
   // Get discard button info
   const getDiscardButtonInfo = () => {
@@ -175,14 +141,13 @@ const FullTurnControls = ({
 
   return (
     <div className="space-y-1">
-      {/* Mobile: Stack vertically, Desktop: 2-column grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
         {/* Draw from Deck */}
         <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 
         {/* Take from Discard */}
         <UseDiscardButton
-          onClick={() => void gameStore.takeFromDiscard()}
+          onClick={handleTakeDiscard}
           disabled={!canTakeDiscard}
           title={discardInfo.tooltip}
           text={discardInfo.text}
@@ -191,4 +156,4 @@ const FullTurnControls = ({
       </div>
     </div>
   );
-};
+});

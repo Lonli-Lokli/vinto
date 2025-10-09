@@ -1,22 +1,22 @@
 // components/action-types/OwnCardPeek.tsx
 'use client';
 
-import { usePlayerStore, useGameStore } from '../di-provider';
+import { useUIStore } from '../di-provider';
 import { useGameClient } from '../../../client/GameClientContext';
+import { GameActions } from '../../../engine/types';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { ContinueButton, SkipButton } from '../buttons';
 
 export const OwnCardPeek = observer(() => {
-  const gameStore = useGameStore(); // Keep for actions
-  const playerStore = usePlayerStore(); // Keep for temporarilyVisibleCards (not in GameState yet)
+  const uiStore = useUIStore();
   const gameClient = useGameClient();
   const action = gameClient.state.pendingAction?.card.rank;
+  const humanPlayerState = gameClient.state.players.find(p => p.isHuman);
 
-  const humanPlayer = playerStore.humanPlayer;
   const hasRevealedCard =
-    humanPlayer && humanPlayer.temporarilyVisibleCards.size > 0;
+    humanPlayerState && uiStore.getTemporarilyVisibleCards(humanPlayerState.id).size > 0;
 
   return (
     <div className="w-full h-full px-3 py-2">
@@ -52,14 +52,18 @@ export const OwnCardPeek = observer(() => {
         {/* Action Buttons */}
         {hasRevealedCard ? (
           <ContinueButton
-            onClick={() => gameStore.confirmPeekCompletion()}
+            onClick={() => {
+              if (!humanPlayerState) return;
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayerState.id));
+            }}
             className="w-full py-2 px-4 text-sm"
           />
         ) : (
           <SkipButton
             onClick={() => {
-              playerStore.clearTemporaryCardVisibility();
-              gameStore.confirmPeekCompletion();
+              if (!humanPlayerState) return;
+              uiStore.clearTemporaryCardVisibility();
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayerState.id));
             }}
             className="w-full py-2 px-4 text-sm"
           />

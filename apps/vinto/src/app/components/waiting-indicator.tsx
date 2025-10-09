@@ -1,9 +1,11 @@
 'use client';
 import { observer } from 'mobx-react-lite';
 import { useGameClient } from '../../client/GameClientContext';
+import { useUIStore } from './di-provider';
 
 export const WaitingIndicator = observer(function WaitingIndicator() {
   const gameClient = useGameClient();
+  const uiStore = useUIStore();
 
   // Get current player
   const currentPlayer = gameClient.currentPlayer;
@@ -11,7 +13,7 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
 
   // Check subPhases
   const isChoosingCardAction = gameClient.state.subPhase === 'choosing';
-  const isSelectingSwapPosition = gameClient.state.subPhase === 'selecting';
+  const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
   const isAwaitingActionTarget = gameClient.state.subPhase === 'awaiting_action';
   const isDeclaringRank = gameClient.state.subPhase === 'declaring_rank';
   const waitingForTossIn = gameClient.state.subPhase === 'toss_queue_active' || gameClient.state.subPhase === 'toss_queue_processing';

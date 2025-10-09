@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useObserver } from 'mobx-react-lite';
 import type { GameState } from '../engine/types';
 import { GameClient } from './GameClient';
-import { quickStartGame } from './initializeGame';
+import { fourPlayerGame } from './initializeGame';
 
 /**
  * React Context for GameClient
@@ -35,13 +35,13 @@ export const GameClientProvider: React.FC<GameClientProviderProps> = ({
   initialClient
 }) => {
   const [client] = useState(() => {
-    // Use provided client or create a new one with quick start game
-    return initialClient || new GameClient(quickStartGame());
+    // Use provided client or create a new one with four player game
+    return initialClient || new GameClient(fourPlayerGame());
   });
 
   // Setup side effects (animations, sounds, etc.)
   useEffect(() => {
-    client.onStateUpdate((oldState, newState, action) => {
+    client.onStateUpdate((_oldState, newState, action) => {
       // TODO: Trigger animations based on action type
       console.log('[GameClient] Action:', action.type, action);
       console.log('[GameClient] New State:', newState.phase, newState.subPhase);

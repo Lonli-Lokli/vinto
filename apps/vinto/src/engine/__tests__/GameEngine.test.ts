@@ -1,6 +1,3 @@
-// engine/__tests__/GameEngine.test.ts
-// Tests for GameEngine - focus on DRAW_CARD action (vertical slice)
-
 import { GameEngine } from '../GameEngine';
 import { GameState, PlayerState, GameActions } from '../types';
 import { Card } from '../../app/shapes';
@@ -298,8 +295,7 @@ describe('GameEngine', () => {
 
       // Should have known card position
       expect(newState.players[0].knownCardPositions).toHaveLength(1);
-      expect(newState.players[0].knownCardPositions[0].position).toBe(0);
-      expect(newState.players[0].knownCardPositions[0].rank).toBe('K');
+      expect(newState.players[0].knownCardPositions[0]).toBe(0);
     });
 
     it('should update existing known position when swapping same position', () => {
@@ -314,7 +310,7 @@ describe('GameEngine', () => {
               createTestCard('J', 'hand3'),
               createTestCard('10', 'hand4'),
             ],
-            knownCardPositions: [{ position: 1, rank: 'Q' }],
+            knownCardPositions: [1],
           },
           createTestPlayer('p2', 'Player 2', false),
         ],
@@ -333,7 +329,6 @@ describe('GameEngine', () => {
 
       // Should still have only 1 known position, but updated
       expect(newState.players[0].knownCardPositions).toHaveLength(1);
-      expect(newState.players[0].knownCardPositions[0].rank).toBe('7');
     });
 
     it('should reject swap when not in choosing phase', () => {
@@ -869,7 +864,7 @@ describe('GameEngine', () => {
         },
       });
 
-      const action = GameActions.useCardAction('p1', cardToUse);
+      const action = GameActions.playCardAction('p1', cardToUse);
       const newState = GameEngine.reduce(state, action);
 
       expect(newState.subPhase).toBe('awaiting_action');
@@ -887,7 +882,7 @@ describe('GameEngine', () => {
         },
       });
 
-      const action = GameActions.useCardAction('p1', cardToUse);
+      const action = GameActions.playCardAction('p1', cardToUse);
       const newState = GameEngine.reduce(state, action);
 
       expect(newState.pendingAction?.actionPhase).toBe('selecting-target');
@@ -905,7 +900,7 @@ describe('GameEngine', () => {
         },
       });
 
-      const action = GameActions.useCardAction('p1', cardToUse);
+      const action = GameActions.playCardAction('p1', cardToUse);
       const newState = GameEngine.reduce(state, action);
 
       expect(newState).toEqual(state);
@@ -918,7 +913,7 @@ describe('GameEngine', () => {
         pendingAction: null,
       });
 
-      const action = GameActions.useCardAction('p1', cardToUse);
+      const action = GameActions.playCardAction('p1', cardToUse);
       const newState = GameEngine.reduce(state, action);
 
       expect(newState).toEqual(state);
@@ -938,7 +933,7 @@ describe('GameEngine', () => {
       });
 
       // p2 trying to use action
-      const action = GameActions.useCardAction('p2', cardToUse);
+      const action = GameActions.playCardAction('p2', cardToUse);
       const newState = GameEngine.reduce(state, action);
 
       expect(newState).toEqual(state);
@@ -957,7 +952,7 @@ describe('GameEngine', () => {
       });
 
       const stateCopy = JSON.parse(JSON.stringify(state));
-      const action = GameActions.useCardAction('p1', cardToUse);
+      const action = GameActions.playCardAction('p1', cardToUse);
 
       GameEngine.reduce(state, action);
 
@@ -1466,7 +1461,7 @@ describe('GameEngine', () => {
 
       // 3. USE_CARD_ACTION (instead of discarding)
       const removedCard = state.pendingAction!.card;
-      state = GameEngine.reduce(state, GameActions.useCardAction('p1', removedCard));
+      state = GameEngine.reduce(state, GameActions.playCardAction('p1', removedCard));
       expect(state.subPhase).toBe('awaiting_action');
       expect(state.pendingAction?.actionPhase).toBe('selecting-target');
 
@@ -1836,7 +1831,7 @@ describe('GameEngine', () => {
       // Toss-in should be triggered
       expect(newState.activeTossIn).not.toBeNull();
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.activeTossIn?.declaredRank).toBe('A');
+      expect(newState.activeTossIn?.rank).toBe('A');
       expect(newState.activeTossIn?.participants).toEqual([]);
 
       // King card should be in discard pile
@@ -1866,7 +1861,7 @@ describe('GameEngine', () => {
 
       let action = GameActions.declareKingAction('p1', '7');
       let newState = GameEngine.reduce(state, action);
-      expect(newState.activeTossIn?.declaredRank).toBe('7');
+      expect(newState.activeTossIn?.rank).toBe('7');
 
       // Test with rank Q
       state = createTestState({
@@ -1882,7 +1877,7 @@ describe('GameEngine', () => {
 
       action = GameActions.declareKingAction('p1', 'Q');
       newState = GameEngine.reduce(state, action);
-      expect(newState.activeTossIn?.declaredRank).toBe('Q');
+      expect(newState.activeTossIn?.rank).toBe('Q');
     });
 
     it('should fail if not player turn', () => {

@@ -29,7 +29,7 @@ export const OpponentSelectButton = ({
       >
         {/* Avatar Image - md size */}
         <div className="flex items-center justify-center">
-          <Avatar player={player} size="md" />
+          <Avatar playerName={player.name} size="md" />
         </div>
         {/* Player Name */}
         <div className="text-xs font-medium text-primary text-center line-clamp-1 w-full">

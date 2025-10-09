@@ -1,16 +1,20 @@
-// components/PlayerArea.tsx - FIXED VERSION
+// components/PlayerArea.tsx - MIGRATED VERSION
 'use client';
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Users, Crown } from 'lucide-react';
-import { Player } from '../shapes';
+import { PlayerState } from '../../engine/types/GameState';
 import { Card } from './card';
 import { Avatar } from './avatar';
 import { useGameClient } from '../../client/GameClientContext';
+import { useUIStore } from './di-provider';
+
+type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
 
 interface PlayerAreaProps {
-  player: Player;
+  player: PlayerState;
+  position: PlayerPosition;
   isCurrentPlayer: boolean;
   isThinking: boolean;
   onCardClick?: (index: number) => void;
@@ -23,6 +27,7 @@ interface PlayerAreaProps {
 
 export const PlayerArea = observer(function PlayerArea({
   player,
+  position,
   isCurrentPlayer,
   onCardClick,
   gamePhase,
@@ -33,8 +38,16 @@ export const PlayerArea = observer(function PlayerArea({
 }: PlayerAreaProps) {
   // Get coalition leader status from GameClient
   const gameClient = useGameClient();
+  const uiStore = useUIStore();
   const humanPlayer = gameClient.state.players.find(p => p.isHuman);
   const coalitionLeader = gameClient.coalitionLeader;
+
+  // Get UI state for this player
+  const temporarilyVisibleCards = uiStore.getTemporarilyVisibleCards(player.id);
+  const highlightedCards = uiStore.getHighlightedCards(player.id);
+
+  // Check if this player is the coalition leader
+  const isCoalitionLeader = coalitionLeader?.id === player.id;
 
   // Determine if we can see this player's cards based on official Vinto rules
   const canSeeCards = (cardIndex: number): boolean => {
@@ -42,8 +55,8 @@ export const PlayerArea = observer(function PlayerArea({
     if (
       gamePhase === 'setup' &&
       player.isHuman &&
-      (player.knownCardPositions.has(cardIndex) ||
-        player.temporarilyVisibleCards.has(cardIndex))
+      (player.knownCardPositions.includes(cardIndex) ||
+        temporarilyVisibleCards.has(cardIndex))
     ) {
       return true;
     }
@@ -52,7 +65,7 @@ export const PlayerArea = observer(function PlayerArea({
     // This works for both human and bot cards when they're being peeked
     if (
       (gamePhase === 'playing' || gamePhase === 'final') &&
-      player.temporarilyVisibleCards.has(cardIndex)
+      temporarilyVisibleCards.has(cardIndex)
     ) {
       return true;
     }
@@ -63,7 +76,7 @@ export const PlayerArea = observer(function PlayerArea({
       coalitionLeader &&
       humanPlayer &&
       coalitionLeader.id === humanPlayer.id &&
-      player.coalitionWith.size > 0 &&
+      player.coalitionWith.length > 0 &&
       !player.isVintoCaller
     ) {
       // Human is coalition leader and this player is a coalition member
@@ -96,13 +109,13 @@ export const PlayerArea = observer(function PlayerArea({
   return (
     <div
       className={`flex items-center ${
-        player.position === 'bottom' || player.position === 'top'
+        position === 'bottom' || position === 'top'
           ? 'flex-row gap-2 md:gap-4'
           : 'flex-col gap-1 md:gap-2'
       }`}
     >
       {/* Avatar comes BEFORE cards for bottom/left */}
-      {(player.position === 'bottom' || player.position === 'left') && (
+      {(position === 'bottom' || position === 'left') && (
         <div className="flex flex-col items-center justify-center gap-1 md:gap-2">
           {/* Mobile: Combined avatar + name in rounded box */}
           <div
@@ -124,7 +137,7 @@ export const PlayerArea = observer(function PlayerArea({
             }
           >
             <div className="w-8 h-8">
-              <Avatar player={player} size="sm" />
+              <Avatar playerName={player.name} size="sm" />
             </div>
             <div
               className={`
@@ -135,7 +148,7 @@ export const PlayerArea = observer(function PlayerArea({
             >
               {player.name}
             </div>
-            {player.coalitionWith.size > 0 && (
+            {player.coalitionWith.length > 0 && (
               <div
                 className="bg-info text-white rounded-full p-0.5"
                 title="Coalition Member"
@@ -143,7 +156,7 @@ export const PlayerArea = observer(function PlayerArea({
                 <Users size={10} />
               </div>
             )}
-            {player.isCoalitionLeader && (
+            {isCoalitionLeader && (
               <div
                 className="bg-warning text-white rounded-full p-0.5"
                 title="Coalition Leader"
@@ -168,7 +181,7 @@ export const PlayerArea = observer(function PlayerArea({
                   : undefined,
               }}
             >
-              <Avatar player={player} size="lg" />
+              <Avatar playerName={player.name} size="lg" />
             </div>
 
             <div className="flex flex-col items-center gap-2">
@@ -193,7 +206,7 @@ export const PlayerArea = observer(function PlayerArea({
               >
                 {player.name}
               </div>
-              {player.coalitionWith.size > 0 && (
+              {player.coalitionWith.length > 0 && (
                 <div
                   className="flex items-center gap-1 bg-info text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Member"
@@ -202,7 +215,7 @@ export const PlayerArea = observer(function PlayerArea({
                   <span>Team</span>
                 </div>
               )}
-              {player.isCoalitionLeader && (
+              {isCoalitionLeader && (
                 <div
                   className="flex items-center gap-1 bg-warning text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Leader"
@@ -218,7 +231,7 @@ export const PlayerArea = observer(function PlayerArea({
 
       {/* Cards container with responsive styling and wrapping */}
       <div
-        className={`${cardContainerClasses[player.position]} ${
+        className={`${cardContainerClasses[position]} ${
           isCurrentPlayer
             ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-success md:border-2 bg-success-light/20'
             : ''
@@ -233,7 +246,7 @@ export const PlayerArea = observer(function PlayerArea({
       >
         {player.cards.map((card, index) => {
           const isSidePlayer =
-            player.position === 'left' || player.position === 'right';
+            position === 'left' || position === 'right';
 
           // Determine if this card is selectable
           const isCardSelectable =
@@ -259,7 +272,7 @@ export const PlayerArea = observer(function PlayerArea({
                 (isDeclaringRank && swapPosition === index) ||
                 isSelectingActionTarget
               }
-              botPeeking={player.highlightedCards.has(index)}
+              botPeeking={highlightedCards.has(index)}
               onClick={() => onCardClick?.(index)}
               rotated={isSidePlayer}
               playerId={player.id}
@@ -270,7 +283,7 @@ export const PlayerArea = observer(function PlayerArea({
       </div>
 
       {/* Avatar comes AFTER cards for top/right */}
-      {(player.position === 'top' || player.position === 'right') && (
+      {(position === 'top' || position === 'right') && (
         <div className="flex flex-col items-center justify-center gap-1 md:gap-2">
           {/* Mobile: Combined avatar + name in rounded box */}
           <div
@@ -292,7 +305,7 @@ export const PlayerArea = observer(function PlayerArea({
             }
           >
             <div className="w-8 h-8">
-              <Avatar player={player} size="sm" />
+              <Avatar playerName={player.name} size="sm" />
             </div>
             <div
               className={`
@@ -303,7 +316,7 @@ export const PlayerArea = observer(function PlayerArea({
             >
               {player.name}
             </div>
-            {player.coalitionWith.size > 0 && (
+            {player.coalitionWith.length > 0 && (
               <div
                 className="bg-info text-white rounded-full p-0.5"
                 title="Coalition Member"
@@ -311,7 +324,7 @@ export const PlayerArea = observer(function PlayerArea({
                 <Users size={10} />
               </div>
             )}
-            {player.isCoalitionLeader && (
+            {isCoalitionLeader && (
               <div
                 className="bg-warning text-white rounded-full p-0.5"
                 title="Coalition Leader"
@@ -336,7 +349,7 @@ export const PlayerArea = observer(function PlayerArea({
                   : undefined,
               }}
             >
-              <Avatar player={player} size="lg" />
+              <Avatar playerName={player.name} size="lg" />
             </div>
 
             <div className="flex flex-col items-center gap-2">
@@ -361,7 +374,7 @@ export const PlayerArea = observer(function PlayerArea({
               >
                 {player.name}
               </div>
-              {player.coalitionWith.size > 0 && (
+              {player.coalitionWith.length > 0 && (
                 <div
                   className="flex items-center gap-1 bg-info text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Member"
@@ -370,7 +383,7 @@ export const PlayerArea = observer(function PlayerArea({
                   <span>Team</span>
                 </div>
               )}
-              {player.isCoalitionLeader && (
+              {isCoalitionLeader && (
                 <div
                   className="flex items-center gap-1 bg-warning text-white rounded-full px-3 py-1 text-sm font-semibold shadow-theme-md"
                   title="Coalition Leader"

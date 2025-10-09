@@ -15,17 +15,12 @@ import {
   CircleArrowRight,
 } from 'lucide-react';
 import { HelpPopover } from './help-popover';
-import type { Card, Player, Rank } from '../shapes';
-import type { ActionStore } from '../stores/action-store';
+import type { Card, Rank } from '../shapes';
 import {
-  useGameStore,
-  useGamePhaseStore,
-  usePlayerStore,
-  useTossInStore,
-  useDeckStore,
-  useActionStore,
-  useCommandHistory,
+  useUIStore,
 } from './di-provider';
+import { useGameClient } from '../../client/GameClientContext';
+import { GameActions } from '../../engine/types';
 import { Card as CardComponent } from './card';
 import {
   UseActionButton,
@@ -42,6 +37,120 @@ import {
   getCardValue,
 } from '../utils/card-helper';
 import { ReactJoin } from '../utils/react-join';
+
+// Main Component
+export const GamePhaseIndicators = observer(() => {
+  const gameClient = useGameClient();
+  const uiStore = useUIStore();
+
+  // Read all state from GameClient
+  const phase = gameClient.state.phase;
+  const subPhase = gameClient.state.subPhase;
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const currentPlayer = gameClient.currentPlayer;
+  const sessionActive = gameClient.state.phase !== 'final';
+  const pendingCard = gameClient.state.pendingAction?.card;
+  const actionContext = gameClient.state.pendingAction;
+  const discardPile = gameClient.state.discardPile;
+
+  // Map subPhases to UI boolean flags
+  const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
+  const isAwaitingActionTarget = subPhase === 'awaiting_action';
+  const isChoosingCardAction = subPhase === 'choosing';
+  const waitingForTossIn = subPhase === 'toss_queue_active';
+
+  // Setup peeks remaining (count cards not in knownCardPositions)
+  const setupPeeksRemaining = humanPlayer
+    ? 4 - humanPlayer.cards.filter((_, idx) =>
+        humanPlayer.knownCardPositions.includes(idx)
+      ).length
+    : 0;
+
+  // Setup Phase
+  if (phase === 'setup' && sessionActive) {
+    return (
+      <SetupPhaseIndicator
+        setupPeeksRemaining={setupPeeksRemaining}
+        onFinishSetup={() => {
+          if (!humanPlayer) return;
+          gameClient.dispatch(GameActions.finishSetup(humanPlayer.id));
+        }}
+      />
+    );
+  }
+
+  // Toss-in Period
+  if (waitingForTossIn) {
+    const topDiscardRank =
+      discardPile.length > 0 ? discardPile[0].rank : undefined;
+    const isCurrentPlayerWaiting = gameClient.state.subPhase === 'ai_thinking';
+    return (
+      <TossInIndicator
+        topDiscardRank={topDiscardRank}
+        onContinue={() => {
+          if (!humanPlayer) return;
+          gameClient.dispatch(GameActions.finishTossInPeriod(humanPlayer.id));
+        }}
+        currentPlayer={currentPlayer}
+        isCurrentPlayerWaiting={isCurrentPlayerWaiting}
+      />
+    );
+  }
+
+  // Action Execution - only show for bot players
+  // Human players get detailed instructions in the ActionTargetSelector (bottom area)
+  if (
+    isAwaitingActionTarget &&
+    actionContext &&
+    currentPlayer &&
+    !currentPlayer.isHuman
+  ) {
+    return (
+      <ActionExecutionIndicator
+        actionContext={actionContext}
+        currentPlayer={currentPlayer}
+      />
+    );
+  }
+
+  // Card Drawn - Choosing Action (only for human players)
+  if (isChoosingCardAction && pendingCard && currentPlayer?.isHuman) {
+    return (
+      <CardDrawnIndicator
+        pendingCard={pendingCard}
+        onUseAction={() => {
+          if (!humanPlayer || !pendingCard) return;
+          gameClient.dispatch(
+            GameActions.playCardAction(humanPlayer.id, pendingCard)
+          );
+        }}
+        onSwapDiscard={() => {
+          // Start swap selection (UI-only state)
+          uiStore.startSelectingSwapPosition();
+        }}
+        onDiscard={() => {
+          if (!humanPlayer) return;
+          gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
+        }}
+      />
+    );
+  }
+
+  // Card Selection for Swap (only for human players)
+  if (isSelectingSwapPosition && currentPlayer?.isHuman) {
+    return (
+      <SwapPositionIndicator
+        onDiscard={() => {
+          if (!humanPlayer) return;
+          uiStore.cancelSwapSelection();
+          gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
+        }}
+      />
+    );
+  }
+
+  return null;
+});
 
 // Setup Phase Component
 const SetupPhaseIndicator = observer(
@@ -90,29 +199,21 @@ const TossInIndicator = observer(
   }: {
     topDiscardRank?: Rank;
     onContinue: () => void;
-    currentPlayer: Player | null;
+    currentPlayer: { name: string; isHuman: boolean } | null;
     isCurrentPlayerWaiting: boolean;
   }) => {
-    const gamePhaseStore = useGamePhaseStore();
-    const commandHistory = useCommandHistory();
-    const playerStore = usePlayerStore();
+    const gameClient = useGameClient();
+    const uiStore = useUIStore();
 
-    // Get actions from current turn and filter for bot actions only
-    const recentActions = commandHistory.getRecentPlayerActions();
-    console.log('[TossInIndicator] Actions from current turn:', recentActions);
-
-    const recentBotActions = recentActions
+    // Get bot actions from current turn using GameState action history
+    const currentTurn = gameClient.state.turnCount;
+    const recentBotActions = gameClient.state.recentActions
       .filter((action) => {
-        if (!action.playerId) return false;
-        const player = playerStore.getPlayer(action.playerId);
-        const isBot = player && player.isBot;
-        console.log('[TossInIndicator] Filtering action:', {
-          playerId: action.playerId,
-          playerName: player?.name,
-          isBot,
-          description: action.description,
-        });
-        return isBot;
+        // Only show actions from current turn
+        if (action.turnNumber !== currentTurn) return false;
+        // Only show bot actions
+        const player = gameClient.state.players.find(p => p.id === action.playerId);
+        return player && !player.isHuman;
       })
       .map((action) => action.description);
 
@@ -200,7 +301,7 @@ Skip toss-in and proceed to next player's turn`;
                 {/* Call Vinto - Special Action */}
                 <div className="space-y-1">
                   <CallVintoButton
-                    onClick={() => gamePhaseStore.openVintoConfirmation()}
+                    onClick={() => uiStore.setShowVintoConfirmation(true)}
                     fullWidth
                     className="py-1.5 px-2"
                   />
@@ -294,11 +395,9 @@ const ActionExecutionIndicator = observer(
   ({
     actionContext,
     currentPlayer,
-    actionStore,
   }: {
     actionContext: any;
-    currentPlayer: Player | null;
-    actionStore: ActionStore;
+    currentPlayer: { id: string; name: string; isHuman: boolean } | null;
   }) => {
     const actionPlayer =
       actionContext.playerId === currentPlayer?.id
@@ -310,7 +409,7 @@ const ActionExecutionIndicator = observer(
       actionContext,
       actionPlayer,
       isHuman,
-      actionStore.peekTargets.length
+      actionContext?.targets?.length || 0
     );
 
     return (
@@ -507,82 +606,3 @@ const SwapPositionIndicator = observer(
 );
 
 SwapPositionIndicator.displayName = 'SwapPositionIndicator';
-
-// Main Component
-export const GamePhaseIndicators = observer(() => {
-  const gameStore = useGameStore();
-  const {
-    phase,
-    isSelectingSwapPosition,
-    isAwaitingActionTarget,
-    isChoosingCardAction,
-  } = useGamePhaseStore();
-  const { setupPeeksRemaining, currentPlayer } = usePlayerStore();
-  const tossInStore = useTossInStore();
-  const { waitingForTossIn } = tossInStore;
-  const { discardPile } = useDeckStore();
-  const actionStore = useActionStore();
-  const { pendingCard, actionContext } = actionStore;
-
-  // Setup Phase
-  if (phase === 'setup' && gameStore.sessionActive) {
-    return (
-      <SetupPhaseIndicator
-        setupPeeksRemaining={setupPeeksRemaining}
-        onFinishSetup={() => gameStore.finishSetup()}
-      />
-    );
-  }
-
-  // Toss-in Period
-  if (waitingForTossIn) {
-    const topDiscardRank =
-      discardPile.length > 0 ? discardPile[0].rank : undefined;
-    return (
-      <TossInIndicator
-        topDiscardRank={topDiscardRank}
-        onContinue={() => gameStore.finishTossInPeriod()}
-        currentPlayer={currentPlayer}
-        isCurrentPlayerWaiting={gameStore.isCurrentPlayerWaiting}
-      />
-    );
-  }
-
-  // Action Execution - only show for bot players
-  // Human players get detailed instructions in the ActionTargetSelector (bottom area)
-  if (
-    isAwaitingActionTarget &&
-    actionContext &&
-    currentPlayer &&
-    !currentPlayer.isHuman
-  ) {
-    return (
-      <ActionExecutionIndicator
-        actionContext={actionContext}
-        currentPlayer={currentPlayer}
-        actionStore={actionStore}
-      />
-    );
-  }
-
-  // Card Drawn - Choosing Action (only for human players)
-  if (isChoosingCardAction && pendingCard && currentPlayer?.isHuman) {
-    return (
-      <CardDrawnIndicator
-        pendingCard={pendingCard}
-        onUseAction={() => void gameStore.choosePlayCard()}
-        onSwapDiscard={() => gameStore.chooseSwap()}
-        onDiscard={() => void gameStore.discardCard()}
-      />
-    );
-  }
-
-  // Card Selection for Swap (only for human players)
-  if (isSelectingSwapPosition && currentPlayer?.isHuman) {
-    return (
-      <SwapPositionIndicator onDiscard={() => void gameStore.discardCard()} />
-    );
-  }
-
-  return null;
-});

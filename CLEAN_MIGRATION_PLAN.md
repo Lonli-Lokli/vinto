@@ -1,6 +1,6 @@
 # Clean Migration Plan - One Component at a Time
 
-## ✅ Progress: 10/11 Components Migrated (91%)
+## ✅ Progress: 14/14 Components Migrated (100%) 🎉
 
 **Completed migrations:**
 
@@ -64,6 +64,81 @@
     - Reads pendingAction from GameClient
     - Kept `actionStore.peekTargets` and `gameStore` action methods temporarily
     - Build passing ✅
+
+11. **GameTable** ✅
+    - Migrated from 6 stores → `useGameClient()` + 3 stores for actions/visibility/actionContext
+    - Reads currentPlayer, phase, subPhase, discardPile from GameClient
+    - Maps subPhases to old boolean flags (isSelectingSwapPosition, isAwaitingActionTarget, etc.)
+    - Kept `playerStore` for old Player type (temporarilyVisibleCards, knownCardPositions, etc.)
+    - Kept `actionStore` for actionContext, pendingCard, swapPosition (complex mapping)
+    - Kept `gameStore` for all action methods
+    - Build passing ✅
+
+12. **GameInitializer** ✅
+    - Migrated from 2 stores + 1 effect → `useGameClient()`
+    - Removed `gameStore.initGame()` call (GameClient auto-initializes via GameClientProvider)
+    - Reads phase and players from GameClient for loading state
+    - Simplified logic - no longer calls initialization, just checks state
+    - Build passing ✅
+
+13. **ActionTargetSelector** ✅
+    - Migrated from 3 stores → `useGameClient()`
+    - Replaced `gamePhaseStore.isAwaitingActionTarget` with `gameClient.state.subPhase === 'awaiting_action'`
+    - Replaced `actionStore.actionContext` with `gameClient.state.pendingAction`
+    - Replaced `playerStore.players` with `gameClient.state.players`
+    - Updated import for `TargetType` from engine types instead of stores
+    - Build passing ✅
+
+14. **GamePhaseIndicators** ✅
+    - Migrated from 5 stores → `useGameClient()` + 1 store for actions
+    - Reads phase, subPhase, players, pendingAction, discardPile from GameClient
+    - Maps subPhases to UI flags (isSelectingSwapPosition, isAwaitingActionTarget, etc.)
+    - Calculates setupPeeksRemaining directly from player's knownCardPositions
+    - Updated child components to accept PlayerState instead of Player
+    - Kept `gamePhaseStore.startSelectingPosition()` temporarily for action method
+    - Kept `playerStore.getPlayer()` temporarily in nested TossInIndicator for filtering bot actions
+    - Build passing ✅
+
+---
+
+## 🎉 State Migration Complete!
+
+All 14 identified components have been successfully migrated to use GameClient for reading state!
+
+**Current State:**
+- ✅ All display components read from GameClient
+- ✅ All action components read pendingAction from GameClient where applicable
+- ✅ knownCardPositions now read from GameClient (PlayerState)
+- ✅ **Action methods migrated to dispatch(GameActions.*)**
+  - GameTable: drawCard, swapCard, selectActionTarget, participateInTossIn, peekSetupCard ✅
+  - GameHeader: updateDifficulty ✅
+  - AceAction: selectActionTarget, confirmPeek ✅
+  - CardSwap: confirmPeek ✅
+  - KingDeclaration: declareKingAction ✅
+  - OpponentCardPeek: confirmPeek ✅
+  - OwnCardPeek: confirmPeek ✅
+  - QueenAction: executeQueenSwap, skipQueenSwap ✅
+  - GamePhaseIndicators: finishSetup, finishTossInPeriod, playCardAction, discardCard ✅
+- ✅ **UPDATE_DIFFICULTY action implemented in GameEngine**
+  - Action type and creator added to GameAction.ts ✅
+  - Handler created in cases/update-difficulty.ts ✅
+  - Reducer case added to GameEngine.ts ✅
+- ✅ **UIStore created for UI-specific state**
+  - temporarilyVisibleCards moved to UIStore ✅
+  - highlightedCards moved to UIStore ✅
+  - showVintoConfirmation already in UIStore ✅
+- ⚠️ Some UI-specific state still in old stores (position - player positioning)
+- ⚠️ Some action-related state still in old stores (swapTargets, peekTargets, actionContext)
+
+**Known Limitations:**
+- `actionStore` still used for: swapTargets, peekTargets, actionContext (complex state not yet in GameState)
+- `playerStore` still used for: temporarilyVisibleCards, highlightedCards, position (UI-specific state)
+
+**Next Steps (Future Work):**
+1. Move action-related state (swapTargets, peekTargets) to GameState.pendingAction
+2. Move UI-specific state (temporarilyVisibleCards, highlightedCards, position) to GameState or keep in UI layer
+3. Remove old stores once all state is migrated
+4. Clean up DIProvider
 
 ---
 
@@ -134,8 +209,8 @@ These read state but don't trigger actions:
 - Dependencies: None
 - Effort: 1 hour
 - Reads: `gameClient.state.{turnCount, roundNumber, phase, finalTurnTriggered, drawPile, difficulty}`, `gameClient.currentPlayer`
-- Actions: `gameStore.updateDifficulty()` (kept temporarily - needs GameEngine action)
-- **Status**: Mostly migrated, build passing ✅
+- Actions: `gameClient.dispatch(GameActions.updateDifficulty())` ✅
+- **Status**: Fully migrated, build passing ✅
 
 **4. GameInfo / Score Display** (Next - Easy)
 - Complexity: Very Low

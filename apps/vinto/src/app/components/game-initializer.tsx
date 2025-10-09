@@ -1,22 +1,20 @@
 // components/GameInitializer.tsx
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGameStore, usePlayerStore } from './di-provider';
+import { useGameClient } from '../../client/GameClientContext';
 
 export const GameInitializer = observer(() => {
-  const gameStore = useGameStore();
-  const { players } = usePlayerStore();
-  // Initialize game on mount
-  useEffect(() => {
-    if (players.length === 0) {
-      void gameStore.initGame();
-    }
-  }, [gameStore, players.length]);
+  const gameClient = useGameClient();
 
-  // Loading state
-  if (!gameStore.sessionActive || players.length === 0) {
+  // Check if game is properly initialized
+  // GameClient is already initialized via GameClientProvider with quickStartGame()
+  const isGameActive = gameClient.state.phase !== 'final';
+  const hasPlayers = gameClient.state.players.length > 0;
+
+  // Loading state - show only if game is not properly initialized
+  if (!isGameActive || !hasPlayers) {
     return (
       <div className="min-h-screen bg-page-gradient flex items-center justify-center">
         <div className="text-center">

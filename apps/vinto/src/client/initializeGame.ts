@@ -166,6 +166,7 @@ export function initializeGame(settings: GameSettings): GameState {
     discardPile: [],
     pendingAction: null,
     activeTossIn: null,
+    recentActions: [],
     difficulty: settings.difficulty,
   };
 

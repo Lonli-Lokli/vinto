@@ -7,26 +7,16 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 
-// Stores
+// Stores (only active stores - old stores removed in migration)
 import {
-  PlayerStore,
-  DeckStore,
-  GamePhaseStore,
-  ActionStore,
-  TossInStore,
-  ReplayStore,
   CardAnimationStore,
   GameStore,
 } from '../stores';
 
-// Command system
-import { CommandFactory } from '../commands/command-factory';
-import { CommandHistory } from '../commands/command-history';
-import { GameStateManager } from '../commands/game-state-manager';
-
 // Services
 import { ActionCoordinator } from '../stores/action-coordinator';
 import { BotDecisionServiceFactory } from '../services/mcts-bot-decision';
+import { UIStore } from '../stores/ui-store';
 
 /**
  * Configure the DI container with all dependencies
@@ -34,18 +24,9 @@ import { BotDecisionServiceFactory } from '../services/mcts-bot-decision';
 export function setupDIContainer(
   difficulty: 'easy' | 'moderate' | 'hard' = 'moderate'
 ) {
-  // Register stores as singletons
-  container.registerSingleton(PlayerStore);
-  container.registerSingleton(DeckStore);
-  container.registerSingleton(GamePhaseStore);
-  container.registerSingleton(ActionStore);
-  container.registerSingleton(TossInStore);
-  container.registerSingleton(ReplayStore);
+  // Register active stores as singletons
   container.registerSingleton(CardAnimationStore);
-
-  // Register command system as singletons
-  container.registerSingleton(CommandHistory);
-  container.registerSingleton(CommandFactory);
+  container.registerSingleton(UIStore);
 
   // Register BotDecisionService
   container.register('BotDecisionService', {
@@ -57,9 +38,6 @@ export function setupDIContainer(
 
   // Register GameStore last (depends on everything)
   container.registerSingleton(GameStore);
-
-  // Register GameStateManager
-  container.registerSingleton(GameStateManager);
 }
 
 /**

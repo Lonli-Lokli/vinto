@@ -1,7 +1,7 @@
 // engine/types/GameAction.ts
 // All possible game actions - the "language" for communicating with the engine
 
-import { Card, Rank } from '../../app/shapes';
+import { Card, Difficulty, Rank } from '../../app/shapes';
 
 /**
  * Discriminated union of all game actions
@@ -34,7 +34,13 @@ export type GameAction =
 
   // Setup
   | PeekSetupCardAction
-  | FinishSetupAction;
+  | FinishSetupAction
+
+  // Configuration
+  | UpdateDifficultyAction
+
+  // Debug/Testing
+  | SetNextDrawCardAction;
 
 /**
  * Turn Actions
@@ -184,6 +190,26 @@ export interface FinishSetupAction {
 }
 
 /**
+ * Configuration Actions
+ */
+export interface UpdateDifficultyAction {
+  type: 'UPDATE_DIFFICULTY';
+  payload: {
+    difficulty: Difficulty;
+  };
+}
+
+/**
+ * Debug/Testing Actions
+ */
+export interface SetNextDrawCardAction {
+  type: 'SET_NEXT_DRAW_CARD';
+  payload: {
+    rank: Rank;
+  };
+}
+
+/**
  * Action creator helper functions
  */
 export const GameActions = {
@@ -207,7 +233,7 @@ export const GameActions = {
     payload: { playerId },
   }),
 
-  doUseCardAction: (playerId: string, card: Card): UseCardActionAction => ({
+  playCardAction: (playerId: string, card: Card): UseCardActionAction => ({
     type: 'USE_CARD_ACTION',
     payload: { playerId, card },
   }),
@@ -279,5 +305,15 @@ export const GameActions = {
   finishSetup: (playerId: string): FinishSetupAction => ({
     type: 'FINISH_SETUP',
     payload: { playerId },
+  }),
+
+  updateDifficulty: (difficulty: Difficulty): UpdateDifficultyAction => ({
+    type: 'UPDATE_DIFFICULTY',
+    payload: { difficulty },
+  }),
+
+  setNextDrawCard: (rank: Rank): SetNextDrawCardAction => ({
+    type: 'SET_NEXT_DRAW_CARD',
+    payload: { rank },
   }),
 };

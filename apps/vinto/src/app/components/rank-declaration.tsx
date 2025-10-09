@@ -3,33 +3,32 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import {
-  useGameStore,
-  usePlayerStore,
-  useActionStore,
-  useGamePhaseStore,
-} from './di-provider';
-import { Rank } from '../shapes';
+import { useGameClient } from '../../client/GameClientContext';
+import { GameActions } from '../../engine/types';
+import type { Rank } from '../shapes';
 import { RankDeclarationButton, SkipButton } from './buttons';
 
 // Only show action cards (7-K, A) since 2-6 and Joker have no actions
 const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 export const RankDeclaration = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer } = usePlayerStore();
-  const { pendingCard, swapPosition } = useActionStore();
-  const { isDeclaringRank } = useGamePhaseStore();
+  const gameClient = useGameClient();
 
-  if (!isDeclaringRank || swapPosition === null) {
+  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const pendingCard = gameClient.state.pendingAction?.card;
+  const swapPosition = gameClient.state.pendingAction?.swapPosition;
+  const isDeclaringRank = gameClient.state.subPhase === 'declaring_rank';
+
+  if (!isDeclaringRank || swapPosition === null || swapPosition === undefined) {
     return null;
   }
 
   // Only show for human players - bot declarations should not display UI
-  if (!currentPlayer || currentPlayer.isBot) return null;
+  if (!humanPlayer) return null;
 
   const handleRankClick = (rank: Rank) => {
-    void gameStore.declareRank(rank);
+    if (!humanPlayer) return;
+    gameClient.dispatch(GameActions.swapCard(humanPlayer.id, swapPosition, rank));
   };
 
   const getHelpContent = () => {
@@ -71,7 +70,10 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
 
         {/* Skip button - compact */}
         <SkipButton
-          onClick={() => void gameStore.skipDeclaration()}
+          onClick={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.swapCard(humanPlayer.id, swapPosition));
+          }}
           className="w-full py-1.5 px-3 flex-shrink-0"
         >
           Skip

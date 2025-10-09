@@ -3,8 +3,9 @@
 
 import { makeObservable, observable, action, computed } from 'mobx';
 import { GameEngine } from '../engine/GameEngine';
-import type { GameState, GameAction, PlayerState } from '../engine/types';
+import type { GameState, GameAction, PlayerState, GameActionHistory } from '../engine/types';
 import type { Card } from '../app/shapes';
+import copy from 'fast-copy';
 
 /**
  * GameClient - Observable wrapper around GameEngine
@@ -23,11 +24,19 @@ import type { Card } from '../app/shapes';
  */
 export class GameClient {
   /**
-   * Current game state (observable)
-   * UI components will react to changes in this state
+   * Internal game state (observable)
+   * UI components access this via the readonly getter
    */
   @observable
-  state: GameState;
+  private _state: GameState;
+
+  /**
+   * Public readonly accessor for game state
+   * Prevents direct state mutation from UI components
+   */
+  get state(): Readonly<GameState> {
+    return this._state;
+  }
 
   /**
    * Animation/effect callbacks (optional)
@@ -36,7 +45,7 @@ export class GameClient {
   private onStateChange?: (oldState: GameState, newState: GameState, action: GameAction) => void;
 
   constructor(initialState: GameState) {
-    this.state = initialState;
+    this._state = initialState;
     makeObservable(this);
   }
 
@@ -52,15 +61,85 @@ export class GameClient {
    */
   @action
   dispatch(action: GameAction): void {
-    const oldState = this.state;
-    const newState = GameEngine.reduce(this.state, action);
+    const oldState = this._state;
+    let newState = GameEngine.reduce(this._state, action);
+
+    // Add action to history (for UI display)
+    newState = this.addActionToHistory(newState, action);
 
     // Update observable state
-    this.state = newState;
+    this._state = newState;
 
     // Trigger side effects
     if (this.onStateChange) {
       this.onStateChange(oldState, newState, action);
+    }
+  }
+
+  /**
+   * Add action to history for UI display
+   * Keeps last 10 actions per turn
+   */
+  private addActionToHistory(state: GameState, action: GameAction): GameState {
+    // Only track certain actions for display
+    const description = this.getActionDescription(state, action);
+    if (!description) return state;
+
+    const player = state.players.find(p => {
+      // Find player associated with this action
+      if ('payload' in action && 'playerId' in action.payload) {
+        return p.id === action.payload.playerId;
+      }
+      return false;
+    });
+
+    if (!player) return state;
+
+    const historyEntry: GameActionHistory = {
+      playerId: player.id,
+      playerName: player.name,
+      description,
+      timestamp: Date.now(),
+      turnNumber: state.turnCount,
+    };
+
+    const newState = copy(state);
+    newState.recentActions = [...state.recentActions, historyEntry];
+
+    // Keep only last 10 actions
+    if (newState.recentActions.length > 10) {
+      newState.recentActions = newState.recentActions.slice(-10);
+    }
+
+    return newState;
+  }
+
+  /**
+   * Get human-readable description of action
+   */
+  private getActionDescription(state: GameState, action: GameAction): string | null {
+    const player = state.players.find(p => {
+      if ('payload' in action && 'playerId' in action.payload) {
+        return p.id === action.payload.playerId;
+      }
+      return false;
+    });
+
+    if (!player) return null;
+
+    switch (action.type) {
+      case 'DRAW_CARD':
+        return `${player.name} drew a card`;
+      case 'SWAP_CARD':
+        return `${player.name} swapped a card`;
+      case 'DISCARD_CARD':
+        return `${player.name} discarded`;
+      case 'PARTICIPATE_IN_TOSS_IN':
+        return `${player.name} tossed in a card`;
+      case 'CALL_VINTO':
+        return `${player.name} called Vinto!`;
+      default:
+        return null;
     }
   }
 
@@ -81,7 +160,7 @@ export class GameClient {
    */
   @computed
   get currentPlayer(): PlayerState {
-    return this.state.players[this.state.currentPlayerIndex];
+    return this._state.players[this._state.currentPlayerIndex];
   }
 
   /**
@@ -105,7 +184,7 @@ export class GameClient {
    */
   @computed
   get topDiscardCard(): Card | undefined {
-    return this.state.discardPile[this.state.discardPile.length - 1];
+    return this._state.discardPile[this._state.discardPile.length - 1];
   }
 
   /**
@@ -113,7 +192,7 @@ export class GameClient {
    */
   @computed
   get isSetupPhase(): boolean {
-    return this.state.phase === 'setup';
+    return this._state.phase === 'setup';
   }
 
   /**
@@ -121,7 +200,7 @@ export class GameClient {
    */
   @computed
   get isPlayingPhase(): boolean {
-    return this.state.phase === 'playing';
+    return this._state.phase === 'playing';
   }
 
   /**
@@ -129,7 +208,7 @@ export class GameClient {
    */
   @computed
   get isGameOver(): boolean {
-    return this.state.phase === 'final';
+    return this._state.phase === 'final';
   }
 
   /**
@@ -138,8 +217,8 @@ export class GameClient {
   @computed
   get canDrawCard(): boolean {
     return (
-      (this.state.subPhase === 'idle' || this.state.subPhase === 'ai_thinking') &&
-      this.state.drawPile.length > 0
+      (this._state.subPhase === 'idle' || this._state.subPhase === 'ai_thinking') &&
+      this._state.drawPile.length > 0
     );
   }
 
@@ -149,8 +228,8 @@ export class GameClient {
   @computed
   get canTakeDiscard(): boolean {
     return (
-      (this.state.subPhase === 'idle' || this.state.subPhase === 'ai_thinking') &&
-      this.state.discardPile.length > 0
+      (this._state.subPhase === 'idle' || this._state.subPhase === 'ai_thinking') &&
+      this._state.discardPile.length > 0
     );
   }
 
@@ -159,7 +238,7 @@ export class GameClient {
    */
   @computed
   get hasPendingAction(): boolean {
-    return this.state.pendingAction !== null;
+    return this._state.pendingAction !== null;
   }
 
   /**
@@ -167,7 +246,7 @@ export class GameClient {
    */
   @computed
   get pendingCard(): Card | undefined {
-    return this.state.pendingAction?.card;
+    return this._state.pendingAction?.card;
   }
 
   /**
@@ -175,21 +254,21 @@ export class GameClient {
    */
   @computed
   get hasTossIn(): boolean {
-    return this.state.activeTossIn !== null;
+    return this._state.activeTossIn !== null;
   }
 
   /**
    * Get player by ID
    */
   getPlayer(playerId: string): PlayerState | undefined {
-    return this.state.players.find(p => p.id === playerId);
+    return this._state.players.find(p => p.id === playerId);
   }
 
   /**
    * Get player index by ID
    */
   getPlayerIndex(playerId: string): number {
-    return this.state.players.findIndex(p => p.id === playerId);
+    return this._state.players.findIndex(p => p.id === playerId);
   }
 
   /**
@@ -204,7 +283,7 @@ export class GameClient {
    */
   @computed
   get drawPileCount(): number {
-    return this.state.drawPile.length;
+    return this._state.drawPile.length;
   }
 
   /**
@@ -212,7 +291,7 @@ export class GameClient {
    */
   @computed
   get discardPileCount(): number {
-    return this.state.discardPile.length;
+    return this._state.discardPile.length;
   }
 
   /**
@@ -220,8 +299,8 @@ export class GameClient {
    */
   @computed
   get vintoCaller(): PlayerState | undefined {
-    if (!this.state.vintoCallerId) return undefined;
-    return this.getPlayer(this.state.vintoCallerId);
+    if (!this._state.vintoCallerId) return undefined;
+    return this.getPlayer(this._state.vintoCallerId);
   }
 
   /**
@@ -229,7 +308,7 @@ export class GameClient {
    */
   @computed
   get isFinalTurn(): boolean {
-    return this.state.finalTurnTriggered;
+    return this._state.finalTurnTriggered;
   }
 
   /**
@@ -237,8 +316,8 @@ export class GameClient {
    */
   @computed
   get coalitionLeader(): PlayerState | undefined {
-    if (!this.state.coalitionLeaderId) return undefined;
-    return this.getPlayer(this.state.coalitionLeaderId);
+    if (!this._state.coalitionLeaderId) return undefined;
+    return this.getPlayer(this._state.coalitionLeaderId);
   }
 
   // ==========================================
@@ -250,14 +329,14 @@ export class GameClient {
    */
   @computed
   get phaseString(): string {
-    return `${this.state.phase} / ${this.state.subPhase}`;
+    return `${this._state.phase} / ${this._state.subPhase}`;
   }
 
   /**
    * Export current state as JSON (for debugging/persistence)
    */
   exportState(): string {
-    return JSON.stringify(this.state, null, 2);
+    return JSON.stringify(this._state, null, 2);
   }
 
   /**
@@ -267,7 +346,7 @@ export class GameClient {
   importState(json: string): void {
     try {
       const newState = JSON.parse(json) as GameState;
-      this.state = newState;
+      this._state = newState;
     } catch (error) {
       console.error('Failed to import state:', error);
     }

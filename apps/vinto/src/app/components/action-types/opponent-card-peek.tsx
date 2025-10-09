@@ -4,21 +4,22 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { usePlayerStore, useGameStore } from '../di-provider';
+import { useUIStore } from '../di-provider';
 import { useGameClient } from '../../../client/GameClientContext';
+import { GameActions } from '../../../engine/types';
 import { ContinueButton, SkipButton } from '../buttons';
 
 export const OpponentCardPeek = observer(() => {
-  const gameStore = useGameStore(); // Keep for actions
-  const playerStore = usePlayerStore(); // Keep for temporarilyVisibleCards (not in GameState yet)
+  const uiStore = useUIStore();
   const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
 
   if (!gameClient.state.pendingAction) return null;
   const action = gameClient.state.pendingAction.card.rank;
 
   // Check if any player has temporarily visible cards (the peeked opponent card)
-  const hasRevealedCard = playerStore.players.some(
-    (p) => p.temporarilyVisibleCards.size > 0
+  const hasRevealedCard = gameClient.state.players.some(
+    (p) => uiStore.getTemporarilyVisibleCards(p.id).size > 0
   );
 
   return (
@@ -55,15 +56,19 @@ export const OpponentCardPeek = observer(() => {
         {/* Action Buttons */}
         {hasRevealedCard ? (
           <ContinueButton
-            onClick={() => gameStore.confirmPeekCompletion()}
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+            }}
             className="w-full py-2 px-4 text-sm"
           />
         ) : (
           <SkipButton
             onClick={() => {
+              if (!humanPlayer) return;
               // Skip the peek action
-              playerStore.clearTemporaryCardVisibility();
-              gameStore.confirmPeekCompletion();
+              uiStore.clearTemporaryCardVisibility();
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
             }}
             className="w-full py-2 px-4 text-sm"
           >

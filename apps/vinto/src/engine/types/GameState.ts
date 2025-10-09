@@ -36,6 +36,9 @@ export interface GameState {
   // Toss-in state (replaces TossInStore)
   activeTossIn: ActiveTossIn | null;
 
+  // Action history (for UI display)
+  recentActions: GameActionHistory[];
+
   // Configuration
   difficulty: Difficulty;
 }
@@ -70,10 +73,19 @@ export interface PendingAction {
   card: Card;
   playerId: string;
   actionPhase: ActionPhase;
+  targetType?: TargetType;
   targets: ActionTarget[];
   declaredRank?: Rank;
   swapPosition?: number;
 }
+
+export type TargetType =
+  | 'own-card'
+  | 'opponent-card'
+  | 'peek-then-swap'
+  | 'swap-cards'
+  | 'force-draw'
+  | 'declare-action';
 
 export type ActionPhase =
   | 'choosing-action'
@@ -104,6 +116,17 @@ export interface TossInAction {
   playerId: string;
   card: Card;
   position: number;
+}
+
+/**
+ * Action history entry (for UI display)
+ */
+export interface GameActionHistory {
+  playerId: string;
+  playerName: string;
+  description: string;
+  timestamp: number;
+  turnNumber: number;
 }
 
 /**
@@ -150,7 +173,7 @@ export function serializeGameState(state: GameState): string {
 }
 
 export function deserializeGameState(json: string): GameState {
-  return JSON.parse(json);
+  return JSON.parse(json) as GameState;
 }
 
 /**
@@ -177,6 +200,7 @@ export function createInitialGameState(
     discardPile: [],
     pendingAction: null,
     activeTossIn: null,
+    recentActions: [],
     difficulty,
   };
 }

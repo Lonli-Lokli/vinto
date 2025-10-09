@@ -1,15 +1,14 @@
 // components/action-types/AceAction.tsx
 'use client';
 
-import { useGameStore } from '../di-provider';
 import { useGameClient } from '../../../client/GameClientContext';
+import { GameActions } from '../../../engine/types';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { OpponentSelectButton, SkipButton } from '../buttons';
 
 export const AceAction = observer(() => {
-  const gameStore = useGameStore(); // Keep for actions
   const gameClient = useGameClient();
   const [selectedOpponentId, setSelectedOpponentId] = React.useState<
     string | null
@@ -21,9 +20,10 @@ export const AceAction = observer(() => {
   const opponents = gameClient.state.players.filter((p) => p.id !== humanPlayer?.id);
 
   const handleOpponentClick = (opponentId: string) => {
+    if (!humanPlayer) return;
     setSelectedOpponentId(opponentId);
     // Select the first card position (index 0) as a dummy - the action only cares about the player
-    void gameStore.selectActionTarget(opponentId, 0);
+    gameClient.dispatch(GameActions.selectActionTarget(humanPlayer.id, opponentId, 0));
   };
 
   return (
@@ -56,7 +56,10 @@ export const AceAction = observer(() => {
         {/* Skip Button */}
         <div className="mt-2 flex-shrink-0">
           <SkipButton
-            onClick={() => void gameStore.confirmPeekCompletion()}
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+            }}
             fullWidth
           />
         </div>
