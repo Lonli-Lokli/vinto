@@ -5,7 +5,7 @@ export const UseActionButton = ({
   onClick,
   disabled = false,
   className = '',
-  children = 'Use',
+  children = 'Use Action',
 }: {
   onClick: () => void;
   disabled?: boolean;

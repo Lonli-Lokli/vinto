@@ -8,8 +8,8 @@
  * 4. Action-specific: skip, king-declaration
  */
 
-import { ButtonAction, getButtonClasses } from '@/app/constants/button-colors';
 import React from 'react';
+import { ButtonAction, getButtonClasses } from '../../constants/button-colors';
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {

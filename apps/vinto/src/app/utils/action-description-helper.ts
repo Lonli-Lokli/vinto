@@ -1,6 +1,5 @@
 // utils/action-description-helper.ts
-import { Rank } from '../shapes';
-import { getCardName } from './card-helper';
+import { getCardName, Rank } from '@/shared';
 
 export interface ActionTarget {
   playerName: string;
@@ -15,7 +14,7 @@ export function formatActionDescription(
   playerName: string,
   cardRank: Rank,
   actionType: string,
-  targets?: ActionTarget[],
+  targets?: ActionTarget[]
 ): string {
   const cardName = getCardName(cardRank);
 

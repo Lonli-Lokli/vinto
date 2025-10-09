@@ -6,9 +6,8 @@
 
 import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
-import { Card } from '../shapes';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
-import { PlayerStore } from './player-store';
+import { Card } from '@/shared';
 
 export type AnimationType =
   | 'swap'
@@ -68,14 +67,11 @@ export class CardAnimationStore {
   activeAnimations: Map<string, CardAnimationState> = new Map();
   private animationCounter = 0;
   private positionCapture: AnimationPositionCapture;
-  private playerStore: PlayerStore;
 
   constructor(
-    @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture,
-    @inject(PlayerStore) playerStore: PlayerStore
+    @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture
   ) {
     this.positionCapture = positionCapture;
-    this.playerStore = playerStore;
 
     makeObservable(this, {
       activeAnimations: observable,
@@ -93,11 +89,15 @@ export class CardAnimationStore {
   /**
    * Get the target rotation for a player based on their position
    * Returns 90 for left/right players, 0 for top/bottom
+   *
+   * Note: playerPosition should be passed from GameState
    */
-  private getTargetRotation(target: AnimationTarget): number {
-    if (target.type === 'player') {
-      const player = this.playerStore.getPlayer(target.playerId);
-      if (player && (player.position === 'left' || player.position === 'right')) {
+  private getTargetRotation(
+    target: AnimationTarget,
+    playerPosition?: string
+  ): number {
+    if (target.type === 'player' && playerPosition) {
+      if (playerPosition === 'left' || playerPosition === 'right') {
         return 90;
       }
     }
@@ -111,13 +111,15 @@ export class CardAnimationStore {
   /**
    * Start a swap animation - card moving from one position to another
    * revealed: whether to show the card face during animation (default: true)
+   * targetPlayerPosition: position of target player ('left', 'right', 'top', 'bottom') for rotation
    */
   startSwapAnimation(
     card: Card,
     from: AnimationTarget,
     to: AnimationTarget,
     duration = 1500,
-    revealed: boolean
+    revealed: boolean,
+    targetPlayerPosition?: string
   ): string {
     const id = `swap-${this.animationCounter++}`;
 
@@ -161,7 +163,7 @@ export class CardAnimationStore {
       startTime: Date.now(),
       duration,
       revealed,
-      targetRotation: this.getTargetRotation(to),
+      targetRotation: this.getTargetRotation(to, targetPlayerPosition),
       completed: false,
     };
 
@@ -171,6 +173,7 @@ export class CardAnimationStore {
 
   /**
    * Start a draw animation from deck/drawn position to player
+   * targetPlayerPosition: position of target player for rotation
    */
   startDrawAnimation(
     card: Card,
@@ -178,7 +181,8 @@ export class CardAnimationStore {
     to: AnimationPlayerTarget | AnimationDrawnTarget,
     duration = 1500,
     revealed = true,
-    fullRotation = false
+    fullRotation = false,
+    targetPlayerPosition?: string
   ): string {
     const id = `draw-${this.animationCounter++}`;
 
@@ -191,7 +195,6 @@ export class CardAnimationStore {
       to.type === 'drawn'
         ? this.positionCapture.getPendingCardPosition()
         : this.positionCapture.getPlayerCardPosition(to.playerId, to.position);
-
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -212,7 +215,7 @@ export class CardAnimationStore {
       duration,
       revealed,
       fullRotation,
-      targetRotation: this.getTargetRotation(to),
+      targetRotation: this.getTargetRotation(to, targetPlayerPosition),
       completed: false,
     });
 
@@ -239,7 +242,6 @@ export class CardAnimationStore {
             from.position
           );
     const toPos = this.positionCapture.getDiscardPilePosition();
-
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -293,8 +295,6 @@ export class CardAnimationStore {
       x: typeof window !== 'undefined' ? window.innerWidth / 2 - 50 : 0,
       y: typeof window !== 'undefined' ? window.innerHeight / 2 - 70 : 0,
     };
-
-  
 
     if (!fromPos) {
       console.warn(

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Card } from './card';
-import { Card as CardType } from '../shapes';
+import { Card as CardType } from '@/shared';
 
 interface DiscardPileProps {
   cards: CardType[];

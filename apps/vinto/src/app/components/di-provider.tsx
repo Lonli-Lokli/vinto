@@ -3,33 +3,15 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { setupDIContainer, getInstance, isDIConfigured } from '../di/setup';
-import {
-  GameStore,
-  PlayerStore,
-  DeckStore,
-  GamePhaseStore,
-  ActionStore,
-  TossInStore,
-  ReplayStore,
-  CardAnimationStore,
-} from '../stores';
-import { GameStateManager } from '../commands';
-import { CommandHistory } from '../commands/command-history';
+import { CardAnimationStore } from '../stores';
+import { UIStore } from '../stores/ui-store';
 
 /**
  * Store context for accessing DI-managed stores
  */
 interface StoreContextValue {
-  gameStore: GameStore;
-  playerStore: PlayerStore;
-  deckStore: DeckStore;
-  gamePhaseStore: GamePhaseStore;
-  actionStore: ActionStore;
-  tossInStore: TossInStore;
-  replayStore: ReplayStore;
   cardAnimationStore: CardAnimationStore;
-  gameStateManager: GameStateManager;
-  commandHistory: CommandHistory;
+  uiStore: UIStore;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -43,20 +25,12 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
     // Only setup DI in browser environment
 
     if (!isDIConfigured()) {
-      setupDIContainer('moderate');
+      setupDIContainer();
     }
 
     return {
-      gameStore: getInstance<GameStore>(GameStore),
-      playerStore: getInstance<PlayerStore>(PlayerStore),
-      deckStore: getInstance<DeckStore>(DeckStore),
-      gamePhaseStore: getInstance<GamePhaseStore>(GamePhaseStore),
-      actionStore: getInstance<ActionStore>(ActionStore),
-      tossInStore: getInstance<TossInStore>(TossInStore),
-      replayStore: getInstance<ReplayStore>(ReplayStore),
       cardAnimationStore: getInstance<CardAnimationStore>(CardAnimationStore),
-      gameStateManager: getInstance<GameStateManager>(GameStateManager),
-      commandHistory: getInstance<CommandHistory>(CommandHistory),
+      uiStore: getInstance<UIStore>(UIStore),
     };
   }, []);
 
@@ -79,59 +53,6 @@ export function useStores(): StoreContextValue {
 }
 
 /**
- * Hook to access gameStore
- */
-export function useGameStore(): GameStore {
-  return useStores().gameStore;
-}
-
-/**
- * Hook to access playerStore
- */
-export function usePlayerStore(): PlayerStore {
-  return useStores().playerStore;
-}
-
-/**
- * Hook to access deckStore
- */
-export function useDeckStore(): DeckStore {
-  return useStores().deckStore;
-}
-
-/**
- * Hook to access gamePhaseStore
- */
-export function useGamePhaseStore(): GamePhaseStore {
-  return useStores().gamePhaseStore;
-}
-
-/**
- * Hook to access actionStore
- */
-export function useActionStore(): ActionStore {
-  return useStores().actionStore;
-}
-
-/**
- * Hook to access tossInStore
- */
-export function useTossInStore(): TossInStore {
-  return useStores().tossInStore;
-}
-
-export function useGameStateManager(): GameStateManager {
-  return useStores().gameStateManager;
-}
-
-/**
- * Hook to access replayStore
- */
-export function useReplayStore(): ReplayStore {
-  return useStores().replayStore;
-}
-
-/**
  * Hook to access cardAnimationStore
  */
 export function useCardAnimationStore(): CardAnimationStore {
@@ -139,8 +60,8 @@ export function useCardAnimationStore(): CardAnimationStore {
 }
 
 /**
- * Hook to access commandHistory
+ * Hook to access uiStore
  */
-export function useCommandHistory(): CommandHistory {
-  return useStores().commandHistory;
+export function useUIStore(): UIStore {
+  return useStores().uiStore;
 }

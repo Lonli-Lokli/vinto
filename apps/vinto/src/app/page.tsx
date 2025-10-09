@@ -4,13 +4,16 @@ import { ToastProvider } from './components/toast-provider';
 import { GameInitializer } from './components/game-initializer';
 import { GameLayout } from './components/game-layout';
 import { GameContent } from './components/game-content';
+import { GameClientDebugProvider } from '@/client';
 
 export default function VintoGame() {
   return (
-    <GameLayout>
-      <ToastProvider />
-      <GameInitializer />
-      <GameContent />
-    </GameLayout>
+    <GameClientDebugProvider>
+      <GameLayout>
+        <ToastProvider />
+        <GameInitializer />
+        <GameContent />
+      </GameLayout>
+    </GameClientDebugProvider>
   );
 }

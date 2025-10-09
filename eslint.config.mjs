@@ -23,7 +23,8 @@ export default [
       '**/instrumentation-client.ts',
       '**/*.config.mjs',
       '**/*.spec.tsx',
-      '**/*.d.ts'
+      '**/*.test.ts',
+      '**/*.d.ts',
     ],
   },
   {
@@ -68,9 +69,9 @@ export default [
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
-      "@typescript-eslint/restrict-template-expressions": "off",
-      "@typescript-eslint/unbound-method": "off",
-      "@typescript-eslint/prefer-promise-reject-errors": "off",
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/prefer-promise-reject-errors': 'off',
       'no-case-declarations': 'off',
     },
   },

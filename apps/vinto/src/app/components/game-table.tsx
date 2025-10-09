@@ -3,35 +3,46 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useGameStore,
-  usePlayerStore,
-  useGamePhaseStore,
-  useActionStore,
-  useTossInStore,
-  useDeckStore,
-} from './di-provider';
+import { useUIStore } from './di-provider';
 import { PlayerArea } from './player-area';
 import { DeckArea } from './deck-area';
 import { useIsDesktop } from '../hooks/use-media-query';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
+import { PlayerState } from '@/shared';
 
 export const GameTable = observer(() => {
   const isDesktop = useIsDesktop();
-  const gameStore = useGameStore();
-  const { currentPlayer, humanPlayer, players, setupPeeksRemaining } =
-    usePlayerStore();
-  const {
-    phase,
-    isSelectingSwapPosition,
-    isChoosingCardAction,
-    isDeclaringRank,
-    isAwaitingActionTarget,
-  } = useGamePhaseStore();
-  const actionStore = useActionStore();
-  const { actionContext, pendingCard, swapPosition } = actionStore;
-  const tossInStore = useTossInStore();
-  const { waitingForTossIn } = tossInStore;
-  const { discardPile } = useDeckStore();
+  const uiStore = useUIStore();
+  const gameClient = useGameClient();
+
+  // Get values from GameClient
+  const currentPlayer = gameClient.currentPlayer;
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const phase = gameClient.state.phase;
+  const subPhase = gameClient.state.subPhase;
+  const discardPile = gameClient.state.discardPile;
+
+  // Map subPhases to old boolean flags
+  const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
+  const isChoosingCardAction = subPhase === 'choosing';
+  const isDeclaringRank = subPhase === 'declaring_rank';
+  const isAwaitingActionTarget = subPhase === 'awaiting_action';
+  const waitingForTossIn =
+    subPhase === 'toss_queue_active' || subPhase === 'toss_queue_processing';
+
+  // Get action state from GameClient.pendingAction
+  const pendingAction = gameClient.state.pendingAction;
+  const pendingCard = pendingAction?.card;
+  const swapPosition = pendingAction?.swapPosition;
+  const targetType = pendingAction?.targetType;
+  const peekTargets = pendingAction?.targets || [];
+  const hasCompletePeekSelection = peekTargets.length === 2;
+
+  // Calculate setup peeks remaining from GameClient state
+  const setupPeeksRemaining = humanPlayer
+    ? Math.max(0, 2 - humanPlayer.knownCardPositions.length)
+    : 0;
 
   // Determine if card interactions should be enabled
   const shouldAllowCardInteractions = () => {
@@ -40,8 +51,8 @@ export const GameTable = observer(() => {
     // For Queen action (peek-then-swap), disable when 2 cards already selected
     if (
       isAwaitingActionTarget &&
-      actionContext?.targetType === 'peek-then-swap' &&
-      actionStore.hasCompletePeekSelection
+      targetType === 'peek-then-swap' &&
+      hasCompletePeekSelection
     ) {
       return false;
     }
@@ -49,8 +60,9 @@ export const GameTable = observer(() => {
     // For own-card peek (7/8), disable after one card is revealed
     if (
       isAwaitingActionTarget &&
-      actionContext?.targetType === 'own-card' &&
-      humanPlayer.temporarilyVisibleCards.size > 0
+      targetType === 'own-card' &&
+      humanPlayer &&
+      uiStore.getTemporarilyVisibleCards(humanPlayer.id).size > 0
     ) {
       return false;
     }
@@ -65,46 +77,78 @@ export const GameTable = observer(() => {
       waitingForTossIn ||
       // During action target selection for own cards
       (isAwaitingActionTarget &&
-        (actionContext?.targetType === 'own-card' ||
-          actionContext?.targetType === 'peek-then-swap' ||
-          actionContext?.targetType === 'swap-cards'))
+        (targetType === 'own-card' ||
+          targetType === 'peek-then-swap' ||
+          targetType === 'swap-cards'))
     );
   };
 
   const handleCardClick = (position: number) => {
+    console.log('[handleCardClick] Card clicked:', {
+      position,
+      humanPlayerId: humanPlayer?.id,
+      phase,
+      subPhase,
+      isSelectingSwapPosition,
+      isChoosingCardAction,
+      isAwaitingActionTarget,
+      waitingForTossIn,
+    });
+
     if (!humanPlayer) return;
 
     // During setup phase, allow peeking at cards for memorization
     if (phase === 'setup') {
       if (
         setupPeeksRemaining > 0 &&
-        !humanPlayer.knownCardPositions.has(position)
+        !humanPlayer.knownCardPositions.includes(position)
       ) {
-        gameStore.peekCard(humanPlayer.id, position);
+        // Show the card temporarily in the UI
+        uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
+        // Dispatch the game action to update knownCardPositions
+        gameClient.dispatch(
+          GameActions.peekSetupCard(humanPlayer.id, position)
+        );
       }
       return;
     }
 
-    // If selecting swap position, perform the swap
+    // If selecting swap position, store the selected position in UI store
     if (isSelectingSwapPosition) {
-      gameStore.swapCard(position);
+      console.log('[GameTable] Position selected for swap:', {
+        humanPlayerId: humanPlayer.id,
+        position,
+        currentSubPhase: subPhase,
+      });
+
+      // Store position in UI store (will show rank declaration buttons inline)
+      uiStore.setSelectedSwapPosition(position);
       return;
     }
 
     // During toss-in period, allow tossing in cards
     if (waitingForTossIn) {
-      gameStore.tossInCard(humanPlayer.id, position);
+      gameClient.dispatch(
+        GameActions.participateInTossIn(humanPlayer.id, position)
+      );
       return;
     }
 
     // During action target selection, allow selecting target
     if (
       isAwaitingActionTarget &&
-      (actionContext?.targetType === 'own-card' ||
-        actionContext?.targetType === 'peek-then-swap' ||
-        actionContext?.targetType === 'swap-cards')
+      (targetType === 'own-card' ||
+        targetType === 'peek-then-swap' ||
+        targetType === 'swap-cards')
     ) {
-      void gameStore.selectActionTarget(humanPlayer.id, position);
+      // For peek actions, reveal the card temporarily
+      if (targetType === 'own-card' || targetType === 'peek-then-swap') {
+        uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
+      }
+
+      gameClient.dispatch(
+        GameActions.selectActionTarget(humanPlayer.id, humanPlayer.id, position)
+      );
       return;
     }
   };
@@ -112,15 +156,15 @@ export const GameTable = observer(() => {
   // Determine if opponent card interactions should be enabled
   const shouldAllowOpponentCardInteractions = () => {
     // For Ace action (force-draw), disable card interactions - use name buttons instead
-    if (isAwaitingActionTarget && actionContext?.targetType === 'force-draw') {
+    if (isAwaitingActionTarget && targetType === 'force-draw') {
       return false;
     }
 
     // For Queen action (peek-then-swap), disable when 2 cards already selected
     if (
       isAwaitingActionTarget &&
-      actionContext?.targetType === 'peek-then-swap' &&
-      actionStore.hasCompletePeekSelection
+      targetType === 'peek-then-swap' &&
+      hasCompletePeekSelection
     ) {
       return false;
     }
@@ -129,47 +173,75 @@ export const GameTable = observer(() => {
     // Check if ANY player has temporarily visible cards (the peeked opponent card)
     if (
       isAwaitingActionTarget &&
-      actionContext?.targetType === 'opponent-card' &&
-      players.some((p) => p.temporarilyVisibleCards.size > 0)
+      targetType === 'opponent-card' &&
+      gameClient.state.players.some(
+        (p) => uiStore.getTemporarilyVisibleCards(p.id).size > 0
+      )
     ) {
       return false;
     }
 
     return (
       isAwaitingActionTarget &&
-      (actionContext?.targetType === 'opponent-card' ||
-        actionContext?.targetType === 'peek-then-swap' ||
-        actionContext?.targetType === 'swap-cards')
+      (targetType === 'opponent-card' ||
+        targetType === 'peek-then-swap' ||
+        targetType === 'swap-cards')
     );
   };
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
+    if (!humanPlayer) return;
+
     // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
     if (
       isAwaitingActionTarget &&
-      (actionContext?.targetType === 'opponent-card' ||
-        actionContext?.targetType === 'force-draw' ||
-        actionContext?.targetType === 'peek-then-swap' ||
-        actionContext?.targetType === 'swap-cards')
+      (targetType === 'opponent-card' ||
+        targetType === 'force-draw' ||
+        targetType === 'peek-then-swap' ||
+        targetType === 'swap-cards')
     ) {
-      void gameStore.selectActionTarget(playerId, position);
+      // For peek actions, reveal the card temporarily
+      if (targetType === 'opponent-card' || targetType === 'peek-then-swap') {
+        uiStore.addTemporarilyVisibleCard(playerId, position);
+      }
+
+      gameClient.dispatch(
+        GameActions.selectActionTarget(humanPlayer.id, playerId, position)
+      );
     }
   };
 
   const handleDrawCard = () => {
     if (currentPlayer && currentPlayer.isHuman) {
-      void gameStore.drawCard();
+      gameClient.dispatch(GameActions.drawCard(currentPlayer.id));
     }
   };
 
-  const playersById = {
-    top: players.find((p) => p.position === 'top'),
-    left: players.find((p) => p.position === 'left'),
-    right: players.find((p) => p.position === 'right'),
+  // Calculate player positions based on index
+  // Human player is always index 0 (bottom position)
+  // Other players are assigned top, left, right based on total player count
+  type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
+
+  const getPlayerPosition = (player: PlayerState): PlayerPosition => {
+    if (player.isHuman) return 'bottom';
+
+    const playerIndex = gameClient.state.players.indexOf(player);
+
+    // For 4 players: human (bottom), opponent1 (left), opponent2 (top), opponent3 (right)
+    if (playerIndex === 1) return 'left';
+    if (playerIndex === 2) return 'top';
+    return 'right';
   };
-  const top = playersById.top;
-  const left = playersById.left;
-  const right = playersById.right;
+
+  const playersWithPositions = gameClient.state.players.map((player) => ({
+    player,
+    position: getPlayerPosition(player),
+  }));
+
+  const top = playersWithPositions.find((p) => p.position === 'top');
+  const left = playersWithPositions.find((p) => p.position === 'left');
+  const right = playersWithPositions.find((p) => p.position === 'right');
+  const bottom = playersWithPositions.find((p) => p.position === 'bottom');
 
   return (
     <div className="h-full flex flex-col">
@@ -182,15 +254,18 @@ export const GameTable = observer(() => {
             {top && (
               <div className="flex justify-center flex-shrink-0 pb-2">
                 <PlayerArea
-                  player={top}
-                  isCurrentPlayer={currentPlayer?.id === top.id}
+                  player={top.player}
+                  position={top.position}
+                  isCurrentPlayer={currentPlayer?.id === top.player.id}
                   isThinking={
-                    gameStore.aiThinking && currentPlayer?.id === top.id
+                    subPhase === 'ai_thinking' &&
+                    currentPlayer?.id === top.player.id
                   }
                   gamePhase={phase}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
-                      ? (position) => handleOpponentCardClick(top.id, position)
+                      ? (position) =>
+                          handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -204,16 +279,18 @@ export const GameTable = observer(() => {
               <div className="flex-1 flex justify-start items-start">
                 {left && (
                   <PlayerArea
-                    player={left}
-                    isCurrentPlayer={currentPlayer?.id === left.id}
+                    player={left.player}
+                    position={left.position}
+                    isCurrentPlayer={currentPlayer?.id === left.player.id}
                     isThinking={
-                      gameStore.aiThinking && currentPlayer?.id === left.id
+                      subPhase === 'ai_thinking' &&
+                      currentPlayer?.id === left.player.id
                     }
                     gamePhase={phase}
                     onCardClick={
                       shouldAllowOpponentCardInteractions()
                         ? (position) =>
-                            handleOpponentCardClick(left.id, position)
+                            handleOpponentCardClick(left.player.id, position)
                         : undefined
                     }
                     isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -225,7 +302,7 @@ export const GameTable = observer(() => {
               <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
                 <DeckArea
                   discardPile={discardPile}
-                  pendingCard={pendingCard}
+                  pendingCard={pendingCard ?? null}
                   canDrawCard={
                     !!(
                       currentPlayer?.isHuman &&
@@ -246,16 +323,18 @@ export const GameTable = observer(() => {
               <div className="flex-1 flex justify-end items-start">
                 {right && (
                   <PlayerArea
-                    player={right}
-                    isCurrentPlayer={currentPlayer?.id === right.id}
+                    player={right.player}
+                    position={right.position}
+                    isCurrentPlayer={currentPlayer?.id === right.player.id}
                     isThinking={
-                      gameStore.aiThinking && currentPlayer?.id === right.id
+                      subPhase === 'ai_thinking' &&
+                      currentPlayer?.id === right.player.id
                     }
                     gamePhase={phase}
                     onCardClick={
                       shouldAllowOpponentCardInteractions()
                         ? (position) =>
-                            handleOpponentCardClick(right.id, position)
+                            handleOpponentCardClick(right.player.id, position)
                         : undefined
                     }
                     isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -266,10 +345,11 @@ export const GameTable = observer(() => {
 
             {/* Row 3: Human player */}
             <div className="flex justify-center flex-shrink-0 pt-2">
-              {humanPlayer && (
+              {bottom && (
                 <PlayerArea
-                  player={humanPlayer}
-                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  player={bottom.player}
+                  position={bottom.position}
+                  isCurrentPlayer={currentPlayer?.id === bottom.player.id}
                   isThinking={false}
                   onCardClick={
                     shouldAllowCardInteractions() ? handleCardClick : undefined
@@ -290,15 +370,18 @@ export const GameTable = observer(() => {
             {top && (
               <div className="absolute top-4 left-1/2 translate-x-8">
                 <PlayerArea
-                  player={top}
-                  isCurrentPlayer={currentPlayer?.id === top.id}
+                  player={top.player}
+                  position={top.position}
+                  isCurrentPlayer={currentPlayer?.id === top.player.id}
                   isThinking={
-                    gameStore.aiThinking && currentPlayer?.id === top.id
+                    subPhase === 'ai_thinking' &&
+                    currentPlayer?.id === top.player.id
                   }
                   gamePhase={phase}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
-                      ? (position) => handleOpponentCardClick(top.id, position)
+                      ? (position) =>
+                          handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -310,15 +393,18 @@ export const GameTable = observer(() => {
             {left && (
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
                 <PlayerArea
-                  player={left}
-                  isCurrentPlayer={currentPlayer?.id === left.id}
+                  player={left.player}
+                  position={left.position}
+                  isCurrentPlayer={currentPlayer?.id === left.player.id}
                   isThinking={
-                    gameStore.aiThinking && currentPlayer?.id === left.id
+                    subPhase === 'ai_thinking' &&
+                    currentPlayer?.id === left.player.id
                   }
                   gamePhase={phase}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
-                      ? (position) => handleOpponentCardClick(left.id, position)
+                      ? (position) =>
+                          handleOpponentCardClick(left.player.id, position)
                       : undefined
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -330,16 +416,18 @@ export const GameTable = observer(() => {
             {right && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <PlayerArea
-                  player={right}
-                  isCurrentPlayer={currentPlayer?.id === right.id}
+                  player={right.player}
+                  position={right.position}
+                  isCurrentPlayer={currentPlayer?.id === right.player.id}
                   isThinking={
-                    gameStore.aiThinking && currentPlayer?.id === right.id
+                    subPhase === 'ai_thinking' &&
+                    currentPlayer?.id === right.player.id
                   }
                   gamePhase={phase}
                   onCardClick={
                     shouldAllowOpponentCardInteractions()
                       ? (position) =>
-                          handleOpponentCardClick(right.id, position)
+                          handleOpponentCardClick(right.player.id, position)
                       : undefined
                   }
                   isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
@@ -351,7 +439,7 @@ export const GameTable = observer(() => {
             <div className="absolute inset-16 flex items-center justify-center">
               <DeckArea
                 discardPile={discardPile}
-                pendingCard={pendingCard}
+                pendingCard={pendingCard ?? null}
                 canDrawCard={
                   !!(
                     currentPlayer?.isHuman &&
@@ -370,10 +458,11 @@ export const GameTable = observer(() => {
 
             {/* Human Player */}
             <div className="absolute bottom-4 left-1/3">
-              {humanPlayer && (
+              {bottom && (
                 <PlayerArea
-                  player={humanPlayer}
-                  isCurrentPlayer={currentPlayer?.id === humanPlayer.id}
+                  player={bottom.player}
+                  position={bottom.position}
+                  isCurrentPlayer={currentPlayer?.id === bottom.player.id}
                   isThinking={false}
                   onCardClick={
                     shouldAllowCardInteractions() ? handleCardClick : undefined

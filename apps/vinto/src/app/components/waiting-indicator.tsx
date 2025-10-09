@@ -1,24 +1,37 @@
 'use client';
 import { observer } from 'mobx-react-lite';
-import {
-  useGameStore,
-  usePlayerStore,
-  useGamePhaseStore,
-  useActionStore,
-  useTossInStore,
-} from './di-provider';
+import { useUIStore } from './di-provider';
+import { useGameClient } from '@/client';
 
 export const WaitingIndicator = observer(function WaitingIndicator() {
-  const { isCurrentPlayerWaiting, aiThinking } = useGameStore();
-  const { currentPlayer } = usePlayerStore();
-  const {
-    isChoosingCardAction,
-    isSelectingSwapPosition,
-    isAwaitingActionTarget,
-    isDeclaringRank,
-  } = useGamePhaseStore();
-  const { actionContext } = useActionStore();
-  const { waitingForTossIn } = useTossInStore();
+  const gameClient = useGameClient();
+  const uiStore = useUIStore();
+
+  // Get current player
+  const currentPlayer = gameClient.currentPlayer;
+  const isCurrentPlayerWaiting =
+    !currentPlayer.isHuman && gameClient.state.phase === 'playing';
+
+  // Check subPhases
+  const isChoosingCardAction = gameClient.state.subPhase === 'choosing';
+  const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
+  const isAwaitingActionTarget =
+    gameClient.state.subPhase === 'awaiting_action';
+  const isDeclaringRank = gameClient.state.subPhase === 'declaring_rank';
+  const waitingForTossIn =
+    gameClient.state.subPhase === 'toss_queue_active' ||
+    gameClient.state.subPhase === 'toss_queue_processing';
+  const aiThinking = gameClient.state.subPhase === 'ai_thinking';
+
+  // Get action context (if any)
+  const actionContext = gameClient.state.pendingAction
+    ? {
+        action: gameClient.state.pendingAction.card.rank,
+        targetType: gameClient.state.pendingAction.targets
+          ? 'awaiting-target'
+          : undefined,
+      }
+    : null;
 
   // Don't show if toss-in is active (shown inline in TossInIndicator instead)
   if (!isCurrentPlayerWaiting || waitingForTossIn) return null;
@@ -40,20 +53,7 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
     }
 
     if (isAwaitingActionTarget && actionContext) {
-      switch (actionContext.targetType) {
-        case 'own-card':
-          return `Playing ${actionContext.action} - peeking at own card...`;
-        case 'opponent-card':
-          return `Playing ${actionContext.action} - peeking at opponent's card...`;
-        case 'swap-cards':
-          return `Playing ${actionContext.action} - selecting cards to swap...`;
-        case 'peek-then-swap':
-          return `Playing ${actionContext.action} - peeking and swapping...`;
-        case 'force-draw':
-          return `Playing ${actionContext.action} - choosing target...`;
-        default:
-          return `Playing ${actionContext.action}...`;
-      }
+      return `Playing ${actionContext.action} - making selection...`;
     }
 
     if (aiThinking) {

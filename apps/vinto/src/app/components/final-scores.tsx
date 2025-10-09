@@ -4,32 +4,36 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { useGameStore, useGamePhaseStore, usePlayerStore } from './di-provider';
-import { getWinnerInfo, calculateActualScore } from '../utils/game-helpers';
+import { calculateFinalScores } from '../../engine/utils/scoring';
 import { Avatar } from './avatar';
 import { HelpPopover } from './help-popover';
+import { useGameClient } from '@/client';
+import { PlayerState } from '@/shared';
 
 export const FinalScores = observer(() => {
-  const gameStore = useGameStore();
-  const gamePhaseStore = useGamePhaseStore();
-  const playerStore = usePlayerStore();
-  const { players } = playerStore;
+  const gameClient = useGameClient();
+
+  const phase = gameClient.state.phase;
+  const vintoCallerId = gameClient.state.vintoCallerId;
+  const players = gameClient.state.players;
 
   // Calculate final scores if in scoring phase
   const finalScores =
-    gamePhaseStore.phase === 'scoring'
-      ? gameStore.calculateFinalScores()
+    phase === 'scoring'
+      ? calculateFinalScores(players, vintoCallerId)
       : undefined;
   const winnerInfo = finalScores
     ? getWinnerInfo(finalScores, players)
     : undefined;
 
-  if (gamePhaseStore.phase !== 'scoring' || !winnerInfo || !finalScores) {
+  if (phase !== 'scoring' || !winnerInfo || !finalScores) {
     return null;
   }
 
-  // Get Vinto caller and coalition members
-  const vintoCaller = playerStore.vintoCaller;
+  // Get Vinto caller
+  const vintoCaller = vintoCallerId
+    ? players.find((p) => p.id === vintoCallerId)
+    : null;
   const hasCoalition = !!vintoCaller;
 
   const getWinnerText = () => {
@@ -73,10 +77,10 @@ Lower card totals are better during the round, but game points are awarded by fi
             <h3 className="text-xs md:text-sm font-semibold text-primary leading-tight truncate">
               {getWinnerText()}
             </h3>
-            {hasCoalition && (
+            {hasCoalition && vintoCaller && (
               <div className="text-xs text-tertiary leading-tight">
                 {(() => {
-                  const vintoScore = calculateActualScore(vintoCaller);
+                  const vintoScore = calculateActualScore(vintoCaller.cards);
                   const coalitionLowest = winnerInfo.score;
 
                   if (winnerInfo.isCoalitionWin) {
@@ -94,8 +98,10 @@ Lower card totals are better during the round, but game points are awarded by fi
         {/* Scores layout - 2x2 grid with horizontal cards */}
         <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
           {players.map((player) => {
-            const actualScore = calculateActualScore(player);
+            const actualScore = calculateActualScore(player.cards);
             const isWinner = winnerInfo.winnerIds?.includes(player.id);
+            const isVintoCaller = player.id === vintoCallerId;
+            const isInCoalition = player.coalitionWith.length > 0;
 
             return (
               <div
@@ -106,12 +112,12 @@ Lower card totals are better during the round, but game points are awarded by fi
                     : 'bg-surface-secondary border-secondary'
                 }`}
               >
-                {/* Avatar - clean without badges */}
+                {/* Avatar */}
                 <div className="flex-shrink-0">
-                  <Avatar player={player} size="sm" />
+                  <Avatar playerName={player.name} size="sm" />
                 </div>
 
-                {/* Player info - flexible width with better overflow handling */}
+                {/* Player name */}
                 <div className="flex-1 min-w-0 mr-1">
                   <div className="text-xs font-medium text-primary truncate">
                     {player.name}
@@ -120,10 +126,10 @@ Lower card totals are better during the round, but game points are awarded by fi
 
                 {/* Score with role indicators - more compact */}
                 <div className="flex-shrink-0 flex items-center gap-1">
-                  {player.isVintoCaller && (
+                  {isVintoCaller && (
                     <Crown className="text-warning flex-shrink-0" size={16} />
                   )}
-                  {player.coalitionWith.size > 0 && (
+                  {isInCoalition && (
                     <Users className="text-info flex-shrink-0" size={16} />
                   )}
                   <div
@@ -142,3 +148,66 @@ Lower card totals are better during the round, but game points are awarded by fi
     </div>
   );
 });
+
+// Helper to calculate actual card score
+function calculateActualScore(cards: PlayerState['cards']): number {
+  return cards.reduce((total, card) => total + card.value, 0);
+}
+
+// Helper to get winner info from PlayerState
+function getWinnerInfo(
+  finalScores: Record<string, number>,
+  players: PlayerState[]
+) {
+  const lowestScore = Math.min(...Object.values(finalScores));
+  const winnerIds = Object.keys(finalScores).filter(
+    (id) => finalScores[id] === lowestScore
+  );
+
+  // Detect coalition win
+  const hasCoalitionWinner = winnerIds.some((id) => {
+    const player = players.find((p) => p.id === id);
+    return player && player.coalitionWith.length > 0;
+  });
+
+  // Build winner names
+  const winners: string[] = [];
+  const processedIds = new Set<string>();
+
+  winnerIds.forEach((winnerId) => {
+    if (processedIds.has(winnerId)) return;
+
+    const winner = players.find((p) => p.id === winnerId);
+    if (!winner) return;
+
+    if (winner.coalitionWith.length > 0) {
+      // Coalition winner - group all coalition members who won
+      const coalitionWinners = winnerIds.filter((id) => {
+        const p = players.find((player) => player.id === id);
+        return (
+          p &&
+          (p.id === winnerId ||
+            winner.coalitionWith.includes(id) ||
+            p.coalitionWith.includes(winnerId))
+        );
+      });
+
+      coalitionWinners.forEach((id) => processedIds.add(id));
+      const names = coalitionWinners
+        .map((id) => players.find((p) => p.id === id)?.name || 'Unknown')
+        .join(' & ');
+      winners.push(names);
+    } else {
+      processedIds.add(winnerId);
+      winners.push(winner.name);
+    }
+  });
+
+  return {
+    winners,
+    winnerIds,
+    score: lowestScore,
+    isMultipleWinners: winnerIds.length > 1 && !hasCoalitionWinner,
+    isCoalitionWin: hasCoalitionWinner,
+  };
+}

@@ -3,33 +3,48 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import {
-  useGameStore,
-  usePlayerStore,
-  useActionStore,
-  useGamePhaseStore,
-} from './di-provider';
-import { Rank } from '../shapes';
-import { RankDeclarationButton, SkipButton } from './buttons';
+import { RankDeclarationButton } from './buttons';
+import { Rank } from '@/shared';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
+import { useUIStore } from './di-provider';
+import { SkipDeclarationButton } from './buttons/skip-declaration';
 
 // Only show action cards (7-K, A) since 2-6 and Joker have no actions
 const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 export const RankDeclaration = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer } = usePlayerStore();
-  const { pendingCard, swapPosition } = useActionStore();
-  const { isDeclaringRank } = useGamePhaseStore();
+  const gameClient = useGameClient();
+  const uiStore = useUIStore();
 
-  if (!isDeclaringRank || swapPosition === null) {
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const pendingCard = gameClient.state.pendingAction?.card;
+  const swapPosition = uiStore.selectedSwapPosition;
+
+  // Show if user is selecting swap position and has selected a card
+  if (
+    !uiStore.isSelectingSwapPosition ||
+    swapPosition === null ||
+    swapPosition === undefined
+  ) {
     return null;
   }
 
-  // Only show for human players - bot declarations should not display UI
-  if (!currentPlayer || currentPlayer.isBot) return null;
+  // Only show for human players
+  if (!humanPlayer) return null;
 
   const handleRankClick = (rank: Rank) => {
-    void gameStore.declareRank(rank);
+    if (!humanPlayer || swapPosition === null) return;
+    gameClient.dispatch(
+      GameActions.swapCard(humanPlayer.id, swapPosition, rank)
+    );
+    uiStore.cancelSwapSelection();
+  };
+
+  const handleJustSwap = () => {
+    if (!humanPlayer || swapPosition === null) return;
+    gameClient.dispatch(GameActions.swapCard(humanPlayer.id, swapPosition));
+    uiStore.cancelSwapSelection();
   };
 
   const getHelpContent = () => {
@@ -39,12 +54,13 @@ export const RankDeclaration = observer(() => {
 
 Your task: Declare what rank you think your position ${
       (swapPosition ?? 0) + 1
-    } card is.
+    } card is to use its action, or just swap without declaring.
 
-✅ Correct: Use the card's action
-❌ Wrong: Get penalty card
+✅ Correct declaration: Use the card's action
+❌ Wrong declaration: Get penalty card
+🔄 Just Swap: No action, no penalty
 
-Note: 2-6 and Joker are not shown because they have no actions. Declaring them correctly provides no benefit, while declaring them incorrectly still results in a penalty.`;
+Note: 2-6 and Joker are not shown because they have no actions.`;
   };
 
   return (
@@ -53,7 +69,7 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         {/* Header with help */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs font-semibold text-primary leading-tight">
-            🎯 Declare Rank
+            🎯 Declare Rank or Just Swap
           </h3>
           <HelpPopover title="Declare Rank" content={getHelpContent()} />
         </div>
@@ -69,13 +85,10 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
           ))}
         </div>
 
-        {/* Skip button - compact */}
-        <SkipButton
-          onClick={() => void gameStore.skipDeclaration()}
-          className="w-full py-1.5 px-3 flex-shrink-0"
-        >
-          Skip
-        </SkipButton>
+        {/* Just Swap button */}
+        <SkipDeclarationButton onClick={handleJustSwap} >
+          Just Swap (No Declaration)
+        </SkipDeclarationButton>
       </div>
     </div>
   );

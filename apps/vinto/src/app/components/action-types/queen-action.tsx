@@ -4,15 +4,17 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { useActionStore, useGameStore } from '../di-provider';
 import { QueenSwapButton, SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const QueenAction = observer(() => {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
-  if (!actionStore.actionContext) return null;
-  const { peekTargets } = actionStore;
+  const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
+  if (!gameClient.state.pendingAction) return null;
+
+  const peekTargets = gameClient.state.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
 
   return (
@@ -57,9 +59,19 @@ export const QueenAction = observer(() => {
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
             <QueenSwapButton
-              onClick={() => void gameStore.executeQueenSwap()}
+              onClick={() => {
+                if (!humanPlayer) return;
+                gameClient.dispatch(
+                  GameActions.executeQueenSwap(humanPlayer.id)
+                );
+              }}
             />
-            <SkipButton onClick={() => void gameStore.skipQueenSwap()} />
+            <SkipButton
+              onClick={() => {
+                if (!humanPlayer) return;
+                gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));
+              }}
+            />
           </div>
         )}
       </div>

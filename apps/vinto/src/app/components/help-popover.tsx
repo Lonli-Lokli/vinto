@@ -3,9 +3,8 @@
 
 import React, { useState } from 'react';
 import { ArrowContainer, Popover, PopoverState } from 'react-tiny-popover';
-import { Rank } from '../shapes';
-import { getCardHelpText } from '../constants/game-setup';
 import { HelpButton } from './buttons';
+import { getCardHelpText, Rank } from '@/shared';
 
 interface HelpPopoverProps {
   title: string;

@@ -6,7 +6,8 @@
     "build": "nx run vinto:build",
     "start": "nx dev vinto",
     "format": "nx format:write",
-    "lint": "nx run-many --all --target=lint --fix=true --verbose"
+    "lint": "nx run-many --all --target=lint --fix=true",
+    "test": "nx run vinto:test --watch=false --passWithNoTests"
   },
   "private": true,
   "dependencies": {
@@ -26,7 +27,8 @@
     "react-intersection-observer": "^9.16.0",
     "react-tiny-popover": "^8.1.6",
     "reflect-metadata": "^0.2.2",
-    "tsyringe": "^4.10.0"
+    "tsyringe": "^4.10.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.1.1",

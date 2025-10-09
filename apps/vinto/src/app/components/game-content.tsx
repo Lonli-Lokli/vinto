@@ -3,27 +3,23 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGamePhaseStore, useGameStore, usePlayerStore } from './di-provider';
 import { GameHeader } from './game-header';
 import { MiddleArea } from './middle-area';
 import { BottomArea } from './bottom-area';
 import { CoalitionTurnIndicator } from './coalition-turn-indicator';
 import { AnimatedCardOverlay } from './animated-card';
 import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
-import { ReplayControls } from './replay-controls';
+import { useGameClientInitialized } from '@/client';
 
 /**
  * Component that conditionally renders the main game UI
- * Only shows when the game is loaded and active
+ * Only shows when the game is fully initialized and active
  */
 export const GameContent = observer(() => {
-  const gameStore = useGameStore();
-  const { players } = usePlayerStore();
+  const isInitialized = useGameClientInitialized();
 
-  const gamePhaseStore = useGamePhaseStore();
-
-  // Only render game content when game is fully loaded
-  if (!gameStore.sessionActive || players.length === 0) {
+  // Wait for GameClient to be fully initialized (AnimationService, BotAI, etc.)
+  if (!isInitialized) {
     return null;
   }
 
@@ -38,17 +34,12 @@ export const GameContent = observer(() => {
       {/* Fixed Bottom Area - Actions and Controls stacked vertically */}
       <BottomArea />
 
-      <ReplayControls />
       <AnimatedCardOverlay />
       <CoalitionLeaderModal />
       <CoalitionTurnIndicator />
 
       {/* Vinto Confirmation Modal */}
-      <VintoConfirmationModal
-        isOpen={gamePhaseStore.showVintoConfirmation}
-        onConfirm={() => void gameStore.callVinto()}
-        onCancel={() => gamePhaseStore.closeVintoConfirmation()}
-      />
+      <VintoConfirmationModal />
     </>
   );
 });

@@ -47,7 +47,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-surface-primary text-on-surface`}>
         <Providers>
-          {/* 
+          {/*
             You could place a site-wide header or navigation bar here.
             For example:
             <nav>

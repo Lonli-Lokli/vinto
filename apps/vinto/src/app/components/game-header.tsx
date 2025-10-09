@@ -1,96 +1,34 @@
 // components/GameHeader.tsx - Client Component (compact)
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useGameStore,
-  usePlayerStore,
-  useGamePhaseStore,
-  useDeckStore,
-} from './di-provider';
-import { GameCommandGroup } from './game-command-group';
 import { DeckManagerPopover } from './deck-manager-popover';
 import { ThemeToggle } from './theme-toggle';
 import { DifficultyButton, SettingsButton, DeckManagerButton } from './buttons';
-
-const SettingsPopover = observer(
-  ({
-    isOpen,
-    onClose,
-    buttonRef,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-    buttonRef: React.RefObject<HTMLButtonElement | null>;
-  }) => {
-    const gameStore = useGameStore();
-    const popoverRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (!isOpen) return;
-
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          popoverRef.current &&
-          !popoverRef.current.contains(event.target as Node) &&
-          buttonRef.current &&
-          !buttonRef.current.contains(event.target as Node)
-        ) {
-          onClose();
-        }
-      };
-
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen, onClose, buttonRef]);
-
-    if (!isOpen) return null;
-
-    return (
-      <div
-        ref={popoverRef}
-        className="absolute top-full left-0 mt-2 bg-surface-primary rounded-lg shadow-lg border border-primary p-4 z-50 min-w-[280px]"
-      >
-        <div className="space-y-4">
-          {/* Difficulty */}
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2">
-              Difficulty
-            </label>
-            <div className="flex gap-2">
-              {(['easy', 'moderate', 'hard'] as const).map((level) => (
-                <DifficultyButton
-                  key={level}
-                  level={level}
-                  isActive={gameStore.difficulty === level}
-                  onClick={() => gameStore.updateDifficulty(level)}
-                  className="px-3 py-2 text-sm"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
+import { SettingsPopover } from './mobile-settings';
+import { GameActions } from '@/engine';
+import { useGameClient } from '@/client';
 
 export const GameHeader = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer, turnCount } = usePlayerStore();
-  const { phase, finalTurnTriggered } = useGamePhaseStore();
-  const { drawPile } = useDeckStore();
+  const gameClient = useGameClient();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDeckManagerOpen, setIsDeckManagerOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const deckManagerButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Get values from GameClient
+  const currentPlayer = gameClient.currentPlayer;
+  const turnCount = gameClient.state.turnCount;
+  const phase = gameClient.state.phase;
+  const finalTurnTriggered = gameClient.state.finalTurnTriggered;
+  const drawPile = gameClient.state.drawPile;
+  const roundNumber = gameClient.state.roundNumber;
+
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
     if (finalTurnTriggered) return `Final • ${phase}`;
-    return `R${gameStore.roundNumber} • ${phase} • T${turnCount}`;
+    return `R${roundNumber} • ${phase} • T${turnCount}`;
   };
 
   const getCurrentPlayerDisplay = () => {
@@ -130,8 +68,10 @@ export const GameHeader = observer(() => {
                     <DifficultyButton
                       key={level}
                       level={level}
-                      isActive={gameStore.difficulty === level}
-                      onClick={() => gameStore.updateDifficulty(level)}
+                      isActive={gameClient.state.difficulty === level}
+                      onClick={() =>
+                        gameClient.dispatch(GameActions.updateDifficulty(level))
+                      }
                     />
                   ))}
                 </div>
@@ -169,10 +109,8 @@ export const GameHeader = observer(() => {
               )}
             </div>
 
-            {/* Right: Cards Left + Command History */}
+            {/* Right: Cards Left + Deck Manager */}
             <div className="flex items-center gap-2">
-              <GameCommandGroup />
-
               {/* Cards Left + Deck Manager */}
               <div className="flex items-center gap-1 relative">
                 <DeckManagerButton

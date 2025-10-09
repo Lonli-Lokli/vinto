@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './card';
-import { Card as CardType } from '../shapes';
+import { Card as CardType } from '@/shared';
 import { useCardAnimationStore } from './di-provider';
 
 interface DrawnCardProps {

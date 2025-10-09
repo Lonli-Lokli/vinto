@@ -1,22 +1,25 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
-import { useActionStore, usePlayerStore, useGameStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { ResetButton, SkipButton } from '../buttons';
+import { SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const CardSwap = observer(() => {
-  const actionStore = useActionStore();
-  const playerStore = usePlayerStore();
-  const gameStore = useGameStore();
-  if (!actionStore.actionContext) return null;
-  const { action } = actionStore.actionContext;
-  const swapTargets = actionStore.swapTargets;
+  const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+
+  const pendingAction = gameClient.state.pendingAction;
+  if (!pendingAction) return null;
+
+  const swapTargets = pendingAction.targets || [];
+  const action = 'Swap Cards'; // Action description
 
   const getPlayerName = (playerId: string) => {
-    const player = playerStore.getPlayer(playerId);
+    const player = gameClient.state.players.find((p) => p.id === playerId);
     return player?.name || 'Unknown';
   };
 
@@ -71,21 +74,13 @@ export const CardSwap = observer(() => {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          {swapTargets.length > 0 && (
-            <ResetButton
-              onClick={() => actionStore.clearSwapTargets()}
-              className="py-2 px-4 text-sm"
-            />
-          )}
+        <div className="w-full">
           <SkipButton
             onClick={() => {
-              actionStore.clearSwapTargets();
-              gameStore.confirmPeekCompletion();
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
             }}
-            className={`py-2 px-4 text-sm ${
-              swapTargets.length === 0 ? 'col-span-2' : ''
-            }`}
+            className="w-full py-2 px-4 text-sm"
           />
         </div>
       </div>

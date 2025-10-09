@@ -9,13 +9,8 @@ import { CardSwap } from './action-types/card-swap';
 import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
-import { NeverError } from '../shapes';
-import {
-  useActionStore,
-  useGamePhaseStore,
-  usePlayerStore,
-} from './di-provider';
-import { TargetType } from '../stores';
+import { useGameClient } from '@/client';
+import { NeverError, TargetType } from '@/shared';
 
 /**
  * ActionTargetSelector: Renders action-specific controls during action execution.
@@ -23,17 +18,20 @@ import { TargetType } from '../stores';
  * progress tracking, and action buttons (swap, skip, continue, cancel).
  */
 export const ActionTargetSelector = observer(() => {
-  const gamePhaseStore = useGamePhaseStore();
-  const actionStore = useActionStore();
-  const playerStore = usePlayerStore();
+  const gameClient = useGameClient();
 
-  if (!gamePhaseStore.isAwaitingActionTarget || !actionStore.actionContext) {
+  // Check if we're in the awaiting_action subPhase
+  const isAwaitingActionTarget =
+    gameClient.state.subPhase === 'awaiting_action';
+  const pendingAction = gameClient.state.pendingAction;
+
+  if (!isAwaitingActionTarget || !pendingAction) {
     return null;
   }
 
-  const { playerId, targetType } = actionStore.actionContext;
-  const actionPlayer = playerStore.players.find((p) => p.id === playerId);
-  const humanPlayer = playerStore.humanPlayer;
+  const { playerId, targetType } = pendingAction;
+  const actionPlayer = gameClient.state.players.find((p) => p.id === playerId);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   // Only show for human players - bot actions should not display UI
   if (!actionPlayer || !humanPlayer || actionPlayer.isBot) {

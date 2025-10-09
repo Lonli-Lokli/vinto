@@ -3,10 +3,11 @@
 
 import React, { useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useDeckStore } from './di-provider';
 import { Card as CardComponent } from './card';
-import { Card, Rank } from '../shapes';
 import { ClosePopoverButton, DeckCardSelectButton } from './buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
+import { Card, Rank } from '@/shared';
 
 const ALL_RANKS: Rank[] = [
   '2',
@@ -34,7 +35,7 @@ export const DeckManagerPopover = observer(
     onClose: () => void;
     buttonRef: React.RefObject<HTMLButtonElement | null>;
   }) => {
-    const deckStore = useDeckStore();
+    const gameClient = useGameClient();
     const popoverRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -59,13 +60,13 @@ export const DeckManagerPopover = observer(
     if (!isOpen) return null;
 
     const handleSetNextCard = (rank: Rank) => {
-      // Use the MobX action to modify the draw pile
-      deckStore.setNextDrawCard(rank);
+      // Dispatch SET_NEXT_DRAW_CARD action
+      gameClient.dispatch(GameActions.setNextDrawCard(rank));
       onClose();
     };
 
     // Group available cards by rank
-    const availableCards = deckStore.drawPile.reduce((acc, card) => {
+    const availableCards = gameClient.state.drawPile.reduce((acc, card) => {
       if (!acc[card.rank]) {
         acc[card.rank] = [];
       }
@@ -135,20 +136,20 @@ export const DeckManagerPopover = observer(
             <div className="text-xs text-secondary mb-2">
               Current next card:
             </div>
-            {deckStore.drawPile.length > 0 ? (
+            {gameClient.state.drawPile.length > 0 ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
                   <CardComponent
-                    card={deckStore.drawPile[0]}
+                    card={gameClient.state.drawPile[0]}
                     revealed={true}
                     size="auto"
                   />
                 </div>
                 <div className="text-sm font-semibold text-primary">
-                  {deckStore.drawPile[0].rank}
-                  {deckStore.drawPile[0].actionText && (
+                  {gameClient.state.drawPile[0].rank}
+                  {gameClient.state.drawPile[0].actionText && (
                     <span className="text-xs text-success ml-1">
-                      ({deckStore.drawPile[0].actionText})
+                      ({gameClient.state.drawPile[0].actionText})
                     </span>
                   )}
                 </div>

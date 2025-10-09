@@ -1,22 +1,15 @@
 // components/GameInitializer.tsx
 'use client';
 
-import React, { useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useGameStore, usePlayerStore } from './di-provider';
+import React from 'react';
+import { useGameClientInitialized } from '@/client';
 
-export const GameInitializer = observer(() => {
-  const gameStore = useGameStore();
-  const { players } = usePlayerStore();
-  // Initialize game on mount
-  useEffect(() => {
-    if (players.length === 0) {
-      void gameStore.initGame();
-    }
-  }, [gameStore, players.length]);
+export const GameInitializer = () => {
+  const isInitialized = useGameClientInitialized();
 
-  // Loading state
-  if (!gameStore.sessionActive || players.length === 0) {
+  // Show loading screen while GameClient is initializing
+  // (waiting for useEffect to complete: AnimationService setup, BotAI initialization, etc.)
+  if (!isInitialized) {
     return (
       <div className="min-h-screen bg-page-gradient flex items-center justify-center">
         <div className="text-center">
@@ -30,4 +23,4 @@ export const GameInitializer = observer(() => {
   }
 
   return null;
-});
+};

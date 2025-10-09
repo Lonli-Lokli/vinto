@@ -3,19 +3,20 @@
 
 import React from 'react';
 import { HelpPopover } from '../help-popover';
-import { useGameStore, useActionStore } from '../di-provider';
 import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export function KingDeclaration() {
-  const gameStore = useGameStore();
-  const actionStore = useActionStore();
+  const gameClient = useGameClient();
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   // K cannot declare itself - only the action cards that can be executed
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
   const nonActionCards = ['2', '3', '4', '5', '6', 'K', 'Joker'] as const;
 
   // Get the pending card (the King card being played)
-  const pendingCard = actionStore.pendingCard;
+  const pendingCard = gameClient.state.pendingAction?.card;
 
   // Function to check if a rank is disabled
   // King cannot declare itself (K), even though K appears in the UI
@@ -44,7 +45,12 @@ export function KingDeclaration() {
                 <KingActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => void gameStore.declareKingAction(rank)}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(
+                      GameActions.declareKingAction(humanPlayer.id, rank)
+                    );
+                  }}
                   disabled={disabled}
                 />
               );
@@ -57,7 +63,12 @@ export function KingDeclaration() {
                 <KingNonActionCardButton
                   key={rank}
                   rank={rank}
-                  onClick={() => void gameStore.declareKingAction(rank)}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(
+                      GameActions.declareKingAction(humanPlayer.id, rank)
+                    );
+                  }}
                   disabled={disabled}
                 />
               );

@@ -4,18 +4,23 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { useGameStore, usePlayerStore } from './di-provider';
 import { Avatar } from './avatar';
+import { useGameClient } from '@/client';
 
 export const CoalitionTurnIndicator = observer(() => {
-  const gameStore = useGameStore();
-  const { currentPlayer, coalitionLeader } = usePlayerStore();
+  const gameClient = useGameClient();
 
-  if (
-    !gameStore.isCoalitionLeaderPlaying ||
-    !currentPlayer ||
-    !coalitionLeader
-  ) {
+  // Get current player and coalition leader
+  const currentPlayer = gameClient.currentPlayer;
+  const coalitionLeader = gameClient.coalitionLeader;
+
+  // Check if coalition leader is playing
+  const isCoalitionLeaderPlaying =
+    gameClient.state.phase === 'playing' &&
+    coalitionLeader &&
+    currentPlayer.id === coalitionLeader.id;
+
+  if (!isCoalitionLeaderPlaying || !currentPlayer || !coalitionLeader) {
     return null;
   }
 
@@ -26,7 +31,7 @@ export const CoalitionTurnIndicator = observer(() => {
           <div className="flex items-center gap-2">
             <Crown className="text-yellow-300" size={20} />
             <div className="w-10 h-10">
-              <Avatar player={coalitionLeader} size="sm" />
+              <Avatar playerName={coalitionLeader.name} size="sm" />
             </div>
             <div>
               <div className="text-xs font-medium opacity-90">
@@ -41,7 +46,7 @@ export const CoalitionTurnIndicator = observer(() => {
           <div className="flex items-center gap-2">
             <Users className="text-white" size={20} />
             <div className="w-10 h-10">
-              <Avatar player={currentPlayer} size="sm" />
+              <Avatar playerName={currentPlayer.name} size="sm" />
             </div>
             <div>
               <div className="text-xs font-medium opacity-90">Playing For</div>

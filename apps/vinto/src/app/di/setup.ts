@@ -8,58 +8,24 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 
 // Stores
-import {
-  PlayerStore,
-  DeckStore,
-  GamePhaseStore,
-  ActionStore,
-  TossInStore,
-  ReplayStore,
-  CardAnimationStore,
-  GameStore,
-} from '../stores';
-
-// Command system
-import { CommandFactory } from '../commands/command-factory';
-import { CommandHistory } from '../commands/command-history';
-import { GameStateManager } from '../commands/game-state-manager';
+import { CardAnimationStore } from '../stores';
 
 // Services
-import { ActionCoordinator } from '../stores/action-coordinator';
-import { BotDecisionServiceFactory } from '../services/mcts-bot-decision';
+import { UIStore } from '../stores/ui-store';
+import { AnimationService } from '../services/animation-service';
+import { AnimationPositionCapture } from '../services/animation-position-capture';
 
 /**
  * Configure the DI container with all dependencies
  */
-export function setupDIContainer(
-  difficulty: 'easy' | 'moderate' | 'hard' = 'moderate'
-) {
-  // Register stores as singletons
-  container.registerSingleton(PlayerStore);
-  container.registerSingleton(DeckStore);
-  container.registerSingleton(GamePhaseStore);
-  container.registerSingleton(ActionStore);
-  container.registerSingleton(TossInStore);
-  container.registerSingleton(ReplayStore);
+export function setupDIContainer() {
+  // Register UI stores
   container.registerSingleton(CardAnimationStore);
+  container.registerSingleton(UIStore);
 
-  // Register command system as singletons
-  container.registerSingleton(CommandHistory);
-  container.registerSingleton(CommandFactory);
-
-  // Register BotDecisionService
-  container.register('BotDecisionService', {
-    useFactory: () => BotDecisionServiceFactory.create(difficulty),
-  });
-
-  // Register ActionCoordinator
-  container.registerSingleton(ActionCoordinator);
-
-  // Register GameStore last (depends on everything)
-  container.registerSingleton(GameStore);
-
-  // Register GameStateManager
-  container.registerSingleton(GameStateManager);
+  // Register services
+  container.registerSingleton(AnimationPositionCapture);
+  container.registerSingleton(AnimationService);
 }
 
 /**
@@ -80,5 +46,5 @@ export function resetDIContainer() {
  * Check if DI is configured
  */
 export function isDIConfigured(): boolean {
-  return container.isRegistered(GameStore);
+  return container.isRegistered(UIStore);
 }

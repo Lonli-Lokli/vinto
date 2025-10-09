@@ -78,6 +78,7 @@ export const BUTTON_ACTION_VARIANTS = {
   discard: 'neutral',
   'discard-instead': 'neutral',
   skip: 'neutral',
+  'skip-declaration': 'neutral',
   cancel: 'neutral',
   reset: 'neutral',
 
