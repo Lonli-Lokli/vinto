@@ -22,7 +22,8 @@ export const ActionTargetSelector = observer(() => {
   const gameClient = useGameClient();
 
   // Check if we're in the awaiting_action subPhase
-  const isAwaitingActionTarget = gameClient.state.subPhase === 'awaiting_action';
+  const isAwaitingActionTarget =
+    gameClient.state.subPhase === 'awaiting_action';
   const pendingAction = gameClient.state.pendingAction;
 
   if (!isAwaitingActionTarget || !pendingAction) {

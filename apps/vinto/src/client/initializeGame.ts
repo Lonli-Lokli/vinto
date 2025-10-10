@@ -25,7 +25,21 @@ export interface GameSettings {
  * - Each rank appears 4 times
  */
 function createDeck(): Card[] {
-  const ranks: Card['rank'][] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  const ranks: Card['rank'][] = [
+    'A',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K',
+  ];
   const deck: Card[] = [];
 
   // Create 4 of each rank
@@ -48,7 +62,7 @@ function createDeck(): Card[] {
  * Get numeric value for a card rank
  */
 function getRankValue(rank: Card['rank']): number {
-  return CARD_CONFIGS[rank].value;  
+  return CARD_CONFIGS[rank].value;
 }
 
 /**
@@ -66,13 +80,13 @@ function shuffle<T>(array: T[]): T[] {
 /**
  * Create initial player states
  */
-function createPlayers(settings: GameSettings): PlayerState[] {
+function createPlayers(_settings: GameSettings): PlayerState[] {
   const players: PlayerState[] = [];
 
   // Human player (always first)
   players.push({
     id: 'human-1',
-    name: settings.humanPlayerName || 'You',
+    name: 'You',
     isHuman: true,
     isBot: false,
     cards: [],
@@ -81,19 +95,38 @@ function createPlayers(settings: GameSettings): PlayerState[] {
     coalitionWith: [],
   });
 
-  // Bot players
-  for (let i = 0; i < settings.botCount; i++) {
-    players.push({
-      id: `bot-${i + 1}`,
-      name: `Bot ${i + 1}`,
+  players.push(
+    {
+      id: `bot-1`,
+      name: `Michelangelo`,
       isHuman: false,
       isBot: true,
       cards: [],
       knownCardPositions: [],
       isVintoCaller: false,
       coalitionWith: [],
-    });
-  }
+    },
+    {
+      id: `bot-2`,
+      name: `Donatello`,
+      isHuman: false,
+      isBot: true,
+      cards: [],
+      knownCardPositions: [],
+      isVintoCaller: false,
+      coalitionWith: [],
+    },
+    {
+      id: `bot-3`,
+      name: `Raphael`,
+      isHuman: false,
+      isBot: true,
+      cards: [],
+      knownCardPositions: [],
+      isVintoCaller: false,
+      coalitionWith: [],
+    }
+  );
 
   return players;
 }
@@ -102,12 +135,15 @@ function createPlayers(settings: GameSettings): PlayerState[] {
  * Deal cards to players
  *
  * In Vinto:
- * - Each player gets 4 cards
+ * - Each player gets 5 cards
  * - Cards are dealt face down
  * - Remaining cards become the draw pile
  */
-function dealCards(deck: Card[], players: PlayerState[]): { players: PlayerState[]; drawPile: Card[] } {
-  const cardsPerPlayer = 4;
+function dealCards(
+  deck: Card[],
+  players: PlayerState[]
+): { players: PlayerState[]; drawPile: Card[] } {
+  const cardsPerPlayer = 5;
   const shuffledDeck = shuffle(deck);
 
   let cardIndex = 0;
@@ -137,8 +173,8 @@ function dealCards(deck: Card[], players: PlayerState[]): { players: PlayerState
 export function initializeGame(settings: GameSettings): GameState {
   // Validate settings
   const totalPlayers = 1 + settings.botCount; // 1 human + N bots
-  if (totalPlayers < 2 || totalPlayers > 4) {
-    throw new Error('Vinto requires 2-4 players');
+  if (totalPlayers < 4 || totalPlayers > 5) {
+    throw new Error('Vinto requires 4-5 players');
   }
 
   // Create players
@@ -188,7 +224,10 @@ export function quickStartGame(playerName = 'You'): GameState {
 /**
  * Initialize a 4-player game (1 human vs 3 bots)
  */
-export function fourPlayerGame(playerName = 'You', difficulty: GameState['difficulty'] = 'moderate'): GameState {
+export function fourPlayerGame(
+  playerName = 'You',
+  difficulty: GameState['difficulty'] = 'moderate'
+): GameState {
   return initializeGame({
     playerCount: 4,
     botCount: 3,

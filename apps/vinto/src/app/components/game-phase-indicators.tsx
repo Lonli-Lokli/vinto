@@ -61,9 +61,7 @@ export const GamePhaseIndicators = observer(() => {
 
   // Setup peeks remaining (count cards not in knownCardPositions)
   const setupPeeksRemaining = humanPlayer
-    ? 4 - humanPlayer.cards.filter((_, idx) =>
-        humanPlayer.knownCardPositions.includes(idx)
-      ).length
+    ? 2 - humanPlayer.knownCardPositions.length
     : 0;
 
   // Setup Phase

@@ -93,6 +93,9 @@ export const GameTable = observer(() => {
         setupPeeksRemaining > 0 &&
         !humanPlayer.knownCardPositions.includes(position)
       ) {
+        // Show the card temporarily in the UI
+        uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
+        // Dispatch the game action to update knownCardPositions
         gameClient.dispatch(GameActions.peekSetupCard(humanPlayer.id, position));
       }
       return;
