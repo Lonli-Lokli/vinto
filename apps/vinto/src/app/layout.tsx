@@ -6,7 +6,7 @@ import { Inter } from 'next/font/google';
 import * as Sentry from '@sentry/nextjs';
 
 import './global.css'; // This is where you import your global Tailwind CSS styles
-import { ProvidersWithGameClient } from './providers-with-gameclient';
+import { Providers } from './providers';
 
 // Optimize fonts using next/font
 const inter = Inter({ subsets: ['latin'] });
@@ -46,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-surface-primary text-on-surface`}>
-        <ProvidersWithGameClient>
+        <Providers>
           {/*
             You could place a site-wide header or navigation bar here.
             For example:
@@ -58,7 +58,7 @@ export default function RootLayout({
 
           {/* The `children` prop will be the content of our `app/page.tsx` file. */}
           {children}
-        </ProvidersWithGameClient>
+        </Providers>
       </body>
     </html>
   );

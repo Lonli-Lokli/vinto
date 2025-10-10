@@ -1,5 +1,5 @@
 // services/mcts-types.ts
-import { Card, Rank } from '../shapes';
+import { Card, Rank } from '@/shared';
 import { BotMemory } from './bot-memory';
 
 /**

@@ -1,7 +1,7 @@
 // constants/game-setup.ts
 // Shared game configuration and constants
 
-import { CardAction, Rank } from '../shapes';
+import { CardAction, Rank } from './domain-types';
 
 export interface CardConfig {
   rank: Rank;

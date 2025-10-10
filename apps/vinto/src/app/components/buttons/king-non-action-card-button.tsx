@@ -1,4 +1,4 @@
-import { getButtonClasses } from '@/app/constants/button-colors';
+import { getButtonClasses } from '../../constants/button-colors';
 
 export const KingNonActionCardButton = ({
   rank,

@@ -3,11 +3,11 @@
 
 import React, { useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGameClient } from '../../client/GameClientContext';
-import { GameActions } from '../../engine/types/GameAction';
 import { Card as CardComponent } from './card';
-import { Card, Rank } from '../shapes';
 import { ClosePopoverButton, DeckCardSelectButton } from './buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
+import { Card, Rank } from '@/shared';
 
 const ALL_RANKS: Rank[] = [
   '2',

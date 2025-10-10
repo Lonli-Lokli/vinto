@@ -4,13 +4,13 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
 import { QueenSwapButton, SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const QueenAction = observer(() => {
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   if (!gameClient.state.pendingAction) return null;
 
@@ -61,7 +61,9 @@ export const QueenAction = observer(() => {
             <QueenSwapButton
               onClick={() => {
                 if (!humanPlayer) return;
-                gameClient.dispatch(GameActions.executeQueenSwap(humanPlayer.id));
+                gameClient.dispatch(
+                  GameActions.executeQueenSwap(humanPlayer.id)
+                );
               }}
             />
             <SkipButton

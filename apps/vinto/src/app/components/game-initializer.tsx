@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGameClient } from '../../client/GameClientContext';
+import { useGameClient } from '@/client';
 
 export const GameInitializer = observer(() => {
   const gameClient = useGameClient();

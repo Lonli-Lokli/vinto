@@ -1,6 +1,4 @@
-import { GameEngine } from '../GameEngine';
-import { GameState, PlayerState, GameActions } from '../types';
-import { Card } from '../../app/shapes';
+import { Card } from '@/shared';
 
 /**
  * Test helpers
@@ -14,7 +12,11 @@ function createTestCard(rank: Card['rank'], id: string): Card {
   };
 }
 
-function createTestPlayer(id: string, name: string, isHuman: boolean): PlayerState {
+function createTestPlayer(
+  id: string,
+  name: string,
+  isHuman: boolean
+): PlayerState {
   return {
     id,
     name,
@@ -376,10 +378,7 @@ describe('GameEngine', () => {
         players: [
           {
             ...createTestPlayer('p1', 'Player 1', true),
-            cards: [
-              createTestCard('K', 'hand1'),
-              createTestCard('Q', 'hand2'),
-            ],
+            cards: [createTestCard('K', 'hand1'), createTestCard('Q', 'hand2')],
           },
           createTestPlayer('p2', 'Player 2', false),
         ],
@@ -970,7 +969,10 @@ describe('GameEngine', () => {
           createTestPlayer('p1', 'Player 1', true),
           {
             ...createTestPlayer('p2', 'Player 2', false),
-            cards: [createTestCard('K', 'target1'), createTestCard('Q', 'target2')],
+            cards: [
+              createTestCard('K', 'target1'),
+              createTestCard('Q', 'target2'),
+            ],
           },
         ],
         pendingAction: {
@@ -1444,7 +1446,10 @@ describe('GameEngine', () => {
           },
           {
             ...createTestPlayer('p2', 'Player 2', false),
-            cards: [createTestCard('A', 'p2card1'), createTestCard('7', 'p2card2')],
+            cards: [
+              createTestCard('A', 'p2card1'),
+              createTestCard('7', 'p2card2'),
+            ],
           },
         ],
       });
@@ -1461,12 +1466,18 @@ describe('GameEngine', () => {
 
       // 3. USE_CARD_ACTION (instead of discarding)
       const removedCard = state.pendingAction!.card;
-      state = GameEngine.reduce(state, GameActions.playCardAction('p1', removedCard));
+      state = GameEngine.reduce(
+        state,
+        GameActions.playCardAction('p1', removedCard)
+      );
       expect(state.subPhase).toBe('awaiting_action');
       expect(state.pendingAction?.actionPhase).toBe('selecting-target');
 
       // 4. SELECT_ACTION_TARGET
-      state = GameEngine.reduce(state, GameActions.selectActionTarget('p1', 'p2', 1));
+      state = GameEngine.reduce(
+        state,
+        GameActions.selectActionTarget('p1', 'p2', 1)
+      );
       expect(state.subPhase).toBe('idle');
       expect(state.discardPile).toHaveLength(1);
       expect(state.discardPile[0].id).toBe('hand1'); // K discarded after action
@@ -1491,11 +1502,17 @@ describe('GameEngine', () => {
           createTestPlayer('p1', 'Player 1', true),
           {
             ...createTestPlayer('p2', 'Player 2', false),
-            cards: [createTestCard('K', 'p2card1'), createTestCard('A', 'p2card2')],
+            cards: [
+              createTestCard('K', 'p2card1'),
+              createTestCard('A', 'p2card2'),
+            ],
           },
           {
             ...createTestPlayer('p3', 'Player 3', false),
-            cards: [createTestCard('7', 'p3card1'), createTestCard('8', 'p3card2')],
+            cards: [
+              createTestCard('7', 'p3card1'),
+              createTestCard('8', 'p3card2'),
+            ],
           },
         ],
         pendingAction: {
@@ -1672,7 +1689,10 @@ describe('GameEngine', () => {
           createTestPlayer('p1', 'Player 1', true),
           {
             ...createTestPlayer('p2', 'Player 2', false),
-            cards: [createTestCard('K', 'p2card1'), createTestCard('A', 'p2card2')],
+            cards: [
+              createTestCard('K', 'p2card1'),
+              createTestCard('A', 'p2card2'),
+            ],
           },
         ],
         pendingAction: {
@@ -1716,11 +1736,17 @@ describe('GameEngine', () => {
           createTestPlayer('p1', 'Player 1', true),
           {
             ...createTestPlayer('p2', 'Player 2', false),
-            cards: [createTestCard('K', 'p2card1'), createTestCard('A', 'p2card2')],
+            cards: [
+              createTestCard('K', 'p2card1'),
+              createTestCard('A', 'p2card2'),
+            ],
           },
           {
             ...createTestPlayer('p3', 'Player 3', false),
-            cards: [createTestCard('7', 'p3card1'), createTestCard('8', 'p3card2')],
+            cards: [
+              createTestCard('7', 'p3card1'),
+              createTestCard('8', 'p3card2'),
+            ],
           },
         ],
         pendingAction: {

@@ -1,8 +1,8 @@
-import { useGameClient } from '@/client/GameClientContext';
-import { GameActions } from '@/engine/types';
 import { observer } from 'mobx-react-lite';
 import { useRef, useEffect } from 'react';
 import { DifficultyButton } from './buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const SettingsPopover = observer(
   ({

@@ -3,17 +3,13 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { setupDIContainer, getInstance, isDIConfigured } from '../di/setup';
-import {
-  GameStore,
-  CardAnimationStore,
-} from '../stores';
+import { CardAnimationStore } from '../stores';
 import { UIStore } from '../stores/ui-store';
 
 /**
  * Store context for accessing DI-managed stores
  */
 interface StoreContextValue {
-  gameStore: GameStore;
   cardAnimationStore: CardAnimationStore;
   uiStore: UIStore;
 }
@@ -29,11 +25,10 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
     // Only setup DI in browser environment
 
     if (!isDIConfigured()) {
-      setupDIContainer('moderate');
+      setupDIContainer();
     }
 
     return {
-      gameStore: getInstance<GameStore>(GameStore),
       cardAnimationStore: getInstance<CardAnimationStore>(CardAnimationStore),
       uiStore: getInstance<UIStore>(UIStore),
     };
@@ -55,13 +50,6 @@ export function useStores(): StoreContextValue {
   }
 
   return context;
-}
-
-/**
- * Hook to access gameStore
- */
-export function useGameStore(): GameStore {
-  return useStores().gameStore;
 }
 
 /**

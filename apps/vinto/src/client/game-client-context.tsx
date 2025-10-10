@@ -1,11 +1,15 @@
 // client/GameClientContext.tsx
-// React Context and hook for GameClient
+
+'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useObserver } from 'mobx-react-lite';
-import type { GameState } from '../engine/types';
-import { GameClient } from './GameClient';
 import { fourPlayerGame } from './initializeGame';
+import { getInstance } from '../app/di/setup';
+import { AnimationService } from '../app/services/animation-service';
+import { GameClient } from './game-client';
+import { BotAIAdapter } from './adapters/botAIAdapter';
+import { GameState } from '@/shared';
 
 /**
  * React Context for GameClient
@@ -32,20 +36,36 @@ interface GameClientProviderProps {
  */
 export const GameClientProvider: React.FC<GameClientProviderProps> = ({
   children,
-  initialClient
+  initialClient,
 }) => {
   const [client] = useState(() => {
     // Use provided client or create a new one with four player game
     return initialClient || new GameClient(fourPlayerGame());
   });
 
-  // Setup side effects (animations, sounds, etc.)
+  // Setup side effects (animations, sounds, bot AI, etc.)
   useEffect(() => {
-    client.onStateUpdate((_oldState, newState, action) => {
-      // TODO: Trigger animations based on action type
+    // Get AnimationService from DI container
+    const animationService = getInstance<AnimationService>(AnimationService);
+
+    client.onStateUpdate((oldState, newState, action) => {
       console.log('[GameClient] Action:', action.type, action);
       console.log('[GameClient] New State:', newState.phase, newState.subPhase);
+
+      // Trigger animations based on action type
+      animationService.handleStateUpdate(oldState, newState, action);
     });
+
+    // Initialize Bot AI Adapter (client-side only, for local games)
+    // For network games, this would be replaced with network client
+    // Difficulty is read from client.state.difficulty
+    const botAI = new BotAIAdapter(client);
+    console.log('[GameClient] Bot AI initialized');
+
+    // Cleanup on unmount
+    return () => {
+      botAI.dispose();
+    };
   }, [client]);
 
   return (

@@ -1,4 +1,4 @@
-import { GameAction, GameState } from './types';
+import { GameAction, GameState, NeverError } from '@/shared';
 
 /**
  * Validates if an action is legal in the current state
@@ -130,8 +130,10 @@ export function actionValidator(
         return { valid: false, reason: 'Not player turn' };
       }
 
-      // Must be in selecting phase (after swapping, deciding to use action vs discard)
-      if (state.subPhase !== 'selecting') {
+      // Must be in choosing or selecting phase (after drawing/swapping, deciding to use action)
+      // choosing: After drawing card, before swapping
+      // selecting: After swapping, deciding to use action vs discard
+      if (state.subPhase !== 'selecting' && state.subPhase !== 'choosing') {
         return {
           valid: false,
           reason: `Cannot use card action in phase ${state.subPhase}`,
@@ -288,8 +290,185 @@ export function actionValidator(
       return { valid: true };
     }
 
-    // TODO: Add validation for other actions
+    case 'PARTICIPATE_IN_TOSS_IN': {
+      const { playerId, position } = action.payload;
+
+      // Must be in toss-in phase
+      if (
+        state.subPhase !== 'toss_queue_active' &&
+        state.subPhase !== 'toss_queue_processing'
+      ) {
+        return {
+          valid: false,
+          reason: `Cannot toss in during phase ${state.subPhase}`,
+        };
+      }
+
+      // Must have an active toss-in
+      if (!state.activeTossIn) {
+        return { valid: false, reason: 'No active toss-in' };
+      }
+
+      // Find the player
+      const player = state.players.find((p) => p.id === playerId);
+      if (!player) {
+        return { valid: false, reason: 'Player not found' };
+      }
+
+      // Position must be valid
+      if (position < 0 || position >= player.cards.length) {
+        return { valid: false, reason: `Invalid card position ${position}` };
+      }
+
+      return { valid: true };
+    }
+
+    case 'FINISH_TOSS_IN_PERIOD': {
+      const { initiatorId } = action.payload;
+
+      // Must be in toss-in phase
+      if (
+        state.subPhase !== 'toss_queue_active' &&
+        state.subPhase !== 'toss_queue_processing'
+      ) {
+        return {
+          valid: false,
+          reason: `Cannot finish toss-in during phase ${state.subPhase}`,
+        };
+      }
+
+      // Must have an active toss-in
+      if (!state.activeTossIn) {
+        return { valid: false, reason: 'No active toss-in' };
+      }
+
+      // Initiator must be the one who triggered toss-in
+      if (state.activeTossIn.initiatorId !== initiatorId) {
+        return {
+          valid: false,
+          reason: 'Only toss-in initiator can finish the period',
+        };
+      }
+
+      return { valid: true };
+    }
+
+    case 'SET_COALITION_LEADER': {
+      const { leaderId } = action.payload;
+
+      // Must be in final phase (after Vinto called)
+      if (state.phase !== 'final') {
+        return {
+          valid: false,
+          reason: 'Coalition leader can only be set in final phase',
+        };
+      }
+
+      // Must have a Vinto caller
+      if (!state.vintoCallerId) {
+        return {
+          valid: false,
+          reason: 'No Vinto caller to form coalition against',
+        };
+      }
+
+      // Leader must be a player
+      const leader = state.players.find((p) => p.id === leaderId);
+      if (!leader) {
+        return { valid: false, reason: 'Leader player not found' };
+      }
+
+      // Leader cannot be the Vinto caller
+      if (leader.id === state.vintoCallerId) {
+        return {
+          valid: false,
+          reason: 'Vinto caller cannot be coalition leader',
+        };
+      }
+
+      return { valid: true };
+    }
+
+    case 'PROCESS_AI_TURN': {
+      const { playerId } = action.payload;
+
+      // Must be a bot player
+      const player = state.players.find((p) => p.id === playerId);
+      if (!player) {
+        return { valid: false, reason: 'Player not found' };
+      }
+
+      if (!player.isBot) {
+        return { valid: false, reason: 'Player is not a bot' };
+      }
+
+      // Must be the current player
+      const currentPlayer = state.players[state.currentPlayerIndex];
+      if (currentPlayer.id !== playerId) {
+        return { valid: false, reason: 'Not player turn' };
+      }
+
+      return { valid: true };
+    }
+
+    case 'PEEK_SETUP_CARD': {
+      const { playerId, position } = action.payload;
+
+      // Must be in setup phase
+      if (state.phase !== 'setup') {
+        return { valid: false, reason: 'Not in setup phase' };
+      }
+
+      // Find the player
+      const player = state.players.find((p) => p.id === playerId);
+      if (!player) {
+        return { valid: false, reason: 'Player not found' };
+      }
+
+      // Position must be valid
+      if (position < 0 || position >= player.cards.length) {
+        return { valid: false, reason: `Invalid card position ${position}` };
+      }
+
+      // Player shouldn't peek at same card twice during setup
+      if (player.knownCardPositions.includes(position)) {
+        return { valid: false, reason: 'Card already peeked' };
+      }
+
+      return { valid: true };
+    }
+
+    case 'FINISH_SETUP': {
+      const { playerId } = action.payload;
+
+      // Must be in setup phase
+      if (state.phase !== 'setup') {
+        return { valid: false, reason: 'Not in setup phase' };
+      }
+
+      // Find the player
+      const player = state.players.find((p) => p.id === playerId);
+      if (!player) {
+        return { valid: false, reason: 'Player not found' };
+      }
+
+      // Player must have peeked at at least 2 cards
+      if (player.knownCardPositions.length < 2) {
+        return {
+          valid: false,
+          reason: `Must peek at 2 cards before finishing setup (peeked ${player.knownCardPositions.length})`,
+        };
+      }
+
+      return { valid: true };
+    }
+
+    case 'UPDATE_DIFFICULTY':
+    case 'SET_NEXT_DRAW_CARD':
+      // Always valid (configuration/debug actions)
+      return { valid: true };
+
     default:
-      return { valid: true }; // Permissive for now
+      throw new NeverError(action);
   }
 }

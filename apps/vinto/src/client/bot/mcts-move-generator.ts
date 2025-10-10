@@ -1,5 +1,6 @@
 // services/mcts-move-generator.ts
-import { CardAction, Rank } from '../shapes';
+
+import { CardAction, Rank } from '@/shared';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**

@@ -5,8 +5,8 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CallVintoButton, CancelButton } from '../buttons';
 import { useUIStore } from '../di-provider';
-import { useGameClient } from '@/client/GameClientContext';
-import { GameActions } from '@/engine/types';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const VintoConfirmationModal = observer(() => {
   const { showVintoConfirmation, setShowVintoConfirmation } = useUIStore();

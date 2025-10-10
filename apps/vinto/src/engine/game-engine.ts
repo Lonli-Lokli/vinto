@@ -1,9 +1,6 @@
- 
 // engine/GameEngine.ts
 // Core game engine - pure reducer that transforms state via actions
 
-import { GameState, GameAction } from './types';
-import { NeverError } from '@/app/shapes';
 import { actionValidator } from './action-validator';
 import { handleSwapCard } from './cases/swap-card';
 import { handleAdvanceTurn } from './cases/advance-turn';
@@ -25,6 +22,7 @@ import { handleTakeDiscard } from './cases/take-discard';
 import { handleUseCardAction } from './cases/use-card';
 import { handleUpdateDifficulty } from './cases/update-difficulty';
 import { handleSetNextDrawCard } from './cases/set-next-draw-card';
+import { GameAction, GameState, NeverError } from '@/shared';
 
 /**
  * GameEngine - The authoritative game logic
@@ -124,34 +122,4 @@ export class GameEngine {
         throw new NeverError(action);
     }
   }
-
-  /**
-   * Helper: Get current player
-   * (Currently unused but may be useful for future refactoring)
-   */
-  // private static getCurrentPlayer(state: GameState) {
-  //   return state.players[state.currentPlayerIndex];
-  // }
-
-  /**
-   * Helper: Find player by ID
-   * (Currently unused but may be useful for future refactoring)
-   */
-  // private static findPlayer(state: GameState, playerId: string) {
-  //   return state.players.find((p) => p.id === playerId);
-  // }
-
-  /**
-   * Helper: Check if phase transition is valid
-   * (For future use - will integrate with phase validation)
-   */
-  // private static canTransitionTo(
-  //   state: GameState,
-  //   newPhase: GameState['phase'],
-  //   newSubPhase: GameState['subPhase']
-  // ): boolean {
-  //   // TODO: Implement full phase transition validation
-  //   // For now, allow all transitions
-  //   return true;
-  // }
 }

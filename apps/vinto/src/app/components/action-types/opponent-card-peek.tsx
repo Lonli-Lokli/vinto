@@ -5,14 +5,14 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { useUIStore } from '../di-provider';
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
 import { ContinueButton, SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const OpponentCardPeek = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   if (!gameClient.state.pendingAction) return null;
   const action = gameClient.state.pendingAction.card.rank;

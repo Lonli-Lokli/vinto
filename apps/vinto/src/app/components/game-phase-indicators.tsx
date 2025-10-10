@@ -15,12 +15,7 @@ import {
   CircleArrowRight,
 } from 'lucide-react';
 import { HelpPopover } from './help-popover';
-import type { Card, Rank } from '../shapes';
-import {
-  useUIStore,
-} from './di-provider';
-import { useGameClient } from '../../client/GameClientContext';
-import { GameActions } from '../../engine/types';
+import { useUIStore } from './di-provider';
 import { Card as CardComponent } from './card';
 import {
   UseActionButton,
@@ -32,11 +27,15 @@ import {
   CallVintoButton,
 } from './buttons';
 import {
-  getActionExplanation,
   getCardName,
   getCardValue,
-} from '../utils/card-helper';
+  getCardLongDescription as getActionExplanation,
+  Rank,
+  Card,
+} from '@/shared';
 import { ReactJoin } from '../utils/react-join';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 // Main Component
 export const GamePhaseIndicators = observer(() => {
@@ -210,7 +209,9 @@ const TossInIndicator = observer(
         // Only show actions from current turn
         if (action.turnNumber !== currentTurn) return false;
         // Only show bot actions
-        const player = gameClient.state.players.find(p => p.id === action.playerId);
+        const player = gameClient.state.players.find(
+          (p) => p.id === action.playerId
+        );
         return player && !player.isHuman;
       })
       .map((action) => action.description);
@@ -570,7 +571,7 @@ const SwapPositionIndicator = observer(
       return `🔄 Swap Card: Replace one of your cards with the drawn card
 
 🎯 How it works:
-• Click any of your 4 cards to replace it
+• Click any of your cards to replace it
 • The replaced card goes to the discard pile
 • The drawn card takes its place in your hand
 

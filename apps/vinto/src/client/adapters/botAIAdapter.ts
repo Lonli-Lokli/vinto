@@ -2,18 +2,17 @@
 // Adapter to integrate existing MCTS Bot AI with new GameClient architecture
 
 import { reaction } from 'mobx';
-import { GameClient } from '../GameClient';
-import { GameActions } from '../../engine/types';
-import { GameState as EngineGameState } from '../../engine/types';
+
+import { GameActions } from '@/engine';
+import { Card } from '@/shared';
 import {
   BotDecisionService,
-  BotDecisionContext,
   BotDecisionServiceFactory,
   BotTurnDecision,
+  BotDecisionContext,
   BotActionDecision,
-} from '../../app/services/mcts-bot-decision';
-import { Player, Card, Difficulty } from '../../app/shapes';
-import { enginePlayerToUIPlayer } from './typeAdapters';
+} from '../bot/mcts-bot-decision';
+import { GameClient } from '../game-client';
 
 /**
  * BotAIAdapter - Bridges MCTS Bot AI with GameClient
@@ -28,7 +27,7 @@ import { enginePlayerToUIPlayer } from './typeAdapters';
  * 4. Dispatch action via GameClient
  * 5. React to state changes via MobX reactions (no setTimeout!)
  *
- * FUTURE: Unified Player Handler
+ * TODO: Unified Player Handler
  * This adapter is temporary. The plan is to create a unified PlayerActionHandler
  * that works for both bots and humans. The handler will:
  * - Accept player ID (bot or human)
@@ -39,16 +38,13 @@ import { enginePlayerToUIPlayer } from './typeAdapters';
  */
 export class BotAIAdapter {
   private botDecisionService: BotDecisionService;
-  private difficulty: Difficulty;
   private disposeReaction?: () => void;
 
   constructor(
-    private gameClient: GameClient,
-    difficulty: Difficulty = 'moderate'
+    private gameClient: GameClient
   ) {
-    this.difficulty = difficulty;
     // Use existing bot decision service factory
-    this.botDecisionService = BotDecisionServiceFactory.create(difficulty);
+    this.botDecisionService = BotDecisionServiceFactory.create(this.gameClient.state.difficulty);
 
     // Setup reactive bot turn execution
     this.setupBotReaction();
@@ -136,7 +132,8 @@ export class BotAIAdapter {
     await this.delay(800); // Simulate thinking time
 
     const context = this.createBotContext(botId);
-    const decision: BotTurnDecision = this.botDecisionService.decideTurnAction(context);
+    const decision: BotTurnDecision =
+      this.botDecisionService.decideTurnAction(context);
 
     if (decision.action === 'take-discard') {
       this.gameClient.dispatch(GameActions.takeDiscard(botId));
@@ -249,7 +246,9 @@ export class BotAIAdapter {
   ): Promise<void> {
     const declaredRank = this.botDecisionService.selectKingDeclaration(context);
 
-    this.gameClient.dispatch(GameActions.declareKingAction(botId, declaredRank));
+    this.gameClient.dispatch(
+      GameActions.declareKingAction(botId, declaredRank)
+    );
     console.log(`[BotAI] ${botId} declared King action: ${declaredRank}`);
 
     // Turn complete - advance turn after delay
@@ -264,7 +263,8 @@ export class BotAIAdapter {
     botId: string,
     context: BotDecisionContext
   ): Promise<void> {
-    const decision: BotActionDecision = this.botDecisionService.selectActionTargets(context);
+    const decision: BotActionDecision =
+      this.botDecisionService.selectActionTargets(context);
 
     if (decision.targets.length >= 2) {
       // Select first target
@@ -313,7 +313,8 @@ export class BotAIAdapter {
     botId: string,
     context: BotDecisionContext
   ): Promise<void> {
-    const decision: BotActionDecision = this.botDecisionService.selectActionTargets(context);
+    const decision: BotActionDecision =
+      this.botDecisionService.selectActionTargets(context);
 
     if (decision.targets.length > 0) {
       const target = decision.targets[0];
@@ -339,43 +340,25 @@ export class BotAIAdapter {
   /**
    * Create bot decision context from current game state
    *
-   * This converts the engine's GameState into the format
-   * that the existing MCTS bot expects
+   * Uses the engine's GameState directly - no conversion needed
    */
   private createBotContext(botId: string): BotDecisionContext {
     const state = this.gameClient.state;
 
-    // Convert engine players to UI players (with extra fields bot needs)
-    const allPlayers: Player[] = state.players.map((enginePlayer, index) => {
-      const position = this.getPlayerPosition(index);
-      return enginePlayerToUIPlayer(enginePlayer, position);
-    });
-
-    const botPlayer = allPlayers.find(p => p.id === botId);
+    const botPlayer = state.players.find((p) => p.id === botId);
     if (!botPlayer) {
       throw new Error(`Bot player ${botId} not found`);
     }
 
     // Extract opponent knowledge from bot player
     const opponentKnowledge = new Map<string, Map<number, Card>>();
-    // Note: This would be populated from bot memory in full implementation
+    // TODO: This would be populated from bot memory in full implementation
 
     return {
-      botId,
-      difficulty: this.difficulty,
+      botId,      
       botPlayer,
-      allPlayers,
-      gameState: {
-        players: allPlayers,
-        currentPlayerIndex: state.currentPlayerIndex,
-        drawPile: state.drawPile,
-        discardPile: state.discardPile,
-        phase: this.mapEnginePhaseToUIPhase(state.phase),
-        gameId: state.gameId,
-        roundNumber: state.roundNumber,
-        turnCount: state.turnCount,
-        finalTurnTriggered: state.finalTurnTriggered,
-      },
+      allPlayers: state.players,
+      gameState: state, // Use engine GameState directly - it already has all required fields
       discardTop: this.gameClient.topDiscardCard,
       discardPile: state.discardPile,
       pendingCard: this.gameClient.pendingCard,
@@ -384,38 +367,10 @@ export class BotAIAdapter {
   }
 
   /**
-   * Map engine phase to UI phase
-   */
-  private mapEnginePhaseToUIPhase(
-    enginePhase: EngineGameState['phase']
-  ): 'setup' | 'playing' | 'final' | 'scoring' {
-    switch (enginePhase) {
-      case 'setup':
-        return 'setup';
-      case 'playing':
-        return 'playing';
-      case 'final':
-        return 'final';
-      case 'scoring':
-        return 'scoring';
-      default:
-        return 'playing';
-    }
-  }
-
-  /**
-   * Get player position for UI (bottom, left, top, right)
-   */
-  private getPlayerPosition(index: number): Player['position'] {
-    const positions: Player['position'][] = ['bottom', 'left', 'top', 'right'];
-    return positions[index] || 'bottom';
-  }
-
-  /**
    * Delay helper for bot "thinking" time
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -442,7 +397,10 @@ export class BotAIAdapter {
 
 /**
  * Factory function to create bot AI adapter
+ * Difficulty is read from gameClient.state.difficulty
  */
-export function createBotAI(gameClient: GameClient, difficulty: Difficulty = 'moderate'): BotAIAdapter {
-  return new BotAIAdapter(gameClient, difficulty);
+export function createBotAI(
+  gameClient: GameClient
+): BotAIAdapter {
+  return new BotAIAdapter(gameClient);
 }

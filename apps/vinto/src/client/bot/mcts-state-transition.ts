@@ -1,6 +1,6 @@
 // services/mcts-state-transition.ts
+import { CARD_CONFIGS } from '@/shared';
 import copy from 'fast-copy';
-import { CARD_CONFIGS } from '../constants/game-setup';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
 /**

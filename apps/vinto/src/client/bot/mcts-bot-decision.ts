@@ -1,24 +1,31 @@
 // services/mcts-bot-decision.ts
-import { Card, Rank, Difficulty, GameState, Player, CardAction } from '../shapes';
 import copy from 'fast-copy';
 import { BotMemory } from './bot-memory';
 import { MCTSMoveGenerator } from './mcts-move-generator';
 import { MCTSStateTransition } from './mcts-state-transition';
+
 import {
-  MCTSNode,
-  MCTSGameState,
-  MCTSMove,
-  MCTSPlayerState,
+  Card,
+  CARD_CONFIGS,
+  CardAction,
+  Difficulty,
+  GameState,
+  PlayerState,
+  Rank,
+} from '@/shared';
+import {
   MCTSConfig,
   MCTS_DIFFICULTY_CONFIGS,
+  MCTSGameState,
+  MCTSMove,
+  MCTSNode,
+  MCTSPlayerState,
 } from './mcts-types';
-import { CARD_CONFIGS } from '../constants/game-setup';
 
 export interface BotDecisionContext {
   botId: string;
-  difficulty: Difficulty;
-  botPlayer: Player;
-  allPlayers: Player[];
+  botPlayer: PlayerState;
+  allPlayers: PlayerState[];
   gameState: GameState;
   discardTop?: Card;
   discardPile: Card[]; // Full discard pile history for tracking removed cards
@@ -105,7 +112,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   constructor(private difficulty: Difficulty) {
     this.botId = ''; // Will be set in first call
     this.config = MCTS_DIFFICULTY_CONFIGS[difficulty];
-    this.botMemory = new BotMemory('', difficulty); // Temp, will be recreated
+    this.botMemory = new BotMemory('', difficulty); // TODO, will be recreated
   }
 
   // ========== BotDecisionService Interface Implementation ==========
@@ -411,7 +418,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private updateMemoryFromContext(context: BotDecisionContext): void {
     // Update from bot's own known cards
     context.botPlayer.cards.forEach((card, position) => {
-      if (context.botPlayer.knownCardPositions.has(position)) {
+      if (context.botPlayer.knownCardPositions.includes(position)) {
         const existing = this.botMemory.getCardMemory(this.botId, position);
         if (!existing || existing.card?.id !== card.id) {
           this.botMemory.observeCard(card, this.botId, position);

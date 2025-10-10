@@ -4,12 +4,10 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown } from 'lucide-react';
-import {
-  useUIStore,
-} from '../di-provider';
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
+import { useUIStore } from '../di-provider';
 import { ContinueButton, OpponentSelectButton } from '../buttons';
+import { GameActions } from '@/engine';
+import { useGameClient } from '@/client';
 
 export const CoalitionLeaderModal = observer(() => {
   const gameClient = useGameClient();
@@ -64,7 +62,9 @@ export const CoalitionLeaderModal = observer(() => {
                 `}
               >
                 <OpponentSelectButton
-                  opponentName={`${player.name}${player.isHuman ? ' (You)' : ''}`}
+                  opponentName={`${player.name}${
+                    player.isHuman ? ' (You)' : ''
+                  }`}
                   onClick={() => handleSelectLeader(player.id)}
                   showAvatar={true}
                   player={player}

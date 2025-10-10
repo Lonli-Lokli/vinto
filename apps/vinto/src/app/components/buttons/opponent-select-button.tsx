@@ -1,6 +1,6 @@
-import { getButtonClasses } from '@/app/constants/button-colors';
 import { Target } from 'lucide-react';
 import { Avatar } from '../avatar';
+import { getButtonClasses } from '../../constants/button-colors';
 
 export const OpponentSelectButton = ({
   opponentName,

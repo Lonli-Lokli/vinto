@@ -8,26 +8,10 @@ import { container } from 'tsyringe';
 
 // Store tokens for type-safe injection
 export const TOKENS = {
-  // Core stores
-  PlayerStore: Symbol('PlayerStore'),
-  DeckStore: Symbol('DeckStore'),
-  GamePhaseStore: Symbol('GamePhaseStore'),
-  ActionStore: Symbol('ActionStore'),
-  TossInStore: Symbol('TossInStore'),
-  GameStore: Symbol('GameStore'),
-
   // Services
   BotDecisionService: Symbol('BotDecisionService'),
   TimerService: Symbol('TimerService'),
   ToastService: Symbol('ToastService'),
-
-  // Command system
-  CommandFactory: Symbol('CommandFactory'),
-  CommandHistory: Symbol('CommandHistory'),
-  GameStateManager: Symbol('GameStateManager'),
-
-  // Coordinators
-  ActionCoordinator: Symbol('ActionCoordinator'),
 } as const;
 
 /**
@@ -47,7 +31,7 @@ export function resetContainer(): void {
  */
 export function isContainerConfigured(): boolean {
   try {
-    return container.isRegistered(TOKENS.GameStore);
+    return container.isRegistered(TOKENS.ToastService);
   } catch {
     return false;
   }

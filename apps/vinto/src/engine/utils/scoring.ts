@@ -1,8 +1,7 @@
 // engine/utils/scoring.ts
 // Pure functions for calculating final scores
 
-import { PlayerState } from '../types/GameState';
-import { Card } from '../../app/shapes';
+import { Card, PlayerState } from '@/shared';
 
 /**
  * Calculate final scores for all players
@@ -30,7 +29,7 @@ export function calculateFinalScores(
   }
 
   // Coalition scoring
-  const vintoCaller = players.find(p => p.id === vintoCallerId);
+  const vintoCaller = players.find((p) => p.id === vintoCallerId);
   if (!vintoCaller) {
     // Fallback to normal scoring if caller not found
     players.forEach((player) => {
@@ -44,7 +43,7 @@ export function calculateFinalScores(
 
   // Find coalition members (players who are in coalition with the caller)
   const coalitionMembers = players.filter(
-    p => p.id !== vintoCallerId && p.coalitionWith.includes(vintoCallerId)
+    (p) => p.id !== vintoCallerId && p.coalitionWith.includes(vintoCallerId)
   );
 
   // Calculate best (lowest) coalition score

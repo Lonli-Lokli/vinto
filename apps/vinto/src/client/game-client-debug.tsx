@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useGameClient } from './GameClientContext';
+import { useGameClient } from './game-client-context';
 
 /**
  * GameClient Debug Utility
@@ -27,7 +27,11 @@ import { useGameClient } from './GameClientContext';
  * __gameClient__.logActions()
  * ```
  */
-export function GameClientDebugProvider({ children }: { children: React.ReactNode }) {
+export function GameClientDebugProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const gameClient = useGameClient();
 
   useEffect(() => {
@@ -40,10 +44,19 @@ export function GameClientDebugProvider({ children }: { children: React.ReactNod
       // @ts-expect-error - Adding debug methods
       window.__gameClient__.logState = () => {
         console.group('🎮 GameClient State');
-        console.log('Phase:', gameClient.state.phase, '/', gameClient.state.subPhase);
+        console.log(
+          'Phase:',
+          gameClient.state.phase,
+          '/',
+          gameClient.state.subPhase
+        );
         console.log('Turn:', gameClient.state.turnCount);
         console.log('Round:', gameClient.state.roundNumber);
-        console.log('Current Player:', gameClient.currentPlayer.name, `(${gameClient.currentPlayer.id})`);
+        console.log(
+          'Current Player:',
+          gameClient.currentPlayer.name,
+          `(${gameClient.currentPlayer.id})`
+        );
         console.log('Is My Turn:', gameClient.isCurrentPlayerHuman);
         console.log('Draw Pile:', gameClient.drawPileCount, 'cards');
         console.log('Discard Pile:', gameClient.discardPileCount, 'cards');
@@ -59,7 +72,11 @@ export function GameClientDebugProvider({ children }: { children: React.ReactNod
       window.__gameClient__.logPlayers = () => {
         console.group('👥 Players');
         gameClient.state.players.forEach((player, index) => {
-          console.group(`${index === gameClient.state.currentPlayerIndex ? '➤' : ' '} ${player.name} (${player.id})`);
+          console.group(
+            `${index === gameClient.state.currentPlayerIndex ? '➤' : ' '} ${
+              player.name
+            } (${player.id})`
+          );
           console.log('Type:', player.isHuman ? '👤 Human' : '🤖 Bot');
           console.log('Cards:', player.cards.length);
           console.log('Known Positions:', player.knownCardPositions.length);
@@ -91,7 +108,10 @@ export function GameClientDebugProvider({ children }: { children: React.ReactNod
       window.__gameClient__.quickSwap = (position: number) => {
         const playerId = gameClient.currentPlayer.id;
         console.log(`🔄 Swapping card at position ${position}`);
-        gameClient.dispatch({ type: 'SWAP_CARD', payload: { playerId, position } });
+        gameClient.dispatch({
+          type: 'SWAP_CARD',
+          payload: { playerId, position },
+        });
       };
 
       // @ts-expect-error - Adding debug methods

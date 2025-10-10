@@ -2,21 +2,22 @@
 'use client';
 
 import { useUIStore } from '../di-provider';
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { ContinueButton, SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const OwnCardPeek = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
   const action = gameClient.state.pendingAction?.card.rank;
-  const humanPlayerState = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayerState = gameClient.state.players.find((p) => p.isHuman);
 
   const hasRevealedCard =
-    humanPlayerState && uiStore.getTemporarilyVisibleCards(humanPlayerState.id).size > 0;
+    humanPlayerState &&
+    uiStore.getTemporarilyVisibleCards(humanPlayerState.id).size > 0;
 
   return (
     <div className="w-full h-full px-3 py-2">

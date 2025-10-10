@@ -1,7 +1,7 @@
 // engine/cases/update-difficulty.ts
 // Handle UPDATE_DIFFICULTY action
 
-import type { GameState, UpdateDifficultyAction } from '../types';
+import { GameState, UpdateDifficultyAction } from '@/shared';
 import copy from 'fast-copy';
 /**
  * Update game difficulty setting

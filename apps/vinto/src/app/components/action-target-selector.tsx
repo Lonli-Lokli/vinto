@@ -9,9 +9,8 @@ import { CardSwap } from './action-types/card-swap';
 import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
-import { NeverError } from '../shapes';
-import { useGameClient } from '../../client/GameClientContext';
-import { TargetType } from '../../engine/types/GameState';
+import { useGameClient } from '@/client';
+import { NeverError, TargetType } from '@/shared';
 
 /**
  * ActionTargetSelector: Renders action-specific controls during action execution.

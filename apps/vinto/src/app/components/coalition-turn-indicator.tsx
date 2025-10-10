@@ -4,8 +4,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { useGameClient } from '../../client/GameClientContext';
 import { Avatar } from './avatar';
+import { useGameClient } from '@/client';
 
 export const CoalitionTurnIndicator = observer(() => {
   const gameClient = useGameClient();

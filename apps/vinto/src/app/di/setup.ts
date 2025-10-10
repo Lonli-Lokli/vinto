@@ -7,37 +7,25 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 
-// Stores (only active stores - old stores removed in migration)
-import {
-  CardAnimationStore,
-  GameStore,
-} from '../stores';
+// Stores
+import { CardAnimationStore } from '../stores';
 
 // Services
-import { ActionCoordinator } from '../stores/action-coordinator';
-import { BotDecisionServiceFactory } from '../services/mcts-bot-decision';
 import { UIStore } from '../stores/ui-store';
+import { AnimationService } from '../services/animation-service';
+import { AnimationPositionCapture } from '../services/animation-position-capture';
 
 /**
  * Configure the DI container with all dependencies
  */
-export function setupDIContainer(
-  difficulty: 'easy' | 'moderate' | 'hard' = 'moderate'
-) {
-  // Register active stores as singletons
+export function setupDIContainer() {
+  // Register UI stores
   container.registerSingleton(CardAnimationStore);
   container.registerSingleton(UIStore);
 
-  // Register BotDecisionService
-  container.register('BotDecisionService', {
-    useFactory: () => BotDecisionServiceFactory.create(difficulty),
-  });
-
-  // Register ActionCoordinator
-  container.registerSingleton(ActionCoordinator);
-
-  // Register GameStore last (depends on everything)
-  container.registerSingleton(GameStore);
+  // Register services
+  container.registerSingleton(AnimationPositionCapture);
+  container.registerSingleton(AnimationService);
 }
 
 /**
@@ -58,5 +46,5 @@ export function resetDIContainer() {
  * Check if DI is configured
  */
 export function isDIConfigured(): boolean {
-  return container.isRegistered(GameStore);
+  return container.isRegistered(UIStore);
 }

@@ -3,10 +3,10 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import { useGameClient } from '../../client/GameClientContext';
-import { GameActions } from '../../engine/types';
-import type { Rank } from '../shapes';
 import { RankDeclarationButton, SkipButton } from './buttons';
+import { Rank } from '@/shared';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 // Only show action cards (7-K, A) since 2-6 and Joker have no actions
 const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -14,7 +14,7 @@ const ACTION_RANKS: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 export const RankDeclaration = observer(() => {
   const gameClient = useGameClient();
 
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
   const pendingCard = gameClient.state.pendingAction?.card;
   const swapPosition = gameClient.state.pendingAction?.swapPosition;
   const isDeclaringRank = gameClient.state.subPhase === 'declaring_rank';
@@ -28,7 +28,9 @@ export const RankDeclaration = observer(() => {
 
   const handleRankClick = (rank: Rank) => {
     if (!humanPlayer) return;
-    gameClient.dispatch(GameActions.swapCard(humanPlayer.id, swapPosition, rank));
+    gameClient.dispatch(
+      GameActions.swapCard(humanPlayer.id, swapPosition, rank)
+    );
   };
 
   const getHelpContent = () => {
@@ -72,7 +74,9 @@ Note: 2-6 and Joker are not shown because they have no actions. Declaring them c
         <SkipButton
           onClick={() => {
             if (!humanPlayer) return;
-            gameClient.dispatch(GameActions.swapCard(humanPlayer.id, swapPosition));
+            gameClient.dispatch(
+              GameActions.swapCard(humanPlayer.id, swapPosition)
+            );
           }}
           className="w-full py-1.5 px-3 flex-shrink-0"
         >

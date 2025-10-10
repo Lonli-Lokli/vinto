@@ -1,8 +1,7 @@
 // engine/utils/action-utils.ts
 // Utility functions for action handling
 
-import { Rank } from '../../app/shapes';
-import { TargetType } from '../types';
+import { Rank, TargetType } from '@/shared';
 
 /**
  * Determine the target type based on card rank

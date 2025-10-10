@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Card as CardType } from '../shapes';
+import { Card as CardType } from '@/shared';
 import { DrawPile } from './draw-pile';
 import { DiscardPile } from './discard-pile';
 import { DrawnCard } from './drawn-card';
@@ -34,7 +34,11 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
   const shouldDimDeckArea = isSelectingActionTarget;
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${shouldDimDeckArea ? 'area-dimmed' : ''}`}>
+    <div
+      className={`flex flex-col items-center gap-2 ${
+        shouldDimDeckArea ? 'area-dimmed' : ''
+      }`}
+    >
       {/* Draw and Discard Piles - Side by Side */}
       <div className={`flex ${gap} items-center`}>
         <DrawPile

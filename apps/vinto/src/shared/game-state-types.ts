@@ -1,7 +1,7 @@
 // engine/types/GameState.ts
 // Authoritative game state - the single source of truth
 
-import { Card, Rank, Difficulty } from '../../app/shapes';
+import { Card, Difficulty, Rank } from './domain-types';
 
 /**
  * Complete, serializable game state
@@ -60,12 +60,14 @@ export interface PlayerState {
   // Vinto flags
   isVintoCaller: boolean;
   coalitionWith: string[];
+  position: PlayerPosition;
 
   // Bot-specific state
   botMemory?: SerializedBotMemory;
   opponentKnowledge?: Record<string, SerializedOpponentKnowledge>;
 }
 
+export type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
 /**
  * Pending action state (multi-step actions)
  */

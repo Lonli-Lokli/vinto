@@ -5,25 +5,9 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
 import { DrawCardButton, UseDiscardButton } from './buttons';
-import { useGameClient, useDispatch } from '../../client/GameClientContext';
-import { GameActions } from '../../engine/types';
+import { useDispatch, useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
-/**
- * GameControls using NEW GameClient architecture
- *
- * Compare to old version (game-controls.tsx):
- * - OLD: Uses multiple store hooks (gameStore, playerStore, gamePhaseStore, deckStore, tossInStore)
- * - NEW: Uses single useGameClient() hook with computed properties
- *
- * - OLD: Calls gameStore.drawCard() (store mutation)
- * - NEW: Dispatches GameActions.drawCard() (pure action)
- *
- * Benefits:
- * - Simpler: One hook instead of five
- * - Clearer: Computed properties express intent
- * - Type-safe: Actions are discriminated unions
- * - Testable: Pure state updates
- */
 export const GameControls = observer(() => {
   const gameClient = useGameClient();
   const dispatch = useDispatch();
@@ -93,67 +77,69 @@ Note: Call Vinto option will be available after you complete your turn during th
   );
 });
 
-const FullTurnControls = observer(({
-  handleDrawCard,
-  handleTakeDiscard,
-}: {
-  handleDrawCard: () => void;
-  handleTakeDiscard: () => void;
-}) => {
-  const gameClient = useGameClient();
+const FullTurnControls = observer(
+  ({
+    handleDrawCard,
+    handleTakeDiscard,
+  }: {
+    handleDrawCard: () => void;
+    handleTakeDiscard: () => void;
+  }) => {
+    const gameClient = useGameClient();
 
-  // Simple computed values from GameClient
-  const deckEmpty = gameClient.drawPileCount === 0;
-  const topDiscard = gameClient.topDiscardCard;
-  const canTakeDiscard = topDiscard?.actionText && !topDiscard?.played;
+    // Simple computed values from GameClient
+    const deckEmpty = gameClient.drawPileCount === 0;
+    const topDiscard = gameClient.topDiscardCard;
+    const canTakeDiscard = topDiscard?.actionText && !topDiscard?.played;
 
-  // Get discard button info
-  const getDiscardButtonInfo = () => {
-    if (!topDiscard) {
-      return {
-        text: 'Use Discard',
-        subtitle: 'Pile empty',
-        tooltip: 'No cards in discard pile',
-      };
-    }
-    if (topDiscard.played) {
+    // Get discard button info
+    const getDiscardButtonInfo = () => {
+      if (!topDiscard) {
+        return {
+          text: 'Use Discard',
+          subtitle: 'Pile empty',
+          tooltip: 'No cards in discard pile',
+        };
+      }
+      if (topDiscard.played) {
+        return {
+          text: `Use ${topDiscard.rank}`,
+          subtitle: 'Already used',
+          tooltip: `${topDiscard.rank} action has already been played`,
+        };
+      }
+      if (!topDiscard.actionText) {
+        return {
+          text: `Use ${topDiscard.rank}`,
+          subtitle: 'No action',
+          tooltip: `${topDiscard.rank} has no special action`,
+        };
+      }
       return {
         text: `Use ${topDiscard.rank}`,
-        subtitle: 'Already used',
-        tooltip: `${topDiscard.rank} action has already been played`,
+        subtitle: null,
+        tooltip: `Use ${topDiscard.rank} card action from discard pile`,
       };
-    }
-    if (!topDiscard.actionText) {
-      return {
-        text: `Use ${topDiscard.rank}`,
-        subtitle: 'No action',
-        tooltip: `${topDiscard.rank} has no special action`,
-      };
-    }
-    return {
-      text: `Use ${topDiscard.rank}`,
-      subtitle: null,
-      tooltip: `Use ${topDiscard.rank} card action from discard pile`,
     };
-  };
 
-  const discardInfo = getDiscardButtonInfo();
+    const discardInfo = getDiscardButtonInfo();
 
-  return (
-    <div className="space-y-1">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-        {/* Draw from Deck */}
-        <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
+    return (
+      <div className="space-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+          {/* Draw from Deck */}
+          <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 
-        {/* Take from Discard */}
-        <UseDiscardButton
-          onClick={handleTakeDiscard}
-          disabled={!canTakeDiscard}
-          title={discardInfo.tooltip}
-          text={discardInfo.text}
-          subtitle={discardInfo.subtitle}
-        />
+          {/* Take from Discard */}
+          <UseDiscardButton
+            onClick={handleTakeDiscard}
+            disabled={!canTakeDiscard}
+            title={discardInfo.tooltip}
+            text={discardInfo.text}
+            subtitle={discardInfo.subtitle}
+          />
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);

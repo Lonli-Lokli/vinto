@@ -1,10 +1,8 @@
 // client/initializeGame.ts
 // Utility functions to create initial game state
 
-import { GameState, PlayerState } from '../engine/types';
-import { Card } from '../app/shapes';
+import { Card, GameState, getCardConfig, PlayerState, Rank } from '@/shared';
 import { v4 as uuidv4 } from 'uuid';
-import { CARD_CONFIGS } from '@/app/constants/game-setup';
 
 /**
  * Game initialization settings
@@ -20,62 +18,69 @@ export interface GameSettings {
  * Create a shuffled deck of Vinto cards
  *
  * Vinto deck composition (for 4 players):
- * - 4 suits × 13 ranks = 52 cards
- * - Ranks: A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K
- * - Each rank appears 4 times
+ * - 4 suits × 13 ranks
+ * - 2 Jokers
+ * - Ranks: A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, Joker 
  */
-function createDeck(): Card[] {
-  const ranks: Card['rank'][] = [
-    'A',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    'J',
-    'Q',
-    'K',
-  ];
+export const createDeck = (): Card[] => {
   const deck: Card[] = [];
+  const cardSet = [0, 1, 2, 3];
+  const noActionRanks = [2, 3, 4, 5, 6] as const;
 
-  // Create 4 of each rank
-  for (let i = 0; i < 4; i++) {
-    for (const rank of ranks) {
-      const value = getRankValue(rank);
+  // Number cards 2-6
+  for (const rank of noActionRanks) {
+    const config = getCardConfig(`${rank}` as Rank);
+    cardSet.forEach((no) => {
       deck.push({
-        id: uuidv4(),
-        rank,
-        value,
+        id: `${rank}_${no}`,
+        rank: `${rank}`,
+        value: config.value,
         played: false,
       });
-    }
+    });
   }
 
+  // Action cards
+  const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+  actionRanks.forEach((rank) => {
+    const config = getCardConfig(rank);
+    cardSet.forEach((no) => {
+      deck.push({
+        id: `${rank}_${no}`,
+        rank: rank,
+        value: config.value,
+        actionText: config.shortDescription,
+        played: false,
+      });
+    });
+  });
+
+  // Jokers
+  const jokerConfig = getCardConfig('Joker');
+  deck.push(
+    { id: 'Joker1', rank: 'Joker', value: jokerConfig.value, played: false },
+    { id: 'Joker2', rank: 'Joker', value: jokerConfig.value, played: false }
+  );
+
   return deck;
-}
+};
 
-/**
- * Get numeric value for a card rank
- */
-function getRankValue(rank: Card['rank']): number {
-  return CARD_CONFIGS[rank].value;
-}
 
-/**
- * Shuffle an array using Fisher-Yates algorithm
- */
-function shuffle<T>(array: T[]): T[] {
-  const shuffled = [...array];
+
+export const shuffleDeck = (deck: Card[]): Card[] => {
+  const shuffled = [...deck];
+
+  // Use crypto.getRandomValues for better entropy
+  const randomBytes = new Uint32Array(shuffled.length);
+  crypto.getRandomValues(randomBytes);
+
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor((randomBytes[i] / 0x100000000) * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
-}
+};
 
 /**
  * Create initial player states
@@ -87,6 +92,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
   players.push({
     id: 'human-1',
     name: 'You',
+    position: 'bottom',
     isHuman: true,
     isBot: false,
     cards: [],
@@ -99,6 +105,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-1`,
       name: `Michelangelo`,
+      position: 'left',
       isHuman: false,
       isBot: true,
       cards: [],
@@ -109,6 +116,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-2`,
       name: `Donatello`,
+      position: 'top',
       isHuman: false,
       isBot: true,
       cards: [],
@@ -119,6 +127,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-3`,
       name: `Raphael`,
+      position: 'right',
       isHuman: false,
       isBot: true,
       cards: [],
@@ -144,7 +153,7 @@ function dealCards(
   players: PlayerState[]
 ): { players: PlayerState[]; drawPile: Card[] } {
   const cardsPerPlayer = 5;
-  const shuffledDeck = shuffle(deck);
+  const shuffledDeck = shuffleDeck(deck);
 
   let cardIndex = 0;
 

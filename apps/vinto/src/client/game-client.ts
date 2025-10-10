@@ -2,10 +2,16 @@
 // Observable wrapper around GameEngine for UI integration
 
 import { makeObservable, observable, action, computed } from 'mobx';
-import { GameEngine } from '../engine/GameEngine';
-import type { GameState, GameAction, PlayerState, GameActionHistory } from '../engine/types';
-import type { Card } from '../app/shapes';
+
 import copy from 'fast-copy';
+import type {
+  GameState,
+  GameAction,
+  GameActionHistory,
+  PlayerState,
+  Card,
+} from '@/shared';
+import { GameEngine } from '@/engine';
 
 /**
  * GameClient - Observable wrapper around GameEngine
@@ -42,7 +48,11 @@ export class GameClient {
    * Animation/effect callbacks (optional)
    * Triggered after state updates
    */
-  private onStateChange?: (oldState: GameState, newState: GameState, action: GameAction) => void;
+  private onStateChange?: (
+    oldState: GameState,
+    newState: GameState,
+    action: GameAction
+  ) => void;
 
   constructor(initialState: GameState) {
     this._state = initialState;
@@ -85,7 +95,7 @@ export class GameClient {
     const description = this.getActionDescription(state, action);
     if (!description) return state;
 
-    const player = state.players.find(p => {
+    const player = state.players.find((p) => {
       // Find player associated with this action
       if ('payload' in action && 'playerId' in action.payload) {
         return p.id === action.payload.playerId;
@@ -117,8 +127,11 @@ export class GameClient {
   /**
    * Get human-readable description of action
    */
-  private getActionDescription(state: GameState, action: GameAction): string | null {
-    const player = state.players.find(p => {
+  private getActionDescription(
+    state: GameState,
+    action: GameAction
+  ): string | null {
+    const player = state.players.find((p) => {
       if ('payload' in action && 'playerId' in action.payload) {
         return p.id === action.payload.playerId;
       }
@@ -147,7 +160,13 @@ export class GameClient {
    * Register a callback for state changes
    * Used for animations, sounds, network sync, etc.
    */
-  onStateUpdate(callback: (oldState: GameState, newState: GameState, action: GameAction) => void): void {
+  onStateUpdate(
+    callback: (
+      oldState: GameState,
+      newState: GameState,
+      action: GameAction
+    ) => void
+  ): void {
     this.onStateChange = callback;
   }
 
@@ -217,7 +236,8 @@ export class GameClient {
   @computed
   get canDrawCard(): boolean {
     return (
-      (this._state.subPhase === 'idle' || this._state.subPhase === 'ai_thinking') &&
+      (this._state.subPhase === 'idle' ||
+        this._state.subPhase === 'ai_thinking') &&
       this._state.drawPile.length > 0
     );
   }
@@ -228,7 +248,8 @@ export class GameClient {
   @computed
   get canTakeDiscard(): boolean {
     return (
-      (this._state.subPhase === 'idle' || this._state.subPhase === 'ai_thinking') &&
+      (this._state.subPhase === 'idle' ||
+        this._state.subPhase === 'ai_thinking') &&
       this._state.discardPile.length > 0
     );
   }
@@ -261,14 +282,14 @@ export class GameClient {
    * Get player by ID
    */
   getPlayer(playerId: string): PlayerState | undefined {
-    return this._state.players.find(p => p.id === playerId);
+    return this._state.players.find((p) => p.id === playerId);
   }
 
   /**
    * Get player index by ID
    */
   getPlayerIndex(playerId: string): number {
-    return this._state.players.findIndex(p => p.id === playerId);
+    return this._state.players.findIndex((p) => p.id === playerId);
   }
 
   /**

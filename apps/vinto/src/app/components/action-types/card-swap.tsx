@@ -1,16 +1,16 @@
 // components/action-types/CardSwap.tsx
 'use client';
 
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const CardSwap = observer(() => {
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   const pendingAction = gameClient.state.pendingAction;
   if (!pendingAction) return null;
@@ -19,7 +19,7 @@ export const CardSwap = observer(() => {
   const action = 'Swap Cards'; // Action description
 
   const getPlayerName = (playerId: string) => {
-    const player = gameClient.state.players.find(p => p.id === playerId);
+    const player = gameClient.state.players.find((p) => p.id === playerId);
     return player?.name || 'Unknown';
   };
 

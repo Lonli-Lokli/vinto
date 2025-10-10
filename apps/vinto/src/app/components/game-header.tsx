@@ -3,14 +3,12 @@
 
 import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGameClient } from '../../client/GameClientContext';
-import { GameActions } from '../../engine/types';
 import { DeckManagerPopover } from './deck-manager-popover';
 import { ThemeToggle } from './theme-toggle';
 import { DifficultyButton, SettingsButton, DeckManagerButton } from './buttons';
 import { SettingsPopover } from './mobile-settings';
-
-
+import { GameActions } from '@/engine';
+import { useGameClient } from '@/client';
 
 export const GameHeader = observer(() => {
   const gameClient = useGameClient();
@@ -71,7 +69,9 @@ export const GameHeader = observer(() => {
                       key={level}
                       level={level}
                       isActive={gameClient.state.difficulty === level}
-                      onClick={() => gameClient.dispatch(GameActions.updateDifficulty(level))}
+                      onClick={() =>
+                        gameClient.dispatch(GameActions.updateDifficulty(level))
+                      }
                     />
                   ))}
                 </div>
@@ -132,4 +132,3 @@ export const GameHeader = observer(() => {
     </div>
   );
 });
-

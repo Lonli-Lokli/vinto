@@ -1,7 +1,7 @@
 // engine/cases/set-next-draw-card.ts
 // Handle SET_NEXT_DRAW_CARD action (debug/testing only)
 
-import { GameState, SetNextDrawCardAction } from '../types';
+import { GameState, SetNextDrawCardAction } from '@/shared';
 import copy from 'fast-copy';
 
 /**

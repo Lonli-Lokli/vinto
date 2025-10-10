@@ -1,4 +1,4 @@
-import { GameState, DeclareKingActionAction } from '../types';
+import { GameState, DeclareKingActionAction } from '@/shared';
 import copy from 'fast-copy';
 
 /**

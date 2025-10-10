@@ -4,11 +4,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Users, Crown } from 'lucide-react';
-import { PlayerState } from '../../engine/types/GameState';
 import { Card } from './card';
 import { Avatar } from './avatar';
-import { useGameClient } from '../../client/GameClientContext';
 import { useUIStore } from './di-provider';
+import { PlayerState } from '@/shared';
+import { useGameClient } from '@/client';
 
 type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
 
@@ -39,7 +39,7 @@ export const PlayerArea = observer(function PlayerArea({
   // Get coalition leader status from GameClient
   const gameClient = useGameClient();
   const uiStore = useUIStore();
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
   const coalitionLeader = gameClient.coalitionLeader;
 
   // Get UI state for this player
@@ -245,8 +245,7 @@ export const PlayerArea = observer(function PlayerArea({
         }
       >
         {player.cards.map((card, index) => {
-          const isSidePlayer =
-            position === 'left' || position === 'right';
+          const isSidePlayer = position === 'left' || position === 'right';
 
           // Determine if this card is selectable
           const isCardSelectable =

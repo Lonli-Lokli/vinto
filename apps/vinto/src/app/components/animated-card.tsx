@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 import { Card } from './card';
 import { useCardAnimationStore } from './di-provider';
-import { Card as CardType } from '../shapes';
+import { Card as CardType } from '@/shared';
 
 interface VirtualCard {
   id: string;

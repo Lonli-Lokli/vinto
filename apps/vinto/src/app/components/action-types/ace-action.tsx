@@ -1,12 +1,12 @@
 // components/action-types/AceAction.tsx
 'use client';
 
-import { useGameClient } from '../../../client/GameClientContext';
-import { GameActions } from '../../../engine/types';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from '../help-popover';
 import { OpponentSelectButton, SkipButton } from '../buttons';
+import { useGameClient } from '@/client';
+import { GameActions } from '@/engine';
 
 export const AceAction = observer(() => {
   const gameClient = useGameClient();
@@ -16,14 +16,18 @@ export const AceAction = observer(() => {
 
   if (!gameClient.state.pendingAction) return null;
 
-  const humanPlayer = gameClient.state.players.find(p => p.isHuman);
-  const opponents = gameClient.state.players.filter((p) => p.id !== humanPlayer?.id);
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const opponents = gameClient.state.players.filter(
+    (p) => p.id !== humanPlayer?.id
+  );
 
   const handleOpponentClick = (opponentId: string) => {
     if (!humanPlayer) return;
     setSelectedOpponentId(opponentId);
     // Select the first card position (index 0) as a dummy - the action only cares about the player
-    gameClient.dispatch(GameActions.selectActionTarget(humanPlayer.id, opponentId, 0));
+    gameClient.dispatch(
+      GameActions.selectActionTarget(humanPlayer.id, opponentId, 0)
+    );
   };
 
   return (

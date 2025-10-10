@@ -1,4 +1,4 @@
-import { DrawCardAction, GameState } from '../types';
+import { GameState, DrawCardAction } from '@/shared';
 import copy from 'fast-copy';
 
 /**

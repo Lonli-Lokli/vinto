@@ -4,12 +4,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { useGameClient } from '../../client/GameClientContext';
 import { calculateFinalScores } from '../../engine/utils/scoring';
 import { Avatar } from './avatar';
 import { HelpPopover } from './help-popover';
-import type { PlayerState } from '../../engine/types/GameState';
-
+import { useGameClient } from '@/client';
+import { PlayerState } from '@/shared';
 
 export const FinalScores = observer(() => {
   const gameClient = useGameClient();
@@ -33,7 +32,7 @@ export const FinalScores = observer(() => {
 
   // Get Vinto caller
   const vintoCaller = vintoCallerId
-    ? players.find(p => p.id === vintoCallerId)
+    ? players.find((p) => p.id === vintoCallerId)
     : null;
   const hasCoalition = !!vintoCaller;
 
@@ -167,7 +166,7 @@ function getWinnerInfo(
 
   // Detect coalition win
   const hasCoalitionWinner = winnerIds.some((id) => {
-    const player = players.find(p => p.id === id);
+    const player = players.find((p) => p.id === id);
     return player && player.coalitionWith.length > 0;
   });
 
@@ -178,23 +177,24 @@ function getWinnerInfo(
   winnerIds.forEach((winnerId) => {
     if (processedIds.has(winnerId)) return;
 
-    const winner = players.find(p => p.id === winnerId);
+    const winner = players.find((p) => p.id === winnerId);
     if (!winner) return;
 
     if (winner.coalitionWith.length > 0) {
       // Coalition winner - group all coalition members who won
-      const coalitionWinners = winnerIds.filter(id => {
-        const p = players.find(player => player.id === id);
-        return p && (
-          p.id === winnerId ||
-          winner.coalitionWith.includes(id) ||
-          p.coalitionWith.includes(winnerId)
+      const coalitionWinners = winnerIds.filter((id) => {
+        const p = players.find((player) => player.id === id);
+        return (
+          p &&
+          (p.id === winnerId ||
+            winner.coalitionWith.includes(id) ||
+            p.coalitionWith.includes(winnerId))
         );
       });
 
-      coalitionWinners.forEach(id => processedIds.add(id));
+      coalitionWinners.forEach((id) => processedIds.add(id));
       const names = coalitionWinners
-        .map(id => players.find(p => p.id === id)?.name || 'Unknown')
+        .map((id) => players.find((p) => p.id === id)?.name || 'Unknown')
         .join(' & ');
       winners.push(names);
     } else {

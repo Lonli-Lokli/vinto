@@ -1,5 +1,6 @@
 // services/bot-memory.ts
-import { Card, Rank, Difficulty } from '../shapes';
+
+import { Card, Difficulty, Rank } from '@/shared';
 
 /**
  * Memory entry for a single card observation
@@ -204,7 +205,9 @@ export class BotMemory {
     if (playerId === this.botId) {
       return new Map(this.ownCards);
     } else {
-      return new Map(this.opponentCards.get(playerId) || new Map<number, CardMemory>());
+      return new Map(
+        this.opponentCards.get(playerId) || new Map<number, CardMemory>()
+      );
     }
   }
 
