@@ -1,6 +1,6 @@
 // services/vinto-round-solver.ts
 
-import { Card, CARD_CONFIGS, CardAction } from '@/shared';
+import { Card, CardAction, getCardAction, getCardValue, Pile } from '@/shared';
 import { BotMemory } from './bot-memory';
 
 /**
@@ -47,7 +47,7 @@ export class VintoRoundSolver {
       id: string;
       cardCount: number;
     }>,
-    discardPile: Card[]
+    discardPile: Pile
   ): VintoValidationResult {
     // Step 1: Calculate bot's actual score
     const callerScore = this.calculateScore(botCards);
@@ -110,7 +110,7 @@ export class VintoRoundSolver {
         knownCards.push(memory.card);
 
         // Track action cards - get action from card rank config
-        const action = CARD_CONFIGS[memory.card.rank].action;
+        const action = getCardAction(memory.card.rank);
         if (action) {
           actionCardTypes.push(action);
         }
@@ -138,7 +138,7 @@ export class VintoRoundSolver {
    */
   private calculateWorstCaseScore(
     opponent: PlayerAnalysisState,
-    discardPile: Card[]
+    discardPile: Pile
   ): number {
     // Start with known cards score
     const knownScore = opponent.knownCards.reduce(
@@ -193,14 +193,14 @@ export class VintoRoundSolver {
    * Calculate the best possible value for unknown cards
    * (lowest possible, which is worst for bot calling Vinto)
    */
-  private calculateBestPossibleUnknownValue(_discardPile: Card[]): number {
+  private calculateBestPossibleUnknownValue(_discardPile: Pile): number {
     const distribution = this.botMemory.getCardDistribution();
 
     // Build list of remaining card values, weighted by count
     const remainingValues: number[] = [];
     for (const [rank, count] of distribution) {
       if (count > 0) {
-        const value = CARD_CONFIGS[rank].value;
+        const value = getCardValue(rank);
         for (let i = 0; i < count; i++) {
           remainingValues.push(value);
         }

@@ -183,6 +183,10 @@ export function getCardValue(rank: Rank): number {
   return CARD_CONFIGS[rank].value;
 }
 
+export function getCardAction(rank: Rank): CardAction | undefined {
+  return CARD_CONFIGS[rank].action;
+}
+
 export function getCardName(rank: Rank): string {
   return CARD_CONFIGS[rank].name;
 }

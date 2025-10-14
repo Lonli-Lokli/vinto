@@ -276,7 +276,7 @@ export class BotAIAdapter {
       this.botDecisionService.decideTurnAction(context);
 
     if (decision.action === 'take-discard') {
-      this.gameClient.dispatch(GameActions.takeDiscard(botId));
+      this.gameClient.dispatch(GameActions.playDiscard(botId));
       console.log(`[BotAI] ${botId} took from discard`);
     } else {
       this.gameClient.dispatch(GameActions.drawCard(botId));

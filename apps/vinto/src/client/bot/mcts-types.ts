@@ -1,5 +1,5 @@
 // services/mcts-types.ts
-import { Card, Rank } from '@/shared';
+import { Card, Pile, Rank } from '@/shared';
 import { BotMemory } from './bot-memory';
 
 /**
@@ -59,7 +59,7 @@ export interface MCTSGameState {
   botPlayerId: string;
 
   discardPileTop: Card | null;
-  discardPile: Card[]; // Full discard pile history
+  discardPile: Pile; // Full discard pile history
   deckSize: number;
 
   // Bot's belief state (imperfect information)

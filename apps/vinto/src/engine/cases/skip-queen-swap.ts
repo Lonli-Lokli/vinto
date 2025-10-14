@@ -24,7 +24,7 @@ export function handleSkipQueenSwap(
 
   // Move Queen card to discard pile (skip the swap)
   if (queenCard) {
-    newState.discardPile.unshift(queenCard);
+    newState.discardPile.addToTop(queenCard);
   }
 
   // Clear pending action

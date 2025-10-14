@@ -26,7 +26,7 @@ export function handleDeclareKingAction(
 
   // Move King card to discard pile
   if (newState.pendingAction?.card) {
-    newState.discardPile.push(newState.pendingAction.card);
+    newState.discardPile.addToTop(newState.pendingAction.card);
   }
 
   // Trigger toss-in for the declared rank

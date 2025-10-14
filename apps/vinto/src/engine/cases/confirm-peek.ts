@@ -25,7 +25,7 @@ export function handleConfirmPeek(
 
   // Move action card to discard pile
   if (peekCard) {
-    newState.discardPile.unshift(peekCard);
+    newState.discardPile.addToTop(peekCard);
   }
 
   // Clear pending action

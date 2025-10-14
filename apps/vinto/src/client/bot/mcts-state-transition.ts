@@ -1,5 +1,5 @@
 // services/mcts-state-transition.ts
-import { CARD_CONFIGS } from '@/shared';
+import { getCardAction } from '@/shared';
 import copy from 'fast-copy';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
@@ -93,7 +93,7 @@ export class MCTSStateTransition {
   ): MCTSGameState {
     // Action effects depend on the action type
     if (move.actionCard) {
-      const actionType = CARD_CONFIGS[move.actionCard.rank].action;
+      const actionType = getCardAction(move.actionCard.rank);;
 
       switch (actionType) {
         case 'swap-cards':

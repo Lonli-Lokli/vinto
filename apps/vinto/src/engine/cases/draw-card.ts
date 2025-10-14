@@ -25,7 +25,7 @@ export function handleDrawCard(
   }
 
   // Draw the top card
-  const drawnCard = newState.drawPile.shift();
+  const drawnCard = newState.drawPile.drawTop();
   if (!drawnCard) {
     // Should never happen due to validation, but be defensive
     return state;

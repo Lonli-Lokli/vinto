@@ -1,6 +1,6 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, Rank, CARD_CONFIGS } from '@/shared';
+import { CardAction, Rank, getCardAction } from '@/shared';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -598,7 +598,7 @@ export class MCTSMoveGenerator {
       // Check known cards for action cards
       for (const [, memory] of opponent.knownCards) {
         if (memory && memory.confidence > 0.5 && memory.card) {
-          const action = CARD_CONFIGS[memory.card.rank].action;
+          const action = getCardAction(memory.card.rank);
           if (action && dangerousActions.includes(action)) {
             threatLevel++;
 

@@ -4,9 +4,10 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './help-popover';
-import { DrawCardButton, UseDiscardButton } from './buttons';
+import { DrawCardButton, PlayDiscardButton } from './buttons';
 import { useDispatch, useGameClient } from '@/client';
 import { GameActions } from '@/engine';
+import { getCardName, getCardShortDescription } from '@/shared';
 
 export const GameControls = observer(() => {
   const gameClient = useGameClient();
@@ -36,9 +37,9 @@ export const GameControls = observer(() => {
     }
   };
 
-  const handleTakeDiscard = () => {
+  const handlePlayDiscard = () => {
     if (isMyTurn) {
-      dispatch(GameActions.takeDiscard(currentPlayer.id));
+      dispatch(GameActions.playDiscard(currentPlayer.id));
     }
   };
 
@@ -69,7 +70,7 @@ Note: Call Vinto option will be available after you complete your turn during th
         <div className="flex flex-col justify-center flex-1 min-h-0">
           <FullTurnControls
             handleDrawCard={handleDrawCard}
-            handleTakeDiscard={handleTakeDiscard}
+            handleTakeDiscard={handlePlayDiscard}
           />
         </div>
       </div>
@@ -103,21 +104,21 @@ const FullTurnControls = observer(
       }
       if (topDiscard.played) {
         return {
-          text: `Use ${topDiscard.rank}`,
+          text: `Use ${getCardName(topDiscard.rank)}`,
           subtitle: 'Already used',
           tooltip: `${topDiscard.rank} action has already been played`,
         };
       }
       if (!topDiscard.actionText) {
         return {
-          text: `Use ${topDiscard.rank}`,
+          text: `Use ${getCardName(topDiscard.rank)}`,
           subtitle: 'No action',
           tooltip: `${topDiscard.rank} has no special action`,
         };
       }
       return {
-        text: `Use ${topDiscard.rank}`,
-        subtitle: null,
+        text: `Use ${getCardName(topDiscard.rank)}`,
+        subtitle: getCardShortDescription(topDiscard.rank),
         tooltip: `Use ${topDiscard.rank} card action from discard pile`,
       };
     };
@@ -130,8 +131,8 @@ const FullTurnControls = observer(
           {/* Draw from Deck */}
           <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 
-          {/* Take from Discard */}
-          <UseDiscardButton
+          {/* Play from Discard */}
+          <PlayDiscardButton
             onClick={handleTakeDiscard}
             disabled={!canTakeDiscard}
             title={discardInfo.tooltip}

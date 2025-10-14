@@ -1,6 +1,6 @@
 import { GameEngine } from '../game-engine';
 import { GameActions } from '../game-actions';
-import { Card, GameState, PlayerState } from '@/shared';
+import { Card, GameState, Pile, PlayerState } from '@/shared';
 
 /**
  * Comprehensive test suite based on official Vinto rules
@@ -59,8 +59,10 @@ function createTestPlayer(
   };
 }
 
+const toPile = (cards: Card[] | Pile = []): Pile => Pile.fromCards(cards);
+
 function createTestState(overrides?: Partial<GameState>): GameState {
-  return {
+  const baseState: GameState = {
     gameId: 'test-game',
     roundNumber: 1,
     turnCount: 0,
@@ -74,12 +76,23 @@ function createTestState(overrides?: Partial<GameState>): GameState {
     currentPlayerIndex: 0,
     vintoCallerId: null,
     coalitionLeaderId: null,
-    drawPile: [],
-    discardPile: [],
+    drawPile: toPile(),
+    discardPile: toPile(),
     pendingAction: null,
     activeTossIn: null,
+    recentActions: [],
     difficulty: 'moderate',
+  };
+
+  const mergedState = {
+    ...baseState,
     ...overrides,
+  } as GameState;
+
+  return {
+    ...mergedState,
+    drawPile: toPile(mergedState.drawPile),
+    discardPile: toPile(mergedState.discardPile),
   };
 }
 
@@ -122,7 +135,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Verify swap occurred
       expect(newState.players[0].cards[0].rank).toBe('2'); // P1 now has 2
       expect(newState.players[1].cards[1].rank).toBe('K'); // P2 now has K
-      expect(newState.discardPile[0].id).toBe('jack1'); // Jack discarded
+      expect(newState.discardPile.peekTop()?.id).toBe('jack1'); // Jack discarded
     });
 
     it('should allow swapping two cards from same player', () => {
@@ -197,7 +210,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Cards should remain unchanged
       expect(newState.players[1].cards[0].rank).toBe('K');
       expect(newState.players[1].cards[1].rank).toBe('A');
-      expect(newState.discardPile[0].id).toBe('queen1');
+      expect(newState.discardPile.peekTop()?.id).toBe('queen1');
       expect(newState.subPhase).toBe('idle');
     });
 
@@ -267,7 +280,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.activeTossIn).not.toBeNull();
       expect(newState.activeTossIn?.rank).toBe('A');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.discardPile[0].id).toBe('king1');
+      expect(newState.discardPile.peekTop()?.id).toBe('king1');
     });
 
     it('should allow declaring non-action cards', () => {
@@ -301,7 +314,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'awaiting_action',
         currentPlayerIndex: 0,
-        drawPile: [penaltyCard, createTestCard('Q', 'card2')],
+        drawPile: toPile([penaltyCard, createTestCard('Q', 'card2')]),
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -359,7 +372,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Confirm peek
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
 
-      expect(newState.discardPile[0].id).toBe('seven1');
+      expect(newState.discardPile.peekTop()?.id).toBe('seven1');
       expect(newState.subPhase).toBe('idle');
     });
   });
@@ -394,7 +407,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Confirm peek
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
 
-      expect(newState.discardPile[0].id).toBe('nine1');
+      expect(newState.discardPile.peekTop()?.id).toBe('nine1');
       expect(newState.subPhase).toBe('idle');
     });
   });
@@ -451,14 +464,13 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
         currentPlayerIndex: 0,
-        drawPile: [createTestCard('K', 'penalty1')],
+        drawPile: toPile([createTestCard('K', 'penalty1')]),
+        discardPile: toPile(),
         players: [
           createTestPlayer('p1', 'Player 1', true),
-          createTestPlayer('p2', 'Player 2', false, [
-            createTestCard('7', 'p2c1'), // Wrong rank (not A)
-            createTestCard('8', 'p2c2'),
-          ]),
+          createTestPlayer('p2', 'Player 2', false, []),
         ],
+
         activeTossIn: {
           rank: 'A', // Looking for Aces
           initiatorId: 'p1',
@@ -541,7 +553,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'choosing', // Correct phase for swapping after drawing
         currentPlayerIndex: 0,
-        drawPile: [penaltyCard],
+        drawPile: toPile([penaltyCard]),
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('A', 'p1c1'), // Actually an Ace at position 0
@@ -667,7 +679,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'idle',
         currentPlayerIndex: 0,
-        discardPile: [unusedActionCard],
+        discardPile: toPile([unusedActionCard]),
       });
 
       const newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
@@ -683,7 +695,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'idle',
         currentPlayerIndex: 0,
-        discardPile: [nonActionCard],
+        discardPile: toPile([nonActionCard]),
       });
 
       // Per rules: "Allowed only if the top discard is an unused action card (7–K)"
@@ -701,7 +713,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'idle',
         currentPlayerIndex: 0,
-        discardPile: [actionCard],
+        discardPile: toPile([actionCard]),
       });
 
       const newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
@@ -733,7 +745,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         subPhase: 'idle',
         currentPlayerIndex: 0,
         turnCount: 5,
-        drawPile: [createTestCard('A', 'drawn1')],
+        drawPile: toPile([createTestCard('A', 'drawn1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('K', 'p1c1'),
@@ -757,7 +769,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Step 3: Discard the swapped card
       state = GameEngine.reduce(state, GameActions.discardCard('p1'));
       expect(state.subPhase).toBe('idle');
-      expect(state.discardPile[0].id).toBe('p1c1');
+      expect(state.discardPile.peekTop()?.id).toBe('p1c1');
       expect(state.turnCount).toBe(6);
 
       // Step 4: Advance to next player

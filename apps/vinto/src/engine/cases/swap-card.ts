@@ -63,9 +63,11 @@ export function handleSwapCard(
 
     // If declaration was incorrect, issue penalty card
     if (!declarationCorrect && newState.drawPile.length > 0) {
-      const penaltyCard = newState.drawPile.shift()!;
-      player.cards.push(penaltyCard);
-      console.log('[handleSwapCard] Penalty card issued:', penaltyCard.rank);
+      const penaltyCard = newState.drawPile.drawTop();
+      if (penaltyCard) {
+        player.cards.push(penaltyCard);
+        console.log('[handleSwapCard] Penalty card issued:', penaltyCard.rank);
+      }
     }
 
     // If declaration was correct, set up the card action based on the card's rank
@@ -88,7 +90,7 @@ export function handleSwapCard(
   }
 
   // If no declaration or incorrect declaration, discard the swapped-out card
-  newState.discardPile.unshift(cardFromHand);
+  newState.discardPile.addToTop(cardFromHand);
 
   // Clear pending action
   newState.pendingAction = null;

@@ -7,10 +7,11 @@ import { VintoRoundSolver } from './vinto-round-solver';
 
 import {
   Card,
-  CARD_CONFIGS,
-  CardAction,
   Difficulty,
   GameState,
+  getCardShortDescription,
+  getCardValue,
+  Pile,
   PlayerState,
   Rank,
 } from '@/shared';
@@ -34,7 +35,7 @@ export interface BotDecisionContext {
   allPlayers: PlayerState[];
   gameState: GameState;
   discardTop?: Card;
-  discardPile: Card[]; // Full discard pile history for tracking removed cards
+  discardPile: Pile; // Full discard pile history for tracking removed cards
   pendingCard?: Card;
   currentAction?: {
     targetType: string;
@@ -825,7 +826,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     for (const [rank, count] of distribution) {
       if (count > 0) {
-        const value = CARD_CONFIGS[rank].value;
+        const value = getCardValue(rank);
         totalValue += value * count;
         totalCount += count;
       }
@@ -954,8 +955,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
           const card: Card = {
             id: `${player.id}-${pos}-sampled`,
             rank: sampledRank,
-            value: this.getRankValue(sampledRank),
-            actionText: this.getRankAction(sampledRank),
+            value: getCardValue(sampledRank),
+            actionText: getCardShortDescription(sampledRank),
             played: false,
           };
           newState.hiddenCards.set(`${player.id}-${pos}`, card);
@@ -1112,19 +1113,5 @@ export class MCTSBotDecisionService implements BotDecisionService {
    */
   private isTerminal(state: MCTSGameState): boolean {
     return MCTSStateTransition.isTerminal(state);
-  }
-
-  /**
-   * Helper: get value for rank
-   */
-  private getRankValue(rank: Rank): number {
-    return CARD_CONFIGS[rank].value;
-  }
-
-  /**
-   * Helper: get action for rank
-   */
-  private getRankAction(rank: Rank): CardAction | undefined {
-    return CARD_CONFIGS[rank].action;
   }
 }

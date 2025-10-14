@@ -27,7 +27,7 @@ export function handleDiscardCard(
   }
 
   const discardedCard = newState.pendingAction.card;
-  newState.discardPile.unshift(discardedCard);
+  newState.discardPile.addToTop(discardedCard);
 
   // Clear pending action
   newState.pendingAction = null;

@@ -47,7 +47,7 @@ export function handleParticipateInTossIn(
 
   // Move card to discard pile
   player.cards.splice(position, 1);
-  newState.discardPile.push(card);
+  newState.discardPile.addToTop(card);
 
   return newState;
 }

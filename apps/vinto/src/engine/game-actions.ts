@@ -20,7 +20,7 @@ import {
   SetNextDrawCardAction,
   SkipQueenSwapAction,
   SwapCardAction,
-  TakeDiscardAction,
+  PlayDiscardAction,
   UpdateDifficultyAction,
   UseCardActionAction,
 } from '@/shared';
@@ -34,8 +34,13 @@ export const GameActions = {
     payload: { playerId },
   }),
 
-  takeDiscard: (playerId: string): TakeDiscardAction => ({
-    type: 'TAKE_DISCARD',
+  playDiscard: (playerId: string): PlayDiscardAction => ({
+    type: 'PLAY_DISCARD',
+    payload: { playerId },
+  }),
+
+  takeDiscard: (playerId: string): PlayDiscardAction => ({
+    type: 'PLAY_DISCARD',
     payload: { playerId },
   }),
 

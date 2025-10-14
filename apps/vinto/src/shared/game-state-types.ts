@@ -1,7 +1,7 @@
 // engine/types/GameState.ts
 // Authoritative game state - the single source of truth
 
-import { Card, Difficulty, Rank } from './domain-types';
+import { Card, Difficulty, Pile, Rank } from './domain-types';
 
 /**
  * Complete, serializable game state
@@ -27,8 +27,8 @@ export interface GameState {
   coalitionLeaderId: string | null;
 
   // Deck state
-  drawPile: Card[];
-  discardPile: Card[];
+  drawPile: Pile;
+  discardPile: Pile;
 
   // Active action state (replaces ActionStore)
   pendingAction: PendingAction | null;
@@ -168,17 +168,6 @@ export interface SerializedOpponentKnowledge {
 }
 
 /**
- * Utility functions for state serialization
- */
-export function serializeGameState(state: GameState): string {
-  return JSON.stringify(state);
-}
-
-export function deserializeGameState(json: string): GameState {
-  return JSON.parse(json) as GameState;
-}
-
-/**
  * Create initial game state
  */
 export function createInitialGameState(
@@ -198,8 +187,8 @@ export function createInitialGameState(
     currentPlayerIndex: 0,
     vintoCallerId: null,
     coalitionLeaderId: null,
-    drawPile: deck,
-    discardPile: [],
+    drawPile: Pile.fromCards(deck),
+    discardPile: new Pile(),
     pendingAction: null,
     activeTossIn: null,
     recentActions: [],

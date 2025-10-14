@@ -1,7 +1,7 @@
 import { Zap } from 'lucide-react';
 import { getButtonClasses } from '../../constants/button-colors';
 
-export const UseDiscardButton = ({
+export const PlayDiscardButton = ({
   onClick,
   disabled = false,
   className = '',
@@ -29,7 +29,7 @@ export const UseDiscardButton = ({
       <Zap size={14} />
       <span>{text}</span>
     </div>
-    {disabled && subtitle && (
+    {subtitle && (
       <div className="text-[10px] opacity-75 mt-0.5">{subtitle}</div>
     )}
   </button>

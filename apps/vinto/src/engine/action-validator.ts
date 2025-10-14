@@ -96,7 +96,7 @@ export function actionValidator(
       return { valid: true };
     }
 
-    case 'TAKE_DISCARD': {
+    case 'PLAY_DISCARD': {
       const { playerId } = action.payload;
 
       // Must be player's turn

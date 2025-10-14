@@ -19,7 +19,7 @@ import { handleProcessAITurn } from './cases/process-ai-turn';
 import { handleSelectActionTarget } from './cases/select-action-target';
 import { handleSetCoalitionLeader } from './cases/set-coalition-leader';
 import { handleSkipQueenSwap } from './cases/skip-queen-swap';
-import { handleTakeDiscard } from './cases/take-discard';
+import { handlePlayDiscard } from './cases/play-discard';
 import { handleUseCardAction } from './cases/use-card';
 import { handleUpdateDifficulty } from './cases/update-difficulty';
 import { handleSetNextDrawCard } from './cases/set-next-draw-card';
@@ -71,8 +71,8 @@ export class GameEngine {
       case 'ADVANCE_TURN':
         return handleAdvanceTurn(state, action);
 
-      case 'TAKE_DISCARD':
-        return handleTakeDiscard(state, action);
+      case 'PLAY_DISCARD':
+        return handlePlayDiscard(state, action);
 
       case 'USE_CARD_ACTION':
         return handleUseCardAction(state, action);

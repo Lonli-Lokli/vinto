@@ -12,6 +12,7 @@
   "private": true,
   "dependencies": {
     "@sentry/nextjs": "^10.17.0",
+  "class-transformer": "^0.5.1",
     "fast-copy": "^3.0.2",
     "framer-motion": "^12.23.22",
     "immer": "^10.1.3",

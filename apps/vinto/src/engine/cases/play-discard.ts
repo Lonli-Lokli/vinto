@@ -1,8 +1,8 @@
-import { GameState, TakeDiscardAction } from '@/shared';
+import { GameState, PlayDiscardAction } from '@/shared';
 import copy from 'fast-copy';
 
 /**
- * TAKE_DISCARD Handler
+ * PLAY_DISCARD Handler
  *
  * Flow:
  * 1. Transition to 'drawing' phase (for animation, same as draw)
@@ -12,9 +12,9 @@ import copy from 'fast-copy';
  *
  * Note: Very similar to DRAW_CARD, but takes from discard pile
  */
-export function handleTakeDiscard(
+export function handlePlayDiscard(
   state: GameState,
-  action: TakeDiscardAction
+  action: PlayDiscardAction
 ): GameState {
   const { playerId } = action.payload;
 
@@ -27,7 +27,7 @@ export function handleTakeDiscard(
   }
 
   // Take the top card from discard pile
-  const takenCard = newState.discardPile.pop();
+  const takenCard = newState.discardPile.drawTop();
   if (!takenCard) {
     // Should never happen due to validation, but be defensive
     return state;

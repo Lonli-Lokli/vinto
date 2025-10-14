@@ -67,7 +67,7 @@ export function handleExecuteQueenSwap(
 
   // Move Queen card to discard pile
   if (queenCard) {
-    newState.discardPile.unshift(queenCard);
+    newState.discardPile.addToTop(queenCard);
   }
 
   // Clear pending action

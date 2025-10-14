@@ -3,16 +3,16 @@
 
 import React from 'react';
 import { Card } from './card';
-import { Card as CardType } from '@/shared';
+import { Pile } from '@/shared';
 
 interface DiscardPileProps {
-  cards: CardType[];
+  pile: Pile;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isMobile?: boolean;
 }
 
 export const DiscardPile: React.FC<DiscardPileProps> = ({
-  cards,
+  pile,
   size = 'lg',
   isMobile = false,
 }) => {
@@ -22,7 +22,7 @@ export const DiscardPile: React.FC<DiscardPileProps> = ({
 
   return (
     <div className="text-center" data-discard-pile="true">
-      <Card card={cards[0]} revealed={cards.length > 0} size={size} />
+      <Card card={pile.peekTop()} revealed={!pile.isEmpty()} size={size} />
       <div
         className={`${labelMargin} ${textSize} text-white font-medium bg-overlay rounded ${labelPadding}`}
       >

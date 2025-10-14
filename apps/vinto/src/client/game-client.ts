@@ -204,7 +204,7 @@ export class GameClient {
    */
   @computed
   get topDiscardCard(): Card | undefined {
-    return this._state.discardPile[0];
+    return this._state.discardPile.peekTop();
   }
 
   /**

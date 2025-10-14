@@ -10,7 +10,7 @@ import { Card, Difficulty, Rank } from './domain-types';
 export type GameAction =
   // Turn actions
   | DrawCardAction
-  | TakeDiscardAction
+  | PlayDiscardAction
   | SwapCardAction
   | DiscardCardAction
 
@@ -53,8 +53,8 @@ export interface DrawCardAction {
   };
 }
 
-export interface TakeDiscardAction {
-  type: 'TAKE_DISCARD';
+export interface PlayDiscardAction {
+  type: 'PLAY_DISCARD';
   payload: {
     playerId: string;
   };

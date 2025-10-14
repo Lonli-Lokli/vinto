@@ -23,7 +23,14 @@ export function handleSetNextDrawCard(
   const newState = copy(state);
 
   // Find a card with the specified rank in the draw pile
-  const cardIndex = newState.drawPile.findIndex((card) => card.rank === rank);
+  let cardIndex = -1;
+  for (let i = 0; i < newState.drawPile.length; i++) {
+    const card = newState.drawPile.at(i);
+    if (card?.rank === rank) {
+      cardIndex = i;
+      break;
+    }
+  }
 
   if (cardIndex === -1) {
     // Card not found in draw pile, return unchanged state
@@ -32,8 +39,11 @@ export function handleSetNextDrawCard(
   }
 
   // Move the card to the top of the draw pile (index 0)
-  const [card] = newState.drawPile.splice(cardIndex, 1);
-  newState.drawPile.unshift(card);
+  const card = newState.drawPile.takeAt(cardIndex);
+  if (!card) {
+    return state;
+  }
+  newState.drawPile.addToTop(card);
 
   return newState;
 }

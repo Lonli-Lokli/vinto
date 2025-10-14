@@ -94,7 +94,7 @@ export function handleSelectActionTarget(
 
         // Move Jack card to discard pile
         if (jackCard) {
-          newState.discardPile.unshift(jackCard);
+          newState.discardPile.addToTop(jackCard);
         }
 
         // Clear pending action
@@ -130,7 +130,7 @@ export function handleSelectActionTarget(
 
         if (targetPlayer && newState.drawPile.length > 0) {
           // Draw a card from the pile
-          const penaltyCard = newState.drawPile.shift();
+          const penaltyCard = newState.drawPile.drawTop();
           if (penaltyCard) {
             // Add penalty card to target player's hand
             targetPlayer.cards.push(penaltyCard);
@@ -141,7 +141,7 @@ export function handleSelectActionTarget(
 
         // Move Ace card to discard pile
         if (aceCard) {
-          newState.discardPile.unshift(aceCard);
+          newState.discardPile.addToTop(aceCard);
         }
 
         // Clear pending action

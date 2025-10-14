@@ -22,7 +22,7 @@ export * from './queen-swap-button';
 export * from './try-again-button';
 export * from './export-button';
 export * from './replay-button';
-export * from './use-discard-button';
+export * from './play-discard-button';
 export * from './difficulty-button';
 export * from './discard-instead-button';
 export * from './exit-replay-button';

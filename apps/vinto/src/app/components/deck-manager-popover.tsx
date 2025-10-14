@@ -66,13 +66,17 @@ export const DeckManagerPopover = observer(
     };
 
     // Group available cards by rank
-    const availableCards = gameClient.state.drawPile.reduce((acc, card) => {
-      if (!acc[card.rank]) {
-        acc[card.rank] = [];
+    const availableCards: Partial<Record<Rank, Card[]>> = {};
+    for (const card of gameClient.state.drawPile) {
+      const existingCards = availableCards[card.rank];
+      if (existingCards) {
+        existingCards.push(card);
+      } else {
+        availableCards[card.rank] = [card];
       }
-      acc[card.rank].push(card);
-      return acc;
-    }, {} as Record<Rank, Card[]>);
+    }
+
+    const topCard = gameClient.state.drawPile.peekTop();
 
     return (
       <div
@@ -136,20 +140,20 @@ export const DeckManagerPopover = observer(
             <div className="text-xs text-secondary mb-2">
               Current next card:
             </div>
-            {gameClient.state.drawPile.length > 0 ? (
+            {gameClient.state.drawPile.length > 0 && topCard ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
                   <CardComponent
-                    card={gameClient.state.drawPile[0]}
+                    card={topCard}
                     revealed={true}
                     size="auto"
                   />
                 </div>
                 <div className="text-sm font-semibold text-primary">
-                  {gameClient.state.drawPile[0].rank}
-                  {gameClient.state.drawPile[0].actionText && (
+                  {topCard.rank}
+                  {topCard.actionText && (
                     <span className="text-xs text-success ml-1">
-                      ({gameClient.state.drawPile[0].actionText})
+                      ({topCard.actionText})
                     </span>
                   )}
                 </div>

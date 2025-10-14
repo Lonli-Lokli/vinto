@@ -2,13 +2,13 @@
 'use client';
 
 import React from 'react';
-import { Card as CardType } from '@/shared';
+import { Card as CardType, Pile } from '@/shared';
 import { DrawPile } from './draw-pile';
 import { DiscardPile } from './discard-pile';
 import { DrawnCard } from './drawn-card';
 
 interface DeckAreaProps {
-  discardPile: CardType[];
+  discardPile: Pile;
   pendingCard: CardType | null;
   canDrawCard: boolean;
   onDrawCard: () => void;
@@ -47,7 +47,7 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
           size={cardSize}
           isMobile={isMobile}
         />
-        <DiscardPile cards={discardPile} size={cardSize} isMobile={isMobile} />
+        <DiscardPile pile={discardPile} size={cardSize} isMobile={isMobile} />
       </div>
 
       {/* Drawn Card - Below both piles - Always reserves space */}
