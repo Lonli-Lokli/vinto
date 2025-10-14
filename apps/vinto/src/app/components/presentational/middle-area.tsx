@@ -1,4 +1,4 @@
-import { GameTable } from './game-table';
+import { GameTable } from "../game-table";
 
 export function MiddleArea() {
   return (

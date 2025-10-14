@@ -116,21 +116,21 @@ export const CARD_CONFIGS: Record<Rank, CardConfig> = {
     name: 'Jack',
     value: 10,
     action: 'swap-cards',
-    shortDescription: 'Swap 2 face-down cards',
-    longDescription: 'Swap any two facedown cards on the table',
+    shortDescription: 'Swap 2 face-down cards from 2 players',
+    longDescription: 'Swap any two facedown cards from two different players',
     helpText:
-      'Select any two cards to swap their positions - they can be from any players, including yourself. You can reset your selection or skip this action.',
+      'Select two cards from different players to swap their positions - you can include your own cards or only opponents. You cannot select two cards from the same player. You can reset your selection or skip this action.',
   },
   Q: {
     rank: 'Q',
     name: 'Queen',
     value: 10,
     action: 'peek-and-swap',
-    shortDescription: 'Peek 2 cards, swap optional',
+    shortDescription: 'Peek 2 cards from 2 players, swap optional',
     longDescription:
       'Peek at any two cards from two different players, then optionally swap them',
     helpText:
-      '1. Peek at two cards from different players (one may be yours, one must be from another player)\n2. After peeking both cards, decide whether to swap them',
+      '1. Peek at two cards from different players (can be your own or opponents, but must be from different players)\n2. After peeking both cards, decide whether to swap them',
   },
   K: {
     rank: 'K',

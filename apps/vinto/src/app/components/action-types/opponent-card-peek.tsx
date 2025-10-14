@@ -3,11 +3,11 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { HelpPopover } from '../help-popover';
 import { useUIStore } from '../di-provider';
 import { ContinueButton, SkipButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
+import { HelpPopover } from '../presentational';
 
 export const OpponentCardPeek = observer(() => {
   const uiStore = useUIStore();

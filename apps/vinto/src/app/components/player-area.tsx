@@ -4,8 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Users, Crown } from 'lucide-react';
-import { Card } from './card';
-import { Avatar } from './avatar';
+import { Avatar, Card } from './presentational';
 import { useUIStore } from './di-provider';
 import { PlayerState } from '@/shared';
 import { useGameClient } from '@/client';

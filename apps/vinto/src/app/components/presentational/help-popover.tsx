@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { ArrowContainer, Popover, PopoverState } from 'react-tiny-popover';
-import { HelpButton } from './buttons';
+import { HelpButton } from '../buttons';
 import { getCardHelpText, Rank } from '@/shared';
 
 interface HelpPopoverProps {

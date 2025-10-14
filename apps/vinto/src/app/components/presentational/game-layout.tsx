@@ -2,9 +2,9 @@
 'use client';
 
 import React from 'react';
-import { useViewport } from '../hooks/use-viewport';
-import { DIProvider } from './di-provider';
 import { ErrorBoundary } from './error-boundary';
+import { useViewport } from '../../hooks/use-viewport';
+import { DIProvider } from '../di-provider';
 
 interface GameLayoutProps {
   children: React.ReactNode;

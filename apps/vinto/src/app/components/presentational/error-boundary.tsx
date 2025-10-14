@@ -5,7 +5,7 @@ import React from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import * as Sentry from '@sentry/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { TryAgainButton } from './buttons';
+import { TryAgainButton } from '../buttons';
 
 interface ErrorFallbackProps {
   error: Error;

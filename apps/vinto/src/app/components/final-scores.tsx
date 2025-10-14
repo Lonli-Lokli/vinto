@@ -5,8 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
 import { calculateFinalScores } from '../../engine/utils/scoring';
-import { Avatar } from './avatar';
-import { HelpPopover } from './help-popover';
+import { HelpPopover, Avatar } from './presentational';
 import { useGameClient } from '@/client';
 import { PlayerState } from '@/shared';
 

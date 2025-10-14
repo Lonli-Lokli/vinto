@@ -9,11 +9,13 @@ import copy from 'fast-copy';
  * 2. Now selecting which card/player to target
  * 3. Add target to pending action's targets array
  * 4. Execute card-specific logic based on card rank:
- *    - Jack (J): Blind swap 2 cards (needs 2 targets)
- *    - 7/8/9/10: Peek at card (1 target, confirm needed)
+ *    - Jack (J): Blind swap 2 cards from 2 different players (needs 2 targets)
+ *    - Queen (Q): Peek 2 cards from 2 different players, then optionally swap
+ *    - 7/8: Peek own card (1 target, confirm needed)
+ *    - 9/10: Peek opponent card (1 target, confirm needed)
  *    - Ace (A): Force opponent to draw (1 target)
  *
- * Note: Queen (Q) and King (K) have their own dedicated handlers
+ * Note: King (K) has its own dedicated handler
  */
 export function handleSelectActionTarget(
   state: GameState,
@@ -50,10 +52,18 @@ export function handleSelectActionTarget(
     }
 
     case 'J': {
-      // Jack: Blind swap 2 cards
+      // Jack: Blind swap 2 cards from 2 different players
+      // Allow swapping any cards (own or opponent), but must be from different players
       if (targets.length === 2) {
-        // We have both targets, execute the swap
+        // Validate: cards must be from different players
         const [target1, target2] = targets;
+        
+        if (target1.playerId === target2.playerId) {
+          // Cannot swap two cards from the same player - this should be prevented by UI
+          // but we handle it here for safety
+          console.warn('[Jack] Cannot swap two cards from the same player');
+          return newState;
+        }
 
         // Find the two target players
         const player1 = newState.players.find((p) => p.id === target1.playerId);
@@ -161,16 +171,54 @@ export function handleSelectActionTarget(
 
         // Transition to toss-in phase
         newState.subPhase = 'toss_queue_active';
+      } else {
+          console.warn('[Ace] Cannot force multiple players');
+          return newState;
       }
       break;
     }
 
     case 'Q': {
-      // Queen: Peek at 2 cards, optionally swap them
-      // Wait for 2 targets, then UI will handle swap/skip decision
-      // Stay in awaiting_action phase until player decides to swap or skip
-      // The actual swap/skip is handled by EXECUTE_QUEEN_SWAP or SKIP_QUEEN_SWAP actions
-      // No state changes needed here, just track targets
+      // Queen: Peek at 2 cards from 2 different players, optionally swap them
+      // Allow peeking any cards (own or opponent), but must be from different players
+      
+      if (targets.length === 1) {
+        // First card peeked - store the card data for later visibility
+        const targetPlayer = newState.players.find(
+          (p) => p.id === targetPlayerId
+        );
+        if (targetPlayer) {
+          const peekedCard = targetPlayer.cards[position];
+          // Store the card in the target so it can be revealed in multiplayer
+          newState.pendingAction!.targets[0].card = peekedCard;
+        }
+        // Stay in awaiting_action phase for second card selection
+      } else if (targets.length === 2) {
+        // Validate: cards must be from different players
+        const [target1, target2] = targets;
+        
+        if (target1.playerId === target2.playerId) {
+          // Cannot peek two cards from the same player - this should be prevented by UI
+          // but we handle it here for safety
+          console.warn('[Queen] Cannot peek two cards from the same player');
+          // Remove the invalid second target
+          newState.pendingAction!.targets.pop();
+          return newState;
+        }
+        
+        // Second card peeked - store the card data
+        const targetPlayer = newState.players.find(
+          (p) => p.id === targetPlayerId
+        );
+        if (targetPlayer) {
+          const peekedCard = targetPlayer.cards[position];
+          // Store the card in the target so it can be revealed in multiplayer
+          newState.pendingAction!.targets[1].card = peekedCard;
+        }
+        // Both cards selected, stay in awaiting_action phase
+        // UI will handle swap/skip decision
+        // The actual swap/skip is handled by EXECUTE_QUEEN_SWAP or SKIP_QUEEN_SWAP actions
+      }
       break;
     }
 

@@ -3,9 +3,9 @@
 
 import React from 'react';
 import { Card as CardType, Pile } from '@/shared';
-import { DrawPile } from './draw-pile';
 import { DiscardPile } from './discard-pile';
-import { DrawnCard } from './drawn-card';
+import { DrawPile } from './draw-pile';
+import { DrawnCard } from '../drawn-card';
 
 interface DeckAreaProps {
   discardPile: Pile;

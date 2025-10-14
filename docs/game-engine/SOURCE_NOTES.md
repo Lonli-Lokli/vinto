@@ -12,8 +12,8 @@ This engine specification encodes the following rule sections:
   - 2–6: no action; values 2–6.  
   - 7–8: peek at one of your own cards.  
   - 9–10: peek at one card of another player.  
-  - J: swap any two facedown cards on the table.  
-  - Q: peek any two cards, then optionally swap them.  
+  - J: swap any two facedown cards from two different players.  
+  - Q: peek any two cards from two different players, then optionally swap them.  
   - K: value 0; declare the value of any card and **play its action**.  
   - A: value 1; choose a player to take 1 card from the deck.  
   - Joker: value −1; no action.  

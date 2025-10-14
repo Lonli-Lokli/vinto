@@ -14,9 +14,9 @@ import {
   Hourglass,
   CircleArrowRight,
 } from 'lucide-react';
-import { HelpPopover } from './help-popover';
+import { HelpPopover } from './presentational';
 import { useUIStore } from './di-provider';
-import { Card as CardComponent } from './card';
+import { Card as CardComponent } from './presentational';
 import {
   UseActionButton,
   SwapButton,

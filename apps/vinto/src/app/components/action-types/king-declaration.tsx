@@ -2,10 +2,10 @@
 'use client';
 
 import React from 'react';
-import { HelpPopover } from '../help-popover';
 import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
+import { HelpPopover } from '../presentational';
 
 export function KingDeclaration() {
   const gameClient = useGameClient();

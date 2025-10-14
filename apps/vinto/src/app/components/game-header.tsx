@@ -4,7 +4,7 @@
 import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { DeckManagerPopover } from './deck-manager-popover';
-import { ThemeToggle } from './theme-toggle';
+import { ThemeToggle } from './presentational';
 import { DifficultyButton, SettingsButton, DeckManagerButton } from './buttons';
 import { SettingsPopover } from './mobile-settings';
 import { GameActions } from '@/engine';

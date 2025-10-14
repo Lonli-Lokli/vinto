@@ -5,11 +5,10 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useUIStore } from './di-provider';
 import { PlayerArea } from './player-area';
-import { DeckArea } from './deck-area';
+import { DeckArea } from './presentational';
 import { useIsDesktop } from '../hooks/use-media-query';
 import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
-import { PlayerState } from '@/shared';
+import * as GameTableLogic from './logic/game-table-logic';
 
 export const GameTable = observer(() => {
   const isDesktop = useIsDesktop();
@@ -40,202 +39,80 @@ export const GameTable = observer(() => {
   const hasCompletePeekSelection = peekTargets.length === 2;
 
   // Calculate setup peeks remaining from GameClient state
-  const setupPeeksRemaining = humanPlayer
-    ? Math.max(0, 2 - humanPlayer.knownCardPositions.length)
-    : 0;
+  const setupPeeksRemaining =
+    GameTableLogic.calculateSetupPeeksRemaining(humanPlayer);
 
   // Determine if card interactions should be enabled
-  const shouldAllowCardInteractions = () => {
-    if (!humanPlayer) return false;
-
-    // For Queen action (peek-then-swap), disable when 2 cards already selected
-    if (
-      isAwaitingActionTarget &&
-      targetType === 'peek-then-swap' &&
-      hasCompletePeekSelection
-    ) {
-      return false;
-    }
-
-    // For own-card peek (7/8), disable after one card is revealed
-    if (
-      isAwaitingActionTarget &&
-      targetType === 'own-card' &&
-      humanPlayer &&
-      uiStore.getTemporarilyVisibleCards(humanPlayer.id).size > 0
-    ) {
-      return false;
-    }
-
-    // Only allow interactions when it's relevant for the human player
-    return (
-      // During setup phase for memorization
-      (phase === 'setup' && setupPeeksRemaining > 0) ||
-      // When selecting swap position after drawing
-      isSelectingSwapPosition ||
-      // During toss-in period
-      waitingForTossIn ||
-      // During action target selection for own cards
-      (isAwaitingActionTarget &&
-        (targetType === 'own-card' ||
-          targetType === 'peek-then-swap' ||
-          targetType === 'swap-cards'))
-    );
-  };
-
-  const handleCardClick = (position: number) => {
-    console.log('[handleCardClick] Card clicked:', {
-      position,
-      humanPlayerId: humanPlayer?.id,
+  const shouldAllowCardInteractions = () =>
+    GameTableLogic.shouldAllowCardInteractions({
+      humanPlayer,
       phase,
       subPhase,
+      setupPeeksRemaining,
       isSelectingSwapPosition,
-      isChoosingCardAction,
-      isAwaitingActionTarget,
       waitingForTossIn,
+      isAwaitingActionTarget,
+      targetType,
+      peekTargets,
+      hasCompletePeekSelection,
+      uiStore,
     });
 
+  const handleCardClick = (position: number) => {
     if (!humanPlayer) return;
 
-    // During setup phase, allow peeking at cards for memorization
-    if (phase === 'setup') {
-      if (
-        setupPeeksRemaining > 0 &&
-        !humanPlayer.knownCardPositions.includes(position)
-      ) {
-        // Show the card temporarily in the UI
-        uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
-        // Dispatch the game action to update knownCardPositions
-        gameClient.dispatch(
-          GameActions.peekSetupCard(humanPlayer.id, position)
-        );
-      }
-      return;
-    }
-
-    // If selecting swap position, store the selected position in UI store
-    if (isSelectingSwapPosition) {
-      console.log('[GameTable] Position selected for swap:', {
-        humanPlayerId: humanPlayer.id,
-        position,
-        currentSubPhase: subPhase,
-      });
-
-      // Store position in UI store (will show rank declaration buttons inline)
-      uiStore.setSelectedSwapPosition(position);
-      return;
-    }
-
-    // During toss-in period, allow tossing in cards
-    if (waitingForTossIn) {
-      gameClient.dispatch(
-        GameActions.participateInTossIn(humanPlayer.id, position)
-      );
-      return;
-    }
-
-    // During action target selection, allow selecting target
-    if (
-      isAwaitingActionTarget &&
-      (targetType === 'own-card' ||
-        targetType === 'peek-then-swap' ||
-        targetType === 'swap-cards')
-    ) {
-      // For peek actions, reveal the card temporarily
-      if (targetType === 'own-card' || targetType === 'peek-then-swap') {
-        uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
-      }
-
-      gameClient.dispatch(
-        GameActions.selectActionTarget(humanPlayer.id, humanPlayer.id, position)
-      );
-      return;
-    }
+    GameTableLogic.handleCardClick({
+      position,
+      humanPlayer,
+      phase,
+      subPhase,
+      setupPeeksRemaining,
+      isSelectingSwapPosition,
+      waitingForTossIn,
+      isAwaitingActionTarget,
+      targetType,
+      gameClient,
+      uiStore,
+    });
   };
 
-  // Determine if opponent card interactions should be enabled
-  const shouldAllowOpponentCardInteractions = () => {
-    // For Ace action (force-draw), disable card interactions - use name buttons instead
-    if (isAwaitingActionTarget && targetType === 'force-draw') {
-      return false;
-    }
-
-    // For Queen action (peek-then-swap), disable when 2 cards already selected
-    if (
-      isAwaitingActionTarget &&
-      targetType === 'peek-then-swap' &&
-      hasCompletePeekSelection
-    ) {
-      return false;
-    }
-
-    // For opponent-card peek (J action), disable after one card is revealed
-    // Check if ANY player has temporarily visible cards (the peeked opponent card)
-    if (
-      isAwaitingActionTarget &&
-      targetType === 'opponent-card' &&
-      gameClient.state.players.some(
-        (p) => uiStore.getTemporarilyVisibleCards(p.id).size > 0
-      )
-    ) {
-      return false;
-    }
-
-    return (
-      isAwaitingActionTarget &&
-      (targetType === 'opponent-card' ||
-        targetType === 'peek-then-swap' ||
-        targetType === 'swap-cards')
-    );
-  };
+  // Determine if opponent card interactions should be enabled for a specific player
+  const shouldAllowOpponentCardInteractions = (opponentPlayerId: string) =>
+    GameTableLogic.shouldAllowOpponentCardInteractions({
+      opponentPlayerId,
+      isAwaitingActionTarget,
+      targetType,
+      peekTargets,
+      hasCompletePeekSelection,
+    });
 
   const handleOpponentCardClick = (playerId: string, position: number) => {
     if (!humanPlayer) return;
 
-    // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
-    if (
-      isAwaitingActionTarget &&
-      (targetType === 'opponent-card' ||
-        targetType === 'force-draw' ||
-        targetType === 'peek-then-swap' ||
-        targetType === 'swap-cards')
-    ) {
-      // For peek actions, reveal the card temporarily
-      if (targetType === 'opponent-card' || targetType === 'peek-then-swap') {
-        uiStore.addTemporarilyVisibleCard(playerId, position);
-      }
-
-      gameClient.dispatch(
-        GameActions.selectActionTarget(humanPlayer.id, playerId, position)
-      );
-    }
+    GameTableLogic.handleOpponentCardClick({
+      playerId,
+      position,
+      humanPlayer,
+      isAwaitingActionTarget,
+      targetType,
+      gameClient,
+      uiStore,
+    });
   };
 
   const handleDrawCard = () => {
-    if (currentPlayer && currentPlayer.isHuman) {
-      gameClient.dispatch(GameActions.drawCard(currentPlayer.id));
-    }
+    GameTableLogic.handleDrawCard({
+      currentPlayer,
+      gameClient,
+    });
   };
 
   // Calculate player positions based on index
   // Human player is always index 0 (bottom position)
   // Other players are assigned top, left, right based on total player count
-  type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
-
-  const getPlayerPosition = (player: PlayerState): PlayerPosition => {
-    if (player.isHuman) return 'bottom';
-
-    const playerIndex = gameClient.state.players.indexOf(player);
-
-    // For 4 players: human (bottom), opponent1 (left), opponent2 (top), opponent3 (right)
-    if (playerIndex === 1) return 'left';
-    if (playerIndex === 2) return 'top';
-    return 'right';
-  };
-
   const playersWithPositions = gameClient.state.players.map((player) => ({
     player,
-    position: getPlayerPosition(player),
+    position: GameTableLogic.getPlayerPosition(player, gameClient.state.players),
   }));
 
   const top = playersWithPositions.find((p) => p.position === 'top');
@@ -263,12 +140,12 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   onCardClick={
-                    shouldAllowOpponentCardInteractions()
+                    shouldAllowOpponentCardInteractions(top.player.id)
                       ? (position) =>
                           handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(top.player.id)}
                 />
               </div>
             )}
@@ -288,12 +165,12 @@ export const GameTable = observer(() => {
                     }
                     gamePhase={phase}
                     onCardClick={
-                      shouldAllowOpponentCardInteractions()
+                      shouldAllowOpponentCardInteractions(left.player.id)
                         ? (position) =>
                             handleOpponentCardClick(left.player.id, position)
                         : undefined
                     }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(left.player.id)}
                   />
                 )}
               </div>
@@ -332,12 +209,12 @@ export const GameTable = observer(() => {
                     }
                     gamePhase={phase}
                     onCardClick={
-                      shouldAllowOpponentCardInteractions()
+                      shouldAllowOpponentCardInteractions(right.player.id)
                         ? (position) =>
                             handleOpponentCardClick(right.player.id, position)
                         : undefined
                     }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(right.player.id)}
                   />
                 )}
               </div>
@@ -379,12 +256,12 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   onCardClick={
-                    shouldAllowOpponentCardInteractions()
+                    shouldAllowOpponentCardInteractions(top.player.id)
                       ? (position) =>
                           handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(top.player.id)}
                 />
               </div>
             )}
@@ -402,12 +279,12 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   onCardClick={
-                    shouldAllowOpponentCardInteractions()
+                    shouldAllowOpponentCardInteractions(left.player.id)
                       ? (position) =>
                           handleOpponentCardClick(left.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(left.player.id)}
                 />
               </div>
             )}
@@ -425,12 +302,12 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   onCardClick={
-                    shouldAllowOpponentCardInteractions()
+                    shouldAllowOpponentCardInteractions(right.player.id)
                       ? (position) =>
                           handleOpponentCardClick(right.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions()}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(right.player.id)}
                 />
               </div>
             )}

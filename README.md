@@ -33,8 +33,8 @@ On your turn, you can either:
 - **8 (Peek Own)**: Look at one of your own cards
 - **9 (Peek Opponent)**: Look at one opponent's card
 - **10 (Peek Opponent)**: Look at one opponent's card
-- **Jack (Swap Cards)**: Swap any two cards between players
-- **Queen (Peek & Swap)**: Peek at two cards, then optionally swap them
+- **Jack (Swap Cards)**: Swap any two cards from two different players
+- **Queen (Peek & Swap)**: Peek at two cards from two different players, then optionally swap them
 - **King (Declare Rank)**: All players must toss in cards of declared rank
 
 ### Scoring

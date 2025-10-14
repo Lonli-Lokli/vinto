@@ -1,6 +1,6 @@
 import { reaction } from 'mobx';
 import { GameClient } from '../../client/game-client';
-import { UIStore } from '../stores/ui-store';
+import { UIStore } from '../stores';
 
 export class HeadlessService {
   private disposeReaction?: () => void;

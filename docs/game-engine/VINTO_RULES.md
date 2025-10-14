@@ -81,8 +81,8 @@ flowchart TD
 - **2–6** → Value = rank; no action.  
 - **7, 8** → Value = 7 or 8; action = peek one of your own cards.  
 - **9, 10** → Value = 9 or 10; action = peek one card of another player.  
-- **Jack (J)** → Value = 10; action = swap any two facedown cards on the table.  
-- **Queen (Q)** → Value = 10; action = peek any two cards, then optionally swap them.  
+- **Jack (J)** → Value = 10; action = swap any two facedown cards from two different players.  
+- **Queen (Q)** → Value = 10; action = peek any two cards from two different players, then optionally swap them.  
 - **King (K)** → Value = 0; action = declare the value of any card and play its action.  
 - **Ace (A)** → Value = 1; action = choose a player to draw one card from the deck face-down.  
 - **Joker** → Value = −1; no action.

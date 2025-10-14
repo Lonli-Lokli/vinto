@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { setupDIContainer, getInstance, isDIConfigured } from '../di/setup';
 import { CardAnimationStore } from '../stores';
-import { UIStore } from '../stores/ui-store';
+import { UIStore } from '../stores';
 
 /**
  * Store context for accessing DI-managed stores

@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Card as CardComponent } from './card';
+import { Card as CardComponent } from './presentational';
 import { ClosePopoverButton, DeckCardSelectButton } from './buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';

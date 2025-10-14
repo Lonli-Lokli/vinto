@@ -9,4 +9,6 @@ export {
   usePlayer,
 } from './game-client-context';
 
+export type { GameClient } from './game-client';
+
 export { GameClientDebugProvider } from './game-client-debug';

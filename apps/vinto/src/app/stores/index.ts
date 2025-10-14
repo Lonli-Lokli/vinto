@@ -9,6 +9,7 @@
 
 // Export store classes for DI
 export { CardAnimationStore } from './card-animation-store';
+export { UIStore } from './ui-store';
 
 // Export types
 export type { AnimationType, CardAnimationState } from './card-animation-store';

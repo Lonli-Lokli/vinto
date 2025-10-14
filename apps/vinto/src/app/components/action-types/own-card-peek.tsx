@@ -4,10 +4,10 @@
 import { useUIStore } from '../di-provider';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { HelpPopover } from '../help-popover';
 import { ContinueButton, SkipButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
+import { HelpPopover } from '../presentational';
 
 export const OwnCardPeek = observer(() => {
   const uiStore = useUIStore();

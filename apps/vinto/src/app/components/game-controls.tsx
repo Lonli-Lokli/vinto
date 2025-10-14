@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { HelpPopover } from './help-popover';
+import { HelpPopover } from './presentational';
 import { DrawCardButton, PlayDiscardButton } from './buttons';
 import { useDispatch, useGameClient } from '@/client';
 import { GameActions } from '@/engine';

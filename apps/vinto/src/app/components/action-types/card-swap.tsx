@@ -3,10 +3,10 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { HelpPopover } from '../help-popover';
 import { SkipButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
+import { HelpPopover } from '../presentational';
 
 export const CardSwap = observer(() => {
   const gameClient = useGameClient();

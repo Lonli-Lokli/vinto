@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { HelpPopover } from './help-popover';
+import { HelpPopover } from './presentational';
 import { RankDeclarationButton } from './buttons';
 import { Rank } from '@/shared';
 import { useGameClient } from '@/client';

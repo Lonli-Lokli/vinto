@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Card } from './card';
+import { Card } from './presentational';
 import { Card as CardType } from '@/shared';
 import { useCardAnimationStore } from './di-provider';
 

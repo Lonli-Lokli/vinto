@@ -1,9 +1,9 @@
-import { ActionTargetSelector } from './action-target-selector';
-import { FinalScores } from './final-scores';
-import { GameControls } from './game-controls';
-import { GamePhaseIndicators } from './game-phase-indicators';
-import { RankDeclaration } from './rank-declaration';
-import { WaitingIndicator } from './waiting-indicator';
+import { ActionTargetSelector } from '../action-target-selector';
+import { FinalScores } from '../final-scores';
+import { GameControls } from '../game-controls';
+import { GamePhaseIndicators } from '../game-phase-indicators';
+import { RankDeclaration } from '../rank-declaration';
+import { WaitingIndicator } from '../waiting-indicator';
 
 export function BottomArea() {
   return (
@@ -27,3 +27,4 @@ export function BottomArea() {
     </div>
   );
 }
+

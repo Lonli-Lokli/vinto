@@ -4,12 +4,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { GameHeader } from './game-header';
-import { MiddleArea } from './middle-area';
-import { BottomArea } from './bottom-area';
+import { MiddleArea, BottomArea } from './presentational';
 import { CoalitionTurnIndicator } from './coalition-turn-indicator';
-import { AnimatedCardOverlay } from './animated-card';
 import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
 import { useGameClientInitialized } from '@/client';
+import { AnimatedCardOverlay } from './animated-card';
 
 /**
  * Component that conditionally renders the main game UI

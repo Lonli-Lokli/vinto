@@ -8,7 +8,7 @@
 
 import { injectable, inject } from 'tsyringe';
 import { CardAnimationStore } from '../stores/card-animation-store';
-import { UIStore } from '../stores/ui-store';
+import { UIStore } from '../stores';
 import { GameAction, GameState } from '@/shared';
 
 @injectable()

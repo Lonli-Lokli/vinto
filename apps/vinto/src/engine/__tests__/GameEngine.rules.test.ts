@@ -408,7 +408,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
 
       expect(newState.discardPile.peekTop()?.id).toBe('nine1');
-      expect(newState.subPhase).toBe('idle');
+      expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
 

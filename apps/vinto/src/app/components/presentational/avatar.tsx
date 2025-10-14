@@ -1,10 +1,5 @@
 import { FC } from 'react';
-import {
-  Image_Donatello,
-  Image_Michelangelo,
-  Image_Raphael,
-  Image_You,
-} from './image';
+import { Image_Donatello, Image_Michelangelo, Image_Raphael, Image_You } from './image';
 
 interface AvatarProps {
   playerName: string;

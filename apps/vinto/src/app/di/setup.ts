@@ -11,7 +11,7 @@ import { container } from 'tsyringe';
 import { CardAnimationStore } from '../stores';
 
 // Services
-import { UIStore } from '../stores/ui-store';
+import { UIStore } from '../stores';
 import { AnimationService } from '../services/animation-service';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 
