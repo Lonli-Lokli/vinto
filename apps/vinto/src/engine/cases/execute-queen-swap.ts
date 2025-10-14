@@ -75,13 +75,18 @@ export function handleExecuteQueenSwap(
 
   // Initialize toss-in phase
   if (queenCard) {
+    // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+    const playersAlreadyReady = newState.players
+      .filter((p) => p.isVintoCaller)
+      .map((p) => p.id);
+
     newState.activeTossIn = {
       rank: queenCard.rank,
       initiatorId: _action.payload.playerId,
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      playersReadyForNextTurn: [],
+      playersReadyForNextTurn: playersAlreadyReady,
     };
   }
 

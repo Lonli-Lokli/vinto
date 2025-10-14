@@ -9,7 +9,7 @@
 import { injectable, inject } from 'tsyringe';
 import { CardAnimationStore } from '../stores/card-animation-store';
 import { UIStore } from '../stores';
-import { GameAction, GameState } from '@/shared';
+import { GameAction, GameState, SwapCardAction } from '@/shared';
 
 @injectable()
 export class AnimationService {
@@ -132,7 +132,7 @@ export class AnimationService {
   private handleSwapCard(
     oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'SWAP_CARD' }
+    action: SwapCardAction
   ): void {
     const playerId = action.payload.playerId;
     const position = action.payload.position;
@@ -157,15 +157,14 @@ export class AnimationService {
     );
 
     // Animate old card from player position to discard pile
-    // Use a slight delay to make it clearer
-    setTimeout(() => {
-      this.animationStore.startDiscardAnimation(
-        oldCard,
-        { type: 'player', playerId, position },
-        { type: 'discard' },
-        1500
-      );
-    }, 200);
+    // Start tracking immediately with a 200ms delay so DiscardPile knows which card to show
+    this.animationStore.startDiscardAnimation(
+      oldCard,
+      { type: 'player', playerId, position },
+      { type: 'discard' },
+      1500,
+      200 // Delay the visual animation start by 200ms
+    );
   }
 
   /**

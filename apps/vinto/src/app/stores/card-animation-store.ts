@@ -52,6 +52,7 @@ export interface CardAnimationState {
   // Animation timing
   startTime: number;
   duration: number;
+  delay?: number; // Optional delay before animation actually starts visually
   // Reveal card during animation
   revealed?: boolean;
   // Full 360 rotation for bot moves
@@ -76,6 +77,8 @@ export class CardAnimationStore {
     makeObservable(this, {
       activeAnimations: observable,
       hasActiveAnimations: computed,
+      isAnimatingToDiscard: computed,
+      cardAnimatingToDiscard: computed,
       startSwapAnimation: action,
       startDrawAnimation: action,
       startDiscardAnimation: action,
@@ -106,6 +109,32 @@ export class CardAnimationStore {
 
   get hasActiveAnimations(): boolean {
     return this.activeAnimations.size > 0;
+  }
+
+  /**
+   * Check if there's currently a card animating to the discard pile
+   * Used to hide the top card of discard pile during animation
+   */
+  get isAnimatingToDiscard(): boolean {
+    for (const animation of this.activeAnimations.values()) {
+      if (animation.type === 'discard' && !animation.completed) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get the card that's currently being animated to the discard pile
+   * Used to show the old card while the animation is in progress
+   */
+  get cardAnimatingToDiscard(): Card | undefined {
+    for (const animation of this.activeAnimations.values()) {
+      if (animation.type === 'discard' && !animation.completed) {
+        return animation.card;
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -229,7 +258,8 @@ export class CardAnimationStore {
     card: Card,
     from: AnimationPlayerTarget | AnimationDrawnTarget,
     to: AnimationDiscardTarget,
-    duration = 1500
+    duration = 1500,
+    delay = 0
   ): string {
     const id = `discard-${this.animationCounter++}`;
 
@@ -260,6 +290,7 @@ export class CardAnimationStore {
       toY: toPos.y,
       startTime: Date.now(),
       duration,
+      delay,
       revealed: true, // Discard animations always show the card
       completed: false,
     });

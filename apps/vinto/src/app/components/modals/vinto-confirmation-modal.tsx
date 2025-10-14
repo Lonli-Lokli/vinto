@@ -9,17 +9,17 @@ import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
 
 export const VintoConfirmationModal = observer(() => {
-  const { showVintoConfirmation, setShowVintoConfirmation } = useUIStore();
+  const uiStore = useUIStore();
   const gameClient = useGameClient();
 
   const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
-  if (!showVintoConfirmation || !humanPlayer) return null;
+  if (!uiStore.showVintoConfirmation || !humanPlayer) return null;
   return (
     <>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-overlay backdrop-blur-sm z-[200] animate-in fade-in duration-200"
-        onClick={() => setShowVintoConfirmation(false)}
+        onClick={() => uiStore.setShowVintoConfirmation(false)}
       />
 
       {/* Modal */}
@@ -46,9 +46,10 @@ export const VintoConfirmationModal = observer(() => {
           <div className="space-y-3">
             {/* Confirm button - Orange, top */}
             <CallVintoButton
-              onClick={() =>
-                gameClient.dispatch(GameActions.callVinto(humanPlayer.id))
-              }
+              onClick={() => {
+                gameClient.dispatch(GameActions.callVinto(humanPlayer.id));
+                uiStore.setShowVintoConfirmation(false);
+              }}
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
             >
@@ -57,7 +58,7 @@ export const VintoConfirmationModal = observer(() => {
 
             {/* Cancel button - Gray, bottom */}
             <CancelButton
-              onClick={() => setShowVintoConfirmation(false)}
+              onClick={() => uiStore.setShowVintoConfirmation(false)}
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
             />

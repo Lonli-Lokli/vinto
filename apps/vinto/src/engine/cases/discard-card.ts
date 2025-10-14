@@ -33,13 +33,18 @@ export function handleDiscardCard(
   newState.pendingAction = null;
 
   // Initialize toss-in phase
+  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+  const playersAlreadyReady = newState.players
+    .filter((p) => p.isVintoCaller)
+    .map((p) => p.id);
+
   newState.activeTossIn = {
     rank: discardedCard.rank,
     initiatorId: playerId,
     participants: [],
     queuedActions: [],
     waitingForInput: true,
-    playersReadyForNextTurn: [],
+    playersReadyForNextTurn: playersAlreadyReady,
   };
 
   // Transition to toss-in phase

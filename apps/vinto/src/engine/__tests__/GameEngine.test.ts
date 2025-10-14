@@ -1326,6 +1326,7 @@ describe('GameEngine', () => {
       const state = createTestState({
         vintoCallerId: null,
         finalTurnTriggered: false,
+        phase: 'playing',
       });
 
       const action = GameActions.callVinto('p1');
@@ -1333,6 +1334,7 @@ describe('GameEngine', () => {
 
       expect(newState.vintoCallerId).toBe('p1');
       expect(newState.finalTurnTriggered).toBe(true);
+      expect(newState.phase).toBe('final');
       expect(newState.players[0].isVintoCaller).toBe(true);
     });
 

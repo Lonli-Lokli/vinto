@@ -27,12 +27,20 @@ export function handleCallVinto(
   // Trigger final turn (everyone gets one more turn)
   newState.finalTurnTriggered = true;
 
+  // Transition to final phase
+  newState.phase = 'final';
+
   // Find the player and mark them as vinto caller
   const player = newState.players.find((p) => p.id === playerId);
   if (player) {
     player.isVintoCaller = true;
   }
 
-  // Game continues in same phase (vinto is declared, turn continues)
+  console.log('[handleCallVinto] Vinto called, entering final phase:', {
+    playerId,
+    phase: newState.phase,
+    finalTurnTriggered: newState.finalTurnTriggered,
+  });
+
   return newState;
 }

@@ -112,13 +112,18 @@ export function handleSelectActionTarget(
 
         // Initialize toss-in phase
         if (jackCard) {
+          // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+          const playersAlreadyReady = newState.players
+            .filter((p) => p.isVintoCaller)
+            .map((p) => p.id);
+
           newState.activeTossIn = {
             rank: jackCard.rank,
             initiatorId: action.payload.playerId,
             participants: [],
             queuedActions: [],
             waitingForInput: true,
-            playersReadyForNextTurn: [],
+            playersReadyForNextTurn: playersAlreadyReady,
           };
         }
 
@@ -159,13 +164,18 @@ export function handleSelectActionTarget(
 
         // Initialize toss-in phase
         if (aceCard) {
+          // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+          const playersAlreadyReady = newState.players
+            .filter((p) => p.isVintoCaller)
+            .map((p) => p.id);
+
           newState.activeTossIn = {
             rank: aceCard.rank,
             initiatorId: action.payload.playerId,
             participants: [],
             queuedActions: [],
             waitingForInput: true,
-            playersReadyForNextTurn: [],
+            playersReadyForNextTurn: playersAlreadyReady,
           };
         }
 

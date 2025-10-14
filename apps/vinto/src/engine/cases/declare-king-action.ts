@@ -31,13 +31,18 @@ export function handleDeclareKingAction(
 
   // Trigger toss-in for the declared rank
   // King forces all players to toss in cards matching the declared rank
+  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+  const playersAlreadyReady = newState.players
+    .filter((p) => p.isVintoCaller)
+    .map((p) => p.id);
+
   newState.activeTossIn = {
     rank: declaredRank,
     initiatorId: playerId,
     participants: [],
     queuedActions: [],
     waitingForInput: true,
-    playersReadyForNextTurn: [],
+    playersReadyForNextTurn: playersAlreadyReady,
   };
 
   // Clear pending action
