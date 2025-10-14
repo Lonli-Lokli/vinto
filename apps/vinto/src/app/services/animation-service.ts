@@ -112,7 +112,7 @@ export class AnimationService {
     _action: GameAction & { type: 'DISCARD_CARD' }
   ): void {
     // Get the card that was just discarded (top of discard pile)
-  const discardedCard = newState.discardPile.peekTop();
+    const discardedCard = newState.discardPile.peekTop();
     if (!discardedCard) return;
 
     // Card moves from pending/drawn area to discard pile
@@ -143,7 +143,7 @@ export class AnimationService {
     // Get the new card that's now at the position
     const newCard = player.cards[position];
     // Get the old card that was discarded (top of discard pile)
-  const oldCard = newState.discardPile.peekTop();
+    const oldCard = newState.discardPile.peekTop();
 
     if (!newCard || !oldCard) return;
 
@@ -208,7 +208,7 @@ export class AnimationService {
     const position = action.payload.position;
 
     // Get the card that was tossed in (should be on top of discard pile)
-  const tossedCard = newState.discardPile.peekTop();
+    const tossedCard = newState.discardPile.peekTop();
     if (!tossedCard) return;
 
     // Animate from player position to discard pile

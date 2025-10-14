@@ -24,7 +24,9 @@ export function handleFinishTossInPeriod(
   // Transition to idle phase - ready for turn advancement
   newState.subPhase = 'idle';
 
-  console.log('[handleFinishTossInPeriod] Toss-in complete, ready for turn advancement');
+  console.log(
+    '[handleFinishTossInPeriod] Toss-in complete, ready for turn advancement'
+  );
 
   return newState;
 }

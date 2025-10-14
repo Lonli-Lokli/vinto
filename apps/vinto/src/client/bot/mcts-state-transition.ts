@@ -93,7 +93,7 @@ export class MCTSStateTransition {
   ): MCTSGameState {
     // Action effects depend on the action type
     if (move.actionCard) {
-      const actionType = getCardAction(move.actionCard.rank);;
+      const actionType = getCardAction(move.actionCard.rank);
 
       switch (actionType) {
         case 'swap-cards':

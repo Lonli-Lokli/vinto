@@ -334,6 +334,17 @@ export class GameClient {
   }
 
   /**
+   * Check if toss in activated
+   */
+  @computed
+  get isTossInActivated(): boolean {
+    return (
+      this._state.phase === 'playing' &&
+      this._state.subPhase === 'toss_queue_active'
+    );
+  }
+
+  /**
    * Get coalition leader (if any)
    */
   @computed

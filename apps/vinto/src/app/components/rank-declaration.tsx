@@ -86,7 +86,7 @@ Note: 2-6 and Joker are not shown because they have no actions.`;
         </div>
 
         {/* Just Swap button */}
-        <SkipDeclarationButton onClick={handleJustSwap} >
+        <SkipDeclarationButton onClick={handleJustSwap}>
           Just Swap (No Declaration)
         </SkipDeclarationButton>
       </div>

@@ -1,7 +1,14 @@
 // client/initializeGame.ts
 // Utility functions to create initial game state
 
-import { Card, GameState, Pile, getCardConfig, PlayerState, Rank } from '@/shared';
+import {
+  Card,
+  GameState,
+  Pile,
+  getCardConfig,
+  PlayerState,
+  Rank,
+} from '@/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -201,8 +208,8 @@ export function initializeGame(settings: GameSettings): GameState {
     currentPlayerIndex: 0, // Human player starts
     vintoCallerId: null,
     coalitionLeaderId: null,
-  drawPile: new Pile(drawPile),
-  discardPile: new Pile(),
+    drawPile: new Pile(drawPile),
+    discardPile: new Pile(),
     pendingAction: null,
     activeTossIn: null,
     recentActions: [],

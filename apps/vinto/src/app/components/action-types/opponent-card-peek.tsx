@@ -58,7 +58,6 @@ export const OpponentCardPeek = observer(() => {
           <ContinueButton
             onClick={() => {
               if (!humanPlayer) return;
-              uiStore.clearTemporaryCardVisibility();
               gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
             }}
             className="w-full py-2 px-4 text-sm"
@@ -68,7 +67,6 @@ export const OpponentCardPeek = observer(() => {
             onClick={() => {
               if (!humanPlayer) return;
               // Skip the peek action
-              uiStore.clearTemporaryCardVisibility();
               gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
             }}
             className="w-full py-2 px-4 text-sm"

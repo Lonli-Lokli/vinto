@@ -24,6 +24,6 @@ export function getTargetTypeFromRank(rank: Rank): TargetType | undefined {
     case 'A':
       return 'force-draw';
     default:
-      return undefined;;
+      return undefined;
   }
 }

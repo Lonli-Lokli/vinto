@@ -35,7 +35,7 @@ interface PlayerAnalysisState {
  * the bot's score is still lower than the best opponent's score.
  */
 export class VintoRoundSolver {
-  constructor( _botId: string, private botMemory: BotMemory) {}
+  constructor(_botId: string, private botMemory: BotMemory) {}
 
   /**
    * Validate if calling Vinto is safe

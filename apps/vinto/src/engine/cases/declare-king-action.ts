@@ -46,10 +46,13 @@ export function handleDeclareKingAction(
   // Transition to toss-in phase
   newState.subPhase = 'toss_queue_active';
 
-  console.log('[handleDeclareKingAction] King action complete, toss-in active:', {
-    declaredRank,
-    newSubPhase: newState.subPhase,
-  });
+  console.log(
+    '[handleDeclareKingAction] King action complete, toss-in active:',
+    {
+      declaredRank,
+      newSubPhase: newState.subPhase,
+    }
+  );
 
   return newState;
 }

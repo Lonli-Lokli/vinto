@@ -77,8 +77,7 @@ export class BotAIAdapter {
       // naturally loop back through state changes. Error handling occurs within methods.
       ({ isBot, subPhase, activeTossIn }) => {
         // Handle toss-in phase separately (all bot players participate)
-        if (subPhase === 'toss_queue_active' && activeTossIn ) {
-
+        if (subPhase === 'toss_queue_active' && activeTossIn) {
           if (this.isHandlingTossIn) {
             // Already processing toss-in - avoid re-entrancy
             return;

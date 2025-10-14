@@ -143,11 +143,7 @@ export const DeckManagerPopover = observer(
             {gameClient.state.drawPile.length > 0 && topCard ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
-                  <CardComponent
-                    card={topCard}
-                    revealed={true}
-                    size="auto"
-                  />
+                  <CardComponent card={topCard} revealed={true} size="auto" />
                 </div>
                 <div className="text-sm font-semibold text-primary">
                   {topCard.rank}

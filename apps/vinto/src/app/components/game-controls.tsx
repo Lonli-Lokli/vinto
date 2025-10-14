@@ -7,7 +7,7 @@ import { HelpPopover } from './help-popover';
 import { DrawCardButton, PlayDiscardButton } from './buttons';
 import { useDispatch, useGameClient } from '@/client';
 import { GameActions } from '@/engine';
-import { getCardName, getCardShortDescription } from '@/shared';
+import { getCardName } from '@/shared';
 
 export const GameControls = observer(() => {
   const gameClient = useGameClient();
@@ -118,7 +118,7 @@ const FullTurnControls = observer(
       }
       return {
         text: `Use ${getCardName(topDiscard.rank)}`,
-        subtitle: getCardShortDescription(topDiscard.rank),
+        subtitle: topDiscard.actionText,
         tooltip: `Use ${topDiscard.rank} card action from discard pile`,
       };
     };

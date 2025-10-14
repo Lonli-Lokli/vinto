@@ -56,7 +56,9 @@ export function handlePlayerTossInFinished(
 
   // If all human players are ready, finish toss-in and advance turn
   if (allHumansReady) {
-    console.log('[handlePlayerTossInFinished] All humans ready, finishing toss-in and advancing turn');
+    console.log(
+      '[handlePlayerTossInFinished] All humans ready, finishing toss-in and advancing turn'
+    );
 
     // Clear toss-in
     newState.activeTossIn = null;
@@ -75,10 +77,13 @@ export function handlePlayerTossInFinished(
       newState.subPhase = 'idle';
     }
 
-    console.log('[handlePlayerTossInFinished] Toss-in complete, turn advanced to:', {
-      nextPlayer: nextPlayer.name,
-      subPhase: newState.subPhase,
-    });
+    console.log(
+      '[handlePlayerTossInFinished] Toss-in complete, turn advanced to:',
+      {
+        nextPlayer: nextPlayer.name,
+        subPhase: newState.subPhase,
+      }
+    );
   }
 
   return newState;

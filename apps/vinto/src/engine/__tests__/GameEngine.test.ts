@@ -82,7 +82,7 @@ describe('GameEngine', () => {
 
       // Draw pile should have one less card
       expect(newState.drawPile).toHaveLength(2);
-    expect(newState.drawPile.peekTop()?.id).toBe('card2'); // card1 was drawn
+      expect(newState.drawPile.peekTop()?.id).toBe('card2'); // card1 was drawn
 
       // Original state should be unchanged (immutability)
       expect(initialState.drawPile).toHaveLength(3);
@@ -142,7 +142,7 @@ describe('GameEngine', () => {
 
     it('should reject draw when draw pile is empty', () => {
       const initialState = createTestState({
-  drawPile: toPile(), // Empty draw pile
+        drawPile: toPile(), // Empty draw pile
       });
       const action = GameActions.drawCard('p1');
 
@@ -481,7 +481,7 @@ describe('GameEngine', () => {
       let state = createTestState({
         subPhase: 'selecting',
         turnCount: 5,
-  discardPile: toPile([createTestCard('Q', 'disc1')]),
+        discardPile: toPile([createTestCard('Q', 'disc1')]),
         pendingAction: {
           card: removedCard,
           playerId: 'p1',
@@ -495,8 +495,8 @@ describe('GameEngine', () => {
 
       // Card should be added to discard pile
       expect(newState.discardPile).toHaveLength(2);
-  expect(newState.discardPile.peekAt(1)?.rank).toBe('K');
-  expect(newState.discardPile.peekAt(1)?.id).toBe('removed1');
+      expect(newState.discardPile.peekAt(1)?.rank).toBe('K');
+      expect(newState.discardPile.peekAt(1)?.id).toBe('removed1');
 
       // Pending action should be cleared
       expect(newState.pendingAction).toBeNull();
@@ -719,7 +719,7 @@ describe('GameEngine', () => {
     it('should take card from discard pile', () => {
       const discardCard = createTestCard('A', 'disc1');
       const initialState = createTestState({
-  discardPile: toPile([createTestCard('K', 'disc0'), discardCard]),
+        discardPile: toPile([createTestCard('K', 'disc0'), discardCard]),
       });
       const action = GameActions.takeDiscard('p1');
 
@@ -727,7 +727,7 @@ describe('GameEngine', () => {
 
       // Discard pile should have one less card
       expect(newState.discardPile).toHaveLength(1);
-  expect(newState.discardPile.peekTop()?.id).toBe('disc0'); // First card remains
+      expect(newState.discardPile.peekTop()?.id).toBe('disc0'); // First card remains
 
       // Taken card should be in pending action
       expect(newState.pendingAction).not.toBeNull();
@@ -740,7 +740,7 @@ describe('GameEngine', () => {
 
     it('should create pending action with taken card', () => {
       const initialState = createTestState({
-  discardPile: toPile([createTestCard('Q', 'disc1')]),
+        discardPile: toPile([createTestCard('Q', 'disc1')]),
       });
       const action = GameActions.takeDiscard('p1');
 
@@ -756,7 +756,7 @@ describe('GameEngine', () => {
     it('should transition from idle to choosing phase', () => {
       const initialState = createTestState({
         subPhase: 'idle',
-  discardPile: toPile([createTestCard('K', 'disc1')]),
+        discardPile: toPile([createTestCard('K', 'disc1')]),
       });
       const action = GameActions.takeDiscard('p1');
 
@@ -769,7 +769,7 @@ describe('GameEngine', () => {
       const initialState = createTestState({
         subPhase: 'ai_thinking',
         currentPlayerIndex: 1, // Bot's turn
-  discardPile: toPile([createTestCard('J', 'disc1')]),
+        discardPile: toPile([createTestCard('J', 'disc1')]),
       });
       const action = GameActions.takeDiscard('p2');
 
@@ -783,7 +783,7 @@ describe('GameEngine', () => {
     it('should reject take when not player turn', () => {
       const initialState = createTestState({
         currentPlayerIndex: 0, // p1's turn
-  discardPile: toPile([createTestCard('K', 'disc1')]),
+        discardPile: toPile([createTestCard('K', 'disc1')]),
       });
       const action = GameActions.takeDiscard('p2'); // p2 trying to take
 
@@ -797,7 +797,7 @@ describe('GameEngine', () => {
 
     it('should reject take when discard pile is empty', () => {
       const initialState = createTestState({
-  discardPile: toPile(), // Empty discard pile
+        discardPile: toPile(), // Empty discard pile
       });
       const action = GameActions.takeDiscard('p1');
 
@@ -811,7 +811,7 @@ describe('GameEngine', () => {
     it('should reject take when in wrong phase', () => {
       const initialState = createTestState({
         subPhase: 'selecting', // Wrong phase
-  discardPile: toPile([createTestCard('K', 'disc1')]),
+        discardPile: toPile([createTestCard('K', 'disc1')]),
       });
       const action = GameActions.takeDiscard('p1');
 
@@ -825,7 +825,7 @@ describe('GameEngine', () => {
 
     it('should not mutate original state', () => {
       const initialState = createTestState({
-  discardPile: toPile([createTestCard('K', 'disc1')]),
+        discardPile: toPile([createTestCard('K', 'disc1')]),
       });
       const stateCopy = JSON.parse(JSON.stringify(initialState));
       const action = GameActions.takeDiscard('p1');
@@ -1003,7 +1003,7 @@ describe('GameEngine', () => {
 
       // Target should be added (before clearing)
       expect(newState.discardPile).toHaveLength(1);
-  expect(newState.discardPile.peekTop()?.id).toBe('card1');
+      expect(newState.discardPile.peekTop()?.id).toBe('card1');
     });
 
     it('should transition to idle after target selection', () => {
@@ -1038,7 +1038,7 @@ describe('GameEngine', () => {
       const actionCard = createTestCard('9', 'card1');
       const state = createTestState({
         subPhase: 'awaiting_action',
-  discardPile: toPile([createTestCard('J', 'disc1')]),
+        discardPile: toPile([createTestCard('J', 'disc1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true),
           {
@@ -1058,7 +1058,7 @@ describe('GameEngine', () => {
       const newState = GameEngine.reduce(state, action);
 
       expect(newState.discardPile).toHaveLength(2);
-  expect(newState.discardPile.peekAt(1)?.id).toBe('card1');
+      expect(newState.discardPile.peekAt(1)?.id).toBe('card1');
     });
 
     it('should reject when not in awaiting_action phase', () => {
@@ -1218,7 +1218,7 @@ describe('GameEngine', () => {
       const state = createTestState({
         subPhase: 'awaiting_action',
         turnCount: 10,
-  discardPile: toPile([createTestCard('K', 'disc1')]),
+        discardPile: toPile([createTestCard('K', 'disc1')]),
         pendingAction: {
           card: peekCard,
           playerId: 'p1',
@@ -1231,7 +1231,7 @@ describe('GameEngine', () => {
       const newState = GameEngine.reduce(state, action);
 
       expect(newState.discardPile).toHaveLength(2);
-  expect(newState.discardPile.peekAt(1)?.id).toBe('peek1');
+      expect(newState.discardPile.peekAt(1)?.id).toBe('peek1');
       expect(newState.turnCount).toBe(11);
       expect(newState.subPhase).toBe('idle');
       expect(newState.pendingAction).toBeNull();
@@ -1388,7 +1388,7 @@ describe('GameEngine', () => {
       state = GameEngine.reduce(state, GameActions.discardCard('p1'));
       expect(state.subPhase).toBe('idle');
       expect(state.discardPile).toHaveLength(1);
-  expect(state.discardPile.peekTop()?.id).toBe('hand1');
+      expect(state.discardPile.peekTop()?.id).toBe('hand1');
       expect(state.turnCount).toBe(11);
 
       // 4. ADVANCE_TURN
@@ -1403,7 +1403,7 @@ describe('GameEngine', () => {
         subPhase: 'idle',
         currentPlayerIndex: 0,
         turnCount: 5,
-  discardPile: toPile([createTestCard('A', 'disc1')]), // Card available to take
+        discardPile: toPile([createTestCard('A', 'disc1')]), // Card available to take
         players: [
           {
             ...createTestPlayer('p1', 'Player 1', true),
@@ -1434,7 +1434,7 @@ describe('GameEngine', () => {
       state = GameEngine.reduce(state, GameActions.discardCard('p1'));
       expect(state.subPhase).toBe('idle');
       expect(state.discardPile).toHaveLength(1);
-  expect(state.discardPile.peekTop()?.id).toBe('hand3'); // J discarded
+      expect(state.discardPile.peekTop()?.id).toBe('hand3'); // J discarded
       expect(state.turnCount).toBe(6);
 
       // 4. ADVANCE_TURN
@@ -1495,7 +1495,7 @@ describe('GameEngine', () => {
       );
       expect(state.subPhase).toBe('idle');
       expect(state.discardPile).toHaveLength(1);
-  expect(state.discardPile.peekTop()?.id).toBe('hand1'); // K discarded after action
+      expect(state.discardPile.peekTop()?.id).toBe('hand1'); // K discarded after action
       expect(state.turnCount).toBe(4);
       expect(state.pendingAction).toBeNull();
 
@@ -1550,7 +1550,7 @@ describe('GameEngine', () => {
 
       // Queen card should be in discard pile
       expect(newState.discardPile).toHaveLength(1);
-  expect(newState.discardPile.peekTop()?.id).toBe('queen1');
+      expect(newState.discardPile.peekTop()?.id).toBe('queen1');
 
       // Turn should be complete
       expect(newState.pendingAction).toBeNull();
@@ -1784,7 +1784,7 @@ describe('GameEngine', () => {
 
       // Queen card should be in discard pile
       expect(newState.discardPile).toHaveLength(1);
-  expect(newState.discardPile.peekTop()?.id).toBe('queen1');
+      expect(newState.discardPile.peekTop()?.id).toBe('queen1');
 
       // Turn should be complete
       expect(newState.pendingAction).toBeNull();
@@ -1877,7 +1877,7 @@ describe('GameEngine', () => {
 
       // King card should be in discard pile
       expect(newState.discardPile).toHaveLength(1);
-  expect(newState.discardPile.peekTop()?.id).toBe('king1');
+      expect(newState.discardPile.peekTop()?.id).toBe('king1');
 
       // Turn should be complete
       expect(newState.pendingAction).toBeNull();

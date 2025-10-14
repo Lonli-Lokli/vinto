@@ -81,10 +81,13 @@ export function handleSwapCard(
       };
       newState.subPhase = 'awaiting_action';
 
-      console.log('[handleSwapCard] Correct declaration - card action available:', {
-        rank: cardFromHand.rank,
-        targetType: getTargetTypeFromRank(cardFromHand.rank),
-      });
+      console.log(
+        '[handleSwapCard] Correct declaration - card action available:',
+        {
+          rank: cardFromHand.rank,
+          targetType: getTargetTypeFromRank(cardFromHand.rank),
+        }
+      );
       return newState;
     }
   }
