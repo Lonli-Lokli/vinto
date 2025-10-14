@@ -132,7 +132,7 @@ export class BotAIAdapter {
     console.log(`[BotAI] ${botId} executing phase: ${subPhase}`);
 
     // Add "thinking time" delay for better UX (optional, visual only)
-    await this.delay(800);
+    await this.delay(3_000);
 
     try {
       switch (subPhase) {

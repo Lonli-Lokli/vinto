@@ -64,7 +64,7 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
   };
 
   return (
-    <div className="w-full h-full px-3 py-2">
+    <div className="w-full h-full py-1">
       <div className="h-full bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm flex flex-col justify-center">
         <div className="text-center">
           <h3 className="text-sm md:text-base font-semibold text-primary mb-2">

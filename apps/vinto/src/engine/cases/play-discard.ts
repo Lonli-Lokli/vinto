@@ -1,5 +1,6 @@
 import { GameState, PlayDiscardAction } from '@/shared';
 import copy from 'fast-copy';
+import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**
  * PLAY_DISCARD Handler
@@ -8,9 +9,10 @@ import copy from 'fast-copy';
  * 1. Transition to 'drawing' phase (for animation, same as draw)
  * 2. Remove top card from discard pile
  * 3. Create pending action with taken card
- * 4. Transition to 'choosing' phase
+ * 4. Immediately transition to using the card's action (no choice to discard)
  *
- * Note: Very similar to DRAW_CARD, but takes from discard pile
+ * Note: When taking a card from discard, you MUST use its action.
+ * You cannot discard it like you can when drawing from the deck.
  */
 export function handlePlayDiscard(
   state: GameState,
@@ -33,16 +35,19 @@ export function handlePlayDiscard(
     return state;
   }
 
-  // Create pending action
+  // Create pending action and immediately set it to use the action
+  // (no choice to discard when taking from discard pile)
   newState.pendingAction = {
     card: takenCard,
     playerId,
-    actionPhase: 'choosing-action',
+    actionPhase: 'selecting-target',
+    targetType: getTargetTypeFromRank(takenCard.rank),
     targets: [],
   };
 
-  // Transition to choosing phase
-  newState.subPhase = 'choosing';
+  // Transition directly to awaiting_action phase
+  // Player must use the card's action, no option to discard
+  newState.subPhase = 'awaiting_action';
 
   return newState;
 }

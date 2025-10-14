@@ -39,6 +39,7 @@ export const GameControls = observer(() => {
 
   const handlePlayDiscard = () => {
     if (isMyTurn) {
+      // When taking from discard, the action is automatically used (no choice to discard)
       dispatch(GameActions.playDiscard(currentPlayer.id));
     }
   };
@@ -70,7 +71,7 @@ Note: Call Vinto option will be available after you complete your turn during th
         <div className="flex flex-col justify-center flex-1 min-h-0">
           <FullTurnControls
             handleDrawCard={handleDrawCard}
-            handleTakeDiscard={handlePlayDiscard}
+            handlePlayDiscard={handlePlayDiscard}
           />
         </div>
       </div>
@@ -81,10 +82,10 @@ Note: Call Vinto option will be available after you complete your turn during th
 const FullTurnControls = observer(
   ({
     handleDrawCard,
-    handleTakeDiscard,
+    handlePlayDiscard,
   }: {
     handleDrawCard: () => void;
-    handleTakeDiscard: () => void;
+    handlePlayDiscard: () => void;
   }) => {
     const gameClient = useGameClient();
 
@@ -133,7 +134,7 @@ const FullTurnControls = observer(
 
           {/* Play from Discard */}
           <PlayDiscardButton
-            onClick={handleTakeDiscard}
+            onClick={handlePlayDiscard}
             disabled={!canTakeDiscard}
             title={discardInfo.tooltip}
             text={discardInfo.text}

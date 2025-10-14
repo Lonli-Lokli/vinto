@@ -716,7 +716,7 @@ describe('GameEngine', () => {
   });
 
   describe('PLAY_DISCARD action', () => {
-    it('should take card from discard pile', () => {
+    it('should take card from discard pile and automatically use its action', () => {
       const discardCard = createTestCard('A', 'disc1');
       const initialState = createTestState({
         discardPile: toPile([createTestCard('K', 'disc0'), discardCard]),
@@ -729,16 +729,21 @@ describe('GameEngine', () => {
       expect(newState.discardPile).toHaveLength(1);
       expect(newState.discardPile.peekTop()?.id).toBe('disc0'); // First card remains
 
-      // Taken card should be in pending action
+      // Taken card should be in pending action with action automatically selected
       expect(newState.pendingAction).not.toBeNull();
       expect(newState.pendingAction?.card.rank).toBe('A');
       expect(newState.pendingAction?.card.id).toBe('disc1');
+      expect(newState.pendingAction?.actionPhase).toBe('selecting-target');
+      expect(newState.pendingAction?.targetType).toBe('force-draw');
+
+      // Should be in awaiting_action phase (not choosing)
+      expect(newState.subPhase).toBe('awaiting_action');
 
       // Original state should be unchanged (immutability)
       expect(initialState.discardPile).toHaveLength(2);
     });
 
-    it('should create pending action with taken card', () => {
+    it('should create pending action with card action pre-selected', () => {
       const initialState = createTestState({
         discardPile: toPile([createTestCard('Q', 'disc1')]),
       });
@@ -749,11 +754,12 @@ describe('GameEngine', () => {
       expect(newState.pendingAction).not.toBeNull();
       expect(newState.pendingAction?.card.id).toBe('disc1');
       expect(newState.pendingAction?.playerId).toBe('p1');
-      expect(newState.pendingAction?.actionPhase).toBe('choosing-action');
+      expect(newState.pendingAction?.actionPhase).toBe('selecting-target');
+      expect(newState.pendingAction?.targetType).toBe('peek-then-swap');
       expect(newState.pendingAction?.targets).toEqual([]);
     });
 
-    it('should transition from idle to choosing phase', () => {
+    it('should transition from idle directly to awaiting_action phase', () => {
       const initialState = createTestState({
         subPhase: 'idle',
         discardPile: toPile([createTestCard('K', 'disc1')]),
@@ -762,7 +768,9 @@ describe('GameEngine', () => {
 
       const newState = GameEngine.reduce(initialState, action);
 
-      expect(newState.subPhase).toBe('choosing');
+      // Should skip choosing phase and go directly to awaiting_action
+      expect(newState.subPhase).toBe('awaiting_action');
+      expect(newState.pendingAction?.targetType).toBe('declare-action');
     });
 
     it('should handle bot taking discard (from ai_thinking phase)', () => {
@@ -775,9 +783,10 @@ describe('GameEngine', () => {
 
       const newState = GameEngine.reduce(initialState, action);
 
-      // Should transition to choosing
-      expect(newState.subPhase).toBe('choosing');
+      // Should transition to awaiting_action with Jack's swap-cards action
+      expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.id).toBe('disc1');
+      expect(newState.pendingAction?.targetType).toBe('swap-cards');
     });
 
     it('should reject take when not player turn', () => {
@@ -1414,30 +1423,35 @@ describe('GameEngine', () => {
               createTestCard('10', 'hand4'),
             ],
           },
-          createTestPlayer('p2', 'Player 2', false),
+          {
+            ...createTestPlayer('p2', 'Player 2', false),
+            cards: [
+              createTestCard('2', 'p2c1'),
+              createTestCard('3', 'p2c2'),
+              createTestCard('4', 'p2c3'),
+              createTestCard('5', 'p2c4'),
+            ],
+          },
         ],
       });
 
       // 1. PLAY_DISCARD instead of DRAW_CARD
+      // When taking from discard, the action is automatically used (no choosing phase)
       state = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
-      expect(state.subPhase).toBe('choosing');
+      expect(state.subPhase).toBe('awaiting_action');
       expect(state.pendingAction?.card.id).toBe('disc1');
+      expect(state.pendingAction?.targetType).toBe('force-draw');
       expect(state.discardPile).toHaveLength(0); // Taken from discard
 
-      // 2. SWAP_CARD
-      state = GameEngine.reduce(state, GameActions.swapCard('p1', 2, 'J'));
-      expect(state.subPhase).toBe('selecting');
-      expect(state.players[0].cards[2].id).toBe('disc1'); // Ace swapped in
-      expect(state.pendingAction?.card.id).toBe('hand3'); // J removed
+      // 2. SELECT_ACTION_TARGET (Ace forces opponent to draw)
+      state = GameEngine.reduce(
+        state,
+        GameActions.selectActionTarget('p1', 'p2', 0)
+      );
+      expect(state.subPhase).toBe('toss_queue_active');
+      expect(state.players[1].cards.length).toBe(5); // P2 drew a penalty card
 
-      // 3. DISCARD_CARD
-      state = GameEngine.reduce(state, GameActions.discardCard('p1'));
-      expect(state.subPhase).toBe('idle');
-      expect(state.discardPile).toHaveLength(1);
-      expect(state.discardPile.peekTop()?.id).toBe('hand3'); // J discarded
-      expect(state.turnCount).toBe(6);
-
-      // 4. ADVANCE_TURN
+      // 3. ADVANCE_TURN (after toss-in period)
       state = GameEngine.reduce(state, GameActions.advanceTurn());
       expect(state.currentPlayerIndex).toBe(1);
       expect(state.subPhase).toBe('ai_thinking'); // Next player is bot
