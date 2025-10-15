@@ -78,6 +78,7 @@ export function handleSwapCard(
         actionPhase: 'selecting-target',
         targetType: getTargetTypeFromRank(cardFromHand.rank),
         targets: [],
+        swapPosition: position, // Store the position for animation later
       };
       newState.subPhase = 'awaiting_action';
 
@@ -86,6 +87,7 @@ export function handleSwapCard(
         {
           rank: cardFromHand.rank,
           targetType: getTargetTypeFromRank(cardFromHand.rank),
+          swapPosition: position,
         }
       );
       return newState;

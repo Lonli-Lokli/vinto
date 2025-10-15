@@ -10,5 +10,7 @@ export * from './game-layout';
 export * from './help-popover';
 export * from './image';
 export * from './middle-area';
+export * from './player-avatar';
+export * from './player-cards';
 export * from './theme-toggle';
 export * from './toast-provider';

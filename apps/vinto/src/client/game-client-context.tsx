@@ -10,6 +10,7 @@ import { AnimationService } from '../app/services/animation-service';
 import { GameClient } from './game-client';
 import { createBotAI } from './adapters/botAIAdapter';
 import { GameState } from '@/shared';
+import { HeadlessService } from '../app/services/headless-service';
 
 /**
  * Context value includes both client and initialization state
@@ -57,8 +58,9 @@ export const GameClientProvider: React.FC<GameClientProviderProps> = ({
   useEffect(() => {
     console.log('[GameClientProvider] Starting initialization...');
 
-    // Get AnimationService from DI container
+    // TODO: change to make those services be self-registered to avoid direct references to app layer from client layer
     const animationService = getInstance<AnimationService>(AnimationService);
+    const headlessService = getInstance<HeadlessService>(HeadlessService);
 
     client.onStateUpdate((oldState, newState, action) => {
       console.log('[GameClient] Action:', action.type, action);
@@ -66,6 +68,7 @@ export const GameClientProvider: React.FC<GameClientProviderProps> = ({
 
       // Trigger animations based on action type
       animationService.handleStateUpdate(oldState, newState, action);
+      headlessService.handleStateUpdate(oldState, newState, action);
     });
 
     // Initialize Bot AI Adapter (client-side only, for local games)

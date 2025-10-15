@@ -49,11 +49,9 @@ export const GamePhaseIndicators = observer(() => {
   const currentPlayer = gameClient.currentPlayer;
   const sessionActive = gameClient.state.phase !== 'final';
   const pendingCard = gameClient.state.pendingAction?.card;
-  const actionContext = gameClient.state.pendingAction;
 
   // Map subPhases to UI boolean flags
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
-  const isAwaitingActionTarget = subPhase === 'awaiting_action';
   const isChoosingCardAction = subPhase === 'choosing';
   const waitingForTossIn = subPhase === 'toss_queue_active';
 
@@ -93,21 +91,8 @@ export const GamePhaseIndicators = observer(() => {
     );
   }
 
-  // Action Execution - only show for bot players
+  // Note: Bot activity during awaiting_action is now shown in WaitingIndicator
   // Human players get detailed instructions in the ActionTargetSelector (bottom area)
-  if (
-    isAwaitingActionTarget &&
-    actionContext &&
-    currentPlayer &&
-    !currentPlayer.isHuman
-  ) {
-    return (
-      <ActionExecutionIndicator
-        actionContext={actionContext}
-        currentPlayer={currentPlayer}
-      />
-    );
-  }
 
   // Card Selection for Swap (only for human players)
   if (isSelectingSwapPosition && currentPlayer?.isHuman) {

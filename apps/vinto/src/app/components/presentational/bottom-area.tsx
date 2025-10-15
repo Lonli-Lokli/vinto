@@ -10,9 +10,9 @@ export function BottomArea() {
     <div
       className="sticky bottom-0 z-40 flex-shrink-0 from-white/95 to-transparent backdrop-blur-sm"
       style={{
-        height: '25vh', // Fixed height as percentage of viewport
+        height: '20vh', // Fixed height as percentage of viewport
         minHeight: '100px', // Minimum height for usability
-        maxHeight: '200px', // Maximum height to prevent taking too much space
+        maxHeight: '260px', // Maximum height to prevent taking too much space
       }}
     >
       <div className="h-full w-full">

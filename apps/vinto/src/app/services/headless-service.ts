@@ -1,32 +1,80 @@
-import { reaction } from 'mobx';
-import { GameClient } from '../../client/game-client';
+import { inject, injectable } from 'tsyringe';
 import { UIStore } from '../stores';
+import { GameAction, GameState, SwapCardAction } from '@/shared';
 
+@injectable()
 export class HeadlessService {
-  private disposeReaction?: () => void;
-  constructor(private gameClient: GameClient, private uiStore: UIStore) {
-    this.setupReaction();
-  }
+  private uiStore: UIStore;
 
-  private setupReaction() {
-    this.disposeReaction = reaction(
-      // Watch for bot turn state - EXPLICIT state watching only
-      () => ({
-        isTossInActivated: this.gameClient.isTossInActivated,
-      }),
-
-      ({ isTossInActivated }) => {
-        if (isTossInActivated) {
-          this.uiStore.clearTemporaryCardVisibility();
-        }
-      }
-    );
+  constructor(@inject(UIStore) uiStore: UIStore) {
+    this.uiStore = uiStore;
   }
 
   /**
-   * Cleanup reactions when service is destroyed
+   * Handle game state updates and do appropriate actions
+   * This is called from GameClientContext after each action
    */
-  dispose(): void {
-    this.disposeReaction?.();
+  handleStateUpdate(
+    oldState: GameState,
+    newState: GameState,
+    action: GameAction
+  ): void {
+    const isTossInActivated =
+      newState.phase === 'playing' && newState.subPhase === 'toss_queue_active';
+    const isSetupPhaseEnded =
+      oldState.phase === 'setup' && newState.phase === 'playing';
+    if (isTossInActivated || isSetupPhaseEnded) {
+      this.uiStore.clearTemporaryCardVisibility();
+    }
+
+    // Handle rank declaration visual feedback
+    if (action.type === 'SWAP_CARD') {
+      this.handleRankDeclarationFeedback(oldState, newState, action);
+    }
+  }
+
+  /**
+   * Detect rank declarations and trigger visual feedback on DISCARD PILE
+   * 
+   * When a rank is declared during swap:
+   * 1. Old card from hand is swapped with new card from discard
+   * 2. Old card goes to discard pile (BOTH correct and incorrect)
+   * 3. If correct: card in discard pile shows GREEN (can be used for action)
+   * 4. If incorrect: card in discard pile shows RED + penalty card added to hand
+   * 
+   * The feedback should appear on the card in the DISCARD PILE to show all players
+   * whether the declaration was correct or not.
+   */
+  private handleRankDeclarationFeedback(
+    oldState: GameState,
+    newState: GameState,
+    action: SwapCardAction
+  ): void {
+    const { declaredRank } = action.payload;
+
+    // Only process if a rank was declared
+    if (!declaredRank) return;
+
+    // Check if declaration was correct or incorrect
+    // Correct: subPhase becomes 'awaiting_action' (card action available, card in pendingAction/drawn area)
+    // Incorrect: subPhase becomes 'toss_queue_active' (penalty issued, card on discard pile)
+    const declarationCorrect =
+      newState.subPhase === 'awaiting_action' && newState.pendingAction !== null;
+    const declarationIncorrect =
+      newState.subPhase === 'toss_queue_active' && newState.pendingAction === null;
+
+    if (declarationCorrect) {
+      console.log('[HeadlessService] Correct rank declaration - showing green feedback on drawn card');
+      // The card is in pendingAction (drawn area) - show green feedback there
+      this.uiStore.setDrawnCardDeclarationFeedback(true);
+    } else if (declarationIncorrect) {
+      console.log('[HeadlessService] Incorrect rank declaration - showing red feedback on discard pile');
+      // The card went directly to discard pile - show red feedback there
+      this.uiStore.setDiscardPileDeclarationFeedback(false);
+    }
+  }
+
+  public dispose() {
+    console.log('Disposed HeadlessService');
   }
 }

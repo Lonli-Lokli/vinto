@@ -23,22 +23,16 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
     gameClient.state.subPhase === 'toss_queue_processing';
   const aiThinking = gameClient.state.subPhase === 'ai_thinking';
 
-  // Get action context (if any)
-  const actionContext = gameClient.state.pendingAction
-    ? {
-        action: gameClient.state.pendingAction.card.rank,
-        targetType: gameClient.state.pendingAction.targets
-          ? 'awaiting-target'
-          : undefined,
-      }
-    : null;
-
   // Don't show if toss-in is active (shown inline in TossInIndicator instead)
   if (!isCurrentPlayerWaiting || waitingForTossIn) return null;
 
   // Determine what the bot is doing
   const getBotActivity = () => {
     if (!currentPlayer) return 'Thinking...';
+
+    if (aiThinking) {
+      return 'Deciding next move...';
+    }
 
     if (isChoosingCardAction) {
       return 'Deciding whether to swap or play the card...';
@@ -52,12 +46,28 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
       return 'Declaring rank for the King action...';
     }
 
-    if (isAwaitingActionTarget && actionContext) {
-      return `Playing ${actionContext.action} - making selection...`;
-    }
+    if (isAwaitingActionTarget) {
+      const pendingAction = gameClient.state.pendingAction;
+      if (pendingAction?.card) {
+        const cardName = pendingAction.card.rank;
+        const targetType = pendingAction.targetType;
 
-    if (aiThinking) {
-      return 'Thinking...';
+        if (targetType === 'own-card') {
+          return `Playing ${cardName} - selecting own card to peek...`;
+        } else if (targetType === 'opponent-card') {
+          return `Playing ${cardName} - selecting opponent card to peek...`;
+        } else if (targetType === 'swap-cards') {
+          return `Playing ${cardName} - selecting cards to swap...`;
+        } else if (targetType === 'peek-then-swap') {
+          return `Playing ${cardName} - peeking and deciding...`;
+        } else if (targetType === 'force-draw') {
+          return `Playing ${cardName} - selecting target player...`;
+        } else if (targetType === 'declare-action') {
+          return `Playing ${cardName} - declaring action...`;
+        }
+        return `Playing ${cardName} - selecting target...`;
+      }
+      return 'Selecting target...';
     }
 
     return 'Making a move...';

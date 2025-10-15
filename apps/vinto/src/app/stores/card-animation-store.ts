@@ -2,6 +2,10 @@
 /**
  * Store for managing card animations
  * Provides a centralized system for coordinating card movements and effects
+ * 
+ * Supports both parallel and sequential animations:
+ * - Parallel: Multiple animations run at the same time
+ * - Sequential: Animations run one after another
  */
 
 import { makeObservable, observable, action, computed } from 'mobx';
@@ -17,6 +21,8 @@ export type AnimationType =
   | 'toss-in'
   | 'highlight'
   | 'play-action';
+
+export type AnimationSequenceType = 'parallel' | 'sequential';
 
 export type AnimationActor = 'draw' | 'discard' | 'drawn' | 'player';
 export type AnimationDrawTarget = {
@@ -52,7 +58,6 @@ export interface CardAnimationState {
   // Animation timing
   startTime: number;
   duration: number;
-  delay?: number; // Optional delay before animation actually starts visually
   // Reveal card during animation
   revealed?: boolean;
   // Full 360 rotation for bot moves
@@ -63,10 +68,61 @@ export interface CardAnimationState {
   completed: boolean;
 }
 
+/**
+ * Animation step - a single animation in a sequence
+ */
+export type AnimationStep =
+  | {
+      type: 'swap';
+      card: Card;
+      from: AnimationTarget;
+      to: AnimationTarget;
+      duration?: number;
+      revealed?: boolean;
+      targetPlayerPosition?: string;
+    }
+  | {
+      type: 'draw';
+      card: Card;
+      from: AnimationDrawTarget | AnimationDrawnTarget;
+      to: AnimationPlayerTarget | AnimationDrawnTarget;
+      duration?: number;
+      revealed?: boolean;
+      fullRotation?: boolean;
+      targetPlayerPosition?: string;
+    }
+  | {
+      type: 'discard';
+      card: Card;
+      from: AnimationPlayerTarget | AnimationDrawnTarget;
+      to: AnimationDiscardTarget;
+      duration?: number;
+      revealed?: boolean;
+    }
+  | {
+      type: 'play-action';
+      card: Card;
+      from: AnimationPlayerTarget | AnimationDrawnTarget;
+      duration?: number;
+    };
+
+/**
+ * Animation sequence - defines how multiple animations should be executed
+ */
+export interface AnimationSequence {
+  id: string;
+  sequenceType: AnimationSequenceType;
+  steps: AnimationStep[];
+  currentStepIndex: number;
+  startTime: number;
+}
+
 @injectable()
 export class CardAnimationStore {
   activeAnimations: Map<string, CardAnimationState> = new Map();
+  activeSequences: Map<string, AnimationSequence> = new Map();
   private animationCounter = 0;
+  private sequenceCounter = 0;
   private positionCapture: AnimationPositionCapture;
 
   constructor(
@@ -76,6 +132,7 @@ export class CardAnimationStore {
 
     makeObservable(this, {
       activeAnimations: observable,
+      activeSequences: observable,
       hasActiveAnimations: computed,
       isAnimatingToDiscard: computed,
       cardAnimatingToDiscard: computed,
@@ -84,6 +141,7 @@ export class CardAnimationStore {
       startDiscardAnimation: action,
       startPlayActionAnimation: action,
       startHighlightAnimation: action,
+      startAnimationSequence: action,
       removeAnimation: action,
       reset: action,
     });
@@ -258,8 +316,7 @@ export class CardAnimationStore {
     card: Card,
     from: AnimationPlayerTarget | AnimationDrawnTarget,
     to: AnimationDiscardTarget,
-    duration = 1500,
-    delay = 0
+    duration = 1500
   ): string {
     const id = `discard-${this.animationCounter++}`;
 
@@ -290,7 +347,6 @@ export class CardAnimationStore {
       toY: toPos.y,
       startTime: Date.now(),
       duration,
-      delay,
       revealed: true, // Discard animations always show the card
       completed: false,
     });
@@ -392,49 +448,122 @@ export class CardAnimationStore {
   }
 
   /**
+   * Start an animation sequence (parallel or sequential)
+   * Parallel: All steps start at the same time
+   * Sequential: Each step starts after the previous one completes
+   */
+  startAnimationSequence(
+    sequenceType: AnimationSequenceType,
+    steps: AnimationStep[]
+  ): string {
+    const sequenceId = `sequence-${this.sequenceCounter++}`;
+
+    const sequence: AnimationSequence = {
+      id: sequenceId,
+      sequenceType,
+      steps,
+      currentStepIndex: 0,
+      startTime: Date.now(),
+    };
+
+    this.activeSequences.set(sequenceId, sequence);
+
+    if (sequenceType === 'parallel') {
+      // Start all animations at once
+      steps.forEach((step) => this.executeAnimationStep(step));
+    } else {
+      // Start the first animation
+      if (steps.length > 0) {
+        const firstAnimId = this.executeAnimationStep(steps[0]);
+        // Set up observer for sequential execution
+        this.observeSequentialAnimation(sequenceId, firstAnimId);
+      }
+    }
+
+    return sequenceId;
+  }
+
+  /**
+   * Execute a single animation step
+   */
+  private executeAnimationStep(step: AnimationStep): string {
+    switch (step.type) {
+      case 'swap':
+        return this.startSwapAnimation(
+          step.card,
+          step.from,
+          step.to,
+          step.duration,
+          step.revealed ?? true,
+          step.targetPlayerPosition
+        );
+      case 'draw':
+        return this.startDrawAnimation(
+          step.card,
+          step.from,
+          step.to,
+          step.duration,
+          step.revealed,
+          step.fullRotation,
+          step.targetPlayerPosition
+        );
+      case 'discard':
+        return this.startDiscardAnimation(
+          step.card,
+          step.from,
+          step.to,
+          step.duration
+        );
+      case 'play-action':
+        return this.startPlayActionAnimation(
+          step.card,
+          step.from,
+          step.duration
+        );
+    }
+  }
+
+  /**
+   * Observe a sequential animation and start the next step when it completes
+   * Uses requestAnimationFrame to avoid React render cycle issues
+   */
+  private observeSequentialAnimation(sequenceId: string, currentAnimId: string): void {
+    // Use requestAnimationFrame to check animation completion
+    // This runs outside React's render cycle and is efficient
+    const checkCompletion = (): void => {
+      // Check if animation is complete
+      if (!this.activeAnimations.has(currentAnimId)) {
+        // Animation completed, move to next step
+        const sequence = this.activeSequences.get(sequenceId);
+        if (!sequence) return;
+
+        sequence.currentStepIndex++;
+        
+        if (sequence.currentStepIndex < sequence.steps.length) {
+          // Start next animation
+          const nextStep = sequence.steps[sequence.currentStepIndex];
+          const nextAnimId = this.executeAnimationStep(nextStep);
+          // Continue observing
+          this.observeSequentialAnimation(sequenceId, nextAnimId);
+        } else {
+          // Sequence complete
+          this.activeSequences.delete(sequenceId);
+        }
+      } else {
+        // Animation still running, check again next frame
+        requestAnimationFrame(checkCompletion);
+      }
+    };
+
+    // Start checking on next frame (outside current render cycle)
+    requestAnimationFrame(checkCompletion);
+  }
+
+  /**
    * Remove an animation immediately
    */
   removeAnimation(id: string) {
     this.activeAnimations.delete(id);
-  }
-
-  /**
-   * Wait for a specific animation to complete
-   */
-  async waitForAnimation(id: string, timeoutMs = 2000): Promise<void> {
-    if (!this.activeAnimations.has(id)) {
-      return; // Animation already completed or never started
-    }
-
-    return new Promise((resolve) => {
-      const checkInterval = 50;
-      let elapsed = 0;
-
-      const check = () => {
-        if (!this.activeAnimations.has(id) || elapsed >= timeoutMs) {
-          resolve();
-        } else {
-          elapsed += checkInterval;
-          setTimeout(check, checkInterval);
-        }
-      };
-
-      check();
-    });
-  }
-
-  /**
-   * Wait for all active animations to complete
-   */
-  async waitForAllAnimations(timeoutMs = 2000): Promise<void> {
-    if (this.activeAnimations.size === 0) {
-      return;
-    }
-
-    const animationIds = Array.from(this.activeAnimations.keys());
-    await Promise.all(
-      animationIds.map((id) => this.waitForAnimation(id, timeoutMs))
-    );
   }
 
   /**

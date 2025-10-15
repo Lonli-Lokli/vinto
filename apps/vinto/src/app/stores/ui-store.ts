@@ -100,4 +100,76 @@ export class UIStore {
   getHighlightedCards(playerId: string): Set<number> {
     return this.highlightedCards.get(playerId) || new Set();
   }
+
+  // Declaration feedback (shows if rank declaration was correct)
+  // For correct declaration: shows on drawn card (pending action area)
+  // For incorrect declaration: shows on discard pile
+  drawnCardDeclarationFeedback: { isCorrect: boolean; timestamp: number } | null = null;
+  discardPileDeclarationFeedback: { isCorrect: boolean; timestamp: number } | null = null;
+
+  setDrawnCardDeclarationFeedback(isCorrect: boolean) {
+    this.drawnCardDeclarationFeedback = {
+      isCorrect,
+      timestamp: Date.now(),
+    };
+  }
+
+  setDiscardPileDeclarationFeedback(isCorrect: boolean) {
+    this.discardPileDeclarationFeedback = {
+      isCorrect,
+      timestamp: Date.now(),
+    };
+  }
+
+  clearDrawnCardDeclarationFeedback() {
+    this.drawnCardDeclarationFeedback = null;
+  }
+
+  clearDiscardPileDeclarationFeedback() {
+    this.discardPileDeclarationFeedback = null;
+  }
+
+  getDrawnCardDeclarationFeedback(): boolean | null {
+    if (!this.drawnCardDeclarationFeedback) return null;
+
+    // Check if expired (pure getter - no side effects)
+    if (Date.now() - this.drawnCardDeclarationFeedback.timestamp > 2000) {
+      // Schedule cleanup for next tick to avoid mutating during render
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(() => {
+          if (
+            this.drawnCardDeclarationFeedback &&
+            Date.now() - this.drawnCardDeclarationFeedback.timestamp > 2000
+          ) {
+            this.clearDrawnCardDeclarationFeedback();
+          }
+        });
+      }
+      return null;
+    }
+
+    return this.drawnCardDeclarationFeedback.isCorrect;
+  }
+
+  getDiscardPileDeclarationFeedback(): boolean | null {
+    if (!this.discardPileDeclarationFeedback) return null;
+
+    // Check if expired (pure getter - no side effects)
+    if (Date.now() - this.discardPileDeclarationFeedback.timestamp > 2000) {
+      // Schedule cleanup for next tick to avoid mutating during render
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(() => {
+          if (
+            this.discardPileDeclarationFeedback &&
+            Date.now() - this.discardPileDeclarationFeedback.timestamp > 2000
+          ) {
+            this.clearDiscardPileDeclarationFeedback();
+          }
+        });
+      }
+      return null;
+    }
+
+    return this.discardPileDeclarationFeedback.isCorrect;
+  }
 }

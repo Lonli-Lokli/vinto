@@ -31,40 +31,36 @@ export const AceAction = observer(() => {
   };
 
   return (
-    <div className="w-full h-full py-1">
-      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
-        {/* Compact Header */}
-        <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
-          <h3 className="text-xs font-semibold text-primary leading-tight">
+    <div className="w-full h-full p-1">
+      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-3 grid-rows-[auto_1fr_auto] gap-1.5">
+        {/* Header - spans all 3 columns */}
+        <div className="col-span-3 flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-primary">
             🎯 Ace: Force opponent to draw
           </h3>
           <HelpPopover title="Ace Action" rank="A" />
         </div>
 
-        {/* Opponent Selection - Horizontal Grid */}
-        <div className="flex-1 flex flex-col justify-center min-h-0">
-          <div className="grid grid-cols-3 gap-2">
-            {opponents.map((opponent) => (
-              <OpponentSelectButton
-                key={opponent.id}
-                opponentName={opponent.name}
-                onClick={() => handleOpponentClick(opponent.id)}
-                showAvatar={true}
-                player={opponent}
-                isSelected={selectedOpponentId === opponent.id}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Opponent Buttons - each in their own column */}
+        {opponents.map((opponent) => (
+          <OpponentSelectButton
+            key={opponent.id}
+            opponentName={opponent.name}
+            onClick={() => handleOpponentClick(opponent.id)}
+            showAvatar={true}
+            player={opponent}
+            isSelected={selectedOpponentId === opponent.id}
+          />
+        ))}
 
-        {/* Skip Button */}
-        <div className="mt-2 flex-shrink-0">
+        {/* Skip Button - spans all 3 columns */}
+        <div className="col-span-3">
           <SkipButton
             onClick={() => {
               if (!humanPlayer) return;
               gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
             }}
-            fullWidth
+            className="w-full py-1.5 px-4 text-sm"
           />
         </div>
       </div>

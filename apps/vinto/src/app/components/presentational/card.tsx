@@ -47,6 +47,8 @@ interface CardProps {
   // New selection states
   selectable?: boolean; // Card can be selected (shows pulsing border)
   notSelectable?: boolean; // Card cannot be selected (dimmed)
+  // Declaration feedback (passed from parent)
+  declarationFeedback?: boolean | null; // true = correct, false = incorrect, null = none
 }
 
 export function Card({
@@ -64,6 +66,7 @@ export function Card({
   isPending = false,
   selectable = false,
   notSelectable = false,
+  declarationFeedback = null,
 }: CardProps) {
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
@@ -84,6 +87,13 @@ export function Card({
     return '';
   };
 
+  // Determine declaration feedback classes
+  const getDeclarationFeedbackClasses = () => {
+    if (declarationFeedback === true) return 'declaration-correct';
+    if (declarationFeedback === false) return 'declaration-incorrect';
+    return '';
+  };
+
   return (
     <div
       className={`
@@ -92,6 +102,7 @@ export function Card({
         transition-all duration-150 select-none
         ${rotated ? 'transform-gpu' : ''}
         ${getCardStateClasses()}
+        ${getDeclarationFeedbackClasses()}
       `}
       style={
         highlighted && !selectable
@@ -117,6 +128,17 @@ export function Card({
       {position > 0 && (
         <div className="absolute -top-2 -right-2 w-4 h-4 bg-secondary text-on-primary rounded-full text-2xs font-bold flex items-center justify-center">
           {position}
+        </div>
+      )}
+
+      {/* Declaration feedback overlay */}
+      {declarationFeedback !== null && (
+        <div
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none ${getDeclarationFeedbackClasses()}`}
+        >
+          <div className="text-4xl font-bold drop-shadow-lg">
+            {declarationFeedback ? '✓' : '✗'}
+          </div>
         </div>
       )}
     </div>

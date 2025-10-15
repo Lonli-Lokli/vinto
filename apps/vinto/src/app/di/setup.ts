@@ -14,6 +14,7 @@ import { CardAnimationStore } from '../stores';
 import { UIStore } from '../stores';
 import { AnimationService } from '../services/animation-service';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
+import { HeadlessService } from '../services/headless-service';
 
 /**
  * Configure the DI container with all dependencies
@@ -26,6 +27,7 @@ export function setupDIContainer() {
   // Register services
   container.registerSingleton(AnimationPositionCapture);
   container.registerSingleton(AnimationService);
+  container.registerSingleton(HeadlessService);
 }
 
 /**

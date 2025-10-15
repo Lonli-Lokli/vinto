@@ -5,7 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './card';
 import { Pile, Card as CardType } from '@/shared';
-import { useCardAnimationStore } from '../di-provider';
+import { useCardAnimationStore, useUIStore } from '../di-provider';
 
 interface DiscardPileProps {
   pile: Pile;
@@ -19,6 +19,7 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(({
   isMobile = false,
 }) => {
   const animationStore = useCardAnimationStore();
+  const uiStore = useUIStore();
   const textSize = isMobile ? 'text-2xs' : 'text-xs';
   const labelMargin = isMobile ? 'mt-1' : 'mt-2';
   const labelPadding = isMobile ? 'px-2 py-0.5' : 'px-2 py-1';
@@ -42,9 +43,17 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(({
     shouldReveal = !pile.isEmpty();
   }
 
+  // Get declaration feedback (green for correct, red for incorrect)
+  const declarationFeedback = uiStore.getDiscardPileDeclarationFeedback();
+
   return (
     <div className="text-center" data-discard-pile="true">
-      <Card card={cardToShow} revealed={shouldReveal} size={size} />
+      <Card 
+        card={cardToShow} 
+        revealed={shouldReveal} 
+        size={size} 
+        declarationFeedback={declarationFeedback}
+      />
       <div
         className={`${labelMargin} ${textSize} text-white font-medium bg-overlay rounded ${labelPadding}`}
       >

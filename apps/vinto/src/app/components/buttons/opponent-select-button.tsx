@@ -25,7 +25,7 @@ export const OpponentSelectButton = ({
     return (
       <button
         onClick={onClick}
-        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg ${borderClass} transition-all active:scale-95 ${className}`}
+        className={`flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg ${borderClass} transition-all active:scale-95 h-full ${className}`}
       >
         {/* Avatar Image - md size */}
         <div className="flex items-center justify-center">
