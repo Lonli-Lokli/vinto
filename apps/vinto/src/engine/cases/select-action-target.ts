@@ -1,4 +1,9 @@
-import { GameState, NeverError, SelectActionTargetAction } from '@/shared';
+import {
+  GameState,
+  NeverError,
+  SelectActionTargetAction,
+  logger,
+} from '@/shared';
 import copy from 'fast-copy';
 
 /**
@@ -61,7 +66,11 @@ export function handleSelectActionTarget(
         if (target1.playerId === target2.playerId) {
           // Cannot swap two cards from the same player - this should be prevented by UI
           // but we handle it here for safety
-          console.warn('[Jack] Cannot swap two cards from the same player');
+          logger.warn('[Jack] Cannot swap two cards from the same player', {
+            playerId: target1.playerId,
+            position1: target1.position,
+            position2: target2.position,
+          });
           return newState;
         }
 
@@ -202,7 +211,14 @@ export function handleSelectActionTarget(
           newState.subPhase = 'toss_queue_active';
         }
       } else {
-        console.warn('[Ace] Cannot force multiple players');
+        logger.warn('[Ace] Cannot force multiple players', {
+          targetCount: newState.pendingAction?.targets.length ?? 0,
+          targets:
+            newState.pendingAction?.targets.map((t) => ({
+              playerId: t.playerId,
+              position: t.position,
+            })) ?? [],
+        });
         return newState;
       }
       break;
@@ -230,7 +246,11 @@ export function handleSelectActionTarget(
         if (target1.playerId === target2.playerId) {
           // Cannot peek two cards from the same player - this should be prevented by UI
           // but we handle it here for safety
-          console.warn('[Queen] Cannot peek two cards from the same player');
+          logger.warn('[Queen] Cannot peek two cards from the same player', {
+            playerId: target1.playerId,
+            position1: target1.position,
+            position2: target2.position,
+          });
           // Remove the invalid second target
           newState.pendingAction!.targets.pop();
           return newState;

@@ -1,4 +1,4 @@
-import { GameState, DiscardCardAction } from '@/shared';
+import { GameState, DiscardCardAction, logger } from '@/shared';
 import copy from 'fast-copy';
 
 /**
@@ -22,7 +22,12 @@ export function handleDiscardCard(
 
   // The card to discard is in pendingAction
   if (!newState.pendingAction?.card) {
-    console.warn('[handleDiscardCard] No card in pendingAction to discard');
+    logger.warn('[handleDiscardCard] No card in pendingAction to discard', {
+      playerId,
+      phase: state.phase,
+      subPhase: state.subPhase,
+      hasPendingAction: !!state.pendingAction,
+    });
     return state;
   }
 

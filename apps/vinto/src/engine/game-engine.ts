@@ -1,6 +1,7 @@
 // engine/GameEngine.ts
 // Core game engine - pure reducer that transforms state via actions
 
+import { logger } from '@/shared';
 import { actionValidator } from './action-validator';
 import { handleSwapCard } from './cases/swap-card';
 import { handleAdvanceTurn } from './cases/advance-turn';
@@ -53,7 +54,12 @@ export class GameEngine {
     // Validate action is legal in current state
     const validation = actionValidator(state, action);
     if (!validation.valid) {
-      console.warn(`Invalid action ${action.type}: ${validation.reason}`);
+      logger.warn(`Invalid action ${action.type}: ${validation.reason}`, {
+        actionType: action.type,
+        reason: validation.reason,
+        currentPhase: state.phase,
+        currentSubPhase: state.subPhase,
+      });
       return state; // Return unchanged state for invalid actions
     }
 

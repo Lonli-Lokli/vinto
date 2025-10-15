@@ -26,6 +26,20 @@ export function handleAdvanceTurn(
     newState.turnCount++;
   }
 
+  // Check if game should end (after vinto call, when we complete the final round)
+  if (
+    newState.phase === 'final' &&
+    newState.players[newState.currentPlayerIndex].id === newState.vintoCallerId
+  ) {
+    // Final round complete - end the game
+    newState.phase = 'scoring';
+    newState.subPhase = 'idle';
+
+    console.log('[handleAdvanceTurn] Final round complete, game finished');
+
+    return newState;
+  }
+
   // Get the new current player
   const nextPlayer = newState.players[newState.currentPlayerIndex];
 

@@ -1,4 +1,4 @@
-import { GameState, PlayerTossInFinishedAction } from '@/shared';
+import { GameState, PlayerTossInFinishedAction, logger } from '@/shared';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 
@@ -29,7 +29,11 @@ export function handlePlayerTossInFinished(
   const newState = copy(state);
 
   if (!newState.activeTossIn) {
-    console.warn('[handlePlayerTossInFinished] No active toss-in');
+    logger.warn('[handlePlayerTossInFinished] No active toss-in', {
+      playerId: action.payload.playerId,
+      phase: state.phase,
+      subPhase: state.subPhase,
+    });
     return state;
   }
 

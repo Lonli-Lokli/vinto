@@ -4,7 +4,7 @@
 import { reaction } from 'mobx';
 
 import { GameActions } from '@/engine';
-import { Card } from '@/shared';
+import { Card, logger } from '@/shared';
 import {
   BotDecisionService,
   BotDecisionServiceFactory,
@@ -131,7 +131,10 @@ export class BotAIAdapter {
     const currentPlayer = this.gameClient.currentPlayer;
 
     if (!currentPlayer.isBot) {
-      console.warn('[BotAI] executeBotTurn called for non-bot player');
+      logger.warn('[BotAI] executeBotTurn called for non-bot player', {
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name,
+      });
       return;
     }
 
@@ -141,7 +144,14 @@ export class BotAIAdapter {
     console.log(`[BotAI] ${botId} executing phase: ${subPhase}`);
 
     // Add "thinking time" delay for better UX (optional, visual only)
-    await this.delay(3_000);
+    // Skip delay if we're continuing from taking discard (awaiting_action after play_discard)
+    const skipDelay =
+      subPhase === 'awaiting_action' &&
+      this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
+
+    if (!skipDelay) {
+      await this.delay(3_000);
+    }
 
     try {
       switch (subPhase) {
@@ -175,7 +185,11 @@ export class BotAIAdapter {
           break;
 
         default:
-          console.warn(`[BotAI] Unhandled subPhase: ${subPhase}`);
+          logger.warn(`[BotAI] Unhandled subPhase: ${subPhase}`, {
+            botId,
+            subPhase,
+            phase: this.gameClient.state.phase,
+          });
       }
     } catch (error) {
       console.error('[BotAI] Error executing bot turn:', error);
@@ -196,7 +210,10 @@ export class BotAIAdapter {
   private async handleTossInPhase(): Promise<void> {
     const activeTossIn = this.gameClient.state.activeTossIn;
     if (!activeTossIn) {
-      console.warn('[BotAI] handleTossInPhase called but no active toss-in');
+      logger.warn('[BotAI] handleTossInPhase called but no active toss-in', {
+        subPhase: this.gameClient.state.subPhase,
+        phase: this.gameClient.state.phase,
+      });
       return;
     }
 
@@ -320,7 +337,10 @@ export class BotAIAdapter {
     const drawnCard = this.gameClient.pendingCard;
 
     if (!drawnCard) {
-      console.warn('[BotAI] No pending card to swap');
+      logger.warn('[BotAI] No pending card to swap', {
+        botId,
+        subPhase: this.gameClient.state.subPhase,
+      });
       return;
     }
 
@@ -346,7 +366,10 @@ export class BotAIAdapter {
     const cardInHand = this.gameClient.pendingCard;
 
     if (!cardInHand) {
-      console.warn('[BotAI] No pending card for action decision');
+      logger.warn('[BotAI] No pending card for action decision', {
+        botId,
+        subPhase: this.gameClient.state.subPhase,
+      });
       return;
     }
 
@@ -379,7 +402,10 @@ export class BotAIAdapter {
     const actionCard = this.gameClient.pendingCard;
 
     if (!actionCard) {
-      console.warn('[BotAI] No action card for target selection');
+      logger.warn('[BotAI] No action card for target selection', {
+        botId,
+        subPhase: this.gameClient.state.subPhase,
+      });
       return;
     }
 

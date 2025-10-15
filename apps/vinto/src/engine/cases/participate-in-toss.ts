@@ -1,4 +1,4 @@
-import { GameState, ParticipateInTossInAction } from '@/shared';
+import { GameState, ParticipateInTossInAction, logger } from '@/shared';
 import copy from 'fast-copy';
 
 /**
@@ -37,8 +37,14 @@ export function handleParticipateInTossIn(
 
   // Verify card matches declared rank (optional validation)
   if (card.rank !== newState.activeTossIn.rank) {
-    console.warn(
-      `Card rank ${card.rank} doesn't match toss-in rank ${newState.activeTossIn.rank}`
+    logger.warn(
+      `Card rank ${card.rank} doesn't match toss-in rank ${newState.activeTossIn.rank}`,
+      {
+        playerId,
+        cardRank: card.rank,
+        tossInRank: newState.activeTossIn.rank,
+        position,
+      }
     );
   }
 

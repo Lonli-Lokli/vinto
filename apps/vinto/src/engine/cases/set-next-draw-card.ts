@@ -1,7 +1,7 @@
 // engine/cases/set-next-draw-card.ts
 // Handle SET_NEXT_DRAW_CARD action (debug/testing only)
 
-import { GameState, SetNextDrawCardAction } from '@/shared';
+import { GameState, SetNextDrawCardAction, logger } from '@/shared';
 import copy from 'fast-copy';
 
 /**
@@ -34,7 +34,18 @@ export function handleSetNextDrawCard(
 
   if (cardIndex === -1) {
     // Card not found in draw pile, return unchanged state
-    console.warn(`No card with rank ${rank} found in draw pile`);
+    logger.warn(`No card with rank ${rank} found in draw pile`, {
+      rank,
+      drawPileSize: state.drawPile.length,
+      availableRanks: Array.from(
+        new Set(
+          Array.from(
+            { length: state.drawPile.length },
+            (_, i) => state.drawPile.at(i)?.rank
+          ).filter(Boolean)
+        )
+      ),
+    });
     return state;
   }
 

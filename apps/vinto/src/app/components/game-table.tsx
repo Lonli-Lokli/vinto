@@ -55,7 +55,7 @@ export const GameTable = observer(() => {
       targetType,
       peekTargets,
       hasCompletePeekSelection,
-      uiStore,
+      uiStore
     });
 
   const handleCardClick = (position: number) => {
