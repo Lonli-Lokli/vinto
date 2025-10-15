@@ -112,7 +112,10 @@ export const GameTable = observer(() => {
   // Other players are assigned top, left, right based on total player count
   const playersWithPositions = gameClient.state.players.map((player) => ({
     player,
-    position: GameTableLogic.getPlayerPosition(player, gameClient.state.players),
+    position: GameTableLogic.getPlayerPosition(
+      player,
+      gameClient.state.players
+    ),
   }));
 
   const top = playersWithPositions.find((p) => p.position === 'top');
@@ -145,7 +148,9 @@ export const GameTable = observer(() => {
                           handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(top.player.id)}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                    top.player.id
+                  )}
                 />
               </div>
             )}
@@ -170,7 +175,9 @@ export const GameTable = observer(() => {
                             handleOpponentCardClick(left.player.id, position)
                         : undefined
                     }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(left.player.id)}
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                      left.player.id
+                    )}
                   />
                 )}
               </div>
@@ -214,7 +221,9 @@ export const GameTable = observer(() => {
                             handleOpponentCardClick(right.player.id, position)
                         : undefined
                     }
-                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(right.player.id)}
+                    isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                      right.player.id
+                    )}
                   />
                 )}
               </div>
@@ -261,7 +270,9 @@ export const GameTable = observer(() => {
                           handleOpponentCardClick(top.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(top.player.id)}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                    top.player.id
+                  )}
                 />
               </div>
             )}
@@ -284,7 +295,9 @@ export const GameTable = observer(() => {
                           handleOpponentCardClick(left.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(left.player.id)}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                    left.player.id
+                  )}
                 />
               </div>
             )}
@@ -307,7 +320,9 @@ export const GameTable = observer(() => {
                           handleOpponentCardClick(right.player.id, position)
                       : undefined
                   }
-                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(right.player.id)}
+                  isSelectingActionTarget={shouldAllowOpponentCardInteractions(
+                    right.player.id
+                  )}
                 />
               </div>
             )}
@@ -334,7 +349,7 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Human Player */}
-            <div className="absolute bottom-4 left-1/3">
+            <div className="absolute bottom-4 left-1/4">
               {bottom && (
                 <PlayerArea
                   player={bottom.player}

@@ -65,6 +65,7 @@ export interface BotTurnDecision {
   action: 'draw' | 'take-discard';
   cardChoice?: 'use-action' | 'swap' | 'discard'; // If drawing
   swapPosition?: number; // If swapping
+  actionDecision?: BotActionDecision; // Pre-computed action plan when taking from discard
 }
 
 /**
@@ -142,9 +143,16 @@ export class MCTSBotDecisionService implements BotDecisionService {
     );
 
     const gameState = this.constructGameState(context);
-    const bestMove = this.runMCTS(gameState);
+    const result = this.runMCTSWithPlan(gameState);
 
-    if (bestMove.type === 'take-discard') {
+    if (result.move.type === 'take-discard') {
+      // If taking from discard and we have a follow-up action plan, cache it
+      if (result.actionPlan) {
+        return {
+          action: 'take-discard',
+          actionDecision: result.actionPlan,
+        };
+      }
       return { action: 'take-discard' };
     }
 
@@ -578,6 +586,114 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   // ========== MCTS Core Algorithm ==========
+
+  /**
+   * Run MCTS and extract action plan if taking from discard
+   * This ensures consistency: if bot decides to take discard based on using the action,
+   * it commits to that plan instead of re-evaluating later
+   */
+  private runMCTSWithPlan(rootState: MCTSGameState): {
+    move: MCTSMove;
+    actionPlan?: BotActionDecision;
+  } {
+    const root = new MCTSNode(rootState, null, null);
+    root.untriedMoves = this.generatePossibleMoves(rootState);
+
+    const startTime = Date.now();
+    let iterations = 0;
+
+    // Run MCTS iterations until time limit or iteration limit
+    while (
+      iterations < this.config.iterations &&
+      Date.now() - startTime < this.config.timeLimit
+    ) {
+      let node = this.select(root);
+
+      if (!node.isTerminal && node.hasUntriedMoves()) {
+        node = this.expand(node);
+      }
+
+      const reward = this.simulate(node.state);
+      node.backpropagate(reward);
+
+      iterations++;
+    }
+
+    console.log(
+      `[MCTS] Completed ${iterations} iterations in ${Date.now() - startTime}ms`
+    );
+
+    // Select best move based on visit count (most robust)
+    const bestChild = root.selectMostVisitedChild();
+
+    if (!bestChild || !bestChild.move) {
+      return {
+        move: {
+          type: 'pass',
+          playerId: this.botId,
+        },
+      };
+    }
+
+    console.log(
+      `[MCTS] Best move: ${bestChild.move.type} (visits: ${
+        bestChild.visits
+      }, reward: ${bestChild.getAverageReward().toFixed(3)})`
+    );
+
+    // If taking from discard with an action card, extract the action plan
+    let actionPlan: BotActionDecision | undefined;
+
+    if (
+      bestChild.move.type === 'take-discard' &&
+      bestChild.move.actionCard?.actionText
+    ) {
+      // Look ahead in the tree to find what action the bot plans to take
+      actionPlan = this.extractActionPlan(bestChild);
+
+      if (actionPlan) {
+        console.log(
+          `[MCTS] Extracted action plan for take-discard:`,
+          actionPlan
+        );
+      }
+    }
+
+    return {
+      move: bestChild.move,
+      actionPlan,
+    };
+  }
+
+  /**
+   * Extract action plan from MCTS tree after take-discard decision
+   * This looks at the best child nodes to see what the bot plans to do with the action
+   */
+  private extractActionPlan(
+    takeDiscardNode: MCTSNode
+  ): BotActionDecision | undefined {
+    // The take-discard node's best child should represent using the action
+    // (or discarding, but if we're here, MCTS likely wants to use it)
+    const actionChild = takeDiscardNode.selectMostVisitedChild();
+
+    if (!actionChild || !actionChild.move) {
+      return undefined;
+    }
+
+    // If the move has targets already, use those
+    if (actionChild.move.targets && actionChild.move.targets.length > 0) {
+      return {
+        targets: actionChild.move.targets.map((t) => ({
+          playerId: t.playerId,
+          position: t.position,
+        })),
+        shouldSwap: actionChild.move.shouldSwap,
+        declaredRank: actionChild.move.declaredRank,
+      };
+    }
+
+    return undefined;
+  }
 
   /**
    * Main MCTS algorithm

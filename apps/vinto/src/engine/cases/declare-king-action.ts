@@ -29,35 +29,47 @@ export function handleDeclareKingAction(
     newState.discardPile.addToTop(newState.pendingAction.card);
   }
 
-  // Trigger toss-in for the declared rank
-  // King forces all players to toss in cards matching the declared rank
-  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-  const playersAlreadyReady = newState.players
-    .filter((p) => p.isVintoCaller)
-    .map((p) => p.id);
-
-  newState.activeTossIn = {
-    rank: declaredRank,
-    initiatorId: playerId,
-    participants: [],
-    queuedActions: [],
-    waitingForInput: true,
-    playersReadyForNextTurn: playersAlreadyReady,
-  };
-
   // Clear pending action
   newState.pendingAction = null;
 
-  // Transition to toss-in phase
-  newState.subPhase = 'toss_queue_active';
+  // Check if this action was part of a toss-in
 
-  console.log(
-    '[handleDeclareKingAction] King action complete, toss-in active:',
-    {
-      declaredRank,
-      newSubPhase: newState.subPhase,
-    }
-  );
+  if (newState.activeTossIn !== null) {
+    // Return to toss-in phase (action was from toss-in participation)
+    newState.subPhase = 'toss_queue_active';
+    newState.activeTossIn.waitingForInput = true;
+    console.log(
+      '[handleDeclareKingAction] King action during toss-in complete, returning to toss-in phase'
+    );
+  } else {
+    // Trigger NEW toss-in for the declared rank (normal turn flow)
+    // King forces all players to toss in cards matching the declared rank
+    // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+    const playersAlreadyReady = newState.players
+      .filter((p) => p.isVintoCaller)
+      .map((p) => p.id);
+
+    newState.activeTossIn = {
+      rank: declaredRank,
+      initiatorId: playerId,
+      originalPlayerIndex: newState.currentPlayerIndex,
+      participants: [],
+      queuedActions: [],
+      waitingForInput: true,
+      playersReadyForNextTurn: playersAlreadyReady,
+    };
+
+    // Transition to toss-in phase
+    newState.subPhase = 'toss_queue_active';
+
+    console.log(
+      '[handleDeclareKingAction] King action complete, toss-in active:',
+      {
+        declaredRank,
+        newSubPhase: newState.subPhase,
+      }
+    );
+  }
 
   return newState;
 }

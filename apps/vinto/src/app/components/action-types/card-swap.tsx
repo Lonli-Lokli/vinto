@@ -18,18 +18,28 @@ export const CardSwap = observer(() => {
   const swapTargets = pendingAction.targets || [];
   const action = 'Swap Cards'; // Action description
 
+  // Check if this is a toss-in action
+  const isTossInAction =
+    gameClient.state.activeTossIn &&
+    gameClient.state.activeTossIn.queuedActions.length > 0;
+
   const getPlayerName = (playerId: string) => {
     const player = gameClient.state.players.find((p) => p.id === playerId);
     return player?.name || 'Unknown';
   };
 
   return (
-    <div className="w-full h-full px-3 py-2">
+    <div className="w-full h-full">
       <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-primary">
             🔄 {action}
+            {isTossInAction && (
+              <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
           </h3>
           <div className="flex items-center gap-2">
             <div className="text-2xs md:text-xs text-secondary">

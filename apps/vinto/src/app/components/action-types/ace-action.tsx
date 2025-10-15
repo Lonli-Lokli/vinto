@@ -21,6 +21,11 @@ export const AceAction = observer(() => {
     (p) => p.id !== humanPlayer?.id
   );
 
+  // Check if this is a toss-in action
+  const isTossInAction =
+    gameClient.state.activeTossIn &&
+    gameClient.state.activeTossIn.queuedActions.length > 0;
+
   const handleOpponentClick = (opponentId: string) => {
     if (!humanPlayer) return;
     setSelectedOpponentId(opponentId);
@@ -31,12 +36,17 @@ export const AceAction = observer(() => {
   };
 
   return (
-    <div className="w-full h-full p-1">
+    <div className="w-full h-full">
       <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-3 grid-rows-[auto_1fr_auto] gap-1.5">
         {/* Header - spans all 3 columns */}
         <div className="col-span-3 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-primary">
             🎯 Ace: Force opponent to draw
+            {isTossInAction && (
+              <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
           </h3>
           <HelpPopover title="Ace Action" rank="A" />
         </div>

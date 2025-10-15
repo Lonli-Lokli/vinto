@@ -71,7 +71,6 @@ export const AnimatedCardOverlay = observer(() => {
           const isPlayAction = animation?.type === 'play-action';
           const hasFullRotation = animation?.fullRotation;
           const targetRotation = animation?.targetRotation ?? 0;
-          const animationDelay = animation?.delay ? animation.delay / 1000 : 0; // Convert ms to seconds
 
           return (
             <motion.div
@@ -128,7 +127,6 @@ export const AnimatedCardOverlay = observer(() => {
                         times: [0, 0.25, 0.5, 0.75, 1],
                         duration: 2,
                       },
-                      delay: animationDelay,
                     }
                   : isPlayAction
                   ? {
@@ -141,7 +139,6 @@ export const AnimatedCardOverlay = observer(() => {
                       rotate: {
                         duration: 2,
                       },
-                      delay: animationDelay,
                     }
                   : {
                       duration: 1.5,
@@ -154,7 +151,6 @@ export const AnimatedCardOverlay = observer(() => {
                         times: [0, 0.3, 0.6, 1],
                         duration: 1.5,
                       },
-                      delay: animationDelay,
                     }
               }
               onAnimationComplete={() => {

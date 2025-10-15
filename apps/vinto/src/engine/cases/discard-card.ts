@@ -32,28 +32,82 @@ export function handleDiscardCard(
   // Clear pending action
   newState.pendingAction = null;
 
-  // Initialize toss-in phase
-  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-  const playersAlreadyReady = newState.players
-    .filter((p) => p.isVintoCaller)
-    .map((p) => p.id);
+  // Check if we're processing a toss-in queue
+  if (
+    newState.activeTossIn !== null &&
+    newState.activeTossIn.queuedActions.length > 0
+  ) {
+    // Remove the processed action from the queue
+    newState.activeTossIn.queuedActions.shift();
 
-  newState.activeTossIn = {
-    rank: discardedCard.rank,
-    initiatorId: playerId,
-    participants: [],
-    queuedActions: [],
-    waitingForInput: true,
-    playersReadyForNextTurn: playersAlreadyReady,
-  };
+    console.log(
+      '[handleDiscardCard] Action discarded during toss-in queue processing',
+      {
+        remainingActions: newState.activeTossIn.queuedActions.length,
+      }
+    );
 
-  // Transition to toss-in phase
-  newState.subPhase = 'toss_queue_active';
+    // Check if there are more queued actions
+    if (newState.activeTossIn.queuedActions.length > 0) {
+      // Process next queued action
+      const nextAction = newState.activeTossIn.queuedActions[0];
 
-  console.log('[handleDiscardCard] Card discarded, toss-in active:', {
-    discardedRank: discardedCard.rank,
-    newSubPhase: newState.subPhase,
-  });
+      newState.pendingAction = {
+        card: nextAction.card,
+        playerId: nextAction.playerId,
+        actionPhase: 'choosing-action',
+        targets: [],
+      };
+
+      newState.subPhase = 'awaiting_action';
+
+      console.log('[handleDiscardCard] Processing next queued action:', {
+        playerId: nextAction.playerId,
+        card: nextAction.card.rank,
+      });
+    } else {
+      // No more queued actions, finish toss-in and advance turn
+      const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
+      newState.activeTossIn = null;
+
+      // Advance to next player from original player
+      newState.currentPlayerIndex =
+        (originalPlayerIndex + 1) % newState.players.length;
+
+      if (newState.currentPlayerIndex === 0) {
+        newState.turnCount++;
+      }
+
+      const nextPlayer = newState.players[newState.currentPlayerIndex];
+      newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
+
+      console.log(
+        '[handleDiscardCard] All toss-in actions processed, turn advanced'
+      );
+    }
+  } else {
+    // Normal discard flow - initialize new toss-in phase
+    const playersAlreadyReady = newState.players
+      .filter((p) => p.isVintoCaller)
+      .map((p) => p.id);
+
+    newState.activeTossIn = {
+      rank: discardedCard.rank,
+      initiatorId: playerId,
+      originalPlayerIndex: newState.currentPlayerIndex,
+      participants: [],
+      queuedActions: [],
+      waitingForInput: true,
+      playersReadyForNextTurn: playersAlreadyReady,
+    };
+
+    newState.subPhase = 'toss_queue_active';
+
+    console.log('[handleDiscardCard] Card discarded, toss-in active:', {
+      discardedRank: discardedCard.rank,
+      newSubPhase: newState.subPhase,
+    });
+  }
 
   return newState;
 }

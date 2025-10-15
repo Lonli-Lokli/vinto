@@ -1,5 +1,6 @@
 import { GameState, PlayerTossInFinishedAction } from '@/shared';
 import copy from 'fast-copy';
+import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**
  * PLAYER_TOSS_IN_FINISHED Handler
@@ -54,36 +55,87 @@ export function handlePlayerTossInFinished(
     readyCount: newState.activeTossIn.playersReadyForNextTurn.length,
   });
 
-  // If all human players are ready, finish toss-in and advance turn
+  // If all human players are ready, check if we have queued actions to process
   if (allHumansReady) {
-    console.log(
-      '[handlePlayerTossInFinished] All humans ready, finishing toss-in and advancing turn'
-    );
+    const hasQueuedActions = newState.activeTossIn.queuedActions.length > 0;
 
-    // Clear toss-in
-    newState.activeTossIn = null;
+    if (hasQueuedActions) {
+      console.log(
+        '[handlePlayerTossInFinished] All humans ready, starting to process queued actions',
+        {
+          queuedCount: newState.activeTossIn.queuedActions.length,
+          queuedCards: newState.activeTossIn.queuedActions.map(
+            (a) => a.card.rank
+          ),
+        }
+      );
 
-    // Advance to next player (circular)
-    newState.currentPlayerIndex =
-      (newState.currentPlayerIndex + 1) % newState.players.length;
+      // Start processing the first queued action
+      const firstAction = newState.activeTossIn.queuedActions[0];
 
-    // Get the new current player
-    const nextPlayer = newState.players[newState.currentPlayerIndex];
+      // Set up pending action for the first queued card
+      newState.pendingAction = {
+        card: firstAction.card,
+        playerId: firstAction.playerId,
+        actionPhase: 'choosing-action',
+        targetType: getTargetTypeFromRank(firstAction.card.rank),
+        targets: [],
+      };
 
-    // Transition to appropriate phase based on player type
-    if (nextPlayer.isBot) {
-      newState.subPhase = 'ai_thinking';
+      // Transition to awaiting_action phase (shows Skip button in UI)
+      newState.subPhase = 'awaiting_action';
+
+      // Mark toss-in as not waiting for input (processing queue)
+      newState.activeTossIn.waitingForInput = false;
+
+      console.log(
+        '[handlePlayerTossInFinished] Processing first queued action:',
+        {
+          playerId: firstAction.playerId,
+          card: firstAction.card.rank,
+        }
+      );
     } else {
-      newState.subPhase = 'idle';
-    }
+      console.log(
+        '[handlePlayerTossInFinished] All humans ready, no queued actions, finishing toss-in and advancing turn'
+      );
 
-    console.log(
-      '[handlePlayerTossInFinished] Toss-in complete, turn advanced to:',
-      {
-        nextPlayer: nextPlayer.name,
-        subPhase: newState.subPhase,
+      // Save the original player index before clearing toss-in
+      const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
+
+      // Clear toss-in
+      newState.activeTossIn = null;
+
+      // Advance to next player from the ORIGINAL player who initiated the turn (circular)
+      newState.currentPlayerIndex =
+        (originalPlayerIndex + 1) % newState.players.length;
+
+      // Increment turn count when wrapping back to first player
+      if (newState.currentPlayerIndex === 0) {
+        newState.turnCount++;
       }
-    );
+
+      // Get the new current player
+      const nextPlayer = newState.players[newState.currentPlayerIndex];
+
+      // Transition to appropriate phase based on player type
+      if (nextPlayer.isBot) {
+        newState.subPhase = 'ai_thinking';
+      } else {
+        newState.subPhase = 'idle';
+      }
+
+      console.log(
+        '[handlePlayerTossInFinished] Toss-in complete, turn advanced to:',
+        {
+          originalPlayerIndex,
+          nextPlayerIndex: newState.currentPlayerIndex,
+          nextPlayer: nextPlayer.name,
+          subPhase: newState.subPhase,
+          turnCount: newState.turnCount,
+        }
+      );
+    }
   }
 
   return newState;

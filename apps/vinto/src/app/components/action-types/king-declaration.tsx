@@ -18,6 +18,11 @@ export function KingDeclaration() {
   // Get the pending card (the King card being played)
   const pendingCard = gameClient.state.pendingAction?.card;
 
+  // Check if this is a toss-in action
+  const isTossInAction =
+    gameClient.state.activeTossIn &&
+    gameClient.state.activeTossIn.queuedActions.length > 0;
+
   // Function to check if a rank is disabled
   // King cannot declare itself (K), even though K appears in the UI
   const isRankDisabled = (rank: string): boolean => {
@@ -25,12 +30,17 @@ export function KingDeclaration() {
   };
 
   return (
-    <div className="w-full h-full py-1">
+    <div className="w-full h-full">
       <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Compact header - single line */}
         <div className="flex flex-row items-center justify-between mb-1.5">
           <h3 className="text-xs font-semibold text-primary leading-tight">
             👑 King: Choose action
+            {isTossInAction && (
+              <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
           </h3>
           <HelpPopover title="King Declaration" rank="K" />
         </div>

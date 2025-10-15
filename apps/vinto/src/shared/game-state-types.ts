@@ -107,6 +107,7 @@ export interface ActionTarget {
 export interface ActiveTossIn {
   rank: Rank;
   initiatorId: string;
+  originalPlayerIndex: number; // Track whose turn it was when toss-in started
   participants: string[];
   queuedActions: TossInAction[];
   waitingForInput: boolean;

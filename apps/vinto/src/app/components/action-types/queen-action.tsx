@@ -17,13 +17,23 @@ export const QueenAction = observer(() => {
   const peekTargets = gameClient.state.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
 
+  // Check if this is a toss-in action
+  const isTossInAction =
+    gameClient.state.activeTossIn &&
+    gameClient.state.activeTossIn.queuedActions.length > 0;
+
   return (
-    <div className="w-full h-full py-1.5">
+    <div className="w-full h-full">
       <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs font-semibold text-primary leading-tight">
             👑 Queen Action
+            {isTossInAction && (
+              <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
           </h3>
           <div className="flex flex-row items-center gap-1">
             <div className="text-xs text-secondary leading-tight">
@@ -35,7 +45,7 @@ export const QueenAction = observer(() => {
 
         {/* Instructions - only show when cards not yet selected */}
         <div className="flex-1 flex flex-col justify-center mb-1 min-h-0">
-          {!hasBothCards && (
+          {
             <div className="text-center space-y-1">
               <p className="text-xs text-primary font-medium leading-tight">
                 👁️ Peek at two cards from different players
@@ -51,8 +61,13 @@ export const QueenAction = observer(() => {
                   ✓ First card selected - choose a card from a different player
                 </p>
               )}
+              {peekTargets.length === 2 && (
+                <p className="text-xs text-success font-semibold leading-tight">
+                  ✓ Both cards selected - you can swap them
+                </p>
+              )}
             </div>
-          )}
+          }
         </div>
 
         {/* Action Buttons - only show when both cards selected */}

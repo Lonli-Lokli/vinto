@@ -23,8 +23,15 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
     gameClient.state.subPhase === 'toss_queue_processing';
   const aiThinking = gameClient.state.subPhase === 'ai_thinking';
 
+  // Check if processing toss-in actions
+  const isProcessingTossInAction =
+    gameClient.state.activeTossIn &&
+    gameClient.state.activeTossIn.queuedActions.length > 0;
+
   // Don't show if toss-in is active (shown inline in TossInIndicator instead)
-  if (!isCurrentPlayerWaiting || waitingForTossIn) return null;
+  // Also don't show when processing toss-in actions (action UI is shown instead)
+  if (!isCurrentPlayerWaiting || waitingForTossIn || isProcessingTossInAction)
+    return null;
 
   // Determine what the bot is doing
   const getBotActivity = () => {
@@ -74,7 +81,7 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
   };
 
   return (
-    <div className="w-full h-full py-1">
+    <div className="w-full h-full">
       <div className="h-full bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm flex flex-col justify-center">
         <div className="text-center">
           <h3 className="text-sm md:text-base font-semibold text-primary mb-2">

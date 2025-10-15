@@ -73,8 +73,10 @@ export function actionValidator(
         return { valid: false, reason: 'Not player turn' };
       }
 
-      // Must be in selecting phase (after swapping)
-      if (state.subPhase !== 'selecting') {
+      // Must be in choosing phase (after drawing) or selecting phase (after swapping)
+      // choosing: Discard drawn card directly without swapping
+      // selecting: Discard after swapping into hand
+      if (state.subPhase !== 'selecting' && state.subPhase !== 'choosing') {
         return {
           valid: false,
           reason: `Cannot discard in phase ${state.subPhase}`,
@@ -151,10 +153,21 @@ export function actionValidator(
     case 'SELECT_ACTION_TARGET': {
       const { playerId, targetPlayerId, position } = action.payload;
 
-      // Must be player's turn
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
       }
 
       // Must be in awaiting_action phase (after USE_CARD_ACTION)
@@ -190,10 +203,21 @@ export function actionValidator(
     case 'CONFIRM_PEEK': {
       const { playerId } = action.payload;
 
-      // Must be player's turn
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
       }
 
       // Must be in awaiting_action phase (after peeking at card)
@@ -231,10 +255,21 @@ export function actionValidator(
     case 'SKIP_QUEEN_SWAP': {
       const { playerId } = action.payload;
 
-      // Must be player's turn
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
       }
 
       // Must be in awaiting_action phase (after selecting peek targets)
@@ -264,10 +299,21 @@ export function actionValidator(
     case 'DECLARE_KING_ACTION': {
       const { playerId } = action.payload;
 
-      // Must be player's turn
-      const currentPlayer = state.players[state.currentPlayerIndex];
-      if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
       }
 
       // Must be in awaiting_action phase (after using King card)

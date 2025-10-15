@@ -109,6 +109,7 @@ export function handleSwapCard(
   newState.activeTossIn = {
     rank: cardFromHand.rank,
     initiatorId: playerId,
+    originalPlayerIndex: newState.currentPlayerIndex,
     participants: [],
     queuedActions: [],
     waitingForInput: true,

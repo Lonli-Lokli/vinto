@@ -153,7 +153,7 @@ const SetupPhaseIndicator = observer(
     setupPeeksRemaining: number;
     onFinishSetup: () => void;
   }) => (
-    <div className="w-full h-full py-1">
+    <div className="w-full h-full">
       <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-theme-sm flex flex-col justify-center">
         <div className="text-center space-y-1">
           <div className="text-xs font-semibold text-primary leading-tight flex items-center justify-center gap-1">
@@ -232,7 +232,7 @@ Skip toss-in and proceed to next player's turn`;
     };
 
     return (
-      <div className="w-full h-full py-1">
+      <div className="w-full h-full">
         <div className="backdrop-theme border border-primary rounded-lg p-2 shadow-theme-sm h-full flex flex-col">
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
@@ -528,7 +528,7 @@ const CardDrawnIndicator = observer(
     };
 
     return (
-      <div className="w-full h-full py-1.5">
+      <div className="w-full h-full">
         <div className="h-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg shadow-sm flex flex-row">
           <div className="h-full flex flex-row gap-2 w-full p-2">
             {/* Card image - takes full height, preserves aspect ratio */}
@@ -579,7 +579,7 @@ const SwapPositionIndicator = observer(
     };
 
     return (
-      <div className="w-full h-full py-1">
+      <div className="w-full h-full">
         <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-sm flex flex-col">
           {/* Header with help button */}
           <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">

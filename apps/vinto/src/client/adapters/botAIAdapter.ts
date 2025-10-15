@@ -40,7 +40,8 @@ export class BotAIAdapter {
   private botDecisionService: BotDecisionService;
   private disposeReaction?: () => void;
   private isHandlingTossIn = false;
-  // Cache bot decisions to avoid re-running MCTS when the decision is already made
+  // Cache action plan when bot commits to take-discard with action card
+  // This ensures consistency: bot won't change its mind about using the action
   private cachedActionDecision: BotActionDecision | null = null;
 
   constructor(private gameClient: GameClient) {
@@ -78,12 +79,18 @@ export class BotAIAdapter {
       // Reactions should not await - they trigger async operations that will
       // naturally loop back through state changes. Error handling occurs within methods.
       ({ isBot, subPhase, activeTossIn }) => {
+        console.log(
+          `[BotAI] Reaction fired: subPhase=${subPhase}, isBot=${isBot}, activeTossIn=${!!activeTossIn}`
+        );
+
         // Handle toss-in phase separately (all bot players participate)
         if (subPhase === 'toss_queue_active' && activeTossIn) {
           if (this.isHandlingTossIn) {
             // Already processing toss-in - avoid re-entrancy
+            console.log('[BotAI] Already handling toss-in, skipping');
             return;
           }
+          console.log('[BotAI] Triggering toss-in phase handling');
           // Fire-and-forget: Let the async operation run independently
           this.handleTossInPhase().catch((error) => {
             console.error('[BotAI] Error in toss-in phase:', error);
@@ -203,6 +210,9 @@ export class BotAIAdapter {
 
       // Process each bot player
       const botPlayers = this.gameClient.state.players.filter((p) => p.isBot);
+      console.log(
+        `[BotAI] Found ${botPlayers.length} bot players to process for toss-in`
+      );
 
       for (const botPlayer of botPlayers) {
         const botId = botPlayer.id;
@@ -212,6 +222,11 @@ export class BotAIAdapter {
           console.log(`[BotAI] ${botId} already marked ready`);
           continue;
         }
+
+        console.log(
+          `[BotAI] Processing toss-in for bot ${botId}, cards:`,
+          botPlayer.cards.map((c) => c.rank)
+        );
 
         // Create decision context for this bot
         const context = this.createBotContext(botId);
@@ -277,20 +292,18 @@ export class BotAIAdapter {
       this.botDecisionService.decideTurnAction(context);
 
     if (decision.action === 'take-discard') {
-      // When taking from discard, we're committing to use the card action
-      // Cache the action decision now so we don't re-run MCTS later
+      // Cache the action plan if bot committed to using the action
       if (decision.actionDecision) {
         this.cachedActionDecision = decision.actionDecision;
         console.log(
-          `[BotAI] ${botId} cached action decision:`,
-          decision.actionDecision
+          `[BotAI] ${botId} cached action plan from take-discard decision`
         );
       }
 
       this.gameClient.dispatch(GameActions.playDiscard(botId));
       console.log(`[BotAI] ${botId} took from discard`);
     } else {
-      // Clear any cached decision when drawing
+      // Clear cache when drawing (fresh decision needed)
       this.cachedActionDecision = null;
       this.gameClient.dispatch(GameActions.drawCard(botId));
       console.log(`[BotAI] ${botId} drew card`);
@@ -408,12 +421,12 @@ export class BotAIAdapter {
     botId: string,
     context: BotDecisionContext
   ): Promise<void> {
-    // Use cached decision if available (from take-discard), otherwise run MCTS
+    // Use cached action plan if available, otherwise run MCTS fresh
     const decision: BotActionDecision = this.cachedActionDecision
       ? this.cachedActionDecision
       : this.botDecisionService.selectActionTargets(context);
 
-    // Clear cached decision after using it
+    // Clear cache after using
     this.cachedActionDecision = null;
 
     if (decision.targets.length >= 2) {
@@ -462,12 +475,12 @@ export class BotAIAdapter {
     botId: string,
     context: BotDecisionContext
   ): void {
-    // Use cached decision if available (from take-discard), otherwise run MCTS
+    // Use cached action plan if available, otherwise run MCTS fresh
     const decision: BotActionDecision = this.cachedActionDecision
       ? this.cachedActionDecision
       : this.botDecisionService.selectActionTargets(context);
 
-    // Clear cached decision after using it
+    // Clear cache after using
     this.cachedActionDecision = null;
 
     if (decision.targets.length > 0) {
@@ -478,8 +491,7 @@ export class BotAIAdapter {
       );
 
       console.log(
-        `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`,
-        this.cachedActionDecision ? '(from cache)' : '(fresh MCTS)'
+        `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`
       );
 
       this.gameClient.dispatch(GameActions.confirmPeek(botId));

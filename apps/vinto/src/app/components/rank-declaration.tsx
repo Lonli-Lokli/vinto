@@ -64,7 +64,7 @@ Note: 2-6 and Joker are not shown because they have no actions.`;
   };
 
   return (
-    <div className="w-full h-full py-1.5 z-[100] relative">
+    <div className="w-full h-full z-[100] relative">
       <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-sm flex flex-col">
         {/* Header with help */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
@@ -75,7 +75,7 @@ Note: 2-6 and Joker are not shown because they have no actions.`;
         </div>
 
         {/* Ranks grid - 4 columns = exactly 2 rows for 8 action cards */}
-        <div className="grid grid-cols-4 gap-1 mb-1 flex-1 content-start min-h-0">
+        <div className="grid grid-cols-4 gap-1 mb-1 flex-1 content-center min-h-0">
           {ACTION_RANKS.map((rank) => (
             <RankDeclarationButton
               key={rank}
