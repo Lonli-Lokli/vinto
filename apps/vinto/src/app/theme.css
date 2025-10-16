@@ -179,6 +179,15 @@
 .bg-primary {
   background-color: rgb(var(--color-primary));
 }
+.bg-secondary {
+  background-color: rgb(var(--color-secondary));
+}
+.bg-secondary-dark {
+  background-color: rgb(var(--color-secondary-dark));
+}
+.bg-secondary-hover {
+  background-color: rgb(var(--color-secondary-hover));
+}
 .bg-table-primary {
   background-color: rgb(var(--color-table-primary));
 }

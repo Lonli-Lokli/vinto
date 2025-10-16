@@ -58,6 +58,16 @@ export function calculateFinalScores(
     scores[member.id] = bestCoalitionScore;
   });
 
+  // For players not in the coalition (didn't join), use their individual scores
+  players.forEach((player) => {
+    if (
+      player.id !== vintoCallerId &&
+      !coalitionMembers.find((m) => m.id === player.id)
+    ) {
+      scores[player.id] = calculateCardTotal(player.cards);
+    }
+  });
+
   return scores;
 }
 

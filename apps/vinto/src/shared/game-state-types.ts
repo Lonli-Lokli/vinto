@@ -113,12 +113,20 @@ export interface ActiveTossIn {
   waitingForInput: boolean;
   timeRemaining?: number;
   playersReadyForNextTurn: string[]; // Player IDs who confirmed they're done with toss-in
+  failedAttempts?: FailedTossInAttempt[]; // Track invalid toss-in attempts for animations
 }
 
 export interface TossInAction {
   playerId: string;
   card: Card;
   position: number;
+}
+
+export interface FailedTossInAttempt {
+  playerId: string;
+  cardRank: Rank;
+  position: number;
+  expectedRank: Rank;
 }
 
 /**

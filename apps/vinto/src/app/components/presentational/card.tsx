@@ -63,6 +63,8 @@ interface CardProps {
   selectionVariant?: CardSelectionVariant;
   // Declaration feedback (passed from parent)
   declarationFeedback?: boolean | null; // true = correct, false = incorrect, null = none
+  // Failed toss-in feedback - shows error indicator when toss-in attempt was invalid
+  failedTossInFeedback?: boolean;
   // Action target selected - for showing which cards are selected as action targets (Q, K, etc.)
   actionTargetSelected?: boolean;
 }
@@ -81,6 +83,7 @@ export function Card({
   selectionState,
   selectionVariant = 'action',
   declarationFeedback = null,
+  failedTossInFeedback = false,
   actionTargetSelected = false,
 }: CardProps) {
   // Build data attributes for animation tracking
@@ -156,6 +159,16 @@ export function Card({
         >
           <div className="text-4xl font-bold drop-shadow-lg">
             {declarationFeedback ? '✓' : '✗'}
+          </div>
+        </div>
+      )}
+
+      {/* Failed toss-in feedback overlay */}
+      {failedTossInFeedback && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-error/20 border-2 border-error rounded animate-pulse" />
+          <div className="relative text-4xl font-bold drop-shadow-lg text-error">
+            ✗
           </div>
         </div>
       )}

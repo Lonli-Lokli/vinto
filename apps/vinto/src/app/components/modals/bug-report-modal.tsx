@@ -45,7 +45,7 @@ export const BugReportModal = observer(function BugReportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm md:items-center md:pt-0 items-start pt-8">
       <div className="bg-surface-primary border-2 border-primary rounded-lg shadow-theme-lg w-full max-w-md mx-4 p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">

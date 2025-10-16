@@ -66,6 +66,8 @@ export class AnimationService {
 
       case 'PARTICIPATE_IN_TOSS_IN':
         this.handleTossIn(oldState, newState, action);
+        // Check if this was a failed toss-in attempt
+        this.handleFailedTossInAttempt(oldState, newState, action);
         break;
 
       case 'CONFIRM_PEEK':
@@ -318,7 +320,7 @@ export class AnimationService {
 
   /**
    * Handle PARTICIPATE_IN_TOSS_IN action animation
-   * - Player position -> Discard pile
+   * - Player position -> Discard pile (only for valid toss-ins)
    */
   private handleTossIn(
     _oldState: GameState,
@@ -328,7 +330,20 @@ export class AnimationService {
     const playerId = action.payload.playerId;
     const position = action.payload.position;
 
-    // Get the card that was tossed in (should be on top of discard pile)
+    // Check if this was a failed attempt
+    const failedAttempts = newState.activeTossIn?.failedAttempts || [];
+    const wasFailedAttempt = failedAttempts.some(
+      (attempt) =>
+        attempt.playerId === playerId && attempt.position === position
+    );
+
+    if (wasFailedAttempt) {
+      // Failed toss-in - don't animate card to discard pile
+      // Card stays in hand, penalty animation handled separately
+      return;
+    }
+
+    // Valid toss-in - get the card that was tossed in (should be on top of discard pile)
     const tossedCard = newState.discardPile.peekTop();
     if (!tossedCard) return;
 
@@ -611,6 +626,41 @@ export class AnimationService {
       console.log(
         '[AnimationService] Queen swap skipped - drawn card to discard'
       );
+    }
+  }
+
+  /**
+   * Handle failed toss-in attempt
+   * - Card stays in hand (no animation needed - it never left)
+   * - Penalty card appears in hand (no animation - just appears naturally)
+   * - Visual feedback is handled by HeadlessService (error indicator on failed card)
+   */
+  private handleFailedTossInAttempt(
+    _oldState: GameState,
+    newState: GameState,
+    action: ParticipateInTossInAction
+  ): void {
+    const { playerId, position } = action.payload;
+
+    // Check if this was a failed attempt
+    const failedAttempts = newState.activeTossIn?.failedAttempts || [];
+    const wasFailedAttempt = failedAttempts.some(
+      (attempt) =>
+        attempt.playerId === playerId && attempt.position === position
+    );
+
+    if (wasFailedAttempt) {
+      console.log(
+        '[AnimationService] Failed toss-in detected - no animation needed:',
+        {
+          playerId,
+          position,
+        }
+      );
+      // No animation needed:
+      // - Failed card stayed in hand (never moved)
+      // - Penalty card just appears in hand (no draw animation)
+      // - Visual feedback (error indicator) is handled by HeadlessService
     }
   }
 

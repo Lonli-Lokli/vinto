@@ -35,10 +35,10 @@ export function handleParticipateInTossIn(
     return state;
   }
 
-  // Verify card matches declared rank (optional validation)
+  // Verify card matches declared rank - STRICT validation now
   if (card.rank !== newState.activeTossIn.rank) {
     logger.warn(
-      `Card rank ${card.rank} doesn't match toss-in rank ${newState.activeTossIn.rank}`,
+      `[handleParticipateInTossIn] Invalid toss-in: Card rank ${card.rank} doesn't match ${newState.activeTossIn.rank}`,
       {
         playerId,
         cardRank: card.rank,
@@ -46,7 +46,37 @@ export function handleParticipateInTossIn(
         position,
       }
     );
+
+    // Invalid toss-in penalty:
+    // 1. Card stays in hand (no removal)
+    // 2. Draw 1 penalty card from draw pile
+    if (newState.drawPile.length > 0) {
+      const penaltyCard = newState.drawPile.drawTop();
+      if (penaltyCard) {
+        player.cards.push(penaltyCard);
+        console.log(
+          `[handleParticipateInTossIn] Penalty card ${penaltyCard.rank} added to ${playerId}'s hand`
+        );
+      }
+    }
+
+    // Mark this as a failed toss-in attempt (for UI feedback)
+    newState.activeTossIn.failedAttempts =
+      newState.activeTossIn.failedAttempts || [];
+    newState.activeTossIn.failedAttempts.push({
+      playerId,
+      cardRank: card.rank,
+      position,
+      expectedRank: newState.activeTossIn.rank,
+    });
+
+    return newState;
   }
+
+  // Valid toss-in - proceed normally
+  console.log(
+    `[handleParticipateInTossIn] Valid toss-in: ${card.rank} matches ${newState.activeTossIn.rank}`
+  );
 
   // Add player to participants
   if (!newState.activeTossIn.participants.includes(playerId)) {

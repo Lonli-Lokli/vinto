@@ -29,6 +29,7 @@ interface PlayerCardsProps {
   coalitionLeaderId: string | null;
   humanPlayerId: string | null;
   actionTargets?: Array<{ playerId: string; position: number }>;
+  failedTossInCards?: Set<number>; // Card positions with failed toss-in feedback
 }
 
 export const PlayerCards: React.FC<PlayerCardsProps> = ({
@@ -47,6 +48,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
   coalitionLeaderId,
   humanPlayerId,
   actionTargets = [],
+  failedTossInCards = new Set(),
 }) => {
   const containerClasses = getCardContainerClasses(position);
   const currentPlayerClasses = ''; // Removed container border - individual cards show selection
@@ -111,6 +113,9 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
           (target) => target.playerId === player.id && target.position === index
         );
 
+        // Check if this card has failed toss-in feedback
+        const hasFailedTossInFeedback = failedTossInCards.has(index);
+
         return (
           <Card
             key={`${card.id}-${index}`}
@@ -126,6 +131,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
             playerId={player.id}
             cardIndex={index}
             actionTargetSelected={isActionTargetSelected}
+            failedTossInFeedback={hasFailedTossInFeedback}
           />
         );
       })}

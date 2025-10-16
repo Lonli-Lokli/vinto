@@ -211,7 +211,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.players[1].cards[0].rank).toBe('K');
       expect(newState.players[1].cards[1].rank).toBe('A');
       expect(newState.discardPile.peekTop()?.id).toBe('queen1');
-      expect(newState.subPhase).toBe('idle');
+      // Queen triggers toss-in after completion
+      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.activeTossIn?.rank).toBe('Q');
     });
 
     it('should allow peeking and then swapping the two cards', () => {
@@ -302,8 +304,10 @@ describe('Game Engine - Rules-Based Tests', () => {
         GameActions.declareKingAction('p1', '5')
       );
 
+      // Declaring any rank (including non-action cards) triggers toss-in period
+      // Players can toss in matching '5' cards even though they have no actions
       expect(newState.activeTossIn?.rank).toBe('5');
-      expect(newState.subPhase).toBe('idle');
+      expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
 
@@ -373,7 +377,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
 
       expect(newState.discardPile.peekTop()?.id).toBe('seven1');
-      expect(newState.subPhase).toBe('idle');
+      // 7 card triggers toss-in after peek confirmation
+      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.activeTossIn?.rank).toBe('7');
     });
   });
 

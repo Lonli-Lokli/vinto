@@ -54,6 +54,14 @@ export const PlayerArea = observer(function PlayerArea({
   // Get action targets for cards that have been selected (Q, K actions, etc.)
   const actionTargets = gameClient.state.pendingAction?.targets || [];
 
+  // Get failed toss-in cards for this player
+  const failedTossInCards = new Set<number>();
+  player.cards.forEach((_, index) => {
+    if (uiStore.hasFailedTossInFeedback(player.id, index)) {
+      failedTossInCards.add(index);
+    }
+  });
+
   const avatarComponent = (
     <PlayerAvatar
       playerName={player.name}
@@ -80,6 +88,7 @@ export const PlayerArea = observer(function PlayerArea({
       coalitionLeaderId={coalitionLeader?.id || null}
       humanPlayerId={humanPlayer?.id || null}
       actionTargets={actionTargets}
+      failedTossInCards={failedTossInCards}
     />
   );
 

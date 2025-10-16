@@ -21,14 +21,14 @@ export const BUTTON_COLORS = {
     classes: 'bg-info hover:bg-info-dark active:bg-info-darker text-white',
   },
 
-  // Neutral action (passive choices) - Dark Slate
+  // Neutral action (passive choices) - Gray with proper contrast
   neutral: {
-    bg: 'var(--color-surface-secondary)',
-    hover: 'var(--color-surface-tertiary)',
-    active: 'var(--color-surface-quaternary)',
+    bg: 'rgb(var(--color-secondary))',
+    hover: 'rgb(var(--color-secondary-dark))',
+    active: 'rgb(var(--color-secondary-hover))',
     text: '#FFFFFF',
     classes:
-      'bg-surface-secondary hover:bg-surface-tertiary active:bg-surface-quaternary text-white',
+      'bg-secondary hover:bg-secondary-dark active:bg-secondary-hover text-white border border-secondary',
   },
 
   // High-stakes action (game-changing) - Orange

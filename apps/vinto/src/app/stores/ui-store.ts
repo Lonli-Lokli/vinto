@@ -104,8 +104,18 @@ export class UIStore {
   // Declaration feedback (shows if rank declaration was correct)
   // For correct declaration: shows on drawn card (pending action area)
   // For incorrect declaration: shows on discard pile
-  drawnCardDeclarationFeedback: { isCorrect: boolean; timestamp: number } | null = null;
-  discardPileDeclarationFeedback: { isCorrect: boolean; timestamp: number } | null = null;
+  drawnCardDeclarationFeedback: {
+    isCorrect: boolean;
+    timestamp: number;
+  } | null = null;
+  discardPileDeclarationFeedback: {
+    isCorrect: boolean;
+    timestamp: number;
+  } | null = null;
+
+  // Failed toss-in feedback (shows error on card that was incorrectly tossed in)
+  // Map<playerId, Map<position, timestamp>>
+  failedTossInFeedback = new Map<string, Map<number, number>>();
 
   setDrawnCardDeclarationFeedback(isCorrect: boolean) {
     this.drawnCardDeclarationFeedback = {
@@ -171,5 +181,43 @@ export class UIStore {
     }
 
     return this.discardPileDeclarationFeedback.isCorrect;
+  }
+
+  // Failed toss-in feedback actions
+  addFailedTossInFeedback(playerId: string, position: number) {
+    if (!this.failedTossInFeedback.has(playerId)) {
+      this.failedTossInFeedback.set(playerId, new Map());
+    }
+    this.failedTossInFeedback.get(playerId)?.set(position, Date.now());
+  }
+
+  hasFailedTossInFeedback(playerId: string, position: number): boolean {
+    const playerFeedback = this.failedTossInFeedback.get(playerId);
+    if (!playerFeedback) return false;
+
+    const timestamp = playerFeedback.get(position);
+    if (!timestamp) return false;
+
+    // Check if expired (2 seconds)
+    if (Date.now() - timestamp > 2000) {
+      // Schedule cleanup for next tick
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(() => {
+          const currentTimestamp = this.failedTossInFeedback
+            .get(playerId)
+            ?.get(position);
+          if (currentTimestamp && Date.now() - currentTimestamp > 2000) {
+            this.failedTossInFeedback.get(playerId)?.delete(position);
+          }
+        });
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  clearFailedTossInFeedback() {
+    this.failedTossInFeedback.clear();
   }
 }

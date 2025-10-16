@@ -454,7 +454,7 @@ const CardDrawnHeader = ({
             : ' points'}
         </span>
         {hasAction && (
-          <span className="text-xs text-emerald-700 leading-tight">
+          <span className="text-xs text-success leading-tight">
             • {getActionExplanation(pendingCard.rank)}
           </span>
         )}

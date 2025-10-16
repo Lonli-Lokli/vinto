@@ -107,7 +107,7 @@ Lower card totals are better during the round, but game points are awarded by fi
                 key={player.id}
                 className={`flex items-center gap-2 px-2 py-1.5 rounded border transition-colors ${
                   actualScore === winnerInfo.score
-                    ? 'bg-success-light border-success ring-1 ring-success'
+                    ? 'bg-surface-tertiary border-success ring-2 ring-success'
                     : 'bg-surface-secondary border-secondary'
                 }`}
               >
