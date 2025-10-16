@@ -891,6 +891,11 @@ export class MCTSBotDecisionService implements BotDecisionService {
       score: this.estimatePlayerScore(p.id, context),
     }));
 
+    // Determine if we're in toss-in phase based on game state
+    const isTossInPhase =
+      context.gameState.subPhase === 'toss_queue_active' &&
+      !!context.gameState.activeTossIn;
+
     return {
       players,
       currentPlayerIndex: context.allPlayers.findIndex(
@@ -903,7 +908,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       botMemory: this.botMemory,
       hiddenCards: new Map(),
       pendingCard: context.pendingCard || null,
-      isTossInPhase: false,
+      isTossInPhase,
       turnCount: context.gameState.turnCount,
       finalTurnTriggered: context.gameState.finalTurnTriggered,
       isTerminal: false,
