@@ -2,7 +2,7 @@
 /**
  * Store for managing card animations
  * Provides a centralized system for coordinating card movements and effects
- * 
+ *
  * Supports both parallel and sequential animations:
  * - Parallel: Multiple animations run at the same time
  * - Sequential: Animations run one after another
@@ -29,7 +29,7 @@ export type AnimationDrawTarget = {
   type: 'draw';
 };
 export type AnimationDiscardTarget = {
-  type: 'discard';
+  type: 'discard' | 'drawn';
 };
 export type AnimationPlayerTarget = {
   type: 'player';
@@ -328,7 +328,10 @@ export class CardAnimationStore {
             from.playerId,
             from.position
           );
-    const toPos = this.positionCapture.getDiscardPilePosition();
+    const toPos =
+      to.type === 'discard'
+        ? this.positionCapture.getDiscardPilePosition()
+        : this.positionCapture.getPendingCardPosition();
 
     if (!fromPos || !toPos) {
       console.warn(
@@ -527,7 +530,10 @@ export class CardAnimationStore {
    * Observe a sequential animation and start the next step when it completes
    * Uses requestAnimationFrame to avoid React render cycle issues
    */
-  private observeSequentialAnimation(sequenceId: string, currentAnimId: string): void {
+  private observeSequentialAnimation(
+    sequenceId: string,
+    currentAnimId: string
+  ): void {
     // Use requestAnimationFrame to check animation completion
     // This runs outside React's render cycle and is efficient
     const checkCompletion = (): void => {
@@ -538,7 +544,7 @@ export class CardAnimationStore {
         if (!sequence) return;
 
         sequence.currentStepIndex++;
-        
+
         if (sequence.currentStepIndex < sequence.steps.length) {
           // Start next animation
           const nextStep = sequence.steps[sequence.currentStepIndex];

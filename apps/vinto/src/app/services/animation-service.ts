@@ -347,11 +347,11 @@ export class AnimationService {
     const tossedCard = newState.discardPile.peekTop();
     if (!tossedCard) return;
 
-    // Animate from player position to discard pile
+    // Animate from player position to Drawn pile
     this.animationStore.startDiscardAnimation(
       tossedCard,
       { type: 'player', playerId, position },
-      { type: 'discard' },
+      { type: 'drawn' },
       1000 // Faster animation for toss-in
     );
   }
