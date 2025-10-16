@@ -51,6 +51,9 @@ export const PlayerArea = observer(function PlayerArea({
   const cardSize = getCardSizeForPlayer(player.cards.length, player.isHuman);
   const avatarFirst = shouldAvatarComeFirst(position);
 
+  // Get action targets for cards that have been selected (Q, K actions, etc.)
+  const actionTargets = gameClient.state.pendingAction?.targets || [];
+
   const avatarComponent = (
     <PlayerAvatar
       playerName={player.name}
@@ -76,6 +79,7 @@ export const PlayerArea = observer(function PlayerArea({
       highlightedCards={highlightedCards}
       coalitionLeaderId={coalitionLeader?.id || null}
       humanPlayerId={humanPlayer?.id || null}
+      actionTargets={actionTargets}
     />
   );
 

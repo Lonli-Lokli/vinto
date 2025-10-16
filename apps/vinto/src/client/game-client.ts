@@ -37,6 +37,12 @@ export class GameClient {
   private _state: GameState;
 
   /**
+   * Full action history for debugging/bug reports
+   * Stores all dispatched actions with timestamps
+   */
+  private _actionHistory: Array<{ action: GameAction; timestamp: number }> = [];
+
+  /**
    * Public readonly accessor for game state
    * Prevents direct state mutation from UI components
    */
@@ -74,6 +80,9 @@ export class GameClient {
   dispatch(action: GameAction): void {
     const oldState = this._state;
     let newState = GameEngine.reduce(this._state, action);
+
+    // Track action in full history for debugging
+    this._actionHistory.push({ action, timestamp: Date.now() });
 
     // Add action to history (for UI display)
     newState = this.addActionToHistory(newState, action);
@@ -383,5 +392,33 @@ export class GameClient {
     } catch (error) {
       console.error('Failed to import state:', error);
     }
+  }
+
+  /**
+   * Export action history for bug reports
+   */
+  exportActionHistory(): string {
+    return JSON.stringify(this._actionHistory, null, 2);
+  }
+
+  /**
+   * Export complete debug data (state + action history)
+   */
+  exportDebugData(): string {
+    return JSON.stringify(
+      {
+        timestamp: Date.now(),
+        gameState: this._state,
+        actionHistory: this._actionHistory,
+        userAgent:
+          typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        viewport:
+          typeof window !== 'undefined'
+            ? { width: window.innerWidth, height: window.innerHeight }
+            : null,
+      },
+      null,
+      2
+    );
   }
 }

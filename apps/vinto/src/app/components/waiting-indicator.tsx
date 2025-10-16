@@ -28,9 +28,18 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
     gameClient.state.activeTossIn &&
     gameClient.state.activeTossIn.queuedActions.length > 0;
 
+  // Get human player to check if they're the Vinto caller
+  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const isVintoCaller = humanPlayer?.isVintoCaller ?? false;
+
   // Don't show if toss-in is active (shown inline in TossInIndicator instead)
+  // Exception: Show for Vinto caller during toss-in (they don't participate)
   // Also don't show when processing toss-in actions (action UI is shown instead)
-  if (!isCurrentPlayerWaiting || waitingForTossIn || isProcessingTossInAction)
+  if (
+    !isCurrentPlayerWaiting ||
+    (waitingForTossIn && !isVintoCaller) ||
+    isProcessingTossInAction
+  )
     return null;
 
   // Determine what the bot is doing

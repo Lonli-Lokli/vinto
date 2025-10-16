@@ -5,6 +5,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { setupDIContainer, getInstance, isDIConfigured } from '../di/setup';
 import { CardAnimationStore } from '../stores';
 import { UIStore } from '../stores';
+import { BugReportStore } from '../stores/bug-report-store';
 
 /**
  * Store context for accessing DI-managed stores
@@ -12,6 +13,7 @@ import { UIStore } from '../stores';
 interface StoreContextValue {
   cardAnimationStore: CardAnimationStore;
   uiStore: UIStore;
+  bugReportStore: BugReportStore;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -31,6 +33,7 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
     return {
       cardAnimationStore: getInstance<CardAnimationStore>(CardAnimationStore),
       uiStore: getInstance<UIStore>(UIStore),
+      bugReportStore: getInstance<BugReportStore>(BugReportStore),
     };
   }, []);
 
@@ -64,4 +67,11 @@ export function useCardAnimationStore(): CardAnimationStore {
  */
 export function useUIStore(): UIStore {
   return useStores().uiStore;
+}
+
+/**
+ * Hook to access bugReportStore
+ */
+export function useBugReportStore(): BugReportStore {
+  return useStores().bugReportStore;
 }

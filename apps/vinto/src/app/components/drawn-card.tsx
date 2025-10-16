@@ -35,7 +35,9 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
 
     return (
       <div
-        className={`text-center ${!shouldShowCard ? 'invisible' : ''}`}
+        className={`flex flex-col items-center justify-center ${
+          !shouldShowCard ? 'invisible' : ''
+        }`}
         data-pending-card="true"
       >
         <Card
@@ -44,6 +46,7 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
           size={size}
           highlighted={!!card}
           isPending={true}
+          selectionState="default"
           declarationFeedback={declarationFeedback}
         />
         <div

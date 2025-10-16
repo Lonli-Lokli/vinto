@@ -285,17 +285,31 @@
 
 /* Card Selection Visual States */
 .card-selectable {
-  border: 2px solid rgba(251, 191, 36, 0.8) !important;
-  cursor: pointer !important;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .card-selectable:hover {
-  transform: scale(1.1) !important;
+  transform: scale(1.05);
   z-index: 20;
+  filter: brightness(1.1);
 }
 
 .card-selectable:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.98);
+}
+
+/* Rotated cards (left/right positions) */
+.card-rotated {
+  transform: rotate(90deg);
+}
+
+.card-rotated.card-selectable:hover {
+  transform: rotate(90deg) scale(1.05);
+}
+
+.card-rotated.card-selectable:active {
+  transform: rotate(90deg) scale(0.98);
 }
 
 .card-not-selectable {
@@ -306,6 +320,24 @@
 .area-dimmed {
   opacity: 0.5;
   pointer-events: none;
+}
+
+/* Action target selected cards (for Q, K, and other card actions) */
+@keyframes action-target-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(251, 146, 60, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.9),
+      0 0 40px rgba(251, 146, 60, 0.6);
+  }
+}
+
+.action-target-selected {
+  animation: action-target-glow 1.5s ease-in-out infinite;
+  border-color: rgb(251, 146, 60) !important;
+  z-index: 15;
 }
 
 /* Dark mode support */

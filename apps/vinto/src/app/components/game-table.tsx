@@ -55,7 +55,7 @@ export const GameTable = observer(() => {
       targetType,
       peekTargets,
       hasCompletePeekSelection,
-      uiStore
+      uiStore,
     });
 
   const handleCardClick = (position: number) => {
@@ -328,7 +328,7 @@ export const GameTable = observer(() => {
             )}
 
             {/* Center - Draw & Discard Piles */}
-            <div className="absolute inset-16 flex items-center justify-center">
+            <div className="absolute inset-16 flex items-center justify-center pointer-events-none">
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard ?? null}

@@ -62,6 +62,14 @@ export class MCTSMoveGenerator {
       return moves;
     }
 
+    // If we have a pending action card (in awaiting_action phase), generate action target moves
+    if (state.pendingCard && state.pendingCard.actionText) {
+      const actionType = getCardAction(state.pendingCard.rank);
+      if (actionType) {
+        return this.generateActionMoves(state, actionType);
+      }
+    }
+
     // Always possible: draw from deck (if deck not empty)
     if (state.deckSize > 0) {
       moves.push({

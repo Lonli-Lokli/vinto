@@ -158,7 +158,7 @@
   --color-accent-dark: 245 158 11; /* amber-500 */
   --color-accent-darker: 217 119 6; /* amber-600 */
 
-  --color-scrollbar-thumb: 255, 255,  255; /* scrollbar thumb - white */
+  --color-scrollbar-thumb: 255, 255, 255; /* scrollbar thumb - white */
 }
 
 /* === UTILITY CLASSES FOR USING CSS VARIABLES === */
@@ -471,14 +471,14 @@
 @keyframes card-select-pulse {
   0%,
   100% {
-    border-color: rgba(var(--color-accent), 0.8);
-    box-shadow: 0 0 0 0 rgba(var(--color-accent), 0.7),
-      0 0 20px 2px rgba(var(--color-accent), 0.4);
+    opacity: 0.6;
+    box-shadow: 0 0 0 3px rgba(var(--color-accent), 0.6),
+      0 0 15px 0 rgba(var(--color-accent), 0.4);
   }
   50% {
-    border-color: rgb(var(--color-accent));
-    box-shadow: 0 0 0 4px rgba(var(--color-accent), 0),
-      0 0 25px 4px rgba(var(--color-accent), 0.6);
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(var(--color-accent), 1),
+      0 0 20px 0 rgba(var(--color-accent), 0.7);
   }
 }
 
@@ -491,6 +491,47 @@
   animation: ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Card selection animation with pseudo-element */
 .animate-card-select-pulse {
-  animation: card-select-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  position: relative;
+}
+
+.animate-card-select-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 0.25rem;
+  pointer-events: none;
+  animation: card-select-pulse 1.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+/* Pending card (drawn card waiting for swap) animation */
+.animate-pending-card-border {
+  position: relative;
+}
+
+.animate-pending-card-border::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 0.25rem;
+  pointer-events: none;
+  animation: pending-card-border 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+/* Swap position selection animation */
+.animate-swap-select-border {
+  position: relative;
+}
+
+.animate-swap-select-border::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 0.25rem;
+  pointer-events: none;
+  animation: swap-select-border 1.5s ease-in-out infinite;
+  z-index: 10;
 }

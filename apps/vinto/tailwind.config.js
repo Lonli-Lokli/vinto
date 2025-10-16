@@ -32,6 +32,11 @@ module.exports = {
         'flip-card': 'flip-card 0.6s ease-in-out',
         float: 'float 3s ease-in-out infinite',
         'card-click': 'card-click-feedback 0.1s ease',
+        'card-select-pulse': 'card-select-pulse 1.5s ease-in-out infinite',
+        'gentle-pulse': 'gentle-pulse 2s infinite',
+        'ring-pulse': 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pending-card-border': 'pending-card-border 2s ease-in-out infinite',
+        'swap-select-border': 'swap-select-border 1.5s ease-in-out infinite',
       },
       keyframes: {
         // Keep animations simple - colors will be handled by CSS classes with variables
@@ -48,6 +53,50 @@ module.exports = {
           '0%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(0.95)' },
           '100%': { transform: 'scale(1)' },
+        },
+        'card-select-pulse': {
+          '0%, 100%': {
+            opacity: '0.6',
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-accent), 0.6), 0 0 15px 0 rgba(var(--color-accent), 0.4)',
+          },
+          '50%': {
+            opacity: '1',
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-accent), 1), 0 0 20px 0 rgba(var(--color-accent), 0.7)',
+          },
+        },
+        'gentle-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' },
+        },
+        'ring-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 0 4px rgba(var(--color-current-player-glow), 0.5)',
+          },
+          '50%': {
+            boxShadow: '0 0 0 8px rgba(var(--color-current-player-glow), 0)',
+          },
+        },
+        'pending-card-border': {
+          '0%, 100%': {
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-warning), 0.7), 0 0 12px 0 rgba(var(--color-warning), 0.5)',
+          },
+          '50%': {
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-warning), 1), 0 0 20px 0 rgba(var(--color-warning), 0.8)',
+          },
+        },
+        'swap-select-border': {
+          '0%, 100%': {
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-info), 0.6), 0 0 12px 0 rgba(var(--color-info), 0.4)',
+          },
+          '50%': {
+            boxShadow:
+              '0 0 0 3px rgba(var(--color-info), 1), 0 0 18px 0 rgba(var(--color-info), 0.7)',
+          },
         },
       },
       backdropBlur: {

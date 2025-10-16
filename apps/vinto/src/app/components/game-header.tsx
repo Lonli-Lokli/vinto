@@ -5,8 +5,14 @@ import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { DeckManagerPopover } from './deck-manager-popover';
 import { ThemeToggle } from './presentational';
-import { DifficultyButton, SettingsButton, DeckManagerButton } from './buttons';
+import {
+  DifficultyButton,
+  SettingsButton,
+  DeckManagerButton,
+  ReportProblemButton,
+} from './buttons';
 import { SettingsPopover } from './mobile-settings';
+import { BugReportModal } from './modals';
 import { GameActions } from '@/engine';
 import { useGameClient } from '@/client';
 
@@ -14,6 +20,7 @@ export const GameHeader = observer(() => {
   const gameClient = useGameClient();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDeckManagerOpen, setIsDeckManagerOpen] = useState(false);
+  const [isBugReportOpen, setIsBugReportOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const deckManagerButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -109,8 +116,11 @@ export const GameHeader = observer(() => {
               )}
             </div>
 
-            {/* Right: Cards Left + Deck Manager */}
+            {/* Right: Cards Left + Deck Manager + Bug Report */}
             <div className="flex items-center gap-2">
+              {/* Bug Report Button */}
+              <ReportProblemButton onClick={() => setIsBugReportOpen(true)} />
+
               {/* Cards Left + Deck Manager */}
               <div className="flex items-center gap-1 relative">
                 <DeckManagerButton
@@ -129,6 +139,12 @@ export const GameHeader = observer(() => {
           </div>
         </div>
       </div>
+
+      {/* Bug Report Modal */}
+      <BugReportModal
+        isOpen={isBugReportOpen}
+        onClose={() => setIsBugReportOpen(false)}
+      />
     </div>
   );
 });

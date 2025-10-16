@@ -83,6 +83,21 @@ export function handleDiscardCard(
         newState.turnCount++;
       }
 
+      // Check if game should end (after vinto call, when we return to the vinto caller)
+      if (
+        newState.phase === 'final' &&
+        newState.players[newState.currentPlayerIndex].id ===
+          newState.vintoCallerId
+      ) {
+        // Final round complete - end the game
+        newState.phase = 'scoring';
+        newState.subPhase = 'idle';
+
+        console.log('[handleDiscardCard] Final round complete, game finished');
+
+        return newState;
+      }
+
       const nextPlayer = newState.players[newState.currentPlayerIndex];
       newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
 

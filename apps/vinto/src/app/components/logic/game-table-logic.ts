@@ -32,7 +32,7 @@ export function shouldAllowCardInteractions(params: {
     targetType,
     peekTargets,
     hasCompletePeekSelection,
-  uiStore,
+    uiStore,
   } = params;
 
   if (!humanPlayer) return false;
@@ -123,7 +123,10 @@ export function shouldAllowOpponentCardInteractions(params: {
   // For Queen action (peek-then-swap), must select from different players
   if (isAwaitingActionTarget && targetType === 'peek-then-swap') {
     // If one card already selected from this player, disable this player
-    if (peekTargets.length > 0 && peekTargets[0].playerId === opponentPlayerId) {
+    if (
+      peekTargets.length > 0 &&
+      peekTargets[0].playerId === opponentPlayerId
+    ) {
       return false;
     }
     // Otherwise allow
@@ -133,7 +136,10 @@ export function shouldAllowOpponentCardInteractions(params: {
   // For Jack action (swap-cards), must select from different players
   if (isAwaitingActionTarget && targetType === 'swap-cards') {
     // If one card already selected from this player, disable this player
-    if (peekTargets.length > 0 && peekTargets[0].playerId === opponentPlayerId) {
+    if (
+      peekTargets.length > 0 &&
+      peekTargets[0].playerId === opponentPlayerId
+    ) {
       return false;
     }
     // Otherwise allow
@@ -142,6 +148,10 @@ export function shouldAllowOpponentCardInteractions(params: {
 
   // For opponent-card peek (9/10 action), single target only
   if (isAwaitingActionTarget && targetType === 'opponent-card') {
+    // Disable all opponent cards after one has been selected
+    if (peekTargets.length > 0) {
+      return false;
+    }
     return true;
   }
 

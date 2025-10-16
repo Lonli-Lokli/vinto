@@ -9,9 +9,10 @@ import { container } from 'tsyringe';
 
 // Stores
 import { CardAnimationStore } from '../stores';
+import { UIStore } from '../stores';
+import { BugReportStore } from '../stores/bug-report-store';
 
 // Services
-import { UIStore } from '../stores';
 import { AnimationService } from '../services/animation-service';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 import { HeadlessService } from '../services/headless-service';
@@ -23,6 +24,7 @@ export function setupDIContainer() {
   // Register UI stores
   container.registerSingleton(CardAnimationStore);
   container.registerSingleton(UIStore);
+  container.registerSingleton(BugReportStore);
 
   // Register services
   container.registerSingleton(AnimationPositionCapture);

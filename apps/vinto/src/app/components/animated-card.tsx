@@ -179,7 +179,7 @@ export const AnimatedCardOverlay = observer(() => {
                 card={virtualCard.card}
                 revealed={virtualCard.revealed}
                 size="lg"
-                clickable={false}
+                selectionState="default"
               />
             </motion.div>
           );

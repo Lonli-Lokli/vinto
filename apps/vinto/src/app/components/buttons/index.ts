@@ -28,3 +28,4 @@ export * from './discard-instead-button';
 export * from './exit-replay-button';
 export * from './next-command-button';
 export * from './load-replay-button';
+export * from './report-problem-button';

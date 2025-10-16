@@ -200,7 +200,7 @@ export function initializeGame(settings: GameSettings): GameState {
   const gameState: GameState = {
     gameId: uuidv4(),
     roundNumber: 1,
-    turnCount: 0,
+    turnCount: 1,
     phase: 'setup', // Start in setup phase (players peek at 2 cards)
     subPhase: 'idle',
     finalTurnTriggered: false,

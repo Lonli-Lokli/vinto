@@ -116,6 +116,7 @@ export const DeckManagerPopover = observer(
                         card={cards[0]}
                         revealed={true}
                         size="auto"
+                        selectionState="default"
                       />
                     ) : (
                       <div className="w-full h-full bg-muted rounded flex items-center justify-center text-muted text-sm font-semibold">
@@ -143,7 +144,12 @@ export const DeckManagerPopover = observer(
             {gameClient.state.drawPile.length > 0 && topCard ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
-                  <CardComponent card={topCard} revealed={true} size="auto" />
+                  <CardComponent
+                    card={topCard}
+                    revealed={true}
+                    size="auto"
+                    selectionState="default"
+                  />
                 </div>
                 <div className="text-sm font-semibold text-primary">
                   {topCard.rank}

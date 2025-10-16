@@ -372,18 +372,7 @@ export function actionValidator(
     case 'PLAYER_TOSS_IN_FINISHED': {
       const { playerId } = action.payload;
 
-      // Must be in toss-in phase
-      if (
-        state.subPhase !== 'toss_queue_active' &&
-        state.subPhase !== 'toss_queue_processing'
-      ) {
-        return {
-          valid: false,
-          reason: `Cannot finish toss-in during phase ${state.subPhase}`,
-        };
-      }
-
-      // Must have an active toss-in
+      // Must have an active toss-in (primary check)
       if (!state.activeTossIn) {
         return { valid: false, reason: 'No active toss-in' };
       }

@@ -35,7 +35,7 @@ export const DeckArea: React.FC<DeckAreaProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center gap-2 ${
+      className={`flex flex-col items-center gap-2 pointer-events-auto ${
         shouldDimDeckArea ? 'area-dimmed' : ''
       }`}
     >

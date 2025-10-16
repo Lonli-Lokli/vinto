@@ -3,6 +3,7 @@ export * from './bottom-area';
 export * from './card';
 export * from './deck-area';
 export * from './discard-pile';
+export * from './draw-card';
 export * from './draw-pile';
 export * from './error-boundary';
 export * from './game-info';

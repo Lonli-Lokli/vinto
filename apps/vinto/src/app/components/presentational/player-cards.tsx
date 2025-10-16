@@ -28,13 +28,14 @@ interface PlayerCardsProps {
   highlightedCards: Set<number>;
   coalitionLeaderId: string | null;
   humanPlayerId: string | null;
+  actionTargets?: Array<{ playerId: string; position: number }>;
 }
 
 export const PlayerCards: React.FC<PlayerCardsProps> = ({
   player,
   position,
   cardSize,
-  isCurrentPlayer,
+  isCurrentPlayer: _isCurrentPlayer, // Not used - individual cards handle selection
   gamePhase,
   onCardClick,
   isSelectingSwapPosition,
@@ -45,16 +46,13 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
   highlightedCards,
   coalitionLeaderId,
   humanPlayerId,
+  actionTargets = [],
 }) => {
   const containerClasses = getCardContainerClasses(position);
-  const currentPlayerClasses = isCurrentPlayer
-    ? 'p-0.5 md:p-1 rounded md:rounded-lg border border-success md:border-2 bg-success-light/20'
-    : '';
+  const currentPlayerClasses = ''; // Removed container border - individual cards show selection
   const dimmedClasses =
     isSelectingActionTarget && !onCardClick ? 'area-dimmed' : '';
-  const currentPlayerAnimation = isCurrentPlayer
-    ? { animation: 'gentle-pulse 2s infinite' }
-    : undefined;
+  const currentPlayerAnimation = undefined; // Removed container animation - individual cards animate
 
   return (
     <div
@@ -91,21 +89,43 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
         // Hide cards during swap selection for human player
         const shouldHideCard = player.isHuman && isSelectingSwapPosition;
 
+        // Determine selection state based on context
+        const getSelectionState = ():
+          | 'default'
+          | 'selectable'
+          | 'not-selectable' => {
+          if (isSelectingActionTarget && !onCardClick) {
+            return 'not-selectable';
+          }
+          if (cardIsSelectable) {
+            return 'selectable';
+          }
+          return 'default';
+        };
+
+        // Determine selection variant (swap vs action)
+        const selectionVariant = isSelectingSwapPosition ? 'swap' : 'action';
+
+        // Check if this card is selected as an action target
+        const isActionTargetSelected = actionTargets.some(
+          (target) => target.playerId === player.id && target.position === index
+        );
+
         return (
           <Card
             key={`${card.id}-${index}`}
             card={card}
             revealed={canSeeCard && !shouldHideCard}
-            position={index + 1}
             size={cardSize}
-            selectable={cardIsSelectable}
-            notSelectable={isSelectingActionTarget && !onCardClick}
+            selectionState={getSelectionState()}
+            selectionVariant={selectionVariant}
             highlighted={cardHighlighted}
             botPeeking={highlightedCards.has(index)}
             onClick={() => onCardClick?.(index)}
             rotated={isSidePlayer(position)}
             playerId={player.id}
             cardIndex={index}
+            actionTargetSelected={isActionTargetSelected}
           />
         );
       })}

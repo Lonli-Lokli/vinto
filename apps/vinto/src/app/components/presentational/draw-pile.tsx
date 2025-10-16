@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from './card';
+import { DrawCard } from './draw-card';
 
 interface DrawPileProps {
   clickable: boolean;
@@ -23,7 +23,7 @@ export const DrawPile: React.FC<DrawPileProps> = ({
 
   return (
     <div className="text-center" data-deck-pile="true">
-      <Card size={size} clickable={clickable} onClick={onClick} />
+      <DrawCard size={size} clickable={clickable} onClick={onClick} />
       <div
         className={`${labelMargin} ${textSize} text-white font-medium bg-surface-tertiary/30 rounded ${labelPadding}`}
       >

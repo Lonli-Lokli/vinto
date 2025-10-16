@@ -11,7 +11,20 @@ import {
   AnimationStep,
   CardAnimationStore,
 } from '../stores/card-animation-store';
-import { GameAction, GameState, SwapCardAction } from '@/shared';
+import {
+  ConfirmPeekAction,
+  DeclareKingActionAction,
+  DiscardCardAction,
+  DrawCardAction,
+  ExecuteQueenSwapAction,
+  GameAction,
+  GameState,
+  ParticipateInTossInAction,
+  SelectActionTargetAction,
+  SkipQueenSwapAction,
+  SwapCardAction,
+  UseCardActionAction,
+} from '@/shared';
 
 @injectable()
 export class AnimationService {
@@ -67,6 +80,14 @@ export class AnimationService {
         this.handleSelectActionTarget(oldState, newState, action);
         break;
 
+      case 'EXECUTE_QUEEN_SWAP':
+        this.handleExecuteQueenSwap(oldState, newState, action);
+        break;
+
+      case 'SKIP_QUEEN_SWAP':
+        this.handleSkipQueenSwap(oldState, newState, action);
+        break;
+
       default:
         // No animation needed for this action
         break;
@@ -79,9 +100,9 @@ export class AnimationService {
    * - For bot: Deck -> Bot player position with full rotation (no animation until swap/discard)
    */
   private handleDrawCard(
-    oldState: GameState,
+    _oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'DRAW_CARD' }
+    action: DrawCardAction
   ): void {
     const playerId = action.payload.playerId;
     const player = newState.players.find((p) => p.id === playerId);
@@ -110,9 +131,9 @@ export class AnimationService {
    * - Drawn card area -> Discard pile
    */
   private handleDiscardCard(
-    oldState: GameState,
+    _oldState: GameState,
     newState: GameState,
-    _action: GameAction & { type: 'DISCARD_CARD' }
+    _action: DiscardCardAction
   ): void {
     // Get the card that was just discarded (top of discard pile)
     const discardedCard = newState.discardPile.peekTop();
@@ -276,12 +297,11 @@ export class AnimationService {
    * Handle USE_CARD_ACTION action animation
    * - Shows card with special play-action effect
    * - Moves to center of screen with glow
-   * - Then to discard pile
    */
   private handleUseCardAction(
-    oldState: GameState,
-    newState: GameState,
-    action: GameAction & { type: 'USE_CARD_ACTION' }
+    _oldState: GameState,
+    _newState: GameState,
+    action: UseCardActionAction
   ): void {
     const card = action.payload.card;
 
@@ -293,13 +313,6 @@ export class AnimationService {
         from: { type: 'drawn' },
         duration: 2000,
       },
-      {
-        type: 'discard',
-        card,
-        from: { type: 'drawn' },
-        to: { type: 'discard' },
-        duration: 1500,
-      },
     ]);
   }
 
@@ -308,9 +321,9 @@ export class AnimationService {
    * - Player position -> Discard pile
    */
   private handleTossIn(
-    oldState: GameState,
+    _oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'PARTICIPATE_IN_TOSS_IN' }
+    action: ParticipateInTossInAction
   ): void {
     const playerId = action.payload.playerId;
     const position = action.payload.position;
@@ -335,7 +348,7 @@ export class AnimationService {
   private handleConfirmPeek(
     oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'CONFIRM_PEEK' }
+    action: ConfirmPeekAction
   ): void {
     const playerId = action.payload.playerId;
     const peekCard = newState.discardPile.peekTop();
@@ -379,7 +392,7 @@ export class AnimationService {
   private handleDeclareKingAction(
     oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'DECLARE_KING_ACTION' }
+    action: DeclareKingActionAction
   ): void {
     const playerId = action.payload.playerId;
     const kingCard = newState.discardPile.peekTop();
@@ -423,7 +436,7 @@ export class AnimationService {
   private handleSelectActionTarget(
     oldState: GameState,
     newState: GameState,
-    action: GameAction & { type: 'SELECT_ACTION_TARGET' }
+    action: SelectActionTargetAction
   ): void {
     // Only animate if the action is complete (card went to discard)
     const wasCompleted = oldState.pendingAction && !newState.pendingAction;
@@ -466,6 +479,162 @@ export class AnimationService {
         '[AnimationService] J/A action complete - animating from drawn to discard'
       );
     }
+  }
+
+  /**
+   * Handle EXECUTE_QUEEN_SWAP animation
+   * Swaps two cards between players with animation
+   */
+  private handleExecuteQueenSwap(
+    oldState: GameState,
+    newState: GameState,
+    _action: ExecuteQueenSwapAction
+  ): void {
+    // Get the two targets from old state (before swap)
+    const targets = oldState.pendingAction?.targets;
+    if (!targets || targets.length !== 2) {
+      console.warn('[AnimationService] No targets for Queen swap');
+      return;
+    }
+
+    const [target1, target2] = targets;
+
+    // Get the cards from the NEW state (after swap)
+    const player1 = newState.players.find((p) => p.id === target1.playerId);
+    const player2 = newState.players.find((p) => p.id === target2.playerId);
+
+    if (!player1 || !player2) {
+      console.warn('[AnimationService] Players not found for Queen swap');
+      return;
+    }
+
+    // The cards at these positions are already swapped in newState
+    // So card1 at target1.position is actually what WAS at target2.position (before swap)
+    // And card2 at target2.position is actually what WAS at target1.position (before swap)
+    const card1AfterSwap = player1.cards[target1.position];
+    const card2AfterSwap = player2.cards[target2.position];
+
+    // Get player positions for rotation
+    const player1Position = this.getPlayerPosition(player1.id, newState);
+    const player2Position = this.getPlayerPosition(player2.id, newState);
+
+    // Determine if cards should be revealed during animation
+    // - Reveal if human player is involved
+    // - Always reveal during Queen swap since player peeked at both cards
+    const humanPlayer = newState.players.find((p) => p.isHuman);
+    const revealCard1 =
+      humanPlayer?.id === target1.playerId ||
+      humanPlayer?.id === target2.playerId;
+    const revealCard2 = revealCard1;
+
+    // Animate both swaps in parallel
+    this.animationStore.startAnimationSequence('parallel', [
+      {
+        type: 'swap',
+        card: card1AfterSwap,
+        from: {
+          type: 'player',
+          playerId: target2.playerId,
+          position: target2.position,
+        },
+        to: {
+          type: 'player',
+          playerId: target1.playerId,
+          position: target1.position,
+        },
+        duration: 1500,
+        revealed: revealCard1,
+        targetPlayerPosition: player1Position,
+      },
+      {
+        type: 'swap',
+        card: card2AfterSwap,
+        from: {
+          type: 'player',
+          playerId: target1.playerId,
+          position: target1.position,
+        },
+        to: {
+          type: 'player',
+          playerId: target2.playerId,
+          position: target2.position,
+        },
+        duration: 1500,
+        revealed: revealCard2,
+        targetPlayerPosition: player2Position,
+      },
+    ]);
+
+    console.log('[AnimationService] Queen swap animation started');
+  }
+
+  /**
+   * Handle SKIP_QUEEN_SWAP animation
+   * Just moves the Queen card to discard pile
+   */
+  private handleSkipQueenSwap(
+    oldState: GameState,
+    newState: GameState,
+    action: SkipQueenSwapAction
+  ): void {
+    // The Queen card should now be on top of discard pile
+    const queenCard = newState.discardPile.peekTop();
+
+    if (!queenCard || queenCard.rank !== 'Q') {
+      console.warn('[AnimationService] No Queen card found on discard pile');
+      return;
+    }
+
+    // Check if the Queen came from a swap declaration
+    const swapPosition = oldState.pendingAction?.swapPosition;
+    const playerId = action.payload.playerId;
+
+    if (swapPosition !== undefined) {
+      // Card came from hand position after correct declaration
+      this.animationStore.startDiscardAnimation(
+        queenCard,
+        { type: 'player', playerId, position: swapPosition },
+        { type: 'discard' },
+        1500
+      );
+      console.log(
+        '[AnimationService] Queen swap skipped - declared card to discard'
+      );
+    } else {
+      // Card came from drawn position (normal flow)
+      this.animationStore.startDiscardAnimation(
+        queenCard,
+        { type: 'drawn' },
+        { type: 'discard' },
+        1500
+      );
+      console.log(
+        '[AnimationService] Queen swap skipped - drawn card to discard'
+      );
+    }
+  }
+
+  /**
+   * Helper to get player position (top, bottom, left, right)
+   */
+  private getPlayerPosition(playerId: string, state: GameState): string {
+    const playerIndex = state.players.findIndex((p) => p.id === playerId);
+    const humanPlayerIndex = state.players.findIndex((p) => p.isHuman);
+
+    if (playerIndex === humanPlayerIndex) return 'bottom';
+
+    const playerCount = state.players.length;
+    const relativeIndex =
+      (playerIndex - humanPlayerIndex + playerCount) % playerCount;
+
+    if (playerCount === 2) return 'top';
+    if (playerCount === 3) {
+      return relativeIndex === 1 ? 'left' : 'right';
+    }
+    // 4 players
+    if (relativeIndex === 1) return 'left';
+    if (relativeIndex === 2) return 'top';
+    return 'right';
   }
 
   /**

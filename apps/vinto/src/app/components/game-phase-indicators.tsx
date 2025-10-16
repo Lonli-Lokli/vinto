@@ -74,7 +74,8 @@ export const GamePhaseIndicators = observer(() => {
   }
 
   // Toss-in Period
-  if (waitingForTossIn) {
+  // Note: Vinto caller should never see toss-in indicator, only waiting indicator
+  if (waitingForTossIn && !humanPlayer?.isVintoCaller) {
     const topDiscardRank = gameClient.topDiscardCard?.rank;
     const isCurrentPlayerWaiting = gameClient.state.subPhase === 'ai_thinking';
     return (
@@ -534,7 +535,12 @@ const CardDrawnIndicator = observer(
             {/* Card image - takes full height, preserves aspect ratio */}
             <div className="flex-shrink-0 h-full flex items-stretch">
               <div className="h-full" style={{ aspectRatio: '2.5 / 3.5' }}>
-                <CardComponent card={pendingCard} revealed={true} size="auto" />
+                <CardComponent
+                  card={pendingCard}
+                  revealed={true}
+                  size="auto"
+                  selectionState="default"
+                />
               </div>
             </div>
 

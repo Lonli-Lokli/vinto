@@ -30,12 +30,25 @@ const CARD_SIZES: Record<CardSize, string> = {
   auto: 'w-full h-full text-xs',
 };
 
+/**
+ * Card selection states:
+ * - 'default': No interaction, not clickable
+ * - 'selectable': Prominent pulsing animation (for action target selection)
+ * - 'not-selectable': Dimmed/disabled state
+ */
+export type CardSelectionState = 'default' | 'selectable' | 'not-selectable';
+
+/**
+ * Card selection variant - determines the visual style of selection animation
+ * - 'action': For selecting action targets (amber accent color)
+ * - 'swap': For selecting card position during swap (blue info color)
+ */
+export type CardSelectionVariant = 'action' | 'swap';
+
 interface CardProps {
   card?: CardType;
   revealed?: boolean;
-  position?: number;
   size?: CardSize;
-  clickable?: boolean;
   highlighted?: boolean;
   botPeeking?: boolean;
   onClick?: () => void;
@@ -44,19 +57,20 @@ interface CardProps {
   playerId?: string;
   cardIndex?: number; // The actual array index (0-based)
   isPending?: boolean;
-  // New selection states
-  selectable?: boolean; // Card can be selected (shows pulsing border)
-  notSelectable?: boolean; // Card cannot be selected (dimmed)
+  // Selection state - required for explicit control
+  selectionState: CardSelectionState;
+  // Selection variant - determines animation style
+  selectionVariant?: CardSelectionVariant;
   // Declaration feedback (passed from parent)
   declarationFeedback?: boolean | null; // true = correct, false = incorrect, null = none
+  // Action target selected - for showing which cards are selected as action targets (Q, K, etc.)
+  actionTargetSelected?: boolean;
 }
 
 export function Card({
   card,
   revealed = false,
-  position = 0,
   size = 'md',
-  clickable = false,
   highlighted = false,
   botPeeking = false,
   onClick,
@@ -64,9 +78,10 @@ export function Card({
   playerId,
   cardIndex,
   isPending = false,
-  selectable = false,
-  notSelectable = false,
+  selectionState,
+  selectionVariant = 'action',
   declarationFeedback = null,
+  actionTargetSelected = false,
 }: CardProps) {
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
@@ -80,11 +95,24 @@ export function Card({
 
   // Determine visual state classes
   const getCardStateClasses = () => {
-    if (notSelectable) return 'card-not-selectable';
-    if (selectable) return 'card-selectable animate-card-select-pulse';
-    if (clickable)
-      return 'cursor-pointer hover:scale-102 active:scale-95 hover:shadow-md';
-    return '';
+    // Pending card (drawn card waiting for swap) takes priority
+    if (isPending) {
+      return 'animate-pending-card-border';
+    }
+
+    switch (selectionState) {
+      case 'not-selectable':
+        return 'card-not-selectable';
+      case 'selectable':
+        // Use different animation based on selection variant
+        const animationClass =
+          selectionVariant === 'swap'
+            ? 'animate-swap-select-border'
+            : 'animate-card-select-pulse';
+        return `card-selectable ${animationClass}`;
+      case 'default':
+        return '';
+    }
   };
 
   // Determine declaration feedback classes
@@ -100,35 +128,25 @@ export function Card({
         ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
         relative flex
         transition-all duration-150 select-none
-        ${rotated ? 'transform-gpu' : ''}
+        ${rotated ? 'transform-gpu card-rotated' : ''}
         ${getCardStateClasses()}
         ${getDeclarationFeedbackClasses()}
+        ${actionTargetSelected ? 'action-target-selected' : ''}
       `}
       style={
-        highlighted && !selectable
+        highlighted && selectionState !== 'selectable'
           ? {
-              transform: rotated ? 'rotate(90deg)' : undefined,
               animation: 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }
-          : rotated
-          ? { transform: 'rotate(90deg)' }
           : undefined
       }
-      onClick={
-        (clickable || selectable) && !notSelectable ? onClick : undefined
-      }
+      onClick={selectionState === 'selectable' ? onClick : undefined}
       {...dataAttributes}
     >
       {revealed && card ? (
         <RankComponent rank={card.rank} />
       ) : (
         <CardBackComponent botPeeking={botPeeking} />
-      )}
-
-      {position > 0 && (
-        <div className="absolute -top-2 -right-2 w-4 h-4 bg-secondary text-on-primary rounded-full text-2xs font-bold flex items-center justify-center">
-          {position}
-        </div>
       )}
 
       {/* Declaration feedback overlay */}
