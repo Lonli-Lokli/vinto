@@ -1,0 +1,18 @@
+{
+  "name": "Vinto - Strategic Card Game",
+  "short_name": "Vinto",
+  "description": "Vinto is a strategic 4-5 player toss-in card game where you minimize your hand value using clever draws, swaps, and action cards.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#059669",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

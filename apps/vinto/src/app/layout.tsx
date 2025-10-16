@@ -89,6 +89,7 @@ export const metadata = {
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
+  manifest: '/manifest.json',
   other: {
     ...Sentry.getTraceData(),
   },
