@@ -435,16 +435,30 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const rank = discardedCard.rank;
 
     // Peek Actions: Reliable knowledge gain
+    // 7 and 8 actions are extremely valuable because they:
+    // 1. Give guaranteed knowledge (no risk)
+    // 2. Don't reduce hand size (preserve card advantage)
+    // 3. Don't reveal information to opponents (unlike swapping which shows toss-ins)
+    // 4. Enable better future decisions with asymmetric information advantage
+    // Weight them MUCH higher than swapping with toss-in potential
     if (rank === '7' || rank === '8') {
       // 7 and 8 peek at 1 card - always gain knowledge if we have unknown cards
       const unknownCount = this.countUnknownCards(context.botPlayer);
-      return unknownCount > 0 ? 1 : 0;
+      // Return 3 instead of 1 to account for:
+      // - +1 for knowledge gain
+      // - +1 for not reducing hand size
+      // - +1 for not revealing information to opponents
+      return unknownCount > 0 ? 3 : 0;
     }
 
     if (rank === 'Q') {
-      // Q peeks at 2 cards - can gain up to 2 knowledge
+      // Q peeks at 2 cards - extremely valuable for the same reasons as 7/8
+      // Plus it can optionally swap after peeking (making it even more powerful)
       const unknownCount = this.countUnknownCards(context.botPlayer);
-      return Math.min(2, unknownCount);
+      // Base knowledge gain (2 cards) + bonus for information advantage
+      const baseKnowledge = Math.min(2, unknownCount);
+      // Add bonus points for the strategic advantages
+      return baseKnowledge > 0 ? baseKnowledge + 2 : 0;
     }
 
     // Swap Actions: Knowledge-gaining swap heuristic

@@ -29,7 +29,7 @@ export type AnimationDrawTarget = {
   type: 'draw';
 };
 export type AnimationDiscardTarget = {
-  type: 'discard' | 'drawn';
+  type: 'discard';
 };
 export type AnimationPlayerTarget = {
   type: 'player';
@@ -315,7 +315,7 @@ export class CardAnimationStore {
   startDiscardAnimation(
     card: Card,
     from: AnimationPlayerTarget | AnimationDrawnTarget,
-    to: AnimationDiscardTarget,
+    to: AnimationDiscardTarget | AnimationDrawnTarget,
     duration = 1500
   ): string {
     const id = `discard-${this.animationCounter++}`;

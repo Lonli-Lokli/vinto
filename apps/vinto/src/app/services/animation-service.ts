@@ -99,7 +99,7 @@ export class AnimationService {
   /**
    * Handle DRAW_CARD action animation
    * - For human: Deck -> Drawn card area (pending card)
-   * - For bot: Deck -> Bot player position with full rotation (no animation until swap/discard)
+   * - For bot: Deck -> Drawn card area with full rotation
    */
   private handleDrawCard(
     _oldState: GameState,
@@ -114,18 +114,16 @@ export class AnimationService {
     const drawnCard = newState.pendingAction?.card;
     if (!drawnCard) return;
 
-    // Only animate draw for human players (card goes to pending area)
-    // For bots, the card is handled internally - no animation until they swap/discard
-    if (player.isHuman) {
-      this.animationStore.startDrawAnimation(
-        drawnCard,
-        { type: 'draw' },
-        { type: 'drawn' },
-        1500,
-        true,
-        false
-      );
-    }
+    // Animate draw for both human and bot players
+    // Card goes from deck to drawn/pending area
+    this.animationStore.startDrawAnimation(
+      drawnCard,
+      { type: 'draw' },
+      { type: 'drawn' },
+      1500,
+      true, // revealed for human, hidden for bot (will be handled by card component)
+      !player.isHuman // fullRotation for bots to show card flip
+    );
   }
 
   /**
