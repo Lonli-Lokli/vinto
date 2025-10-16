@@ -36,9 +36,46 @@ export function handleCallVinto(
     player.isVintoCaller = true;
   }
 
+  // If Vinto is called during a toss-in, the player has already completed their turn
+  // (they drew/played and discarded, which triggered the toss-in)
+  // So we need to advance to the next player
+  const wasDuringTossIn = newState.subPhase === 'toss_queue_active' || newState.subPhase === 'toss_queue_processing';
+
+  // Clear any active toss-in since Vinto caller cannot participate
+  if (newState.activeTossIn) {
+    const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
+    newState.activeTossIn = null;
+
+    // If called during toss-in, advance to next player
+    if (wasDuringTossIn) {
+      newState.currentPlayerIndex = (originalPlayerIndex + 1) % newState.players.length;
+
+      if (newState.currentPlayerIndex === 0) {
+        newState.turnCount++;
+      }
+
+      // Check if game should end (if we've returned to the vinto caller)
+      if (newState.players[newState.currentPlayerIndex].id === newState.vintoCallerId) {
+        newState.phase = 'scoring';
+        newState.subPhase = 'idle';
+        console.log('[handleCallVinto] Vinto caller completed turn, game ending');
+        return newState;
+      }
+
+      // Set appropriate subPhase for next player
+      const nextPlayer = newState.players[newState.currentPlayerIndex];
+      newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
+    } else {
+      // If called before turn completion, player continues their turn
+      newState.subPhase = 'idle';
+    }
+  }
+
   console.log('[handleCallVinto] Vinto called, entering final phase:', {
     playerId,
     phase: newState.phase,
+    subPhase: newState.subPhase,
+    currentPlayer: newState.players[newState.currentPlayerIndex].name,
     finalTurnTriggered: newState.finalTurnTriggered,
   });
 

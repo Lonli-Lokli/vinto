@@ -4,7 +4,7 @@
 import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { DeckManagerPopover } from './deck-manager-popover';
-import { ThemeToggle } from './presentational';
+import { ThemeToggle, WakeLockToggle } from './presentational';
 import {
   DifficultyButton,
   SettingsButton,
@@ -35,7 +35,7 @@ export const GameHeader = observer(() => {
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
     if (finalTurnTriggered) return `Final • ${phase}`;
-    return `R${roundNumber} • ${phase} • T${turnCount}`;
+    return `R${roundNumber} / T${turnCount}`;
   };
 
   const getCurrentPlayerDisplay = () => {
@@ -69,6 +69,9 @@ export const GameHeader = observer(() => {
                 {/* Theme Toggle */}
                 <ThemeToggle />
 
+                {/* Wake Lock Toggle */}
+                <WakeLockToggle />
+
                 {/* Difficulty */}
                 <div className="flex items-center gap-1">
                   {(['easy', 'moderate', 'hard'] as const).map((level) => (
@@ -88,9 +91,10 @@ export const GameHeader = observer(() => {
             {/* Center: Title + Game Info */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                {/* Theme Toggle - visible on mobile next to VINTO */}
-                <div className="sm:hidden">
+                {/* Theme Toggle & Wake Lock - visible on mobile next to VINTO */}
+                <div className="sm:hidden flex items-center gap-1">
                   <ThemeToggle />
+                  <WakeLockToggle />
                 </div>
                 <h1 className="text-lg font-bold text-transparent bg-clip-text bg-title-gradient">
                   VINTO

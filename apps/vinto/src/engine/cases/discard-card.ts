@@ -121,12 +121,66 @@ export function handleDiscardCard(
       playersReadyForNextTurn: playersAlreadyReady,
     };
 
-    newState.subPhase = 'toss_queue_active';
+    // Check if all human players are already ready (e.g., Vinto caller is the only human)
+    const humanPlayers = newState.players.filter((p) => p.isHuman);
+    const allHumansReady = humanPlayers.every((p) =>
+      newState.activeTossIn!.playersReadyForNextTurn.includes(p.id)
+    );
 
-    console.log('[handleDiscardCard] Card discarded, toss-in active:', {
-      discardedRank: discardedCard.rank,
-      newSubPhase: newState.subPhase,
-    });
+    if (allHumansReady) {
+      // All humans are ready immediately, skip toss-in and advance turn
+      console.log(
+        '[handleDiscardCard] All humans already ready (Vinto caller), skipping toss-in'
+      );
+
+      const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
+      newState.activeTossIn = null;
+
+      // Advance to next player from original player
+      newState.currentPlayerIndex =
+        (originalPlayerIndex + 1) % newState.players.length;
+
+      if (newState.currentPlayerIndex === 0) {
+        newState.turnCount++;
+      }
+
+      // Check if game should end (after vinto call, when we return to the vinto caller)
+      if (
+        newState.phase === 'final' &&
+        newState.players[newState.currentPlayerIndex].id ===
+          newState.vintoCallerId
+      ) {
+        // Final round complete - end the game
+        newState.phase = 'scoring';
+        newState.subPhase = 'idle';
+
+        console.log(
+          '[handleDiscardCard] Final round complete after Vinto caller turn, game finished'
+        );
+
+        return newState;
+      }
+
+      const nextPlayer = newState.players[newState.currentPlayerIndex];
+      newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
+
+      console.log(
+        '[handleDiscardCard] Toss-in skipped, turn advanced to:',
+        {
+          nextPlayer: nextPlayer.name,
+          subPhase: newState.subPhase,
+        }
+      );
+    } else {
+      // Some humans need to decide on toss-in participation
+      newState.subPhase = 'toss_queue_active';
+
+      console.log('[handleDiscardCard] Card discarded, toss-in active:', {
+        discardedRank: discardedCard.rank,
+        newSubPhase: newState.subPhase,
+        playersAlreadyReady,
+      });
+    }
   }
 
   return newState;

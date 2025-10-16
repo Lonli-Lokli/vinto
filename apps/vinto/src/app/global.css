@@ -406,26 +406,4 @@
   }
 }
 
-/* Portrait Mode Lock for Mobile Devices */
-/* Automatically rotate content to portrait when mobile device is in landscape */
-/* Uses pointer detection to target only touch devices */
-@media (any-pointer: coarse) and (orientation: landscape) {
-  html,
-  body {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  body {
-    transform: rotate(-90deg);
-    transform-origin: left top;
-    width: 100vh;
-    height: 100vw;
-    overflow-x: hidden;
-    position: absolute;
-    top: 100%;
-    left: 0;
-  }
-}
 

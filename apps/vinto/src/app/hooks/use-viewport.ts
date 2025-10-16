@@ -6,23 +6,6 @@ interface ViewportSize {
   width: number;
   height: number;
   visualHeight: number; // Available height considering mobile browser UI
-  isRotated: boolean; // Whether the viewport is being rotated by CSS
-}
-
-/**
- * Detects if device is a touch device in landscape mode
- * (where we apply CSS rotation to maintain portrait layout)
- */
-function isMobileLandscape(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  // Check if device has coarse pointer (touch screen)
-  const hasCoarsePointer = window.matchMedia('(any-pointer: coarse)').matches;
-
-  // Check if device is in landscape orientation
-  const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-
-  return hasCoarsePointer && isLandscape;
 }
 
 export function useViewport() {
@@ -30,31 +13,22 @@ export function useViewport() {
     width: 0,
     height: 0,
     visualHeight: 0,
-    isRotated: false,
   });
 
   useEffect(() => {
     function updateViewport() {
-      const isRotated = isMobileLandscape();
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      let visualHeight = window.visualViewport
+      // For mobile devices, use visualViewport if available to account for virtual keyboard and address bar
+      const visualHeight = window.visualViewport
         ? window.visualViewport.height
         : height;
-
-      // When we rotate the content via CSS, swap width and height
-      // so that the reported dimensions match the visual portrait layout
-      if (isRotated) {
-        [width, height] = [height, width];
-        visualHeight = width; // In rotated view, visual height is actually the physical width
-      }
 
       setViewport({
         width,
         height,
         visualHeight,
-        isRotated,
       });
     }
 

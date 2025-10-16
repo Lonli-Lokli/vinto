@@ -77,7 +77,7 @@ export class BugReportStore {
 
       // Submit to formsubmit.co
       const response = await fetch(
-        'https://formsubmit.co/lonli.lokli@gmail.com',
+        'https://formsubmit.co/4aa7fcc39662f7586c67799b921c4889 ',
         {
           method: 'POST',
           body: formData,
