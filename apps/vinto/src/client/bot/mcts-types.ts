@@ -258,21 +258,21 @@ export const MCTS_DIFFICULTY_CONFIGS: Record<
   MCTSConfig
 > = {
   easy: {
-    iterations: 100,
+    iterations: 2_000,
     explorationConstant: Math.sqrt(2),
     rolloutDepth: 5,
-    timeLimit: 100,
+    timeLimit: 500,
   },
   moderate: {
-    iterations: 500,
+    iterations: 10_000,
     explorationConstant: Math.sqrt(2),
     rolloutDepth: 10,
-    timeLimit: 300,
+    timeLimit: 1_000,
   },
   hard: {
-    iterations: 1000,
+    iterations: 50_000,
     explorationConstant: Math.sqrt(2),
     rolloutDepth: 15,
-    timeLimit: 500,
+    timeLimit: 1_500,
   },
 };

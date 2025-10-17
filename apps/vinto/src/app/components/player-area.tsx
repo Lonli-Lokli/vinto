@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { PlayerAvatar, PlayerCards } from './presentational';
-import { useUIStore } from './di-provider';
+import { useCardAnimationStore, useUIStore } from './di-provider';
 import { PlayerState } from '@/shared';
 import { useGameClient } from '@/client';
 import type { PlayerPosition } from './logic/player-area-logic';
@@ -39,6 +39,14 @@ export const PlayerArea = observer(function PlayerArea({
 }: PlayerAreaProps) {
   const gameClient = useGameClient();
   const uiStore = useUIStore();
+  const animationStore = useCardAnimationStore();
+  const landingCards = new Set(
+    animationStore
+      .getPlayerAnimations(player.id)
+      .filter((a) => a.card)
+      .map((a) => a.to.position)
+  );
+
   const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
   const coalitionLeader = gameClient.coalitionLeader;
 
@@ -76,7 +84,6 @@ export const PlayerArea = observer(function PlayerArea({
       player={player}
       position={position}
       cardSize={cardSize}
-      isCurrentPlayer={isCurrentPlayer}
       gamePhase={gamePhase}
       onCardClick={onCardClick}
       isSelectingSwapPosition={isSelectingSwapPosition}
@@ -89,6 +96,7 @@ export const PlayerArea = observer(function PlayerArea({
       humanPlayerId={humanPlayer?.id || null}
       actionTargets={actionTargets}
       failedTossInCards={failedTossInCards}
+      landingCards={landingCards}
     />
   );
 

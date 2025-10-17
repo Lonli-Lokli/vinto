@@ -1,4 +1,4 @@
-import { GameState, SkipQueenSwapAction } from '@/shared';
+import { GameState, SkipJackSwapAction } from '@/shared';
 import copy from 'fast-copy';
 import {
   clearTossInReadyList,
@@ -6,32 +6,31 @@ import {
 } from '../utils/toss-in-utils';
 
 /**
- * SKIP_QUEEN_SWAP Handler
+ * SKIP_JACK_SWAP Handler
  *
  * Flow:
- * 1. Player has used a Queen card action
- * 2. Player has selected 2 cards to peek at (stored in pendingAction.targets)
- * 3. Player chooses NOT to swap those two cards (declined Queen's ability)
- * 4. Move Queen card to discard pile (without swapping)
+ * 1. Player has used a Jack card action
+ * 2. Player has selected 2 cards (stored in pendingAction.targets)
+ * 3. Player chooses NOT to swap those two cards (declined Jack's ability)
+ * 4. Move Jack card to discard pile (without swapping)
  * 5. Complete turn (increment turn count, transition to idle)
  *
- * Note: Same as EXECUTE_QUEEN_SWAP but skips the actual swap
+ * Note: Same as EXECUTE_JACK_SWAP but skips the actual swap
  */
-export function handleSkipQueenSwap(
+export function handleSkipJackSwap(
   state: GameState,
-  _action: SkipQueenSwapAction
+  _action: SkipJackSwapAction
 ): GameState {
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  const queenCard = newState.pendingAction?.card;
+  const jackCard = newState.pendingAction?.card;
 
-  // Move Queen card to discard pile (skip the swap)
-  if (queenCard) {
-    newState.discardPile.addToTop(queenCard);
+  // Move Jack card to discard pile (skip the swap)
+  if (jackCard) {
+    newState.discardPile.addToTop(jackCard);
   }
 
-  // TODO: we should update knowledge even for skipped swap - players know the cards they peeked at remain in same positions
   // Clear pending action
   newState.pendingAction = null;
 
@@ -45,7 +44,7 @@ export function handleSkipQueenSwap(
     newState.activeTossIn!.queuedActions.shift();
 
     console.log(
-      '[handleSkipQueenSwap] Action completed during toss-in queue processing',
+      '[handleSkipJackSwap] Action completed during toss-in queue processing',
       {
         remainingActions: newState.activeTossIn!.queuedActions.length,
       }
@@ -65,7 +64,7 @@ export function handleSkipQueenSwap(
 
       newState.subPhase = 'awaiting_action';
 
-      console.log('[handleSkipQueenSwap] Processing next queued action:', {
+      console.log('[handleSkipJackSwap] Processing next queued action:', {
         playerId: nextAction.playerId,
         card: nextAction.card.rank,
       });
@@ -91,9 +90,7 @@ export function handleSkipQueenSwap(
         newState.phase = 'scoring';
         newState.subPhase = 'idle';
 
-        console.log(
-          '[handleSkipQueenSwap] Final round complete, game finished'
-        );
+        console.log('[handleSkipJackSwap] Final round complete, game finished');
 
         return newState;
       }
@@ -102,7 +99,7 @@ export function handleSkipQueenSwap(
       newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
 
       console.log(
-        '[handleSkipQueenSwap] All toss-in actions processed, turn advanced'
+        '[handleSkipJackSwap] All toss-in actions processed, turn advanced'
       );
     }
   } else if (newState.activeTossIn !== null) {
@@ -112,14 +109,14 @@ export function handleSkipQueenSwap(
     newState.subPhase = 'toss_queue_active';
     newState.activeTossIn.waitingForInput = true;
     console.log(
-      '[handleSkipQueenSwap] Queen swap skipped during toss-in, returning to toss-in phase (ready list cleared)'
+      '[handleSkipJackSwap] Jack swap skipped during toss-in, returning to toss-in phase (ready list cleared)'
     );
   } else {
     // Initialize new toss-in phase (normal turn flow)
-    if (queenCard) {
+    if (jackCard) {
       // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
       newState.activeTossIn = {
-        rank: queenCard.rank,
+        rank: jackCard.rank,
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],
@@ -132,7 +129,7 @@ export function handleSkipQueenSwap(
     // Transition to toss-in phase
     newState.subPhase = 'toss_queue_active';
 
-    console.log('[handleSkipQueenSwap] Queen swap skipped, toss-in active');
+    console.log('[handleSkipJackSwap] Jack swap skipped, toss-in active');
   }
 
   return newState;

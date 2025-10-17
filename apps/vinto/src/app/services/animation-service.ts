@@ -16,11 +16,13 @@ import {
   DeclareKingActionAction,
   DiscardCardAction,
   DrawCardAction,
+  ExecuteJackSwapAction,
   ExecuteQueenSwapAction,
   GameAction,
   GameState,
   ParticipateInTossInAction,
   SelectActionTargetAction,
+  SkipJackSwapAction,
   SkipQueenSwapAction,
   SwapCardAction,
   UseCardActionAction,
@@ -43,8 +45,6 @@ export class AnimationService {
     newState: GameState,
     action: GameAction
   ): void {
-    console.log('[AnimationService] Handling action:', action.type);
-
     // Animation service only handles animations, not UI state management
 
     switch (action.type) {
@@ -92,6 +92,14 @@ export class AnimationService {
 
       case 'SKIP_QUEEN_SWAP':
         this.handleSkipQueenSwap(oldState, newState, action);
+        break;
+
+      case 'EXECUTE_JACK_SWAP':
+        this.handleExecuteJackSwap(oldState, newState, action);
+        break;
+
+      case 'SKIP_JACK_SWAP':
+        this.handleSkipJackSwap(oldState, newState, action);
         break;
 
       default:
@@ -363,43 +371,22 @@ export class AnimationService {
    * Card used for peek action (7, 8, 9, 10) animates to discard pile
    */
   private handleConfirmPeek(
-    oldState: GameState,
+    _oldState: GameState,
     newState: GameState,
-    action: ConfirmPeekAction
+    _action: ConfirmPeekAction
   ): void {
-    const playerId = action.payload.playerId;
     const peekCard = newState.discardPile.peekTop();
 
     if (!peekCard) return;
 
     // Check if this card came from a swap declaration (has swapPosition)
-    const swapPosition = oldState.pendingAction?.swapPosition;
 
-    if (swapPosition !== undefined) {
-      // Card came from hand position after correct declaration
-      // Animate from hand position to discard pile
-      this.animationStore.startDiscardAnimation(
-        peekCard,
-        { type: 'player', playerId, position: swapPosition },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Declared card action complete - animating from hand to discard'
-      );
-    } else {
-      // Card came from draw/discard pile (normal flow)
-      // Animate from drawn position to discard pile
-      this.animationStore.startDiscardAnimation(
-        peekCard,
-        { type: 'drawn' },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Peek action complete - animating from drawn to discard'
-      );
-    }
+    this.animationStore.startDiscardAnimation(
+      peekCard,
+      { type: 'drawn' },
+      { type: 'discard' },
+      1500
+    );
   }
 
   /**
@@ -564,7 +551,9 @@ export class AnimationService {
     // For Ace action, also animate the penalty card being drawn to target player's hand
     if (actionCard.rank === 'A') {
       const targetPlayerId = action.payload.targetPlayerId;
-      const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
+      const targetPlayer = newState.players.find(
+        (p) => p.id === targetPlayerId
+      );
       const oldTargetPlayer = oldState.players.find(
         (p) => p.id === targetPlayerId
       );
@@ -579,38 +568,31 @@ export class AnimationService {
             const steps: AnimationStep[] = [];
 
             // Step 1: Ace card to discard
-            if (swapPosition !== undefined) {
-              steps.push({
-                type: 'discard',
-                card: actionCard,
-                from: { type: 'player', playerId, position: swapPosition },
-                to: { type: 'discard' },
-                duration: 1500,
-                revealed: true,
-              });
-            } else {
-              steps.push({
-                type: 'discard',
-                card: actionCard,
-                from: { type: 'drawn' },
-                to: { type: 'discard' },
-                duration: 1500,
-                revealed: true,
-              });
-            }
+            steps.push({
+              type: 'discard',
+              card: actionCard,
+              from: { type: 'drawn' },
+              to: { type: 'discard' },
+              duration: 1500,
+              revealed: true,
+            });
 
             // Step 2: Penalty card from draw pile to target player's hand
             steps.push({
               type: 'draw',
               card: penaltyCard,
               from: { type: 'draw' },
-              to: { type: 'player', playerId: targetPlayerId, position: penaltyCardPosition },
+              to: {
+                type: 'player',
+                playerId: targetPlayerId,
+                position: penaltyCardPosition,
+              },
               duration: 1500,
               revealed: false, // Penalty cards are never revealed
               fullRotation: false,
             });
 
-            this.animationStore.startAnimationSequence('sequential', steps);
+            this.animationStore.startAnimationSequence('parallel', steps);
             console.log(
               '[AnimationService] Ace action complete - Ace to discard, penalty card to target player'
             );
@@ -628,7 +610,7 @@ export class AnimationService {
         actionCard,
         { type: 'player', playerId, position: swapPosition },
         { type: 'discard' },
-        1500
+        1_500
       );
       console.log(
         '[AnimationService] Declared J/A action complete - animating from hand to discard'
@@ -782,6 +764,130 @@ export class AnimationService {
   }
 
   /**
+   * Handle EXECUTE_JACK_SWAP animation
+   * Swaps two cards between players with animation
+   */
+  private handleExecuteJackSwap(
+    oldState: GameState,
+    newState: GameState,
+    _action: ExecuteJackSwapAction
+  ): void {
+    // Get the two targets from old state (before swap)
+    const targets = oldState.pendingAction?.targets;
+    if (!targets || targets.length !== 2) {
+      console.warn('[AnimationService] No targets for Jack swap');
+      return;
+    }
+
+    const [target1, target2] = targets;
+
+    // Get the cards from the NEW state (after swap)
+    const player1 = newState.players.find((p) => p.id === target1.playerId);
+    const player2 = newState.players.find((p) => p.id === target2.playerId);
+
+    if (!player1 || !player2) {
+      console.warn('[AnimationService] Players not found for Jack swap');
+      return;
+    }
+
+    // The cards at these positions are already swapped in newState
+    // So card1 at target1.position is actually what WAS at target2.position (before swap)
+    // And card2 at target2.position is actually what WAS at target1.position (before swap)
+    const card1AfterSwap = player1.cards[target1.position];
+    const card2AfterSwap = player2.cards[target2.position];
+
+    // Get player positions for rotation
+    const player1Position = this.getPlayerPosition(player1.id, newState);
+    const player2Position = this.getPlayerPosition(player2.id, newState);
+
+    // Animate both swaps in parallel
+    this.animationStore.startAnimationSequence('parallel', [
+      {
+        type: 'swap',
+        card: card1AfterSwap,
+        from: {
+          type: 'player',
+          playerId: target2.playerId,
+          position: target2.position,
+        },
+        to: {
+          type: 'player',
+          playerId: target1.playerId,
+          position: target1.position,
+        },
+        duration: 1500,
+        revealed: false,
+        targetPlayerPosition: player1Position,
+      },
+      {
+        type: 'swap',
+        card: card2AfterSwap,
+        from: {
+          type: 'player',
+          playerId: target1.playerId,
+          position: target1.position,
+        },
+        to: {
+          type: 'player',
+          playerId: target2.playerId,
+          position: target2.position,
+        },
+        duration: 1500,
+        revealed: false,
+        targetPlayerPosition: player2Position,
+      },
+    ]);
+
+    console.log('[AnimationService] Jack swap animation started');
+  }
+
+  /**
+   * Handle SKIP_JACK_SWAP animation
+   * Just moves the Jack card to discard pile
+   */
+  private handleSkipJackSwap(
+    oldState: GameState,
+    newState: GameState,
+    action: SkipJackSwapAction
+  ): void {
+    // The Jack card should now be on top of discard pile
+    const jackCard = newState.discardPile.peekTop();
+
+    if (!jackCard || jackCard.rank !== 'J') {
+      console.warn('[AnimationService] No Jack card found on discard pile');
+      return;
+    }
+
+    // Check if the Jack came from a swap declaration
+    const swapPosition = oldState.pendingAction?.swapPosition;
+    const playerId = action.payload.playerId;
+
+    if (swapPosition !== undefined) {
+      // Card came from hand position after correct declaration
+      this.animationStore.startDiscardAnimation(
+        jackCard,
+        { type: 'player', playerId, position: swapPosition },
+        { type: 'discard' },
+        1500
+      );
+      console.log(
+        '[AnimationService] Jack swap skipped - declared card to discard'
+      );
+    } else {
+      // Card came from drawn position (normal flow)
+      this.animationStore.startDiscardAnimation(
+        jackCard,
+        { type: 'drawn' },
+        { type: 'discard' },
+        1500
+      );
+      console.log(
+        '[AnimationService] Jack swap skipped - drawn card to discard'
+      );
+    }
+  }
+
+  /**
    * Handle failed toss-in attempt
    * - Card stays in hand (no animation needed - it never left)
    * - Penalty card animates from draw pile to hand
@@ -815,7 +921,9 @@ export class AnimationService {
       const oldPlayer = oldState.players.find((p) => p.id === playerId);
 
       if (!player || !oldPlayer) {
-        console.warn('[AnimationService] Player not found for failed toss-in animation');
+        console.warn(
+          '[AnimationService] Player not found for failed toss-in animation'
+        );
         return;
       }
 
@@ -863,10 +971,15 @@ export class AnimationService {
             }
           );
         } else {
-          console.warn('[AnimationService] Penalty card not found at position', penaltyCardPosition);
+          console.warn(
+            '[AnimationService] Penalty card not found at position',
+            penaltyCardPosition
+          );
         }
       } else {
-        console.warn('[AnimationService] No penalty card added - card counts are equal or decreased');
+        console.warn(
+          '[AnimationService] No penalty card added - card counts are equal or decreased'
+        );
       }
     }
   }

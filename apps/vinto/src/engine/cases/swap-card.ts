@@ -1,6 +1,7 @@
 import { GameState, SwapCardAction } from '@/shared';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
+import { getAutomaticallyReadyPlayers } from '../utils/toss-in-utils';
 
 /**
  * SWAP_CARD Handler
@@ -102,10 +103,6 @@ export function handleSwapCard(
 
   // Initialize toss-in phase
   // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-  const playersAlreadyReady = newState.players
-    .filter((p) => p.isVintoCaller)
-    .map((p) => p.id);
-
   newState.activeTossIn = {
     rank: cardFromHand.rank,
     initiatorId: playerId,
@@ -113,7 +110,7 @@ export function handleSwapCard(
     participants: [],
     queuedActions: [],
     waitingForInput: true,
-    playersReadyForNextTurn: playersAlreadyReady,
+    playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
   };
 
   // Transition to toss-in phase

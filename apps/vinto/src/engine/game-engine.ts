@@ -26,6 +26,8 @@ import { handleUseCardAction } from './cases/use-card';
 import { handleUpdateDifficulty } from './cases/update-difficulty';
 import { handleSetNextDrawCard } from './cases/set-next-draw-card';
 import { GameAction, GameState, NeverError } from '@/shared';
+import { handleExecuteJackSwap } from './cases/execute-jack-swap';
+import { handleSkipJackSwap } from './cases/skip-jack-swap';
 
 /**
  * GameEngine - The authoritative game logic
@@ -92,6 +94,12 @@ export class GameEngine {
 
       case 'CALL_VINTO':
         return handleCallVinto(state, action);
+
+      case 'EXECUTE_JACK_SWAP':
+        return handleExecuteJackSwap(state, action);
+
+      case 'SKIP_JACK_SWAP':
+        return handleSkipJackSwap(state, action);
 
       case 'EXECUTE_QUEEN_SWAP':
         return handleExecuteQueenSwap(state, action);

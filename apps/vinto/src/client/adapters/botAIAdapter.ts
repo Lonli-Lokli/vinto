@@ -79,18 +79,12 @@ export class BotAIAdapter {
       // Reactions should not await - they trigger async operations that will
       // naturally loop back through state changes. Error handling occurs within methods.
       ({ isBot, subPhase, activeTossIn }) => {
-        console.log(
-          `[BotAI] Reaction fired: subPhase=${subPhase}, isBot=${isBot}, activeTossIn=${!!activeTossIn}`
-        );
-
         // Handle toss-in phase separately (all bot players participate)
         if (subPhase === 'toss_queue_active' && activeTossIn) {
           if (this.isHandlingTossIn) {
             // Already processing toss-in - avoid re-entrancy
-            console.log('[BotAI] Already handling toss-in, skipping');
             return;
           }
-          console.log('[BotAI] Triggering toss-in phase handling');
           // Fire-and-forget: Let the async operation run independently
           this.handleTossInPhase().catch((error) => {
             console.error('[BotAI] Error in toss-in phase:', error);
@@ -141,8 +135,6 @@ export class BotAIAdapter {
     const botId = currentPlayer.id;
     const subPhase = this.gameClient.state.subPhase;
 
-    console.log(`[BotAI] ${botId} executing phase: ${subPhase}`);
-
     // Add "thinking time" delay for better UX (optional, visual only)
     // Skip delay if we're continuing from taking discard (awaiting_action after play_discard)
     const skipDelay =
@@ -150,7 +142,7 @@ export class BotAIAdapter {
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
 
     if (!skipDelay) {
-      await this.delay(3_000);
+      await this.delay(1_000);
     }
 
     try {
@@ -234,16 +226,19 @@ export class BotAIAdapter {
       for (const botPlayer of botPlayers) {
         const botId = botPlayer.id;
 
+        // Re-fetch the latest active toss-in state to check if player is already ready
+        // This prevents duplicate PLAYER_TOSS_IN_FINISHED actions if state changed during async operations
+        const currentActiveTossIn = this.gameClient.state.activeTossIn;
+        if (!currentActiveTossIn) {
+          console.log('[BotAI] Toss-in ended during processing, stopping');
+          break;
+        }
+
         // Skip if bot has already finished toss-in
-        if (activeTossIn.playersReadyForNextTurn.includes(botId)) {
+        if (currentActiveTossIn.playersReadyForNextTurn.includes(botId)) {
           console.log(`[BotAI] ${botId} already marked ready`);
           continue;
         }
-
-        console.log(
-          `[BotAI] Processing toss-in for bot ${botId}, cards:`,
-          botPlayer.cards.map((c) => c.rank)
-        );
 
         // Create decision context for this bot
         const context = this.createBotContext(botId);
@@ -287,8 +282,21 @@ export class BotAIAdapter {
           console.log(`[BotAI] ${botId} chose not to participate in toss-in`);
         }
 
-        // Mark bot as ready for next turn
-        this.gameClient.dispatch(GameActions.playerTossInFinished(botId));
+        // Re-check before marking ready (state might have changed during delays/toss-ins)
+        const latestActiveTossIn = this.gameClient.state.activeTossIn;
+        const currentSubPhase = this.gameClient.state.subPhase;
+        if (
+          latestActiveTossIn &&
+          !latestActiveTossIn.playersReadyForNextTurn.includes(botId) &&
+          currentSubPhase === 'toss_queue_active'
+        ) {
+          // Mark bot as ready for next turn (only if still in toss_queue_active phase)
+          this.gameClient.dispatch(GameActions.playerTossInFinished(botId));
+        } else {
+          console.log(
+            `[BotAI] ${botId} skipping mark ready - already ready or not in toss_queue_active (subPhase: ${currentSubPhase})`
+          );
+        }
 
         // Delay between bot confirmations for proper sequencing
         await this.delay(300);
@@ -413,6 +421,9 @@ export class BotAIAdapter {
     if (actionCard.rank === 'K') {
       // King: Declare a rank
       await this.executeKingDeclaration(botId, context);
+    } else if (actionCard.rank === 'J') {
+      // Jack: Select 2 cards to swap
+      await this.executeJackAction(botId, context);
     } else if (actionCard.rank === 'Q') {
       // Queen: Select 2 cards to peek/swap
       await this.executeQueenAction(botId, context);
@@ -470,6 +481,60 @@ export class BotAIAdapter {
 
       // King action transitions to toss-in phase (if correct) or idle (if incorrect)
       // handleTossInPhase will handle turn advancement after toss-in completes (if toss-in triggered)
+    }
+  }
+
+  /**
+   * Jack card: Optionally swap two cards
+   */
+  private async executeJackAction(
+    botId: string,
+    context: BotDecisionContext
+  ): Promise<void> {
+    // Use cached action plan if available, otherwise run MCTS fresh
+    const decision: BotActionDecision = this.cachedActionDecision
+      ? this.cachedActionDecision
+      : this.botDecisionService.selectActionTargets(context);
+
+    // Clear cache after using
+    this.cachedActionDecision = null;
+
+    if (decision.targets.length >= 2) {
+      // Select first target
+      this.gameClient.dispatch(
+        GameActions.selectActionTarget(
+          botId,
+          decision.targets[0].playerId,
+          decision.targets[0].position
+        )
+      );
+
+      // Delay before second target
+      await this.delay(800);
+
+      // Select second target
+      this.gameClient.dispatch(
+        GameActions.selectActionTarget(
+          botId,
+          decision.targets[1].playerId,
+          decision.targets[1].position
+        )
+      );
+
+      // Delay before swap decision
+      await this.delay(800);
+
+      // Decide whether to swap
+      if (decision.shouldSwap) {
+        this.gameClient.dispatch(GameActions.executeJackSwap(botId));
+        console.log(`[BotAI] ${botId} executed Jack swap`);
+      } else {
+        this.gameClient.dispatch(GameActions.skipJackSwap(botId));
+        console.log(`[BotAI] ${botId} skipped Jack swap`);
+      }
+
+      // Jack action transitions to toss-in phase
+      // handleTossInPhase will handle turn advancement after toss-in completes
     }
   }
 

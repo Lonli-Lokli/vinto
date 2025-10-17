@@ -67,6 +67,7 @@ interface CardProps {
   failedTossInFeedback?: boolean;
   // Action target selected - for showing which cards are selected as action targets (Q, K, etc.)
   actionTargetSelected?: boolean;
+  hidden?: boolean;
 }
 
 export function Card({
@@ -83,6 +84,7 @@ export function Card({
   selectionState,
   selectionVariant = 'action',
   declarationFeedback = null,
+  hidden = false,
   failedTossInFeedback = false,
   actionTargetSelected = false,
 }: CardProps) {
@@ -124,6 +126,21 @@ export function Card({
     if (declarationFeedback === false) return 'declaration-incorrect';
     return '';
   };
+
+  if (hidden) {
+    // Render an empty, borderless, transparent box with same size
+    return (
+      <div
+        className={`
+          ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
+          flex items-center justify-center
+          bg-transparent
+        `}
+        style={{ border: 'none', opacity: 0.2 }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <div

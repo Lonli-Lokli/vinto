@@ -251,6 +251,51 @@ export function actionValidator(
       return { valid: true };
     }
 
+    case 'EXECUTE_JACK_SWAP':
+    case 'SKIP_JACK_SWAP': {
+      const { playerId } = action.payload;
+
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
+      }
+
+      // Must be in awaiting_action phase (after selecting peek targets)
+      if (state.subPhase !== 'awaiting_action') {
+        return {
+          valid: false,
+          reason: `Cannot execute Jack action in phase ${state.subPhase}`,
+        };
+      }
+
+      // Must have a pending action
+      if (!state.pendingAction) {
+        return { valid: false, reason: 'No pending action' };
+      }
+
+      // Must have exactly 2 targets (Queen peeks at 2 cards)
+      if (state.pendingAction.targets.length !== 2) {
+        return {
+          valid: false,
+          reason: `Jack action requires 2 targets, got ${state.pendingAction.targets.length}`,
+        };
+      }
+
+      return { valid: true };
+    }
+
     case 'EXECUTE_QUEEN_SWAP':
     case 'SKIP_QUEEN_SWAP': {
       const { playerId } = action.payload;

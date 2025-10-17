@@ -1,6 +1,10 @@
 import { GameState, DeclareKingActionAction } from '@/shared';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
+import {
+  clearTossInReadyList,
+  getAutomaticallyReadyPlayers,
+} from '../utils/toss-in-utils';
 
 /**
  * DECLARE_KING_ACTION Handler
@@ -163,10 +167,12 @@ export function handleDeclareKingAction(
 
   if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation)
+    // Clear the ready list so players can confirm again for this new toss-in round
+    clearTossInReadyList(newState);
     newState.subPhase = 'toss_queue_active';
     newState.activeTossIn.waitingForInput = true;
     console.log(
-      '[handleDeclareKingAction] King action during toss-in complete, returning to toss-in phase'
+      '[handleDeclareKingAction] King action during toss-in complete, returning to toss-in phase (ready list cleared)'
     );
   } else {
     // Determine which rank triggers the toss-in:
@@ -175,10 +181,6 @@ export function handleDeclareKingAction(
     const tossInRank = isCorrect ? declaredRank : 'K';
 
     // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-    const playersAlreadyReady = newState.players
-      .filter((p) => p.isVintoCaller)
-      .map((p) => p.id);
-
     newState.activeTossIn = {
       rank: tossInRank,
       initiatorId: playerId,
@@ -186,7 +188,7 @@ export function handleDeclareKingAction(
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      playersReadyForNextTurn: playersAlreadyReady,
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
     };
 
     // Transition to toss-in phase

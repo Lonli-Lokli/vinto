@@ -5,7 +5,7 @@ import React, { FC } from 'react';
 import { observer } from 'mobx-react-lite';
 import { OwnCardPeek } from './action-types/own-card-peek';
 import { OpponentCardPeek } from './action-types/opponent-card-peek';
-import { CardSwap } from './action-types/card-swap';
+import { JackAction } from './action-types/jack-action';
 import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
@@ -54,7 +54,7 @@ const ActionContent: FC<{ targetType: TargetType | undefined }> = ({
     case 'opponent-card':
       return <OpponentCardPeek />;
     case 'swap-cards':
-      return <CardSwap />;
+      return <JackAction />;
     case 'peek-then-swap':
       return <QueenAction />;
     case 'force-draw':

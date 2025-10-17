@@ -24,6 +24,8 @@ import {
   PlayDiscardAction,
   UpdateDifficultyAction,
   UseCardActionAction,
+  ExecuteJackSwapAction,
+  SkipJackSwapAction,
 } from '@/shared';
 
 /**
@@ -75,6 +77,16 @@ export const GameActions = {
 
   confirmPeek: (playerId: string): ConfirmPeekAction => ({
     type: 'CONFIRM_PEEK',
+    payload: { playerId },
+  }),
+
+  executeJackSwap: (playerId: string): ExecuteJackSwapAction => ({
+    type: 'EXECUTE_JACK_SWAP',
+    payload: { playerId },
+  }),
+
+  skipJackSwap: (playerId: string): SkipJackSwapAction => ({
+    type: 'SKIP_JACK_SWAP',
     payload: { playerId },
   }),
 

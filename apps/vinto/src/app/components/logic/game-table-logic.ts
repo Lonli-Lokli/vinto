@@ -203,16 +203,6 @@ export function handleCardClick(params: {
     uiStore,
   } = params;
 
-  console.log('[handleCardClick] Card clicked:', {
-    position,
-    humanPlayerId: humanPlayer.id,
-    phase,
-    subPhase,
-    isSelectingSwapPosition,
-    isAwaitingActionTarget,
-    waitingForTossIn,
-  });
-
   // During setup phase, allow peeking at cards for memorization
   if (phase === 'setup') {
     if (

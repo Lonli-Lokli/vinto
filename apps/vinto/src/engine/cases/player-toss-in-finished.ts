@@ -1,6 +1,7 @@
 import { GameState, PlayerTossInFinishedAction, logger } from '@/shared';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
+import { areAllHumansReady } from '../utils/toss-in-utils';
 
 /**
  * PLAYER_TOSS_IN_FINISHED Handler
@@ -42,22 +43,8 @@ export function handlePlayerTossInFinished(
     newState.activeTossIn.playersReadyForNextTurn.push(playerId);
   }
 
-  console.log('[handlePlayerTossInFinished] Player ready:', {
-    playerId,
-    readyPlayers: newState.activeTossIn.playersReadyForNextTurn,
-  });
-
   // Check if all human players are ready
-  const humanPlayers = newState.players.filter((p) => p.isHuman);
-  const allHumansReady = humanPlayers.every((p) =>
-    newState.activeTossIn!.playersReadyForNextTurn.includes(p.id)
-  );
-
-  console.log('[handlePlayerTossInFinished] All humans ready:', {
-    allHumansReady,
-    totalHumans: humanPlayers.length,
-    readyCount: newState.activeTossIn.playersReadyForNextTurn.length,
-  });
+  const allHumansReady = areAllHumansReady(newState);
 
   // If all human players are ready, check if we have queued actions to process
   if (allHumansReady) {

@@ -1,5 +1,9 @@
 import { GameState, DiscardCardAction, logger } from '@/shared';
 import copy from 'fast-copy';
+import {
+  getAutomaticallyReadyPlayers,
+  areAllHumansReady,
+} from '../utils/toss-in-utils';
 
 /**
  * DISCARD_CARD Handler
@@ -107,10 +111,6 @@ export function handleDiscardCard(
     }
   } else {
     // Normal discard flow - initialize new toss-in phase
-    const playersAlreadyReady = newState.players
-      .filter((p) => p.isVintoCaller)
-      .map((p) => p.id);
-
     newState.activeTossIn = {
       rank: discardedCard.rank,
       initiatorId: playerId,
@@ -118,14 +118,11 @@ export function handleDiscardCard(
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      playersReadyForNextTurn: playersAlreadyReady,
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
     };
 
     // Check if all human players are already ready (e.g., Vinto caller is the only human)
-    const humanPlayers = newState.players.filter((p) => p.isHuman);
-    const allHumansReady = humanPlayers.every((p) =>
-      newState.activeTossIn!.playersReadyForNextTurn.includes(p.id)
-    );
+    const allHumansReady = areAllHumansReady(newState);
 
     if (allHumansReady) {
       // All humans are ready immediately, skip toss-in and advance turn
@@ -164,13 +161,10 @@ export function handleDiscardCard(
       const nextPlayer = newState.players[newState.currentPlayerIndex];
       newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
 
-      console.log(
-        '[handleDiscardCard] Toss-in skipped, turn advanced to:',
-        {
-          nextPlayer: nextPlayer.name,
-          subPhase: newState.subPhase,
-        }
-      );
+      console.log('[handleDiscardCard] Toss-in skipped, turn advanced to:', {
+        nextPlayer: nextPlayer.name,
+        subPhase: newState.subPhase,
+      });
     } else {
       // Some humans need to decide on toss-in participation
       newState.subPhase = 'toss_queue_active';
@@ -178,7 +172,6 @@ export function handleDiscardCard(
       console.log('[handleDiscardCard] Card discarded, toss-in active:', {
         discardedRank: discardedCard.rank,
         newSubPhase: newState.subPhase,
-        playersAlreadyReady,
       });
     }
   }

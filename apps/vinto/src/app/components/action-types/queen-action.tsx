@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { QueenSwapButton, SkipButton } from '../buttons';
+import { SwapButton, SkipButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
 import { HelpPopover } from '../presentational';
@@ -73,7 +73,7 @@ export const QueenAction = observer(() => {
         {/* Action Buttons - only show when both cards selected */}
         {hasBothCards && (
           <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-            <QueenSwapButton
+            <SwapButton
               onClick={() => {
                 if (!humanPlayer) return;
                 gameClient.dispatch(

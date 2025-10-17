@@ -18,7 +18,6 @@ export * from './use-action-button';
 export * from './discard-button';
 export * from './cancel-button';
 export * from './continue-button';
-export * from './queen-swap-button';
 export * from './try-again-button';
 export * from './export-button';
 export * from './replay-button';

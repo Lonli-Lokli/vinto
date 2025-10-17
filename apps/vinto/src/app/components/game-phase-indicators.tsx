@@ -215,8 +215,6 @@ const TossInIndicator = observer(
       })
       .map((action) => action.description);
 
-    console.log('[TossInIndicator] Bot actions to display:', recentBotActions);
-
     const getHelpContent = () => {
       return `⚡ Toss-in Phase: After a card is discarded, all players can toss in matching cards from their hand.
 

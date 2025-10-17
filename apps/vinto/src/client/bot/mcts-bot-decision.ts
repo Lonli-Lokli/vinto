@@ -164,10 +164,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     if (!drawnCard.actionText) return false;
 
-    console.log(
-      `[MCTS] ${this.botId} deciding whether to use ${drawnCard.rank} action`
-    );
-
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
 
@@ -176,8 +172,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   selectActionTargets(context: BotDecisionContext): BotActionDecision {
     this.initializeIfNeeded(context);
-
-    console.log(`[MCTS] ${this.botId} selecting action targets`);
 
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
@@ -215,8 +209,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
       });
     }
 
-    console.log(`[MCTS] ${this.botId} deciding whether to swap after peek`);
-
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
 
@@ -225,8 +217,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   selectKingDeclaration(context: BotDecisionContext): Rank {
     this.initializeIfNeeded(context);
-
-    console.log(`[MCTS] ${this.botId} selecting King declaration`);
 
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
@@ -245,8 +235,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
   ): boolean {
     this.initializeIfNeeded(context);
 
-    console.log(`[MCTS] ${this.botId} deciding toss-in for ${discardedRank}`);
-
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
 
@@ -258,10 +246,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     context: BotDecisionContext
   ): number | null {
     this.initializeIfNeeded(context);
-
-    console.log(
-      `[MCTS] ${this.botId} selecting swap position for ${drawnCard.rank}`
-    );
 
     // Temporarily add drawn card to memory for accurate simulation
     const tempMemory = new BotMemory(this.botId, this.difficulty);
@@ -278,10 +262,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     let bestPosition = 0;
     let bestScore = -Infinity;
-
-    console.log(
-      `[SwapSelector] Evaluating ${context.botPlayer.cards.length} positions`
-    );
 
     // Evaluate each possible swap position
     for (
@@ -542,22 +522,15 @@ export class MCTSBotDecisionService implements BotDecisionService {
       return false;
     }
 
-    console.log(`[MCTS] ${this.botId} deciding whether to call Vinto`);
-
     // Step 1: Run MCTS to see if it suggests calling Vinto
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
 
     if (bestMove.type !== 'call-vinto') {
-      console.log(`[MCTS] ${this.botId} MCTS did not suggest Vinto call`);
       return false;
     }
 
     // Step 2: MCTS suggests calling Vinto - now validate with worst-case analysis
-    console.log(
-      `[MCTS] ${this.botId} MCTS suggests Vinto - running VintoRoundSolver validation`
-    );
-
     const solver = new VintoRoundSolver(this.botId, this.botMemory);
 
     // Build opponent list
@@ -575,28 +548,11 @@ export class MCTSBotDecisionService implements BotDecisionService {
       context.discardPile
     );
 
-    console.log(
-      `[VintoRoundSolver] ${this.botId} validation result: ${validation.reason}`
-    );
-
     // Only call Vinto if:
     // 1. MCTS suggests it (already passed)
     // 2. VintoRoundSolver confirms it's safe
     // 3. Confidence is reasonable (> 40%)
-    const shouldCall =
-      validation.shouldCallVinto && validation.confidence > 0.4;
-
-    if (!shouldCall && validation.shouldCallVinto) {
-      console.log(
-        `[VintoRoundSolver] ${
-          this.botId
-        } rejected Vinto due to low confidence: ${(
-          validation.confidence * 100
-        ).toFixed(0)}%`
-      );
-    }
-
-    return shouldCall;
+    return validation.shouldCallVinto && validation.confidence > 0.4;
   }
 
   // ========== MCTS Core Algorithm ==========
@@ -664,13 +620,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     ) {
       // Look ahead in the tree to find what action the bot plans to take
       actionPlan = this.extractActionPlan(bestChild);
-
-      if (actionPlan) {
-        console.log(
-          `[MCTS] Extracted action plan for take-discard:`,
-          actionPlan
-        );
-      }
     }
 
     return {
@@ -846,9 +795,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     if (this.botId !== context.botId) {
       this.botId = context.botId;
       this.botMemory = new BotMemory(context.botId, this.difficulty);
-      console.log(
-        `[MCTS] Initialized memory for ${this.botId} (${this.difficulty})`
-      );
     }
 
     // Update memory with current context

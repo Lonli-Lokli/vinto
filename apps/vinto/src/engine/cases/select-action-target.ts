@@ -5,6 +5,10 @@ import {
   logger,
 } from '@/shared';
 import copy from 'fast-copy';
+import {
+  clearTossInReadyList,
+  getAutomaticallyReadyPlayers,
+} from '../utils/toss-in-utils';
 
 /**
  * SELECT_ACTION_TARGET Handler
@@ -57,169 +61,49 @@ export function handleSelectActionTarget(
     }
 
     case 'J': {
-      // Jack: Blind swap 2 cards from 2 different players
+      // Jack: Do not peeking at 2 cards from 2 different players, optionally swap them
       // Allow swapping any cards (own or opponent), but must be from different players
-      if (targets.length === 2) {
+
+      if (targets.length === 1) {
+        // First card choosen - store the card data for later visibility
+        const targetPlayer = newState.players.find(
+          (p) => p.id === targetPlayerId
+        );
+        if (targetPlayer) {
+          const choosenCard = targetPlayer.cards[position];
+          // Store the card in the target so it can be revealed in multiplayer
+          newState.pendingAction!.targets[0].card = choosenCard;
+        }
+        // Stay in awaiting_action phase for second card selection
+      } else if (targets.length === 2) {
         // Validate: cards must be from different players
         const [target1, target2] = targets;
 
         if (target1.playerId === target2.playerId) {
-          // Cannot swap two cards from the same player - this should be prevented by UI
+          // Cannot choose two cards from the same player - this should be prevented by UI
           // but we handle it here for safety
-          logger.warn('[Jack] Cannot swap two cards from the same player', {
+          logger.warn('[Jack] Cannot choose two cards from the same player', {
             playerId: target1.playerId,
             position1: target1.position,
             position2: target2.position,
           });
+          // Remove the invalid second target
+          newState.pendingAction!.targets.pop();
           return newState;
         }
 
-        // Find the two target players
-        const player1 = newState.players.find((p) => p.id === target1.playerId);
-        const player2 = newState.players.find((p) => p.id === target2.playerId);
-
-        if (player1 && player2) {
-          // Swap the two cards (blind swap - no peeking)
-          const card1 = player1.cards[target1.position];
-          const card2 = player2.cards[target2.position];
-
-          player1.cards[target1.position] = card2;
-          player2.cards[target2.position] = card1;
-
-          // Update known card positions after swap
-          // If a player knew a card at the swapped position, they no longer know it after swap
-          // This is a blind swap - neither player sees the cards being swapped
-          const wasPlayer1Known = player1.knownCardPositions.includes(
-            target1.position
-          );
-          const wasPlayer2Known = player2.knownCardPositions.includes(
-            target2.position
-          );
-
-          // Remove known positions for both players at swapped locations
-          if (wasPlayer1Known) {
-            player1.knownCardPositions = player1.knownCardPositions.filter(
-              (pos) => pos !== target1.position
-            );
-          }
-          if (wasPlayer2Known) {
-            player2.knownCardPositions = player2.knownCardPositions.filter(
-              (pos) => pos !== target2.position
-            );
-          }
-        }
-
-        const jackCard = newState.pendingAction?.card;
-
-        // Move Jack card to discard pile
-        if (jackCard) {
-          newState.discardPile.addToTop(jackCard);
-        }
-
-        // Clear pending action
-        newState.pendingAction = null;
-
-        // Check if this action was part of a toss-in
-        const isPartOfTossIn = newState.activeTossIn !== null;
-
-        if (isPartOfTossIn) {
-          // Return to toss-in phase (action was from toss-in participation)
-          newState.subPhase = 'toss_queue_active';
-          newState.activeTossIn!.waitingForInput = true;
-        } else {
-          // Initialize new toss-in phase (normal turn flow)
-          if (jackCard) {
-            // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-            const playersAlreadyReady = newState.players
-              .filter((p) => p.isVintoCaller)
-              .map((p) => p.id);
-
-            newState.activeTossIn = {
-              rank: jackCard.rank,
-              initiatorId: action.payload.playerId,
-              originalPlayerIndex: newState.currentPlayerIndex,
-              participants: [],
-              queuedActions: [],
-              waitingForInput: true,
-              playersReadyForNextTurn: playersAlreadyReady,
-            };
-          }
-
-          // Transition to toss-in phase
-          newState.subPhase = 'toss_queue_active';
-        }
-      }
-      // If we only have 1 target, stay in awaiting_action phase for second target
-      // No state changes needed, just return current state with updated targets
-      break;
-    }
-
-    case 'A': {
-      // Ace: Force opponent to draw a penalty card
-      if (targets.length === 1) {
-        const target = targets[0];
+        // Second card choosen - store the card data
         const targetPlayer = newState.players.find(
-          (p) => p.id === target.playerId
+          (p) => p.id === targetPlayerId
         );
-
-        if (targetPlayer && newState.drawPile.length > 0) {
-          // Draw a card from the pile
-          const penaltyCard = newState.drawPile.drawTop();
-          if (penaltyCard) {
-            // Add penalty card to target player's hand
-            targetPlayer.cards.push(penaltyCard);
-          }
+        if (targetPlayer) {
+          const choosenCard = targetPlayer.cards[position];
+          // Store the card in the target so it can be revealed in multiplayer
+          newState.pendingAction!.targets[1].card = choosenCard;
         }
-
-        const aceCard = newState.pendingAction?.card;
-
-        // Move Ace card to discard pile
-        if (aceCard) {
-          newState.discardPile.addToTop(aceCard);
-        }
-
-        // Clear pending action
-        newState.pendingAction = null;
-
-        // Check if this action was part of a toss-in
-        const isPartOfTossIn = newState.activeTossIn !== null;
-
-        if (isPartOfTossIn) {
-          // Return to toss-in phase (action was from toss-in participation)
-          newState.subPhase = 'toss_queue_active';
-          newState.activeTossIn!.waitingForInput = true;
-        } else {
-          // Initialize new toss-in phase (normal turn flow)
-          if (aceCard) {
-            // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-            const playersAlreadyReady = newState.players
-              .filter((p) => p.isVintoCaller)
-              .map((p) => p.id);
-
-            newState.activeTossIn = {
-              rank: aceCard.rank,
-              initiatorId: action.payload.playerId,
-              originalPlayerIndex: newState.currentPlayerIndex,
-              participants: [],
-              queuedActions: [],
-              waitingForInput: true,
-              playersReadyForNextTurn: playersAlreadyReady,
-            };
-          }
-
-          // Transition to toss-in phase
-          newState.subPhase = 'toss_queue_active';
-        }
-      } else {
-        logger.warn('[Ace] Cannot force multiple players', {
-          targetCount: newState.pendingAction?.targets.length ?? 0,
-          targets:
-            newState.pendingAction?.targets.map((t) => ({
-              playerId: t.playerId,
-              position: t.position,
-            })) ?? [],
-        });
-        return newState;
+        // Both cards selected, stay in awaiting_action phase
+        // UI will handle swap/skip decision
+        // The actual swap/skip is handled by EXECUTE_JACK_SWAP or SKIP_JACK_SWAP actions
       }
       break;
     }
@@ -273,6 +157,79 @@ export function handleSelectActionTarget(
     }
 
     case 'K': {
+      break;
+    }
+
+    case 'A': {
+      // Ace: Force opponent to draw a penalty card
+      if (targets.length === 1) {
+        const target = targets[0];
+        const targetPlayer = newState.players.find(
+          (p) => p.id === target.playerId
+        );
+
+        if (targetPlayer && newState.drawPile.length > 0) {
+          // Draw a card from the pile
+          const penaltyCard = newState.drawPile.drawTop();
+          if (penaltyCard) {
+            // Add penalty card to target player's hand
+            targetPlayer.cards.push(penaltyCard);
+          }
+        }
+
+        const aceCard = newState.pendingAction?.card;
+
+        // Move Ace card to discard pile
+        if (aceCard) {
+          newState.discardPile.addToTop(aceCard);
+        }
+
+        // Clear pending action
+        newState.pendingAction = null;
+
+        // Check if this action was part of a toss-in
+        const isPartOfTossIn = newState.activeTossIn !== null;
+
+        if (isPartOfTossIn) {
+          // Return to toss-in phase (action was from toss-in participation)
+          // Clear the ready list so players can confirm again for this new toss-in round
+          clearTossInReadyList(newState);
+          newState.subPhase = 'toss_queue_active';
+          newState.activeTossIn!.waitingForInput = true;
+          console.log(
+            '[handleSelectActionTarget] Ace action during toss-in complete, returning to toss-in phase (ready list cleared)'
+          );
+        } else {
+          // Initialize new toss-in phase (normal turn flow)
+          if (aceCard) {
+            // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+            newState.activeTossIn = {
+              rank: aceCard.rank,
+              initiatorId: action.payload.playerId,
+              originalPlayerIndex: newState.currentPlayerIndex,
+              participants: [],
+              queuedActions: [],
+              waitingForInput: true,
+              playersReadyForNextTurn: getAutomaticallyReadyPlayers(
+                newState.players
+              ),
+            };
+          }
+
+          // Transition to toss-in phase
+          newState.subPhase = 'toss_queue_active';
+        }
+      } else {
+        logger.warn('[Ace] Cannot force multiple players', {
+          targetCount: newState.pendingAction?.targets.length ?? 0,
+          targets:
+            newState.pendingAction?.targets.map((t) => ({
+              playerId: t.playerId,
+              position: t.position,
+            })) ?? [],
+        });
+        return newState;
+      }
       break;
     }
     case 'Joker': {

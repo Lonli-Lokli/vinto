@@ -1,14 +1,14 @@
-// components/action-types/CardSwap.tsx
+// components/action-types/JackAction.tsx
 'use client';
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { SkipButton } from '../buttons';
+import { SkipButton, SwapButton } from '../buttons';
 import { useGameClient } from '@/client';
 import { GameActions } from '@/engine';
 import { HelpPopover } from '../presentational';
 
-export const CardSwap = observer(() => {
+export const JackAction = observer(() => {
   const gameClient = useGameClient();
   const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
@@ -16,7 +16,7 @@ export const CardSwap = observer(() => {
   if (!pendingAction) return null;
 
   const swapTargets = pendingAction.targets || [];
-  const action = 'Swap Cards'; // Action description
+  const hasBothCards = swapTargets.length === 2;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -34,7 +34,7 @@ export const CardSwap = observer(() => {
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-primary">
-            🔄 {action}
+            🔄 Jack Action
             {isTossInAction && (
               <span className="ml-2 text-[10px] text-accent-primary font-medium">
                 ⚡ Toss-in
@@ -73,7 +73,7 @@ export const CardSwap = observer(() => {
                 {swapTargets
                   .map(
                     (target) =>
-                      `${getPlayerName(target.playerId)} pos ${
+                      `${getPlayerName(target.playerId)} Position ${
                         target.position + 1
                       }`
                   )
@@ -84,13 +84,19 @@ export const CardSwap = observer(() => {
         </div>
 
         {/* Action Buttons */}
-        <div className="w-full">
+        <div className="grid grid-cols-2 gap-1 flex-shrink-0">
+          <SwapButton
+            disabled={!hasBothCards}
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.executeJackSwap(humanPlayer.id));
+            }}
+          />
           <SkipButton
             onClick={() => {
               if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+              gameClient.dispatch(GameActions.skipJackSwap(humanPlayer.id));
             }}
-            className="w-full py-2 px-4 text-sm"
           />
         </div>
       </div>

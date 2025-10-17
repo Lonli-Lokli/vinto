@@ -18,6 +18,8 @@ export type GameAction =
   | UseCardActionAction
   | SelectActionTargetAction
   | ConfirmPeekAction
+  | ExecuteJackSwapAction
+  | SkipJackSwapAction
   | ExecuteQueenSwapAction
   | SkipQueenSwapAction
   | SelectKingCardTargetAction
@@ -99,6 +101,20 @@ export interface SelectActionTargetAction {
 
 export interface ConfirmPeekAction {
   type: 'CONFIRM_PEEK';
+  payload: {
+    playerId: string;
+  };
+}
+
+export interface ExecuteJackSwapAction {
+  type: 'EXECUTE_JACK_SWAP';
+  payload: {
+    playerId: string;
+  };
+}
+
+export interface SkipJackSwapAction {
+  type: 'SKIP_JACK_SWAP';
   payload: {
     playerId: string;
   };

@@ -17,7 +17,6 @@ interface PlayerCardsProps {
   player: PlayerState;
   position: PlayerPosition;
   cardSize: CardSize;
-  isCurrentPlayer: boolean;
   gamePhase: GamePhase;
   onCardClick?: (index: number) => void;
   isSelectingSwapPosition: boolean;
@@ -30,13 +29,13 @@ interface PlayerCardsProps {
   humanPlayerId: string | null;
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>; // Card positions with failed toss-in feedback
+  landingCards?: Set<number>;
 }
 
 export const PlayerCards: React.FC<PlayerCardsProps> = ({
   player,
   position,
   cardSize,
-  isCurrentPlayer: _isCurrentPlayer, // Not used - individual cards handle selection
   gamePhase,
   onCardClick,
   isSelectingSwapPosition,
@@ -49,16 +48,16 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
   humanPlayerId,
   actionTargets = [],
   failedTossInCards = new Set(),
+  landingCards = new Set(),
 }) => {
   const containerClasses = getCardContainerClasses(position);
-  const currentPlayerClasses = ''; // Removed container border - individual cards show selection
   const dimmedClasses =
     isSelectingActionTarget && !onCardClick ? 'area-dimmed' : '';
   const currentPlayerAnimation = undefined; // Removed container animation - individual cards animate
 
   return (
     <div
-      className={`${containerClasses} ${currentPlayerClasses} ${dimmedClasses}`}
+      className={`${containerClasses} ${dimmedClasses}`}
       style={currentPlayerAnimation}
     >
       {player.cards.map((card, index) => {
@@ -132,6 +131,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
             cardIndex={index}
             actionTargetSelected={isActionTargetSelected}
             failedTossInFeedback={hasFailedTossInFeedback}
+            hidden={landingCards.has(index)}
           />
         );
       })}

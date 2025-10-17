@@ -66,6 +66,11 @@ export interface CardAnimationState {
   targetRotation?: number;
   // Status
   completed: boolean;
+
+  // not used during animations, needed for UI display later
+
+  from?: AnimationTarget;
+  to?: AnimationTarget;
 }
 
 /**
@@ -243,6 +248,8 @@ export class CardAnimationStore {
       id,
       type: 'swap' as const,
       card,
+      from,
+      to,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -294,6 +301,8 @@ export class CardAnimationStore {
       id,
       type: 'draw',
       card,
+      from,
+      to,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -344,6 +353,8 @@ export class CardAnimationStore {
       id,
       type: 'discard',
       card,
+      from,
+      to,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -397,6 +408,7 @@ export class CardAnimationStore {
       id,
       type: 'play-action',
       card,
+      from,
       fromX: fromPos.x,
       fromY: fromPos.y,
       toX: toPos.x,
@@ -437,6 +449,7 @@ export class CardAnimationStore {
       id,
       type: 'highlight',
       card,
+      to: target,
       fromX: pos.x,
       fromY: pos.y,
       toX: pos.x,
@@ -484,6 +497,20 @@ export class CardAnimationStore {
     }
 
     return sequenceId;
+  }
+
+  public getPlayerAnimations(
+    playerId: string
+  ): (CardAnimationState & { to: AnimationPlayerTarget })[] {
+    return Array.from(this.activeAnimations.values()).filter(
+      (anim): anim is CardAnimationState & { to: AnimationPlayerTarget } => {
+        return (
+          !!anim.to &&
+          anim.to.type === 'player' &&
+          anim.to.playerId === playerId
+        );
+      }
+    );
   }
 
   /**

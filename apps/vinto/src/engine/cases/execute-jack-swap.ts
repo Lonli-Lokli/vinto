@@ -1,4 +1,4 @@
-import { ExecuteQueenSwapAction, GameState } from '@/shared';
+import { ExecuteJackSwapAction, GameState } from '@/shared';
 import copy from 'fast-copy';
 import {
   clearTossInReadyList,
@@ -6,22 +6,22 @@ import {
 } from '../utils/toss-in-utils';
 
 /**
- * EXECUTE_QUEEN_SWAP Handler
+ * EXECUTE_JACK_SWAP Handler
  *
  * Flow:
- * 1. Player has used a Queen card action
- * 2. Player has selected 2 cards to peek at (stored in pendingAction.targets)
- * 3. Player chooses to swap those two cards (Queen's special ability)
+ * 1. Player has used a Jack card action
+ * 2. Player has selected 2 cards without peeking (stored in pendingAction.targets)
+ * 3. Player chooses to swap those two cards (Jack's special ability)
  * 4. Swap the two target cards between players/positions
- * 5. Move Queen card to discard pile
+ * 5. Move Jack card to discard pile
  * 6. Complete turn (increment turn count, transition to idle)
  *
- * Note: Queen allows peeking at 2 cards then optionally swapping them
- * This handler executes the swap; SKIP_QUEEN_SWAP skips it
+ * Note: Jack does not allow peeking at cards before swapping them
+ * This handler executes the swap; SKIP_JACK_SWAP skips it
  */
-export function handleExecuteQueenSwap(
+export function handleExecuteJackSwap(
   state: GameState,
-  _action: ExecuteQueenSwapAction
+  _action: ExecuteJackSwapAction
 ): GameState {
   // Create new state (deep copy for safety)
   const newState = copy(state);
@@ -47,31 +47,36 @@ export function handleExecuteQueenSwap(
   player2.cards[target2.position] = card1;
 
   // Update known card positions after swap
-  // Queen action: Player peeked at both cards before swapping, so they know:
-  // - card2 is now at player1's position
-  // - card1 is now at player2's position
-  // The current player (who used Queen) now knows these positions
-  const currentPlayer = newState.players[newState.currentPlayerIndex];
-
-  // If current player is player1, they now know their new card at target1.position
-  if (currentPlayer.id === player1.id) {
-    if (!currentPlayer.knownCardPositions.includes(target1.position)) {
-      currentPlayer.knownCardPositions.push(target1.position);
+  // Jack swap is blind: if a player knew a card's position before the swap, they now know its new position in the other player's hand
+  // For both players, transfer knownCardPositions for swapped cards
+  // If player1 knew their card at target1.position, they now know player2's card at target2.position
+  // TODO: update as it's currently not correct
+  if (player1.knownCardPositions.includes(target1.position)) {
+    if (!player1.knownCardPositions.includes(target2.position)) {
+      player1.knownCardPositions.push(target2.position);
     }
   }
+  // Remove old position from player1
+  player1.knownCardPositions = player1.knownCardPositions.filter(
+    (pos) => pos !== target1.position
+  );
 
-  // If current player is player2, they now know their new card at target2.position
-  if (currentPlayer.id === player2.id) {
-    if (!currentPlayer.knownCardPositions.includes(target2.position)) {
-      currentPlayer.knownCardPositions.push(target2.position);
+  // If player2 knew their card at target2.position, they now know player1's card at target1.position
+  if (player2.knownCardPositions.includes(target2.position)) {
+    if (!player2.knownCardPositions.includes(target1.position)) {
+      player2.knownCardPositions.push(target1.position);
     }
   }
+  // Remove old position from player2
+  player2.knownCardPositions = player2.knownCardPositions.filter(
+    (pos) => pos !== target2.position
+  );
 
-  const queenCard = newState.pendingAction?.card;
+  const jackCard = newState.pendingAction?.card;
 
-  // Move Queen card to discard pile
-  if (queenCard) {
-    newState.discardPile.addToTop(queenCard);
+  // Move Jack card to discard pile
+  if (jackCard) {
+    newState.discardPile.addToTop(jackCard);
   }
 
   // Clear pending action
@@ -87,7 +92,7 @@ export function handleExecuteQueenSwap(
     newState.activeTossIn!.queuedActions.shift();
 
     console.log(
-      '[handleExecuteQueenSwap] Action completed during toss-in queue processing',
+      '[handleExecuteJackSwap] Action completed during toss-in queue processing',
       {
         remainingActions: newState.activeTossIn!.queuedActions.length,
       }
@@ -107,7 +112,7 @@ export function handleExecuteQueenSwap(
 
       newState.subPhase = 'awaiting_action';
 
-      console.log('[handleExecuteQueenSwap] Processing next queued action:', {
+      console.log('[handleExecuteJackSwap] Processing next queued action:', {
         playerId: nextAction.playerId,
         card: nextAction.card.rank,
       });
@@ -135,7 +140,7 @@ export function handleExecuteQueenSwap(
         newState.subPhase = 'idle';
 
         console.log(
-          '[handleExecuteQueenSwap] Final round complete, game finished'
+          '[handleExecuteJackSwap] Final round complete, game finished'
         );
 
         return newState;
@@ -145,7 +150,7 @@ export function handleExecuteQueenSwap(
       newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
 
       console.log(
-        '[handleExecuteQueenSwap] All toss-in actions processed, turn advanced'
+        '[handleExecuteJackSwap] All toss-in actions processed, turn advanced'
       );
     }
   } else if (newState.activeTossIn !== null) {
@@ -155,13 +160,13 @@ export function handleExecuteQueenSwap(
     newState.subPhase = 'toss_queue_active';
     newState.activeTossIn.waitingForInput = true;
     console.log(
-      '[handleExecuteQueenSwap] Queen swap executed during toss-in, returning to toss-in phase (ready list cleared)'
+      '[handleExecuteJackSwap] Jack swap executed during toss-in, returning to toss-in phase (ready list cleared)'
     );
   } else {
     // Initialize new toss-in phase (normal turn flow)
-    if (queenCard) {
+    if (jackCard) {
       newState.activeTossIn = {
-        rank: queenCard.rank,
+        rank: jackCard.rank,
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],
@@ -174,7 +179,7 @@ export function handleExecuteQueenSwap(
     // Transition to toss-in phase
     newState.subPhase = 'toss_queue_active';
 
-    console.log('[handleExecuteQueenSwap] Queen swap executed, toss-in active');
+    console.log('[handleExecuteJackSwap] JJack swap executed, toss-in active');
   }
 
   return newState;

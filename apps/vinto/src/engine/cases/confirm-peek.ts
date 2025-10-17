@@ -1,5 +1,9 @@
 import { GameState, ConfirmPeekAction } from '@/shared';
 import copy from 'fast-copy';
+import {
+  clearTossInReadyList,
+  getAutomaticallyReadyPlayers
+} from '../utils/toss-in-utils';
 
 /**
  * CONFIRM_PEEK Handler
@@ -101,20 +105,17 @@ export function handleConfirmPeek(
     }
   } else if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation but no queue)
+    // Clear the ready list so players can confirm again for this new toss-in round
+    clearTossInReadyList(newState);
     newState.subPhase = 'toss_queue_active';
     newState.activeTossIn.waitingForInput = true;
 
     console.log(
-      '[handleConfirmPeek] Peek confirmed during toss-in, returning to toss-in phase'
+      '[handleConfirmPeek] Peek confirmed during toss-in, returning to toss-in phase (ready list cleared)'
     );
   } else {
     // Initialize new toss-in phase (normal turn flow)
     if (peekCard) {
-      // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-      const playersAlreadyReady = newState.players
-        .filter((p) => p.isVintoCaller)
-        .map((p) => p.id);
-
       newState.activeTossIn = {
         rank: peekCard.rank,
         initiatorId: _action.payload.playerId,
@@ -122,7 +123,7 @@ export function handleConfirmPeek(
         participants: [],
         queuedActions: [],
         waitingForInput: true,
-        playersReadyForNextTurn: playersAlreadyReady,
+        playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
       };
     }
 

@@ -5,12 +5,10 @@ export const SwapButton = ({
   onClick,
   disabled = false,
   className = '',
-  children = 'Swap',
 }: {
   onClick: () => void;
   disabled?: boolean;
   className?: string;
-  children?: React.ReactNode;
 }) => (
   <Button
     variant="swap"
@@ -19,6 +17,6 @@ export const SwapButton = ({
     disabled={disabled}
     className={className}
   >
-    {children}
+    Swap Cards
   </Button>
 );
