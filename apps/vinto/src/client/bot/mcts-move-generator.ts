@@ -121,27 +121,41 @@ export class MCTSMoveGenerator {
 
     switch (actionType) {
       case 'peek-own':
-        // Generate peek moves for each own card
+        // Generate peek moves for own cards that are UNKNOWN
+        // Don't peek cards we already know about
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [{ playerId: currentPlayer.id, position: pos }],
-          });
+          const memory = currentPlayer.knownCards.get(pos);
+          const isKnown = memory && memory.confidence > 0.5;
+
+          // Only peek unknown cards
+          if (!isKnown) {
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [{ playerId: currentPlayer.id, position: pos }],
+            });
+          }
         }
         break;
 
       case 'peek-opponent':
-        // Generate peek moves for each opponent card
+        // Generate peek moves for opponent cards that are UNKNOWN
+        // Don't peek cards we already know about
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
-            moves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [{ playerId: opponent.id, position: pos }],
-            });
+            const memory = opponent.knownCards.get(pos);
+            const isKnown = memory && memory.confidence > 0.5;
+
+            // Only peek unknown cards
+            if (!isKnown) {
+              moves.push({
+                type: 'use-action',
+                playerId: currentPlayer.id,
+                targets: [{ playerId: opponent.id, position: pos }],
+              });
+            }
           }
         }
         break;
@@ -426,6 +440,7 @@ export class MCTSMoveGenerator {
 
   /**
    * Generate strategic peek-and-swap moves for Queen action
+   * Prioritizes peeking unknown cards to gain maximum information
    */
   private static generateStrategicPeekAndSwapMoves(
     state: MCTSGameState
@@ -437,56 +452,63 @@ export class MCTSMoveGenerator {
     const prioritizedPositions = this.categorizePositionsForSwap(state);
     const MAX_PEEK_MOVES = 25; // Focused set of strategic peeks
 
-    // Separate own and opponent positions
-    const myPositions = prioritizedPositions.filter(
+    // Filter to only include UNKNOWN cards (for gaining information)
+    // For Queen, we can optionally swap after peeking, so we might want to
+    // peek known high cards to swap them, but prioritize unknown cards
+    const unknownPositions = prioritizedPositions.filter((p) => {
+      const player = state.players.find((pl) => pl.id === p.target.playerId);
+      if (!player) return false;
+
+      const memory = player.knownCards.get(p.target.position);
+      const isKnown = memory && memory.confidence > 0.5;
+      return !isKnown; // Only unknown cards
+    });
+
+    // Separate own and opponent positions (unknown only)
+    const myUnknownPositions = unknownPositions.filter(
       (p) => p.target.playerId === currentPlayer.id
     );
-    const opponentPositions = prioritizedPositions.filter(
+    const opponentUnknownPositions = unknownPositions.filter(
       (p) => p.target.playerId !== currentPlayer.id
     );
 
-    // Strategy 1: Peek my high cards and opponent unknowns (to potentially swap)
-    const myHighCards = myPositions.filter(
-      (p) =>
-        p.priority === SwapPriority.CRITICAL || p.priority === SwapPriority.HIGH
-    );
-
-    for (const myCard of myHighCards.slice(0, 3)) {
-      for (const oppCard of opponentPositions.slice(0, 5)) {
+    // Strategy 1: Peek two opponent unknown cards (maximize information gain)
+    for (let i = 0; i < Math.min(opponentUnknownPositions.length - 1, 8); i++) {
+      for (
+        let j = i + 1;
+        j < Math.min(opponentUnknownPositions.length, i + 5);
+        j++
+      ) {
         if (moves.length >= MAX_PEEK_MOVES) break;
-        moves.push({
-          type: 'use-action',
-          playerId: currentPlayer.id,
-          targets: [myCard.target, oppCard.target],
-        });
+        if (
+          opponentUnknownPositions[i].target.playerId !==
+            opponentUnknownPositions[j].target.playerId ||
+          opponentUnknownPositions[i].target.position !==
+            opponentUnknownPositions[j].target.position
+        ) {
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [
+              opponentUnknownPositions[i].target,
+              opponentUnknownPositions[j].target,
+            ],
+          });
+        }
       }
       if (moves.length >= MAX_PEEK_MOVES) break;
     }
 
-    // Strategy 2: Peek two opponent cards (gain information)
+    // Strategy 2: Peek own unknown and opponent unknown (for potential swap)
     if (moves.length < MAX_PEEK_MOVES) {
-      for (let i = 0; i < Math.min(opponentPositions.length - 1, 5); i++) {
-        for (
-          let j = i + 1;
-          j < Math.min(opponentPositions.length, i + 4);
-          j++
-        ) {
+      for (const myCard of myUnknownPositions.slice(0, 5)) {
+        for (const oppCard of opponentUnknownPositions.slice(0, 5)) {
           if (moves.length >= MAX_PEEK_MOVES) break;
-          if (
-            opponentPositions[i].target.playerId !==
-              opponentPositions[j].target.playerId ||
-            opponentPositions[i].target.position !==
-              opponentPositions[j].target.position
-          ) {
-            moves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [
-                opponentPositions[i].target,
-                opponentPositions[j].target,
-              ],
-            });
-          }
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [myCard.target, oppCard.target],
+          });
         }
         if (moves.length >= MAX_PEEK_MOVES) break;
       }

@@ -285,7 +285,7 @@ export class AnimationService {
           card: newCard,
           from: { type: 'drawn' },
           to: { type: 'player', playerId, position },
-          duration: 1500,
+          duration: 3_000,
           revealed: player.isHuman,
         },
       ];
@@ -296,7 +296,7 @@ export class AnimationService {
           card: oldCard,
           from: { type: 'player', playerId, position },
           to: { type: 'discard' },
-          duration: 1500,
+          duration: 3_000,
           revealed: true,
         });
       }
@@ -525,25 +525,57 @@ export class AnimationService {
 
   /**
    * Handle SELECT_ACTION_TARGET animation
-   * Handles J (Jack) and A (Ace) actions that complete and move card to discard
+   * - For peek actions (7, 8, 9, 10): Highlight the peeked card
+   * - For J (Jack) and A (Ace) actions that complete: Move card to discard
    */
   private handleSelectActionTarget(
     oldState: GameState,
     newState: GameState,
     action: SelectActionTargetAction
   ): void {
+    const { playerId, targetPlayerId, position } = action.payload;
+    const actionCard = oldState.pendingAction?.card;
+
+    if (!actionCard) return;
+
+    // Handle peek actions (7, 8, 9, 10, Q) - highlight the peeked card
+    if (
+      actionCard.rank === '7' ||
+      actionCard.rank === '8' ||
+      actionCard.rank === '9' ||
+      actionCard.rank === '10' ||
+      actionCard.rank === 'Q'
+    ) {
+      // Get the target player and card
+      const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
+      if (!targetPlayer || position >= targetPlayer.cards.length) return;
+
+      const peekedCard = targetPlayer.cards[position];
+      if (!peekedCard) return;
+
+      // Start highlight animation on the peeked card
+      this.animationStore.startHighlightAnimation(
+        peekedCard,
+        { type: 'player', playerId: targetPlayerId, position },
+        2000 // 2 second highlight
+      );
+
+      console.log(
+        `[AnimationService] Peek action - highlighting ${peekedCard.rank} at ${targetPlayerId} position ${position}`
+      );
+      return;
+    }
+
     // Only animate if the action is complete (card went to discard)
     const wasCompleted = oldState.pendingAction && !newState.pendingAction;
 
     if (!wasCompleted) return;
 
-    const playerId = action.payload.playerId;
-    const actionCard = newState.discardPile.peekTop();
-
-    if (!actionCard) return;
+    const discardCard = newState.discardPile.peekTop();
+    if (!discardCard) return;
 
     // Only handle J and A cards (they complete on SELECT_ACTION_TARGET)
-    if (actionCard.rank !== 'J' && actionCard.rank !== 'A') return;
+    if (discardCard.rank !== 'J' && discardCard.rank !== 'A') return;
 
     // Check if this card came from a swap declaration (has swapPosition)
     const swapPosition = oldState.pendingAction?.swapPosition;

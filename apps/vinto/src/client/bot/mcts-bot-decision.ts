@@ -753,7 +753,14 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   /**
-   * Simulation phase - random playout with determinization
+   * Simulation phase - prioritized rollout with determinization
+   *
+   * Rollout Policy: Prioritized for Strategic Information & Control
+   * 1. Game-Ending Moves (Highest Priority): call-vinto, winning toss-in
+   * 2. Information-Gathering (High Priority): known-match toss-in, peek actions (7, 8, Q)
+   * 3. Score Reduction (Medium Priority): swap high-value for low-value
+   * 4. Defensive Moves (Medium-Low Priority): Ace against opponents close to winning
+   * 5. Fallback (Lowest Priority): random move
    */
   private simulate(state: MCTSGameState): number {
     // Determinize: sample hidden information
@@ -763,13 +770,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
     let currentState = this.deepCopyGameState(deterministicState);
     let depth = 0;
 
-    // Fast rollout
+    // Fast rollout with prioritized move selection
     while (!this.isTerminal(currentState) && depth < this.config.rolloutDepth) {
       const moves = this.generatePossibleMoves(currentState);
       if (moves.length === 0) break;
 
-      // Select random move
-      const move = moves[Math.floor(Math.random() * moves.length)];
+      // Select move using prioritized rollout policy
+      const move = this.selectRolloutMove(currentState, moves);
       currentState = this.applyMove(currentState, move);
 
       depth++;
@@ -777,6 +784,141 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     // Evaluate final state
     return this.evaluateState(currentState);
+  }
+
+  /**
+   * Select move during rollout using prioritized policy
+   * This implements the strategic heuristics for faster convergence
+   */
+  private selectRolloutMove(state: MCTSGameState, moves: MCTSMove[]): MCTSMove {
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer || moves.length === 0) {
+      return moves[0];
+    }
+
+    // Priority 1: Game-Ending Moves
+    // Check for call-vinto that is likely to win
+    const vintoMoves = moves.filter((m) => m.type === 'call-vinto');
+    if (vintoMoves.length > 0) {
+      const botScore = currentPlayer.score;
+      const opponentScores = state.players
+        .filter((p) => p.id !== currentPlayer.id)
+        .map((p) => p.score);
+      const avgOpponentScore =
+        opponentScores.reduce((a, b) => a + b, 0) / (opponentScores.length || 1);
+
+      // Call vinto if bot score is significantly lower (likely to win)
+      if (botScore < avgOpponentScore - 5) {
+        return vintoMoves[0];
+      }
+    }
+
+    // Check for toss-in that results in zero cards (instant win)
+    const tossInMoves = moves.filter((m) => m.type === 'toss-in');
+    if (tossInMoves.length > 0 && currentPlayer.cardCount === 1) {
+      // If we have 1 card and can toss it in, we win
+      return tossInMoves[0];
+    }
+
+    // Priority 2: Information-Gathering (High Priority)
+    // Known matching card toss-in
+    if (tossInMoves.length > 0) {
+      const discardRank = state.discardPileTop?.rank;
+      if (discardRank) {
+        for (const move of tossInMoves) {
+          if (move.tossInPosition !== undefined) {
+            const card = state.hiddenCards.get(
+              `${currentPlayer.id}-${move.tossInPosition}`
+            );
+            const memory = currentPlayer.knownCards.get(move.tossInPosition);
+            // If we know this card matches, prioritize it
+            if (
+              memory &&
+              memory.confidence > 0.5 &&
+              card &&
+              card.rank === discardRank
+            ) {
+              return move;
+            }
+          }
+        }
+      }
+    }
+
+    // Peek actions (7, 8, Q) - 75% probability to select
+    const peekMoves = moves.filter((m) => {
+      if (m.type !== 'use-action') return false;
+      const card = state.pendingCard;
+      if (!card) return false;
+      return card.rank === '7' || card.rank === '8' || card.rank === 'Q';
+    });
+
+    if (peekMoves.length > 0 && Math.random() < 0.75) {
+      return peekMoves[Math.floor(Math.random() * peekMoves.length)];
+    }
+
+    // Priority 3: Score Reduction (Medium Priority)
+    // Swap move that replaces known high-value card (>9) with known low-value card (<3)
+    const swapMoves = moves.filter((m) => m.type === 'swap');
+    if (swapMoves.length > 0) {
+      for (const move of swapMoves) {
+        if (move.swapPosition !== undefined) {
+          const oldCard = state.hiddenCards.get(
+            `${currentPlayer.id}-${move.swapPosition}`
+          );
+          const newCard = state.pendingCard;
+          const memory = currentPlayer.knownCards.get(move.swapPosition);
+
+          if (
+            oldCard &&
+            newCard &&
+            memory &&
+            memory.confidence > 0.5 &&
+            oldCard.value > 9 &&
+            newCard.value < 3
+          ) {
+            return move;
+          }
+        }
+      }
+    }
+
+    // Priority 4: Defensive Moves (Medium-Low Priority)
+    // Check if an opponent is close to winning (1 or 2 cards left)
+    const opponentsCloseToWinning = state.players.filter(
+      (p) => p.id !== currentPlayer.id && p.cardCount <= 2
+    );
+
+    if (opponentsCloseToWinning.length > 0) {
+      // Look for Ace (force draw) action
+      const aceMoves = moves.filter((m) => {
+        if (m.type !== 'use-action') return false;
+        const card = state.pendingCard;
+        if (!card) return false;
+        return card.rank === 'A';
+      });
+
+      if (aceMoves.length > 0) {
+        // Target the opponent closest to winning
+        const targetOpponent = opponentsCloseToWinning.reduce((closest, opp) =>
+          opp.cardCount < closest.cardCount ? opp : closest
+        );
+
+        const targetedAceMove = aceMoves.find(
+          (m) =>
+            m.targets &&
+            m.targets.length > 0 &&
+            m.targets[0].playerId === targetOpponent.id
+        );
+
+        if (targetedAceMove) {
+          return targetedAceMove;
+        }
+      }
+    }
+
+    // Priority 5: Fallback - Random move
+    return moves[Math.floor(Math.random() * moves.length)];
   }
 
   /**

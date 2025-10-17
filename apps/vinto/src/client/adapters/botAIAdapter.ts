@@ -14,6 +14,9 @@ import {
 } from '../bot/mcts-bot-decision';
 import { GameClient } from '../game-client';
 
+const NORMAL_DELAY = 1_000; // delay before running any MCST action
+const LARGE_DELAY = 3_000; // larger delay for showing UI elements
+
 /**
  * BotAIAdapter - Bridges MCTS Bot AI with GameClient
  *
@@ -142,7 +145,7 @@ export class BotAIAdapter {
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
 
     if (!skipDelay) {
-      await this.delay(1_000);
+      await this.delay(500);
     }
 
     try {
@@ -155,9 +158,9 @@ export class BotAIAdapter {
           break;
 
         case 'choosing':
-          // Phase 2: Swap card into hand
-          this.executeSwapDecision(botId);
-          // Returns immediately - reaction will fire when subPhase -> 'selecting'
+          // Phase 2: Decide whether to use action, swap, or discard
+          await this.executeChoosingDecision(botId);
+          // Returns immediately - reaction will fire based on choice
           break;
 
         case 'selecting':
@@ -215,7 +218,7 @@ export class BotAIAdapter {
       console.log(`[BotAI] Toss-in phase for rank: ${tossInRank}`);
 
       // Give bots time to "think" about toss-in
-      await this.delay(800);
+      await this.delay(NORMAL_DELAY);
 
       // Process each bot player
       const botPlayers = this.gameClient.state.players.filter((p) => p.isBot);
@@ -338,21 +341,42 @@ export class BotAIAdapter {
   }
 
   /**
-   * Phase 2: Swap Card into Hand
+   * Phase 2: Decide whether to use action, swap, or discard drawn card
+   * This is the 'choosing' phase where bot evaluates the drawn card
    */
-  private executeSwapDecision(botId: string): void {
+  private async executeChoosingDecision(botId: string): Promise<void> {
     const context = this.createBotContext(botId);
     const drawnCard = this.gameClient.pendingCard;
 
     if (!drawnCard) {
-      logger.warn('[BotAI] No pending card to swap', {
+      logger.warn('[BotAI] No pending card in choosing phase', {
         botId,
         subPhase: this.gameClient.state.subPhase,
       });
       return;
     }
 
-    // Use MCTS to decide best swap position
+    // Add delay so everyone can see the drawn card before bot makes a decision
+    // This gives time for the draw animation to complete and for players to see what was drawn
+    await this.delay(LARGE_DELAY);
+
+    // First, check if the card has an action and if we should use it
+    if (drawnCard.actionText) {
+      const shouldUseAction = this.botDecisionService.shouldUseAction(
+        drawnCard,
+        context
+      );
+
+      if (shouldUseAction) {
+        // Use the action immediately
+        this.gameClient.dispatch(GameActions.playCardAction(botId, drawnCard));
+        console.log(`[BotAI] ${botId} chose to use ${drawnCard.rank} action`);
+        return; // State will transition to awaiting_action
+      }
+    }
+
+    // Bot chose not to use action (or card has no action)
+    // Now decide: swap or discard?
     const swapPosition = this.botDecisionService.selectBestSwapPosition(
       drawnCard,
       context
@@ -361,6 +385,10 @@ export class BotAIAdapter {
     if (swapPosition !== null) {
       this.gameClient.dispatch(GameActions.swapCard(botId, swapPosition));
       console.log(`[BotAI] ${botId} swapped at position ${swapPosition}`);
+    } else {
+      // Discard the drawn card
+      this.gameClient.dispatch(GameActions.discardCard(botId));
+      console.log(`[BotAI] ${botId} discarded ${drawnCard.rank}`);
     }
 
     // State will update and MobX reaction will trigger next phase
@@ -465,7 +493,7 @@ export class BotAIAdapter {
         );
 
         // Small delay before declaring rank
-        await this.delay(500);
+        await this.delay(NORMAL_DELAY);
       }
 
       // State will update and MobX reaction will trigger declaring-rank phase
@@ -510,7 +538,7 @@ export class BotAIAdapter {
       );
 
       // Delay before second target
-      await this.delay(800);
+      await this.delay(NORMAL_DELAY);
 
       // Select second target
       this.gameClient.dispatch(
@@ -522,7 +550,7 @@ export class BotAIAdapter {
       );
 
       // Delay before swap decision
-      await this.delay(800);
+      await this.delay(NORMAL_DELAY);
 
       // Decide whether to swap
       if (decision.shouldSwap) {
@@ -564,7 +592,7 @@ export class BotAIAdapter {
       );
 
       // Delay before second target
-      await this.delay(800);
+      await this.delay(NORMAL_DELAY);
 
       // Select second target
       this.gameClient.dispatch(
@@ -576,7 +604,7 @@ export class BotAIAdapter {
       );
 
       // Delay before swap decision
-      await this.delay(800);
+      await this.delay(NORMAL_DELAY);
 
       // Decide whether to swap
       if (decision.shouldSwap) {
