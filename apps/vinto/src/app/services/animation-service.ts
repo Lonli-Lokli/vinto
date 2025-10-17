@@ -539,6 +539,7 @@ export class AnimationService {
     if (!actionCard) return;
 
     // Handle peek actions (7, 8, 9, 10, Q) - highlight the peeked card
+    // BUT: Only for bot peek actions! Human peek actions should just reveal the card immediately.
     if (
       actionCard.rank === '7' ||
       actionCard.rank === '8' ||
@@ -546,23 +547,36 @@ export class AnimationService {
       actionCard.rank === '10' ||
       actionCard.rank === 'Q'
     ) {
-      // Get the target player and card
-      const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
-      if (!targetPlayer || position >= targetPlayer.cards.length) return;
+      // Find the acting player (the one using the peek action)
+      const actingPlayer = newState.players.find((p) => p.id === playerId);
 
-      const peekedCard = targetPlayer.cards[position];
-      if (!peekedCard) return;
+      // Only start highlight animation if BOT is peeking
+      // Human peeks should just reveal the card (handled by UIStore.temporarilyVisibleCards)
+      if (actingPlayer && !actingPlayer.isHuman) {
+        // Get the target player and card
+        const targetPlayer = newState.players.find(
+          (p) => p.id === targetPlayerId
+        );
+        if (!targetPlayer || position >= targetPlayer.cards.length) return;
 
-      // Start highlight animation on the peeked card
-      this.animationStore.startHighlightAnimation(
-        peekedCard,
-        { type: 'player', playerId: targetPlayerId, position },
-        2000 // 2 second highlight
-      );
+        const peekedCard = targetPlayer.cards[position];
+        if (!peekedCard) return;
 
-      console.log(
-        `[AnimationService] Peek action - highlighting ${peekedCard.rank} at ${targetPlayerId} position ${position}`
-      );
+        // Start highlight animation on the peeked card (bot action)
+        this.animationStore.startHighlightAnimation(
+          peekedCard,
+          { type: 'player', playerId: targetPlayerId, position },
+          2000 // 2 second highlight
+        );
+
+        console.log(
+          `[AnimationService] Bot peek action - highlighting ${peekedCard.rank} at ${targetPlayerId} position ${position}`
+        );
+      } else {
+        console.log(
+          `[AnimationService] Human peek action - skipping highlight animation (card will reveal via temporarilyVisibleCards)`
+        );
+      }
       return;
     }
 

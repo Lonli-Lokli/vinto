@@ -392,12 +392,10 @@ export class MCTSMoveGenerator {
           j++
         ) {
           if (moves.length >= MAX_SWAP_MOVES) break;
-          // Don't swap two cards from the same position
+          // Jack rule: Cannot swap two cards from the same player
           if (
             opponent1Positions[i].target.playerId !==
-              opponent1Positions[j].target.playerId ||
-            opponent1Positions[i].target.position !==
-              opponent1Positions[j].target.position
+              opponent1Positions[j].target.playerId
           ) {
             moves.push({
               type: 'use-action',
@@ -480,11 +478,10 @@ export class MCTSMoveGenerator {
         j++
       ) {
         if (moves.length >= MAX_PEEK_MOVES) break;
+        // Queen rule: Cannot peek two cards from the same player
         if (
           opponentUnknownPositions[i].target.playerId !==
-            opponentUnknownPositions[j].target.playerId ||
-          opponentUnknownPositions[i].target.position !==
-            opponentUnknownPositions[j].target.position
+            opponentUnknownPositions[j].target.playerId
         ) {
           moves.push({
             type: 'use-action',

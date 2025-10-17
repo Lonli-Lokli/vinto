@@ -16,6 +16,7 @@ import { GameClient } from '../game-client';
 
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
 const LARGE_DELAY = 3_000; // larger delay for showing UI elements
+const SMALL_DELAY = 200; // small delay to let UI draw
 
 /**
  * BotAIAdapter - Bridges MCTS Bot AI with GameClient
@@ -139,7 +140,9 @@ export class BotAIAdapter {
     const subPhase = this.gameClient.state.subPhase;
 
     // Add "thinking time" delay for better UX (optional, visual only)
-    // Skip delay if we're continuing from taking discard (awaiting_action after play_discard)
+    // Skip delay if:
+    // 1. Continuing from taking discard (awaiting_action after play_discard)
+    // 2. Selecting action targets (Queen/Jack/etc) - cards should be revealed immediately
     const skipDelay =
       subPhase === 'awaiting_action' &&
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
@@ -219,6 +222,30 @@ export class BotAIAdapter {
 
       // Give bots time to "think" about toss-in
       await this.delay(NORMAL_DELAY);
+
+      // Check if the bot who just finished their turn should call Vinto
+      // This is the correct timing according to game rules - Vinto is called after discarding
+      const turnPlayerIndex = activeTossIn.originalPlayerIndex;
+      const turnPlayer = this.gameClient.state.players[turnPlayerIndex];
+
+      if (
+        turnPlayer &&
+        turnPlayer.isBot &&
+        !this.gameClient.state.vintoCallerId
+      ) {
+        const context = this.createBotContext(turnPlayer.id);
+        const shouldCallVinto =
+          this.botDecisionService.shouldCallVinto(context);
+
+        if (shouldCallVinto) {
+          console.log(
+            `[BotAI] ${turnPlayer.id} calling Vinto after their turn!`
+          );
+          this.gameClient.dispatch(GameActions.callVinto(turnPlayer.id));
+          // Vinto call will transition the game state, exit toss-in handling
+          return;
+        }
+      }
 
       // Process each bot player
       const botPlayers = this.gameClient.state.players.filter((p) => p.isBot);
@@ -528,7 +555,7 @@ export class BotAIAdapter {
     this.cachedActionDecision = null;
 
     if (decision.targets.length >= 2) {
-      // Select first target
+      // Select first target (reveals immediately for Jack - blind swap but needs UI update)
       this.gameClient.dispatch(
         GameActions.selectActionTarget(
           botId,
@@ -537,10 +564,10 @@ export class BotAIAdapter {
         )
       );
 
-      // Delay before second target
-      await this.delay(NORMAL_DELAY);
+      // Small delay to let first card selection register
+      await this.delay(SMALL_DELAY);
 
-      // Select second target
+      // Select second target (reveals immediately)
       this.gameClient.dispatch(
         GameActions.selectActionTarget(
           botId,
@@ -549,7 +576,7 @@ export class BotAIAdapter {
         )
       );
 
-      // Delay before swap decision
+      // Delay to let user see both selected cards before swap decision
       await this.delay(NORMAL_DELAY);
 
       // Decide whether to swap
@@ -582,7 +609,7 @@ export class BotAIAdapter {
     this.cachedActionDecision = null;
 
     if (decision.targets.length >= 2) {
-      // Select first target
+      // Select first target (reveals immediately)
       this.gameClient.dispatch(
         GameActions.selectActionTarget(
           botId,
@@ -591,10 +618,10 @@ export class BotAIAdapter {
         )
       );
 
-      // Delay before second target
-      await this.delay(NORMAL_DELAY);
+      // Small delay to let first card reveal animation start
+      await this.delay(SMALL_DELAY);
 
-      // Select second target
+      // Select second target (reveals immediately)
       this.gameClient.dispatch(
         GameActions.selectActionTarget(
           botId,
@@ -603,7 +630,7 @@ export class BotAIAdapter {
         )
       );
 
-      // Delay before swap decision
+      // Delay to let user see both revealed cards before swap decision
       await this.delay(NORMAL_DELAY);
 
       // Decide whether to swap
@@ -716,27 +743,6 @@ export class BotAIAdapter {
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Check if bot should call Vinto
-   * Note: This is synchronous but returns Promise for API consistency
-   */
-  checkVintoCall(botId: string): boolean {
-    const context = this.createBotContext(botId);
-    return this.botDecisionService.shouldCallVinto(context);
-  }
-
-  /**
-   * Execute Vinto call if bot decides to
-   */
-  maybeCallVinto(botId: string): void {
-    const shouldCall = this.checkVintoCall(botId);
-
-    if (shouldCall) {
-      this.gameClient.dispatch(GameActions.callVinto(botId));
-      console.log(`[BotAI] ${botId} called Vinto!`);
-    }
   }
 }
 

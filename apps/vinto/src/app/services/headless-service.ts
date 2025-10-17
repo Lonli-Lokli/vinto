@@ -5,6 +5,7 @@ import {
   GameState,
   SwapCardAction,
   DeclareKingActionAction,
+  SelectActionTargetAction,
 } from '@/shared';
 
 @injectable()
@@ -28,12 +29,20 @@ export class HeadlessService {
       oldState.phase === 'setup' && newState.phase === 'playing';
     const isQueenActionCompleted =
       action.type === 'EXECUTE_QUEEN_SWAP' || action.type === 'SKIP_QUEEN_SWAP';
+    const isJackActionCompleted =
+      action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
+    const isPeekActionCompleted = action.type === 'CONFIRM_PEEK';
 
     // Note: We no longer clear temporarily visible cards when toss-in is activated
     // because they now have timestamp-based expiration (3 seconds) and should
     // remain visible for the full duration even during toss-in phase
     if (isSetupPhaseEnded || isQueenActionCompleted) {
       this.uiStore.clearTemporaryCardVisibility();
+    }
+
+    // Clear highlights when peek/swap actions complete
+    if (isQueenActionCompleted || isJackActionCompleted || isPeekActionCompleted) {
+      this.uiStore.clearHighlightedCards();
     }
 
     // Handle rank declaration visual feedback
@@ -49,6 +58,11 @@ export class HeadlessService {
     // Handle failed toss-in visual feedback
     if (action.type === 'PARTICIPATE_IN_TOSS_IN') {
       this.handleFailedTossInFeedback(newState, action);
+    }
+
+    // Handle peek action card reveals (7, 8, 9, 10, Q, J)
+    if (action.type === 'SELECT_ACTION_TARGET') {
+      this.handlePeekActionCardReveal(oldState, newState, action);
     }
   }
 
@@ -171,6 +185,59 @@ export class HeadlessService {
 
       // Make card temporarily visible (so player can see which card was wrong)
       this.uiStore.addTemporarilyVisibleCard(playerId, position);
+    }
+  }
+
+  /**
+   * Handle peek action card reveals (7, 8, 9, 10, Q)
+   *
+   * Visibility Rules (local game with 1 human + bots):
+   * - Peek actions (7, 8, 9, 10, Q) reveal cards ONLY to the acting player
+   * - In local game: Only reveal if HUMAN is the acting player
+   * - If bot is acting player: Don't reveal (bot's private information)
+   * - Jack (J) is a blind swap: Never reveal cards
+   *
+   * When human selects peek targets, game-table-logic.ts already handles reveals.
+   * This handler is for showing highlights/animations when BOT peeks, WITHOUT revealing card content.
+   */
+  private handlePeekActionCardReveal(
+    oldState: GameState,
+    newState: GameState,
+    action: SelectActionTargetAction
+  ): void {
+    const { playerId, targetPlayerId, position } = action.payload;
+    const actionCard = newState.pendingAction?.card;
+
+    if (!actionCard) return;
+
+    // Check if this is a peek action card (excluding Jack - blind swap)
+    const isPeekAction =
+      actionCard.rank === '7' ||
+      actionCard.rank === '8' ||
+      actionCard.rank === '9' ||
+      actionCard.rank === '10' ||
+      actionCard.rank === 'Q';
+
+    if (!isPeekAction) return;
+
+    // Find the acting player (the one using the action card)
+    const actingPlayer = newState.players.find((p) => p.id === playerId);
+    if (!actingPlayer) return;
+
+    // Only reveal card if HUMAN is the acting player
+    // (In local game, revealing to human = revealing to the only viewer)
+    if (actingPlayer.isHuman) {
+      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
+      console.log(
+        `[HeadlessService] Human peek action (${actionCard.rank}) - revealing card at ${targetPlayerId} position ${position}`
+      );
+    } else {
+      // Bot is peeking - don't reveal card content, but add highlight for visual feedback
+      // This shows the human WHICH cards the bot peeked at, without revealing the card value
+      this.uiStore.addHighlightedCard(targetPlayerId, position);
+      console.log(
+        `[HeadlessService] Bot peek action (${actionCard.rank}) - highlighting (not revealing) card at ${targetPlayerId} position ${position}`
+      );
     }
   }
 
