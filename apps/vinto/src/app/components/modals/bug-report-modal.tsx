@@ -151,7 +151,7 @@ export const BugReportModal = observer(function BugReportModal({
           {/* Info */}
           <div className="text-xs text-muted bg-muted border border-primary rounded-lg p-3">
             <p className="font-semibold text-primary mb-1">
-              📋 Debug Information
+              📋 Debug Information ({process.env.VERCEL_GIT_REPO_ID ?? 'unknown'})
             </p>
             <p className="text-muted-foreground">
               Game state and action history will be automatically attached to

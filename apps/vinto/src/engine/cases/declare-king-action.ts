@@ -79,7 +79,7 @@ export function handleDeclareKingAction(
     const targetType = getTargetTypeFromRank(selectedCard.rank);
 
     // If the card has an action, set up pendingAction for it
-    if (targetType !== 'none') {
+    if (targetType !== undefined) {
       // Remove the card from the target player's hand
       const [removedCard] = targetPlayer.cards.splice(position, 1);
 
