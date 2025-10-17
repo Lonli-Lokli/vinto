@@ -5,16 +5,19 @@ export const CancelButton = ({
   disabled = false,
   fullWidth = false,
   className = '',
+  autoFocus = false,
   children = 'Cancel',
 }: {
   onClick: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
+  autoFocus?: boolean;
   children?: React.ReactNode;
 }) => (
   <Button
     variant="cancel"
+    autoFocus={autoFocus}
     onClick={onClick}
     disabled={disabled}
     fullWidth={fullWidth}

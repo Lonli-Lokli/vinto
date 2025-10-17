@@ -13,59 +13,92 @@ export const VintoConfirmationModal = observer(() => {
   const gameClient = useGameClient();
 
   const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
-  if (!uiStore.showVintoConfirmation || !humanPlayer) return null;
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+  // Open/close dialog imperatively
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (uiStore.showVintoConfirmation && !dialog.open) {
+      dialog.showModal();
+    } else if (!uiStore.showVintoConfirmation && dialog.open) {
+      dialog.close('close');
+    }
+  }, [uiStore.showVintoConfirmation]);
+
+  // Light dismiss (click backdrop)
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleLightDismiss = (e: MouseEvent) => {
+      if (e.target === dialog) {
+        dialog.close('dismiss');
+      }
+    };
+    dialog.addEventListener('click', handleLightDismiss);
+    return () => dialog.removeEventListener('click', handleLightDismiss);
+  }, []);
+
+  // Handle close event
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleClose = (_e: Event) => {
+      uiStore.setShowVintoConfirmation(false);
+    };
+    dialog.addEventListener('close', handleClose);
+    return () => dialog.removeEventListener('close', handleClose);
+  }, [uiStore]);
+
+  if (!humanPlayer) return null;
+
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-overlay backdrop-blur-sm z-[200] animate-in fade-in duration-200"
-        onClick={() => uiStore.setShowVintoConfirmation(false)}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none">
-        <div
-          className="bg-surface-primary rounded-lg shadow-2xl border-2 border-warning max-w-sm w-full p-6 pointer-events-auto animate-in zoom-in-95 duration-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Title */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-3xl">⚠️</span>
-            <h2 className="text-xl md:text-2xl font-bold text-primary">
-              Call Vinto?
-            </h2>
-          </div>
-
-          {/* Message */}
-          <p className="text-base md:text-lg text-secondary text-center leading-relaxed mb-6">
-            This ends the round immediately. All other players get one final
-            turn.
+    <dialog
+      ref={dialogRef}
+      id="VintoConfirmationDialog"
+      modal-mode="mega"
+      className="z-50 bg-surface-primary border-warning border-2 rounded-xl shadow-theme-lg max-w-sm w-full animate-fade-in"
+    >
+      <form method="dialog" className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]">
+        <header className="flex items-center justify-center gap-2 mb-0 bg-surface-secondary px-6 py-4 rounded-t-xl">
+          <span className="text-3xl">⚠️</span>
+          <h2 className="text-xl md:text-2xl font-bold text-primary">Call Vinto?</h2>
+          <button
+            type="button"
+            onClick={() => dialogRef.current?.close('close')}
+            className="text-muted-foreground hover:text-accent transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-accent p-2 aspect-square ml-auto"
+            aria-label="Close confirmation dialog"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
+        <article className="overflow-y-auto max-h-full px-6 py-4 bg-surface-primary flex flex-col gap-5">
+          <p className="text-base md:text-lg text-secondary text-center leading-relaxed mb-2">
+            This ends the round immediately. All other players get one final turn.
           </p>
-
-          {/* Buttons - Vertical stack */}
-          <div className="space-y-3">
-            {/* Confirm button - Orange, top */}
+        </article>
+        <footer className="bg-surface-secondary flex flex-wrap gap-3 justify-between items-center px-6 py-4 rounded-b-xl">
+          <menu className="flex flex-col gap-3 p-0 m-0 w-full">
             <CallVintoButton
               onClick={() => {
                 gameClient.dispatch(GameActions.callVinto(humanPlayer.id));
-                uiStore.setShowVintoConfirmation(false);
+                dialogRef.current?.close('confirm');
               }}
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
             >
               Yes, Call Vinto
             </CallVintoButton>
-
-            {/* Cancel button - Gray, bottom */}
             <CancelButton
-              onClick={() => uiStore.setShowVintoConfirmation(false)}
+              onClick={() => dialogRef.current?.close('cancel')}
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
+              autoFocus
             />
-          </div>
-        </div>
-      </div>
-    </>
+          </menu>
+        </footer>
+      </form>
+    </dialog>
   );
 });
 

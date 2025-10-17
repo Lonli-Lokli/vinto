@@ -119,7 +119,7 @@ export const DeckManagerPopover = observer(
                         selectionState="default"
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted rounded flex items-center justify-center text-muted text-sm font-semibold">
+                      <div className="w-full h-full bg-muted rounded flex items-center justify-center text-muted text-sm font-semibold cursor-not-allowed">
                         {rank}
                       </div>
                     )}
