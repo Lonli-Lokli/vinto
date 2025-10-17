@@ -36,36 +36,81 @@ export const BugReportModal = observer(function BugReportModal({
     return undefined;
   }, [store.showSuccessMessage, onClose]);
 
-  if (!isOpen) return null;
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  // Open/close dialog imperatively
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close('close');
+    }
+  }, [isOpen]);
+
+  // Light dismiss (click backdrop)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleLightDismiss = (e: MouseEvent) => {
+      if (e.target === dialog) {
+        dialog.close('dismiss');
+      }
+    };
+    dialog.addEventListener('click', handleLightDismiss);
+    return () => dialog.removeEventListener('click', handleLightDismiss);
+  }, []);
+
+  // Handle close event
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleClose = () => {
+      onClose();
+    };
+    dialog.addEventListener('close', handleClose);
+    return () => dialog.removeEventListener('close', handleClose);
+  }, [onClose]);
+
+  // Form submit handler
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const debugData = gameClient.exportDebugData();
     void store.submit(debugData);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm md:items-center md:pt-0 items-start pt-8">
-      <div className="bg-surface-primary border-2 border-primary rounded-lg shadow-theme-lg w-full max-w-md mx-4 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-primary">Report a Bug</h2>
+    <dialog
+      ref={dialogRef}
+      id="MegaDialog"
+      modal-mode="mega"
+      className="z-50 bg-surface-primary border-primary border rounded-xl shadow-theme-lg max-w-md w-full animate-fade-in"
+    >
+      <form
+        method="dialog"
+        onSubmit={handleSubmit}
+        className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]"
+      >
+        <header className="flex justify-between items-center mb-0 bg-surface-secondary px-6 py-4 rounded-t-xl">
+          <h2 className="text-2xl font-bold text-primary tracking-tight">
+            Report a Bug
+          </h2>
           <button
-            onClick={onClose}
-            className="text-secondary hover:text-primary transition-colors"
             type="button"
+            onClick={() => dialogRef.current?.close('close')}
+            className="text-muted-foreground hover:text-accent transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-accent p-2 aspect-square"
+            aria-label="Close bug report dialog"
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        </header>
+        <article className="overflow-y-auto max-h-full px-6 py-4 bg-surface-primary flex flex-col gap-5">
           {/* Email */}
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-primary mb-1"
+              className="block text-sm font-medium text-primary mb-2"
             >
               Email (optional)
             </label>
@@ -73,81 +118,82 @@ export const BugReportModal = observer(function BugReportModal({
               id="email"
               type="email"
               value={store.email}
-              onChange={(e) => {
-                store.setEmail(e.target.value);
-              }}
+              onChange={(e) => store.setEmail(e.target.value)}
               disabled={store.isSubmitting}
-              className="w-full px-3 py-2 bg-surface-secondary border border-primary rounded focus:outline-none focus:ring-2 focus:ring-accent-primary text-primary disabled:opacity-50"
+              className="w-full px-3 py-2 bg-surface-secondary border border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-primary placeholder:text-muted-foreground disabled:opacity-50 transition-shadow shadow-theme-sm"
               placeholder="your.email@example.com"
+              autoComplete="email"
             />
           </div>
-
           {/* Description */}
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-primary mb-1"
+              className="block text-sm font-medium text-primary mb-2"
             >
-              What went wrong? <span className="text-error">*</span>
+              What went wrong?{' '}
+              <span className="text-error" aria-label="required">
+                *
+              </span>
             </label>
             <textarea
               id="description"
+              autoFocus
               value={store.description}
-              onChange={(e) => {
-                store.setDescription(e.target.value);
-              }}
+              onChange={(e) => store.setDescription(e.target.value)}
               disabled={store.isSubmitting}
               required
               rows={4}
-              className="w-full px-3 py-2 bg-surface-secondary border border-primary rounded focus:outline-none focus:ring-2 focus:ring-accent-primary text-primary resize-none disabled:opacity-50"
+              className="w-full px-3 py-2 bg-surface-secondary border border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-primary resize-none placeholder:text-muted-foreground disabled:opacity-50 transition-shadow shadow-theme-sm"
               placeholder="Describe the bug you encountered..."
             />
           </div>
-
           {/* Info */}
-          <div className="text-xs text-secondary bg-surface-secondary border border-primary rounded p-3">
-            <p className="font-medium text-primary mb-1">
+          <div className="text-xs text-muted bg-muted border border-primary rounded-lg p-3">
+            <p className="font-semibold text-primary mb-1">
               📋 Debug Information
             </p>
-            <p>
+            <p className="text-muted-foreground">
               Game state and action history will be automatically attached to
               help us diagnose the issue.
             </p>
           </div>
-
           {/* Status Messages */}
           {store.showSuccessMessage && (
-            <div className="text-sm text-success bg-success/10 border border-success rounded p-3">
-              ✓ Bug report submitted successfully! Thank you for your feedback.
+            <div className="text-sm text-success bg-success-light border border-success rounded-lg p-3 flex items-center gap-2 animate-gentle-pulse">
+              <span aria-hidden="true">✓</span> Bug report submitted
+              successfully! Thank you for your feedback.
             </div>
           )}
           {store.showErrorMessage && (
-            <div className="text-sm text-error bg-error/10 border border-error rounded p-3">
-              ✗ Failed to submit bug report. Please try again or email us
-              directly.
+            <div className="text-sm text-error bg-error-light border border-error rounded-lg p-3 flex items-center gap-2 animate-gentle-pulse">
+              <span aria-hidden="true">✗</span> Failed to submit bug report.
+              Please try again or email us directly.
             </div>
           )}
-
-          {/* Buttons */}
-          <div className="flex gap-3">
+        </article>
+        <footer className="bg-surface-secondary flex flex-wrap gap-3 justify-between items-center px-6 py-4 rounded-b-xl">
+          <menu className="flex flex-wrap gap-3 p-0 m-0 w-full">
             <button
-              type="button"
-              onClick={onClose}
+              type="reset"
+              autoFocus
+              onClick={() => dialogRef.current?.close('cancel')}
               disabled={store.isSubmitting}
-              className="flex-1 px-4 py-2 bg-surface-secondary text-secondary border border-primary rounded hover:bg-surface-primary transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-muted text-muted-foreground border border-primary rounded-lg hover:bg-surface-secondary transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent"
             >
               Cancel
             </button>
             <button
               type="submit"
+              value="confirm"
               disabled={!store.canSubmit}
-              className="flex-1 px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="flex-1 px-4 py-2 bg-accent text-on-primary rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {store.isSubmitting ? 'Sending...' : 'Submit Report'}
             </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </menu>
+        </footer>
+      </form>
+    </dialog>
   );
 });

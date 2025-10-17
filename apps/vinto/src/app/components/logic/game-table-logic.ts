@@ -75,6 +75,11 @@ export function shouldAllowCardInteractions(params: {
     return false;
   }
 
+  // For King action (declare-action), allow selecting any card
+  if (isAwaitingActionTarget && targetType === 'declare-action') {
+    return true;
+  }
+
   // Only allow interactions when it's relevant for the human player
   return (
     // During setup phase for memorization
@@ -152,6 +157,11 @@ export function shouldAllowOpponentCardInteractions(params: {
     if (peekTargets.length > 0) {
       return false;
     }
+    return true;
+  }
+
+  // For King action (declare-action), allow selecting any opponent card
+  if (isAwaitingActionTarget && targetType === 'declare-action') {
     return true;
   }
 
@@ -238,6 +248,16 @@ export function handleCardClick(params: {
     return;
   }
 
+  // During King action target selection, select card without revealing
+  if (isAwaitingActionTarget && targetType === 'declare-action') {
+    // Don't reveal the card - just highlight it
+    // Dispatch the King card target selection
+    gameClient.dispatch(
+      GameActions.selectKingCardTarget(humanPlayer.id, humanPlayer.id, position)
+    );
+    return;
+  }
+
   // During action target selection, allow selecting target
   if (
     isAwaitingActionTarget &&
@@ -278,6 +298,16 @@ export function handleOpponentCardClick(params: {
     gameClient,
     uiStore,
   } = params;
+
+  // During King action target selection for opponent cards, select without revealing
+  if (isAwaitingActionTarget && targetType === 'declare-action') {
+    // Don't reveal the card - just highlight it
+    // Dispatch the King card target selection
+    gameClient.dispatch(
+      GameActions.selectKingCardTarget(humanPlayer.id, playerId, position)
+    );
+    return;
+  }
 
   // During action target selection for opponent cards, Queen peek-then-swap, or Jack swaps
   if (

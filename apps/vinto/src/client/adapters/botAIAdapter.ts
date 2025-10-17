@@ -412,7 +412,7 @@ export class BotAIAdapter {
     // Special handling for different card types
     if (actionCard.rank === 'K') {
       // King: Declare a rank
-      this.executeKingDeclaration(botId, context);
+      await this.executeKingDeclaration(botId, context);
     } else if (actionCard.rank === 'Q') {
       // Queen: Select 2 cards to peek/swap
       await this.executeQueenAction(botId, context);
@@ -423,21 +423,54 @@ export class BotAIAdapter {
   }
 
   /**
-   * King card: Declare a rank for toss-in
+   * King card: Two-step process
+   * 1. Select a card from hand or opponent's hand
+   * 2. Declare the rank of that card
    */
-  private executeKingDeclaration(
+  private async executeKingDeclaration(
     botId: string,
     context: BotDecisionContext
-  ): void {
-    const declaredRank = this.botDecisionService.selectKingDeclaration(context);
+  ): Promise<void> {
+    const actionPhase = this.gameClient.state.pendingAction?.actionPhase;
 
-    this.gameClient.dispatch(
-      GameActions.declareKingAction(botId, declaredRank)
-    );
-    console.log(`[BotAI] ${botId} declared King action: ${declaredRank}`);
+    if (actionPhase === 'selecting-king-card') {
+      // Step 1: Select a card target
+      const decision: BotActionDecision =
+        this.botDecisionService.selectActionTargets(context);
 
-    // King action transitions to toss-in phase
-    // handleTossInPhase will handle turn advancement after toss-in completes
+      if (decision.targets.length > 0) {
+        const target = decision.targets[0];
+
+        this.gameClient.dispatch(
+          GameActions.selectKingCardTarget(
+            botId,
+            target.playerId,
+            target.position
+          )
+        );
+
+        console.log(
+          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}`
+        );
+
+        // Small delay before declaring rank
+        await this.delay(500);
+      }
+
+      // State will update and MobX reaction will trigger declaring-rank phase
+    } else if (actionPhase === 'declaring-rank') {
+      // Step 2: Declare the rank
+      const declaredRank =
+        this.botDecisionService.selectKingDeclaration(context);
+
+      this.gameClient.dispatch(
+        GameActions.declareKingAction(botId, declaredRank)
+      );
+      console.log(`[BotAI] ${botId} declared King action: ${declaredRank}`);
+
+      // King action transitions to toss-in phase (if correct) or idle (if incorrect)
+      // handleTossInPhase will handle turn advancement after toss-in completes (if toss-in triggered)
+    }
   }
 
   /**

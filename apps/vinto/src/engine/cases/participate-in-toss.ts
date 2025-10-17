@@ -1,4 +1,4 @@
-import { GameState, ParticipateInTossInAction, logger } from '@/shared';
+import { GameState, ParticipateInTossInAction } from '@/shared';
 import copy from 'fast-copy';
 
 /**
@@ -37,16 +37,6 @@ export function handleParticipateInTossIn(
 
   // Verify card matches declared rank - STRICT validation now
   if (card.rank !== newState.activeTossIn.rank) {
-    logger.warn(
-      `[handleParticipateInTossIn] Invalid toss-in: Card rank ${card.rank} doesn't match ${newState.activeTossIn.rank}`,
-      {
-        playerId,
-        cardRank: card.rank,
-        tossInRank: newState.activeTossIn.rank,
-        position,
-      }
-    );
-
     // Invalid toss-in penalty:
     // 1. Card stays in hand (no removal)
     // 2. Draw 1 penalty card from draw pile

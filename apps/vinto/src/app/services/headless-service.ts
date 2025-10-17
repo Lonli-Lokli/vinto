@@ -1,6 +1,11 @@
 import { inject, injectable } from 'tsyringe';
 import { UIStore } from '../stores';
-import { GameAction, GameState, SwapCardAction } from '@/shared';
+import {
+  GameAction,
+  GameState,
+  SwapCardAction,
+  DeclareKingActionAction,
+} from '@/shared';
 
 @injectable()
 export class HeadlessService {
@@ -19,20 +24,26 @@ export class HeadlessService {
     newState: GameState,
     action: GameAction
   ): void {
-    const isTossInActivated =
-      newState.phase === 'playing' && newState.subPhase === 'toss_queue_active';
     const isSetupPhaseEnded =
       oldState.phase === 'setup' && newState.phase === 'playing';
     const isQueenActionCompleted =
       action.type === 'EXECUTE_QUEEN_SWAP' || action.type === 'SKIP_QUEEN_SWAP';
 
-    if (isTossInActivated || isSetupPhaseEnded || isQueenActionCompleted) {
+    // Note: We no longer clear temporarily visible cards when toss-in is activated
+    // because they now have timestamp-based expiration (3 seconds) and should
+    // remain visible for the full duration even during toss-in phase
+    if (isSetupPhaseEnded || isQueenActionCompleted) {
       this.uiStore.clearTemporaryCardVisibility();
     }
 
     // Handle rank declaration visual feedback
     if (action.type === 'SWAP_CARD') {
       this.handleRankDeclarationFeedback(oldState, newState, action);
+    }
+
+    // Handle King declaration visual feedback
+    if (action.type === 'DECLARE_KING_ACTION') {
+      this.handleKingDeclarationFeedback(oldState, newState, action);
     }
 
     // Handle failed toss-in visual feedback
@@ -85,6 +96,50 @@ export class HeadlessService {
       );
       // The card went directly to discard pile - show red feedback there
       this.uiStore.setDiscardPileDeclarationFeedback(false);
+    }
+  }
+
+  /**
+   * Handle King declaration visual feedback
+   *
+   * When a rank is declared with King action:
+   * 1. King card goes to discard pile (ALWAYS)
+   * 2. If correct: selected card also goes to discard pile, show GREEN feedback on discard
+   * 3. If incorrect: selected card stays in hand (revealed), show RED feedback on the card in hand, penalty card added
+   */
+  private handleKingDeclarationFeedback(
+    oldState: GameState,
+    newState: GameState,
+    action: DeclareKingActionAction
+  ): void {
+    const { declaredRank } = action.payload;
+    const selectedCardInfo = oldState.pendingAction?.selectedCardForKing;
+
+    if (!selectedCardInfo) return;
+
+    const {
+      playerId: targetPlayerId,
+      position,
+      card: selectedCard,
+    } = selectedCardInfo;
+    const actualRank = selectedCard.rank;
+    const isCorrect = actualRank === declaredRank;
+
+    if (isCorrect) {
+      console.log(
+        '[HeadlessService] Correct King declaration - showing green feedback on discard pile'
+      );
+      // Both cards went to discard pile - show green feedback on discard
+      this.uiStore.setDiscardPileDeclarationFeedback(true);
+    } else {
+      console.log(
+        '[HeadlessService] Incorrect King declaration - showing red feedback on card in hand'
+      );
+      // Show red feedback on the incorrectly declared card in hand (not on King in discard)
+      this.uiStore.addFailedTossInFeedback(targetPlayerId, position);
+
+      // Make the incorrectly declared card temporarily visible (stays longer than usual)
+      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
     }
   }
 

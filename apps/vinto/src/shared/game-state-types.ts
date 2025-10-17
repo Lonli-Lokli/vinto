@@ -78,6 +78,7 @@ export interface PendingAction {
   targets: ActionTarget[];
   declaredRank?: Rank;
   swapPosition?: number;
+  selectedCardForKing?: { playerId: string; position: number; card: Card }; // For King action validation
 }
 
 export type TargetType =
@@ -93,6 +94,7 @@ export type ActionPhase =
   | 'selecting-target'
   | 'peeking'
   | 'swapping'
+  | 'selecting-king-card'
   | 'declaring-rank';
 
 export interface ActionTarget {

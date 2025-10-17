@@ -21,8 +21,8 @@ export class UIStore {
   selectedSwapPosition: number | null = null;
 
   // Card visibility states (per player)
-  // Map<playerId, Set<cardPosition>>
-  temporarilyVisibleCards = new Map<string, Set<number>>();
+  // Map<playerId, Map<position, timestamp>> - now with timestamp for duration control
+  temporarilyVisibleCards = new Map<string, Map<number, number>>();
   highlightedCards = new Map<string, Set<number>>();
 
   constructor() {
@@ -64,9 +64,9 @@ export class UIStore {
   // Card visibility actions
   addTemporarilyVisibleCard(playerId: string, position: number) {
     if (!this.temporarilyVisibleCards.has(playerId)) {
-      this.temporarilyVisibleCards.set(playerId, new Set());
+      this.temporarilyVisibleCards.set(playerId, new Map());
     }
-    this.temporarilyVisibleCards.get(playerId)?.add(position);
+    this.temporarilyVisibleCards.get(playerId)?.set(position, Date.now());
   }
 
   clearTemporaryCardVisibility() {
@@ -77,8 +77,45 @@ export class UIStore {
     this.temporarilyVisibleCards.get(playerId)?.clear();
   }
 
+  isTemporarilyVisible(playerId: string, position: number): boolean {
+    const playerCards = this.temporarilyVisibleCards.get(playerId);
+    if (!playerCards) return false;
+
+    const timestamp = playerCards.get(position);
+    if (!timestamp) return false;
+
+    // Check if expired (3 seconds - longer than feedback duration)
+    if (Date.now() - timestamp > 3000) {
+      // Schedule cleanup for next tick
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(() => {
+          const currentTimestamp = this.temporarilyVisibleCards
+            .get(playerId)
+            ?.get(position);
+          if (currentTimestamp && Date.now() - currentTimestamp > 3000) {
+            this.temporarilyVisibleCards.get(playerId)?.delete(position);
+          }
+        });
+      }
+      return false;
+    }
+
+    return true;
+  }
+
   getTemporarilyVisibleCards(playerId: string): Set<number> {
-    return this.temporarilyVisibleCards.get(playerId) || new Set();
+    const playerCards = this.temporarilyVisibleCards.get(playerId);
+    if (!playerCards) return new Set();
+
+    // Filter out expired cards and return only valid positions
+    const validPositions = new Set<number>();
+    playerCards.forEach((timestamp, position) => {
+      if (Date.now() - timestamp <= 3000) {
+        validPositions.add(position);
+      }
+    });
+
+    return validPositions;
   }
 
   // Highlighted cards (for bot actions)

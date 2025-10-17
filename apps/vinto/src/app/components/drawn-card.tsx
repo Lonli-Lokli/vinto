@@ -38,9 +38,9 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
         className={`flex flex-col items-center justify-center ${
           !shouldShowCard ? 'invisible' : ''
         }`}
-        data-pending-card="true"
       >
         <Card
+          data-pending-card="true"
           card={card}
           revealed={!!card}
           size={size}

@@ -77,11 +77,18 @@ export function handlePlayerTossInFinished(
       // Start processing the first queued action
       const firstAction = newState.activeTossIn.queuedActions[0];
 
+      // Determine the appropriate action phase based on card rank
+      // King has special two-step flow: selecting-king-card -> declaring-rank
+      const actionPhase =
+        firstAction.card.rank === 'K'
+          ? 'selecting-king-card'
+          : 'choosing-action';
+
       // Set up pending action for the first queued card
       newState.pendingAction = {
         card: firstAction.card,
         playerId: firstAction.playerId,
-        actionPhase: 'choosing-action',
+        actionPhase,
         targetType: getTargetTypeFromRank(firstAction.card.rank),
         targets: [],
       };

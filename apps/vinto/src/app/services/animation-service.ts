@@ -82,6 +82,10 @@ export class AnimationService {
         this.handleSelectActionTarget(oldState, newState, action);
         break;
 
+      case 'SELECT_KING_CARD_TARGET':
+        // No animation needed for card selection - just highlighting (handled by UI state)
+        break;
+
       case 'EXECUTE_QUEEN_SWAP':
         this.handleExecuteQueenSwap(oldState, newState, action);
         break;
@@ -194,7 +198,7 @@ export class AnimationService {
             from: { type: 'drawn' },
             to: { type: 'player', playerId, position },
             duration: 1500,
-            revealed: player.isHuman,
+            revealed: false,
           },
           {
             type: 'swap',
@@ -349,8 +353,8 @@ export class AnimationService {
     this.animationStore.startDiscardAnimation(
       tossedCard,
       { type: 'player', playerId, position },
-      { type: 'drawn' },
-      1000 // Faster animation for toss-in
+      tossedCard.actionText ? { type: 'drawn' } : { type: 'discard' },
+      1_500
     );
   }
 
@@ -400,7 +404,9 @@ export class AnimationService {
 
   /**
    * Handle DECLARE_KING_ACTION animation
-   * King card animates to discard pile after declaring rank for toss-in
+   * Two scenarios:
+   * 1. Correct declaration: King → discard, selected card → discard
+   * 2. Incorrect declaration: King → discard, selected card stays (revealed briefly), penalty card drawn
    */
   private handleDeclareKingAction(
     oldState: GameState,
@@ -408,36 +414,124 @@ export class AnimationService {
     action: DeclareKingActionAction
   ): void {
     const playerId = action.payload.playerId;
-    const kingCard = newState.discardPile.peekTop();
+    const declaredRank = action.payload.declaredRank;
+    const selectedCardInfo = oldState.pendingAction?.selectedCardForKing;
 
-    if (!kingCard || kingCard.rank !== 'K') return;
+    if (!selectedCardInfo) {
+      console.warn('[AnimationService] No selected card for King action');
+      return;
+    }
+
+    const {
+      playerId: targetPlayerId,
+      position,
+      card: selectedCard,
+    } = selectedCardInfo;
+    const actualRank = selectedCard.rank;
+    const isCorrect = actualRank === declaredRank;
+
+    // Get players
+    const player = newState.players.find((p) => p.id === playerId);
+    const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
+    const oldTargetPlayer = oldState.players.find(
+      (p) => p.id === targetPlayerId
+    );
+
+    if (!player || !targetPlayer || !oldTargetPlayer) return;
 
     // Check if this card came from a swap declaration (has swapPosition)
     const swapPosition = oldState.pendingAction?.swapPosition;
 
-    if (swapPosition !== undefined) {
-      // Card came from hand position after correct declaration
-      // Animate from hand position to discard pile
-      this.animationStore.startDiscardAnimation(
-        kingCard,
-        { type: 'player', playerId, position: swapPosition },
-        { type: 'discard' },
-        1500
-      );
+    if (isCorrect) {
+      // CORRECT DECLARATION
+      // Sequential animation: King → discard, then selected card → discard
+      const kingCard = newState.discardPile.peekTop();
+      // Second card is in pending action
+      const selectedCardOnDiscard = newState.pendingAction?.card;
+
+      const steps: AnimationStep[] = [];
+
+      // Step 1: King card to discard
+      if (kingCard && kingCard.rank === 'K') {
+        steps.push({
+          type: 'discard',
+          card: kingCard,
+          from:
+            swapPosition !== undefined
+              ? { type: 'player', playerId, position: swapPosition }
+              : { type: 'drawn' },
+          to: { type: 'discard' },
+          duration: 3_000,
+          revealed: true,
+        });
+      }
+
+      // Step 2: Selected card to discard
+      if (selectedCardOnDiscard) {
+        steps.push({
+          type: 'swap',
+          card: selectedCardOnDiscard,
+          from: { type: 'player', playerId: targetPlayerId, position },
+          to: { type: 'drawn' },
+          duration: 1_500,
+          revealed: true,
+        });
+      }
+
+      this.animationStore.startAnimationSequence('sequential', steps);
       console.log(
-        '[AnimationService] Declared King action complete - animating from hand to discard'
+        '[AnimationService] Correct King declaration - King and selected card to discard'
       );
     } else {
-      // Card came from draw/discard pile (normal flow)
-      // Animate from drawn position to discard pile
-      this.animationStore.startDiscardAnimation(
-        kingCard,
-        { type: 'drawn' },
-        { type: 'discard' },
-        1500
-      );
+      // INCORRECT DECLARATION
+      // Sequential animation:
+      // 1. King → discard
+      // 2. Selected card revealed briefly in hand (handled by state)
+      // 3. Penalty card: draw → hand
+      const kingCard = newState.discardPile.peekTop();
+      const penaltyCardPosition = player.cards.length - 1;
+      const penaltyCard = player.cards[penaltyCardPosition];
+
+      const steps: AnimationStep[] = [];
+
+      // Step 1: King card to discard
+      if (kingCard && kingCard.rank === 'K') {
+        steps.push({
+          type: 'discard',
+          card: kingCard,
+          from:
+            swapPosition !== undefined
+              ? { type: 'player', playerId, position: swapPosition }
+              : { type: 'drawn' },
+          to: { type: 'discard' },
+          duration: 2_000,
+          revealed: true,
+        });
+      }
+
+      // Step 2: Penalty card from draw pile to hand
+      // Note: The penalty card goes to the player who made the King declaration (playerId),
+      // not necessarily the target player. The card should NOT be revealed.
+      if (
+        penaltyCard &&
+        player.cards.length >
+          oldState.players.find((p) => p.id === playerId)!.cards.length
+      ) {
+        // Use a timeout to ensure DOM is ready before starting animation
+        steps.push({
+          type: 'draw',
+          card: penaltyCard,
+          from: { type: 'draw' },
+          to: { type: 'player', playerId, position: penaltyCardPosition },
+          duration: 2_000,
+          revealed: false, // Penalty cards are never revealed
+          fullRotation: false,
+        });
+      }
+
+      this.animationStore.startAnimationSequence('sequential', steps);
       console.log(
-        '[AnimationService] King action complete - animating from drawn to discard'
+        '[AnimationService] Incorrect King declaration - King to discard, penalty card drawn'
       );
     }
   }
@@ -467,6 +561,66 @@ export class AnimationService {
     // Check if this card came from a swap declaration (has swapPosition)
     const swapPosition = oldState.pendingAction?.swapPosition;
 
+    // For Ace action, also animate the penalty card being drawn to target player's hand
+    if (actionCard.rank === 'A') {
+      const targetPlayerId = action.payload.targetPlayerId;
+      const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
+      const oldTargetPlayer = oldState.players.find(
+        (p) => p.id === targetPlayerId
+      );
+
+      if (targetPlayer && oldTargetPlayer) {
+        // Check if target player received a penalty card
+        if (targetPlayer.cards.length > oldTargetPlayer.cards.length) {
+          const penaltyCardPosition = targetPlayer.cards.length - 1;
+          const penaltyCard = targetPlayer.cards[penaltyCardPosition];
+
+          if (penaltyCard) {
+            const steps: AnimationStep[] = [];
+
+            // Step 1: Ace card to discard
+            if (swapPosition !== undefined) {
+              steps.push({
+                type: 'discard',
+                card: actionCard,
+                from: { type: 'player', playerId, position: swapPosition },
+                to: { type: 'discard' },
+                duration: 1500,
+                revealed: true,
+              });
+            } else {
+              steps.push({
+                type: 'discard',
+                card: actionCard,
+                from: { type: 'drawn' },
+                to: { type: 'discard' },
+                duration: 1500,
+                revealed: true,
+              });
+            }
+
+            // Step 2: Penalty card from draw pile to target player's hand
+            steps.push({
+              type: 'draw',
+              card: penaltyCard,
+              from: { type: 'draw' },
+              to: { type: 'player', playerId: targetPlayerId, position: penaltyCardPosition },
+              duration: 1500,
+              revealed: false, // Penalty cards are never revealed
+              fullRotation: false,
+            });
+
+            this.animationStore.startAnimationSequence('sequential', steps);
+            console.log(
+              '[AnimationService] Ace action complete - Ace to discard, penalty card to target player'
+            );
+            return;
+          }
+        }
+      }
+    }
+
+    // For Jack or Ace without penalty card, just animate action card to discard
     if (swapPosition !== undefined) {
       // Card came from hand position after correct declaration
       // Animate from hand position to discard pile
@@ -630,11 +784,11 @@ export class AnimationService {
   /**
    * Handle failed toss-in attempt
    * - Card stays in hand (no animation needed - it never left)
-   * - Penalty card appears in hand (no animation - just appears naturally)
+   * - Penalty card animates from draw pile to hand
    * - Visual feedback is handled by HeadlessService (error indicator on failed card)
    */
   private handleFailedTossInAttempt(
-    _oldState: GameState,
+    oldState: GameState,
     newState: GameState,
     action: ParticipateInTossInAction
   ): void {
@@ -649,16 +803,71 @@ export class AnimationService {
 
     if (wasFailedAttempt) {
       console.log(
-        '[AnimationService] Failed toss-in detected - no animation needed:',
+        '[AnimationService] Failed toss-in detected - checking for penalty card:',
         {
           playerId,
           position,
         }
       );
-      // No animation needed:
-      // - Failed card stayed in hand (never moved)
-      // - Penalty card just appears in hand (no draw animation)
-      // - Visual feedback (error indicator) is handled by HeadlessService
+
+      // Get the player
+      const player = newState.players.find((p) => p.id === playerId);
+      const oldPlayer = oldState.players.find((p) => p.id === playerId);
+
+      if (!player || !oldPlayer) {
+        console.warn('[AnimationService] Player not found for failed toss-in animation');
+        return;
+      }
+
+      console.log('[AnimationService] Card count comparison:', {
+        oldCount: oldPlayer.cards.length,
+        newCount: player.cards.length,
+      });
+
+      // Check if a penalty card was added (new state has more cards than old state)
+      if (player.cards.length > oldPlayer.cards.length) {
+        const penaltyCardPosition = player.cards.length - 1;
+        const penaltyCard = player.cards[penaltyCardPosition];
+
+        if (penaltyCard) {
+          // Create a sequence with a dummy first step to give React time to render
+          // This matches the pattern used in swap card incorrect declaration
+          const steps: AnimationStep[] = [
+            // Dummy step: animate from draw to draw (no movement, just a delay)
+            {
+              type: 'draw',
+              card: penaltyCard,
+              from: { type: 'draw' },
+              to: { type: 'drawn' },
+              duration: 1, // Very short duration, just to trigger React render
+              revealed: false,
+            },
+            // Actual animation: draw pile to hand
+            {
+              type: 'draw',
+              card: penaltyCard,
+              from: { type: 'draw' },
+              to: { type: 'player', playerId, position: penaltyCardPosition },
+              duration: 1500,
+              revealed: false, // Never reveal penalty cards
+              fullRotation: false,
+            },
+          ];
+
+          this.animationStore.startAnimationSequence('sequential', steps);
+          console.log(
+            '[AnimationService] Failed toss-in penalty card animation started:',
+            {
+              card: penaltyCard.rank,
+              toPosition: penaltyCardPosition,
+            }
+          );
+        } else {
+          console.warn('[AnimationService] Penalty card not found at position', penaltyCardPosition);
+        }
+      } else {
+        console.warn('[AnimationService] No penalty card added - card counts are equal or decreased');
+      }
     }
   }
 

@@ -44,17 +44,16 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(
     const declarationFeedback = uiStore.getDiscardPileDeclarationFeedback();
 
     return (
-      <div
-        className="flex flex-col items-center justify-center"
-        data-discard-pile="true"
-      >
-        <Card
-          card={cardToShow}
-          revealed={shouldReveal}
-          size={size}
-          selectionState="default"
-          declarationFeedback={declarationFeedback}
-        />
+      <div className="flex flex-col items-center justify-center">
+        <div className="flex" data-discard-pile="true">
+          <Card
+            card={cardToShow}
+            revealed={shouldReveal}
+            size={size}
+            selectionState="default"
+            declarationFeedback={declarationFeedback}
+          />
+        </div>
         <div
           className={`${labelMargin} ${textSize} text-white font-medium bg-overlay rounded ${labelPadding}`}
         >

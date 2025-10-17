@@ -18,6 +18,7 @@ import { handlePlayerTossInFinished } from './cases/player-toss-in-finished';
 import { handlePeekSetupCard } from './cases/peek-setup-card';
 import { handleProcessAITurn } from './cases/process-ai-turn';
 import { handleSelectActionTarget } from './cases/select-action-target';
+import { handleSelectKingCardTarget } from './cases/select-king-card-target';
 import { handleSetCoalitionLeader } from './cases/set-coalition-leader';
 import { handleSkipQueenSwap } from './cases/skip-queen-swap';
 import { handlePlayDiscard } from './cases/play-discard';
@@ -97,6 +98,9 @@ export class GameEngine {
 
       case 'SKIP_QUEEN_SWAP':
         return handleSkipQueenSwap(state, action);
+
+      case 'SELECT_KING_CARD_TARGET':
+        return handleSelectKingCardTarget(state, action);
 
       case 'DECLARE_KING_ACTION':
         return handleDeclareKingAction(state, action);

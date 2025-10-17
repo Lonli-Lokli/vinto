@@ -296,8 +296,8 @@ export function actionValidator(
       return { valid: true };
     }
 
-    case 'DECLARE_KING_ACTION': {
-      const { playerId } = action.payload;
+    case 'SELECT_KING_CARD_TARGET': {
+      const { playerId, targetPlayerId, position } = action.payload;
 
       // Check if processing toss-in action
       const isProcessingTossInAction =
@@ -320,6 +320,68 @@ export function actionValidator(
       if (state.subPhase !== 'awaiting_action') {
         return {
           valid: false,
+          reason: `Cannot select King card target in phase ${state.subPhase}`,
+        };
+      }
+
+      // Must have a pending action with King card
+      if (!state.pendingAction?.card) {
+        return { valid: false, reason: 'No pending King card' };
+      }
+
+      if (state.pendingAction.card.rank !== 'K') {
+        return { valid: false, reason: 'Pending card is not a King' };
+      }
+
+      // Must be in selecting-king-card action phase
+      if (state.pendingAction.actionPhase !== 'selecting-king-card') {
+        return {
+          valid: false,
+          reason: `Cannot select card in action phase ${state.pendingAction.actionPhase}`,
+        };
+      }
+
+      // Find target player
+      const targetPlayer = state.players.find((p) => p.id === targetPlayerId);
+      if (!targetPlayer) {
+        return { valid: false, reason: 'Target player not found' };
+      }
+
+      // Position must be valid for target player
+      if (position < 0 || position >= targetPlayer.cards.length) {
+        return {
+          valid: false,
+          reason: `Invalid position ${position} for target player`,
+        };
+      }
+
+      return { valid: true };
+    }
+
+    case 'DECLARE_KING_ACTION': {
+      const { playerId } = action.payload;
+
+      // Check if processing toss-in action
+      const isProcessingTossInAction =
+        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
+
+      // For toss-in actions, validate against pendingAction.playerId
+      // For normal actions, validate against currentPlayerIndex
+      if (isProcessingTossInAction) {
+        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
+          return { valid: false, reason: 'Not your toss-in action' };
+        }
+      } else {
+        const currentPlayer = state.players[state.currentPlayerIndex];
+        if (currentPlayer.id !== playerId) {
+          return { valid: false, reason: 'Not player turn' };
+        }
+      }
+
+      // Must be in awaiting_action phase (after using King card and selecting card)
+      if (state.subPhase !== 'awaiting_action') {
+        return {
+          valid: false,
           reason: `Cannot declare King action in phase ${state.subPhase}`,
         };
       }
@@ -331,6 +393,19 @@ export function actionValidator(
 
       if (state.pendingAction.card.rank !== 'K') {
         return { valid: false, reason: 'Pending card is not a King' };
+      }
+
+      // Must be in declaring-rank action phase (after selecting card)
+      if (state.pendingAction.actionPhase !== 'declaring-rank') {
+        return {
+          valid: false,
+          reason: `Cannot declare rank in action phase ${state.pendingAction.actionPhase}`,
+        };
+      }
+
+      // Must have selected a card
+      if (!state.pendingAction.selectedCardForKing) {
+        return { valid: false, reason: 'No card selected for King action' };
       }
 
       return { valid: true };
