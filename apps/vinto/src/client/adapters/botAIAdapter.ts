@@ -16,7 +16,7 @@ import { GameClient } from '../game-client';
 
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
 const LARGE_DELAY = 3_000; // larger delay for showing UI elements
-const SMALL_DELAY = 200; // small delay to let UI draw
+const _SMALL_DELAY = 200; // small delay to let UI draw
 
 /**
  * BotAIAdapter - Bridges MCTS Bot AI with GameClient
@@ -478,12 +478,12 @@ export class BotAIAdapter {
       await this.executeKingDeclaration(botId, context);
     } else if (actionCard.rank === 'J') {
       // Jack: Select 2 cards to swap
-      await this.executeJackAction(botId, context);
+      this.executeJackAction(botId, context);
     } else if (actionCard.rank === 'Q') {
       // Queen: Select 2 cards to peek/swap
-      await this.executeQueenAction(botId, context);
+      this.executeQueenAction(botId, context);
     } else {
-      // Other actions: Select target
+      // Other actions: Select target (7, 8, 9, 10, A)
       this.executeStandardAction(botId, context);
     }
   }
@@ -556,44 +556,65 @@ export class BotAIAdapter {
   /**
    * Jack card: Optionally swap two cards
    */
-  private async executeJackAction(
+  private executeJackAction(
     botId: string,
     context: BotDecisionContext
-  ): Promise<void> {
-    // Use cached action plan if available, otherwise run MCTS fresh
-    const decision: BotActionDecision = this.cachedActionDecision
-      ? this.cachedActionDecision
-      : this.botDecisionService.selectActionTargets(context);
+  ): void {
+    const pendingAction = this.gameClient.state.pendingAction;
+    const targetsSelected = pendingAction?.targets?.length || 0;
 
-    // Clear cache after using
-    this.cachedActionDecision = null;
+    if (targetsSelected === 0) {
+      // Step 1: Select first target
+      // Use cached action plan if available, otherwise run MCTS fresh
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
-    if (decision.targets.length >= 2) {
-      // Select first target (reveals immediately for Jack - blind swap but needs UI update)
-      this.gameClient.dispatch(
-        GameActions.selectActionTarget(
-          botId,
-          decision.targets[0].playerId,
-          decision.targets[0].position
-        )
-      );
+      // Cache the decision for subsequent steps
+      this.cachedActionDecision = decision;
 
-      // Small delay to let first card selection register
-      await this.delay(SMALL_DELAY);
+      if (decision.targets.length >= 2) {
+        this.gameClient.dispatch(
+          GameActions.selectActionTarget(
+            botId,
+            decision.targets[0].playerId,
+            decision.targets[0].position
+          )
+        );
+        console.log(
+          `[BotAI] ${botId} selected first Jack target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+        );
+      }
+    } else if (targetsSelected === 1) {
+      // Step 2: Select second target
+      // Use cached decision from step 1
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
-      // Select second target (reveals immediately)
-      this.gameClient.dispatch(
-        GameActions.selectActionTarget(
-          botId,
-          decision.targets[1].playerId,
-          decision.targets[1].position
-        )
-      );
+      if (decision.targets.length >= 2) {
+        this.gameClient.dispatch(
+          GameActions.selectActionTarget(
+            botId,
+            decision.targets[1].playerId,
+            decision.targets[1].position
+          )
+        );
+        console.log(
+          `[BotAI] ${botId} selected second Jack target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+        );
+      }
+    } else if (targetsSelected === 2) {
+      // Step 3: Decide whether to swap
+      // Use cached decision from step 1
+      const decision: BotActionDecision = this.cachedActionDecision || {
+        targets: [],
+        shouldSwap: false,
+      };
 
-      // Delay to let user see both selected cards before swap decision
-      await this.delay(NORMAL_DELAY);
+      // Clear cache after using
+      this.cachedActionDecision = null;
 
-      // Decide whether to swap
       if (decision.shouldSwap) {
         this.gameClient.dispatch(GameActions.executeJackSwap(botId));
         console.log(`[BotAI] ${botId} executed Jack swap`);
@@ -610,44 +631,65 @@ export class BotAIAdapter {
   /**
    * Queen card: Peek at 2 cards, optionally swap them
    */
-  private async executeQueenAction(
+  private executeQueenAction(
     botId: string,
     context: BotDecisionContext
-  ): Promise<void> {
-    // Use cached action plan if available, otherwise run MCTS fresh
-    const decision: BotActionDecision = this.cachedActionDecision
-      ? this.cachedActionDecision
-      : this.botDecisionService.selectActionTargets(context);
+  ): void {
+    const pendingAction = this.gameClient.state.pendingAction;
+    const targetsSelected = pendingAction?.targets?.length || 0;
 
-    // Clear cache after using
-    this.cachedActionDecision = null;
+    if (targetsSelected === 0) {
+      // Step 1: Select first target
+      // Use cached action plan if available, otherwise run MCTS fresh
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
-    if (decision.targets.length >= 2) {
-      // Select first target (reveals immediately)
-      this.gameClient.dispatch(
-        GameActions.selectActionTarget(
-          botId,
-          decision.targets[0].playerId,
-          decision.targets[0].position
-        )
-      );
+      // Cache the decision for subsequent steps
+      this.cachedActionDecision = decision;
 
-      // Small delay to let first card reveal animation start
-      await this.delay(SMALL_DELAY);
+      if (decision.targets.length >= 2) {
+        this.gameClient.dispatch(
+          GameActions.selectActionTarget(
+            botId,
+            decision.targets[0].playerId,
+            decision.targets[0].position
+          )
+        );
+        console.log(
+          `[BotAI] ${botId} selected first Queen target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+        );
+      }
+    } else if (targetsSelected === 1) {
+      // Step 2: Select second target
+      // Use cached decision from step 1
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
-      // Select second target (reveals immediately)
-      this.gameClient.dispatch(
-        GameActions.selectActionTarget(
-          botId,
-          decision.targets[1].playerId,
-          decision.targets[1].position
-        )
-      );
+      if (decision.targets.length >= 2) {
+        this.gameClient.dispatch(
+          GameActions.selectActionTarget(
+            botId,
+            decision.targets[1].playerId,
+            decision.targets[1].position
+          )
+        );
+        console.log(
+          `[BotAI] ${botId} selected second Queen target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+        );
+      }
+    } else if (targetsSelected === 2) {
+      // Step 3: Decide whether to swap
+      // Use cached decision from step 1
+      const decision: BotActionDecision = this.cachedActionDecision || {
+        targets: [],
+        shouldSwap: false,
+      };
 
-      // Delay to let user see both revealed cards before swap decision
-      await this.delay(NORMAL_DELAY);
+      // Clear cache after using
+      this.cachedActionDecision = null;
 
-      // Decide whether to swap
       if (decision.shouldSwap) {
         this.gameClient.dispatch(GameActions.executeQueenSwap(botId));
         console.log(`[BotAI] ${botId} executed Queen swap`);
@@ -662,34 +704,51 @@ export class BotAIAdapter {
   }
 
   /**
-   * Standard actions (7, 8, 9, 10, J, A): Select target and execute
+   * Standard actions (7, 8, 9, 10, A): Select target and execute
+   * These actions only require one target selection
    */
   private executeStandardAction(
     botId: string,
     context: BotDecisionContext
   ): void {
-    // Use cached action plan if available, otherwise run MCTS fresh
-    const decision: BotActionDecision = this.cachedActionDecision
-      ? this.cachedActionDecision
-      : this.botDecisionService.selectActionTargets(context);
+    const pendingAction = this.gameClient.state.pendingAction;
+    const targetsSelected = pendingAction?.targets?.length || 0;
 
-    // Clear cache after using
-    this.cachedActionDecision = null;
+    if (targetsSelected === 0) {
+      // Step 1: Select target
+      // Use cached action plan if available, otherwise run MCTS fresh
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
-    if (decision.targets.length > 0) {
-      const target = decision.targets[0];
+      // Cache the decision for step 2
+      this.cachedActionDecision = decision;
 
-      this.gameClient.dispatch(
-        GameActions.selectActionTarget(botId, target.playerId, target.position)
-      );
+      if (decision.targets.length > 0) {
+        const target = decision.targets[0];
 
-      console.log(
-        `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`
-      );
+        this.gameClient.dispatch(
+          GameActions.selectActionTarget(
+            botId,
+            target.playerId,
+            target.position
+          )
+        );
+
+        console.log(
+          `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`
+        );
+      }
+    } else if (targetsSelected === 1) {
+      // Step 2: Confirm the peek
+      // Clear cache after using
+      this.cachedActionDecision = null;
 
       this.gameClient.dispatch(GameActions.confirmPeek(botId));
 
-      // Card actions (J, A, 7-10) transition to toss-in phase
+      console.log(`[BotAI] ${botId} confirmed peek action`);
+
+      // Card actions (A, 7-10) transition to toss-in phase
       // handleTossInPhase will handle turn advancement after toss-in completes
     }
   }

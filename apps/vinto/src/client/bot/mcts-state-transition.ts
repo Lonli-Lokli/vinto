@@ -92,8 +92,10 @@ export class MCTSStateTransition {
     move: MCTSMove
   ): MCTSGameState {
     // Action effects depend on the action type
-    if (move.actionCard) {
-      const actionType = getCardAction(move.actionCard.rank);
+    // Use state.pendingCard if move.actionCard is not set (which is the case for action moves generated in awaiting_action phase)
+    const actionCard = move.actionCard || state.pendingCard;
+    if (actionCard) {
+      const actionType = getCardAction(actionCard.rank);
 
       switch (actionType) {
         case 'swap-cards':
@@ -162,6 +164,9 @@ export class MCTSStateTransition {
           break;
       }
     }
+
+    // Clear pending card since action is complete
+    state.pendingCard = null;
 
     // Advance turn
     state.currentPlayerIndex =
