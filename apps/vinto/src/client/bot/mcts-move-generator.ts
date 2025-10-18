@@ -173,28 +173,75 @@ export class MCTSMoveGenerator {
 
       case 'force-draw':
         // Force each opponent to draw
+        // Ace action requires selecting a target player (position doesn't matter, any valid position will do)
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
 
+          // Select position 0 as a valid placeholder (Ace action targets player, not specific card)
           moves.push({
             type: 'use-action',
             playerId: currentPlayer.id,
-            targets: [{ playerId: opponent.id, position: -1 }],
+            targets: [{ playerId: opponent.id, position: 0 }],
           });
         }
         break;
 
       case 'declare-action':
         // King: declare each possible action rank
+        // King requires two steps:
+        // 1. Select a card (from own or opponent's hand)
+        // 2. Declare the rank of that card
+        // For move generation, we need to generate combinations of (target card, declared rank)
         const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
 
-        for (const rank of actionRanks) {
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            declaredRank: rank,
-          });
+        // Generate strategic King moves: target card + declared rank combinations
+        const kingMoves: MCTSMove[] = [];
+
+        // Prioritize own cards that we know about
+        for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+          const memory = currentPlayer.knownCards.get(pos);
+          if (memory && memory.confidence > 0.5 && memory.card) {
+            // We know this card - declare its actual rank
+            kingMoves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [{ playerId: currentPlayer.id, position: pos }],
+              declaredRank: memory.card.rank,
+            });
+          } else {
+            // Unknown card - try each possible rank
+            for (const rank of actionRanks) {
+              kingMoves.push({
+                type: 'use-action',
+                playerId: currentPlayer.id,
+                targets: [{ playerId: currentPlayer.id, position: pos }],
+                declaredRank: rank,
+              });
+            }
+          }
         }
+
+        // Also consider opponent cards that we know about
+        for (const opponent of state.players) {
+          if (opponent.id === currentPlayer.id) continue;
+
+          for (let pos = 0; pos < opponent.cardCount; pos++) {
+            const memory = opponent.knownCards.get(pos);
+            if (memory && memory.confidence > 0.5 && memory.card) {
+              // We know this opponent card - declare its actual rank
+              kingMoves.push({
+                type: 'use-action',
+                playerId: currentPlayer.id,
+                targets: [{ playerId: opponent.id, position: pos }],
+                declaredRank: memory.card.rank,
+              });
+            }
+          }
+        }
+
+        // Limit number of King moves to prevent explosion
+        const MAX_KING_MOVES = 20;
+        moves.push(...kingMoves.slice(0, MAX_KING_MOVES));
         break;
     }
 
@@ -395,7 +442,7 @@ export class MCTSMoveGenerator {
           // Jack rule: Cannot swap two cards from the same player
           if (
             opponent1Positions[i].target.playerId !==
-              opponent1Positions[j].target.playerId
+            opponent1Positions[j].target.playerId
           ) {
             moves.push({
               type: 'use-action',
@@ -481,7 +528,7 @@ export class MCTSMoveGenerator {
         // Queen rule: Cannot peek two cards from the same player
         if (
           opponentUnknownPositions[i].target.playerId !==
-            opponentUnknownPositions[j].target.playerId
+          opponentUnknownPositions[j].target.playerId
         ) {
           moves.push({
             type: 'use-action',

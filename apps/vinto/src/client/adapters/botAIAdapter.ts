@@ -492,6 +492,9 @@ export class BotAIAdapter {
    * King card: Two-step process
    * 1. Select a card from hand or opponent's hand
    * 2. Declare the rank of that card
+   *
+   * IMPORTANT: MCTS now generates both target and declaredRank together,
+   * so we cache the decision to ensure consistency between phases
    */
   private async executeKingDeclaration(
     botId: string,
@@ -501,11 +504,17 @@ export class BotAIAdapter {
 
     if (actionPhase === 'selecting-king-card') {
       // Step 1: Select a card target
-      const decision: BotActionDecision =
-        this.botDecisionService.selectActionTargets(context);
+      // Use cached action plan if available, otherwise run MCTS fresh
+      const decision: BotActionDecision = this.cachedActionDecision
+        ? this.cachedActionDecision
+        : this.botDecisionService.selectActionTargets(context);
 
       if (decision.targets.length > 0) {
         const target = decision.targets[0];
+
+        // Cache the decision so we use the same declaredRank in step 2
+        // This is critical because MCTS generates (target, rank) pairs together
+        this.cachedActionDecision = decision;
 
         this.gameClient.dispatch(
           GameActions.selectKingCardTarget(
@@ -516,7 +525,7 @@ export class BotAIAdapter {
         );
 
         console.log(
-          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}`
+          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}, will declare: ${decision.declaredRank}`
         );
 
         // Small delay before declaring rank
@@ -526,8 +535,13 @@ export class BotAIAdapter {
       // State will update and MobX reaction will trigger declaring-rank phase
     } else if (actionPhase === 'declaring-rank') {
       // Step 2: Declare the rank
-      const declaredRank =
-        this.botDecisionService.selectKingDeclaration(context);
+      // Use the cached declared rank from step 1 to maintain consistency
+      const declaredRank = this.cachedActionDecision?.declaredRank
+        ? this.cachedActionDecision.declaredRank
+        : this.botDecisionService.selectKingDeclaration(context);
+
+      // Clear cache after using
+      this.cachedActionDecision = null;
 
       this.gameClient.dispatch(
         GameActions.declareKingAction(botId, declaredRank)
