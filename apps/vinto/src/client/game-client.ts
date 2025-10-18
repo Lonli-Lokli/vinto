@@ -11,6 +11,7 @@ import type {
   PlayerState,
   Card,
 } from '@/shared';
+import { getCardName } from '@/shared';
 import { GameEngine } from '@/engine';
 
 /**
@@ -150,17 +151,84 @@ export class GameClient {
 
     if (!player) return null;
 
+    const formatCard = (card: Card) => `${getCardName(card.rank)}${card.suit}`;
+
     switch (action.type) {
-      case 'DRAW_CARD':
-        return `${player.name} drew a card`;
-      case 'SWAP_CARD':
-        return `${player.name} swapped a card`;
-      case 'DISCARD_CARD':
-        return `${player.name} discarded`;
-      case 'PARTICIPATE_IN_TOSS_IN':
-        return `${player.name} tossed in a card`;
+      case 'DRAW_CARD': {
+        const drawnCard = state.pendingAction?.card;
+        return drawnCard
+          ? `drew ${formatCard(drawnCard)}`
+          : `drew a card`;
+      }
+
+      case 'PLAY_DISCARD': {
+        const takenCard = state.pendingAction?.card;
+        return takenCard
+          ? `took ${formatCard(takenCard)} from discard`
+          : `took from discard`;
+      }
+
+      case 'USE_CARD_ACTION':
+      case 'PLAY_CARD_ACTION': {
+        const actionCard = state.pendingAction?.card;
+        return actionCard
+          ? `played ${formatCard(actionCard)}`
+          : `played action card`;
+      }
+
+      case 'SWAP_CARD': {
+        const swappedCard = state.discardPile.peekTop();
+        return swappedCard
+          ? `swapped for ${formatCard(swappedCard)}`
+          : `swapped a card`;
+      }
+
+      case 'DISCARD_CARD': {
+        const discardedCard = state.discardPile.peekTop();
+        return discardedCard
+          ? `discarded ${formatCard(discardedCard)}`
+          : `discarded`;
+      }
+
+      case 'CONFIRM_PEEK': {
+        // Peek action was completed
+        const peekCard = state.discardPile.peekTop();
+        if (peekCard) {
+          return `used ${formatCard(peekCard)}`;
+        }
+        return null; // Don't show if no card info
+      }
+
+      case 'EXECUTE_QUEEN_SWAP': {
+        const queenCard = state.discardPile.peekTop();
+        return queenCard ? `swapped cards with ${formatCard(queenCard)}` : `swapped cards`;
+      }
+
+      case 'SKIP_QUEEN_SWAP': {
+        const queenCard = state.discardPile.peekTop();
+        return queenCard ? `didn't swap with ${formatCard(queenCard)}` : `didn't swap`;
+      }
+
+      case 'EXECUTE_JACK_SWAP': {
+        const jackCard = state.discardPile.peekTop();
+        return jackCard ? `swapped cards with ${formatCard(jackCard)}` : `swapped cards`;
+      }
+
+      case 'SKIP_JACK_SWAP': {
+        const jackCard = state.discardPile.peekTop();
+        return jackCard ? `didn't swap with ${formatCard(jackCard)}` : `didn't swap`;
+      }
+
+      case 'PARTICIPATE_IN_TOSS_IN': {
+        const tossedCard = state.discardPile.peekTop();
+        return tossedCard
+          ? `tossed in ${formatCard(tossedCard)}`
+          : `tossed in a card`;
+      }
+
       case 'CALL_VINTO':
-        return `${player.name} called Vinto!`;
+        return `called Vinto!`;
+
       default:
         return null;
     }

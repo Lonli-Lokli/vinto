@@ -556,10 +556,7 @@ export class BotAIAdapter {
   /**
    * Jack card: Optionally swap two cards
    */
-  private executeJackAction(
-    botId: string,
-    context: BotDecisionContext
-  ): void {
+  private executeJackAction(botId: string, context: BotDecisionContext): void {
     const pendingAction = this.gameClient.state.pendingAction;
     const targetsSelected = pendingAction?.targets?.length || 0;
 
@@ -631,10 +628,7 @@ export class BotAIAdapter {
   /**
    * Queen card: Peek at 2 cards, optionally swap them
    */
-  private executeQueenAction(
-    botId: string,
-    context: BotDecisionContext
-  ): void {
+  private executeQueenAction(botId: string, context: BotDecisionContext): void {
     const pendingAction = this.gameClient.state.pendingAction;
     const targetsSelected = pendingAction?.targets?.length || 0;
 
