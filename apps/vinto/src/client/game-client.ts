@@ -151,7 +151,7 @@ export class GameClient {
 
     if (!player) return null;
 
-    const formatCard = (card: Card) => `${getCardName(card.rank)}${card.suit}`;
+    const formatCard = (card: Card) => getCardName(card.rank);
 
     switch (action.type) {
       case 'DRAW_CARD': {
