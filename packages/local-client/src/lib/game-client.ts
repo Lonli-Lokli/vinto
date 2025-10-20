@@ -10,6 +10,7 @@ import type {
   GameActionHistory,
   PlayerState,
   Card,
+  Rank,
 } from '@vinto/shapes';
 import { getCardName } from '@vinto/shapes';
 import { GameEngine } from '@vinto/engine';
@@ -287,6 +288,14 @@ export class GameClient {
   @computed
   get topDiscardCard(): Card | undefined {
     return this._state.discardPile.peekTop();
+  }
+
+  /**
+   * Get the top card of the discard pile
+   */
+  @computed
+  get tossInRanks(): Rank[] {
+    return this._state.activeTossIn?.ranks || [];
   }
 
   /**

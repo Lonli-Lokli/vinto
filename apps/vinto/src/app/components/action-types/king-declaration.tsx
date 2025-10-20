@@ -51,7 +51,7 @@ export function KingDeclaration() {
           {/* Instructions */}
           <div className="flex-1 flex flex-col justify-center items-center text-center p-4">
             <p className="text-sm text-primary mb-2">
-              Step 1: Select a card from your hand or an opponent&apos;s hand
+              Select a card from your hand or an opponent&apos;s hand
             </p>
             <p className="text-xs text-gray-500">
               The card will be highlighted but not revealed yet
@@ -90,7 +90,7 @@ export function KingDeclaration() {
           {/* Single unified grid for all cards */}
           <div className="flex-1 flex flex-col justify-center">
             <p className="text-xs text-primary mb-2 text-center">
-              Step 2: Declare the rank you think it is
+              Declare the rank you think it is
             </p>
             <div className="grid grid-cols-7 gap-1">
               {/* Action cards with visual distinction */}

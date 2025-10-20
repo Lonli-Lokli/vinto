@@ -89,16 +89,10 @@ export function isCardSelectable(params: {
   cardIndex: number;
   isSelectingActionTarget: boolean;
 }): boolean {
-  const {
-    hasOnCardClick,
-    isSelectingSwapPosition,
-    isSelectingActionTarget,
-  } = params;
+  const { hasOnCardClick, isSelectingSwapPosition, isSelectingActionTarget } =
+    params;
 
-  return (
-    hasOnCardClick &&
-    (isSelectingSwapPosition || isSelectingActionTarget)
-  );
+  return hasOnCardClick && (isSelectingSwapPosition || isSelectingActionTarget);
 }
 
 /**
@@ -110,10 +104,7 @@ export function shouldHighlightCard(params: {
   cardIndex: number;
   isSelectingActionTarget: boolean;
 }): boolean {
-  const {
-    isSelectingSwapPosition,
-    isSelectingActionTarget,
-  } = params;
+  const { isSelectingSwapPosition, isSelectingActionTarget } = params;
 
   return isSelectingSwapPosition || isSelectingActionTarget;
 }

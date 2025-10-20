@@ -76,11 +76,11 @@ export const GamePhaseIndicators = observer(() => {
   // Toss-in Period
   // Note: Vinto caller should never see toss-in indicator, only waiting indicator
   if (waitingForTossIn && !humanPlayer?.isVintoCaller) {
-    const topDiscardRank = gameClient.topDiscardCard?.rank;
+    const tossInRanks = gameClient.tossInRanks;
     const isCurrentPlayerWaiting = gameClient.state.subPhase === 'ai_thinking';
     return (
       <TossInIndicator
-        topDiscardRank={topDiscardRank}
+        tossInRanks={tossInRanks}
         onContinue={() => {
           if (!humanPlayer) return;
           // Engine will check if all humans are ready and auto-advance turn
@@ -185,12 +185,12 @@ SetupPhaseIndicator.displayName = 'SetupPhaseIndicator';
 // Toss-in Period Component
 const TossInIndicator = observer(
   ({
-    topDiscardRank,
+    tossInRanks,
     onContinue,
     currentPlayer,
     isCurrentPlayerWaiting,
   }: {
-    topDiscardRank?: Rank;
+    tossInRanks: Rank[];
     onContinue: () => void;
     currentPlayer: { name: string; isHuman: boolean } | null;
     isCurrentPlayerWaiting: boolean;
@@ -248,13 +248,16 @@ Skip toss-in and proceed to next player's turn`;
               </h3>
               <div className="text-xs text-secondary leading-tight">
                 Toss matching{' '}
-                {topDiscardRank ? (
-                  <span className="text-sm font-bold text-primary leading-tight">
-                    {getCardName(topDiscardRank)}
-                  </span>
-                ) : (
-                  'cards'
-                )}{' '}
+                <ReactJoin separator=", ">
+                  {tossInRanks.map((rank, idx) => (
+                    <span
+                      key={idx}
+                      className="text-sm font-bold text-primary leading-tight"
+                    >
+                      {getCardName(rank)}
+                    </span>
+                  ))}
+                </ReactJoin>
                 • Wrong = penalty
               </div>
             </div>

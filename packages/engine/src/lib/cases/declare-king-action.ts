@@ -1,4 +1,4 @@
-import { GameState, DeclareKingActionAction } from '@vinto/shapes';
+import { GameState, DeclareKingActionAction, Rank } from '@vinto/shapes';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import {
@@ -175,13 +175,13 @@ export function handleDeclareKingAction(
     );
   } else {
     // Determine which rank triggers the toss-in:
-    // - If declaration is CORRECT: toss-in for the declared rank (because that card is now top of discard)
+    // - If declaration is CORRECT: toss-in for King as well as the declared rank
     // - If declaration is INCORRECT: toss-in for King rank (because only King went to discard)
-    const tossInRank = isCorrect ? declaredRank : 'K';
+    const tossInRanks: [Rank, ...Rank[]] = isCorrect ? ['K', declaredRank] : ['K'];
 
     // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
     newState.activeTossIn = {
-      ranks: [tossInRank],
+      ranks: tossInRanks,
       initiatorId: playerId,
       originalPlayerIndex: newState.currentPlayerIndex,
       participants: [],
@@ -198,7 +198,7 @@ export function handleDeclareKingAction(
       {
         declaredRank,
         isCorrect,
-        tossInRank,
+        tossInRanks,
         newSubPhase: newState.subPhase,
       }
     );

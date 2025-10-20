@@ -77,31 +77,6 @@ export class UIStore {
     this.temporarilyVisibleCards.get(playerId)?.clear();
   }
 
-  isTemporarilyVisible(playerId: string, position: number): boolean {
-    const playerCards = this.temporarilyVisibleCards.get(playerId);
-    if (!playerCards) return false;
-
-    const timestamp = playerCards.get(position);
-    if (!timestamp) return false;
-
-    // Check if expired (3 seconds - longer than feedback duration)
-    if (Date.now() - timestamp > 3000) {
-      // Schedule cleanup for next tick
-      if (typeof queueMicrotask !== 'undefined') {
-        queueMicrotask(() => {
-          const currentTimestamp = this.temporarilyVisibleCards
-            .get(playerId)
-            ?.get(position);
-          if (currentTimestamp && Date.now() - currentTimestamp > 3000) {
-            this.temporarilyVisibleCards.get(playerId)?.delete(position);
-          }
-        });
-      }
-      return false;
-    }
-
-    return true;
-  }
 
   getTemporarilyVisibleCards(playerId: string): Set<number> {
     const playerCards = this.temporarilyVisibleCards.get(playerId);
@@ -110,9 +85,7 @@ export class UIStore {
     // Filter out expired cards and return only valid positions
     const validPositions = new Set<number>();
     playerCards.forEach((timestamp, position) => {
-      if (Date.now() - timestamp <= 3000) {
         validPositions.add(position);
-      }
     });
 
     return validPositions;
