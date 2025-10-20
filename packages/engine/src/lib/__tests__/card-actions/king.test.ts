@@ -48,7 +48,7 @@ describe('King (K) Card Action', () => {
 
       // Should trigger toss-in for rank 5
       expect(newState.activeTossIn).not.toBeNull();
-      expect(newState.activeTossIn?.rank).toBe('5');
+      expect(newState.activeTossIn?.ranks).toContain('5');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
       expect(newState.subPhase).toBe('toss_queue_active');
 
@@ -76,7 +76,7 @@ describe('King (K) Card Action', () => {
         GameActions.declareKingAction('p1', 'Joker')
       );
 
-      expect(newState.activeTossIn?.rank).toBe('Joker');
+      expect(newState.activeTossIn?.ranks).toContain('Joker');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
@@ -111,7 +111,7 @@ describe('King (K) Card Action', () => {
 
       // Should trigger Ace action setup (force draw)
       // Implementation may vary - check if pending action is set for Ace
-      expect(newState.activeTossIn?.rank).toBe('A');
+      expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
 
@@ -142,7 +142,7 @@ describe('King (K) Card Action', () => {
       );
 
       // Should trigger toss-in for Queen
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
 
@@ -172,7 +172,7 @@ describe('King (K) Card Action', () => {
       );
 
       // Should trigger toss-in for 7
-      expect(newState.activeTossIn?.rank).toBe('7');
+      expect(newState.activeTossIn?.ranks).toContain('7');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
@@ -221,7 +221,7 @@ describe('King (K) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'K',
+          ranks: ['K'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -254,7 +254,7 @@ describe('King (K) Card Action', () => {
           createTestPlayer('p2', 'Player 2', false),
         ],
         activeTossIn: {
-          rank: 'K',
+          ranks: ['K'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -392,7 +392,7 @@ describe('King (K) Card Action', () => {
       );
 
       // Should trigger toss-in for King rank
-      expect(newState.activeTossIn?.rank).toBe('K');
+      expect(newState.activeTossIn?.ranks).toContain('K');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });

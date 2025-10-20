@@ -341,48 +341,6 @@ export function actionValidator(
       return { valid: true };
     }
 
-    case 'SELECT_KING_CARD_TARGET': {
-      const { playerId, targetPlayerId, position } = action.payload;
-
-      // Check if processing toss-in action
-      const isProcessingTossInAction =
-        state.activeTossIn && state.activeTossIn.queuedActions.length > 0;
-
-      // For toss-in actions, validate against pendingAction.playerId
-      // For normal actions, validate against currentPlayerIndex
-      if (isProcessingTossInAction) {
-        if (!state.pendingAction || state.pendingAction.playerId !== playerId) {
-          return { valid: false, reason: 'Not your toss-in action' };
-        }
-      } else {
-        const currentPlayer = state.players[state.currentPlayerIndex];
-        if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
-        }
-      }
-
-      // Must be in awaiting_action phase (after using King card)
-      if (state.subPhase !== 'awaiting_action') {
-        return {
-          valid: false,
-          reason: `Cannot select King card target in phase ${state.subPhase}`,
-        };
-      }
-
-      // Must have a pending action with King card
-      if (!state.pendingAction?.card) {
-        return { valid: false, reason: 'No pending King card' };
-      }
-
-      if (state.pendingAction.card.rank !== 'K') {
-        return { valid: false, reason: 'Pending card is not a King' };
-      }
-
-      // King now uses SELECT_ACTION_TARGET, so this validation is deprecated
-      // Remove this case - King validation is handled in SELECT_ACTION_TARGET below
-      return { valid: false, reason: 'SELECT_KING_CARD_TARGET is deprecated, use SELECT_ACTION_TARGET' };
-    }
-
     case 'DECLARE_KING_ACTION': {
       const { playerId } = action.payload;
 

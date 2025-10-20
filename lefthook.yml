@@ -2,7 +2,7 @@ pre-commit:
   commands:
     format:
       glob: '*.{ts,tsx,js,jsx}'
-      run: npx nx affected --target=lint --fix=true --files='{staged_files}'
+      run: npx nx affected --target=lint --fix=true --files='{staged_files}' --no-error-on-unmatched-pattern
       staged_fixed: true
     lint:
       glob: '*.{ts,tsx,js,jsx}'

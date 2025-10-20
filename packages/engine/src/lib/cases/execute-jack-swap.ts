@@ -141,7 +141,7 @@ export function handleExecuteJackSwap(
     // Initialize new toss-in phase (normal turn flow)
     if (jackCard) {
       newState.activeTossIn = {
-        rank: jackCard.rank,
+        ranks: [jackCard.rank],
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],

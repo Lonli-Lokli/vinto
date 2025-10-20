@@ -149,7 +149,7 @@ export class HeadlessService {
     action: DeclareKingActionAction
   ): void {
     const { declaredRank } = action.payload;
-    const selectedCardInfo = oldState.pendingAction?.selectedCardForKing;
+    const selectedCardInfo = oldState.pendingAction?.targets?.[0];
 
     if (!selectedCardInfo) return;
 
@@ -158,7 +158,7 @@ export class HeadlessService {
       position,
       card: selectedCard,
     } = selectedCardInfo;
-    const actualRank = selectedCard.rank;
+    const actualRank = selectedCard?.rank;
     const isCorrect = actualRank === declaredRank;
 
     if (isCorrect) {

@@ -136,7 +136,7 @@ export function handleExecuteQueenSwap(
     // Initialize new toss-in phase (normal turn flow)
     if (queenCard) {
       newState.activeTossIn = {
-        rank: queenCard.rank,
+        ranks: [queenCard.rank],
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],

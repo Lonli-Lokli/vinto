@@ -67,7 +67,7 @@ describe('Queen (Q) Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
     });
 
@@ -106,7 +106,7 @@ describe('Queen (Q) Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
     });
   });
 
@@ -153,7 +153,7 @@ describe('Queen (Q) Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
     });
 
     it('should allow swapping two cards from same player', () => {
@@ -242,7 +242,7 @@ describe('Queen (Q) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'Q',
+          ranks: ['Q'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -282,7 +282,7 @@ describe('Queen (Q) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'Q',
+          ranks: ['Q'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -339,7 +339,7 @@ describe('Queen (Q) Card Action', () => {
 
       // Should return to toss-in (not create new toss-in)
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('Q'); // Same toss-in continues
+      expect(newState.activeTossIn?.ranks).toContain('Q'); // Same toss-in continues
       expect(newState.pendingAction).toBeNull();
     });
   });

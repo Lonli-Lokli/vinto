@@ -94,7 +94,7 @@ export function handleSkipJackSwap(
     if (jackCard) {
       // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
       newState.activeTossIn = {
-        rank: jackCard.rank,
+        ranks: [jackCard.rank],
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],

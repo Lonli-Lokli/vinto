@@ -97,7 +97,7 @@ export interface BotDecisionService {
 
   // Utility decisions
   shouldParticipateInTossIn(
-    discardedRank: Rank,
+    discardedRanks: [Rank, ...Rank[]],
     context: BotDecisionContext
   ): boolean;
   selectBestSwapPosition(
@@ -230,7 +230,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   shouldParticipateInTossIn(
-    discardedRank: Rank,
+    discardedRanks: [Rank , ...Rank[]],
     context: BotDecisionContext
   ): boolean {
     this.initializeIfNeeded(context);

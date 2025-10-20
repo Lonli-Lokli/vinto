@@ -67,12 +67,12 @@ describe('Ace (A) Card Action', () => {
       // Verify opponent drew penalty card
       expect(newState.players[1].cards.length).toBe(3); // Was 2, now 3
       expect(newState.drawPile.length).toBe(1); // One card drawn
-      expect(newState.drawPile.peekTop()?.played).toBe(true); // We should mark card as played
+      expect(newState.discardPile.peekTop()?.played).toBe(true); // We should mark card as played
 
       // Verify toss-in triggered
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.activeTossIn).not.toBeNull();
-      expect(newState.activeTossIn?.rank).toBe('A');
+      expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
     });
 
@@ -144,7 +144,7 @@ describe('Ace (A) Card Action', () => {
 
       // Verify toss-in triggered
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('A');
+      expect(newState.activeTossIn?.ranks).toContain('A');
     });
   });
 
@@ -165,7 +165,7 @@ describe('Ace (A) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'A',
+          ranks: ['A'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -201,7 +201,7 @@ describe('Ace (A) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'A',
+          ranks: ['A'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -246,9 +246,9 @@ describe('Ace (A) Card Action', () => {
         GameActions.selectActionTarget('p2', 'p1', 0)
       );
 
-      // Should return to toss-in (not create new toss-in)
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('A'); // Same toss-in continues
+      // Should return to idle (not create new toss-in)
+      expect(newState.subPhase).toBe('idle');
+      expect(newState.activeTossIn?.ranks).toContain('A'); // Same toss-in continues
       expect(newState.pendingAction).toBeNull();
       expect(newState.discardPile.peekTop()?.rank).toBe('A');
       expect(newState.discardPile.peekTop()?.played).toBe(true);
@@ -266,7 +266,7 @@ describe('Ace (A) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'A', // Looking for Aces
+          ranks: ['A'], // Looking for Aces
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],

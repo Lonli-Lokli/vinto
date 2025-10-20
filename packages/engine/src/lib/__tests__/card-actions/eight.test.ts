@@ -54,8 +54,9 @@ describe('8 Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('8');
+      expect(newState.activeTossIn?.ranks).toContain('8');
       expect(newState.discardPile.peekTop()?.id).toBe('eight1');
+      expect(newState.discardPile.peekTop()?.played).toBe(true);
     });
 
     it('should allow swapping 8 into hand instead of using action', () => {
@@ -82,7 +83,7 @@ describe('8 Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('eight1');
     });
   });
@@ -99,7 +100,7 @@ describe('8 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '8',
+          ranks: ['8'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -130,7 +131,7 @@ describe('8 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '8',
+          ranks: ['8'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -178,8 +179,8 @@ describe('8 Card Action', () => {
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p2'));
 
       // Should return to toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('8');
+      expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
+      expect(newState.activeTossIn).toBeNull();
     });
   });
 

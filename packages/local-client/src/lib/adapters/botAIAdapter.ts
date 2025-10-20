@@ -217,8 +217,8 @@ export class BotAIAdapter {
 
     this.isHandlingTossIn = true;
     try {
-      const tossInRank = activeTossIn.rank;
-      console.log(`[BotAI] Toss-in phase for rank: ${tossInRank}`);
+      const tossInRanks = activeTossIn.ranks;
+      console.log(`[BotAI] Toss-in phase for ranks : ${tossInRanks}`);
 
       // Give bots time to "think" about toss-in
       await this.delay(NORMAL_DELAY);
@@ -276,19 +276,19 @@ export class BotAIAdapter {
         // Ask MCTS if bot should participate in toss-in
         const shouldParticipate =
           this.botDecisionService.shouldParticipateInTossIn(
-            tossInRank,
+            tossInRanks,
             context
           );
 
         if (shouldParticipate) {
           // Find all matching cards in bot's hand
           const matchingCards = botPlayer.cards.filter(
-            (card) => card.rank === tossInRank
+            (card) => tossInRanks.includes(card.rank)
           );
 
           if (matchingCards.length > 0) {
             console.log(
-              `[BotAI] ${botId} tossing in ${matchingCards.length} ${tossInRank}(s)`
+              `[BotAI] ${botId} tossing in ${matchingCards.length} ${tossInRanks.map((rank) => rank).join(',')}`
             );
 
             // Toss in each matching card sequentially
@@ -305,7 +305,7 @@ export class BotAIAdapter {
             }
           } else {
             console.log(
-              `[BotAI] ${botId} wants to toss in but has no matching ${tossInRank}`
+              `[BotAI] ${botId} wants to toss in but has no matching ${tossInRanks}`
             );
           }
         } else {

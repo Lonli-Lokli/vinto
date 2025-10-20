@@ -55,7 +55,7 @@ describe('9 Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('9');
+      expect(newState.activeTossIn?.ranks).toContain('9');
       expect(newState.discardPile.peekTop()?.id).toBe('nine1');
     });
 
@@ -100,7 +100,7 @@ describe('9 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '9',
+          ranks: ['9'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -132,7 +132,7 @@ describe('9 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '9',
+          ranks: ['9'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -181,7 +181,7 @@ describe('9 Card Action', () => {
 
       // Should return to toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('9');
+      expect(newState.activeTossIn?.ranks).toContain('9');
     });
   });
 

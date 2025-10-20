@@ -198,7 +198,10 @@ export function handleSelectActionTarget(
 
         // Move Ace card to discard pile
         if (aceCard) {
-          newState.discardPile.addToTop(aceCard);
+          newState.discardPile.addToTop({
+            ...copy(aceCard),
+            played: true,
+          });
         }
 
         // Clear pending action
@@ -221,7 +224,7 @@ export function handleSelectActionTarget(
           if (aceCard) {
             // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
             newState.activeTossIn = {
-              rank: aceCard.rank,
+              ranks: [aceCard.rank],
               initiatorId: action.payload.playerId,
               originalPlayerIndex: newState.currentPlayerIndex,
               participants: [],

@@ -92,8 +92,6 @@ export function isCardSelectable(params: {
   const {
     hasOnCardClick,
     isSelectingSwapPosition,
-    swapPosition,
-    cardIndex,
     isSelectingActionTarget,
   } = params;
 
@@ -114,8 +112,6 @@ export function shouldHighlightCard(params: {
 }): boolean {
   const {
     isSelectingSwapPosition,
-    swapPosition,
-    cardIndex,
     isSelectingActionTarget,
   } = params;
 

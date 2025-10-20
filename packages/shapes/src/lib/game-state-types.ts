@@ -115,7 +115,7 @@ export interface ActionTarget {
  * Active toss-in state
  */
 export interface ActiveTossIn {
-  rank: Rank;
+  ranks: [Rank, ...Rank[]]; // Support multiple ranks, but always at least one element
   initiatorId: string;
   originalPlayerIndex: number; // Track whose turn it was when toss-in started
   participants: string[];
@@ -136,7 +136,7 @@ export interface FailedTossInAttempt {
   playerId: string;
   cardRank: Rank;
   position: number;
-  expectedRank: Rank;
+  expectedRanks: [Rank, ...Rank[]];
 }
 
 /**

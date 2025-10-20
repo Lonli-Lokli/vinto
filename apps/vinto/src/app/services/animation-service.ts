@@ -100,10 +100,6 @@ export class AnimationService {
         this.handleSelectActionTarget(oldState, newState, action);
         break;
 
-      case 'SELECT_KING_CARD_TARGET':
-        // No animation needed for card selection - just highlighting (handled by UI state)
-        break;
-
       case 'EXECUTE_QUEEN_SWAP':
         this.handleExecuteQueenSwap(oldState, newState, action);
         break;
@@ -420,7 +416,7 @@ export class AnimationService {
   ): void {
     const playerId = action.payload.playerId;
     const declaredRank = action.payload.declaredRank;
-    const selectedCardInfo = oldState.pendingAction?.selectedCardForKing;
+    const selectedCardInfo = oldState.pendingAction?.targets?.[0];
 
     if (!selectedCardInfo) {
       console.warn('[AnimationService] No selected card for King action');
@@ -432,7 +428,7 @@ export class AnimationService {
       position,
       card: selectedCard,
     } = selectedCardInfo;
-    const actualRank = selectedCard.rank;
+    const actualRank = selectedCard?.rank;
     const isCorrect = actualRank === declaredRank;
 
     // Get players

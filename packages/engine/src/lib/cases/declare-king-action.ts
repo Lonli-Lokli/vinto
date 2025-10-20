@@ -164,7 +164,6 @@ export function handleDeclareKingAction(
   newState.pendingAction = null;
 
   // Check if this action was part of a toss-in
-
   if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation)
     // Clear the ready list so players can confirm again for this new toss-in round
@@ -182,7 +181,7 @@ export function handleDeclareKingAction(
 
     // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
     newState.activeTossIn = {
-      rank: tossInRank,
+      ranks: [tossInRank],
       initiatorId: playerId,
       originalPlayerIndex: newState.currentPlayerIndex,
       participants: [],

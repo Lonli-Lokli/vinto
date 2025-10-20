@@ -213,7 +213,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.discardPile.peekTop()?.id).toBe('queen1');
       // Queen triggers toss-in after completion
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
     });
 
     it('should allow peeking and then swapping the two cards', () => {
@@ -280,7 +280,7 @@ describe('Game Engine - Rules-Based Tests', () => {
 
       // Toss-in should be activated
       expect(newState.activeTossIn).not.toBeNull();
-      expect(newState.activeTossIn?.rank).toBe('A');
+      expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
       expect(newState.discardPile.peekTop()?.id).toBe('king1');
     });
@@ -306,7 +306,7 @@ describe('Game Engine - Rules-Based Tests', () => {
 
       // Declaring any rank (including non-action cards) triggers toss-in period
       // Players can toss in matching '5' cards even though they have no actions
-      expect(newState.activeTossIn?.rank).toBe('5');
+      expect(newState.activeTossIn?.ranks).toContain('5');
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
@@ -379,7 +379,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.discardPile.peekTop()?.id).toBe('seven1');
       // 7 card triggers toss-in after peek confirmation
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('7');
+      expect(newState.activeTossIn?.ranks).toContain('7');
     });
   });
 
@@ -439,7 +439,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'A',
+          ranks: ['A'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -482,7 +482,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
 
         activeTossIn: {
-          rank: 'A', // Looking for Aces
+          ranks: ['A'], // Looking for Aces
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -509,7 +509,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         subPhase: 'toss_queue_active', // Correct phase for toss-in
         turnCount: 5,
         activeTossIn: {
-          rank: 'A',
+          ranks: ['A'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2', 'p3'],

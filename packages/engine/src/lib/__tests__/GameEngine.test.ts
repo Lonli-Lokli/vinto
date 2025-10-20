@@ -1888,7 +1888,7 @@ describe('GameEngine', () => {
       // Toss-in should be triggered
       expect(newState.activeTossIn).not.toBeNull();
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.activeTossIn?.rank).toBe('A');
+      expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.activeTossIn?.participants).toEqual([]);
 
       // King card should be in discard pile
@@ -1918,7 +1918,7 @@ describe('GameEngine', () => {
 
       let action = GameActions.declareKingAction('p1', '7');
       let newState = GameEngine.reduce(state, action);
-      expect(newState.activeTossIn?.rank).toBe('7');
+      expect(newState.activeTossIn?.ranks).toContain('7');
 
       // Test with rank Q
       state = createTestState({
@@ -1934,7 +1934,7 @@ describe('GameEngine', () => {
 
       action = GameActions.declareKingAction('p1', 'Q');
       newState = GameEngine.reduce(state, action);
-      expect(newState.activeTossIn?.rank).toBe('Q');
+      expect(newState.activeTossIn?.ranks).toContain('Q');
     });
 
     it('should fail if not player turn', () => {

@@ -86,7 +86,7 @@ export function handleDiscardCard(
   } else {
     // Normal discard flow - initialize new toss-in phase
     newState.activeTossIn = {
-      rank: discardedCard.rank,
+      ranks: [discardedCard.rank],
       initiatorId: playerId,
       originalPlayerIndex: newState.currentPlayerIndex,
       participants: [],

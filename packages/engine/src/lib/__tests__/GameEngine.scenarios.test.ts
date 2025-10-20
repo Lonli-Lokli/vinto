@@ -194,7 +194,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     );
     expect(newState.subPhase).toBe('toss_queue_active');
     expect(newState.activeTossIn).not.toBeNull();
-    expect(newState.activeTossIn?.rank).toBe('A');
+    expect(newState.activeTossIn?.ranks).toContain('A');
 
     // Step 3: Human tosses in second Ace
     newState = GameEngine.reduce(
@@ -335,7 +335,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         targets: [],
       },
       activeTossIn: {
-        rank: 'J',
+        ranks: ['J'],
         initiatorId: 'human-1',
         originalPlayerIndex: 0,
         participants: [],
@@ -482,7 +482,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
 
     // Ace action completes → toss-in starts for Ace rank
     expect(newState.subPhase).toBe('toss_queue_active');
-    expect(newState.activeTossIn?.rank).toBe('A');
+    expect(newState.activeTossIn?.ranks).toContain('A');
     expect(newState.pendingAction).toBeNull(); // Ace action cleared
 
     // Step 5: Human tosses in first Ace from hand (position 1, since position 0 is King)
@@ -526,7 +526,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // CRITICAL: After queued Ace completes, should return to toss-in (NOT create another Ace toss-in!)
     expect(newState.subPhase).toBe('toss_queue_active');
     expect(newState.activeTossIn).not.toBeNull();
-    expect(newState.activeTossIn?.rank).toBe('A'); // Still toss-in for 'A' (same toss-in continues)
+    expect(newState.activeTossIn?.ranks).toContain('A'); // Still toss-in for 'A' (same toss-in continues)
     expect(newState.pendingAction).toBeNull(); // Ace action should be CLEARED
     expect(newState.activeTossIn?.queuedActions.length).toBe(0); // Queue should be empty
 

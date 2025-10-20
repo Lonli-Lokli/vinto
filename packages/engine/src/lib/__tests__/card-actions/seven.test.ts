@@ -54,7 +54,7 @@ describe('7 Card Action', () => {
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('7');
+      expect(newState.activeTossIn?.ranks).toContain('7');
       expect(newState.discardPile.peekTop()?.id).toBe('seven1');
     });
 
@@ -99,7 +99,7 @@ describe('7 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '7',
+          ranks: ['7'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -130,7 +130,7 @@ describe('7 Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: '7',
+          ranks: ['7'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -179,7 +179,7 @@ describe('7 Card Action', () => {
 
       // Should return to toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('7');
+      expect(newState.activeTossIn?.ranks).toContain('7');
     });
   });
 

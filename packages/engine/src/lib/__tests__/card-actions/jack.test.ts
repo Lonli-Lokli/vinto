@@ -64,10 +64,11 @@ describe('Jack (J) Card Action', () => {
 
       // Jack should be in discard pile
       expect(newState.discardPile.peekTop()?.id).toBe('jack1');
+      expect(newState.discardPile.peekTop()?.played).toBe(true);
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('J');
+      expect(newState.activeTossIn?.ranks).toContain('J');
     });
   });
 
@@ -111,7 +112,7 @@ describe('Jack (J) Card Action', () => {
       expect(newState.players[1].cards[2].rank).toBe('8');
 
       expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('J');
+      expect(newState.activeTossIn?.ranks).toContain('J');
     });
   });
 
@@ -141,9 +142,10 @@ describe('Jack (J) Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('jack1'); // Jack swapped in
-      expect(newState.pendingAction?.card.id).toBe('p1c1'); // King removed
+      expect(newState.discardPile.peekTop()?.id).toBe('p1c1'); // King discarded
+      expect(newState.pendingAction).toBeNull(); 
     });
   });
 
@@ -159,7 +161,7 @@ describe('Jack (J) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'J',
+          ranks: ['J'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: [],
@@ -199,7 +201,7 @@ describe('Jack (J) Card Action', () => {
           ]),
         ],
         activeTossIn: {
-          rank: 'J',
+          ranks: ['J'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
           participants: ['p2'],
@@ -254,10 +256,12 @@ describe('Jack (J) Card Action', () => {
         GameActions.executeQueenSwap('p2')
       );
 
-      // Should return to toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.rank).toBe('J');
+      // Should not return to toss-in
+      expect(newState.subPhase).toBe('ai_thinking');  // next player is bot so ai_thinking
+      expect(newState.activeTossIn).toBeNull();
       expect(newState.pendingAction).toBeNull();
+      expect(newState.players.find(p => p.id === 'p1')?.cards[0].rank).toBe('7'); // P1 now has 7
+      expect(newState.players.find(p => p.id === 'p3')?.cards[0].rank).toBe('K'); // P3 now has K
     });
   });
 

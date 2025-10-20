@@ -94,7 +94,7 @@ export function handleConfirmPeek(
     // Initialize new toss-in phase (normal turn flow)
     if (peekCard) {
       newState.activeTossIn = {
-        rank: peekCard.rank,
+        ranks: [peekCard.rank],
         initiatorId: _action.payload.playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],

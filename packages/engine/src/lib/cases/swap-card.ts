@@ -104,7 +104,7 @@ export function handleSwapCard(
   // Initialize toss-in phase
   // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
   newState.activeTossIn = {
-    rank: cardFromHand.rank,
+    ranks: [cardFromHand.rank],
     initiatorId: playerId,
     originalPlayerIndex: newState.currentPlayerIndex,
     participants: [],
