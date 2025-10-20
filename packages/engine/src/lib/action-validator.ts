@@ -378,29 +378,9 @@ export function actionValidator(
         return { valid: false, reason: 'Pending card is not a King' };
       }
 
-      // Must be in selecting-king-card action phase
-      if (state.pendingAction.actionPhase !== 'selecting-king-card') {
-        return {
-          valid: false,
-          reason: `Cannot select card in action phase ${state.pendingAction.actionPhase}`,
-        };
-      }
-
-      // Find target player
-      const targetPlayer = state.players.find((p) => p.id === targetPlayerId);
-      if (!targetPlayer) {
-        return { valid: false, reason: 'Target player not found' };
-      }
-
-      // Position must be valid for target player
-      if (position < 0 || position >= targetPlayer.cards.length) {
-        return {
-          valid: false,
-          reason: `Invalid position ${position} for target player`,
-        };
-      }
-
-      return { valid: true };
+      // King now uses SELECT_ACTION_TARGET, so this validation is deprecated
+      // Remove this case - King validation is handled in SELECT_ACTION_TARGET below
+      return { valid: false, reason: 'SELECT_KING_CARD_TARGET is deprecated, use SELECT_ACTION_TARGET' };
     }
 
     case 'DECLARE_KING_ACTION': {
@@ -440,16 +420,16 @@ export function actionValidator(
         return { valid: false, reason: 'Pending card is not a King' };
       }
 
-      // Must be in declaring-rank action phase (after selecting card)
-      if (state.pendingAction.actionPhase !== 'declaring-rank') {
+      // Must be in selecting-target action phase (after selecting card via SELECT_ACTION_TARGET)
+      if (state.pendingAction.actionPhase !== 'selecting-target') {
         return {
           valid: false,
           reason: `Cannot declare rank in action phase ${state.pendingAction.actionPhase}`,
         };
       }
 
-      // Must have selected a card
-      if (!state.pendingAction.selectedCardForKing) {
+      // Must have selected a card (stored in targets[0])
+      if (!state.pendingAction.targets?.[0]?.card) {
         return { valid: false, reason: 'No card selected for King action' };
       }
 

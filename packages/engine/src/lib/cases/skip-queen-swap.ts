@@ -28,7 +28,10 @@ export function handleSkipQueenSwap(
 
   // Move Queen card to discard pile (skip the swap)
   if (queenCard) {
-    newState.discardPile.addToTop(queenCard);
+    newState.discardPile.addToTop({
+      ...copy(queenCard),
+      played: true
+    });
   }
 
   // TODO: we should update knowledge even for skipped swap - players know the cards they peeked at remain in same positions
@@ -70,39 +73,12 @@ export function handleSkipQueenSwap(
         card: nextAction.card.rank,
       });
     } else {
-      // No more queued actions, finish toss-in and advance turn
-      const originalPlayerIndex = newState.activeTossIn!.originalPlayerIndex;
-      newState.activeTossIn = null;
-
-      newState.currentPlayerIndex =
-        (originalPlayerIndex + 1) % newState.players.length;
-
-      if (newState.currentPlayerIndex === 0) {
-        newState.turnCount++;
-      }
-
-      // Check if game should end (after vinto call, when we return to the vinto caller)
-      if (
-        newState.phase === 'final' &&
-        newState.players[newState.currentPlayerIndex].id ===
-          newState.vintoCallerId
-      ) {
-        // Final round complete - end the game
-        newState.phase = 'scoring';
-        newState.subPhase = 'idle';
-
-        console.log(
-          '[handleSkipQueenSwap] Final round complete, game finished'
-        );
-
-        return newState;
-      }
-
-      const nextPlayer = newState.players[newState.currentPlayerIndex];
-      newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
+      // No more queued actions - clear pendingAction
+      // GameEngine will handle turn advancement automatically
+      newState.pendingAction = null;
 
       console.log(
-        '[handleSkipQueenSwap] All toss-in actions processed, turn advanced'
+        '[handleSkipQueenSwap] All toss-in actions processed, turn will advance'
       );
     }
   } else if (newState.activeTossIn !== null) {

@@ -23,8 +23,7 @@ export const GameControls = observer(() => {
     (phase !== 'playing' && phase !== 'final') ||
     subPhase === 'choosing' || // Selecting swap position
     subPhase === 'selecting' || // Choosing card action
-    subPhase === 'declaring_rank' || // Declaring king rank
-    subPhase === 'awaiting_action' || // Awaiting action target
+    subPhase === 'awaiting_action' || // Awaiting action target (includes King rank declaration)
     subPhase === 'toss_queue_processing' || // Processing toss-in
     subPhase === 'toss_queue_active' || // Waiting for toss-in
     gameClient.state.finalTurnTriggered ||

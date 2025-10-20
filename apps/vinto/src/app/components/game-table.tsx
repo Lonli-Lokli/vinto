@@ -25,7 +25,6 @@ export const GameTable = observer(() => {
   // Map subPhases to old boolean flags
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
   const isChoosingCardAction = subPhase === 'choosing';
-  const isDeclaringRank = subPhase === 'declaring_rank';
   const isAwaitingActionTarget = subPhase === 'awaiting_action';
   const waitingForTossIn =
     subPhase === 'toss_queue_active' || subPhase === 'toss_queue_processing';
@@ -193,7 +192,6 @@ export const GameTable = observer(() => {
                       !isSelectingSwapPosition &&
                       !isChoosingCardAction &&
                       !isAwaitingActionTarget &&
-                      !isDeclaringRank &&
                       phase === 'playing'
                     )
                   }
@@ -242,7 +240,6 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   isSelectingSwapPosition={isSelectingSwapPosition}
-                  isDeclaringRank={isDeclaringRank}
                   swapPosition={swapPosition}
                   isSelectingActionTarget={shouldAllowCardInteractions()}
                 />
@@ -338,7 +335,6 @@ export const GameTable = observer(() => {
                     !isSelectingSwapPosition &&
                     !isChoosingCardAction &&
                     !isAwaitingActionTarget &&
-                    !isDeclaringRank &&
                     phase === 'playing'
                   )
                 }
@@ -361,7 +357,6 @@ export const GameTable = observer(() => {
                   }
                   gamePhase={phase}
                   isSelectingSwapPosition={isSelectingSwapPosition}
-                  isDeclaringRank={isDeclaringRank}
                   swapPosition={swapPosition}
                   isSelectingActionTarget={shouldAllowCardInteractions()}
                 />

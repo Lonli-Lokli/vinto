@@ -4,6 +4,7 @@ import './reflect-metadata-client-side';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import * as Sentry from '@sentry/nextjs';
+import { Analytics } from '@vercel/analytics/next';
 
 import './global.css'; // This is where you import your global Tailwind CSS styles
 import { Providers } from './providers';
@@ -108,6 +109,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-surface-primary text-on-surface`}>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

@@ -16,7 +16,6 @@ import {
   ProcessAITurnAction,
   Rank,
   SelectActionTargetAction,
-  SelectKingCardTargetAction,
   SetCoalitionLeaderAction,
   SetNextDrawCardAction,
   SkipQueenSwapAction,
@@ -98,15 +97,6 @@ export const GameActions = {
   skipQueenSwap: (playerId: string): SkipQueenSwapAction => ({
     type: 'SKIP_QUEEN_SWAP',
     payload: { playerId },
-  }),
-
-  selectKingCardTarget: (
-    playerId: string,
-    targetPlayerId: string,
-    position: number
-  ): SelectKingCardTargetAction => ({
-    type: 'SELECT_KING_CARD_TARGET',
-    payload: { playerId, targetPlayerId, position },
   }),
 
   declareKingAction: (

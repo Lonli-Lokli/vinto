@@ -49,3 +49,67 @@ export function areAllHumansReady(state: GameState): boolean {
     state.activeTossIn!.playersReadyForNextTurn.includes(p.id)
   );
 }
+
+/**
+ * Advance turn after toss-in completes
+ *
+ * This function handles turn advancement when all toss-in actions have been processed.
+ * It clears the toss-in state and moves to the next player.
+ *
+ * @param state - Current game state (will be mutated)
+ * @param context - Context string for logging (e.g., handler name)
+ */
+export function advanceTurnAfterTossIn(
+  state: GameState,
+  context: string
+): void {
+  if (!state.activeTossIn) {
+    console.warn(`[${context}] No active toss-in to complete`);
+    return;
+  }
+
+  // Save who started this turn before clearing toss-in
+  const originalPlayerIndex = state.activeTossIn.originalPlayerIndex;
+
+  // Clear toss-in
+  state.activeTossIn = null;
+
+  // Advance to next player from the ORIGINAL player who initiated the turn (circular)
+  state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
+
+  // Increment turn count when wrapping back to first player
+  if (state.currentPlayerIndex === 0) {
+    state.turnCount++;
+  }
+
+  // Check if game should end (after vinto call, when we return to the vinto caller)
+  if (
+    state.phase === 'final' &&
+    state.players[state.currentPlayerIndex].id === state.vintoCallerId
+  ) {
+    // Final round complete - end the game
+    state.phase = 'scoring';
+    state.subPhase = 'idle';
+
+    console.log(`[${context}] Final round complete, game finished`);
+    return;
+  }
+
+  // Get the new current player
+  const nextPlayer = state.players[state.currentPlayerIndex];
+
+  // Transition to appropriate phase based on player type
+  if (nextPlayer.isBot) {
+    state.subPhase = 'ai_thinking';
+  } else {
+    state.subPhase = 'idle';
+  }
+
+  console.log(`[${context}] Toss-in complete, turn advanced to:`, {
+    originalPlayerIndex,
+    nextPlayerIndex: state.currentPlayerIndex,
+    nextPlayer: nextPlayer.name,
+    subPhase: state.subPhase,
+    turnCount: state.turnCount,
+  });
+}

@@ -246,9 +246,9 @@ export function handleCardClick(params: {
   // During King action target selection, select card without revealing
   if (isAwaitingActionTarget && targetType === 'declare-action') {
     // Don't reveal the card - just highlight it
-    // Dispatch the King card target selection
+    // Dispatch the action target selection (now unified for all cards including King)
     gameClient.dispatch(
-      GameActions.selectKingCardTarget(humanPlayer.id, humanPlayer.id, position)
+      GameActions.selectActionTarget(humanPlayer.id, humanPlayer.id, position)
     );
     return;
   }
@@ -297,9 +297,9 @@ export function handleOpponentCardClick(params: {
   // During King action target selection for opponent cards, select without revealing
   if (isAwaitingActionTarget && targetType === 'declare-action') {
     // Don't reveal the card - just highlight it
-    // Dispatch the King card target selection
+    // Dispatch the action target selection (now unified for all cards including King)
     gameClient.dispatch(
-      GameActions.selectKingCardTarget(humanPlayer.id, playerId, position)
+      GameActions.selectActionTarget(humanPlayer.id, playerId, position)
     );
     return;
   }

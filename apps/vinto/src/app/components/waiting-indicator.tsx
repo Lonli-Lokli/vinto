@@ -17,7 +17,6 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
   const isAwaitingActionTarget =
     gameClient.state.subPhase === 'awaiting_action';
-  const isDeclaringRank = gameClient.state.subPhase === 'declaring_rank';
   const waitingForTossIn =
     gameClient.state.subPhase === 'toss_queue_active' ||
     gameClient.state.subPhase === 'toss_queue_processing';
@@ -56,10 +55,6 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
 
     if (isSelectingSwapPosition) {
       return 'Choosing which card to swap...';
-    }
-
-    if (isDeclaringRank) {
-      return 'Declaring rank for the King action...';
     }
 
     if (isAwaitingActionTarget) {

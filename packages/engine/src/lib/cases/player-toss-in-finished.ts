@@ -64,18 +64,14 @@ export function handlePlayerTossInFinished(
       // Start processing the first queued action
       const firstAction = newState.activeTossIn.queuedActions[0];
 
-      // Determine the appropriate action phase based on card rank
-      // King has special two-step flow: selecting-king-card -> declaring-rank
-      const actionPhase =
-        firstAction.card.rank === 'K'
-          ? 'selecting-king-card'
-          : 'choosing-action';
+      // All cards now use 'choosing-action' phase initially
+      // Multi-step actions (J, Q, K) track progress via targets.length
 
       // Set up pending action for the first queued card
       newState.pendingAction = {
         card: firstAction.card,
         playerId: firstAction.playerId,
-        actionPhase,
+        actionPhase: 'choosing-action',
         targetType: getTargetTypeFromRank(firstAction.card.rank),
         targets: [],
       };
@@ -95,61 +91,11 @@ export function handlePlayerTossInFinished(
       );
     } else {
       console.log(
-        '[handlePlayerTossInFinished] All humans ready, no queued actions, finishing toss-in and advancing turn'
+        '[handlePlayerTossInFinished] All humans ready, no queued actions'
       );
 
-      // Save the original player index before clearing toss-in
-      const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
-
-      // Clear toss-in
-      newState.activeTossIn = null;
-
-      // Advance to next player from the ORIGINAL player who initiated the turn (circular)
-      newState.currentPlayerIndex =
-        (originalPlayerIndex + 1) % newState.players.length;
-
-      // Increment turn count when wrapping back to first player
-      if (newState.currentPlayerIndex === 0) {
-        newState.turnCount++;
-      }
-
-      // Check if game should end (after vinto call, when we return to the vinto caller)
-      if (
-        newState.phase === 'final' &&
-        newState.players[newState.currentPlayerIndex].id ===
-          newState.vintoCallerId
-      ) {
-        // Final round complete - end the game
-        newState.phase = 'scoring';
-        newState.subPhase = 'idle';
-
-        console.log(
-          '[handlePlayerTossInFinished] Final round complete, game finished'
-        );
-
-        return newState;
-      }
-
-      // Get the new current player
-      const nextPlayer = newState.players[newState.currentPlayerIndex];
-
-      // Transition to appropriate phase based on player type
-      if (nextPlayer.isBot) {
-        newState.subPhase = 'ai_thinking';
-      } else {
-        newState.subPhase = 'idle';
-      }
-
-      console.log(
-        '[handlePlayerTossInFinished] Toss-in complete, turn advanced to:',
-        {
-          originalPlayerIndex,
-          nextPlayerIndex: newState.currentPlayerIndex,
-          nextPlayer: nextPlayer.name,
-          subPhase: newState.subPhase,
-          turnCount: newState.turnCount,
-        }
-      );
+      // Clear pendingAction - GameEngine will handle turn advancement
+      newState.pendingAction = null;
     }
   }
 

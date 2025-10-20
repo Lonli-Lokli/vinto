@@ -21,7 +21,6 @@ interface PlayerAreaProps {
   onCardClick?: (index: number) => void;
   gamePhase: 'setup' | 'playing' | 'final' | 'scoring';
   isSelectingSwapPosition?: boolean;
-  isDeclaringRank?: boolean;
   swapPosition?: number | null;
   isSelectingActionTarget?: boolean;
 }
@@ -33,7 +32,6 @@ export const PlayerArea = observer(function PlayerArea({
   onCardClick,
   gamePhase,
   isSelectingSwapPosition = false,
-  isDeclaringRank = false,
   swapPosition = null,
   isSelectingActionTarget = false,
 }: PlayerAreaProps) {
@@ -87,7 +85,6 @@ export const PlayerArea = observer(function PlayerArea({
       gamePhase={gamePhase}
       onCardClick={onCardClick}
       isSelectingSwapPosition={isSelectingSwapPosition}
-      isDeclaringRank={isDeclaringRank}
       swapPosition={swapPosition}
       isSelectingActionTarget={isSelectingActionTarget}
       temporarilyVisibleCards={temporarilyVisibleCards}

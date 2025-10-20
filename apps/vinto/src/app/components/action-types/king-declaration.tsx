@@ -15,9 +15,9 @@ export function KingDeclaration() {
   const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
   const nonActionCards = ['2', '3', '4', '5', '6', 'K', 'Joker'] as const;
 
-  // Get the pending card (the King card being played)
-  const actionPhase = gameClient.state.pendingAction?.actionPhase;
-  const selectedCard = gameClient.state.pendingAction?.selectedCardForKing;
+  // Get the pending action
+  const targets = gameClient.state.pendingAction?.targets || [];
+  const selectedTarget = targets[0];
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -25,8 +25,10 @@ export function KingDeclaration() {
     gameClient.state.activeTossIn.queuedActions.length > 0;
 
   // Check if we're in the card selection phase or rank declaration phase
-  const isSelectingCard = actionPhase === 'selecting-king-card';
-  const isDeclaringRank = actionPhase === 'declaring-rank';
+  // Step 1: targets.length === 0 → selecting card
+  // Step 2: targets.length === 1 → declaring rank
+  const isSelectingCard = targets.length === 0;
+  const isDeclaringRank = targets.length === 1;
 
   if (isSelectingCard) {
     // Step 1: Show instructions to select a card from hand or opponent's hand
@@ -79,9 +81,9 @@ export function KingDeclaration() {
           </div>
 
           {/* Selected card info */}
-          {selectedCard && (
+          {selectedTarget && (
             <div className="mb-2 text-xs text-gray-500 text-center">
-              Card selected at position {selectedCard.position + 1}
+              Card selected at position {selectedTarget.position + 1}
             </div>
           )}
 

@@ -500,9 +500,9 @@ export class BotAIAdapter {
     botId: string,
     context: BotDecisionContext
   ): Promise<void> {
-    const actionPhase = this.gameClient.state.pendingAction?.actionPhase;
+    const targets = this.gameClient.state.pendingAction?.targets || [];
 
-    if (actionPhase === 'selecting-king-card') {
+    if (targets.length === 0) {
       // Step 1: Select a card target
       // Use cached action plan if available, otherwise run MCTS fresh
       const decision: BotActionDecision = this.cachedActionDecision
@@ -517,7 +517,7 @@ export class BotAIAdapter {
         this.cachedActionDecision = decision;
 
         this.gameClient.dispatch(
-          GameActions.selectKingCardTarget(
+          GameActions.selectActionTarget(
             botId,
             target.playerId,
             target.position
@@ -532,8 +532,8 @@ export class BotAIAdapter {
         await this.delay(NORMAL_DELAY);
       }
 
-      // State will update and MobX reaction will trigger declaring-rank phase
-    } else if (actionPhase === 'declaring-rank') {
+      // State will update and MobX reaction will trigger step 2 (targets.length === 1)
+    } else if (targets.length === 1) {
       // Step 2: Declare the rank
       // Use the cached declared rank from step 1 to maintain consistency
       const declaredRank = this.cachedActionDecision?.declaredRank

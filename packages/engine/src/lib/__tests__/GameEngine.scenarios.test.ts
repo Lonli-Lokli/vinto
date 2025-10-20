@@ -1,10 +1,10 @@
 // GameEngine.scenarios.test.ts
 // Test specific game scenarios that have caused issues
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { GameEngine } from '../game-engine';
 import { GameActions } from '../game-actions';
-import { GameState, Card } from '@vinto/shapes';
+import { GameState, Card, Pile } from '@vinto/shapes';
 
 /**
  * Helper: Create a test game state with specific cards
@@ -62,20 +62,8 @@ function createTestState(overrides?: Partial<GameState>): GameState {
     currentPlayerIndex: 0,
     vintoCallerId: null,
     coalitionLeaderId: null,
-    drawPile: {
-      cards: [],
-      peekTop: () => null,
-      drawTop: () => null,
-      addToTop: () => {},
-      length: 0,
-    },
-    discardPile: {
-      cards: [],
-      peekTop: () => null,
-      drawTop: () => null,
-      addToTop: () => {},
-      length: 0,
-    },
+    drawPile: Pile.fromCards([]),
+    discardPile: Pile.fromCards([]),
     pendingAction: null,
     activeTossIn: null,
     recentActions: [],
@@ -181,36 +169,8 @@ describe('GameEngine - Toss-in Scenarios', () => {
           coalitionWith: [],
         },
       ],
-      drawPile: {
-        cards: [createCard('2'), createCard('3')],
-        peekTop: function () {
-          return this.cards[this.cards.length - 1] || null;
-        },
-        drawTop: function () {
-          return this.cards.pop() || null;
-        },
-        addToTop: function (card) {
-          this.cards.push(card);
-        },
-        get length() {
-          return this.cards.length;
-        },
-      },
-      discardPile: {
-        cards: [],
-        peekTop: function () {
-          return this.cards[this.cards.length - 1] || null;
-        },
-        drawTop: function () {
-          return this.cards.pop() || null;
-        },
-        addToTop: function (card) {
-          this.cards.push(card);
-        },
-        get length() {
-          return this.cards.length;
-        },
-      },
+      drawPile: Pile.fromCards([createCard('2'), createCard('3')]),
+      discardPile: Pile.fromCards([]),
       subPhase: 'choosing',
       pendingAction: {
         card: ace1,
@@ -477,36 +437,8 @@ describe('GameEngine - Toss-in Scenarios', () => {
           coalitionWith: [],
         },
       ],
-      drawPile: {
-        cards: [createCard('2'), createCard('3'), createCard('4')],
-        peekTop: function () {
-          return this.cards[this.cards.length - 1] || null;
-        },
-        drawTop: function () {
-          return this.cards.pop() || null;
-        },
-        addToTop: function (card) {
-          this.cards.push(card);
-        },
-        get length() {
-          return this.cards.length;
-        },
-      },
-      discardPile: {
-        cards: [],
-        peekTop: function () {
-          return this.cards[this.cards.length - 1] || null;
-        },
-        drawTop: function () {
-          return this.cards.pop() || null;
-        },
-        addToTop: function (card) {
-          this.cards.push(card);
-        },
-        get length() {
-          return this.cards.length;
-        },
-      },
+      drawPile: Pile.fromCards([createCard('2'), createCard('3'), createCard('4')]),
+      discardPile: Pile.fromCards([]),
       subPhase: 'choosing',
       pendingAction: {
         card: king,
@@ -527,9 +459,9 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // Step 2: Human selects target card (bot-1's Ace at position 0)
     newState = GameEngine.reduce(
       newState,
-      GameActions.selectKingCardTarget('human-1', 'bot-1', 0)
+      GameActions.selectActionTarget('human-1', 'bot-1', 0)
     );
-    expect(newState.pendingAction?.selectedCardForKing).toBeDefined();
+    expect(newState.pendingAction?.targets[0]?.card).toBeDefined();
 
     // Step 3: Human declares rank 'A' (correct declaration - Ace is action card)
     newState = GameEngine.reduce(

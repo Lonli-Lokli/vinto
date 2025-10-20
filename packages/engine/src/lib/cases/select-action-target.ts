@@ -157,6 +157,23 @@ export function handleSelectActionTarget(
     }
 
     case 'K': {
+      // King: Select a card, then declare rank
+      // Step 1: Player selects a card (targets.length === 0 → 1)
+      // Step 2: Player declares rank via DECLARE_KING_ACTION (handled separately)
+
+      if (targets.length === 1) {
+        // First target selected - store the card for later validation
+        const targetPlayer = newState.players.find(
+          (p) => p.id === targetPlayerId
+        );
+        if (targetPlayer) {
+          const selectedCard = targetPlayer.cards[position];
+          // Store the card in the target for validation when rank is declared
+          newState.pendingAction!.targets[0].card = selectedCard;
+        }
+        // Stay in awaiting_action phase
+        // Next: Player will call DECLARE_KING_ACTION with declaredRank
+      }
       break;
     }
 

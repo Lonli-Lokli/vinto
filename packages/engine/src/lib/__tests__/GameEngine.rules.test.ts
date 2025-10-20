@@ -107,7 +107,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         currentPlayerIndex: 0,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
-            createTestCard('K', 'p1c1'),
+          createTestCard('K', 'p1c1'),
             createTestCard('Q', 'p1c2'),
           ]),
           createTestPlayer('p2', 'Player 2', false, [
@@ -441,7 +441,11 @@ describe('Game Engine - Rules-Based Tests', () => {
         activeTossIn: {
           rank: 'A',
           initiatorId: 'p1',
+          originalPlayerIndex: 0,
           participants: [],
+          queuedActions: [],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
         },
       });
 
@@ -480,7 +484,11 @@ describe('Game Engine - Rules-Based Tests', () => {
         activeTossIn: {
           rank: 'A', // Looking for Aces
           initiatorId: 'p1',
+          originalPlayerIndex: 0,
           participants: [],
+          queuedActions: [],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
         },
       });
 
@@ -503,7 +511,11 @@ describe('Game Engine - Rules-Based Tests', () => {
         activeTossIn: {
           rank: 'A',
           initiatorId: 'p1',
+          originalPlayerIndex: 0,
           participants: ['p2', 'p3'],
+          queuedActions: [],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
         },
       });
 

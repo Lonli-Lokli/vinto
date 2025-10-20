@@ -18,7 +18,6 @@ import { handlePlayerTossInFinished } from './cases/player-toss-in-finished';
 import { handlePeekSetupCard } from './cases/peek-setup-card';
 import { handleProcessAITurn } from './cases/process-ai-turn';
 import { handleSelectActionTarget } from './cases/select-action-target';
-import { handleSelectKingCardTarget } from './cases/select-king-card-target';
 import { handleSetCoalitionLeader } from './cases/set-coalition-leader';
 import { handleSkipQueenSwap } from './cases/skip-queen-swap';
 import { handlePlayDiscard } from './cases/play-discard';
@@ -28,6 +27,7 @@ import { handleSetNextDrawCard } from './cases/set-next-draw-card';
 import { GameAction, GameState, NeverError } from '@vinto/shapes';
 import { handleExecuteJackSwap } from './cases/execute-jack-swap';
 import { handleSkipJackSwap } from './cases/skip-jack-swap';
+import { advanceTurnAfterTossIn } from './utils/toss-in-utils';
 
 /**
  * GameEngine - The authoritative game logic
@@ -66,82 +66,119 @@ export class GameEngine {
       return state; // Return unchanged state for invalid actions
     }
 
+    console.log(`[GameEngine] Processing action: ${action.type}`);
     // Route to specific handler based on action type
+    let newState: GameState;
     switch (action.type) {
       case 'DRAW_CARD':
-        return handleDrawCard(state, action);
+        newState = handleDrawCard(state, action);
+        break;
 
       case 'SWAP_CARD':
-        return handleSwapCard(state, action);
+        newState = handleSwapCard(state, action);
+        break;
 
       case 'DISCARD_CARD':
-        return handleDiscardCard(state, action);
+        newState = handleDiscardCard(state, action);
+        break;
 
       case 'ADVANCE_TURN':
-        return handleAdvanceTurn(state, action);
+        newState = handleAdvanceTurn(state, action);
+        break;
 
       case 'PLAY_DISCARD':
-        return handlePlayDiscard(state, action);
+        newState = handlePlayDiscard(state, action);
+        break;
 
       case 'USE_CARD_ACTION':
-        return handleUseCardAction(state, action);
+        newState = handleUseCardAction(state, action);
+        break;
 
       case 'SELECT_ACTION_TARGET':
-        return handleSelectActionTarget(state, action);
+        newState = handleSelectActionTarget(state, action);
+        break;
 
       case 'CONFIRM_PEEK':
-        return handleConfirmPeek(state, action);
+        newState = handleConfirmPeek(state, action);
+        break;
 
       case 'CALL_VINTO':
-        return handleCallVinto(state, action);
+        newState = handleCallVinto(state, action);
+        break;
 
       case 'EXECUTE_JACK_SWAP':
-        return handleExecuteJackSwap(state, action);
+        newState = handleExecuteJackSwap(state, action);
+        break;
 
       case 'SKIP_JACK_SWAP':
-        return handleSkipJackSwap(state, action);
+        newState = handleSkipJackSwap(state, action);
+        break;
 
       case 'EXECUTE_QUEEN_SWAP':
-        return handleExecuteQueenSwap(state, action);
+        newState = handleExecuteQueenSwap(state, action);
+        break;
 
       case 'SKIP_QUEEN_SWAP':
-        return handleSkipQueenSwap(state, action);
-
-      case 'SELECT_KING_CARD_TARGET':
-        return handleSelectKingCardTarget(state, action);
+        newState = handleSkipQueenSwap(state, action);
+        break;
 
       case 'DECLARE_KING_ACTION':
-        return handleDeclareKingAction(state, action);
+        newState = handleDeclareKingAction(state, action);
+        break;
 
       case 'PARTICIPATE_IN_TOSS_IN':
-        return handleParticipateInTossIn(state, action);
+        newState = handleParticipateInTossIn(state, action);
+        break;
 
       case 'PLAYER_TOSS_IN_FINISHED':
-        return handlePlayerTossInFinished(state, action);
+        newState = handlePlayerTossInFinished(state, action);
+        break;
 
       case 'FINISH_TOSS_IN_PERIOD':
-        return handleFinishTossInPeriod(state, action);
+        newState = handleFinishTossInPeriod(state, action);
+        break;
 
       case 'SET_COALITION_LEADER':
-        return handleSetCoalitionLeader(state, action);
+        newState = handleSetCoalitionLeader(state, action);
+        break;
 
       case 'PROCESS_AI_TURN':
-        return handleProcessAITurn(state, action);
+        newState = handleProcessAITurn(state, action);
+        break;
 
       case 'PEEK_SETUP_CARD':
-        return handlePeekSetupCard(state, action);
+        newState = handlePeekSetupCard(state, action);
+        break;
 
       case 'FINISH_SETUP':
-        return handleFinishSetup(state, action);
+        newState = handleFinishSetup(state, action);
+        break;
 
       case 'UPDATE_DIFFICULTY':
-        return handleUpdateDifficulty(state, action);
+        newState = handleUpdateDifficulty(state, action);
+        break;
 
       case 'SET_NEXT_DRAW_CARD':
-        return handleSetNextDrawCard(state, action);
+        newState = handleSetNextDrawCard(state, action);
+        break;
 
       default:
         throw new NeverError(action);
     }
+
+    // POST-ACTION PROCESSING
+    // Auto-advance turn if toss-in queue is empty and all players are ready
+    if (
+      newState.activeTossIn &&
+      newState.activeTossIn.queuedActions.length === 0 &&
+      newState.pendingAction === null &&
+      newState.activeTossIn.playersReadyForNextTurn.length === newState.players.length
+    ) {
+      // All queued actions have been processed
+      // Advance turn automatically
+      advanceTurnAfterTossIn(newState, `GameEngine.reduce(${action.type})`);
+    }
+
+    return newState;
   }
 }

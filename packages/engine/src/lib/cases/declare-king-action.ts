@@ -11,7 +11,7 @@ import {
  *
  * Flow:
  * 1. Player has used a King card (via USE_CARD_ACTION)
- * 2. Player has selected a card from their hand or an opponent's hand (via SELECT_KING_CARD_TARGET)
+ * 2. Player has selected a card from their hand or an opponent's hand (via SELECT_ACTION_TARGET)
  * 3. Player declares a rank (any rank including K is allowed)
  * 4. Validate declared rank against the selected card's actual rank
  * 5a. If correct:
@@ -41,9 +41,9 @@ export function handleDeclareKingAction(
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  // Get the selected card from pendingAction
-  const selectedCardInfo = newState.pendingAction?.selectedCardForKing;
-  if (!selectedCardInfo) {
+  // Get the selected card from pendingAction.targets[0]
+  const selectedTarget = newState.pendingAction?.targets?.[0];
+  if (!selectedTarget || !selectedTarget.card) {
     console.error(
       '[handleDeclareKingAction] No card was selected for King action'
     );
@@ -54,7 +54,7 @@ export function handleDeclareKingAction(
     playerId: targetPlayerId,
     position,
     card: selectedCard,
-  } = selectedCardInfo;
+  } = selectedTarget;
   const actualRank = selectedCard.rank;
   const isCorrect = actualRank === declaredRank;
 
@@ -68,7 +68,10 @@ export function handleDeclareKingAction(
 
   // Move King card to discard pile first (always happens)
   if (newState.pendingAction?.card) {
-    newState.discardPile.addToTop(newState.pendingAction.card);
+    newState.discardPile.addToTop({
+      ...copy(newState.pendingAction.card),
+      played: true
+    });
   }
 
   // Find the target player
@@ -96,12 +99,9 @@ export function handleDeclareKingAction(
       newState.pendingAction = {
         card: removedCard,
         playerId,
-        actionPhase:
-          removedCard.rank === 'K' ? 'selecting-king-card' : 'selecting-target',
+        actionPhase: 'selecting-target',
         targetType,
         targets: [],
-        selectedCardForKing:
-          removedCard.rank === 'K' ? selectedCardInfo : undefined,
       };
       newState.subPhase = 'awaiting_action';
 

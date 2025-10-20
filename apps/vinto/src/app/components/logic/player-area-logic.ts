@@ -85,7 +85,6 @@ export function getCardSizeForPlayer(
 export function isCardSelectable(params: {
   hasOnCardClick: boolean;
   isSelectingSwapPosition: boolean;
-  isDeclaringRank: boolean;
   swapPosition: number | null;
   cardIndex: number;
   isSelectingActionTarget: boolean;
@@ -93,7 +92,6 @@ export function isCardSelectable(params: {
   const {
     hasOnCardClick,
     isSelectingSwapPosition,
-    isDeclaringRank,
     swapPosition,
     cardIndex,
     isSelectingActionTarget,
@@ -101,9 +99,7 @@ export function isCardSelectable(params: {
 
   return (
     hasOnCardClick &&
-    ((isSelectingSwapPosition && !isDeclaringRank) ||
-      (isDeclaringRank && swapPosition === cardIndex) ||
-      isSelectingActionTarget)
+    (isSelectingSwapPosition || isSelectingActionTarget)
   );
 }
 
@@ -112,24 +108,18 @@ export function isCardSelectable(params: {
  */
 export function shouldHighlightCard(params: {
   isSelectingSwapPosition: boolean;
-  isDeclaringRank: boolean;
   swapPosition: number | null;
   cardIndex: number;
   isSelectingActionTarget: boolean;
 }): boolean {
   const {
     isSelectingSwapPosition,
-    isDeclaringRank,
     swapPosition,
     cardIndex,
     isSelectingActionTarget,
   } = params;
 
-  return (
-    (isSelectingSwapPosition && !isDeclaringRank) ||
-    (isDeclaringRank && swapPosition === cardIndex) ||
-    isSelectingActionTarget
-  );
+  return isSelectingSwapPosition || isSelectingActionTarget;
 }
 
 /**

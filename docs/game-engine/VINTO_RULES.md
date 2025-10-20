@@ -117,7 +117,7 @@ flowchart TD
 
 - After a card is placed on discard, any player may immediately toss in a card of the **same rank**.
 - Tossed-in card’s action resolves immediately, while action is still optional.
-- If wrong rank → player takes back their card and draws **1 penalty card face-down**.
+- If wrong rank → player takes back their card and draws **1 penalty card face-down**, also no more tossin available during this round.
 
 ---
 

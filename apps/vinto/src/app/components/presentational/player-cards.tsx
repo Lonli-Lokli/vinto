@@ -20,7 +20,6 @@ interface PlayerCardsProps {
   gamePhase: GamePhase;
   onCardClick?: (index: number) => void;
   isSelectingSwapPosition: boolean;
-  isDeclaringRank: boolean;
   swapPosition: number | null;
   isSelectingActionTarget: boolean;
   temporarilyVisibleCards: Set<number>;
@@ -39,7 +38,6 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
   gamePhase,
   onCardClick,
   isSelectingSwapPosition,
-  isDeclaringRank,
   swapPosition,
   isSelectingActionTarget,
   temporarilyVisibleCards,
@@ -64,7 +62,6 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
         const cardIsSelectable = isCardSelectable({
           hasOnCardClick: !!onCardClick,
           isSelectingSwapPosition,
-          isDeclaringRank,
           swapPosition,
           cardIndex: index,
           isSelectingActionTarget,
@@ -72,7 +69,6 @@ export const PlayerCards: React.FC<PlayerCardsProps> = ({
 
         const cardHighlighted = shouldHighlightCard({
           isSelectingSwapPosition,
-          isDeclaringRank,
           swapPosition,
           cardIndex: index,
           isSelectingActionTarget,

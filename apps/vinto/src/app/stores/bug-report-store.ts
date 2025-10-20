@@ -6,7 +6,9 @@ import {
   computed,
   runInAction,
 } from 'mobx';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
+import { AnimationService } from '../services/animation-service';
+import { HeadlessService } from '../services/headless-service';
 
 export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -16,7 +18,11 @@ export class BugReportStore {
   @observable description = '';
   @observable submitStatus: SubmitStatus = 'idle';
 
-  constructor() {
+  constructor(
+    // we have to resolve our services, otherwise they will not be created
+    @inject(AnimationService) _animationService: AnimationService,
+    @inject(HeadlessService) _headlessService: HeadlessService
+  ) {
     makeObservable(this);
   }
 
@@ -69,7 +75,10 @@ export class BugReportStore {
       formData.append('email', this.email);
       formData.append('description', this.description);
       formData.append('timestamp', new Date().toISOString());
-      formData.append('appVersion', process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_ID || 'unknown');
+      formData.append(
+        'appVersion',
+        process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_ID || 'unknown'
+      );
       formData.append('userAgent', navigator.userAgent);
 
       // Add debug data as a JSON attachment

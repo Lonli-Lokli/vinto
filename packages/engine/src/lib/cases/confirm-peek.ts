@@ -29,7 +29,10 @@ export function handleConfirmPeek(
 
   // Move action card to discard pile
   if (peekCard) {
-    newState.discardPile.addToTop(peekCard);
+    newState.discardPile.addToTop({
+      ...copy(peekCard),
+      played: true
+    });
   }
 
   // Clear pending action
@@ -69,38 +72,12 @@ export function handleConfirmPeek(
         card: nextAction.card.rank,
       });
     } else {
-      // No more queued actions, finish toss-in and advance turn
-      const originalPlayerIndex = newState.activeTossIn.originalPlayerIndex;
-      newState.activeTossIn = null;
-
-      // Advance to next player from original player
-      newState.currentPlayerIndex =
-        (originalPlayerIndex + 1) % newState.players.length;
-
-      if (newState.currentPlayerIndex === 0) {
-        newState.turnCount++;
-      }
-
-      // Check if game should end (after vinto call, when we return to the vinto caller)
-      if (
-        newState.phase === 'final' &&
-        newState.players[newState.currentPlayerIndex].id ===
-          newState.vintoCallerId
-      ) {
-        // Final round complete - end the game
-        newState.phase = 'scoring';
-        newState.subPhase = 'idle';
-
-        console.log('[handleConfirmPeek] Final round complete, game finished');
-
-        return newState;
-      }
-
-      const nextPlayer = newState.players[newState.currentPlayerIndex];
-      newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
+      // No more queued actions - clear pendingAction
+      // GameEngine will handle turn advancement automatically
+      newState.pendingAction = null;
 
       console.log(
-        '[handleConfirmPeek] All toss-in actions processed, turn advanced'
+        '[handleConfirmPeek] All toss-in actions processed, turn will advance'
       );
     }
   } else if (newState.activeTossIn !== null) {

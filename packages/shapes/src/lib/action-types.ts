@@ -22,7 +22,6 @@ export type GameAction =
   | SkipJackSwapAction
   | ExecuteQueenSwapAction
   | SkipQueenSwapAction
-  | SelectKingCardTargetAction
   | DeclareKingActionAction
 
   // Toss-in actions
@@ -131,15 +130,6 @@ export interface SkipQueenSwapAction {
   type: 'SKIP_QUEEN_SWAP';
   payload: {
     playerId: string;
-  };
-}
-
-export interface SelectKingCardTargetAction {
-  type: 'SELECT_KING_CARD_TARGET';
-  payload: {
-    playerId: string;
-    targetPlayerId: string;
-    position: number;
   };
 }
 
