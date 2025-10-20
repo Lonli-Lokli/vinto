@@ -212,12 +212,17 @@ export function handleSelectActionTarget(
 
         if (isPartOfTossIn) {
           // Return to toss-in phase (action was from toss-in participation)
+          // Add this card's rank to toss-in ranks if not already present
+          if (aceCard && !newState.activeTossIn!.ranks.includes(aceCard.rank)) {
+            newState.activeTossIn!.ranks.push(aceCard.rank);
+          }
           // Clear the ready list so players can confirm again for this new toss-in round
           clearTossInReadyList(newState);
           newState.subPhase = 'toss_queue_active';
           newState.activeTossIn!.waitingForInput = true;
           console.log(
-            '[handleSelectActionTarget] Ace action during toss-in complete, returning to toss-in phase (ready list cleared)'
+            '[handleSelectActionTarget] Ace action during toss-in complete, rank added, returning to toss-in phase (ready list cleared)',
+            { ranks: newState.activeTossIn!.ranks }
           );
         } else {
           // Initialize new toss-in phase (normal turn flow)

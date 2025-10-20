@@ -130,12 +130,17 @@ export function handleExecuteJackSwap(
     }
   } else if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation but no queue)
+    // Add this card's rank to toss-in ranks if not already present
+    if (jackCard && !newState.activeTossIn.ranks.includes(jackCard.rank)) {
+      newState.activeTossIn.ranks.push(jackCard.rank);
+    }
     // Clear the ready list so players can confirm again for this new toss-in round
     clearTossInReadyList(newState);
     newState.subPhase = 'toss_queue_active';
     newState.activeTossIn.waitingForInput = true;
     console.log(
-      '[handleExecuteJackSwap] Jack swap executed during toss-in, returning to toss-in phase (ready list cleared)'
+      '[handleExecuteJackSwap] Jack swap executed during toss-in, rank added, returning to toss-in phase (ready list cleared)',
+      { ranks: newState.activeTossIn.ranks }
     );
   } else {
     // Initialize new toss-in phase (normal turn flow)

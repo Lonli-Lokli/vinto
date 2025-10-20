@@ -257,7 +257,7 @@ Skip toss-in and proceed to next player's turn`;
                       {getCardName(rank)}
                     </span>
                   ))}
-                </ReactJoin>
+                </ReactJoin> {' '}
                 • Wrong = penalty
               </div>
             </div>
