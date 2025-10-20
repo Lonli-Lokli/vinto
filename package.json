@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "nx run vinto:build",
-    "start": "nx dev vinto",
+    "build": "nx run game:build",
+    "start": "nx dev game",
     "format": "nx format:write",
     "lint": "nx run-many --all --target=lint --fix=true",
     "test": "nx run-many --all --target=test --passWithNoTests"
