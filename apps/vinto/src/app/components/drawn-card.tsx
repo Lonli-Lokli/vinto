@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './presentational';
-import { Card as CardType } from '@/shared';
+import { Card as CardType } from '@vinto/shapes';
 import { useCardAnimationStore, useUIStore } from './di-provider';
 
 interface DrawnCardProps {

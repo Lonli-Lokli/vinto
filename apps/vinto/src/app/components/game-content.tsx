@@ -7,7 +7,7 @@ import { GameHeader } from './game-header';
 import { MiddleArea, BottomArea } from './presentational';
 import { CoalitionTurnIndicator } from './coalition-turn-indicator';
 import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
-import { useGameClientInitialized } from '@/client';
+import { useGameClientInitialized } from '@vinto/local-client';
 import { AnimatedCardOverlay } from './animated-card';
 
 /**

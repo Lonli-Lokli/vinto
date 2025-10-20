@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useBugReportStore } from '../di-provider';
-import { useGameClient } from '@/client';
+import { useGameClient } from '@vinto/local-client';
 
 interface BugReportModalProps {
   isOpen: boolean;

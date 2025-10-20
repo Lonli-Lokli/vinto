@@ -4,9 +4,9 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './presentational';
 import { RankDeclarationButton } from './buttons';
-import { Rank } from '@/shared';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { Rank } from '@vinto/shapes';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 import { useUIStore } from './di-provider';
 import { SkipDeclarationButton } from './buttons/skip-declaration';
 

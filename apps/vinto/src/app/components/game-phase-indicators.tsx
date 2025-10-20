@@ -32,10 +32,10 @@ import {
   getCardLongDescription as getActionExplanation,
   Rank,
   Card,
-} from '@/shared';
+} from '@vinto/shapes';
 import { ReactJoin } from '../utils/react-join';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 
 // Main Component
 export const GamePhaseIndicators = observer(() => {

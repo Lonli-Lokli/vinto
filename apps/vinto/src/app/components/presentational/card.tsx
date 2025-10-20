@@ -2,7 +2,7 @@
 'use client';
 
 import React, { FC } from 'react';
-import { Card as CardType, NeverError, Rank } from '@/shared';
+import { Card as CardType, NeverError, Rank } from '@vinto/shapes';
 import {
   Image_2,
   Image_3,

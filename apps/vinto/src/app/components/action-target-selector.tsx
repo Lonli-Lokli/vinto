@@ -9,8 +9,8 @@ import { JackAction } from './action-types/jack-action';
 import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
-import { useGameClient } from '@/client';
-import { NeverError, TargetType } from '@/shared';
+import { useGameClient } from '@vinto/local-client';
+import { NeverError, TargetType } from '@vinto/shapes';
 
 /**
  * ActionTargetSelector: Renders action-specific controls during action execution.

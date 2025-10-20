@@ -13,8 +13,8 @@ import {
 } from './buttons';
 import { SettingsPopover } from './mobile-settings';
 import { BugReportModal } from './modals';
-import { GameActions } from '@/engine';
-import { useGameClient } from '@/client';
+import { GameActions } from '@vinto/engine';
+import { useGameClient } from '@vinto/local-client';
 
 export const GameHeader = observer(() => {
   const gameClient = useGameClient();

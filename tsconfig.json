@@ -5,6 +5,18 @@
   "references": [
     {
       "path": "./apps/vinto"
+    },
+    {
+      "path": "./packages/engine"
+    },
+    {
+      "path": "./packages/shapes"
+    },
+    {
+      "path": "./packages/local-client"
+    },
+    {
+      "path": "./packages/bot"
     }
   ]
 }

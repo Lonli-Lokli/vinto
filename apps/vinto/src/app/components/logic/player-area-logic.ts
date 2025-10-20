@@ -1,7 +1,7 @@
 // player-area-logic.ts
 // Pure functions for PlayerArea component logic
 
-import { GamePhase, PlayerState } from '@/shared';
+import { GamePhase, PlayerState } from '@vinto/shapes';
 
 export type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
 

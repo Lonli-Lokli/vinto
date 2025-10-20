@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Card as CardType, Pile } from '@/shared';
+import { Card as CardType, Pile } from '@vinto/shapes';
 import { DiscardPile } from './discard-pile';
 import { DrawPile } from './draw-pile';
 import { DrawnCard } from '../drawn-card';

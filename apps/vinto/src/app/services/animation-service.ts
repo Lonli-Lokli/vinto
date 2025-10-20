@@ -26,14 +26,32 @@ import {
   SkipQueenSwapAction,
   SwapCardAction,
   UseCardActionAction,
-} from '@/shared';
+} from '@vinto/shapes';
+import {
+  registerStateUpdateCallback,
+  unregisterStateUpdateCallback,
+} from '@vinto/local-client';
 
 @injectable()
 export class AnimationService {
+  private _stateUpdateCallback?: (
+    oldState: GameState,
+    newState: GameState,
+    action: GameAction
+  ) => void;
+  private _unregisterCallback?: () => void;
   private animationStore: CardAnimationStore;
 
   constructor(@inject(CardAnimationStore) animationStore: CardAnimationStore) {
     this.animationStore = animationStore;
+    // Register state update callback
+    this._stateUpdateCallback = this.handleStateUpdate.bind(this);
+    registerStateUpdateCallback(this._stateUpdateCallback);
+    this._unregisterCallback = () => {
+      if (this._stateUpdateCallback) {
+        unregisterStateUpdateCallback(this._stateUpdateCallback);
+      }
+    };
   }
 
   /**
@@ -1058,5 +1076,13 @@ export class AnimationService {
    */
   reset(): void {
     this.animationStore.reset();
+  }
+
+  public dispose() {
+    // Unregister callback
+    if (this._unregisterCallback) {
+      this._unregisterCallback();
+    }
+    console.log('Disposed AnimationService');
   }
 }

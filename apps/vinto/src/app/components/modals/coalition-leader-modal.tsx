@@ -6,8 +6,8 @@ import { observer } from 'mobx-react-lite';
 import { Crown } from 'lucide-react';
 import { useUIStore } from '../di-provider';
 import { ContinueButton, OpponentSelectButton } from '../buttons';
-import { GameActions } from '@/engine';
-import { useGameClient } from '@/client';
+import { GameActions } from '@vinto/engine';
+import { useGameClient } from '@vinto/local-client';
 
 export const CoalitionLeaderModal = observer(() => {
   const gameClient = useGameClient();
@@ -67,11 +67,16 @@ export const CoalitionLeaderModal = observer(() => {
       modal-mode="mega"
       className="z-50 bg-surface-primary border-primary border-2 rounded-2xl shadow-theme-lg max-w-2xl w-full animate-fade-in"
     >
-      <form method="dialog" className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]">
+      <form
+        method="dialog"
+        className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]"
+      >
         <header className="text-center mb-0 bg-surface-secondary px-8 py-6 rounded-t-2xl">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Crown className="text-warning" size={32} />
-            <h2 className="text-2xl font-bold text-primary">Select Coalition Leader</h2>
+            <h2 className="text-2xl font-bold text-primary">
+              Select Coalition Leader
+            </h2>
             <button
               type="button"
               onClick={() => dialogRef.current?.close('close')}
@@ -82,7 +87,8 @@ export const CoalitionLeaderModal = observer(() => {
             </button>
           </div>
           <p className="text-secondary">
-            {vintoCaller?.name} called Vinto! Choose who will lead the coalition.
+            {vintoCaller?.name} called Vinto! Choose who will lead the
+            coalition.
           </p>
           <p className="text-sm text-secondary mt-2">
             The leader will see all coalition cards and play for the team.

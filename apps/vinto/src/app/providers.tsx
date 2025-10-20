@@ -3,7 +3,7 @@
 
 import { ThemeProvider } from 'next-themes';
 import { DIProvider } from './components/di-provider';
-import { GameClientProvider } from '@/client';
+import { GameClientProvider } from '@vinto/local-client';
 
 /**
  * Enhanced Providers component that includes both:

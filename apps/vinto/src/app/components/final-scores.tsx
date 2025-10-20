@@ -4,10 +4,10 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Crown, Users } from 'lucide-react';
-import { calculateFinalScores } from '../../engine/utils/scoring';
 import { HelpPopover, Avatar } from './presentational';
-import { useGameClient } from '@/client';
-import { PlayerState } from '@/shared';
+import { useGameClient } from '@vinto/local-client';
+import { PlayerState } from '@vinto/shapes';
+import { calculateFinalScores } from '@vinto/engine';
 
 export const FinalScores = observer(() => {
   const gameClient = useGameClient();

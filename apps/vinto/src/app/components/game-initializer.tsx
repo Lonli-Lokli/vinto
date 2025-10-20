@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { useGameClientInitialized } from '@/client';
+import { useGameClientInitialized } from '@vinto/local-client';
 
 export const GameInitializer = () => {
   const isInitialized = useGameClientInitialized();

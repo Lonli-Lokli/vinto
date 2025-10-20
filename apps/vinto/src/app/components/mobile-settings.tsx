@@ -1,8 +1,8 @@
 import { observer } from 'mobx-react-lite';
 import { useRef, useEffect } from 'react';
 import { DifficultyButton } from './buttons';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 
 export const SettingsPopover = observer(
   ({

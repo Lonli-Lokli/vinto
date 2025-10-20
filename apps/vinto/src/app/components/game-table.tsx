@@ -7,7 +7,7 @@ import { useUIStore } from './di-provider';
 import { PlayerArea } from './player-area';
 import { DeckArea } from './presentational';
 import { useIsDesktop } from '../hooks/use-media-query';
-import { useGameClient } from '@/client';
+import { useGameClient } from '@vinto/local-client';
 import * as GameTableLogic from './logic/game-table-logic';
 
 export const GameTable = observer(() => {

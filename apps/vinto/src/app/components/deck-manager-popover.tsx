@@ -5,25 +5,9 @@ import React, { useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card as CardComponent } from './presentational';
 import { ClosePopoverButton, DeckCardSelectButton } from './buttons';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
-import { Card, Rank } from '@/shared';
-
-const ALL_RANKS: Rank[] = [
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '10',
-  'J',
-  'Q',
-  'K',
-  'A',
-];
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
+import { ALL_RANKS, Card, Rank } from '@vinto/shapes';
 
 export const DeckManagerPopover = observer(
   ({

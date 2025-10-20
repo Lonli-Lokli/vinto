@@ -11,7 +11,7 @@
 import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
-import { Card } from '@/shared';
+import { Card } from '@vinto/shapes';
 
 export type AnimationType =
   | 'swap'

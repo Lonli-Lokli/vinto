@@ -1,9 +1,14 @@
 // game-table-logic.ts
 // Pure functions for GameTable component logic
 
-import type { GameClient } from '@/client';
-import { GameActions } from '@/engine';
-import { GamePhase, GameSubPhase, PendingAction, PlayerState } from '@/shared';
+import type { GameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
+import {
+  GamePhase,
+  GameSubPhase,
+  PendingAction,
+  PlayerState,
+} from '@vinto/shapes';
 import { UIStore } from '../../stores';
 
 /**

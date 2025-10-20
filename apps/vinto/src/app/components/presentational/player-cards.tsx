@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Card } from './card';
-import type { PlayerState, GamePhase } from '@/shared';
+import type { PlayerState, GamePhase } from '@vinto/shapes';
 import type { PlayerPosition, CardSize } from '../logic/player-area-logic';
 import {
   canSeePlayerCard,

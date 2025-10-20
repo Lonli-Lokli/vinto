@@ -16,12 +16,6 @@
         "name": "next"
       }
     ],
-    "paths": {
-      "@/app": ["./src/app/index.ts"],
-      "@/client": ["./src/client/index.ts"],
-      "@/engine": ["./src/engine/index.ts"],
-      "@/shared": ["./src/shared/index.ts"]
-    },
     "types": ["jest", "node"],
     "outDir": "dist",
     "rootDir": "src",
@@ -48,5 +42,16 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../packages/engine"
+    },
+    {
+      "path": "../../packages/shapes"
+    },
+    {
+      "path": "../../packages/local-client"
+    }
   ]
 }

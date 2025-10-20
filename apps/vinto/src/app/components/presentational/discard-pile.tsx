@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './card';
-import { Pile, Card as CardType } from '@/shared';
+import { Pile, Card as CardType } from '@vinto/shapes';
 import { useCardAnimationStore, useUIStore } from '../di-provider';
 
 interface DiscardPileProps {

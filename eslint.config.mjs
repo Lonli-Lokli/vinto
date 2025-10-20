@@ -25,6 +25,9 @@ export default [
       '**/*.spec.tsx',
       '**/*.test.ts',
       '**/*.d.ts',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*',
+      '**/vitest.workspace.ts',
     ],
   },
   {

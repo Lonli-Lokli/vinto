@@ -6,14 +6,32 @@ import {
   SwapCardAction,
   DeclareKingActionAction,
   SelectActionTargetAction,
-} from '@/shared';
+} from '@vinto/shapes';
+import {
+  registerStateUpdateCallback,
+  unregisterStateUpdateCallback,
+} from '@vinto/local-client';
 
 @injectable()
 export class HeadlessService {
+  private _stateUpdateCallback?: (
+    oldState: GameState,
+    newState: GameState,
+    action: GameAction
+  ) => void;
+  private _unregisterCallback?: () => void;
   private uiStore: UIStore;
 
   constructor(@inject(UIStore) uiStore: UIStore) {
     this.uiStore = uiStore;
+    // Register state update callback
+    this._stateUpdateCallback = this.handleStateUpdate.bind(this);
+    registerStateUpdateCallback(this._stateUpdateCallback);
+    this._unregisterCallback = () => {
+      if (this._stateUpdateCallback) {
+        unregisterStateUpdateCallback(this._stateUpdateCallback);
+      }
+    };
   }
 
   /**
@@ -41,7 +59,11 @@ export class HeadlessService {
     }
 
     // Clear highlights when peek/swap actions complete
-    if (isQueenActionCompleted || isJackActionCompleted || isPeekActionCompleted) {
+    if (
+      isQueenActionCompleted ||
+      isJackActionCompleted ||
+      isPeekActionCompleted
+    ) {
       this.uiStore.clearHighlightedCards();
     }
 
@@ -242,6 +264,10 @@ export class HeadlessService {
   }
 
   public dispose() {
+    // Unregister callback
+    if (this._unregisterCallback) {
+      this._unregisterCallback();
+    }
     console.log('Disposed HeadlessService');
   }
 }

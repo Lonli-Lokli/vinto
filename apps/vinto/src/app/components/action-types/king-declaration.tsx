@@ -3,8 +3,8 @@
 
 import React from 'react';
 import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
 
 export function KingDeclaration() {

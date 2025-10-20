@@ -4,8 +4,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { SkipButton, SwapButton } from '../buttons';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
 
 export const JackAction = observer(() => {

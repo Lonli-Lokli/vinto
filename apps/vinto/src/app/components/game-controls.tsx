@@ -5,9 +5,9 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { HelpPopover } from './presentational';
 import { DrawCardButton, PlayDiscardButton } from './buttons';
-import { useDispatch, useGameClient } from '@/client';
-import { GameActions } from '@/engine';
-import { getCardName } from '@/shared';
+import { useDispatch, useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
+import { getCardName } from '@vinto/shapes';
 
 export const GameControls = observer(() => {
   const gameClient = useGameClient();

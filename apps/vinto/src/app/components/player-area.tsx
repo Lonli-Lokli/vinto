@@ -5,8 +5,8 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { PlayerAvatar, PlayerCards } from './presentational';
 import { useCardAnimationStore, useUIStore } from './di-provider';
-import { PlayerState } from '@/shared';
-import { useGameClient } from '@/client';
+import { PlayerState } from '@vinto/shapes';
+import { useGameClient } from '@vinto/local-client';
 import type { PlayerPosition } from './logic/player-area-logic';
 import {
   getCardSizeForPlayer,

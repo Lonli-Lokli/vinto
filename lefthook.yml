@@ -1,10 +1,10 @@
 pre-commit:
   commands:
+    format:
+      glob: '*.{ts,tsx,js,jsx}'
+      run: npx nx affected --target=lint --fix=true --files='{staged_files}'
+      staged_fixed: true
     lint:
       glob: '*.{ts,tsx,js,jsx}'
       run: npx nx format:write --files='{staged_files}'
-      staged_fixed: true
-    format:
-      glob: '*.{ts,tsx,js,jsx}'
-      run: npm run lint
       staged_fixed: true

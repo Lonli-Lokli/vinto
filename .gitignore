@@ -52,3 +52,6 @@ apps/vinto/.env.local
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*

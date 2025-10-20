@@ -5,8 +5,8 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CallVintoButton, CancelButton } from '../buttons';
 import { useUIStore } from '../di-provider';
-import { useGameClient } from '@/client';
-import { GameActions } from '@/engine';
+import { useGameClient } from '@vinto/local-client';
+import { GameActions } from '@vinto/engine';
 
 export const VintoConfirmationModal = observer(() => {
   const uiStore = useUIStore();
@@ -59,10 +59,15 @@ export const VintoConfirmationModal = observer(() => {
       modal-mode="mega"
       className="z-50 bg-surface-primary border-warning border-2 rounded-xl shadow-theme-lg max-w-sm w-full animate-fade-in"
     >
-      <form method="dialog" className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]">
+      <form
+        method="dialog"
+        className="grid grid-rows-[auto_1fr_auto] max-h-[80vh]"
+      >
         <header className="flex items-center justify-center gap-2 mb-0 bg-surface-secondary px-6 py-4 rounded-t-xl">
           <span className="text-3xl">⚠️</span>
-          <h2 className="text-xl md:text-2xl font-bold text-primary">Call Vinto?</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-primary">
+            Call Vinto?
+          </h2>
           <button
             type="button"
             onClick={() => dialogRef.current?.close('close')}
@@ -74,7 +79,8 @@ export const VintoConfirmationModal = observer(() => {
         </header>
         <article className="overflow-y-auto max-h-full px-6 py-4 bg-surface-primary flex flex-col gap-5">
           <p className="text-base md:text-lg text-secondary text-center leading-relaxed mb-2">
-            This ends the round immediately. All other players get one final turn.
+            This ends the round immediately. All other players get one final
+            turn.
           </p>
         </article>
         <footer className="bg-surface-secondary flex flex-wrap gap-3 justify-between items-center px-6 py-4 rounded-b-xl">

@@ -1,5 +1,5 @@
 // utils/action-description-helper.ts
-import { getCardName, Rank } from '@/shared';
+import { getCardName, Rank } from '@vinto/shapes';
 
 export interface ActionTarget {
   playerName: string;

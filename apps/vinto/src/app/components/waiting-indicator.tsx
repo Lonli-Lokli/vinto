@@ -1,7 +1,7 @@
 'use client';
 import { observer } from 'mobx-react-lite';
 import { useUIStore } from './di-provider';
-import { useGameClient } from '@/client';
+import { useGameClient } from '@vinto/local-client';
 
 export const WaitingIndicator = observer(function WaitingIndicator() {
   const gameClient = useGameClient();
