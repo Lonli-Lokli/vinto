@@ -22,6 +22,17 @@ export const GameTable = observer(() => {
   const subPhase = gameClient.state.subPhase;
   const discardPile = gameClient.state.discardPile;
 
+  // Get toss-in information
+  const tossInRanks = gameClient.state.activeTossIn?.ranks || [];
+  const tossInQueue = gameClient.state.activeTossIn?.queuedActions.map(action => {
+    const player = gameClient.state.players.find(p => p.id === action.playerId);
+    return {
+      playerId: action.playerId,
+      playerName: player?.name || 'Unknown',
+      card: action.card,
+    };
+  }) || [];
+
   // Map subPhases to old boolean flags
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
   const isChoosingCardAction = subPhase === 'choosing';
@@ -155,9 +166,9 @@ export const GameTable = observer(() => {
             )}
 
             {/* Row 2: Left | Center piles | Right */}
-            <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 min-h-0">
+            <div className="flex-1 flex items-center gap-1 sm:gap-2 min-h-0">
               {/* Left Player */}
-              <div className="flex-1 flex justify-start items-start">
+              <div className="flex-shrink-0 flex justify-start items-start">
                 {left && (
                   <PlayerArea
                     player={left.player}
@@ -181,11 +192,13 @@ export const GameTable = observer(() => {
                 )}
               </div>
 
-              {/* Center draw/discard */}
-              <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0 relative">
+              {/* Center draw/discard - takes remaining space and centers content */}
+              <div className="flex-1 flex items-center justify-center min-w-0">
                 <DeckArea
                   discardPile={discardPile}
                   pendingCard={pendingCard ?? null}
+                  tossInRanks={tossInRanks}
+                  tossInQueue={tossInQueue}
                   canDrawCard={
                     !!(
                       currentPlayer?.isHuman &&
@@ -202,7 +215,7 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Right Player */}
-              <div className="flex-1 flex justify-end items-start">
+              <div className="flex-shrink-0 flex justify-end items-start">
                 {right && (
                   <PlayerArea
                     player={right.player}
@@ -329,6 +342,8 @@ export const GameTable = observer(() => {
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard ?? null}
+                tossInRanks={tossInRanks}
+                tossInQueue={tossInQueue}
                 canDrawCard={
                   !!(
                     currentPlayer?.isHuman &&

@@ -2,6 +2,7 @@ import { GameState, DeclareKingActionAction, Rank } from '@vinto/shapes';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import {
+  addTossInCard,
   clearTossInReadyList,
   getAutomaticallyReadyPlayers,
 } from '../utils/toss-in-utils';
@@ -70,7 +71,7 @@ export function handleDeclareKingAction(
   if (newState.pendingAction?.card) {
     newState.discardPile.addToTop({
       ...copy(newState.pendingAction.card),
-      played: true
+      played: true,
     });
   }
 
@@ -85,11 +86,17 @@ export function handleDeclareKingAction(
     // Correct declaration: check if the card has an action
     const targetType = getTargetTypeFromRank(selectedCard.rank);
 
+    // Remove the card from the target player's hand
+    const [removedCard] = targetPlayer.cards.splice(position, 1);
+
+    if (newState.activeTossIn) {
+      newState.activeTossIn.ranks = addTossInCard(
+        newState.activeTossIn?.ranks,
+        removedCard.rank
+      );
+    }
     // If the card has an action, set up pendingAction for it
     if (targetType !== undefined) {
-      // Remove the card from the target player's hand
-      const [removedCard] = targetPlayer.cards.splice(position, 1);
-
       // Update known card positions (remove the position that was removed)
       targetPlayer.knownCardPositions = targetPlayer.knownCardPositions
         .filter((pos) => pos !== position)
@@ -103,6 +110,7 @@ export function handleDeclareKingAction(
         targetType,
         targets: [],
       };
+
       newState.subPhase = 'awaiting_action';
 
       console.log(
@@ -114,8 +122,8 @@ export function handleDeclareKingAction(
       );
       return newState;
     } else {
-      // Non-action card: remove and discard it
-      const [removedCard] = targetPlayer.cards.splice(position, 1);
+      // Non-action card: discard it
+
       newState.discardPile.addToTop(removedCard);
 
       // Update known card positions (remove the position that was removed)
@@ -177,7 +185,9 @@ export function handleDeclareKingAction(
     // Determine which rank triggers the toss-in:
     // - If declaration is CORRECT: toss-in for King as well as the declared rank
     // - If declaration is INCORRECT: toss-in for King rank (because only King went to discard)
-    const tossInRanks: [Rank, ...Rank[]] = isCorrect ? ['K', declaredRank] : ['K'];
+    const tossInRanks: [Rank, ...Rank[]] = isCorrect
+      ? ['K', declaredRank]
+      : ['K'];
 
     // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
     newState.activeTossIn = {

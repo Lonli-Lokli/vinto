@@ -1,6 +1,7 @@
 import { GameState, ConfirmPeekAction } from '@vinto/shapes';
 import copy from 'fast-copy';
 import {
+  addTossInCard,
   clearTossInReadyList,
   getAutomaticallyReadyPlayers,
 } from '../utils/toss-in-utils';
@@ -82,10 +83,9 @@ export function handleConfirmPeek(
     }
   } else if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation but no queue)
-    // Add this card's rank to toss-in ranks if not already present
-    if (peekCard && !newState.activeTossIn.ranks.includes(peekCard.rank)) {
-      newState.activeTossIn.ranks.push(peekCard.rank);
-    }
+    // ADD or REPLACE this card's rank to toss-in ranks if not already present
+    newState.activeTossIn.ranks = addTossInCard(newState.activeTossIn.ranks, peekCard?.rank); 
+    
     // Clear the ready list so players can confirm again for this new toss-in round
     clearTossInReadyList(newState);
     newState.subPhase = 'toss_queue_active';

@@ -1,6 +1,10 @@
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import { GameState, UseCardActionAction } from '@vinto/shapes';
+import {
+  addTossInCard,
+  getAutomaticallyReadyPlayers,
+} from '../utils/toss-in-utils';
 
 /**
  * USE_CARD_ACTION Handler
@@ -17,7 +21,7 @@ import { GameState, UseCardActionAction } from '@vinto/shapes';
  */
 export function handleUseCardAction(
   state: GameState,
-  _action: UseCardActionAction
+  action: UseCardActionAction
 ): GameState {
   // Create new state (deep copy for safety)
   const newState = copy(state);
@@ -30,6 +34,26 @@ export function handleUseCardAction(
     newState.pendingAction.actionPhase = 'selecting-target';
     newState.pendingAction.targetType = getTargetTypeFromRank(cardRank);
   }
+
+  if (!newState.activeTossIn) {
+    // Initialize toss-in phase
+    // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+    newState.activeTossIn = {
+      ranks: [action.payload.card.rank],
+      initiatorId: action.payload.playerId,
+      originalPlayerIndex: newState.currentPlayerIndex,
+      participants: [],
+      queuedActions: [],
+      waitingForInput: true,
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+    };
+  }
+
+  // ADD or REPLACE this card's rank to toss-in ranks if not already present
+  newState.activeTossIn.ranks = addTossInCard(
+    newState.activeTossIn.ranks,
+    action.payload.card.rank
+  );
 
   // Transition to awaiting_action phase (ready for target selection)
   newState.subPhase = 'awaiting_action';

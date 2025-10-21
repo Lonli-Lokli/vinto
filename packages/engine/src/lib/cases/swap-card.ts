@@ -51,6 +51,18 @@ export function handleSwapCard(
     player.knownCardPositions.push(position);
   }
 
+  // Initialize toss-in phase
+  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+  newState.activeTossIn = {
+    ranks: [cardFromHand.rank],
+    initiatorId: playerId,
+    originalPlayerIndex: newState.currentPlayerIndex,
+    participants: [],
+    queuedActions: [],
+    waitingForInput: true,
+    playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+  };
+
   // Validate rank declaration if provided
   let declarationCorrect = false;
   if (declaredRank) {
@@ -100,18 +112,6 @@ export function handleSwapCard(
 
   // Clear pending action
   newState.pendingAction = null;
-
-  // Initialize toss-in phase
-  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-  newState.activeTossIn = {
-    ranks: [cardFromHand.rank],
-    initiatorId: playerId,
-    originalPlayerIndex: newState.currentPlayerIndex,
-    participants: [],
-    queuedActions: [],
-    waitingForInput: true,
-    playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
-  };
 
   // Transition to toss-in phase
   newState.subPhase = 'toss_queue_active';

@@ -1,7 +1,7 @@
 // utils/toss-in-utils.ts
 // Utility functions for managing toss-in phase state
 
-import { GameState, PlayerState } from '@vinto/shapes';
+import { GameState, PlayerState, Rank } from '@vinto/shapes';
 
 /**
  * Get the list of player IDs who should be automatically marked as ready for toss-in.
@@ -54,7 +54,11 @@ export function areAllHumansReady(state: GameState): boolean {
  * Advance turn after toss-in completes
  *
  * This function handles turn advancement when all toss-in actions have been processed.
- * It clears the toss-in state and moves to the next player.
+ * It clears toss-in participation data while preserving the current ranks.
+ *
+ * IMPORTANT: The ranks are NOT reset here because they were set correctly when cards
+ * were discarded. For example, if King declared Ace correctly, activeTossIn.ranks
+ * contains ['K', 'A'], and we must preserve both ranks for the next turn.
  *
  * @param state - Current game state (will be mutated)
  * @param context - Context string for logging (e.g., handler name)
@@ -68,11 +72,19 @@ export function advanceTurnAfterTossIn(
     return;
   }
 
-  // Save who started this turn before clearing toss-in
+  // Save who started this turn before refreshing toss-in
   const originalPlayerIndex = state.activeTossIn.originalPlayerIndex;
 
-  // Clear toss-in
-  state.activeTossIn = null;
+  // Clear toss-in participation data (but preserve ranks)
+  // The ranks stay the same because they represent the cards currently in discard pile
+  // For example: King + Ace declared correctly = ['K', 'A'] should persist
+  state.activeTossIn.participants = [];
+  state.activeTossIn.queuedActions = [];
+  state.activeTossIn.waitingForInput = false;
+  state.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
+    state.players
+  );
+  state.activeTossIn.failedAttempts = [];
 
   // Advance to next player from the ORIGINAL player who initiated the turn (circular)
   state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
@@ -111,5 +123,17 @@ export function advanceTurnAfterTossIn(
     nextPlayer: nextPlayer.name,
     subPhase: state.subPhase,
     turnCount: state.turnCount,
+    tossInRefreshedWithRanks: state.activeTossIn?.ranks || null,
   });
+}
+
+export function addTossInCard(
+  currentTossInRanks: [Rank, ...Rank[]],
+  rank?: Rank
+): [Rank, ...Rank[]] {
+  if (rank && !currentTossInRanks.includes(rank)) {
+    return currentTossInRanks.includes('K')
+      ? [...currentTossInRanks, rank]
+      : [rank];
+  } else return currentTossInRanks;
 }

@@ -15,4 +15,5 @@ export * from './player-avatar';
 export * from './player-cards';
 export * from './theme-toggle';
 export * from './toast-provider';
+export * from './toss-in-area';
 export * from './wake-lock-toggle';
