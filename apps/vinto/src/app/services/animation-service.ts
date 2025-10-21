@@ -547,8 +547,13 @@ export class AnimationService {
     newState: GameState,
     action: SelectActionTargetAction
   ): void {
-    const { playerId, targetPlayerId, position } = action.payload;
+    const { playerId, targetPlayerId } = action.payload;
     const actionCard = oldState.pendingAction?.card;
+
+    const position =
+      action.payload.rank === 'Any'
+        ? action.payload.position
+        : newState.players.find((p) => p.id === targetPlayerId)!.cards.length -1;
 
     if (!actionCard) return;
 

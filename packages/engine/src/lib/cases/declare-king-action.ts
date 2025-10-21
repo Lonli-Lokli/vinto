@@ -56,8 +56,16 @@ export function handleDeclareKingAction(
     position
   } = selectedTarget;
 
-  const selectedCard = selectedTarget;
-  const actualRank = newState.players.find(p => p.id === targetPlayerId)?.cards[position]?.rank;
+  const selectedCard = newState.players.find(p => p.id === targetPlayerId)?.cards[position];
+
+   if (!selectedCard) {
+    console.error(
+      '[handleDeclareKingAction] No selected card found for King action'
+    );
+    return state;
+  }
+
+  const actualRank = selectedCard.rank;
   const isCorrect = actualRank === declaredRank;
 
   console.log('[handleDeclareKingAction] Validating declaration:', {

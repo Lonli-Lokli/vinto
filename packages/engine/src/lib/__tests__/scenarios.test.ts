@@ -468,7 +468,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     );
 
     // King correctly declared Ace (action card) → sets up pending action for Ace
-    expect(newState.subPhase).toBe('toss_queue_active');
+    expect(newState.subPhase).toBe('awaiting_action');
 
     // Step 4: Human uses the declared Ace action (force-draw on bot-2)
     newState = GameEngine.reduce(

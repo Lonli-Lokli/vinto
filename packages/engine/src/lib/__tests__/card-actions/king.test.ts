@@ -178,7 +178,7 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.ranks.length).toBe(2);
       expect(newState.activeTossIn?.ranks).toContain('7');
       expect(newState.activeTossIn?.ranks).toContain('K');
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.subPhase).toBe('awaiting_action');
     });
 
     it('should incorrectly declare 7 and get penalty', () => {
@@ -453,7 +453,7 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn).toBeDefined();
       expect(newState.activeTossIn?.ranks).toContain('K');
       expect(newState.activeTossIn?.ranks.length).toBe(1);
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.subPhase).toBe('awaiting_action');
     });
   });
 });

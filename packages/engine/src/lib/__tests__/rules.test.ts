@@ -213,11 +213,11 @@ describe('Game Engine - Rules-Based Tests', () => {
       );
 
       // Toss-in should be activated
+      expect(mockLogger.warn).not.toHaveBeenCalled();
       expect(newState.activeTossIn).not.toBeNull();
       expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.discardPile.peekTop()?.id).toBe('p2c1');
-      expect(newState.discardPile.peekAt(-1)?.id).toBe('king1');
+      expect(newState.discardPile.peekTop()?.id).toBe('king1'); // not Ace as it will be in pending action before going to discard
     });
   });
 
