@@ -258,7 +258,7 @@ describe('Jack (J) Card Action', () => {
 
       // Should not return to toss-in
       expect(newState.subPhase).toBe('ai_thinking');  // next player is bot so ai_thinking
-      expect(newState.activeTossIn).toBeNull();
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
       expect(newState.pendingAction).toBeNull();
       expect(newState.players.find(p => p.id === 'p1')?.cards[0].rank).toBe('7'); // P1 now has 7
       expect(newState.players.find(p => p.id === 'p3')?.cards[0].rank).toBe('K'); // P3 now has K

@@ -31,10 +31,16 @@ export function handleSelectActionTarget(
   state: GameState,
   action: SelectActionTargetAction
 ): GameState {
-  const { targetPlayerId, position } = action.payload;
+  const { targetPlayerId } = action.payload;
 
-  // Create new state (deep copy for safety)
   const newState = copy(state);
+
+  const targetPlayer = newState.players.find((p) => p.id === targetPlayerId)!;
+  const position =
+    action.payload.rank === 'A'
+      ? targetPlayer.cards.length
+      : action.payload.position;
+  // Create new state (deep copy for safety)
 
   // Add target to pending action
   if (newState.pendingAction) {
@@ -208,8 +214,62 @@ export function handleSelectActionTarget(
         // Clear pending action
         newState.pendingAction = null;
 
-        // Check if this action was part of a toss-in
-        if (newState.activeTossIn !== null) {
+        // Check if we're processing a toss-in queue
+        if (
+          newState.activeTossIn !== null &&
+          newState.activeTossIn.queuedActions.length > 0
+        ) {
+          // Remove the processed action from the queue
+          newState.activeTossIn.queuedActions.shift();
+
+          console.log(
+            '[handleSelectActionTarget] Ace action completed during toss-in queue processing',
+            {
+              remainingActions: newState.activeTossIn.queuedActions.length,
+            }
+          );
+
+          // ADD or REPLACE this card's rank to toss-in ranks if not already present
+          newState.activeTossIn.ranks = addTossInCard(
+            newState.activeTossIn.ranks,
+            aceCard?.rank
+          );
+
+          // Check if there are more queued actions
+          if (newState.activeTossIn.queuedActions.length > 0) {
+            // Process next queued action
+            const nextAction = newState.activeTossIn.queuedActions[0];
+
+            newState.pendingAction = {
+              card: nextAction.card,
+              playerId: nextAction.playerId,
+              actionPhase: 'choosing-action',
+              targets: [],
+            };
+
+            newState.subPhase = 'awaiting_action';
+
+            console.log(
+              '[handleSelectActionTarget] Processing next queued action:',
+              {
+                playerId: nextAction.playerId,
+                card: nextAction.card.rank,
+              }
+            );
+          } else {
+            // No more queued actions - clear pendingAction and return to toss-in
+            newState.pendingAction = null;
+            clearTossInReadyList(newState);
+            newState.subPhase = 'toss_queue_active';
+            newState.activeTossIn.waitingForInput = true;
+
+            console.log(
+              '[handleSelectActionTarget] All toss-in actions processed, rank added, returning to toss-in phase (ready list cleared)',
+              { ranks: newState.activeTossIn.ranks }
+            );
+          }
+        } else if (newState.activeTossIn !== null) {
+          // Existing toss-in but no queue - add rank and return to toss-in phase
           // ADD or REPLACE this card's rank to toss-in ranks if not already present
           newState.activeTossIn.ranks = addTossInCard(
             newState.activeTossIn.ranks,

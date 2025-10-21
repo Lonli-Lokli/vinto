@@ -24,7 +24,7 @@ import {
   UpdateDifficultyAction,
   UseCardActionAction,
   ExecuteJackSwapAction,
-  SkipJackSwapAction,
+  SkipJackSwapAction
 } from '@vinto/shapes';
 
 /**
@@ -65,13 +65,25 @@ export const GameActions = {
     payload: { playerId, card },
   }),
 
+  selectAceActionTarget: (
+    playerId: string,
+    targetPlayerId: string
+  ): SelectActionTargetAction => ({
+    type: 'SELECT_ACTION_TARGET',
+    payload: {
+      rank: 'A',
+      playerId,
+      targetPlayerId,
+    },
+  }),
+
   selectActionTarget: (
     playerId: string,
     targetPlayerId: string,
     position: number
   ): SelectActionTargetAction => ({
     type: 'SELECT_ACTION_TARGET',
-    payload: { playerId, targetPlayerId, position },
+    payload: { rank: 'Any', playerId, targetPlayerId, position },
   }),
 
   confirmPeek: (playerId: string): ConfirmPeekAction => ({
@@ -133,11 +145,6 @@ export const GameActions = {
   setCoalitionLeader: (leaderId: string): SetCoalitionLeaderAction => ({
     type: 'SET_COALITION_LEADER',
     payload: { leaderId },
-  }),
-
-  advanceTurn: (): AdvanceTurnAction => ({
-    type: 'ADVANCE_TURN',
-    payload: {},
   }),
 
   processAITurn: (playerId: string): ProcessAITurnAction => ({

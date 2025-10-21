@@ -9,7 +9,6 @@
       "WebSearch",
       "Bash(cat:*)",
       "Bash(npm test:*)",
-      "Bash(npx jest:*)",
       "Bash(npx eslint:*)",
       "Bash(for file in apps/vinto/src/app/components/*.tsx)",
       "Bash(done)",

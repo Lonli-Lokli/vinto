@@ -2,7 +2,16 @@
  * Shared test helpers for GameEngine tests
  */
 
-import { Card, GameState, getCardShortDescription, Pile, PlayerState } from '@vinto/shapes';
+import {
+  Card,
+  GameState,
+  getCardShortDescription,
+  Pile,
+  PlayerState,
+} from '@vinto/shapes';
+import { GameEngine } from '../game-engine';
+import copy from 'fast-copy';
+import { GameActions } from '../game-actions';
 
 /**
  * Create a test card with proper value mapping
@@ -99,4 +108,19 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     drawPile: toPile(mergedState.drawPile),
     discardPile: toPile(mergedState.discardPile),
   };
+}
+
+export function markPlayersReady(
+  state: GameState,
+  playerIds: string[]
+): GameState {
+  let newState = copy(state);
+  for (const playerId of playerIds) {
+    newState = GameEngine.reduce(
+      newState,
+      GameActions.playerTossInFinished(playerId)
+    );
+  }
+
+  return newState;
 }

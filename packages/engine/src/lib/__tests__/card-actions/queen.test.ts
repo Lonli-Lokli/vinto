@@ -20,6 +20,7 @@ import {
   createTestCard,
   createTestPlayer,
   createTestState,
+  markPlayersReady,
   toPile,
 } from '../test-helpers';
 
@@ -224,9 +225,12 @@ describe('Queen (Q) Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('queen1'); // Queen swapped in
-      expect(newState.pendingAction?.card.id).toBe('p1c1'); // King removed
+      expect(newState.pendingAction).toBeNull(); // No pending action
+
+      // Previous first card should be on discard pile
+      expect(newState.discardPile.peekTop()?.id).toBe('p1c1');
     });
   });
 
@@ -299,22 +303,8 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // All players mark ready
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.playerTossInFinished('p1')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p2')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p3')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p4')
-      );
+      let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
+     
 
       // Queued Queen action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -338,7 +328,7 @@ describe('Queen (Q) Card Action', () => {
       );
 
       // Should return to toss-in (not create new toss-in)
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.subPhase).toBe('ai_thinking');
       expect(newState.activeTossIn?.ranks).toContain('Q'); // Same toss-in continues
       expect(newState.pendingAction).toBeNull();
     });

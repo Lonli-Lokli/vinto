@@ -151,7 +151,7 @@ export function actionValidator(
     }
 
     case 'SELECT_ACTION_TARGET': {
-      const { playerId, targetPlayerId, position } = action.payload;
+      const { playerId, targetPlayerId } = action.payload;
 
       // Check if processing toss-in action
       const isProcessingTossInAction =
@@ -190,10 +190,14 @@ export function actionValidator(
       }
 
       // Position must be valid for target player
-      if (position < 0 || position >= targetPlayer.cards.length) {
+      if (
+        action.payload.rank === 'Any' &&
+        (action.payload.position < 0 ||
+          action.payload.position >= targetPlayer.cards.length)
+      ) {
         return {
           valid: false,
-          reason: `Invalid position ${position} for target player`,
+          reason: `Invalid position ${action.payload.position} for target player`,
         };
       }
 
@@ -386,9 +390,29 @@ export function actionValidator(
         };
       }
 
-      // Must have selected a card (stored in targets[0])
-      if (!state.pendingAction.targets?.[0]?.card) {
-        return { valid: false, reason: 'No card selected for King action' };
+      const targetPlayer = state.players.find(
+        (p) => p.id === state.pendingAction?.targets?.[0]?.playerId
+      );
+      if (!targetPlayer) {
+        return { valid: false, reason: 'Target player not found' };
+      }
+
+      // Position must be valid for target player
+      if (
+        state.pendingAction.targets?.[0]?.position < 0 ||
+        state.pendingAction.targets?.[0]?.position >= targetPlayer.cards.length
+      ) {
+        return {
+          valid: false,
+          reason: `Invalid position ${state.pendingAction.targets?.[0]?.position} for target player`,
+        };
+      }
+
+      if (!state.pendingAction.targets?.[0]?.playerId) {
+        return {
+          valid: false,
+          reason: 'No card position selected for King action',
+        };
       }
 
       return { valid: true };

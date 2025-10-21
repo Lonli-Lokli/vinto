@@ -89,13 +89,24 @@ export interface UseCardActionAction {
   };
 }
 
+export type AceTargetActionPayload = {
+  rank: 'A';
+  playerId: string;
+  targetPlayerId: string;
+};
+export type OtherTargetActionPayload = {
+  rank: 'Any';
+  playerId: string;
+  targetPlayerId: string;
+  position: number;
+};
+export type TargetActionPayload =
+  | AceTargetActionPayload
+  | OtherTargetActionPayload;
+
 export interface SelectActionTargetAction {
   type: 'SELECT_ACTION_TARGET';
-  payload: {
-    playerId: string;
-    targetPlayerId: string;
-    position: number;
-  };
+  payload: TargetActionPayload;
 }
 
 export interface ConfirmPeekAction {

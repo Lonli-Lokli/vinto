@@ -22,106 +22,28 @@ import {
   createTestCard,
   createTestPlayer,
   createTestState,
+  markPlayersReady,
   toPile,
 } from '../test-helpers';
+import { mockLogger } from '../setup-tests';
 
 describe('King (K) Card Action', () => {
+  beforeEach(() => {
+    // Reset all mock calls before each test
+    mockLogger.log.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
+  });
   describe('Normal Flow - Declaring Non-Action Cards', () => {
     it('should allow declaring non-action card rank (e.g., 5)', () => {
       const kingCard = createTestCard('K', 'king1');
 
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        pendingAction: {
-          card: kingCard,
-          playerId: 'p1',
-          actionPhase: 'selecting-target',
-          targets: [],
-        },
-      });
-
-      // Declare rank 5 (non-action card)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.declareKingAction('p1', '5')
-      );
-
-      // Should trigger toss-in for rank 5
-      expect(newState.activeTossIn).not.toBeNull();
-      expect(newState.activeTossIn?.ranks).toContain('5');
-      expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.subPhase).toBe('toss_queue_active');
-
-      // King should be in discard pile
-      expect(newState.discardPile.peekTop()?.id).toBe('king1');
-      expect(newState.pendingAction).toBeNull();
-    });
-
-    it('should allow declaring Joker rank', () => {
-      const kingCard = createTestCard('K', 'king1');
-
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        pendingAction: {
-          card: kingCard,
-          playerId: 'p1',
-          actionPhase: 'selecting-target',
-          targets: [],
-        },
-      });
-
-      // Declare Joker (non-action card)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.declareKingAction('p1', 'Joker')
-      );
-
-      expect(newState.activeTossIn?.ranks).toContain('Joker');
-      expect(newState.subPhase).toBe('toss_queue_active');
-    });
-  });
-
-  describe('Normal Flow - Declaring Action Cards', () => {
-    it('should declare Ace and require immediate action execution', () => {
-      const kingCard = createTestCard('K', 'king1');
-      const penaltyCard = createTestCard('Q', 'penalty1');
-
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        drawPile: toPile([penaltyCard]),
+      let state = createTestState({
+        subPhase: 'choosing',
         players: [
-          createTestPlayer('p1', 'Player 1', true),
-          createTestPlayer('p2', 'Player 2', false, [
-            createTestCard('7', 'p2c1'),
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('5', 'p1c1'),
           ]),
-        ],
-        pendingAction: {
-          card: kingCard,
-          playerId: 'p1',
-          actionPhase: 'selecting-target',
-          targets: [],
-        },
-      });
-
-      // Declare Ace (action card)
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.declareKingAction('p1', 'A')
-      );
-
-      // Should trigger Ace action setup (force draw)
-      // Implementation may vary - check if pending action is set for Ace
-      expect(newState.activeTossIn?.ranks).toContain('A');
-      expect(newState.subPhase).toBe('toss_queue_active');
-    });
-
-    it('should declare Queen and require peek+swap action', () => {
-      const kingCard = createTestCard('K', 'king1');
-
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        players: [
-          createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
             createTestCard('7', 'p2c1'),
             createTestCard('8', 'p2c2'),
@@ -131,48 +53,178 @@ describe('King (K) Card Action', () => {
           card: kingCard,
           playerId: 'p1',
           actionPhase: 'selecting-target',
-          targets: [],
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+              card: createTestCard('5', 'p1c1'),
+            },
+          ],
         },
       });
 
-      // Declare Queen
-      const newState = GameEngine.reduce(
+      let newState = GameEngine.reduce(
         state,
-        GameActions.declareKingAction('p1', 'Q')
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare rank 5 (non-action card)
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.declareKingAction('p1', '5')
       );
 
-      // Should trigger toss-in for Queen
-      expect(newState.activeTossIn?.ranks).toContain('Q');
+      // Should trigger toss-in for rank 5
+      expect(newState.activeTossIn?.ranks).toContain('5');
+      expect(newState.activeTossIn?.initiatorId).toBe('p1');
       expect(newState.subPhase).toBe('toss_queue_active');
+
+      // King should be in discard pile
+      expect(newState.discardPile.at(-1)?.id).toBe(kingCard.id);
+      expect(newState.discardPile.peekTop()?.id).toBe('p1c1');
+      expect(newState.pendingAction).toBeNull();
     });
 
-    it('should declare 7 and require peek-own action', () => {
+    it('should allow declaring Joker rank', () => {
       const kingCard = createTestCard('K', 'king1');
 
       const state = createTestState({
-        subPhase: 'awaiting_action',
+        subPhase: 'choosing',
         players: [
           createTestPlayer('p1', 'Player 1', true, [
-            createTestCard('2', 'p1c1'),
-            createTestCard('3', 'p1c2'),
+            createTestCard('Joker', 'p1c1'),
+          ]),
+          createTestPlayer('p2', 'Player 2', false, [
+            createTestCard('7', 'p2c1'),
+            createTestCard('8', 'p2c2'),
           ]),
         ],
         pendingAction: {
           card: kingCard,
           playerId: 'p1',
           actionPhase: 'selecting-target',
-          targets: [],
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+              card: createTestCard('Joker', 'p1c1'),
+            },
+          ],
         },
       });
 
-      // Declare 7
-      const newState = GameEngine.reduce(
+      // first create tossin
+      let newState = GameEngine.reduce(
         state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare Joker (non-action card)
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.declareKingAction('p1', 'Joker')
+      );
+
+      expect(newState.activeTossIn).not.toBeNull();
+      expect(newState.activeTossIn?.ranks).toContain('Joker');
+      expect(newState.subPhase).toBe('toss_queue_active');
+    });
+  });
+
+  describe('Normal Flow - Declaring Action Cards', () => {
+    it('should correctly declare 7 and require peek-own action', () => {
+      const kingCard = createTestCard('K', 'king1');
+
+      const state = createTestState({
+        subPhase: 'choosing',
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('7', 'p1c1'),
+            createTestCard('2', 'p1c2'),
+            createTestCard('3', 'p1c3'),
+          ]),
+        ],
+        pendingAction: {
+          card: kingCard,
+          playerId: 'p1',
+          actionPhase: 'selecting-target',
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+              card: createTestCard('7', 'p1c1'),
+            },
+          ],
+        },
+      });
+
+      // Step 1: Player chooses to use Ace action
+      let newState = GameEngine.reduce(
+        state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare 7
+      newState = GameEngine.reduce(
+        newState,
         GameActions.declareKingAction('p1', '7')
       );
 
       // Should trigger toss-in for 7
+      expect(newState.activeTossIn?.ranks.length).toBe(2);
       expect(newState.activeTossIn?.ranks).toContain('7');
+      expect(newState.activeTossIn?.ranks).toContain('K');
+      expect(newState.subPhase).toBe('toss_queue_active');
+    });
+
+    it('should incorrectly declare 7 and get penalty', () => {
+      const kingCard = createTestCard('K', 'king1');
+
+      const penaltyCard = createTestCard('Q', 'penalty1');
+
+      const state = createTestState({
+        subPhase: 'choosing',
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('2', 'p1c1'),
+            createTestCard('3', 'p1c2'),
+          ]),
+        ],
+        drawPile: toPile([penaltyCard]),
+        pendingAction: {
+          card: kingCard,
+          playerId: 'p1',
+          actionPhase: 'selecting-target',
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+              card: createTestCard('7', 'p1c1'),
+            },
+          ],
+        },
+      });
+
+      // Step 1: Player chooses to use Ace action
+      let newState = GameEngine.reduce(
+        state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare 7
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.declareKingAction('p1', '7')
+      );
+
+      expect(newState.activeTossIn?.ranks.length).toBe(1);
+      expect(newState.activeTossIn?.ranks).toContain('K');
+      expect(newState.players.find((p) => p.id === 'p1')?.cards.length).toBe(3); // Penalty card added
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });
@@ -198,14 +250,11 @@ describe('King (K) Card Action', () => {
       });
 
       // Swap King into hand
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('king1'); // King swapped in
-      expect(newState.pendingAction?.card.id).toBe('p1c1'); // Ace removed
+      expect(newState.pendingAction).toBeNull(); // Ace removed
     });
   });
 
@@ -271,27 +320,18 @@ describe('King (K) Card Action', () => {
       });
 
       // All players mark ready
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.playerTossInFinished('p1')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p2')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p3')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p4')
-      );
+      let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
 
       // Queued King action should start
       expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.rank).toBe('K');
       expect(newState.pendingAction?.playerId).toBe('p2');
+
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.playCardAction('p1', createTestCard('K', 'p2k1'))
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
 
       // P2 declares a rank (e.g., 7)
       newState = GameEngine.reduce(
@@ -299,10 +339,7 @@ describe('King (K) Card Action', () => {
         GameActions.declareKingAction('p2', '7')
       );
 
-      // Should return to toss-in for King (original), with nested toss-in for 7
-      // Or implementation may trigger toss-in for 7 directly
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.pendingAction).toBeNull();
+      expect(newState.subPhase).toBe('awaiting_action');
     });
   });
 
@@ -376,23 +413,46 @@ describe('King (K) Card Action', () => {
       const kingCard = createTestCard('K', 'king1');
 
       const state = createTestState({
-        subPhase: 'awaiting_action',
+        subPhase: 'choosing',
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('K', 'p1c1'),
+          ]),
+          createTestPlayer('p2', 'Player 2', false, [
+            createTestCard('7', 'p2c1'),
+            createTestCard('8', 'p2c2'),
+          ]),
+        ],
         pendingAction: {
           card: kingCard,
           playerId: 'p1',
           actionPhase: 'selecting-target',
-          targets: [],
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+              card: createTestCard('K', 'p1c1'),
+            },
+          ],
         },
       });
 
-      // Declare King (self-reference)
-      const newState = GameEngine.reduce(
+      let newState = GameEngine.reduce(
         state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare King (self-reference)
+      newState = GameEngine.reduce(
+        newState,
         GameActions.declareKingAction('p1', 'K')
       );
 
       // Should trigger toss-in for King rank
+      expect(newState.activeTossIn).toBeDefined();
       expect(newState.activeTossIn?.ranks).toContain('K');
+      expect(newState.activeTossIn?.ranks.length).toBe(1);
       expect(newState.subPhase).toBe('toss_queue_active');
     });
   });

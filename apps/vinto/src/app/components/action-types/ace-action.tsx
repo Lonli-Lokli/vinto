@@ -31,7 +31,7 @@ export const AceAction = observer(() => {
     setSelectedOpponentId(opponentId);
     // Select the first card position (index 0) as a dummy - the action only cares about the player
     gameClient.dispatch(
-      GameActions.selectActionTarget(humanPlayer.id, opponentId, 0)
+      GameActions.selectAceActionTarget(humanPlayer.id, opponentId)
     );
   };
 

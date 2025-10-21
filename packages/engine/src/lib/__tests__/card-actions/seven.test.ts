@@ -82,7 +82,7 @@ describe('7 Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('seven1');
     });
   });
@@ -178,7 +178,7 @@ describe('7 Card Action', () => {
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p2'));
 
       // Should return to toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.subPhase).toBe('ai_thinking');
       expect(newState.activeTossIn?.ranks).toContain('7');
     });
   });

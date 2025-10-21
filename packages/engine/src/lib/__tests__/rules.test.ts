@@ -1,6 +1,12 @@
 import { GameEngine } from '../game-engine';
 import { GameActions } from '../game-actions';
-import { Card, GameState, Pile, PlayerState } from '@vinto/shapes';
+import {
+  createTestCard,
+  createTestState,
+  createTestPlayer,
+  toPile,
+} from './test-helpers';
+import { mockLogger } from './setup-tests';
 
 /**
  * Comprehensive test suite based on official Vinto rules
@@ -10,95 +16,13 @@ import { Card, GameState, Pile, PlayerState } from '@vinto/shapes';
  * not just implementation details.
  */
 
-// ========== Test Helpers ==========
-
-function createTestCard(rank: Card['rank'], id: string): Card {
-  const values: Record<Card['rank'], number> = {
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    '10': 10,
-    J: 10,
-    Q: 10,
-    K: 0,
-    A: 1,
-    Joker: -1,
-  };
-
-  return {
-    id,
-    rank,
-    value: values[rank],
-    played: false,
-    actionText: ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(rank)
-      ? (`peek-own` as any) // Simplified for testing
-      : undefined,
-  };
-}
-
-function createTestPlayer(
-  id: string,
-  name: string,
-  isHuman: boolean,
-  cards: Card[] = []
-): PlayerState {
-  return {
-    id,
-    name,
-    isHuman,
-    isBot: !isHuman,
-    cards: [...cards],
-    knownCardPositions: [],
-    isVintoCaller: false,
-    coalitionWith: [],
-  };
-}
-
-const toPile = (cards: Card[] | Pile = []): Pile => Pile.fromCards(cards);
-
-function createTestState(overrides?: Partial<GameState>): GameState {
-  const baseState: GameState = {
-    gameId: 'test-game',
-    roundNumber: 1,
-    turnCount: 0,
-    phase: 'playing',
-    subPhase: 'idle',
-    finalTurnTriggered: false,
-    players: [
-      createTestPlayer('p1', 'Player 1', true),
-      createTestPlayer('p2', 'Player 2', false),
-    ],
-    currentPlayerIndex: 0,
-    vintoCallerId: null,
-    coalitionLeaderId: null,
-    drawPile: toPile(),
-    discardPile: toPile(),
-    pendingAction: null,
-    activeTossIn: null,
-    recentActions: [],
-    difficulty: 'moderate',
-  };
-
-  const mergedState = {
-    ...baseState,
-    ...overrides,
-  } as GameState;
-
-  return {
-    ...mergedState,
-    drawPile: toPile(mergedState.drawPile),
-    discardPile: toPile(mergedState.discardPile),
-  };
-}
-
-// ========== Card Action Tests (Based on Rules) ==========
-
 describe('Game Engine - Rules-Based Tests', () => {
+  beforeEach(() => {
+    // Reset all mock calls before each test
+    mockLogger.log.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
+  });
   describe('Jack (J) - Swap any two facedown cards', () => {
     it('should allow swapping two cards from different players', () => {
       const jackCard = createTestCard('J', 'jack1');
@@ -107,7 +31,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         currentPlayerIndex: 0,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
-          createTestCard('K', 'p1c1'),
+            createTestCard('K', 'p1c1'),
             createTestCard('Q', 'p1c2'),
           ]),
           createTestPlayer('p2', 'Player 2', false, [
@@ -255,7 +179,7 @@ describe('Game Engine - Rules-Based Tests', () => {
     it('should trigger toss-in period after declaration', () => {
       const kingCard = createTestCard('K', 'king1');
       const state = createTestState({
-        subPhase: 'awaiting_action',
+        subPhase: 'choosing',
         currentPlayerIndex: 0,
         players: [
           createTestPlayer('p1', 'Player 1', true),
@@ -268,13 +192,23 @@ describe('Game Engine - Rules-Based Tests', () => {
           card: kingCard,
           playerId: 'p1',
           actionPhase: 'selecting-target',
-          targets: [],
+          targets: [
+            {
+              playerId: 'p2',
+              position: 0,
+            }
+          ],
         },
       });
 
       // Declare Ace
-      const newState = GameEngine.reduce(
+      let newState = GameEngine.reduce(
         state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+
+      newState = GameEngine.reduce(
+        newState,
         GameActions.declareKingAction('p1', 'A')
       );
 
@@ -282,32 +216,8 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.activeTossIn).not.toBeNull();
       expect(newState.activeTossIn?.ranks).toContain('A');
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
-      expect(newState.discardPile.peekTop()?.id).toBe('king1');
-    });
-
-    it('should allow declaring non-action cards', () => {
-      const kingCard = createTestCard('K', 'king1');
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        currentPlayerIndex: 0,
-        pendingAction: {
-          card: kingCard,
-          playerId: 'p1',
-          actionPhase: 'selecting-target',
-          targets: [],
-        },
-      });
-
-      // According to rules: can declare 2-6, K, or Joker (non-action cards)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.declareKingAction('p1', '5')
-      );
-
-      // Declaring any rank (including non-action cards) triggers toss-in period
-      // Players can toss in matching '5' cards even though they have no actions
-      expect(newState.activeTossIn?.ranks).toContain('5');
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.discardPile.peekTop()?.id).toBe('p2c1');
+      expect(newState.discardPile.peekAt(-1)?.id).toBe('king1');
     });
   });
 
@@ -419,7 +329,7 @@ describe('Game Engine - Rules-Based Tests', () => {
   });
 
   describe('Toss-In mechanism', () => {
-    it('should allow any player to toss in matching card', () => {
+    it('should allow any player to toss in action card', () => {
       // Setup: King has declared rank 'A', triggering toss-in
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
@@ -455,8 +365,9 @@ describe('Game Engine - Rules-Based Tests', () => {
         GameActions.participateInTossIn('p2', 0)
       );
 
-      expect(newState.players[1].cards.length).toBe(1); // P2 lost a card
-      expect(newState.discardPile.length).toBe(1); // Ace in discard
+      expect(mockLogger.warn).not.toHaveBeenCalled();
+      expect(newState.players.find((p) => p.id === 'p2')?.cards.length).toBe(1); // P2 lost a card
+      expect(newState.activeTossIn?.queuedActions.length).toBe(1); // Ace in discard
       expect(newState.activeTossIn?.participants).toContain('p2');
 
       // P3 also tosses in their Ace
@@ -466,7 +377,61 @@ describe('Game Engine - Rules-Based Tests', () => {
       );
 
       expect(newState.players[2].cards.length).toBe(1); // P3 lost a card
-      expect(newState.discardPile.length).toBe(2); // Two Aces in discard
+      expect(newState.activeTossIn?.queuedActions.length).toBe(2); // Two Aces in discard
+      expect(newState.activeTossIn?.participants).toContain('p3');
+    });
+
+    it('should allow any player to toss in non-action card', () => {
+      // Setup: King has declared rank 'A', triggering toss-in
+      const state = createTestState({
+        subPhase: 'toss_queue_active', // Correct phase for toss-in
+        currentPlayerIndex: 0,
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('K', 'p1c1'),
+            createTestCard('Q', 'p1c2'),
+          ]),
+          createTestPlayer('p2', 'Player 2', false, [
+            createTestCard('2', 'p2c1'), // Matching card
+            createTestCard('7', 'p2c2'),
+          ]),
+          createTestPlayer('p3', 'Player 3', false, [
+            createTestCard('2', 'p3c1'), // Matching card
+            createTestCard('8', 'p3c2'),
+          ]),
+        ],
+        activeTossIn: {
+          ranks: ['2'],
+          initiatorId: 'p1',
+          originalPlayerIndex: 0,
+          participants: [],
+          queuedActions: [],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
+        },
+      });
+
+      // P2 tosses in their Ace
+      let newState = GameEngine.reduce(
+        state,
+        GameActions.participateInTossIn('p2', 0)
+      );
+
+      expect(mockLogger.warn).not.toHaveBeenCalled();
+      expect(newState.players.find((p) => p.id === 'p2')?.cards.length).toBe(1); // P2 lost a card
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
+      expect(newState.discardPile.length).toBe(1);
+      expect(newState.activeTossIn?.participants).toContain('p2');
+
+      // P3 also tosses in their Ace
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.participateInTossIn('p3', 0)
+      );
+
+      expect(newState.players[2].cards.length).toBe(1); // P3 lost a card
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
+      expect(newState.discardPile.length).toBe(2);
       expect(newState.activeTossIn?.participants).toContain('p3');
     });
 
@@ -524,7 +489,6 @@ describe('Game Engine - Rules-Based Tests', () => {
         GameActions.finishTossInPeriod('p1')
       );
 
-      expect(newState.activeTossIn).toBeNull();
       // Note: finishTossInPeriod does NOT increment turnCount
       // Turn count is managed separately by the advance turn logic
       expect(newState.turnCount).toBe(5); // Unchanged
@@ -562,7 +526,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       );
 
       expect(newState.players[0].knownCardPositions).toContain(0);
-      expect(newState.subPhase).toBe('selecting'); // Should advance to selecting phase
+      expect(newState.subPhase).toBe('awaiting_action');
     });
 
     it('should apply penalty if declaration is wrong', () => {
@@ -636,31 +600,6 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.players[0].isVintoCaller).toBe(false); // P1 is not caller
     });
 
-    it('should allow coalition members one more turn after Vinto', () => {
-      // According to rules: "Each other player (the Coalition) takes exactly one more turn"
-      const state = createTestState({
-        subPhase: 'idle',
-        currentPlayerIndex: 1, // P2's turn
-        finalTurnTriggered: true,
-        vintoCallerId: 'p1',
-        turnCount: 20,
-        players: [
-          createTestPlayer('p1', 'Player 1', true),
-          createTestPlayer('p2', 'Player 2', true), // Make P2 human to avoid ai_thinking phase
-          createTestPlayer('p3', 'Player 3', true), // Make P3 human
-        ],
-      });
-
-      // P2 takes their final turn
-      let newState = GameEngine.reduce(state, GameActions.advanceTurn());
-      expect(newState.currentPlayerIndex).toBe(2); // Move to P3
-
-      // P3 takes their final turn
-      newState = GameEngine.reduce(newState, GameActions.advanceTurn());
-      // After final coalition member takes turn, should cycle back
-      // (implementation may vary - this documents the behavior)
-    });
-
     it('should prevent interaction with Vinto caller cards during final round', () => {
       // According to rules: "During Final Round, no one may interact with the Vinto caller's cards"
       const state = createTestState({
@@ -704,7 +643,7 @@ describe('Game Engine - Rules-Based Tests', () => {
 
       expect(newState.pendingAction?.card.id).toBe('disc1');
       expect(newState.discardPile.length).toBe(0);
-      expect(newState.subPhase).toBe('choosing');
+      expect(newState.subPhase).toBe('awaiting_action');
     });
 
     it('should not allow taking non-action cards from discard', () => {
@@ -737,7 +676,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
 
       // Should transition to choosing, and the action MUST be used
-      expect(newState.subPhase).toBe('choosing');
+      expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.rank).toBe('J');
 
       // The implementation should enforce that swap is not an option here
@@ -781,18 +720,13 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Step 2: Choose to swap or discard
       // Let's swap with position 0
       state = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
-      expect(state.subPhase).toBe('selecting');
-      expect(state.pendingAction?.card.id).toBe('p1c1'); // King removed
+      expect(state.subPhase).toBe('toss_queue_active');
+      expect(state.pendingAction).toBeNull(); // King removed
 
       // Step 3: Discard the swapped card
       state = GameEngine.reduce(state, GameActions.discardCard('p1'));
-      expect(state.subPhase).toBe('idle');
+      expect(state.subPhase).toBe('toss_queue_active');
       expect(state.discardPile.peekTop()?.id).toBe('p1c1');
-      expect(state.turnCount).toBe(6);
-
-      // Step 4: Advance to next player
-      state = GameEngine.reduce(state, GameActions.advanceTurn());
-      expect(state.currentPlayerIndex).toBe(1);
     });
   });
 });

@@ -180,7 +180,7 @@ describe('8 Card Action', () => {
 
       // Should return to toss-in
       expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
-      expect(newState.activeTossIn).toBeNull();
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
     });
   });
 

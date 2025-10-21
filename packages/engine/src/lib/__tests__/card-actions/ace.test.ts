@@ -13,18 +13,26 @@
  * 4. Edge cases and validations
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../../game-engine';
 import { GameActions } from '../../game-actions';
 import {
   createTestCard,
   createTestPlayer,
   createTestState,
+  markPlayersReady,
   toPile,
 } from '../test-helpers';
 import { GameSubPhase } from '@vinto/shapes';
+import { mockLogger } from '../setup-tests';
 
 describe('Ace (A) Card Action', () => {
+  beforeEach(() => {
+    // Reset all mock calls before each test
+    mockLogger.log.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
+  });
   describe('Normal Flow - Draw from Deck', () => {
     it('should allow using Ace action to force opponent to draw penalty card', () => {
       const aceCard = createTestCard('A', 'ace1');
@@ -61,7 +69,7 @@ describe('Ace (A) Card Action', () => {
       // Step 2: Player selects opponent to draw penalty card
       newState = GameEngine.reduce(
         newState,
-        GameActions.selectActionTarget('p1', 'p2', 0)
+        GameActions.selectAceActionTarget('p1', 'p2')
       );
 
       // Verify opponent drew penalty card
@@ -136,7 +144,7 @@ describe('Ace (A) Card Action', () => {
       // Step 2: Must use action immediately
       newState = GameEngine.reduce(
         newState,
-        GameActions.selectActionTarget('p1', 'p2', 0)
+        GameActions.selectAceActionTarget('p1', 'p2')
       );
 
       // Verify opponent drew penalty card
@@ -202,8 +210,8 @@ describe('Ace (A) Card Action', () => {
         ],
         activeTossIn: {
           ranks: ['A'],
-          initiatorId: 'p1',
-          originalPlayerIndex: 0,
+          initiatorId: 'p2',
+          originalPlayerIndex: 1,
           participants: ['p2'],
           queuedActions: [
             {
@@ -218,22 +226,7 @@ describe('Ace (A) Card Action', () => {
       });
 
       // All players mark ready
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.playerTossInFinished('p1')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p2')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p3')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p4')
-      );
+      let newState = markPlayersReady(state, ['p1', 'p2']);
 
       // Queued Ace action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -243,12 +236,18 @@ describe('Ace (A) Card Action', () => {
       // P2 selects target for queued Ace
       newState = GameEngine.reduce(
         newState,
-        GameActions.selectActionTarget('p2', 'p1', 0)
+        GameActions.selectAceActionTarget('p2', 'p1')
       );
 
+
+      // mark again as we still allowing toss in to continue
+      newState = markPlayersReady(newState, ['p1', 'p2']);
+
+      expect(mockLogger.warn).not.toHaveBeenCalled();
       // Should return to idle (not create new toss-in)
       expect(newState.subPhase).toBe('idle');
       expect(newState.activeTossIn?.ranks).toContain('A'); // Same toss-in continues
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0); // No queued actions
       expect(newState.pendingAction).toBeNull();
       expect(newState.discardPile.peekTop()?.rank).toBe('A');
       expect(newState.discardPile.peekTop()?.played).toBe(true);
@@ -309,12 +308,19 @@ describe('Ace (A) Card Action', () => {
 
       const newState = GameEngine.reduce(
         state,
-        GameActions.selectActionTarget('p1', 'p2', 0)
+        GameActions.selectAceActionTarget('p1', 'p2')
       );
 
       // Should fail gracefully - check implementation
       // At minimum, state should be valid
       expect(newState.players[1].cards.length).toBe(0); // No card drawn
+
+      // Example: Check if logger.warn was called (or not called)
+      // expect(mockLogger.warn).not.toHaveBeenCalled();
+      // Or check if it was called with specific message:
+      // expect(mockLogger.warn).toHaveBeenCalledWith('Expected warning message');
+      // Or check all calls:
+      // console.log('All warn calls:', mockLogger.warn.mock.calls);
     });
 
     it('should reject action when not player turn', () => {
@@ -335,7 +341,7 @@ describe('Ace (A) Card Action', () => {
       // P2 tries to use action (not their turn)
       const newState = GameEngine.reduce(
         state,
-        GameActions.selectActionTarget('p2', 'p3', 0)
+        GameActions.selectAceActionTarget('p2', 'p3')
       );
 
       expect(newState).toEqual(state); // State unchanged
@@ -364,7 +370,7 @@ describe('Ace (A) Card Action', () => {
       // P1 targets themselves
       const newState = GameEngine.reduce(
         state,
-        GameActions.selectActionTarget('p1', 'p1', 0)
+        GameActions.selectAceActionTarget('p1', 'p1')
       );
 
       // Should draw penalty card to self

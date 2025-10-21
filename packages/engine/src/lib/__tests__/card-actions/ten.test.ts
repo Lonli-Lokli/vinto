@@ -83,7 +83,7 @@ describe('10 Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('ten1');
     });
   });
@@ -183,7 +183,7 @@ describe('10 Card Action', () => {
       );
 
       // Should return to toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(newState.subPhase).toBe('ai_thinking');
       expect(newState.activeTossIn?.ranks).toContain('10');
     });
   });

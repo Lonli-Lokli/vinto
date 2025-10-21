@@ -44,19 +44,20 @@ export function handleDeclareKingAction(
 
   // Get the selected card from pendingAction.targets[0]
   const selectedTarget = newState.pendingAction?.targets?.[0];
-  if (!selectedTarget || !selectedTarget.card) {
+  if (!selectedTarget) {
     console.error(
-      '[handleDeclareKingAction] No card was selected for King action'
+      '[handleDeclareKingAction] No target was selected for King action'
     );
     return state;
   }
 
   const {
     playerId: targetPlayerId,
-    position,
-    card: selectedCard,
+    position
   } = selectedTarget;
-  const actualRank = selectedCard.rank;
+
+  const selectedCard = selectedTarget;
+  const actualRank = newState.players.find(p => p.id === targetPlayerId)?.cards[position]?.rank;
   const isCorrect = actualRank === declaredRank;
 
   console.log('[handleDeclareKingAction] Validating declaration:', {

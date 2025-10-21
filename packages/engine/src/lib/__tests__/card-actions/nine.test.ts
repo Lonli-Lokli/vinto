@@ -19,6 +19,7 @@ import {
   createTestCard,
   createTestPlayer,
   createTestState,
+  markPlayersReady,
   toPile,
 } from '../test-helpers';
 
@@ -83,8 +84,9 @@ describe('9 Card Action', () => {
         GameActions.swapCard('p1', 0)
       );
 
-      expect(newState.subPhase).toBe('selecting');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('nine1');
+      expect(newState.discardPile.peekTop()?.id).toBe('p1c1');
     });
   });
 
@@ -149,22 +151,7 @@ describe('9 Card Action', () => {
       });
 
       // All players mark ready
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.playerTossInFinished('p1')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p2')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p3')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p4')
-      );
+      let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
 
       // Queued 9 action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -179,9 +166,8 @@ describe('9 Card Action', () => {
       // Confirm peek
       newState = GameEngine.reduce(newState, GameActions.confirmPeek('p2'));
 
-      // Should return to toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.ranks).toContain('9');
+      expect(newState.subPhase).toBe('ai_thinking'); // all already marked they are ready so auto-advance
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
     });
   });
 
