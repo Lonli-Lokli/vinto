@@ -71,24 +71,21 @@ export const QueenAction = observer(() => {
         </div>
 
         {/* Action Buttons - only show when both cards selected */}
-        {hasBothCards && (
-          <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-            <SwapButton
-              onClick={() => {
-                if (!humanPlayer) return;
-                gameClient.dispatch(
-                  GameActions.executeQueenSwap(humanPlayer.id)
-                );
-              }}
-            />
-            <SkipButton
-              onClick={() => {
-                if (!humanPlayer) return;
-                gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));
-              }}
-            />
-          </div>
-        )}
+        <div className="grid grid-cols-2 gap-1 flex-shrink-0">
+          <SwapButton
+            disabled={!hasBothCards}
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.executeQueenSwap(humanPlayer.id));
+            }}
+          />
+          <SkipButton
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));
+            }}
+          />
+        </div>
       </div>
     </div>
   );

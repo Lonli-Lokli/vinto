@@ -185,6 +185,7 @@ export class CardAnimationStore {
     return this.activeAnimations.size > 0;
   }
 
+
   /**
    * Check if there are blocking animations (excludes highlights and other non-blocking animations)
    * Used to determine if user interactions should be disabled

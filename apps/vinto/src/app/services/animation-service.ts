@@ -133,10 +133,12 @@ export class AnimationService {
 
       default:
         // No animation needed for this action
-        if (!this.animationStore.hasActiveAnimations) {
-          this.gameClient?.syncVisualState();
-        }
+
         break;
+    }
+
+    if (!this.animationStore.hasBlockingAnimations) {
+      this.gameClient?.syncVisualState();
     }
   }
 
