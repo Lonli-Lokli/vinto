@@ -275,7 +275,7 @@ export const ParallaxStars = () => {
 // Alternative Pure CSS Version (No JS for star generation)
 export const PureCSSParallaxStars = () => {
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden ">
       {/* Gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-sky-100 via-blue-100 to-indigo-200 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 transition-colors duration-500" />
 
