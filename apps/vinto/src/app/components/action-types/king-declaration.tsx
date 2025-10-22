@@ -2,7 +2,10 @@
 'use client';
 
 import React from 'react';
-import { KingActionCardButton, KingNonActionCardButton } from '../buttons';
+import {
+  KingCardButton,
+  SkipButton,
+} from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
@@ -12,8 +15,24 @@ export function KingDeclaration() {
   const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
 
   // K can now be declared (King is allowed for declaring)
-  const actionCards = ['7', '8', '9', '10', 'J', 'Q', 'A'] as const;
-  const nonActionCards = ['2', '3', '4', '5', '6', 'K', 'Joker'] as const;
+  const firstRowCards = [
+    { rank: '7' as const, actionable: true },
+    { rank: '8' as const, actionable: true },
+    { rank: '9' as const, actionable: true },
+    { rank: '10' as const, actionable: true },
+    { rank: 'J' as const, actionable: true },
+    { rank: 'Q' as const, actionable: true },
+    { rank: 'K' as const, actionable: true },
+  ];
+  const secondRowCards = [
+    { rank: 'A' as const, actionable: true },
+    { rank: '2' as const, actionable: false },
+    { rank: '3' as const, actionable: false },
+    { rank: '4' as const, actionable: false },
+    { rank: '5' as const, actionable: false },
+    { rank: '6' as const, actionable: false },
+    { rank: 'Joker' as const, actionable: false },
+  ];
 
   // Get the pending action
   const targets = gameClient.state.pendingAction?.targets || [];
@@ -57,6 +76,17 @@ export function KingDeclaration() {
               The card will be highlighted but not revealed yet
             </p>
           </div>
+          {
+            <div className="flex-shrink-0">
+              <SkipButton
+                onClick={() => {
+                  if (!humanPlayer) return;
+                  gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+                }}
+                className="w-full py-1.5 px-4 text-sm"
+              />
+            </div>
+          }
         </div>
       </div>
     );
@@ -94,35 +124,35 @@ export function KingDeclaration() {
             </p>
             <div className="grid grid-cols-7 gap-1">
               {/* Action cards with visual distinction */}
-              {actionCards.map((rank) => {
+              {firstRowCards.map((item) => {
                 return (
-                  <KingActionCardButton
-                    key={rank}
-                    rank={rank}
+                  <KingCardButton
+                    key={item.rank}
+                    rank={item.rank}
+                    actionable={item.actionable}
                     onClick={() => {
                       if (!humanPlayer) return;
                       gameClient.dispatch(
-                        GameActions.declareKingAction(humanPlayer.id, rank)
+                        GameActions.declareKingAction(humanPlayer.id, item.rank)
                       );
                     }}
-                    disabled={false}
                   />
                 );
               })}
 
               {/* Non-action cards in same grid */}
-              {nonActionCards.map((rank) => {
+              {secondRowCards.map((item) => {
                 return (
-                  <KingNonActionCardButton
-                    key={rank}
-                    rank={rank}
+                  <KingCardButton
+                    key={item.rank}
+                    rank={item.rank}
+                    actionable={item.actionable}
                     onClick={() => {
                       if (!humanPlayer) return;
                       gameClient.dispatch(
-                        GameActions.declareKingAction(humanPlayer.id, rank)
+                        GameActions.declareKingAction(humanPlayer.id, item.rank)
                       );
                     }}
-                    disabled={false}
                   />
                 );
               })}

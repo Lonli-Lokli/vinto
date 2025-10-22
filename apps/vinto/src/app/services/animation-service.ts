@@ -553,7 +553,8 @@ export class AnimationService {
     const position =
       action.payload.rank === 'Any'
         ? action.payload.position
-        : newState.players.find((p) => p.id === targetPlayerId)!.cards.length -1;
+        : newState.players.find((p) => p.id === targetPlayerId)!.cards.length -
+          1;
 
     if (!actionCard) return;
 
