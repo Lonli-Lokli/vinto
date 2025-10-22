@@ -287,17 +287,7 @@ export const PureCSSParallaxStars = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex items-center justify-center h-full">
-        <div className="text-center space-y-4">
-          <h1 className="text-6xl font-thin tracking-widest text-gray-800 dark:text-white">
-            STELLAR
-          </h1>
-          <p className="text-xl tracking-[0.3em] text-gray-600 dark:text-gray-300">
-            PARALLAX EXPERIENCE
-          </p>
-        </div>
-      </div>
-
+      
       <style jsx>{`
         .stars-wrapper {
           background: transparent;
