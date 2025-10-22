@@ -200,13 +200,14 @@ export class MCTSMoveGenerator {
         // Prioritize own cards that we know about
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
           const memory = currentPlayer.knownCards.get(pos);
-          if (memory && memory.confidence > 0.5 && memory.card) {
-            // We know this card - declare its actual rank
+          if (memory && memory.confidence > 0.5) {
+            // Generate move with just the target position
+            // DO NOT include declaredRank in the move - it will be determined  later
             kingMoves.push({
               type: 'use-action',
               playerId: currentPlayer.id,
               targets: [{ playerId: currentPlayer.id, position: pos }],
-              declaredRank: memory.card.rank,
+              // declaredRank will be set when actually declaring, not during move       generation
             });
           } else {
             // Unknown card - try each possible rank

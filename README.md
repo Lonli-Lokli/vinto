@@ -163,37 +163,21 @@ graph LR
 ## Project Structure
 
 ```
-apps/vinto/src/
-├── engine/              # Pure game logic (cloud-ready)
-│   ├── GameEngine.ts    # Main reducer
-│   ├── cases/           # Action handlers
-│   │   ├── draw-card.ts
-│   │   ├── swap-card.ts
-│   │   ├── use-card.ts
-│   │   └── ...
-│   └── types/           # GameState, GameAction types
-│       ├── GameState.ts
-│       └── GameAction.ts
-├── client/              # Client-side wrapper
-│   ├── GameClient.ts    # Observable wrapper around engine
-│   └── adapters/
-│       └── botAIAdapter.ts  # Bot AI integration
-├── app/
-│   ├── components/      # React components
-│   │   ├── game-table.tsx
-│   │   ├── player-hand.tsx
-│   │   └── ...
-│   ├── stores/          # UI-only stores
-│   │   ├── ui-store.ts          # Modals, highlights
-│   │   └── card-animation-store.ts  # Animations
-│   ├── services/
-│   │   ├── mcts-bot-decision.ts  # Bot AI algorithm
-│   │   └── animation-service.ts
-│   └── di/              # Dependency injection
-│       └── setup.ts
-└── shared/              # Shared types and utilities
-    └── types.ts
+apps/
+  vinto/           # Main Next.js app (UI, integration, entrypoint)
+
+packages/
+  engine/          # Core game logic and rules (pure, deterministic, cloud-ready)
+  bot/             # AI bot logic for automated players
+  local-client/    # Client-side state management for local games (React hooks, context, services)
+  shapes/          # Shared types, interfaces, and constants used by all packages
 ```
+
+- **apps/vinto**: The main application, integrating all packages and providing the user interface.
+- **engine**: Implements all game rules, state transitions, and reducers. No UI or side effects.
+- **bot**: Provides AI player logic, decision-making, and strategy for bots.
+- **local-client**: Manages client-side state, user actions, and UI integration for local games.
+- **shapes**: Exports TypeScript types, interfaces, and constants used by all packages.
 
 ## Getting Started
 

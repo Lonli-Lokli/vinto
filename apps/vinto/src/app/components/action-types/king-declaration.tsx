@@ -2,10 +2,7 @@
 'use client';
 
 import React from 'react';
-import {
-  KingCardButton,
-  SkipButton,
-} from '../buttons';
+import { KingCardButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';

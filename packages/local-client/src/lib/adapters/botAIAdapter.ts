@@ -282,13 +282,15 @@ export class BotAIAdapter {
 
         if (shouldParticipate) {
           // Find all matching cards in bot's hand
-          const matchingCards = botPlayer.cards.filter(
-            (card) => tossInRanks.includes(card.rank)
+          const matchingCards = botPlayer.cards.filter((card) =>
+            tossInRanks.includes(card.rank)
           );
 
           if (matchingCards.length > 0) {
             console.log(
-              `[BotAI] ${botId} tossing in ${matchingCards.length} ${tossInRanks.map((rank) => rank).join(',')}`
+              `[BotAI] ${botId} tossing in ${matchingCards.length} ${tossInRanks
+                .map((rank) => rank)
+                .join(',')}`
             );
 
             // Toss in each matching card sequentially
@@ -410,8 +412,20 @@ export class BotAIAdapter {
     );
 
     if (swapPosition !== null) {
-      this.gameClient.dispatch(GameActions.swapCard(botId, swapPosition));
-      console.log(`[BotAI] ${botId} swapped at position ${swapPosition}`);
+      // Look at current game state to see what card is at the swap position
+      const cardAtPosition = context.botPlayer.cards[swapPosition];
+
+      // If it's an action card and bot knows about it, declare its rank
+      const shouldDeclare =
+        cardAtPosition.actionText &&
+        context.botPlayer.knownCardPositions.includes(swapPosition);
+      const declaredRank = shouldDeclare ? cardAtPosition.rank : undefined;
+
+      this.gameClient.dispatch(
+        GameActions.swapCard(botId, swapPosition, declaredRank)
+      );
+      console.log(`[BotAI] ${botId} swapped at position ${swapPosition},
+  declared: ${declaredRank || 'none'}`);
     } else {
       // Discard the drawn card
       this.gameClient.dispatch(GameActions.discardCard(botId));
@@ -534,22 +548,36 @@ export class BotAIAdapter {
 
       // State will update and MobX reaction will trigger step 2 (targets.length === 1)
     } else if (targets.length === 1) {
-      // Step 2: Declare the rank
-      // Use the cached declared rank from step 1 to maintain consistency
-      const declaredRank = this.cachedActionDecision?.declaredRank
-        ? this.cachedActionDecision.declaredRank
-        : this.botDecisionService.selectKingDeclaration(context);
+      // Step 2: Declare the rank by looking at CURRENT game state
+      const target = targets[0];
 
-      // Clear cache after using
+      // Find the target player and look at what card is actually at that  position NOW
+      const targetPlayer = context.allPlayers.find(
+        (p) => p.id === target.playerId
+      );
+      if (!targetPlayer) {
+        console.error(`[BotAI] Target player ${target.playerId} not found`);
+        return;
+      }
+
+      const cardAtPosition = targetPlayer.cards[target.position];
+      if (!cardAtPosition) {
+        console.error(
+          `[BotAI] No card at ${target.playerId}[${target.position}]`
+        );
+        return;
+      }
+
+      // Declare the rank of the card that's CURRENTLY at that position
+      const declaredRank = cardAtPosition.rank;
       this.cachedActionDecision = null;
 
       this.gameClient.dispatch(
         GameActions.declareKingAction(botId, declaredRank)
       );
-      console.log(`[BotAI] ${botId} declared King action: ${declaredRank}`);
-
-      // King action transitions to toss-in phase (if correct) or idle (if incorrect)
-      // handleTossInPhase will handle turn advancement after toss-in completes (if toss-in triggered)
+      console.log(
+        `[BotAI] ${botId} declared King action: ${declaredRank} at ${target.playerId}[${target.position}]`
+      );
     }
   }
 
