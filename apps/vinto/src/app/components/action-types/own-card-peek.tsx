@@ -12,8 +12,8 @@ import { HelpPopover } from '../presentational';
 export const OwnCardPeek = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
-  const action = gameClient.state.pendingAction?.card.rank;
-  const humanPlayerState = gameClient.state.players.find((p) => p.isHuman);
+  const action = gameClient.visualState.pendingAction?.card.rank;
+  const humanPlayerState = gameClient.visualState.players.find((p) => p.isHuman);
 
   const hasRevealedCard =
     humanPlayerState &&
@@ -21,8 +21,8 @@ export const OwnCardPeek = observer(() => {
 
   // Check if this is a toss-in action
   const isTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   return (
     <div className="w-full h-full">

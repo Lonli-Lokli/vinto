@@ -144,7 +144,7 @@ export function useGameClientInitialized(): boolean {
 export function useGameState(): GameState {
   const client = useGameClient();
   // useObserver makes this hook reactive to GameClient.state changes
-  return useObserver(() => client.state);
+  return useObserver(() => client.visualState);
 }
 
 /**

@@ -9,7 +9,7 @@ import { HelpPopover } from '../presentational';
 
 export function KingDeclaration() {
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
   // K can now be declared (King is allowed for declaring)
   const firstRowCards = [
@@ -32,13 +32,13 @@ export function KingDeclaration() {
   ];
 
   // Get the pending action
-  const targets = gameClient.state.pendingAction?.targets || [];
+  const targets = gameClient.visualState.pendingAction?.targets || [];
   const selectedTarget = targets[0];
 
   // Check if this is a toss-in action
   const isTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   // Check if we're in the card selection phase or rank declaration phase
   // Step 1: targets.length === 0 → selecting card

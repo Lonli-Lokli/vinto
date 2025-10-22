@@ -10,9 +10,9 @@ import { HelpPopover } from '../presentational';
 
 export const JackAction = observer(() => {
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
-  const pendingAction = gameClient.state.pendingAction;
+  const pendingAction = gameClient.visualState.pendingAction;
   if (!pendingAction) return null;
 
   const swapTargets = pendingAction.targets || [];
@@ -20,11 +20,11 @@ export const JackAction = observer(() => {
 
   // Check if this is a toss-in action
   const isTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   const getPlayerName = (playerId: string) => {
-    const player = gameClient.state.players.find((p) => p.id === playerId);
+    const player = gameClient.visualState.players.find((p) => p.id === playerId);
     return player?.name || 'Unknown';
   };
 

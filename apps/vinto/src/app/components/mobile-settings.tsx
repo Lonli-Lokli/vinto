@@ -54,7 +54,7 @@ export const SettingsPopover = observer(
                 <DifficultyButton
                   key={level}
                   level={level}
-                  isActive={gameClient.state.difficulty === level}
+                  isActive={gameClient.visualState.difficulty === level}
                   onClick={() =>
                     gameClient.dispatch(GameActions.updateDifficulty(level))
                   }

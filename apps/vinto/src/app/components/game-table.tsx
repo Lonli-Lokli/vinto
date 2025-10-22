@@ -17,15 +17,15 @@ export const GameTable = observer(() => {
 
   // Get values from GameClient
   const currentPlayer = gameClient.currentPlayer;
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
-  const phase = gameClient.state.phase;
-  const subPhase = gameClient.state.subPhase;
-  const discardPile = gameClient.state.discardPile;
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
+  const phase = gameClient.visualState.phase;
+  const subPhase = gameClient.visualState.subPhase;
+  const discardPile = gameClient.visualState.discardPile;
 
   // Get toss-in information
-  const tossInRanks = gameClient.state.activeTossIn?.ranks || [];
-  const tossInQueue = gameClient.state.activeTossIn?.queuedActions.map(action => {
-    const player = gameClient.state.players.find(p => p.id === action.playerId);
+  const tossInRanks = gameClient.visualState.activeTossIn?.ranks || [];
+  const tossInQueue = gameClient.visualState.activeTossIn?.queuedActions.map(action => {
+    const player = gameClient.visualState.players.find(p => p.id === action.playerId);
     return {
       playerId: action.playerId,
       playerName: player?.name || 'Unknown',
@@ -41,7 +41,7 @@ export const GameTable = observer(() => {
     subPhase === 'toss_queue_active' || subPhase === 'toss_queue_processing';
 
   // Get action state from GameClient.pendingAction
-  const pendingAction = gameClient.state.pendingAction;
+  const pendingAction = gameClient.visualState.pendingAction;
   const pendingCard = pendingAction?.card;
   const swapPosition = pendingAction?.swapPosition;
   const targetType = pendingAction?.targetType;
@@ -120,11 +120,11 @@ export const GameTable = observer(() => {
   // Calculate player positions based on index
   // Human player is always index 0 (bottom position)
   // Other players are assigned top, left, right based on total player count
-  const playersWithPositions = gameClient.state.players.map((player) => ({
+  const playersWithPositions = gameClient.visualState.players.map((player) => ({
     player,
     position: GameTableLogic.getPlayerPosition(
       player,
-      gameClient.state.players
+      gameClient.visualState.players
     ),
   }));
 

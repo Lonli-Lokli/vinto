@@ -12,6 +12,7 @@ import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 import { Card } from '@vinto/shapes';
+import { activeAnimations } from 'framer-motion';
 
 export type AnimationType =
   | 'swap'
@@ -129,6 +130,7 @@ export class CardAnimationStore {
   private animationCounter = 0;
   private sequenceCounter = 0;
   private positionCapture: AnimationPositionCapture;
+  private onAllAnimationsCompleteCallback?: () => void;
 
   constructor(
     @inject(AnimationPositionCapture) positionCapture: AnimationPositionCapture
@@ -150,6 +152,14 @@ export class CardAnimationStore {
       removeAnimation: action,
       reset: action,
     });
+  }
+
+  /**
+   * Register callback to be called when all animations complete
+   * Used to sync visual state after animations finish
+   */
+  onAllAnimationsComplete(callback: () => void): void {
+    this.onAllAnimationsCompleteCallback = callback;
   }
 
   /**
@@ -568,7 +578,10 @@ export class CardAnimationStore {
       if (!this.activeAnimations.has(currentAnimId)) {
         // Animation completed, move to next step
         const sequence = this.activeSequences.get(sequenceId);
-        if (!sequence) return;
+        if (!sequence) {
+          this.notifyIfAllAnimationsComplete();
+          return;
+        }
 
         sequence.currentStepIndex++;
 
@@ -594,9 +607,31 @@ export class CardAnimationStore {
 
   /**
    * Remove an animation immediately
+   * Triggers callback if this was the last animation
    */
   removeAnimation(id: string) {
     this.activeAnimations.delete(id);
+    this.notifyIfAllAnimationsComplete();
+}
+
+  notifyIfAllAnimationsComplete() {
+// Check if all animations are now complete
+    if (
+      this.activeAnimations.size === 0 &&
+      this.activeSequences.size === 0 &&
+      this.onAllAnimationsCompleteCallback
+    ) {
+      // Use double RAF to ensure callback runs after all render cycles complete
+      // First RAF: schedule for next frame
+      // Second RAF: ensures DOM has fully updated and painted
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (this.onAllAnimationsCompleteCallback) {
+            this.onAllAnimationsCompleteCallback();
+          }
+        });
+      });
+    }
   }
 
   /**

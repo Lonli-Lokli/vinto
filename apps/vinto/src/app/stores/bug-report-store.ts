@@ -9,6 +9,7 @@ import {
 import { inject, injectable } from 'tsyringe';
 import { AnimationService } from '../services/animation-service';
 import { HeadlessService } from '../services/headless-service';
+import type { GameClient } from '@vinto/local-client';
 
 export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -20,7 +21,7 @@ export class BugReportStore {
 
   constructor(
     // we have to resolve our services, otherwise they will not be created
-    @inject(AnimationService) _animationService: AnimationService,
+    @inject(AnimationService) private animationService: AnimationService,
     @inject(HeadlessService) _headlessService: HeadlessService
   ) {
     makeObservable(this);
@@ -107,5 +108,10 @@ export class BugReportStore {
         this.submitStatus = 'error';
       });
     }
+  }
+
+  @action
+  registerGameClient(gameClient: GameClient): void {
+    this.animationService.registerGameClient(gameClient);
   }
 }

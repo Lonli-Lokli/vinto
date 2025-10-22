@@ -10,25 +10,25 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
   // Get current player
   const currentPlayer = gameClient.currentPlayer;
   const isCurrentPlayerWaiting =
-    !currentPlayer.isHuman && gameClient.state.phase === 'playing';
+    !currentPlayer.isHuman && gameClient.visualState.phase === 'playing';
 
   // Check subPhases
-  const isChoosingCardAction = gameClient.state.subPhase === 'choosing';
+  const isChoosingCardAction = gameClient.visualState.subPhase === 'choosing';
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
   const isAwaitingActionTarget =
-    gameClient.state.subPhase === 'awaiting_action';
+    gameClient.visualState.subPhase === 'awaiting_action';
   const waitingForTossIn =
-    gameClient.state.subPhase === 'toss_queue_active' ||
-    gameClient.state.subPhase === 'toss_queue_processing';
-  const aiThinking = gameClient.state.subPhase === 'ai_thinking';
+    gameClient.visualState.subPhase === 'toss_queue_active' ||
+    gameClient.visualState.subPhase === 'toss_queue_processing';
+  const aiThinking = gameClient.visualState.subPhase === 'ai_thinking';
 
   // Check if processing toss-in actions
   const isProcessingTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   // Get human player to check if they're the Vinto caller
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
   const isVintoCaller = humanPlayer?.isVintoCaller ?? false;
 
   // Don't show if toss-in is active (shown inline in TossInIndicator instead)
@@ -58,7 +58,7 @@ export const WaitingIndicator = observer(function WaitingIndicator() {
     }
 
     if (isAwaitingActionTarget) {
-      const pendingAction = gameClient.state.pendingAction;
+      const pendingAction = gameClient.visualState.pendingAction;
       if (pendingAction?.card) {
         const cardName = pendingAction.card.rank;
         const targetType = pendingAction.targetType;

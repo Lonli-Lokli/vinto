@@ -12,7 +12,7 @@ export const VintoConfirmationModal = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
 
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
   const dialogRef = React.useRef<HTMLDialogElement>(null);
 
   // Open/close dialog imperatively

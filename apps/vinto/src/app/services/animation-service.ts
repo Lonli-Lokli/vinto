@@ -28,6 +28,7 @@ import {
   UseCardActionAction,
 } from '@vinto/shapes';
 import {
+  GameClient,
   registerStateUpdateCallback,
   unregisterStateUpdateCallback,
 } from '@vinto/local-client';
@@ -41,6 +42,7 @@ export class AnimationService {
   ) => void;
   private _unregisterCallback?: () => void;
   private animationStore: CardAnimationStore;
+  private gameClient?: GameClient;
 
   constructor(@inject(CardAnimationStore) animationStore: CardAnimationStore) {
     this.animationStore = animationStore;
@@ -52,6 +54,19 @@ export class AnimationService {
         unregisterStateUpdateCallback(this._stateUpdateCallback);
       }
     };
+
+    // Register callback to sync visual state after animations complete
+    this.animationStore.onAllAnimationsComplete(() => {
+      this.gameClient?.syncVisualState();
+    });
+  }
+
+  /**
+   * Register the GameClient instance
+   * Called from GameClientProvider to enable visual state syncing
+   */
+  registerGameClient(gameClient: GameClient): void {
+    this.gameClient = gameClient;
   }
 
   /**
@@ -118,6 +133,9 @@ export class AnimationService {
 
       default:
         // No animation needed for this action
+        if (!this.animationStore.hasActiveAnimations) {
+           this.gameClient?.syncVisualState();
+        }
         break;
     }
   }
@@ -1087,4 +1105,15 @@ export class AnimationService {
     }
     console.log('Disposed AnimationService');
   }
+}
+
+/**
+ * Helper function to register GameClient with AnimationService
+ * Called from app initialization to wire up visual state syncing
+ */
+export function registerGameClientWithAnimations(
+  animationService: AnimationService,
+  gameClient: any
+): void {
+  animationService.registerGameClient(gameClient);
 }

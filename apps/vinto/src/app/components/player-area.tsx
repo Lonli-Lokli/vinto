@@ -45,7 +45,7 @@ export const PlayerArea = observer(function PlayerArea({
       .map((a) => a.to.position)
   );
 
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
   const coalitionLeader = gameClient.coalitionLeader;
 
   const temporarilyVisibleCards = uiStore.getTemporarilyVisibleCards(player.id);
@@ -58,7 +58,7 @@ export const PlayerArea = observer(function PlayerArea({
   const avatarFirst = shouldAvatarComeFirst(position);
 
   // Get action targets for cards that have been selected (Q, K actions, etc.)
-  const actionTargets = gameClient.state.pendingAction?.targets || [];
+  const actionTargets = gameClient.visualState.pendingAction?.targets || [];
 
   // Get failed toss-in cards for this player
   const failedTossInCards = new Set<number>();

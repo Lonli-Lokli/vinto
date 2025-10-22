@@ -25,6 +25,9 @@ export const BugReportModal = observer(function BugReportModal({
     }
   }, [isOpen, store]);
 
+  useEffect(() => {
+    store.registerGameClient(gameClient)
+  }, [gameClient, store])
   // Auto-close on success
   useEffect(() => {
     if (store.showSuccessMessage) {

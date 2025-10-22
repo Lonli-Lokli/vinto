@@ -17,8 +17,8 @@ export const RankDeclaration = observer(() => {
   const gameClient = useGameClient();
   const uiStore = useUIStore();
 
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
-  const pendingCard = gameClient.state.pendingAction?.card;
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
+  const pendingCard = gameClient.visualState.pendingAction?.card;
   const swapPosition = uiStore.selectedSwapPosition;
 
   // Show if user is selecting swap position and has selected a card

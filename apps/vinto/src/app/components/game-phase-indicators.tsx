@@ -43,12 +43,12 @@ export const GamePhaseIndicators = observer(() => {
   const uiStore = useUIStore();
 
   // Read all state from GameClient
-  const phase = gameClient.state.phase;
-  const subPhase = gameClient.state.subPhase;
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const phase = gameClient.visualState.phase;
+  const subPhase = gameClient.visualState.subPhase;
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
   const currentPlayer = gameClient.currentPlayer;
-  const sessionActive = gameClient.state.phase !== 'final';
-  const pendingCard = gameClient.state.pendingAction?.card;
+  const sessionActive = gameClient.visualState.phase !== 'final';
+  const pendingCard = gameClient.visualState.pendingAction?.card;
 
   // Map subPhases to UI boolean flags
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;
@@ -77,7 +77,7 @@ export const GamePhaseIndicators = observer(() => {
   // Note: Vinto caller should never see toss-in indicator, only waiting indicator
   if (waitingForTossIn && !humanPlayer?.isVintoCaller) {
     const tossInRanks = gameClient.tossInRanks;
-    const isCurrentPlayerWaiting = gameClient.state.subPhase === 'ai_thinking';
+    const isCurrentPlayerWaiting = gameClient.visualState.subPhase === 'ai_thinking';
     return (
       <TossInIndicator
         tossInRanks={tossInRanks}
@@ -200,15 +200,15 @@ const TossInIndicator = observer(
 
     // Get bot actions from the PREVIOUS player (who just finished their turn)
     // Since we're in toss-in phase, the previous player's actions are what we want to show
-    const currentTurn = gameClient.state.turnNumber;
-    const recentBotActions = gameClient.state.recentActions
+    const currentTurn = gameClient.visualState.turnNumber;
+    const recentBotActions = gameClient.visualState.recentActions
       .filter((action) => {
         // Only show actions from current turn
         if (action.turnNumber !== currentTurn) return false;
         // Only show actions from the player who just took their turn (previous player)
         // This is the player whose turn triggered this toss-in phase
         const previousPlayer =
-          gameClient.state.players[gameClient.state.currentPlayerIndex];
+          gameClient.visualState.players[gameClient.visualState.currentPlayerIndex];
         if (!previousPlayer) return false;
         // Only show if it's the previous player and they're a bot
         return action.playerId === previousPlayer.id && !previousPlayer.isHuman;

@@ -562,7 +562,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
       ]),
     });
 
-    const makeTurn = (playerId: string, cardPosition: number, currentState: GameState) => {  
+    const makeTurn = (
+      playerId: string,
+      cardPosition: number,
+      currentState: GameState
+    ) => {
       let updatedState = GameEngine.reduce(
         currentState,
         GameActions.drawCard(playerId)
@@ -575,7 +579,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
 
       updatedState = markPlayersReady(updatedState, ['p1', 'p2', 'p3', 'p4']);
       return updatedState;
-    }
+    };
 
     let newState = makeTurn('p1', 0, state);
     expect(mockLogger.warn).not.toHaveBeenCalled();
@@ -597,6 +601,4 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.roundNumber).toBe(2); // Round count should increment
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
-
-  
 });

@@ -14,17 +14,17 @@ export const AceAction = observer(() => {
     string | null
   >(null);
 
-  if (!gameClient.state.pendingAction) return null;
+  if (!gameClient.visualState.pendingAction) return null;
 
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
-  const opponents = gameClient.state.players.filter(
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
+  const opponents = gameClient.visualState.players.filter(
     (p) => p.id !== humanPlayer?.id
   );
 
   // Check if this is a toss-in action
   const isTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   const handleOpponentClick = (opponentId: string) => {
     if (!humanPlayer) return;

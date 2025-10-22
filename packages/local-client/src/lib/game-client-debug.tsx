@@ -46,12 +46,12 @@ export function GameClientDebugProvider({
         console.group('🎮 GameClient State');
         console.log(
           'Phase:',
-          gameClient.state.phase,
+          gameClient.visualState.phase,
           '/',
-          gameClient.state.subPhase
+          gameClient.visualState.subPhase
         );
-        console.log('Turn:', gameClient.state.turnNumber);
-        console.log('Round:', gameClient.state.roundNumber);
+        console.log('Turn:', gameClient.visualState.turnNumber);
+        console.log('Round:', gameClient.visualState.roundNumber);
         console.log(
           'Current Player:',
           gameClient.currentPlayer.name,
@@ -64,16 +64,16 @@ export function GameClientDebugProvider({
         console.log('Pending Card:', gameClient.pendingCard);
         console.log('Can Draw:', gameClient.canDrawCard);
         console.log('Can Take Discard:', gameClient.canTakeDiscard);
-        console.log('Final Turn:', gameClient.state.finalTurnTriggered);
+        console.log('Final Turn:', gameClient.visualState.finalTurnTriggered);
         console.groupEnd();
       };
 
       // @ts-expect-error - Adding debug methods
       window.__gameClient__.logPlayers = () => {
         console.group('👥 Players');
-        gameClient.state.players.forEach((player, index) => {
+        gameClient.visualState.players.forEach((player, index) => {
           console.group(
-            `${index === gameClient.state.currentPlayerIndex ? '➤' : ' '} ${
+            `${index === gameClient.visualState.currentPlayerIndex ? '➤' : ' '} ${
               player.name
             } (${player.id})`
           );

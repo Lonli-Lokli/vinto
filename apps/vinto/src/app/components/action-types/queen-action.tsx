@@ -10,17 +10,17 @@ import { HelpPopover } from '../presentational';
 
 export const QueenAction = observer(() => {
   const gameClient = useGameClient();
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
-  if (!gameClient.state.pendingAction) return null;
+  if (!gameClient.visualState.pendingAction) return null;
 
-  const peekTargets = gameClient.state.pendingAction.targets || [];
+  const peekTargets = gameClient.visualState.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
 
   // Check if this is a toss-in action
   const isTossInAction =
-    gameClient.state.activeTossIn &&
-    gameClient.state.activeTossIn.queuedActions.length > 0;
+    gameClient.visualState.activeTossIn &&
+    gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   return (
     <div className="w-full h-full">

@@ -16,7 +16,7 @@ export const CoalitionTurnIndicator = observer(() => {
 
   // Check if coalition leader is playing
   const isCoalitionLeaderPlaying =
-    gameClient.state.phase === 'playing' &&
+    gameClient.visualState.phase === 'playing' &&
     coalitionLeader &&
     currentPlayer.id === coalitionLeader.id;
 

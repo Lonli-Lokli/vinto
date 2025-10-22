@@ -51,7 +51,7 @@ export const DeckManagerPopover = observer(
 
     // Group available cards by rank
     const availableCards: Partial<Record<Rank, Card[]>> = {};
-    for (const card of gameClient.state.drawPile) {
+    for (const card of gameClient.visualState.drawPile) {
       const existingCards = availableCards[card.rank];
       if (existingCards) {
         existingCards.push(card);
@@ -60,7 +60,7 @@ export const DeckManagerPopover = observer(
       }
     }
 
-    const topCard = gameClient.state.drawPile.peekTop();
+    const topCard = gameClient.visualState.drawPile.peekTop();
 
     return (
       <div
@@ -125,7 +125,7 @@ export const DeckManagerPopover = observer(
             <div className="text-xs text-secondary mb-2">
               Current next card:
             </div>
-            {gameClient.state.drawPile.length > 0 && topCard ? (
+            {gameClient.visualState.drawPile.length > 0 && topCard ? (
               <div className="flex items-center gap-3">
                 <div className="w-14 h-20">
                   <CardComponent

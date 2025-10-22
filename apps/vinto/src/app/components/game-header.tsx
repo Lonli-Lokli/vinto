@@ -26,11 +26,11 @@ export const GameHeader = observer(() => {
 
   // Get values from GameClient
   const currentPlayer = gameClient.currentPlayer;
-  const turnCount = gameClient.state.turnNumber;
-  const phase = gameClient.state.phase;
-  const finalTurnTriggered = gameClient.state.finalTurnTriggered;
-  const drawPile = gameClient.state.drawPile;
-  const roundNumber = gameClient.state.roundNumber;
+  const turnCount = gameClient.visualState.turnNumber;
+  const phase = gameClient.visualState.phase;
+  const finalTurnTriggered = gameClient.visualState.finalTurnTriggered;
+  const drawPile = gameClient.visualState.drawPile;
+  const roundNumber = gameClient.visualState.roundNumber;
 
   const getPhaseDisplay = () => {
     if (phase === 'scoring') return 'Final Scores';
@@ -78,7 +78,7 @@ export const GameHeader = observer(() => {
                     <DifficultyButton
                       key={level}
                       level={level}
-                      isActive={gameClient.state.difficulty === level}
+                      isActive={gameClient.visualState.difficulty === level}
                       onClick={() =>
                         gameClient.dispatch(GameActions.updateDifficulty(level))
                       }

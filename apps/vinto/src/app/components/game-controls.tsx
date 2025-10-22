@@ -15,8 +15,8 @@ export const GameControls = observer(() => {
 
   const currentPlayer = gameClient.currentPlayer;
   const isMyTurn = gameClient.isCurrentPlayerHuman;
-  const subPhase = gameClient.state.subPhase;
-  const phase = gameClient.state.phase;
+  const subPhase = gameClient.visualState.subPhase;
+  const phase = gameClient.visualState.phase;
 
   // Consolidated game state checks
   const shouldHideControls =
@@ -26,7 +26,7 @@ export const GameControls = observer(() => {
     subPhase === 'awaiting_action' || // Awaiting action target (includes King rank declaration)
     subPhase === 'toss_queue_processing' || // Processing toss-in
     subPhase === 'toss_queue_active' || // Waiting for toss-in
-    gameClient.state.finalTurnTriggered ||
+    gameClient.visualState.finalTurnTriggered ||
     !isMyTurn;
 
   // Action handlers using dispatch

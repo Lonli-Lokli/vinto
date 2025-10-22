@@ -22,16 +22,16 @@ export const ActionTargetSelector = observer(() => {
 
   // Check if we're in the awaiting_action subPhase
   const isAwaitingActionTarget =
-    gameClient.state.subPhase === 'awaiting_action';
-  const pendingAction = gameClient.state.pendingAction;
+    gameClient.visualState.subPhase === 'awaiting_action';
+  const pendingAction = gameClient.visualState.pendingAction;
 
   if (!isAwaitingActionTarget || !pendingAction) {
     return null;
   }
 
   const { playerId, targetType } = pendingAction;
-  const actionPlayer = gameClient.state.players.find((p) => p.id === playerId);
-  const humanPlayer = gameClient.state.players.find((p) => p.isHuman);
+  const actionPlayer = gameClient.visualState.players.find((p) => p.id === playerId);
+  const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
   // Only show for human players - bot actions should not display UI
   if (!actionPlayer || !humanPlayer || actionPlayer.isBot) {

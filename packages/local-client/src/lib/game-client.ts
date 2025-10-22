@@ -33,10 +33,19 @@ import { GameEngine } from '@vinto/engine';
 export class GameClient {
   /**
    * Internal game state (observable)
-   * UI components access this via the readonly getter
+   * This is the LOGICAL state - always current and accurate
+   * Used by bot AI, validation, and game logic
    */
   @observable
   private _state: GameState;
+
+  /**
+   * Visual state (observable)
+   * This is what the UI displays - lags behind _state during animations
+   * Updated by animations to smoothly transition from old to new state
+   */
+  @observable
+  private _visualState: GameState;
 
   /**
    * Full action history for debugging/bug reports
@@ -45,11 +54,20 @@ export class GameClient {
   private _actionHistory: Array<{ action: GameAction; timestamp: number }> = [];
 
   /**
-   * Public readonly accessor for game state
-   * Prevents direct state mutation from UI components
+   * Public readonly accessor for logical game state
+   * Used by bot AI and game logic
    */
   get state(): Readonly<GameState> {
     return this._state;
+  }
+
+  /**
+   * Public readonly accessor for visual state
+   * UI components should read from this instead of state
+   * This ensures UI updates only after animations complete
+   */
+  get visualState(): Readonly<GameState> {
+    return this._visualState;
   }
 
   /**
@@ -64,6 +82,7 @@ export class GameClient {
 
   constructor(initialState: GameState) {
     this._state = initialState;
+    this._visualState = copy(initialState); // Visual state starts synchronized
     makeObservable(this);
   }
 
@@ -252,6 +271,24 @@ export class GameClient {
     ) => void
   ): void {
     this.onStateChange = callback;
+  }
+
+  /**
+   * Update visual state to match logical state
+   * Called by AnimationService after animations complete
+   * This is when the UI actually updates to show the new state
+   */
+  @action
+  syncVisualState(): void {
+    this._visualState = copy(this._state);
+  }
+
+  /**
+   * Get the old visual state before starting animations
+   * Used by AnimationService to calculate animation start positions
+   */
+  getVisualStateSnapshot(): GameState {
+    return copy(this._visualState);
   }
 
   // ==========================================

@@ -12,9 +12,9 @@ import { calculateFinalScores } from '@vinto/engine';
 export const FinalScores = observer(() => {
   const gameClient = useGameClient();
 
-  const phase = gameClient.state.phase;
-  const vintoCallerId = gameClient.state.vintoCallerId;
-  const players = gameClient.state.players;
+  const phase = gameClient.visualState.phase;
+  const vintoCallerId = gameClient.visualState.vintoCallerId;
+  const players = gameClient.visualState.players;
 
   // Calculate final scores if in scoring phase
   const finalScores =

@@ -51,10 +51,10 @@ export const CoalitionLeaderModal = observer(() => {
   }, [uiStore]);
 
   // Get coalition members (everyone except Vinto caller)
-  const players = gameClient.state.players;
+  const players = gameClient.visualState.players;
   const coalitionMembers = players.filter((p) => !p.isVintoCaller);
   const vintoCaller = players.find((p) => p.isVintoCaller);
-  const coalitionLeaderId = gameClient.state.coalitionLeaderId;
+  const coalitionLeaderId = gameClient.visualState.coalitionLeaderId;
 
   const handleSelectLeader = (playerId: string) => {
     gameClient.dispatch(GameActions.setCoalitionLeader(playerId));
