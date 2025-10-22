@@ -48,30 +48,18 @@ export function handleExecuteJackSwap(
   player2.cards[target2.position] = card1;
 
   // Update known card positions after swap
-  // Jack swap is blind: if a player knew a card's position before the swap, they now know its new position in the other player's hand
-  // For both players, transfer knownCardPositions for swapped cards
-  // If player1 knew their card at target1.position, they now know player2's card at target2.position
-  // TODO: update as it's currently not correct
-  if (player1.knownCardPositions.includes(target1.position)) {
-    if (!player1.knownCardPositions.includes(target2.position)) {
-      player1.knownCardPositions.push(target2.position);
-    }
-  }
-  // Remove old position from player1
+  // Jack swap is BLIND: nobody peeks at the cards before swapping
+  // Players lose knowledge of their swapped positions (cards changed)
   player1.knownCardPositions = player1.knownCardPositions.filter(
     (pos) => pos !== target1.position
   );
 
-  // If player2 knew their card at target2.position, they now know player1's card at target1.position
-  if (player2.knownCardPositions.includes(target2.position)) {
-    if (!player2.knownCardPositions.includes(target1.position)) {
-      player2.knownCardPositions.push(target1.position);
-    }
-  }
-  // Remove old position from player2
   player2.knownCardPositions = player2.knownCardPositions.filter(
     (pos) => pos !== target2.position
   );
+
+  // Acting player (who used Jack) doesn't gain knowledge - Jack is blind swap
+  // All opponents also don't gain knowledge - swap happened without revealing cards
 
   const jackCard = newState.pendingAction?.card;
 

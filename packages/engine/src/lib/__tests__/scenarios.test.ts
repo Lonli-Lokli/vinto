@@ -4,92 +4,22 @@
 import { describe, it, expect } from 'vitest';
 import { GameEngine } from '../game-engine';
 import { GameActions } from '../game-actions';
-import { GameState, Card, Pile } from '@vinto/shapes';
-
-/**
- * Helper: Create a test game state with specific cards
- */
-function createTestState(overrides?: Partial<GameState>): GameState {
-  const baseState: GameState = {
-    gameId: 'test-game',
-    roundNumber: 1,
-    turnCount: 1,
-    phase: 'playing',
-    subPhase: 'idle',
-    finalTurnTriggered: false,
-    players: [
-      {
-        id: 'human-1',
-        name: 'Human',
-        isHuman: true,
-        isBot: false,
-        cards: [],
-        knownCardPositions: [],
-        isVintoCaller: false,
-        coalitionWith: [],
-      },
-      {
-        id: 'bot-1',
-        name: 'Bot 1',
-        isHuman: false,
-        isBot: true,
-        cards: [],
-        knownCardPositions: [],
-        isVintoCaller: false,
-        coalitionWith: [],
-      },
-      {
-        id: 'bot-2',
-        name: 'Bot 2',
-        isHuman: false,
-        isBot: true,
-        cards: [],
-        knownCardPositions: [],
-        isVintoCaller: false,
-        coalitionWith: [],
-      },
-      {
-        id: 'bot-3',
-        name: 'Bot 3',
-        isHuman: false,
-        isBot: true,
-        cards: [],
-        knownCardPositions: [],
-        isVintoCaller: false,
-        coalitionWith: [],
-      },
-    ],
-    currentPlayerIndex: 0,
-    vintoCallerId: null,
-    coalitionLeaderId: null,
-    drawPile: Pile.fromCards([]),
-    discardPile: Pile.fromCards([]),
-    pendingAction: null,
-    activeTossIn: null,
-    recentActions: [],
-    difficulty: 'moderate',
-    ...overrides,
-  };
-
-  return baseState;
-}
-
-/**
- * Helper: Create test cards
- */
-function createCard(rank: string, id?: string): Card {
-  return {
-    id: id || `${rank}_test`,
-    rank: rank as any,
-    value: 0,
-    played: false,
-    actionText: ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'].includes(rank)
-      ? 'Action'
-      : undefined,
-  };
-}
+import { GameState, Pile } from '@vinto/shapes';
+import {
+  createTestCard,
+  createTestPlayer,
+  createTestState,
+  markPlayersReady,
+} from './test-helpers';
+import { mockLogger } from './setup-tests';
 
 describe('GameEngine - Toss-in Scenarios', () => {
+  beforeEach(() => {
+    // Reset all mock calls before each test
+    mockLogger.log.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
+  });
   it('Scenario 01. should handle human tossing in second Ace during toss-in without duplicate ready error', () => {
     // Scenario:
     // 1. Human uses Ace from hand → toss-in starts
@@ -100,8 +30,8 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // 6. Human clicks Continue again → should NOT error
 
     // Setup: Human has 2 Aces, others have random cards
-    const ace1 = createCard('A', 'A_1');
-    const ace2 = createCard('A', 'A_2');
+    const ace1 = createTestCard('A', 'A_1');
+    const ace2 = createTestCard('A', 'A_2');
     const state = createTestState({
       players: [
         {
@@ -112,9 +42,9 @@ describe('GameEngine - Toss-in Scenarios', () => {
           cards: [
             ace1,
             ace2,
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
+            createTestCard('2', '2_1'),
+            createTestCard('3', '3_1'),
+            createTestCard('4', '4_1'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -126,11 +56,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2'),
+            createTestCard('3'),
+            createTestCard('4'),
+            createTestCard('5'),
+            createTestCard('6'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -142,11 +72,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2'),
+            createTestCard('3'),
+            createTestCard('4'),
+            createTestCard('5'),
+            createTestCard('6'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -158,18 +88,18 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2'),
+            createTestCard('3'),
+            createTestCard('4'),
+            createTestCard('5'),
+            createTestCard('6'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
           coalitionWith: [],
         },
       ],
-      drawPile: Pile.fromCards([createCard('2'), createCard('3')]),
+      drawPile: Pile.fromCards([createTestCard('2'), createTestCard('3')]),
       discardPile: Pile.fromCards([]),
       subPhase: 'choosing',
       pendingAction: {
@@ -258,7 +188,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // Test with different action cards (J, Q, K, 7-10) to ensure all handlers clear ready list
 
     // Test with Jack card
-    const jack = createCard('J', 'J_1');
+    const jack = createTestCard('J', 'J_1');
     const state = createTestState({
       players: [
         {
@@ -268,10 +198,10 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isBot: false,
           cards: [
             jack,
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
+            createTestCard('2', '2_1'),
+            createTestCard('3', '3_1'),
+            createTestCard('4', '4_1'),
+            createTestCard('5', '5_1'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -283,11 +213,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2', '2_2'),
+            createTestCard('3', '3_2'),
+            createTestCard('4', '4_2'),
+            createTestCard('5', '5_2'),
+            createTestCard('6', '6_2'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -299,11 +229,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2', '2_3'),
+            createTestCard('3', '3_3'),
+            createTestCard('4', '4_3'),
+            createTestCard('5', '5_3'),
+            createTestCard('6', '6_3'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -315,11 +245,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2', '2_4'),
+            createTestCard('3', '3_4'),
+            createTestCard('4', '4_4'),
+            createTestCard('5', '5_4'),
+            createTestCard('6', '6_4'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -369,10 +299,10 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // 7. BUG: After queued Ace completes, it should return to toss-in (not create ANOTHER Ace toss-in)
     // 8. Human should be able to toss in second Ace or continue to next turn
 
-    const king = createCard('K', 'K_1');
-    const ace1 = createCard('A', 'A_1');
-    const ace2 = createCard('A', 'A_2');
-    const targetCard = createCard('A', 'A_target'); // Ace in bot's hand that King will declare
+    const king = createTestCard('K', 'K_1');
+    const ace1 = createTestCard('A', 'A_1');
+    const ace2 = createTestCard('A', 'A_2');
+    const targetCard = createTestCard('A', 'A_target'); // Ace in bot's hand that King will declare
 
     const state = createTestState({
       players: [
@@ -381,7 +311,13 @@ describe('GameEngine - Toss-in Scenarios', () => {
           name: 'Human',
           isHuman: true,
           isBot: false,
-          cards: [king, ace1, ace2, createCard('2'), createCard('3')],
+          cards: [
+            king,
+            ace1,
+            ace2,
+            createTestCard('2', '2_1'),
+            createTestCard('3', '3_1'),
+          ],
           knownCardPositions: [],
           isVintoCaller: false,
           coalitionWith: [],
@@ -393,10 +329,10 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isBot: true,
           cards: [
             targetCard,
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
+            createTestCard('2', '2_2'),
+            createTestCard('3', '3_2'),
+            createTestCard('4', '4_2'),
+            createTestCard('5', '5_2'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -408,11 +344,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2', '2_3'),
+            createTestCard('3', '3_3'),
+            createTestCard('4', '4_3'),
+            createTestCard('5', '5_3'),
+            createTestCard('6', '6_3'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -424,18 +360,22 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createCard('2'),
-            createCard('3'),
-            createCard('4'),
-            createCard('5'),
-            createCard('6'),
+            createTestCard('2', '2_4'),
+            createTestCard('3', '3_4'),
+            createTestCard('4', '4_4'),
+            createTestCard('5', '5_4'),
+            createTestCard('6', '6_4'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
           coalitionWith: [],
         },
       ],
-      drawPile: Pile.fromCards([createCard('2'), createCard('3'), createCard('4')]),
+      drawPile: Pile.fromCards([
+        createTestCard('2', '2_draw'),
+        createTestCard('3', '3_draw'),
+        createTestCard('4', '4_draw'),
+      ]),
       discardPile: Pile.fromCards([]),
       subPhase: 'choosing',
       pendingAction: {
@@ -589,5 +529,68 @@ describe('GameEngine - Toss-in Scenarios', () => {
 
     // Toss-in should be complete, turn should advance
     expect(newState.currentPlayerIndex).toBe(1); // Next player
+  });
+
+  it('Scenario 03. Turn auto-advances after all players are ready', () => {
+    const state = createTestState({
+      subPhase: 'idle',
+      currentPlayerIndex: 0,
+      turnCount: 1,
+      players: [
+        createTestPlayer('p1', 'Player 1', true, [
+          createTestCard('A', 'p1c1'),
+          createTestCard('K', 'p1c2'),
+        ]),
+        createTestPlayer('p2', 'Player 2', false, [
+          createTestCard('A', 'p2c1'),
+          createTestCard('K', 'p2c2'),
+        ]),
+        createTestPlayer('p3', 'Player 3', false, [
+          createTestCard('J', 'p3c1'),
+          createTestCard('J', 'p3c2'),
+        ]),
+        createTestPlayer('p4', 'Player 4', false, [
+          createTestCard('Q', 'p4c1'),
+          createTestCard('Q', 'p4c2'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('2', '2'),
+        createTestCard('3', '3'),
+        createTestCard('4', '4'),
+        createTestCard('5', '5'),
+      ]),
+    });
+
+    const makeTurn = (playerId: string, cardPosition: number, currentState: GameState) => {  
+      let updatedState = GameEngine.reduce(
+        currentState,
+        GameActions.drawCard(playerId)
+      );
+
+      updatedState = GameEngine.reduce(
+        updatedState,
+        GameActions.swapCard(playerId, cardPosition)
+      );
+
+      updatedState = markPlayersReady(updatedState, ['p1', 'p2', 'p3', 'p4']);
+      return updatedState;
+    }
+
+    let newState = makeTurn('p1', 0, state);
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+    expect(newState.currentPlayerIndex).toBe(1); // Turn should advance to Player 2
+
+    newState = makeTurn('p2', 0, newState);
+    expect(newState.currentPlayerIndex).toBe(2); // Turn should advance to Player 3
+
+    newState = makeTurn('p3', 0, newState);
+    expect(newState.currentPlayerIndex).toBe(3); // Turn should advance to Player 4
+
+    newState = makeTurn('p4', 0, newState);
+    expect(newState.currentPlayerIndex).toBe(0); // Turn should advance back to Player 1
+
+    expect(newState.turnCount).toBe(2); // Turn count should increment
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 });

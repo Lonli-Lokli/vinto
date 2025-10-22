@@ -86,18 +86,6 @@ export function actionValidator(
       return { valid: true };
     }
 
-    case 'ADVANCE_TURN': {
-      // Must be in idle phase (turn completed)
-      if (state.subPhase !== 'idle') {
-        return {
-          valid: false,
-          reason: `Cannot advance turn in phase ${state.subPhase}`,
-        };
-      }
-
-      return { valid: true };
-    }
-
     case 'PLAY_DISCARD': {
       const { playerId } = action.payload;
 

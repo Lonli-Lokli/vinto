@@ -121,12 +121,6 @@ export function GameClientDebugProvider({
         gameClient.dispatch({ type: 'DISCARD_CARD', payload: { playerId } });
       };
 
-      // @ts-expect-error - Adding debug methods
-      window.__gameClient__.quickAdvanceTurn = () => {
-        console.log('⏭️ Advancing turn');
-        gameClient.dispatch({ type: 'ADVANCE_TURN', payload: {} });
-      };
-
       console.log(
         '%c🎮 GameClient Debug Mode Enabled',
         'color: #00ff00; font-weight: bold; font-size: 14px;'

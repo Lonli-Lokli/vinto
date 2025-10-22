@@ -10,7 +10,7 @@ import { getAutomaticallyReadyPlayers } from '../utils/toss-in-utils';
  * 2. All players have had a chance to participate
  * 3. Clear toss-in participation data (preserve ranks)
  * 4. Transition to idle phase (ready for next turn)
- * 5. Turn will be advanced by ADVANCE_TURN action (dispatched separately)
+ * 5. Turn will be advanced later
  *
  * IMPORTANT: The ranks are NOT reset here because they were set correctly when cards
  * were discarded. For example, if King declared Ace correctly, activeTossIn.ranks

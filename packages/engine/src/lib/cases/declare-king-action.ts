@@ -145,20 +145,12 @@ export function handleDeclareKingAction(
       );
     }
   } else {
-    // Incorrect declaration: card stays in hand, mark it as known to the player
+    // Incorrect declaration: card stays in hand, mark it as known to ALL players
     // and issue a penalty card
     const player = newState.players.find((p) => p.id === playerId);
     if (!player) {
       console.error('[handleDeclareKingAction] Player not found');
       return state;
-    }
-
-    // If target is the player themselves, mark the position as known
-    if (
-      targetPlayerId === playerId &&
-      !player.knownCardPositions.includes(position)
-    ) {
-      player.knownCardPositions.push(position);
     }
 
     // Issue penalty card if draw pile is not empty
@@ -173,8 +165,22 @@ export function handleDeclareKingAction(
       }
     }
 
-    // TODO: Mark the selected card for "flash animation" to show it briefly
-    // This could be stored in a temporary state or handled by the UI layer
+    // When declaration fails, the card is revealed (flash animation) to ALL players
+    for (const p of newState.players) {
+      if (p.id === targetPlayerId) {
+        // Target player marks own card as known
+        if (!p.knownCardPositions.includes(position)) {
+          p.knownCardPositions.push(position);
+        }
+      } else {
+        // All other players learn about target player's revealed card
+        if (!p.opponentKnowledge) p.opponentKnowledge = {};
+        if (!p.opponentKnowledge[targetPlayerId]) {
+          p.opponentKnowledge[targetPlayerId] = { knownCards: {} };
+        }
+        p.opponentKnowledge[targetPlayerId].knownCards[position] = selectedCard;
+      }
+    }
   }
 
   // Clear pending action

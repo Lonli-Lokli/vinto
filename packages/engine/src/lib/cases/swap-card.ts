@@ -51,6 +51,21 @@ export function handleSwapCard(
     player.knownCardPositions.push(position);
   }
 
+  // ALL players see the card being discarded, so they all know what replaced it
+  for (const p of newState.players) {
+    if (p.id !== playerId) {
+      // Initialize opponent knowledge if needed
+      if (!p.opponentKnowledge) {
+        p.opponentKnowledge = {};
+      }
+      if (!p.opponentKnowledge[playerId]) {
+        p.opponentKnowledge[playerId] = { knownCards: {} };
+      }
+      // Store the card that was swapped in (pendingCard is now visible at this position)
+      p.opponentKnowledge[playerId].knownCards[position] = pendingCard;
+    }
+  }
+
   // Initialize toss-in phase
   // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
   newState.activeTossIn = {
@@ -80,6 +95,23 @@ export function handleSwapCard(
       if (penaltyCard) {
         player.cards.push(penaltyCard);
         console.log('[handleSwapCard] Penalty card issued:', penaltyCard.rank);
+      }
+
+      // When declaration fails, the card is revealed to all players
+      for (const p of newState.players) {
+        if (p.id === playerId) {
+          // Acting player marks own position as known
+          if (!p.knownCardPositions.includes(position)) {
+            p.knownCardPositions.push(position);
+          }
+        } else {
+          // Opponents learn about the revealed card
+          if (!p.opponentKnowledge) p.opponentKnowledge = {};
+          if (!p.opponentKnowledge[playerId]) {
+            p.opponentKnowledge[playerId] = { knownCards: {} };
+          }
+          p.opponentKnowledge[playerId].knownCards[position] = player.cards[position];
+        }
       }
     }
 

@@ -48,24 +48,49 @@ export function handleExecuteQueenSwap(
   player2.cards[target2.position] = card1;
 
   // Update known card positions after swap
-  // Queen action: Player peeked at both cards before swapping, so they know:
-  // - card2 is now at player1's position
-  // - card1 is now at player2's position
-  // The current player (who used Queen) now knows these positions
+  // Queen action: Acting player peeked at both cards before swapping
   const currentPlayer = newState.players[newState.currentPlayerIndex];
 
-  // If current player is player1, they now know their new card at target1.position
+  // Acting player knows both positions after swap (they peeked before swapping)
   if (currentPlayer.id === player1.id) {
+    // Acting player IS player1, they know their new card
     if (!currentPlayer.knownCardPositions.includes(target1.position)) {
       currentPlayer.knownCardPositions.push(target1.position);
     }
-  }
-
-  // If current player is player2, they now know their new card at target2.position
-  if (currentPlayer.id === player2.id) {
+  } else if (currentPlayer.id === player2.id) {
+    // Acting player IS player2, they know their new card
     if (!currentPlayer.knownCardPositions.includes(target2.position)) {
       currentPlayer.knownCardPositions.push(target2.position);
     }
+  } else {
+    // Acting player is neither player1 nor player2
+    // They peeked at both cards, so they know both swapped positions in opponent knowledge
+    if (!currentPlayer.opponentKnowledge) currentPlayer.opponentKnowledge = {};
+
+    if (!currentPlayer.opponentKnowledge[player1.id]) {
+      currentPlayer.opponentKnowledge[player1.id] = { knownCards: {} };
+    }
+    currentPlayer.opponentKnowledge[player1.id].knownCards[target1.position] =
+      card2;
+
+    if (!currentPlayer.opponentKnowledge[player2.id]) {
+      currentPlayer.opponentKnowledge[player2.id] = { knownCards: {} };
+    }
+    currentPlayer.opponentKnowledge[player2.id].knownCards[target2.position] =
+      card1;
+  }
+
+  // Target players: if they didn't peek, they lose knowledge of their positions
+  if (currentPlayer.id !== player1.id) {
+    player1.knownCardPositions = player1.knownCardPositions.filter(
+      (pos) => pos !== target1.position
+    );
+  }
+
+  if (currentPlayer.id !== player2.id) {
+    player2.knownCardPositions = player2.knownCardPositions.filter(
+      (pos) => pos !== target2.position
+    );
   }
 
   const queenCard = newState.pendingAction?.card;

@@ -526,8 +526,7 @@ export class BotAIAdapter {
       if (decision.targets.length > 0) {
         const target = decision.targets[0];
 
-        // Cache the decision so we use the same declaredRank in step 2
-        // This is critical because MCTS generates (target, rank) pairs together
+        // Cache the decision for consistency
         this.cachedActionDecision = decision;
 
         this.gameClient.dispatch(
@@ -539,7 +538,7 @@ export class BotAIAdapter {
         );
 
         console.log(
-          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}, will declare: ${decision.declaredRank}`
+          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}`
         );
 
         // Small delay before declaring rank

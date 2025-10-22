@@ -32,7 +32,6 @@ export type GameAction =
   // Game flow
   | CallVintoAction
   | SetCoalitionLeaderAction
-  | AdvanceTurnAction
   | ProcessAITurnAction
 
   // Setup
@@ -192,11 +191,6 @@ export interface SetCoalitionLeaderAction {
   payload: {
     leaderId: string;
   };
-}
-
-export interface AdvanceTurnAction {
-  type: 'ADVANCE_TURN';
-  payload: Record<string, never>; // Empty payload
 }
 
 export interface ProcessAITurnAction {

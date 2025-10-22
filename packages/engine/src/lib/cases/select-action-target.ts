@@ -61,7 +61,36 @@ export function handleSelectActionTarget(
     case '10': {
       // Peek cards (7/8 peek own, 9/10 peek opponent)
       // The peek action is handled by UI (showing the card)
-      // This handler just tracks the target
+      // This handler tracks the target and updates knowledge
+      const currentPlayer = newState.players[newState.currentPlayerIndex];
+      const target = newState.pendingAction?.targets?.[0];
+
+      if (target && currentPlayer) {
+        if (target.playerId === currentPlayer.id) {
+          // Peeking own card (7/8)
+          if (!currentPlayer.knownCardPositions.includes(target.position)) {
+            currentPlayer.knownCardPositions.push(target.position);
+          }
+        } else {
+          // Peeking opponent card (9/10)
+          const peekedCard = newState.players.find(
+            (p) => p.id === target.playerId
+          )?.cards[target.position];
+          if (peekedCard) {
+            if (!currentPlayer.opponentKnowledge)
+              currentPlayer.opponentKnowledge = {};
+            if (!currentPlayer.opponentKnowledge[target.playerId]) {
+              currentPlayer.opponentKnowledge[target.playerId] = {
+                knownCards: {},
+              };
+            }
+            currentPlayer.opponentKnowledge[target.playerId].knownCards[
+              target.position
+            ] = peekedCard;
+          }
+        }
+      }
+
       // Player will then call CONFIRM_PEEK to complete the action
       // Stay in awaiting_action phase - no further action needed here
       break;

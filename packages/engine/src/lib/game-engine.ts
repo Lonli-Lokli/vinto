@@ -82,10 +82,6 @@ export class GameEngine {
         newState = handleDiscardCard(state, action);
         break;
 
-      case 'ADVANCE_TURN':
-        newState = handleAdvanceTurn(state, action);
-        break;
-
       case 'PLAY_DISCARD':
         newState = handlePlayDiscard(state, action);
         break;

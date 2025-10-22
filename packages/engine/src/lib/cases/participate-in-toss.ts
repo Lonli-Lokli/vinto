@@ -1,4 +1,4 @@
-import { GameState, ParticipateInTossInAction } from '@vinto/shapes';
+import { GameState, ParticipateInTossInAction, Card } from '@vinto/shapes';
 import copy from 'fast-copy';
 
 /**
@@ -60,6 +60,23 @@ export function handleParticipateInTossIn(
       expectedRanks: newState.activeTossIn.ranks,
     });
 
+    // When toss-in fails, the card is revealed to ALL players
+    for (const p of newState.players) {
+      if (p.id === playerId) {
+        // Acting player marks own position as known
+        if (!p.knownCardPositions.includes(position)) {
+          p.knownCardPositions.push(position);
+        }
+      } else {
+        // Opponents learn about the revealed card
+        if (!p.opponentKnowledge) p.opponentKnowledge = {};
+        if (!p.opponentKnowledge[playerId]) {
+          p.opponentKnowledge[playerId] = { knownCards: {} };
+        }
+        p.opponentKnowledge[playerId].knownCards[position] = card;
+      }
+    }
+
     return newState;
   }
 
@@ -75,6 +92,33 @@ export function handleParticipateInTossIn(
 
   // Remove card from hand
   player.cards.splice(position, 1);
+
+  // Adjust known positions: all positions after the removed card shift down
+  player.knownCardPositions = player.knownCardPositions
+    .filter((pos) => pos !== position) // Remove the tossed-in position
+    .map((pos) => (pos > position ? pos - 1 : pos)); // Shift down positions after it
+
+  // Also update opponent knowledge for this player across ALL other players
+  for (const p of newState.players) {
+    if (p.id !== playerId && p.opponentKnowledge?.[playerId]) {
+      const oppKnowledge = p.opponentKnowledge[playerId].knownCards;
+      const updatedKnowledge: Record<number, Card> = {};
+
+      for (const [posStr, card] of Object.entries(oppKnowledge)) {
+        const pos = parseInt(posStr, 10);
+        if (pos < position) {
+          // Position unchanged
+          updatedKnowledge[pos] = card;
+        } else if (pos > position) {
+          // Position shifts down
+          updatedKnowledge[pos - 1] = card;
+        }
+        // pos === position is removed (card was tossed in)
+      }
+
+      p.opponentKnowledge[playerId].knownCards = updatedKnowledge;
+    }
+  }
 
   // Check if card has an action
   if (card.actionText) {

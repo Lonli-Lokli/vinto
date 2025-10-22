@@ -1,6 +1,6 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, Rank, getCardAction } from '@vinto/shapes';
+import { CardAction, getCardAction } from '@vinto/shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -187,38 +187,22 @@ export class MCTSMoveGenerator {
         break;
 
       case 'declare-action':
-        // King: declare each possible action rank
-        // King requires two steps:
-        // 1. Select a card (from own or opponent's hand)
-        // 2. Declare the rank of that card
-        // For move generation, we need to generate combinations of (target card, declared rank)
-        const actionRanks: Rank[] = ['7', '8', '9', '10', 'J', 'Q', 'A'];
-
-        // Generate strategic King moves: target card + declared rank combinations
+        // King: Select a card position to declare
+        // The actual rank will be determined at declaration time by looking at current game state
+        // This ensures we always declare what's actually at the position, not stale memory
         const kingMoves: MCTSMove[] = [];
 
-        // Prioritize own cards that we know about
+        // Consider own cards that we know about
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
           const memory = currentPlayer.knownCards.get(pos);
           if (memory && memory.confidence > 0.5) {
-            // Generate move with just the target position
-            // DO NOT include declaredRank in the move - it will be determined  later
+            // We know there's an action card here - target it
+            // Rank will be determined at declaration time
             kingMoves.push({
               type: 'use-action',
               playerId: currentPlayer.id,
               targets: [{ playerId: currentPlayer.id, position: pos }],
-              // declaredRank will be set when actually declaring, not during move       generation
             });
-          } else {
-            // Unknown card - try each possible rank
-            for (const rank of actionRanks) {
-              kingMoves.push({
-                type: 'use-action',
-                playerId: currentPlayer.id,
-                targets: [{ playerId: currentPlayer.id, position: pos }],
-                declaredRank: rank,
-              });
-            }
           }
         }
 
@@ -229,12 +213,12 @@ export class MCTSMoveGenerator {
           for (let pos = 0; pos < opponent.cardCount; pos++) {
             const memory = opponent.knownCards.get(pos);
             if (memory && memory.confidence > 0.5 && memory.card) {
-              // We know this opponent card - declare its actual rank
+              // We know this opponent card has an action rank - target it
+              // Rank will be determined at declaration time
               kingMoves.push({
                 type: 'use-action',
                 playerId: currentPlayer.id,
                 targets: [{ playerId: opponent.id, position: pos }],
-                declaredRank: memory.card.rank,
               });
             }
           }
