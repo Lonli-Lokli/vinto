@@ -580,17 +580,21 @@ describe('GameEngine - Toss-in Scenarios', () => {
     let newState = makeTurn('p1', 0, state);
     expect(mockLogger.warn).not.toHaveBeenCalled();
     expect(newState.currentPlayerIndex).toBe(1); // Turn should advance to Player 2
+    expect(newState.turnNumber).toBe(2); // Turn count should increment
 
     newState = makeTurn('p2', 0, newState);
     expect(newState.currentPlayerIndex).toBe(2); // Turn should advance to Player 3
+    expect(newState.turnNumber).toBe(3); // Turn count should increment
 
     newState = makeTurn('p3', 0, newState);
     expect(newState.currentPlayerIndex).toBe(3); // Turn should advance to Player 4
+    expect(newState.turnNumber).toBe(4); // Turn count should increment
 
     newState = makeTurn('p4', 0, newState);
     expect(newState.currentPlayerIndex).toBe(0); // Turn should advance back to Player 1
+    expect(newState.turnNumber).toBe(5); // Turn count should increment
 
-    expect(newState.turnNumber).toBe(2); // Turn count should increment
+    expect(newState.roundNumber).toBe(2); // Round count should increment
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
