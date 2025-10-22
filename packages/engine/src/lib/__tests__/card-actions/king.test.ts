@@ -302,7 +302,7 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
     });
 
-    it.only('should remove King from toss in queue when next player use card', () => {
+    it('should remove King from toss in queue when next player use card', () => {
       const kingCard = createTestCard('K', 'king1');
 
       const state = createTestState({
