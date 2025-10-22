@@ -39,6 +39,7 @@ export function handlePlayDiscard(
   // (no choice to discard when taking from discard pile)
   newState.pendingAction = {
     card: takenCard,
+    from: 'hand',
     playerId,
     actionPhase: 'selecting-target',
     targetType: getTargetTypeFromRank(takenCard.rank),

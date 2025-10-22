@@ -44,6 +44,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -87,6 +88,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -130,6 +132,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -173,6 +176,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -213,6 +217,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -220,10 +225,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // Swap Queen into hand
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('queen1'); // Queen swapped in
@@ -238,6 +240,7 @@ describe('Queen (Q) Card Action', () => {
     it('should allow player to toss in Queen during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -249,6 +252,7 @@ describe('Queen (Q) Card Action', () => {
           ranks: ['Q'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -289,6 +293,7 @@ describe('Queen (Q) Card Action', () => {
           ranks: ['Q'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: ['p2'],
           queuedActions: [
             {
@@ -304,7 +309,6 @@ describe('Queen (Q) Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
-     
 
       // Queued Queen action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -342,6 +346,7 @@ describe('Queen (Q) Card Action', () => {
         subPhase: 'idle', // Wrong phase
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -367,6 +372,7 @@ describe('Queen (Q) Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -393,6 +399,7 @@ describe('Queen (Q) Card Action', () => {
         subPhase: 'awaiting_action',
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [{ playerId: 'p2', position: 0 }], // Only 1 target
@@ -410,6 +417,7 @@ describe('Queen (Q) Card Action', () => {
         subPhase: 'awaiting_action',
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -441,6 +449,7 @@ describe('Queen (Q) Card Action', () => {
         ],
         pendingAction: {
           card: queenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [

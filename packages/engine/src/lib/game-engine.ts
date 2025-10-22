@@ -23,6 +23,7 @@ import { handlePlayDiscard } from './cases/play-discard';
 import { handleUseCardAction } from './cases/use-card';
 import { handleUpdateDifficulty } from './cases/update-difficulty';
 import { handleSetNextDrawCard } from './cases/set-next-draw-card';
+import { handleSwapHandWithDeck } from './cases/swap-hand-with-deck';
 import { GameAction, GameState, NeverError } from '@vinto/shapes';
 import { handleExecuteJackSwap } from './cases/execute-jack-swap';
 import { handleSkipJackSwap } from './cases/skip-jack-swap';
@@ -157,6 +158,10 @@ export class GameEngine {
         newState = handleSetNextDrawCard(state, action);
         break;
 
+      case 'SWAP_HAND_WITH_DECK':
+        newState = handleSwapHandWithDeck(state, action);
+        break;
+
       default:
         throw new NeverError(action);
     }
@@ -167,7 +172,8 @@ export class GameEngine {
       newState.activeTossIn &&
       newState.activeTossIn.queuedActions.length === 0 &&
       newState.pendingAction === null &&
-      newState.activeTossIn.playersReadyForNextTurn.length === newState.players.length
+      newState.activeTossIn.playersReadyForNextTurn.length ===
+        newState.players.length
     ) {
       // All queued actions have been processed
       // Advance turn automatically

@@ -134,7 +134,7 @@ export class AnimationService {
       default:
         // No animation needed for this action
         if (!this.animationStore.hasActiveAnimations) {
-           this.gameClient?.syncVisualState();
+          this.gameClient?.syncVisualState();
         }
         break;
     }
@@ -576,8 +576,9 @@ export class AnimationService {
 
     if (!actionCard) return;
 
-    // Handle peek actions (7, 8, 9, 10, Q) - highlight the peeked card
-    // BUT: Only for bot peek actions! Human peek actions should just reveal the card immediately.
+    // Handle peek actions (7, 8, 9, 10, Q) - no highlight animation
+    // The card will be revealed directly via temporarilyVisibleCards or opponentKnowledge
+    // Spectators don't need to see "selection hints" - they just see the revealed card
     if (
       actionCard.rank === '7' ||
       actionCard.rank === '8' ||

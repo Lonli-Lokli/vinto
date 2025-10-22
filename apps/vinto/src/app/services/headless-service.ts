@@ -51,10 +51,7 @@ export class HeadlessService {
       action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
     const isPeekActionCompleted = action.type === 'CONFIRM_PEEK';
 
-    // Note: We no longer clear temporarily visible cards when toss-in is activated
-    // because they now have timestamp-based expiration (3 seconds) and should
-    // remain visible for the full duration even during toss-in phase
-    if (isSetupPhaseEnded || isQueenActionCompleted) {
+    if (isSetupPhaseEnded || isQueenActionCompleted || isPeekActionCompleted) {
       this.uiStore.clearTemporaryCardVisibility();
     }
 

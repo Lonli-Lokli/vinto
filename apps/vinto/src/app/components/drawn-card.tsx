@@ -22,13 +22,12 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
     const labelMargin = isMobile ? 'mt-1' : 'mt-2';
     const labelPadding = isMobile ? 'px-2 py-0.5' : 'px-2 py-1';
 
-    // Check if there's an active draw animation targeting the drawn area
-    const hasActiveDrawAnimation = Array.from(
-      animationStore.activeAnimations.values()
-    ).some((anim) => anim.type === 'draw' && !anim.completed);
+    // Check if the drawn card is being animated TO or FROM
+    // Hide if animating to drawn area (card arriving) or animating from drawn area (card leaving)
+    const isDrawnCardAnimating = animationStore.isDrawnCardAnimating();
 
     // Completely hide during animation, show after
-    const shouldShowCard = isVisible && !hasActiveDrawAnimation;
+    const shouldShowCard = isVisible && !isDrawnCardAnimating;
 
     // Get declaration feedback for drawn card (correct declarations)
     const declarationFeedback = uiStore.getDrawnCardDeclarationFeedback();

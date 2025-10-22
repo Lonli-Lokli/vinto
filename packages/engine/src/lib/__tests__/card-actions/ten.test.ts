@@ -38,6 +38,7 @@ describe('10 Card Action', () => {
         ],
         pendingAction: {
           card: tenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -72,16 +73,14 @@ describe('10 Card Action', () => {
         ],
         pendingAction: {
           card: tenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('ten1');
@@ -92,6 +91,7 @@ describe('10 Card Action', () => {
     it('should allow player to toss in 10 during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -103,6 +103,7 @@ describe('10 Card Action', () => {
           ranks: ['10'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -123,6 +124,7 @@ describe('10 Card Action', () => {
     it('should process queued 10 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('K', 'p1c1'),
@@ -135,6 +137,7 @@ describe('10 Card Action', () => {
           ranks: ['10'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: ['p2'],
           queuedActions: [
             {
@@ -177,10 +180,7 @@ describe('10 Card Action', () => {
       );
 
       // Confirm peek
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.confirmPeek('p2')
-      );
+      newState = GameEngine.reduce(newState, GameActions.confirmPeek('p2'));
 
       // Should return to toss-in
       expect(newState.subPhase).toBe('ai_thinking');
@@ -201,6 +201,7 @@ describe('10 Card Action', () => {
         ],
         pendingAction: {
           card: tenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -225,6 +226,7 @@ describe('10 Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: tenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],

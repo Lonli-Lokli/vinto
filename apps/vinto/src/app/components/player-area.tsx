@@ -77,13 +77,17 @@ export const PlayerArea = observer(function PlayerArea({
     />
   );
 
+  // Disable card clicks during blocking animations (but allow during highlights)
+  const hasBlockingAnimations = animationStore.hasBlockingAnimations;
+  const effectiveOnCardClick = hasBlockingAnimations ? undefined : onCardClick;
+
   const cardsComponent = (
     <PlayerCards
       player={player}
       position={position}
       cardSize={cardSize}
       gamePhase={gamePhase}
-      onCardClick={onCardClick}
+      onCardClick={effectiveOnCardClick}
       isSelectingSwapPosition={isSelectingSwapPosition}
       swapPosition={swapPosition}
       isSelectingActionTarget={isSelectingActionTarget}

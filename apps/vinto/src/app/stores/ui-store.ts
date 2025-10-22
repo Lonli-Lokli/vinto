@@ -77,7 +77,6 @@ export class UIStore {
     this.temporarilyVisibleCards.get(playerId)?.clear();
   }
 
-
   getTemporarilyVisibleCards(playerId: string): Set<number> {
     const playerCards = this.temporarilyVisibleCards.get(playerId);
     if (!playerCards) return new Set();
@@ -85,7 +84,7 @@ export class UIStore {
     // Filter out expired cards and return only valid positions
     const validPositions = new Set<number>();
     playerCards.forEach((timestamp, position) => {
-        validPositions.add(position);
+      validPositions.add(position);
     });
 
     return validPositions;
@@ -153,13 +152,13 @@ export class UIStore {
     if (!this.drawnCardDeclarationFeedback) return null;
 
     // Check if expired (pure getter - no side effects)
-    if (Date.now() - this.drawnCardDeclarationFeedback.timestamp > 2000) {
+    if (Date.now() - this.drawnCardDeclarationFeedback.timestamp > 3_000) {
       // Schedule cleanup for next tick to avoid mutating during render
       if (typeof queueMicrotask !== 'undefined') {
         queueMicrotask(() => {
           if (
             this.drawnCardDeclarationFeedback &&
-            Date.now() - this.drawnCardDeclarationFeedback.timestamp > 2000
+            Date.now() - this.drawnCardDeclarationFeedback.timestamp > 3_000
           ) {
             this.clearDrawnCardDeclarationFeedback();
           }

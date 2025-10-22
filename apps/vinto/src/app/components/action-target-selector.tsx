@@ -30,7 +30,9 @@ export const ActionTargetSelector = observer(() => {
   }
 
   const { playerId, targetType } = pendingAction;
-  const actionPlayer = gameClient.visualState.players.find((p) => p.id === playerId);
+  const actionPlayer = gameClient.visualState.players.find(
+    (p) => p.id === playerId
+  );
   const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
   // Only show for human players - bot actions should not display UI

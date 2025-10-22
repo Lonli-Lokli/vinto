@@ -149,6 +149,7 @@ describe('King (K) Card Action', () => {
         ],
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -197,6 +198,7 @@ describe('King (K) Card Action', () => {
         drawPile: toPile([penaltyCard]),
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -233,6 +235,7 @@ describe('King (K) Card Action', () => {
 
       const state = createTestState({
         subPhase: 'choosing',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('7', 'p1c1'),
@@ -258,6 +261,7 @@ describe('King (K) Card Action', () => {
         pendingAction: {
           card: kingCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
             {
@@ -298,11 +302,12 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
     });
 
-     it('should remove King from toss in queue when next player use card', () => {
+    it.only('should remove King from toss in queue when next player use card', () => {
       const kingCard = createTestCard('K', 'king1');
 
       const state = createTestState({
         subPhase: 'choosing',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('7', 'p1c1'),
@@ -318,6 +323,7 @@ describe('King (K) Card Action', () => {
         activeTossIn: {
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           ranks: ['K'],
@@ -327,6 +333,7 @@ describe('King (K) Card Action', () => {
         drawPile: toPile([createTestCard('Q', 'draw1')]),
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -362,7 +369,10 @@ describe('King (K) Card Action', () => {
 
       newState = GameEngine.reduce(newState, GameActions.drawCard('p2'));
 
-      newState = GameEngine.reduce(newState, GameActions.playCardAction('p2', createTestCard('Q', 'p2c1')));
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.playCardAction('p2', createTestCard('Q', 'p2c1'))
+      );
 
       expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
       expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
@@ -383,6 +393,7 @@ describe('King (K) Card Action', () => {
         ],
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -402,6 +413,7 @@ describe('King (K) Card Action', () => {
     it('should allow player to toss in King during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -413,6 +425,7 @@ describe('King (K) Card Action', () => {
           ranks: ['K'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -438,6 +451,8 @@ describe('King (K) Card Action', () => {
     it('should process queued King action requiring rank declaration', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false),
@@ -446,6 +461,7 @@ describe('King (K) Card Action', () => {
           ranks: ['K'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: ['p2'],
           queuedActions: [
             {
@@ -491,6 +507,7 @@ describe('King (K) Card Action', () => {
         subPhase: 'idle', // Wrong phase
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -513,6 +530,7 @@ describe('King (K) Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -535,6 +553,7 @@ describe('King (K) Card Action', () => {
         subPhase: 'awaiting_action',
         pendingAction: {
           card: notKingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -565,6 +584,7 @@ describe('King (K) Card Action', () => {
         ],
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [

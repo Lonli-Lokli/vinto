@@ -114,6 +114,7 @@ export function handleDeclareKingAction(
       // Set up pending action for the correctly declared action card
       newState.pendingAction = {
         card: removedCard,
+        from: 'hand',
         playerId,
         actionPhase: 'selecting-target',
         targetType,
@@ -212,7 +213,6 @@ export function handleDeclareKingAction(
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      turnNumberAtStart: newState.turnNumber,
       playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
     };
 

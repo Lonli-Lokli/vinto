@@ -56,11 +56,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createTestCard('2'),
-            createTestCard('3'),
-            createTestCard('4'),
-            createTestCard('5'),
-            createTestCard('6'),
+            createTestCard('2', '2_2'),
+            createTestCard('3', '3_2'),
+            createTestCard('4', '4_2'),
+            createTestCard('5', '5_2'),
+            createTestCard('6', '6_2'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -72,11 +72,11 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createTestCard('2'),
-            createTestCard('3'),
-            createTestCard('4'),
-            createTestCard('5'),
-            createTestCard('6'),
+            createTestCard('2', '2_3'),
+            createTestCard('3', '3_3'),
+            createTestCard('4', '4_3'),
+            createTestCard('5', '5_3'),
+            createTestCard('6', '6_3'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
@@ -88,22 +88,26 @@ describe('GameEngine - Toss-in Scenarios', () => {
           isHuman: false,
           isBot: true,
           cards: [
-            createTestCard('2'),
-            createTestCard('3'),
-            createTestCard('4'),
-            createTestCard('5'),
-            createTestCard('6'),
+            createTestCard('2', '2_4'),
+            createTestCard('3', '3_4'),
+            createTestCard('4', '4_4'),
+            createTestCard('5', '5_4'),
+            createTestCard('6', '6_4'),
           ],
           knownCardPositions: [],
           isVintoCaller: false,
           coalitionWith: [],
         },
       ],
-      drawPile: Pile.fromCards([createTestCard('2'), createTestCard('3')]),
+      drawPile: Pile.fromCards([
+        createTestCard('2', '2_4'),
+        createTestCard('3', '3_4'),
+      ]),
       discardPile: Pile.fromCards([]),
       subPhase: 'choosing',
       pendingAction: {
         card: ace1,
+        from: 'drawing',
         playerId: 'human-1',
         actionPhase: 'choosing-action',
         targets: [],
@@ -259,6 +263,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
       subPhase: 'awaiting_action',
       pendingAction: {
         card: jack,
+        from: 'drawing',
         playerId: 'human-1',
         actionPhase: 'selecting-target',
         targetType: 'swap-cards',
@@ -268,6 +273,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         ranks: ['J'],
         initiatorId: 'human-1',
         originalPlayerIndex: 0,
+
         participants: [],
         queuedActions: [],
         waitingForInput: false,
@@ -381,6 +387,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
       pendingAction: {
         card: king,
         playerId: 'human-1',
+        from: 'drawing',
         actionPhase: 'choosing-action',
         targets: [],
       },
@@ -595,6 +602,76 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.turnNumber).toBe(4); // Turn count should increment
 
     newState = makeTurn('p4', 0, newState);
+    expect(newState.currentPlayerIndex).toBe(0); // Turn should advance back to Player 1
+    expect(newState.turnNumber).toBe(5); // Turn count should increment
+
+    expect(newState.roundNumber).toBe(2); // Round count should increment
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+  });
+
+  it('Scenario 03. Turn auto-advances after bot playing card', () => {
+    const state = createTestState({
+      subPhase: 'idle',
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      players: [
+        createTestPlayer('p1', 'Player 1', true, [
+          createTestCard('A', 'p1c1'),
+          createTestCard('K', 'p1c2'),
+        ]),
+        createTestPlayer('p2', 'Player 2', false, [
+          createTestCard('A', 'p2c1'),
+          createTestCard('K', 'p2c2'),
+        ]),
+        createTestPlayer('p3', 'Player 3', false, [
+          createTestCard('J', 'p3c1'),
+          createTestCard('J', 'p3c2'),
+        ]),
+        createTestPlayer('p4', 'Player 4', false, [
+          createTestCard('Q', 'p4c1'),
+          createTestCard('Q', 'p4c2'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('Q', 'draw1'),
+        createTestCard('Q', 'draw2'),
+        createTestCard('Q', 'draw3'),
+        createTestCard('Q', 'draw4'),
+      ]),
+    });
+
+    const makeTurn = (playerId: string, currentState: GameState) => {
+      let updatedState = GameEngine.reduce(
+        currentState,
+        GameActions.drawCard(playerId)
+      );
+
+      updatedState = GameEngine.reduce(
+        updatedState,
+        GameActions.playCardAction(
+          playerId,
+          createTestCard('Q', `play_${updatedState.turnNumber}`)
+        )
+      );
+
+      updatedState = markPlayersReady(updatedState, ['p1', 'p2', 'p3', 'p4']);
+      return updatedState;
+    };
+
+    let newState = makeTurn('p1', state);
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+    expect(newState.currentPlayerIndex).toBe(1); // Turn should advance to Player 2
+    expect(newState.turnNumber).toBe(2); // Turn count should increment
+
+    newState = makeTurn('p2', newState);
+    expect(newState.currentPlayerIndex).toBe(2); // Turn should advance to Player 3
+    expect(newState.turnNumber).toBe(3); // Turn count should increment
+
+    newState = makeTurn('p3', newState);
+    expect(newState.currentPlayerIndex).toBe(3); // Turn should advance to Player 4
+    expect(newState.turnNumber).toBe(4); // Turn count should increment
+
+    newState = makeTurn('p4', newState);
     expect(newState.currentPlayerIndex).toBe(0); // Turn should advance back to Player 1
     expect(newState.turnNumber).toBe(5); // Turn count should increment
 

@@ -19,11 +19,12 @@ import {
   SetNextDrawCardAction,
   SkipQueenSwapAction,
   SwapCardAction,
+  SwapHandWithDeckAction,
   PlayDiscardAction,
   UpdateDifficultyAction,
   UseCardActionAction,
   ExecuteJackSwapAction,
-  SkipJackSwapAction
+  SkipJackSwapAction,
 } from '@vinto/shapes';
 
 /**
@@ -169,5 +170,14 @@ export const GameActions = {
   setNextDrawCard: (rank: Rank): SetNextDrawCardAction => ({
     type: 'SET_NEXT_DRAW_CARD',
     payload: { rank },
+  }),
+
+  swapHandWithDeck: (
+    playerId: string,
+    handPosition: number,
+    deckCardRank: Rank
+  ): SwapHandWithDeckAction => ({
+    type: 'SWAP_HAND_WITH_DECK',
+    payload: { playerId, handPosition, deckCardRank },
   }),
 };

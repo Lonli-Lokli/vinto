@@ -54,6 +54,7 @@ describe('Ace (A) Card Action', () => {
         pendingAction: {
           card: aceCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'choosing-action',
           targets: [],
         },
@@ -97,6 +98,7 @@ describe('Ace (A) Card Action', () => {
         ],
         pendingAction: {
           card: aceCard,
+          from: 'hand',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -104,12 +106,11 @@ describe('Ace (A) Card Action', () => {
       });
 
       // Player chooses to swap Ace into hand
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
-      expect(newState.subPhase).toBe('toss_queue_active' satisfies GameSubPhase);
+      expect(newState.subPhase).toBe(
+        'toss_queue_active' satisfies GameSubPhase
+      );
       expect(newState.players[0].cards[0].id).toBe('ace1'); // Ace swapped in
       expect(newState.discardPile.peekTop()?.id).toBe('p1c1'); // King removed
     });
@@ -160,6 +161,7 @@ describe('Ace (A) Card Action', () => {
     it('should allow player to toss in Ace during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         drawPile: toPile([createTestCard('K', 'penalty1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true, [
@@ -201,6 +203,7 @@ describe('Ace (A) Card Action', () => {
     it('should process queued Ace action after all players ready', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         drawPile: toPile([createTestCard('K', 'penalty1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true),
@@ -239,7 +242,6 @@ describe('Ace (A) Card Action', () => {
         GameActions.selectAceActionTarget('p2', 'p1')
       );
 
-
       // mark again as we still allowing toss in to continue
       newState = markPlayersReady(newState, ['p1', 'p2']);
 
@@ -256,6 +258,7 @@ describe('Ace (A) Card Action', () => {
     it('should reject toss-in with wrong rank', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         drawPile: toPile([createTestCard('K', 'penalty1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true),
@@ -300,6 +303,7 @@ describe('Ace (A) Card Action', () => {
         ],
         pendingAction: {
           card: aceCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -332,6 +336,7 @@ describe('Ace (A) Card Action', () => {
         drawPile: toPile([createTestCard('K', 'penalty1')]),
         pendingAction: {
           card: aceCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -361,6 +366,7 @@ describe('Ace (A) Card Action', () => {
         ],
         pendingAction: {
           card: aceCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],

@@ -13,7 +13,9 @@ export const OwnCardPeek = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
   const action = gameClient.visualState.pendingAction?.card.rank;
-  const humanPlayerState = gameClient.visualState.players.find((p) => p.isHuman);
+  const humanPlayerState = gameClient.visualState.players.find(
+    (p) => p.isHuman
+  );
 
   const hasRevealedCard =
     humanPlayerState &&

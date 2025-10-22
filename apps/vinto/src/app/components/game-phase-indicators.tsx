@@ -77,7 +77,8 @@ export const GamePhaseIndicators = observer(() => {
   // Note: Vinto caller should never see toss-in indicator, only waiting indicator
   if (waitingForTossIn && !humanPlayer?.isVintoCaller) {
     const tossInRanks = gameClient.tossInRanks;
-    const isCurrentPlayerWaiting = gameClient.visualState.subPhase === 'ai_thinking';
+    const isCurrentPlayerWaiting =
+      gameClient.visualState.subPhase === 'ai_thinking';
     return (
       <TossInIndicator
         tossInRanks={tossInRanks}
@@ -198,22 +199,9 @@ const TossInIndicator = observer(
     const gameClient = useGameClient();
     const uiStore = useUIStore();
 
-    // Get bot actions from the PREVIOUS player (who just finished their turn)
-    // Since we're in toss-in phase, the previous player's actions are what we want to show
-    const currentTurn = gameClient.visualState.turnNumber;
-    const recentBotActions = gameClient.visualState.recentActions
-      .filter((action) => {
-        // Only show actions from current turn
-        if (action.turnNumber !== currentTurn) return false;
-        // Only show actions from the player who just took their turn (previous player)
-        // This is the player whose turn triggered this toss-in phase
-        const previousPlayer =
-          gameClient.visualState.players[gameClient.visualState.currentPlayerIndex];
-        if (!previousPlayer) return false;
-        // Only show if it's the previous player and they're a bot
-        return action.playerId === previousPlayer.id && !previousPlayer.isHuman;
-      })
-      .map((action) => action.description);
+    const recentActions = gameClient.visualState.recentActions.map(
+      (action) => `${action.playerName} ${action.description}`
+    );
 
     const getHelpContent = () => {
       return `⚡ Toss-in Phase: After a card is discarded, all players can toss in matching cards from their hand.
@@ -265,14 +253,14 @@ Skip toss-in and proceed to next player's turn`;
           </div>
 
           {/* Bot Actions Section */}
-          {recentBotActions.length > 0 && (
+          {recentActions.length > 0 && (
             <div className="mb-2 p-2 bg-info-light rounded border border-info flex-shrink-0">
               <div className="font-semibold text-secondary mb-1 text-xs">
                 Recent Actions:
               </div>
               <div className="flex flex-wrap gap-1 items-center">
                 <ReactJoin separator={<CircleArrowRight size={14} />}>
-                  {recentBotActions.map((action, idx) => (
+                  {recentActions.map((action, idx) => (
                     <span key={idx} className="text-secondary text-xs">
                       {action}
                     </span>

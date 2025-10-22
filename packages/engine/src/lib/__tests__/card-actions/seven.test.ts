@@ -37,6 +37,7 @@ describe('7 Card Action', () => {
         ],
         pendingAction: {
           card: sevenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -71,16 +72,14 @@ describe('7 Card Action', () => {
         ],
         pendingAction: {
           card: sevenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('seven1');
@@ -91,6 +90,7 @@ describe('7 Card Action', () => {
     it('should allow player to toss in 7 during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -102,6 +102,7 @@ describe('7 Card Action', () => {
           ranks: ['7'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -122,6 +123,7 @@ describe('7 Card Action', () => {
     it('should process queued 7 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -133,6 +135,7 @@ describe('7 Card Action', () => {
           ranks: ['7'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: ['p2'],
           queuedActions: [
             {
@@ -192,6 +195,7 @@ describe('7 Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: sevenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],

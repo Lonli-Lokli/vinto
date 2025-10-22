@@ -271,6 +271,7 @@ export function handleSelectActionTarget(
 
             newState.pendingAction = {
               card: nextAction.card,
+              from: 'hand',
               playerId: nextAction.playerId,
               actionPhase: 'choosing-action',
               targets: [],
@@ -323,7 +324,6 @@ export function handleSelectActionTarget(
               participants: [],
               queuedActions: [],
               waitingForInput: true,
-              turnNumberAtStart: newState.turnNumber,
               playersReadyForNextTurn: getAutomaticallyReadyPlayers(
                 newState.players
               ),

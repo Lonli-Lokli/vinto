@@ -74,8 +74,7 @@ export function handleSwapCard(
     originalPlayerIndex: newState.currentPlayerIndex,
     participants: [],
     queuedActions: [],
-    waitingForInput: true,
-    turnNumberAtStart: newState.turnNumber,
+    waitingForInput: true,    
     playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
   };
 
@@ -120,6 +119,7 @@ export function handleSwapCard(
     if (declarationCorrect) {
       newState.pendingAction = {
         card: cardFromHand,
+        from: 'hand',
         playerId,
         actionPhase: 'selecting-target',
         targetType: getTargetTypeFromRank(cardFromHand.rank),

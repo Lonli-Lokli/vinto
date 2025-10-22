@@ -33,9 +33,10 @@ export function handleDrawCard(
 
   // Create pending action
   newState.pendingAction = {
-    card: drawnCard,
+    card: drawnCard,    
     playerId,
     actionPhase: 'choosing-action',
+    from: 'drawing',
     targets: [],
   };
 

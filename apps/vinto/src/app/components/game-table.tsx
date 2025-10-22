@@ -24,14 +24,17 @@ export const GameTable = observer(() => {
 
   // Get toss-in information
   const tossInRanks = gameClient.visualState.activeTossIn?.ranks || [];
-  const tossInQueue = gameClient.visualState.activeTossIn?.queuedActions.map(action => {
-    const player = gameClient.visualState.players.find(p => p.id === action.playerId);
-    return {
-      playerId: action.playerId,
-      playerName: player?.name || 'Unknown',
-      card: action.card,
-    };
-  }) || [];
+  const tossInQueue =
+    gameClient.visualState.activeTossIn?.queuedActions.map((action) => {
+      const player = gameClient.visualState.players.find(
+        (p) => p.id === action.playerId
+      );
+      return {
+        playerId: action.playerId,
+        playerName: player?.name || 'Unknown',
+        card: action.card,
+      };
+    }) || [];
 
   // Map subPhases to old boolean flags
   const isSelectingSwapPosition = uiStore.isSelectingSwapPosition;

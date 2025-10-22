@@ -606,6 +606,7 @@ export function actionValidator(
 
     case 'UPDATE_DIFFICULTY':
     case 'SET_NEXT_DRAW_CARD':
+    case 'SWAP_HAND_WITH_DECK':
       // Always valid (configuration/debug actions)
       return { valid: true };
 

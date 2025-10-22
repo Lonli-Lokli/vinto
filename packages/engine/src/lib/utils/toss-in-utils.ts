@@ -75,6 +75,16 @@ export function advanceTurnAfterTossIn(
   // Save who started this turn before refreshing toss-in
   const originalPlayerIndex = state.activeTossIn.originalPlayerIndex;
 
+  // Advance to next player from the ORIGINAL player who initiated the turn (circular)
+  state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
+
+  state.turnNumber++;
+
+  // Increment turn count when wrapping back to first player
+  if (state.currentPlayerIndex === 0) {
+    state.roundNumber++;
+  }
+
   // Clear toss-in participation data (but preserve ranks)
   // The ranks stay the same because they represent the cards currently in discard pile
   // For example: King + Ace declared correctly = ['K', 'A'] should persist
@@ -85,16 +95,7 @@ export function advanceTurnAfterTossIn(
     state.players
   );
   state.activeTossIn.failedAttempts = [];
-
-  // Advance to next player from the ORIGINAL player who initiated the turn (circular)
-  state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
-
-  state.turnNumber++;
-  
-  // Increment turn count when wrapping back to first player
-  if (state.currentPlayerIndex === 0) {
-    state.roundNumber++;
-  }
+  state.activeTossIn.originalPlayerIndex = state.currentPlayerIndex;
 
   // Check if game should end (after vinto call, when we return to the vinto caller)
   if (

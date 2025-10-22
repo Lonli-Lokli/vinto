@@ -24,7 +24,9 @@ export const JackAction = observer(() => {
     gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   const getPlayerName = (playerId: string) => {
-    const player = gameClient.visualState.players.find((p) => p.id === playerId);
+    const player = gameClient.visualState.players.find(
+      (p) => p.id === playerId
+    );
     return player?.name || 'Unknown';
   };
 

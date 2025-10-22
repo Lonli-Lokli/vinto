@@ -73,9 +73,9 @@ export function GameClientDebugProvider({
         console.group('👥 Players');
         gameClient.visualState.players.forEach((player, index) => {
           console.group(
-            `${index === gameClient.visualState.currentPlayerIndex ? '➤' : ' '} ${
-              player.name
-            } (${player.id})`
+            `${
+              index === gameClient.visualState.currentPlayerIndex ? '➤' : ' '
+            } ${player.name} (${player.id})`
           );
           console.log('Type:', player.isHuman ? '👤 Human' : '🤖 Bot');
           console.log('Cards:', player.cards.length);

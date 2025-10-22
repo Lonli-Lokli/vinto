@@ -12,7 +12,6 @@ import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
 import { Card } from '@vinto/shapes';
-import { activeAnimations } from 'framer-motion';
 
 export type AnimationType =
   | 'swap'
@@ -141,6 +140,7 @@ export class CardAnimationStore {
       activeAnimations: observable,
       activeSequences: observable,
       hasActiveAnimations: computed,
+      hasBlockingAnimations: computed,
       isAnimatingToDiscard: computed,
       cardAnimatingToDiscard: computed,
       startSwapAnimation: action,
@@ -181,7 +181,24 @@ export class CardAnimationStore {
   }
 
   get hasActiveAnimations(): boolean {
+    console.log('Active animations count:', this.activeAnimations.size);
     return this.activeAnimations.size > 0;
+  }
+
+  /**
+   * Check if there are blocking animations (excludes highlights and other non-blocking animations)
+   * Used to determine if user interactions should be disabled
+   */
+  get hasBlockingAnimations(): boolean {
+    for (const animation of this.activeAnimations.values()) {
+      // Highlight animations are non-blocking - users can still interact
+      if (animation.type === 'highlight') {
+        continue;
+      }
+      // All other animations are blocking
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -481,32 +498,29 @@ export class CardAnimationStore {
   startAnimationSequence(
     sequenceType: AnimationSequenceType,
     steps: AnimationStep[]
-  ): string {
-    const sequenceId = `sequence-${this.sequenceCounter++}`;
-
-    const sequence: AnimationSequence = {
-      id: sequenceId,
-      sequenceType,
-      steps,
-      currentStepIndex: 0,
-      startTime: Date.now(),
-    };
-
-    this.activeSequences.set(sequenceId, sequence);
-
+  ): void {
     if (sequenceType === 'parallel') {
       // Start all animations at once
       steps.forEach((step) => this.executeAnimationStep(step));
     } else {
       // Start the first animation
       if (steps.length > 0) {
+        const sequenceId = `sequence-${this.sequenceCounter++}`;
+
+        const sequence: AnimationSequence = {
+          id: sequenceId,
+          sequenceType,
+          steps,
+          currentStepIndex: 0,
+          startTime: Date.now(),
+        };
+
+        this.activeSequences.set(sequenceId, sequence);
         const firstAnimId = this.executeAnimationStep(steps[0]);
         // Set up observer for sequential execution
         this.observeSequentialAnimation(sequenceId, firstAnimId);
       }
     }
-
-    return sequenceId;
   }
 
   public getPlayerAnimations(
@@ -521,6 +535,59 @@ export class CardAnimationStore {
         );
       }
     );
+  }
+
+  /**
+   * Check if a card position is involved in any animation (source or destination)
+   * Both arriving and leaving cards should be hidden to prevent double-rendering
+   * The ghost element will show them animating
+   */
+  isCardAnimating(playerId: string, position: number): boolean {
+    for (const animation of this.activeAnimations.values()) {
+      // Check if animating FROM this position
+      if (animation.from?.type === 'player') {
+        if (
+          animation.from.playerId === playerId &&
+          animation.from.position === position
+        ) {
+          return true;
+        }
+      }
+      // Check if animating TO this position
+      if (animation.to?.type === 'player') {
+        if (
+          animation.to.playerId === playerId &&
+          animation.to.position === position
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if the drawn/pending card is currently being animated
+   */
+  isDrawnCardAnimating(): boolean {
+    for (const animation of this.activeAnimations.values()) {
+      if (animation.from?.type === 'drawn' || animation.to?.type === 'drawn') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if the discard pile top card is being animated
+   */
+  isDiscardPileAnimating(): boolean {
+    for (const animation of this.activeAnimations.values()) {
+      if (animation.to?.type === 'discard') {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -594,6 +661,7 @@ export class CardAnimationStore {
         } else {
           // Sequence complete
           this.activeSequences.delete(sequenceId);
+          this.notifyIfAllAnimationsComplete();
         }
       } else {
         // Animation still running, check again next frame
@@ -612,25 +680,18 @@ export class CardAnimationStore {
   removeAnimation(id: string) {
     this.activeAnimations.delete(id);
     this.notifyIfAllAnimationsComplete();
-}
+  }
 
   notifyIfAllAnimationsComplete() {
-// Check if all animations are now complete
+    // Check if all animations are now complete
     if (
       this.activeAnimations.size === 0 &&
       this.activeSequences.size === 0 &&
       this.onAllAnimationsCompleteCallback
     ) {
-      // Use double RAF to ensure callback runs after all render cycles complete
-      // First RAF: schedule for next frame
-      // Second RAF: ensures DOM has fully updated and painted
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (this.onAllAnimationsCompleteCallback) {
-            this.onAllAnimationsCompleteCallback();
-          }
-        });
-      });
+      // Call immediately - we want visual state to sync as soon as animation stops
+      // This prevents showing old state in the UI
+      this.onAllAnimationsCompleteCallback();
     }
   }
 

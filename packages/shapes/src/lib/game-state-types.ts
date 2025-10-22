@@ -74,6 +74,7 @@ export interface PendingAction {
   card: Card;
   playerId: string;
   actionPhase: ActionPhase;
+  from: 'drawing' | 'hand';
   targetType?: TargetType;
   targets: ActionTarget[];
   declaredRank?: Rank;
@@ -101,9 +102,7 @@ export type TargetType =
  * - King: targets.length 0→1 (select card, then declare rank via declaredRank field)
  * - Simple (7,8,9,10,A): targets.length 0→1 (select single target)
  */
-export type ActionPhase =
-  | 'choosing-action'
-  | 'selecting-target';
+export type ActionPhase = 'choosing-action' | 'selecting-target';
 
 export interface ActionTarget {
   playerId: string;
@@ -124,7 +123,7 @@ export interface ActiveTossIn {
   timeRemaining?: number;
   playersReadyForNextTurn: string[]; // Player IDs who confirmed they're done with toss-in
   failedAttempts?: FailedTossInAttempt[]; // Track invalid toss-in attempts for animations
-  turnNumberAtStart: number; // Track turn number when toss-in started
+  tossInCompleted?: boolean; // Flag indicating if toss-in period has concluded
 }
 
 export interface TossInAction {

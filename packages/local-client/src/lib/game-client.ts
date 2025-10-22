@@ -12,7 +12,6 @@ import type {
   Card,
   Rank,
 } from '@vinto/shapes';
-import { getCardName } from '@vinto/shapes';
 import { GameEngine } from '@vinto/engine';
 
 /**
@@ -145,12 +144,10 @@ export class GameClient {
     };
 
     const newState = copy(state);
-    newState.recentActions = [...state.recentActions, historyEntry];
-
-    // Keep only last 10 actions
-    if (newState.recentActions.length > 10) {
-      newState.recentActions = newState.recentActions.slice(-10);
-    }
+    // Only keep actions from the latest turnNumber
+    newState.recentActions = [...state.recentActions, historyEntry].filter(
+      (a) => a.turnNumber === historyEntry.turnNumber
+    );
 
     return newState;
   }
@@ -171,7 +168,7 @@ export class GameClient {
 
     if (!player) return null;
 
-    const formatCard = (card: Card) => getCardName(card.rank);
+    const formatCard = (card: Card) => card.rank;
 
     switch (action.type) {
       case 'DRAW_CARD': {
@@ -182,8 +179,8 @@ export class GameClient {
       case 'PLAY_DISCARD': {
         const takenCard = state.pendingAction?.card;
         return takenCard
-          ? `took ${formatCard(takenCard)} from discard`
-          : `took from discard`;
+          ? `played ${formatCard(takenCard)} from discard`
+          : `played from discard`;
       }
 
       case 'USE_CARD_ACTION': {
@@ -194,10 +191,10 @@ export class GameClient {
       }
 
       case 'SWAP_CARD': {
-        const swappedCard = state.discardPile.peekTop();
-        return swappedCard
-          ? `swapped for ${formatCard(swappedCard)}`
-          : `swapped a card`;
+        const declaredRank = action.payload.declaredRank;
+        return declaredRank !== undefined
+          ? `swapped for ${declaredRank}`
+          : `swapped card at position ${action.payload.position + 1}`;
       }
 
       case 'DISCARD_CARD': {
@@ -254,6 +251,10 @@ export class GameClient {
       case 'CALL_VINTO':
         return `called Vinto!`;
 
+      case 'DECLARE_KING_ACTION':
+        const rank = action.payload.declaredRank;
+        return rank ? `declared ${rank}` : null;
+
       default:
         return null;
     }
@@ -280,6 +281,7 @@ export class GameClient {
    */
   @action
   syncVisualState(): void {
+    console.log('[GameClient] Syncing visual state to logical state');
     this._visualState = copy(this._state);
   }
 

@@ -39,6 +39,7 @@ describe('9 Card Action', () => {
         ],
         pendingAction: {
           card: nineCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -73,16 +74,14 @@ describe('9 Card Action', () => {
         ],
         pendingAction: {
           card: nineCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('nine1');
@@ -94,6 +93,7 @@ describe('9 Card Action', () => {
     it('should allow player to toss in 9 during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -105,6 +105,7 @@ describe('9 Card Action', () => {
           ranks: ['9'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -125,6 +126,7 @@ describe('9 Card Action', () => {
     it('should process queued 9 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('K', 'p1c1'),
@@ -137,6 +139,7 @@ describe('9 Card Action', () => {
           ranks: ['9'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: ['p2'],
           queuedActions: [
             {
@@ -181,6 +184,7 @@ describe('9 Card Action', () => {
         pendingAction: {
           card: nineCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [],
         },

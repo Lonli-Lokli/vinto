@@ -42,7 +42,8 @@ export type GameAction =
   | UpdateDifficultyAction
 
   // Debug/Testing
-  | SetNextDrawCardAction;
+  | SetNextDrawCardAction
+  | SwapHandWithDeckAction;
 
 /**
  * Turn Actions
@@ -235,5 +236,14 @@ export interface SetNextDrawCardAction {
   type: 'SET_NEXT_DRAW_CARD';
   payload: {
     rank: Rank;
+  };
+}
+
+export interface SwapHandWithDeckAction {
+  type: 'SWAP_HAND_WITH_DECK';
+  payload: {
+    playerId: string;
+    handPosition: number;
+    deckCardRank: Rank;
   };
 }

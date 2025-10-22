@@ -41,6 +41,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -81,6 +82,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -117,6 +119,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         pendingAction: {
           card: queenCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p2', position: 0 },
@@ -155,6 +158,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         pendingAction: {
           card: queenCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p2', position: 0 }, // K
@@ -190,13 +194,14 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: kingCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
             {
               playerId: 'p2',
               position: 0,
-            }
+            },
           ],
         },
       });
@@ -238,6 +243,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: aceCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [], // Empty targets initially
@@ -271,6 +277,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: sevenCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -309,6 +316,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         pendingAction: {
           card: nineCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [],
         },
@@ -334,6 +342,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
         currentPlayerIndex: 0,
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('K', 'p1c1'),
@@ -352,6 +361,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           ranks: ['A'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -385,6 +395,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Setup: King has declared rank 'A', triggering toss-in
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
+        turnNumber: 1,
         currentPlayerIndex: 0,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
@@ -404,6 +415,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           ranks: ['2'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -438,6 +450,7 @@ describe('Game Engine - Rules-Based Tests', () => {
     it('should handle wrong rank toss-in (penalty draw)', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
+        turnNumber: 1,
         currentPlayerIndex: 0,
         drawPile: toPile([createTestCard('K', 'penalty1')]),
         discardPile: toPile(),
@@ -450,6 +463,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           ranks: ['A'], // Looking for Aces
           initiatorId: 'p1',
           originalPlayerIndex: 0,
+
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -509,6 +523,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: createTestCard('A', 'drawn-card'), // Drawn card (Ace)
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -544,6 +559,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: createTestCard('7', 'drawn-card'), // Drawn card
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -616,6 +632,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
         pendingAction: {
           card: createTestCard('J', 'jack1'), // P2 has Jack
+          from: 'drawing',
           playerId: 'p2',
           actionPhase: 'selecting-target',
           targets: [],

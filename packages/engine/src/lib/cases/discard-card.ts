@@ -63,6 +63,7 @@ export function handleDiscardCard(
 
       newState.pendingAction = {
         card: nextAction.card,
+        from: 'hand',
         playerId: nextAction.playerId,
         actionPhase: 'choosing-action',
         targets: [],
@@ -92,7 +93,6 @@ export function handleDiscardCard(
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      turnNumberAtStart: newState.turnNumber,
       playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
     };
 

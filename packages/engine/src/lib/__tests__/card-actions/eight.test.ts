@@ -37,6 +37,7 @@ describe('8 Card Action', () => {
         ],
         pendingAction: {
           card: eightCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],
@@ -72,16 +73,14 @@ describe('8 Card Action', () => {
         ],
         pendingAction: {
           card: eightCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('eight1');
@@ -92,6 +91,7 @@ describe('8 Card Action', () => {
     it('should allow player to toss in 8 during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -123,6 +123,7 @@ describe('8 Card Action', () => {
     it('should process queued 8 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -193,6 +194,7 @@ describe('8 Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: eightCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [],

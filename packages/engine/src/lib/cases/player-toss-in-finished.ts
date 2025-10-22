@@ -70,6 +70,7 @@ export function handlePlayerTossInFinished(
       // Set up pending action for the first queued card
       newState.pendingAction = {
         card: firstAction.card,
+        from: 'hand',
         playerId: firstAction.playerId,
         actionPhase: 'choosing-action',
         targetType: getTargetTypeFromRank(firstAction.card.rank),

@@ -44,6 +44,7 @@ describe('Jack (J) Card Action', () => {
         pendingAction: {
           card: jackCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p1', position: 0 }, // P1's King
@@ -89,6 +90,7 @@ describe('Jack (J) Card Action', () => {
         ],
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -130,6 +132,7 @@ describe('Jack (J) Card Action', () => {
         ],
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'choosing-action',
           targets: [],
@@ -137,15 +140,12 @@ describe('Jack (J) Card Action', () => {
       });
 
       // Swap Jack into hand
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0)
-      );
+      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('jack1'); // Jack swapped in
       expect(newState.discardPile.peekTop()?.id).toBe('p1c1'); // King discarded
-      expect(newState.pendingAction).toBeNull(); 
+      expect(newState.pendingAction).toBeNull();
     });
   });
 
@@ -153,6 +153,7 @@ describe('Jack (J) Card Action', () => {
     it('should allow player to toss in Jack during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
+        turnNumber: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true),
           createTestPlayer('p2', 'Player 2', false, [
@@ -257,11 +258,15 @@ describe('Jack (J) Card Action', () => {
       );
 
       // Should not return to toss-in
-      expect(newState.subPhase).toBe('ai_thinking');  // next player is bot so ai_thinking
+      expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
       expect(newState.activeTossIn?.queuedActions.length).toBe(0);
       expect(newState.pendingAction).toBeNull();
-      expect(newState.players.find(p => p.id === 'p1')?.cards[0].rank).toBe('7'); // P1 now has 7
-      expect(newState.players.find(p => p.id === 'p3')?.cards[0].rank).toBe('K'); // P3 now has K
+      expect(newState.players.find((p) => p.id === 'p1')?.cards[0].rank).toBe(
+        '7'
+      ); // P1 now has 7
+      expect(newState.players.find((p) => p.id === 'p3')?.cards[0].rank).toBe(
+        'K'
+      ); // P3 now has K
     });
   });
 
@@ -274,6 +279,7 @@ describe('Jack (J) Card Action', () => {
         pendingAction: {
           card: jackCard,
           playerId: 'p1',
+          from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p1', position: 0 },
@@ -298,6 +304,7 @@ describe('Jack (J) Card Action', () => {
         currentPlayerIndex: 0, // P1's turn
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
@@ -323,6 +330,7 @@ describe('Jack (J) Card Action', () => {
         subPhase: 'awaiting_action',
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [{ playerId: 'p1', position: 0 }], // Only 1 target
@@ -351,6 +359,7 @@ describe('Jack (J) Card Action', () => {
         ],
         pendingAction: {
           card: jackCard,
+          from: 'drawing',
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
