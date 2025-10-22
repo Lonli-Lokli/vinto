@@ -323,6 +323,7 @@ export function handleSelectActionTarget(
               participants: [],
               queuedActions: [],
               waitingForInput: true,
+              turnNumberAtStart: newState.turnNumber,
               playersReadyForNextTurn: getAutomaticallyReadyPlayers(
                 newState.players
               ),

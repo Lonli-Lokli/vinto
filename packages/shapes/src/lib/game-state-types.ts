@@ -11,7 +11,7 @@ export interface GameState {
   // Game metadata
   gameId: string;
   roundNumber: number;
-  turnCount: number;
+  turnNumber: number;
 
   // Phase management
   phase: GamePhase;
@@ -124,6 +124,7 @@ export interface ActiveTossIn {
   timeRemaining?: number;
   playersReadyForNextTurn: string[]; // Player IDs who confirmed they're done with toss-in
   failedAttempts?: FailedTossInAttempt[]; // Track invalid toss-in attempts for animations
+  turnNumberAtStart: number; // Track turn number when toss-in started
 }
 
 export interface TossInAction {
@@ -283,7 +284,7 @@ export function createInitialGameState(
   return {
     gameId,
     roundNumber: 1,
-    turnCount: 0,
+    turnNumber: 0,
     phase: 'setup',
     subPhase: 'idle',
     finalTurnTriggered: false,

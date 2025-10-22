@@ -46,14 +46,15 @@ export function handleUseCardAction(
       queuedActions: [],
       waitingForInput: true,
       playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+      turnNumberAtStart: newState.turnNumber,
     };
   }
 
-  // ADD or REPLACE this card's rank to toss-in ranks if not already present
-  newState.activeTossIn.ranks = addTossInCard(
-    newState.activeTossIn.ranks,
-    action.payload.card.rank
-  );
+  // ADD or REPLACE this card's rank to toss-in ranks if not already present if same turn
+  newState.activeTossIn.ranks =
+    newState.activeTossIn.turnNumberAtStart !== newState.turnNumber
+      ? [action.payload.card.rank]
+      : addTossInCard(newState.activeTossIn.ranks, action.payload.card.rank);
 
   // Transition to awaiting_action phase (ready for target selection)
   newState.subPhase = 'awaiting_action';

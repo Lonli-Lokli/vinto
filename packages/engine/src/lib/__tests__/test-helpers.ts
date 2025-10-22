@@ -77,7 +77,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
   const baseState: GameState = {
     gameId: 'test-game',
     roundNumber: 1,
-    turnCount: 0,
+    turnNumber: 0,
     phase: 'playing',
     subPhase: 'idle',
     finalTurnTriggered: false,

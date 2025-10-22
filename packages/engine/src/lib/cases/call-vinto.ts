@@ -54,7 +54,7 @@ export function handleCallVinto(
         (originalPlayerIndex + 1) % newState.players.length;
 
       if (newState.currentPlayerIndex === 0) {
-        newState.turnCount++;
+        newState.turnNumber++;
       }
 
       // Check if game should end (if we've returned to the vinto caller)

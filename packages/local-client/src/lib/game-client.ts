@@ -122,7 +122,7 @@ export class GameClient {
       playerName: player.name,
       description,
       timestamp: Date.now(),
-      turnNumber: state.turnCount,
+      turnNumber: state.turnNumber,
     };
 
     const newState = copy(state);

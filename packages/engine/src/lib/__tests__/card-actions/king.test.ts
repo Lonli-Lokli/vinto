@@ -227,6 +227,146 @@ describe('King (K) Card Action', () => {
       expect(newState.players.find((p) => p.id === 'p1')?.cards.length).toBe(3); // Penalty card added
       expect(newState.subPhase).toBe('toss_queue_active');
     });
+
+    it('should remove King from toss in queue when next player swaps card', () => {
+      const kingCard = createTestCard('K', 'king1');
+
+      const state = createTestState({
+        subPhase: 'choosing',
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('7', 'p1c1'),
+            createTestCard('2', 'p1c2'),
+            createTestCard('3', 'p1c3'),
+          ]),
+          createTestPlayer('p2', 'Player 2', true, [
+            createTestCard('Q', 'p2c1'),
+            createTestCard('2', 'p2c2'),
+            createTestCard('3', 'p2c3'),
+          ]),
+        ],
+        activeTossIn: {
+          initiatorId: 'p1',
+          originalPlayerIndex: 0,
+          participants: [],
+          queuedActions: [],
+          ranks: ['K'],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
+        },
+        drawPile: toPile([createTestCard('4', 'draw1')]),
+        pendingAction: {
+          card: kingCard,
+          playerId: 'p1',
+          actionPhase: 'selecting-target',
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+            },
+          ],
+        },
+      });
+
+      // Step 1: Player chooses to use Ace action
+      let newState = GameEngine.reduce(
+        state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare 7
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.declareKingAction('p1', '7')
+      );
+
+      // Should trigger toss-in for 7
+      expect(newState.activeTossIn?.ranks.length).toBe(2);
+      expect(newState.activeTossIn?.ranks).toContain('7');
+      expect(newState.activeTossIn?.ranks).toContain('K');
+
+      newState = markPlayersReady(newState, ['p1', 'p2', 'p3', 'p4']);
+      expect(newState.activeTossIn?.ranks.length).toBe(2); // we still should be available in toss in
+      expect(newState.currentPlayerIndex).toBe(1); // p2 turn
+
+      newState = GameEngine.reduce(newState, GameActions.drawCard('p2'));
+
+      newState = GameEngine.reduce(newState, GameActions.swapCard('p2', 0));
+
+      expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
+      expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
+    });
+
+     it('should remove King from toss in queue when next player use card', () => {
+      const kingCard = createTestCard('K', 'king1');
+
+      const state = createTestState({
+        subPhase: 'choosing',
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('7', 'p1c1'),
+            createTestCard('2', 'p1c2'),
+            createTestCard('3', 'p1c3'),
+          ]),
+          createTestPlayer('p2', 'Player 2', true, [
+            createTestCard('6', 'p2c1'),
+            createTestCard('2', 'p2c2'),
+            createTestCard('3', 'p2c3'),
+          ]),
+        ],
+        activeTossIn: {
+          initiatorId: 'p1',
+          originalPlayerIndex: 0,
+          participants: [],
+          queuedActions: [],
+          ranks: ['K'],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
+        },
+        drawPile: toPile([createTestCard('Q', 'draw1')]),
+        pendingAction: {
+          card: kingCard,
+          playerId: 'p1',
+          actionPhase: 'selecting-target',
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+            },
+          ],
+        },
+      });
+
+      // Step 1: Player chooses to use Ace action
+      let newState = GameEngine.reduce(
+        state,
+        GameActions.playCardAction('p1', kingCard)
+      );
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare 7
+      newState = GameEngine.reduce(
+        newState,
+        GameActions.declareKingAction('p1', '7')
+      );
+
+      // Should trigger toss-in for 7
+      expect(newState.activeTossIn?.ranks.length).toBe(2);
+      expect(newState.activeTossIn?.ranks).toContain('7');
+      expect(newState.activeTossIn?.ranks).toContain('K');
+
+      newState = markPlayersReady(newState, ['p1', 'p2', 'p3', 'p4']);
+      expect(newState.activeTossIn?.ranks.length).toBe(2); // we still should be available in toss in
+      expect(newState.currentPlayerIndex).toBe(1); // p2 turn
+
+      newState = GameEngine.reduce(newState, GameActions.drawCard('p2'));
+
+      newState = GameEngine.reduce(newState, GameActions.playCardAction('p2', createTestCard('Q', 'p2c1')));
+
+      expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
+      expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
+    });
   });
 
   describe('Normal Flow - Swapping King Instead of Using Action', () => {

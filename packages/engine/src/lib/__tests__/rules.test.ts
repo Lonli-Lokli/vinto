@@ -472,7 +472,7 @@ describe('Game Engine - Rules-Based Tests', () => {
     it('should finish toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active', // Correct phase for toss-in
-        turnCount: 5,
+        turnNumber: 5,
         activeTossIn: {
           ranks: ['A'],
           initiatorId: 'p1',
@@ -491,7 +491,7 @@ describe('Game Engine - Rules-Based Tests', () => {
 
       // Note: finishTossInPeriod does NOT increment turnCount
       // Turn count is managed separately by the advance turn logic
-      expect(newState.turnCount).toBe(5); // Unchanged
+      expect(newState.turnNumber).toBe(5); // Unchanged
     });
   });
 
@@ -701,7 +701,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       let state = createTestState({
         subPhase: 'idle',
         currentPlayerIndex: 0,
-        turnCount: 5,
+        turnNumber: 5,
         drawPile: toPile([createTestCard('A', 'drawn1')]),
         players: [
           createTestPlayer('p1', 'Player 1', true, [

@@ -75,6 +75,7 @@ export function handleSwapCard(
     participants: [],
     queuedActions: [],
     waitingForInput: true,
+    turnNumberAtStart: newState.turnNumber,
     playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
   };
 

@@ -518,7 +518,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     this.initializeIfNeeded(context);
 
     // Never call Vinto too early
-    if (context.gameState.turnCount < context.allPlayers.length * 2) {
+    if (context.gameState.turnNumber < context.allPlayers.length * 2) {
       return false;
     }
 
@@ -998,7 +998,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       hiddenCards: new Map(),
       pendingCard: context.pendingCard || null,
       isTossInPhase,
-      turnCount: context.gameState.turnCount,
+      turnCount: context.gameState.turnNumber,
       finalTurnTriggered: context.gameState.finalTurnTriggered,
       isTerminal: false,
       winner: null,

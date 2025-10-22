@@ -75,7 +75,7 @@ export class BotAIAdapter {
       () => ({
         isBot: this.gameClient.currentPlayer.isBot,
         subPhase: this.gameClient.state.subPhase,
-        turnCount: this.gameClient.state.turnCount,
+        turnCount: this.gameClient.state.turnNumber,
         activeTossIn: this.gameClient.state.activeTossIn,
       }),
       // Execute bot turn when state is ready

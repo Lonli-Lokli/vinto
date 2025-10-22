@@ -32,7 +32,7 @@ export function handleConfirmPeek(
   if (peekCard) {
     newState.discardPile.addToTop({
       ...copy(peekCard),
-      played: true
+      played: true,
     });
   }
 
@@ -84,8 +84,11 @@ export function handleConfirmPeek(
   } else if (newState.activeTossIn !== null) {
     // Return to toss-in phase (action was from toss-in participation but no queue)
     // ADD or REPLACE this card's rank to toss-in ranks if not already present
-    newState.activeTossIn.ranks = addTossInCard(newState.activeTossIn.ranks, peekCard?.rank); 
-    
+    newState.activeTossIn.ranks = addTossInCard(
+      newState.activeTossIn.ranks,
+      peekCard?.rank
+    );
+
     // Clear the ready list so players can confirm again for this new toss-in round
     clearTossInReadyList(newState);
     newState.subPhase = 'toss_queue_active';
@@ -105,6 +108,7 @@ export function handleConfirmPeek(
         participants: [],
         queuedActions: [],
         waitingForInput: true,
+        turnNumberAtStart: newState.turnNumber,
         playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
       };
     }

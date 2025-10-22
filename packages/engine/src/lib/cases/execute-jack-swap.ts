@@ -143,6 +143,7 @@ export function handleExecuteJackSwap(
         participants: [],
         queuedActions: [],
         waitingForInput: true,
+        turnNumberAtStart: newState.turnNumber,
         playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
       };
     }

@@ -26,7 +26,7 @@ export const GameHeader = observer(() => {
 
   // Get values from GameClient
   const currentPlayer = gameClient.currentPlayer;
-  const turnCount = gameClient.state.turnCount;
+  const turnCount = gameClient.state.turnNumber;
   const phase = gameClient.state.phase;
   const finalTurnTriggered = gameClient.state.finalTurnTriggered;
   const drawPile = gameClient.state.drawPile;

@@ -109,6 +109,7 @@ export function handleSkipQueenSwap(
         participants: [],
         queuedActions: [],
         waitingForInput: true,
+        turnNumberAtStart: newState.turnNumber,
         playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
       };
     }

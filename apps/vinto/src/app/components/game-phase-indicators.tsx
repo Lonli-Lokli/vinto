@@ -200,7 +200,7 @@ const TossInIndicator = observer(
 
     // Get bot actions from the PREVIOUS player (who just finished their turn)
     // Since we're in toss-in phase, the previous player's actions are what we want to show
-    const currentTurn = gameClient.state.turnCount;
+    const currentTurn = gameClient.state.turnNumber;
     const recentBotActions = gameClient.state.recentActions
       .filter((action) => {
         // Only show actions from current turn

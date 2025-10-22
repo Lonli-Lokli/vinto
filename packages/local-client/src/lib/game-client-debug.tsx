@@ -50,7 +50,7 @@ export function GameClientDebugProvider({
           '/',
           gameClient.state.subPhase
         );
-        console.log('Turn:', gameClient.state.turnCount);
+        console.log('Turn:', gameClient.state.turnNumber);
         console.log('Round:', gameClient.state.roundNumber);
         console.log(
           'Current Player:',

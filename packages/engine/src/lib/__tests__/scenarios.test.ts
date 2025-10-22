@@ -535,7 +535,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     const state = createTestState({
       subPhase: 'idle',
       currentPlayerIndex: 0,
-      turnCount: 1,
+      turnNumber: 1,
       players: [
         createTestPlayer('p1', 'Player 1', true, [
           createTestCard('A', 'p1c1'),
@@ -590,7 +590,9 @@ describe('GameEngine - Toss-in Scenarios', () => {
     newState = makeTurn('p4', 0, newState);
     expect(newState.currentPlayerIndex).toBe(0); // Turn should advance back to Player 1
 
-    expect(newState.turnCount).toBe(2); // Turn count should increment
+    expect(newState.turnNumber).toBe(2); // Turn count should increment
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
+
+  
 });

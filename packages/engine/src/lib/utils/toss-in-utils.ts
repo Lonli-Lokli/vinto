@@ -89,9 +89,11 @@ export function advanceTurnAfterTossIn(
   // Advance to next player from the ORIGINAL player who initiated the turn (circular)
   state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
 
+  state.turnNumber++;
+  
   // Increment turn count when wrapping back to first player
   if (state.currentPlayerIndex === 0) {
-    state.turnCount++;
+    state.roundNumber++;
   }
 
   // Check if game should end (after vinto call, when we return to the vinto caller)
@@ -122,7 +124,7 @@ export function advanceTurnAfterTossIn(
     nextPlayerIndex: state.currentPlayerIndex,
     nextPlayer: nextPlayer.name,
     subPhase: state.subPhase,
-    turnCount: state.turnCount,
+    turnCount: state.turnNumber,
     tossInRefreshedWithRanks: state.activeTossIn?.ranks || null,
   });
 }
