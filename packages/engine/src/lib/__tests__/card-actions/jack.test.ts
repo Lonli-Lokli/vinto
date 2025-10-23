@@ -15,13 +15,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GameEngine } from '../../game-engine';
 import { GameActions } from '../../game-actions';
 import {
   createTestCard,
   createTestPlayer,
   createTestState,
-  toPile,
+  markPlayersReady,
+  unsafeReduce,
 } from '../test-helpers';
 
 describe('Jack (J) Card Action', () => {
@@ -54,7 +54,7 @@ describe('Jack (J) Card Action', () => {
       });
 
       // Execute Jack swap
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.executeQueenSwap('p1')
       );
@@ -100,7 +100,7 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.executeQueenSwap('p1')
       );
@@ -140,7 +140,7 @@ describe('Jack (J) Card Action', () => {
       });
 
       // Swap Jack into hand
-      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
+      const newState = unsafeReduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('jack1'); // Jack swapped in
@@ -173,9 +173,9 @@ describe('Jack (J) Card Action', () => {
       });
 
       // P2 tosses in their Jack
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       // Verify card was removed from hand
@@ -219,22 +219,7 @@ describe('Jack (J) Card Action', () => {
       });
 
       // All players mark ready
-      let newState = GameEngine.reduce(
-        state,
-        GameActions.playerTossInFinished('p1')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p2')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p3')
-      );
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.playerTossInFinished('p4')
-      );
+      let newState = markPlayersReady(state, ['p1', 'p2', 'p3']);
 
       // Queued Jack action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -242,17 +227,17 @@ describe('Jack (J) Card Action', () => {
       expect(newState.pendingAction?.playerId).toBe('p2');
 
       // P2 selects two targets to swap
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p1', 0)
       );
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p3', 0)
       );
 
       // Execute swap
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.executeQueenSwap('p2')
       );
@@ -288,12 +273,10 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state,
         GameActions.executeQueenSwap('p1')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      )).toThrow();
     });
 
     it('should reject when not player turn', () => {
@@ -315,12 +298,10 @@ describe('Jack (J) Card Action', () => {
       });
 
       // P2 tries to execute swap (not their turn)
-      const newState = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state,
         GameActions.executeQueenSwap('p2')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      )).toThrow();
     });
 
     it('should reject when not exactly 2 targets selected', () => {
@@ -337,12 +318,10 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state,
         GameActions.executeQueenSwap('p1')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      )).toThrow();
     });
 
     it('should handle swapping player own cards', () => {
@@ -369,7 +348,7 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.executeQueenSwap('p1')
       );

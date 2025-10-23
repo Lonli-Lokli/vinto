@@ -35,7 +35,7 @@ export interface MCTSMove {
   targets?: MCTSActionTarget[];
   swapPosition?: number;
   declaredRank?: Rank;
-  tossInPosition?: number;
+  tossInPositions?: number[]; // Array of positions for multi-card toss-in
   shouldSwap?: boolean; // For peek-and-swap actions
 }
 

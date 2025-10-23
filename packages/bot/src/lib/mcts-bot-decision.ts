@@ -229,23 +229,31 @@ export class MCTSBotDecisionService implements BotDecisionService {
     return 'Q';
   }
 
+  /**
+   * IMPORTANT: Tossing in is ALWAYS beneficial because:
+   * 1. Reduces hand size (closer to winning)
+   * 2. Reduces score (lower points)
+   *
+   * Therefore, we use simple heuristic: participate if we have ANY matching cards.
+   * No need for MCTS evaluation - this is a no-brainer decision.
+   */
   shouldParticipateInTossIn(
     discardedRanks: [Rank, ...Rank[]],
     context: BotDecisionContext
   ): boolean {
     this.initializeIfNeeded(context);
 
-    // Construct game state with explicit toss-in information
-    const gameState = this.constructGameState(context);
+    // Simple check: do we have any cards that match the toss-in ranks?
+    const hasMatchingCard = context.botPlayer.cards.some((card, index) => {
+      // Only consider known cards
+      if (!context.botPlayer.knownCardPositions.includes(index)) {
+        return false;
+      }
+      // Check if card matches any of the toss-in ranks
+      return discardedRanks.includes(card.rank);
+    });
 
-    // Explicitly mark as toss-in phase and provide ALL valid toss-in ranks
-    // The move generator will check against all ranks in this array
-    gameState.isTossInPhase = true;
-    gameState.tossInRanks = discardedRanks;
-
-    const bestMove = this.runMCTS(gameState);
-
-    return bestMove.type === 'toss-in';
+    return hasMatchingCard;
   }
 
   selectBestSwapPosition(
@@ -834,19 +842,22 @@ export class MCTSBotDecisionService implements BotDecisionService {
       const discardRank = state.discardPileTop?.rank;
       if (discardRank) {
         for (const move of tossInMoves) {
-          if (move.tossInPosition !== undefined) {
-            const card = state.hiddenCards.get(
-              `${currentPlayer.id}-${move.tossInPosition}`
-            );
-            const memory = currentPlayer.knownCards.get(move.tossInPosition);
-            // If we know this card matches, prioritize it
-            if (
-              memory &&
-              memory.confidence > 0.5 &&
-              card &&
-              card.rank === discardRank
-            ) {
-              return move;
+          if (move.tossInPositions && move.tossInPositions.length > 0) {
+            // Check if any of the positions contain high-confidence matching cards
+            for (const position of move.tossInPositions) {
+              const card = state.hiddenCards.get(
+                `${currentPlayer.id}-${position}`
+              );
+              const memory = currentPlayer.knownCards.get(position);
+              // If we know this card matches, prioritize the toss-in move
+              if (
+                memory &&
+                memory.confidence > 0.5 &&
+                card &&
+                card.rank === discardRank
+              ) {
+                return move;
+              }
             }
           }
         }

@@ -4,6 +4,7 @@
 
 import {
   Card,
+  GameAction,
   GameState,
   getCardShortDescription,
   Pile,
@@ -116,11 +117,22 @@ export function markPlayersReady(
 ): GameState {
   let newState = copy(state);
   for (const playerId of playerIds) {
-    newState = GameEngine.reduce(
+    newState = unsafeReduce(
       newState,
       GameActions.playerTossInFinished(playerId)
     );
   }
 
   return newState;
+}
+
+export function unsafeReduce(state: GameState, action: GameAction) {
+  const result = GameEngine.reduce(state, action);
+  if (!result.success) {
+    throw new Error(
+      `Action reduction failed: ${result.reason} (action: ${action.type})`
+    );
+  }
+
+  return result.state;
 }

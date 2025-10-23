@@ -1,5 +1,5 @@
 // services/mcts-state-transition.ts
-import { getCardAction } from '@vinto/shapes';
+import { getCardAction, Card } from '@vinto/shapes';
 import copy from 'fast-copy';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
@@ -252,7 +252,7 @@ export class MCTSStateTransition {
   }
 
   /**
-   * Apply toss-in move
+   * Apply toss-in move (supports multiple cards)
    */
   private static applyTossIn(
     state: MCTSGameState,
@@ -260,19 +260,62 @@ export class MCTSStateTransition {
   ): MCTSGameState {
     const player = state.players.find((p) => p.id === move.playerId);
 
-    if (player && move.tossInPosition !== undefined) {
-      // Remove card from hand
-      const cardKey = `${player.id}-${move.tossInPosition}`;
-      const card = state.hiddenCards.get(cardKey);
+    if (player && move.tossInPositions && move.tossInPositions.length > 0) {
+      // Sort positions in descending order to avoid index shift issues
+      const sortedPositions = [...move.tossInPositions].sort((a, b) => b - a);
 
-      if (card) {
-        state.hiddenCards.delete(cardKey);
+      for (const position of sortedPositions) {
+        // Remove card from hand
+        const cardKey = `${player.id}-${position}`;
+        const card = state.hiddenCards.get(cardKey);
 
-        // Decrease card count
-        player.cardCount--;
+        if (card) {
+          state.hiddenCards.delete(cardKey);
 
-        // Update player score estimate
-        player.score -= card.value;
+          // Decrease card count
+          player.cardCount--;
+
+          // Update player score estimate
+          player.score -= card.value;
+        }
+
+        // Update positions in hiddenCards map (shift down after removal)
+        const updatedHiddenCards = new Map<string, Card>();
+        for (const [key, cardValue] of state.hiddenCards.entries()) {
+          if (key.startsWith(`${player.id}-`)) {
+            const pos = parseInt(key.split('-')[1], 10);
+            if (pos > position) {
+              // Shift position down by 1
+              updatedHiddenCards.set(`${player.id}-${pos - 1}`, cardValue);
+            } else {
+              // Keep same position
+              updatedHiddenCards.set(key, cardValue);
+            }
+          } else {
+            // Other players' cards remain unchanged
+            updatedHiddenCards.set(key, cardValue);
+          }
+        }
+        state.hiddenCards = updatedHiddenCards;
+
+        // Update known cards positions (shift down after removal)
+        const updatedKnownCards = new Map<
+          number,
+          { card: Card | null; confidence: number }
+        >();
+        for (const [pos, memory] of player.knownCards.entries()) {
+          if (pos === position) {
+            // Remove this position (card was tossed in)
+            continue;
+          } else if (pos > position) {
+            // Shift down
+            updatedKnownCards.set(pos - 1, memory);
+          } else {
+            // Keep same position
+            updatedKnownCards.set(pos, memory);
+          }
+        }
+        player.knownCards = updatedKnownCards;
       }
     }
 

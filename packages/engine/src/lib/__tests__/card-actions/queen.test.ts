@@ -22,6 +22,7 @@ import {
   createTestState,
   markPlayersReady,
   toPile,
+  unsafeReduce,
 } from '../test-helpers';
 
 describe('Queen (Q) Card Action', () => {
@@ -55,10 +56,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // Skip the swap
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.skipQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.skipQueenSwap('p1'));
 
       // Cards should remain unchanged
       expect(newState.players[1].cards[0].rank).toBe('K');
@@ -98,10 +96,7 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.skipQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.skipQueenSwap('p1'));
 
       // Cards unchanged
       expect(newState.players[1].cards[0].rank).toBe('K');
@@ -143,10 +138,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // Execute the swap
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Cards should be swapped
       expect(newState.players[1].cards[0].rank).toBe('8'); // Was K, now 8
@@ -186,10 +178,7 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Cards within p2's hand should be swapped
       expect(newState.players[1].cards[0].rank).toBe('8'); // Was K
@@ -225,7 +214,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // Swap Queen into hand
-      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
+      const newState = unsafeReduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('queen1'); // Queen swapped in
@@ -261,9 +250,9 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // P2 tosses in their Queen
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       // Verify card was removed from hand
@@ -308,7 +297,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // All players mark ready
-      let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
+      let newState = markPlayersReady(state, ['p1', 'p2', 'p3']);
 
       // Queued Queen action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -316,20 +305,17 @@ describe('Queen (Q) Card Action', () => {
       expect(newState.pendingAction?.playerId).toBe('p2');
 
       // P2 selects two targets to peek
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p1', 0)
       );
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p3', 0)
       );
 
       // P2 decides to swap
-      newState = GameEngine.reduce(
-        newState,
-        GameActions.executeQueenSwap('p2')
-      );
+      newState = unsafeReduce(newState, GameActions.executeQueenSwap('p2'));
 
       // Should return to toss-in (not create new toss-in)
       expect(newState.subPhase).toBe('ai_thinking');
@@ -356,12 +342,7 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      expect(() => unsafeReduce(state, GameActions.executeQueenSwap('p1'))).toThrow();
     });
 
     it('should reject when not player turn', () => {
@@ -383,12 +364,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // P2 tries to execute swap (not their turn)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p2')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      expect(() => unsafeReduce(state, GameActions.executeQueenSwap('p2'))).toThrow();
     });
 
     it('should reject when not exactly 2 targets selected', () => {
@@ -406,11 +382,10 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState1 = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state1,
         GameActions.executeQueenSwap('p1')
-      );
-      expect(newState1).toEqual(state1); // State unchanged
+      )).toThrow();
 
       // Test with 3 targets
       const state3 = createTestState({
@@ -428,11 +403,10 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState3 = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state3,
         GameActions.executeQueenSwap('p1')
-      );
-      expect(newState3).toEqual(state3); // State unchanged
+      )).toThrow();
     });
 
     it('should handle peeking own cards', () => {
@@ -460,10 +434,7 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // Execute swap of own cards
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Cards should be swapped
       expect(newState.players[0].cards[0].rank).toBe('7'); // Was K

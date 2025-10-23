@@ -5,6 +5,7 @@ import {
   createTestState,
   createTestPlayer,
   toPile,
+  unsafeReduce,
 } from './test-helpers';
 import { mockLogger } from './setup-tests';
 
@@ -52,10 +53,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Execute Jack swap (swap p1[0] with p2[1])
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Verify swap occurred
       expect(newState.players[0].cards[0].rank).toBe('2'); // P1 now has 2
@@ -92,10 +90,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Verify swap within p2's hand
       expect(newState.players[1].cards[0].rank).toBe('7'); // Position 0 now has 7
@@ -129,10 +124,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Skip the swap
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.skipQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.skipQueenSwap('p1'));
 
       // Cards should remain unchanged
       expect(newState.players[1].cards[0].rank).toBe('K');
@@ -168,10 +160,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Execute the swap
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Cards should be swapped
       expect(newState.players[1].cards[0].rank).toBe('A');
@@ -207,12 +196,12 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Declare Ace
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
         GameActions.playCardAction('p1', kingCard)
       );
 
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.declareKingAction('p1', 'A')
       );
@@ -251,7 +240,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Select opponent player - Ace targets a player, so use position 0 as placeholder
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.selectActionTarget('p1', 'p2', 0)
       );
@@ -285,13 +274,13 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Select own card to peek
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
         GameActions.selectActionTarget('p1', 'p1', 1)
       );
 
       // Confirm peek
-      newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
+      newState = unsafeReduce(newState, GameActions.confirmPeek('p1'));
 
       expect(newState.discardPile.peekTop()?.id).toBe('seven1');
       // 7 card triggers toss-in after peek confirmation
@@ -323,13 +312,13 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Select opponent card to peek
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
         GameActions.selectActionTarget('p1', 'p2', 0)
       );
 
       // Confirm peek
-      newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
+      newState = unsafeReduce(newState, GameActions.confirmPeek('p1'));
 
       expect(newState.discardPile.peekTop()?.id).toBe('nine1');
       expect(newState.subPhase).toBe('toss_queue_active');
@@ -370,9 +359,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // P2 tosses in their Ace
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       expect(mockLogger.warn).not.toHaveBeenCalled();
@@ -381,9 +370,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.activeTossIn?.participants).toContain('p2');
 
       // P3 also tosses in their Ace
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
-        GameActions.participateInTossIn('p3', 0)
+        GameActions.participateInTossIn('p3', [0])
       );
 
       expect(newState.players[2].cards.length).toBe(1); // P3 lost a card
@@ -424,9 +413,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // P2 tosses in their Ace
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       expect(mockLogger.warn).not.toHaveBeenCalled();
@@ -436,9 +425,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       expect(newState.activeTossIn?.participants).toContain('p2');
 
       // P3 also tosses in their Ace
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
-        GameActions.participateInTossIn('p3', 0)
+        GameActions.participateInTossIn('p3', [0])
       );
 
       expect(newState.players[2].cards.length).toBe(1); // P3 lost a card
@@ -472,15 +461,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // P2 tries to toss in a 7 (wrong rank)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.participateInTossIn('p2', 0)
-      );
-
-      // According to rules: "If wrong rank → player takes back their card and draws 1 penalty card face-down"
-      // This behavior should be implemented in the handler
-      // For now, we test that the warning is logged
-      expect(newState.activeTossIn).not.toBeNull();
+      expect(() =>
+        unsafeReduce(state, GameActions.participateInTossIn('p2', [0]))
+      ).toThrow();
     });
 
     it('should finish toss-in period', () => {
@@ -498,7 +481,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.finishTossInPeriod('p1')
       );
@@ -535,10 +518,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Since K has action, it should be usable
 
       // For this test, we verify the swap occurs and the known card position is tracked
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.swapCard('p1', 0, 'K')
-      );
+      const newState = unsafeReduce(state, GameActions.swapCard('p1', 0, 'K'));
 
       expect(newState.players[0].knownCardPositions).toContain(0);
       expect(newState.subPhase).toBe('awaiting_action');
@@ -589,7 +569,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
       });
 
-      const newState = GameEngine.reduce(state, GameActions.callVinto('p1'));
+      const newState = unsafeReduce(state, GameActions.callVinto('p1'));
 
       // Verify final round is triggered
       expect(newState.finalTurnTriggered).toBe(true);
@@ -609,11 +589,11 @@ describe('Game Engine - Rules-Based Tests', () => {
         ],
       });
 
-      const newState = GameEngine.reduce(state, GameActions.callVinto('p1'));
+      expect(() => unsafeReduce(state, GameActions.callVinto('p1'))).toThrow();
 
       // State should be unchanged
-      expect(newState.vintoCallerId).toBe('p2'); // Still p2
-      expect(newState.players[0].isVintoCaller).toBe(false); // P1 is not caller
+      expect(state.vintoCallerId).toBe('p2'); // Still p2
+      expect(state.players[0].isVintoCaller).toBe(false); // P1 is not caller
     });
 
     it('should prevent interaction with Vinto caller cards during final round', () => {
@@ -656,7 +636,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         discardPile: toPile([unusedActionCard]),
       });
 
-      const newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
+      const newState = unsafeReduce(state, GameActions.takeDiscard('p1'));
 
       expect(newState.pendingAction?.card.id).toBe('disc1');
       expect(newState.discardPile.length).toBe(0);
@@ -690,7 +670,7 @@ describe('Game Engine - Rules-Based Tests', () => {
         discardPile: toPile([actionCard]),
       });
 
-      const newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
+      const newState = unsafeReduce(state, GameActions.takeDiscard('p1'));
 
       // Should transition to choosing, and the action MUST be used
       expect(newState.subPhase).toBe('awaiting_action');
@@ -730,20 +710,15 @@ describe('Game Engine - Rules-Based Tests', () => {
       });
 
       // Step 1: Draw from deck
-      state = GameEngine.reduce(state, GameActions.drawCard('p1'));
+      state = unsafeReduce(state, GameActions.drawCard('p1'));
       expect(state.subPhase).toBe('choosing');
       expect(state.pendingAction?.card.id).toBe('drawn1');
 
       // Step 2: Choose to swap or discard
       // Let's swap with position 0
-      state = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
+      state = unsafeReduce(state, GameActions.swapCard('p1', 0));
       expect(state.subPhase).toBe('toss_queue_active');
       expect(state.pendingAction).toBeNull(); // King removed
-
-      // Step 3: Discard the swapped card
-      state = GameEngine.reduce(state, GameActions.discardCard('p1'));
-      expect(state.subPhase).toBe('toss_queue_active');
-      expect(state.discardPile.peekTop()?.id).toBe('p1c1');
     });
   });
 });

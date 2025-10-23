@@ -79,6 +79,10 @@ export class GameClient {
     action: GameAction
   ) => void;
 
+  /**  * Error callback (optional)
+   */
+  private onStateError?: (reason: string) => void;
+
   constructor(initialState: GameState) {
     this._state = initialState;
     this._visualState = copy(initialState); // Visual state starts synchronized
@@ -99,20 +103,27 @@ export class GameClient {
   @action
   dispatch(action: GameAction): void {
     const oldState = this._state;
-    let newState = GameEngine.reduce(this._state, action);
+    const result = GameEngine.reduce(this._state, action);
 
     // Track action in full history for debugging
     this._actionHistory.push({ action, timestamp: Date.now() });
 
-    // Add action to history (for UI display)
-    newState = this.addActionToHistory(newState, action);
+    if (result.success) {
+      // Add action to history (for UI display)
+      const newState = this.addActionToHistory(result.state, action);
 
-    // Update observable state
-    this._state = newState;
+      // Update observable state
+      this._state = newState;
 
-    // Trigger side effects
-    if (this.onStateChange) {
-      this.onStateChange(oldState, newState, action);
+      // Trigger side effects
+      if (this.onStateChange) {
+        this.onStateChange(oldState, newState, action);
+      }
+    } else {
+      // Notify about error
+      if (this.onStateError) {
+        this.onStateError(result.reason);
+      }
     }
   }
 
@@ -264,7 +275,7 @@ export class GameClient {
    * Register a callback for state changes
    * Used for animations, sounds, network sync, etc.
    */
-  onStateUpdate(
+  onStateUpdateSuccess(
     callback: (
       oldState: GameState,
       newState: GameState,
@@ -272,6 +283,13 @@ export class GameClient {
     ) => void
   ): void {
     this.onStateChange = callback;
+  }
+
+  /**
+   * Register a callback for state errored changes
+   */
+  onStateUpdateError(callback: (reason: string) => void): void {
+    this.onStateError = callback;
   }
 
   /**

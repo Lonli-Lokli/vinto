@@ -247,10 +247,11 @@ export function handleCardClick(params: {
     return;
   }
 
-  // During toss-in period, allow tossing in cards
+  // During toss-in period, allow tossing cards
   if (waitingForTossIn) {
+    // Toss in card
     gameClient.dispatch(
-      GameActions.participateInTossIn(humanPlayer.id, position)
+      GameActions.participateInTossIn(humanPlayer.id, [position])
     );
     return;
   }

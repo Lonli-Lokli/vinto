@@ -159,7 +159,7 @@ export interface ParticipateInTossInAction {
   type: 'PARTICIPATE_IN_TOSS_IN';
   payload: {
     playerId: string;
-    position: number;
+    positions: [number, ...number[]]; // Array of card positions to toss in (all must match toss-in ranks)
   };
 }
 

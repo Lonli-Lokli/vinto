@@ -13,7 +13,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GameEngine } from '../../game-engine';
 import { GameActions } from '../../game-actions';
 import {
   createTestCard,
@@ -21,6 +20,7 @@ import {
   createTestState,
   markPlayersReady,
   toPile,
+  unsafeReduce,
 } from '../test-helpers';
 
 describe('9 Card Action', () => {
@@ -47,13 +47,13 @@ describe('9 Card Action', () => {
       });
 
       // Select opponent card to peek
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
         GameActions.selectActionTarget('p1', 'p2', 0)
       );
 
       // Confirm peek
-      newState = GameEngine.reduce(newState, GameActions.confirmPeek('p1'));
+      newState = unsafeReduce(newState, GameActions.confirmPeek('p1'));
 
       // Should trigger toss-in
       expect(newState.subPhase).toBe('toss_queue_active');
@@ -81,7 +81,7 @@ describe('9 Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
+      const newState = unsafeReduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.players[0].cards[0].id).toBe('nine1');
@@ -113,9 +113,9 @@ describe('9 Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       expect(newState.players[1].cards.length).toBe(1);
@@ -154,20 +154,20 @@ describe('9 Card Action', () => {
       });
 
       // All players mark ready
-      let newState = markPlayersReady(state, ['p1', 'p2', 'p3', 'p4']);
+      let newState = markPlayersReady(state, ['p1', 'p2']);
 
       // Queued 9 action should start
       expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.rank).toBe('9');
 
       // P2 peeks p1's card
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p1', 0)
       );
 
       // Confirm peek
-      newState = GameEngine.reduce(newState, GameActions.confirmPeek('p2'));
+      newState = unsafeReduce(newState, GameActions.confirmPeek('p2'));
 
       expect(newState.subPhase).toBe('ai_thinking'); // all already marked they are ready so auto-advance
       expect(newState.activeTossIn?.queuedActions.length).toBe(0);
@@ -190,12 +190,10 @@ describe('9 Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      expect(() => unsafeReduce(
         state,
         GameActions.selectActionTarget('p2', 'p3', 0)
-      );
-
-      expect(newState).toEqual(state);
+      )).toThrow();
     });
   });
 });

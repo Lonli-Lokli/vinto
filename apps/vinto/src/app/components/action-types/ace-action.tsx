@@ -51,7 +51,9 @@ export const AceAction = observer(() => {
                 </span>
               )}
             </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">
+              {getCardShortDescription(action)}
+            </span>
           </div>
           <HelpPopover title="Ace Action" rank="A" />
         </div>

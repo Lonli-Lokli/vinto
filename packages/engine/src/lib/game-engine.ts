@@ -29,6 +29,14 @@ import { handleExecuteJackSwap } from './cases/execute-jack-swap';
 import { handleSkipJackSwap } from './cases/skip-jack-swap';
 import { advanceTurnAfterTossIn } from './utils/toss-in-utils';
 
+type GameEngineReduceResult = {
+  success: true;
+  state: GameState;
+} | {
+  success: false;
+  state: GameState
+  reason: string;
+};
 /**
  * GameEngine - The authoritative game logic
  *
@@ -53,7 +61,7 @@ export class GameEngine {
    * @param action Action to apply
    * @returns New game state (never mutates input)
    */
-  static reduce(state: GameState, action: GameAction): GameState {
+  static reduce(state: GameState, action: GameAction): GameEngineReduceResult {
     // Validate action is legal in current state
     const validation = actionValidator(state, action);
     if (!validation.valid) {
@@ -63,7 +71,7 @@ export class GameEngine {
         currentPhase: state.phase,
         currentSubPhase: state.subPhase,
       });
-      return state; // Return unchanged state for invalid actions
+      return { success: false, state, reason: validation.reason }; // Return unchanged state for invalid actions
     }
 
     console.log(`[GameEngine] Processing action: ${action.type}`);
@@ -180,6 +188,6 @@ export class GameEngine {
       advanceTurnAfterTossIn(newState, `GameEngine.reduce(${action.type})`);
     }
 
-    return newState;
+    return { success: true, state: newState };
   }
 }

@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GameEngine } from '../../game-engine';
 import { GameActions } from '../../game-actions';
 import {
   createTestCard,
@@ -22,6 +21,7 @@ import {
   createTestState,
   markPlayersReady,
   toPile,
+  unsafeReduce,
 } from '../test-helpers';
 import { GameSubPhase } from '@vinto/shapes';
 import { mockLogger } from '../setup-tests';
@@ -61,14 +61,14 @@ describe('Ace (A) Card Action', () => {
       });
 
       // Step 1: Player chooses to use Ace action
-      let newState = GameEngine.reduce(
+      let newState = unsafeReduce(
         state,
         GameActions.playCardAction('p1', aceCard)
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Step 2: Player selects opponent to draw penalty card
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectAceActionTarget('p1', 'p2')
       );
@@ -106,7 +106,7 @@ describe('Ace (A) Card Action', () => {
       });
 
       // Player chooses to swap Ace into hand
-      const newState = GameEngine.reduce(state, GameActions.swapCard('p1', 0));
+      const newState = unsafeReduce(state, GameActions.swapCard('p1', 0));
 
       expect(newState.subPhase).toBe(
         'toss_queue_active' satisfies GameSubPhase
@@ -136,14 +136,14 @@ describe('Ace (A) Card Action', () => {
       });
 
       // Step 1: Take Ace from discard
-      let newState = GameEngine.reduce(state, GameActions.takeDiscard('p1'));
+      let newState = unsafeReduce(state, GameActions.takeDiscard('p1'));
 
       expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.id).toBe('ace1');
       expect(newState.pendingAction?.actionPhase).toBe('selecting-target');
 
       // Step 2: Must use action immediately
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectAceActionTarget('p1', 'p2')
       );
@@ -186,9 +186,9 @@ describe('Ace (A) Card Action', () => {
       });
 
       // P2 tosses in their Ace
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       // Verify card was removed from hand
@@ -237,7 +237,7 @@ describe('Ace (A) Card Action', () => {
       expect(newState.pendingAction?.playerId).toBe('p2');
 
       // P2 selects target for queued Ace
-      newState = GameEngine.reduce(
+      newState = unsafeReduce(
         newState,
         GameActions.selectAceActionTarget('p2', 'p1')
       );
@@ -279,9 +279,9 @@ describe('Ace (A) Card Action', () => {
       });
 
       // P2 tries to toss in wrong card
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
-        GameActions.participateInTossIn('p2', 0)
+        GameActions.participateInTossIn('p2', [0])
       );
 
       // Should be rejected (state mostly unchanged)
@@ -310,7 +310,7 @@ describe('Ace (A) Card Action', () => {
         },
       });
 
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.selectAceActionTarget('p1', 'p2')
       );
@@ -344,12 +344,9 @@ describe('Ace (A) Card Action', () => {
       });
 
       // P2 tries to use action (not their turn)
-      const newState = GameEngine.reduce(
-        state,
-        GameActions.selectAceActionTarget('p2', 'p3')
-      );
-
-      expect(newState).toEqual(state); // State unchanged
+      expect(() =>
+        unsafeReduce(state, GameActions.selectAceActionTarget('p2', 'p3'))
+      ).toThrow();
     });
 
     it('should allow targeting self with Ace (edge case)', () => {
@@ -374,7 +371,7 @@ describe('Ace (A) Card Action', () => {
       });
 
       // P1 targets themselves
-      const newState = GameEngine.reduce(
+      const newState = unsafeReduce(
         state,
         GameActions.selectAceActionTarget('p1', 'p1')
       );

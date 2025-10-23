@@ -367,37 +367,45 @@ export class AnimationService {
    * - Player position -> Discard pile (only for valid toss-ins)
    */
   private handleTossIn(
-    _oldState: GameState,
+    oldState: GameState,
     newState: GameState,
     action: ParticipateInTossInAction
   ): void {
     const playerId = action.payload.playerId;
-    const position = action.payload.position;
+    const positions = action.payload.positions;
 
-    // Check if this was a failed attempt
+    // Get the player from old state to access the cards before they were removed
+    const oldPlayer = oldState.players.find((p) => p.id === playerId);
+    if (!oldPlayer) return;
+
+    // Check if any positions were failed attempts
     const failedAttempts = newState.activeTossIn?.failedAttempts || [];
-    const wasFailedAttempt = failedAttempts.some(
-      (attempt) =>
-        attempt.playerId === playerId && attempt.position === position
-    );
 
-    if (wasFailedAttempt) {
-      // Failed toss-in - don't animate card to discard pile
-      // Card stays in hand, penalty animation handled separately
-      return;
+    // Animate each tossed-in card separately
+    for (const position of positions) {
+      const wasFailedAttempt = failedAttempts.some(
+        (attempt) =>
+          attempt.playerId === playerId && attempt.position === position
+      );
+
+      if (wasFailedAttempt) {
+        // Failed toss-in - don't animate card to discard pile
+        // Card stays in hand, penalty animation handled separately
+        continue;
+      }
+
+      // Valid toss-in - get the card from old state at its original position
+      const tossedCard = oldPlayer.cards[position];
+      if (!tossedCard) continue;
+
+      // Animate from player position to Drawn pile or discard pile
+      this.animationStore.startDiscardAnimation(
+        tossedCard,
+        { type: 'player', playerId, position },
+        tossedCard.actionText ? { type: 'drawn' } : { type: 'discard' },
+        1_500
+      );
     }
-
-    // Valid toss-in - get the card that was tossed in (should be on top of discard pile)
-    const tossedCard = newState.discardPile.peekTop();
-    if (!tossedCard) return;
-
-    // Animate from player position to Drawn pile
-    this.animationStore.startDiscardAnimation(
-      tossedCard,
-      { type: 'player', playerId, position },
-      tossedCard.actionText ? { type: 'drawn' } : { type: 'discard' },
-      1_500
-    );
   }
 
   /**
@@ -985,44 +993,47 @@ export class AnimationService {
     newState: GameState,
     action: ParticipateInTossInAction
   ): void {
-    const { playerId, position } = action.payload;
+    const { playerId, positions } = action.payload;
+
+    // Get the player
+    const player = newState.players.find((p) => p.id === playerId);
+    const oldPlayer = oldState.players.find((p) => p.id === playerId);
+
+    if (!player || !oldPlayer) {
+      console.warn(
+        '[AnimationService] Player not found for failed toss-in animation'
+      );
+      return;
+    }
 
     // Check if this was a failed attempt
     const failedAttempts = newState.activeTossIn?.failedAttempts || [];
-    const wasFailedAttempt = failedAttempts.some(
-      (attempt) =>
-        attempt.playerId === playerId && attempt.position === position
-    );
 
-    if (wasFailedAttempt) {
-      console.log(
-        '[AnimationService] Failed toss-in detected - checking for penalty card:',
-        {
-          playerId,
-          position,
-        }
+    // Check each position for failed attempts
+    for (const position of positions) {
+      const wasFailedAttempt = failedAttempts.some(
+        (attempt) =>
+          attempt.playerId === playerId && attempt.position === position
       );
 
-      // Get the player
-      const player = newState.players.find((p) => p.id === playerId);
-      const oldPlayer = oldState.players.find((p) => p.id === playerId);
-
-      if (!player || !oldPlayer) {
-        console.warn(
-          '[AnimationService] Player not found for failed toss-in animation'
+      if (wasFailedAttempt) {
+        console.log(
+          '[AnimationService] Failed toss-in detected - checking for penalty card:',
+          {
+            playerId,
+            position,
+          }
         );
-        return;
-      }
 
-      console.log('[AnimationService] Card count comparison:', {
-        oldCount: oldPlayer.cards.length,
-        newCount: player.cards.length,
-      });
+        console.log('[AnimationService] Card count comparison:', {
+          oldCount: oldPlayer.cards.length,
+          newCount: player.cards.length,
+        });
 
-      // Check if a penalty card was added (new state has more cards than old state)
-      if (player.cards.length > oldPlayer.cards.length) {
-        const penaltyCardPosition = player.cards.length - 1;
-        const penaltyCard = player.cards[penaltyCardPosition];
+        // Check if a penalty card was added (new state has more cards than old state)
+        if (player.cards.length > oldPlayer.cards.length) {
+          const penaltyCardPosition = player.cards.length - 1;
+          const penaltyCard = player.cards[penaltyCardPosition];
 
         if (penaltyCard) {
           // Create a sequence with a dummy first step to give React time to render
@@ -1067,6 +1078,7 @@ export class AnimationService {
         console.warn(
           '[AnimationService] No penalty card added - card counts are equal or decreased'
         );
+      }
       }
     }
   }

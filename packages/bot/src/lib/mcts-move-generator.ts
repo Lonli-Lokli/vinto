@@ -44,22 +44,36 @@ export class MCTSMoveGenerator {
         playerId: currentPlayer.id,
       });
 
-      // Generate toss-in moves for matching cards
+      // Collect ALL matching card positions for multi-card toss-in
       // Check if card matches ANY of the valid toss-in ranks
       const validRanks: Rank[] =
         state.tossInRanks ||
         (state.discardPileTop ? [state.discardPileTop.rank] : []);
+
       if (validRanks.length > 0) {
+        const matchingPositions: number[] = [];
+
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
-          const card = state.hiddenCards.get(`${currentPlayer.id}-${pos}`);
+          // First check if the card is known from the player's memory
+          const knownCardMemory = currentPlayer.knownCards.get(pos);
+          const card =
+            knownCardMemory?.card ||
+            state.hiddenCards.get(`${currentPlayer.id}-${pos}`);
+
           // Include card if known to match ANY of the valid ranks
           if (card && validRanks.includes(card.rank)) {
-            moves.push({
-              type: 'toss-in',
-              playerId: currentPlayer.id,
-              tossInPosition: pos,
-            });
+            matchingPositions.push(pos);
           }
+        }
+
+        // Create a single toss-in move with ALL matching positions
+        // This ensures all matching cards are tossed in simultaneously
+        if (matchingPositions.length > 0) {
+          moves.push({
+            type: 'toss-in',
+            playerId: currentPlayer.id,
+            tossInPositions: matchingPositions,
+          });
         }
       }
       return moves;

@@ -8,7 +8,7 @@ import { fourPlayerGame } from './initializeGame';
 import { GameClient } from './game-client';
 import { createBotAI } from './adapters/botAIAdapter';
 import { GameState } from '@vinto/shapes';
-import { triggerStateUpdateCallbacks } from './game-client-events';
+import { triggerStateErrorCallbacks, triggerStateUpdateCallbacks } from './game-client-events';
 
 /**
  * Context value includes both client and initialization state
@@ -57,10 +57,14 @@ export const GameClientProvider: React.FC<GameClientProviderProps> = ({
     console.log('[GameClientProvider] Starting initialization...');
 
     // Register state update callback dispatcher
-    client.onStateUpdate((oldState, newState, action) => {
+    client.onStateUpdateSuccess((oldState, newState, action) => {
       console.log('[GameClient] Action:', action.type, action);
       console.log('[GameClient] New State:', newState.phase, newState.subPhase);
       triggerStateUpdateCallbacks(oldState, newState, action);
+    });
+
+     client.onStateUpdateError((reason) => {
+      triggerStateErrorCallbacks(reason);
     });
 
     // Initialize Bot AI Adapter (client-side only, for local games)

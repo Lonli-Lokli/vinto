@@ -282,29 +282,37 @@ export class BotAIAdapter {
 
         if (shouldParticipate) {
           // Find all matching cards in bot's hand
-          const matchingCards = botPlayer.cards.filter((card) =>
-            tossInRanks.includes(card.rank)
-          );
+          const matchingCards = botPlayer.cards
+            .map((card, index) =>
+              tossInRanks.includes(card.rank) &&
+              botPlayer.knownCardPositions.includes(index)
+                ? {
+                    card: card,
+                    position: index,
+                  }
+                : null
+            )
+            .filter((item) => item !== null);
 
           if (matchingCards.length > 0) {
             console.log(
-              `[BotAI] ${botId} tossing in ${matchingCards.length} ${tossInRanks
+              `[BotAI] ${botId} tossing in ${
+                matchingCards.length
+              } cards from ${tossInRanks
                 .map((rank) => rank)
-                .join(',')}`
+                .join(',')} available ranks`
             );
 
-            // Toss in each matching card sequentially
-            for (const card of matchingCards) {
-              const cardPosition = botPlayer.cards.indexOf(card);
-              if (cardPosition >= 0) {
-                this.gameClient.dispatch(
-                  GameActions.participateInTossIn(botId, cardPosition)
-                );
+            // Collect all positions and toss in simultaneously
+            const positions = matchingCards.map(({ position }) => position);
 
-                // Small delay between multiple toss-ins for visual clarity
-                await this.delay(400);
-              }
-            }
+            // Type assertion: we know positions is non-empty because matchingCards.length > 0
+            this.gameClient.dispatch(
+              GameActions.participateInTossIn(botId, positions as [number, ...number[]])
+            );
+
+            // Delay for visual feedback
+            await this.delay(600);
           } else {
             console.log(
               `[BotAI] ${botId} wants to toss in but has no matching ${tossInRanks}`

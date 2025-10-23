@@ -8,9 +8,12 @@ import {
   SelectActionTargetAction,
 } from '@vinto/shapes';
 import {
+  registerStateErrorCallback,
   registerStateUpdateCallback,
+  unregisterStateErrorCallback,
   unregisterStateUpdateCallback,
 } from '@vinto/local-client';
+import { GameToastService } from './toast-service';
 
 @injectable()
 export class HeadlessService {
@@ -19,6 +22,9 @@ export class HeadlessService {
     newState: GameState,
     action: GameAction
   ) => void;
+  private _unregisterUpdateCallback?: () => void;
+
+  private _stateErrorCallback?: (reason: string) => void;
   private _unregisterCallback?: () => void;
   private uiStore: UIStore;
 
@@ -26,12 +32,21 @@ export class HeadlessService {
     this.uiStore = uiStore;
     // Register state update callback
     this._stateUpdateCallback = this.handleStateUpdate.bind(this);
+    this._stateErrorCallback = this.handleStateError.bind(this);
     registerStateUpdateCallback(this._stateUpdateCallback);
+    registerStateErrorCallback(this._stateErrorCallback);
     this._unregisterCallback = () => {
       if (this._stateUpdateCallback) {
         unregisterStateUpdateCallback(this._stateUpdateCallback);
       }
+      if (this._stateErrorCallback) {
+        unregisterStateErrorCallback(this._stateErrorCallback);
+      }
     };
+  }
+
+  handleStateError(reason: string): void {
+    GameToastService.error(reason);
   }
 
   /**
@@ -186,23 +201,26 @@ export class HeadlessService {
   ): void {
     if (action.type !== 'PARTICIPATE_IN_TOSS_IN') return;
 
-    const { playerId, position } = action.payload;
+    const { playerId, positions } = action.payload;
     const failedAttempts = newState.activeTossIn?.failedAttempts || [];
 
-    const wasFailedAttempt = failedAttempts.some(
-      (attempt) =>
-        attempt.playerId === playerId && attempt.position === position
-    );
-
-    if (wasFailedAttempt) {
-      console.log(
-        '[HeadlessService] Failed toss-in detected - adding visual feedback'
+    // Check all positions for failed attempts
+    for (const position of positions) {
+      const wasFailedAttempt = failedAttempts.some(
+        (attempt) =>
+          attempt.playerId === playerId && attempt.position === position
       );
 
-      // Add failed toss-in feedback (shows error indicator)
-      this.uiStore.addFailedTossInFeedback(playerId, position);
+      if (wasFailedAttempt) {
+        console.log(
+          `[HeadlessService] Failed toss-in detected at position ${position} - adding visual feedback`
+        );
 
-      // Make card temporarily visible (so player can see which card was wrong)
+        // Add failed toss-in feedback (shows error indicator)
+        this.uiStore.addFailedTossInFeedback(playerId, position);
+      }
+
+      // Make card temporarily visible
       this.uiStore.addTemporarilyVisibleCard(playerId, position);
     }
   }

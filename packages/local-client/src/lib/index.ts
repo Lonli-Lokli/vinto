@@ -15,4 +15,6 @@ export { GameClientDebugProvider } from './game-client-debug';
 export {
   registerStateUpdateCallback,
   unregisterStateUpdateCallback,
+  registerStateErrorCallback,
+  unregisterStateErrorCallback,
 } from './game-client-events';

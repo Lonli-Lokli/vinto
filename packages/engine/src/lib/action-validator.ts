@@ -1,12 +1,20 @@
 import { GameAction, GameState, NeverError } from '@vinto/shapes';
 
+type ValidationResult =
+  | {
+      valid: true;
+    }
+  | {
+      valid: false;
+      reason: string;
+    };
 /**
  * Validates if an action is legal in the current state
  */
 export function actionValidator(
   state: GameState,
   action: GameAction
-): { valid: boolean; reason?: string } {
+): ValidationResult {
   // Common validations
   switch (action.type) {
     case 'DRAW_CARD': {
@@ -407,7 +415,7 @@ export function actionValidator(
     }
 
     case 'PARTICIPATE_IN_TOSS_IN': {
-      const { playerId, position } = action.payload;
+      const { playerId, positions } = action.payload;
 
       // Must be in toss-in phase
       if (
@@ -431,9 +439,15 @@ export function actionValidator(
         return { valid: false, reason: 'Player not found' };
       }
 
-      // Position must be valid
-      if (position < 0 || position >= player.cards.length) {
-        return { valid: false, reason: `Invalid card position ${position}` };
+      // Validate all positions
+      if (!positions || positions.length === 0) {
+        return { valid: false, reason: 'No positions provided' };
+      }
+
+      for (const position of positions) {
+        if (position < 0 || position >= player.cards.length) {
+          return { valid: false, reason: `Invalid card position ${position}` };
+        }
       }
 
       return { valid: true };

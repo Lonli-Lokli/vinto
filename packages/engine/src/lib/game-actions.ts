@@ -121,10 +121,10 @@ export const GameActions = {
 
   participateInTossIn: (
     playerId: string,
-    position: number
+    positions: [number, ...number[]]
   ): ParticipateInTossInAction => ({
     type: 'PARTICIPATE_IN_TOSS_IN',
-    payload: { playerId, position },
+    payload: { playerId, positions },
   }),
 
   playerTossInFinished: (playerId: string): PlayerTossInFinishedAction => ({
