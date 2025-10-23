@@ -406,4 +406,501 @@
   }
 }
 
+/* Dialog Component Styles */
+/* Based on web.dev best practices: https://web.dev/articles/building/a-dialog-component */
 
+/* Base dialog styles */
+dialog {
+  display: grid;
+  background: var(--surface-2, #fff);
+  color: var(--text-1, #000);
+  max-inline-size: min(90vw, 60ch);
+  max-block-size: min(80vh, 100%);
+  max-block-size: min(80dvb, 100%);
+  margin: auto;
+  padding: 0;
+  position: fixed;
+  inset: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  overflow: hidden;
+  transition: opacity 0.5s cubic-bezier(0.5, 0, 0.5, 1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog {
+    border-block-start: 1px solid var(--surface-3, #333);
+  }
+}
+
+/* Hidden state */
+dialog:not([open]) {
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Backdrop */
+dialog::backdrop {
+  backdrop-filter: blur(25px);
+  transition: backdrop-filter 0.5s ease;
+}
+
+/* Prevent body scroll when mega dialog is open */
+html:has(dialog[open][modal-mode='mega']) {
+  overflow: hidden;
+}
+
+/* Mega dialog specific styles */
+dialog[modal-mode='mega'] {
+  /* Use more viewport space */
+  max-inline-size: min(90vw, 60ch);
+}
+
+/* Mobile mega dialog (action sheet style) */
+@media (max-width: 768px) {
+  dialog[modal-mode='mega'] {
+    margin-block-end: 0;
+    border-end-end-radius: 0;
+    border-end-start-radius: 0;
+  }
+}
+
+/* Form layout */
+dialog > form {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  max-block-size: 80vh;
+  max-block-size: 80dvb;
+  height: 100%;
+}
+
+/* Header */
+dialog > form > header {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--surface-2, #f3f4f6);
+  padding-block: 1rem;
+  padding-inline: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog > form > header {
+    background: var(--surface-1, #1f2937);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+dialog > form > header > h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-1, #000);
+}
+
+/* Close button */
+dialog > form > header > button.dialog-close-btn {
+  border-radius: 9999px;
+  padding: 0.5rem;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+dialog > form > header > button.dialog-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog > form > header > button.dialog-close-btn {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  dialog > form > header > button.dialog-close-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Article (scrollable content area) */
+dialog > form > article {
+  overflow-y: auto;
+  max-block-size: 100%;
+  overscroll-behavior-y: contain;
+  display: grid;
+  justify-items: flex-start;
+  gap: 1.5rem;
+  padding-inline: 1.5rem;
+  padding-block: 1.5rem;
+  background: var(--surface-1, #fff);
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog > form > article {
+    background: var(--surface-2, #111827);
+  }
+}
+
+/* Form fields */
+dialog .form-field {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+dialog .form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-1, #000);
+}
+
+dialog .form-field .required {
+  color: #ef4444;
+}
+
+dialog .form-field input,
+dialog .form-field textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  background: var(--surface-2, #f9fafb);
+  color: var(--text-1, #000);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+dialog .form-field input:focus,
+dialog .form-field textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+dialog .form-field input:disabled,
+dialog .form-field textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+dialog .form-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog .form-field input,
+  dialog .form-field textarea {
+    background: var(--surface-1, #1f2937);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Dialog info box */
+dialog .dialog-info {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+}
+
+dialog .dialog-info .info-title {
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-1, #000);
+}
+
+dialog .dialog-info .info-description {
+  margin: 0;
+  color: var(--text-2, #666);
+}
+
+/* Dialog messages */
+dialog .dialog-message {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: gentle-pulse 2s ease-in-out;
+}
+
+dialog .dialog-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+}
+
+dialog .dialog-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+/* Footer */
+dialog > form > footer {
+  background: var(--surface-2, #f3f4f6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-inline: 1.5rem;
+  padding-block: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog > form > footer {
+    background: var(--surface-1, #1f2937);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Menu */
+dialog > form > footer > menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+dialog > form > footer > menu:only-child {
+  margin-inline-start: auto;
+}
+
+/* Buttons */
+dialog > form > footer button {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+dialog > form > footer button[type='reset'] {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.2);
+  color: var(--text-1, #000);
+}
+
+dialog > form > footer button[type='reset']:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+dialog > form > footer button[type='submit'] {
+  background: #3b82f6;
+  color: white;
+}
+
+dialog > form > footer button[type='submit']:hover {
+  background: #2563eb;
+}
+
+dialog > form > footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog > form > footer button[type='reset'] {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  dialog > form > footer button[type='reset']:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Animations */
+@media (prefers-reduced-motion: no-preference) {
+  dialog {
+    animation: scale-down 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  dialog[open] {
+    animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Mobile specific exit animation */
+  @media (max-width: 768px) {
+    dialog[modal-mode='mega'] {
+      animation: slide-down 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-down {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Mini dialog specific styles */
+dialog[modal-mode='mini'] {
+  max-inline-size: min(90vw, 28rem);
+}
+
+/* Coalition Leader Dialog specific styles */
+.coalition-leader-dialog {
+  max-inline-size: min(90vw, 48rem);
+}
+
+.coalition-leader-dialog .dialog-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.coalition-leader-dialog .dialog-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.coalition-leader-dialog .dialog-subtitle {
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--text-2, #666);
+}
+
+.coalition-leader-dialog .dialog-description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  text-align: center;
+  color: var(--text-2, #666);
+}
+
+.coalition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.coalition-player-card {
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  background: var(--surface-2, #f9fafb);
+  transition: all 0.2s ease;
+}
+
+.coalition-player-card.is-leader {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .coalition-player-card {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--surface-1, #1f2937);
+  }
+
+  .coalition-player-card.is-leader {
+    background: rgba(245, 158, 11, 0.15);
+  }
+}
+
+.leader-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #f59e0b;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0 0.5rem 0 0.5rem;
+}
+
+/* Vinto Confirmation Dialog specific styles */
+.vinto-confirmation-dialog {
+  border-color: #f59e0b;
+  border-width: 2px;
+}
+
+.dialog-warning-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-warning-icon {
+  font-size: 2rem;
+}
+
+.dialog-text-center {
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-2, #666);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .dialog-text-center {
+    font-size: 1.125rem;
+  }
+}
+
+.vinto-confirmation-dialog footer menu {
+  flex-direction: column;
+  width: 100%;
+}

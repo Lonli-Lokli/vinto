@@ -1036,50 +1036,50 @@ export class AnimationService {
           const penaltyCardPosition = player.cards.length - 1;
           const penaltyCard = player.cards[penaltyCardPosition];
 
-        if (penaltyCard) {
-          // Create a sequence with a dummy first step to give React time to render
-          // This matches the pattern used in swap card incorrect declaration
-          const steps: AnimationStep[] = [
-            // Dummy step: animate from draw to draw (no movement, just a delay)
-            {
-              type: 'draw',
-              card: penaltyCard,
-              from: { type: 'draw' },
-              to: { type: 'drawn' },
-              duration: 1, // Very short duration, just to trigger React render
-              revealed: false,
-            },
-            // Actual animation: draw pile to hand
-            {
-              type: 'draw',
-              card: penaltyCard,
-              from: { type: 'draw' },
-              to: { type: 'player', playerId, position: penaltyCardPosition },
-              duration: 1500,
-              revealed: false, // Never reveal penalty cards
-              fullRotation: false,
-            },
-          ];
+          if (penaltyCard) {
+            // Create a sequence with a dummy first step to give React time to render
+            // This matches the pattern used in swap card incorrect declaration
+            const steps: AnimationStep[] = [
+              // Dummy step: animate from draw to draw (no movement, just a delay)
+              {
+                type: 'draw',
+                card: penaltyCard,
+                from: { type: 'draw' },
+                to: { type: 'drawn' },
+                duration: 1, // Very short duration, just to trigger React render
+                revealed: false,
+              },
+              // Actual animation: draw pile to hand
+              {
+                type: 'draw',
+                card: penaltyCard,
+                from: { type: 'draw' },
+                to: { type: 'player', playerId, position: penaltyCardPosition },
+                duration: 1500,
+                revealed: false, // Never reveal penalty cards
+                fullRotation: false,
+              },
+            ];
 
-          this.animationStore.startAnimationSequence('sequential', steps);
-          console.log(
-            '[AnimationService] Failed toss-in penalty card animation started:',
-            {
-              card: penaltyCard.rank,
-              toPosition: penaltyCardPosition,
-            }
-          );
+            this.animationStore.startAnimationSequence('sequential', steps);
+            console.log(
+              '[AnimationService] Failed toss-in penalty card animation started:',
+              {
+                card: penaltyCard.rank,
+                toPosition: penaltyCardPosition,
+              }
+            );
+          } else {
+            console.warn(
+              '[AnimationService] Penalty card not found at position',
+              penaltyCardPosition
+            );
+          }
         } else {
           console.warn(
-            '[AnimationService] Penalty card not found at position',
-            penaltyCardPosition
+            '[AnimationService] No penalty card added - card counts are equal or decreased'
           );
         }
-      } else {
-        console.warn(
-          '[AnimationService] No penalty card added - card counts are equal or decreased'
-        );
-      }
       }
     }
   }

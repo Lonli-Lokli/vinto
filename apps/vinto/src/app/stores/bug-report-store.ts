@@ -76,6 +76,7 @@ export class BugReportStore {
       formData.append('email', this.email);
       formData.append('description', this.description);
       formData.append('timestamp', new Date().toISOString());
+      formData.append('_captcha', 'false'); // Disable captcha
       formData.append(
         'appVersion',
         process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_ID || 'unknown'
