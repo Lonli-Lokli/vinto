@@ -499,61 +499,165 @@ export class MCTSMoveGenerator {
     const prioritizedPositions = this.categorizePositionsForSwap(state);
     const MAX_PEEK_MOVES = 25; // Focused set of strategic peeks
 
-    // Filter to only include UNKNOWN cards (for gaining information)
-    // For Queen, we can optionally swap after peeking, so we might want to
-    // peek known high cards to swap them, but prioritize unknown cards
-    const unknownPositions = prioritizedPositions.filter((p) => {
-      const player = state.players.find((pl) => pl.id === p.target.playerId);
-      if (!player) return false;
+    // For Queen, we want BOTH known and unknown cards:
+    // - Known opponent low cards (Jokers, 2s) to steal
+    // - Unknown cards for information gain
+    // Prioritize known good cards first, then unknown cards
 
-      const memory = player.knownCards.get(p.target.position);
-      const isKnown = memory && memory.confidence > 0.5;
-      return !isKnown; // Only unknown cards
-    });
-
-    // Separate own and opponent positions (unknown only)
-    const myUnknownPositions = unknownPositions.filter(
+    // Separate by player
+    const myPositions = prioritizedPositions.filter(
       (p) => p.target.playerId === currentPlayer.id
     );
-    const opponentUnknownPositions = unknownPositions.filter(
+    const opponentPositions = prioritizedPositions.filter(
       (p) => p.target.playerId !== currentPlayer.id
     );
 
-    // Strategy 1: Peek two opponent unknown cards (maximize information gain)
-    for (let i = 0; i < Math.min(opponentUnknownPositions.length - 1, 8); i++) {
-      for (
-        let j = i + 1;
-        j < Math.min(opponentUnknownPositions.length, i + 5);
-        j++
-      ) {
+    // For opponents: separate known GOOD cards (worth stealing) from unknown/other cards
+    const opponentKnownGoodCards = opponentPositions.filter((p) => {
+      const player = state.players.find((pl) => pl.id === p.target.playerId);
+      if (!player) return false;
+      const memory = player.knownCards.get(p.target.position);
+      const isKnown = memory && memory.confidence > 0.5 && memory.card;
+      if (!isKnown || !memory.card) return false;
+
+      const card = memory.card;
+
+      // 1. Joker or King - always steal
+      if (card.value === -1 || card.value === 0) return true;
+
+      // 2. Low-value cards (2-5) - good to steal
+      if (card.value <= 5) return true;
+
+      // 3. Cards matching current discard (enables immediate toss-in)
+      const tossInRanks = state.tossInRanks
+        ? state.tossInRanks
+        : state.discardPileTop?.rank
+        ? [state.discardPileTop.rank]
+        : [];
+      if (tossInRanks.includes(card.rank)) return true;
+
+      // 4. Cards matching what bot already has (enables multi-card toss-in)
+      for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+        const botCard = state.hiddenCards.get(`${currentPlayer.id}-${pos}`);
+        if (botCard && botCard.rank === card.rank) return true;
+      }
+
+      return false;
+    });
+
+    const opponentUnknownOrOther = opponentPositions.filter((p) => {
+      const player = state.players.find((pl) => pl.id === p.target.playerId);
+      if (!player) return false;
+      const memory = player.knownCards.get(p.target.position);
+      const isKnown = memory && memory.confidence > 0.5 && memory.card;
+
+      if (!isKnown || !memory.card) return true; // Unknown cards
+
+      const card = memory.card;
+      // Exclude good cards (already in opponentKnownGoodCards)
+      // Include high-value cards that aren't useful
+      if (card.value === -1 || card.value === 0) return false; // Joker/King - in good cards
+      if (card.value <= 5) return false; // Low cards - in good cards
+      if (state.discardPileTop && card.rank === state.discardPileTop.rank)
+        return false; // Toss-in match - in good cards
+
+      // Check if matches bot's cards (multi-toss-in potential)
+      for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+        const botCard = state.hiddenCards.get(`${currentPlayer.id}-${pos}`);
+        if (botCard && botCard.rank === card.rank) return false; // In good cards
+      }
+
+      return true; // High-value cards with no strategic benefit
+    });
+
+    // Strategy 0 (HIGHEST PRIORITY): Peek bot's card and opponent's known GOOD card to steal it
+    // This includes: Jokers, Kings, low cards (2-5), toss-in matches, and multi-toss-in enablers
+    for (const myCard of myPositions.slice(0, 5)) {
+      for (const oppGoodCard of opponentKnownGoodCards.slice(0, 5)) {
         if (moves.length >= MAX_PEEK_MOVES) break;
-        // Queen rule: Cannot peek two cards from the same player
-        if (
-          opponentUnknownPositions[i].target.playerId !==
-          opponentUnknownPositions[j].target.playerId
-        ) {
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [
-              opponentUnknownPositions[i].target,
-              opponentUnknownPositions[j].target,
-            ],
-          });
-        }
+
+        // Generate peek-only move
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, oppGoodCard.target],
+          shouldSwap: false,
+        });
+
+        // Generate peek-and-swap move (highly likely to be chosen by MCTS)
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, oppGoodCard.target],
+          shouldSwap: true,
+        });
       }
       if (moves.length >= MAX_PEEK_MOVES) break;
     }
 
-    // Strategy 2: Peek own unknown and opponent unknown (for potential swap)
+    // Strategy 1: Peek two opponent unknown/other cards (maximize information gain)
+    // For these, we generate both "peek-only" and "peek-and-swap" variants
     if (moves.length < MAX_PEEK_MOVES) {
-      for (const myCard of myUnknownPositions.slice(0, 5)) {
-        for (const oppCard of opponentUnknownPositions.slice(0, 5)) {
+      for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
+        for (
+          let j = i + 1;
+          j < Math.min(opponentUnknownOrOther.length, i + 5);
+          j++
+        ) {
           if (moves.length >= MAX_PEEK_MOVES) break;
+          // Queen rule: Cannot peek two cards from the same player
+          if (
+            opponentUnknownOrOther[i].target.playerId !==
+            opponentUnknownOrOther[j].target.playerId
+          ) {
+            // Generate peek-only move (don't swap)
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [
+                opponentUnknownOrOther[i].target,
+                opponentUnknownOrOther[j].target,
+              ],
+              shouldSwap: false,
+            });
+
+            // Generate peek-and-swap move (swap after peeking)
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [
+                opponentUnknownOrOther[i].target,
+                opponentUnknownOrOther[j].target,
+              ],
+              shouldSwap: true,
+            });
+          }
+        }
+        if (moves.length >= MAX_PEEK_MOVES) break;
+      }
+    }
+
+    // Strategy 2: Peek own and opponent unknown/other (for potential swap)
+    // These are more likely to benefit from swapping
+    if (moves.length < MAX_PEEK_MOVES) {
+      for (const myCard of myPositions.slice(0, 5)) {
+        for (const oppCard of opponentUnknownOrOther.slice(0, 5)) {
+          if (moves.length >= MAX_PEEK_MOVES) break;
+
+          // Generate peek-only move
           moves.push({
             type: 'use-action',
             playerId: currentPlayer.id,
             targets: [myCard.target, oppCard.target],
+            shouldSwap: false,
+          });
+
+          // Generate peek-and-swap move
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [myCard.target, oppCard.target],
+            shouldSwap: true,
           });
         }
         if (moves.length >= MAX_PEEK_MOVES) break;

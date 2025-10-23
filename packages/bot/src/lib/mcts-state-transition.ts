@@ -135,9 +135,45 @@ export class MCTSStateTransition {
 
         case 'peek-own':
         case 'peek-opponent':
-        case 'peek-and-swap':
           // Peek actions just reveal information (already tracked in bot memory)
           // No state change needed for simulation
+          break;
+
+        case 'peek-and-swap':
+          // Queen: Peek two cards, optionally swap them
+          // Check if the move includes a swap decision
+          if (move.shouldSwap && move.targets && move.targets.length === 2) {
+            const target1 = move.targets[0];
+            const target2 = move.targets[1];
+
+            const card1Key = `${target1.playerId}-${target1.position}`;
+            const card2Key = `${target2.playerId}-${target2.position}`;
+
+            const card1 = state.hiddenCards.get(card1Key);
+            const card2 = state.hiddenCards.get(card2Key);
+
+            if (card1 && card2) {
+              // Swap the cards
+              state.hiddenCards.set(card1Key, card2);
+              state.hiddenCards.set(card2Key, card1);
+
+              // Update player scores
+              const player1 = state.players.find(
+                (p) => p.id === target1.playerId
+              );
+              const player2 = state.players.find(
+                (p) => p.id === target2.playerId
+              );
+
+              if (player1) {
+                player1.score = player1.score - card1.value + card2.value;
+              }
+              if (player2 && player2.id !== player1?.id) {
+                player2.score = player2.score - card2.value + card1.value;
+              }
+            }
+          }
+          // If shouldSwap is false, just peek (no state change)
           break;
 
         case 'force-draw':

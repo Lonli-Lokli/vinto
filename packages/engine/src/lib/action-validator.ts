@@ -197,6 +197,23 @@ export function actionValidator(
         };
       }
 
+      // For Jack (swap-cards) and Queen (peek-and-swap), ensure targets are from different players
+      const actionCard = state.pendingAction.card;
+      if (actionCard && (actionCard.rank === 'J' || actionCard.rank === 'Q')) {
+        const existingTargets = state.pendingAction.targets || [];
+
+        // If this is the second target, check it's from a different player
+        if (existingTargets.length === 1) {
+          const firstTargetPlayerId = existingTargets[0].playerId;
+          if (firstTargetPlayerId === targetPlayerId) {
+            return {
+              valid: false,
+              reason: 'Jack and Queen must target cards from different players',
+            };
+          }
+        }
+      }
+
       return { valid: true };
     }
 

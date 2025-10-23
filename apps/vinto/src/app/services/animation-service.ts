@@ -763,13 +763,14 @@ export class AnimationService {
     const player2Position = this.getPlayerPosition(player2.id, newState);
 
     // Determine if cards should be revealed during animation
-    // - Reveal if human player is involved
-    // - Always reveal during Queen swap since player peeked at both cards
+    // - Only reveal if HUMAN is the acting player (the one who used Queen)
+    // - If bot used Queen, cards should NOT be revealed to human
     const humanPlayer = newState.players.find((p) => p.isHuman);
-    const revealCard1 =
-      humanPlayer?.id === target1.playerId ||
-      humanPlayer?.id === target2.playerId;
-    const revealCard2 = revealCard1;
+    const actingPlayerId = oldState.pendingAction?.playerId;
+    const isHumanActing = humanPlayer?.id === actingPlayerId;
+
+    const revealCard1 = isHumanActing;
+    const revealCard2 = isHumanActing;
 
     // Animate both swaps in parallel
     this.animationStore.startAnimationSequence('parallel', [

@@ -182,7 +182,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
           playerId: t.playerId,
           position: t.position,
         })),
-        shouldSwap: bestMove.type === 'swap',
+        // Use shouldSwap from the move (for Queen) or check if type is 'swap' (for Jack)
+        shouldSwap: bestMove.shouldSwap ?? (bestMove.type === 'swap'),
         declaredRank: bestMove.declaredRank,
       };
     }

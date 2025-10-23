@@ -12,7 +12,6 @@ import {
   createBotContext,
   toPile,
 } from './test-helpers';
-import { Rank } from '@vinto/shapes';
 
 describe('MCTS Bot - Toss-In Functionality', () => {
   let bot: MCTSBotDecisionService;
