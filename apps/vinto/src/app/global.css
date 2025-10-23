@@ -411,9 +411,8 @@
 
 /* Base dialog styles */
 dialog {
-  display: grid;
-  background: var(--surface-2, #fff);
-  color: var(--text-1, #000);
+  background: rgb(var(--color-surface-elevated));
+  color: rgb(var(--color-text-primary));
   max-inline-size: min(90vw, 60ch);
   max-block-size: min(80vh, 100%);
   max-block-size: min(80dvb, 100%);
@@ -422,23 +421,14 @@ dialog {
   position: fixed;
   inset: 0;
   border-radius: 0.75rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(var(--color-shadow-heavy), 0.25);
   z-index: 100;
   overflow: hidden;
-  transition: opacity 0.5s cubic-bezier(0.5, 0, 0.5, 1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(var(--color-border-primary));
 }
 
-@media (prefers-color-scheme: dark) {
-  dialog {
-    border-block-start: 1px solid var(--surface-3, #333);
-  }
-}
-
-/* Hidden state */
-dialog:not([open]) {
-  pointer-events: none;
-  opacity: 0;
+dialog[open] {
+  display: grid;
 }
 
 /* Backdrop */
@@ -483,24 +473,17 @@ dialog > form > header {
   gap: 1rem;
   justify-content: space-between;
   align-items: flex-start;
-  background: var(--surface-2, #f3f4f6);
+  background: rgb(var(--color-surface-secondary));
   padding-block: 1rem;
   padding-inline: 1.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  dialog > form > header {
-    background: var(--surface-1, #1f2937);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
+  border-bottom: 1px solid rgb(var(--color-border-primary));
 }
 
 dialog > form > header > h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-1, #000);
+  color: rgb(var(--color-text-primary));
 }
 
 /* Close button */
@@ -511,8 +494,9 @@ dialog > form > header > button.dialog-close-btn {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(var(--color-border-primary));
   background: transparent;
+  color: rgb(var(--color-text-secondary));
   cursor: pointer;
   font-size: 1.25rem;
   line-height: 1;
@@ -520,17 +504,8 @@ dialog > form > header > button.dialog-close-btn {
 }
 
 dialog > form > header > button.dialog-close-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-  dialog > form > header > button.dialog-close-btn {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  dialog > form > header > button.dialog-close-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  background: rgb(var(--color-surface-tertiary));
+  color: rgb(var(--color-text-primary));
 }
 
 /* Article (scrollable content area) */
@@ -543,13 +518,7 @@ dialog > form > article {
   gap: 1.5rem;
   padding-inline: 1.5rem;
   padding-block: 1.5rem;
-  background: var(--surface-1, #fff);
-}
-
-@media (prefers-color-scheme: dark) {
-  dialog > form > article {
-    background: var(--surface-2, #111827);
-  }
+  background: rgb(var(--color-surface-primary));
 }
 
 /* Form fields */
@@ -562,11 +531,11 @@ dialog .form-field {
 dialog .form-field label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-1, #000);
+  color: rgb(var(--color-text-primary));
 }
 
 dialog .form-field .required {
-  color: #ef4444;
+  color: rgb(var(--color-error));
 }
 
 dialog .form-field input,
@@ -574,10 +543,10 @@ dialog .form-field textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
   font-size: 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid rgb(var(--color-border-primary));
   border-radius: 0.5rem;
-  background: var(--surface-2, #f9fafb);
-  color: var(--text-1, #000);
+  background: rgb(var(--color-surface-secondary));
+  color: rgb(var(--color-text-primary));
   font-family: inherit;
   transition: all 0.2s ease;
 }
@@ -585,8 +554,8 @@ dialog .form-field textarea {
 dialog .form-field input:focus,
 dialog .form-field textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: rgb(var(--color-border-focus));
+  box-shadow: 0 0 0 3px rgba(var(--color-border-focus), 0.1);
 }
 
 dialog .form-field input:disabled,
@@ -600,20 +569,12 @@ dialog .form-field textarea {
   min-height: 100px;
 }
 
-@media (prefers-color-scheme: dark) {
-  dialog .form-field input,
-  dialog .form-field textarea {
-    background: var(--surface-1, #1f2937);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
 /* Dialog info box */
 dialog .dialog-info {
   width: 100%;
   padding: 0.75rem;
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(var(--color-info), 0.05);
+  border: 1px solid rgba(var(--color-info), 0.2);
   border-radius: 0.5rem;
   font-size: 0.75rem;
 }
@@ -621,12 +582,12 @@ dialog .dialog-info {
 dialog .dialog-info .info-title {
   font-weight: 600;
   margin: 0 0 0.25rem 0;
-  color: var(--text-1, #000);
+  color: rgb(var(--color-text-primary));
 }
 
 dialog .dialog-info .info-description {
   margin: 0;
-  color: var(--text-2, #666);
+  color: rgb(var(--color-text-secondary));
 }
 
 /* Dialog messages */
@@ -642,20 +603,20 @@ dialog .dialog-message {
 }
 
 dialog .dialog-message.success {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #16a34a;
+  background: rgb(var(--color-success-light));
+  border: 1px solid rgb(var(--color-success));
+  color: rgb(var(--color-success));
 }
 
 dialog .dialog-message.error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #dc2626;
+  background: rgb(var(--color-error-light));
+  border: 1px solid rgb(var(--color-error));
+  color: rgb(var(--color-error));
 }
 
 /* Footer */
 dialog > form > footer {
-  background: var(--surface-2, #f3f4f6);
+  background: rgb(var(--color-surface-secondary));
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -663,14 +624,7 @@ dialog > form > footer {
   align-items: flex-start;
   padding-inline: 1.5rem;
   padding-block: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  dialog > form > footer {
-    background: var(--surface-1, #1f2937);
-    border-top-color: rgba(255, 255, 255, 0.1);
-  }
+  border-top: 1px solid rgb(var(--color-border-primary));
 }
 
 /* Menu */
@@ -701,21 +655,21 @@ dialog > form > footer button {
 
 dialog > form > footer button[type='reset'] {
   background: transparent;
-  border-color: rgba(0, 0, 0, 0.2);
-  color: var(--text-1, #000);
+  border-color: rgb(var(--color-border-primary));
+  color: rgb(var(--color-text-primary));
 }
 
 dialog > form > footer button[type='reset']:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(var(--color-surface-tertiary));
 }
 
 dialog > form > footer button[type='submit'] {
-  background: #3b82f6;
+  background: rgb(var(--color-info));
   color: white;
 }
 
 dialog > form > footer button[type='submit']:hover {
-  background: #2563eb;
+  background: rgb(var(--color-info-dark));
 }
 
 dialog > form > footer button:disabled {
@@ -723,66 +677,86 @@ dialog > form > footer button:disabled {
   cursor: not-allowed;
 }
 
-@media (prefers-color-scheme: dark) {
-  dialog > form > footer button[type='reset'] {
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  dialog > form > footer button[type='reset']:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-}
-
 /* Animations */
 @media (prefers-reduced-motion: no-preference) {
-  dialog {
-    animation: scale-down 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  @keyframes dialog-show {
+    from {
+      opacity: 0;
+      transform: translateY(100px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes dialog-hide {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(100px) scale(0.9);
+    }
+  }
+
+  @starting-style {
+    dialog[open] {
+      opacity: 0;
+      transform: translateY(100px) scale(0.9);
+    }
   }
 
   dialog[open] {
-    animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: dialog-show 0.3s ease-out;
   }
 
-  /* Mobile specific exit animation */
+  dialog:not([open]) {
+    animation: dialog-hide 0.3s ease-in;
+  }
+
+  /* Mobile specific animations */
   @media (max-width: 768px) {
-    dialog[modal-mode='mega'] {
-      animation: slide-down 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    @keyframes dialog-show-mobile {
+      from {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes dialog-hide-mobile {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+    }
+
+    @starting-style {
+      dialog[modal-mode='mega'][open] {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+    }
+
+    dialog[modal-mode='mega'][open] {
+      animation: dialog-show-mobile 0.3s ease-out;
+    }
+
+    dialog[modal-mode='mega']:not([open]) {
+      animation: dialog-hide-mobile 0.3s ease-in;
     }
   }
 }
 
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes scale-down {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-}
-
-@keyframes slide-down {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-}
 
 /* Mini dialog specific styles */
 dialog[modal-mode='mini'] {
@@ -811,14 +785,14 @@ dialog[modal-mode='mini'] {
   margin: 0.5rem 0 0 0;
   font-size: 1rem;
   text-align: center;
-  color: var(--text-2, #666);
+  color: rgb(var(--color-text-secondary));
 }
 
 .coalition-leader-dialog .dialog-description {
   margin: 0.5rem 0 0 0;
   font-size: 0.875rem;
   text-align: center;
-  color: var(--text-2, #666);
+  color: rgb(var(--color-text-secondary));
 }
 
 .coalition-grid {
@@ -832,25 +806,14 @@ dialog[modal-mode='mini'] {
   position: relative;
   padding: 0.5rem;
   border-radius: 0.75rem;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  background: var(--surface-2, #f9fafb);
+  border: 2px solid rgb(var(--color-border-primary));
+  background: rgb(var(--color-surface-secondary));
   transition: all 0.2s ease;
 }
 
 .coalition-player-card.is-leader {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .coalition-player-card {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: var(--surface-1, #1f2937);
-  }
-
-  .coalition-player-card.is-leader {
-    background: rgba(245, 158, 11, 0.15);
-  }
+  border-color: rgb(var(--color-warning));
+  background: rgba(var(--color-warning), 0.1);
 }
 
 .leader-badge {
@@ -860,7 +823,7 @@ dialog[modal-mode='mini'] {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  background: #f59e0b;
+  background: rgb(var(--color-warning));
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -870,7 +833,7 @@ dialog[modal-mode='mini'] {
 
 /* Vinto Confirmation Dialog specific styles */
 .vinto-confirmation-dialog {
-  border-color: #f59e0b;
+  border-color: rgb(var(--color-warning));
   border-width: 2px;
 }
 
@@ -890,7 +853,7 @@ dialog[modal-mode='mini'] {
   text-align: center;
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--text-2, #666);
+  color: rgb(var(--color-text-secondary));
   margin: 0;
 }
 
