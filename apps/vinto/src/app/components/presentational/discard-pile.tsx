@@ -58,6 +58,7 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(
             size={size}
             selectionState="default"
             intent={intent}
+            disableFlipAnimation={true}
           />
         </div>
         <div

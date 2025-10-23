@@ -6,7 +6,7 @@ import { KingCardButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
-import { getCardLongDescription, getCardName } from '@vinto/shapes';
+import { getCardShortDescription, getCardName } from '@vinto/shapes';
 
 export function KingDeclaration() {
   const gameClient = useGameClient();
@@ -36,14 +36,17 @@ export function KingDeclaration() {
         <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-primary leading-tight">
-              👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-              {isTossInAction && (
-                <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                  ⚡ Toss-in
-                </span>
-              )}
-            </h3>
+            <div className="flex flex-col">
+              <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+                👑 {getCardName(action)}
+                {isTossInAction && (
+                  <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                    ⚡ Toss-in
+                  </span>
+                )}
+              </h3>
+              <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+            </div>
             <HelpPopover title="King Declaration" rank="K" />
           </div>
 
@@ -79,14 +82,17 @@ export function KingDeclaration() {
         <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-primary leading-tight">
-              👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-              {isTossInAction && (
-                <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                  ⚡ Toss-in
-                </span>
-              )}
-            </h3>
+            <div className="flex flex-col">
+              <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+                👑 {getCardName(action)}
+                {isTossInAction && (
+                  <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                    ⚡ Toss-in
+                  </span>
+                )}
+              </h3>
+              <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+            </div>
             <HelpPopover title="King Declaration" rank="K" />
           </div>
 
@@ -148,9 +154,12 @@ export function KingDeclaration() {
     <div className="w-full h-full">
       <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         <div className="flex flex-row items-center justify-between mb-1.5">
-          <h3 className="text-xs font-semibold text-primary leading-tight">
-            👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+              👑 {getCardName(action)}
+            </h3>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+          </div>
           <HelpPopover title="King Declaration" rank="K" />
         </div>
         <div className="flex-1 flex items-center justify-center">

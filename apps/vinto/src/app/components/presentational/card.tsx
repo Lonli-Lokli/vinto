@@ -73,6 +73,8 @@ interface CardProps {
   // Action target selected - for showing which cards are selected as action targets (Q, K, etc.)
   actionTargetSelected?: boolean;
   hidden?: boolean;
+  // Disable flip animation - for cards that should not flip (drawn/discard pile)
+  disableFlipAnimation?: boolean;
 }
 
 export function Card({
@@ -91,6 +93,7 @@ export function Card({
   intent,
   hidden = false,
   actionTargetSelected = false,
+  disableFlipAnimation = false,
 }: CardProps) {
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
@@ -167,23 +170,35 @@ export function Card({
       {...dataAttributes}
     >
       {/* Flip card container with 3D perspective */}
-      <div className="flip-card-container">
-        <div
-          className={`flip-card-inner ${
-            revealed && card ? 'flip-card-revealed' : ''
-          }`}
-        >
-          {/* Front side - Card face (shown when revealed) */}
-          <div className="flip-card-front">
-            {card && <RankComponent rank={card.rank} />}
-          </div>
-
-          {/* Back side - Card back (shown when not revealed) */}
-          <div className="flip-card-back">
+      {disableFlipAnimation ? (
+        // No flip animation - just show the revealed/unrevealed state directly
+        <div className="w-full h-full">
+          {revealed && card ? (
+            <RankComponent rank={card.rank} />
+          ) : (
             <CardBackComponent botPeeking={botPeeking} />
+          )}
+        </div>
+      ) : (
+        // With flip animation
+        <div className="flip-card-container">
+          <div
+            className={`flip-card-inner ${
+              revealed && card ? 'flip-card-revealed' : ''
+            }`}
+          >
+            {/* Front side - Card face (shown when revealed) */}
+            <div className="flip-card-front">
+              {card && <RankComponent rank={card.rank} />}
+            </div>
+
+            {/* Back side - Card back (shown when not revealed) */}
+            <div className="flip-card-back">
+              <CardBackComponent botPeeking={botPeeking} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Intent feedback overlay */}
       {intent && (
@@ -211,7 +226,7 @@ const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
   const containerClassName = `h-full w-auto rounded border shadow-theme-sm overflow-hidden ${
     botPeeking
       ? 'border-warning bg-card-revealed-gradient'
-      : 'border-primary bg-card-gradient'
+      : 'bg-card-gradient'
   }`;
 
   const imageClassName = 'h-full w-full object-cover';
@@ -228,7 +243,7 @@ const RankComponent: FC<{
 }> = ({ rank }) => {
   // Container has border and background, image fills it completely
   const containerClassName =
-    'h-full w-auto rounded border border-border-primary bg-surface-primary shadow-sm overflow-hidden';
+    'h-full w-auto rounded shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
 
   const renderImage = () => {

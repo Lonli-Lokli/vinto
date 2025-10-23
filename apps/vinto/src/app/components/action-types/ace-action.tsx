@@ -7,7 +7,7 @@ import { OpponentSelectButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
-import { getCardLongDescription, getCardName } from '@vinto/shapes';
+import { getCardName, getCardShortDescription } from '@vinto/shapes';
 
 export const AceAction = observer(() => {
   const gameClient = useGameClient();
@@ -42,14 +42,17 @@ export const AceAction = observer(() => {
       <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-3 grid-rows-[auto_1fr_auto] gap-1.5">
         {/* Header - spans all 3 columns */}
         <div className="col-span-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-primary">
-            🎯 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-            {isTossInAction && (
-              <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                ⚡ Toss-in
-              </span>
-            )}
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary flex items-center">
+              🎯 {getCardName(action)}
+              {isTossInAction && (
+                <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                  ⚡ Toss-in
+                </span>
+              )}
+            </h3>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+          </div>
           <HelpPopover title="Ace Action" rank="A" />
         </div>
 

@@ -235,21 +235,11 @@ export class MCTSBotDecisionService implements BotDecisionService {
   ): boolean {
     this.initializeIfNeeded(context);
 
-    // STEP 1 FIX: Construct game state with explicit toss-in information
+    // Construct game state with explicit toss-in information
     const gameState = this.constructGameState(context);
 
-    // Override the discard pile top to reflect the toss-in rank (use first rank for simulation)
-    // This ensures the bot's "brain" knows what rank to match
-    const tossInRank = discardedRanks[0];
-    gameState.discardPileTop = {
-      id: `tossin-temp-${tossInRank}`,
-      rank: tossInRank,
-      value: getCardValue(tossInRank),
-      actionText: getCardShortDescription(tossInRank),
-      played: true,
-    };
-
     // Explicitly mark as toss-in phase and provide ALL valid toss-in ranks
+    // The move generator will check against all ranks in this array
     gameState.isTossInPhase = true;
     gameState.tossInRanks = discardedRanks;
 

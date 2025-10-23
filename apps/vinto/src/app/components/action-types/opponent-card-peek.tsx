@@ -8,7 +8,7 @@ import { ContinueButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
-import { getCardLongDescription, getCardName } from '@vinto/shapes';
+import { getCardShortDescription, getCardName } from '@vinto/shapes';
 
 export const OpponentCardPeek = observer(() => {
   const uiStore = useUIStore();
@@ -33,14 +33,17 @@ export const OpponentCardPeek = observer(() => {
       <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs md:text-sm font-semibold text-primary">
-            🔍 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-            {isTossInAction && (
-              <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                ⚡ Toss-in
-              </span>
-            )}
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-xs md:text-sm font-semibold text-primary flex items-center">
+              🔍 {getCardName(action)}
+              {isTossInAction && (
+                <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                  ⚡ Toss-in
+                </span>
+              )}
+            </h3>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+          </div>
           <div className="flex items-center gap-2">
             {hasRevealedCard && (
               <div className="text-2xs md:text-xs text-success font-medium">

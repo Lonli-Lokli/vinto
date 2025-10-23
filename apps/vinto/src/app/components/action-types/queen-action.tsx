@@ -7,7 +7,7 @@ import { SwapButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
-import { getCardLongDescription, getCardName } from '@vinto/shapes';
+import { getCardShortDescription, getCardName } from '@vinto/shapes';
 
 export const QueenAction = observer(() => {
   const gameClient = useGameClient();
@@ -18,6 +18,7 @@ export const QueenAction = observer(() => {
   const action = gameClient.visualState.pendingAction.card.rank;
   const peekTargets = gameClient.visualState.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
+  const hasAnyCard = peekTargets.length > 0;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -29,14 +30,17 @@ export const QueenAction = observer(() => {
       <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
-          <h3 className="text-xs font-semibold text-primary leading-tight">
-            👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
-            {isTossInAction && (
-              <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                ⚡ Toss-in
-              </span>
-            )}
-          </h3>
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+              👑 {getCardName(action)}
+              {!isTossInAction && (
+                <span className="ml-2 text-[10px] text-accent-primary font-medium">
+                  ⚡ Toss-in
+                </span>
+              )}
+            </h3>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+          </div>
           <div className="flex flex-row items-center gap-1">
             <div className="text-xs text-secondary leading-tight">
               {peekTargets.length}/2 selected
@@ -82,6 +86,7 @@ export const QueenAction = observer(() => {
             }}
           />
           <SkipButton
+            disabled={hasAnyCard}
             onClick={() => {
               if (!humanPlayer) return;
               gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));

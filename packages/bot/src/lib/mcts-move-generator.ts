@@ -1,6 +1,6 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, getCardAction } from '@vinto/shapes';
+import { CardAction, getCardAction, Rank } from '@vinto/shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -46,7 +46,7 @@ export class MCTSMoveGenerator {
 
       // Generate toss-in moves for matching cards
       // Check if card matches ANY of the valid toss-in ranks
-      const validRanks =
+      const validRanks: Rank[] =
         state.tossInRanks ||
         (state.discardPileTop ? [state.discardPileTop.rank] : []);
       if (validRanks.length > 0) {

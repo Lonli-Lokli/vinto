@@ -72,7 +72,7 @@ export interface MCTSGameState {
   // Current turn state
   pendingCard: Card | null; // Card drawn but not yet swapped/discarded
   isTossInPhase: boolean;
-  tossInRanks?: Rank[]; // Available ranks for toss-in (multiple ranks can be valid)
+  tossInRanks?: [Rank, ...Rank[]]; // Available ranks for toss-in (multiple ranks can be valid)
 
   // Game phase
   turnCount: number;
