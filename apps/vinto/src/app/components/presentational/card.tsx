@@ -45,6 +45,13 @@ export type CardSelectionState = 'default' | 'selectable' | 'not-selectable';
  */
 export type CardSelectionVariant = 'action' | 'swap';
 
+/**
+ * Card feedback intent - shows success/failure feedback for actions
+ * - 'success': Shows success indicator (green checkmark)
+ * - 'failure': Shows failure indicator (red X)
+ */
+export type CardIntent = 'success' | 'failure';
+
 interface CardProps {
   card?: CardType;
   revealed?: boolean;
@@ -61,10 +68,8 @@ interface CardProps {
   selectionState: CardSelectionState;
   // Selection variant - determines animation style
   selectionVariant?: CardSelectionVariant;
-  // Declaration feedback (passed from parent)
-  declarationFeedback?: boolean | null; // true = correct, false = incorrect, null = none
-  // Failed toss-in feedback - shows error indicator when toss-in attempt was invalid
-  failedTossInFeedback?: boolean;
+  // Intent feedback - shows success/failure indicator for actions (declarations, toss-ins, etc.)
+  intent?: CardIntent;
   // Action target selected - for showing which cards are selected as action targets (Q, K, etc.)
   actionTargetSelected?: boolean;
   hidden?: boolean;
@@ -83,9 +88,8 @@ export function Card({
   isPending = false,
   selectionState,
   selectionVariant = 'action',
-  declarationFeedback = null,
+  intent,
   hidden = false,
-  failedTossInFeedback = false,
   actionTargetSelected = false,
 }: CardProps) {
   // Build data attributes for animation tracking
@@ -120,10 +124,10 @@ export function Card({
     }
   };
 
-  // Determine declaration feedback classes
-  const getDeclarationFeedbackClasses = () => {
-    if (declarationFeedback === true) return 'declaration-correct';
-    if (declarationFeedback === false) return 'declaration-incorrect';
+  // Determine intent feedback classes
+  const getIntentFeedbackClasses = () => {
+    if (intent === 'success') return 'declaration-correct';
+    if (intent === 'failure') return 'declaration-incorrect';
     return '';
   };
 
@@ -146,11 +150,10 @@ export function Card({
     <div
       className={`
         ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
-        relative flex
-        transition-all duration-150 select-none
+        relative select-none
         ${rotated ? 'transform-gpu card-rotated' : ''}
         ${getCardStateClasses()}
-        ${getDeclarationFeedbackClasses()}
+        ${getIntentFeedbackClasses()}
         ${actionTargetSelected ? 'action-target-selected' : ''}
       `}
       style={
@@ -163,29 +166,35 @@ export function Card({
       onClick={selectionState === 'selectable' ? onClick : undefined}
       {...dataAttributes}
     >
-      {revealed && card ? (
-        <RankComponent rank={card.rank} />
-      ) : (
-        <CardBackComponent botPeeking={botPeeking} />
-      )}
-
-      {/* Declaration feedback overlay */}
-      {declarationFeedback !== null && (
+      {/* Flip card container with 3D perspective */}
+      <div className="flip-card-container">
         <div
-          className={`absolute inset-0 flex items-center justify-center pointer-events-none ${getDeclarationFeedbackClasses()}`}
+          className={`flip-card-inner ${revealed && card ? 'flip-card-revealed' : ''}`}
         >
-          <div className="text-4xl font-bold drop-shadow-lg">
-            {declarationFeedback ? '✓' : '✗'}
+          {/* Front side - Card face (shown when revealed) */}
+          <div className="flip-card-front">
+            {card && <RankComponent rank={card.rank} />}
+          </div>
+
+          {/* Back side - Card back (shown when not revealed) */}
+          <div className="flip-card-back">
+            <CardBackComponent botPeeking={botPeeking} />
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Failed toss-in feedback overlay */}
-      {failedTossInFeedback && (
+      {/* Intent feedback overlay */}
+      {intent && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="absolute inset-0 bg-error/20 border-2 border-error rounded animate-pulse" />
-          <div className="relative text-4xl font-bold drop-shadow-lg text-error">
-            ✗
+          {intent === 'failure' && (
+            <div className="absolute inset-0 bg-error/20 border-2 border-error rounded animate-pulse" />
+          )}
+          <div
+            className={`relative text-4xl font-bold drop-shadow-lg ${
+              intent === 'success' ? 'text-success' : 'text-error'
+            }`}
+          >
+            {intent === 'success' ? '✓' : '✗'}
           </div>
         </div>
       )}

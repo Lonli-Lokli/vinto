@@ -55,6 +55,13 @@ export const GameTable = observer(() => {
   const setupPeeksRemaining =
     GameTableLogic.calculateSetupPeeksRemaining(humanPlayer);
 
+  // Get failed toss-in attempts from ActiveTossIn state
+  const failedTossInAttempts =
+    gameClient.visualState.activeTossIn?.failedAttempts?.map((attempt) => ({
+      playerId: attempt.playerId,
+      position: attempt.position,
+    })) || [];
+
   // Determine if card interactions should be enabled
   const shouldAllowCardInteractions = () =>
     GameTableLogic.shouldAllowCardInteractions({
@@ -69,6 +76,7 @@ export const GameTable = observer(() => {
       peekTargets,
       hasCompletePeekSelection,
       uiStore,
+      failedTossInAttempts,
     });
 
   const handleCardClick = (position: number) => {

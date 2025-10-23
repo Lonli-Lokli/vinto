@@ -208,7 +208,7 @@ const TossInIndicator = observer(
 
 🎯 How it works:
 • Click matching cards to toss them in
-• Wrong card = penalty card draw
+• Wrong card = penalty card draw, no more toss-ins this round
 • Click Continue when done
 
 🏆 Call Vinto:

@@ -31,6 +31,12 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
 
     // Get declaration feedback for drawn card (correct declarations)
     const declarationFeedback = uiStore.getDrawnCardDeclarationFeedback();
+    const intent =
+      declarationFeedback === null
+        ? undefined
+        : declarationFeedback
+          ? 'success'
+          : 'failure';
 
     return (
       <div
@@ -46,7 +52,7 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
           highlighted={!!card}
           isPending={true}
           selectionState="default"
-          declarationFeedback={declarationFeedback}
+          intent={intent}
         />
         <div
           className={`${labelMargin} ${textSize} text-white font-medium bg-warning/80 rounded ${labelPadding}`}

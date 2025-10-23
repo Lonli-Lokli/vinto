@@ -42,6 +42,12 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(
 
     // Get declaration feedback (green for correct, red for incorrect)
     const declarationFeedback = uiStore.getDiscardPileDeclarationFeedback();
+    const intent =
+      declarationFeedback === null
+        ? undefined
+        : declarationFeedback
+          ? 'success'
+          : 'failure';
 
     return (
       <div className="flex flex-col items-center justify-center">
@@ -51,7 +57,7 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(
             revealed={shouldReveal}
             size={size}
             selectionState="default"
-            declarationFeedback={declarationFeedback}
+            intent={intent}
           />
         </div>
         <div

@@ -135,7 +135,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
               playerId={player.id}
               cardIndex={index}
               actionTargetSelected={isActionTargetSelected}
-              failedTossInFeedback={hasFailedTossInFeedback}
+              intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
             />
           );

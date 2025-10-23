@@ -26,6 +26,7 @@ export function shouldAllowCardInteractions(params: {
   peekTargets: PendingAction['targets'];
   hasCompletePeekSelection: boolean;
   uiStore: UIStore;
+  failedTossInAttempts?: Array<{ playerId: string; position: number }>;
 }): boolean {
   const {
     humanPlayer,
@@ -37,10 +38,21 @@ export function shouldAllowCardInteractions(params: {
     targetType,
     peekTargets,
     hasCompletePeekSelection,
+    failedTossInAttempts = [],
     uiStore,
   } = params;
 
   if (!humanPlayer) return false;
+
+  // Disable toss-in if player has made a failed attempt in the current toss-in
+  if (waitingForTossIn && failedTossInAttempts.length > 0) {
+    const hasFailedAttempt = failedTossInAttempts.some(
+      (attempt) => attempt.playerId === humanPlayer.id
+    );
+    if (hasFailedAttempt) {
+      return false;
+    }
+  }
 
   // For Queen action (peek-then-swap), must select from different players
   if (isAwaitingActionTarget && targetType === 'peek-then-swap') {

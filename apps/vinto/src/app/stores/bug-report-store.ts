@@ -84,11 +84,11 @@ export class BugReportStore {
 
       // Add debug data as a JSON attachment
       const debugBlob = new Blob([debugData], { type: 'application/json' });
-      formData.append('attachment', debugBlob, 'debug-data.json');
+      formData.append('file', debugBlob, 'debug-data.json');
 
       // Submit to formsubmit.co
       const response = await fetch(
-        'https://formsubmit.co/4aa7fcc39662f7586c67799b921c4889 ',
+        'https://formsubmit.co/4aa7fcc39662f7586c67799b921c4889',
         {
           method: 'POST',
           body: formData,
