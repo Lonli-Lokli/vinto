@@ -28,14 +28,13 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
       return null; // Don't show anything when there's no toss-in active
     }
 
-
     return (
-      <div className="flex flex-col items-center gap-1 opacity-70">
+      <div className="flex flex-col items-center gap-1 opacity-75">
         {/* Available Toss-In Ranks Section */}
         {tossInRanks.length > 0 && (
           <div className="flex flex-col items-center">
             <div
-              className={`${textSize} text-secondary font-medium mb-0.5`}
+              className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
             >
               Toss-In
             </div>
@@ -43,7 +42,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
               {tossInRanks.map((rank, index) => (
                 <div
                   key={`rank-${rank}-${index}`}
-                  className={`${textSize} px-1.5 py-0.5 bg-surface-secondary/60 border border-primary/40 rounded text-primary font-semibold`}
+                  className={`${textSize} px-1.5 py-0.5 bg-surface-primary/70 border border-primary/60 rounded text-primary font-bold shadow-sm`}
                 >
                   {rank}
                 </div>
@@ -56,7 +55,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
         {tossInQueue.length > 0 && (
           <div className="flex flex-col items-center">
             <div
-              className={`${textSize} text-secondary font-medium mb-0.5`}
+              className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
             >
               Tossed Cards ({tossInQueue.length})
             </div>
@@ -64,14 +63,17 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
               {tossInQueue.map((item, index) => (
                 <div
                   key={`queue-${item.playerId}-${index}`}
-                  className="flex items-center gap-1 bg-surface-secondary/40 border border-primary/30 rounded px-1.5 py-0.5"
+                  className="flex items-center gap-1 bg-surface-primary/60 border border-primary/40 rounded px-1.5 py-0.5 shadow-sm"
                 >
                   {/* Player name */}
-                  <span className={`${textSize} text-tertiary font-medium`}>
+                  <span className={`${textSize} text-secondary font-medium`}>
                     {item.playerName}:
                   </span>
                   {/* Small card preview */}
-                  <div className="relative" style={{ width: '24px', height: '36px' }}>
+                  <div
+                    className="relative"
+                    style={{ width: '24px', height: '36px' }}
+                  >
                     <Card
                       card={item.card}
                       revealed={true}

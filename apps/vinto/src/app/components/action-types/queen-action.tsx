@@ -7,6 +7,7 @@ import { SwapButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
+import { getCardLongDescription, getCardName } from '@vinto/shapes';
 
 export const QueenAction = observer(() => {
   const gameClient = useGameClient();
@@ -14,6 +15,7 @@ export const QueenAction = observer(() => {
 
   if (!gameClient.visualState.pendingAction) return null;
 
+  const action = gameClient.visualState.pendingAction.card.rank;
   const peekTargets = gameClient.visualState.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
 
@@ -28,7 +30,7 @@ export const QueenAction = observer(() => {
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-1 flex-shrink-0">
           <h3 className="text-xs font-semibold text-primary leading-tight">
-            👑 Queen Action
+            👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
             {isTossInAction && (
               <span className="ml-2 text-[10px] text-accent-primary font-medium">
                 ⚡ Toss-in

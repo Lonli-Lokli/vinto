@@ -8,11 +8,14 @@ import { ContinueButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
+import { getCardLongDescription, getCardName } from '@vinto/shapes';
 
 export const OwnCardPeek = observer(() => {
   const uiStore = useUIStore();
   const gameClient = useGameClient();
-  const action = gameClient.visualState.pendingAction?.card.rank;
+  if (!gameClient.visualState.pendingAction) return null;
+
+  const action = gameClient.visualState.pendingAction.card.rank;
   const humanPlayerState = gameClient.visualState.players.find(
     (p) => p.isHuman
   );
@@ -32,7 +35,7 @@ export const OwnCardPeek = observer(() => {
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-primary">
-            👁️ {action}
+            👁️ {`${getCardName(action)}: ${getCardLongDescription(action)}`}
             {isTossInAction && (
               <span className="ml-2 text-[10px] text-accent-primary font-medium">
                 ⚡ Toss-in

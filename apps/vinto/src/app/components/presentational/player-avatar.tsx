@@ -44,7 +44,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
           className={`
             text-xs
             font-extrabold
-            ${isCurrentPlayer ? 'text-success' : 'text-primary'}
+            ${isCurrentPlayer ? 'text-accent' : 'text-secondary'}
           `}
         >
           {playerName}
@@ -90,7 +90,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
             className={`
               text-lg
               font-extrabold
-              ${isCurrentPlayer ? 'text-success' : 'text-primary'}
+              ${isCurrentPlayer ? 'text-accent' : 'text-secondary'}
               bg-surface-primary/95 backdrop-blur-sm
               px-4 py-2
               rounded-full

@@ -1,3 +1,5 @@
+import { shuffleCards } from './utils';
+
 // types/game.ts
 export interface Card {
   id: string;
@@ -99,6 +101,16 @@ export class Pile implements Iterable<Card> {
 
   toArray(): Card[] {
     return [...this._cards];
+  }
+
+  reshuffleFrom(otherPile: Pile): void {
+    const [otherTopCard, ...cardsToShuffle] = otherPile.toArray();
+    const thisTopCard = this.drawTop();
+    this._cards = [
+      ...(thisTopCard ? [thisTopCard] : []),
+      ...shuffleCards([...cardsToShuffle, ...this._cards]),
+    ];
+    otherPile.replace([otherTopCard]);
   }
 
   replace(cards: Iterable<Card>): void {

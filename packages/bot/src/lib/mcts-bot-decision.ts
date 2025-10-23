@@ -230,12 +230,29 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   shouldParticipateInTossIn(
-    discardedRanks: [Rank , ...Rank[]],
+    discardedRanks: [Rank, ...Rank[]],
     context: BotDecisionContext
   ): boolean {
     this.initializeIfNeeded(context);
 
+    // STEP 1 FIX: Construct game state with explicit toss-in information
     const gameState = this.constructGameState(context);
+
+    // Override the discard pile top to reflect the toss-in rank (use first rank for simulation)
+    // This ensures the bot's "brain" knows what rank to match
+    const tossInRank = discardedRanks[0];
+    gameState.discardPileTop = {
+      id: `tossin-temp-${tossInRank}`,
+      rank: tossInRank,
+      value: getCardValue(tossInRank),
+      actionText: getCardShortDescription(tossInRank),
+      played: true,
+    };
+
+    // Explicitly mark as toss-in phase and provide ALL valid toss-in ranks
+    gameState.isTossInPhase = true;
+    gameState.tossInRanks = discardedRanks;
+
     const bestMove = this.runMCTS(gameState);
 
     return bestMove.type === 'toss-in';
@@ -985,19 +1002,38 @@ export class MCTSBotDecisionService implements BotDecisionService {
       context.gameState.subPhase === 'toss_queue_active' &&
       !!context.gameState.activeTossIn;
 
+    // STEP 2 FIX: Make discardPileTop aware of active toss-in
+    // If we're in toss-in phase, use the toss-in rank as the discard top
+    let simulationDiscardTop = context.discardTop || null;
+
+    if (isTossInPhase && context.gameState.activeTossIn) {
+      const tossInRank = context.gameState.activeTossIn.ranks[0];
+      simulationDiscardTop = {
+        id: `tossin-state-${tossInRank}`,
+        rank: tossInRank,
+        value: getCardValue(tossInRank),
+        actionText: getCardShortDescription(tossInRank),
+        played: true,
+      };
+    }
+
     return {
       players,
       currentPlayerIndex: context.allPlayers.findIndex(
         (p) => p.id === context.botId
       ),
       botPlayerId: context.botId,
-      discardPileTop: context.discardTop || null,
+      discardPileTop: simulationDiscardTop,
       discardPile: context.discardPile,
       deckSize: 54, // Standard deck with 2 Jokers
       botMemory: this.botMemory,
       hiddenCards: new Map(),
       pendingCard: context.pendingCard || null,
       isTossInPhase,
+      tossInRanks:
+        isTossInPhase && context.gameState.activeTossIn
+          ? context.gameState.activeTossIn.ranks
+          : undefined,
       turnCount: context.gameState.turnNumber,
       finalTurnTriggered: context.gameState.finalTurnTriggered,
       isTerminal: false,

@@ -35,8 +35,8 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
       declarationFeedback === null
         ? undefined
         : declarationFeedback
-          ? 'success'
-          : 'failure';
+        ? 'success'
+        : 'failure';
 
     return (
       <div

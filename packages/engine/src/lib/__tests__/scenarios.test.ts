@@ -678,4 +678,73 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.roundNumber).toBe(2); // Round count should increment
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
+
+  it('Scenario 04. Deck pile getting reshuffled and goes into draw pile if no cards left in draw', () => {
+    const state = createTestState({
+      subPhase: 'idle',
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      players: [
+        createTestPlayer('p1', 'Player 1', true, [
+          createTestCard('A', 'p1c1'),
+          createTestCard('K', 'p1c2'),
+        ]),
+        createTestPlayer('p2', 'Player 2', false, [
+          createTestCard('A', 'p2c1'),
+          createTestCard('K', 'p2c2'),
+        ]),
+        createTestPlayer('p3', 'Player 3', false, [
+          createTestCard('J', 'p3c1'),
+          createTestCard('J', 'p3c2'),
+        ]),
+        createTestPlayer('p4', 'Player 4', false, [
+          createTestCard('Q', 'p4c1'),
+          createTestCard('Q', 'p4c2'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('2', 'draw1'),
+        createTestCard('3', 'draw2'),
+        createTestCard('4', 'draw3'),
+        createTestCard('5', 'draw4'),
+      ]),
+      discardPile: Pile.fromCards([
+        createTestCard('6', 'discard1'),
+        createTestCard('6', 'discard2'),
+        createTestCard('6', 'discard3'),
+      ]),
+    });
+
+    const makeTurn = (playerId: string, currentState: GameState) => {
+      let updatedState = GameEngine.reduce(
+        currentState,
+        GameActions.drawCard(playerId)
+      );
+
+      updatedState = GameEngine.reduce(
+        updatedState,
+        GameActions.discardCard(playerId)
+      );
+
+      updatedState = markPlayersReady(updatedState, ['p1', 'p2', 'p3', 'p4']);
+      return updatedState;
+    };
+
+    expect(state.drawPile.length).toBe(4);
+    expect(state.discardPile.length).toBe(3);
+    let newState = makeTurn('p1', state);
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+    expect(newState.drawPile.length).toBe(3);
+    expect(newState.discardPile.length).toBe(4);
+
+    newState = makeTurn('p2', newState);
+    expect(newState.drawPile.length).toBe(2);
+    expect(newState.discardPile.length).toBe(5);
+
+    newState = makeTurn('p3', newState);
+    expect(newState.drawPile.length).toBe(6); // We should now have reshuffled discard into draw
+    expect(newState.discardPile.length).toBe(1);
+
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+  });
 });

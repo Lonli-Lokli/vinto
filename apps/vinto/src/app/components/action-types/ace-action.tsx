@@ -7,6 +7,7 @@ import { OpponentSelectButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
+import { getCardLongDescription, getCardName } from '@vinto/shapes';
 
 export const AceAction = observer(() => {
   const gameClient = useGameClient();
@@ -20,6 +21,7 @@ export const AceAction = observer(() => {
   const opponents = gameClient.visualState.players.filter(
     (p) => p.id !== humanPlayer?.id
   );
+  const action = gameClient.visualState.pendingAction.card.rank;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -41,7 +43,7 @@ export const AceAction = observer(() => {
         {/* Header - spans all 3 columns */}
         <div className="col-span-3 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-primary">
-            🎯 Ace: Force opponent to draw
+            🎯 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
             {isTossInAction && (
               <span className="ml-2 text-[10px] text-accent-primary font-medium">
                 ⚡ Toss-in

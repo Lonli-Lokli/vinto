@@ -7,6 +7,7 @@ import { SkipButton, SwapButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
+import { getCardLongDescription, getCardName } from '@vinto/shapes';
 
 export const JackAction = observer(() => {
   const gameClient = useGameClient();
@@ -17,6 +18,7 @@ export const JackAction = observer(() => {
 
   const swapTargets = pendingAction.targets || [];
   const hasBothCards = swapTargets.length === 2;
+  const action = pendingAction.card.rank;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -36,7 +38,7 @@ export const JackAction = observer(() => {
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs md:text-sm font-semibold text-primary">
-            🔄 Jack Action
+            🔄 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
             {isTossInAction && (
               <span className="ml-2 text-[10px] text-accent-primary font-medium">
                 ⚡ Toss-in

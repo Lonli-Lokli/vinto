@@ -85,6 +85,10 @@ export function advanceTurnAfterTossIn(
     state.roundNumber++;
   }
 
+  if (state.drawPile.length === 1) {
+    state.drawPile.reshuffleFrom(state.discardPile);
+  }
+
   // Clear toss-in participation data (but preserve ranks)
   // The ranks stay the same because they represent the cards currently in discard pile
   // For example: King + Ace declared correctly = ['K', 'A'] should persist

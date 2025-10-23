@@ -254,14 +254,18 @@ Skip toss-in and proceed to next player's turn`;
 
           {/* Bot Actions Section */}
           {recentActions.length > 0 && (
-            <div className="mb-2 p-2 bg-info-light rounded border border-info flex-shrink-0">
-              <div className="font-semibold text-secondary mb-1 text-xs">
+            <div className="mb-2 p-1.5 bg-surface-tertiary/40 rounded border border-border-secondary flex-shrink-0">
+              <div className="font-normal text-muted mb-0.5 text-2xs">
                 Recent Actions:
               </div>
-              <div className="flex flex-wrap gap-1 items-center">
-                <ReactJoin separator={<CircleArrowRight size={14} />}>
+              <div className="flex flex-wrap gap-0.5 items-center">
+                <ReactJoin
+                  separator={
+                    <CircleArrowRight size={12} className="text-muted" />
+                  }
+                >
                   {recentActions.map((action, idx) => (
-                    <span key={idx} className="text-secondary text-xs">
+                    <span key={idx} className="text-tertiary text-2xs">
                       {action}
                     </span>
                   ))}

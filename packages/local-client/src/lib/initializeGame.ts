@@ -8,6 +8,7 @@ import {
   getCardConfig,
   PlayerState,
   Rank,
+  shuffleCards,
 } from '@vinto/shapes';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -71,20 +72,6 @@ export const createDeck = (): Card[] => {
   );
 
   return deck;
-};
-
-export const shuffleDeck = (deck: Card[]): Card[] => {
-  const shuffled = [...deck];
-
-  // Use crypto.getRandomValues for better entropy
-  const randomBytes = new Uint32Array(shuffled.length);
-  crypto.getRandomValues(randomBytes);
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor((randomBytes[i] / 0x100000000) * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 };
 
 /**
@@ -154,7 +141,7 @@ function dealCards(
   players: PlayerState[]
 ): { players: PlayerState[]; drawPile: Card[] } {
   const cardsPerPlayer = 5;
-  const shuffledDeck = shuffleDeck(deck);
+  const shuffledDeck = shuffleCards(deck);
 
   let cardIndex = 0;
 

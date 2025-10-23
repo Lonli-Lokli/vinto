@@ -169,7 +169,9 @@ export function Card({
       {/* Flip card container with 3D perspective */}
       <div className="flip-card-container">
         <div
-          className={`flip-card-inner ${revealed && card ? 'flip-card-revealed' : ''}`}
+          className={`flip-card-inner ${
+            revealed && card ? 'flip-card-revealed' : ''
+          }`}
         >
           {/* Front side - Card face (shown when revealed) */}
           <div className="flip-card-front">
@@ -226,7 +228,7 @@ const RankComponent: FC<{
 }> = ({ rank }) => {
   // Container has border and background, image fills it completely
   const containerClassName =
-    'h-full w-auto rounded border border-primary bg-surface-primary shadow-sm overflow-hidden';
+    'h-full w-auto rounded border border-border-primary bg-surface-primary shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
 
   const renderImage = () => {

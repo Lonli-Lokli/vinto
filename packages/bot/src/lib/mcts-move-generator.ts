@@ -45,12 +45,15 @@ export class MCTSMoveGenerator {
       });
 
       // Generate toss-in moves for matching cards
-      const discardRank = state.discardPileTop?.rank;
-      if (discardRank) {
+      // Check if card matches ANY of the valid toss-in ranks
+      const validRanks =
+        state.tossInRanks ||
+        (state.discardPileTop ? [state.discardPileTop.rank] : []);
+      if (validRanks.length > 0) {
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
           const card = state.hiddenCards.get(`${currentPlayer.id}-${pos}`);
-          // Include card if known to match OR unknown (uncertainty about matching)
-          if (card && card.rank === discardRank) {
+          // Include card if known to match ANY of the valid ranks
+          if (card && validRanks.includes(card.rank)) {
             moves.push({
               type: 'toss-in',
               playerId: currentPlayer.id,

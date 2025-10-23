@@ -6,34 +6,17 @@ import { KingCardButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
+import { getCardLongDescription, getCardName } from '@vinto/shapes';
 
 export function KingDeclaration() {
   const gameClient = useGameClient();
   const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
-  // K can now be declared (King is allowed for declaring)
-  const firstRowCards = [
-    { rank: '7' as const, actionable: true },
-    { rank: '8' as const, actionable: true },
-    { rank: '9' as const, actionable: true },
-    { rank: '10' as const, actionable: true },
-    { rank: 'J' as const, actionable: true },
-    { rank: 'Q' as const, actionable: true },
-    { rank: 'K' as const, actionable: true },
-  ];
-  const secondRowCards = [
-    { rank: 'A' as const, actionable: true },
-    { rank: '2' as const, actionable: false },
-    { rank: '3' as const, actionable: false },
-    { rank: '4' as const, actionable: false },
-    { rank: '5' as const, actionable: false },
-    { rank: '6' as const, actionable: false },
-    { rank: 'Joker' as const, actionable: false },
-  ];
-
+  if (!gameClient.visualState.pendingAction) return null;
   // Get the pending action
   const targets = gameClient.visualState.pendingAction?.targets || [];
   const selectedTarget = targets[0];
+  const action = gameClient.visualState.pendingAction.card.rank;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -54,7 +37,7 @@ export function KingDeclaration() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5">
             <h3 className="text-xs font-semibold text-primary leading-tight">
-              👑 King: Select a card
+              👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
               {isTossInAction && (
                 <span className="ml-2 text-[10px] text-accent-primary font-medium">
                   ⚡ Toss-in
@@ -97,7 +80,7 @@ export function KingDeclaration() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between mb-1.5">
             <h3 className="text-xs font-semibold text-primary leading-tight">
-              👑 King: Declare rank
+              👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
               {isTossInAction && (
                 <span className="ml-2 text-[10px] text-accent-primary font-medium">
                   ⚡ Toss-in
@@ -166,14 +149,34 @@ export function KingDeclaration() {
       <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
         <div className="flex flex-row items-center justify-between mb-1.5">
           <h3 className="text-xs font-semibold text-primary leading-tight">
-            👑 King Action
+            👑 {`${getCardName(action)}: ${getCardLongDescription(action)}`}
           </h3>
           <HelpPopover title="King Declaration" rank="K" />
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-gray-500">Waiting...</p>
+          <p className="text-sm text-gray-500">Thinking...</p>
         </div>
       </div>
     </div>
   );
 }
+
+// K can now be declared (King is allowed for declaring)
+const firstRowCards = [
+  { rank: '7' as const, actionable: true },
+  { rank: '8' as const, actionable: true },
+  { rank: '9' as const, actionable: true },
+  { rank: '10' as const, actionable: true },
+  { rank: 'J' as const, actionable: true },
+  { rank: 'Q' as const, actionable: true },
+  { rank: 'K' as const, actionable: true },
+];
+const secondRowCards = [
+  { rank: 'A' as const, actionable: true },
+  { rank: '2' as const, actionable: false },
+  { rank: '3' as const, actionable: false },
+  { rank: '4' as const, actionable: false },
+  { rank: '5' as const, actionable: false },
+  { rank: '6' as const, actionable: false },
+  { rank: 'Joker' as const, actionable: false },
+];
