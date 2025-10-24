@@ -50,6 +50,7 @@ export interface GameState {
 export interface PlayerState {
   id: string;
   name: string;
+  nickname: string;
   isHuman: boolean;
   isBot: boolean;
   cards: Card[];

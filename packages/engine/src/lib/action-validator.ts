@@ -143,6 +143,11 @@ export function actionValidator(
         return { valid: false, reason: 'No card to use action from' };
       }
 
+      // Must not have already been played
+      if (state.pendingAction.card.played) {
+        return { valid: false, reason: 'Card has already been played' };
+      }
+
       return { valid: true };
     }
 

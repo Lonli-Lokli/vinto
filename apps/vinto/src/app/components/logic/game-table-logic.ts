@@ -27,6 +27,7 @@ export function shouldAllowCardInteractions(params: {
   hasCompletePeekSelection: boolean;
   uiStore: UIStore;
   failedTossInAttempts?: Array<{ playerId: string; position: number }>;
+  actingPlayerId?: string | null; // ID of player whose action is being executed
 }): boolean {
   const {
     humanPlayer,
@@ -40,9 +41,15 @@ export function shouldAllowCardInteractions(params: {
     hasCompletePeekSelection,
     failedTossInAttempts = [],
     uiStore,
+    actingPlayerId,
   } = params;
 
   if (!humanPlayer) return false;
+
+  // During action target selection in toss-in queue, only allow if it's the HUMAN's action being processed
+  if (isAwaitingActionTarget && actingPlayerId && actingPlayerId !== humanPlayer.id) {
+    return false;
+  }
 
   // Disable toss-in if player has made a failed attempt in the current toss-in
   if (waitingForTossIn && failedTossInAttempts.length > 0) {
@@ -203,6 +210,7 @@ export function handleCardClick(params: {
   waitingForTossIn: boolean;
   isAwaitingActionTarget: boolean;
   targetType: PendingAction['targetType'];
+  actingPlayerId: string | null; // ID of player whose action is being executed (for toss-in queue)
   gameClient: GameClient;
   uiStore: UIStore;
 }): void {
@@ -216,6 +224,7 @@ export function handleCardClick(params: {
     waitingForTossIn,
     isAwaitingActionTarget,
     targetType,
+    actingPlayerId,
     gameClient,
     uiStore,
   } = params;
@@ -260,8 +269,10 @@ export function handleCardClick(params: {
   if (isAwaitingActionTarget && targetType === 'declare-action') {
     // Don't reveal the card - just highlight it
     // Dispatch the action target selection (now unified for all cards including King)
+    // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id
+    const playerId = actingPlayerId || humanPlayer.id;
     gameClient.dispatch(
-      GameActions.selectActionTarget(humanPlayer.id, humanPlayer.id, position)
+      GameActions.selectActionTarget(playerId, humanPlayer.id, position)
     );
     return;
   }
@@ -273,13 +284,15 @@ export function handleCardClick(params: {
       targetType === 'peek-then-swap' ||
       targetType === 'swap-cards')
   ) {
-    // For peek actions, reveal the card temporarily
+     // For peek actions, reveal the card temporarily
     if (targetType === 'own-card' || targetType === 'peek-then-swap') {
       uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
     }
 
+    // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id
+    const playerId = actingPlayerId || humanPlayer.id;
     gameClient.dispatch(
-      GameActions.selectActionTarget(humanPlayer.id, humanPlayer.id, position)
+      GameActions.selectActionTarget(playerId, humanPlayer.id, position)
     );
     return;
   }
@@ -294,6 +307,7 @@ export function handleOpponentCardClick(params: {
   humanPlayer: PlayerState;
   isAwaitingActionTarget: boolean;
   targetType: PendingAction['targetType'];
+  actingPlayerId: string | null; // ID of player whose action is being executed (for toss-in queue)
   gameClient: GameClient;
   uiStore: UIStore;
 }): void {
@@ -303,6 +317,7 @@ export function handleOpponentCardClick(params: {
     humanPlayer,
     isAwaitingActionTarget,
     targetType,
+    actingPlayerId,
     gameClient,
     uiStore,
   } = params;
@@ -311,8 +326,10 @@ export function handleOpponentCardClick(params: {
   if (isAwaitingActionTarget && targetType === 'declare-action') {
     // Don't reveal the card - just highlight it
     // Dispatch the action target selection (now unified for all cards including King)
+    // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id
+    const actionPlayerId = actingPlayerId || humanPlayer.id;
     gameClient.dispatch(
-      GameActions.selectActionTarget(humanPlayer.id, playerId, position)
+      GameActions.selectActionTarget(actionPlayerId, playerId, position)
     );
     return;
   }
@@ -330,8 +347,10 @@ export function handleOpponentCardClick(params: {
       uiStore.addTemporarilyVisibleCard(playerId, position);
     }
 
+    // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id
+    const actionPlayerId = actingPlayerId || humanPlayer.id;
     gameClient.dispatch(
-      GameActions.selectActionTarget(humanPlayer.id, playerId, position)
+      GameActions.selectActionTarget(actionPlayerId, playerId, position)
     );
   }
 }

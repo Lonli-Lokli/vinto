@@ -402,7 +402,7 @@ export class AnimationService {
       this.animationStore.startDiscardAnimation(
         tossedCard,
         { type: 'player', playerId, position },
-        tossedCard.actionText ? { type: 'drawn' } : { type: 'discard' },
+        { type: 'discard' },
         1_500
       );
     }

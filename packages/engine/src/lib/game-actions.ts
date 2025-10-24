@@ -25,6 +25,7 @@ import {
   UseCardActionAction,
   ExecuteJackSwapAction,
   SkipJackSwapAction,
+  SkipPeekAction,
 } from '@vinto/shapes';
 
 /**
@@ -88,6 +89,11 @@ export const GameActions = {
 
   confirmPeek: (playerId: string): ConfirmPeekAction => ({
     type: 'CONFIRM_PEEK',
+    payload: { playerId },
+  }),
+
+  skipPeek: (playerId: string): SkipPeekAction => ({
+    type: 'SKIP_PEEK',
     payload: { playerId },
   }),
 

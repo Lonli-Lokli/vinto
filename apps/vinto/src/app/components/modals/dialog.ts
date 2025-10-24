@@ -47,7 +47,6 @@ const dialogDeleteObserver = isBrowser
         mutation.removedNodes.forEach((removedNode) => {
           if (removedNode.nodeName === 'DIALOG') {
             const dialog = removedNode as HTMLDialogElement;
-            dialog.removeEventListener('click', lightDismiss);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             dialog.removeEventListener('close', dialogClose);
             if (dialogRemovedEvent) dialog.dispatchEvent(dialogRemovedEvent);
@@ -63,14 +62,6 @@ const animationsComplete = (element: HTMLElement) =>
     element.getAnimations().map((animation) => animation.finished)
   );
 
-// Click outside the dialog handler (light dismiss)
-const lightDismiss = (event: MouseEvent) => {
-  const dialog = event.target as HTMLDialogElement;
-  if (dialog.nodeName === 'DIALOG') {
-    dialog.close('dismiss');
-  }
-};
-
 const dialogClose = async (event: Event) => {
   const dialog = event.target as HTMLDialogElement;
   dialog.setAttribute('inert', '');
@@ -85,7 +76,6 @@ const dialogClose = async (event: Event) => {
 export async function initDialog(dialog: HTMLDialogElement) {
   if (!isBrowser) return;
 
-  dialog.addEventListener('click', lightDismiss);
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   dialog.addEventListener('close', dialogClose);
 

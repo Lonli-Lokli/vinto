@@ -57,7 +57,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
             <div
               className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
             >
-              Tossed Cards ({tossInQueue.length})
+              Tossed ({tossInQueue.length})
             </div>
             <div className="flex flex-col gap-1">
               {tossInQueue.map((item, index) => (

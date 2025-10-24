@@ -31,7 +31,7 @@ export const GameTable = observer(() => {
       );
       return {
         playerId: action.playerId,
-        playerName: player?.name || 'Unknown',
+        playerName: player?.nickname || 'Unknown',
         card: action.card,
       };
     }) || [];
@@ -77,6 +77,7 @@ export const GameTable = observer(() => {
       hasCompletePeekSelection,
       uiStore,
       failedTossInAttempts,
+      actingPlayerId: pendingAction?.playerId || null,
     });
 
   const handleCardClick = (position: number) => {
@@ -92,6 +93,7 @@ export const GameTable = observer(() => {
       waitingForTossIn,
       isAwaitingActionTarget,
       targetType,
+      actingPlayerId: pendingAction?.playerId || null,
       gameClient,
       uiStore,
     });
@@ -116,6 +118,7 @@ export const GameTable = observer(() => {
       humanPlayer,
       isAwaitingActionTarget,
       targetType,
+      actingPlayerId: pendingAction?.playerId || null,
       gameClient,
       uiStore,
     });

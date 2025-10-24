@@ -77,6 +77,7 @@ export class BotAIAdapter {
         subPhase: this.gameClient.state.subPhase,
         turnCount: this.gameClient.state.turnNumber,
         activeTossIn: this.gameClient.state.activeTossIn,
+        currentPlayerId: this.gameClient.currentPlayer.id,
       }),
       // Execute bot turn when state is ready
       // Note: Using fire-and-forget pattern here is intentional.
@@ -127,6 +128,9 @@ export class BotAIAdapter {
    */
   async executeBotTurn(): Promise<void> {
     const currentPlayer = this.gameClient.currentPlayer;
+    const botId = currentPlayer.id;
+    const subPhase = this.gameClient.state.subPhase;    
+    const pendingAction = this.gameClient.state.pendingAction;
 
     if (!currentPlayer.isBot) {
       logger.warn('[BotAI] executeBotTurn called for non-bot player', {
@@ -136,8 +140,12 @@ export class BotAIAdapter {
       return;
     }
 
-    const botId = currentPlayer.id;
-    const subPhase = this.gameClient.state.subPhase;
+    if (pendingAction && pendingAction.playerId !== botId) {
+      console.log(
+        `[BotAI] ${botId} skipping turn execution - pending action is for another player`
+      );
+      return;
+    }
 
     // Add "thinking time" delay for better UX (optional, visual only)
     // Skip delay if:
@@ -308,7 +316,10 @@ export class BotAIAdapter {
 
             // Type assertion: we know positions is non-empty because matchingCards.length > 0
             this.gameClient.dispatch(
-              GameActions.participateInTossIn(botId, positions as [number, ...number[]])
+              GameActions.participateInTossIn(
+                botId,
+                positions as [number, ...number[]]
+              )
             );
 
             // Delay for visual feedback

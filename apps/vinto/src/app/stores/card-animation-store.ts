@@ -107,7 +107,7 @@ export type AnimationStep =
   | {
       type: 'play-action';
       card: Card;
-      from: AnimationPlayerTarget | AnimationDrawnTarget;
+      from: AnimationDrawnTarget;
       duration?: number;
     };
 
@@ -404,26 +404,16 @@ export class CardAnimationStore {
    */
   startPlayActionAnimation(
     card: Card,
-    from: AnimationPlayerTarget | AnimationDrawnTarget,
+    from: AnimationDrawnTarget,
     duration = 2000
   ): string {
     const id = `play-action-${this.animationCounter++}`;
 
     // Capture positions immediately
-    const fromPos =
-      from.type === 'drawn'
-        ? this.positionCapture.getPendingCardPosition()
-        : this.positionCapture.getPlayerCardPosition(
-            from.playerId,
-            from.position
-          );
+    const fromPos = this.positionCapture.getPendingCardPosition();
 
-    // For play-action, the "to" position is the center of the viewport
-    // We'll calculate center dynamically in the component
-    const toPos = {
-      x: typeof window !== 'undefined' ? window.innerWidth / 2 - 50 : 0,
-      y: typeof window !== 'undefined' ? window.innerHeight / 2 - 70 : 0,
-    };
+    // For play-action, the "to" position is same as from - pending pile
+    const toPos = this.positionCapture.getPendingCardPosition()!;
 
     if (!fromPos) {
       console.warn(

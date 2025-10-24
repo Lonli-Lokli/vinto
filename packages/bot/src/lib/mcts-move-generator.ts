@@ -205,45 +205,127 @@ export class MCTSMoveGenerator {
 
       case 'declare-action':
         // King: Select a card position to declare
-        // The actual rank will be determined at declaration time by looking at current game state
-        // This ensures we always declare what's actually at the position, not stale memory
+        // Strategy priority:
+        // 1. HIGHEST: Own known cards (reduces hand size, score, increases knowledge %)
+        //    - Especially Kings (enables multi-toss-in cascade!)
+        //    - High-value cards (reduces score most)
+        //    - Cards matching what bot already has (enables toss-in)
+        // 2. LOWEST: Opponent cards (only if no good own cards available)
         const kingMoves: MCTSMove[] = [];
 
-        // Consider own cards that we know about
+        // Helper: Calculate strategic value of declaring a card
+        const calculateDeclarationValue = (
+          card: { rank: Rank; value: number },
+          isOwnCard: boolean,
+          position: number
+        ): number => {
+          let value = 0;
+
+          if (isOwnCard) {
+            // Base value for declaring own card (always positive)
+            value += 100;
+
+            // Bonus for declaring King (enables King toss-ins!)
+            if (card.rank === 'K') {
+              value += 50; // King toss-in is extremely valuable
+            }
+
+            // Bonus for high-value cards (reduces score more)
+            value += card.value * 2;
+
+            // Bonus if we have matching cards (enables toss-in cascade)
+            let matchingCards = 0;
+            for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+              if (pos === position) continue; // Don't count the card itself
+              const otherMemory = currentPlayer.knownCards.get(pos);
+              if (
+                otherMemory &&
+                otherMemory.confidence > 0.5 &&
+                otherMemory.card &&
+                otherMemory.card.rank === card.rank
+              ) {
+                matchingCards++;
+              }
+            }
+            value += matchingCards * 30; // Toss-in potential is very valuable
+
+            // Small bonus for known cards at higher positions (positional advantage)
+            value += (currentPlayer.cardCount - position) * 2;
+          } else {
+            // Opponent cards have much lower value
+            value = 10; // Minimal base value
+
+            // Only slightly prefer high-value opponent cards
+            value += card.value * 0.5;
+          }
+
+          return value;
+        };
+
+        // Collect all potential King declaration targets with strategic values
+        const potentialDeclarations: Array<{
+          target: MCTSActionTarget;
+          value: number;
+          card: { rank: Rank; value: number };
+        }> = [];
+
+        // Priority 1: Own cards that we know about
         for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
           const memory = currentPlayer.knownCards.get(pos);
-          if (memory && memory.confidence > 0.5) {
-            // We know there's an action card here - target it
-            // Rank will be determined at declaration time
-            kingMoves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [{ playerId: currentPlayer.id, position: pos }],
+          if (memory && memory.confidence > 0.5 && memory.card) {
+            const strategicValue = calculateDeclarationValue(
+              memory.card,
+              true,
+              pos
+            );
+            potentialDeclarations.push({
+              target: { playerId: currentPlayer.id, position: pos },
+              value: strategicValue,
+              card: memory.card,
             });
           }
         }
 
-        // Also consider opponent cards that we know about
+        // Priority 2: Opponent cards (only consider if we have few own cards to declare)
+        // This is defensive/disruptive play
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
             const memory = opponent.knownCards.get(pos);
             if (memory && memory.confidence > 0.5 && memory.card) {
-              // We know this opponent card has an action rank - target it
-              // Rank will be determined at declaration time
-              kingMoves.push({
-                type: 'use-action',
-                playerId: currentPlayer.id,
-                targets: [{ playerId: opponent.id, position: pos }],
+              const strategicValue = calculateDeclarationValue(
+                memory.card,
+                false,
+                pos
+              );
+              potentialDeclarations.push({
+                target: { playerId: opponent.id, position: pos },
+                value: strategicValue,
+                card: memory.card,
               });
             }
           }
         }
 
-        // Limit number of King moves to prevent explosion
-        const MAX_KING_MOVES = 20;
-        moves.push(...kingMoves.slice(0, MAX_KING_MOVES));
+        // Sort by strategic value (highest first)
+        potentialDeclarations.sort((a, b) => b.value - a.value);
+
+        // Generate moves from top declarations
+        const MAX_KING_MOVES = 25; // Increased slightly since we're being strategic
+        for (const declaration of potentialDeclarations.slice(
+          0,
+          MAX_KING_MOVES
+        )) {
+          kingMoves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [declaration.target],
+            declaredRank: declaration.card.rank, // Include the rank for simulation
+          });
+        }
+
+        moves.push(...kingMoves);
         break;
     }
 

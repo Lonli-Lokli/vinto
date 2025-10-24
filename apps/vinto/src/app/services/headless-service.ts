@@ -94,9 +94,14 @@ export class HeadlessService {
       this.handleFailedTossInFeedback(newState, action);
     }
 
-    // Handle peek action card reveals (7, 8, 9, 10, Q, J)
+    // Handle peek action card target selection - reveal peeked cards
     if (action.type === 'SELECT_ACTION_TARGET') {
       this.handlePeekActionCardReveal(oldState, newState, action);
+    }
+
+    // Handle peek confirmation - reveal the peeked cards to the acting player
+    if (action.type === 'CONFIRM_PEEK') {
+      this.handlePeekConfirmation(oldState, newState, action);
     }
   }
 
@@ -194,6 +199,7 @@ export class HeadlessService {
   /**
    * Handle failed toss-in attempt visual feedback
    * Show error indicator on card and make it temporarily visible
+   * ONLY for failed attempts - successful toss-ins should NOT reveal cards
    */
   private handleFailedTossInFeedback(
     newState: GameState,
@@ -218,10 +224,42 @@ export class HeadlessService {
 
         // Add failed toss-in feedback (shows error indicator)
         this.uiStore.addFailedTossInFeedback(playerId, position);
-      }
 
-      // Make card temporarily visible
-      this.uiStore.addTemporarilyVisibleCard(playerId, position);
+        // Make card temporarily visible ONLY for failed attempts
+        // Successful toss-ins should not reveal any cards
+        this.uiStore.addTemporarilyVisibleCard(playerId, position);
+      }
+    }
+  }
+
+  /**
+   * Handle peek confirmation - reveal cards when human confirms a peek
+   * This happens AFTER target selection, so positions are correct
+   */
+  private handlePeekConfirmation(
+    oldState: GameState,
+    newState: GameState,
+    action: GameAction
+  ): void {
+    if (action.type !== 'CONFIRM_PEEK') return;
+
+    const { playerId } = action.payload;
+    const actingPlayer = oldState.players.find((p) => p.id === playerId);
+
+    // Only reveal cards if HUMAN is the acting player
+    if (!actingPlayer?.isHuman) return;
+
+    // Get the peek targets from the oldState pendingAction
+    const targets = oldState.pendingAction?.targets || [];
+
+    // Reveal each peeked card
+    for (const target of targets) {
+      if (target.card) {
+        console.log(
+          `[HeadlessService] Revealing peeked card for human: ${target.playerId} position ${target.position}`
+        );
+        this.uiStore.addTemporarilyVisibleCard(target.playerId, target.position);
+      }
     }
   }
 
@@ -234,8 +272,9 @@ export class HeadlessService {
    * - If bot is acting player: Don't reveal (bot's private information)
    * - Jack (J) is a blind swap: Never reveal cards
    *
-   * When human selects peek targets, game-table-logic.ts already handles reveals.
-   * This handler is for showing highlights/animations when BOT peeks, WITHOUT revealing card content.
+   * IMPORTANT: game-table-logic.ts already handles revealing cards when human clicks.
+   * This handler should ONLY handle BOT peeks for showing highlights.
+   * Do NOT reveal cards here for human - that causes double-reveals and premature visibility during toss-in.
    */
   private handlePeekActionCardReveal(
     oldState: GameState,
@@ -266,14 +305,8 @@ export class HeadlessService {
     const actingPlayer = newState.players.find((p) => p.id === playerId);
     if (!actingPlayer) return;
 
-    // Only reveal card if HUMAN is the acting player
-    // (In local game, revealing to human = revealing to the only viewer)
-    if (actingPlayer.isHuman) {
-      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
-      console.log(
-        `[HeadlessService] Human peek action (${actionCard.rank}) - revealing card at ${targetPlayerId} position ${position}`
-      );
-    } else {
+    // ONLY handle bot peeks - human peeks are handled by game-table-logic.ts
+    if (!actingPlayer.isHuman) {
       // Bot is peeking - don't reveal card content, but add highlight for visual feedback
       // This shows the human WHICH cards the bot peeked at, without revealing the card value
       this.uiStore.addHighlightedCard(targetPlayerId, position);
@@ -281,6 +314,8 @@ export class HeadlessService {
         `[HeadlessService] Bot peek action (${actionCard.rank}) - highlighting (not revealing) card at ${targetPlayerId} position ${position}`
       );
     }
+    // Note: We do NOT add temporarilyVisibleCard for human peeks here
+    // because game-table-logic.ts already does that when the human clicks the card
   }
 
   public dispose() {

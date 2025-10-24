@@ -2,6 +2,7 @@
 // Observable wrapper around GameEngine for UI integration
 
 import { makeObservable, observable, action, computed } from 'mobx';
+import { deepEqual } from 'fast-equals';
 
 import copy from 'fast-copy';
 import type {
@@ -299,8 +300,10 @@ export class GameClient {
    */
   @action
   syncVisualState(): void {
-    console.log('[GameClient] Syncing visual state to logical state');
-    this._visualState = copy(this._state);
+    if (!deepEqual(this._visualState, this._state)) {
+      console.log('[GameClient] Syncing visual state to logical state');
+      this._visualState = copy(this._state);
+    }
   }
 
   /**

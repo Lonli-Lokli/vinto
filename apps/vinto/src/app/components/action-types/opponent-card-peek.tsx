@@ -42,7 +42,9 @@ export const OpponentCardPeek = observer(() => {
                 </span>
               )}
             </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">
+              {getCardShortDescription(action)}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {hasRevealedCard && (

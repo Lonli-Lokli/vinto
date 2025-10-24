@@ -18,7 +18,6 @@ export const QueenAction = observer(() => {
   const action = gameClient.visualState.pendingAction.card.rank;
   const peekTargets = gameClient.visualState.pendingAction.targets || [];
   const hasBothCards = peekTargets.length === 2;
-  const hasAnyCard = peekTargets.length > 0;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -86,7 +85,6 @@ export const QueenAction = observer(() => {
             }}
           />
           <SkipButton
-            disabled={hasAnyCard}
             onClick={() => {
               if (!humanPlayer) return;
               gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));

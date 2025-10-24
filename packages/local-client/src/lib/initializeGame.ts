@@ -84,6 +84,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
   players.push({
     id: 'human-1',
     name: 'You',
+    nickname: 'You',
     isHuman: true,
     isBot: false,
     cards: [],
@@ -96,6 +97,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-1`,
       name: `Michelangelo`,
+      nickname: 'Mikey',
       isHuman: false,
       isBot: true,
       cards: [],
@@ -106,6 +108,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-2`,
       name: `Donatello`,
+      nickname: 'Don',
       isHuman: false,
       isBot: true,
       cards: [],
@@ -116,6 +119,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
     {
       id: `bot-3`,
       name: `Raphael`,
+      nickname: 'Raph',
       isHuman: false,
       isBot: true,
       cards: [],

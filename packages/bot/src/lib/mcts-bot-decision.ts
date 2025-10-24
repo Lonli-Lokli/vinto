@@ -142,6 +142,25 @@ export class MCTSBotDecisionService implements BotDecisionService {
       `[MCTS] ${this.botId} deciding turn action (${this.difficulty})`
     );
 
+    // HEURISTIC: Always take 7 or 8 from discard if bot has unknown cards
+    // These peek actions are STRICTLY better than drawing:
+    // - Guaranteed knowledge gain (vs. random draw)
+    // - No hand size increase
+    // - No score increase
+    // - No information revealed to opponents
+    if (context.discardTop) {
+      const {rank: discardRank, played} = context.discardTop;
+      const hasUnknownCards =
+        this.countUnknownCards(context.botPlayer) > 0;
+
+      if ((discardRank === '7' || discardRank === '8') && hasUnknownCards && !played) {
+        console.log(
+          `[MCTS] Heuristic: Always taking ${discardRank} from discard (has unknown cards)`
+        );
+        return { action: 'take-discard' };
+      }
+    }
+
     const gameState = this.constructGameState(context);
     const result = this.runMCTSWithPlan(gameState);
 
@@ -162,8 +181,67 @@ export class MCTSBotDecisionService implements BotDecisionService {
   shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
 
-    if (!drawnCard.actionText) return false;
+    if (!drawnCard.actionText || drawnCard.played) return false;
 
+    // HEURISTIC: Always use 7 or 8 peek actions if bot has unknown cards
+    // These are STRICTLY better than swapping because:
+    // - Guaranteed knowledge gain
+    // - No hand size increase (unlike swapping which keeps the card)
+    // - No score increase
+    const hasUnknownCards = this.countUnknownCards(context.botPlayer) > 0;
+    if ((drawnCard.rank === '7' || drawnCard.rank === '8') && hasUnknownCards) {
+      console.log(
+        `[MCTS] Heuristic: Always using ${drawnCard.rank} peek action (has unknown cards)`
+      );
+      return true;
+    }
+
+    // HEURISTIC: For Ace, compare action value vs swap value
+    // Ace is worth only 1 point, so swapping it for a high card is often better
+    // than using the force-draw action (which is only good defensively)
+    if (drawnCard.rank === 'A') {
+      // Check if we have high-value known cards to swap
+      let maxKnownValue = 0;
+      for (let pos = 0; pos < context.botPlayer.cards.length; pos++) {
+        if (context.botPlayer.knownCardPositions.includes(pos)) {
+          const card = context.botPlayer.cards[pos];
+          if (card.value > maxKnownValue) {
+            maxKnownValue = card.value;
+          }
+        }
+      }
+
+      // If we can swap Ace for a card worth 8+, do that instead
+      if (maxKnownValue >= 8) {
+        console.log(
+          `[MCTS] Heuristic: Swapping Ace instead of using action (can replace ${maxKnownValue})`
+        );
+        return false;
+      }
+
+      // Check if any opponent is close to calling Vinto (defensive Ace use)
+      const botScore = context.botPlayer.cards.reduce((sum, c) => sum + c.value, 0);
+      for (const player of context.allPlayers) {
+        if (player.id === context.botId) continue;
+        const opponentScore = player.cards.reduce((sum, c) => sum + c.value, 0);
+
+        // If opponent has low score and few cards, Ace force-draw is valuable
+        if (opponentScore < botScore - 3 && player.cards.length <= 3) {
+          console.log(
+            `[MCTS] Heuristic: Using Ace action (defensive - opponent near Vinto)`
+          );
+          return true;
+        }
+      }
+
+      // Default: swap Ace (low value card, action is situational)
+      console.log(
+        `[MCTS] Heuristic: Swapping Ace (low value, no defensive need)`
+      );
+      return false;
+    }
+
+    // For other action cards, run MCTS to evaluate action effectiveness
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
 
@@ -462,8 +540,48 @@ export class MCTSBotDecisionService implements BotDecisionService {
       return this.simulateKnowledgeGainingSwap(context, _tempMemory);
     }
 
-    // King (K): No direct position knowledge gain
-    // Ace (A): No direct position knowledge gain
+    // King (K): EXTREMELY valuable to discard via swap
+    // - Removes card from hand when declared (like using an action)
+    // - Triggers toss-in for BOTH King AND declared rank
+    // - Can execute declared card's action
+    // - Declaring another King creates massive cascade potential
+    if (rank === 'K') {
+      // Base value: equivalent to a strong peek action
+      let kingValue = 4;
+
+      // Bonus if bot has OTHER known Kings (enables King toss-in cascade)
+      let otherKings = 0;
+      for (let pos = 0; pos < context.botPlayer.cards.length; pos++) {
+        if (!context.botPlayer.knownCardPositions.includes(pos)) continue;
+        const card = context.botPlayer.cards[pos];
+        if (card.rank === 'K') {
+          otherKings++;
+        }
+      }
+      kingValue += otherKings * 3; // Each King enables toss-in cascade
+
+      // Bonus if bot has known action cards to declare
+      let knownActionCards = 0;
+      for (let pos = 0; pos < context.botPlayer.cards.length; pos++) {
+        if (!context.botPlayer.knownCardPositions.includes(pos)) continue;
+        const card = context.botPlayer.cards[pos];
+        if (card.actionText && card.rank !== 'K') {
+          knownActionCards++;
+        }
+      }
+      kingValue += knownActionCards * 2; // Can declare and execute these actions
+
+      return kingValue;
+    }
+
+    // Ace (A): Low value card (1 point), but force-draw action is situational
+    // Swapping Ace into hand is often good (low points)
+    // Using Ace action is only good when opponent is about to call Vinto
+    // Give small bonus since it's a flexible card
+    if (rank === 'A') {
+      return 1;
+    }
+
     return 0;
   }
 

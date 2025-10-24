@@ -195,8 +195,135 @@ export class MCTSStateTransition {
           break;
 
         case 'declare-action':
-          // King - declare action (simulated as giving information)
-          // No state change in simulation
+          // King - declare action
+          // Simulate the card being removed from hand and toss-in cascade
+          if (move.targets && move.targets.length > 0) {
+            const target = move.targets[0];
+            const targetPlayer = state.players.find(
+              (p) => p.id === target.playerId
+            );
+
+            if (targetPlayer) {
+              // Get the card being declared
+              const cardKey = `${target.playerId}-${target.position}`;
+              const declaredCard = state.hiddenCards.get(cardKey);
+
+              if (declaredCard) {
+                // Remove the card from the player's hand
+                state.hiddenCards.delete(cardKey);
+                targetPlayer.cardCount--;
+                targetPlayer.score -= declaredCard.value;
+
+                // Update positions in hiddenCards map (shift down after removal)
+                const updatedHiddenCards = new Map<string, Card>();
+                for (const [key, cardValue] of state.hiddenCards.entries()) {
+                  if (key.startsWith(`${targetPlayer.id}-`)) {
+                    const pos = parseInt(key.split('-')[1], 10);
+                    if (pos > target.position) {
+                      updatedHiddenCards.set(
+                        `${targetPlayer.id}-${pos - 1}`,
+                        cardValue
+                      );
+                    } else if (pos !== target.position) {
+                      updatedHiddenCards.set(key, cardValue);
+                    }
+                  } else {
+                    updatedHiddenCards.set(key, cardValue);
+                  }
+                }
+                state.hiddenCards = updatedHiddenCards;
+
+                // Update known cards positions
+                const updatedKnownCards = new Map<
+                  number,
+                  { card: Card | null; confidence: number }
+                >();
+                for (const [pos, memory] of targetPlayer.knownCards.entries()) {
+                  if (pos === target.position) {
+                    continue; // Remove this position
+                  } else if (pos > target.position) {
+                    updatedKnownCards.set(pos - 1, memory);
+                  } else {
+                    updatedKnownCards.set(pos, memory);
+                  }
+                }
+                targetPlayer.knownCards = updatedKnownCards;
+
+                // Simulate toss-in cascade for BOTH King and declared rank
+                // When declaring correctly: Both 'K' and declaredCard.rank can be tossed in
+                // We assume correct declaration in simulation (optimistic)
+                // Use move.declaredRank if available, otherwise use actual card rank
+                const declaredRank = move.declaredRank || declaredCard.rank;
+                const tossInRanks =
+                  declaredRank === 'K' ? ['K'] : ['K', declaredRank];
+
+                // Check all players for matching cards to toss in
+                for (const player of state.players) {
+                  const cardsToTossIn: number[] = [];
+
+                  // Collect all positions with matching ranks
+                  for (let pos = 0; pos < player.cardCount; pos++) {
+                    const card = state.hiddenCards.get(`${player.id}-${pos}`);
+                    const memory = player.knownCards.get(pos);
+
+                    // Only toss in if we know the card matches
+                    if (
+                      card &&
+                      memory &&
+                      memory.confidence > 0.5 &&
+                      tossInRanks.includes(card.rank)
+                    ) {
+                      cardsToTossIn.push(pos);
+                    }
+                  }
+
+                  // Remove tossed-in cards (in reverse order to maintain indices)
+                  for (const pos of cardsToTossIn.sort((a, b) => b - a)) {
+                    const cardKey = `${player.id}-${pos}`;
+                    const card = state.hiddenCards.get(cardKey);
+
+                    if (card) {
+                      state.hiddenCards.delete(cardKey);
+                      player.cardCount--;
+                      player.score -= card.value;
+
+                      // Shift positions down
+                      const shifted = new Map<string, Card>();
+                      for (const [key, val] of state.hiddenCards.entries()) {
+                        if (key.startsWith(`${player.id}-`)) {
+                          const p = parseInt(key.split('-')[1], 10);
+                          if (p > pos) {
+                            shifted.set(`${player.id}-${p - 1}`, val);
+                          } else if (p !== pos) {
+                            shifted.set(key, val);
+                          }
+                        } else {
+                          shifted.set(key, val);
+                        }
+                      }
+                      state.hiddenCards = shifted;
+
+                      // Shift known cards
+                      const shiftedKnown = new Map<
+                        number,
+                        { card: Card | null; confidence: number }
+                      >();
+                      for (const [p, mem] of player.knownCards.entries()) {
+                        if (p === pos) {
+                          continue;
+                        } else if (p > pos) {
+                          shiftedKnown.set(p - 1, mem);
+                        } else {
+                          shiftedKnown.set(p, mem);
+                        }
+                      }
+                      player.knownCards = shiftedKnown;
+                    }
+                  }
+                }
+              }
+            }
+          }
           break;
       }
     }

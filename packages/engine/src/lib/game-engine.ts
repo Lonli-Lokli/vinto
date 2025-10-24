@@ -28,6 +28,7 @@ import { GameAction, GameState, NeverError } from '@vinto/shapes';
 import { handleExecuteJackSwap } from './cases/execute-jack-swap';
 import { handleSkipJackSwap } from './cases/skip-jack-swap';
 import { advanceTurnAfterTossIn } from './utils/toss-in-utils';
+import { handleSkipPeek } from './cases/skip-peek';
 
 type GameEngineReduceResult = {
   success: true;
@@ -70,6 +71,7 @@ export class GameEngine {
         reason: validation.reason,
         currentPhase: state.phase,
         currentSubPhase: state.subPhase,
+        action: action
       });
       return { success: false, state, reason: validation.reason }; // Return unchanged state for invalid actions
     }
@@ -104,6 +106,10 @@ export class GameEngine {
 
       case 'CONFIRM_PEEK':
         newState = handleConfirmPeek(state, action);
+        break;
+
+      case 'SKIP_PEEK':
+        newState = handleSkipPeek(state, action);
         break;
 
       case 'CALL_VINTO':
