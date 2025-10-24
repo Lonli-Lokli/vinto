@@ -1,4 +1,4 @@
-import { GameState, ConfirmPeekAction, SkipPeekAction } from '@vinto/shapes';
+import { GameState, SkipPeekAction } from '@vinto/shapes';
 import copy from 'fast-copy';
 import {
   addTossInCard,

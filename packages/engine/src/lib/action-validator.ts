@@ -222,6 +222,7 @@ export function actionValidator(
       return { valid: true };
     }
 
+    case 'SKIP_PEEK':
     case 'CONFIRM_PEEK': {
       const { playerId } = action.payload;
 
