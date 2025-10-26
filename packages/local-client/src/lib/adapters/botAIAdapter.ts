@@ -43,7 +43,7 @@ const _SMALL_DELAY = 200; // small delay to let UI draw
 export class BotAIAdapter {
   private botDecisionService: BotDecisionService;
   private disposeReaction?: () => void;
-  private isHandlingTossIn = false;
+  private botsProcessedForRanks = new Map<string, string>(); // botId -> serialized ranks
   // Cache action plan when bot commits to take-discard with action card
   // This ensures consistency: bot won't change its mind about using the action
   private cachedActionDecision: BotActionDecision | null = null;
@@ -84,12 +84,18 @@ export class BotAIAdapter {
       // Reactions should not await - they trigger async operations that will
       // naturally loop back through state changes. Error handling occurs within methods.
       ({ isBot, subPhase, activeTossIn }) => {
+        if (
+          subPhase !== 'toss_queue_active' &&
+          this.botsProcessedForRanks.size > 0
+        ) {
+          console.log(
+            '[BotAI] Clearing processed ranks map - toss-in phase ended'
+          );
+          this.botsProcessedForRanks.clear();
+        }
+
         // Handle toss-in phase separately (all bot players participate)
         if (subPhase === 'toss_queue_active' && activeTossIn) {
-          if (this.isHandlingTossIn) {
-            // Already processing toss-in - avoid re-entrancy
-            return;
-          }
           // Fire-and-forget: Let the async operation run independently
           this.handleTossInPhase().catch((error) => {
             console.error('[BotAI] Error in toss-in phase:', error);
@@ -129,7 +135,7 @@ export class BotAIAdapter {
   async executeBotTurn(): Promise<void> {
     const currentPlayer = this.gameClient.currentPlayer;
     const botId = currentPlayer.id;
-    const subPhase = this.gameClient.state.subPhase;    
+    const subPhase = this.gameClient.state.subPhase;
     const pendingAction = this.gameClient.state.pendingAction;
 
     if (!currentPlayer.isBot) {
@@ -223,7 +229,9 @@ export class BotAIAdapter {
       return;
     }
 
-    this.isHandlingTossIn = true;
+    const tossInRanks = activeTossIn.ranks;
+    const ranksKey = [...tossInRanks].sort().join(','); // Create unique key for current ranks
+    console.log(`[BotAI] Toss-in phase for ranks: ${ranksKey}`);
     try {
       const tossInRanks = activeTossIn.ranks;
       console.log(`[BotAI] Toss-in phase for ranks : ${tossInRanks}`);
@@ -264,6 +272,17 @@ export class BotAIAdapter {
       for (const botPlayer of botPlayers) {
         const botId = botPlayer.id;
 
+        // Skip if this bot has already processed this specific rank combination
+        if (this.botsProcessedForRanks.get(botId) === ranksKey) {
+          console.log(
+            `[BotAI] ${botId} already processed ranks ${ranksKey}, skipping`
+          );
+          continue;
+        }
+
+        // Mark this bot as having processed the current ranks
+        this.botsProcessedForRanks.set(botId, ranksKey);
+
         // Re-fetch the latest active toss-in state to check if player is already ready
         // This prevents duplicate PLAYER_TOSS_IN_FINISHED actions if state changed during async operations
         const currentActiveTossIn = this.gameClient.state.activeTossIn;
@@ -277,6 +296,9 @@ export class BotAIAdapter {
           console.log(`[BotAI] ${botId} already marked ready`);
           continue;
         }
+
+        // Mark this bot as having processed these specific ranks
+        this.botsProcessedForRanks.set(botId, ranksKey);
 
         // Create decision context for this bot
         const context = this.createBotContext(botId);
@@ -336,16 +358,29 @@ export class BotAIAdapter {
         // Re-check before marking ready (state might have changed during delays/toss-ins)
         const latestActiveTossIn = this.gameClient.state.activeTossIn;
         const currentSubPhase = this.gameClient.state.subPhase;
+
+        // IMPORTANT: Only mark ready if ranks haven't changed
+        // If ranks changed, bot needs to re-process with new ranks
+
+        const latestRanksKey = [...(latestActiveTossIn?.ranks ?? [])]
+          .sort()
+          .join(',');
         if (
           latestActiveTossIn &&
+          latestRanksKey === ranksKey && // Ranks must match
           !latestActiveTossIn.playersReadyForNextTurn.includes(botId) &&
           currentSubPhase === 'toss_queue_active'
         ) {
-          // Mark bot as ready for next turn (only if still in toss_queue_active phase)
           this.gameClient.dispatch(GameActions.playerTossInFinished(botId));
+        } else if (latestRanksKey !== ranksKey) {
+          console.log(
+            `[BotAI] ${botId} NOT marking ready - ranks changed from ${ranksKey} to ${latestRanksKey}`
+          );
+          // Clear the processed flag so bot can reprocess with new ranks
+          this.botsProcessedForRanks.delete(botId);
         } else {
           console.log(
-            `[BotAI] ${botId} skipping mark ready - already ready or not in toss_queue_active (subPhase: ${currentSubPhase})`
+            `[BotAI] ${botId} skipping mark ready - already ready or not in toss_queue_active`
           );
         }
 
@@ -354,8 +389,8 @@ export class BotAIAdapter {
       }
 
       console.log('[BotAI] All bots processed for toss-in phase');
-    } finally {
-      this.isHandlingTossIn = false;
+    } catch (error) {
+      logger.error('[BotAI] Error during toss-in phase:', error);
     }
   }
 

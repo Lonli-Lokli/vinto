@@ -56,6 +56,7 @@ export function createTestPlayer(
   return {
     id,
     name,
+    nickname: name,
     isHuman,
     isBot: !isHuman,
     cards: [...cards],

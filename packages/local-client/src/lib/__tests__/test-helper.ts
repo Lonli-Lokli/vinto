@@ -1,5 +1,5 @@
 /**
- * Shared test helpers for Bot tests
+ * Shared test helpers
  */
 
 import {
@@ -9,7 +9,6 @@ import {
   Pile,
   PlayerState,
 } from '@vinto/shapes';
-import { BotDecisionContext } from '../mcts-bot-decision';
 
 /**
  * Create a test card with proper value mapping
@@ -93,7 +92,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     currentPlayerIndex: 0,
     vintoCallerId: null,
     coalitionLeaderId: null,
-    drawPile: toPile(),
+    drawPile: toPile(createTestDeck()),
     discardPile: toPile(),
     pendingAction: null,
     activeTossIn: null,
@@ -108,46 +107,30 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
   };
 }
 
-/**
- * Create a bot decision context for testing
- *
- * IMPORTANT: For test reliability, this ensures the bot knows ALL its own cards
- * with 100% confidence by adding them to opponentKnowledge (which bypasses
- * the probabilistic memory system and ensures deterministic test behavior).
- */
-export function createBotContext(
-  botId: string,
-  gameState: GameState,
-  overrides?: Partial<BotDecisionContext>
-): BotDecisionContext {
-  const botPlayer = gameState.players.find((p) => p.id === botId);
-  if (!botPlayer) {
-    throw new Error(`Bot player ${botId} not found in game state`);
+export function createTestDeck(): Card[] {
+  const ranks = [
+    'A',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    'J',
+    'Q',
+    'K',
+  ] as const;
+  const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+  const deck: Card[] = [];
+
+  for (const suit of suits) {
+    for (const rank of ranks) {
+      deck.push(createTestCard(rank, suit));
+    }
   }
 
-  // For test reliability: Create opponent knowledge map that includes the bot's own cards
-  // This ensures the bot knows its cards with 100% confidence in tests
-  const opponentKnowledge = new Map<string, Map<number, Card>>();
-  const botCardsMap = new Map<number, Card>();
-
-  // Add all bot's known cards to the knowledge map
-  botPlayer.cards.forEach((card, position) => {
-    if (botPlayer.knownCardPositions.includes(position)) {
-      botCardsMap.set(position, card);
-    }
-  });
-
-  opponentKnowledge.set(botId, botCardsMap);
-
-  return {
-    botId,
-    botPlayer,
-    gameState,
-    allPlayers: gameState.players,
-    discardTop: gameState.discardPile.peekTop() || undefined,
-    discardPile: gameState.discardPile,
-    pendingCard: undefined,
-    opponentKnowledge, // Use the knowledge map with bot's own cards
-    ...overrides,
-  };
+  return deck;
 }

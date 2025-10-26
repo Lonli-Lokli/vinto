@@ -149,11 +149,14 @@ export class MCTSBotDecisionService implements BotDecisionService {
     // - No score increase
     // - No information revealed to opponents
     if (context.discardTop) {
-      const {rank: discardRank, played} = context.discardTop;
-      const hasUnknownCards =
-        this.countUnknownCards(context.botPlayer) > 0;
+      const { rank: discardRank, played } = context.discardTop;
+      const hasUnknownCards = this.countUnknownCards(context.botPlayer) > 0;
 
-      if ((discardRank === '7' || discardRank === '8') && hasUnknownCards && !played) {
+      if (
+        (discardRank === '7' || discardRank === '8') &&
+        hasUnknownCards &&
+        !played
+      ) {
         console.log(
           `[MCTS] Heuristic: Always taking ${discardRank} from discard (has unknown cards)`
         );
@@ -220,7 +223,10 @@ export class MCTSBotDecisionService implements BotDecisionService {
       }
 
       // Check if any opponent is close to calling Vinto (defensive Ace use)
-      const botScore = context.botPlayer.cards.reduce((sum, c) => sum + c.value, 0);
+      const botScore = context.botPlayer.cards.reduce(
+        (sum, c) => sum + c.value,
+        0
+      );
       for (const player of context.allPlayers) {
         if (player.id === context.botId) continue;
         const opponentScore = player.cards.reduce((sum, c) => sum + c.value, 0);
@@ -261,7 +267,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
           position: t.position,
         })),
         // Use shouldSwap from the move (for Queen) or check if type is 'swap' (for Jack)
-        shouldSwap: bestMove.shouldSwap ?? (bestMove.type === 'swap'),
+        shouldSwap: bestMove.shouldSwap ?? bestMove.type === 'swap',
         declaredRank: bestMove.declaredRank,
       };
     }
@@ -320,6 +326,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
     discardedRanks: [Rank, ...Rank[]],
     context: BotDecisionContext
   ): boolean {
+    const ranksToCheck: Rank[] = discardedRanks.filter(
+      (rank) => rank !== 'Joker'
+    );
     this.initializeIfNeeded(context);
 
     // Simple check: do we have any cards that match the toss-in ranks?
@@ -329,7 +338,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         return false;
       }
       // Check if card matches any of the toss-in ranks
-      return discardedRanks.includes(card.rank);
+      return ranksToCheck.includes(card.rank);
     });
 
     return hasMatchingCard;
