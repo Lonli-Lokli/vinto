@@ -9,6 +9,7 @@ import { JackAction } from './action-types/jack-action';
 import { QueenAction } from './action-types/queen-action';
 import { KingDeclaration } from './action-types/king-declaration';
 import { AceAction } from './action-types/ace-action';
+import { MissedAction } from './action-types/missed-action';
 import { useGameClient } from '@vinto/local-client';
 import { NeverError, TargetType } from '@vinto/shapes';
 
@@ -64,8 +65,7 @@ const ActionContent: FC<{ targetType: TargetType | undefined }> = ({
     case 'declare-action':
       return <KingDeclaration />;
     case undefined:
-      console.warn('ActionTargetSelector: targetType is undefined');
-      return null;
+      return <MissedAction />;
     default:
       throw new NeverError(targetType);
   }

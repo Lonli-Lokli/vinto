@@ -5,6 +5,7 @@ import {
   clearTossInReadyList,
   getAutomaticallyReadyPlayers,
 } from '../utils/toss-in-utils';
+import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**
  * SKIP_JACK_SWAP Handler
@@ -64,6 +65,7 @@ export function handleSkipJackSwap(
         from: 'hand',
         playerId: nextAction.playerId,
         actionPhase: 'choosing-action',
+        targetType: getTargetTypeFromRank(nextAction.card.rank),
         targets: [],
       };
 

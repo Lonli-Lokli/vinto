@@ -4,6 +4,7 @@ import {
   getAutomaticallyReadyPlayers,
   areAllHumansReady,
 } from '../utils/toss-in-utils';
+import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**
  * DISCARD_CARD Handler
@@ -66,6 +67,7 @@ export function handleDiscardCard(
         from: 'hand',
         playerId: nextAction.playerId,
         actionPhase: 'choosing-action',
+        targetType: getTargetTypeFromRank(nextAction.card.rank),
         targets: [],
       };
 

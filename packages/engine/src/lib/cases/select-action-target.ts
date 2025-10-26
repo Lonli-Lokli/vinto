@@ -10,6 +10,7 @@ import {
   clearTossInReadyList,
   getAutomaticallyReadyPlayers,
 } from '../utils/toss-in-utils';
+import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**
  * SELECT_ACTION_TARGET Handler
@@ -274,6 +275,7 @@ export function handleSelectActionTarget(
               from: 'hand',
               playerId: nextAction.playerId,
               actionPhase: 'choosing-action',
+              targetType: getTargetTypeFromRank(nextAction.card.rank),
               targets: [],
             };
 
