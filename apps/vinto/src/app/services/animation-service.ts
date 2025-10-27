@@ -884,7 +884,7 @@ export class AnimationService {
         to: { type: 'discard' },
         duration: 1500,
         revealed: true,
-      }
+      },
     ]);
 
     console.log('[AnimationService] Queen swap animation started');
@@ -905,7 +905,7 @@ export class AnimationService {
     if (!queenCard || queenCard.rank !== 'Q') {
       console.warn('[AnimationService] No Queen card found on discard pile');
       return;
-    };
+    }
 
     this.animationStore.startDiscardAnimation(
       queenCard,
@@ -990,6 +990,14 @@ export class AnimationService {
         duration: 1500,
         revealed: false,
         targetPlayerPosition: player2Position,
+      },
+      {
+        type: 'discard',
+        card: oldState.pendingAction!.card,
+        from: { type: 'drawn' },
+        to: { type: 'discard' },
+        duration: 1500,
+        revealed: true,
       },
     ]);
 
