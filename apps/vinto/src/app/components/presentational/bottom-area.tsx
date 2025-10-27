@@ -8,7 +8,7 @@ import { GamePhaseIndicators } from '../game-phase-indicators';
 import { RankDeclaration } from '../rank-declaration';
 import { WaitingIndicator } from '../waiting-indicator';
 import { useCardAnimationStore } from '../di-provider';
-import { PureCSSParallaxStars } from './parallax-stars';
+
 
 export const BottomArea = observer(() => {
   const animationStore = useCardAnimationStore();
@@ -25,7 +25,7 @@ export const BottomArea = observer(() => {
     >
       <div className="h-full w-full relative">
         {hasBlockingAnimations ? (
-          <PureCSSParallaxStars />
+          <WaitingIndicator />
         ) : (
           // Normal content when not blocking
           <div className="h-full w-full" key="controls-content">

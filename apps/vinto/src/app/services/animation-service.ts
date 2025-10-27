@@ -21,6 +21,7 @@ import {
   GameAction,
   GameState,
   ParticipateInTossInAction,
+  PlayDiscardAction,
   SelectActionTargetAction,
   SkipJackSwapAction,
   SkipQueenSwapAction,
@@ -97,10 +98,12 @@ export class AnimationService {
         this.handleUseCardAction(oldState, newState, action);
         break;
 
+      case 'PLAY_DISCARD':
+        this.handlePlayDiscardCardAction(oldState, newState, action);
+        break;
+
       case 'PARTICIPATE_IN_TOSS_IN':
         this.handleTossIn(oldState, newState, action);
-        // Check if this was a failed toss-in attempt
-        this.handleFailedTossInAttempt(oldState, newState, action);
         break;
 
       case 'CONFIRM_PEEK':
@@ -342,7 +345,6 @@ export class AnimationService {
   /**
    * Handle USE_CARD_ACTION action animation
    * - Shows card with special play-action effect
-   * - Moves to center of screen with glow
    */
   private handleUseCardAction(
     _oldState: GameState,
@@ -350,6 +352,30 @@ export class AnimationService {
     action: UseCardActionAction
   ): void {
     const card = action.payload.card;
+
+    // Sequential animation: play-action effect, then move to discard
+    this.animationStore.startAnimationSequence('parallel', [
+      {
+        type: 'play-action',
+        card,
+        from: { type: 'drawn' },
+        duration: 2000,
+      },
+    ]);
+  }
+
+  /**
+   * Handle USE_CARD_ACTION action animation
+   * - Shows card with special play-action effect
+   */
+  private handlePlayDiscardCardAction(
+    _oldState: GameState,
+    newState: GameState,
+    _action: PlayDiscardAction
+  ): void {
+    const card = newState.discardPile.peekTop();
+
+    if (!card) return;
 
     // Sequential animation: play-action effect, then move to discard
     this.animationStore.startAnimationSequence('sequential', [
@@ -376,24 +402,67 @@ export class AnimationService {
 
     // Get the player from old state to access the cards before they were removed
     const oldPlayer = oldState.players.find((p) => p.id === playerId);
-    if (!oldPlayer) return;
+    const player = newState.players.find((p) => p.id === playerId);
+    if (!oldPlayer || !player) return;
 
     // Check if any positions were failed attempts
     const failedAttempts = newState.activeTossIn?.failedAttempts || [];
 
-    // Animate each tossed-in card separately
-    for (const position of positions) {
-      const wasFailedAttempt = failedAttempts.some(
-        (attempt) =>
-          attempt.playerId === playerId && attempt.position === position
-      );
+    const wasFailedAttempt = failedAttempts.some(
+      (attempt) => attempt.playerId === playerId
+    );
 
-      if (wasFailedAttempt) {
-        // Failed toss-in - don't animate card to discard pile
-        // Card stays in hand, penalty animation handled separately
-        continue;
+    if (wasFailedAttempt) {
+      // Failed toss-in - don't animate card to discard pile
+      // Card stays in hand, penalty animation handled separately
+
+      if (player.cards.length > oldPlayer.cards.length) {
+        const penaltyCardPosition = player.cards.length - 1;
+        const penaltyCard = player.cards[penaltyCardPosition];
+
+        if (penaltyCard) {
+          // Create a sequence with a dummy first step to give React time to render
+          // This matches the pattern used in swap card incorrect declaration
+          const steps: AnimationStep[] = [
+            {
+              type: 'draw',
+              card: penaltyCard,
+              from: { type: 'draw' },
+              to: {
+                type: 'player',
+                playerId,
+                position: penaltyCardPosition,
+              },
+              duration: 1500,
+              revealed: false, // Never reveal penalty cards
+              fullRotation: false,
+            },
+          ];
+
+          this.animationStore.startAnimationSequence('sequential', steps);
+          console.log(
+            '[AnimationService] Failed toss-in penalty card animation started:',
+            {
+              card: penaltyCard.rank,
+              toPosition: penaltyCardPosition,
+            }
+          );
+        } else {
+          console.warn(
+            '[AnimationService] Penalty card not found at position',
+            penaltyCardPosition
+          );
+        }
+      } else {
+        console.warn(
+          '[AnimationService] No penalty card added - card counts are equal or decreased'
+        );
       }
 
+      return;
+    }
+    // Animate each tossed-in card separately
+    for (const position of positions) {
       // Valid toss-in - get the card from old state at its original position
       const tossedCard = oldPlayer.cards[position];
       if (!tossedCard) continue;
@@ -980,107 +1049,6 @@ export class AnimationService {
       console.log(
         '[AnimationService] Jack swap skipped - drawn card to discard'
       );
-    }
-  }
-
-  /**
-   * Handle failed toss-in attempt
-   * - Card stays in hand (no animation needed - it never left)
-   * - Penalty card animates from draw pile to hand
-   * - Visual feedback is handled by HeadlessService (error indicator on failed card)
-   */
-  private handleFailedTossInAttempt(
-    oldState: GameState,
-    newState: GameState,
-    action: ParticipateInTossInAction
-  ): void {
-    const { playerId, positions } = action.payload;
-
-    // Get the player
-    const player = newState.players.find((p) => p.id === playerId);
-    const oldPlayer = oldState.players.find((p) => p.id === playerId);
-
-    if (!player || !oldPlayer) {
-      console.warn(
-        '[AnimationService] Player not found for failed toss-in animation'
-      );
-      return;
-    }
-
-    // Check if this was a failed attempt
-    const failedAttempts = newState.activeTossIn?.failedAttempts || [];
-
-    // Check each position for failed attempts
-    for (const position of positions) {
-      const wasFailedAttempt = failedAttempts.some(
-        (attempt) =>
-          attempt.playerId === playerId && attempt.position === position
-      );
-
-      if (wasFailedAttempt) {
-        console.log(
-          '[AnimationService] Failed toss-in detected - checking for penalty card:',
-          {
-            playerId,
-            position,
-          }
-        );
-
-        console.log('[AnimationService] Card count comparison:', {
-          oldCount: oldPlayer.cards.length,
-          newCount: player.cards.length,
-        });
-
-        // Check if a penalty card was added (new state has more cards than old state)
-        if (player.cards.length > oldPlayer.cards.length) {
-          const penaltyCardPosition = player.cards.length - 1;
-          const penaltyCard = player.cards[penaltyCardPosition];
-
-          if (penaltyCard) {
-            // Create a sequence with a dummy first step to give React time to render
-            // This matches the pattern used in swap card incorrect declaration
-            const steps: AnimationStep[] = [
-              // Dummy step: animate from draw to draw (no movement, just a delay)
-              {
-                type: 'draw',
-                card: penaltyCard,
-                from: { type: 'draw' },
-                to: { type: 'drawn' },
-                duration: 1, // Very short duration, just to trigger React render
-                revealed: false,
-              },
-              // Actual animation: draw pile to hand
-              {
-                type: 'draw',
-                card: penaltyCard,
-                from: { type: 'draw' },
-                to: { type: 'player', playerId, position: penaltyCardPosition },
-                duration: 1500,
-                revealed: false, // Never reveal penalty cards
-                fullRotation: false,
-              },
-            ];
-
-            this.animationStore.startAnimationSequence('sequential', steps);
-            console.log(
-              '[AnimationService] Failed toss-in penalty card animation started:',
-              {
-                card: penaltyCard.rank,
-                toPosition: penaltyCardPosition,
-              }
-            );
-          } else {
-            console.warn(
-              '[AnimationService] Penalty card not found at position',
-              penaltyCardPosition
-            );
-          }
-        } else {
-          console.warn(
-            '[AnimationService] No penalty card added - card counts are equal or decreased'
-          );
-        }
-      }
     }
   }
 

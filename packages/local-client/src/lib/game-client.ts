@@ -149,7 +149,7 @@ export class GameClient {
 
     const historyEntry: GameActionHistory = {
       playerId: player.id,
-      playerName: player.name,
+      playerName: player.nickname,
       description,
       timestamp: Date.now(),
       turnNumber: state.turnNumber,
@@ -225,32 +225,13 @@ export class GameClient {
         return null; // Don't show if no card info
       }
 
-      case 'EXECUTE_QUEEN_SWAP': {
-        const queenCard = state.discardPile.peekTop();
-        return queenCard
-          ? `swapped cards with ${formatCard(queenCard)}`
-          : `swapped cards`;
-      }
-
-      case 'SKIP_QUEEN_SWAP': {
-        const queenCard = state.discardPile.peekTop();
-        return queenCard
-          ? `didn't swap with ${formatCard(queenCard)}`
-          : `didn't swap`;
-      }
-
+      case 'EXECUTE_QUEEN_SWAP':
       case 'EXECUTE_JACK_SWAP': {
-        const jackCard = state.discardPile.peekTop();
-        return jackCard
-          ? `swapped cards with ${formatCard(jackCard)}`
-          : `swapped cards`;
+        return 'swapped cards';
       }
-
-      case 'SKIP_JACK_SWAP': {
-        const jackCard = state.discardPile.peekTop();
-        return jackCard
-          ? `didn't swap with ${formatCard(jackCard)}`
-          : `didn't swap`;
+      case 'SKIP_JACK_SWAP':
+      case 'SKIP_QUEEN_SWAP': {
+        return `didn't swap`;
       }
 
       case 'PARTICIPATE_IN_TOSS_IN': {
@@ -262,6 +243,36 @@ export class GameClient {
 
       case 'CALL_VINTO':
         return `called Vinto!`;
+      case 'SELECT_ACTION_TARGET': {
+        switch (state.pendingAction?.targetType) {
+          case 'peek-then-swap':
+            return state.pendingAction.targets.length === 2
+              ? `peeking at ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[0].playerId
+                  )?.nickname
+                } (pos ${state.pendingAction?.targets[0].position + 1}) and ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[1].playerId
+                  )?.nickname
+                } (pos ${state.pendingAction?.targets[1].position + 1})`
+              : null;
+          case 'swap-cards':
+            return state.pendingAction.targets.length === 2
+              ? `thinking about ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[0].playerId
+                  )?.nickname
+                } (pos ${state.pendingAction?.targets[0].position + 1}) and ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[1].playerId
+                  )?.nickname
+                } (pos ${state.pendingAction?.targets[1].position + 1})`
+              : null;
+          default:
+            return null;
+        }
+      }
 
       case 'DECLARE_KING_ACTION':
         const rank = action.payload.declaredRank;

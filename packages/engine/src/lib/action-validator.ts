@@ -363,6 +363,7 @@ export function actionValidator(
 
       return { valid: true };
     }
+    
 
     case 'DECLARE_KING_ACTION': {
       const { playerId } = action.payload;

@@ -39,31 +39,15 @@ export class AnimationPositionCapture {
         position,
         selector,
       });
+      if (position > 0) {
+       // Try to fallback to prev position if we have cards
+        return this.getPlayerCardPosition(playerId, position - 1);
+      }
       return null;
     }
 
     const rect = el.getBoundingClientRect();
     return { x: rect.left, y: rect.top };
-  }
-
-  /**
-   * Get position of a player's card slot with retry logic
-   * Useful when DOM might not be fully updated yet
-   */
-  async getPlayerCardPositionAsync(
-    playerId: string,
-    position: number,
-    maxRetries = 3
-  ): Promise<Position | null> {
-    for (let i = 0; i < maxRetries; i++) {
-      const pos = this.getPlayerCardPosition(playerId, position);
-      if (pos) return pos;
-
-      // Wait for next animation frame before retrying
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
-
-    return null;
   }
 
   /**

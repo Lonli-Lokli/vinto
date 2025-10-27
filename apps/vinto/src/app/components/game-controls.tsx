@@ -67,7 +67,7 @@ Note: Call Vinto option will be available after you complete your turn during th
         </div>
 
         {/* Main controls */}
-        <div className="flex flex-col justify-center flex-1 min-h-0">
+        <div className="flex flex-col justify-end flex-1 min-h-0">
           <FullTurnControls
             handleDrawCard={handleDrawCard}
             handlePlayDiscard={handlePlayDiscard}

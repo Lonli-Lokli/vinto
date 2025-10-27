@@ -107,7 +107,7 @@ export type AnimationStep =
   | {
       type: 'play-action';
       card: Card;
-      from: AnimationDrawnTarget;
+      from: AnimationDrawnTarget | AnimationDiscardTarget;
       duration?: number;
     };
 
@@ -184,7 +184,6 @@ export class CardAnimationStore {
     console.log('Active animations count:', this.activeAnimations.size);
     return this.activeAnimations.size > 0;
   }
-
 
   /**
    * Check if there are blocking animations (excludes highlights and other non-blocking animations)
@@ -404,13 +403,16 @@ export class CardAnimationStore {
    */
   startPlayActionAnimation(
     card: Card,
-    from: AnimationDrawnTarget,
+    from: AnimationDrawnTarget | AnimationDiscardTarget,
     duration = 2000
   ): string {
     const id = `play-action-${this.animationCounter++}`;
 
     // Capture positions immediately
-    const fromPos = this.positionCapture.getPendingCardPosition();
+    const fromPos =
+      from.type === 'drawn'
+        ? this.positionCapture.getPendingCardPosition()
+        : this.positionCapture.getDiscardPilePosition();
 
     // For play-action, the "to" position is same as from - pending pile
     const toPos = this.positionCapture.getPendingCardPosition()!;

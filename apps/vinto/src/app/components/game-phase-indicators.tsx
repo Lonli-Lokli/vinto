@@ -5,11 +5,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import {
   Eye,
-  Search,
   Repeat,
-  Crown,
-  Target,
-  Sparkles,
   Zap,
   Hourglass,
   CircleArrowRight,
@@ -156,12 +152,22 @@ const SetupPhaseIndicator = observer(
     onFinishSetup: () => void;
   }) => (
     <div className="w-full h-full">
-      <div className="h-full bg-surface-primary border border-primary rounded-lg p-2 shadow-theme-sm flex flex-col justify-center">
-        <div className="text-center space-y-1">
-          <div className="text-xs font-semibold text-primary leading-tight flex items-center justify-center gap-1">
-            <Eye size={14} />
-            <span>Memory Phase</span>
+      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-1.5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary flex items-center">
+              <Eye size={14} className="mr-1" />
+              Memory Phase
+            </h3>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">
+              Setup your memory before the game begins
+            </span>
           </div>
+        </div>
+
+        {/* Text Content */}
+        <div className="flex flex-col justify-center text-center space-y-2">
           <div className="text-xs text-secondary leading-tight">
             Click any 2 of your cards to memorize them. They will be hidden
             during the game!
@@ -169,12 +175,15 @@ const SetupPhaseIndicator = observer(
           <div className="text-xs font-medium text-tertiary leading-tight">
             Peeks remaining: {setupPeeksRemaining}
           </div>
-          <div className="flex justify-center">
-            <StartGameButton
-              onClick={onFinishSetup}
-              disabled={setupPeeksRemaining > 0}
-            />
-          </div>
+        </div>
+
+        {/* Button */}
+        <div>
+          <StartGameButton
+            onClick={onFinishSetup}
+                className="w-full py-1.5 px-4 text-sm"
+            disabled={setupPeeksRemaining > 0}
+          />
         </div>
       </div>
     </div>
@@ -308,120 +317,6 @@ Skip toss-in and proceed to next player's turn`;
 
 TossInIndicator.displayName = 'TossInIndicator';
 
-// Utility function to get action information
-const getActionInfo = (
-  actionContext: any,
-  actionPlayer: string,
-  isHuman: boolean,
-  peekTargetsLength: number
-) => {
-  switch (actionContext.targetType) {
-    case 'own-card':
-      return {
-        icon: <Eye size={14} />,
-        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} peeking at own card`,
-        description: isHuman
-          ? 'Click one of your cards to peek at it'
-          : 'Bot is selecting a card...',
-      };
-    case 'opponent-card':
-      return {
-        icon: <Search size={14} />,
-        title: `${actionPlayer} ${
-          isHuman ? 'are' : 'is'
-        } peeking at opponent card`,
-        description: isHuman
-          ? "Click an opponent's card to peek at it"
-          : 'Bot is selecting a target...',
-      };
-    case 'swap-cards':
-      return {
-        icon: <Repeat size={14} />,
-        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} swapping cards`,
-        description: isHuman
-          ? 'Click two cards to swap them (any player)'
-          : 'Bot is selecting cards to swap...',
-      };
-    case 'peek-then-swap':
-      return {
-        icon: <Crown size={14} />,
-        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} using Queen action`,
-        description: isHuman
-          ? peekTargetsLength < 2
-            ? 'Click two cards to peek at them'
-            : 'Choose whether to swap the peeked cards'
-          : 'Bot is making a decision...',
-      };
-    case 'force-draw':
-      return {
-        icon: <Target size={14} />,
-        title: `${actionPlayer} ${
-          isHuman ? 'are' : 'is'
-        } forcing a player to draw`,
-        description: isHuman
-          ? 'Click an opponent to force them to draw a card'
-          : 'Bot is selecting a target...',
-      };
-    case 'declare-action':
-      return {
-        icon: <Crown size={14} />,
-        title: `${actionPlayer} ${
-          isHuman ? 'are' : 'is'
-        } declaring King action`,
-        description: isHuman
-          ? 'Choose which card action to use (7-10, J, Q, A)'
-          : 'Bot is declaring...',
-      };
-    default:
-      return {
-        icon: <Sparkles size={14} />,
-        title: `${actionPlayer} ${isHuman ? 'are' : 'is'} performing an action`,
-        description: actionContext.action || 'Action in progress...',
-      };
-  }
-};
-
-// Action Execution Indicator Component
-const ActionExecutionIndicator = observer(
-  ({
-    actionContext,
-    currentPlayer,
-  }: {
-    actionContext: any;
-    currentPlayer: { id: string; name: string; isHuman: boolean } | null;
-  }) => {
-    const actionPlayer =
-      actionContext.playerId === currentPlayer?.id
-        ? 'You'
-        : currentPlayer?.name || 'Player';
-    const isHuman = currentPlayer?.isHuman ?? false;
-
-    const actionInfo = getActionInfo(
-      actionContext,
-      actionPlayer,
-      isHuman,
-      actionContext?.targets?.length || 0
-    );
-
-    return (
-      <div className="w-full px-2 py-1">
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 shadow-sm">
-          <div className="text-center">
-            <div className="text-xs font-semibold text-purple-800 leading-tight flex items-center justify-center gap-1">
-              {actionInfo.icon}
-              <span>{actionInfo.title}</span>
-            </div>
-            <div className="text-xs text-purple-700 leading-tight mt-0.5">
-              {actionInfo.description}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
-
-ActionExecutionIndicator.displayName = 'ActionExecutionIndicator';
 
 // Card Drawn Header Component
 const CardDrawnHeader = ({
@@ -592,8 +487,8 @@ const SwapPositionIndicator = observer(
           </div>
 
           {/* Action button */}
-          <div className="flex items-center justify-center flex-1 min-h-0">
-            <DiscardInsteadButton onClick={onDiscard} />
+          <div className="flex items-end justify-center flex-1 min-h-0">
+            <DiscardInsteadButton onClick={onDiscard} className="w-full" />
           </div>
         </div>
       </div>

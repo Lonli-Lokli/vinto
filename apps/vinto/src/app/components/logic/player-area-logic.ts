@@ -36,6 +36,7 @@ export function canSeePlayerCard(params: {
   ) {
     return true;
   }
+  
 
   // During gameplay, show temporarily visible cards (from actions like peek)
   // This works for both human and bot cards when they're being peeked

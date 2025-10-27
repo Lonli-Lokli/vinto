@@ -327,7 +327,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     context: BotDecisionContext
   ): boolean {
     const ranksToCheck: Rank[] = discardedRanks.filter(
-      (rank) => getCardValue(rank) > 0
+      (rank) => getCardValue(rank) >= 0
     );
     this.initializeIfNeeded(context);
 

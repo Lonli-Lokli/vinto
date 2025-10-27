@@ -65,8 +65,15 @@ export class HeadlessService {
     const isJackActionCompleted =
       action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
     const isPeekActionCompleted = action.type === 'CONFIRM_PEEK';
+    const nextTurnStarted =
+      newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
 
-    if (isSetupPhaseEnded || isQueenActionCompleted || isPeekActionCompleted) {
+    if (
+      isSetupPhaseEnded ||
+      isQueenActionCompleted ||
+      isPeekActionCompleted ||
+      nextTurnStarted
+    ) {
       this.uiStore.clearTemporaryCardVisibility();
     }
 
@@ -209,6 +216,13 @@ export class HeadlessService {
 
     const { playerId, positions } = action.payload;
     const failedAttempts = newState.activeTossIn?.failedAttempts || [];
+    const wasFailedAttempt = failedAttempts.some(
+      (attempt) => attempt.playerId === playerId
+    );
+    if (!wasFailedAttempt) {
+      // No failed attempts for this player - nothing to do
+      return;
+    }
 
     // Check all positions for failed attempts
     for (const position of positions) {
@@ -225,7 +239,7 @@ export class HeadlessService {
         // Add failed toss-in feedback (shows error indicator)
         this.uiStore.addFailedTossInFeedback(playerId, position);
 
-        // Make card temporarily visible ONLY for failed attempts
+        // Make card temporarily visible
         // Successful toss-ins should not reveal any cards
         this.uiStore.addTemporarilyVisibleCard(playerId, position);
       }
@@ -258,7 +272,10 @@ export class HeadlessService {
         console.log(
           `[HeadlessService] Revealing peeked card for human: ${target.playerId} position ${target.position}`
         );
-        this.uiStore.addTemporarilyVisibleCard(target.playerId, target.position);
+        this.uiStore.addTemporarilyVisibleCard(
+          target.playerId,
+          target.position
+        );
       }
     }
   }

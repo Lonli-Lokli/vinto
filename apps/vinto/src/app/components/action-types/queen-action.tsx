@@ -32,7 +32,7 @@ export const QueenAction = observer(() => {
           <div className="flex flex-col">
             <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
               👑 {getCardName(action)}
-              {!isTossInAction && (
+              {isTossInAction && (
                 <span className="ml-2 text-[10px] text-accent-primary font-medium">
                   ⚡ Toss-in
                 </span>
@@ -87,9 +87,13 @@ export const QueenAction = observer(() => {
           <SkipButton
             onClick={() => {
               if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));
+              if (hasBothCards) {
+                gameClient.dispatch(GameActions.skipQueenSwap(humanPlayer.id));
+              } else {
+                gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+              }
             }}
-          />
+          >{hasBothCards ? 'Do not Swap' : 'Skip'}</SkipButton>
         </div>
       </div>
     </div>
