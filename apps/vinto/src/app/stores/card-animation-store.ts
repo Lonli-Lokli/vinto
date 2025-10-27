@@ -11,16 +11,17 @@
 import { makeObservable, observable, action, computed } from 'mobx';
 import { inject, injectable } from 'tsyringe';
 import { AnimationPositionCapture } from '../services/animation-position-capture';
-import { Card } from '@vinto/shapes';
+import { Rank } from '@vinto/shapes';
 
 export type AnimationType =
   | 'swap'
   | 'draw'
-  | 'discard'
   | 'peek'
+  | 'discard'
   | 'toss-in'
   | 'highlight'
-  | 'play-action';
+  | 'play-action'
+  | 'shake';
 
 export type AnimationSequenceType = 'parallel' | 'sequential';
 
@@ -49,7 +50,7 @@ export type AnimationTarget =
 export interface CardAnimationState {
   id: string;
   type: AnimationType;
-  card?: Card;
+  rank?: Rank;
   // Pre-captured positions (for immediate measurement)
   fromX?: number;
   fromY?: number;
@@ -79,7 +80,7 @@ export interface CardAnimationState {
 export type AnimationStep =
   | {
       type: 'swap';
-      card: Card;
+      rank: Rank;
       from: AnimationTarget;
       to: AnimationTarget;
       duration?: number;
@@ -88,7 +89,7 @@ export type AnimationStep =
     }
   | {
       type: 'draw';
-      card: Card;
+      rank: Rank;
       from: AnimationDrawTarget | AnimationDrawnTarget;
       to: AnimationPlayerTarget | AnimationDrawnTarget;
       duration?: number;
@@ -98,7 +99,7 @@ export type AnimationStep =
     }
   | {
       type: 'discard';
-      card: Card;
+      rank: Rank;
       from: AnimationPlayerTarget | AnimationDrawnTarget;
       to: AnimationDiscardTarget;
       duration?: number;
@@ -106,8 +107,14 @@ export type AnimationStep =
     }
   | {
       type: 'play-action';
-      card: Card;
+      rank: Rank;
       from: AnimationDrawnTarget | AnimationDiscardTarget;
+      duration?: number;
+    }
+  | {
+      type: 'shake';
+      rank: Rank;
+      target: AnimationPlayerTarget;
       duration?: number;
     };
 
@@ -142,12 +149,13 @@ export class CardAnimationStore {
       hasActiveAnimations: computed,
       hasBlockingAnimations: computed,
       isAnimatingToDiscard: computed,
-      cardAnimatingToDiscard: computed,
+      rankAnimatingToDiscard: computed,
       startSwapAnimation: action,
       startDrawAnimation: action,
       startDiscardAnimation: action,
       startPlayActionAnimation: action,
       startHighlightAnimation: action,
+      startShakeAnimation: action,
       startAnimationSequence: action,
       removeAnimation: action,
       reset: action,
@@ -218,10 +226,10 @@ export class CardAnimationStore {
    * Get the card that's currently being animated to the discard pile
    * Used to show the old card while the animation is in progress
    */
-  get cardAnimatingToDiscard(): Card | undefined {
+  get rankAnimatingToDiscard(): Rank | undefined {
     for (const animation of this.activeAnimations.values()) {
       if (animation.type === 'discard' && !animation.completed) {
-        return animation.card;
+        return animation.rank;
       }
     }
     return undefined;
@@ -233,7 +241,7 @@ export class CardAnimationStore {
    * targetPlayerPosition: position of target player ('left', 'right', 'top', 'bottom') for rotation
    */
   startSwapAnimation(
-    card: Card,
+    rank: Rank,
     from: AnimationTarget,
     to: AnimationTarget,
     duration = 1500,
@@ -274,7 +282,7 @@ export class CardAnimationStore {
     const animation = {
       id,
       type: 'swap' as const,
-      card,
+      rank,
       from,
       to,
       fromX: fromPos.x,
@@ -297,7 +305,7 @@ export class CardAnimationStore {
    * targetPlayerPosition: position of target player for rotation
    */
   startDrawAnimation(
-    card: Card,
+    rank: Rank,
     from: AnimationDrawTarget | AnimationDrawnTarget,
     to: AnimationPlayerTarget | AnimationDrawnTarget,
     duration = 1500,
@@ -327,7 +335,7 @@ export class CardAnimationStore {
     this.activeAnimations.set(id, {
       id,
       type: 'draw',
-      card,
+      rank,
       from,
       to,
       fromX: fromPos.x,
@@ -349,7 +357,7 @@ export class CardAnimationStore {
    * Start a discard animation from player/drawn to discard pile
    */
   startDiscardAnimation(
-    card: Card,
+    rank: Rank,
     from: AnimationPlayerTarget | AnimationDrawnTarget,
     to: AnimationDiscardTarget | AnimationDrawnTarget,
     duration = 1500
@@ -379,7 +387,7 @@ export class CardAnimationStore {
     this.activeAnimations.set(id, {
       id,
       type: 'discard',
-      card,
+      rank,
       from,
       to,
       fromX: fromPos.x,
@@ -402,7 +410,7 @@ export class CardAnimationStore {
    * 2. Move from center to discard pile
    */
   startPlayActionAnimation(
-    card: Card,
+    rank: Rank,
     from: AnimationDrawnTarget | AnimationDiscardTarget,
     duration = 2000
   ): string {
@@ -427,7 +435,7 @@ export class CardAnimationStore {
     this.activeAnimations.set(id, {
       id,
       type: 'play-action',
-      card,
+      rank,
       from,
       fromX: fromPos.x,
       fromY: fromPos.y,
@@ -446,7 +454,7 @@ export class CardAnimationStore {
    * Start a highlight animation - card pulses at its current position
    */
   startHighlightAnimation(
-    card: Card,
+    rank: Rank,
     target: AnimationPlayerTarget,
     duration = 2000
   ): string {
@@ -468,7 +476,48 @@ export class CardAnimationStore {
     this.activeAnimations.set(id, {
       id,
       type: 'highlight',
-      card,
+      rank,
+      to: target,
+      fromX: pos.x,
+      fromY: pos.y,
+      toX: pos.x,
+      toY: pos.y,
+      startTime: Date.now(),
+      duration,
+      revealed: false,
+      completed: false,
+    });
+
+    return id;
+  }
+
+  /**
+   * Start a shake animation - card shakes at its current position to indicate cancellation
+   */
+  startShakeAnimation(
+    rank: Rank,
+    target: AnimationPlayerTarget,
+    duration = 800
+  ): string {
+    const id = `shake-${this.animationCounter++}`;
+
+    // Capture position
+    const pos = this.positionCapture.getPlayerCardPosition(
+      target.playerId,
+      target.position
+    );
+
+    if (!pos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture position for shake animation'
+      );
+      return id;
+    }
+
+    this.activeAnimations.set(id, {
+      id,
+      type: 'shake',
+      rank,
       to: target,
       fromX: pos.x,
       fromY: pos.y,
@@ -590,7 +639,7 @@ export class CardAnimationStore {
     switch (step.type) {
       case 'swap':
         return this.startSwapAnimation(
-          step.card,
+          step.rank,
           step.from,
           step.to,
           step.duration,
@@ -599,7 +648,7 @@ export class CardAnimationStore {
         );
       case 'draw':
         return this.startDrawAnimation(
-          step.card,
+          step.rank,
           step.from,
           step.to,
           step.duration,
@@ -609,15 +658,21 @@ export class CardAnimationStore {
         );
       case 'discard':
         return this.startDiscardAnimation(
-          step.card,
+          step.rank,
           step.from,
           step.to,
           step.duration
         );
       case 'play-action':
         return this.startPlayActionAnimation(
-          step.card,
+          step.rank,
           step.from,
+          step.duration
+        );
+      case 'shake':
+        return this.startShakeAnimation(
+          step.rank,
+          step.target,
           step.duration
         );
     }

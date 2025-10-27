@@ -23,14 +23,14 @@ export const DiscardPile: React.FC<DiscardPileProps> = observer(
 
     // While a card is being animated to the discard pile, show the previous card
     // This prevents the visual bug where the new card appears before animation completes
-    const animatingCard = animationStore.cardAnimatingToDiscard;
+    const animatingRank = animationStore.rankAnimatingToDiscard;
 
     // If animating, we need to show what was on top before (second card)
     // Otherwise show the current top card
     let cardToShow: CardType | undefined;
     let shouldReveal: boolean;
 
-    if (animatingCard) {
+    if (animatingRank) {
       // During animation, show the second-to-top card (what was top before)
       cardToShow = pile.length >= 2 ? pile.peekAt(1) : undefined;
       shouldReveal = cardToShow !== undefined;

@@ -5,7 +5,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 import { useCardAnimationStore } from './di-provider';
-import { Card as CardType } from '@vinto/shapes';
+import { Card as CardType, getCardShortDescription, getCardValue } from '@vinto/shapes';
 import { Card } from './presentational';
 
 interface VirtualCard {
@@ -46,14 +46,20 @@ export const AnimatedCardOverlay = observer(() => {
       return;
     }
 
-    if (!animation.card) {
+    if (!animation.rank) {
       console.warn('[AnimatedCard] No card for animation:', animation.id);
       return;
     }
 
     virtualCards.push({
       id: animation.id,
-      card: animation.card,
+      card: {
+         id: 'virtual-' + animation.id,
+         played: false,
+         rank: animation.rank,
+         value: getCardValue(animation.rank),
+         actionText: getCardShortDescription(animation.rank),
+      },
       fromX: animation.fromX,
       fromY: animation.fromY,
       toX: animation.toX,
@@ -69,6 +75,7 @@ export const AnimatedCardOverlay = observer(() => {
           const animation = animationStore.activeAnimations.get(virtualCard.id);
           const isHighlight = animation?.type === 'highlight';
           const isPlayAction = animation?.type === 'play-action';
+          const isShake = animation?.type === 'shake';
           const hasFullRotation = animation?.fullRotation;
           const targetRotation = animation?.targetRotation ?? 0;
 
@@ -87,6 +94,12 @@ export const AnimatedCardOverlay = observer(() => {
                 isHighlight
                   ? {
                       scale: [1, 1.15, 1, 1.15, 1],
+                      opacity: 1,
+                    }
+                  : isShake
+                  ? {
+                      x: [0, -10, 10, -10, 10, -5, 5, 0],
+                      rotate: [0, -5, 5, -5, 5, -2, 2, 0],
                       opacity: 1,
                     }
                   : isPlayAction
@@ -128,6 +141,19 @@ export const AnimatedCardOverlay = observer(() => {
                         duration: 2,
                       },
                     }
+                  : isShake
+                  ? {
+                      duration: 0.8,
+                      ease: 'easeInOut',
+                      x: {
+                        times: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 1],
+                        duration: 0.8,
+                      },
+                      rotate: {
+                        times: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 1],
+                        duration: 0.8,
+                      },
+                    }
                   : isPlayAction
                   ? {
                       duration: 2,
@@ -161,6 +187,12 @@ export const AnimatedCardOverlay = observer(() => {
                   ? {
                       filter:
                         'drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))',
+                      zIndex: 101,
+                    }
+                  : isShake
+                  ? {
+                      filter:
+                        'drop-shadow(0 0 20px rgba(239, 68, 68, 0.8)) drop-shadow(0 0 40px rgba(239, 68, 68, 0.6))',
                       zIndex: 101,
                     }
                   : isPlayAction

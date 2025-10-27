@@ -20,6 +20,7 @@ import {
   ExecuteQueenSwapAction,
   GameAction,
   GameState,
+  getCardAction,
   ParticipateInTossInAction,
   PlayDiscardAction,
   SelectActionTargetAction,
@@ -166,7 +167,7 @@ export class AnimationService {
     // Animate draw for both human and bot players
     // Card goes from deck to drawn/pending area
     this.animationStore.startDrawAnimation(
-      drawnCard,
+      drawnCard.rank,
       { type: 'draw' },
       { type: 'drawn' },
       1500,
@@ -190,7 +191,7 @@ export class AnimationService {
 
     // Card moves from pending/drawn area to discard pile
     this.animationStore.startDiscardAnimation(
-      discardedCard,
+      discardedCard.rank,
       { type: 'drawn' },
       { type: 'discard' },
       1500
@@ -239,7 +240,7 @@ export class AnimationService {
         this.animationStore.startAnimationSequence('parallel', [
           {
             type: 'swap',
-            card: newCard,
+            rank: newCard.rank,
             from: { type: 'drawn' },
             to: { type: 'player', playerId, position },
             duration: 1500,
@@ -247,7 +248,7 @@ export class AnimationService {
           },
           {
             type: 'swap',
-            card: declaredCard,
+            rank: declaredCard.rank,
             from: { type: 'player', playerId, position },
             to: { type: 'drawn' },
             duration: 1500,
@@ -271,7 +272,7 @@ export class AnimationService {
       const steps: AnimationStep[] = [
         {
           type: 'swap',
-          card: newCard,
+          rank: newCard.rank,
           from: { type: 'drawn' },
           to: { type: 'player', playerId, position },
           duration: 1500,
@@ -282,7 +283,7 @@ export class AnimationService {
       if (oldCard) {
         steps.push({
           type: 'discard',
-          card: oldCard,
+          rank: oldCard.rank,
           from: { type: 'player', playerId, position },
           to: { type: 'discard' },
           duration: 1500,
@@ -297,7 +298,7 @@ export class AnimationService {
       ) {
         steps.push({
           type: 'draw',
-          card: penaltyCard,
+          rank: penaltyCard.rank,
           from: { type: 'draw' },
           to: { type: 'player', playerId, position: penaltyCardPosition },
           duration: 1500,
@@ -319,7 +320,7 @@ export class AnimationService {
       const steps: AnimationStep[] = [
         {
           type: 'swap',
-          card: newCard,
+          rank: newCard.rank,
           from: { type: 'drawn' },
           to: { type: 'player', playerId, position },
           duration: 3_000,
@@ -330,7 +331,7 @@ export class AnimationService {
       if (oldCard) {
         steps.push({
           type: 'discard',
-          card: oldCard,
+          rank: oldCard.rank,
           from: { type: 'player', playerId, position },
           to: { type: 'discard' },
           duration: 3_000,
@@ -357,7 +358,7 @@ export class AnimationService {
     this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'play-action',
-        card,
+        rank: card.rank,
         from: { type: 'drawn' },
         duration: 2000,
       },
@@ -381,7 +382,7 @@ export class AnimationService {
     this.animationStore.startAnimationSequence('sequential', [
       {
         type: 'play-action',
-        card,
+        rank: card.rank,
         from: { type: 'drawn' },
         duration: 2000,
       },
@@ -426,7 +427,7 @@ export class AnimationService {
           const steps: AnimationStep[] = [
             {
               type: 'draw',
-              card: penaltyCard,
+              rank: penaltyCard.rank,
               from: { type: 'draw' },
               to: {
                 type: 'player',
@@ -469,7 +470,7 @@ export class AnimationService {
 
       // Animate from player position to Drawn pile or discard pile
       this.animationStore.startDiscardAnimation(
-        tossedCard,
+        tossedCard.rank,
         { type: 'player', playerId, position },
         { type: 'discard' },
         1_500
@@ -493,7 +494,7 @@ export class AnimationService {
     // Check if this card came from a swap declaration (has swapPosition)
 
     this.animationStore.startDiscardAnimation(
-      peekCard,
+      peekCard.rank,
       { type: 'drawn' },
       { type: 'discard' },
       1500
@@ -538,45 +539,36 @@ export class AnimationService {
     if (!player || !targetPlayer || !oldTargetPlayer) return;
 
     // Check if this card came from a swap declaration (has swapPosition)
-    const swapPosition = oldState.pendingAction?.swapPosition;
-
     if (isCorrect) {
       // CORRECT DECLARATION
       // Sequential animation: King → discard, then selected card → discard
-      const kingCard = newState.discardPile.peekTop();
       // Second card is in pending action
-      const selectedCardOnDiscard = newState.pendingAction?.card;
-
       const steps: AnimationStep[] = [];
 
       // Step 1: King card to discard
-      if (kingCard && kingCard.rank === 'K') {
-        steps.push({
-          type: 'discard',
-          card: kingCard,
-          from:
-            swapPosition !== undefined
-              ? { type: 'player', playerId, position: swapPosition }
-              : { type: 'drawn' },
-          to: { type: 'discard' },
-          duration: 3_000,
-          revealed: true,
-        });
-      }
 
-      // Step 2: Selected card to discard
-      if (selectedCardOnDiscard) {
-        steps.push({
-          type: 'swap',
-          card: selectedCardOnDiscard,
-          from: { type: 'player', playerId: targetPlayerId, position },
-          to: { type: 'drawn' },
-          duration: 1_500,
-          revealed: true,
-        });
-      }
+      steps.push({
+        type: 'discard',
+        rank: 'K',
+        from: { type: 'drawn' },
+        to: { type: 'discard' },
+        duration: 3_000,
+        revealed: true,
+      });
 
-      this.animationStore.startAnimationSequence('sequential', steps);
+      steps.push({
+        type: 'swap',
+        rank: declaredRank,
+        from: { type: 'player', playerId: targetPlayerId, position },
+        to:
+          getCardAction(declaredRank) !== undefined
+            ? { type: 'drawn' }
+            : { type: 'discard' },
+        duration: 1_500,
+        revealed: true,
+      });
+
+      this.animationStore.startAnimationSequence('parallel', steps);
       console.log(
         '[AnimationService] Correct King declaration - King and selected card to discard'
       );
@@ -586,26 +578,20 @@ export class AnimationService {
       // 1. King → discard
       // 2. Selected card revealed briefly in hand (handled by state)
       // 3. Penalty card: draw → hand
-      const kingCard = newState.discardPile.peekTop();
       const penaltyCardPosition = player.cards.length - 1;
       const penaltyCard = player.cards[penaltyCardPosition];
 
       const steps: AnimationStep[] = [];
 
       // Step 1: King card to discard
-      if (kingCard && kingCard.rank === 'K') {
-        steps.push({
-          type: 'discard',
-          card: kingCard,
-          from:
-            swapPosition !== undefined
-              ? { type: 'player', playerId, position: swapPosition }
-              : { type: 'drawn' },
-          to: { type: 'discard' },
-          duration: 2_000,
-          revealed: true,
-        });
-      }
+      steps.push({
+        type: 'discard',
+        rank: 'K',
+        from: {type: 'drawn' },
+        to: { type: 'discard' },
+        duration: 2_000,
+        revealed: true,
+      });
 
       // Step 2: Penalty card from draw pile to hand
       // Note: The penalty card goes to the player who made the King declaration (playerId),
@@ -618,7 +604,7 @@ export class AnimationService {
         // Use a timeout to ensure DOM is ready before starting animation
         steps.push({
           type: 'draw',
-          card: penaltyCard,
+          rank: penaltyCard.rank,
           from: { type: 'draw' },
           to: { type: 'player', playerId, position: penaltyCardPosition },
           duration: 2_000,
@@ -682,7 +668,7 @@ export class AnimationService {
 
         // Start highlight animation on the peeked card (bot action)
         this.animationStore.startHighlightAnimation(
-          peekedCard,
+          peekedCard.rank,
           { type: 'player', playerId: targetPlayerId, position },
           2000 // 2 second highlight
         );
@@ -734,7 +720,7 @@ export class AnimationService {
             // Step 1: Ace card to discard
             steps.push({
               type: 'discard',
-              card: actionCard,
+              rank: actionCard.rank,
               from: { type: 'drawn' },
               to: { type: 'discard' },
               duration: 1500,
@@ -744,7 +730,7 @@ export class AnimationService {
             // Step 2: Penalty card from draw pile to target player's hand
             steps.push({
               type: 'draw',
-              card: penaltyCard,
+              rank: penaltyCard.rank,
               from: { type: 'draw' },
               to: {
                 type: 'player',
@@ -771,7 +757,7 @@ export class AnimationService {
       // Card came from hand position after correct declaration
       // Animate from hand position to discard pile
       this.animationStore.startDiscardAnimation(
-        actionCard,
+        actionCard.rank,
         { type: 'player', playerId, position: swapPosition },
         { type: 'discard' },
         1_500
@@ -783,7 +769,7 @@ export class AnimationService {
       // Card came from draw/discard pile (normal flow)
       // Animate from drawn position to discard pile
       this.animationStore.startDiscardAnimation(
-        actionCard,
+        actionCard.rank,
         { type: 'drawn' },
         { type: 'discard' },
         1500
@@ -845,7 +831,7 @@ export class AnimationService {
     this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'swap',
-        card: card1AfterSwap,
+        rank: card1AfterSwap.rank,
         from: {
           type: 'player',
           playerId: target2.playerId,
@@ -862,7 +848,7 @@ export class AnimationService {
       },
       {
         type: 'swap',
-        card: card2AfterSwap,
+        rank: card2AfterSwap.rank,
         from: {
           type: 'player',
           playerId: target1.playerId,
@@ -879,7 +865,7 @@ export class AnimationService {
       },
       {
         type: 'discard',
-        card: oldState.pendingAction!.card,
+        rank: oldState.pendingAction!.card.rank,
         from: { type: 'drawn' },
         to: { type: 'discard' },
         duration: 1500,
@@ -892,29 +878,44 @@ export class AnimationService {
 
   /**
    * Handle SKIP_QUEEN_SWAP animation
-   * Just moves the Queen card to discard pile
+   * Shows shake animation on selected cards (if any), then moves Queen to discard
    */
   private handleSkipQueenSwap(
-    _oldState: GameState,
-    newState: GameState,
+    oldState: GameState,
+    _newState: GameState,
     _action: SkipQueenSwapAction
   ): void {
-    // The Queen card should now be on top of discard pile
-    const queenCard = newState.discardPile.peekTop();
+    // Get the selected targets (if any) to show they weren't swapped
+    const targets = oldState.pendingAction?.targets;
+    
+    const steps: AnimationStep[] = [];
 
-    if (!queenCard || queenCard.rank !== 'Q') {
-      console.warn('[AnimationService] No Queen card found on discard pile');
-      return;
+    // If cards were selected, show a "shake" animation on them to indicate cancellation
+    if (targets && targets.length === 2) {
+      targets.forEach(target => {
+        if (target.card) {
+          steps.push({
+            type: 'shake',
+            rank: target.card.rank,
+            target: { type: 'player', playerId: target.playerId, position: target.position },
+            duration: 1_500,
+          });
+        }
+      });
     }
 
-    this.animationStore.startDiscardAnimation(
-      queenCard,
-      { type: 'drawn' },
-      { type: 'discard' },
-      1500
-    );
+    // Then discard the Queen
+    steps.push({
+      type: 'discard',
+      rank: 'Q',
+      from: { type: 'drawn' },
+      to: { type: 'discard' },
+      duration: 1_500,
+    });
+
+    this.animationStore.startAnimationSequence('parallel', steps);
     console.log(
-      '[AnimationService] Queen swap skipped - drawn card to discard'
+      '[AnimationService] Queen swap skipped - showing shake animation on selected cards'
     );
   }
 
@@ -959,7 +960,7 @@ export class AnimationService {
     this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'swap',
-        card: card1AfterSwap,
+        rank: card1AfterSwap.rank,
         from: {
           type: 'player',
           playerId: target2.playerId,
@@ -976,7 +977,7 @@ export class AnimationService {
       },
       {
         type: 'swap',
-        card: card2AfterSwap,
+        rank: card2AfterSwap.rank,
         from: {
           type: 'player',
           playerId: target1.playerId,
@@ -993,7 +994,7 @@ export class AnimationService {
       },
       {
         type: 'discard',
-        card: oldState.pendingAction!.card,
+        rank: 'J',
         from: { type: 'drawn' },
         to: { type: 'discard' },
         duration: 1500,
@@ -1010,44 +1011,41 @@ export class AnimationService {
    */
   private handleSkipJackSwap(
     oldState: GameState,
-    newState: GameState,
-    action: SkipJackSwapAction
+    _newState: GameState,
+    _action: SkipJackSwapAction
   ): void {
-    // The Jack card should now be on top of discard pile
-    const jackCard = newState.discardPile.peekTop();
+     // Get the selected targets (if any) to show they weren't swapped
+    const targets = oldState.pendingAction?.targets;
+    
+    const steps: AnimationStep[] = [];
 
-    if (!jackCard || jackCard.rank !== 'J') {
-      console.warn('[AnimationService] No Jack card found on discard pile');
-      return;
+    // If cards were selected, show a "shake" animation on them to indicate cancellation
+    if (targets && targets.length === 2) {
+      targets.forEach(target => {
+        if (target.card) {
+          steps.push({
+            type: 'shake',
+            rank: target.card.rank,
+            target: { type: 'player', playerId: target.playerId, position: target.position },
+            duration: 1_500,
+          });
+        }
+      });
     }
 
-    // Check if the Jack came from a swap declaration
-    const swapPosition = oldState.pendingAction?.swapPosition;
-    const playerId = action.payload.playerId;
+    // Then discard the Queen
+    steps.push({
+      type: 'discard',
+      rank: 'J',
+      from: { type: 'drawn' },
+      to: { type: 'discard' },
+      duration: 1_500,
+    });
 
-    if (swapPosition !== undefined) {
-      // Card came from hand position after correct declaration
-      this.animationStore.startDiscardAnimation(
-        jackCard,
-        { type: 'player', playerId, position: swapPosition },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Jack swap skipped - declared card to discard'
-      );
-    } else {
-      // Card came from drawn position (normal flow)
-      this.animationStore.startDiscardAnimation(
-        jackCard,
-        { type: 'drawn' },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Jack swap skipped - drawn card to discard'
-      );
-    }
+    this.animationStore.startAnimationSequence('parallel', steps);
+    console.log(
+      '[AnimationService] Jack swap skipped - showing shake animation on selected cards'
+    );
   }
 
   /**

@@ -38,6 +38,7 @@ module.exports = {
         'ring-pulse': 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pending-card-border': 'pending-card-border 2s ease-in-out infinite',
         'swap-select-border': 'swap-select-border 1.5s ease-in-out infinite',
+        'shake': 'shake 0.8s ease-in-out',
       },
       keyframes: {
         // Flip animations for card reveal/unreveal
@@ -101,6 +102,15 @@ module.exports = {
             boxShadow:
               '0 0 0 3px rgba(var(--color-info), 1), 0 0 18px 0 rgba(var(--color-info), 0.7)',
           },
+        },
+        'shake': {
+          '0%, 100%': { transform: 'translateX(0) rotate(0deg)' },
+          '12.5%': { transform: 'translateX(-10px) rotate(-5deg)' },
+          '25%': { transform: 'translateX(10px) rotate(5deg)' },
+          '37.5%': { transform: 'translateX(-10px) rotate(-5deg)' },
+          '50%': { transform: 'translateX(10px) rotate(5deg)' },
+          '62.5%': { transform: 'translateX(-5px) rotate(-2deg)' },
+          '75%': { transform: 'translateX(5px) rotate(2deg)' },
         },
       },
       backdropBlur: {
