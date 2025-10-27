@@ -164,7 +164,7 @@ export const BugReportModal = observer(function BugReportModal({
           {store.showErrorMessage && (
             <div className="dialog-message error">
               <span aria-hidden="true">✗</span> Failed to submit bug report.
-              Please try again or email us directly.
+              Please try again later.
             </div>
           )}
         </article>

@@ -10,6 +10,7 @@ import { inject, injectable } from 'tsyringe';
 import { AnimationService } from '../services/animation-service';
 import { HeadlessService } from '../services/headless-service';
 import type { GameClient } from '@vinto/local-client';
+import { logger } from '@vinto/shapes';
 
 export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -104,7 +105,7 @@ export class BugReportStore {
         }
       });
     } catch (error) {
-      console.error('Failed to submit bug report:', error);
+      logger.error('Failed to submit bug report:', error);
       runInAction(() => {
         this.submitStatus = 'error';
       });
