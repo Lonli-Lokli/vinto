@@ -18,7 +18,7 @@ export const CoalitionTurnIndicator = observer(() => {
   const isCoalitionLeaderPlaying =
     gameClient.visualState.phase === 'playing' &&
     coalitionLeader &&
-    currentPlayer.id === coalitionLeader.id;
+    currentPlayer?.id === coalitionLeader.id;
 
   if (!isCoalitionLeaderPlaying || !currentPlayer || !coalitionLeader) {
     return null;

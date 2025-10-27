@@ -48,6 +48,9 @@ export interface BotDecisionContext {
   };
   // Opponent knowledge - what this bot knows about opponents' cards
   opponentKnowledge: Map<string, Map<number, Card>>; // opponentId -> position -> card
+  // Coalition context (for final round)
+  coalitionLeaderId?: string | null; // ID of the coalition leader (if in final round)
+  isCoalitionMember?: boolean; // True if bot is part of coalition against Vinto caller
 }
 
 export interface BotActionTarget {
@@ -138,6 +141,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
   decideTurnAction(context: BotDecisionContext): BotTurnDecision {
     this.initializeIfNeeded(context);
 
+    // Set context for coalition evaluation
+    this.setBotDecisionContext(context);
+
     console.log(
       `[MCTS] ${this.botId} deciding turn action (${this.difficulty})`
     );
@@ -183,6 +189,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
+
+    // Set context for coalition evaluation
+    this.setBotDecisionContext(context);
 
     if (!drawnCard.actionText || drawnCard.played) return false;
 
@@ -256,6 +265,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   selectActionTargets(context: BotDecisionContext): BotActionDecision {
     this.initializeIfNeeded(context);
+
+    // Set context for coalition evaluation
+    this.setBotDecisionContext(context);
 
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
@@ -349,6 +361,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
     context: BotDecisionContext
   ): number | null {
     this.initializeIfNeeded(context);
+
+    // Set context for coalition evaluation
+    this.setBotDecisionContext(context);
 
     // Temporarily add drawn card to memory for accurate simulation
     const tempMemory = new BotMemory(this.botId, this.difficulty);
@@ -1165,6 +1180,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
           : undefined,
       turnCount: context.gameState.turnNumber,
       finalTurnTriggered: context.gameState.finalTurnTriggered,
+      vintoCallerId: context.gameState.vintoCallerId || null,
+      coalitionLeaderId: context.coalitionLeaderId || null,
       isTerminal: false,
       winner: null,
     };
@@ -1376,11 +1393,106 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   /**
    * Evaluate state from bot's perspective (0-1, higher is better)
+   *
+   * COALITION MODE: When bot is coalition leader, evaluates coalition win probability
+   * - Coalition wins if ANY coalition member beats Vinto caller
+   * - Leader optimizes for best coalition member's chances
+   * - Coordinates resources to maximize probability of coalition victory
    */
   private evaluateState(state: MCTSGameState): number {
     const botPlayer = state.players.find((p) => p.id === state.botPlayerId);
     if (!botPlayer) return 0;
 
+    // COALITION EVALUATION: If bot is coalition leader in final round
+    const context = this.getBotDecisionContext();
+    if (
+      context?.isCoalitionMember &&
+      context?.coalitionLeaderId === state.botPlayerId
+    ) {
+      return this.evaluateCoalitionState(state, context);
+    }
+
+    // STANDARD EVALUATION: Individual play
+    return this.evaluateIndividualState(state, botPlayer);
+  }
+
+  /**
+   * Coalition evaluation: Maximize probability that ANY coalition member beats Vinto
+   */
+  private evaluateCoalitionState(
+    state: MCTSGameState,
+    context: BotDecisionContext
+  ): number {
+    const vintoCallerId = context.gameState.vintoCallerId;
+    if (!vintoCallerId) {
+      return this.evaluateIndividualState(
+        state,
+        state.players.find((p) => p.id === state.botPlayerId)!
+      );
+    }
+
+    // Find Vinto caller's score
+    const vintoCaller = state.players.find((p) => p.id === vintoCallerId);
+    const vintoScore = vintoCaller ? vintoCaller.score : 50;
+
+    // Find all coalition members
+    const coalitionMembers = state.players.filter(
+      (p) => p.id !== vintoCallerId
+    );
+
+    // Find best coalition member (lowest score)
+    const bestMemberScore = Math.min(...coalitionMembers.map((p) => p.score));
+
+    // Coalition wins if best member beats Vinto
+    const coalitionAdvantage = vintoScore - bestMemberScore;
+
+    // Secondary: Average coalition scores (shows overall strength)
+    const avgCoalitionScore =
+      coalitionMembers.reduce((sum, p) => sum + p.score, 0) /
+      coalitionMembers.length;
+    const avgAdvantage = vintoScore - avgCoalitionScore;
+
+    // Knowledge: Coalition's total information
+    const coalitionKnowledge = coalitionMembers.reduce(
+      (sum, p) => sum + p.knownCards.size,
+      0
+    );
+    const coalitionCards = coalitionMembers.reduce(
+      (sum, p) => sum + p.cardCount,
+      0
+    );
+    const coalitionKnowledgeRatio =
+      coalitionCards > 0 ? coalitionKnowledge / coalitionCards : 0;
+
+    // Terminal bonus
+    let terminalBonus = 0;
+    if (state.isTerminal) {
+      // Coalition wins if ANY member beats Vinto
+      if (bestMemberScore < vintoScore) {
+        terminalBonus = 100;
+      } else {
+        terminalBonus = -100;
+      }
+    }
+
+    // Evaluate based on coalition victory probability
+    const reward =
+      coalitionAdvantage * 5.0 + // Best member's advantage (most important)
+      avgAdvantage * 1.0 + // Average coalition strength
+      coalitionKnowledgeRatio * 10.0 + // Coalition's total information
+      terminalBonus;
+
+    // Normalize to [0, 1] using sigmoid
+    return 1 / (1 + Math.exp(-reward / 20));
+  }
+
+  /**
+   * Individual evaluation: Original single-player optimization
+   */
+  private evaluateIndividualState(
+    state: MCTSGameState,
+    botPlayer: MCTSPlayerState
+  ): number {
     // 1. Score component - lower bot score is better
     const botScore = botPlayer.score;
     const opponentScores = state.players
@@ -1495,6 +1607,19 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     // Normalize to [0, 1] using sigmoid
     return 1 / (1 + Math.exp(-reward / 20));
+  }
+
+  /**
+   * Get current bot decision context (used for coalition evaluation)
+   */
+  private currentContext?: BotDecisionContext;
+
+  private getBotDecisionContext(): BotDecisionContext | undefined {
+    return this.currentContext;
+  }
+
+  private setBotDecisionContext(context: BotDecisionContext): void {
+    this.currentContext = context;
   }
 
   /**

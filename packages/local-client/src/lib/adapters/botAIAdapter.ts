@@ -17,6 +17,7 @@ import { GameClient } from '../game-client';
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
 const LARGE_DELAY = 3_000; // larger delay for showing UI elements
 const _SMALL_DELAY = 200; // small delay to let UI draw
+const FINAL_ROUND_DELAY = 2_000; // slower delay for final round actions (coalition vs Vinto)
 
 /**
  * BotAIAdapter - Bridges MCTS Bot AI with GameClient
@@ -79,12 +80,35 @@ export class BotAIAdapter {
         turnCount: this.gameClient.state.turnNumber,
         activeTossIn: this.gameClient.state.activeTossIn,
         currentPlayerId: this.gameClient.currentPlayer.id,
+        // Watch for Vinto being called to select coalition leader
+        vintoCallerId: this.gameClient.state.vintoCallerId,
+        coalitionLeaderId: this.gameClient.state.coalitionLeaderId,
+        phase: this.gameClient.state.phase,
       }),
       // Execute bot turn when state is ready
       // Note: Using fire-and-forget pattern here is intentional.
       // Reactions should not await - they trigger async operations that will
       // naturally loop back through state changes. Error handling occurs within methods.
-      ({ isBot, subPhase, activeTossIn }) => {
+      ({
+        isBot,
+        subPhase,
+        activeTossIn,
+        vintoCallerId,
+        coalitionLeaderId,
+        phase,
+      }) => {
+        // CRITICAL: Handle coalition leader selection when Vinto is called
+        // If all players are bots, automatically select the bot with lowest estimated score
+        if (
+          phase === 'final' &&
+          vintoCallerId &&
+          !coalitionLeaderId &&
+          this.allPlayersAreBots()
+        ) {
+          this.selectCoalitionLeaderForBots();
+          return;
+        }
+
         // Handle toss-in phase separately (all bot players participate)
         if (subPhase === 'toss_queue_active' && activeTossIn) {
           // Fire-and-forget: Let the async operation run independently
@@ -153,7 +177,9 @@ export class BotAIAdapter {
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
 
     if (!skipDelay) {
-      await this.delay(500);
+      // Use longer delay in final round for better visibility of coalition actions
+      const isFinalRound = this.gameClient.state.phase === 'final';
+      await this.delay(isFinalRound ? FINAL_ROUND_DELAY : 500);
     }
 
     try {
@@ -391,11 +417,30 @@ export class BotAIAdapter {
   }
   /**
    * Phase 1: Draw or Take Discard
+   *
+   * COALITION LOGIC:
+   * - If this bot is a coalition member but NOT the leader, the leader makes the decision
+   * - If this bot IS the coalition leader, it makes decisions for itself
+   * - Leader uses its MCTS to evaluate what's best for the coalition as a whole
    */
   private executeTurnDecision(botId: string): void {
     const context = this.createBotContext(botId);
+
+    // CRITICAL: Coalition leader makes decisions for all coalition members
+    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
+    const effectiveContext =
+      effectiveDecisionMakerId === botId
+        ? context
+        : this.createBotContext(effectiveDecisionMakerId);
+
+    if (effectiveDecisionMakerId !== botId) {
+      console.log(
+        `[BotAI] ${botId} is coalition member - leader ${effectiveDecisionMakerId} making decision`
+      );
+    }
+
     const decision: BotTurnDecision =
-      this.botDecisionService.decideTurnAction(context);
+      this.botDecisionService.decideTurnAction(effectiveContext);
 
     if (decision.action === 'take-discard') {
       // Cache the action plan if bot committed to using the action
@@ -421,9 +466,19 @@ export class BotAIAdapter {
   /**
    * Phase 2: Decide whether to use action, swap, or discard drawn card
    * This is the 'choosing' phase where bot evaluates the drawn card
+   *
+   * COALITION LOGIC: Leader makes decision for coalition members
    */
   private async executeChoosingDecision(botId: string): Promise<void> {
     const context = this.createBotContext(botId);
+
+    // Coalition leader decides for coalition members
+    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
+    const effectiveContext =
+      effectiveDecisionMakerId === botId
+        ? context
+        : this.createBotContext(effectiveDecisionMakerId);
+
     const drawnCard = this.gameClient.pendingCard;
 
     if (!drawnCard) {
@@ -436,13 +491,15 @@ export class BotAIAdapter {
 
     // Add delay so everyone can see the drawn card before bot makes a decision
     // This gives time for the draw animation to complete and for players to see what was drawn
-    await this.delay(LARGE_DELAY);
+    // Use even longer delay in final round
+    const isFinalRound = this.gameClient.state.phase === 'final';
+    await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
     // First, check if the card has an action and if we should use it
     if (drawnCard.actionText) {
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,
-        context
+        effectiveContext
       );
 
       if (shouldUseAction) {
@@ -457,7 +514,7 @@ export class BotAIAdapter {
     // Now decide: swap or discard?
     const swapPosition = this.botDecisionService.selectBestSwapPosition(
       drawnCard,
-      context
+      effectiveContext
     );
 
     if (swapPosition !== null) {
@@ -486,9 +543,19 @@ export class BotAIAdapter {
 
   /**
    * Phase 3: Use Action or Discard
+   *
+   * COALITION LOGIC: Leader makes decision for coalition members
    */
   private executeActionDecision(botId: string): void {
     const context = this.createBotContext(botId);
+
+    // Coalition leader decides for coalition members
+    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
+    const effectiveContext =
+      effectiveDecisionMakerId === botId
+        ? context
+        : this.createBotContext(effectiveDecisionMakerId);
+
     const cardInHand = this.gameClient.pendingCard;
 
     if (!cardInHand) {
@@ -502,7 +569,7 @@ export class BotAIAdapter {
     // Use MCTS to decide: use action or discard?
     const shouldUseAction = this.botDecisionService.shouldUseAction(
       cardInHand,
-      context
+      effectiveContext
     );
 
     if (shouldUseAction && cardInHand.actionText) {
@@ -522,9 +589,19 @@ export class BotAIAdapter {
 
   /**
    * Phase 4: Select Action Targets (for card actions)
+   *
+   * COALITION LOGIC: Leader makes decision for coalition members
    */
   private async executeTargetSelection(botId: string): Promise<void> {
     const context = this.createBotContext(botId);
+
+    // Coalition leader decides for coalition members
+    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
+    const effectiveContext =
+      effectiveDecisionMakerId === botId
+        ? context
+        : this.createBotContext(effectiveDecisionMakerId);
+
     const actionCard = this.gameClient.pendingCard;
 
     if (!actionCard) {
@@ -538,16 +615,16 @@ export class BotAIAdapter {
     // Special handling for different card types
     if (actionCard.rank === 'K') {
       // King: Declare a rank
-      await this.executeKingDeclaration(botId, context);
+      await this.executeKingDeclaration(botId, effectiveContext);
     } else if (actionCard.rank === 'J') {
       // Jack: Select 2 cards to swap
-      this.executeJackAction(botId, context);
+      this.executeJackAction(botId, effectiveContext);
     } else if (actionCard.rank === 'Q') {
       // Queen: Select 2 cards to peek/swap
-      this.executeQueenAction(botId, context);
+      this.executeQueenAction(botId, effectiveContext);
     } else {
       // Other actions: Select target (7, 8, 9, 10, A)
-      this.executeStandardAction(botId, context);
+      this.executeStandardAction(botId, effectiveContext);
     }
   }
 
@@ -878,6 +955,12 @@ export class BotAIAdapter {
       discardPile: state.discardPile,
       pendingCard: this.gameClient.pendingCard,
       opponentKnowledge,
+      // Coalition context for final round
+      coalitionLeaderId: state.coalitionLeaderId,
+      isCoalitionMember:
+        state.phase === 'final' &&
+        state.vintoCallerId !== botId &&
+        state.vintoCallerId !== null,
     };
   }
 
@@ -886,6 +969,79 @@ export class BotAIAdapter {
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Determine who should make the decision for this bot
+   *
+   * In coalition play:
+   * - Coalition leader makes decisions for ALL coalition members
+   * - This enables coordinated strategy where leader plans for the whole team
+   *
+   * Returns: the ID of the bot who should actually make the decision
+   */
+  private getEffectiveDecisionMaker(botId: string): string {
+    const state = this.gameClient.state;
+
+    // Not in final phase? Bot makes its own decisions
+    if (state.phase !== 'final') {
+      return botId;
+    }
+
+    // No coalition leader selected yet? Bot makes its own decisions
+    if (!state.coalitionLeaderId) {
+      return botId;
+    }
+
+    // Is this bot the Vinto caller? They always decide for themselves
+    if (botId === state.vintoCallerId) {
+      return botId;
+    }
+
+    // This bot is a coalition member - the leader decides for them
+    return state.coalitionLeaderId;
+  }
+
+  /**
+   * Check if all non-Vinto players are bots
+   */
+  private allPlayersAreBots(): boolean {
+    const vintoCallerId = this.gameClient.state.vintoCallerId;
+    const coalitionPlayers = this.gameClient.state.players.filter(
+      (p) => p.id !== vintoCallerId
+    );
+    return coalitionPlayers.every((p) => p.isBot);
+  }
+
+  /**
+   * Automatically select coalition leader for bot-only games
+   * Simply selects the first coalition bot as leader
+   *
+   * The leader will make coordinated decisions for ALL coalition members
+   * to maximize the chance that at least one member beats the Vinto caller
+   */
+  private selectCoalitionLeaderForBots(): void {
+    console.log('[BotAI] Automatically selecting coalition leader for bots');
+
+    const vintoCallerId = this.gameClient.state.vintoCallerId;
+    const coalitionBots = this.gameClient.state.players.filter(
+      (p) => p.id !== vintoCallerId && p.isBot
+    );
+
+    if (coalitionBots.length === 0) {
+      console.warn('[BotAI] No coalition bots found');
+      return;
+    }
+
+    // Simply select the first bot as coalition leader
+    const leader = coalitionBots[0];
+
+    console.log(
+      `[BotAI] Selected ${leader.name} as coalition leader (will coordinate all coalition members)`
+    );
+
+    // Dispatch action to set coalition leader
+    this.gameClient.dispatch(GameActions.setCoalitionLeader(leader.id));
   }
 }
 

@@ -89,8 +89,6 @@ const BotActivity = ({
   isAwaitingActionTarget: boolean;
   pendingAction: PendingAction | null;
 }) => {
-
-  console.log('BotActivity render', aiThinking, isChoosingCardAction, isSelectingSwapPosition, isAwaitingActionTarget, pendingAction?.card);
   if (!currentPlayer) return <span>Thinking...</span>;
 
   if (aiThinking) {

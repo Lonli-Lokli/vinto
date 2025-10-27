@@ -190,6 +190,28 @@ export function actionValidator(
         return { valid: false, reason: 'Target player not found' };
       }
 
+      // COALITION RULE: Coalition members cannot target Vinto caller
+      // Check if current player is in coalition against Vinto caller
+      if (
+        state.phase === 'final' &&
+        state.vintoCallerId &&
+        state.coalitionLeaderId
+      ) {
+        const currentPlayerData = isProcessingTossInAction
+          ? state.players.find((p) => p.id === state.pendingAction?.playerId)
+          : state.players[state.currentPlayerIndex];
+
+        const isCoalitionMember =
+          currentPlayerData && currentPlayerData.id !== state.vintoCallerId;
+
+        if (isCoalitionMember && targetPlayerId === state.vintoCallerId) {
+          return {
+            valid: false,
+            reason: 'Coalition members cannot target Vinto caller with actions',
+          };
+        }
+      }
+
       // Position must be valid for target player
       if (
         action.payload.rank === 'Any' &&
@@ -308,13 +330,16 @@ export function actionValidator(
         return { valid: false, reason: 'No pending action' };
       }
 
-      // Must have exactly 2 targets (Queen peeks at 2 cards)
+      // Must have exactly 2 targets (Jack swaps 2 cards)
       if (state.pendingAction.targets.length !== 2) {
         return {
           valid: false,
           reason: `Jack action requires 2 targets, got ${state.pendingAction.targets.length}`,
         };
       }
+
+      // Note: Coalition validation happens in SELECT_ACTION_TARGET
+      // Targets are already validated when they were selected
 
       return { valid: true };
     }
@@ -361,9 +386,11 @@ export function actionValidator(
         };
       }
 
+      // Note: Coalition validation happens in SELECT_ACTION_TARGET
+      // Targets are already validated when they were selected
+
       return { valid: true };
     }
-    
 
     case 'DECLARE_KING_ACTION': {
       const { playerId } = action.payload;
@@ -434,6 +461,9 @@ export function actionValidator(
           reason: 'No card position selected for King action',
         };
       }
+
+      // Note: Coalition validation happens in SELECT_ACTION_TARGET
+      // Target is already validated when it was selected
 
       return { valid: true };
     }

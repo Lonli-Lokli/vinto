@@ -33,7 +33,7 @@ export const GameHeader = observer(() => {
   const roundNumber = gameClient.visualState.roundNumber;
 
   const getPhaseDisplay = () => {
-    if (phase === 'scoring') return 'Final Scores';
+    if (phase === 'scoring') return 'Final';
     if (finalTurnTriggered) return `Final • ${phase}`;
     return `R${roundNumber} / T${turnCount}`;
   };

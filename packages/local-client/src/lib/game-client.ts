@@ -269,6 +269,15 @@ export class GameClient {
                   )?.nickname
                 } (pos ${state.pendingAction?.targets[1].position + 1})`
               : null;
+          case 'force-draw':
+            return state.pendingAction.targets.length === 1
+              ? `forcing ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[0].playerId
+                  )?.nickname
+                } to draw`
+              : null;
+
           default:
             return null;
         }

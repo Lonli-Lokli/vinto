@@ -158,8 +158,18 @@ export class MCTSMoveGenerator {
       case 'peek-opponent':
         // Generate peek moves for opponent cards that are UNKNOWN
         // Don't peek cards we already know about
+        // COALITION: Don't target Vinto caller if bot is in coalition
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
+
+          // COALITION FILTER: Skip Vinto caller if bot is coalition member
+          const isCoalitionMember =
+            state.vintoCallerId &&
+            state.coalitionLeaderId &&
+            currentPlayer.id !== state.vintoCallerId;
+          if (isCoalitionMember && opponent.id === state.vintoCallerId) {
+            continue; // Coalition cannot peek Vinto caller
+          }
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
             const memory = opponent.knownCards.get(pos);
@@ -191,8 +201,18 @@ export class MCTSMoveGenerator {
       case 'force-draw':
         // Force each opponent to draw
         // Ace action requires selecting a target player (position doesn't matter, any valid position will do)
+        // COALITION: Don't target Vinto caller if bot is in coalition
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
+
+          // COALITION FILTER: Skip Vinto caller if bot is coalition member
+          const isCoalitionMember =
+            state.vintoCallerId &&
+            state.coalitionLeaderId &&
+            currentPlayer.id !== state.vintoCallerId;
+          if (isCoalitionMember && opponent.id === state.vintoCallerId) {
+            continue; // Coalition cannot use Ace on Vinto caller
+          }
 
           // Select position 0 as a valid placeholder (Ace action targets player, not specific card)
           moves.push({
@@ -288,8 +308,18 @@ export class MCTSMoveGenerator {
 
         // Priority 2: Opponent cards (only consider if we have few own cards to declare)
         // This is defensive/disruptive play
+        // COALITION: Don't target Vinto caller if bot is in coalition
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
+
+          // COALITION FILTER: Skip Vinto caller if bot is coalition member
+          const isCoalitionMember =
+            state.vintoCallerId &&
+            state.coalitionLeaderId &&
+            currentPlayer.id !== state.vintoCallerId;
+          if (isCoalitionMember && opponent.id === state.vintoCallerId) {
+            continue; // Coalition cannot use King on Vinto caller cards
+          }
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
             const memory = opponent.knownCards.get(pos);
@@ -459,6 +489,7 @@ export class MCTSMoveGenerator {
     if (!currentPlayer) return moves;
 
     // Step 1: Categorize all positions by strategic value
+    // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
 
     // Step 2: Generate high-priority swaps first
@@ -578,6 +609,7 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer) return moves;
 
+    // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
     const MAX_PEEK_MOVES = 25; // Focused set of strategic peeks
 
@@ -759,8 +791,19 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer) return positions;
 
+    // Check if bot is coalition member (needs to filter Vinto caller)
+    const isCoalitionMember =
+      state.vintoCallerId &&
+      state.coalitionLeaderId &&
+      currentPlayer.id !== state.vintoCallerId;
+
     for (const player of state.players) {
       const isBot = player.id === currentPlayer.id;
+
+      // COALITION FILTER: Skip Vinto caller if bot is coalition member
+      if (isCoalitionMember && player.id === state.vintoCallerId) {
+        continue; // Coalition cannot target Vinto caller for swaps
+      }
 
       for (let pos = 0; pos < player.cardCount; pos++) {
         const memory = player.knownCards.get(pos);

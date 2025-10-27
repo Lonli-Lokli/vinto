@@ -78,6 +78,10 @@ export interface MCTSGameState {
   turnCount: number;
   finalTurnTriggered: boolean;
 
+  // Coalition context (for final round)
+  vintoCallerId: string | null; // Player who called Vinto
+  coalitionLeaderId: string | null; // Coalition leader (if selected)
+
   // For evaluation
   isTerminal: boolean;
   winner: string | null;

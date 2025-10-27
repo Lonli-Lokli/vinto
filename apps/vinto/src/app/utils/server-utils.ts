@@ -8,7 +8,7 @@ export function formatGamePhase(
   finalTurnTriggered: boolean
 ): string {
   if (phase === 'scoring') {
-    return 'Final Scores';
+    return 'Final';
   }
 
   if (finalTurnTriggered) {

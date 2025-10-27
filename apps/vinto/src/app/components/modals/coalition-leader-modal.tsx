@@ -34,6 +34,42 @@ export const CoalitionLeaderModal = observer(() => {
     };
   }, [uiStore]);
 
+  // AUTO-OPEN MODAL: Watch for Vinto being called and automatically open modal
+  // This only triggers if there's at least one human player
+  // (All-bot games handle coalition leader selection automatically in botAIAdapter)
+  useEffect(() => {
+    const phase = gameClient.visualState.phase;
+    const vintoCallerId = gameClient.visualState.vintoCallerId;
+    const coalitionLeaderId = gameClient.visualState.coalitionLeaderId;
+    const hasHumanPlayer = gameClient.visualState.players.some(
+      (p) => p.isHuman
+    );
+
+    // Open modal when:
+    // 1. We're in final phase (Vinto was called)
+    // 2. Coalition leader hasn't been selected yet
+    // 3. There's at least one human player
+    // 4. Modal isn't already open
+    if (
+      phase === 'final' &&
+      vintoCallerId &&
+      !coalitionLeaderId &&
+      hasHumanPlayer &&
+      !uiStore.showCoalitionLeaderSelection
+    ) {
+      console.log(
+        '[CoalitionLeaderModal] Auto-opening coalition leader selection'
+      );
+      uiStore.openCoalitionLeaderSelection();
+    }
+  }, [
+    gameClient.visualState.phase,
+    gameClient.visualState.vintoCallerId,
+    gameClient.visualState.coalitionLeaderId,
+    gameClient.visualState.players,
+    uiStore,
+  ]);
+
   // Open/close dialog imperatively
   useEffect(() => {
     const dialog = dialogRef.current;

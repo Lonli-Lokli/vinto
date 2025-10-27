@@ -165,7 +165,8 @@ function getWinnerInfo(
   );
 
   // Detect coalition win
-  const hasCoalitionWinner = vintoCallerId && !winnerIds.includes(vintoCallerId);
+  const hasCoalitionWinner =
+    vintoCallerId && !winnerIds.includes(vintoCallerId);
 
   // Build winner names
   const winners: string[] = [];
