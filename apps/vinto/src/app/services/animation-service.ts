@@ -171,7 +171,7 @@ export class AnimationService {
       { type: 'drawn' },
       1500,
       true, // revealed for human, hidden for bot (will be handled by card component)
-      !player.isHuman // fullRotation for bots to show card flip
+      false 
     );
   }
 

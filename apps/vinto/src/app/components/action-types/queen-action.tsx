@@ -38,7 +38,9 @@ export const QueenAction = observer(() => {
                 </span>
               )}
             </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
+            <span className="text-[10px] text-secondary mt-0.5 ml-5">
+              {getCardShortDescription(action)}
+            </span>
           </div>
           <div className="flex flex-row items-center gap-1">
             <div className="text-xs text-secondary leading-tight">
@@ -93,7 +95,9 @@ export const QueenAction = observer(() => {
                 gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
               }
             }}
-          >{hasBothCards ? 'Do not Swap' : 'Skip'}</SkipButton>
+          >
+            {hasBothCards ? 'Do not Swap' : 'Skip'}
+          </SkipButton>
         </div>
       </div>
     </div>

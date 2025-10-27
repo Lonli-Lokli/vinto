@@ -156,7 +156,8 @@ function calculateActualScore(cards: PlayerState['cards']): number {
 // Helper to get winner info from PlayerState
 function getWinnerInfo(
   finalScores: Record<string, number>,
-  players: PlayerState[]
+  players: PlayerState[],
+  vintoCallerId: string
 ) {
   const lowestScore = Math.min(...Object.values(finalScores));
   const winnerIds = Object.keys(finalScores).filter(
@@ -164,10 +165,7 @@ function getWinnerInfo(
   );
 
   // Detect coalition win
-  const hasCoalitionWinner = winnerIds.some((id) => {
-    const player = players.find((p) => p.id === id);
-    return player && player.coalitionWith.length > 0;
-  });
+  const hasCoalitionWinner = !winnerIds.includes(vintoCallerId);
 
   // Build winner names
   const winners: string[] = [];

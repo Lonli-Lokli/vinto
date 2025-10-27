@@ -31,9 +31,15 @@ export function handleCallVinto(
   newState.phase = 'final';
 
   // Find the player and mark them as vinto caller
-  const player = newState.players.find((p) => p.id === playerId);
-  if (player) {
-    player.isVintoCaller = true;
+  for (const player of newState.players) {
+    player.isVintoCaller = player.id === playerId;
+
+    if (!player.isVintoCaller) {
+      // Remove from any coalition since Vinto caller cannot be in coalition
+      player.coalitionWith = player.coalitionWith.filter(
+        (id) => id !== playerId
+      );
+    }
   }
 
   // If Vinto is called during a toss-in, the player has already completed their turn
