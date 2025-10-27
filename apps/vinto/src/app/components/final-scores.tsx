@@ -22,7 +22,7 @@ export const FinalScores = observer(() => {
       ? calculateFinalScores(players, vintoCallerId)
       : undefined;
   const winnerInfo = finalScores
-    ? getWinnerInfo(finalScores, players)
+    ? getWinnerInfo(finalScores, players, vintoCallerId)
     : undefined;
 
   if (phase !== 'scoring' || !winnerInfo || !finalScores) {
@@ -157,7 +157,7 @@ function calculateActualScore(cards: PlayerState['cards']): number {
 function getWinnerInfo(
   finalScores: Record<string, number>,
   players: PlayerState[],
-  vintoCallerId: string
+  vintoCallerId: string | null
 ) {
   const lowestScore = Math.min(...Object.values(finalScores));
   const winnerIds = Object.keys(finalScores).filter(
@@ -165,7 +165,7 @@ function getWinnerInfo(
   );
 
   // Detect coalition win
-  const hasCoalitionWinner = !winnerIds.includes(vintoCallerId);
+  const hasCoalitionWinner = vintoCallerId && !winnerIds.includes(vintoCallerId);
 
   // Build winner names
   const winners: string[] = [];
