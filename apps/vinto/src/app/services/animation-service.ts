@@ -171,7 +171,7 @@ export class AnimationService {
       { type: 'drawn' },
       1500,
       true, // revealed for human, hidden for bot (will be handled by card component)
-      false 
+      false
     );
   }
 
@@ -877,6 +877,14 @@ export class AnimationService {
         revealed: revealCard2,
         targetPlayerPosition: player2Position,
       },
+      {
+        type: 'discard',
+        card: oldState.pendingAction!.card,
+        from: { type: 'drawn' },
+        to: { type: 'discard' },
+        duration: 1500,
+        revealed: true,
+      }
     ]);
 
     console.log('[AnimationService] Queen swap animation started');
@@ -887,9 +895,9 @@ export class AnimationService {
    * Just moves the Queen card to discard pile
    */
   private handleSkipQueenSwap(
-    oldState: GameState,
+    _oldState: GameState,
     newState: GameState,
-    action: SkipQueenSwapAction
+    _action: SkipQueenSwapAction
   ): void {
     // The Queen card should now be on top of discard pile
     const queenCard = newState.discardPile.peekTop();
@@ -897,35 +905,17 @@ export class AnimationService {
     if (!queenCard || queenCard.rank !== 'Q') {
       console.warn('[AnimationService] No Queen card found on discard pile');
       return;
-    }
+    };
 
-    // Check if the Queen came from a swap declaration
-    const swapPosition = oldState.pendingAction?.swapPosition;
-    const playerId = action.payload.playerId;
-
-    if (swapPosition !== undefined) {
-      // Card came from hand position after correct declaration
-      this.animationStore.startDiscardAnimation(
-        queenCard,
-        { type: 'player', playerId, position: swapPosition },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Queen swap skipped - declared card to discard'
-      );
-    } else {
-      // Card came from drawn position (normal flow)
-      this.animationStore.startDiscardAnimation(
-        queenCard,
-        { type: 'drawn' },
-        { type: 'discard' },
-        1500
-      );
-      console.log(
-        '[AnimationService] Queen swap skipped - drawn card to discard'
-      );
-    }
+    this.animationStore.startDiscardAnimation(
+      queenCard,
+      { type: 'drawn' },
+      { type: 'discard' },
+      1500
+    );
+    console.log(
+      '[AnimationService] Queen swap skipped - drawn card to discard'
+    );
   }
 
   /**
