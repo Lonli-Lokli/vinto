@@ -5,7 +5,11 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 import { useCardAnimationStore } from './di-provider';
-import { Card as CardType, getCardShortDescription, getCardValue } from '@vinto/shapes';
+import {
+  Card as CardType,
+  getCardShortDescription,
+  getCardValue,
+} from '@vinto/shapes';
 import { Card } from './presentational';
 
 interface VirtualCard {
@@ -54,11 +58,11 @@ export const AnimatedCardOverlay = observer(() => {
     virtualCards.push({
       id: animation.id,
       card: {
-         id: 'virtual-' + animation.id,
-         played: false,
-         rank: animation.rank,
-         value: getCardValue(animation.rank),
-         actionText: getCardShortDescription(animation.rank),
+        id: 'virtual-' + animation.id,
+        played: false,
+        rank: animation.rank,
+        value: getCardValue(animation.rank),
+        actionText: getCardShortDescription(animation.rank),
       },
       fromX: animation.fromX,
       fromY: animation.fromY,

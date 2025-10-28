@@ -42,6 +42,8 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
     const cardSize = 'lg';
     const columnGap = isMobile ? 'gap-x-2' : 'gap-x-12';
     const rowGap = isMobile ? 'gap-y-2' : 'gap-y-3';
+  // Reserve vertical space so the grid doesn't jump when lower-row content appears
+    const rowMinHeight = isMobile ? 'min-h-20' : 'min-h-24';
 
     // Show drawn card whenever there's a pending card
     const isDrawnCardVisible = !!pendingCard;
@@ -57,7 +59,7 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
         }`}
       >
         {/* Row 1, Col 1: Draw Pile */}
-        <div className="flex justify-center items-center">
+        <div className={`flex justify-center items-center ${rowMinHeight}`}>
           <DrawPile
             clickable={canDrawCard && !hasBlockingAnimations}
             onClick={onDrawCard}
@@ -67,12 +69,12 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
         </div>
 
         {/* Row 1, Col 2: Discard Pile */}
-        <div className="flex justify-center items-center">
+        <div className={`flex justify-center items-center ${rowMinHeight}`}>
           <DiscardPile pile={discardPile} size={cardSize} isMobile={isMobile} />
         </div>
 
         {/* Row 2, Col 1: Drawn Card - Directly under Draw Pile */}
-        <div className="flex justify-center items-start">
+        <div className={`flex justify-center items-start ${rowMinHeight}`}>
           <DrawnCard
             card={pendingCard ?? undefined}
             isVisible={isDrawnCardVisible}
@@ -82,7 +84,7 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
         </div>
 
         {/* Row 2, Col 2: Toss-In Area - Under Discard Pile - Informational only */}
-        <div className="flex justify-center items-start">
+        <div className={`flex justify-center items-start ${rowMinHeight}`}>
           <TossInArea
             tossInRanks={tossInRanks}
             tossInQueue={tossInQueue}

@@ -354,7 +354,8 @@ export class AnimationService {
   ): void {
     const card = action.payload.card;
 
-    // Sequential animation: play-action effect, then move to discard
+    // parallel animation: play-action effect, then move to discard
+    // important: do not use sequential here as it will render old controls once
     this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'play-action',
@@ -374,12 +375,11 @@ export class AnimationService {
     newState: GameState,
     _action: PlayDiscardAction
   ): void {
-    const card = newState.discardPile.peekTop();
-
+    const card = newState.pendingAction?.card;
     if (!card) return;
 
     // Sequential animation: play-action effect, then move to discard
-    this.animationStore.startAnimationSequence('sequential', [
+    this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'play-action',
         rank: card.rank,
