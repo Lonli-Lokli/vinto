@@ -319,7 +319,7 @@ describe('Bot Toss-In Integration Test', () => {
     // we should see only these actions changes: bot-1 finished toss in, bot-2 choosed card to declare, bot 2 finished toss in, bot 3 finished toss in, bot-4 finished toss-in
     expect(
       gameClient.state.players.find((p) => p.id === 'bot3')?.cards.length
-    ).toBe(1);
+    ).toBe(0);
     expect(gameClient.state.subPhase).toBe('ai_thinking');
   });
 });
