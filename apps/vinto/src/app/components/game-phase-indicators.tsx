@@ -113,7 +113,7 @@ export const GamePhaseIndicators = observer(() => {
         onUseAction={() => {
           if (!humanPlayer || !pendingCard) return;
           gameClient.dispatch(
-            GameActions.playCardAction(humanPlayer.id, pendingCard)
+            GameActions.playCardAction(humanPlayer.id)
           );
         }}
         onSwapDiscard={() => {

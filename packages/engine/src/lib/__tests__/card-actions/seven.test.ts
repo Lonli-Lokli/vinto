@@ -121,7 +121,7 @@ describe('7 Card Action', () => {
       expect(newState.activeTossIn?.queuedActions[0].rank).toBe('7');
     });
 
-    it.only('should process queued 7 action requiring peek target', () => {
+    it('should process queued 7 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
         turnNumber: 1,
