@@ -541,7 +541,7 @@ export class BotAIAdapter {
 
       if (shouldUseAction) {
         // Use the action immediately
-        this.gameClient.dispatch(GameActions.playCardAction(botId, drawnCard));
+        this.gameClient.dispatch(GameActions.playCardAction(botId));
         console.log(`[BotAI] ${botId} chose to use ${drawnCard.rank} action`);
         return; // State will transition to awaiting_action
       }
