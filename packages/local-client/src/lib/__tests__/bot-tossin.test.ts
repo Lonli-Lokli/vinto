@@ -269,7 +269,7 @@ describe('Bot Toss-In Integration Test', () => {
     adapter.dispose();
   });
 
-  it.only('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
+  it('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer(
