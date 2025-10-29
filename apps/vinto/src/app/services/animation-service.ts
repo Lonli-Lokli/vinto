@@ -348,11 +348,11 @@ export class AnimationService {
    * - Shows card with special play-action effect
    */
   private handleUseCardAction(
-    _oldState: GameState,
+    oldState: GameState,
     _newState: GameState,
     action: UseCardActionAction
   ): void {
-    const card = action.payload.card;
+    const card = oldState.pendingAction?.card!;
 
     // parallel animation: play-action effect, then move to discard
     // important: do not use sequential here as it will render old controls once
