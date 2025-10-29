@@ -84,7 +84,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           playerId: 'p1',
           actionPhase: 'selecting-target',
           targets: [
-            { playerId: 'p2', position: 0 }, // P2's 10
+            { playerId: 'p1', position: 0 }, // P1's K
             { playerId: 'p2', position: 3 }, // P2's 7
           ],
         },
@@ -93,8 +93,8 @@ describe('Game Engine - Rules-Based Tests', () => {
       const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Verify swap within p2's hand
-      expect(newState.players[1].cards[0].rank).toBe('7'); // Position 0 now has 7
-      expect(newState.players[1].cards[3].rank).toBe('10'); // Position 3 now has 10
+      expect(newState.players[0].cards[0].rank).toBe('7'); // Position 0 now has 7
+      expect(newState.players[1].cards[3].rank).toBe('K'); // Position 3 now has K
     });
   });
 
@@ -105,7 +105,9 @@ describe('Game Engine - Rules-Based Tests', () => {
         subPhase: 'awaiting_action',
         currentPlayerIndex: 0,
         players: [
-          createTestPlayer('p1', 'Player 1', true),
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('J', 'p1c1'),
+          ]),
           createTestPlayer('p2', 'Player 2', false, [
             createTestCard('K', 'p2c1'),
             createTestCard('A', 'p2c2'),
@@ -117,7 +119,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
-            { playerId: 'p2', position: 0 },
+            { playerId: 'p1', position: 0 },
             { playerId: 'p2', position: 1 },
           ],
         },
@@ -127,6 +129,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       const newState = unsafeReduce(state, GameActions.skipQueenSwap('p1'));
 
       // Cards should remain unchanged
+      expect(newState.players[0].cards[0].rank).toBe('J');
       expect(newState.players[1].cards[0].rank).toBe('K');
       expect(newState.players[1].cards[1].rank).toBe('A');
       expect(newState.discardPile.peekTop()?.id).toBe('queen1');
@@ -141,7 +144,9 @@ describe('Game Engine - Rules-Based Tests', () => {
         subPhase: 'awaiting_action',
         currentPlayerIndex: 0,
         players: [
-          createTestPlayer('p1', 'Player 1', true),
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('J', 'p1c1'),
+          ]),
           createTestPlayer('p2', 'Player 2', false, [
             createTestCard('K', 'p2c1'),
             createTestCard('A', 'p2c2'),
@@ -153,7 +158,7 @@ describe('Game Engine - Rules-Based Tests', () => {
           from: 'drawing',
           actionPhase: 'selecting-target',
           targets: [
-            { playerId: 'p2', position: 0 }, // K
+            { playerId: 'p1', position: 0 }, // K
             { playerId: 'p2', position: 1 }, // A
           ],
         },
@@ -163,8 +168,9 @@ describe('Game Engine - Rules-Based Tests', () => {
       const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
 
       // Cards should be swapped
-      expect(newState.players[1].cards[0].rank).toBe('A');
-      expect(newState.players[1].cards[1].rank).toBe('K');
+      expect(newState.players[0].cards[0].rank).toBe('A');
+      expect(newState.players[1].cards[0].rank).toBe('K');
+      expect(newState.players[1].cards[1].rank).toBe('J');
     });
   });
 

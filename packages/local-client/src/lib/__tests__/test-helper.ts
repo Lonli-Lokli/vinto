@@ -6,9 +6,14 @@ import {
   Card,
   GameState,
   getCardShortDescription,
+  logger,
   Pile,
   PlayerState,
 } from '@vinto/shapes';
+import { GameClient } from '../game-client';
+import { GameActions } from '@vinto/engine';
+import { vi } from 'vitest';
+import { BotAIAdapter } from '../adapters/botAIAdapter';
 
 /**
  * Create a test card with proper value mapping
@@ -133,4 +138,78 @@ export function createTestDeck(): Card[] {
   }
 
   return deck;
+}
+
+/**
+ * Helper: Setup a simpler scenario by injecting specific cards
+ * This uses the swap-hand-with-deck action to inject specific cards
+ */
+export async function setupSimpleScenario(
+  players: PlayerState[],
+  currentPlayerIndex: number,
+  stateOverrides?: Partial<GameState>,
+  additionalSetup?: (gameClient: GameClient) => void
+) {
+  // Create initial state using GameEngine
+  const initialState = createTestState({
+    players: players,
+    subPhase: 'ai_thinking',
+  });
+
+  // Create GameClient with initial state
+  const gameClient = new GameClient({
+    ...initialState,
+    ...(stateOverrides ?? {}),
+  });
+
+  // Track any errors during state updates
+  const errors: string[] = [];
+  gameClient.onStateUpdateError((reason) => {
+    logger.error(`[SETUP ERROR] State update failed: ${reason}`);
+    errors.push(reason);
+  });
+
+  // Navigate to correct turn with safety limit
+  let turnCount = 0;
+  const maxTurns = 10;
+
+  // Navigate to correct turn
+  while (
+    gameClient.state.currentPlayerIndex !== currentPlayerIndex &&
+    turnCount < maxTurns
+  ) {
+    const currentPlayerId =
+      gameClient.state.players[gameClient.state.currentPlayerIndex].id;
+    gameClient.dispatch(GameActions.drawCard(currentPlayerId));
+    await vi.runAllTimersAsync();
+    if (errors.length > 0) {
+      throw new Error(`Errors during drawCard: ${errors.join(', ')}`);
+    }
+
+    gameClient.dispatch(GameActions.discardCard(currentPlayerId));
+    await vi.runAllTimersAsync();
+    if (errors.length > 0) {
+      throw new Error(`Errors during discardCard: ${errors.join(', ')}`);
+    }
+
+    for (const player of gameClient.state.players) {
+      gameClient.dispatch(GameActions.playerTossInFinished(player.id));
+    }
+    await vi.runAllTimersAsync();
+
+    turnCount++;
+  }
+
+  if (turnCount >= maxTurns) {
+    throw new Error(
+      `Failed to reach player index ${currentPlayerIndex} after ${maxTurns} turns`
+    );
+  }
+
+  additionalSetup?.(gameClient);
+
+  // bots start listening for game events
+  const botAdapter = new BotAIAdapter(gameClient);
+
+  return { gameClient, botAdapter };
 }

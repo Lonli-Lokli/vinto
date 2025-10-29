@@ -14,9 +14,23 @@ import {
 } from '@vinto/bot';
 import { GameClient } from '../game-client';
 
+type GameClientInstance = InstanceType<typeof GameClient>;
+type GameClientState = GameClientInstance['state'];
+
+type ReactionSnapshot = {
+  isBot: boolean;
+  subPhase: GameClientState['subPhase'];
+  activeTossIn: GameClientState['activeTossIn'];
+  vintoCallerId: GameClientState['vintoCallerId'];
+  coalitionLeaderId: GameClientState['coalitionLeaderId'];
+  phase: GameClientState['phase'];
+  turnCount: GameClientState['turnNumber'];
+  currentPlayerId: GameClientInstance['currentPlayer']['id'];
+};
+
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
 const LARGE_DELAY = 3_000; // larger delay for showing UI elements
-const _SMALL_DELAY = 200; // small delay to let UI draw
+const SMALL_DELAY = 300; // small delay to let UI draw
 const FINAL_ROUND_DELAY = 2_000; // slower delay for final round actions (coalition vs Vinto)
 
 /**
@@ -49,6 +63,8 @@ export class BotAIAdapter {
   // Cache action plan when bot commits to take-discard with action card
   // This ensures consistency: bot won't change its mind about using the action
   private cachedActionDecision: BotActionDecision | null = null;
+  private reactionQueue: Promise<void> = Promise.resolve();
+  private isDisposed = false;
 
   constructor(private gameClient: GameClient) {
     // Use existing bot decision service factory
@@ -70,9 +86,10 @@ export class BotAIAdapter {
    * After dispatching an action, methods simply return. The reaction will
    * automatically fire again when the game state transitions, creating a
    * robust, self-triggering loop that is perfectly synchronized with the game state.
+   * Asynchronous work is queued to guarantee sequential execution.
    */
   private setupBotReaction(): void {
-    this.disposeReaction = reaction(
+    this.disposeReaction = reaction<ReactionSnapshot>(
       // Watch for bot turn state - EXPLICIT state watching only
       () => ({
         isBot: this.gameClient.currentPlayer.isBot,
@@ -86,57 +103,77 @@ export class BotAIAdapter {
         phase: this.gameClient.state.phase,
       }),
       // Execute bot turn when state is ready
-      // Note: Using fire-and-forget pattern here is intentional.
-      // Reactions should not await - they trigger async operations that will
-      // naturally loop back through state changes. Error handling occurs within methods.
-      ({
-        isBot,
-        subPhase,
-        activeTossIn,
-        vintoCallerId,
-        coalitionLeaderId,
-        phase,
-      }) => {
-        // CRITICAL: Handle coalition leader selection when Vinto is called
-        // If all players are bots, automatically select the bot with lowest estimated score
-        if (
-          phase === 'final' &&
-          vintoCallerId &&
-          !coalitionLeaderId &&
-          this.allPlayersAreBots()
-        ) {
-          this.selectCoalitionLeaderForBots();
-          return;
-        }
-
-        // Handle toss-in phase separately (all bot players participate)
-        if (subPhase === 'toss_queue_active' && activeTossIn) {
-          // Fire-and-forget: Let the async operation run independently
-          this.handleTossInPhase().catch((error) => {
-            console.error('[BotAI] Error in toss-in phase:', error);
-          });
-          return;
-        }
-
-        // Only execute bot logic when it's a bot's turn
-        if (!isBot) {
-          return;
-        }
-
-        // Execute bot turn based on current subPhase
-        // Fire-and-forget: Let the async operation run independently
-        this.executeBotTurn().catch((error) => {
-          console.error('[BotAI] Error executing bot turn:', error);
-        });
+      // Reactions stay synchronous; async work is queued for sequential handling.
+      (snapshot) => {
+        this.queueReactionTask(snapshot);
       }
     );
+  }
+
+  private queueReactionTask(snapshot: ReactionSnapshot): void {
+    if (this.isDisposed) {
+      return;
+    }
+
+    this.reactionQueue = this.reactionQueue
+      .then(async () => {
+        if (this.isDisposed) {
+          return;
+        }
+
+        try {
+          await this.runQueuedReaction(snapshot);
+        } catch (error) {
+          logger.error('[BotAI] Error processing queued reaction:', error);
+        }
+      })
+      .catch((error) => {
+        logger.error('[BotAI] Reaction queue failure:', error);
+      });
+  }
+
+  private async runQueuedReaction(_snapshot: ReactionSnapshot): Promise<void> {
+    const state = this.gameClient.state;
+    const isBot = this.gameClient.currentPlayer.isBot;
+
+    // CRITICAL: Handle coalition leader selection when Vinto is called
+    if (
+      state.phase === 'final' &&
+      state.vintoCallerId &&
+      !state.coalitionLeaderId &&
+      this.allPlayersAreBots()
+    ) {
+      this.selectCoalitionLeaderForBots();
+      return;
+    }
+
+    // Handle toss-in phase separately (all bot players participate)
+    if (state.subPhase === 'toss_queue_active' && state.activeTossIn) {
+      await this.handleTossInPhase();
+      return;
+    }
+
+    // Only execute bot logic when it's a bot's turn
+    if (!isBot) {
+      return;
+    }
+
+    await this.executeBotTurn();
   }
 
   /**
    * Cleanup reactions when adapter is destroyed
    */
   dispose(): void {
+    this.isDisposed = true;
     this.disposeReaction?.();
+  }
+
+  /**
+   * Await resolution of currently queued bot reaction tasks (useful in tests)
+   */
+  async waitForIdle(): Promise<void> {
+    await this.reactionQueue;
   }
 
   /**
@@ -221,7 +258,7 @@ export class BotAIAdapter {
           });
       }
     } catch (error) {
-      console.error('[BotAI] Error executing bot turn:', error);
+      logger.error('[BotAI] Error executing bot turn:', error);
     }
   }
 
@@ -365,7 +402,7 @@ export class BotAIAdapter {
               )
             );
 
-            await this.delay(600);
+            await this.delay(SMALL_DELAY * 2);
           } else {
             console.log(
               `[BotAI] ${botId} wants to toss in but has no matching ${rank}`
@@ -410,7 +447,7 @@ export class BotAIAdapter {
         );
       }
 
-      await this.delay(300);
+      await this.delay(SMALL_DELAY);
     }
 
     console.log('[BotAI] All bots processed for current toss-in ranks');
@@ -681,13 +718,13 @@ export class BotAIAdapter {
         (p) => p.id === target.playerId
       );
       if (!targetPlayer) {
-        console.error(`[BotAI] Target player ${target.playerId} not found`);
+        logger.error(`[BotAI] Target player ${target.playerId} not found`);
         return;
       }
 
       const cardAtPosition = targetPlayer.cards[target.position];
       if (!cardAtPosition) {
-        console.error(
+        logger.error(
           `[BotAI] No card at ${target.playerId}[${target.position}]`
         );
         return;

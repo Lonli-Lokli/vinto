@@ -129,7 +129,7 @@ export interface ActiveTossIn {
 
 export interface TossInAction {
   playerId: string;
-  card: Card;
+  rank: Rank;
   position: number;
 }
 

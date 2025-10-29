@@ -1,7 +1,7 @@
 // engine/types/GameAction.ts
 // All possible game actions - the "language" for communicating with the engine
 
-import { Card, Difficulty, Rank } from './domain-types';
+import { Difficulty, Rank } from './domain-types';
 
 /**
  * Discriminated union of all game actions
@@ -44,6 +44,7 @@ export type GameAction =
 
   // Debug/Testing
   | SetNextDrawCardAction
+  | EmptyAction
   | SwapHandWithDeckAction;
 
 /**
@@ -86,7 +87,6 @@ export interface UseCardActionAction {
   type: 'USE_CARD_ACTION';
   payload: {
     playerId: string;
-    card: Card;
   };
 }
 
@@ -254,4 +254,9 @@ export interface SwapHandWithDeckAction {
     handPosition: number;
     deckCardRank: Rank;
   };
+}
+
+export interface EmptyAction {
+  type: 'EMPTY';
+  payload: any;
 }

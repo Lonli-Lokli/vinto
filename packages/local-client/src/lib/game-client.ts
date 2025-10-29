@@ -5,13 +5,14 @@ import { makeObservable, observable, action, computed } from 'mobx';
 import { deepEqual } from 'fast-equals';
 
 import copy from 'fast-copy';
-import type {
-  GameState,
-  GameAction,
-  GameActionHistory,
-  PlayerState,
-  Card,
-  Rank,
+import {
+  type GameState,
+  type GameAction,
+  type GameActionHistory,
+  type PlayerState,
+  type Card,
+  type Rank,
+  logger,
 } from '@vinto/shapes';
 import { GameEngine } from '@vinto/engine';
 
@@ -552,7 +553,7 @@ export class GameClient {
       const newState = JSON.parse(json) as GameState;
       this._state = newState;
     } catch (error) {
-      console.error('Failed to import state:', error);
+      logger.error('Failed to import state:', error);
     }
   }
 

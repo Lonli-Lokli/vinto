@@ -118,10 +118,10 @@ describe('7 Card Action', () => {
 
       expect(newState.players[1].cards.length).toBe(1);
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('7');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('7');
     });
 
-    it('should process queued 7 action requiring peek target', () => {
+    it.only('should process queued 7 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
         turnNumber: 1,
@@ -136,12 +136,11 @@ describe('7 Card Action', () => {
           ranks: ['7'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
-
           participants: ['p2'],
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('7', 'p2s1'),
+              rank: '7',
               position: 0,
             },
           ],
@@ -152,7 +151,8 @@ describe('7 Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2']);
-
+      // Play pending action (should be p1's turn)
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
       // Queued 7 action should start
       expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.rank).toBe('7');
@@ -188,10 +188,9 @@ describe('7 Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.selectActionTarget('p2', 'p2', 0)
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.selectActionTarget('p2', 'p2', 0))
+      ).toThrow();
     });
   });
 });

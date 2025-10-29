@@ -32,7 +32,7 @@ export const GameTable = observer(() => {
       return {
         playerId: action.playerId,
         playerName: player?.nickname || 'Unknown',
-        card: action.card,
+        rank: action.rank,
       };
     }) || [];
 

@@ -4,18 +4,18 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './presentational';
-import { Card as CardType } from '@vinto/shapes';
+import { Rank } from '@vinto/shapes';
 import { useCardAnimationStore, useUIStore } from './di-provider';
 
 interface DrawnCardProps {
-  card?: CardType;
+  rank?: Rank;
   isVisible: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isMobile?: boolean;
 }
 
 export const DrawnCard: React.FC<DrawnCardProps> = observer(
-  ({ card, isVisible, size = 'lg', isMobile = false }) => {
+  ({ rank, isVisible, size = 'lg', isMobile = false }) => {
     const animationStore = useCardAnimationStore();
     const uiStore = useUIStore();
     const textSize = isMobile ? 'text-2xs' : 'text-xs';
@@ -46,10 +46,10 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
       >
         <Card
           data-pending-card="true"
-          card={card}
-          revealed={!!card}
+          rank={rank}
+          revealed={!!rank}
           size={size}
-          highlighted={!!card}
+          highlighted={!!rank}
           isPending={true}
           selectionState="default"
           intent={intent}

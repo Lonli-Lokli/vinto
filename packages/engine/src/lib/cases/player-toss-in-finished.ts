@@ -1,7 +1,13 @@
-import { GameState, PlayerTossInFinishedAction, logger } from '@vinto/shapes';
+import {
+  GameState,
+  PlayerTossInFinishedAction,
+  getCardShortDescription,
+  getCardValue,
+  logger,
+} from '@vinto/shapes';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
-import { areAllHumansReady } from '../utils/toss-in-utils';
+import { areAllPlayersReady } from '../utils/toss-in-utils';
 
 /**
  * PLAYER_TOSS_IN_FINISHED Handler
@@ -43,11 +49,11 @@ export function handlePlayerTossInFinished(
     newState.activeTossIn.playersReadyForNextTurn.push(playerId);
   }
 
-  // Check if all human players are ready
-  const allHumansReady = areAllHumansReady(newState);
+  // Check if all players are ready
+  const allReady = areAllPlayersReady(newState);
 
-  // If all human players are ready, check if we have queued actions to process
-  if (allHumansReady) {
+  // If all players are ready, check if we have queued actions to process
+  if (allReady) {
     const hasQueuedActions = newState.activeTossIn.queuedActions.length > 0;
 
     if (hasQueuedActions) {
@@ -55,9 +61,7 @@ export function handlePlayerTossInFinished(
         '[handlePlayerTossInFinished] All humans ready, starting to process queued actions',
         {
           queuedCount: newState.activeTossIn.queuedActions.length,
-          queuedCards: newState.activeTossIn.queuedActions.map(
-            (a) => a.card.rank
-          ),
+          queuedCards: newState.activeTossIn.queuedActions.map((a) => a.rank),
         }
       );
 
@@ -69,27 +73,47 @@ export function handlePlayerTossInFinished(
 
       // Set up pending action for the first queued card
       newState.pendingAction = {
-        card: firstAction.card,
+        card: {
+          rank: firstAction.rank,
+          played: false,
+          id: `[handlePlayerTossInFinished]_${Date.now().toString()}`,
+          value: getCardValue(firstAction.rank),
+          actionText: getCardShortDescription(firstAction.rank),
+        },
         from: 'hand',
         playerId: firstAction.playerId,
         actionPhase: 'choosing-action',
-        targetType: getTargetTypeFromRank(firstAction.card.rank),
+        targetType: getTargetTypeFromRank(firstAction.rank),
         targets: [],
       };
-
-      // Transition to awaiting_action phase (shows Skip button in UI)
-      newState.subPhase = 'awaiting_action';
-
-      // Mark toss-in as not waiting for input (processing queue)
-      newState.activeTossIn.waitingForInput = false;
 
       console.log(
         '[handlePlayerTossInFinished] Processing first queued action:',
         {
           playerId: firstAction.playerId,
-          card: firstAction.card.rank,
+          card: firstAction.rank,
         }
       );
+
+      // CRITICAL: Set currentPlayerIndex to the player executing the queued action
+      // This ensures UI shows correct active player and BotAI processes correct bot
+      const actionPlayerIndex = newState.players.findIndex(
+        (p) => p.id === firstAction.playerId
+      );
+      if (actionPlayerIndex !== -1) {
+        newState.currentPlayerIndex = actionPlayerIndex;
+        console.log(
+          '[handlePlayerTossInFinished] Set currentPlayerIndex to action player:',
+          {
+            playerId: firstAction.playerId,
+            playerIndex: actionPlayerIndex,
+          }
+        );
+      }
+
+      // Transition to selecting phase to process the queued action
+      newState.subPhase = 'selecting';
+      newState.activeTossIn.waitingForInput = false;
     } else {
       console.log(
         '[handlePlayerTossInFinished] All humans ready, no queued actions'

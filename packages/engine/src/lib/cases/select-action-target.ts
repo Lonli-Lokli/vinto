@@ -2,6 +2,8 @@ import {
   GameState,
   NeverError,
   SelectActionTargetAction,
+  getCardShortDescription,
+  getCardValue,
   logger,
 } from '@vinto/shapes';
 import copy from 'fast-copy';
@@ -270,7 +272,13 @@ export function handleSelectActionTarget(
             const nextAction = newState.activeTossIn.queuedActions[0];
 
             newState.pendingAction = {
-              card: nextAction.card,
+              card: {
+                id: '[select-action-target]_${Date.now().toString()}',
+                rank: nextAction.rank,
+                played: false,
+                value: getCardValue(nextAction.rank),
+                actionText: getCardShortDescription(nextAction.rank),
+              },
               from: 'hand',
               playerId: nextAction.playerId,
               actionPhase: 'choosing-action',
@@ -283,7 +291,7 @@ export function handleSelectActionTarget(
               '[handleSelectActionTarget] Processing next queued action:',
               {
                 playerId: nextAction.playerId,
-                card: nextAction.card.rank,
+                card: nextAction.rank,
               }
             );
           } else {

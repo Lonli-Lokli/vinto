@@ -3,13 +3,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  Eye,
-  Repeat,
-  Zap,
-  Hourglass,
-  CircleArrowRight,
-} from 'lucide-react';
+import { Eye, Repeat, Zap, Hourglass, CircleArrowRight } from 'lucide-react';
 import { HelpPopover } from './presentational';
 import { useUIStore } from './di-provider';
 import { Card as CardComponent } from './presentational';
@@ -181,7 +175,7 @@ const SetupPhaseIndicator = observer(
         <div>
           <StartGameButton
             onClick={onFinishSetup}
-                className="w-full py-1.5 px-4 text-sm"
+            className="w-full py-1.5 px-4 text-sm"
             disabled={setupPeeksRemaining > 0}
           />
         </div>
@@ -317,7 +311,6 @@ Skip toss-in and proceed to next player's turn`;
 
 TossInIndicator.displayName = 'TossInIndicator';
 
-
 // Card Drawn Header Component
 const CardDrawnHeader = ({
   pendingCard,
@@ -424,7 +417,7 @@ const CardDrawnIndicator = observer(
             <div className="flex-shrink-0 h-full flex items-stretch">
               <div className="h-full" style={{ aspectRatio: '2.5 / 3.5' }}>
                 <CardComponent
-                  card={pendingCard}
+                  rank={pendingCard.rank}
                   revealed={true}
                   size="auto"
                   selectionState="default"

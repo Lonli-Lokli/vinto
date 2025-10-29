@@ -446,7 +446,7 @@ describe('King (K) Card Action', () => {
 
       // Verify King action was queued
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('K');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('K');
       expect(newState.activeTossIn?.participants).toContain('p2');
     });
   });

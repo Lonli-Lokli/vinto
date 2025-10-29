@@ -1,4 +1,9 @@
-import { GameState, DeclareKingActionAction, Rank } from '@vinto/shapes';
+import {
+  GameState,
+  DeclareKingActionAction,
+  Rank,
+  logger,
+} from '@vinto/shapes';
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import {
@@ -45,21 +50,19 @@ export function handleDeclareKingAction(
   // Get the selected card from pendingAction.targets[0]
   const selectedTarget = newState.pendingAction?.targets?.[0];
   if (!selectedTarget) {
-    console.error(
+    logger.error(
       '[handleDeclareKingAction] No target was selected for King action'
     );
     return state;
   }
 
-  const {
-    playerId: targetPlayerId,
-    position
-  } = selectedTarget;
+  const { playerId: targetPlayerId, position } = selectedTarget;
 
-  const selectedCard = newState.players.find(p => p.id === targetPlayerId)?.cards[position];
+  const selectedCard = newState.players.find((p) => p.id === targetPlayerId)
+    ?.cards[position];
 
-   if (!selectedCard) {
-    console.error(
+  if (!selectedCard) {
+    logger.error(
       '[handleDeclareKingAction] No selected card found for King action'
     );
     return state;
@@ -87,7 +90,7 @@ export function handleDeclareKingAction(
   // Find the target player
   const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
   if (!targetPlayer) {
-    console.error('[handleDeclareKingAction] Target player not found');
+    logger.error('[handleDeclareKingAction] Target player not found');
     return state;
   }
 
@@ -150,7 +153,7 @@ export function handleDeclareKingAction(
     // and issue a penalty card
     const player = newState.players.find((p) => p.id === playerId);
     if (!player) {
-      console.error('[handleDeclareKingAction] Player not found');
+      logger.error('[handleDeclareKingAction] Player not found');
       return state;
     }
 

@@ -1,6 +1,5 @@
 import {
   CallVintoAction,
-  Card,
   ConfirmPeekAction,
   DeclareKingActionAction,
   Difficulty,
@@ -26,6 +25,7 @@ import {
   ExecuteJackSwapAction,
   SkipJackSwapAction,
   SkipPeekAction,
+  EmptyAction,
 } from '@vinto/shapes';
 
 /**
@@ -61,9 +61,9 @@ export const GameActions = {
     payload: { playerId },
   }),
 
-  playCardAction: (playerId: string, card: Card): UseCardActionAction => ({
+  playCardAction: (playerId: string): UseCardActionAction => ({
     type: 'USE_CARD_ACTION',
-    payload: { playerId, card },
+    payload: { playerId },
   }),
 
   selectAceActionTarget: (
@@ -186,4 +186,11 @@ export const GameActions = {
     type: 'SWAP_HAND_WITH_DECK',
     payload: { playerId, handPosition, deckCardRank },
   }),
+
+  empty(): EmptyAction {
+    return {
+      type: 'EMPTY',
+      payload: {},
+    };
+  },
 };

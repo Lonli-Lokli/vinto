@@ -13,7 +13,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GameEngine } from '../../game-engine';
 import { GameActions } from '../../game-actions';
 import {
   createTestCard,
@@ -120,13 +119,14 @@ describe('10 Card Action', () => {
 
       expect(newState.players[1].cards.length).toBe(1);
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('10');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('10');
     });
 
     it('should process queued 10 action requiring peek target', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
         turnNumber: 1,
+        currentPlayerIndex: 1,
         players: [
           createTestPlayer('p1', 'Player 1', true, [
             createTestCard('K', 'p1c1'),
@@ -139,12 +139,11 @@ describe('10 Card Action', () => {
           ranks: ['10'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
-
           participants: ['p2'],
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('10', 'p2t1'),
+              rank: '10',
               position: 0,
             },
           ],
@@ -157,8 +156,10 @@ describe('10 Card Action', () => {
       let newState = markPlayersReady(state, ['p1', 'p2']);
 
       // Queued 10 action should start
-      expect(newState.subPhase).toBe('awaiting_action');
+      expect(newState.subPhase).toBe('selecting');
       expect(newState.pendingAction?.card.rank).toBe('10');
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
 
       // P2 peeks p1's card
       newState = unsafeReduce(
@@ -220,10 +221,9 @@ describe('10 Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.selectActionTarget('p2', 'p3', 0)
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.selectActionTarget('p2', 'p3', 0))
+      ).toThrow();
     });
   });
 });

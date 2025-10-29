@@ -38,6 +38,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'human-1',
           name: 'Human',
+          nickname: 'TheHuman',
           isHuman: true,
           isBot: false,
           cards: [
@@ -54,6 +55,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-1',
           name: 'Bot 1',
+          nickname: 'TheBot1',
           isHuman: false,
           isBot: true,
           cards: [
@@ -70,6 +72,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-2',
           name: 'Bot 2',
+          nickname: 'TheBot2',
           isHuman: false,
           isBot: true,
           cards: [
@@ -86,6 +89,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-3',
           name: 'Bot 3',
+          nickname: 'TheBot3',
           isHuman: false,
           isBot: true,
           cards: [
@@ -116,10 +120,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     });
 
     // Step 1: Human chooses to use first Ace action (card already in pendingAction from draw)
-    let newState = unsafeReduce(
-      state,
-      GameActions.playCardAction('human-1', ace1)
-    );
+    let newState = unsafeReduce(state, GameActions.playCardAction('human-1'));
     expect(newState.subPhase).toBe('awaiting_action');
 
     // Step 2: Human selects target for first Ace (forces bot-1 to draw)
@@ -146,18 +147,9 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.activeTossIn?.playersReadyForNextTurn).toContain('human-1');
 
     // Bots also mark ready (simulating bot AI)
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-1')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-2')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-3')
-    );
+    newState = markPlayersReady(newState, ['bot-1', 'bot-2', 'bot-3']);
+
+    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
 
     // All humans ready, queued actions should start processing
     expect(newState.subPhase).toBe('awaiting_action');
@@ -199,6 +191,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'human-1',
           name: 'Human',
+          nickname: 'TheHuman',
           isHuman: true,
           isBot: false,
           cards: [
@@ -215,6 +208,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-1',
           name: 'Bot 1',
+          nickname: 'TheBot1',
           isHuman: false,
           isBot: true,
           cards: [
@@ -231,6 +225,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-2',
           name: 'Bot 2',
+          nickname: 'TheBot2',
           isHuman: false,
           isBot: true,
           cards: [
@@ -247,6 +242,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-3',
           name: 'Bot 3',
+          nickname: 'TheBot3',
           isHuman: false,
           isBot: true,
           cards: [
@@ -295,7 +291,86 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.subPhase).toBe('awaiting_action');
   });
 
-  it('should NOT get stuck in infinite Ace action loop after toss-in King action', () => {
+  it('Scenario 03. should let bot 2 re-confirm toss-in after swap-triggered king toss-in', () => {
+    const bot2King = createTestCard('K', 'bot2_K');
+    const bot1King = createTestCard('K', 'bot1_K');
+    const drawCard = createTestCard('9', 'bot2_draw');
+
+    const state = createTestState({
+      players: [
+        createTestPlayer('bot-1', 'Bot 1', false, [
+          bot1King,
+          createTestCard('7', 'bot1_7'),
+          createTestCard('8', 'bot1_8'),
+          createTestCard('9', 'bot1_9'),
+        ]),
+        createTestPlayer('bot-2', 'Bot 2', false, [
+          bot2King,
+          createTestCard('6', 'bot2_6'),
+          createTestCard('7', 'bot2_7'),
+          createTestCard('8', 'bot2_8'),
+        ]),
+        createTestPlayer('bot-3', 'Bot 3', false, [
+          createTestCard('2', 'bot3_2'),
+          createTestCard('3', 'bot3_3'),
+          createTestCard('4', 'bot3_4'),
+          createTestCard('5', 'bot3_5'),
+        ]),
+        createTestPlayer('bot-4', 'Bot 4', false, [
+          createTestCard('2', 'bot4_2'),
+          createTestCard('3', 'bot4_3'),
+          createTestCard('4', 'bot4_4'),
+          createTestCard('5', 'bot4_5'),
+        ]),
+      ],
+      currentPlayerIndex: 1,
+      drawPile: Pile.fromCards([
+        createTestCard('J', 'draw_J'),
+        createTestCard('Q', 'draw_Q'),
+      ]),
+      discardPile: Pile.fromCards([]),
+      subPhase: 'choosing',
+      pendingAction: {
+        card: drawCard,
+        from: 'drawing',
+        playerId: 'bot-2',
+        actionPhase: 'choosing-action',
+        targets: [],
+      },
+    });
+
+    // Bot 2 swaps King without declaring → starts King toss-in
+    let newState = unsafeReduce(state, GameActions.swapCard('bot-2', 0));
+    expect(newState.activeTossIn?.ranks).toEqual(['K']);
+
+    // Bot 2 immediately flags ready (AI auto-behavior)
+    newState = unsafeReduce(
+      newState,
+      GameActions.playerTossInFinished('bot-2')
+    );
+    expect(newState.activeTossIn?.playersReadyForNextTurn).toContain('bot-2');
+
+    // Bot 1 tosses in their King, queueing the action
+    newState = unsafeReduce(
+      newState,
+      GameActions.participateInTossIn('bot-1', [0])
+    );
+    expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+
+    // Other bots can still mark ready normally
+    newState = unsafeReduce(
+      newState,
+      GameActions.playerTossInFinished('bot-3')
+    );
+    expect(newState.activeTossIn?.playersReadyForNextTurn).toContain('bot-3');
+
+    //Player already confirmed ready for next turn
+    expect(() =>
+      unsafeReduce(newState, GameActions.playerTossInFinished('bot-2'))
+    ).toThrow();
+  });
+
+  it('Scenario 04. should NOT get stuck in infinite Ace action loop after toss-in King action', () => {
     // Bug scenario:
     // 1. Human has 2 Aces in hand, draws King
     // 2. Human uses King action, declares Ace in bot's hand (correct)
@@ -316,6 +391,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'human-1',
           name: 'Human',
+          nickname: 'TheHuman',
           isHuman: true,
           isBot: false,
           cards: [
@@ -332,6 +408,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-1',
           name: 'Bot 1',
+          nickname: 'TheBot1',
           isHuman: false,
           isBot: true,
           cards: [
@@ -348,6 +425,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-2',
           name: 'Bot 2',
+          nickname: 'TheBot2',
           isHuman: false,
           isBot: true,
           cards: [
@@ -364,6 +442,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
         {
           id: 'bot-3',
           name: 'Bot 3',
+          nickname: 'TheBot3',
           isHuman: false,
           isBot: true,
           cards: [
@@ -395,10 +474,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     });
 
     // Step 1: Human chooses to use King action (card already in pendingAction from draw)
-    let newState = unsafeReduce(
-      state,
-      GameActions.playCardAction('human-1', king)
-    );
+    let newState = unsafeReduce(state, GameActions.playCardAction('human-1'));
     expect(newState.subPhase).toBe('awaiting_action');
     expect(newState.pendingAction?.card?.rank).toBe('K');
 
@@ -437,24 +513,14 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.activeTossIn?.queuedActions.length).toBe(1);
 
     // Step 6: Human clicks Continue (marks as ready)
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('human-1')
-    );
+    newState = markPlayersReady(newState, [
+      'human-1',
+      'bot-1',
+      'bot-2',
+      'bot-3',
+    ]);
 
-    // Bots also mark ready
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-1')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-2')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-3')
-    );
+    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
 
     // All humans ready, queued Ace action should start processing
     expect(newState.subPhase).toBe('awaiting_action');
@@ -483,25 +549,14 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.activeTossIn?.queuedActions.length).toBe(1);
 
     // Human clicks Continue
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('human-1')
-    );
+    newState = markPlayersReady(newState, [
+      'human-1',
+      'bot-1',
+      'bot-2',
+      'bot-3',
+    ]);
 
-    // Bots mark ready
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-1')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-2')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-3')
-    );
-
+    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
     // Second Ace should process
     expect(newState.subPhase).toBe('awaiting_action');
     expect(newState.pendingAction?.card?.rank).toBe('A');
@@ -518,28 +573,18 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(newState.activeTossIn?.queuedActions.length).toBe(0);
 
     // Final Continue - should advance turn to next player
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('human-1')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-1')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-2')
-    );
-    newState = unsafeReduce(
-      newState,
-      GameActions.playerTossInFinished('bot-3')
-    );
+    newState = markPlayersReady(newState, [
+      'human-1',
+      'bot-1',
+      'bot-2',
+      'bot-3',
+    ]);
 
     // Toss-in should be complete, turn should advance
     expect(newState.currentPlayerIndex).toBe(1); // Next player
   });
 
-  it('Scenario 03. Turn auto-advances after all players are ready', () => {
+  it('Scenario 05. Turn auto-advances after all players are ready', () => {
     const state = createTestState({
       subPhase: 'idle',
       currentPlayerIndex: 0,
@@ -610,7 +655,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
-  it('Scenario 03. Turn auto-advances after bot playing card', () => {
+  it('Scenario 06. Turn auto-advances after bot playing card', () => {
     const state = createTestState({
       subPhase: 'idle',
       currentPlayerIndex: 0,
@@ -649,10 +694,7 @@ describe('GameEngine - Toss-in Scenarios', () => {
 
       updatedState = unsafeReduce(
         updatedState,
-        GameActions.playCardAction(
-          playerId,
-          createTestCard('Q', `play_${updatedState.turnNumber}`)
-        )
+        GameActions.playCardAction(playerId)
       );
 
       updatedState = markPlayersReady(updatedState, ['p1', 'p2', 'p3', 'p4']);

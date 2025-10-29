@@ -120,7 +120,7 @@ describe('9 Card Action', () => {
 
       expect(newState.players[1].cards.length).toBe(1);
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('9');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('9');
     });
 
     it('should process queued 9 action requiring peek target', () => {
@@ -144,7 +144,7 @@ describe('9 Card Action', () => {
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('9', 'p2n1'),
+              rank: '9',
               position: 0,
             },
           ],
@@ -156,6 +156,7 @@ describe('9 Card Action', () => {
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2']);
 
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
       // Queued 9 action should start
       expect(newState.subPhase).toBe('awaiting_action');
       expect(newState.pendingAction?.card.rank).toBe('9');
@@ -190,10 +191,9 @@ describe('9 Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.selectActionTarget('p2', 'p3', 0)
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.selectActionTarget('p2', 'p3', 0))
+      ).toThrow();
     });
   });
 });

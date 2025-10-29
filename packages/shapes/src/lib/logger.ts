@@ -3,6 +3,8 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+import { getEnvironment } from './utils';
+
 /**
  * Logger utility with Sentry integration
  *
@@ -33,11 +35,13 @@ export const logger = {
       console.warn(message);
     }
 
-    // Report to Sentry as a warning-level message
-    Sentry.captureMessage(message, {
-      level: 'warning',
-      extra: data,
-    });
+    if (getEnvironment() === 'production') {
+      // Report to Sentry as a warning-level message
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: data,
+      });
+    }
   },
 
   /**
@@ -60,22 +64,24 @@ export const logger = {
       console.error(message);
     }
 
-    // Report to Sentry
-    if (error instanceof Error) {
-      Sentry.captureException(error, {
-        extra: {
-          message,
-          ...data,
-        },
-      });
-    } else {
-      Sentry.captureMessage(message, {
-        level: 'error',
-        extra: {
-          error,
-          ...data,
-        },
-      });
+    if (getEnvironment() !== 'production') {
+      // Report to Sentry
+      if (error instanceof Error) {
+        Sentry.captureException(error, {
+          extra: {
+            message,
+            ...data,
+          },
+        });
+      } else {
+        Sentry.captureMessage(message, {
+          level: 'error',
+          extra: {
+            error,
+            ...data,
+          },
+        });
+      }
     }
   },
 

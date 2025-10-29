@@ -196,7 +196,7 @@ describe('Ace (A) Card Action', () => {
 
       // Verify Ace action was queued
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('A');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('A');
       expect(newState.activeTossIn?.participants).toContain('p2');
     });
 
@@ -219,7 +219,7 @@ describe('Ace (A) Card Action', () => {
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('A', 'p2ace'),
+              rank: 'A',
               position: 0,
             },
           ],
@@ -230,6 +230,8 @@ describe('Ace (A) Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2']);
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
 
       // Queued Ace action should start
       expect(newState.subPhase).toBe('awaiting_action');

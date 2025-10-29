@@ -2,7 +2,7 @@
 'use client';
 
 import React, { FC } from 'react';
-import { Card as CardType, NeverError, Rank } from '@vinto/shapes';
+import { NeverError, Rank } from '@vinto/shapes';
 import {
   Image_2,
   Image_3,
@@ -53,7 +53,7 @@ export type CardSelectionVariant = 'action' | 'swap';
 export type CardIntent = 'success' | 'failure';
 
 interface CardProps {
-  card?: CardType;
+  rank?: Rank;
   revealed?: boolean;
   size?: CardSize;
   highlighted?: boolean;
@@ -78,7 +78,7 @@ interface CardProps {
 }
 
 export function Card({
-  card,
+  rank,
   revealed = false,
   size = 'md',
   highlighted = false,
@@ -173,8 +173,8 @@ export function Card({
       {disableFlipAnimation ? (
         // No flip animation - just show the revealed/unrevealed state directly
         <div className="w-full h-full">
-          {revealed && card ? (
-            <RankComponent rank={card.rank} />
+          {revealed && rank ? (
+            <RankComponent rank={rank} />
           ) : (
             <CardBackComponent botPeeking={botPeeking} />
           )}
@@ -184,12 +184,12 @@ export function Card({
         <div className="flip-card-container">
           <div
             className={`flip-card-inner ${
-              revealed && card ? 'flip-card-revealed' : ''
+              revealed && rank ? 'flip-card-revealed' : ''
             }`}
           >
             {/* Front side - Card face (shown when revealed) */}
             <div className="flip-card-front">
-              {card && <RankComponent rank={card.rank} />}
+              {rank && <RankComponent rank={rank} />}
             </div>
 
             {/* Back side - Card back (shown when not revealed) */}
@@ -224,9 +224,7 @@ const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
 }) => {
   // Container has border and background, image fills it completely
   const containerClassName = `h-full w-auto rounded border shadow-theme-sm overflow-hidden ${
-    botPeeking
-      ? 'border-warning bg-card-revealed-gradient'
-      : 'bg-card-gradient'
+    botPeeking ? 'border-warning bg-card-revealed-gradient' : 'bg-card-gradient'
   }`;
 
   const imageClassName = 'h-full w-full object-cover';
@@ -242,8 +240,7 @@ const RankComponent: FC<{
   rank: Rank;
 }> = ({ rank }) => {
   // Container has border and background, image fills it completely
-  const containerClassName =
-    'h-full w-auto rounded shadow-sm overflow-hidden';
+  const containerClassName = 'h-full w-auto rounded shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
 
   const renderImage = () => {

@@ -167,7 +167,7 @@ export const DeckManagerPopover = observer(
                       >
                         <div className="w-14 h-20">
                           <CardComponent
-                            card={card}
+                            rank={card.rank}
                             revealed={true}
                             size="auto"
                             selectionState="default"
@@ -209,7 +209,7 @@ export const DeckManagerPopover = observer(
                     <div className="w-14 h-20">
                       {isAvailable ? (
                         <CardComponent
-                          card={cards[0]}
+                          rank={cards[0].rank}
                           revealed={true}
                           size="auto"
                           selectionState="default"
@@ -243,7 +243,7 @@ export const DeckManagerPopover = observer(
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-20">
                     <CardComponent
-                      card={topCard}
+                      rank={topCard.rank}
                       revealed={true}
                       size="auto"
                       selectionState="default"
@@ -274,7 +274,7 @@ export const DeckManagerPopover = observer(
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-20">
                     <CardComponent
-                      card={humanPlayer.cards[selectedHandPosition]}
+                      rank={humanPlayer.cards[selectedHandPosition].rank}
                       revealed={true}
                       size="auto"
                       selectionState="default"

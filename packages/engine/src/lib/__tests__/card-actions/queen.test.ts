@@ -71,7 +71,7 @@ describe('Queen (Q) Card Action', () => {
       expect(newState.activeTossIn?.initiatorId).toBe('p1');
     });
 
-    it('should allow peeking two cards from same player without swapping', () => {
+    it('should reject peeking two cards from same player', () => {
       const queenCard = createTestCard('Q', 'queen1');
 
       const state = createTestState({
@@ -96,15 +96,9 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState = unsafeReduce(state, GameActions.skipQueenSwap('p1'));
-
-      // Cards unchanged
-      expect(newState.players[1].cards[0].rank).toBe('K');
-      expect(newState.players[1].cards[2].rank).toBe('7');
-
-      // Should trigger toss-in
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.ranks).toContain('Q');
+      expect(() =>
+        unsafeReduce(state, GameActions.skipQueenSwap('p1'))
+      ).toThrow();
     });
   });
 
@@ -152,7 +146,7 @@ describe('Queen (Q) Card Action', () => {
       expect(newState.activeTossIn?.ranks).toContain('Q');
     });
 
-    it('should allow swapping two cards from same player', () => {
+    it('should reject swapping two cards from same player', () => {
       const queenCard = createTestCard('Q', 'queen1');
 
       const state = createTestState({
@@ -178,17 +172,9 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
-
-      // Cards within p2's hand should be swapped
-      expect(newState.players[1].cards[0].rank).toBe('8'); // Was K
-      expect(newState.players[1].cards[3].rank).toBe('K'); // Was 8
-
-      // Other cards unchanged
-      expect(newState.players[1].cards[1].rank).toBe('A');
-      expect(newState.players[1].cards[2].rank).toBe('7');
-
-      expect(newState.subPhase).toBe('toss_queue_active');
+      expect(() =>
+        unsafeReduce(state, GameActions.executeQueenSwap('p1'))
+      ).toThrow();
     });
   });
 
@@ -260,7 +246,7 @@ describe('Queen (Q) Card Action', () => {
 
       // Verify Queen action was queued
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('Q');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('Q');
       expect(newState.activeTossIn?.participants).toContain('p2');
     });
 
@@ -287,7 +273,7 @@ describe('Queen (Q) Card Action', () => {
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('Q', 'p2q1'),
+              rank: 'Q',
               position: 0,
             },
           ],
@@ -298,6 +284,8 @@ describe('Queen (Q) Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2', 'p3']);
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
 
       // Queued Queen action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -342,7 +330,9 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(state, GameActions.executeQueenSwap('p1'))).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.executeQueenSwap('p1'))
+      ).toThrow();
     });
 
     it('should reject when not player turn', () => {
@@ -364,7 +354,9 @@ describe('Queen (Q) Card Action', () => {
       });
 
       // P2 tries to execute swap (not their turn)
-      expect(() => unsafeReduce(state, GameActions.executeQueenSwap('p2'))).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.executeQueenSwap('p2'))
+      ).toThrow();
     });
 
     it('should reject when not exactly 2 targets selected', () => {
@@ -382,10 +374,9 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state1,
-        GameActions.executeQueenSwap('p1')
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state1, GameActions.executeQueenSwap('p1'))
+      ).toThrow();
 
       // Test with 3 targets
       const state3 = createTestState({
@@ -403,42 +394,9 @@ describe('Queen (Q) Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state3,
-        GameActions.executeQueenSwap('p1')
-      )).toThrow();
-    });
-
-    it('should handle peeking own cards', () => {
-      const queenCard = createTestCard('Q', 'queen1');
-
-      const state = createTestState({
-        subPhase: 'awaiting_action',
-        players: [
-          createTestPlayer('p1', 'Player 1', true, [
-            createTestCard('K', 'p1c1'),
-            createTestCard('A', 'p1c2'),
-            createTestCard('7', 'p1c3'),
-          ]),
-        ],
-        pendingAction: {
-          card: queenCard,
-          from: 'drawing',
-          playerId: 'p1',
-          actionPhase: 'selecting-target',
-          targets: [
-            { playerId: 'p1', position: 0 }, // Own card
-            { playerId: 'p1', position: 2 }, // Own card
-          ],
-        },
-      });
-
-      // Execute swap of own cards
-      const newState = unsafeReduce(state, GameActions.executeQueenSwap('p1'));
-
-      // Cards should be swapped
-      expect(newState.players[0].cards[0].rank).toBe('7'); // Was K
-      expect(newState.players[0].cards[2].rank).toBe('K'); // Was 7
+      expect(() =>
+        unsafeReduce(state3, GameActions.executeQueenSwap('p1'))
+      ).toThrow();
     });
   });
 });

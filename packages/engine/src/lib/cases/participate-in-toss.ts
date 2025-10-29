@@ -66,7 +66,9 @@ export function handleParticipateInTossIn(
     // 1. ALL cards stay in hand (no removal)
     // 2. Draw penalty cards (one per invalid card) from draw pile
     console.log(
-      `[handleParticipateInTossIn] Invalid toss-in by ${playerId}: ${invalidCards.length} card(s) don't match ranks ${newState.activeTossIn.ranks.join(', ')}`
+      `[handleParticipateInTossIn] Invalid toss-in by ${playerId}: ${
+        invalidCards.length
+      } card(s) don't match ranks ${newState.activeTossIn.ranks.join(', ')}`
     );
 
     const penaltyCards: Card[] = [];
@@ -82,7 +84,9 @@ export function handleParticipateInTossIn(
 
     if (penaltyCards.length > 0) {
       console.log(
-        `[handleParticipateInTossIn] Penalty cards added to ${playerId}'s hand: ${penaltyCards.map((c) => c.rank).join(', ')}`
+        `[handleParticipateInTossIn] Penalty cards added to ${playerId}'s hand: ${penaltyCards
+          .map((c) => c.rank)
+          .join(', ')}`
       );
     }
 
@@ -124,7 +128,9 @@ export function handleParticipateInTossIn(
 
   // Valid toss-in - proceed normally
   console.log(
-    `[handleParticipateInTossIn] Valid toss-in by ${playerId}: ${cardsToTossIn.length} card(s) [${cardsToTossIn.map(({ card }) => card.rank).join(', ')}]`
+    `[handleParticipateInTossIn] Valid toss-in by ${playerId}: ${
+      cardsToTossIn.length
+    } card(s) [${cardsToTossIn.map(({ card }) => card.rank).join(', ')}]`
   );
 
   // Add player to participants
@@ -181,7 +187,7 @@ export function handleParticipateInTossIn(
       // Cards will be processed in order: first tossed-in, first processed
       newState.activeTossIn.queuedActions.push({
         playerId,
-        card,
+        rank: card.rank,
         position, // Original position (for bot memory)
       });
     } else {

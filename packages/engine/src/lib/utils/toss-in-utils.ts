@@ -1,7 +1,14 @@
 // utils/toss-in-utils.ts
 // Utility functions for managing toss-in phase state
 
-import { GameState, PlayerState, Rank } from '@vinto/shapes';
+import {
+  GameState,
+  getCardShortDescription,
+  getCardValue,
+  PlayerState,
+  Rank,
+} from '@vinto/shapes';
+import { getTargetTypeFromRank } from './action-utils';
 
 /**
  * Get the list of player IDs who should be automatically marked as ready for toss-in.
@@ -33,20 +40,13 @@ export function clearTossInReadyList(state: GameState): void {
   }
 }
 
-/**
- * Check if all human players have confirmed they're ready for the next turn.
- *
- * @param state - Current game state
- * @returns True if all human players are marked as ready
- */
-export function areAllHumansReady(state: GameState): boolean {
+export function areAllPlayersReady(state: GameState): boolean {
   if (!state.activeTossIn) {
     return false;
   }
 
-  const humanPlayers = state.players.filter((p) => p.isHuman);
-  return humanPlayers.every((p) =>
-    state.activeTossIn!.playersReadyForNextTurn.includes(p.id)
+  return (
+    state.players.length === state.activeTossIn.playersReadyForNextTurn.length
   );
 }
 
@@ -87,6 +87,13 @@ export function advanceTurnAfterTossIn(
 
   if (state.drawPile.length === 1) {
     state.drawPile.reshuffleFrom(state.discardPile);
+  }
+
+  if (state.pendingAction) {
+    state.subPhase = 'awaiting_action';
+
+    // Mark toss-in as not waiting for input (processing queue)
+    state.activeTossIn.waitingForInput = false;
   }
 
   // Clear toss-in participation data (but preserve ranks)
@@ -143,4 +150,119 @@ export function addTossInCard(
       ? [...currentTossInRanks, rank]
       : [rank];
   } else return currentTossInRanks;
+}
+
+export function clearTossInAfterActionableCard(
+  newState: GameState,
+  playerId: string,
+  rank: Rank | undefined
+): void {
+  // Clear pending action
+  newState.pendingAction = null;
+
+  // Check if we're processing a toss-in queue
+  if (
+    newState.activeTossIn !== null &&
+    newState.activeTossIn.queuedActions.length > 0
+  ) {
+    // Remove the processed action from the queue
+    newState.activeTossIn.queuedActions.shift();
+
+    console.log(
+      '[clearTossInAfterActionableCard] Action completed during toss-in queue processing',
+      {
+        remainingActions: newState.activeTossIn.queuedActions.length,
+      }
+    );
+
+    // Check if there are more queued actions
+    if (newState.activeTossIn.queuedActions.length > 0) {
+      // Process next queued action
+      const nextAction = newState.activeTossIn.queuedActions[0];
+
+      newState.pendingAction = {
+        card: {
+          // todo: consider using real card from player
+          rank: nextAction.rank,
+          played: false,
+          id: `[toss-in-utils]_${Date.now().toString()}`,
+          value: getCardValue(nextAction.rank),
+          actionText: getCardShortDescription(nextAction.rank),
+        },
+        from: 'hand',
+        playerId: nextAction.playerId,
+        actionPhase: 'choosing-action',
+        targetType: getTargetTypeFromRank(nextAction.rank),
+        targets: [],
+      };
+
+      // Set currentPlayerIndex to the player executing this queued action
+      const actionPlayerIndex = newState.players.findIndex(
+        (p) => p.id === nextAction.playerId
+      );
+      if (actionPlayerIndex !== -1) {
+        newState.currentPlayerIndex = actionPlayerIndex;
+      }
+
+      newState.subPhase = 'awaiting_action';
+
+      console.log(
+        '[clearTossInAfterActionableCard] Processing next queued action:',
+        {
+          playerId: nextAction.playerId,
+          rank: nextAction.rank,
+          currentPlayerIndex: newState.currentPlayerIndex,
+        }
+      );
+    } else {
+      // No more queued actions - clear pendingAction
+      // GameEngine will handle turn advancement automatically
+      newState.pendingAction = null;
+
+      console.log(
+        '[clearTossInAfterActionableCard] All toss-in actions processed, turn will advance'
+      );
+    }
+  } else if (newState.activeTossIn !== null) {
+    // Return to toss-in phase (action was from toss-in participation but no queue)
+    // ADD or REPLACE this card's rank to toss-in ranks if not already present
+    newState.activeTossIn.ranks = addTossInCard(
+      newState.activeTossIn.ranks,
+      rank
+    );
+
+    // Clear the ready list so players can confirm again for this new toss-in round
+    clearTossInReadyList(newState);
+
+    newState.subPhase = 'toss_queue_active';
+    newState.activeTossIn.waitingForInput = true;
+
+    console.log(
+      '[clearTossInAfterActionableCard] Peek confirmed during toss-in, rank added, returning to toss-in phase (ready list cleared)',
+      {
+        ranks: newState.activeTossIn.ranks,
+        restoredCurrentPlayerIndex: newState.currentPlayerIndex,
+      }
+    );
+  } else {
+    // Initialize new toss-in phase (normal turn flow)
+    if (rank) {
+      newState.activeTossIn = {
+        ranks: [rank],
+        initiatorId: playerId,
+        originalPlayerIndex: newState.currentPlayerIndex,
+        participants: [],
+        queuedActions: [],
+        waitingForInput: true,
+        playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+      };
+    }
+
+    // Transition to toss-in phase
+    newState.subPhase = 'toss_queue_active';
+
+    console.log(
+      '[clearTossInAfterActionableCard] Peek confirmed, toss-in active'
+    );
+  }
 }

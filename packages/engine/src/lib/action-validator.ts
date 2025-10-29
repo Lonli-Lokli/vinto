@@ -338,6 +338,16 @@ export function actionValidator(
         };
       }
 
+      if (
+        state.pendingAction.targets[0].playerId ===
+        state.pendingAction.targets[1].playerId
+      ) {
+        return {
+          valid: false,
+          reason: `Jack action requires 2 different players, got same ${state.pendingAction.targets[0].playerId}`,
+        };
+      }
+
       // Note: Coalition validation happens in SELECT_ACTION_TARGET
       // Targets are already validated when they were selected
 
@@ -383,6 +393,16 @@ export function actionValidator(
         return {
           valid: false,
           reason: `Queen action requires 2 targets, got ${state.pendingAction.targets.length}`,
+        };
+      }
+
+      if (
+        state.pendingAction.targets[0].playerId ===
+        state.pendingAction.targets[1].playerId
+      ) {
+        return {
+          valid: false,
+          reason: `Jack action requires 2 different players, got same ${state.pendingAction.targets[0].playerId}`,
         };
       }
 
@@ -672,6 +692,7 @@ export function actionValidator(
       return { valid: true };
     }
 
+    case 'EMPTY':
     case 'UPDATE_DIFFICULTY':
     case 'SET_NEXT_DRAW_CARD':
     case 'SWAP_HAND_WITH_DECK':

@@ -3,13 +3,12 @@
  *
  * Rules:
  * - Value: 10
- * - Action: Swap any two facedown cards from two different players
- * - Note: Despite rules saying "two different players", implementation may allow same player
+ * - Action: Swap any two facedown cards from two different players (MUST be different players)
  * - After action completes, triggers toss-in period for Jack rank
  *
  * Tests cover:
  * 1. Normal flow - swapping two cards from different players
- * 2. Normal flow - swapping two cards from same player
+ * 2. Validation - reject swapping two cards from same player
  * 3. Toss-in flow - tossing in Jack during toss-in period
  * 4. Edge cases and validations
  */
@@ -54,10 +53,7 @@ describe('Jack (J) Card Action', () => {
       });
 
       // Execute Jack swap
-      const newState = unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
+      const newState = unsafeReduce(state, GameActions.executeJackSwap('p1'));
 
       // Verify swap occurred
       expect(newState.players[0].cards[0].rank).toBe('2'); // P1 now has 2
@@ -74,7 +70,7 @@ describe('Jack (J) Card Action', () => {
   });
 
   describe('Normal Flow - Swapping Cards from Same Player', () => {
-    it('should allow swapping two cards from same player', () => {
+    it('should reject swapping two cards from same player', () => {
       const jackCard = createTestCard('J', 'jack1');
 
       const state = createTestState({
@@ -95,26 +91,15 @@ describe('Jack (J) Card Action', () => {
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p2', position: 0 }, // P2's 10
-            { playerId: 'p2', position: 3 }, // P2's 7
+            { playerId: 'p2', position: 3 }, // P2's 7 - SAME PLAYER
           ],
         },
       });
 
-      const newState = unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
-
-      // Verify swap within p2's hand
-      expect(newState.players[1].cards[0].rank).toBe('7'); // Position 0 now has 7
-      expect(newState.players[1].cards[3].rank).toBe('10'); // Position 3 now has 10
-
-      // Other cards unchanged
-      expect(newState.players[1].cards[1].rank).toBe('9');
-      expect(newState.players[1].cards[2].rank).toBe('8');
-
-      expect(newState.subPhase).toBe('toss_queue_active');
-      expect(newState.activeTossIn?.ranks).toContain('J');
+      // Jack requires two different players, should be rejected
+      expect(() =>
+        unsafeReduce(state, GameActions.executeJackSwap('p1'))
+      ).toThrow();
     });
   });
 
@@ -183,7 +168,7 @@ describe('Jack (J) Card Action', () => {
 
       // Verify Jack action was queued
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('J');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('J');
       expect(newState.activeTossIn?.participants).toContain('p2');
     });
 
@@ -209,7 +194,7 @@ describe('Jack (J) Card Action', () => {
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('J', 'p2j1'),
+              rank: 'J',
               position: 0,
             },
           ],
@@ -220,6 +205,8 @@ describe('Jack (J) Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2', 'p3']);
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
 
       // Queued Jack action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -237,10 +224,7 @@ describe('Jack (J) Card Action', () => {
       );
 
       // Execute swap
-      newState = unsafeReduce(
-        newState,
-        GameActions.executeQueenSwap('p2')
-      );
+      newState = unsafeReduce(newState, GameActions.executeJackSwap('p2'));
 
       // Should not return to toss-in
       expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
@@ -273,10 +257,9 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.executeQueenSwap('p1'))
+      ).toThrow();
     });
 
     it('should reject when not player turn', () => {
@@ -298,10 +281,9 @@ describe('Jack (J) Card Action', () => {
       });
 
       // P2 tries to execute swap (not their turn)
-      expect(() => unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p2')
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.executeJackSwap('p2'))
+      ).toThrow();
     });
 
     it('should reject when not exactly 2 targets selected', () => {
@@ -318,13 +300,12 @@ describe('Jack (J) Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      )).toThrow();
+      expect(() =>
+        unsafeReduce(state, GameActions.executeJackSwap('p1'))
+      ).toThrow();
     });
 
-    it('should handle swapping player own cards', () => {
+    it('should reject swapping player own cards', () => {
       const jackCard = createTestCard('J', 'jack1');
 
       const state = createTestState({
@@ -343,19 +324,15 @@ describe('Jack (J) Card Action', () => {
           actionPhase: 'selecting-target',
           targets: [
             { playerId: 'p1', position: 0 }, // Own card
-            { playerId: 'p1', position: 2 }, // Own card
+            { playerId: 'p1', position: 2 }, // Own card - SAME PLAYER
           ],
         },
       });
 
-      const newState = unsafeReduce(
-        state,
-        GameActions.executeQueenSwap('p1')
-      );
-
-      // Cards should be swapped
-      expect(newState.players[0].cards[0].rank).toBe('7'); // Was K
-      expect(newState.players[0].cards[2].rank).toBe('K'); // Was 7
+      // Jack requires two different players
+      expect(() =>
+        unsafeReduce(state, GameActions.executeJackSwap('p1'))
+      ).toThrow();
     });
   });
 });

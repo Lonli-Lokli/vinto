@@ -13,3 +13,12 @@ export const shuffleCards = (deck: Card[]): Card[] => {
   }
   return shuffled;
 };
+
+export const getEnvironment = () => {
+  switch (process.env.VERCEL_ENV) {
+    case 'production':
+      return 'production';
+    default:
+      return 'development';
+  }
+};

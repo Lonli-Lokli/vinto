@@ -1,14 +1,14 @@
 // bot-tossin.integration.test.ts
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { GameClient } from '../game-client';
 import { BotAIAdapter } from '../adapters/botAIAdapter';
-import { GameActions, GameEngine } from '@vinto/engine';
-import { PlayerState } from '@vinto/shapes';
+import { GameActions } from '@vinto/engine';
+import { Pile } from '@vinto/shapes';
 import {
-  createTestState,
   createTestCard,
   createTestPlayer,
+  setupSimpleScenario,
 } from './test-helper';
+import { mockLogger } from './setup-tests';
 
 /**
  * Integration test for bot toss-in during another bot's turn
@@ -21,112 +21,39 @@ import {
  * themselves ready, causing the game to freeze.
  */
 describe('Bot Toss-In Integration Test', () => {
-  let gameClient: GameClient;
-  let botAdapter: BotAIAdapter;
-  let gameEngine: GameEngine;
-
   beforeEach(() => {
+    mockLogger.log.mockClear();
+    mockLogger.warn.mockClear();
+    mockLogger.error.mockClear();
     // Mock delays for faster testing
     vi.useFakeTimers();
   });
 
   afterEach(() => {
-    if (botAdapter) {
-      botAdapter.dispose();
-    }
     vi.restoreAllMocks();
     vi.useRealTimers();
   });
-
-  /**
-   * Helper: Setup a simpler scenario by injecting specific cards
-   * This uses the swap-hand-with-deck action to inject specific cards
-   */
-  async function setupSimpleScenario(
-    players: PlayerState[],
-    currentPlayerIndex = 1
-  ): Promise<void> {
-    // Create initial state using GameEngine
-    const initialState = createTestState({
-      players: players,
-    });
-
-    // Create GameClient with initial state
-    gameClient = new GameClient(initialState);
-
-    // Track any errors during state updates
-    const errors: string[] = [];
-    gameClient.onStateUpdateError((reason) => {
-      console.error(`[SETUP ERROR] State update failed: ${reason}`);
-      errors.push(reason);
-    });
-
-    // Navigate to correct turn with safety limit
-    let turnCount = 0;
-    const maxTurns = 10;
-
-    // Navigate to correct turn
-    while (
-      gameClient.state.currentPlayerIndex !== currentPlayerIndex &&
-      turnCount < maxTurns
-    ) {
-      const currentPlayerId =
-        gameClient.state.players[gameClient.state.currentPlayerIndex].id;
-      gameClient.dispatch(GameActions.drawCard(currentPlayerId));
-      await vi.runAllTimersAsync();
-      if (errors.length > 0) {
-        throw new Error(`Errors during drawCard: ${errors.join(', ')}`);
-      }
-
-      gameClient.dispatch(GameActions.discardCard(currentPlayerId));
-      await vi.runAllTimersAsync();
-      if (errors.length > 0) {
-        throw new Error(`Errors during discardCard: ${errors.join(', ')}`);
-      }
-
-      if (gameClient.state.subPhase === 'toss_queue_active') {
-        for (const player of gameClient.state.players) {
-          gameClient.dispatch(GameActions.playerTossInFinished(player.id));
-        }
-        await vi.runAllTimersAsync();
-      }
-
-      turnCount++;
-    }
-
-    if (turnCount >= maxTurns) {
-      throw new Error(
-        `Failed to reach player index ${currentPlayerIndex} after ${maxTurns} turns`
-      );
-    }
-
-    botAdapter = new BotAIAdapter(gameClient);
-  }
 
   /**
    * Test 1: Simple toss-in with 7 cards
    *
    * Core test: Bot2 discards, Bot2 marks ready, Bot1 tosses in, game continues
    */
-  it.skip('should handle simple toss-in with 7 cards', async () => {
-    const bot1Cards = [
-      createTestCard('7', 'p1c1'),
-      createTestCard('5', 'p1c2'),
-      createTestCard('4', 'p1c3'),
-      createTestCard('3', 'p1c4'),
-    ];
-
-    const bot2Cards = [
-      createTestCard('7', 'p2c1'),
-      createTestCard('6', 'p2c2'),
-      createTestCard('5', 'p2c3'),
-      createTestCard('4', 'p2c4'),
-    ];
-
-    await setupSimpleScenario(
+  it('should handle simple toss-in with 7 cards', async () => {
+    const { gameClient, botAdapter } = await setupSimpleScenario(
       [
-        createTestPlayer('bot1', 'Bot 1', false, bot1Cards),
-        createTestPlayer('bot2', 'Bot 2', false, bot2Cards),
+        createTestPlayer('bot1', 'Bot 1', false, [
+          createTestCard('7', 'p1c1'),
+          createTestCard('5', 'p1c2'),
+          createTestCard('4', 'p1c3'),
+          createTestCard('3', 'p1c4'),
+        ]),
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('7', 'p2c1'),
+          createTestCard('6', 'p2c2'),
+          createTestCard('5', 'p2c3'),
+          createTestCard('4', 'p2c4'),
+        ]),
       ],
       0
     );
@@ -185,22 +112,18 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 2: Turn player should not toss in their own discard
    */
-  it.skip('should not allow turn player to toss in their own discard', async () => {
-    const bot1Cards = [
-      createTestCard('7', 'spades'),
-      createTestCard('5', 'hearts'),
-    ];
-
-    const bot2Cards = [
-      createTestCard('7', 'hearts'),
-      createTestCard('7', 'diamonds'),
-      createTestCard('6', 'clubs'),
-    ];
-
-    await setupSimpleScenario(
+  it('should not allow turn player to toss in their own discard', async () => {
+    const { gameClient, botAdapter } = await setupSimpleScenario(
       [
-        createTestPlayer('bot1', 'Bot 1', false, bot1Cards),
-        createTestPlayer('bot2', 'Bot 2', false, bot2Cards),
+        createTestPlayer('bot1', 'Bot 1', false, [
+          createTestCard('7', 'spades'),
+          createTestCard('5', 'hearts'),
+        ]),
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('7', 'hearts'),
+          createTestCard('7', 'diamonds'),
+          createTestCard('6', 'clubs'),
+        ]),
       ],
       1
     );
@@ -243,21 +166,17 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 3: No matching cards - both bots should still mark ready
    */
-  it.skip('should advance turn when no bots have matching cards', async () => {
-    const bot1Cards = [
-      createTestCard('5', 'hearts'),
-      createTestCard('4', 'hearts'),
-    ];
-
-    const bot2Cards = [
-      createTestCard('7', 'hearts'),
-      createTestCard('6', 'diamonds'),
-    ];
-
-    await setupSimpleScenario(
+  it('should advance turn when no bots have matching cards', async () => {
+    const { gameClient, botAdapter } = await setupSimpleScenario(
       [
-        createTestPlayer('bot1', 'Bot 1', false, bot1Cards),
-        createTestPlayer('bot2', 'Bot 2', false, bot2Cards),
+        createTestPlayer('bot1', 'Bot 1', false, [
+          createTestCard('5', 'hearts'),
+          createTestCard('4', 'hearts'),
+        ]),
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('7', 'hearts'),
+          createTestCard('6', 'diamonds'),
+        ]),
       ],
       1
     );
@@ -300,16 +219,21 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 4: Three bots - all must mark ready
    */
-  it.skip('should require all 3 bots to mark ready', async () => {
-    const bot1Cards = [createTestCard('7', 's1'), createTestCard('5', 'h1')];
-    const bot2Cards = [createTestCard('7', 'h2'), createTestCard('6', 'd1')];
-    const bot3Cards = [createTestCard('7', 'c1'), createTestCard('4', 'c2')];
-
-    await setupSimpleScenario(
+  it('should require all 3 bots to mark ready', async () => {
+    const { gameClient } = await setupSimpleScenario(
       [
-        createTestPlayer('bot1', 'Bot 1', false, bot1Cards),
-        createTestPlayer('bot2', 'Bot 2', false, bot2Cards),
-        createTestPlayer('bot3', 'Bot 3', false, bot3Cards),
+        createTestPlayer('bot1', 'Bot 1', false, [
+          createTestCard('7', 's1'),
+          createTestCard('5', 'h1'),
+        ]),
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('7', 'h2'),
+          createTestCard('6', 'd1'),
+        ]),
+        createTestPlayer('bot3', 'Bot 3', false, [
+          createTestCard('7', 'c1'),
+          createTestCard('4', 'c2'),
+        ]),
       ],
       1
     );
@@ -343,5 +267,59 @@ describe('Bot Toss-In Integration Test', () => {
     }
 
     adapter.dispose();
+  });
+
+  it.only('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
+    const { gameClient, botAdapter } = await setupSimpleScenario(
+      [
+        createTestPlayer(
+          'bot1',
+          'Bot 1',
+          false,
+          [createTestCard('K', 'bot1_king')],
+          []
+        ), // bot 1 has 1 unknown card only so it should draw & replace with King in hand
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('3', 'bot3_3'),
+          createTestCard('4', 'bot3_4'),
+          createTestCard('5', 'bot3_5'),
+        ]),
+
+        createTestPlayer('bot3', 'Bot 3', false, [
+          createTestCard('K', 'bot3_king'),
+          createTestCard('6', 'bot3_6'),
+          createTestCard('A', 'bot3_7'),
+        ]),
+        createTestPlayer('bot4', 'Bot 4', false, [
+          createTestCard('2', 'bot4_2'),
+          createTestCard('3', 'bot4_3'),
+          createTestCard('4', 'bot4_4'),
+          createTestCard('5', 'bot4_5'),
+        ]),
+      ],
+      0,
+      {
+        drawPile: Pile.fromCards([createTestCard('3', 'drawn_1')]),
+      }
+    );
+
+    const errorSpy = vi.fn();
+    const successSpy = vi.fn();
+    gameClient.onStateUpdateError(errorSpy);
+    gameClient.onStateUpdateSuccess(successSpy);
+
+    expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 3
+
+    gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+    await vi.runAllTimersAsync();
+
+    await botAdapter.waitForIdle();
+
+    //expect(mockLogger.warn).not.toHaveBeenCalled(); // we will have warnings as pile is empty - only way to stop bots
+    // we should see only these actions changes: bot-1 finished toss in, bot-2 choosed card to declare, bot 2 finished toss in, bot 3 finished toss in, bot-4 finished toss-in
+    expect(
+      gameClient.state.players.find((p) => p.id === 'bot3')?.cards.length
+    ).toBe(1);
+    expect(gameClient.state.subPhase).toBe('ai_thinking');
   });
 });

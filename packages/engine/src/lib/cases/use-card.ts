@@ -1,6 +1,6 @@
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
-import { GameState, UseCardActionAction } from '@vinto/shapes';
+import { GameState, logger, UseCardActionAction } from '@vinto/shapes';
 import {
   addTossInCard,
   getAutomaticallyReadyPlayers,
@@ -26,20 +26,24 @@ export function handleUseCardAction(
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
+  if (!newState.pendingAction) {
+    logger.warn('[handleUseCardAction] No pending action to use');
+    return newState;
+  }
   // Update pending action to reflect we're now using the card's action
   if (newState.pendingAction) {
-    const cardRank = newState.pendingAction.card.rank;
-
     // All cards use the same 'selecting-target' phase
     newState.pendingAction.actionPhase = 'selecting-target';
-    newState.pendingAction.targetType = getTargetTypeFromRank(cardRank);
+    newState.pendingAction.targetType = getTargetTypeFromRank(
+      newState.pendingAction.card.rank
+    );
   }
 
   if (!newState.activeTossIn) {
     // Initialize toss-in phase
     // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
     newState.activeTossIn = {
-      ranks: [action.payload.card.rank],
+      ranks: [newState.pendingAction.card.rank],
       initiatorId: action.payload.playerId,
       originalPlayerIndex: newState.currentPlayerIndex,
       participants: [],
@@ -52,8 +56,11 @@ export function handleUseCardAction(
   // ADD or REPLACE this card's rank to toss-in ranks if not already present if same turn
   newState.activeTossIn.ranks =
     newState.pendingAction?.from === 'drawing'
-      ? [action.payload.card.rank]
-      : addTossInCard(newState.activeTossIn.ranks, action.payload.card.rank);
+      ? [newState.pendingAction.card.rank]
+      : addTossInCard(
+          newState.activeTossIn.ranks,
+          newState.pendingAction.card.rank
+        );
 
   // Transition to awaiting_action phase (ready for target selection)
   newState.subPhase = 'awaiting_action';

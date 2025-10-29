@@ -4,12 +4,12 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Card } from './card';
-import { Card as CardType, Rank } from '@vinto/shapes';
+import { Rank } from '@vinto/shapes';
 
 interface TossInQueueItem {
   playerId: string;
   playerName: string;
-  card: CardType;
+  rank: Rank;
 }
 
 interface TossInAreaProps {
@@ -75,7 +75,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
                     style={{ width: '24px', height: '36px' }}
                   >
                     <Card
-                      card={item.card}
+                      rank={item.rank}
                       revealed={true}
                       size={cardSize}
                       selectionState="default"

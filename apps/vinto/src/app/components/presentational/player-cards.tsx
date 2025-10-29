@@ -123,7 +123,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
           return (
             <Card
               key={`${card.id}-${index}`}
-              card={card}
+              rank={card.rank}
               revealed={canSeeCard && !shouldHideCard}
               size={cardSize}
               selectionState={getSelectionState()}

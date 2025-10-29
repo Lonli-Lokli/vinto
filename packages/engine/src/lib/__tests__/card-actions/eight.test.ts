@@ -118,7 +118,7 @@ describe('8 Card Action', () => {
 
       expect(newState.players[1].cards.length).toBe(1);
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
-      expect(newState.activeTossIn?.queuedActions[0].card.rank).toBe('8');
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('8');
     });
 
     it('should process queued 8 action requiring peek target', () => {
@@ -140,7 +140,7 @@ describe('8 Card Action', () => {
           queuedActions: [
             {
               playerId: 'p2',
-              card: createTestCard('8', 'p2e1'),
+              rank: '8',
               position: 0,
             },
           ],
@@ -151,6 +151,8 @@ describe('8 Card Action', () => {
 
       // All players mark ready
       let newState = markPlayersReady(state, ['p1', 'p2']);
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
 
       // Queued 8 action should start
       expect(newState.subPhase).toBe('awaiting_action');
@@ -187,10 +189,9 @@ describe('8 Card Action', () => {
         },
       });
 
-      expect(() => unsafeReduce(
-        state,
-        GameActions.selectActionTarget('p2', 'p2', 0)
-      )).toThrow()
+      expect(() =>
+        unsafeReduce(state, GameActions.selectActionTarget('p2', 'p2', 0))
+      ).toThrow();
     });
   });
 });

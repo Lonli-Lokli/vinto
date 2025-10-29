@@ -29,15 +29,18 @@ import { handleExecuteJackSwap } from './cases/execute-jack-swap';
 import { handleSkipJackSwap } from './cases/skip-jack-swap';
 import { advanceTurnAfterTossIn } from './utils/toss-in-utils';
 import { handleSkipPeek } from './cases/skip-peek';
+import { handleEmpty } from './cases/empty';
 
-type GameEngineReduceResult = {
-  success: true;
-  state: GameState;
-} | {
-  success: false;
-  state: GameState
-  reason: string;
-};
+type GameEngineReduceResult =
+  | {
+      success: true;
+      state: GameState;
+    }
+  | {
+      success: false;
+      state: GameState;
+      reason: string;
+    };
 /**
  * GameEngine - The authoritative game logic
  *
@@ -71,7 +74,7 @@ export class GameEngine {
         reason: validation.reason,
         currentPhase: state.phase,
         currentSubPhase: state.subPhase,
-        action: action
+        action: action,
       });
       return { success: false, state, reason: validation.reason }; // Return unchanged state for invalid actions
     }
@@ -176,8 +179,20 @@ export class GameEngine {
         newState = handleSwapHandWithDeck(state, action);
         break;
 
+      case 'EMPTY':
+        newState = handleEmpty(state, action);
+        break;
+
       default:
         throw new NeverError(action);
+    }
+
+    if (newState === state) {
+      return {
+        success: false,
+        state,
+        reason: `Action handler for ${action.type} did not modify state`,
+      };
     }
 
     // POST-ACTION PROCESSING
@@ -187,7 +202,8 @@ export class GameEngine {
       newState.activeTossIn.queuedActions.length === 0 &&
       newState.pendingAction === null &&
       newState.activeTossIn.playersReadyForNextTurn.length ===
-        newState.players.length
+        newState.players.length &&
+      action.type !== 'EMPTY' // skip for empty action
     ) {
       // All queued actions have been processed
       // Advance turn automatically

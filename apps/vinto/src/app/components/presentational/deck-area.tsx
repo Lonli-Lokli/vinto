@@ -13,7 +13,7 @@ import { useCardAnimationStore } from '../di-provider';
 interface TossInQueueItem {
   playerId: string;
   playerName: string;
-  card: CardType;
+  rank: Rank;
 }
 
 interface DeckAreaProps {
@@ -42,7 +42,7 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
     const cardSize = 'lg';
     const columnGap = isMobile ? 'gap-x-2' : 'gap-x-12';
     const rowGap = isMobile ? 'gap-y-2' : 'gap-y-3';
-  // Reserve vertical space so the grid doesn't jump when lower-row content appears
+    // Reserve vertical space so the grid doesn't jump when lower-row content appears
     const rowMinHeight = isMobile ? 'min-h-20' : 'min-h-24';
 
     // Show drawn card whenever there's a pending card
@@ -76,7 +76,7 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
         {/* Row 2, Col 1: Drawn Card - Directly under Draw Pile */}
         <div className={`flex justify-center items-start ${rowMinHeight}`}>
           <DrawnCard
-            card={pendingCard ?? undefined}
+            rank={pendingCard?.rank}
             isVisible={isDrawnCardVisible}
             size={cardSize}
             isMobile={isMobile}
