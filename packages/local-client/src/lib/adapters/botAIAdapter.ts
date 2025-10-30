@@ -611,7 +611,7 @@ export class BotAIAdapter {
 
     if (shouldUseAction && cardInHand.actionText) {
       // Has action - use it
-      this.gameClient.dispatch(GameActions.playCardAction(botId, cardInHand));
+      this.gameClient.dispatch(GameActions.playCardAction(botId));
       console.log(`[BotAI] ${botId} using ${cardInHand.rank} action`);
       // State will update and MobX reaction will trigger target selection
     } else {
