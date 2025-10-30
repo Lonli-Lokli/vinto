@@ -227,7 +227,7 @@ describe('Jack (J) Card Action', () => {
       newState = unsafeReduce(newState, GameActions.executeJackSwap('p2'));
 
       // Should not return to toss-in
-      expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.activeTossIn?.queuedActions.length).toBe(0);
       expect(newState.pendingAction).toBeNull();
       expect(newState.players.find((p) => p.id === 'p1')?.cards[0].rank).toBe(

@@ -170,7 +170,7 @@ describe('9 Card Action', () => {
       // Confirm peek
       newState = unsafeReduce(newState, GameActions.confirmPeek('p2'));
 
-      expect(newState.subPhase).toBe('ai_thinking'); // all already marked they are ready so auto-advance
+      expect(newState.subPhase).toBe('toss_queue_active'); 
       expect(newState.activeTossIn?.queuedActions.length).toBe(0);
     });
   });

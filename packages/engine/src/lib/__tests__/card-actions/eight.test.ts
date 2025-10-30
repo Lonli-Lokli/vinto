@@ -168,7 +168,7 @@ describe('8 Card Action', () => {
       newState = unsafeReduce(newState, GameActions.confirmPeek('p2'));
 
       // Should return to toss-in
-      expect(newState.subPhase).toBe('ai_thinking'); // next player is bot so ai_thinking
+      expect(newState.subPhase).toBe('toss_queue_active'); // next player is bot so ai_thinking
       expect(newState.activeTossIn?.queuedActions.length).toBe(0);
     });
   });

@@ -171,7 +171,7 @@ describe('10 Card Action', () => {
       newState = unsafeReduce(newState, GameActions.confirmPeek('p2'));
 
       // Should return to toss-in
-      expect(newState.subPhase).toBe('ai_thinking');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.activeTossIn?.ranks).toContain('10');
     });
   });

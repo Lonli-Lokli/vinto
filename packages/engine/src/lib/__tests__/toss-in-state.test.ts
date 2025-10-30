@@ -9,6 +9,7 @@ import {
   createTestCard,
   createTestPlayer,
   createTestState,
+  markPlayersReady,
   toPile,
   unsafeReduce,
 } from './test-helpers';
@@ -229,5 +230,61 @@ describe('GameEngine - Toss-In State Management', () => {
     // Turn should advance to bot-2, no queued actions
     expect(newState.currentPlayerIndex).toBe(1);
     expect(newState.subPhase).toBe('ai_thinking'); // Bot-2's turn, no actions queued
+  });
+
+  it('should allow to say vinto after toss in', () => {
+    // Setup: Player 0 (human) discards a King, Players 1-2 (bots) have Kings
+    const state = createTestState({
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      subPhase: 'toss_queue_active',
+      players: [
+        createTestPlayer('human-1', 'Human', true, [
+          createTestCard('7', 'h1'),
+          createTestCard('4', 'h2'),
+        ]),
+        createTestPlayer('bot-1', 'Bot 1', false, [
+          createTestCard('K', 'b1k'),
+          createTestCard('4', 'b2'),
+        ]),
+        createTestPlayer('bot-2', 'Bot 2', false, [
+          createTestCard('K', 'b2k'),
+          createTestCard('6', 'b4'),
+        ]),
+      ],
+      activeTossIn: {
+        ranks: ['7'],
+        initiatorId: 'human-1',
+        originalPlayerIndex: 0,
+        participants: [],
+        queuedActions: [],
+        waitingForInput: true,
+        playersReadyForNextTurn: [],
+      },
+    });
+
+    // Verify initial state
+    expect(state.currentPlayerIndex).toBe(0); // Human's turn
+    expect(state.subPhase).toBe('toss_queue_active');
+
+    let newState = unsafeReduce(
+      state,
+      GameActions.participateInTossIn('human-1', [0])
+    );
+
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+   
+    expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+    expect(newState.activeTossIn?.queuedActions[0].playerId).toBe('human-1');
+    expect(newState.currentPlayerIndex).toBe(0); // STILL human's turn
+
+    // human plays his toss in card
+    newState = unsafeReduce(newState, GameActions.selectActionTarget('human-1', 'human-1', 0));
+    newState = unsafeReduce(newState, GameActions.confirmPeek('human-1'));
+
+    // Should now be processing queued actions
+    expect(newState.subPhase).toBe('toss_queue_active');
+    expect(newState.pendingAction).toBeNull();
+    expect(newState.currentPlayerIndex).toBe(0); // STILL human's turn
   });
 });

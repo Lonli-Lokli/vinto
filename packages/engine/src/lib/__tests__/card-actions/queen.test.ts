@@ -306,7 +306,7 @@ describe('Queen (Q) Card Action', () => {
       newState = unsafeReduce(newState, GameActions.executeQueenSwap('p2'));
 
       // Should return to toss-in (not create new toss-in)
-      expect(newState.subPhase).toBe('ai_thinking');
+      expect(newState.subPhase).toBe('toss_queue_active');
       expect(newState.activeTossIn?.ranks).toContain('Q'); // Same toss-in continues
       expect(newState.pendingAction).toBeNull();
     });
