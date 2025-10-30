@@ -66,7 +66,7 @@ describe('King (K) Card Action', () => {
 
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -119,7 +119,7 @@ describe('King (K) Card Action', () => {
       // first create tossin
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
 
       expect(newState.subPhase).toBe('awaiting_action');
@@ -167,7 +167,7 @@ describe('King (K) Card Action', () => {
       // Step 1: Player chooses to use Ace action
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -216,7 +216,7 @@ describe('King (K) Card Action', () => {
       // Step 1: Player chooses to use Ace action
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -277,7 +277,7 @@ describe('King (K) Card Action', () => {
       // Step 1: Player chooses to use Ace action
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -350,7 +350,7 @@ describe('King (K) Card Action', () => {
       // Step 1: Player chooses to use Ace action
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -542,7 +542,7 @@ describe('King (K) Card Action', () => {
 
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 
