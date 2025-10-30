@@ -204,7 +204,7 @@ describe('Game Engine - Rules-Based Tests', () => {
       // Declare Ace
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', kingCard)
+        GameActions.playCardAction('p1')
       );
 
       newState = unsafeReduce(
