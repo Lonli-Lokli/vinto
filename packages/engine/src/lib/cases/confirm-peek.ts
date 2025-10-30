@@ -1,12 +1,6 @@
 import { GameState, ConfirmPeekAction } from '@vinto/shapes';
 import copy from 'fast-copy';
-import {
-  addTossInCard,
-  clearTossInAfterActionableCard,
-  clearTossInReadyList,
-  getAutomaticallyReadyPlayers,
-} from '../utils/toss-in-utils';
-import { getTargetTypeFromRank } from '../utils/action-utils';
+import { clearTossInAfterActionableCard } from '../utils/toss-in-utils';
 
 /**
  * CONFIRM_PEEK Handler

@@ -213,10 +213,14 @@ export class BotAIAdapter {
       subPhase === 'awaiting_action' &&
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
 
+    console.log(
+      `[BotAI] ${botId} executing turn in subPhase: ${subPhase}, skipDelay: ${skipDelay}`
+    );
+
     if (!skipDelay) {
       // Use longer delay in final round for better visibility of coalition actions
       const isFinalRound = this.gameClient.state.phase === 'final';
-      await this.delay(isFinalRound ? FINAL_ROUND_DELAY : 500);
+      await this.delay(isFinalRound ? FINAL_ROUND_DELAY : 3_000);
     }
 
     try {

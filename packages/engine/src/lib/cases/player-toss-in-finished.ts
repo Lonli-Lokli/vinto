@@ -111,8 +111,12 @@ export function handlePlayerTossInFinished(
         );
       }
 
-      // Transition to selecting phase to process the queued action
-      newState.subPhase = 'selecting';
+      const isHumanPlayer =
+        newState.players.find((p) => p.id === firstAction.playerId)?.isHuman ??
+        false;
+      // Transition to selecting or awaiting_action for human phase to process the queued action
+      // we skip selecting for human because they have an ability to skip action on UI
+      newState.subPhase = isHumanPlayer ? 'awaiting_action' : 'selecting';
       newState.activeTossIn.waitingForInput = false;
     } else {
       console.log(

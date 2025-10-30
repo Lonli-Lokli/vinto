@@ -64,10 +64,7 @@ describe('King (K) Card Action', () => {
         },
       });
 
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare rank 5 (non-action card)
@@ -117,10 +114,7 @@ describe('King (K) Card Action', () => {
       });
 
       // first create tossin
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
 
       expect(newState.subPhase).toBe('awaiting_action');
 
@@ -165,10 +159,7 @@ describe('King (K) Card Action', () => {
       });
 
       // Step 1: Player chooses to use Ace action
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare 7
@@ -214,10 +205,7 @@ describe('King (K) Card Action', () => {
       });
 
       // Step 1: Player chooses to use Ace action
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare 7
@@ -275,10 +263,7 @@ describe('King (K) Card Action', () => {
       });
 
       // Step 1: Player chooses to use Ace action
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare 7
@@ -302,6 +287,75 @@ describe('King (K) Card Action', () => {
 
       expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
       expect(newState.activeTossIn?.ranks).toContain('Q'); // only Q should remain
+    });
+
+    it('should remove King from toss in queue when next player discards card', () => {
+      const kingCard = createTestCard('K', 'king1');
+
+      const state = createTestState({
+        subPhase: 'choosing',
+        turnNumber: 1,
+        players: [
+          createTestPlayer('p1', 'Player 1', true, [
+            createTestCard('7', 'p1c1'),
+            createTestCard('2', 'p1c2'),
+            createTestCard('3', 'p1c3'),
+          ]),
+          createTestPlayer('p2', 'Player 2', true, [
+            createTestCard('Q', 'p2c1'),
+            createTestCard('2', 'p2c2'),
+            createTestCard('3', 'p2c3'),
+          ]),
+        ],
+        activeTossIn: {
+          initiatorId: 'p1',
+          originalPlayerIndex: 0,
+          participants: [],
+          queuedActions: [],
+          ranks: ['K'],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
+        },
+        drawPile: toPile([createTestCard('4', 'draw1')]),
+        pendingAction: {
+          card: kingCard,
+          playerId: 'p1',
+          from: 'drawing',
+          actionPhase: 'selecting-target',
+          targets: [
+            {
+              playerId: 'p1',
+              position: 0,
+            },
+          ],
+        },
+      });
+
+      // Step 1: Player chooses to use Ace action
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
+      expect(newState.subPhase).toBe('awaiting_action');
+
+      // Declare 7
+      newState = unsafeReduce(
+        newState,
+        GameActions.declareKingAction('p1', '7')
+      );
+
+      // Should trigger toss-in for 7
+      expect(newState.activeTossIn?.ranks.length).toBe(2);
+      expect(newState.activeTossIn?.ranks).toContain('7');
+      expect(newState.activeTossIn?.ranks).toContain('K');
+
+      newState = markPlayersReady(newState, ['p1', 'p2']);
+      expect(newState.activeTossIn?.ranks.length).toBe(2); // we still should be available in toss in
+      expect(newState.currentPlayerIndex).toBe(1); // p2 turn
+
+      newState = unsafeReduce(newState, GameActions.drawCard('p2'));
+
+      newState = unsafeReduce(newState, GameActions.discardCard('p2'));
+
+      expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
+      expect(newState.activeTossIn?.ranks).toContain('4'); // only drawn should remain
     });
 
     it('should remove King from toss in queue when next player use card', () => {
@@ -348,10 +402,7 @@ describe('King (K) Card Action', () => {
       });
 
       // Step 1: Player chooses to use Ace action
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare 7
@@ -540,10 +591,7 @@ describe('King (K) Card Action', () => {
         },
       });
 
-      let newState = unsafeReduce(
-        state,
-        GameActions.playCardAction('p1')
-      );
+      let newState = unsafeReduce(state, GameActions.playCardAction('p1'));
       expect(newState.subPhase).toBe('awaiting_action');
 
       // Declare King (self-reference)

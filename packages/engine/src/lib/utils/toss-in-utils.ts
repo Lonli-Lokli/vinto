@@ -157,14 +157,55 @@ export function clearTossInAfterActionableCard(
   playerId: string,
   rank: Rank | undefined
 ): void {
-  // Clear pending action
-  newState.pendingAction = null;
+  if (newState.activeTossIn === null) {
+    // Initialize new toss-in phase (normal turn flow)
+    if (rank) {
+      newState.activeTossIn = {
+        ranks: [rank],
+        initiatorId: playerId,
+        originalPlayerIndex: newState.currentPlayerIndex,
+        participants: [],
+        queuedActions: [],
+        waitingForInput: true,
+        playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+      };
+    }
 
-  // Check if we're processing a toss-in queue
-  if (
-    newState.activeTossIn !== null &&
-    newState.activeTossIn.queuedActions.length > 0
-  ) {
+    newState.pendingAction = null;
+    // Transition to toss-in phase
+    newState.subPhase = 'toss_queue_active';
+
+    console.log(
+      '[clearTossInAfterActionableCard] Peek confirmed, toss-in active'
+    );
+  } else if (newState.activeTossIn.queuedActions.length === 0) {
+    // ADD or REPLACE this card's rank to toss-in ranks if not already present if same turn
+    newState.activeTossIn.ranks =
+      newState.pendingAction?.from === 'drawing'
+        ? [newState.pendingAction.card.rank]
+        : addTossInCard(
+            newState.activeTossIn.ranks,
+            newState.pendingAction?.card.rank
+          );
+
+    newState.pendingAction = null;
+    // Clear the ready list so players can confirm again for this new toss-in round
+    clearTossInReadyList(newState);
+
+    newState.subPhase = 'toss_queue_active';
+    newState.activeTossIn.waitingForInput = true;
+
+    console.log(
+      '[clearTossInAfterActionableCard] Peek confirmed during toss-in, rank added, returning to toss-in phase (ready list cleared)',
+      {
+        ranks: newState.activeTossIn.ranks,
+        restoredCurrentPlayerIndex: newState.currentPlayerIndex,
+      }
+    );
+  } else if (newState.activeTossIn.queuedActions.length > 0) {
+    // Clear pending action
+    newState.pendingAction = null;
+
     // Remove the processed action from the queue
     newState.activeTossIn.queuedActions.shift();
 
@@ -214,55 +255,6 @@ export function clearTossInAfterActionableCard(
           currentPlayerIndex: newState.currentPlayerIndex,
         }
       );
-    } else {
-      // No more queued actions - clear pendingAction
-      // GameEngine will handle turn advancement automatically
-      newState.pendingAction = null;
-
-      console.log(
-        '[clearTossInAfterActionableCard] All toss-in actions processed, turn will advance'
-      );
     }
-  } else if (newState.activeTossIn !== null) {
-    // Return to toss-in phase (action was from toss-in participation but no queue)
-    // ADD or REPLACE this card's rank to toss-in ranks if not already present
-    newState.activeTossIn.ranks = addTossInCard(
-      newState.activeTossIn.ranks,
-      rank
-    );
-
-    // Clear the ready list so players can confirm again for this new toss-in round
-    clearTossInReadyList(newState);
-
-    newState.subPhase = 'toss_queue_active';
-    newState.activeTossIn.waitingForInput = true;
-
-    console.log(
-      '[clearTossInAfterActionableCard] Peek confirmed during toss-in, rank added, returning to toss-in phase (ready list cleared)',
-      {
-        ranks: newState.activeTossIn.ranks,
-        restoredCurrentPlayerIndex: newState.currentPlayerIndex,
-      }
-    );
-  } else {
-    // Initialize new toss-in phase (normal turn flow)
-    if (rank) {
-      newState.activeTossIn = {
-        ranks: [rank],
-        initiatorId: playerId,
-        originalPlayerIndex: newState.currentPlayerIndex,
-        participants: [],
-        queuedActions: [],
-        waitingForInput: true,
-        playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
-      };
-    }
-
-    // Transition to toss-in phase
-    newState.subPhase = 'toss_queue_active';
-
-    console.log(
-      '[clearTossInAfterActionableCard] Peek confirmed, toss-in active'
-    );
   }
 }

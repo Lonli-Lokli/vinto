@@ -34,6 +34,7 @@ import {
   registerStateUpdateCallback,
   unregisterStateUpdateCallback,
 } from '@vinto/local-client';
+import { logger } from '@sentry/nextjs';
 
 @injectable()
 export class AnimationService {
@@ -350,16 +351,22 @@ export class AnimationService {
   private handleUseCardAction(
     oldState: GameState,
     _newState: GameState,
-    action: UseCardActionAction
+    _action: UseCardActionAction
   ): void {
-    const card = oldState.pendingAction?.card!;
+    const rank = oldState.pendingAction?.card?.rank;
 
+    if (!rank) {
+      logger.warn(
+        '[AnimationService] No card rank found in pending action for USE_CARD_ACTION'
+      );
+      return;
+    }
     // parallel animation: play-action effect, then move to discard
     // important: do not use sequential here as it will render old controls once
     this.animationStore.startAnimationSequence('parallel', [
       {
         type: 'play-action',
-        rank: card.rank,
+        rank: rank,
         from: { type: 'drawn' },
         duration: 2000,
       },
@@ -587,7 +594,7 @@ export class AnimationService {
       steps.push({
         type: 'discard',
         rank: 'K',
-        from: {type: 'drawn' },
+        from: { type: 'drawn' },
         to: { type: 'discard' },
         duration: 2_000,
         revealed: true,
@@ -887,17 +894,21 @@ export class AnimationService {
   ): void {
     // Get the selected targets (if any) to show they weren't swapped
     const targets = oldState.pendingAction?.targets;
-    
+
     const steps: AnimationStep[] = [];
 
     // If cards were selected, show a "shake" animation on them to indicate cancellation
     if (targets && targets.length === 2) {
-      targets.forEach(target => {
+      targets.forEach((target) => {
         if (target.card) {
           steps.push({
             type: 'shake',
             rank: target.card.rank,
-            target: { type: 'player', playerId: target.playerId, position: target.position },
+            target: {
+              type: 'player',
+              playerId: target.playerId,
+              position: target.position,
+            },
             duration: 1_500,
           });
         }
@@ -1014,19 +1025,23 @@ export class AnimationService {
     _newState: GameState,
     _action: SkipJackSwapAction
   ): void {
-     // Get the selected targets (if any) to show they weren't swapped
+    // Get the selected targets (if any) to show they weren't swapped
     const targets = oldState.pendingAction?.targets;
-    
+
     const steps: AnimationStep[] = [];
 
     // If cards were selected, show a "shake" animation on them to indicate cancellation
     if (targets && targets.length === 2) {
-      targets.forEach(target => {
+      targets.forEach((target) => {
         if (target.card) {
           steps.push({
             type: 'shake',
             rank: target.card.rank,
-            target: { type: 'player', playerId: target.playerId, position: target.position },
+            target: {
+              type: 'player',
+              playerId: target.playerId,
+              position: target.position,
+            },
             duration: 1_500,
           });
         }

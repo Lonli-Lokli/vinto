@@ -149,8 +149,6 @@ describe('GameEngine - Toss-in Scenarios', () => {
     // Bots also mark ready (simulating bot AI)
     newState = markPlayersReady(newState, ['bot-1', 'bot-2', 'bot-3']);
 
-    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
-
     // All humans ready, queued actions should start processing
     expect(newState.subPhase).toBe('awaiting_action');
     expect(newState.pendingAction?.card?.rank).toBe('A');
@@ -520,8 +518,6 @@ describe('GameEngine - Toss-in Scenarios', () => {
       'bot-3',
     ]);
 
-    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
-
     // All humans ready, queued Ace action should start processing
     expect(newState.subPhase).toBe('awaiting_action');
     expect(newState.pendingAction?.card?.rank).toBe('A');
@@ -556,7 +552,6 @@ describe('GameEngine - Toss-in Scenarios', () => {
       'bot-3',
     ]);
 
-    newState = unsafeReduce(newState, GameActions.playCardAction('human-1'));
     // Second Ace should process
     expect(newState.subPhase).toBe('awaiting_action');
     expect(newState.pendingAction?.card?.rank).toBe('A');
