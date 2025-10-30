@@ -256,14 +256,8 @@ export function clearTossInAfterActionableCard(
         }
       );
     } else {
-      const humanIds = newState.players
-        .filter((p) => p.isHuman)
-        .map((p) => p.id);
-
-      newState.activeTossIn.playersReadyForNextTurn =
-        newState.activeTossIn?.playersReadyForNextTurn.filter(
-          (id) => !humanIds.includes(id)
-        );
+      // Clear the ready list so players can confirm again for this new toss-in round
+      clearTossInReadyList(newState);
       newState.subPhase = 'toss_queue_active'; // Return to toss-in phase to allow human call vinto
     }
   }

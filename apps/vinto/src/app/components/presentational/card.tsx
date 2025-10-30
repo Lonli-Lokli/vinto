@@ -136,6 +136,7 @@ export function Card({
 
   if (hidden) {
     // Render an empty, borderless, transparent box with same size
+    // Keep data attributes so position can be captured for animations
     return (
       <div
         className={`
@@ -143,8 +144,9 @@ export function Card({
           flex items-center justify-center
           bg-transparent
         `}
-        style={{ border: 'none', opacity: 0.2 }}
+        style={{ border: 'none', opacity: 0 }}
         aria-hidden="true"
+        {...dataAttributes}
       />
     );
   }
