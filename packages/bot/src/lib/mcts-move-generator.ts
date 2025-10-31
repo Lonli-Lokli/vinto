@@ -230,14 +230,25 @@ export class MCTSMoveGenerator {
         //    - Especially Kings (enables multi-toss-in cascade!)
         //    - High-value cards (reduces score most)
         //    - Cards matching what bot already has (enables toss-in)
-        // 2. LOWEST: Opponent cards (only if no good own cards available)
+        // 2. TACTICAL: Opponent action cards (7-K) - use as tools for strategic plays
+        //    - Example: Declare opponent's Queen → use it to swap our high card with their Joker
+        //    - Example: Declare opponent's Jack → use it to swap our Ace with their 2
+        // 3. COALITION: Opponent high-value cards (helps coalition win)
+        // 4. SKIP: Opponent non-action cards when NOT in coalition (zero strategic value)
         const kingMoves: MCTSMove[] = [];
+
+        // Check if bot is playing as coalition member
+        const isCoalitionMember =
+          state.vintoCallerId &&
+          state.coalitionLeaderId &&
+          currentPlayer.id !== state.vintoCallerId;
 
         // Helper: Calculate strategic value of declaring a card
         const calculateDeclarationValue = (
           card: { rank: Rank; value: number },
           isOwnCard: boolean,
-          position: number
+          position: number,
+          opponentId?: string
         ): number => {
           let value = 0;
 
@@ -272,11 +283,52 @@ export class MCTSMoveGenerator {
             // Small bonus for known cards at higher positions (positional advantage)
             value += (currentPlayer.cardCount - position) * 2;
           } else {
-            // Opponent cards have much lower value
-            value = 10; // Minimal base value
+            // Opponent cards have strategic value in TWO scenarios:
+            // 1. Coalition play: help team by declaring opponent high-value cards
+            // 2. Tactical play: declare opponent ACTION cards (7-K) to use them for our benefit
+            //    Example: Declare opponent's Queen, use it to swap our high card with opponent's Joker
 
-            // Only slightly prefer high-value opponent cards
-            value += card.value * 0.5;
+            // Skip if this is the Vinto caller (coalition cannot target Vinto caller)
+            if (isCoalitionMember && opponentId === state.vintoCallerId) {
+              return 0;
+            }
+
+            // Check if card is an action card (7-K) - these are tools we can use
+            const cardAction = getCardAction(card.rank);
+            const isActionCard = cardAction !== undefined;
+
+            if (isCoalitionMember) {
+              // Coalition play: focus on high-value cards (10, 11, 12) to hurt opponents
+              if (card.value >= 10) {
+                value = 50 + card.value * 5; // High priority for 10s, Jacks, Queens
+              } else if (card.value >= 7) {
+                value = 30 + card.value * 3; // Medium priority for 7-9
+              } else {
+                value = 10 + card.value; // Lower priority for low-value cards
+              }
+            } else if (isActionCard) {
+              // Non-coalition tactical play: action cards are valuable tools
+              // Example: Declare opponent's Queen → use it to swap our high card with their Joker
+              // Priority: Q > J > 10 > 9 > 8 > 7 (based on action flexibility)
+              if (card.rank === 'Q') {
+                value = 40; // Queen is most flexible (peek 2 + optional swap)
+              } else if (card.rank === 'J') {
+                value = 35; // Jack can swap any two cards
+              } else if (card.rank === '10') {
+                value = 30; // 10 can peek opponent card
+              } else if (card.rank === '9') {
+                value = 25; // 9 can peek opponent card
+              } else if (card.rank === '8') {
+                value = 20; // 8 can peek own card
+              } else if (card.rank === '7') {
+                value = 15; // 7 can peek own card
+              } else {
+                value = 10; // Other action cards
+              }
+            } else {
+              // Non-action, non-coalition: no strategic value
+              return 0;
+            }
           }
 
           return value;
@@ -306,19 +358,17 @@ export class MCTSMoveGenerator {
           }
         }
 
-        // Priority 2: Opponent cards (only consider if we have few own cards to declare)
-        // This is defensive/disruptive play
-        // COALITION: Don't target Vinto caller if bot is in coalition
+        // Priority 2: Opponent cards
+        // Two scenarios where opponent cards have value:
+        // - Coalition: Declare high-value cards to hurt opponents (help team win)
+        // - Tactical: Declare action cards (7-K) to use them as tools for strategic plays
+        // Non-action, non-coalition cards are filtered out (strategicValue = 0)
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
 
-          // COALITION FILTER: Skip Vinto caller if bot is coalition member
-          const isCoalitionMember =
-            state.vintoCallerId &&
-            state.coalitionLeaderId &&
-            currentPlayer.id !== state.vintoCallerId;
+          // Skip Vinto caller (already handled in calculateDeclarationValue)
           if (isCoalitionMember && opponent.id === state.vintoCallerId) {
-            continue; // Coalition cannot use King on Vinto caller cards
+            continue;
           }
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
@@ -327,13 +377,18 @@ export class MCTSMoveGenerator {
               const strategicValue = calculateDeclarationValue(
                 memory.card,
                 false,
-                pos
+                pos,
+                opponent.id
               );
-              potentialDeclarations.push({
-                target: { playerId: opponent.id, position: pos },
-                value: strategicValue,
-                card: memory.card,
-              });
+              
+              // Only add opponent cards if they have strategic value (coalition play)
+              if (strategicValue > 0) {
+                potentialDeclarations.push({
+                  target: { playerId: opponent.id, position: pos },
+                  value: strategicValue,
+                  card: memory.card,
+                });
+              }
             }
           }
         }
@@ -341,12 +396,10 @@ export class MCTSMoveGenerator {
         // Sort by strategic value (highest first)
         potentialDeclarations.sort((a, b) => b.value - a.value);
 
-        // Generate moves from top declarations
-        const MAX_KING_MOVES = 25; // Increased slightly since we're being strategic
-        for (const declaration of potentialDeclarations.slice(
-          0,
-          MAX_KING_MOVES
-        )) {
+        // Generate moves for ALL valuable declarations
+        // No arbitrary limit - if a card has strategic value, include it
+        // (own cards always have value, opponent cards only if coalition)
+        for (const declaration of potentialDeclarations) {
           kingMoves.push({
             type: 'use-action',
             playerId: currentPlayer.id,
@@ -391,34 +444,16 @@ export class MCTSMoveGenerator {
 
   /**
    * Prune moves based on heuristics (to reduce branching factor)
+   * 
+   * NOTE: With strategic move generation, we no longer need arbitrary pruning.
+   * All generated moves have strategic value. Let MCTS explore them all.
    */
   static pruneMoves(state: MCTSGameState, moves: MCTSMove[]): MCTSMove[] {
-    // For now, just limit total number of moves
-    const MAX_MOVES = 20;
-
-    if (moves.length <= MAX_MOVES) {
-      return moves;
-    }
-
-    // Prioritize certain move types
-    const priorityOrder: Record<string, number> = {
-      'call-vinto': 1,
-      'use-action': 2,
-      'take-discard': 3,
-      'toss-in': 4,
-      draw: 5,
-      swap: 6,
-      discard: 7,
-      pass: 8,
-    };
-
-    const sorted = moves.sort((a, b) => {
-      const aPriority = priorityOrder[a.type] || 99;
-      const bPriority = priorityOrder[b.type] || 99;
-      return aPriority - bPriority;
-    });
-
-    return sorted.slice(0, MAX_MOVES);
+    // Return all moves - strategic generation already filters useless moves
+    // King declarations filter opponent cards if not coalition
+    // Jack/Queen swaps prioritize high-value combinations
+    // Peek actions only target unknown cards
+    return moves;
   }
 
   /**
@@ -492,8 +527,8 @@ export class MCTSMoveGenerator {
     // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
 
-    // Step 2: Generate high-priority swaps first
-    const MAX_SWAP_MOVES = 30; // Reduced from 50 since we're being smarter
+    // Step 2: Generate ALL strategic swaps prioritized by value
+    // No arbitrary limits - generate all valuable combinations and let MCTS explore them
 
     // Critical swaps: My known high cards with opponent's unknown cards
     const myHighCards = prioritizedPositions.filter(
@@ -509,14 +544,12 @@ export class MCTSMoveGenerator {
 
     for (const myCard of myHighCards) {
       for (const oppCard of opponentUnknown) {
-        if (moves.length >= MAX_SWAP_MOVES) break;
         moves.push({
           type: 'use-action',
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
         });
       }
-      if (moves.length >= MAX_SWAP_MOVES) break;
     }
 
     // High priority: My known high cards with opponent's known low cards
@@ -529,69 +562,60 @@ export class MCTSMoveGenerator {
 
     for (const myCard of myHighCards) {
       for (const oppCard of opponentLowCards) {
-        if (moves.length >= MAX_SWAP_MOVES) break;
         moves.push({
           type: 'use-action',
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
         });
       }
-      if (moves.length >= MAX_SWAP_MOVES) break;
     }
 
     // Medium priority: Disrupt opponent - swap their cards with each other
-    if (moves.length < MAX_SWAP_MOVES) {
-      const opponent1Positions = prioritizedPositions.filter(
-        (p) =>
-          p.target.playerId !== currentPlayer.id &&
-          p.priority !== SwapPriority.LOW
-      );
+    // Limited to top 5 positions to avoid combinatorial explosion
+    const opponent1Positions = prioritizedPositions.filter(
+      (p) =>
+        p.target.playerId !== currentPlayer.id &&
+        p.priority !== SwapPriority.LOW
+    );
 
-      for (let i = 0; i < Math.min(opponent1Positions.length - 1, 5); i++) {
-        for (
-          let j = i + 1;
-          j < Math.min(opponent1Positions.length, i + 3);
-          j++
+    for (let i = 0; i < Math.min(opponent1Positions.length - 1, 5); i++) {
+      for (
+        let j = i + 1;
+        j < Math.min(opponent1Positions.length, i + 3);
+        j++
+      ) {
+        // Jack rule: Cannot swap two cards from the same player
+        if (
+          opponent1Positions[i].target.playerId !==
+          opponent1Positions[j].target.playerId
         ) {
-          if (moves.length >= MAX_SWAP_MOVES) break;
-          // Jack rule: Cannot swap two cards from the same player
-          if (
-            opponent1Positions[i].target.playerId !==
-            opponent1Positions[j].target.playerId
-          ) {
-            moves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [
-                opponent1Positions[i].target,
-                opponent1Positions[j].target,
-              ],
-            });
-          }
-        }
-        if (moves.length >= MAX_SWAP_MOVES) break;
-      }
-    }
-
-    // Low priority: Exploratory swaps with unknown cards
-    if (moves.length < MAX_SWAP_MOVES / 2) {
-      // Only fill remaining space
-      const myUnknown = prioritizedPositions.filter(
-        (p) =>
-          p.target.playerId === currentPlayer.id &&
-          p.priority === SwapPriority.LOW
-      );
-
-      for (const myCard of myUnknown.slice(0, 3)) {
-        for (const oppCard of opponentUnknown.slice(0, 3)) {
-          if (moves.length >= MAX_SWAP_MOVES) break;
           moves.push({
             type: 'use-action',
             playerId: currentPlayer.id,
-            targets: [myCard.target, oppCard.target],
+            targets: [
+              opponent1Positions[i].target,
+              opponent1Positions[j].target,
+            ],
           });
         }
-        if (moves.length >= MAX_SWAP_MOVES) break;
+      }
+    }
+
+    // Low priority: Limited exploratory swaps with unknown cards
+    // These are lower value, so limit to avoid too many exploratory moves
+    const myUnknown = prioritizedPositions.filter(
+      (p) =>
+        p.target.playerId === currentPlayer.id &&
+        p.priority === SwapPriority.LOW
+    );
+
+    for (const myCard of myUnknown.slice(0, 3)) {
+      for (const oppCard of opponentUnknown.slice(0, 3)) {
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, oppCard.target],
+        });
       }
     }
 
@@ -611,12 +635,12 @@ export class MCTSMoveGenerator {
 
     // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
-    const MAX_PEEK_MOVES = 25; // Focused set of strategic peeks
 
     // For Queen, we want BOTH known and unknown cards:
     // - Known opponent low cards (Jokers, 2s) to steal
     // - Unknown cards for information gain
     // Prioritize known good cards first, then unknown cards
+    // No arbitrary limits - generate all strategic peek combinations
 
     // Separate by player
     const myPositions = prioritizedPositions.filter(
@@ -686,10 +710,9 @@ export class MCTSMoveGenerator {
 
     // Strategy 0 (HIGHEST PRIORITY): Peek bot's card and opponent's known GOOD card to steal it
     // This includes: Jokers, Kings, low cards (2-5), toss-in matches, and multi-toss-in enablers
-    for (const myCard of myPositions.slice(0, 5)) {
-      for (const oppGoodCard of opponentKnownGoodCards.slice(0, 5)) {
-        if (moves.length >= MAX_PEEK_MOVES) break;
-
+    // Generate ALL combinations - these are high-value tactical moves
+    for (const myCard of myPositions) {
+      for (const oppGoodCard of opponentKnownGoodCards) {
         // Generate peek-only move
         moves.push({
           type: 'use-action',
@@ -706,75 +729,67 @@ export class MCTSMoveGenerator {
           shouldSwap: true,
         });
       }
-      if (moves.length >= MAX_PEEK_MOVES) break;
     }
 
     // Strategy 1: Peek two opponent unknown/other cards (maximize information gain)
     // For these, we generate both "peek-only" and "peek-and-swap" variants
-    if (moves.length < MAX_PEEK_MOVES) {
-      for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
-        for (
-          let j = i + 1;
-          j < Math.min(opponentUnknownOrOther.length, i + 5);
-          j++
+    // Limited to top 8 positions to avoid combinatorial explosion with unknown cards
+    for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
+      for (
+        let j = i + 1;
+        j < Math.min(opponentUnknownOrOther.length, i + 5);
+        j++
+      ) {
+        // Queen rule: Cannot peek two cards from the same player
+        if (
+          opponentUnknownOrOther[i].target.playerId !==
+          opponentUnknownOrOther[j].target.playerId
         ) {
-          if (moves.length >= MAX_PEEK_MOVES) break;
-          // Queen rule: Cannot peek two cards from the same player
-          if (
-            opponentUnknownOrOther[i].target.playerId !==
-            opponentUnknownOrOther[j].target.playerId
-          ) {
-            // Generate peek-only move (don't swap)
-            moves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [
-                opponentUnknownOrOther[i].target,
-                opponentUnknownOrOther[j].target,
-              ],
-              shouldSwap: false,
-            });
+          // Generate peek-only move (don't swap)
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [
+              opponentUnknownOrOther[i].target,
+              opponentUnknownOrOther[j].target,
+            ],
+            shouldSwap: false,
+          });
 
-            // Generate peek-and-swap move (swap after peeking)
-            moves.push({
-              type: 'use-action',
-              playerId: currentPlayer.id,
-              targets: [
-                opponentUnknownOrOther[i].target,
-                opponentUnknownOrOther[j].target,
-              ],
-              shouldSwap: true,
-            });
-          }
+          // Generate peek-and-swap move (swap after peeking)
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [
+              opponentUnknownOrOther[i].target,
+              opponentUnknownOrOther[j].target,
+            ],
+            shouldSwap: true,
+          });
         }
-        if (moves.length >= MAX_PEEK_MOVES) break;
       }
     }
 
     // Strategy 2: Peek own and opponent unknown/other (for potential swap)
     // These are more likely to benefit from swapping
-    if (moves.length < MAX_PEEK_MOVES) {
-      for (const myCard of myPositions.slice(0, 5)) {
-        for (const oppCard of opponentUnknownOrOther.slice(0, 5)) {
-          if (moves.length >= MAX_PEEK_MOVES) break;
+    // Limited to top 5 of each category to keep move count reasonable
+    for (const myCard of myPositions.slice(0, 5)) {
+      for (const oppCard of opponentUnknownOrOther.slice(0, 5)) {
+        // Generate peek-only move
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, oppCard.target],
+          shouldSwap: false,
+        });
 
-          // Generate peek-only move
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [myCard.target, oppCard.target],
-            shouldSwap: false,
-          });
-
-          // Generate peek-and-swap move
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [myCard.target, oppCard.target],
-            shouldSwap: true,
-          });
-        }
-        if (moves.length >= MAX_PEEK_MOVES) break;
+        // Generate peek-and-swap move
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, oppCard.target],
+          shouldSwap: true,
+        });
       }
     }
 

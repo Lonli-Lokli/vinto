@@ -9,6 +9,7 @@ import {
   Card,
   Difficulty,
   GameState,
+  getCardAction,
   getCardShortDescription,
   getCardValue,
   Pile,
@@ -129,6 +130,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private botMemory: BotMemory;
   private config: MCTSConfig;
   private botId: string;
+  private cachedActionPlan?: BotActionDecision; // Cache action plan for declared action cards
 
   constructor(private difficulty: Difficulty) {
     this.botId = ''; // Will be set in first call
@@ -205,6 +207,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       console.log(
         `[MCTS] Heuristic: Always using ${drawnCard.rank} peek action (has unknown cards)`
       );
+      // Note: 7/8 don't need action plan caching since they have simple single-target selection
       return true;
     }
 
@@ -228,6 +231,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         console.log(
           `[MCTS] Heuristic: Swapping Ace instead of using action (can replace ${maxKnownValue})`
         );
+        this.cachedActionPlan = undefined; // Clear any cached plan
         return false;
       }
 
@@ -245,6 +249,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
           console.log(
             `[MCTS] Heuristic: Using Ace action (defensive - opponent near Vinto)`
           );
+          // Ace has simple single-target selection, no need to cache plan
+          this.cachedActionPlan = undefined;
           return true;
         }
       }
@@ -253,18 +259,47 @@ export class MCTSBotDecisionService implements BotDecisionService {
       console.log(
         `[MCTS] Heuristic: Swapping Ace (low value, no defensive need)`
       );
+      this.cachedActionPlan = undefined;
       return false;
     }
 
-    // For other action cards, run MCTS to evaluate action effectiveness
+    // For other action cards (J, Q, 9, 10), run MCTS and cache the action plan
+    // This ensures we execute the planned action targets instead of re-evaluating
     const gameState = this.constructGameState(context);
-    const bestMove = this.runMCTS(gameState);
+    const result = this.runMCTSWithPlan(gameState);
 
-    return bestMove.type === 'use-action';
+    if (result.move.type === 'use-action') {
+      // Cache the action plan for Jack/Queen/9/10 actions
+      // These require complex target selection that should be planned ahead
+      if (result.actionPlan) {
+        this.cachedActionPlan = result.actionPlan;
+        console.log(
+          `[Use Action] Caching action plan for ${drawnCard.rank}:`,
+          result.actionPlan
+        );
+      } else {
+        this.cachedActionPlan = undefined;
+      }
+      return true;
+    }
+
+    this.cachedActionPlan = undefined;
+    return false;
   }
 
   selectActionTargets(context: BotDecisionContext): BotActionDecision {
     this.initializeIfNeeded(context);
+
+    // Check if we have a cached action plan from King declaration or take-discard
+    if (this.cachedActionPlan) {
+      console.log(
+        '[Action Targets] Using cached action plan from King declaration',
+        this.cachedActionPlan
+      );
+      const plan = this.cachedActionPlan;
+      this.cachedActionPlan = undefined; // Clear cache after use
+      return plan;
+    }
 
     // Set context for coalition evaluation
     this.setBotDecisionContext(context);
@@ -316,13 +351,26 @@ export class MCTSBotDecisionService implements BotDecisionService {
     this.initializeIfNeeded(context);
 
     const gameState = this.constructGameState(context);
-    const bestMove = this.runMCTS(gameState);
+    const result = this.runMCTSWithPlan(gameState);
 
-    if (bestMove.declaredRank) {
-      return bestMove.declaredRank;
+    if (result.move.declaredRank) {
+      // Cache the action plan if declaring an action card
+      // This ensures we execute the planned action when selectActionTargets is called
+      if (result.actionPlan) {
+        this.cachedActionPlan = result.actionPlan;
+        console.log(
+          `[King Declaration] Caching action plan for declared action card: ${result.move.declaredRank}`,
+          result.actionPlan
+        );
+      } else {
+        this.cachedActionPlan = undefined;
+      }
+
+      return result.move.declaredRank;
     }
 
     // Fallback to Q (most powerful)
+    this.cachedActionPlan = undefined;
     return 'Q';
   }
 
@@ -769,7 +817,10 @@ export class MCTSBotDecisionService implements BotDecisionService {
       }, reward: ${bestChild.getAverageReward().toFixed(3)})`
     );
 
-    // If taking from discard with an action card, extract the action plan
+    // Extract action plan for moves that will require action target selection:
+    // 1. take-discard with action card
+    // 2. King declaration of action card (use-action with declaredRank)
+    // 3. Direct use-action with targets (J/Q/A from drawn cards)
     let actionPlan: BotActionDecision | undefined;
 
     if (
@@ -778,6 +829,39 @@ export class MCTSBotDecisionService implements BotDecisionService {
     ) {
       // Look ahead in the tree to find what action the bot plans to take
       actionPlan = this.extractActionPlan(bestChild);
+    } else if (
+      bestChild.move.type === 'use-action' &&
+      bestChild.move.declaredRank
+    ) {
+      // King declaring an action card - check if it's an action rank
+      const declaredAction = getCardAction(bestChild.move.declaredRank);
+      if (declaredAction) {
+        // This is declaring an action card (7-K) - extract the planned action
+        actionPlan = this.extractActionPlan(bestChild);
+        console.log(
+          `[MCTS] King declaring action card ${bestChild.move.declaredRank}, extracted plan:`,
+          actionPlan
+        );
+      }
+    } else if (
+      bestChild.move.type === 'use-action' &&
+      bestChild.move.targets &&
+      bestChild.move.targets.length > 0
+    ) {
+      // Direct use-action with targets (J/Q/9/10/A from drawn cards)
+      // The move already has targets, use them directly
+      actionPlan = {
+        targets: bestChild.move.targets.map((t) => ({
+          playerId: t.playerId,
+          position: t.position,
+        })),
+        shouldSwap: bestChild.move.shouldSwap,
+        declaredRank: bestChild.move.declaredRank,
+      };
+      console.log(
+        `[MCTS] Direct use-action move with targets, caching plan:`,
+        actionPlan
+      );
     }
 
     return {
