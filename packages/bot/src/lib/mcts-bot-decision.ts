@@ -130,7 +130,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private botMemory: BotMemory;
   private config: MCTSConfig;
   private botId: string;
-  private cachedActionPlan?: BotActionDecision; // Cache action plan for declared action cards
+  // Map of player ID -> cached action plan (for coalition scenarios where leader plans for multiple members)
+  private cachedActionPlans = new Map<string, BotActionDecision>();
 
   constructor(private difficulty: Difficulty) {
     this.botId = ''; // Will be set in first call
@@ -231,7 +232,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         console.log(
           `[MCTS] Heuristic: Swapping Ace instead of using action (can replace ${maxKnownValue})`
         );
-        this.cachedActionPlan = undefined; // Clear any cached plan
+        this.cachedActionPlans.delete(context.botId); // Clear any cached plan for this player
         return false;
       }
 
@@ -250,7 +251,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
             `[MCTS] Heuristic: Using Ace action (defensive - opponent near Vinto)`
           );
           // Ace has simple single-target selection, no need to cache plan
-          this.cachedActionPlan = undefined;
+          this.cachedActionPlans.delete(context.botId);
           return true;
         }
       }
@@ -259,7 +260,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       console.log(
         `[MCTS] Heuristic: Swapping Ace (low value, no defensive need)`
       );
-      this.cachedActionPlan = undefined;
+      this.cachedActionPlans.delete(context.botId);
       return false;
     }
 
@@ -272,18 +273,18 @@ export class MCTSBotDecisionService implements BotDecisionService {
       // Cache the action plan for Jack/Queen/9/10 actions
       // These require complex target selection that should be planned ahead
       if (result.actionPlan) {
-        this.cachedActionPlan = result.actionPlan;
+        this.cachedActionPlans.set(context.botId, result.actionPlan);
         console.log(
-          `[Use Action] Caching action plan for ${drawnCard.rank}:`,
+          `[Use Action] Caching action plan for ${context.botId} with ${drawnCard.rank}:`,
           result.actionPlan
         );
       } else {
-        this.cachedActionPlan = undefined;
+        this.cachedActionPlans.delete(context.botId);
       }
       return true;
     }
 
-    this.cachedActionPlan = undefined;
+    this.cachedActionPlans.delete(context.botId);
     return false;
   }
 
@@ -291,14 +292,14 @@ export class MCTSBotDecisionService implements BotDecisionService {
     this.initializeIfNeeded(context);
 
     // Check if we have a cached action plan from King declaration or take-discard
-    if (this.cachedActionPlan) {
+    const cachedPlan = this.cachedActionPlans.get(context.botId);
+    if (cachedPlan) {
       console.log(
-        '[Action Targets] Using cached action plan from King declaration',
-        this.cachedActionPlan
+        `[Action Targets] Using cached action plan for ${context.botId}`,
+        cachedPlan
       );
-      const plan = this.cachedActionPlan;
-      this.cachedActionPlan = undefined; // Clear cache after use
-      return plan;
+      this.cachedActionPlans.delete(context.botId); // Clear cache after use
+      return cachedPlan;
     }
 
     // Set context for coalition evaluation
@@ -357,20 +358,20 @@ export class MCTSBotDecisionService implements BotDecisionService {
       // Cache the action plan if declaring an action card
       // This ensures we execute the planned action when selectActionTargets is called
       if (result.actionPlan) {
-        this.cachedActionPlan = result.actionPlan;
+        this.cachedActionPlans.set(context.botId, result.actionPlan);
         console.log(
-          `[King Declaration] Caching action plan for declared action card: ${result.move.declaredRank}`,
+          `[King Declaration] Caching action plan for ${context.botId} with declared ${result.move.declaredRank}:`,
           result.actionPlan
         );
       } else {
-        this.cachedActionPlan = undefined;
+        this.cachedActionPlans.delete(context.botId);
       }
 
       return result.move.declaredRank;
     }
 
     // Fallback to Q (most powerful)
-    this.cachedActionPlan = undefined;
+    this.cachedActionPlans.delete(context.botId);
     return 'Q';
   }
 

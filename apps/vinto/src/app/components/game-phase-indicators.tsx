@@ -202,6 +202,13 @@ const TossInIndicator = observer(
     const gameClient = useGameClient();
     const uiStore = useUIStore();
 
+    // Check if it's the human player's original turn (not just participating in toss-in)
+    const activeTossIn = gameClient.visualState.activeTossIn;
+    const currentPlayerIndex = gameClient.visualState.currentPlayerIndex;
+    const isOriginalTurn = activeTossIn 
+      ? activeTossIn.originalPlayerIndex === currentPlayerIndex
+      : false;
+
     const recentActions = gameClient.visualState.recentActions.map(
       (action) => `${action.playerName} ${action.description}`
     );
@@ -283,7 +290,8 @@ Skip toss-in and proceed to next player's turn`;
             {/* Continue Button */}
             <ContinueButton onClick={onContinue} fullWidth />
 
-            {currentPlayer && currentPlayer.isHuman && (
+            {/* Only show Call Vinto on player's original turn, not when just participating in toss-in */}
+            {currentPlayer && currentPlayer.isHuman && isOriginalTurn && (
               <>
                 {/* Divider */}
                 <div className="flex items-center gap-2">
