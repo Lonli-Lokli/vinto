@@ -9,6 +9,7 @@ import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
 import { getCardShortDescription, getCardName } from '@vinto/shapes';
+import { Card } from '../presentational/card';
 
 export const OpponentCardPeek = observer(() => {
   const uiStore = useUIStore();
@@ -18,10 +19,18 @@ export const OpponentCardPeek = observer(() => {
   if (!gameClient.visualState.pendingAction) return null;
   const action = gameClient.visualState.pendingAction.card.rank;
 
-  // Check if any player has temporarily visible cards (the peeked opponent card)
-  const hasRevealedCard = gameClient.visualState.players.some(
+  // Find the opponent whose card is revealed
+  const opponent = gameClient.visualState.players.find(
     (p) => uiStore.getTemporarilyVisibleCards(p.id).size > 0
   );
+  const cardId = opponent
+    ? Array.from(uiStore.getTemporarilyVisibleCards(opponent.id))[0]
+    : undefined;
+  // Get the card rank if possible
+  const cardRank =
+    opponent && typeof cardId === 'number' && opponent.cards[cardId]
+      ? opponent.cards[cardId].rank
+      : undefined;
 
   // Check if this is a toss-in action
   const isTossInAction =
@@ -29,68 +38,77 @@ export const OpponentCardPeek = observer(() => {
     gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
   return (
-    <div className="w-full h-full">
-      <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex flex-col">
-            <h3 className="text-xs md:text-sm font-semibold text-primary flex items-center">
-              🔍 {getCardName(action)}
-              {isTossInAction && (
-                <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                  ⚡ Toss-in
-                </span>
-              )}
-            </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">
-              {getCardShortDescription(action)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {hasRevealedCard && (
-              <div className="text-2xs md:text-xs text-success font-medium">
-                ✓ Card Revealed
-              </div>
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1 flex-shrink-0">
+        <div className="flex flex-col">
+          <h3 className="text-xs font-semibold text-primary flex items-center leading-tight">
+            🔍 {getCardName(action)}
+            {isTossInAction && (
+              <span className="ml-2 text-2xs text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
             )}
-            <HelpPopover title="Peek at Opponent Card" rank="9" />
-          </div>
+          </h3>
+          <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">
+            {getCardShortDescription(action)}
+          </span>
         </div>
-
-        {/* Instructions or Confirmation */}
-        <div className="flex-1 flex flex-col justify-center mb-2">
-          {!hasRevealedCard ? (
-            <p className="text-xs text-secondary text-center">
-              Click on an opponent&apos;s card to peek at it
-            </p>
-          ) : (
-            <p className="text-xs text-secondary text-center">
-              You have peeked at opponent&apos;s card
-            </p>
+        <div className="flex items-center gap-1">
+          {opponent && (
+            <div className="text-2xs text-success font-medium">
+              ✓ Revealed
+            </div>
           )}
+          <HelpPopover title="Peek at Opponent Card" rank="9" />
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        {hasRevealedCard ? (
-          <ContinueButton
-            onClick={() => {
-              if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
-            }}
-            className="w-full py-2 px-4 text-sm"
-          />
+      {/* Instructions or Confirmation */}
+      <div className="flex items-center justify-center gap-3 mb-1 flex-1 min-h-0">
+        {!opponent ? (
+          <p className="text-xs text-secondary text-center">
+            Click on an opponent&apos;s card to peek at it
+          </p>
         ) : (
-          <SkipButton
-            onClick={() => {
-              if (!humanPlayer) return;
-              // Skip the peek action
-              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
-            }}
-            className="w-full py-2 px-4 text-sm"
-          >
-            Skip
-          </SkipButton>
+          <>
+            {cardRank && (
+              <Card
+                rank={cardRank}
+                revealed={true}
+                isPeeked={true}
+                size="md"
+                selectionState="default"
+              />
+            )}
+            <p className="text-xs text-secondary">
+              You have peeked at {opponent.name}&apos;s card
+            </p>
+          </>
         )}
       </div>
-    </div>
+
+      {/* Action Buttons */}
+      {opponent ? (
+        <ContinueButton
+          onClick={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+          }}
+          className="w-full"
+        />
+      ) : (
+        <SkipButton
+          onClick={() => {
+            if (!humanPlayer) return;
+            // Skip the peek action
+            gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+          }}
+          className="w-full"
+        >
+          Skip
+        </SkipButton>
+      )}
+    </>
   );
 });

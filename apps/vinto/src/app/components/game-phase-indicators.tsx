@@ -112,9 +112,7 @@ export const GamePhaseIndicators = observer(() => {
         pendingCard={pendingCard}
         onUseAction={() => {
           if (!humanPlayer || !pendingCard) return;
-          gameClient.dispatch(
-            GameActions.playCardAction(humanPlayer.id)
-          );
+          gameClient.dispatch(GameActions.playCardAction(humanPlayer.id));
         }}
         onSwapDiscard={() => {
           console.log('[CardDrawnIndicator] Swap button clicked');
@@ -205,7 +203,7 @@ const TossInIndicator = observer(
     // Check if it's the human player's original turn (not just participating in toss-in)
     const activeTossIn = gameClient.visualState.activeTossIn;
     const currentPlayerIndex = gameClient.visualState.currentPlayerIndex;
-    const isOriginalTurn = activeTossIn 
+    const isOriginalTurn = activeTossIn
       ? activeTossIn.originalPlayerIndex === currentPlayerIndex
       : false;
 
@@ -264,22 +262,24 @@ Skip toss-in and proceed to next player's turn`;
 
           {/* Bot Actions Section */}
           {recentActions.length > 0 && (
-            <div className="mb-2 p-1.5 bg-surface-tertiary/40 rounded border border-border-secondary flex-shrink-0">
-              <div className="font-normal text-muted mb-0.5 text-2xs">
-                Recent Actions:
+            <div className="mb-2 relative flex-shrink-0">
+              <div className="absolute -top-2 right-2 px-1.5 bg-surface-primary text-2xs font-medium text-muted z-10">
+                Recent Actions
               </div>
-              <div className="flex flex-wrap gap-0.5 items-center">
-                <ReactJoin
-                  separator={
-                    <CircleArrowRight size={12} className="text-muted" />
-                  }
-                >
+              <div className="p-1.5 bg-surface-tertiary/40 rounded border border-border-secondary max-h-[47px] overflow-y-auto">
+                <p className="text-tertiary text-2xs leading-relaxed">
                   {recentActions.map((action, idx) => (
-                    <span key={idx} className="text-tertiary text-2xs">
+                    <React.Fragment key={idx}>
+                      {idx > 0 && (
+                        <CircleArrowRight
+                          size={12}
+                          className="text-muted inline mx-0.5 -mt-0.5"
+                        />
+                      )}
                       {action}
-                    </span>
+                    </React.Fragment>
                   ))}
-                </ReactJoin>
+                </p>
               </div>
             </div>
           )}

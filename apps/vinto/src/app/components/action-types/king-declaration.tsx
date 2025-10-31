@@ -32,69 +32,65 @@ export function KingDeclaration() {
   if (isSelectingCard) {
     // Step 1: Show instructions to select a card from hand or opponent's hand
     return (
-      <div className="w-full h-full">
-        <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
-          {/* Header */}
-          <div className="flex flex-row items-center justify-between mb-1.5">
-            <div className="flex flex-col">
-              <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
-                👑 {getCardName(action)}
-                {isTossInAction && (
-                  <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                    ⚡ Toss-in
-                  </span>
-                )}
-              </h3>
-              <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
-            </div>
-            <HelpPopover title="King Declaration" rank="K" />
+      <>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-1 flex-shrink-0">
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+              👑 {getCardName(action)}
+              {isTossInAction && (
+                <span className="ml-2 text-2xs text-accent-primary font-medium">
+                  ⚡ Toss-in
+                </span>
+              )}
+            </h3>
+            <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">{getCardShortDescription(action)}</span>
           </div>
-
-          {/* Instructions */}
-          <div className="flex-1 flex flex-col justify-center items-center text-center p-4">
-            <p className="text-sm text-primary mb-2">
-              Select a card from your hand or an opponent&apos;s hand
-            </p>
-            <p className="text-xs text-gray-500">
-              The card will be highlighted but not revealed yet
-            </p>
-          </div>
-          {
-            <div className="flex-shrink-0">
-              <SkipButton
-                onClick={() => {
-                  if (!humanPlayer) return;
-                  gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
-                }}
-                className="w-full py-1.5 px-4 text-sm"
-              />
-            </div>
-          }
+          <HelpPopover title="King Declaration" rank="K" />
         </div>
-      </div>
+
+        {/* Instructions */}
+        <div className="flex flex-col justify-center items-center text-center flex-1 min-h-0">
+          <p className="text-sm text-primary mb-1">
+            Select a card from your hand or an opponent&apos;s hand
+          </p>
+          <p className="text-xs text-secondary">
+            The card will be highlighted but not revealed yet
+          </p>
+        </div>
+
+        <div className="flex-shrink-0">
+          <SkipButton
+            onClick={() => {
+              if (!humanPlayer) return;
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+            }}
+            className="w-full"
+          />
+        </div>
+      </>
     );
   }
 
   if (isDeclaringRank) {
     // Step 2: Show rank selection UI with selected card info
     return (
-      <div className="w-full h-full">
-        <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
-          {/* Header */}
-          <div className="flex flex-row items-center justify-between mb-1.5">
-            <div className="flex flex-col">
-              <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
-                👑 {getCardName(action)}
-                {isTossInAction && (
-                  <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                    ⚡ Toss-in
-                  </span>
-                )}
-              </h3>
-              <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
-            </div>
-            <HelpPopover title="King Declaration" rank="K" />
+      <>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-1 flex-shrink-0">
+          <div className="flex flex-col">
+            <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+              👑 {getCardName(action)}
+              {isTossInAction && (
+                <span className="ml-2 text-2xs text-accent-primary font-medium">
+                  ⚡ Toss-in
+                </span>
+              )}
+            </h3>
+            <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">{getCardShortDescription(action)}</span>
           </div>
+          <HelpPopover title="King Declaration" rank="K" />
+        </div>
 
           {/* Selected card info */}
           {selectedTarget && (
@@ -103,70 +99,67 @@ export function KingDeclaration() {
             </div>
           )}
 
-          {/* Single unified grid for all cards */}
-          <div className="flex-1 flex flex-col justify-center">
-            <p className="text-xs text-primary mb-2 text-center">
-              Declare the rank you think it is
-            </p>
-            <div className="grid grid-cols-7 gap-1">
-              {/* Action cards with visual distinction */}
-              {firstRowCards.map((item) => {
-                return (
-                  <KingCardButton
-                    key={item.rank}
-                    rank={item.rank}
-                    actionable={item.actionable}
-                    onClick={() => {
-                      if (!humanPlayer) return;
-                      gameClient.dispatch(
-                        GameActions.declareKingAction(humanPlayer.id, item.rank)
-                      );
-                    }}
-                  />
-                );
-              })}
+        {/* Single unified grid for all cards */}
+        <div className="flex-1 flex flex-col justify-center min-h-0">
+          <p className="text-xs text-primary mb-1 text-center">
+            Declare the rank you think it is
+          </p>
+          <div className="grid grid-cols-7 gap-1">
+            {/* Action cards with visual distinction */}
+            {firstRowCards.map((item) => {
+              return (
+                <KingCardButton
+                  key={item.rank}
+                  rank={item.rank}
+                  actionable={item.actionable}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(
+                      GameActions.declareKingAction(humanPlayer.id, item.rank)
+                    );
+                  }}
+                />
+              );
+            })}
 
-              {/* Non-action cards in same grid */}
-              {secondRowCards.map((item) => {
-                return (
-                  <KingCardButton
-                    key={item.rank}
-                    rank={item.rank}
-                    actionable={item.actionable}
-                    onClick={() => {
-                      if (!humanPlayer) return;
-                      gameClient.dispatch(
-                        GameActions.declareKingAction(humanPlayer.id, item.rank)
-                      );
-                    }}
-                  />
-                );
-              })}
-            </div>
+            {/* Non-action cards in same grid */}
+            {secondRowCards.map((item) => {
+              return (
+                <KingCardButton
+                  key={item.rank}
+                  rank={item.rank}
+                  actionable={item.actionable}
+                  onClick={() => {
+                    if (!humanPlayer) return;
+                    gameClient.dispatch(
+                      GameActions.declareKingAction(humanPlayer.id, item.rank)
+                    );
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // Fallback (shouldn't reach here in normal flow)
   return (
-    <div className="w-full h-full">
-      <div className="bg-surface-primary border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
-        <div className="flex flex-row items-center justify-between mb-1.5">
-          <div className="flex flex-col">
-            <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
-              👑 {getCardName(action)}
-            </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
-          </div>
-          <HelpPopover title="King Declaration" rank="K" />
+    <>
+      <div className="flex items-center justify-between mb-1 flex-shrink-0">
+        <div className="flex flex-col">
+          <h3 className="text-xs font-semibold text-primary leading-tight flex items-center">
+            👑 {getCardName(action)}
+          </h3>
+          <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">{getCardShortDescription(action)}</span>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-gray-500">Thinking...</p>
-        </div>
+        <HelpPopover title="King Declaration" rank="K" />
       </div>
-    </div>
+      <div className="flex-1 flex items-center justify-center min-h-0">
+        <p className="text-sm text-secondary">Thinking...</p>
+      </div>
+    </>
   );
 }
 

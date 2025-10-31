@@ -64,20 +64,20 @@ export class HeadlessService {
       action.type === 'EXECUTE_QUEEN_SWAP' || action.type === 'SKIP_QUEEN_SWAP';
     const isJackActionCompleted =
       action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
-    const isPeekActionCompleted = action.type === 'CONFIRM_PEEK';
+    // Don't include isPeekActionCompleted here - peeked cards should stay visible until next turn
     const nextTurnStarted =
       newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
 
     if (
       isSetupPhaseEnded ||
       isQueenActionCompleted ||
-      isPeekActionCompleted ||
       nextTurnStarted
     ) {
       this.uiStore.clearTemporaryCardVisibility();
     }
 
     // Clear highlights when peek/swap actions complete
+    const isPeekActionCompleted = action.type === 'CONFIRM_PEEK';
     if (
       isQueenActionCompleted ||
       isJackActionCompleted ||
@@ -322,17 +322,25 @@ export class HeadlessService {
     const actingPlayer = newState.players.find((p) => p.id === playerId);
     if (!actingPlayer) return;
 
+    // Add card to temporarily visible cards for ALL players
+    // This shows the peek border on the card regardless of who is peeking
+    // The card will only be revealed (face-up) based on game rules
+    this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
+
     // ONLY handle bot peeks - human peeks are handled by game-table-logic.ts
     if (!actingPlayer.isHuman) {
-      // Bot is peeking - don't reveal card content, but add highlight for visual feedback
-      // This shows the human WHICH cards the bot peeked at, without revealing the card value
+      // Bot is peeking - also add highlight for extra visual feedback
+      // This shows the human WHICH cards the bot peeked at
       this.uiStore.addHighlightedCard(targetPlayerId, position);
       console.log(
-        `[HeadlessService] Bot peek action (${actionCard.rank}) - highlighting (not revealing) card at ${targetPlayerId} position ${position}`
+        `[HeadlessService] Bot peek action (${actionCard.rank}) - showing border and highlight on card at ${targetPlayerId} position ${position}`
+      );
+    } else {
+      console.log(
+        `[HeadlessService] Human peek action (${actionCard.rank}) - showing border on card at ${targetPlayerId} position ${position}`
       );
     }
-    // Note: We do NOT add temporarilyVisibleCard for human peeks here
-    // because game-table-logic.ts already does that when the human clicks the card
+    // Note: game-table-logic.ts also adds temporarilyVisibleCard for human peeks when clicked
   }
 
   public dispose() {

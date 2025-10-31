@@ -41,7 +41,7 @@ export const PlayerArea = observer(function PlayerArea({
   const landingCards = new Set(
     animationStore
       .getPlayerAnimations(player.id)
-      .filter((a) => a.rank)
+      .filter((a) => a.rank && a.type !== 'highlight')
       .map((a) => a.to.position)
   );
 

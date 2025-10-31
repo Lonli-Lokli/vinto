@@ -58,6 +58,7 @@ interface CardProps {
   size?: CardSize;
   highlighted?: boolean;
   botPeeking?: boolean;
+  isPeeked?: boolean; // New prop: card is currently being peeked (shows minimalistic border)
   onClick?: () => void;
   rotated?: boolean;
   // For animation tracking
@@ -83,6 +84,7 @@ export function Card({
   size = 'md',
   highlighted = false,
   botPeeking = false,
+  isPeeked = false,
   onClick,
   rotated = false,
   playerId,
@@ -162,7 +164,13 @@ export function Card({
         ${actionTargetSelected ? 'action-target-selected' : ''}
       `}
       style={
-        highlighted && selectionState !== 'selectable'
+        isPeeked
+          ? {
+              boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4)',
+              outline: '3px solid rgb(96, 165, 250)',
+              outlineOffset: '2px',
+            }
+          : highlighted && selectionState !== 'selectable'
           ? {
               animation: 'ring-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }

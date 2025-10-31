@@ -38,48 +38,46 @@ export const AceAction = observer(() => {
   };
 
   return (
-    <div className="w-full h-full">
-      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-3 grid-rows-[auto_1fr_auto] gap-1.5">
-        {/* Header - spans all 3 columns */}
-        <div className="col-span-3 flex items-center justify-between">
-          <div className="flex flex-col">
-            <h3 className="text-xs font-semibold text-primary flex items-center">
-              🎯 {getCardName(action)}
-              {isTossInAction && (
-                <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                  ⚡ Toss-in
-                </span>
-              )}
-            </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">
-              {getCardShortDescription(action)}
-            </span>
-          </div>
-          <HelpPopover title="Ace Action" rank="A" />
+    <div className="h-full grid grid-cols-3 grid-rows-[auto_1fr_auto] gap-1.5">
+      {/* Header - spans all 3 columns */}
+      <div className="col-span-3 flex items-center justify-between">
+        <div className="flex flex-col">
+          <h3 className="text-xs font-semibold text-primary flex items-center leading-tight">
+            🎯 {getCardName(action)}
+            {isTossInAction && (
+              <span className="ml-2 text-2xs text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
+          </h3>
+          <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">
+            {getCardShortDescription(action)}
+          </span>
         </div>
+        <HelpPopover title="Ace Action" rank="A" />
+      </div>
 
-        {/* Opponent Buttons - each in their own column */}
-        {opponents.map((opponent) => (
-          <OpponentSelectButton
-            key={opponent.id}
-            opponentName={opponent.name}
-            onClick={() => handleOpponentClick(opponent.id)}
-            showAvatar={true}
-            player={opponent}
-            isSelected={selectedOpponentId === opponent.id}
-          />
-        ))}
+      {/* Opponent Buttons - each in their own column */}
+      {opponents.map((opponent) => (
+        <OpponentSelectButton
+          key={opponent.id}
+          opponentName={opponent.name}
+          onClick={() => handleOpponentClick(opponent.id)}
+          showAvatar={true}
+          player={opponent}
+          isSelected={selectedOpponentId === opponent.id}
+        />
+      ))}
 
-        {/* Skip Button - spans all 3 columns */}
-        <div className="col-span-3">
-          <SkipButton
-            onClick={() => {
-              if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
-            }}
-            className="w-full py-1.5 px-4 text-sm"
-          />
-        </div>
+      {/* Skip Button - spans all 3 columns */}
+      <div className="col-span-3">
+        <SkipButton
+          onClick={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+          }}
+          className="w-full"
+        />
       </div>
     </div>
   );

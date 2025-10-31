@@ -43,7 +43,9 @@ export const ActionTargetSelector = observer(() => {
 
   return (
     <div className="w-full h-full">
-      <ActionContent targetType={targetType} />
+      <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-2 shadow-sm h-full flex flex-col">
+        <ActionContent targetType={targetType} />
+      </div>
     </div>
   );
 });

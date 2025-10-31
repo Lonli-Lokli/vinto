@@ -121,6 +121,9 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
           // Hide both to prevent double-rendering with ghost element
           const isAnimating = animationStore.isCardAnimating(player.id, index);
 
+          // Check if this card is being peeked (temporarily visible)
+          const isPeeked = temporarilyVisibleCards.has(index);
+
           return (
             <Card
               key={`${card.id}-${index}`}
@@ -131,6 +134,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
               selectionVariant={selectionVariant}
               highlighted={cardHighlighted}
               botPeeking={highlightedCards.has(index)}
+              isPeeked={isPeeked}
               onClick={() => onCardClick?.(index)}
               rotated={isSidePlayer(position)}
               playerId={player.id}

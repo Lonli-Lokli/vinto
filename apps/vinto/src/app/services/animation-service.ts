@@ -667,24 +667,16 @@ export class AnimationService {
       const peekedCard = targetPlayer.cards[position];
       if (!peekedCard) return;
 
-      // Get target player position for rotation
-      const targetPlayerPosition = this.getPlayerPosition(
-        targetPlayerId,
-        newState
-      );
-
-      // Start peek animation - card shifts toward draw pile with glow and rotation
-      // Card is revealed to all players (revealed: true)
-      this.animationStore.startPeekAnimation(
+      // Start highlight animation to draw attention to the peeked card
+      // The border is shown via isPeeked prop (added in headless-service), animation adds extra visual flair
+      this.animationStore.startHighlightAnimation(
         peekedCard.rank,
         { type: 'player', playerId: targetPlayerId, position },
-        2500, // 2.5 second animation
-        false, // Never reveal during animation - handled by temporarilyVisibleCards
-        targetPlayerPosition
+        2000 // 2 second highlight animation
       );
 
       logger.info(
-        `[AnimationService] Peek action (${actionCard.rank}) - showing card ${peekedCard.rank} at ${targetPlayerId} position ${position} to all players`
+        `[AnimationService] Peek action (${actionCard.rank}) - highlighting card at ${targetPlayerId} position ${position}`
       );
       return;
     }

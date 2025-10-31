@@ -8,6 +8,8 @@ import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
 import { HelpPopover } from '../presentational';
 import { getCardShortDescription, getCardName } from '@vinto/shapes';
+import { Card } from '../presentational/card';
+import { ArrowRightLeft } from 'lucide-react';
 
 export const JackAction = observer(() => {
   const gameClient = useGameClient();
@@ -25,88 +27,130 @@ export const JackAction = observer(() => {
     gameClient.visualState.activeTossIn &&
     gameClient.visualState.activeTossIn.queuedActions.length > 0;
 
-  const getPlayerName = (playerId: string) => {
-    const player = gameClient.visualState.players.find(
-      (p) => p.id === playerId
-    );
-    return player?.name || 'Unknown';
-  };
+  // Extract target information
+  const target1 = swapTargets[0];
+  const target2 = swapTargets[1];
+
+  const player1 = target1
+    ? gameClient.visualState.players.find((p) => p.id === target1.playerId)
+    : undefined;
+  const player2 = target2
+    ? gameClient.visualState.players.find((p) => p.id === target2.playerId)
+    : undefined;
+
+  // Jack cards are NOT revealed - they remain face down
+  const card1Rank = undefined;
+  const card2Rank = undefined;
 
   return (
-    <div className="w-full h-full">
-      <div className="bg-surface-primary/95 backdrop-blur-sm border border-primary rounded-lg p-4 shadow-sm h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex flex-col">
-            <h3 className="text-xs md:text-sm font-semibold text-primary flex items-center">
-              🔄 {getCardName(action)}
-              {isTossInAction && (
-                <span className="ml-2 text-[10px] text-accent-primary font-medium">
-                  ⚡ Toss-in
-                </span>
-              )}
-            </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">{getCardShortDescription(action)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-2xs md:text-xs text-secondary">
-              {swapTargets.length}/2 selected
-            </div>
-            <HelpPopover title="Swap Cards" rank="J" />
-          </div>
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1 flex-shrink-0">
+        <div className="flex flex-col">
+          <h3 className="text-xs font-semibold text-primary flex items-center leading-tight">
+            🔄 {getCardName(action)}
+            {isTossInAction && (
+              <span className="ml-2 text-2xs text-accent-primary font-medium">
+                ⚡ Toss-in
+              </span>
+            )}
+          </h3>
+          <span className="text-2xs text-secondary mt-0.5 ml-5 leading-tight">
+            {getCardShortDescription(action)}
+          </span>
         </div>
-
-        {/* Instructions or Selected Cards Info */}
-        <div className="flex-1 flex flex-col justify-center mb-2">
-          {swapTargets.length === 0 ? (
-            <p className="text-xs text-secondary text-center">
-              Select any two cards to swap (from any players)
-            </p>
-          ) : swapTargets.length === 1 ? (
-            <div className="text-xs text-secondary text-center">
-              <div className="mb-1">First card selected:</div>
-              <div className="text-sm font-medium text-primary">
-                {getPlayerName(swapTargets[0].playerId)} • Position{' '}
-                {swapTargets[0].position + 1}
-              </div>
-              <p className="text-2xs text-secondary mt-1">
-                Select second card to swap
-              </p>
-            </div>
-          ) : (
-            <div className="text-xs text-secondary text-center">
-              <div className="mb-1">Cards will be swapped:</div>
-              <div className="text-sm font-medium text-primary">
-                {swapTargets
-                  .map(
-                    (target) =>
-                      `${getPlayerName(target.playerId)} Position ${
-                        target.position + 1
-                      }`
-                  )
-                  .join(' ⟷ ')}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-1 flex-shrink-0">
-          <SwapButton
-            disabled={!hasBothCards}
-            onClick={() => {
-              if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.executeJackSwap(humanPlayer.id));
-            }}
-          />
-          <SkipButton
-            onClick={() => {
-              if (!humanPlayer) return;
-              gameClient.dispatch(GameActions.skipJackSwap(humanPlayer.id));
-            }}
-          />
+        <div className="flex items-center gap-1">
+          <div className="text-2xs text-secondary">{swapTargets.length}/2</div>
+          <HelpPopover title="Swap Cards" rank="J" />
         </div>
       </div>
-    </div>
+
+      {/* Instructions and Card Selection - split 1/3 and 2/3 */}
+      <div className="flex items-center gap-3 mb-1 flex-1 min-h-0 w-full">
+        {/* Instruction text - left 1/3 */}
+        <div className="w-1/3 text-2xs text-secondary text-center">
+          {swapTargets.length === 0
+            ? 'Select any two cards to swap'
+            : swapTargets.length === 1
+            ? 'Select second card'
+            : 'Cards will be swapped'}
+        </div>
+
+        {/* Cards - right 2/3 */}
+        <div className="w-2/3 h-full flex items-center justify-center gap-3">
+          {/* First target slot */}
+          <div className="flex flex-col items-center">
+            {target1 ? (
+              <>
+                <Card
+                  rank={card1Rank}
+                  revealed={false}
+                  size="md"
+                  selectionState="default"
+                />
+                <div className="mt-0.5 text-2xs font-medium text-primary truncate max-w-[80px]">
+                  {player1?.name || 'Unknown'}
+                </div>
+                <div className="text-xs text-secondary">Position {target1.position + 1}</div>
+              </>
+            ) : (
+              <>
+                <div className="w-6 h-9 border-2 border-dashed border-secondary/30 rounded flex items-center justify-center">
+                  <span className="text-secondary/50 text-sm">?</span>
+                </div>
+                <div className="mt-0.5 text-2xs text-secondary">First</div>
+              </>
+            )}
+          </div>
+
+          {/* Swap arrow */}
+          <div className="text-base text-secondary">
+            <ArrowRightLeft />
+          </div>
+
+          {/* Second target slot */}
+          <div className="flex flex-col items-center">
+            {target2 ? (
+              <>
+                <Card
+                  rank={card2Rank}
+                  revealed={false}
+                  size="md"
+                  selectionState="default"
+                />
+                <div className="mt-0.5 text-2xs font-medium text-primary truncate max-w-[80px]">
+                  {player2?.name || 'Unknown'}
+                </div>
+                <div className="text-xs text-secondary">  Position {target2.position + 1}</div>
+              </>
+            ) : (
+              <>
+                <div className="w-6 h-9 border-2 border-dashed border-secondary/30 rounded flex items-center justify-center">
+                  <span className="text-secondary/50 text-sm">?</span>
+                </div>
+                <div className="mt-0.5 text-2xs text-secondary">Second</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-1 flex-shrink-0">
+        <SwapButton
+          disabled={!hasBothCards}
+          onClick={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.executeJackSwap(humanPlayer.id));
+          }}
+        />
+        <SkipButton
+          onClick={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.skipJackSwap(humanPlayer.id));
+          }}
+        />
+      </div>
+    </>
   );
 });
