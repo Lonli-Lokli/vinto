@@ -21,7 +21,8 @@ export type AnimationType =
   | 'toss-in'
   | 'highlight'
   | 'play-action'
-  | 'shake';
+  | 'shake'
+  | 'penalty-indicator';
 
 export type AnimationSequenceType = 'parallel' | 'sequential';
 
@@ -65,6 +66,8 @@ export interface CardAnimationState {
   fullRotation?: boolean;
   // Target rotation angle (0 for normal, 90 for left/right players)
   targetRotation?: number;
+  // Player position for directional animations (peek)
+  playerPosition?: string;
   // Status
   completed: boolean;
 
@@ -115,6 +118,11 @@ export type AnimationStep =
       type: 'shake';
       rank: Rank;
       target: AnimationPlayerTarget;
+      duration?: number;
+    }
+  | {
+      type: 'penalty-indicator';
+      targetPlayerId: string;
       duration?: number;
     };
 
@@ -533,6 +541,53 @@ export class CardAnimationStore {
   }
 
   /**
+   * Start a peek animation - card shifts perpendicular to player's edge with glow
+   * All players can see the card during animation
+   * For left/right players, the card rotates during animation
+   */
+  startPeekAnimation(
+    rank: Rank,
+    target: AnimationPlayerTarget,
+    duration = 2500,
+    revealed = true,
+    targetPlayerPosition?: string
+  ): string {
+    const id = `peek-${this.animationCounter++}`;
+
+    // Capture position
+    const pos = this.positionCapture.getPlayerCardPosition(
+      target.playerId,
+      target.position
+    );
+
+    if (!pos) {
+      console.warn(
+        '[CardAnimationStore] Could not capture position for peek animation'
+      );
+      return id;
+    }
+
+    this.activeAnimations.set(id, {
+      id,
+      type: 'peek',
+      rank,
+      to: target,
+      fromX: pos.x,
+      fromY: pos.y,
+      toX: pos.x, // Card returns to same position
+      toY: pos.y,
+      startTime: Date.now(),
+      duration,
+      revealed, // Card is revealed to all players during peek
+      targetRotation: this.getTargetRotation(target, targetPlayerPosition),
+      playerPosition: targetPlayerPosition, // Store player position for directional movement
+      completed: false,
+    });
+
+    return id;
+  }
+
+  /**
    * Start an animation sequence (parallel or sequential)
    * Parallel: All steps start at the same time
    * Sequential: Each step starts after the previous one completes
@@ -633,6 +688,34 @@ export class CardAnimationStore {
   }
 
   /**
+   * Start a penalty indicator animation - shows a visual indicator on a player avatar
+   */
+  startPenaltyIndicatorAnimation(
+    targetPlayerId: string,
+    duration = 1500
+  ): string {
+    const id = `penalty-indicator-${this.animationCounter++}`;
+
+    // This is a special animation that doesn't involve a card
+    // It's tracked but handled differently in the UI
+    this.activeAnimations.set(id, {
+      id,
+      type: 'penalty-indicator',
+      to: { type: 'player', playerId: targetPlayerId, position: -1 },
+      fromX: 0,
+      fromY: 0,
+      toX: 0,
+      toY: 0,
+      startTime: Date.now(),
+      duration,
+      revealed: false,
+      completed: false,
+    });
+
+    return id;
+  }
+
+  /**
    * Execute a single animation step
    */
   private executeAnimationStep(step: AnimationStep): string {
@@ -670,9 +753,10 @@ export class CardAnimationStore {
           step.duration
         );
       case 'shake':
-        return this.startShakeAnimation(
-          step.rank,
-          step.target,
+        return this.startShakeAnimation(step.rank, step.target, step.duration);
+      case 'penalty-indicator':
+        return this.startPenaltyIndicatorAnimation(
+          step.targetPlayerId,
           step.duration
         );
     }

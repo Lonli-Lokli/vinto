@@ -3,12 +3,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useObserver } from 'mobx-react-lite';
 import { fourPlayerGame } from './initializeGame';
 import { GameClient } from './game-client';
 import { createBotAI } from './adapters/botAIAdapter';
 import { GameState } from '@vinto/shapes';
-import { triggerStateErrorCallbacks, triggerStateUpdateCallbacks } from './game-client-events';
+import {
+  triggerStateErrorCallbacks,
+  triggerStateUpdateCallbacks,
+} from './game-client-events';
 
 /**
  * Context value includes both client and initialization state
@@ -63,7 +65,7 @@ export const GameClientProvider: React.FC<GameClientProviderProps> = ({
       triggerStateUpdateCallbacks(oldState, newState, action);
     });
 
-     client.onStateUpdateError((reason) => {
+    client.onStateUpdateError((reason) => {
       triggerStateErrorCallbacks(reason);
     });
 
@@ -135,7 +137,7 @@ export function useGameClientInitialized(): boolean {
  * Hook to get current game state (observable)
  *
  * This hook automatically re-renders when the state changes.
- * Uses MobX's useObserver internally, so components don't need to be wrapped with observer().
+ * Uses MobX's Observer component internally, so components don't need to be wrapped with observer().
  *
  * Usage:
  * ```tsx
@@ -147,27 +149,27 @@ export function useGameClientInitialized(): boolean {
  */
 export function useGameState(): GameState {
   const client = useGameClient();
-  // useObserver makes this hook reactive to GameClient.state changes
-  return useObserver(() => client.visualState);
+  // Return the observable state - components using this should be wrapped with observer() or use <Observer>
+  return client.visualState;
 }
 
 /**
  * Hook to get current player (observable)
  *
  * This hook automatically re-renders when the current player changes.
- * Uses MobX's useObserver internally, so components don't need to be wrapped with observer().
+ * Components using this should be wrapped with observer() or use <Observer>.
  *
  * Usage:
  * ```tsx
- * const MyComponent = () => {
+ * const MyComponent = observer(() => {
  *   const player = useCurrentPlayer(); // Automatically reactive!
  *   return <div>{player.name}</div>;
- * };
+ * });
  * ```
  */
 export function useCurrentPlayer() {
   const client = useGameClient();
-  return useObserver(() => client.currentPlayer);
+  return client.currentPlayer;
 }
 
 /**

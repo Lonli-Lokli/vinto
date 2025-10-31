@@ -69,12 +69,14 @@ export const PlayerArea = observer(function PlayerArea({
   });
 
   const avatarComponent = (
-    <PlayerAvatar
-      playerName={player.name}
-      isCurrentPlayer={isCurrentPlayer}
-      isCoalitionMember={isCoalitionMember}
-      isCoalitionLeader={isCoalitionLeader}
-    />
+    <div data-player-id={player.id}>
+      <PlayerAvatar
+        playerName={player.name}
+        isCurrentPlayer={isCurrentPlayer}
+        isCoalitionMember={isCoalitionMember}
+        isCoalitionLeader={isCoalitionLeader}
+      />
+    </div>
   );
 
   // Disable card clicks during blocking animations (but allow during highlights)

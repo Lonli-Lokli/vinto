@@ -61,6 +61,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
       <div
         className={`${containerClasses} ${dimmedClasses}`}
         style={currentPlayerAnimation}
+        data-player-cards={player.id}
       >
         {player.cards.map((card, index) => {
           const cardIsSelectable = isCardSelectable({

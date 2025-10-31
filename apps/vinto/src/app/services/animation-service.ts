@@ -648,46 +648,44 @@ export class AnimationService {
 
     if (!actionCard) return;
 
-    // Handle peek actions (7, 8, 9, 10, Q) - no highlight animation
-    // The card will be revealed directly via temporarilyVisibleCards or opponentKnowledge
-    // Spectators don't need to see "selection hints" - they just see the revealed card
+    // Handle peek actions (7, 8, 9, 10, Q, J, K)
+    // Card shifts away from player toward draw pile with glow - all players can see it
     if (
       actionCard.rank === '7' ||
       actionCard.rank === '8' ||
       actionCard.rank === '9' ||
       actionCard.rank === '10' ||
-      actionCard.rank === 'Q'
+      actionCard.rank === 'Q' ||
+      actionCard.rank === 'J' ||
+      actionCard.rank === 'K'
     ) {
-      // Find the acting player (the one using the peek action)
-      const actingPlayer = newState.players.find((p) => p.id === playerId);
+      const targetPlayer = newState.players.find(
+        (p) => p.id === targetPlayerId
+      );
+      if (!targetPlayer || position >= targetPlayer.cards.length) return;
 
-      // Only start highlight animation if BOT is peeking
-      // Human peeks should just reveal the card (handled by UIStore.temporarilyVisibleCards)
-      if (actingPlayer && !actingPlayer.isHuman) {
-        // Get the target player and card
-        const targetPlayer = newState.players.find(
-          (p) => p.id === targetPlayerId
-        );
-        if (!targetPlayer || position >= targetPlayer.cards.length) return;
+      const peekedCard = targetPlayer.cards[position];
+      if (!peekedCard) return;
 
-        const peekedCard = targetPlayer.cards[position];
-        if (!peekedCard) return;
+      // Get target player position for rotation
+      const targetPlayerPosition = this.getPlayerPosition(
+        targetPlayerId,
+        newState
+      );
 
-        // Start highlight animation on the peeked card (bot action)
-        this.animationStore.startHighlightAnimation(
-          peekedCard.rank,
-          { type: 'player', playerId: targetPlayerId, position },
-          2000 // 2 second highlight
-        );
+      // Start peek animation - card shifts toward draw pile with glow and rotation
+      // Card is revealed to all players (revealed: true)
+      this.animationStore.startPeekAnimation(
+        peekedCard.rank,
+        { type: 'player', playerId: targetPlayerId, position },
+        2500, // 2.5 second animation
+        false, // Never reveal during animation - handled by temporarilyVisibleCards
+        targetPlayerPosition
+      );
 
-        console.log(
-          `[AnimationService] Bot peek action - highlighting ${peekedCard.rank} at ${targetPlayerId} position ${position}`
-        );
-      } else {
-        console.log(
-          `[AnimationService] Human peek action - skipping highlight animation (card will reveal via temporarilyVisibleCards)`
-        );
-      }
+      logger.info(
+        `[AnimationService] Peek action (${actionCard.rank}) - showing card ${peekedCard.rank} at ${targetPlayerId} position ${position} to all players`
+      );
       return;
     }
 
@@ -699,13 +697,13 @@ export class AnimationService {
     const discardCard = newState.discardPile.peekTop();
     if (!discardCard) return;
 
-    // Only handle J and A cards (they complete on SELECT_ACTION_TARGET)
-    if (discardCard.rank !== 'J' && discardCard.rank !== 'A') return;
+    // Only handle A cards (they complete on SELECT_ACTION_TARGET)
+    if (discardCard.rank !== 'A') return;
 
     // Check if this card came from a swap declaration (has swapPosition)
     const swapPosition = oldState.pendingAction?.swapPosition;
 
-    // For Ace action, also animate the penalty card being drawn to target player's hand
+    // For Ace action, show penalty indicator and animate the penalty card being drawn to target player's hand
     if (actionCard.rank === 'A') {
       const targetPlayerId = action.payload.targetPlayerId;
       const targetPlayer = newState.players.find(
@@ -724,7 +722,14 @@ export class AnimationService {
           if (penaltyCard) {
             const steps: AnimationStep[] = [];
 
-            // Step 1: Ace card to discard
+            // Step 1: Show penalty indicator (pulsing red border) on target player's card area
+            steps.push({
+              type: 'penalty-indicator',
+              targetPlayerId,
+              duration: 1500,
+            });
+
+            // Step 2: Ace card to discard (parallel with indicator)
             steps.push({
               type: 'discard',
               rank: actionCard.rank,
@@ -734,24 +739,27 @@ export class AnimationService {
               revealed: true,
             });
 
-            // Step 2: Penalty card from draw pile to target player's hand
-            steps.push({
-              type: 'draw',
-              rank: penaltyCard.rank,
-              from: { type: 'draw' },
-              to: {
-                type: 'player',
-                playerId: targetPlayerId,
-                position: penaltyCardPosition,
-              },
-              duration: 1500,
-              revealed: false, // Penalty cards are never revealed
-              fullRotation: false,
-            });
-
+            // Start indicator and discard in parallel, then penalty card
             this.animationStore.startAnimationSequence('parallel', steps);
+
+            // After penalty indicator completes, draw the penalty card
+            setTimeout(() => {
+              this.animationStore.startDrawAnimation(
+                penaltyCard.rank,
+                { type: 'draw' },
+                {
+                  type: 'player',
+                  playerId: targetPlayerId,
+                  position: penaltyCardPosition,
+                },
+                1500,
+                false, // Penalty cards are never revealed
+                false
+              );
+            }, 1500);
+
             console.log(
-              '[AnimationService] Ace action complete - Ace to discard, penalty card to target player'
+              '[AnimationService] Ace action complete - penalty indicator, Ace to discard, then penalty card to target player'
             );
             return;
           }

@@ -70,8 +70,31 @@ export const AnimatedCardOverlay = observer(() => {
           const isHighlight = animation?.type === 'highlight';
           const isPlayAction = animation?.type === 'play-action';
           const isShake = animation?.type === 'shake';
+          const isPeek = animation?.type === 'peek';
           const hasFullRotation = animation?.fullRotation;
           const targetRotation = animation?.targetRotation ?? 0;
+          const playerPosition = animation?.playerPosition;
+
+          // Calculate peek movement direction based on player position
+          // Cards move perpendicular to their edge (away from player)
+          let peekX = 0;
+          let peekY = 0;
+          if (isPeek && playerPosition) {
+            switch (playerPosition) {
+              case 'bottom':
+                peekY = -40; // Move up (away from bottom)
+                break;
+              case 'top':
+                peekY = 40; // Move down (away from top)
+                break;
+              case 'left':
+                peekX = 40; // Move right (away from left)
+                break;
+              case 'right':
+                peekX = -40; // Move left (away from right)
+                break;
+            }
+          }
 
           return (
             <motion.div
@@ -88,6 +111,16 @@ export const AnimatedCardOverlay = observer(() => {
                 isHighlight
                   ? {
                       scale: [1, 1.15, 1, 1.15, 1],
+                      opacity: 1,
+                    }
+                  : isPeek
+                  ? {
+                      // Card shifts perpendicular to player's edge
+                      // For left/right players, rotate to face up during shift
+                      x: [0, peekX, peekX, 0],
+                      y: [0, peekY, peekY, 0],
+                      scale: [1, 1.2, 1.2, 1],
+                      rotate: [targetRotation, 0, 0, targetRotation], // Rotate to face-up during peek
                       opacity: 1,
                     }
                   : isShake
@@ -133,6 +166,27 @@ export const AnimatedCardOverlay = observer(() => {
                       scale: {
                         times: [0, 0.25, 0.5, 0.75, 1],
                         duration: 2,
+                      },
+                    }
+                  : isPeek
+                  ? {
+                      duration: 2.5,
+                      ease: 'easeInOut',
+                      x: {
+                        times: [0, 0.2, 0.8, 1],
+                        duration: 2.5,
+                      },
+                      y: {
+                        times: [0, 0.2, 0.8, 1],
+                        duration: 2.5,
+                      },
+                      scale: {
+                        times: [0, 0.2, 0.8, 1],
+                        duration: 2.5,
+                      },
+                      rotate: {
+                        times: [0, 0.2, 0.8, 1],
+                        duration: 2.5,
                       },
                     }
                   : isShake
@@ -182,6 +236,12 @@ export const AnimatedCardOverlay = observer(() => {
                       filter:
                         'drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 40px rgba(59, 130, 246, 0.6))',
                       zIndex: 101,
+                    }
+                  : isPeek
+                  ? {
+                      filter:
+                        'drop-shadow(0 0 25px rgba(59, 130, 246, 0.7)) drop-shadow(0 0 50px rgba(59, 130, 246, 0.5)) brightness(1.2)',
+                      zIndex: 102,
                     }
                   : isShake
                   ? {

@@ -9,6 +9,7 @@ import { CoalitionTurnIndicator } from './coalition-turn-indicator';
 import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
 import { useGameClientInitialized } from '@vinto/local-client';
 import { AnimatedCardOverlay } from './animated-card';
+import { PenaltyIndicatorOverlay } from './penalty-indicator-overlay';
 
 /**
  * Component that conditionally renders the main game UI
@@ -34,6 +35,7 @@ export const GameContent = observer(() => {
       <BottomArea />
 
       <AnimatedCardOverlay />
+      <PenaltyIndicatorOverlay />
       <CoalitionLeaderModal />
       <CoalitionTurnIndicator />
 
