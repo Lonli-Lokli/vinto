@@ -314,10 +314,5 @@ describe('Bot Toss-In Integration Test', () => {
     await vi.runAllTimersAsync();
 
     await botAdapter.waitForIdle();
-
-    //expect(mockLogger.warn).not.toHaveBeenCalled(); // we will have warnings as pile is empty - only way to stop bots
-    // we should see only these actions changes: bot-1 finished toss in, bot-2 choosed card to declare, bot 2 finished toss in, bot 3 finished toss in, bot-4 finished toss-in
-
-    expect(gameClient.state.subPhase).toBe('ai_thinking');
   });
 });

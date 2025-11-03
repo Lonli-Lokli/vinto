@@ -710,6 +710,13 @@ export class BotAIAdapter {
 
         // Small delay before declaring rank
         await this.delay(NORMAL_DELAY);
+      } else {
+        // No valid moves available - discard the card instead
+        console.log(
+          `[BotAI] ${botId} cannot use King action (no valid moves), discarding`
+        );
+        this.gameClient.dispatch(GameActions.discardCard(botId));
+        this.cachedActionDecision = null;
       }
 
       // State will update and MobX reaction will trigger step 2 (targets.length === 1)
@@ -775,6 +782,13 @@ export class BotAIAdapter {
         console.log(
           `[BotAI] ${botId} selected first Jack target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
         );
+      } else {
+        // No valid moves available - discard the card instead
+        console.log(
+          `[BotAI] ${botId} cannot use Jack action (no valid moves), discarding`
+        );
+        this.gameClient.dispatch(GameActions.discardCard(botId));
+        this.cachedActionDecision = null;
       }
     } else if (targetsSelected === 1) {
       // Step 2: Select second target
@@ -847,6 +861,13 @@ export class BotAIAdapter {
         console.log(
           `[BotAI] ${botId} selected first Queen target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
         );
+      } else {
+        // No valid moves available - discard the card instead
+        console.log(
+          `[BotAI] ${botId} cannot use Queen action (no valid moves), discarding`
+        );
+        this.gameClient.dispatch(GameActions.discardCard(botId));
+        this.cachedActionDecision = null;
       }
     } else if (targetsSelected === 1) {
       // Step 2: Select second target
@@ -926,6 +947,13 @@ export class BotAIAdapter {
         console.log(
           `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`
         );
+      } else {
+        // No valid moves available - discard the card instead
+        console.log(
+          `[BotAI] ${botId} cannot use action (no valid moves), discarding`
+        );
+        this.gameClient.dispatch(GameActions.discardCard(botId));
+        this.cachedActionDecision = null;
       }
     } else if (targetsSelected === 1) {
       // Step 2: Confirm the peek

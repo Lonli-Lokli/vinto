@@ -777,6 +777,17 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const root = new MCTSNode(rootState, null, null);
     root.untriedMoves = this.generatePossibleMoves(rootState);
 
+    // Early return if there are no possible moves (e.g., empty draw pile, no actionable discard)
+    if (root.untriedMoves.length === 0) {
+      console.log(`[MCTS] No possible moves available, returning pass`);
+      return {
+        move: {
+          type: 'pass',
+          playerId: this.botId,
+        },
+      };
+    }
+
     const startTime = Date.now();
     let iterations = 0;
 
@@ -908,6 +919,15 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private runMCTS(rootState: MCTSGameState): MCTSMove {
     const root = new MCTSNode(rootState, null, null);
     root.untriedMoves = this.generatePossibleMoves(rootState);
+
+    // Early return if there are no possible moves (e.g., empty draw pile, no actionable discard)
+    if (root.untriedMoves.length === 0) {
+      console.log(`[MCTS] No possible moves available, returning pass`);
+      return {
+        type: 'pass',
+        playerId: this.botId,
+      };
+    }
 
     const startTime = Date.now();
     let iterations = 0;
