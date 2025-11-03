@@ -19,11 +19,13 @@ export const OpponentCardPeek = observer(() => {
 
   // Find the opponent whose card is revealed
   const opponent = gameClient.visualState.pendingAction.targets[0];
-  
+
   // Get the card rank if possible
   const cardRank =
-    opponent && gameClient.visualState.players.find((p) => p.id === opponent.playerId)
-      ? gameClient.visualState.players.find((p) => p.id === opponent.playerId)!.cards[opponent.position].rank
+    opponent &&
+    gameClient.visualState.players.find((p) => p.id === opponent.playerId)
+      ? gameClient.visualState.players.find((p) => p.id === opponent.playerId)!
+          .cards[opponent.position].rank
       : undefined;
 
   // Check if this is a toss-in action
@@ -50,9 +52,7 @@ export const OpponentCardPeek = observer(() => {
         </div>
         <div className="flex items-center gap-1">
           {opponent && (
-            <div className="text-2xs text-success font-medium">
-              ✓ Revealed
-            </div>
+            <div className="text-2xs text-success font-medium">✓ Revealed</div>
           )}
           <HelpPopover title="Peek at Opponent Card" rank="9" />
         </div>

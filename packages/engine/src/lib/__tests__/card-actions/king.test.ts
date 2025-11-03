@@ -463,7 +463,7 @@ describe('King (K) Card Action', () => {
   });
 
   describe('Toss-In Flow', () => {
-    it('should allow player to toss in King during toss-in period', () => {
+    it('should allow another player to toss in King during toss-in period', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
         turnNumber: 1,
@@ -478,7 +478,6 @@ describe('King (K) Card Action', () => {
           ranks: ['K'],
           initiatorId: 'p1',
           originalPlayerIndex: 0,
-
           participants: [],
           queuedActions: [],
           waitingForInput: false,
@@ -499,6 +498,75 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.queuedActions.length).toBe(1);
       expect(newState.activeTossIn?.queuedActions[0].rank).toBe('K');
       expect(newState.activeTossIn?.participants).toContain('p2');
+    });
+
+     it('should allow same player to play toss in in King during toss-in period and declare', () => {
+      const state = createTestState({
+        subPhase: 'toss_queue_active',
+        turnNumber: 1,
+        currentPlayerIndex: 1,
+        players: [
+          createTestPlayer('p1', 'Player 1', true),
+          createTestPlayer('p2', 'Player 2', false, [
+            createTestCard('K', 'p2k1'), // Has matching King
+            createTestCard('4', 'p2c2'),
+          ]),
+        ],
+        activeTossIn: {
+          ranks: ['K'],
+          initiatorId: 'p1',
+          originalPlayerIndex: 1,
+          participants: [],
+          queuedActions: [],
+          waitingForInput: false,
+          playersReadyForNextTurn: [],
+        },
+      });
+
+      // P2 tosses in their King
+      let newState = unsafeReduce(
+        state,
+        GameActions.participateInTossIn('p2', [0])
+      );
+
+      // Verify card was removed from hand
+      expect(newState.players[1].cards.length).toBe(1);
+
+      // Verify King action was queued
+      expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+      expect(newState.activeTossIn?.queuedActions[0].rank).toBe('K');
+      expect(newState.activeTossIn?.participants).toContain('p2');
+
+      newState = markPlayersReady(newState, ['p1', 'p2']);
+      expect(newState.currentPlayerIndex).toBe(1); // p2 turn
+      expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+      expect(newState.activeTossIn?.participants).toContain('p2');
+
+      expect(newState.pendingAction).not.toBeNull();
+      
+      // Select the target card (position 0, which is the '4' card)
+      newState = unsafeReduce(
+        newState,
+        GameActions.selectActionTarget('p2', 'p2', 0)
+      );
+      
+      // Declare rank 4 (non-action card)
+      newState = unsafeReduce(
+        newState,
+        GameActions.declareKingAction('p2', '4')
+      );
+
+      // Should trigger toss-in for rank 4
+      expect(newState.activeTossIn?.queuedActions.length).toBe(0);
+      expect(newState.activeTossIn?.ranks.length).toBe(2);
+      expect(newState.activeTossIn?.ranks).toContain('K');
+      expect(newState.activeTossIn?.ranks).toContain('4');
+      expect(newState.players[1].cards.length).toBe(0);
+      expect(newState.subPhase).toBe('toss_queue_active');
+
+      newState = markPlayersReady(newState, ['p1', 'p2']);
+      expect(newState.currentPlayerIndex).toBe(0); // p1 turn
+
     });
   });
 

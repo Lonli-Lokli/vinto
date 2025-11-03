@@ -70,6 +70,7 @@ export function handlePlayerTossInFinished(
 
       // All cards now use 'choosing-action' phase initially
       // Multi-step actions (J, Q, K) track progress via targets.length
+      // Exception: King (K) should start at 'selecting-target' since it needs immediate declaration
 
       // Set up pending action for the first queued card
       newState.pendingAction = {
@@ -82,7 +83,7 @@ export function handlePlayerTossInFinished(
         },
         from: 'hand',
         playerId: firstAction.playerId,
-        actionPhase: 'choosing-action',
+        actionPhase: firstAction.rank === 'K' ? 'selecting-target' : 'choosing-action',
         targetType: getTargetTypeFromRank(firstAction.rank),
         targets: [],
       };

@@ -171,8 +171,8 @@ export function actionValidator(
         }
       }
 
-      // Must be in awaiting_action phase (after USE_CARD_ACTION)
-      if (state.subPhase !== 'awaiting_action') {
+      // Must be in awaiting_action or selecting phase (selecting is for bots processing toss-in)
+      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
         return {
           valid: false,
           reason: `Cannot select target in phase ${state.subPhase}`,
@@ -432,8 +432,8 @@ export function actionValidator(
         }
       }
 
-      // Must be in awaiting_action phase (after using King card and selecting card)
-      if (state.subPhase !== 'awaiting_action') {
+      // Must be in awaiting_action or selecting phase (selecting is for bots processing toss-in)
+      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
         return {
           valid: false,
           reason: `Cannot declare King action in phase ${state.subPhase}`,

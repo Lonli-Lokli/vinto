@@ -135,7 +135,7 @@ export function handleDeclareKingAction(
       );
       return newState;
     } else {
-      // Non-action card: discard it
+      // success declare of non-action card: discard it
 
       newState.discardPile.addToTop(removedCard);
 
@@ -192,6 +192,8 @@ export function handleDeclareKingAction(
 
   // Check if this action was part of a toss-in
   if (newState.activeTossIn !== null) {
+      // Remove the processed action from the queue
+    newState.activeTossIn.queuedActions.shift();
     // Return to toss-in phase (action was from toss-in participation)
     // Clear the ready list so players can confirm again for this new toss-in round
     clearTossInReadyList(newState);
