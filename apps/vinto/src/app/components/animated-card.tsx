@@ -88,6 +88,7 @@ export const AnimatedCardOverlay = observer(() => {
                 isHighlight
                   ? {
                       scale: [1, 1.15, 1, 1.15, 1],
+                      rotate: [0, targetRotation, 0],
                       opacity: 1,
                     }
                   : isShake
@@ -95,13 +96,12 @@ export const AnimatedCardOverlay = observer(() => {
                       x: [0, -10, 10, -10, 10, -5, 5, 0],
                       rotate: [0, -5, 5, -5, 5, -2, 2, 0],
                       opacity: 1,
-                    }
+                  }
                   : isPlayAction
                   ? {
                       left: virtualCard.toX,
                       top: virtualCard.toY,
-                      scale: [1, 1.4, 1.3],
-                      rotate: [0, 360, targetRotation],
+                      scale: [1, 2.5, 1],
                       opacity: 1,
                     }
                   : hasFullRotation
@@ -150,14 +150,12 @@ export const AnimatedCardOverlay = observer(() => {
                     }
                   : isPlayAction
                   ? {
-                      duration: 2,
-                      ease: [0.34, 1.56, 0.64, 1],
+                      duration: 2.5,
+                      ease: [0.34, 1.25, 0.66, 1],
                       scale: {
-                        times: [0, 0.5, 1],
-                        duration: 2,
-                      },
-                      rotate: {
-                        duration: 2,
+                        times: [0, 0.55, 1],
+                        duration: 2.5,
+                        ease: [0.34, 1.25, 0.66, 1],
                       },
                     }
                   : {

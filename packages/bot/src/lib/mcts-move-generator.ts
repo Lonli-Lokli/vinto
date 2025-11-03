@@ -224,190 +224,11 @@ export class MCTSMoveGenerator {
         break;
 
       case 'declare-action':
-        // King: Select a card position to declare
-        // Strategy priority:
-        // 1. HIGHEST: Own known cards (reduces hand size, score, increases knowledge %)
-        //    - Especially Kings (enables multi-toss-in cascade!)
-        //    - High-value cards (reduces score most)
-        //    - Cards matching what bot already has (enables toss-in)
-        // 2. TACTICAL: Opponent action cards (7-K) - use as tools for strategic plays
-        //    - Example: Declare opponent's Queen → use it to swap our high card with their Joker
-        //    - Example: Declare opponent's Jack → use it to swap our Ace with their 2
-        // 3. COALITION: Opponent high-value cards (helps coalition win)
-        // 4. SKIP: Opponent non-action cards when NOT in coalition (zero strategic value)
-        const kingMoves: MCTSMove[] = [];
-
-        // Check if bot is playing as coalition member
-        const isCoalitionMember =
-          state.vintoCallerId &&
-          state.coalitionLeaderId &&
-          currentPlayer.id !== state.vintoCallerId;
-
-        // Helper: Calculate strategic value of declaring a card
-        const calculateDeclarationValue = (
-          card: { rank: Rank; value: number },
-          isOwnCard: boolean,
-          position: number,
-          opponentId?: string
-        ): number => {
-          let value = 0;
-
-          if (isOwnCard) {
-            // Base value for declaring own card (always positive)
-            value += 100;
-
-            // Bonus for declaring King (enables King toss-ins!)
-            if (card.rank === 'K') {
-              value += 50; // King toss-in is extremely valuable
-            }
-
-            // Bonus for high-value cards (reduces score more)
-            value += card.value * 2;
-
-            // Bonus if we have matching cards (enables toss-in cascade)
-            let matchingCards = 0;
-            for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
-              if (pos === position) continue; // Don't count the card itself
-              const otherMemory = currentPlayer.knownCards.get(pos);
-              if (
-                otherMemory &&
-                otherMemory.confidence > 0.5 &&
-                otherMemory.card &&
-                otherMemory.card.rank === card.rank
-              ) {
-                matchingCards++;
-              }
-            }
-            value += matchingCards * 30; // Toss-in potential is very valuable
-
-            // Small bonus for known cards at higher positions (positional advantage)
-            value += (currentPlayer.cardCount - position) * 2;
-          } else {
-            // Opponent cards have strategic value in TWO scenarios:
-            // 1. Coalition play: help team by declaring opponent high-value cards
-            // 2. Tactical play: declare opponent ACTION cards (7-K) to use them for our benefit
-            //    Example: Declare opponent's Queen, use it to swap our high card with opponent's Joker
-
-            // Skip if this is the Vinto caller (coalition cannot target Vinto caller)
-            if (isCoalitionMember && opponentId === state.vintoCallerId) {
-              return 0;
-            }
-
-            // Check if card is an action card (7-K) - these are tools we can use
-            const cardAction = getCardAction(card.rank);
-            const isActionCard = cardAction !== undefined;
-
-            if (isCoalitionMember) {
-              // Coalition play: focus on high-value cards (10, 11, 12) to hurt opponents
-              if (card.value >= 10) {
-                value = 50 + card.value * 5; // High priority for 10s, Jacks, Queens
-              } else if (card.value >= 7) {
-                value = 30 + card.value * 3; // Medium priority for 7-9
-              } else {
-                value = 10 + card.value; // Lower priority for low-value cards
-              }
-            } else if (isActionCard) {
-              // Non-coalition tactical play: action cards are valuable tools
-              // Example: Declare opponent's Queen → use it to swap our high card with their Joker
-              // Priority: Q > J > 10 > 9 > 8 > 7 (based on action flexibility)
-              if (card.rank === 'Q') {
-                value = 40; // Queen is most flexible (peek 2 + optional swap)
-              } else if (card.rank === 'J') {
-                value = 35; // Jack can swap any two cards
-              } else if (card.rank === '10') {
-                value = 30; // 10 can peek opponent card
-              } else if (card.rank === '9') {
-                value = 25; // 9 can peek opponent card
-              } else if (card.rank === '8') {
-                value = 20; // 8 can peek own card
-              } else if (card.rank === '7') {
-                value = 15; // 7 can peek own card
-              } else {
-                value = 10; // Other action cards
-              }
-            } else {
-              // Non-action, non-coalition: no strategic value
-              return 0;
-            }
-          }
-
-          return value;
-        };
-
-        // Collect all potential King declaration targets with strategic values
-        const potentialDeclarations: Array<{
-          target: MCTSActionTarget;
-          value: number;
-          card: { rank: Rank; value: number };
-        }> = [];
-
-        // Priority 1: Own cards that we know about
-        for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
-          const memory = currentPlayer.knownCards.get(pos);
-          if (memory && memory.confidence > 0.5 && memory.card) {
-            const strategicValue = calculateDeclarationValue(
-              memory.card,
-              true,
-              pos
-            );
-            potentialDeclarations.push({
-              target: { playerId: currentPlayer.id, position: pos },
-              value: strategicValue,
-              card: memory.card,
-            });
-          }
-        }
-
-        // Priority 2: Opponent cards
-        // Two scenarios where opponent cards have value:
-        // - Coalition: Declare high-value cards to hurt opponents (help team win)
-        // - Tactical: Declare action cards (7-K) to use them as tools for strategic plays
-        // Non-action, non-coalition cards are filtered out (strategicValue = 0)
-        for (const opponent of state.players) {
-          if (opponent.id === currentPlayer.id) continue;
-
-          // Skip Vinto caller (already handled in calculateDeclarationValue)
-          if (isCoalitionMember && opponent.id === state.vintoCallerId) {
-            continue;
-          }
-
-          for (let pos = 0; pos < opponent.cardCount; pos++) {
-            const memory = opponent.knownCards.get(pos);
-            if (memory && memory.confidence > 0.5 && memory.card) {
-              const strategicValue = calculateDeclarationValue(
-                memory.card,
-                false,
-                pos,
-                opponent.id
-              );
-              
-              // Only add opponent cards if they have strategic value (coalition play)
-              if (strategicValue > 0) {
-                potentialDeclarations.push({
-                  target: { playerId: opponent.id, position: pos },
-                  value: strategicValue,
-                  card: memory.card,
-                });
-              }
-            }
-          }
-        }
-
-        // Sort by strategic value (highest first)
-        potentialDeclarations.sort((a, b) => b.value - a.value);
-
-        // Generate moves for ALL valuable declarations
-        // No arbitrary limit - if a card has strategic value, include it
-        // (own cards always have value, opponent cards only if coalition)
-        for (const declaration of potentialDeclarations) {
-          kingMoves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [declaration.target],
-            declaredRank: declaration.card.rank, // Include the rank for simulation
-          });
-        }
-
+        // King: Use improved strategy
+        const kingMoves = this.generateImprovedKingMoves(
+          state,
+          currentPlayer.id
+        );
         moves.push(...kingMoves);
         break;
     }
@@ -443,8 +264,136 @@ export class MCTSMoveGenerator {
   }
 
   /**
+   * IMPROVED King Declaration Strategy
+   *
+   * Key insight: King is EXTREMELY powerful for removing OUR OWN cards, not opponents!
+   *
+   * Priority:
+   * 1. TOSS-IN CASCADES: Declare ranks we have 2+ of (removes multiple cards at once)
+   * 2. HIGH VALUE REMOVAL: Declare our single high-value cards (10, J, Q)
+   * 3. STRATEGIC SYNERGY: Declare ranks that match other players' cards (force them to toss in too)
+   *
+   * NEVER declare opponent cards unless in coalition (helps them, not us)
+   */
+  static generateImprovedKingMoves(
+    state: MCTSGameState,
+    currentPlayerId: string
+  ): MCTSMove[] {
+    const moves: MCTSMove[] = [];
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer || currentPlayer.id !== currentPlayerId) return moves;
+
+    // Build map: rank → positions we have
+    const ourRankMap = new Map<Rank, number[]>();
+
+    for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+      const memory = currentPlayer.knownCards.get(pos);
+      if (memory && memory.confidence > 0.5 && memory.card) {
+        const rank = memory.card.rank;
+        const positions = ourRankMap.get(rank) || [];
+        positions.push(pos);
+        ourRankMap.set(rank, positions);
+      }
+    }
+
+    // Calculate strategic value for each possible King declaration
+    const declarations: Array<{
+      playerId: string;
+      position: number;
+      rank: Rank;
+      strategicValue: number;
+      reason: string;
+    }> = [];
+
+    // Evaluate each card we could declare
+    ourRankMap.forEach((positions, rank) => {
+      const card = state.hiddenCards.get(`${currentPlayer.id}-${positions[0]}`);
+      if (!card) return;
+
+      let strategicValue = 0;
+      let reason = '';
+
+      // FACTOR 1: Toss-in cascade value (HIGHEST priority)
+      if (positions.length >= 2) {
+        // Multiple cards = cascade removal
+        const cascadeValue = positions.length * card.value;
+        strategicValue += cascadeValue * 10; // HUGE multiplier for cascades
+        reason = `CASCADE: Remove ${positions.length} ${rank}s at once (${cascadeValue} points)`;
+
+        // BONUS: If it's Kings, even better (King toss-ins are rare and powerful)
+        if (rank === 'K') {
+          strategicValue += 50;
+          reason += ' [KING CASCADE!]';
+        }
+      } else {
+        // Single card removal
+        strategicValue += card.value * 3; // Base value for removing high card
+        reason = `Remove single ${rank} (${card.value} points)`;
+      }
+
+      // FACTOR 2: Card value (prefer removing high-value cards)
+      if (card.value >= 10) {
+        strategicValue += 20; // Extra bonus for 10, J, Q, K
+        reason += ` [HIGH VALUE]`;
+      }
+
+      // FACTOR 3: Enable future plays (e.g., declaring 7 leaves us with peeking capability)
+      if (rank === '7' || rank === '8' || rank === 'Q' || rank === 'J') {
+        // Action cards have extra utility if kept
+        strategicValue -= 5; // Small penalty (might want to keep them)
+        reason += ` [action card - consider keeping]`;
+      }
+
+      // FACTOR 4: Opponent synergy (if others have matching cards, force them to toss in too)
+      let opponentMatchCount = 0;
+      state.players.forEach((opponent) => {
+        if (opponent.id === currentPlayer.id) return;
+
+        opponent.knownCards.forEach((memory) => {
+          if (memory.card && memory.card.rank === rank) {
+            opponentMatchCount++;
+          }
+        });
+      });
+
+      if (opponentMatchCount > 0) {
+        strategicValue += opponentMatchCount * 15; // Bonus for forcing opponent toss-ins
+        reason += ` [+${opponentMatchCount} opponent toss-ins]`;
+      }
+
+      declarations.push({
+        playerId: currentPlayer.id,
+        position: positions[0],
+        rank,
+        strategicValue,
+        reason,
+      });
+    });
+
+    // Sort by strategic value (highest first)
+    declarations.sort((a, b) => b.strategicValue - a.strategicValue);
+
+    // Generate moves for top declarations (limit to top 5 to avoid too many branches)
+    declarations.slice(0, 5).forEach((decl) => {
+      console.log(
+        `[King Strategy] ${decl.rank} @ [${decl.position}]: ` +
+          `value=${decl.strategicValue.toFixed(0)} | ${decl.reason}`
+      );
+
+      moves.push({
+        type: 'use-action',
+        playerId: currentPlayer.id,
+        targets: [{ playerId: decl.playerId, position: decl.position }],
+        declaredRank: decl.rank,
+      });
+    });
+
+    return moves;
+  }
+
+  /**
    * Prune moves based on heuristics (to reduce branching factor)
-   * 
+   *
    * NOTE: With strategic move generation, we no longer need arbitrary pruning.
    * All generated moves have strategic value. Let MCTS explore them all.
    */
@@ -579,11 +528,7 @@ export class MCTSMoveGenerator {
     );
 
     for (let i = 0; i < Math.min(opponent1Positions.length - 1, 5); i++) {
-      for (
-        let j = i + 1;
-        j < Math.min(opponent1Positions.length, i + 3);
-        j++
-      ) {
+      for (let j = i + 1; j < Math.min(opponent1Positions.length, i + 3); j++) {
         // Jack rule: Cannot swap two cards from the same player
         if (
           opponent1Positions[i].target.playerId !==

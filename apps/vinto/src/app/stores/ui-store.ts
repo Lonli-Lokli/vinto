@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { injectable } from 'tsyringe';
 
+
 /**
  * UIStore - Manages UI-specific state that doesn't belong in the game engine
  *
@@ -21,8 +22,8 @@ export class UIStore {
   selectedSwapPosition: number | null = null;
 
   // Card visibility states (per player)
-  // Map<playerId, Map<position, timestamp>> - now with timestamp for duration control
-  temporarilyVisibleCards = new Map<string, Map<number, number>>();
+  // Map<playerId, Map<position, Array<playerId>> - who can see this card
+  temporarilyVisibleCards = new Map<string, Map<number, string[]>>();
   highlightedCards = new Map<string, Set<number>>();
 
   constructor() {
@@ -62,32 +63,29 @@ export class UIStore {
   }
 
   // Card visibility actions
-  addTemporarilyVisibleCard(playerId: string, position: number) {
+  addTemporarilyVisibleCard(
+    playerId: string,
+    position: number,
+    whoCanSee: string[]
+  ) {
     if (!this.temporarilyVisibleCards.has(playerId)) {
       this.temporarilyVisibleCards.set(playerId, new Map());
     }
-    this.temporarilyVisibleCards.get(playerId)?.set(position, Date.now());
+    const playerCards = this.temporarilyVisibleCards.get(playerId)!;
+    if (!playerCards.has(position)) {
+      playerCards.set(position, []);
+    }
+    playerCards.get(position)!.push(...whoCanSee);
   }
 
   clearTemporaryCardVisibility() {
     this.temporarilyVisibleCards.clear();
   }
 
-  clearTemporaryCardVisibilityForPlayer(playerId: string) {
-    this.temporarilyVisibleCards.get(playerId)?.clear();
-  }
-
-  getTemporarilyVisibleCards(playerId: string): Set<number> {
+  getTemporarilyVisibleCards(playerId: string): Map<number, string[]> { // Map<position, Array<playerId>> {
     const playerCards = this.temporarilyVisibleCards.get(playerId);
-    if (!playerCards) return new Set();
 
-    // Filter out expired cards and return only valid positions
-    const validPositions = new Set<number>();
-    playerCards.forEach((timestamp, position) => {
-      validPositions.add(position);
-    });
-
-    return validPositions;
+    return  playerCards || new Map<number, string[]>();
   }
 
   // Highlighted cards (for bot actions)

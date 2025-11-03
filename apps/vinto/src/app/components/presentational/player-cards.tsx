@@ -24,10 +24,10 @@ interface PlayerCardsProps {
   isSelectingSwapPosition: boolean;
   swapPosition: number | null;
   isSelectingActionTarget: boolean;
-  temporarilyVisibleCards: Set<number>;
+  temporarilyVisibleCards: Map<number, Array<string>>; // cardIndex -> array of playerIds who can see it
   highlightedCards: Set<number>;
   coalitionLeaderId: string | null;
-  humanPlayerId: string | null;
+  observingPlayer: PlayerState | undefined;
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>; // Card positions with failed toss-in feedback
   landingCards?: Set<number>;
@@ -46,7 +46,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
     temporarilyVisibleCards,
     highlightedCards,
     coalitionLeaderId,
-    humanPlayerId,
+    observingPlayer,
     actionTargets = [],
     failedTossInCards = new Set(),
     landingCards = new Set(),
@@ -81,11 +81,11 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
 
           const canSeeCard = canSeePlayerCard({
             cardIndex: index,
-            player,
+            targetPlayer: player,
             gamePhase,
             temporarilyVisibleCards,
             coalitionLeaderId,
-            humanPlayerId,
+            observingPlayer,
           });
 
           // Hide cards during swap selection for human player

@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useUIStore } from '../di-provider';
 import { ContinueButton, SkipButton } from '../buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
@@ -12,7 +11,6 @@ import { getCardShortDescription, getCardName } from '@vinto/shapes';
 import { Card } from '../presentational/card';
 
 export const OpponentCardPeek = observer(() => {
-  const uiStore = useUIStore();
   const gameClient = useGameClient();
   const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
 
@@ -20,16 +18,12 @@ export const OpponentCardPeek = observer(() => {
   const action = gameClient.visualState.pendingAction.card.rank;
 
   // Find the opponent whose card is revealed
-  const opponent = gameClient.visualState.players.find(
-    (p) => uiStore.getTemporarilyVisibleCards(p.id).size > 0
-  );
-  const cardId = opponent
-    ? Array.from(uiStore.getTemporarilyVisibleCards(opponent.id))[0]
-    : undefined;
+  const opponent = gameClient.visualState.pendingAction.targets[0];
+  
   // Get the card rank if possible
   const cardRank =
-    opponent && typeof cardId === 'number' && opponent.cards[cardId]
-      ? opponent.cards[cardId].rank
+    opponent && gameClient.visualState.players.find((p) => p.id === opponent.playerId)
+      ? gameClient.visualState.players.find((p) => p.id === opponent.playerId)!.cards[opponent.position].rank
       : undefined;
 
   // Check if this is a toss-in action

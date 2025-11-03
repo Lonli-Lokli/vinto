@@ -464,6 +464,8 @@ export class CardAnimationStore {
   startHighlightAnimation(
     rank: Rank,
     target: AnimationPlayerTarget,
+    revealed: boolean,
+    targetPlayerPosition?: string,
     duration = 2000
   ): string {
     const id = `highlight-${this.animationCounter++}`;
@@ -492,7 +494,8 @@ export class CardAnimationStore {
       toY: pos.y,
       startTime: Date.now(),
       duration,
-      revealed: false,
+      revealed,
+      targetRotation: this.getTargetRotation(target, targetPlayerPosition),
       completed: false,
     });
 
@@ -641,6 +644,12 @@ export class CardAnimationStore {
    */
   isCardAnimating(playerId: string, position: number): boolean {
     for (const animation of this.activeAnimations.values()) {
+      // Highlight animations should NOT hide the original card
+      // They add visual flair on top of the existing card
+      if (animation.type === 'highlight') {
+        continue;
+      }
+
       // Check if animating FROM this position
       if (animation.from?.type === 'player') {
         if (

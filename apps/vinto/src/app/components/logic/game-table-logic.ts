@@ -236,7 +236,7 @@ export function handleCardClick(params: {
       !humanPlayer.knownCardPositions.includes(position)
     ) {
       // Show the card temporarily in the UI
-      uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
+      uiStore.addTemporarilyVisibleCard(humanPlayer.id, position, [humanPlayer.id]);
       // Dispatch the game action to update knownCardPositions
       gameClient.dispatch(GameActions.peekSetupCard(humanPlayer.id, position));
     }
@@ -286,7 +286,7 @@ export function handleCardClick(params: {
   ) {
      // For peek actions, reveal the card temporarily
     if (targetType === 'own-card' || targetType === 'peek-then-swap') {
-      uiStore.addTemporarilyVisibleCard(humanPlayer.id, position);
+      uiStore.addTemporarilyVisibleCard(humanPlayer.id, position, [humanPlayer.id]);
     }
 
     // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id
@@ -344,7 +344,7 @@ export function handleOpponentCardClick(params: {
   ) {
     // For peek actions, reveal the card temporarily
     if (targetType === 'opponent-card' || targetType === 'peek-then-swap') {
-      uiStore.addTemporarilyVisibleCard(playerId, position);
+      uiStore.addTemporarilyVisibleCard(playerId, position, [humanPlayer.id]);
     }
 
     // Use actingPlayerId during toss-in queue processing, otherwise use humanPlayer.id

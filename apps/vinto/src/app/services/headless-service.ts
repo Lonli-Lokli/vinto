@@ -198,8 +198,8 @@ export class HeadlessService {
       // Show red feedback on the incorrectly declared card in hand (not on King in discard)
       this.uiStore.addFailedTossInFeedback(targetPlayerId, position);
 
-      // Make the incorrectly declared card temporarily visible (stays longer than usual)
-      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
+      // Make the incorrectly declared card temporarily visible for all (stays longer than usual)
+      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position, newState.players.map(p => p.id));
     }
   }
 
@@ -239,9 +239,9 @@ export class HeadlessService {
         // Add failed toss-in feedback (shows error indicator)
         this.uiStore.addFailedTossInFeedback(playerId, position);
 
-        // Make card temporarily visible
+        // Make card temporarily visible for all players
         // Successful toss-ins should not reveal any cards
-        this.uiStore.addTemporarilyVisibleCard(playerId, position);
+        this.uiStore.addTemporarilyVisibleCard(playerId, position, newState.players.map(p => p.id));
       }
     }
   }
@@ -274,7 +274,8 @@ export class HeadlessService {
         );
         this.uiStore.addTemporarilyVisibleCard(
           target.playerId,
-          target.position
+          target.position,
+          [playerId]
         );
       }
     }
@@ -322,10 +323,10 @@ export class HeadlessService {
     const actingPlayer = newState.players.find((p) => p.id === playerId);
     if (!actingPlayer) return;
 
-    // Add card to temporarily visible cards for ALL players
+    // Add card to temporarily visible cards for acting player
     // This shows the peek border on the card regardless of who is peeking
     // The card will only be revealed (face-up) based on game rules
-    this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position);
+    this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position, [playerId]);
 
     // ONLY handle bot peeks - human peeks are handled by game-table-logic.ts
     if (!actingPlayer.isHuman) {

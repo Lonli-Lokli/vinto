@@ -1,5 +1,5 @@
 // services/mcts-state-transition.ts
-import { getCardAction, Card } from '@vinto/shapes';
+import { Card, Rank } from '@vinto/shapes';
 import copy from 'fast-copy';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
@@ -91,252 +91,39 @@ export class MCTSStateTransition {
     state: MCTSGameState,
     move: MCTSMove
   ): MCTSGameState {
-    // Action effects depend on the action type
-    // Use state.pendingCard if move.actionCard is not set (which is the case for action moves generated in awaiting_action phase)
-    const actionCard = move.actionCard || state.pendingCard;
-    if (actionCard) {
-      const actionType = getCardAction(actionCard.rank);
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer || !state.pendingCard) return state;
 
-      switch (actionType) {
-        case 'swap-cards':
-          // Swap two cards
-          if (move.targets && move.targets.length === 2) {
-            const target1 = move.targets[0];
-            const target2 = move.targets[1];
+    const actionCard = state.pendingCard;
 
-            const card1Key = `${target1.playerId}-${target1.position}`;
-            const card2Key = `${target2.playerId}-${target2.position}`;
+    // Execute the action effect
+    this.applyActionEffect(state, move, actionCard);
 
-            const card1 = state.hiddenCards.get(card1Key);
-            const card2 = state.hiddenCards.get(card2Key);
-
-            if (card1 && card2) {
-              // Swap the cards
-              state.hiddenCards.set(card1Key, card2);
-              state.hiddenCards.set(card2Key, card1);
-
-              // Update player scores
-              const player1 = state.players.find(
-                (p) => p.id === target1.playerId
-              );
-              const player2 = state.players.find(
-                (p) => p.id === target2.playerId
-              );
-
-              if (player1) {
-                player1.score = player1.score - card1.value + card2.value;
-              }
-              if (player2 && player2.id !== player1?.id) {
-                player2.score = player2.score - card2.value + card1.value;
-              }
-            }
-          }
-          break;
-
-        case 'peek-own':
-        case 'peek-opponent':
-          // Peek actions just reveal information (already tracked in bot memory)
-          // No state change needed for simulation
-          break;
-
-        case 'peek-and-swap':
-          // Queen: Peek two cards, optionally swap them
-          // Check if the move includes a swap decision
-          if (move.shouldSwap && move.targets && move.targets.length === 2) {
-            const target1 = move.targets[0];
-            const target2 = move.targets[1];
-
-            const card1Key = `${target1.playerId}-${target1.position}`;
-            const card2Key = `${target2.playerId}-${target2.position}`;
-
-            const card1 = state.hiddenCards.get(card1Key);
-            const card2 = state.hiddenCards.get(card2Key);
-
-            if (card1 && card2) {
-              // Swap the cards
-              state.hiddenCards.set(card1Key, card2);
-              state.hiddenCards.set(card2Key, card1);
-
-              // Update player scores
-              const player1 = state.players.find(
-                (p) => p.id === target1.playerId
-              );
-              const player2 = state.players.find(
-                (p) => p.id === target2.playerId
-              );
-
-              if (player1) {
-                player1.score = player1.score - card1.value + card2.value;
-              }
-              if (player2 && player2.id !== player1?.id) {
-                player2.score = player2.score - card2.value + card1.value;
-              }
-            }
-          }
-          // If shouldSwap is false, just peek (no state change)
-          break;
-
-        case 'force-draw':
-          // Opponent draws a card (increases hand size)
-          if (move.targets && move.targets.length > 0) {
-            const target = move.targets[0];
-            const targetPlayer = state.players.find(
-              (p) => p.id === target.playerId
-            );
-
-            if (targetPlayer && state.deckSize > 0) {
-              targetPlayer.cardCount++;
-              state.deckSize--;
-
-              // Estimate the drawn card as average value
-              targetPlayer.score += 6;
-            }
-          }
-          break;
-
-        case 'declare-action':
-          // King - declare action
-          // Simulate the card being removed from hand and toss-in cascade
-          if (move.targets && move.targets.length > 0) {
-            const target = move.targets[0];
-            const targetPlayer = state.players.find(
-              (p) => p.id === target.playerId
-            );
-
-            if (targetPlayer) {
-              // Get the card being declared
-              const cardKey = `${target.playerId}-${target.position}`;
-              const declaredCard = state.hiddenCards.get(cardKey);
-
-              if (declaredCard) {
-                // Remove the card from the player's hand
-                state.hiddenCards.delete(cardKey);
-                targetPlayer.cardCount--;
-                targetPlayer.score -= declaredCard.value;
-
-                // Update positions in hiddenCards map (shift down after removal)
-                const updatedHiddenCards = new Map<string, Card>();
-                for (const [key, cardValue] of state.hiddenCards.entries()) {
-                  if (key.startsWith(`${targetPlayer.id}-`)) {
-                    const pos = parseInt(key.split('-')[1], 10);
-                    if (pos > target.position) {
-                      updatedHiddenCards.set(
-                        `${targetPlayer.id}-${pos - 1}`,
-                        cardValue
-                      );
-                    } else if (pos !== target.position) {
-                      updatedHiddenCards.set(key, cardValue);
-                    }
-                  } else {
-                    updatedHiddenCards.set(key, cardValue);
-                  }
-                }
-                state.hiddenCards = updatedHiddenCards;
-
-                // Update known cards positions
-                const updatedKnownCards = new Map<
-                  number,
-                  { card: Card | null; confidence: number }
-                >();
-                for (const [pos, memory] of targetPlayer.knownCards.entries()) {
-                  if (pos === target.position) {
-                    continue; // Remove this position
-                  } else if (pos > target.position) {
-                    updatedKnownCards.set(pos - 1, memory);
-                  } else {
-                    updatedKnownCards.set(pos, memory);
-                  }
-                }
-                targetPlayer.knownCards = updatedKnownCards;
-
-                // Simulate toss-in cascade for BOTH King and declared rank
-                // When declaring correctly: Both 'K' and declaredCard.rank can be tossed in
-                // We assume correct declaration in simulation (optimistic)
-                // Use move.declaredRank if available, otherwise use actual card rank
-                const declaredRank = move.declaredRank || declaredCard.rank;
-                const tossInRanks =
-                  declaredRank === 'K' ? ['K'] : ['K', declaredRank];
-
-                // Check all players for matching cards to toss in
-                for (const player of state.players) {
-                  const cardsToTossIn: number[] = [];
-
-                  // Collect all positions with matching ranks
-                  for (let pos = 0; pos < player.cardCount; pos++) {
-                    const card = state.hiddenCards.get(`${player.id}-${pos}`);
-                    const memory = player.knownCards.get(pos);
-
-                    // Only toss in if we know the card matches
-                    if (
-                      card &&
-                      memory &&
-                      memory.confidence > 0.5 &&
-                      tossInRanks.includes(card.rank)
-                    ) {
-                      cardsToTossIn.push(pos);
-                    }
-                  }
-
-                  // Remove tossed-in cards (in reverse order to maintain indices)
-                  for (const pos of cardsToTossIn.sort((a, b) => b - a)) {
-                    const cardKey = `${player.id}-${pos}`;
-                    const card = state.hiddenCards.get(cardKey);
-
-                    if (card) {
-                      state.hiddenCards.delete(cardKey);
-                      player.cardCount--;
-                      player.score -= card.value;
-
-                      // Shift positions down
-                      const shifted = new Map<string, Card>();
-                      for (const [key, val] of state.hiddenCards.entries()) {
-                        if (key.startsWith(`${player.id}-`)) {
-                          const p = parseInt(key.split('-')[1], 10);
-                          if (p > pos) {
-                            shifted.set(`${player.id}-${p - 1}`, val);
-                          } else if (p !== pos) {
-                            shifted.set(key, val);
-                          }
-                        } else {
-                          shifted.set(key, val);
-                        }
-                      }
-                      state.hiddenCards = shifted;
-
-                      // Shift known cards
-                      const shiftedKnown = new Map<
-                        number,
-                        { card: Card | null; confidence: number }
-                      >();
-                      for (const [p, mem] of player.knownCards.entries()) {
-                        if (p === pos) {
-                          continue;
-                        } else if (p > pos) {
-                          shiftedKnown.set(p - 1, mem);
-                        } else {
-                          shiftedKnown.set(p, mem);
-                        }
-                      }
-                      player.knownCards = shiftedKnown;
-                    }
-                  }
-                }
-              }
-            }
-          }
-          break;
-      }
-    }
-
-    // Clear pending card since action is complete
+    // Action card goes to discard pile (played)
+    const discardedCard = { ...actionCard, played: true };
+    state.discardPileTop = discardedCard;
     state.pendingCard = null;
 
-    // Advance turn
-    state.currentPlayerIndex =
-      (state.currentPlayerIndex + 1) % state.players.length;
-    state.turnCount++;
+    // Simulate toss-in cascade
+    const { tossedCards, finalState } = this.simulateTossInCascade(
+      state,
+      actionCard.rank,
+      currentPlayer.id
+    );
 
-    return state;
+    console.log(
+      `[MCTS Transition] Use ${actionCard.rank} action, ` +
+        `toss-in ${tossedCards.length} matching cards`
+    );
+
+    // Advance turn
+    finalState.currentPlayerIndex =
+      (finalState.currentPlayerIndex + 1) % finalState.players.length;
+    finalState.turnCount++;
+    finalState.isTossInPhase = false;
+    finalState.tossInRanks = undefined;
+
+    return finalState;
   }
 
   /**
@@ -346,54 +133,55 @@ export class MCTSStateTransition {
     state: MCTSGameState,
     move: MCTSMove
   ): MCTSGameState {
-    const player = state.players[state.currentPlayerIndex];
+    if (move.swapPosition === undefined) return state;
 
-    if (move.swapPosition !== undefined && player) {
-      // Remove old card from position
-      const oldCardKey = `${player.id}-${move.swapPosition}`;
-      const oldCard = state.hiddenCards.get(oldCardKey);
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer) return state;
 
-      if (oldCard) {
-        // Update player score
-        player.score -= oldCard.value;
+    // Step 1: Execute the swap
+    const oldCard = state.hiddenCards.get(
+      `${currentPlayer.id}-${move.swapPosition}`
+    );
+    const newCard = state.pendingCard;
 
-        // Remove old card
-        state.hiddenCards.delete(oldCardKey);
+    if (!oldCard || !newCard) return state;
 
-        // Discarded card might trigger toss-in phase
-        if (oldCard.rank !== 'K' && oldCard.rank !== 'A') {
-          // Check if any other player could toss in
-          let hasPotentialTossIn = false;
+    // Replace card in hand
+    state.hiddenCards.set(`${currentPlayer.id}-${move.swapPosition}`, newCard);
 
-          for (const otherPlayer of state.players) {
-            if (otherPlayer.id === player.id) continue;
+    // Update player state
+    currentPlayer.knownCards.set(move.swapPosition, {
+      card: newCard,
+      confidence: 1.0
+    });
 
-            for (let pos = 0; pos < otherPlayer.cardCount; pos++) {
-              const card = state.hiddenCards.get(`${otherPlayer.id}-${pos}`);
-              if (card && card.rank === oldCard.rank) {
-                hasPotentialTossIn = true;
-                break;
-              }
-            }
-            if (hasPotentialTossIn) break;
-          }
+    // Card that was swapped out goes to discard
+    const discardedCard = oldCard;
+    state.discardPileTop = { ...discardedCard, played: false };
+    state.pendingCard = null;
 
-          if (hasPotentialTossIn) {
-            state.isTossInPhase = true;
-            state.discardPileTop = oldCard;
-            // Don't advance turn yet
-            return state;
-          }
-        }
-      }
-    }
+    // CRITICAL: Step 2 - Simulate toss-in cascade
+    const tossInRank = discardedCard.rank;
+    const { tossedCards, finalState } = this.simulateTossInCascade(
+      state,
+      tossInRank,
+      currentPlayer.id
+    );
 
-    // Advance turn
-    state.currentPlayerIndex =
-      (state.currentPlayerIndex + 1) % state.players.length;
-    state.turnCount++;
+    console.log(
+      `[MCTS Transition] Swap at [${move.swapPosition}]: ` +
+        `${oldCard.rank}(${oldCard.value}) → ${newCard.rank}(${newCard.value}), ` +
+        `then toss-in ${tossedCards.length} ${tossInRank}s`
+    );
 
-    return state;
+    // Advance turn after toss-in completes
+    finalState.currentPlayerIndex =
+      (finalState.currentPlayerIndex + 1) % finalState.players.length;
+    finalState.turnCount++;
+    finalState.isTossInPhase = false;
+    finalState.tossInRanks = undefined;
+
+    return finalState;
   }
 
   /**
@@ -403,15 +191,33 @@ export class MCTSStateTransition {
     state: MCTSGameState,
     _move: MCTSMove
   ): MCTSGameState {
-    // Card goes to discard pile (but we don't track it in simplified simulation)
-    // Discarding means the player chose not to swap the drawn card
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer || !state.pendingCard) return state;
+
+    const discardedCard = state.pendingCard;
+    state.discardPileTop = { ...discardedCard, played: false };
+    state.pendingCard = null;
+
+    // Simulate toss-in cascade
+    const { tossedCards, finalState } = this.simulateTossInCascade(
+      state,
+      discardedCard.rank,
+      currentPlayer.id
+    );
+
+    console.log(
+      `[MCTS Transition] Discard ${discardedCard.rank}, ` +
+        `toss-in ${tossedCards.length} matching cards`
+    );
 
     // Advance turn
-    state.currentPlayerIndex =
-      (state.currentPlayerIndex + 1) % state.players.length;
-    state.turnCount++;
+    finalState.currentPlayerIndex =
+      (finalState.currentPlayerIndex + 1) % finalState.players.length;
+    finalState.turnCount++;
+    finalState.isTossInPhase = false;
+    finalState.tossInRanks = undefined;
 
-    return state;
+    return finalState;
   }
 
   /**
@@ -651,5 +457,291 @@ export class MCTSStateTransition {
     }
 
     return false;
+  }
+
+  /**
+   * CORE ALGORITHM: Simulate toss-in cascade
+   *
+   * This recursively finds ALL cards that match the discarded rank
+   * and removes them from ALL players' hands
+   *
+   * Example:
+   * - Bot discards 7
+   * - Bot has two more 7s → toss them in (3 total 7s removed)
+   * - Bot also has a King → declare King action
+   * - King declares another 7 → triggers ANOTHER toss-in cascade!
+   */
+  private static simulateTossInCascade(
+    state: MCTSGameState,
+    discardedRank: Rank,
+    _currentPlayerId: string
+  ): { tossedCards: Card[]; finalState: MCTSGameState } {
+    const tossedCards: Card[] = [];
+
+    // Check each player for matching cards
+    for (const player of state.players) {
+      const cardsToRemove: number[] = [];
+
+      // Find all matching cards this player knows about
+      for (let pos = 0; pos < player.cardCount; pos++) {
+        const memory = player.knownCards.get(pos);
+
+        // Only toss in cards we KNOW about
+        if (memory && memory.confidence > 0.5 && memory.card) {
+          if (memory.card.rank === discardedRank) {
+            cardsToRemove.push(pos);
+            tossedCards.push(memory.card);
+          }
+        }
+      }
+
+      // Remove tossed cards from player's hand
+      if (cardsToRemove.length > 0) {
+        // Update card count
+        player.cardCount -= cardsToRemove.length;
+
+        // Update score (remove value of tossed cards)
+        const scoreReduction = cardsToRemove.reduce((sum, pos) => {
+          const card = state.hiddenCards.get(`${player.id}-${pos}`);
+          return sum + (card?.value || 0);
+        }, 0);
+        player.score -= scoreReduction;
+
+        // Remove cards from hiddenCards map
+        cardsToRemove.forEach((pos) => {
+          state.hiddenCards.delete(`${player.id}-${pos}`);
+          player.knownCards.delete(pos);
+        });
+
+        // Reindex remaining cards (shift down)
+        const newHiddenCards = new Map<string, Card>();
+        const newKnownCards = new Map<number, any>();
+
+        let newPos = 0;
+        for (
+          let oldPos = 0;
+          oldPos < player.cardCount + cardsToRemove.length;
+          oldPos++
+        ) {
+          if (!cardsToRemove.includes(oldPos)) {
+            const card = state.hiddenCards.get(`${player.id}-${oldPos}`);
+            if (card) {
+              newHiddenCards.set(`${player.id}-${newPos}`, card);
+            }
+
+            const memory = player.knownCards.get(oldPos);
+            if (memory) {
+              newKnownCards.set(newPos, memory);
+            }
+
+            newPos++;
+          }
+        }
+
+        // Update maps
+        for (
+          let pos = 0;
+          pos < player.cardCount + cardsToRemove.length;
+          pos++
+        ) {
+          state.hiddenCards.delete(`${player.id}-${pos}`);
+        }
+
+        newHiddenCards.forEach((card, key) => {
+          state.hiddenCards.set(key, card);
+        });
+
+        player.knownCards = newKnownCards;
+      }
+    }
+
+    return { tossedCards, finalState: state };
+  }
+
+  /**
+   * Apply action card effects (peek, swap, etc.)
+   */
+  private static applyActionEffect(
+    state: MCTSGameState,
+    move: MCTSMove,
+    actionCard: Card
+  ): void {
+    const rank = actionCard.rank;
+
+    if (!move.targets || move.targets.length === 0) return;
+
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer) return;
+
+    switch (rank) {
+      case '7':
+      case '8':
+        // Peek own card - update knowledge
+        const target = move.targets[0];
+        const card = state.hiddenCards.get(
+          `${target.playerId}-${target.position}`
+        );
+        if (card) {
+          currentPlayer.knownCards.set(target.position, {
+            card,
+            confidence: 1.0,
+          });
+        }
+        break;
+
+      case '9':
+      case '10':
+        // Peek opponent card - update bot's knowledge of opponent
+        const oppTarget = move.targets[0];
+        const oppCard = state.hiddenCards.get(
+          `${oppTarget.playerId}-${oppTarget.position}`
+        );
+        if (oppCard) {
+          const oppPlayer = state.players.find(
+            (p) => p.id === oppTarget.playerId
+          );
+          if (oppPlayer) {
+            oppPlayer.knownCards.set(oppTarget.position, {
+              card: oppCard,
+              confidence: 1.0,
+            });
+          }
+        }
+        break;
+
+      case 'J':
+        // Jack: Swap two cards
+        if (move.targets.length >= 2) {
+          const [target1, target2] = move.targets;
+          const card1 = state.hiddenCards.get(
+            `${target1.playerId}-${target1.position}`
+          );
+          const card2 = state.hiddenCards.get(
+            `${target2.playerId}-${target2.position}`
+          );
+
+          if (card1 && card2) {
+            // Swap in hidden cards
+            state.hiddenCards.set(
+              `${target1.playerId}-${target1.position}`,
+              card2
+            );
+            state.hiddenCards.set(
+              `${target2.playerId}-${target2.position}`,
+              card1
+            );
+
+            // Update knowledge for bot
+            const player1 = state.players.find(
+              (p) => p.id === target1.playerId
+            );
+            const player2 = state.players.find(
+              (p) => p.id === target2.playerId
+            );
+
+            if (player1) {
+              player1.knownCards.set(target1.position, {
+                card: card2,
+                confidence: 1.0,
+              });
+            }
+
+            if (player2) {
+              player2.knownCards.set(target2.position, {
+                card: card1,
+                confidence: 1.0,
+              });
+            }
+
+            // Update scores
+            if (player1) {
+              player1.score = player1.score - card1.value + card2.value;
+            }
+            if (player2) {
+              player2.score = player2.score - card2.value + card1.value;
+            }
+          }
+        }
+        break;
+
+      case 'Q':
+        // Queen: Peek 2, optionally swap
+        if (move.targets.length >= 2) {
+          const [target1, target2] = move.targets;
+          const card1 = state.hiddenCards.get(
+            `${target1.playerId}-${target1.position}`
+          );
+          const card2 = state.hiddenCards.get(
+            `${target2.playerId}-${target2.position}`
+          );
+
+          // Update knowledge
+          const player1 = state.players.find((p) => p.id === target1.playerId);
+          const player2 = state.players.find((p) => p.id === target2.playerId);
+
+          if (card1 && player1) {
+            player1.knownCards.set(target1.position, {
+              card: card1,
+              confidence: 1.0,
+            });
+          }
+
+          if (card2 && player2) {
+            player2.knownCards.set(target2.position, {
+              card: card2,
+              confidence: 1.0,
+            });
+          }
+
+          // If shouldSwap is true, execute the swap
+          if (move.shouldSwap && card1 && card2) {
+            state.hiddenCards.set(
+              `${target1.playerId}-${target1.position}`,
+              card2
+            );
+            state.hiddenCards.set(
+              `${target2.playerId}-${target2.position}`,
+              card1
+            );
+
+            if (player1) {
+              player1.score = player1.score - card1.value + card2.value;
+            }
+            if (player2) {
+              player2.score = player2.score - card2.value + card1.value;
+            }
+          }
+        }
+        break;
+
+      case 'K':
+        // King: Declare rank (triggers toss-in for declared rank)
+        if (move.declaredRank) {
+          // This triggers a SECOND toss-in cascade in the caller
+          // For now, just update knowledge
+          const target = move.targets[0];
+          const card = state.hiddenCards.get(
+            `${target.playerId}-${target.position}`
+          );
+          if (card) {
+            currentPlayer.knownCards.set(target.position, {
+              card,
+              confidence: 1.0,
+            });
+          }
+        }
+        break;
+
+      case 'A':
+        // Ace: Force opponent to draw (increase their hand size/score)
+        const oppId = move.targets[0].playerId;
+        const opponent = state.players.find((p) => p.id === oppId);
+        if (opponent) {
+          // Simulate opponent drawing a card (estimate value)
+          opponent.cardCount++;
+          opponent.score += 5; // Estimate average card value
+        }
+        break;
+    }
   }
 }

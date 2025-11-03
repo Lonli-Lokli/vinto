@@ -12,37 +12,37 @@ export type CardSize = 'sm' | 'md' | 'lg';
  */
 export function canSeePlayerCard(params: {
   cardIndex: number;
-  player: PlayerState;
+  targetPlayer: PlayerState;
+  observingPlayer: PlayerState | undefined;
   gamePhase: GamePhase;
-  temporarilyVisibleCards: Set<number>;
+  temporarilyVisibleCards: Map<number, string[]>;
   coalitionLeaderId: string | null;
-  humanPlayerId: string | null;
 }): boolean {
   const {
     cardIndex,
-    player,
+    targetPlayer,
+    observingPlayer,
     gamePhase,
     temporarilyVisibleCards,
     coalitionLeaderId,
-    humanPlayerId,
   } = params;
 
+  const cardVisibilities = temporarilyVisibleCards.get(cardIndex) || [];
   // During setup phase, human can see their own cards for memorization
   if (
     gamePhase === 'setup' &&
-    player.isHuman &&
-    (player.knownCardPositions.includes(cardIndex) ||
+    targetPlayer.id === observingPlayer?.id &&
+    (targetPlayer.knownCardPositions.includes(cardIndex) ||
       temporarilyVisibleCards.has(cardIndex))
   ) {
     return true;
   }
-  
 
   // During gameplay, show temporarily visible cards (from actions like peek)
   // This works for both human and bot cards when they're being peeked
   if (
     (gamePhase === 'playing' || gamePhase === 'final') &&
-    temporarilyVisibleCards.has(cardIndex)
+    cardVisibilities.includes(observingPlayer?.id ?? '') // '' handles null case
   ) {
     return true;
   }
@@ -51,10 +51,9 @@ export function canSeePlayerCard(params: {
   if (
     (gamePhase === 'playing' || gamePhase === 'final') &&
     coalitionLeaderId &&
-    humanPlayerId &&
-    coalitionLeaderId === humanPlayerId &&
-    player.coalitionWith.length > 0 &&
-    !player.isVintoCaller
+    coalitionLeaderId === observingPlayer?.id &&
+    targetPlayer.coalitionWith.length > 0 &&
+    !targetPlayer.isVintoCaller
   ) {
     // Human is coalition leader and this player is a coalition member
     return true;

@@ -29,6 +29,7 @@ import {
   SWAP_KNOWLEDGE_WEIGHT,
   SWAP_SCORE_WEIGHT,
 } from './constants';
+import { evaluateTossInPotential, evaluateRelativePosition, evaluateActionCardValue, evaluateInformationAdvantage, evaluateThreatLevel } from './evaluation-helpers';
 
 export interface BotDecisionContext {
   botId: string;
@@ -1026,7 +1027,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     }
 
     // Evaluate final state
-    return this.evaluateState(currentState);
+    return this.evaluateState(currentState, this.botId);
   }
 
   /**
@@ -1477,223 +1478,49 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   /**
-   * Evaluate state from bot's perspective (0-1, higher is better)
-   *
-   * COALITION MODE: When bot is coalition leader, evaluates coalition win probability
-   * - Coalition wins if ANY coalition member beats Vinto caller
-   * - Leader optimizes for best coalition member's chances
-   * - Coordinates resources to maximize probability of coalition victory
-   */
-  private evaluateState(state: MCTSGameState): number {
-    const botPlayer = state.players.find((p) => p.id === state.botPlayerId);
-    if (!botPlayer) return 0;
-
-    // COALITION EVALUATION: If bot is coalition leader in final round
-    const context = this.getBotDecisionContext();
-    if (
-      context?.isCoalitionMember &&
-      context?.coalitionLeaderId === state.botPlayerId
-    ) {
-      return this.evaluateCoalitionState(state, context);
-    }
-
-    // STANDARD EVALUATION: Individual play
-    return this.evaluateIndividualState(state, botPlayer);
+ * CRITICAL IMPROVEMENT: Evaluate states by understanding POTENTIAL, not just current state
+ * 
+ * Before: Only looked at current score and hand size
+ * After: Evaluates:
+ * 1. Toss-in potential (pairs, triples of matching ranks)
+ * 2. Action card synergies (having King + action cards to declare)
+ * 3. Information asymmetry (what we know vs what opponents know)
+ * 4. Relative position (not absolute)
+ */
+  private evaluateState(state: MCTSGameState,
+  botPlayerId: string): number {
+     const botPlayer = state.players.find(p => p.id === botPlayerId);
+  if (!botPlayer) return 0;
+  
+  // Terminal state check
+  if (state.isTerminal) {
+    return state.winner === botPlayerId ? 1.0 : 0.0;
   }
-
-  /**
-   * Coalition evaluation: Maximize probability that ANY coalition member beats Vinto
-   */
-  private evaluateCoalitionState(
-    state: MCTSGameState,
-    context: BotDecisionContext
-  ): number {
-    const vintoCallerId = context.gameState.vintoCallerId;
-    if (!vintoCallerId) {
-      return this.evaluateIndividualState(
-        state,
-        state.players.find((p) => p.id === state.botPlayerId)!
-      );
-    }
-
-    // Find Vinto caller's score
-    const vintoCaller = state.players.find((p) => p.id === vintoCallerId);
-    const vintoScore = vintoCaller ? vintoCaller.score : 50;
-
-    // Find all coalition members
-    const coalitionMembers = state.players.filter(
-      (p) => p.id !== vintoCallerId
-    );
-
-    // Find best coalition member (lowest score)
-    const bestMemberScore = Math.min(...coalitionMembers.map((p) => p.score));
-
-    // Coalition wins if best member beats Vinto
-    const coalitionAdvantage = vintoScore - bestMemberScore;
-
-    // Secondary: Average coalition scores (shows overall strength)
-    const avgCoalitionScore =
-      coalitionMembers.reduce((sum, p) => sum + p.score, 0) /
-      coalitionMembers.length;
-    const avgAdvantage = vintoScore - avgCoalitionScore;
-
-    // Knowledge: Coalition's total information
-    const coalitionKnowledge = coalitionMembers.reduce(
-      (sum, p) => sum + p.knownCards.size,
-      0
-    );
-    const coalitionCards = coalitionMembers.reduce(
-      (sum, p) => sum + p.cardCount,
-      0
-    );
-    const coalitionKnowledgeRatio =
-      coalitionCards > 0 ? coalitionKnowledge / coalitionCards : 0;
-
-    // Terminal bonus
-    let terminalBonus = 0;
-    if (state.isTerminal) {
-      // Coalition wins if ANY member beats Vinto
-      if (bestMemberScore < vintoScore) {
-        terminalBonus = 100;
-      } else {
-        terminalBonus = -100;
-      }
-    }
-
-    // Evaluate based on coalition victory probability
-    const reward =
-      coalitionAdvantage * 5.0 + // Best member's advantage (most important)
-      avgAdvantage * 1.0 + // Average coalition strength
-      coalitionKnowledgeRatio * 10.0 + // Coalition's total information
-      terminalBonus;
-
-    // Normalize to [0, 1] using sigmoid
-    return 1 / (1 + Math.exp(-reward / 20));
+  
+  // Component 1: Toss-in Potential (30% weight) - NEW!
+  const tossInScore = evaluateTossInPotential(state, botPlayer);
+  
+  // Component 2: Relative Position (25% weight)
+  const positionScore = evaluateRelativePosition(state, botPlayer);
+  
+  // Component 3: Action Card Value (20% weight)
+  const actionScore = evaluateActionCardValue(state, botPlayer);
+  
+  // Component 4: Information Advantage (15% weight)
+  const infoScore = evaluateInformationAdvantage(state, botPlayer);
+  
+  // Component 5: Threat Level (10% weight)
+  const threatScore = evaluateThreatLevel(state, botPlayer);
+  
+  const finalScore =
+    tossInScore * 0.30 +
+    positionScore * 0.25 +
+    actionScore * 0.20 +
+    infoScore * 0.15 +
+    threatScore * 0.10;
+  
+  return Math.max(0, Math.min(1, finalScore));
   }
-
-  /**
-   * Individual evaluation: Original single-player optimization
-   */
-  private evaluateIndividualState(
-    state: MCTSGameState,
-    botPlayer: MCTSPlayerState
-  ): number {
-    // 1. Score component - lower bot score is better
-    const botScore = botPlayer.score;
-    const opponentScores = state.players
-      .filter((p) => p.id !== state.botPlayerId)
-      .map((p) => p.score);
-
-    const avgOpponentScore =
-      opponentScores.reduce((a, b) => a + b, 0) / (opponentScores.length || 1);
-    const minOpponentScore = Math.min(...opponentScores);
-
-    // Score advantage vs average (positive is good)
-    const scoreAdvantage = avgOpponentScore - botScore;
-
-    // Score advantage vs best opponent (for competitive positioning)
-    const competitiveAdvantage = minOpponentScore - botScore;
-
-    // 2. Card count component - fewer cards is better
-    const botCardCount = botPlayer.cardCount;
-    const avgOpponentCardCount =
-      opponentScores.length > 0
-        ? state.players
-            .filter((p) => p.id !== state.botPlayerId)
-            .reduce((sum, p) => sum + p.cardCount, 0) / opponentScores.length
-        : 4;
-
-    const cardCountAdvantage = avgOpponentCardCount - botCardCount;
-
-    // 3. Knowledge component - more known cards is better
-    const botKnownCards = botPlayer.knownCards.size;
-    const botKnowledgeRatio =
-      botCardCount > 0 ? botKnownCards / botCardCount : 0;
-
-    // Calculate opponent knowledge (what bot knows about opponents)
-    let totalOpponentCardsKnown = 0;
-    let totalOpponentCards = 0;
-    for (const opponent of state.players) {
-      if (opponent.id === state.botPlayerId) continue;
-      totalOpponentCardsKnown += opponent.knownCards.size;
-      totalOpponentCards += opponent.cardCount;
-    }
-
-    const opponentKnowledgeRatio =
-      totalOpponentCards > 0 ? totalOpponentCardsKnown / totalOpponentCards : 0;
-
-    // Information advantage = knowing own cards + knowing opponent cards
-    const knowledgeAdvantage = (botKnowledgeRatio + opponentKnowledgeRatio) * 3;
-
-    // 4. Action card value - having action cards is good
-    let actionCardCount = 0;
-    for (let pos = 0; pos < botCardCount; pos++) {
-      const card = state.hiddenCards.get(`${state.botPlayerId}-${pos}`);
-      if (card && card.actionText) {
-        actionCardCount++;
-      }
-    }
-
-    // 5. High value card detection - knowing you have high cards is bad
-    let knownHighCardPenalty = 0;
-    for (let pos = 0; pos < botCardCount; pos++) {
-      const memory = botPlayer.knownCards.get(pos);
-      if (memory && memory.card && memory.card.value > 8) {
-        knownHighCardPenalty += (memory.card.value - 6) * 0.5;
-      }
-    }
-
-    // 6. Game phase component
-    const isEarlyGame = state.turnCount < state.players.length * 2;
-    const isLateGame = state.finalTurnTriggered || state.turnCount > 40;
-
-    let phaseMultiplier = 1.0;
-    let actionCardMultiplier = 1.0;
-    let penaltyMultiplier = 1.0;
-
-    if (isEarlyGame) {
-      phaseMultiplier = 0.7; // Early game: score advantage less critical
-      actionCardMultiplier = 1.5; // Action cards more valuable early
-      penaltyMultiplier = 0.8; // High card penalty less severe early
-    } else if (isLateGame) {
-      phaseMultiplier = 1.5; // Late game: score matters most
-      actionCardMultiplier = 0.5; // Action cards less valuable late
-      penaltyMultiplier = 1.3; // High card penalty more severe late
-    }
-
-    const actionCardBonus = actionCardCount * 2 * actionCardMultiplier;
-
-    // 7. Terminal state bonus
-    let terminalBonus = 0;
-    if (state.isTerminal) {
-      if (state.winner === state.botPlayerId) {
-        terminalBonus = 100; // Huge bonus for winning
-      } else {
-        terminalBonus = -100; // Huge penalty for losing
-      }
-    }
-
-    // 8. Position relative to calling Vinto
-    let vintoReadinessBonus = 0;
-    if (isLateGame && botScore < avgOpponentScore - 3) {
-      vintoReadinessBonus = 5; // Bonus for being in good position to call Vinto
-    }
-
-    // Weighted combination with phase-adaptive multipliers
-    const reward =
-      scoreAdvantage * 2.5 * phaseMultiplier + // Score difference vs average (phase-adjusted)
-      competitiveAdvantage * 0.5 + // Score vs best opponent
-      cardCountAdvantage * 1.0 + // Fewer cards is better
-      knowledgeAdvantage * (isEarlyGame ? 2.0 : 0.5) + // Info valuable early
-      actionCardBonus + // Action cards (phase-adjusted)
-      -knownHighCardPenalty * penaltyMultiplier + // Penalty for known high cards (phase-adjusted)
-      vintoReadinessBonus + // Ready to win
-      terminalBonus; // Terminal state bonus
-
-    // Normalize to [0, 1] using sigmoid
-    return 1 / (1 + Math.exp(-reward / 20));
-  }
-
   /**
    * Get current bot decision context (used for coalition evaluation)
    */

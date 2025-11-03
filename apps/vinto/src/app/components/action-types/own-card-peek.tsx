@@ -22,12 +22,12 @@ export const OwnCardPeek = observer(() => {
   );
 
   // Find the peeked card index for the human player
-  const cardId = humanPlayerState
-    ? Array.from(uiStore.getTemporarilyVisibleCards(humanPlayerState.id))[0]
-    : undefined;
+   // for peek wwe might have only one 
+  const cardPosition: number | undefined = (humanPlayerState ? Array.from(uiStore.getTemporarilyVisibleCards(humanPlayerState.id).keys()) : [])[0];
+  
   const cardRank =
-    humanPlayerState && typeof cardId === 'number' && humanPlayerState.cards[cardId]
-      ? humanPlayerState.cards[cardId].rank
+    humanPlayerState && typeof cardPosition === 'number' && humanPlayerState.cards[cardPosition]
+      ? humanPlayerState.cards[cardPosition].rank
       : undefined;
 
   // Check if this is a toss-in action

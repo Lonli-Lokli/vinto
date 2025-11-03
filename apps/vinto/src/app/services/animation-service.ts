@@ -35,6 +35,8 @@ import {
   unregisterStateUpdateCallback,
 } from '@vinto/local-client';
 import { logger } from '@sentry/nextjs';
+import { canSeePlayerCard } from '../components/logic/player-area-logic';
+import { UIStore } from '../stores';
 
 @injectable()
 export class AnimationService {
@@ -45,10 +47,12 @@ export class AnimationService {
   ) => void;
   private _unregisterCallback?: () => void;
   private animationStore: CardAnimationStore;
+  private uiStore: UIStore;
   private gameClient?: GameClient;
 
-  constructor(@inject(CardAnimationStore) animationStore: CardAnimationStore) {
+  constructor(@inject(CardAnimationStore) animationStore: CardAnimationStore, @inject(UIStore) uiStore: UIStore) {
     this.animationStore = animationStore;
+    this.uiStore = uiStore;
     // Register state update callback
     this._stateUpdateCallback = this.handleStateUpdate.bind(this);
     registerStateUpdateCallback(this._stateUpdateCallback);
@@ -672,6 +676,15 @@ export class AnimationService {
       this.animationStore.startHighlightAnimation(
         peekedCard.rank,
         { type: 'player', playerId: targetPlayerId, position },
+        canSeePlayerCard({
+          cardIndex: position,
+          coalitionLeaderId: newState.coalitionLeaderId,
+          targetPlayer: targetPlayer,
+          temporarilyVisibleCards: this.uiStore.getTemporarilyVisibleCards(targetPlayerId),
+          gamePhase: newState.phase,
+          observingPlayer: newState.players.find((p) => p.id === playerId)!,
+        }),
+        this.getPlayerPosition(targetPlayerId, newState),
         2000 // 2 second highlight animation
       );
 
