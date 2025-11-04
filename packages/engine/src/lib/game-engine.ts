@@ -68,7 +68,6 @@ export class GameEngine {
     // Validate action is legal in current state
     const validation = actionValidator(state, action);
     if (!validation.valid) {
-     
       return { success: false, state, reason: validation.reason }; // Return unchanged state for invalid actions
     }
 
@@ -184,7 +183,7 @@ export class GameEngine {
       return {
         success: false,
         state,
-        reason: `Action handler for ${action.type} did not modify state`
+        reason: `Action handler for ${action.type} did not modify state`,
       };
     }
 

@@ -495,8 +495,10 @@ export class MCTSMoveGenerator {
       for (const oppCard of opponentUnknown) {
         moves.push({
           type: 'use-action',
+
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
+          shouldSwap: true,
         });
       }
     }
@@ -515,6 +517,7 @@ export class MCTSMoveGenerator {
           type: 'use-action',
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
+          shouldSwap: true,
         });
       }
     }
@@ -541,6 +544,7 @@ export class MCTSMoveGenerator {
               opponent1Positions[i].target,
               opponent1Positions[j].target,
             ],
+            shouldSwap: true,
           });
         }
       }
@@ -560,6 +564,7 @@ export class MCTSMoveGenerator {
           type: 'use-action',
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
+          shouldSwap: true,
         });
       }
     }
