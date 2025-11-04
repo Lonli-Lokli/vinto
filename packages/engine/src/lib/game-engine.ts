@@ -1,7 +1,6 @@
 // engine/GameEngine.ts
 // Core game engine - pure reducer that transforms state via actions
 
-import { logger } from '@vinto/shapes';
 import { actionValidator } from './action-validator';
 import { handleSwapCard } from './cases/swap-card';
 import { handleCallVinto } from './cases/call-vinto';
