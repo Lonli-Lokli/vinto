@@ -99,7 +99,7 @@
   --color-warning-darker: 180 83 9; /* amber-700 - darkest warning */
   --color-info-darker: 29 78 216; /* blue-700 - darkest info */
 
-  --color-scrollbar-thumb: 0, 0, 0; /* scrollbar thumb - black */
+  --color-scrollbar-thumb: 0 0 0; /* scrollbar thumb - black */
 }
 
 /* Dark Theme */
@@ -158,7 +158,7 @@
   --color-accent-dark: 245 158 11; /* amber-500 */
   --color-accent-darker: 217 119 6; /* amber-600 */
 
-  --color-scrollbar-thumb: 255, 255, 255; /* scrollbar thumb - white */
+  --color-scrollbar-thumb: 255 255 255; /* scrollbar thumb - white */
 }
 
 /* === UTILITY CLASSES FOR USING CSS VARIABLES === */
@@ -193,6 +193,9 @@
 }
 .bg-table-secondary {
   background-color: rgb(var(--color-table-secondary));
+}
+.bg-floating-label {
+  background-color: rgb(var(--ccolor-backdrop-blur) / 0.95);
 }
 
 /* Text Colors */

@@ -141,13 +141,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(var(--color-scrollbar-thumb), 0.2);
+  background: rgba(var(--color-scrollbar-thumb) / 0.2);
   border-radius: 3px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--color-scrollbar-thumb), 0.4);
+  background: rgba(var(--color-scrollbar-thumb) / 0.4);
 }
 
 /* Smooth focus styles */

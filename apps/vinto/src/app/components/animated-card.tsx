@@ -75,22 +75,22 @@ export const AnimatedCardOverlay = observer(() => {
 
           return (
             <motion.div
-              key={virtualCard.id}
-              className="absolute"
-              initial={{
-                left: virtualCard.fromX,
-                top: virtualCard.fromY,
-                scale: 1,
-                rotate: 0,
-                opacity: 1,
-              }}
+                key={virtualCard.id}
+                className="absolute"
+                initial={{
+                  left: virtualCard.fromX,
+                  top: virtualCard.fromY,
+                  scale: 1,
+                  rotate: isHighlight ? targetRotation : 0,
+                  opacity: 1,
+                }}
               animate={
                 isHighlight
-                  ? {
-                      scale: [1, 1.15, 1, 1.15, 1],
-                      rotate: [0, targetRotation, 0],
-                      opacity: 1,
-                    }
+                      ? {
+                          scale: [1, 1.15, 1],
+                          rotate: targetRotation,
+                          opacity: 1,
+                        }
                   : isShake
                   ? {
                       x: [0, -10, 10, -10, 10, -5, 5, 0],
@@ -127,14 +127,14 @@ export const AnimatedCardOverlay = observer(() => {
               }}
               transition={
                 isHighlight
-                  ? {
-                      duration: 2,
-                      ease: 'easeInOut',
-                      scale: {
-                        times: [0, 0.25, 0.5, 0.75, 1],
-                        duration: 2,
-                      },
-                    }
+                      ? {
+                          duration: 1.2,
+                          ease: 'easeInOut',
+                          scale: {
+                            times: [0, 0.5, 1],
+                            duration: 1.2,
+                          },
+                        }
                   : isShake
                   ? {
                       duration: 0.8,

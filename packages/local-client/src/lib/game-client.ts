@@ -122,6 +122,14 @@ export class GameClient {
         this.onStateChange(oldState, newState, action);
       }
     } else {
+      logger.warn(`Invalid action ${action.type}: ${result.reason}`, {
+        actionType: action.type,
+        reason: result.reason,
+        currentPhase: result.state.phase,
+        currentSubPhase: result.state.subPhase,
+        action: action,
+        actionHistory: this._actionHistory
+      });
       // Notify about error
       if (this.onStateError) {
         this.onStateError(result.reason);

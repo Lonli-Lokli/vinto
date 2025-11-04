@@ -208,8 +208,10 @@ const TossInIndicator = observer(
       ? activeTossIn.originalPlayerIndex === currentPlayerIndex
       : false;
     const hasWrongAttempt = activeTossIn
-      ? activeTossIn.failedAttempts?.some(attempt => attempt.playerId === humanPlayer?.id)
-      : false;  
+      ? activeTossIn.failedAttempts?.some(
+          (attempt) => attempt.playerId === humanPlayer?.id
+        )
+      : false;
 
     const recentActions = gameClient.visualState.recentActions.map(
       (action) => `${action.playerName} ${action.description}`
@@ -258,7 +260,7 @@ Skip toss-in and proceed to next player's turn`;
                     </span>
                   ))}
                 </ReactJoin>{' '}
-                • Wrong = penalty 
+                • Wrong = penalty
               </div>
               {hasWrongAttempt && (
                 <div className="text-xs text-error leading-tight mt-1">
@@ -271,11 +273,11 @@ Skip toss-in and proceed to next player's turn`;
 
           {/* Bot Actions Section */}
           {recentActions.length > 0 && (
-            <div className="mb-2 relative flex-shrink-0">
-              <div className="absolute -top-2 right-2 px-1.5 bg-surface-primary text-2xs font-medium text-muted z-10">
+            <fieldset className="mb-1.5 relative flex-shrink-0 rounded border border-border-secondary">
+              <legend className="ml-auto mr-2 px-1.5 text-2xs font-medium text-muted">
                 Recent Actions
-              </div>
-              <div className="p-1.5 bg-surface-tertiary/40 rounded border border-border-secondary max-h-[47px] overflow-y-auto">
+              </legend>
+              <div className="p-1.5 bg-surface-tertiary/40 rounded max-h-[47px] overflow-y-auto">
                 <p className="text-tertiary text-2xs leading-relaxed">
                   {recentActions.map((action, idx) => (
                     <React.Fragment key={idx}>
@@ -290,7 +292,7 @@ Skip toss-in and proceed to next player's turn`;
                   ))}
                 </p>
               </div>
-            </div>
+            </fieldset>
           )}
 
           {/* Main Actions */}
