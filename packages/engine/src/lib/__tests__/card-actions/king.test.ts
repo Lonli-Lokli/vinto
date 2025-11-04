@@ -424,7 +424,7 @@ describe('King (K) Card Action', () => {
 
       newState = unsafeReduce(
         newState,
-        GameActions.playCardAction('p2', createTestCard('Q', 'p2c1'))
+        GameActions.playCardAction('p2')
       );
 
       expect(newState.activeTossIn?.ranks.length).toBe(1); // King should be removed from toss in
@@ -500,7 +500,7 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.participants).toContain('p2');
     });
 
-     it('should allow same player to play toss in in King during toss-in period and declare', () => {
+    it('should allow same player to play toss in in King during toss-in period and declare', () => {
       const state = createTestState({
         subPhase: 'toss_queue_active',
         turnNumber: 1,
@@ -543,13 +543,15 @@ describe('King (K) Card Action', () => {
       expect(newState.activeTossIn?.participants).toContain('p2');
 
       expect(newState.pendingAction).not.toBeNull();
-      
+
+      newState = unsafeReduce(newState, GameActions.playCardAction('p2'));
+
       // Select the target card (position 0, which is the '4' card)
       newState = unsafeReduce(
         newState,
         GameActions.selectActionTarget('p2', 'p2', 0)
       );
-      
+
       // Declare rank 4 (non-action card)
       newState = unsafeReduce(
         newState,
@@ -566,7 +568,6 @@ describe('King (K) Card Action', () => {
 
       newState = markPlayersReady(newState, ['p1', 'p2']);
       expect(newState.currentPlayerIndex).toBe(0); // p1 turn
-
     });
   });
 

@@ -29,7 +29,13 @@ import {
   SWAP_KNOWLEDGE_WEIGHT,
   SWAP_SCORE_WEIGHT,
 } from './constants';
-import { evaluateTossInPotential, evaluateRelativePosition, evaluateActionCardValue, evaluateInformationAdvantage, evaluateThreatLevel } from './evaluation-helpers';
+import {
+  evaluateTossInPotential,
+  evaluateRelativePosition,
+  evaluateActionCardValue,
+  evaluateInformationAdvantage,
+  evaluateThreatLevel,
+} from './evaluation-helpers';
 
 export interface BotDecisionContext {
   botId: string;
@@ -1498,48 +1504,47 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   /**
- * CRITICAL IMPROVEMENT: Evaluate states by understanding POTENTIAL, not just current state
- * 
- * Before: Only looked at current score and hand size
- * After: Evaluates:
- * 1. Toss-in potential (pairs, triples of matching ranks)
- * 2. Action card synergies (having King + action cards to declare)
- * 3. Information asymmetry (what we know vs what opponents know)
- * 4. Relative position (not absolute)
- */
-  private evaluateState(state: MCTSGameState,
-  botPlayerId: string): number {
-     const botPlayer = state.players.find(p => p.id === botPlayerId);
-  if (!botPlayer) return 0;
-  
-  // Terminal state check
-  if (state.isTerminal) {
-    return state.winner === botPlayerId ? 1.0 : 0.0;
-  }
-  
-  // Component 1: Toss-in Potential (30% weight) - NEW!
-  const tossInScore = evaluateTossInPotential(state, botPlayer);
-  
-  // Component 2: Relative Position (25% weight)
-  const positionScore = evaluateRelativePosition(state, botPlayer);
-  
-  // Component 3: Action Card Value (20% weight)
-  const actionScore = evaluateActionCardValue(state, botPlayer);
-  
-  // Component 4: Information Advantage (15% weight)
-  const infoScore = evaluateInformationAdvantage(state, botPlayer);
-  
-  // Component 5: Threat Level (10% weight)
-  const threatScore = evaluateThreatLevel(state, botPlayer);
-  
-  const finalScore =
-    tossInScore * 0.30 +
-    positionScore * 0.25 +
-    actionScore * 0.20 +
-    infoScore * 0.15 +
-    threatScore * 0.10;
-  
-  return Math.max(0, Math.min(1, finalScore));
+   * CRITICAL IMPROVEMENT: Evaluate states by understanding POTENTIAL, not just current state
+   *
+   * Before: Only looked at current score and hand size
+   * After: Evaluates:
+   * 1. Toss-in potential (pairs, triples of matching ranks)
+   * 2. Action card synergies (having King + action cards to declare)
+   * 3. Information asymmetry (what we know vs what opponents know)
+   * 4. Relative position (not absolute)
+   */
+  private evaluateState(state: MCTSGameState, botPlayerId: string): number {
+    const botPlayer = state.players.find((p) => p.id === botPlayerId);
+    if (!botPlayer) return 0;
+
+    // Terminal state check
+    if (state.isTerminal) {
+      return state.winner === botPlayerId ? 1.0 : 0.0;
+    }
+
+    // Component 1: Toss-in Potential (30% weight) - NEW!
+    const tossInScore = evaluateTossInPotential(state, botPlayer);
+
+    // Component 2: Relative Position (25% weight)
+    const positionScore = evaluateRelativePosition(state, botPlayer);
+
+    // Component 3: Action Card Value (20% weight)
+    const actionScore = evaluateActionCardValue(state, botPlayer);
+
+    // Component 4: Information Advantage (15% weight)
+    const infoScore = evaluateInformationAdvantage(state, botPlayer);
+
+    // Component 5: Threat Level (10% weight)
+    const threatScore = evaluateThreatLevel(state, botPlayer);
+
+    const finalScore =
+      tossInScore * 0.3 +
+      positionScore * 0.25 +
+      actionScore * 0.2 +
+      infoScore * 0.15 +
+      threatScore * 0.1;
+
+    return Math.max(0, Math.min(1, finalScore));
   }
   /**
    * Get current bot decision context (used for coalition evaluation)

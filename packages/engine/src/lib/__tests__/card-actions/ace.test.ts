@@ -63,7 +63,7 @@ describe('Ace (A) Card Action', () => {
       // Step 1: Player chooses to use Ace action
       let newState = unsafeReduce(
         state,
-        GameActions.playCardAction('p1', aceCard)
+        GameActions.playCardAction('p1')
       );
       expect(newState.subPhase).toBe('awaiting_action');
 

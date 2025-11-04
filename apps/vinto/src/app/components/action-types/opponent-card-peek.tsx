@@ -18,14 +18,15 @@ export const OpponentCardPeek = observer(() => {
   const action = gameClient.visualState.pendingAction.card.rank;
 
   // Find the opponent whose card is revealed
-  const opponent = gameClient.visualState.pendingAction.targets[0];
+  const { playerId, position } =
+    gameClient.visualState.pendingAction.targets[0] ?? {};
 
   // Get the card rank if possible
   const cardRank =
-    opponent &&
-    gameClient.visualState.players.find((p) => p.id === opponent.playerId)
-      ? gameClient.visualState.players.find((p) => p.id === opponent.playerId)!
-          .cards[opponent.position].rank
+    playerId && gameClient.visualState.players.find((p) => p.id === playerId)
+      ? gameClient.visualState.players.find((p) => p.id === playerId)!.cards[
+          position
+        ].rank
       : undefined;
 
   // Check if this is a toss-in action
@@ -51,7 +52,7 @@ export const OpponentCardPeek = observer(() => {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          {opponent && (
+          {playerId && (
             <div className="text-2xs text-success font-medium">✓ Revealed</div>
           )}
           <HelpPopover title="Peek at Opponent Card" rank="9" />
@@ -60,7 +61,7 @@ export const OpponentCardPeek = observer(() => {
 
       {/* Instructions or Confirmation */}
       <div className="flex items-center justify-center gap-3 mb-1 flex-1 min-h-0">
-        {!opponent ? (
+        {!playerId ? (
           <p className="text-xs text-secondary text-center">
             Click on an opponent&apos;s card to peek at it
           </p>
@@ -69,21 +70,23 @@ export const OpponentCardPeek = observer(() => {
             {cardRank && (
               <Card
                 rank={cardRank}
-                revealed={true}
-                isPeeked={true}
+                revealed={true}                
                 size="md"
                 selectionState="default"
               />
             )}
             <p className="text-xs text-secondary">
-              You have peeked at {opponent.name}&apos;s card
+              You have peeked at{' '}
+              {gameClient.visualState.players.find((p) => p.id === playerId)
+                ?.name ?? 'opponent'}
+              &apos;s card
             </p>
           </>
         )}
       </div>
 
       {/* Action Buttons */}
-      {opponent ? (
+      {playerId ? (
         <ContinueButton
           onClick={() => {
             if (!humanPlayer) return;

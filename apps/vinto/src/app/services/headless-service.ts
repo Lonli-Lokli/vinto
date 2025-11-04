@@ -64,14 +64,14 @@ export class HeadlessService {
       action.type === 'EXECUTE_QUEEN_SWAP' || action.type === 'SKIP_QUEEN_SWAP';
     const isJackActionCompleted =
       action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
-    // Don't include isPeekActionCompleted here - peeked cards should stay visible until next turn
-    const nextTurnStarted =
-      newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
+    const isCarPeeked = action.type === 'CONFIRM_PEEK';
+    // const nextTurnStarted =
+    //   newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
 
     if (
       isSetupPhaseEnded ||
       isQueenActionCompleted ||
-      nextTurnStarted
+      isCarPeeked
     ) {
       this.uiStore.clearTemporaryCardVisibility();
     }

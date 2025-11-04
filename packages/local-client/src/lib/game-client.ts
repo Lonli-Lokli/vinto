@@ -218,11 +218,6 @@ export class GameClient {
       }
 
       case 'CONFIRM_PEEK': {
-        // Peek action was completed
-        const peekCard = state.discardPile.peekTop();
-        if (peekCard) {
-          return `used ${formatCard(peekCard)}`;
-        }
         return null; // Don't show if no card info
       }
 
@@ -278,7 +273,21 @@ export class GameClient {
                   )?.nickname
                 } to draw`
               : null;
+          case 'opponent-card':
+            return state.pendingAction.targets.length === 1
+              ? `peeked at ${
+                  state.players.find(
+                    (p) => p.id === state.pendingAction?.targets[0].playerId
+                  )?.nickname
+                }'s card  (pos ${state.pendingAction?.targets[0].position + 1})`
+              : null;
 
+          case 'own-card':
+            return state.pendingAction.targets.length === 1
+              ? `peeked at own card (pos ${
+                  state.pendingAction?.targets[0].position + 1
+                })`
+              : null;
           default:
             return null;
         }

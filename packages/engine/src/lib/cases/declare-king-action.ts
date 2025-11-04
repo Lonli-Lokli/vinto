@@ -7,7 +7,6 @@ import {
 import copy from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import {
-  addTossInCard,
   clearTossInReadyList,
   getAutomaticallyReadyPlayers,
 } from '../utils/toss-in-utils';
@@ -44,34 +43,34 @@ export function handleDeclareKingAction(
     declaredRank,
   });
 
-  // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  // Get the selected card from pendingAction.targets[0]
+  // Get selected target
   const selectedTarget = newState.pendingAction?.targets?.[0];
   if (!selectedTarget) {
-    logger.error(
-      '[handleDeclareKingAction] No target was selected for King action'
-    );
+    logger.error('[handleDeclareKingAction] No target selected');
     return state;
   }
 
   const { playerId: targetPlayerId, position } = selectedTarget;
 
-  const selectedCard = newState.players.find((p) => p.id === targetPlayerId)
-    ?.cards[position];
+  // Find target player and card
+  const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
+  if (!targetPlayer) {
+    logger.error('[handleDeclareKingAction] Target player not found');
+    return state;
+  }
 
+  const selectedCard = targetPlayer.cards[position];
   if (!selectedCard) {
-    logger.error(
-      '[handleDeclareKingAction] No selected card found for King action'
-    );
+    logger.error('[handleDeclareKingAction] Selected card not found');
     return state;
   }
 
   const actualRank = selectedCard.rank;
   const isCorrect = actualRank === declaredRank;
 
-  console.log('[handleDeclareKingAction] Validating declaration:', {
+  console.log('[handleDeclareKingAction] Declaration:', {
     declaredRank,
     actualRank,
     isCorrect,
@@ -79,7 +78,7 @@ export function handleDeclareKingAction(
     position,
   });
 
-  // Move King card to discard pile first (always happens)
+  // STEP 1: Move King to discard (ALWAYS happens)
   if (newState.pendingAction?.card) {
     newState.discardPile.addToTop({
       ...copy(newState.pendingAction.card),
@@ -87,153 +86,200 @@ export function handleDeclareKingAction(
     });
   }
 
-  // Find the target player
-  const targetPlayer = newState.players.find((p) => p.id === targetPlayerId);
-  if (!targetPlayer) {
-    logger.error('[handleDeclareKingAction] Target player not found');
-    return state;
-  }
-
+  // STEP 2: Handle correct vs incorrect
   if (isCorrect) {
-    // Correct declaration: check if the card has an action
-    const targetType = getTargetTypeFromRank(selectedCard.rank);
-
-    // Remove the card from the target player's hand
-    const [removedCard] = targetPlayer.cards.splice(position, 1);
-
-    if (newState.activeTossIn) {
-      newState.activeTossIn.ranks = addTossInCard(
-        newState.activeTossIn?.ranks,
-        removedCard.rank
-      );
-    }
-    // If the card has an action, set up pendingAction for it
-    if (targetType !== undefined) {
-      // Update known card positions (remove the position that was removed)
-      targetPlayer.knownCardPositions = targetPlayer.knownCardPositions
-        .filter((pos) => pos !== position)
-        .map((pos) => (pos > position ? pos - 1 : pos));
-
-      // Set up pending action for the correctly declared action card
-      newState.pendingAction = {
-        card: removedCard,
-        from: 'hand',
-        playerId,
-        actionPhase: 'selecting-target',
-        targetType,
-        targets: [],
-      };
-
-      newState.subPhase = 'awaiting_action';
-
-      console.log(
-        '[handleDeclareKingAction] Correct declaration - card action available:',
-        {
-          rank: removedCard.rank,
-          targetType,
-        }
-      );
-      return newState;
-    } else {
-      // success declare of non-action card: discard it
-
-      newState.discardPile.addToTop(removedCard);
-
-      // Update known card positions (remove the position that was removed)
-      targetPlayer.knownCardPositions = targetPlayer.knownCardPositions
-        .filter((pos) => pos !== position)
-        .map((pos) => (pos > position ? pos - 1 : pos));
-
-      console.log(
-        '[handleDeclareKingAction] Correct declaration - card moved to discard'
-      );
-    }
-  } else {
-    // Incorrect declaration: card stays in hand, mark it as known to ALL players
-    // and issue a penalty card
-    const player = newState.players.find((p) => p.id === playerId);
-    if (!player) {
-      logger.error('[handleDeclareKingAction] Player not found');
-      return state;
-    }
-
-    // Issue penalty card if draw pile is not empty
-    if (newState.drawPile.length > 0) {
-      const penaltyCard = newState.drawPile.drawTop();
-      if (penaltyCard) {
-        player.cards.push(penaltyCard);
-        console.log(
-          '[handleDeclareKingAction] Incorrect declaration - penalty card issued:',
-          penaltyCard.rank
-        );
-      }
-    }
-
-    // When declaration fails, the card is revealed (flash animation) to ALL players
-    for (const p of newState.players) {
-      if (p.id === targetPlayerId) {
-        // Target player marks own card as known
-        if (!p.knownCardPositions.includes(position)) {
-          p.knownCardPositions.push(position);
-        }
-      } else {
-        // All other players learn about target player's revealed card
-        if (!p.opponentKnowledge) p.opponentKnowledge = {};
-        if (!p.opponentKnowledge[targetPlayerId]) {
-          p.opponentKnowledge[targetPlayerId] = { knownCards: {} };
-        }
-        p.opponentKnowledge[targetPlayerId].knownCards[position] = selectedCard;
-      }
-    }
-  }
-
-  // Clear pending action
-  newState.pendingAction = null;
-
-  // Check if this action was part of a toss-in
-  if (newState.activeTossIn !== null) {
-      // Remove the processed action from the queue
-    newState.activeTossIn.queuedActions.shift();
-    // Return to toss-in phase (action was from toss-in participation)
-    // Clear the ready list so players can confirm again for this new toss-in round
-    clearTossInReadyList(newState);
-    newState.subPhase = 'toss_queue_active';
-    newState.activeTossIn.waitingForInput = true;
-    console.log(
-      '[handleDeclareKingAction] King action during toss-in complete, returning to toss-in phase (ready list cleared)'
+    handleCorrectDeclaration(
+      newState,
+      targetPlayer,
+      position,
+      selectedCard,
+      playerId,
+      declaredRank
     );
   } else {
-    // Determine which rank triggers the toss-in:
-    // - If declaration is CORRECT: toss-in for King as well as the declared rank
-    // - If declaration is INCORRECT: toss-in for King rank (because only King went to discard)
-    const tossInRanks: [Rank, ...Rank[]] = isCorrect
-      ? ['K', declaredRank]
-      : ['K'];
-
-    // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
-    newState.activeTossIn = {
-      ranks: tossInRanks,
-      initiatorId: playerId,
-      originalPlayerIndex: newState.currentPlayerIndex,
-      participants: [],
-      queuedActions: [],
-      waitingForInput: true,
-      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
-    };
-
-    // Transition to toss-in phase
-    newState.subPhase = 'toss_queue_active';
-
-    console.log(
-      '[handleDeclareKingAction] King action complete, toss-in active:',
-      {
-        declaredRank,
-        isCorrect,
-        tossInRanks,
-        newSubPhase: newState.subPhase,
-      }
+    handleIncorrectDeclaration(
+      newState,
+      targetPlayer,
+      position,
+      selectedCard,
+      playerId
     );
   }
 
   return newState;
+}
+
+/**
+ * CORRECT Declaration Handler
+ * 
+ * FIX: Properly creates multi-rank toss-in ['K', declaredRank]
+ */
+function handleCorrectDeclaration(
+  newState: GameState,
+  targetPlayer: any,
+  position: number,
+  selectedCard: any,
+  playerId: string,
+  declaredRank: Rank
+): void {
+  // Remove declared card from hand
+  const [removedCard] = targetPlayer.cards.splice(position, 1);
+
+  // Update known positions (shift indices after removal)
+  targetPlayer.knownCardPositions = targetPlayer.knownCardPositions
+    .filter((pos: number) => pos !== position)
+    .map((pos: number) => (pos > position ? pos - 1 : pos));
+
+  // Check if declared card is actionable
+  const targetType = getTargetTypeFromRank(selectedCard.rank);
+
+  if (targetType !== undefined) {
+    // ACTIONABLE CARD - Setup pending action
+    console.log('[handleDeclareKingAction] Correct - actionable card:', {
+      rank: removedCard.rank,
+      targetType,
+    });
+
+    newState.pendingAction = {
+      card: removedCard,
+      from: 'hand',
+      playerId,
+      actionPhase: 'selecting-target',
+      targetType,
+      targets: [],
+    };
+
+    // FIX BUG 1 & 3: Properly setup multi-rank toss-in
+    setupKingTossInMultiRank(newState, playerId, declaredRank, true);
+  } else {
+    // NON-ACTIONABLE CARD - Just discard it
+    console.log('[handleDeclareKingAction] Correct - non-actionable, discarding');
+
+    newState.discardPile.addToTop(removedCard);
+    newState.pendingAction = null;
+
+    // FIX BUG 1 & 3: Properly setup multi-rank toss-in
+    setupKingTossInMultiRank(newState, playerId, declaredRank, false);
+  }
+}
+
+/**
+ * INCORRECT Declaration Handler
+ */
+function handleIncorrectDeclaration(
+  newState: GameState,
+  targetPlayer: any,
+  position: number,
+  selectedCard: any,
+  playerId: string
+): void {
+  console.log('[handleDeclareKingAction] INCORRECT declaration');
+
+  const player = newState.players.find((p) => p.id === playerId);
+  if (!player) {
+    logger.error('[handleDeclareKingAction] Player not found');
+    return;
+  }
+
+  // Card stays in hand, revealed to ALL players
+  for (const p of newState.players) {
+    if (p.id === targetPlayer.id) {
+      if (!p.knownCardPositions.includes(position)) {
+        p.knownCardPositions.push(position);
+      }
+    } else {
+      if (!p.opponentKnowledge) p.opponentKnowledge = {};
+      if (!p.opponentKnowledge[targetPlayer.id]) {
+        p.opponentKnowledge[targetPlayer.id] = { knownCards: {} };
+      }
+      p.opponentKnowledge[targetPlayer.id].knownCards[position] = selectedCard;
+    }
+  }
+
+  // Issue penalty card
+  if (newState.drawPile.length > 0) {
+    const penaltyCard = newState.drawPile.drawTop();
+    if (penaltyCard) {
+      player.cards.push(penaltyCard);
+      console.log('[handleDeclareKingAction] Penalty card issued:', penaltyCard.rank);
+    }
+  }
+
+  newState.pendingAction = null;
+
+  // Setup toss-in for KING ONLY (no declared rank)
+  setupKingTossInMultiRank(newState, playerId, undefined, false);
+}
+
+/**
+ * Setup King multi-rank toss-in
+ * 
+ * FIXES:
+ * - BUG 1: Always creates ['K', declaredRank] array (not just ['K'])
+ * - BUG 3: APPENDS to existing ranks instead of overwriting
+ * 
+ * @param declaredRank - undefined for incorrect declaration
+ * @param hasAction - true if declared card is actionable
+ */
+function setupKingTossInMultiRank(
+  newState: GameState,
+  playerId: string,
+  declaredRank: Rank | undefined,
+  hasAction: boolean
+): void {
+  // Build rank array: ['K'] or ['K', declaredRank]
+  const kingRanks: Rank[] = declaredRank ? ['K', declaredRank] : ['K'];
+
+  if (newState.activeTossIn === null) {
+    // START NEW TOSS-IN
+    console.log('[setupKingTossInMultiRank] Starting new King toss-in:', {
+      ranks: kingRanks,
+      hasAction,
+    });
+
+    newState.activeTossIn = {
+      ranks: kingRanks as [Rank, ...Rank[]],
+      initiatorId: playerId,
+      originalPlayerIndex: newState.currentPlayerIndex,
+      participants: [],
+      queuedActions: [],
+      waitingForInput: !hasAction,
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+    };
+
+    newState.subPhase = hasAction ? 'awaiting_action' : 'toss_queue_active';
+  } else {
+    // ALREADY IN TOSS-IN - Append King ranks
+    console.log('[setupKingTossInMultiRank] Adding King ranks to existing toss-in:', {
+      existingRanks: newState.activeTossIn.ranks,
+      addingRanks: kingRanks,
+    });
+
+    // FIX BUG 3: APPEND ranks instead of overwriting
+    kingRanks.forEach(rank => {
+      if (!newState.activeTossIn!.ranks.includes(rank)) {
+        newState.activeTossIn!.ranks.push(rank);
+      }
+    });
+
+    // Remove processed King action from queue if applicable
+    if (newState.activeTossIn.queuedActions.length > 0) {
+      const firstAction = newState.activeTossIn.queuedActions[0];
+      if (firstAction.rank === 'K' && firstAction.playerId === playerId) {
+        newState.activeTossIn.queuedActions.shift();
+        console.log('[setupKingTossInMultiRank] Removed King from queue');
+      }
+    }
+
+    // Clear ready list (new ranks added)
+    clearTossInReadyList(newState);
+
+    newState.subPhase = hasAction ? 'awaiting_action' : 'toss_queue_active';
+    newState.activeTossIn.waitingForInput = !hasAction;
+
+    console.log('[setupKingTossInMultiRank] Updated toss-in:', {
+      finalRanks: newState.activeTossIn.ranks,
+      subPhase: newState.subPhase,
+    });
+  }
 }
