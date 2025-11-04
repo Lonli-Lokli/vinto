@@ -202,10 +202,14 @@ const TossInIndicator = observer(
 
     // Check if it's the human player's original turn (not just participating in toss-in)
     const activeTossIn = gameClient.visualState.activeTossIn;
+    const humanPlayer = gameClient.visualState.players.find((p) => p.isHuman);
     const currentPlayerIndex = gameClient.visualState.currentPlayerIndex;
     const isOriginalTurn = activeTossIn
       ? activeTossIn.originalPlayerIndex === currentPlayerIndex
       : false;
+    const hasWrongAttempt = activeTossIn
+      ? activeTossIn.failedAttempts?.some(attempt => attempt.playerId === humanPlayer?.id)
+      : false;  
 
     const recentActions = gameClient.visualState.recentActions.map(
       (action) => `${action.playerName} ${action.description}`
@@ -254,8 +258,13 @@ Skip toss-in and proceed to next player's turn`;
                     </span>
                   ))}
                 </ReactJoin>{' '}
-                • Wrong = penalty
+                • Wrong = penalty 
               </div>
+              {hasWrongAttempt && (
+                <div className="text-xs text-error leading-tight mt-1">
+                  ⚠️ Wrong attempt made - no more toss-ins this round
+                </div>
+              )}
             </div>
             <HelpPopover title="Toss-in Phase" content={getHelpContent()} />
           </div>

@@ -524,6 +524,17 @@ export function actionValidator(
         }
       }
 
+      // Check if player has already made a failed attempt
+      const hasFailedAttempt = state.activeTossIn.failedAttempts?.some(
+        (attempt) => attempt.playerId === playerId
+      );
+      if (hasFailedAttempt) {
+        return {
+          valid: false,
+          reason: 'Cannot participate in toss-in after failed attempt',
+        };
+      }
+
       return { valid: true };
     }
 

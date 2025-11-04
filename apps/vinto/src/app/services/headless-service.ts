@@ -64,14 +64,13 @@ export class HeadlessService {
       action.type === 'EXECUTE_QUEEN_SWAP' || action.type === 'SKIP_QUEEN_SWAP';
     const isJackActionCompleted =
       action.type === 'EXECUTE_JACK_SWAP' || action.type === 'SKIP_JACK_SWAP';
-    const isCarPeeked = action.type === 'CONFIRM_PEEK';
-    // const nextTurnStarted =
-    //   newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
+    const nextTurnStarted =
+      newState.subPhase === 'ai_thinking' || newState.subPhase === 'idle';
 
     if (
       isSetupPhaseEnded ||
       isQueenActionCompleted ||
-      isCarPeeked
+      nextTurnStarted
     ) {
       this.uiStore.clearTemporaryCardVisibility();
     }
@@ -83,6 +82,7 @@ export class HeadlessService {
       isJackActionCompleted ||
       isPeekActionCompleted
     ) {
+      this.uiStore.clearTemporaryCardVisibility();
       this.uiStore.clearHighlightedCards();
     }
 
@@ -199,7 +199,11 @@ export class HeadlessService {
       this.uiStore.addFailedTossInFeedback(targetPlayerId, position);
 
       // Make the incorrectly declared card temporarily visible for all (stays longer than usual)
-      this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position, newState.players.map(p => p.id));
+      this.uiStore.addTemporarilyVisibleCard(
+        targetPlayerId,
+        position,
+        newState.players.map((p) => p.id)
+      );
     }
   }
 
@@ -241,7 +245,11 @@ export class HeadlessService {
 
         // Make card temporarily visible for all players
         // Successful toss-ins should not reveal any cards
-        this.uiStore.addTemporarilyVisibleCard(playerId, position, newState.players.map(p => p.id));
+        this.uiStore.addTemporarilyVisibleCard(
+          playerId,
+          position,
+          newState.players.map((p) => p.id)
+        );
       }
     }
   }
@@ -326,7 +334,9 @@ export class HeadlessService {
     // Add card to temporarily visible cards for acting player
     // This shows the peek border on the card regardless of who is peeking
     // The card will only be revealed (face-up) based on game rules
-    this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position, [playerId]);
+    this.uiStore.addTemporarilyVisibleCard(targetPlayerId, position, [
+      playerId,
+    ]);
 
     // ONLY handle bot peeks - human peeks are handled by game-table-logic.ts
     if (!actingPlayer.isHuman) {
