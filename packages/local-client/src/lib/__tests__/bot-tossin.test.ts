@@ -107,6 +107,8 @@ describe('Bot Toss-In Integration Test', () => {
         gameClient.state.subPhase !== 'toss_queue_active';
       expect(gameProgressed).toBe(true);
     }
+
+    botAdapter.dispose();
   });
 
   /**
@@ -161,6 +163,8 @@ describe('Bot Toss-In Integration Test', () => {
       );
       expect(bot2ReadyCalls.length).toBeGreaterThanOrEqual(1);
     }
+
+    botAdapter.dispose();
   });
 
   /**
@@ -214,13 +218,15 @@ describe('Bot Toss-In Integration Test', () => {
       );
       expect(bot2ReadyCalls.length).toBeGreaterThanOrEqual(1);
     }
+
+    botAdapter.dispose();
   });
 
   /**
    * Test 4: Three bots - all must mark ready
    */
   it('should require all 3 bots to mark ready', async () => {
-    const { gameClient } = await setupSimpleScenario(
+    const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer('bot1', 'Bot 1', false, [
           createTestCard('7', 's1'),
@@ -238,7 +244,6 @@ describe('Bot Toss-In Integration Test', () => {
       1
     );
 
-    const adapter = new BotAIAdapter(gameClient);
     const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
 
     gameClient.dispatch(GameActions.drawCard('bot2'));
@@ -248,7 +253,7 @@ describe('Bot Toss-In Integration Test', () => {
     await vi.runAllTimersAsync();
 
     if (gameClient.state.subPhase === 'toss_queue_active') {
-      await adapter['handleTossInPhase']();
+      await botAdapter['handleTossInPhase']();
       await vi.runAllTimersAsync();
 
       const readyCalls = dispatchSpy.mock.calls.filter(
@@ -266,7 +271,7 @@ describe('Bot Toss-In Integration Test', () => {
       expect(readyPlayers.has('bot3')).toBe(true);
     }
 
-    adapter.dispose();
+    botAdapter.dispose();
   });
 
   it('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
@@ -314,5 +319,7 @@ describe('Bot Toss-In Integration Test', () => {
     await vi.runAllTimersAsync();
 
     await botAdapter.waitForIdle();
+
+    botAdapter.dispose();
   });
 });
