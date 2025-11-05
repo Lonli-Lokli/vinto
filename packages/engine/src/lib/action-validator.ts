@@ -268,7 +268,7 @@ export function actionValidator(
       // Must be in awaiting_action phase (after peeking at card)
       // Note: In a full implementation, we'd check for 'peeking' subphase
       // For now, we accept awaiting_action as that's where peek actions happen
-      if (state.subPhase !== 'awaiting_action') {
+      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
         return {
           valid: false,
           reason: `Cannot confirm peek in phase ${state.subPhase}`,
