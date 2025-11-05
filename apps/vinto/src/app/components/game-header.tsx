@@ -85,6 +85,25 @@ export const GameHeader = observer(() => {
                     />
                   ))}
                 </div>
+
+                {/* Bot Version */}
+                <div className="flex items-center gap-1">
+                  {(['v1', 'v2'] as const).map((version) => (
+                    <button
+                      key={version}
+                      onClick={() =>
+                        gameClient.dispatch(GameActions.updateBotVersion(version))
+                      }
+                      className={`px-2 py-1 text-xs rounded border transition-colors ${
+                        gameClient.visualState.botVersion === version
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-surface-secondary text-primary border-primary/20 hover:bg-surface-primary'
+                      }`}
+                    >
+                      {version.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

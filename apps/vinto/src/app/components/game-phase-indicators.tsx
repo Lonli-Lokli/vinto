@@ -247,6 +247,11 @@ Skip toss-in and proceed to next player's turn`;
                     {currentPlayer.name}
                   </span>
                 )}
+                {hasWrongAttempt && (
+                  <span className="text-error ml-1">
+                    ⚠️ Wrong attempt - no more toss-ins
+                  </span>
+                )}
               </h3>
               <div className="text-xs text-secondary leading-tight">
                 Toss matching{' '}
@@ -262,11 +267,6 @@ Skip toss-in and proceed to next player's turn`;
                 </ReactJoin>{' '}
                 • Wrong = penalty
               </div>
-              {hasWrongAttempt && (
-                <div className="text-xs text-error leading-tight mt-1">
-                  ⚠️ Wrong attempt made - no more toss-ins this round
-                </div>
-              )}
             </div>
             <HelpPopover title="Toss-in Phase" content={getHelpContent()} />
           </div>

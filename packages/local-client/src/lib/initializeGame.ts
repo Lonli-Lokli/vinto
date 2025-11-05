@@ -20,6 +20,7 @@ export interface GameSettings {
   botCount: number;
   humanPlayerName: string;
   difficulty: GameState['difficulty'];
+  botVersion: GameState['botVersion'];
 }
 
 /**
@@ -205,6 +206,7 @@ export function initializeGame(settings: GameSettings): GameState {
     activeTossIn: null,
     recentActions: [],
     difficulty: settings.difficulty,
+    botVersion: settings.botVersion,
   };
 
   return gameState;
@@ -219,6 +221,7 @@ export function quickStartGame(playerName = 'You'): GameState {
     botCount: 1,
     humanPlayerName: playerName,
     difficulty: 'moderate',
+    botVersion: 'v1',
   });
 }
 
@@ -227,12 +230,14 @@ export function quickStartGame(playerName = 'You'): GameState {
  */
 export function fourPlayerGame(
   playerName = 'You',
-  difficulty: GameState['difficulty'] = 'moderate'
+  difficulty: GameState['difficulty'] = 'moderate',
+  botVersion: GameState['botVersion'] = 'v1'
 ): GameState {
   return initializeGame({
     playerCount: 4,
     botCount: 3,
     humanPlayerName: playerName,
     difficulty,
+    botVersion,
   });
 }

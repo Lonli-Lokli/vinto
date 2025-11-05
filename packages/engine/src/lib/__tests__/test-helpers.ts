@@ -98,6 +98,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     activeTossIn: null,
     recentActions: [],
     difficulty: 'moderate',
+    botVersion: 'v1',
   };
 
   const mergedState = {

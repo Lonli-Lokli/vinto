@@ -91,7 +91,9 @@ export const JackAction = observer(() => {
                 <div className="mt-0.5 text-2xs font-medium text-primary truncate max-w-[80px]">
                   {player1?.name || 'Unknown'}
                 </div>
-                <div className="text-xs text-secondary">Position {target1.position + 1}</div>
+                <div className="text-xs text-secondary">
+                  Position {target1.position + 1}
+                </div>
               </>
             ) : (
               <>
@@ -121,7 +123,10 @@ export const JackAction = observer(() => {
                 <div className="mt-0.5 text-2xs font-medium text-primary truncate max-w-[80px]">
                   {player2?.name || 'Unknown'}
                 </div>
-                <div className="text-xs text-secondary">  Position {target2.position + 1}</div>
+                <div className="text-xs text-secondary">
+                  {' '}
+                  Position {target2.position + 1}
+                </div>
               </>
             ) : (
               <>
@@ -147,7 +152,11 @@ export const JackAction = observer(() => {
         <SkipButton
           onClick={() => {
             if (!humanPlayer) return;
-            gameClient.dispatch(GameActions.skipJackSwap(humanPlayer.id));
+            if (hasBothCards) {
+              gameClient.dispatch(GameActions.skipJackSwap(humanPlayer.id));
+            } else {
+              gameClient.dispatch(GameActions.confirmPeek(humanPlayer.id));
+            }
           }}
         />
       </div>

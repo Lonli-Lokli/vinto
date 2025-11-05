@@ -1,7 +1,7 @@
 // engine/types/GameState.ts
 // Authoritative game state - the single source of truth
 
-import { Card, Difficulty, Pile, Rank } from './domain-types';
+import { Card, Difficulty, BotVersion, Pile, Rank } from './domain-types';
 
 /**
  * Complete, serializable game state
@@ -41,6 +41,7 @@ export interface GameState {
 
   // Configuration
   difficulty: Difficulty;
+  botVersion: BotVersion;
 }
 
 /**
@@ -279,6 +280,7 @@ export function createInitialGameState(
   gameId: string,
   players: PlayerState[],
   difficulty: Difficulty,
+  botVersion: BotVersion,
   deck: Card[]
 ): GameState {
   return {
@@ -298,5 +300,6 @@ export function createInitialGameState(
     activeTossIn: null,
     recentActions: [],
     difficulty,
+    botVersion,
   };
 }

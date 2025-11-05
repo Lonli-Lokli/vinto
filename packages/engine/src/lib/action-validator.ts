@@ -167,12 +167,18 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: `Not player turn for SELECT_ACTION_TARGET` };
+          return {
+            valid: false,
+            reason: `Not player turn for SELECT_ACTION_TARGET`,
+          };
         }
       }
 
       // Must be in awaiting_action or selecting phase (selecting is for bots processing toss-in)
-      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
+      if (
+        state.subPhase !== 'awaiting_action' &&
+        state.subPhase !== 'selecting'
+      ) {
         return {
           valid: false,
           reason: `Cannot select target in phase ${state.subPhase}`,
@@ -266,7 +272,10 @@ export function actionValidator(
       }
 
       // Must be in awaiting_action phase (selecting is for bots processing toss-in)
-      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
+      if (
+        state.subPhase !== 'awaiting_action' &&
+        state.subPhase !== 'selecting'
+      ) {
         return {
           valid: false,
           reason: `Cannot confirm peek in phase ${state.subPhase}`,
@@ -424,12 +433,18 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: `Not player turn for DECLARE_KING_ACTION` };
+          return {
+            valid: false,
+            reason: `Not player turn for DECLARE_KING_ACTION`,
+          };
         }
       }
 
       // Must be in awaiting_action or selecting phase (selecting is for bots processing toss-in)
-      if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
+      if (
+        state.subPhase !== 'awaiting_action' &&
+        state.subPhase !== 'selecting'
+      ) {
         return {
           valid: false,
           reason: `Cannot declare King action in phase ${state.subPhase}`,
@@ -701,6 +716,7 @@ export function actionValidator(
 
     case 'EMPTY':
     case 'UPDATE_DIFFICULTY':
+    case 'UPDATE_BOT_VERSION':
     case 'SET_NEXT_DRAW_CARD':
     case 'SWAP_HAND_WITH_DECK':
       // Always valid (configuration/debug actions)

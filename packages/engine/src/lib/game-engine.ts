@@ -21,6 +21,7 @@ import { handleSkipQueenSwap } from './cases/skip-queen-swap';
 import { handlePlayDiscard } from './cases/play-discard';
 import { handleUseCardAction } from './cases/use-card';
 import { handleUpdateDifficulty } from './cases/update-difficulty';
+import { handleUpdateBotVersion } from './cases/update-bot-version';
 import { handleSetNextDrawCard } from './cases/set-next-draw-card';
 import { handleSwapHandWithDeck } from './cases/swap-hand-with-deck';
 import { GameAction, GameState, NeverError } from '@vinto/shapes';
@@ -161,6 +162,10 @@ export class GameEngine {
 
       case 'UPDATE_DIFFICULTY':
         newState = handleUpdateDifficulty(state, action);
+        break;
+
+      case 'UPDATE_BOT_VERSION':
+        newState = handleUpdateBotVersion(state, action);
         break;
 
       case 'SET_NEXT_DRAW_CARD':

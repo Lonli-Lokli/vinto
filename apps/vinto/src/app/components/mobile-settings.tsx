@@ -63,6 +63,30 @@ export const SettingsPopover = observer(
               ))}
             </div>
           </div>
+
+          {/* Bot Version */}
+          <div>
+            <label className="block text-sm font-medium text-primary mb-2">
+              Bot Version
+            </label>
+            <div className="flex gap-2">
+              {(['v1', 'v2'] as const).map((version) => (
+                <button
+                  key={version}
+                  onClick={() =>
+                    gameClient.dispatch(GameActions.updateBotVersion(version))
+                  }
+                  className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                    gameClient.visualState.botVersion === version
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-surface-secondary text-primary border-primary/20 hover:bg-surface-primary'
+                  }`}
+                >
+                  {version.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

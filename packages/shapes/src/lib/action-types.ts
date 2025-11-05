@@ -1,7 +1,7 @@
 // engine/types/GameAction.ts
 // All possible game actions - the "language" for communicating with the engine
 
-import { Difficulty, Rank } from './domain-types';
+import { Difficulty, Rank, BotVersion } from './domain-types';
 
 /**
  * Discriminated union of all game actions
@@ -41,6 +41,7 @@ export type GameAction =
 
   // Configuration
   | UpdateDifficultyAction
+  | UpdateBotVersionAction
 
   // Debug/Testing
   | SetNextDrawCardAction
@@ -234,6 +235,13 @@ export interface UpdateDifficultyAction {
   type: 'UPDATE_DIFFICULTY';
   payload: {
     difficulty: Difficulty;
+  };
+}
+
+export interface UpdateBotVersionAction {
+  type: 'UPDATE_BOT_VERSION';
+  payload: {
+    botVersion: BotVersion;
   };
 }
 

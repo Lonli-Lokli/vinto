@@ -26,6 +26,8 @@ type ReactionSnapshot = {
   phase: GameClientState['phase'];
   turnCount: GameClientState['turnNumber'];
   currentPlayerId: GameClientInstance['currentPlayer']['id'];
+  difficulty: GameClientState['difficulty'];
+  botVersion: GameClientState['botVersion'];
 };
 
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
@@ -65,11 +67,18 @@ export class BotAIAdapter {
   private cachedActionDecision: BotActionDecision | null = null;
   private reactionQueue: Promise<void> = Promise.resolve();
   private isDisposed = false;
+  private currentDifficulty: GameClientState['difficulty'];
+  private currentBotVersion: GameClientState['botVersion'];
 
   constructor(private gameClient: GameClient) {
+    // Initialize current difficulty and bot version
+    this.currentDifficulty = this.gameClient.state.difficulty;
+    this.currentBotVersion = this.gameClient.state.botVersion;
+
     // Use existing bot decision service factory
     this.botDecisionService = BotDecisionServiceFactory.create(
-      this.gameClient.state.difficulty
+      this.gameClient.state.difficulty,
+      this.gameClient.state.botVersion
     );
 
     // Setup reactive bot turn execution
@@ -101,6 +110,8 @@ export class BotAIAdapter {
         vintoCallerId: this.gameClient.state.vintoCallerId,
         coalitionLeaderId: this.gameClient.state.coalitionLeaderId,
         phase: this.gameClient.state.phase,
+        difficulty: this.gameClient.state.difficulty,
+        botVersion: this.gameClient.state.botVersion,
       }),
       // Execute bot turn when state is ready
       // Reactions stay synchronous; async work is queued for sequential handling.
@@ -132,9 +143,25 @@ export class BotAIAdapter {
       });
   }
 
-  private async runQueuedReaction(_snapshot: ReactionSnapshot): Promise<void> {
+  private async runQueuedReaction(snapshot: ReactionSnapshot): Promise<void> {
     const state = this.gameClient.state;
     const isBot = this.gameClient.currentPlayer.isBot;
+
+    // Check if difficulty or bot version changed and recreate bot decision service if needed
+    if (
+      snapshot.difficulty !== this.currentDifficulty ||
+      snapshot.botVersion !== this.currentBotVersion
+    ) {
+      console.log(
+        `[BotAI] Bot settings changed from ${this.currentDifficulty}/${this.currentBotVersion} to ${snapshot.difficulty}/${snapshot.botVersion}, recreating bot decision service`
+      );
+      this.currentDifficulty = snapshot.difficulty;
+      this.currentBotVersion = snapshot.botVersion;
+      this.botDecisionService = BotDecisionServiceFactory.create(
+        snapshot.difficulty,
+        snapshot.botVersion
+      );
+    }
 
     // CRITICAL: Handle coalition leader selection when Vinto is called
     if (
@@ -420,13 +447,15 @@ export class BotAIAdapter {
           currentSubPhase === 'toss_queue_active'
         ) {
           // Check if this bot is the one who just finished their turn
-          const isCurrentTurnPlayer = latestActiveTossIn.originalPlayerIndex === 
-            this.gameClient.state.players.findIndex(p => p.id === botId);
+          const isCurrentTurnPlayer =
+            latestActiveTossIn.originalPlayerIndex ===
+            this.gameClient.state.players.findIndex((p) => p.id === botId);
 
           // If this is the current turn player, check if they should call Vinto
           if (isCurrentTurnPlayer && !this.gameClient.state.vintoCallerId) {
             const vintoContext = this.createBotContext(botId);
-            const shouldCallVinto = this.botDecisionService.shouldCallVinto(vintoContext);
+            const shouldCallVinto =
+              this.botDecisionService.shouldCallVinto(vintoContext);
 
             if (shouldCallVinto) {
               console.log(
@@ -741,7 +770,8 @@ export class BotAIAdapter {
       }
 
       // Declare the rank of the card that's CURRENTLY at that position
-      const declaredRank = this.cachedActionDecision?.declaredRank ?? cardAtPosition.rank;
+      const declaredRank =
+        this.cachedActionDecision?.declaredRank ?? cardAtPosition.rank;
       this.cachedActionDecision = null;
 
       this.gameClient.dispatch(
