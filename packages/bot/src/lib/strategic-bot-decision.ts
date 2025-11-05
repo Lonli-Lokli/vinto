@@ -219,13 +219,16 @@ export class StrategicBotDecisionService implements BotDecisionService {
     context: BotDecisionContext
   ): boolean {
     this.initializeIfNeeded(context);
+    const ranksToCheck: Rank[] = discardedRanks.filter(
+      (rank) => getCardValue(rank) >= 0 // never toss in Joker
+    );
 
     // Simple: always toss in if we have matching cards
     // (Tossing in is always beneficial: reduces hand size and score)
     return context.botPlayer.cards.some(
       (card, index) =>
         context.botPlayer.knownCardPositions.includes(index) &&
-        discardedRanks.includes(card.rank)
+        ranksToCheck.includes(card.rank)
     );
   }
 
