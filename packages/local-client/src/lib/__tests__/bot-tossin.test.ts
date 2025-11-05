@@ -253,7 +253,13 @@ describe('Bot Toss-In Integration Test', () => {
           createTestCard('4', 'c2'),
         ]),
       ],
-      1
+      1,
+      {
+        drawPile: Pile.fromCards([
+          createTestCard('3', 'spades'),
+          createTestCard('2', 'clubs'),
+        ])
+      }
     );
 
     const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
