@@ -303,25 +303,6 @@ export class BotAIAdapter {
     // Give bots time to "think" about toss-in
     await this.delay(NORMAL_DELAY);
 
-    // Check if the bot who just finished their turn should call Vinto
-    const turnPlayerIndex = activeTossIn.originalPlayerIndex;
-    const turnPlayer = this.gameClient.state.players[turnPlayerIndex];
-
-    if (
-      turnPlayer &&
-      turnPlayer.isBot &&
-      !this.gameClient.state.vintoCallerId
-    ) {
-      const context = this.createBotContext(turnPlayer.id);
-      const shouldCallVinto = this.botDecisionService.shouldCallVinto(context);
-
-      if (shouldCallVinto) {
-        console.log(`[BotAI] ${turnPlayer.id} calling Vinto after their turn!`);
-        this.gameClient.dispatch(GameActions.callVinto(turnPlayer.id));
-        return;
-      }
-    }
-
     // Process each bot player
     const botPlayers = this.gameClient.state.players.filter((p) => p.isBot);
     console.log(
@@ -438,6 +419,24 @@ export class BotAIAdapter {
           !latestActiveTossIn.playersReadyForNextTurn.includes(botId) &&
           currentSubPhase === 'toss_queue_active'
         ) {
+          // Check if this bot is the one who just finished their turn
+          const isCurrentTurnPlayer = latestActiveTossIn.originalPlayerIndex === 
+            this.gameClient.state.players.findIndex(p => p.id === botId);
+
+          // If this is the current turn player, check if they should call Vinto
+          if (isCurrentTurnPlayer && !this.gameClient.state.vintoCallerId) {
+            const vintoContext = this.createBotContext(botId);
+            const shouldCallVinto = this.botDecisionService.shouldCallVinto(vintoContext);
+
+            if (shouldCallVinto) {
+              console.log(
+                `[BotAI] ${botId} calling Vinto instead of marking ready!`
+              );
+              this.gameClient.dispatch(GameActions.callVinto(botId));
+              return; // Don't mark as ready, Vinto was called
+            }
+          }
+
           console.log(
             `[BotAI] ${botId} processed all ranks [${currentRanks.join(
               ','

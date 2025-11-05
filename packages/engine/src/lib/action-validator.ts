@@ -23,7 +23,7 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for DRAW_CARD` };
       }
 
       // Must be in idle phase
@@ -48,7 +48,7 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for SWAP_CARD` };
       }
 
       // Must be in choosing phase (after drawing card)
@@ -78,7 +78,7 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for DISCARD_CARD` };
       }
 
       // Must be in choosing phase (after drawing) or selecting phase (after swapping)
@@ -100,7 +100,7 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for PLAY_DISCARD` };
       }
 
       // Must be in idle or ai_thinking phase
@@ -125,7 +125,7 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for USE_CARD_ACTION` };
       }
 
       // Must be in choosing or selecting phase (after drawing/swapping, deciding to use action)
@@ -167,7 +167,7 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
+          return { valid: false, reason: `Not player turn for SELECT_ACTION_TARGET` };
         }
       }
 
@@ -261,13 +261,11 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
+          return { valid: false, reason: `Not player turn for ${action.type}` };
         }
       }
 
-      // Must be in awaiting_action phase (after peeking at card)
-      // Note: In a full implementation, we'd check for 'peeking' subphase
-      // For now, we accept awaiting_action as that's where peek actions happen
+      // Must be in awaiting_action phase (selecting is for bots processing toss-in)
       if (state.subPhase !== 'awaiting_action' && state.subPhase !== 'selecting') {
         return {
           valid: false,
@@ -284,11 +282,9 @@ export function actionValidator(
       // Must be player's turn
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for CALL_VINTO` };
       }
 
-      // Player must have low score (sum of cards <= threshold, e.g., 5)
-      // For MVP: just check they haven't called vinto already
       if (state.vintoCallerId !== null) {
         return { valid: false, reason: 'Vinto already called' };
       }
@@ -313,7 +309,7 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
+          return { valid: false, reason: `Not player turn for ${action.type}` };
         }
       }
 
@@ -371,7 +367,7 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
+          return { valid: false, reason: `Not player turn for ${action.type}` };
         }
       }
 
@@ -428,7 +424,7 @@ export function actionValidator(
       } else {
         const currentPlayer = state.players[state.currentPlayerIndex];
         if (currentPlayer.id !== playerId) {
-          return { valid: false, reason: 'Not player turn' };
+          return { valid: false, reason: `Not player turn for DECLARE_KING_ACTION` };
         }
       }
 
@@ -645,7 +641,7 @@ export function actionValidator(
       // Must be the current player
       const currentPlayer = state.players[state.currentPlayerIndex];
       if (currentPlayer.id !== playerId) {
-        return { valid: false, reason: 'Not player turn' };
+        return { valid: false, reason: `Not player turn for PROCESS_AI_TURN` };
       }
 
       return { valid: true };
