@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { RotateCw } from 'lucide-react';
+import { useIsDesktop } from '../hooks/use-is-desktop';
 
 /**
  * Landscape Warning Overlay
@@ -9,20 +10,16 @@ import { RotateCw } from 'lucide-react';
  * Asks users to rotate their device to portrait mode
  */
 export function LandscapeWarning() {
+  const isDesktop = useIsDesktop();
   const [isLandscape, setIsLandscape] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkOrientation = () => {
-      // Check if device is mobile (touch device with coarse pointer)
-      const isTouchDevice = window.matchMedia('(any-pointer: coarse)').matches;
-
       // Check if in landscape orientation
       const isLandscapeOrientation = window.matchMedia(
         '(orientation: landscape)'
       ).matches;
 
-      setIsMobile(isTouchDevice);
       setIsLandscape(isLandscapeOrientation);
     };
 
@@ -39,8 +36,8 @@ export function LandscapeWarning() {
     };
   }, []);
 
-  // Only show on mobile devices in landscape orientation
-  if (!isMobile || !isLandscape) {
+  // Only show on mobile devices (non-desktop) in landscape orientation
+  if (isDesktop || !isLandscape) {
     return null;
   }
 

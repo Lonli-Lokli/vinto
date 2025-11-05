@@ -278,7 +278,7 @@ export const GameTable = observer(() => {
           <div className="relative bg-table-gradient rounded-lg border-2 border-primary shadow-theme-lg p-3 w-full h-full min-h-0">
             {/* Top Player */}
             {top && (
-              <div className="absolute top-4 left-1/2 translate-x-8">
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
                 <PlayerArea
                   player={top.player}
                   position={top.position}
@@ -303,7 +303,7 @@ export const GameTable = observer(() => {
 
             {/* Left Player */}
             {left && (
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
                 <PlayerArea
                   player={left.player}
                   position={left.position}
@@ -328,7 +328,7 @@ export const GameTable = observer(() => {
 
             {/* Right Player */}
             {right && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                 <PlayerArea
                   player={right.player}
                   position={right.position}
@@ -352,7 +352,7 @@ export const GameTable = observer(() => {
             )}
 
             {/* Center - Draw & Discard Piles */}
-            <div className="absolute inset-16 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <DeckArea
                 discardPile={discardPile}
                 pendingCard={pendingCard ?? null}
@@ -374,7 +374,7 @@ export const GameTable = observer(() => {
             </div>
 
             {/* Human Player */}
-            <div className="absolute bottom-4 left-1/4">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
               {bottom && (
                 <PlayerArea
                   player={bottom.player}
