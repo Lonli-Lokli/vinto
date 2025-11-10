@@ -4,7 +4,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { GameHeader } from './game-header';
-import { MiddleArea, BottomArea } from './presentational';
+import { MiddleArea, UserControlsArea } from './presentational';
 import { CoalitionTurnIndicator } from './coalition-turn-indicator';
 import { CoalitionLeaderModal, VintoConfirmationModal } from './modals';
 import { useGameClientInitialized } from '@vinto/local-client';
@@ -37,15 +37,15 @@ export const GameContent = observer(() => {
             <div className="flex-1 min-w-0 w-full h-full">
               <MiddleArea />
             </div>
-            <div className="w-96 flex-shrink-0 border-l border-primary bg-surface-primary/80">
-              <BottomArea />
+            <div className="w-104 min-w-104 max-w-104 flex-shrink-0 border-l border-primary bg-surface-primary/80 flex flex-col justify-end">
+              <UserControlsArea />
             </div>
           </div>
       ) : (
         /* Mobile Layout: Vertical stack */
         <>
           <MiddleArea />
-          <BottomArea />
+          <UserControlsArea />
         </>
       )}
 

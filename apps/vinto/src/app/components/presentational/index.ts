@@ -1,5 +1,5 @@
 export * from './avatar';
-export * from './bottom-area';
+export * from './user-conrols-area';
 export * from './card';
 export * from './deck-area';
 export * from './discard-pile';

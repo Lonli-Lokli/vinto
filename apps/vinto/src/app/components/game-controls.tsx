@@ -57,10 +57,10 @@ Note: Call Vinto option will be available after you complete your turn during th
 
   return (
     <div className="w-full h-full">
-      <div className="h-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm flex flex-col">
+      <div className="h-full w-full bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
-          <h3 className="text-xs md:text-sm font-semibold text-primary leading-tight">
+          <h3 className="text-xs font-semibold text-primary leading-tight">
             Your turn
           </h3>
           <HelpPopover title="Game Controls" content={getHelpContent()} />
@@ -126,8 +126,8 @@ const FullTurnControls = observer(
     const discardInfo = getDiscardButtonInfo();
 
     return (
-      <div className="space-y-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+      <div className="space-y-1 w-full">
+        <div className="flex flex-col gap-1 w-full">
           {/* Draw from Deck */}
           <DrawCardButton onClick={handleDrawCard} disabled={deckEmpty} />
 

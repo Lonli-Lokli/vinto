@@ -24,6 +24,9 @@ module.exports = {
       },
       // Remove colors entirely - use CSS variable utility classes instead
       // All colors are now defined in theme.css as CSS variables with utility classes
+      width: {
+        104: '26rem', // 416px - for desktop right sidebar
+      },
       height: {
         18: '4.5rem',
       },

@@ -11,7 +11,7 @@ import { WaitingIndicator } from '../waiting-indicator';
 import { useCardAnimationStore } from '../di-provider';
 import { useGameClient } from '@vinto/local-client';
 
-export const BottomArea = observer(() => {
+export const UserControlsArea = observer(() => {
   const animationStore = useCardAnimationStore();
   const gameClient = useGameClient();
   const hideGameControls = gameClient.isFinalTurn && gameClient.visualState.phase !== 'scoring';
@@ -19,7 +19,7 @@ export const BottomArea = observer(() => {
 
   return (
     <div
-      className="sticky bottom-0 z-40 flex-shrink-0 from-white/95 to-transparent backdrop-blur-sm"
+      className="sticky bottom-0 z-40 flex-shrink-0 from-white/95 to-transparent backdrop-blur-sm w-full"
       style={{
         height: '25vh',
         minHeight: '100px',

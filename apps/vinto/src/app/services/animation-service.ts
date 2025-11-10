@@ -307,12 +307,12 @@ export class AnimationService {
           from: { type: 'draw' },
           to: { type: 'player', playerId, position: penaltyCardPosition },
           duration: 1500,
-          revealed: player.isHuman,
+          revealed: false,
           fullRotation: false,
         });
       }
 
-      this.animationStore.startAnimationSequence('sequential', steps);
+      this.animationStore.startAnimationSequence('parallel', steps);
       console.log(
         '[AnimationService] Incorrect declaration - sequential: drawn→hand, hand→discard, draw→hand'
       );
