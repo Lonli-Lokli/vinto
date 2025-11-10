@@ -1,6 +1,6 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, getCardAction, Rank } from '@vinto/shapes';
+import { CardAction, getCardAction, logger, Rank } from '@vinto/shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
