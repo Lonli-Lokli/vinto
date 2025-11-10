@@ -1127,7 +1127,7 @@ export class BotAIAdapter {
     );
 
     if (coalitionBots.length === 0) {
-      console.warn('[BotAI] No coalition bots found');
+      logger.warn('[BotAI] No coalition bots found');
       return;
     }
 

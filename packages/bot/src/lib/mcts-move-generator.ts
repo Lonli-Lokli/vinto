@@ -331,7 +331,7 @@ export class MCTSMoveGenerator {
       // Do NOT use hiddenCards here - it's empty until determinize() is called
       const memory = currentPlayer.knownCards.get(positions[0]);
       if (!memory || !memory.card) {
-        console.warn(
+        logger.warn(
           `[King Generator] No card memory for position ${positions[0]} - this should not happen`
         );
         return;

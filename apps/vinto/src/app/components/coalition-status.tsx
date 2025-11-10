@@ -42,7 +42,9 @@ export const CoalitionStatus = observer(() => {
   // Get all recent actions from the current turn
   const roundActions = React.useMemo(() => {
     const allActions = gameClient.visualState.roundActions || [];
-    return allActions.map((action) => `${action.playerName} ${action.description}`);
+    return allActions.map(
+      (action) => `${action.playerName} ${action.description}`
+    );
   }, [gameClient.visualState.roundActions]);
 
   return (

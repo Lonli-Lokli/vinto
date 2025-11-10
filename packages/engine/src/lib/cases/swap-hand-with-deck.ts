@@ -1,7 +1,7 @@
 // engine/cases/swap-hand-with-deck.ts
 // Handle SWAP_HAND_WITH_DECK action (debug/testing only)
 
-import { GameState, SwapHandWithDeckAction } from '@vinto/shapes';
+import { GameState, logger, SwapHandWithDeckAction } from '@vinto/shapes';
 import copy from 'fast-copy';
 
 /**
@@ -25,13 +25,13 @@ export function handleSwapHandWithDeck(
   // Find the player
   const player = newState.players.find((p) => p.id === playerId);
   if (!player) {
-    console.warn(`Player ${playerId} not found`, { playerId });
+    logger.warn(`Player ${playerId} not found`, { playerId });
     return state;
   }
 
   // Validate hand position
   if (handPosition < 0 || handPosition >= player.cards.length) {
-    console.warn(`Invalid hand position ${handPosition}`, {
+    logger.warn(`Invalid hand position ${handPosition}`, {
       handPosition,
       cardCount: player.cards.length,
     });
