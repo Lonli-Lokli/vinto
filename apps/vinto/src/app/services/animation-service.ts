@@ -740,31 +740,42 @@ export class AnimationService {
             // Step 2: Ace card to discard (parallel with indicator)
             steps.push({
               type: 'discard',
-              rank: actionCard.rank,
+              rank: 'A',
               from: { type: 'drawn' },
               to: { type: 'discard' },
               duration: 1500,
               revealed: true,
             });
 
+            steps.push({
+              type: 'draw',
+              rank: penaltyCard.rank,
+              from: {
+                type: 'draw'
+              },
+              to: {type: 'player', 'playerId': targetPlayerId, position: penaltyCardPosition},
+              duration: 1_500,
+              revealed: false,
+              fullRotation: false
+            })
             // Start indicator and discard in parallel, then penalty card
             this.animationStore.startAnimationSequence('parallel', steps);
 
-            // After penalty indicator completes, draw the penalty card
-            setTimeout(() => {
-              this.animationStore.startDrawAnimation(
-                penaltyCard.rank,
-                { type: 'draw' },
-                {
-                  type: 'player',
-                  playerId: targetPlayerId,
-                  position: penaltyCardPosition,
-                },
-                1500,
-                false, // Penalty cards are never revealed
-                false
-              );
-            }, 1500);
+            // // After penalty indicator completes, draw the penalty card
+            // setTimeout(() => {
+            //   this.animationStore.startDrawAnimation(
+            //     penaltyCard.rank,
+            //     { type: 'draw' },
+            //     {
+            //       type: 'player',
+            //       playerId: targetPlayerId,
+            //       position: penaltyCardPosition,
+            //     },
+            //     1500,
+            //     false, // Penalty cards are never revealed
+            //     false
+            //   );
+            // }, 1500);
 
             console.log(
               '[AnimationService] Ace action complete - penalty indicator, Ace to discard, then penalty card to target player'

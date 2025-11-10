@@ -294,24 +294,28 @@ export class MCTSMoveGenerator {
       // ONLY use known cards from the player's memory (high confidence)
       // King declaration should NEVER use determinized/sampled cards
       const memory = currentPlayer.knownCards.get(pos);
-      
+
       if (memory && memory.confidence > 0.5 && memory.card) {
         const card = memory.card;
         const rank = card.rank;
         const positions = ourRankMap.get(rank) || [];
         positions.push(pos);
         ourRankMap.set(rank, positions);
-        
+
         console.log(
-          `[King Generator] Position ${pos}: ${rank} (confidence: ${memory.confidence.toFixed(2)})`
+          `[King Generator] Position ${pos}: ${rank} (confidence: ${memory.confidence.toFixed(
+            2
+          )})`
         );
       } else {
         console.log(
-          `[King Generator] Position ${pos}: UNKNOWN (confidence: ${memory?.confidence?.toFixed(2) || 'N/A'})`
+          `[King Generator] Position ${pos}: UNKNOWN (confidence: ${
+            memory?.confidence?.toFixed(2) || 'N/A'
+          })`
         );
       }
     }
-    
+
     console.log(
       `[King Generator] Found ${ourRankMap.size} distinct ranks in known cards`
     );
@@ -336,9 +340,9 @@ export class MCTSMoveGenerator {
         );
         return;
       }
-      
+
       const card = memory.card;
-      
+
       console.log(
         `[King Generator] Evaluating declaration of ${rank} at position ${positions[0]}`
       );

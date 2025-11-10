@@ -112,7 +112,11 @@ export class GameClient {
 
     if (result.success) {
       // Add action to history (for UI display)
-      const newState = this.addActionToHistory(this._state, result.state, action);
+      const newState = this.addActionToHistory(
+        this._state,
+        result.state,
+        action
+      );
 
       // Update observable state
       this._state = newState;
@@ -128,7 +132,7 @@ export class GameClient {
         currentPhase: result.state.phase,
         currentSubPhase: result.state.subPhase,
         action: action,
-        actionHistory: this._actionHistory
+        actionHistory: this._actionHistory,
       });
       // Notify about error
       if (this.onStateError) {
@@ -141,7 +145,11 @@ export class GameClient {
    * Add action to history for UI display
    * Keeps last 10 actions per turn
    */
-  private addActionToHistory(oldState: GameState,state: GameState, action: GameAction): GameState {
+  private addActionToHistory(
+    oldState: GameState,
+    state: GameState,
+    action: GameAction
+  ): GameState {
     // Only track certain actions for display
     const description = this.getActionDescription(oldState, state, action);
     if (!description) return state;
@@ -224,11 +232,14 @@ export class GameClient {
           : `played action card`;
       }
 
-      case 'SWAP_CARD': {        
+      case 'SWAP_CARD': {
         const declaredRank = action.payload.declaredRank;
-        const correctlyDeclared = oldPlayer?.cards.length === player.cards.length;
+        const correctlyDeclared =
+          oldPlayer?.cards.length === player.cards.length;
         return declaredRank !== undefined
-          ? `swapped for ${declaredRank} (${correctlyDeclared ? 'correct' : 'incorrect'})`
+          ? `swapped for ${declaredRank} (${
+              correctlyDeclared ? 'correct' : 'incorrect'
+            })`
           : `swapped card at position ${action.payload.position + 1}`;
       }
 
@@ -262,52 +273,51 @@ export class GameClient {
       case 'CALL_VINTO':
         return `called Vinto!`;
       case 'SELECT_ACTION_TARGET': {
-        switch (newState.pendingAction?.targetType) {
+        const pendingAction = newState.pendingAction ?? oldState.pendingAction;
+        switch (pendingAction?.targetType) {
           case 'peek-then-swap':
-            return newState.pendingAction.targets.length === 2
+            return pendingAction.targets.length === 2
               ? `peeking at ${
                   newState.players.find(
                     (p) => p.id === newState.pendingAction?.targets[0].playerId
                   )?.nickname
-                } (pos ${newState.pendingAction?.targets[0].position + 1}) and ${
+                } (pos ${pendingAction?.targets[0].position + 1}) and ${
                   newState.players.find(
                     (p) => p.id === newState.pendingAction?.targets[1].playerId
                   )?.nickname
-                } (pos ${newState.pendingAction?.targets[1].position + 1})`
+                } (pos ${pendingAction?.targets[1].position + 1})`
               : null;
           case 'swap-cards':
-            return newState.pendingAction.targets.length === 2
+            return pendingAction.targets.length === 2
               ? `thinking about ${
                   newState.players.find(
                     (p) => p.id === newState.pendingAction?.targets[0].playerId
                   )?.nickname
-                } (pos ${newState.pendingAction?.targets[0].position + 1}) and ${
+                } (pos ${pendingAction?.targets[0].position + 1}) and ${
                   newState.players.find(
                     (p) => p.id === newState.pendingAction?.targets[1].playerId
                   )?.nickname
-                } (pos ${newState.pendingAction?.targets[1].position + 1})`
+                } (pos ${pendingAction?.targets[1].position + 1})`
               : null;
           case 'force-draw':
-            return newState.pendingAction.targets.length === 1
-              ? `forcing ${
-                  newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[0].playerId
-                  )?.nickname
-                } to draw`
-              : null;
+            return `forcing ${
+              newState.players.find(
+                (p) => p.id === action.payload.targetPlayerId
+              )?.nickname
+            } to draw`;
           case 'opponent-card':
-            return newState.pendingAction.targets.length === 1
+            return pendingAction.targets.length === 1
               ? `peeked at ${
                   newState.players.find(
                     (p) => p.id === newState.pendingAction?.targets[0].playerId
                   )?.nickname
-                }'s card  (pos ${newState.pendingAction?.targets[0].position + 1})`
+                }'s card  (pos ${pendingAction?.targets[0].position + 1})`
               : null;
 
           case 'own-card':
-            return newState.pendingAction.targets.length === 1
+            return pendingAction.targets.length === 1
               ? `peeked at own card (pos ${
-                  newState.pendingAction?.targets[0].position + 1
+                  pendingAction?.targets[0].position + 1
                 })`
               : null;
           default:
