@@ -768,15 +768,36 @@ dialog[modal-mode='mini'] {
 
 /* Coalition Leader Dialog specific styles */
 .coalition-leader-dialog {
-  max-inline-size: min(90vw, 48rem);
+  max-inline-size: min(90vw, 42rem);
 }
 
-.coalition-leader-dialog .dialog-header-content {
+/* Override form grid to prevent scrolling */
+.coalition-leader-dialog > form {
+  max-block-size: none;
+  height: auto;
+}
+
+/* Header layout */
+.coalition-header-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.coalition-header-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.coalition-header-top h3 {
+  flex: 1;
+  text-align: center;
+  font-size: 1.125rem;
+  margin: 0;
 }
 
 .coalition-leader-dialog .dialog-icon {
@@ -784,27 +805,43 @@ dialog[modal-mode='mini'] {
   flex-shrink: 0;
 }
 
-.coalition-leader-dialog .dialog-subtitle {
-  margin: 0.5rem 0 0 0;
-  font-size: 1rem;
+.coalition-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   text-align: center;
-  color: rgb(var(--color-text-secondary));
+}
+
+.coalition-leader-dialog .dialog-subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: rgb(var(--color-text-primary));
+  font-weight: 500;
 }
 
 .coalition-leader-dialog .dialog-description {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.875rem;
-  text-align: center;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: rgb(var(--color-text-secondary));
 }
 
+/* Article - remove scroll */
+.coalition-leader-dialog > form > article {
+  overflow-y: visible;
+  padding-block: 1.25rem;
+}
+
+/* Grid layout */
 .coalition-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.875rem;
   width: 100%;
 }
 
+/* Player cards */
 .coalition-player-card {
   position: relative;
   padding: 0.5rem;
@@ -817,21 +854,87 @@ dialog[modal-mode='mini'] {
 .coalition-player-card.is-leader {
   border-color: rgb(var(--color-warning));
   background: rgba(var(--color-warning), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--color-warning), 0.15);
 }
 
 .leader-badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -2px;
+  right: -2px;
   display: flex;
   align-items: center;
   gap: 0.25rem;
   background: rgb(var(--color-warning));
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
-  border-radius: 0 0.5rem 0 0.5rem;
+  border-radius: 0 0.625rem 0 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Footer adjustments */
+.coalition-leader-dialog > form > footer {
+  padding-inline: 1.5rem;
+  padding-block: 1rem;
+}
+
+.coalition-leader-dialog > form > footer > menu {
+  width: 100%;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .coalition-leader-dialog {
+    max-inline-size: 95vw;
+  }
+
+  .coalition-header-top h3 {
+    font-size: 1rem;
+  }
+
+  .coalition-leader-dialog .dialog-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .coalition-leader-dialog .dialog-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .coalition-leader-dialog .dialog-description {
+    font-size: 0.75rem;
+  }
+
+  .coalition-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .coalition-leader-dialog > form > article {
+    padding-block: 1rem;
+    padding-inline: 1rem;
+  }
+
+  .coalition-leader-dialog > form > header,
+  .coalition-leader-dialog > form > footer {
+    padding-inline: 1rem;
+    padding-block: 0.875rem;
+  }
+}
+
+/* Desktop - 2 column layout for 2-3 players */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .coalition-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop - 3 column layout for 4+ players */
+@media (min-width: 1025px) {
+  .coalition-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* Vinto Confirmation Dialog specific styles */

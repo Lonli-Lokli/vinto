@@ -244,7 +244,10 @@ function setupKingTossInMultiRank(
       participants: [],
       queuedActions: [],
       waitingForInput: !hasAction,
-      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(
+        newState.players,
+        newState.coalitionLeaderId
+      ),
     };
 
     newState.subPhase = hasAction ? 'awaiting_action' : 'toss_queue_active';

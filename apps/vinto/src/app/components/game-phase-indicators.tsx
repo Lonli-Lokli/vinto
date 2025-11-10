@@ -213,7 +213,7 @@ const TossInIndicator = observer(
         )
       : false;
 
-    const recentActions = gameClient.visualState.recentActions.map(
+    const recentActions = gameClient.visualState.turnActions.map(
       (action) => `${action.playerName} ${action.description}`
     );
 

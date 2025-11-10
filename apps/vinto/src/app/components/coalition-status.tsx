@@ -10,6 +10,7 @@ import { Avatar } from './presentational';
 /**
  * Coalition Status Display - Shows in bottom area during final phase
  * Displays coalition formation: Leader + Members vs Vinto Caller
+ * Also shows recent actions from all players
  */
 export const CoalitionStatus = observer(() => {
   const gameClient = useGameClient();
@@ -32,6 +33,17 @@ export const CoalitionStatus = observer(() => {
 
   const isCurrentPlayerLeader = currentPlayer?.id === coalitionLeader.id;
   const isCurrentPlayerVinto = currentPlayer?.id === vintoCallerId;
+  const isHumanCoalitionMember =
+    currentPlayer?.isHuman &&
+    !isCurrentPlayerLeader &&
+    !isCurrentPlayerVinto &&
+    coalitionMembers.some((m) => m.id === currentPlayer?.id);
+
+  // Get all recent actions from the current turn
+  const roundActions = React.useMemo(() => {
+    const allActions = gameClient.visualState.roundActions || [];
+    return allActions.map((action) => `${action.playerName} ${action.description}`);
+  }, [gameClient.visualState.roundActions]);
 
   return (
     <div className="absolute top-0 left-0 right-0 z-10">
@@ -49,16 +61,30 @@ export const CoalitionStatus = observer(() => {
               <span className="font-semibold text-primary">
                 {currentPlayer.name}
               </span>
-              {!isCurrentPlayerLeader &&
-                !isCurrentPlayerVinto &&
-                currentPlayer.id !== coalitionLeader.id && (
-                  <span className="text-tertiary text-xs ml-1">
-                    (Leader decides)
-                  </span>
-                )}
+              {isHumanCoalitionMember && (
+                <span className="text-tertiary text-xs ml-1">
+                  (Leader decides)
+                </span>
+              )}
             </div>
           )}
         </div>
+
+        {/* Recent Actions - only show if there are any */}
+        {roundActions.length > 0 && (
+          <div className="mb-2.5 bg-surface-tertiary/40 rounded px-2 py-1.5 border border-primary/10">
+            <div className="text-tertiary text-xs font-semibold uppercase tracking-wide mb-1">
+              Round Actions
+            </div>
+            <div className="space-y-0.5">
+              {roundActions.map((action, idx) => (
+                <div key={idx} className="text-secondary text-xs">
+                  {action}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Teams display */}
         <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start">

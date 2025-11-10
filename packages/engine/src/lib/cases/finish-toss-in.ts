@@ -28,7 +28,10 @@ export function handleFinishTossInPeriod(
     newState.activeTossIn.participants = [];
     newState.activeTossIn.queuedActions = [];
     newState.activeTossIn.waitingForInput = false;
-    newState.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(newState.players);
+    newState.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
+      newState.players,
+      newState.coalitionLeaderId
+    );
     newState.activeTossIn.failedAttempts = [];
 
     console.log(

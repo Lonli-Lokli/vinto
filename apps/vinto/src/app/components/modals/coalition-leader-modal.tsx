@@ -88,8 +88,28 @@ export const CoalitionLeaderModal = observer(() => {
   const vintoCaller = players.find((p) => p.isVintoCaller);
   const coalitionLeaderId = gameClient.visualState.coalitionLeaderId;
 
+  const [selectedLeaderId, setSelectedLeaderId] = React.useState<string | null>(
+    coalitionLeaderId
+  );
+
+  // Update local state when coalition leader is set in game state
+  React.useEffect(() => {
+    if (coalitionLeaderId) {
+      setSelectedLeaderId(coalitionLeaderId);
+    }
+  }, [coalitionLeaderId]);
+
   const handleSelectLeader = (playerId: string) => {
-    gameClient.dispatch(GameActions.setCoalitionLeader(playerId));
+    // Only update local state, don't dispatch action yet
+    setSelectedLeaderId(playerId);
+  };
+
+  const handleConfirm = () => {
+    if (selectedLeaderId) {
+      // Dispatch the action only when confirming
+      gameClient.dispatch(GameActions.setCoalitionLeader(selectedLeaderId));
+      dialogRef.current?.close('confirm');
+    }
   };
 
   return (
@@ -100,38 +120,42 @@ export const CoalitionLeaderModal = observer(() => {
       className="dialog-mega coalition-leader-dialog"
       {...({ loading: 'true' } as React.HTMLAttributes<HTMLDialogElement>)}
     >
-      <form method="dialog">
+      <form method="dialog" onSubmit={(e) => e.preventDefault()}>
         <header>
-          <div className="dialog-header-content">
-            <Crown className="dialog-icon" size={32} />
-            <h3>Select Coalition Leader</h3>
-            <button
-              type="button"
-              onClick={() => dialogRef.current?.close('close')}
-              className="dialog-close-btn"
-              aria-label="Close coalition leader dialog"
-            >
-              <span aria-hidden="true">✕</span>
-            </button>
+          <div className="coalition-header-layout">
+            <div className="coalition-header-top">
+              <Crown className="dialog-icon" size={28} />
+              <h3>Select Coalition Leader</h3>
+              <button
+                type="button"
+                onClick={() => dialogRef.current?.close('close')}
+                className="dialog-close-btn"
+                aria-label="Close coalition leader dialog"
+              >
+                <span aria-hidden="true">✕</span>
+              </button>
+            </div>
+            <div className="coalition-header-info">
+              <p className="dialog-subtitle">
+                {vintoCaller?.name} called Vinto! Choose who will lead the
+                coalition.
+              </p>
+              <p className="dialog-description">
+                The leader will see all coalition cards and play for the team.
+              </p>
+            </div>
           </div>
-          <p className="dialog-subtitle">
-            {vintoCaller?.name} called Vinto! Choose who will lead the
-            coalition.
-          </p>
-          <p className="dialog-description">
-            The leader will see all coalition cards and play for the team.
-          </p>
         </header>
 
         <article>
           <div className="coalition-grid">
             {coalitionMembers.map((player) => {
-              const isCoalitionLeader = coalitionLeaderId === player.id;
+              const isSelected = selectedLeaderId === player.id;
               return (
                 <div
                   key={player.id}
                   className={`coalition-player-card ${
-                    isCoalitionLeader ? 'is-leader' : ''
+                    isSelected ? 'is-leader' : ''
                   }`}
                 >
                   <OpponentSelectButton
@@ -141,10 +165,10 @@ export const CoalitionLeaderModal = observer(() => {
                     onClick={() => handleSelectLeader(player.id)}
                     showAvatar={true}
                     player={player}
-                    isSelected={isCoalitionLeader}
+                    isSelected={isSelected}
                     className="w-full"
                   />
-                  {isCoalitionLeader && (
+                  {isSelected && (
                     <div className="leader-badge">
                       <Crown size={12} />
                       <span>Leader</span>
@@ -159,8 +183,10 @@ export const CoalitionLeaderModal = observer(() => {
         <footer>
           <menu>
             <ContinueButton
-              onClick={() => dialogRef.current?.close('confirm')}
-              disabled={!coalitionLeaderId}
+              onClick={handleConfirm}
+              disabled={!selectedLeaderId}
+              className="w-full"
+              type="button"
             >
               Confirm Leader
             </ContinueButton>

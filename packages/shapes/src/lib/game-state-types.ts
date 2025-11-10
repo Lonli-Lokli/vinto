@@ -37,7 +37,9 @@ export interface GameState {
   activeTossIn: ActiveTossIn | null;
 
   // Action history (for UI display)
-  recentActions: GameActionHistory[];
+  turnActions: GameActionHistory[];
+
+  roundActions: GameActionHistory[];
 
   // Configuration
   difficulty: Difficulty;
@@ -150,6 +152,7 @@ export interface GameActionHistory {
   description: string;
   timestamp: number;
   turnNumber: number;
+  roundNumber: number;
 }
 
 /**
@@ -298,7 +301,8 @@ export function createInitialGameState(
     discardPile: new Pile(),
     pendingAction: null,
     activeTossIn: null,
-    recentActions: [],
+    turnActions: [],
+    roundActions: [],
     difficulty,
     botVersion,
   };

@@ -41,7 +41,7 @@ export function handleUseCardAction(
 
   if (!newState.activeTossIn) {
     // Initialize toss-in phase
-    // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
+    // Players who called VINTO and coalition members are automatically marked as ready (can't participate in toss-in)
     newState.activeTossIn = {
       ranks: [newState.pendingAction.card.rank],
       initiatorId: action.payload.playerId,
@@ -49,7 +49,10 @@ export function handleUseCardAction(
       participants: [],
       queuedActions: [],
       waitingForInput: true,
-      playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+      playersReadyForNextTurn: getAutomaticallyReadyPlayers(
+        newState.players,
+        newState.coalitionLeaderId
+      ),
     };
   }
 

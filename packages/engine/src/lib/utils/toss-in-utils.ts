@@ -12,19 +12,36 @@ import { getTargetTypeFromRank } from './action-utils';
 
 /**
  * Get the list of player IDs who should be automatically marked as ready for toss-in.
- * Currently, only players who have called Vinto are automatically marked as ready
- * (they cannot participate in toss-in after calling Vinto).
+ * This includes:
+ * - Players who have called Vinto (they cannot participate in toss-in after calling Vinto)
+ * - Players in a coalition who are not the leader (they don't control their own turns)
  *
  * @param players - Array of all players in the game
+ * @param coalitionLeaderId - ID of the coalition leader (if any)
  * @returns Array of player IDs who are automatically ready
  */
-export function getAutomaticallyReadyPlayers(players: PlayerState[]): string[] {
-  return players.filter((p) => p.isVintoCaller).map((p) => p.id);
+export function getAutomaticallyReadyPlayers(
+  players: PlayerState[],
+  coalitionLeaderId: string | null
+): string[] {
+  return players
+    .filter((p) => {
+      // Vinto callers are automatically ready
+      if (p.isVintoCaller) return true;
+      
+      // Coalition members who are not the leader are automatically ready
+      if (coalitionLeaderId && p.coalitionWith.length > 0 && p.id !== coalitionLeaderId) {
+        return true;
+      }
+      
+      return false;
+    })
+    .map((p) => p.id);
 }
 
 /**
  * Clear the ready list for a toss-in, resetting it to only include
- * players who should be automatically marked as ready (e.g., Vinto callers).
+ * players who should be automatically marked as ready (e.g., Vinto callers, coalition members).
  *
  * This should be called when:
  * 1. A new toss-in round starts after a queued action completes
@@ -35,7 +52,8 @@ export function getAutomaticallyReadyPlayers(players: PlayerState[]): string[] {
 export function clearTossInReadyList(state: GameState): void {
   if (state.activeTossIn) {
     state.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
-      state.players
+      state.players,
+      state.coalitionLeaderId
     );
   }
 }
@@ -103,7 +121,8 @@ export function advanceTurnAfterTossIn(
   state.activeTossIn.queuedActions = [];
   state.activeTossIn.waitingForInput = false;
   state.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
-    state.players
+    state.players,
+    state.coalitionLeaderId
   );
   state.activeTossIn.failedAttempts = [];
   state.activeTossIn.originalPlayerIndex = state.currentPlayerIndex;
@@ -167,7 +186,10 @@ export function clearTossInAfterActionableCard(
         participants: [],
         queuedActions: [],
         waitingForInput: true,
-        playersReadyForNextTurn: getAutomaticallyReadyPlayers(newState.players),
+        playersReadyForNextTurn: getAutomaticallyReadyPlayers(
+          newState.players,
+          newState.coalitionLeaderId
+        ),
       };
     }
 

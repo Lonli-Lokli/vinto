@@ -204,7 +204,8 @@ export function initializeGame(settings: GameSettings): GameState {
     discardPile: new Pile(),
     pendingAction: null,
     activeTossIn: null,
-    recentActions: [],
+    turnActions: [],
+    roundActions: [],
     difficulty: settings.difficulty,
     botVersion: settings.botVersion,
   };

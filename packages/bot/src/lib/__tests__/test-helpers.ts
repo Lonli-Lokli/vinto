@@ -97,7 +97,8 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     discardPile: toPile(),
     pendingAction: null,
     activeTossIn: null,
-    recentActions: [],
+    turnActions: [],
+    roundActions: [],
     difficulty: 'moderate',
     botVersion: 'v1',
   };

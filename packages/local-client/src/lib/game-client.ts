@@ -162,12 +162,17 @@ export class GameClient {
       description,
       timestamp: Date.now(),
       turnNumber: state.turnNumber,
+      roundNumber: state.roundNumber,
     };
 
     const newState = copy(state);
     // Only keep actions from the latest turnNumber
-    newState.recentActions = [...state.recentActions, historyEntry].filter(
+    newState.turnActions = [...state.turnActions, historyEntry].filter(
       (a) => a.turnNumber === historyEntry.turnNumber
+    );
+
+    newState.roundActions = [...state.roundActions, historyEntry].filter(
+      (a) => a.roundNumber === historyEntry.roundNumber
     );
 
     return newState;
@@ -185,6 +190,8 @@ export class GameClient {
       if ('payload' in action && 'playerId' in action.payload) {
         return p.id === action.payload.playerId;
       }
+
+      return false;
     });
     const player = newState.players.find((p) => {
       if ('payload' in action && 'playerId' in action.payload) {
