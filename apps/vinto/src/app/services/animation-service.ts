@@ -140,9 +140,12 @@ export class AnimationService {
         this.handleSkipJackSwap(oldState, newState, action);
         break;
 
+      case 'PLAYER_TOSS_IN_FINISHED': 
+        this.handlePlayerTossInFinished(oldState, newState, action);
+        break;
+
       default:
         // No animation needed for this action
-
         break;
     }
 
@@ -1074,6 +1077,20 @@ export class AnimationService {
     console.log(
       '[AnimationService] Jack swap skipped - showing shake animation on selected cards'
     );
+  }
+
+  private handlePlayerTossInFinished(
+    _oldState: GameState,
+    newState: GameState,
+    _action: GameAction
+  ): void {
+    if (newState.pendingAction) {
+      this.animationStore.startPlayActionAnimation(newState.pendingAction.card.rank, {
+        type: 'discard'
+      }, 2_000 );
+
+      console.log('[AnimationService] Player toss-in finished - play action animation started');
+    }
   }
 
   /**

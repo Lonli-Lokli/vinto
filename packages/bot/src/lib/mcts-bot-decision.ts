@@ -1136,11 +1136,19 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Update bot memory from context (cards bot has seen)
    */
   private updateMemoryFromContext(context: BotDecisionContext): void {
+    console.log(
+      `[Memory Update] ${this.botId} has ${context.botPlayer.knownCardPositions.length} known card positions:`,
+      context.botPlayer.knownCardPositions
+    );
+    
     // Update from bot's own known cards
     context.botPlayer.cards.forEach((card, position) => {
       if (context.botPlayer.knownCardPositions.includes(position)) {
         const existing = this.botMemory.getCardMemory(this.botId, position);
         if (!existing || existing.card?.id !== card.id) {
+          console.log(
+            `[Memory Update] ${this.botId} observing own card at position ${position}: ${card.rank}`
+          );
           this.botMemory.observeCard(card, this.botId, position);
         }
       }
@@ -1161,12 +1169,18 @@ export class MCTSBotDecisionService implements BotDecisionService {
    * Construct MCTS game state from bot context
    */
   private constructGameState(context: BotDecisionContext): MCTSGameState {
-    const players: MCTSPlayerState[] = context.allPlayers.map((p) => ({
-      id: p.id,
-      cardCount: p.cards.length,
-      knownCards: this.botMemory.getPlayerMemory(p.id),
-      score: this.estimatePlayerScore(p.id, context),
-    }));
+    const players: MCTSPlayerState[] = context.allPlayers.map((p) => {
+      const playerMemory = this.botMemory.getPlayerMemory(p.id);
+      console.log(
+        `[GameState] Player ${p.id} memory: ${playerMemory.size} cards known`
+      );
+      return {
+        id: p.id,
+        cardCount: p.cards.length,
+        knownCards: playerMemory,
+        score: this.estimatePlayerScore(p.id, context),
+      };
+    });
 
     // Determine if we're in toss-in phase based on game state
     const isTossInPhase =

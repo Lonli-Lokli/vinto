@@ -32,15 +32,15 @@ export const GameContent = observer(() => {
 
       {/* Main Game Layout */}
       {isDesktop ? (
-          /* Desktop Layout: Middle area fills all available space, Bottom area on right */
-          <div className="flex flex-1 min-h-0 justify-center items-stretch w-full h-full">
-            <div className="flex-1 min-w-0 w-full h-full">
-              <MiddleArea />
-            </div>
-            <div className="w-104 min-w-104 max-w-104 flex-shrink-0 border-l border-primary bg-surface-primary/80 flex flex-col justify-end">
-              <UserControlsArea />
-            </div>
+        /* Desktop Layout: Middle area fills all available space, Bottom area on right */
+        <div className="flex flex-1 min-h-0 justify-center items-stretch w-full h-full">
+          <div className="flex-1 min-w-0 w-full h-full">
+            <MiddleArea />
           </div>
+          <div className="w-104 min-w-104 max-w-104 flex-shrink-0 border-l border-primary bg-surface-primary/80 flex flex-col justify-end">
+            <UserControlsArea />
+          </div>
+        </div>
       ) : (
         /* Mobile Layout: Vertical stack */
         <>

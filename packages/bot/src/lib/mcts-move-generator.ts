@@ -283,18 +283,38 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer || currentPlayer.id !== currentPlayerId) return moves;
 
+    console.log(
+      `[King Generator] Player ${currentPlayerId} has ${currentPlayer.cardCount} cards, ${currentPlayer.knownCards.size} known cards in memory`
+    );
+
     // Build map: rank → positions we have
     const ourRankMap = new Map<Rank, number[]>();
 
     for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+      // ONLY use known cards from the player's memory (high confidence)
+      // King declaration should NEVER use determinized/sampled cards
       const memory = currentPlayer.knownCards.get(pos);
+      
       if (memory && memory.confidence > 0.5 && memory.card) {
-        const rank = memory.card.rank;
+        const card = memory.card;
+        const rank = card.rank;
         const positions = ourRankMap.get(rank) || [];
         positions.push(pos);
         ourRankMap.set(rank, positions);
+        
+        console.log(
+          `[King Generator] Position ${pos}: ${rank} (confidence: ${memory.confidence.toFixed(2)})`
+        );
+      } else {
+        console.log(
+          `[King Generator] Position ${pos}: UNKNOWN (confidence: ${memory?.confidence?.toFixed(2) || 'N/A'})`
+        );
       }
     }
+    
+    console.log(
+      `[King Generator] Found ${ourRankMap.size} distinct ranks in known cards`
+    );
 
     // Calculate strategic value for each possible King declaration
     const declarations: Array<{
@@ -307,8 +327,21 @@ export class MCTSMoveGenerator {
 
     // Evaluate each card we could declare
     ourRankMap.forEach((positions, rank) => {
-      const card = state.hiddenCards.get(`${currentPlayer.id}-${positions[0]}`);
-      if (!card) return;
+      // Get card from memory (which we already used to build ourRankMap)
+      // Do NOT use hiddenCards here - it's empty until determinize() is called
+      const memory = currentPlayer.knownCards.get(positions[0]);
+      if (!memory || !memory.card) {
+        console.warn(
+          `[King Generator] No card memory for position ${positions[0]} - this should not happen`
+        );
+        return;
+      }
+      
+      const card = memory.card;
+      
+      console.log(
+        `[King Generator] Evaluating declaration of ${rank} at position ${positions[0]}`
+      );
 
       let strategicValue = 0;
       let reason = '';
