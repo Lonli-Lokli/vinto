@@ -14,6 +14,14 @@ import { Avatar } from './presentational';
  */
 export const CoalitionStatus = observer(() => {
   const gameClient = useGameClient();
+    // Get all recent actions from the current turn
+  const roundActions = React.useMemo(() => {
+    const allActions = gameClient.visualState.roundActions || [];
+    return allActions.map(
+      (action) => `${action.playerName} ${action.description}`
+    );
+  }, [gameClient.visualState.roundActions]);
+  
 
   const phase = gameClient.visualState.phase;
   const vintoCallerId = gameClient.visualState.vintoCallerId;
@@ -28,6 +36,11 @@ export const CoalitionStatus = observer(() => {
     (p) => p.id !== vintoCallerId && !p.isVintoCaller
   );
 
+      // Only show during final phase when coalition exists
+  if (phase !== 'final' || !coalitionLeader || !vintoCallerId) {
+    return null;
+  }
+
   const isCurrentPlayerLeader = currentPlayer?.id === coalitionLeader.id;
   const isCurrentPlayerVinto = currentPlayer?.id === vintoCallerId;
   const isHumanCoalitionMember =
@@ -36,18 +49,8 @@ export const CoalitionStatus = observer(() => {
     !isCurrentPlayerVinto &&
     coalitionMembers.some((m) => m.id === currentPlayer?.id);
 
-  // Get all recent actions from the current turn
-  const roundActions = React.useMemo(() => {
-    const allActions = gameClient.visualState.roundActions || [];
-    return allActions.map(
-      (action) => `${action.playerName} ${action.description}`
-    );
-  }, [gameClient.visualState.roundActions]);
 
-    // Only show during final phase when coalition exists
-  if (phase !== 'final' || !coalitionLeader || !vintoCallerId) {
-    return null;
-  }
+
 
   return (
     <div className="absolute top-0 left-0 right-0 z-10">
