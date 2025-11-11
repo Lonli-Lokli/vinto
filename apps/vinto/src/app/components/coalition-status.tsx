@@ -21,10 +21,7 @@ export const CoalitionStatus = observer(() => {
   const currentPlayer = gameClient.currentPlayer;
   const players = gameClient.visualState.players;
 
-  // Only show during final phase when coalition exists
-  if (phase !== 'final' || !coalitionLeader || !vintoCallerId) {
-    return null;
-  }
+
 
   const vintoCaller = players.find((p) => p.id === vintoCallerId);
   const coalitionMembers = players.filter(
@@ -46,6 +43,11 @@ export const CoalitionStatus = observer(() => {
       (action) => `${action.playerName} ${action.description}`
     );
   }, [gameClient.visualState.roundActions]);
+
+    // Only show during final phase when coalition exists
+  if (phase !== 'final' || !coalitionLeader || !vintoCallerId) {
+    return null;
+  }
 
   return (
     <div className="absolute top-0 left-0 right-0 z-10">
