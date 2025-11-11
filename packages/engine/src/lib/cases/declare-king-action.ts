@@ -144,7 +144,7 @@ function handleCorrectDeclaration(
       card: removedCard,
       from: 'hand',
       playerId,
-      actionPhase: 'selecting-target',
+      actionPhase: 'choosing-action',
       targetType,
       targets: [],
     };
