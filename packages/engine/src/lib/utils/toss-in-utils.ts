@@ -101,6 +101,7 @@ export function advanceTurnAfterTossIn(
   // Increment turn count when wrapping back to first player
   if (state.currentPlayerIndex === 0) {
     state.roundNumber++;
+    state.roundFailedAttempts = [];
   }
 
   if (state.drawPile.length === 1) {

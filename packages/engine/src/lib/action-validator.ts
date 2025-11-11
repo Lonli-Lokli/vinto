@@ -536,7 +536,7 @@ export function actionValidator(
       }
 
       // Check if player has already made a failed attempt
-      const hasFailedAttempt = state.activeTossIn.failedAttempts?.some(
+      const hasFailedAttempt = state.roundFailedAttempts.some(
         (attempt) => attempt.playerId === playerId
       );
       if (hasFailedAttempt) {

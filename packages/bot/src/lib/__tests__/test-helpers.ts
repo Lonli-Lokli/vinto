@@ -9,7 +9,7 @@ import {
   Pile,
   PlayerState,
 } from '@vinto/shapes';
-import { BotDecisionContext } from '../mcts-bot-decision';
+import { BotDecisionContext } from '../shapes';
 
 /**
  * Create a test card with proper value mapping
@@ -101,6 +101,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     roundActions: [],
     difficulty: 'moderate',
     botVersion: 'v1',
+    roundFailedAttempts: [],
   };
 
   return {

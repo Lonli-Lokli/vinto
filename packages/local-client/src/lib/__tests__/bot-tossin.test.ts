@@ -1,6 +1,5 @@
 // bot-tossin.integration.test.ts
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { BotAIAdapter } from '../adapters/botAIAdapter';
 import { GameActions } from '@vinto/engine';
 import { Pile } from '@vinto/shapes';
 import {

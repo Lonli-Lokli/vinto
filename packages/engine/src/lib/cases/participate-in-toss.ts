@@ -102,6 +102,12 @@ export function handleParticipateInTossIn(
         position,
         expectedRanks: newState.activeTossIn.ranks,
       });
+        newState.roundFailedAttempts.push({
+        playerId,
+        cardRank: card.rank,
+        position,
+        expectedRanks: newState.activeTossIn.ranks,
+      });
     }
 
     // When toss-in fails, ALL attempted cards are revealed to ALL players

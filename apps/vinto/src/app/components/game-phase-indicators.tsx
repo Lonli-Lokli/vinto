@@ -207,11 +207,9 @@ const TossInIndicator = observer(
     const isOriginalTurn = activeTossIn
       ? activeTossIn.originalPlayerIndex === currentPlayerIndex
       : false;
-    const hasWrongAttempt = activeTossIn
-      ? activeTossIn.failedAttempts?.some(
+    const hasWrongAttempt = gameClient.visualState.roundFailedAttempts.some(
           (attempt) => attempt.playerId === humanPlayer?.id
-        )
-      : false;
+        );
 
     const recentActions = gameClient.visualState.turnActions.map(
       (action) => `${action.playerName} ${action.description}`

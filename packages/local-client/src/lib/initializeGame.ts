@@ -208,6 +208,7 @@ export function initializeGame(settings: GameSettings): GameState {
     roundActions: [],
     difficulty: settings.difficulty,
     botVersion: settings.botVersion,
+    roundFailedAttempts: [],
   };
 
   return gameState;

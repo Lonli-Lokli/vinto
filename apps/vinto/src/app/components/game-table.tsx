@@ -57,7 +57,7 @@ export const GameTable = observer(() => {
 
   // Get failed toss-in attempts from ActiveTossIn state
   const failedTossInAttempts =
-    gameClient.visualState.activeTossIn?.failedAttempts?.map((attempt) => ({
+    gameClient.visualState.roundFailedAttempts.map((attempt) => ({
       playerId: attempt.playerId,
       position: attempt.position,
     })) || [];

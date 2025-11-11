@@ -41,6 +41,8 @@ export interface GameState {
 
   roundActions: GameActionHistory[];
 
+  roundFailedAttempts: FailedTossInAttempt[];
+
   // Configuration
   difficulty: Difficulty;
   botVersion: BotVersion;
@@ -305,5 +307,6 @@ export function createInitialGameState(
     roundActions: [],
     difficulty,
     botVersion,
+    roundFailedAttempts: [],
   };
 }
