@@ -148,7 +148,7 @@ export function GameClientDebugProvider({
     };
   }, [gameClient]);
 
-  return <>{children}</>;
+  return children;
 }
 
 /**

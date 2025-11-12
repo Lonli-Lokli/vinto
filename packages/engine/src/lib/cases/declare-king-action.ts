@@ -79,7 +79,7 @@ export function handleDeclareKingAction(
   });
 
   const isTossInPhase =
-    newState.activeTossIn && newState.activeTossIn.queuedActions.length > 0;
+    newState.activeTossIn !== null && newState.activeTossIn.queuedActions.length > 0;
   // STEP 1: Move King to discard (ALWAYS happens)
   if (newState.pendingAction?.card) {
     const discardedCard = {

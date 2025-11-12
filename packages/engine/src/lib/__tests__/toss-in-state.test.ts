@@ -426,8 +426,7 @@ describe('GameEngine - Toss-In State Management', () => {
     expect(newState.discardPile.peekTop()?.played).toBe(false); // bot-1 has drawn card before toss in without playing
   });
 
-
-    it('should allow play King card with declaring actionable card with non drawn before toss in', () => {
+  it('should allow play King card with declaring actionable card with non drawn before toss in', () => {
     // Setup: Player 0 (human) discards King, Player 2 (bot) toss in King and play it, declaring actionable card
     // Player 1 should be able to play the card drawn before toss in
     const state = createTestState({
