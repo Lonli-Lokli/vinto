@@ -49,14 +49,6 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         >
           {playerName}
         </div>
-        {isCoalitionMember && (
-          <div
-            className="bg-info text-white rounded-full p-0.5"
-            title="Coalition Member"
-          >
-            <Users size={10} />
-          </div>
-        )}
         {isCoalitionLeader && (
           <div
             className="bg-warning text-white rounded-full p-0.5"

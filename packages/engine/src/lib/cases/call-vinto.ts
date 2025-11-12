@@ -35,10 +35,9 @@ export function handleCallVinto(
     player.isVintoCaller = player.id === playerId;
 
     if (!player.isVintoCaller) {
-      // Remove from any coalition since Vinto caller cannot be in coalition
-      player.coalitionWith = player.coalitionWith.filter(
-        (id) => id !== playerId
-      );
+      player.coalitionWith = newState.players.filter(
+        (p) => p.id !== playerId
+      ).map((p) => p.id);
     }
   }
 

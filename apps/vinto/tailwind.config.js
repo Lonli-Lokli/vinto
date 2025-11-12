@@ -20,7 +20,9 @@ module.exports = {
   theme: {
     extend: {
       fontSize: {
-        '2xs': '0.625rem', // 10px
+        '3xs': '0.5rem', // 8px
+        '2xs': '0.5625rem', // 9px
+        'xs': '0.625rem', // 10px
       },
       // Remove colors entirely - use CSS variable utility classes instead
       // All colors are now defined in theme.css as CSS variables with utility classes

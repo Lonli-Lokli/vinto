@@ -167,10 +167,16 @@ export class BotAIAdapter {
     if (
       state.phase === 'final' &&
       state.vintoCallerId &&
-      !state.coalitionLeaderId &&
-      this.allPlayersAreBots()
+      !state.coalitionLeaderId
     ) {
-      this.selectCoalitionLeaderForBots();
+      // If all coalition players are bots, auto-select leader
+      if (this.allPlayersAreBots()) {
+        this.selectCoalitionLeaderForBots();
+        return;
+      }
+      // If there's a human in the coalition, wait for them to select leader
+      // Don't execute any bot turns until coalition leader is selected
+      console.log('[BotAI] Waiting for human to select coalition leader');
       return;
     }
 

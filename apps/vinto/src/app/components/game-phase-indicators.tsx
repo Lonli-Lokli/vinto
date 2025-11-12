@@ -152,7 +152,7 @@ const SetupPhaseIndicator = observer(
               <Eye size={14} className="mr-1" />
               Memory Phase
             </h3>
-            <span className="text-[10px] text-secondary mt-0.5 ml-5">
+            <span className="text-xs text-secondary mt-0.5 ml-5">
               Setup your memory before the game begins
             </span>
           </div>

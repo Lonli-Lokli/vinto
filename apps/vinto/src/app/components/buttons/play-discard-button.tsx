@@ -30,7 +30,7 @@ export const PlayDiscardButton = ({
       <span>{text}</span>
     </div>
     {subtitle && (
-      <div className="text-[10px] opacity-75 mt-0.5">{subtitle}</div>
+      <div className="text-xs opacity-75 mt-0.5">{subtitle}</div>
     )}
   </button>
 );

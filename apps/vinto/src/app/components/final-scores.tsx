@@ -80,7 +80,7 @@ Lower card totals are better during the round, but game points are awarded by fi
               <div className="text-xs text-tertiary leading-tight">
                 {(() => {
                   const vintoScore = calculateActualScore(vintoCaller.cards);
-                  const coalitionLowest = winnerInfo.score;
+                  const coalitionLowest = winnerInfo.coalitionScore;
 
                   if (winnerInfo.isCoalitionWin) {
                     return `Coalition wins: Vinto ${vintoScore} vs Coalition lowest ${coalitionLowest}`;
@@ -106,7 +106,7 @@ Lower card totals are better during the round, but game points are awarded by fi
               <div
                 key={player.id}
                 className={`flex items-center gap-2 px-2 py-1.5 rounded border transition-colors ${
-                  actualScore === winnerInfo.score
+                  actualScore === winnerInfo.winnerScore
                     ? 'bg-surface-tertiary border-success ring-2 ring-success'
                     : 'bg-surface-secondary border-secondary'
                 }`}
@@ -164,6 +164,29 @@ function getWinnerInfo(
     (id) => finalScores[id] === lowestScore
   );
 
+  // Calculate vintoScore and coalitionScore
+  let vintoScore: number | undefined;
+  let coalitionScore: number | undefined;
+
+  if (vintoCallerId) {
+    const vintoCaller = players.find((p) => p.id === vintoCallerId);
+    if (vintoCaller) {
+      vintoScore = calculateActualScore(vintoCaller.cards);
+      
+      // Find all coalition members
+      const coalitionMembers = players.filter(
+        (p) => p.coalitionWith.length > 0 && p.id !== vintoCallerId
+      );
+      
+      if (coalitionMembers.length > 0) {
+        const coalitionScores = coalitionMembers.map((p) =>
+          calculateActualScore(p.cards)
+        );
+        coalitionScore = Math.min(...coalitionScores);
+      }
+    }
+  }
+
   // Detect coalition win
   const hasCoalitionWinner =
     vintoCallerId && !winnerIds.includes(vintoCallerId);
@@ -204,7 +227,9 @@ function getWinnerInfo(
   return {
     winners,
     winnerIds,
-    score: lowestScore,
+    winnerScore: lowestScore,
+    vintoScore,
+    coalitionScore,
     isMultipleWinners: winnerIds.length > 1 && !hasCoalitionWinner,
     isCoalitionWin: hasCoalitionWinner,
   };
