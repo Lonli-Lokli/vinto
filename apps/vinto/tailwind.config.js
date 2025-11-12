@@ -20,9 +20,11 @@ module.exports = {
   theme: {
     extend: {
       fontSize: {
-        '3xs': '0.5rem', // 8px
-        '2xs': '0.5625rem', // 9px
-        'xs': '0.625rem', // 10px
+        '3xs': '0.625rem', // 10px (was 8px - too small)
+        '2xs': '0.6875rem', // 11px (was 9px)
+        xs: '0.75rem', // 12px (was 10px - improved readability)
+        sm: '0.875rem', // 14px (default Tailwind)
+        base: '1rem', // 16px (default Tailwind)
       },
       // Remove colors entirely - use CSS variable utility classes instead
       // All colors are now defined in theme.css as CSS variables with utility classes

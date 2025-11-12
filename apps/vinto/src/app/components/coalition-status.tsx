@@ -57,18 +57,18 @@ export const CoalitionStatus = observer(() => {
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1">
-            <Swords className="text-warning" size={12} />
-            <span className="text-primary font-bold text-xs uppercase tracking-wide">
+            <Swords className="text-warning" size={14} />
+            <span className="text-primary font-bold text-sm uppercase tracking-wide">
               Final Round ({roundActions.length} actions)
             </span>
           </div>
           {currentPlayer && (
-            <div className="text-secondary text-xs">
+            <div className="text-secondary text-sm">
               <span className="font-semibold text-primary">
                 {currentPlayer.name}
               </span>
               {isHumanCoalitionMember && (
-                <span className="text-tertiary text-2xs ml-1">
+                <span className="text-tertiary text-xs ml-1">
                   (Leader decides)
                 </span>
               )}
@@ -81,10 +81,7 @@ export const CoalitionStatus = observer(() => {
           <div className="mb-1 bg-surface-tertiary/40 rounded px-1.5 py-0.5 border border-primary/10">
             <div className="max-h-10 overflow-y-auto space-y-0.5 pr-1">
               {roundActions.map((action, idx) => (
-                <div
-                  key={idx}
-                  className="text-secondary text-2xs leading-tight"
-                >
+                <div key={idx} className="text-secondary text-xs leading-tight">
                   {action}
                 </div>
               ))}
@@ -97,20 +94,20 @@ export const CoalitionStatus = observer(() => {
         <div className="grid grid-cols-[1fr_auto_1fr] gap-1.5 items-start">
           {/* Coalition */}
           <div className="space-y-0.5">
-            <div className="text-warning text-2xs font-semibold uppercase tracking-wide mb-0.5">
+            <div className="text-warning text-xs font-semibold uppercase tracking-wide mb-0.5">
               Coalition
             </div>
 
             {/* Leader */}
             <div className="flex items-center gap-1 bg-primary/5 rounded px-1 py-0.5 border-l-2 border-warning">
-              <div className="w-4 h-4 flex-shrink-0 overflow-hidden rounded-full">
+              <div className="w-5 h-5 flex-shrink-0 overflow-hidden rounded-full">
                 <Avatar playerName={coalitionLeader.name} size="sm" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-primary text-xs font-semibold truncate leading-tight">
+                <div className="text-primary text-sm font-semibold truncate leading-tight">
                   {coalitionLeader.name}
                 </div>
-                <div className="text-tertiary text-3xs leading-tight">
+                <div className="text-tertiary text-2xs leading-tight">
                   Leader
                 </div>
               </div>
@@ -124,10 +121,10 @@ export const CoalitionStatus = observer(() => {
                   key={member.id}
                   className="flex items-center gap-1 bg-surface-tertiary/50 rounded px-1 py-0.5"
                 >
-                  <div className="w-4 h-4 flex-shrink-0 overflow-hidden rounded-full">
+                  <div className="w-5 h-5 flex-shrink-0 overflow-hidden rounded-full">
                     <Avatar playerName={member.name} size="xs" />
                   </div>
-                  <div className="text-primary text-xs truncate leading-tight">
+                  <div className="text-primary text-sm truncate leading-tight">
                     {member.name}
                   </div>
                 </div>
@@ -141,20 +138,20 @@ export const CoalitionStatus = observer(() => {
 
           {/* Vinto */}
           <div className="space-y-0.5">
-            <div className="text-error text-2xs font-semibold uppercase tracking-wide mb-0.5">
+            <div className="text-error text-xs font-semibold uppercase tracking-wide mb-0.5">
               Vinto Caller
             </div>
 
             {vintoCaller && (
               <div className="flex items-center gap-1 bg-error/10 rounded px-1 py-0.5 border-l-2 border-error">
-                <div className="w-4 h-4 flex-shrink-0 overflow-hidden rounded-full">
+                <div className="w-5 h-5 flex-shrink-0 overflow-hidden rounded-full">
                   <Avatar playerName={vintoCaller.name} size="md" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-primary text-xs font-semibold truncate leading-tight">
+                  <div className="text-primary text-sm font-semibold truncate leading-tight">
                     {vintoCaller.name}
                   </div>
-                  <div className="text-tertiary text-3xs leading-tight">
+                  <div className="text-tertiary text-2xs leading-tight">
                     Solo
                   </div>
                 </div>

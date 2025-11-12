@@ -1,5 +1,4 @@
 // app/page.tsx
-import React from 'react';
 import { GameInitializer } from './components/game-initializer';
 import { GameContent } from './components/game-content';
 import { LandscapeWarning } from './components/landscape-warning';

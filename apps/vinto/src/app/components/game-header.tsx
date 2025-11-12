@@ -33,8 +33,8 @@ export const GameHeader = observer(() => {
   const roundNumber = gameClient.visualState.roundNumber;
 
   const getPhaseDisplay = () => {
-    if (phase === 'scoring') return 'Final';
-    if (finalTurnTriggered) return `Final • ${phase}`;
+    if (phase === 'scoring') return 'Scoring';
+    if (finalTurnTriggered) return `Final`;
     return `R${roundNumber} / T${turnCount}`;
   };
 
@@ -92,7 +92,9 @@ export const GameHeader = observer(() => {
                     <button
                       key={version}
                       onClick={() =>
-                        gameClient.dispatch(GameActions.updateBotVersion(version))
+                        gameClient.dispatch(
+                          GameActions.updateBotVersion(version)
+                        )
                       }
                       className={`px-2 py-1 text-xs rounded border transition-colors ${
                         gameClient.visualState.botVersion === version
@@ -115,7 +117,7 @@ export const GameHeader = observer(() => {
                   <ThemeToggle />
                   <WakeLockToggle />
                 </div>
-                <h1 className="text-lg font-bold text-transparent bg-clip-text bg-title-gradient">
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-title-gradient">
                   VINTO
                 </h1>
 
@@ -123,17 +125,17 @@ export const GameHeader = observer(() => {
                   href="/VintoRules.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-secondary hover:text-success transition-colors"
+                  className="text-sm text-secondary hover:text-success transition-colors"
                   title="View game rules"
                 >
                   📖
                 </a>
               </div>
-              <div className="text-xs text-secondary font-medium">
+              <div className="text-sm text-secondary font-medium">
                 {getPhaseDisplay()}
               </div>
               {getCurrentPlayerDisplay() && (
-                <div className="text-xs font-medium text-success hidden sm:block">
+                <div className="text-sm font-medium text-success hidden sm:block">
                   {getCurrentPlayerDisplay()}
                 </div>
               )}

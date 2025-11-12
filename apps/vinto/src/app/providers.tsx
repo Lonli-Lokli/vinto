@@ -14,7 +14,7 @@ import { GameClientProvider } from '@vinto/local-client';
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <DIProvider>
         <GameClientProvider>{children}</GameClientProvider>
       </DIProvider>

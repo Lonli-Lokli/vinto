@@ -46,7 +46,7 @@ export const SettingsPopover = observer(
         <div className="space-y-4">
           {/* Difficulty */}
           <div>
-            <label className="block text-sm font-medium text-primary mb-2">
+            <label className="block text-base font-medium text-primary mb-2">
               Difficulty
             </label>
             <div className="flex gap-2">
@@ -58,7 +58,7 @@ export const SettingsPopover = observer(
                   onClick={() =>
                     gameClient.dispatch(GameActions.updateDifficulty(level))
                   }
-                  className="px-3 py-2 text-sm"
+                  className="px-3 py-2 text-base"
                 />
               ))}
             </div>
@@ -66,7 +66,7 @@ export const SettingsPopover = observer(
 
           {/* Bot Version */}
           <div>
-            <label className="block text-sm font-medium text-primary mb-2">
+            <label className="block text-base font-medium text-primary mb-2">
               Bot Version
             </label>
             <div className="flex gap-2">
@@ -76,7 +76,7 @@ export const SettingsPopover = observer(
                   onClick={() =>
                     gameClient.dispatch(GameActions.updateBotVersion(version))
                   }
-                  className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                  className={`px-3 py-2 text-base rounded-md border transition-colors ${
                     gameClient.visualState.botVersion === version
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-surface-secondary text-primary border-primary/20 hover:bg-surface-primary'

@@ -15,7 +15,7 @@ A strategic multiplayer card game built with **Next.js**, **TypeScript**, and a 
 
 ### Setup
 
-- Each player starts with 4 cards
+- Each player starts with 5 cards
 - Players get to peek at 2 of their own cards
 - Goal: Achieve the lowest total score
 
@@ -40,8 +40,10 @@ On your turn, you can either:
 ### Scoring
 
 - Number cards (1-6): Face value
-- Action cards (7-K): 10 points each
-- Pairs in same column: 0 points
+- Action cards (7-Q): 10 points each
+- King: 0 point
+- Ace: 1 point
+- Joker: -1 point
 - Game ends when someone calls Vinto - all cards revealed and scored
 
 ## Architecture

@@ -17,7 +17,7 @@ export const DrawPile: React.FC<DrawPileProps> = ({
   size = 'lg',
   isMobile = false,
 }) => {
-  const textSize = isMobile ? 'text-2xs' : 'text-xs';
+  const textSize = isMobile ? 'text-xs' : 'text-sm';
   const labelMargin = isMobile ? 'mt-1' : 'mt-2';
   const labelPadding = isMobile ? 'px-2 py-0.5' : 'px-2 py-1';
 

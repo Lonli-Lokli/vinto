@@ -2,7 +2,7 @@
 
 import './reflect-metadata-client-side';
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Geist } from 'next/font/google';
 import * as Sentry from '@sentry/nextjs';
 import { Analytics } from '@vercel/analytics/next';
 
@@ -10,7 +10,7 @@ import './global.css'; // This is where you import your global Tailwind CSS styl
 import { Providers } from './providers';
 
 // Optimize fonts using next/font
-const inter = Inter({ subsets: ['latin'] });
+const geist = Geist({ subsets: ['latin'] });
 
 const toMetadataBase = (value?: string) => {
   if (!value) {
@@ -106,8 +106,8 @@ export default function RootLayout({
   children: React.ReactNode; // This prop is mandatory
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-surface-primary text-on-surface`}>
+    <html lang="en" className={geist.className} suppressHydrationWarning>
+      <body className={`bg-surface-primary text-on-surface`}>
         <Providers>{children}</Providers>
         <Analytics />
       </body>

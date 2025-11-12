@@ -38,9 +38,9 @@
 
   /* Text Colors */
   --color-text-primary: 17 24 39; /* gray-900 - main text */
-  --color-text-secondary: 75 85 99; /* gray-600 - secondary text */
-  --color-text-tertiary: 107 114 128; /* gray-500 - muted text */
-  --color-text-quaternary: 156 163 175; /* gray-400 - disabled text */
+  --color-text-secondary: 55 65 81; /* gray-700 - secondary text (improved contrast: 9.7:1) */
+  --color-text-tertiary: 75 85 99; /* gray-600 - muted text (improved contrast: 7:1) */
+  --color-text-quaternary: 107 114 128; /* gray-500 - disabled text (improved contrast: 4.6:1) */
   --color-text-on-primary: 255 255 255; /* white - text on primary backgrounds */
   --color-text-on-surface: 17 24 39; /* gray-900 - text on light surfaces */
 
