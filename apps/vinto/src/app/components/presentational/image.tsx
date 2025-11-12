@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import coverSrc from '../../images/cover.png';
 import twoSrc from '../../images/2.png';

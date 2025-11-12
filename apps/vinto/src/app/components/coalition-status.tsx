@@ -1,7 +1,7 @@
 // components/CoalitionStatus.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Swords } from 'lucide-react';
 import { useGameClient } from '@vinto/local-client';
@@ -14,14 +14,14 @@ import { Avatar } from './presentational';
  */
 export const CoalitionStatus = observer(() => {
   const gameClient = useGameClient();
-    // Get all recent actions from the current turn
+  // Get all recent actions from the current turn
   const roundActions = React.useMemo(() => {
     const allActions = gameClient.visualState.roundActions || [];
     return allActions.map(
       (action) => `${action.playerName} ${action.description}`
     );
   }, [gameClient.visualState.roundActions]);
-  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const phase = gameClient.visualState.phase;
   const vintoCallerId = gameClient.visualState.vintoCallerId;
@@ -29,14 +29,16 @@ export const CoalitionStatus = observer(() => {
   const currentPlayer = gameClient.currentPlayer;
   const players = gameClient.visualState.players;
 
-
-
   const vintoCaller = players.find((p) => p.id === vintoCallerId);
   const coalitionMembers = players.filter(
     (p) => p.id !== vintoCallerId && !p.isVintoCaller
   );
 
-      // Only show during final phase when coalition exists
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [roundActions]);
+
+  // Only show during final phase when coalition exists
   if (phase !== 'final' || !coalitionLeader || !vintoCallerId) {
     return null;
   }
@@ -48,9 +50,6 @@ export const CoalitionStatus = observer(() => {
     !isCurrentPlayerLeader &&
     !isCurrentPlayerVinto &&
     coalitionMembers.some((m) => m.id === currentPlayer?.id);
-
-
-
 
   return (
     <div className="absolute top-0 left-0 right-0 z-10">
@@ -82,10 +81,14 @@ export const CoalitionStatus = observer(() => {
           <div className="mb-1 bg-surface-tertiary/40 rounded px-1.5 py-0.5 border border-primary/10">
             <div className="max-h-10 overflow-y-auto space-y-0.5 pr-1">
               {roundActions.map((action, idx) => (
-                <div key={idx} className="text-secondary text-2xs leading-tight">
+                <div
+                  key={idx}
+                  className="text-secondary text-2xs leading-tight"
+                >
                   {action}
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           </div>
         )}
@@ -107,7 +110,9 @@ export const CoalitionStatus = observer(() => {
                 <div className="text-primary text-xs font-semibold truncate leading-tight">
                   {coalitionLeader.name}
                 </div>
-                <div className="text-tertiary text-3xs leading-tight">Leader</div>
+                <div className="text-tertiary text-3xs leading-tight">
+                  Leader
+                </div>
               </div>
             </div>
 
@@ -149,7 +154,9 @@ export const CoalitionStatus = observer(() => {
                   <div className="text-primary text-xs font-semibold truncate leading-tight">
                     {vintoCaller.name}
                   </div>
-                  <div className="text-tertiary text-3xs leading-tight">Solo</div>
+                  <div className="text-tertiary text-3xs leading-tight">
+                    Solo
+                  </div>
                 </div>
               </div>
             )}
