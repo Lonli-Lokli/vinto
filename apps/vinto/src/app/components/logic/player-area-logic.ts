@@ -2,10 +2,9 @@
 // Pure functions for PlayerArea component logic
 
 import { GamePhase, PlayerState } from '@vinto/shapes';
+import { CardSize } from '../helpers';
 
 export type PlayerPosition = 'bottom' | 'left' | 'top' | 'right';
-
-export type CardSize = 'sm' | 'md' | 'lg';
 
 /**
  * Determine if we can see this player's cards based on official Vinto rules

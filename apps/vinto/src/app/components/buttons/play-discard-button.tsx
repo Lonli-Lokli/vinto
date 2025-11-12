@@ -29,8 +29,6 @@ export const PlayDiscardButton = ({
       <Zap size={14} />
       <span>{text}</span>
     </div>
-    {subtitle && (
-      <div className="text-xs opacity-75 mt-0.5">{subtitle}</div>
-    )}
+    {subtitle && <div className="text-xs opacity-75 mt-0.5">{subtitle}</div>}
   </button>
 );

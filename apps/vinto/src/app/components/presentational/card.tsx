@@ -1,34 +1,9 @@
 // components/Card.tsx
-'use client';
 
 import React, { FC } from 'react';
-import { NeverError, Rank } from '@vinto/shapes';
-import {
-  Image_2,
-  Image_3,
-  Image_4,
-  Image_5,
-  Image_6,
-  Image_7,
-  Image_8,
-  Image_9,
-  Image_10,
-  Image_J,
-  Image_Q,
-  Image_K,
-  Image_A,
-  Image_Joker,
-  Image_Cover,
-} from './image';
-
-type CardSize = 'sm' | 'md' | 'lg' | 'xl' | 'auto';
-const CARD_SIZES: Record<CardSize, string> = {
-  sm: 'w-6 h-9 text-2xs',
-  md: 'w-8 h-12 text-2xs',
-  lg: 'w-10 h-14 text-xs',
-  xl: 'w-12 h-16 text-sm',
-  auto: 'w-full h-full text-xs',
-};
+import { Rank } from '@vinto/shapes';
+import { CARD_SIZE_CONFIG, CardSize, RANK_IMAGE_MAP } from '../helpers';
+import { Image_Cover } from './image';
 
 /**
  * Card selection states:
@@ -52,14 +27,13 @@ export type CardSelectionVariant = 'action' | 'swap';
  */
 export type CardIntent = 'success' | 'failure';
 
-interface CardProps {
+export interface CardProps {
   rank?: Rank;
   revealed?: boolean;
   size?: CardSize;
   highlighted?: boolean;
   botPeeking?: boolean;
   isPeeked?: boolean; // New prop: card is currently being peeked (shows minimalistic border)
-  onClick?: () => void;
   rotated?: boolean;
   // For animation tracking
   playerId?: string;
@@ -85,7 +59,6 @@ export function Card({
   highlighted = false,
   botPeeking = false,
   isPeeked = false,
-  onClick,
   rotated = false,
   playerId,
   cardIndex,
@@ -97,6 +70,7 @@ export function Card({
   actionTargetSelected = false,
   disableFlipAnimation = false,
 }: CardProps) {
+  const config = CARD_SIZE_CONFIG[size];
   // Build data attributes for animation tracking
   const dataAttributes: Record<string, string> = {};
   if (playerId && cardIndex !== undefined && cardIndex >= 0) {
@@ -142,7 +116,7 @@ export function Card({
     return (
       <div
         className={`
-          ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
+           ${config.className}
           flex items-center justify-center
           bg-transparent
         `}
@@ -156,7 +130,7 @@ export function Card({
   return (
     <div
       className={`
-        ${size === 'auto' ? 'w-full h-full' : CARD_SIZES[size]}
+          ${config.className}
         relative select-none
         ${rotated ? 'transform-gpu card-rotated' : ''}
         ${getCardStateClasses()}
@@ -166,7 +140,8 @@ export function Card({
       style={
         isPeeked
           ? {
-              boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4)',
+              boxShadow:
+                '0 0 0 3px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4)',
               outline: '3px solid rgb(96, 165, 250)',
               outlineOffset: '2px',
             }
@@ -176,7 +151,6 @@ export function Card({
             }
           : undefined
       }
-      onClick={selectionState === 'selectable' ? onClick : undefined}
       {...dataAttributes}
     >
       {/* Flip card container with 3D perspective */}
@@ -184,9 +158,13 @@ export function Card({
         // No flip animation - just show the revealed/unrevealed state directly
         <div className="w-full h-full">
           {revealed && rank ? (
-            <RankComponent rank={rank} />
+            <RankComponent rank={rank}   fill={config.fill}
+                  width={config.width}
+                  height={config.height}/>
           ) : (
-            <CardBackComponent botPeeking={botPeeking} />
+            <CardBackComponent botPeeking={botPeeking}   fill={config.fill}
+                  width={config.width}
+                  height={config.height}/>
           )}
         </div>
       ) : (
@@ -199,12 +177,16 @@ export function Card({
           >
             {/* Front side - Card face (shown when revealed) */}
             <div className="flip-card-front">
-              {rank && <RankComponent rank={rank} />}
+              {rank && <RankComponent rank={rank}   fill={config.fill}
+                  width={config.width}
+                  height={config.height}/>}
             </div>
 
             {/* Back side - Card back (shown when not revealed) */}
             <div className="flip-card-back">
-              <CardBackComponent botPeeking={botPeeking} />
+              <CardBackComponent botPeeking={botPeeking}   fill={config.fill}
+                  width={config.width}
+                  height={config.height}/>
             </div>
           </div>
         </div>
@@ -229,10 +211,12 @@ export function Card({
   );
 }
 
-const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
-  botPeeking = false,
-}) => {
-  // Container has border and background, image fills it completely
+const CardBackComponent: FC<{
+  botPeeking?: boolean;
+  width?: number;
+  height?: number;
+   fill?: boolean;
+}> = ({ botPeeking = false, width, height, fill }) => {
   const containerClassName = `h-full w-auto rounded border shadow-theme-sm overflow-hidden ${
     botPeeking ? 'border-warning bg-card-revealed-gradient' : 'bg-card-gradient'
   }`;
@@ -241,52 +225,39 @@ const CardBackComponent: FC<{ botPeeking?: boolean }> = ({
 
   return (
     <div className={containerClassName}>
-      <Image_Cover className={imageClassName} />
+      <Image_Cover
+        className={imageClassName}
+        width={width}
+        height={height}
+        fill={fill}
+        priority={true}
+      />
     </div>
   );
 };
 
 const RankComponent: FC<{
   rank: Rank;
-}> = ({ rank }) => {
+  width?: number;
+  height?: number;
+  fill?: boolean;
+}> = ({ rank, width, height, fill }) => {
   // Container has border and background, image fills it completely
   const containerClassName = 'h-full w-auto rounded shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
 
-  const renderImage = () => {
-    switch (rank) {
-      case '2':
-        return <Image_2 className={imageClassName} />;
-      case '3':
-        return <Image_3 className={imageClassName} />;
-      case '4':
-        return <Image_4 className={imageClassName} />;
-      case '5':
-        return <Image_5 className={imageClassName} />;
-      case '6':
-        return <Image_6 className={imageClassName} />;
-      case '7':
-        return <Image_7 className={imageClassName} />;
-      case '8':
-        return <Image_8 className={imageClassName} />;
-      case '9':
-        return <Image_9 className={imageClassName} />;
-      case '10':
-        return <Image_10 className={imageClassName} />;
-      case 'J':
-        return <Image_J className={imageClassName} />;
-      case 'Q':
-        return <Image_Q className={imageClassName} />;
-      case 'K':
-        return <Image_K className={imageClassName} />;
-      case 'A':
-        return <Image_A className={imageClassName} />;
-      case 'Joker':
-        return <Image_Joker className={imageClassName} />;
-      default:
-        throw new NeverError(rank);
-    }
-  };
+  const ImageComponent = RANK_IMAGE_MAP[rank];
 
-  return <div className={containerClassName}>{renderImage()}</div>;
+  return (
+    <div className={containerClassName}>
+      {
+        <ImageComponent
+          className={imageClassName}
+          width={width}
+          height={height}
+          fill={fill}
+        />
+      }
+    </div>
+  );
 };

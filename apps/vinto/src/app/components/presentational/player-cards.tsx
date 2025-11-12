@@ -3,9 +3,8 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Card } from './card';
 import type { PlayerState, GamePhase } from '@vinto/shapes';
-import type { PlayerPosition, CardSize } from '../logic/player-area-logic';
+import type { PlayerPosition } from '../logic/player-area-logic';
 import {
   canSeePlayerCard,
   isCardSelectable,
@@ -14,6 +13,8 @@ import {
   isSidePlayer,
 } from '../logic/player-area-logic';
 import { useCardAnimationStore } from '../di-provider';
+import { ClickableCard } from './clickable-card';
+import { CardSize } from '../helpers';
 
 interface PlayerCardsProps {
   player: PlayerState;
@@ -125,7 +126,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
           const isPeeked = temporarilyVisibleCards.has(index);
 
           return (
-            <Card
+            <ClickableCard
               key={`${card.id}-${index}`}
               rank={card.rank}
               revealed={canSeeCard && !shouldHideCard}
