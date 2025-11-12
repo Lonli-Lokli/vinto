@@ -33,12 +33,11 @@ export function handleDiscardCard(
   }
 
   const discardedCard = newState.pendingAction.card;
-  newState.discardPile.addToTop(discardedCard);
 
   clearTossInAfterActionableCard(
+    copy(discardedCard),
     newState,
-    action.payload.playerId,
-    discardedCard.rank
+    action.payload.playerId
   );
 
   return newState;

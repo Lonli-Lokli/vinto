@@ -2,6 +2,7 @@
 // Utility functions for managing toss-in phase state
 
 import {
+  Card,
   GameState,
   getCardShortDescription,
   getCardValue,
@@ -28,12 +29,16 @@ export function getAutomaticallyReadyPlayers(
     .filter((p) => {
       // Vinto callers are automatically ready
       if (p.isVintoCaller) return true;
-      
+
       // Coalition members who are not the leader are automatically ready
-      if (coalitionLeaderId && p.coalitionWith.length > 0 && p.id !== coalitionLeaderId) {
+      if (
+        coalitionLeaderId &&
+        p.coalitionWith.length > 0 &&
+        p.id !== coalitionLeaderId
+      ) {
         return true;
       }
-      
+
       return false;
     })
     .map((p) => p.id);
@@ -173,15 +178,25 @@ export function addTossInCard(
 }
 
 export function clearTossInAfterActionableCard(
+  pendingCard: Card | undefined,
   newState: GameState,
-  playerId: string,
-  rank: Rank | undefined
+  playerId: string
 ): void {
+  if (newState.activeTossIn && newState.activeTossIn.queuedActions.length > 0) {
+    // card is from toss in queue, move it to discard pile to be below top, possible unplayed card
+    if (pendingCard) {
+      newState.discardPile.addBeforeTop(pendingCard);
+    }
+  } else {
+    if (pendingCard) {
+      newState.discardPile.addToTop(pendingCard);
+    }
+  }
   if (newState.activeTossIn === null) {
     // Initialize new toss-in phase (normal turn flow)
-    if (rank) {
+    if (pendingCard?.rank) {
       newState.activeTossIn = {
-        ranks: [rank],
+        ranks: [pendingCard.rank],
         initiatorId: playerId,
         originalPlayerIndex: newState.currentPlayerIndex,
         participants: [],

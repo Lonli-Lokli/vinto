@@ -5,9 +5,7 @@ import {
   logger,
 } from '@vinto/shapes';
 import copy from 'fast-copy';
-import {
-  clearTossInAfterActionableCard,
-} from '../utils/toss-in-utils';
+import { clearTossInAfterActionableCard } from '../utils/toss-in-utils';
 
 /**
  * SELECT_ACTION_TARGET Handler
@@ -228,17 +226,13 @@ export function handleSelectActionTarget(
           }
         }
 
-        const aceCard = newState.pendingAction?.card;
+        const pendingCard = newState.pendingAction?.card;
 
-        // Move Ace card to discard pile
-        if (aceCard) {
-          newState.discardPile.addToTop({
-            ...copy(aceCard),
-            played: true,
-          });
-        }
-
-        clearTossInAfterActionableCard(newState, action.payload.playerId, 'A');
+        clearTossInAfterActionableCard(
+          pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
+          newState,
+          action.payload.playerId
+        );
       } else {
         logger.warn('[Ace] Cannot force multiple players', {
           targetCount: newState.pendingAction?.targets.length ?? 0,

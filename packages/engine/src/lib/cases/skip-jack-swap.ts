@@ -21,16 +21,13 @@ export function handleSkipJackSwap(
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  const jackCard = newState.pendingAction?.card;
+  const pendingCard = newState.pendingAction?.card;
 
-  // Move Jack card to discard pile (skip the swap)
-  if (jackCard) {
-    newState.discardPile.addToTop({
-      ...copy(jackCard),
-      played: true,
-    });
-  }
-  clearTossInAfterActionableCard(newState, action.payload.playerId, 'J');
+  clearTossInAfterActionableCard(
+    pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
+    newState,
+    action.payload.playerId
+  );
 
   return newState;
 }

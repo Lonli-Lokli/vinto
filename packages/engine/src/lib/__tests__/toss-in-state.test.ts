@@ -13,6 +13,7 @@ import {
   toPile,
   unsafeReduce,
 } from './test-helpers';
+import { Pile } from '@vinto/shapes';
 
 describe('GameEngine - Toss-In State Management', () => {
   it('should maintain currentPlayerIndex during toss-in phase until all players ready', () => {
@@ -273,18 +274,226 @@ describe('GameEngine - Toss-In State Management', () => {
     );
 
     newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
-   
+
     expect(newState.activeTossIn?.queuedActions.length).toBe(1);
     expect(newState.activeTossIn?.queuedActions[0].playerId).toBe('human-1');
     expect(newState.currentPlayerIndex).toBe(0); // STILL human's turn
 
     // human plays his toss in card
-    newState = unsafeReduce(newState, GameActions.selectActionTarget('human-1', 'human-1', 0));
+    newState = unsafeReduce(
+      newState,
+      GameActions.selectActionTarget('human-1', 'human-1', 0)
+    );
     newState = unsafeReduce(newState, GameActions.confirmPeek('human-1'));
 
     // Should now be processing queued actions
     expect(newState.subPhase).toBe('toss_queue_active');
     expect(newState.pendingAction).toBeNull();
     expect(newState.currentPlayerIndex).toBe(0); // STILL human's turn
+  });
+
+  it('should allow play non-King card drawn before toss in', () => {
+    // Setup: Player 0 (human) discards Seven, Player 2 (bot) toss in Seven and play it
+    // Player 1 should be able to play the card drawn before toss in
+    const state = createTestState({
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      subPhase: 'ai_thinking',
+      players: [
+        createTestPlayer('human-1', 'Human', true, [
+          createTestCard('7', 'h1'),
+          createTestCard('4', 'h2'),
+        ]),
+        createTestPlayer('bot-1', 'Bot 1', false, [
+          createTestCard('K', 'b1k'),
+          createTestCard('4', 'b2'),
+        ]),
+        createTestPlayer('bot-2', 'Bot 2', false, [
+          createTestCard('7', 'b2k'),
+          createTestCard('6', 'b4'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('2', 'draw_2'),
+        createTestCard('3', 'draw_3'),
+      ]),
+    });
+
+    // Verify initial state
+    expect(state.currentPlayerIndex).toBe(0); // Human's turn
+
+    let newState = unsafeReduce(state, GameActions.drawCard('human-1'));
+
+    newState = unsafeReduce(newState, GameActions.swapCard('human-1', 0));
+
+    newState = unsafeReduce(
+      newState,
+      GameActions.participateInTossIn('bot-2', [0])
+    );
+
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // Should now be processing queued actions
+    expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+    expect(newState.activeTossIn?.queuedActions[0].playerId).toBe('bot-2');
+    expect(newState.currentPlayerIndex).toBe(2);
+
+    // bot-2 plays his toss in card
+    newState = unsafeReduce(
+      newState,
+      GameActions.selectActionTarget('bot-2', 'bot-2', 0)
+    );
+    newState = unsafeReduce(newState, GameActions.confirmPeek('bot-2'));
+
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // restoring original player order after toss in finished
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.subPhase).toBe('ai_thinking'); // bot-1's turn
+    expect(newState.pendingAction).toBeNull();
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.discardPile.peekTop()?.rank).toBe('7'); // bot-2's played card
+    expect(newState.discardPile.peekTop()?.played).toBe(false); // bot-1 has drawn card before toss in without playing
+  });
+
+  it('should allow play King card with declaring non-actionable card with non drawn before toss in', () => {
+    // Setup: Player 0 (human) discards King, Player 2 (bot) toss in King and play it, declaring non-actionable card
+    // Player 1 should be able to play the card drawn before toss in
+    const state = createTestState({
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      subPhase: 'ai_thinking',
+      players: [
+        createTestPlayer('human-1', 'Human', true, [
+          createTestCard('K', 'h1'),
+          createTestCard('4', 'h2'),
+        ]),
+        createTestPlayer('bot-1', 'Bot 1', false, [
+          createTestCard('K', 'b1k'),
+          createTestCard('4', 'b2'),
+        ]),
+        createTestPlayer('bot-2', 'Bot 2', false, [
+          createTestCard('K', 'b2k'),
+          createTestCard('6', 'b4'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('2', 'draw_2'),
+        createTestCard('3', 'draw_3'),
+      ]),
+    });
+
+    // Verify initial state
+    expect(state.currentPlayerIndex).toBe(0); // Human's turn
+
+    let newState = unsafeReduce(state, GameActions.drawCard('human-1'));
+
+    newState = unsafeReduce(newState, GameActions.swapCard('human-1', 0));
+
+    newState = unsafeReduce(
+      newState,
+      GameActions.participateInTossIn('bot-2', [0])
+    );
+
+    expect(newState.players.find((p) => p.id === 'bot-2')?.cards.length).toBe(
+      1
+    ); // only non-King left in hand
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // Should now be processing queued actions
+    expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+    expect(newState.activeTossIn?.queuedActions[0].playerId).toBe('bot-2');
+    expect(newState.currentPlayerIndex).toBe(2);
+
+    // bot-2 plays his toss in card
+    newState = unsafeReduce(
+      newState,
+      GameActions.selectActionTarget('bot-2', 'bot-2', 0)
+    );
+    newState = unsafeReduce(
+      newState,
+      GameActions.declareKingAction('bot-2', '6')
+    );
+
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // restoring original player order after toss in finished
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.subPhase).toBe('ai_thinking'); // bot-1's turn
+    expect(newState.pendingAction).toBeNull();
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.discardPile.peekTop()?.rank).toBe('K'); // human's unplayed King card
+    expect(newState.discardPile.peekTop()?.played).toBe(false); // bot-1 has drawn card before toss in without playing
+  });
+
+
+    it('should allow play King card with declaring actionable card with non drawn before toss in', () => {
+    // Setup: Player 0 (human) discards King, Player 2 (bot) toss in King and play it, declaring actionable card
+    // Player 1 should be able to play the card drawn before toss in
+    const state = createTestState({
+      currentPlayerIndex: 0,
+      turnNumber: 1,
+      subPhase: 'ai_thinking',
+      players: [
+        createTestPlayer('human-1', 'Human', true, [
+          createTestCard('K', 'h1'),
+          createTestCard('4', 'h2'),
+        ]),
+        createTestPlayer('bot-1', 'Bot 1', false, [
+          createTestCard('K', 'b1k'),
+          createTestCard('4', 'b2'),
+        ]),
+        createTestPlayer('bot-2', 'Bot 2', false, [
+          createTestCard('K', 'b2k'),
+          createTestCard('7', 'b4'),
+        ]),
+      ],
+      drawPile: Pile.fromCards([
+        createTestCard('2', 'draw_2'),
+        createTestCard('3', 'draw_3'),
+      ]),
+    });
+
+    // Verify initial state
+    expect(state.currentPlayerIndex).toBe(0); // Human's turn
+
+    let newState = unsafeReduce(state, GameActions.drawCard('human-1'));
+
+    newState = unsafeReduce(newState, GameActions.swapCard('human-1', 0));
+
+    newState = unsafeReduce(
+      newState,
+      GameActions.participateInTossIn('bot-2', [0])
+    );
+
+    expect(newState.players.find((p) => p.id === 'bot-2')?.cards.length).toBe(
+      1
+    ); // only non-King left in hand
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // Should now be processing queued actions
+    expect(newState.activeTossIn?.queuedActions.length).toBe(1);
+    expect(newState.activeTossIn?.queuedActions[0].playerId).toBe('bot-2');
+    expect(newState.currentPlayerIndex).toBe(2);
+
+    // bot-2 plays his toss in card
+    newState = unsafeReduce(
+      newState,
+      GameActions.selectActionTarget('bot-2', 'bot-2', 0)
+    );
+    newState = unsafeReduce(
+      newState,
+      GameActions.declareKingAction('bot-2', '7')
+    );
+
+    newState = markPlayersReady(newState, ['human-1', 'bot-1', 'bot-2']);
+
+    // restoring original player order after toss in finished
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.subPhase).toBe('ai_thinking'); // bot-1's turn
+    expect(newState.pendingAction).toBeNull();
+    expect(newState.currentPlayerIndex).toBe(1);
+    expect(newState.discardPile.peekTop()?.rank).toBe('K'); // human's unplayed King card
+    expect(newState.discardPile.peekTop()?.played).toBe(false); // bot-1 has drawn card before toss in without playing
   });
 });

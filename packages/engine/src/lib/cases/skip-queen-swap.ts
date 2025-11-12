@@ -21,15 +21,12 @@ export function handleSkipQueenSwap(
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  const queenCard = newState.pendingAction?.card;
+  const pendingCard = newState.pendingAction?.card;
 
-  // Move Queen card to discard pile (skip the swap)
-  if (queenCard) {
-    newState.discardPile.addToTop({
-      ...copy(queenCard),
-      played: true,
-    });
-  }
-  clearTossInAfterActionableCard(newState, action.payload.playerId, 'Q');
+  clearTossInAfterActionableCard(
+    pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
+    newState,
+    action.payload.playerId
+  );
   return newState;
 }

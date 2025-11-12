@@ -201,7 +201,7 @@ export function handleParticipateInTossIn(
         `[handleParticipateInTossIn] Non-action card ${card.rank}, moving directly to discard`
       );
       // Non-action card goes directly to discard pile
-      newState.discardPile.addToTop(card);
+      newState.discardPile.addBeforeTop(card);
     }
   }
 

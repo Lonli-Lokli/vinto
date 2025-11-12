@@ -23,19 +23,13 @@ export function handleSkipPeek(
   // Create new state (deep copy for safety)
   const newState = copy(state);
 
-  const peekCard = newState.pendingAction?.card;
+  const pendingCard = newState.pendingAction?.card;
 
-  // Move action card to discard pile
-  if (peekCard) {
-    newState.discardPile.addToTop({
-      ...copy(peekCard),
-    });
-  }
 
   clearTossInAfterActionableCard(
+    pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
     newState,
-    action.payload.playerId,
-    peekCard?.rank
+    action.payload.playerId
   );
 
   return newState;

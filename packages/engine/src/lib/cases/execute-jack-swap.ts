@@ -57,16 +57,12 @@ export function handleExecuteJackSwap(
   // Acting player (who used Jack) doesn't gain knowledge - Jack is blind swap
   // All opponents also don't gain knowledge - swap happened without revealing cards
 
-  const jackCard = newState.pendingAction?.card;
+  const pendingCard = newState.pendingAction?.card;  
 
-  // Move Jack card to discard pile
-  if (jackCard) {
-    newState.discardPile.addToTop({
-      ...copy(jackCard),
-      played: true,
-    });
-  }
-
-  clearTossInAfterActionableCard(newState, action.payload.playerId, 'J');
+  clearTossInAfterActionableCard(
+    pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
+    newState,
+    action.payload.playerId
+  );
   return newState;
 }

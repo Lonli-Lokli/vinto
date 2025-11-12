@@ -78,12 +78,20 @@ export function handleDeclareKingAction(
     position,
   });
 
+  const isTossInPhase =
+    newState.activeTossIn && newState.activeTossIn.queuedActions.length > 0;
   // STEP 1: Move King to discard (ALWAYS happens)
   if (newState.pendingAction?.card) {
-    newState.discardPile.addToTop({
+    const discardedCard = {
       ...copy(newState.pendingAction.card),
       played: true,
-    });
+    };
+    if (isTossInPhase) {
+      // we are in toss-in phase, add card to one below top
+      newState.discardPile.addBeforeTop(discardedCard);
+    } else {
+      newState.discardPile.addToTop(discardedCard);
+    }
   }
 
   // STEP 2: Handle correct vs incorrect
@@ -94,7 +102,8 @@ export function handleDeclareKingAction(
       position,
       selectedCard,
       playerId,
-      declaredRank
+      declaredRank,
+      isTossInPhase
     );
   } else {
     handleIncorrectDeclaration(
@@ -111,7 +120,7 @@ export function handleDeclareKingAction(
 
 /**
  * CORRECT Declaration Handler
- * 
+ *
  * FIX: Properly creates multi-rank toss-in ['K', declaredRank]
  */
 function handleCorrectDeclaration(
@@ -120,7 +129,8 @@ function handleCorrectDeclaration(
   position: number,
   selectedCard: any,
   playerId: string,
-  declaredRank: Rank
+  declaredRank: Rank,
+  isTossInPhase: boolean
 ): void {
   // Remove declared card from hand
   const [removedCard] = targetPlayer.cards.splice(position, 1);
@@ -153,9 +163,16 @@ function handleCorrectDeclaration(
     setupKingTossInMultiRank(newState, playerId, declaredRank, true);
   } else {
     // NON-ACTIONABLE CARD - Just discard it
-    console.log('[handleDeclareKingAction] Correct - non-actionable, discarding');
+    console.log(
+      '[handleDeclareKingAction] Correct - non-actionable, discarding'
+    );
 
-    newState.discardPile.addToTop(removedCard);
+    if (isTossInPhase) {
+      // we are in toss-in phase, add card to one below top
+      newState.discardPile.addBeforeTop(removedCard);
+    } else {
+      newState.discardPile.addToTop(removedCard);
+    }
     newState.pendingAction = null;
 
     // FIX BUG 1 & 3: Properly setup multi-rank toss-in
@@ -201,7 +218,10 @@ function handleIncorrectDeclaration(
     const penaltyCard = newState.drawPile.drawTop();
     if (penaltyCard) {
       player.cards.push(penaltyCard);
-      console.log('[handleDeclareKingAction] Penalty card issued:', penaltyCard.rank);
+      console.log(
+        '[handleDeclareKingAction] Penalty card issued:',
+        penaltyCard.rank
+      );
     }
   }
 
@@ -213,11 +233,11 @@ function handleIncorrectDeclaration(
 
 /**
  * Setup King multi-rank toss-in
- * 
+ *
  * FIXES:
  * - BUG 1: Always creates ['K', declaredRank] array (not just ['K'])
  * - BUG 3: APPENDS to existing ranks instead of overwriting
- * 
+ *
  * @param declaredRank - undefined for incorrect declaration
  * @param hasAction - true if declared card is actionable
  */
@@ -253,13 +273,16 @@ function setupKingTossInMultiRank(
     newState.subPhase = hasAction ? 'awaiting_action' : 'toss_queue_active';
   } else {
     // ALREADY IN TOSS-IN - Append King ranks
-    console.log('[setupKingTossInMultiRank] Adding King ranks to existing toss-in:', {
-      existingRanks: newState.activeTossIn.ranks,
-      addingRanks: kingRanks,
-    });
+    console.log(
+      '[setupKingTossInMultiRank] Adding King ranks to existing toss-in:',
+      {
+        existingRanks: newState.activeTossIn.ranks,
+        addingRanks: kingRanks,
+      }
+    );
 
     // FIX BUG 3: APPEND ranks instead of overwriting
-    kingRanks.forEach(rank => {
+    kingRanks.forEach((rank) => {
       if (!newState.activeTossIn!.ranks.includes(rank)) {
         newState.activeTossIn!.ranks.push(rank);
       }

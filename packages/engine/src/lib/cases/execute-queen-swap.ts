@@ -89,17 +89,12 @@ export function handleExecuteQueenSwap(
     );
   }
 
-  const queenCard = newState.pendingAction?.card;
-
-  // Move Queen card to discard pile
-  if (queenCard) {
-    newState.discardPile.addToTop({
-      ...copy(queenCard),
-      played: true,
-    });
-  }
-
-  clearTossInAfterActionableCard(newState, action.payload.playerId, 'Q');
+  const pendingCard = newState.pendingAction?.card;
+  clearTossInAfterActionableCard(
+    pendingCard ? { ...copy(pendingCard), played: true } : pendingCard,
+    newState,
+    action.payload.playerId
+  );
 
   return newState;
 }

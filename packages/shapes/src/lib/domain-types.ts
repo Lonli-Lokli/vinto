@@ -1,5 +1,5 @@
 import { shuffleCards } from './utils';
-
+import copy from 'fast-copy';
 // types/game.ts
 export interface Card {
   id: string;
@@ -92,6 +92,10 @@ export class Pile implements Iterable<Card> {
     this._cards.unshift(card);
   }
 
+  addBeforeTop(card: Card): void {
+    this._cards.splice(1, 0, card);
+  }
+
   takeAt(index: number): Card | undefined {
     if (index < 0 || index >= this._cards.length) {
       return undefined;
@@ -108,8 +112,11 @@ export class Pile implements Iterable<Card> {
     const [otherTopCard, ...cardsToShuffle] = otherPile.toArray();
     const thisTopCard = this.drawTop();
     this._cards = [
-      ...(thisTopCard ? [thisTopCard] : []),
-      ...shuffleCards([...cardsToShuffle, ...this._cards]),
+      ...(thisTopCard ? [{ ...copy(thisTopCard), played: false }] : []),
+      ...shuffleCards([
+        ...cardsToShuffle.map((card) => ({ ...copy(card), played: false })),
+        ...this._cards.map((card) => ({ ...copy(card), played: false })),
+      ]),
     ];
     otherPile.replace([otherTopCard]);
   }
