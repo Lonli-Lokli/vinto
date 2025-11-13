@@ -83,3 +83,15 @@ export const getImageSizes = (size: CardSize, rotated: boolean): string  | undef
 
   return config.sizes;
 };
+
+
+export const getPileSettings = (isMobile: boolean) => {
+   const textSize = isMobile ? 'text-2xs' : 'text-xs';
+    const labelMargin = isMobile ? 'mt-1' : 'mt-2';
+    const labelPadding = isMobile ? 'px-2 py-0.5' : 'px-2 py-1';
+    const textClasses = 'text-white font-medium bg-overlay rounded'
+
+    return {
+      textSize, labelMargin, labelPadding,textClasses
+    }
+}

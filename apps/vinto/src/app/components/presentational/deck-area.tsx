@@ -54,12 +54,12 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
 
     return (
       <div
-        className={`grid grid-cols-2 grid-rows-2 ${columnGap} ${rowGap} pointer-events-auto ${
+        className={`grid grid-cols-2 grid-rows-[auto_1fr] ${columnGap} ${rowGap} pointer-events-auto ${
           shouldDimDeckArea ? 'area-dimmed' : ''
         }`}
       >
         {/* Row 1, Col 1: Draw Pile */}
-        <div className={`flex justify-center items-center ${rowMinHeight}`}>
+        <div className="flex justify-center items-start">
           <DrawPile
             clickable={canDrawCard && !hasBlockingAnimations}
             onClick={onDrawCard}
@@ -69,7 +69,7 @@ export const DeckArea: React.FC<DeckAreaProps> = observer(
         </div>
 
         {/* Row 1, Col 2: Discard Pile */}
-        <div className={`flex justify-center items-center ${rowMinHeight}`}>
+        <div className="flex justify-center items-start">
           <DiscardPile pile={discardPile} size={cardSize} isMobile={isMobile} />
         </div>
 

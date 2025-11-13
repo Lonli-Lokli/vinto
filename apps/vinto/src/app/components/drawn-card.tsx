@@ -6,6 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { Card } from './presentational';
 import { Rank } from '@vinto/shapes';
 import { useCardAnimationStore, useUIStore } from './di-provider';
+import { getPileSettings } from './helpers';
 
 interface DrawnCardProps {
   rank?: Rank;
@@ -18,9 +19,7 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
   ({ rank, isVisible, size = 'lg', isMobile = false }) => {
     const animationStore = useCardAnimationStore();
     const uiStore = useUIStore();
-    const textSize = isMobile ? 'text-2xs' : 'text-xs';
-    const labelMargin = isMobile ? 'mt-1' : 'mt-2';
-    const labelPadding = isMobile ? 'px-2 py-0.5' : 'px-2 py-1';
+    const { textSize, labelMargin, labelPadding, textClasses } = getPileSettings(isMobile);
 
     // Check if the drawn card is being animated TO or FROM
     // Hide if animating to drawn area (card arriving) or animating from drawn area (card leaving)
@@ -40,23 +39,26 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
 
     return (
       <div
-        className={`flex flex-col items-center justify-center ${
-          !shouldShowCard ? 'invisible' : ''
-        }`}
+        className="flex flex-col items-center justify-center"
+        data-discard-pile="true"
       >
-        <Card
-          data-pending-card="true"
-          rank={rank}
-          revealed={!!rank}
-          size={size}
-          highlighted={!!rank}
-          isPending={true}
-          selectionState="default"
-          intent={intent}
-          disableFlipAnimation={true}
-        />
+        <div className={`flex ${!shouldShowCard ? 'invisible' : ''}`}>
+          <Card
+            data-pending-card="true"
+            rank={rank}
+            revealed={!!rank}
+            size={size}
+            highlighted={!!rank}
+            isPending={true}
+            selectionState="default"
+            intent={intent}
+            disableFlipAnimation={true}
+          />
+        </div>
         <div
-          className={`${labelMargin} ${textSize} text-white font-medium bg-warning/80 rounded ${labelPadding}`}
+          className={`${labelMargin} ${textSize} ${textClasses} ${labelPadding} ${
+            !shouldShowCard ? 'invisible' : ''
+          }`}
         >
           DRAWN
         </div>

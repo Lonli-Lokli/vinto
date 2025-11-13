@@ -207,7 +207,7 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Center draw/discard - takes remaining space and centers content */}
-              <div className="flex-1 flex items-center justify-center min-w-0 pt-8">
+              <div className="flex-1 flex items-start justify-center min-w-0 pt-8">
                 <DeckArea
                   discardPile={discardPile}
                   pendingCard={pendingCard ?? null}

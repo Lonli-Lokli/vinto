@@ -25,7 +25,7 @@ export const DrawCard: React.FC<DrawCardProps> = ({
       className={
         (clickable
           ? 'cursor-pointer hover:scale-105 active:scale-95 hover:shadow-lg transition-all duration-150'
-          : 'opacity-75') + ' flex flex-col items-center justify-center'
+          : '') + ' flex flex-col items-center justify-center'
       }
       onClick={clickable ? onClick : undefined}
     >

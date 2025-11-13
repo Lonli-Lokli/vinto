@@ -232,9 +232,9 @@ Skip toss-in and proceed to next player's turn`;
 
     return (
       <div className="w-full h-full">
-        <div className="backdrop-theme border border-primary rounded-lg p-2 shadow-theme-sm h-full flex flex-col">
+        <div className="backdrop-theme border border-primary rounded-lg p-1.5 shadow-theme-sm h-full flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex flex-row items-center justify-between mb-1.5 flex-shrink-0">
+          <div className="flex flex-row items-center justify-between mb-0.5 flex-shrink-0">
             <div className="flex-1 min-w-0">
               <h3 className="text-xs font-semibold text-primary leading-tight flex items-center gap-1">
                 <Zap size={14} />
@@ -271,12 +271,12 @@ Skip toss-in and proceed to next player's turn`;
 
           {/* Bot Actions Section */}
           {recentActions.length > 0 && (
-            <fieldset className="mb-1.5 relative flex-shrink-0 rounded border border-border-secondary">
-              <legend className="ml-auto mr-2 px-1.5 text-2xs font-medium text-muted">
+            <fieldset className="mb-0.5 relative flex-shrink-0 rounded border border-border-secondary">
+              <legend className="ml-auto mr-2 px-1 text-2xs font-medium text-muted">
                 Recent Actions
               </legend>
-              <div className="p-1.5 bg-surface-tertiary/40 rounded max-h-[47px] overflow-y-auto">
-                <p className="text-tertiary text-2xs leading-relaxed">
+              <div className="p-1 bg-surface-tertiary/40 rounded max-h-[40px] overflow-y-auto">
+                <p className="text-tertiary text-2xs leading-snug">
                   {recentActions.map((action, idx) => (
                     <React.Fragment key={idx}>
                       {idx > 0 && (
@@ -294,8 +294,9 @@ Skip toss-in and proceed to next player's turn`;
           )}
 
           {/* Main Actions */}
+          <div className="flex-1 min-h-0"></div>
 
-          <div className="flex-1 flex flex-col justify-center min-h-0 space-y-1.5">
+          <div className="flex flex-col gap-0.5 flex-shrink-0">
             {/* Continue Button */}
             <ContinueButton onClick={onContinue} fullWidth />
 
@@ -310,13 +311,11 @@ Skip toss-in and proceed to next player's turn`;
                 </div>
 
                 {/* Call Vinto - Special Action */}
-                <div className="space-y-1">
-                  <CallVintoButton
-                    onClick={() => uiStore.setShowVintoConfirmation(true)}
-                    fullWidth
-                    className="py-1.5 px-2"
-                  />
-                </div>
+                <CallVintoButton
+                  onClick={() => uiStore.setShowVintoConfirmation(true)}
+                  fullWidth
+                  className="py-1.5 px-2"
+                />
               </>
             )}
           </div>
