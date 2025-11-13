@@ -158,13 +158,21 @@ export function Card({
         // No flip animation - just show the revealed/unrevealed state directly
         <div className="w-full h-full">
           {revealed && rank ? (
-            <RankComponent rank={rank}   fill={config.fill}
-                  width={config.width}
-                  height={config.height}/>
+            <RankComponent
+              rank={rank}
+              fill={config.fill}
+              width={config.width}
+              height={config.height}
+              sizes={config.sizes}
+            />
           ) : (
-            <CardBackComponent botPeeking={botPeeking}   fill={config.fill}
-                  width={config.width}
-                  height={config.height}/>
+            <CardBackComponent
+              botPeeking={botPeeking}
+              fill={config.fill}
+              width={config.width}
+              height={config.height}
+              sizes={config.sizes}
+            />
           )}
         </div>
       ) : (
@@ -177,16 +185,26 @@ export function Card({
           >
             {/* Front side - Card face (shown when revealed) */}
             <div className="flip-card-front">
-              {rank && <RankComponent rank={rank}   fill={config.fill}
+              {rank && (
+                <RankComponent
+                  rank={rank}
+                  fill={config.fill}
                   width={config.width}
-                  height={config.height}/>}
+                  height={config.height}
+                  sizes={config.sizes}
+                />
+              )}
             </div>
 
             {/* Back side - Card back (shown when not revealed) */}
             <div className="flip-card-back">
-              <CardBackComponent botPeeking={botPeeking}   fill={config.fill}
-                  width={config.width}
-                  height={config.height}/>
+              <CardBackComponent
+                botPeeking={botPeeking}
+                fill={config.fill}
+                width={config.width}
+                height={config.height}
+                sizes={config.sizes}
+              />
             </div>
           </div>
         </div>
@@ -215,8 +233,9 @@ const CardBackComponent: FC<{
   botPeeking?: boolean;
   width?: number;
   height?: number;
-   fill?: boolean;
-}> = ({ botPeeking = false, width, height, fill }) => {
+  fill?: boolean;
+  sizes?: string;
+}> = ({ botPeeking = false, width, height, sizes, fill }) => {
   const containerClassName = `h-full w-auto rounded border shadow-theme-sm overflow-hidden ${
     botPeeking ? 'border-warning bg-card-revealed-gradient' : 'bg-card-gradient'
   }`;
@@ -230,6 +249,7 @@ const CardBackComponent: FC<{
         width={width}
         height={height}
         fill={fill}
+        sizes={sizes}
         priority={true}
       />
     </div>
@@ -241,7 +261,8 @@ const RankComponent: FC<{
   width?: number;
   height?: number;
   fill?: boolean;
-}> = ({ rank, width, height, fill }) => {
+  sizes?: string;
+}> = ({ rank, width, height, fill, sizes }) => {
   // Container has border and background, image fills it completely
   const containerClassName = 'h-full w-auto rounded shadow-sm overflow-hidden';
   const imageClassName = 'h-full w-full object-contain';
@@ -255,6 +276,7 @@ const RankComponent: FC<{
           className={imageClassName}
           width={width}
           height={height}
+          sizes={sizes}
           fill={fill}
         />
       }

@@ -257,7 +257,7 @@ describe('Bot Toss-In Integration Test', () => {
         drawPile: Pile.fromCards([
           createTestCard('3', 'spades'),
           createTestCard('2', 'clubs'),
-        ])
+        ]),
       }
     );
 
@@ -336,6 +336,71 @@ describe('Bot Toss-In Integration Test', () => {
     await vi.runAllTimersAsync();
 
     await botAdapter.waitForIdle();
+
+    botAdapter.dispose();
+  });
+
+  it('should handle multiple toss-in with 7 cards', async () => {
+    const { gameClient, botAdapter } = await setupSimpleScenario(
+      [
+        createTestPlayer(
+          'bot1',
+          'Bot 1',
+          false,
+          [
+            createTestCard('7', 'p1c1'),
+            createTestCard('3', 'p1c2'),
+            createTestCard('4', 'p1c3'),
+            createTestCard('7', 'p1c4'),
+            createTestCard('7', 'p1c5'),
+          ],
+          [3, 4]
+        ),
+        createTestPlayer('bot2', 'Bot 2', false, [
+          createTestCard('5', 'p2c1'),
+          createTestCard('6', 'p2c2'),
+          createTestCard('5', 'p2c3'),
+          createTestCard('4', 'p2c4'),
+        ]),
+
+        createTestPlayer('human', 'human', true, [
+          createTestCard('5', 'p3c1'),
+          createTestCard('6', 'p3c2'),
+          createTestCard('5', 'p3c3'),
+          createTestCard('4', 'p3c4'),
+        ]),
+      ],
+      0,
+      {
+        drawPile: Pile.fromCards([
+          createTestCard('2', 'drawn_1'),
+          createTestCard('10', 'drawn_2'),
+        ]),
+      }
+    );
+
+    const errorSpy = vi.fn();
+    const successSpy = vi.fn();
+    gameClient.onStateUpdateError(errorSpy);
+    gameClient.onStateUpdateSuccess(successSpy);
+
+    expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
+
+    gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+    await vi.runAllTimersAsync();
+
+    expect(gameClient.getPlayer('bot1')?.cards.length).toBe(3);
+    expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
+      expect.arrayContaining([0])
+    ); // bot1 should have tossed in 2 cards, so now it knows only discarded card
+
+    gameClient.dispatch(GameActions.playerTossInFinished('human')); // now we will start toss in round
+    await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
+    // now we should again know two cards after playing two 7s
+    expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
+      expect.arrayContaining([0, 1, 2])
+    );
 
     botAdapter.dispose();
   });

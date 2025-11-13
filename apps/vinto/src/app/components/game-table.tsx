@@ -180,7 +180,7 @@ export const GameTable = observer(() => {
             )}
 
             {/* Row 2: Left | Center piles | Right */}
-            <div className="flex-1 flex items-center gap-1 sm:gap-2 min-h-0">
+            <div className="flex-1 flex items-start gap-1 sm:gap-2 min-h-0 pt-4">
               {/* Left Player */}
               <div className="flex-shrink-0 flex justify-start items-start">
                 {left && (
@@ -207,7 +207,7 @@ export const GameTable = observer(() => {
               </div>
 
               {/* Center draw/discard - takes remaining space and centers content */}
-              <div className="flex-1 flex items-center justify-center min-w-0">
+              <div className="flex-1 flex items-center justify-center min-w-0 pt-8">
                 <DeckArea
                   discardPile={discardPile}
                   pendingCard={pendingCard ?? null}

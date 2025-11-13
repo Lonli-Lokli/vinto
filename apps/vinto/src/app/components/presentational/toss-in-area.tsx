@@ -24,67 +24,69 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
     const textSize = 'text-2xs';
     const hasActiveTossIn = tossInRanks.length > 0 || tossInQueue.length > 0;
 
-    if (!hasActiveTossIn) {
-      return null; // Don't show anything when there's no toss-in active
-    }
-
     return (
-      <div className="flex flex-col items-center gap-1 opacity-75">
-        {/* Available Toss-In Ranks Section */}
-        {tossInRanks.length > 0 && (
-          <div className="flex flex-col items-center">
-            <div
-              className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
-            >
-              Toss-In
-            </div>
-            <div className="flex gap-0.5">
-              {tossInRanks.map((rank, index) => (
+      <div className="flex flex-col items-center gap-1 opacity-75 min-h-[80px]">
+        {hasActiveTossIn && (
+          <>
+            {/* Available Toss-In Ranks Section */}
+            {tossInRanks.length > 0 && (
+              <div className="flex flex-col items-center">
                 <div
-                  key={`rank-${rank}-${index}`}
-                  className={`${textSize} px-1.5 py-0.5 bg-surface-primary/70 border border-primary/60 rounded text-primary font-bold shadow-sm`}
+                  className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
                 >
-                  {rank}
+                  Toss-In
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="flex gap-0.5">
+                  {tossInRanks.map((rank, index) => (
+                    <div
+                      key={`rank-${rank}-${index}`}
+                      className={`${textSize} px-1.5 py-0.5 bg-surface-primary/70 border border-primary/60 rounded text-primary font-bold shadow-sm`}
+                    >
+                      {rank}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Toss-In Queue Section */}
-        {tossInQueue.length > 0 && (
-          <div className="flex flex-col items-center">
-            <div
-              className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
-            >
-              Tossed ({tossInQueue.length})
-            </div>
-            <div className="flex flex-col gap-1">
-              {tossInQueue.map((item, index) => (
+            {/* Toss-In Queue Section */}
+            {tossInQueue.length > 0 && (
+              <div className="flex flex-col items-center">
                 <div
-                  key={`queue-${item.playerId}-${index}`}
-                  className="flex items-center gap-1 bg-surface-primary/60 border border-primary/40 rounded px-1.5 py-0.5 shadow-sm"
+                  className={`${textSize} text-white/90 font-medium mb-0.5 drop-shadow-md`}
                 >
-                  {/* Player name */}
-                  <span className={`${textSize} text-secondary font-medium`}>
-                    {item.playerName}:
-                  </span>
-                  {/* Small card preview */}
-                  <div
-                    className="relative"
-                    style={{ width: '24px', height: '36px' }}
-                  >
-                    <Card
-                      rank={item.rank}
-                      revealed={true}
-                      size={cardSize}
-                      selectionState="default"
-                    />
-                  </div>
+                  Tossed ({tossInQueue.length})
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex flex-col gap-1">
+                  {tossInQueue.map((item, index) => (
+                    <div
+                      key={`queue-${item.playerId}-${index}`}
+                      className="flex items-center gap-1 bg-surface-primary/60 border border-primary/40 rounded px-1.5 py-0.5 shadow-sm"
+                    >
+                      {/* Player name */}
+                      <span
+                        className={`${textSize} text-secondary font-medium`}
+                      >
+                        {item.playerName}:
+                      </span>
+                      {/* Small card preview */}
+                      <div
+                        className="relative"
+                        style={{ width: '24px', height: '36px' }}
+                      >
+                        <Card
+                          rank={item.rank}
+                          revealed={true}
+                          size={cardSize}
+                          selectionState="default"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     );

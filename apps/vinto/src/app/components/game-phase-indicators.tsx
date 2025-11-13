@@ -208,8 +208,8 @@ const TossInIndicator = observer(
       ? activeTossIn.originalPlayerIndex === currentPlayerIndex
       : false;
     const hasWrongAttempt = gameClient.visualState.roundFailedAttempts.some(
-          (attempt) => attempt.playerId === humanPlayer?.id
-        );
+      (attempt) => attempt.playerId === humanPlayer?.id
+    );
 
     const recentActions = gameClient.visualState.turnActions.map(
       (action) => `${action.playerName} ${action.description}`
@@ -375,7 +375,7 @@ const CardActionButtons = ({
   onSwapDiscard: () => void;
   onDiscard: () => void;
 }) => (
-  <div className="space-y-1 mt-auto flex-shrink-0">
+  <div className="space-y-1 mt-auto flex-shrink-0 mb-1">
     {/* Row 1: Use and Swap (or just Swap and Discard if no action) */}
     <div className="grid grid-cols-2 gap-1">
       {hasAction ? (
