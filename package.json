@@ -16,6 +16,7 @@
     "@sentry/nextjs": "^10.17.0",
     "@vercel/analytics": "^1.5.0",
     "class-transformer": "^0.5.1",
+    "dialog-polyfill": "^0.5.6",
     "fast-copy": "^3.0.2",
     "fast-equals": "5.3.2",
     "framer-motion": "^12.23.22",

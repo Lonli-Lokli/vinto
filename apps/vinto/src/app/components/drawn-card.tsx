@@ -19,7 +19,8 @@ export const DrawnCard: React.FC<DrawnCardProps> = observer(
   ({ rank, isVisible, size = 'lg', isMobile = false }) => {
     const animationStore = useCardAnimationStore();
     const uiStore = useUIStore();
-    const { textSize, labelMargin, labelPadding, textClasses } = getPileSettings(isMobile);
+    const { textSize, labelMargin, labelPadding, textClasses } =
+      getPileSettings(isMobile);
 
     // Check if the drawn card is being animated TO or FROM
     // Hide if animating to drawn area (card arriving) or animating from drawn area (card leaving)

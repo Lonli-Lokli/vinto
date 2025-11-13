@@ -389,6 +389,7 @@
 /* Backdrop utilities with CSS variables */
 .backdrop-theme {
   background-color: rgba(var(--color-backdrop-blur), 0.95);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 

@@ -54,7 +54,7 @@ export const PlayerArea = observer(function PlayerArea({
   const isCoalitionLeader = coalitionLeader?.id === player.id;
   const isCoalitionMember = player.coalitionWith.length > 0;
 
-  const cardSize = getCardSizeForPlayer(player.cards.length, player.isHuman);
+  const cardSize = getCardSizeForPlayer(player.cards.length, position, player.isHuman);
   const avatarFirst = shouldAvatarComeFirst(position);
 
   // Get action targets for cards that have been selected (Q, K actions, etc.)

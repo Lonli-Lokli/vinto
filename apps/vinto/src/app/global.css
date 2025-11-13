@@ -3,6 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import 'dialog-polyfill/dist/dialog-polyfill.css';
+
 /* Import theme variables */
 @import './theme.css';
 
@@ -433,6 +435,7 @@ dialog[open] {
 
 /* Backdrop */
 dialog::backdrop {
+  -webkit-backdrop-filter: blur(25px);
   backdrop-filter: blur(25px);
   transition: backdrop-filter 0.5s ease;
 }
@@ -703,11 +706,12 @@ dialog > form > footer button:disabled {
       transform: translateY(100px) scale(0.9);
     }
   }
-
-  @starting-style {
-    dialog[open] {
-      opacity: 0;
-      transform: translateY(100px) scale(0.9);
+  @supports (transition-behavior: allow-discrete) {
+    @starting-style {
+      dialog[open] {
+        opacity: 0;
+        transform: translateY(100px) scale(0.9);
+      }
     }
   }
 
@@ -743,10 +747,12 @@ dialog > form > footer button:disabled {
       }
     }
 
-    @starting-style {
-      dialog[modal-mode='mega'][open] {
-        opacity: 0;
-        transform: translateY(100%);
+    @supports (transition-behavior: allow-discrete) {
+      @starting-style {
+        dialog[modal-mode='mega'][open] {
+          opacity: 0;
+          transform: translateY(100%);
+        }
       }
     }
 
@@ -759,7 +765,6 @@ dialog > form > footer button:disabled {
     }
   }
 }
-
 
 /* Mini dialog specific styles */
 dialog[modal-mode='mini'] {
