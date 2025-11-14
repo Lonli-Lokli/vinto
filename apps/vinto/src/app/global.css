@@ -11,6 +11,9 @@
 /* Viewport handling for mobile devices */
 @layer base {
   html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    
     /* Base font size - mobile first */
     font-size: 16px;
 
