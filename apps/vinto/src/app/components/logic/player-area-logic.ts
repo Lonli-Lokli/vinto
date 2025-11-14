@@ -74,6 +74,12 @@ export function getCardSizeForPlayer(
   position: PlayerPosition,
   isHuman: boolean
 ): CardSize {
+  // Side players: very constrained vertically, never use large
+  if (position === 'left' || position === 'right') {
+    if (cardCount <= 5) return 'md';
+    return 'sm';
+  }
+
   if (cardCount > 7) return 'sm';
   if (cardCount > 5) return 'md';
   return isHuman ? 'lg' : 'md';
@@ -111,13 +117,17 @@ export function shouldHighlightCard(params: {
 
 /**
  * Get CSS classes for card container based on player position
+ * Note: left/right cards are rotated 90°, so they need special spacing treatment.
+ * The rotation keeps the original box dimensions (w-8 h-12 = 32×48px box),
+ * but visually the card appears 48×32. Using negative margin compensates for this
+ * by pulling cards closer together to match the visual gap of top/bottom players.
  */
 export function getCardContainerClasses(position: PlayerPosition): string {
   const classes = {
     bottom: 'flex flex-wrap gap-1 justify-center max-w-full',
     top: 'flex flex-wrap gap-1 justify-center max-w-full',
-    left: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
-    right: 'flex flex-col flex-wrap gap-1 items-center max-h-full',
+    left: 'flex flex-col flex-wrap gap-1 items-center max-h-full -space-y-2',
+    right: 'flex flex-col flex-wrap gap-1 items-center max-h-full -space-y-2',
   };
   return classes[position];
 }
