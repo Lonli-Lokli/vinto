@@ -74,7 +74,6 @@ export function getCardSizeForPlayer(
   position: PlayerPosition,
   isHuman: boolean
 ): CardSize {
-  if (position === 'left' || position === 'right') return 'sm';
   if (cardCount > 7) return 'sm';
   if (cardCount > 5) return 'md';
   return isHuman ? 'lg' : 'md';
