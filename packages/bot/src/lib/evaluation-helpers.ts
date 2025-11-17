@@ -1,4 +1,4 @@
-import { Rank } from '@vinto/shapes';
+import { isRankActionable, Rank } from '@vinto/shapes';
 import { MCTSGameState, MCTSPlayerState } from './mcts-types';
 
 /**
@@ -118,7 +118,7 @@ export function evaluateActionCardValue(
       rankCounts.set(rank, (rankCounts.get(rank) || 0) + 1);
 
       // Action cards have strategic value
-      if (card.actionText) {
+      if (isRankActionable(card.rank)) {
         if (rank === 'K') {
           actionValue += 15; // King is most powerful
         } else if (rank === 'Q' || rank === 'J') {

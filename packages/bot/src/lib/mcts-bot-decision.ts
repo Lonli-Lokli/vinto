@@ -42,8 +42,6 @@ import {
 } from './shapes';
 import { TurnOutcome } from './shapes';
 
-
-
 /**
  * MCTS-based Bot Decision Service
  * Uses Monte Carlo Tree Search with imperfect information (determinization)
@@ -1140,7 +1138,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       `[Memory Update] ${this.botId} has ${context.botPlayer.knownCardPositions.length} known card positions:`,
       context.botPlayer.knownCardPositions
     );
-    
+
     // Update from bot's own known cards
     context.botPlayer.cards.forEach((card, position) => {
       if (context.botPlayer.knownCardPositions.includes(position)) {
@@ -1213,7 +1211,10 @@ export class MCTSBotDecisionService implements BotDecisionService {
       deckSize: 54, // Standard deck with 2 Jokers
       botMemory: this.botMemory,
       hiddenCards: new Map(),
-      pendingCard: context.pendingCard || null,
+      // --- THIS IS THE CORRESPONDING FIX IN THE BOT ---
+      // It prioritizes the active card from the context, falling back to the
+      // pending card. This makes the simulation state correct in all scenarios.
+      pendingCard: context.activeActionCard || context.pendingCard || null,
       isTossInPhase,
       tossInRanks:
         isTossInPhase && context.gameState.activeTossIn

@@ -7,6 +7,7 @@ import {
   getCardValue,
   Rank,
   CardAction,
+  isRankActionable,
 } from '@vinto/shapes';
 import { BotMemory } from './bot-memory';
 import {
@@ -87,7 +88,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
   shouldUseAction(drawnCard: Card, context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
 
-    if (!drawnCard.actionText) return false;
+    if (!isRankActionable(drawnCard.rank)) return false;
 
     // Evaluate: Use action vs swap vs discard
     const useActionValue = this.evaluateUseAction(drawnCard, context);

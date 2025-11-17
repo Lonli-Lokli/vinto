@@ -8,6 +8,7 @@ export interface BotDecisionContext {
   discardTop?: Card;
   discardPile: Pile; // Full discard pile history for tracking removed cards
   pendingCard?: Card;
+  activeActionCard?: Card;
   currentAction?: {
     targetType: string;
     card: Card;

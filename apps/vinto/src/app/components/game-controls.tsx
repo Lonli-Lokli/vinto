@@ -7,7 +7,7 @@ import { HelpPopover } from './presentational';
 import { DrawCardButton, PlayDiscardButton } from './buttons';
 import { useDispatch, useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
-import { getCardName } from '@vinto/shapes';
+import { getCardName, isRankActionable } from '@vinto/shapes';
 
 export const GameControls = observer(() => {
   const gameClient = useGameClient();
@@ -109,7 +109,7 @@ const FullTurnControls = observer(
           tooltip: `${topDiscard.rank} action has already been played`,
         };
       }
-      if (!topDiscard.actionText) {
+      if (!isRankActionable(topDiscard.rank)) {
         return {
           text: `Use ${getCardName(topDiscard.rank)}`,
           subtitle: 'No action',

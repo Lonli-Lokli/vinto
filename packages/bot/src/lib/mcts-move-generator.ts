@@ -1,6 +1,6 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, getCardAction, logger, Rank } from '@vinto/shapes';
+import { CardAction, getCardAction, isRankActionable, logger, Rank } from '@vinto/shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -80,7 +80,7 @@ export class MCTSMoveGenerator {
     }
 
     // If we have a pending action card (in awaiting_action phase), generate action target moves
-    if (state.pendingCard && state.pendingCard.actionText) {
+    if (state.pendingCard && isRankActionable(state.pendingCard.rank)) {
       const actionType = getCardAction(state.pendingCard.rank);
       if (actionType) {
         return this.generateActionMoves(state, actionType);

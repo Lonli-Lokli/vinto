@@ -184,7 +184,7 @@ export function handleParticipateInTossIn(
     }
 
     // Check if card has an action
-    if (card.actionText) {
+    if ((card.actionText?.length ?? 0) > 0) {
       console.log(
         `[handleParticipateInTossIn] Action card ${card.rank} tossed in by ${playerId}, queuing for action use`
       );

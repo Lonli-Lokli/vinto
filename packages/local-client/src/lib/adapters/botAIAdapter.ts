@@ -4,7 +4,7 @@
 import { reaction } from 'mobx';
 
 import { GameActions } from '@vinto/engine';
-import { Card, logger, Rank } from '@vinto/shapes';
+import { Card, isRankActionable, logger, Rank } from '@vinto/shapes';
 import {
   BotDecisionService,
   BotDecisionServiceFactory,
@@ -571,7 +571,7 @@ export class BotAIAdapter {
     await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
     // First, check if the card has an action and if we should use it
-    if (drawnCard.actionText) {
+    if (isRankActionable(drawnCard.rank)) {
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,
         effectiveContext
@@ -647,7 +647,7 @@ export class BotAIAdapter {
       effectiveContext
     );
 
-    if (shouldUseAction && cardInHand.actionText) {
+    if (shouldUseAction && isRankActionable(cardInHand.rank)) {
       // Has action - use it
       this.gameClient.dispatch(GameActions.playCardAction(botId));
       console.log(`[BotAI] ${botId} using ${cardInHand.rank} action`);
@@ -1050,6 +1050,8 @@ export class BotAIAdapter {
       }
     }
 
+    const activeCardFromAction = this.gameClient.state.pendingAction?.card;
+
     return {
       botId,
       botPlayer,
@@ -1057,6 +1059,9 @@ export class BotAIAdapter {
       gameState: state, // Use engine GameState directly - it already has all required fields
       discardTop: this.gameClient.topDiscardCard,
       discardPile: state.discardPile,
+      // This new property explicitly tells the bot which card's action to process.
+      // It will be correctly populated during both regular turns and toss-in action phases.
+      activeActionCard: activeCardFromAction,
       pendingCard: this.gameClient.pendingCard,
       opponentKnowledge,
       // Coalition context for final round
