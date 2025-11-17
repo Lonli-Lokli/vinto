@@ -1,7 +1,7 @@
 // components/GamePhaseIndicators.tsx
 'use client';
 
-import React from 'react';
+import React, { FC } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Eye, Repeat, Zap, Hourglass, CircleArrowRight } from 'lucide-react';
 import { HelpPopover } from './presentational';
@@ -19,6 +19,7 @@ import {
 import {
   getCardName,
   getCardValue,
+  getCardShortDescription,
   getCardLongDescription as getActionExplanation,
   Rank,
   Card,
@@ -142,44 +143,51 @@ const SetupPhaseIndicator = observer(
   }: {
     setupPeeksRemaining: number;
     onFinishSetup: () => void;
-  }) => (
-    <div className="w-full h-full">
-      <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-1.5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h3 className="text-xs font-semibold text-primary flex items-center">
-              <Eye size={14} className="mr-1" />
-              Memory Phase
-            </h3>
-            <span className="text-xs text-secondary mt-0.5 ml-5">
-              Setup your memory before the game begins
-            </span>
+  }) => {
+    return (
+      <div className="w-full h-full">
+        <div className="bg-surface-primary/98 backdrop-blur-sm supports-[backdrop-filter]:bg-surface-primary/95 border border-primary rounded-lg p-2 shadow-sm h-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-1.5">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <h3 className="text-xs font-semibold text-primary flex items-center">
+                <Eye size={14} className="mr-1" />
+                Memory Phase
+              </h3>
+              <span className="text-xs text-secondary mt-0.5 ml-5">
+                Setup your memory before the game begins
+              </span>
+            </div>
+            <HelpPopover
+              title="Card Reference"
+              content={<CardReferences />}
+              showPulseUntilOpen={true}
+            />
           </div>
-        </div>
 
-        {/* Text Content */}
-        <div className="flex flex-col justify-center text-center space-y-2">
-          <div className="text-xs text-secondary leading-tight">
-            Click any 2 of your cards to memorize them. They will be hidden
-            during the game!
+          {/* Text Content */}
+          <div className="flex flex-col justify-center text-center space-y-2">
+            <div className="text-xs text-secondary leading-tight">
+              Click any 2 of your cards to memorize them. They will be hidden
+              during the game!
+            </div>
+            <div className="text-xs font-medium text-tertiary leading-tight">
+              Peeks remaining: {setupPeeksRemaining}
+            </div>
           </div>
-          <div className="text-xs font-medium text-tertiary leading-tight">
-            Peeks remaining: {setupPeeksRemaining}
-          </div>
-        </div>
 
-        {/* Button */}
-        <div>
-          <StartGameButton
-            onClick={onFinishSetup}
-            className="w-full py-1.5 px-4 text-sm"
-            disabled={setupPeeksRemaining > 0}
-          />
+          {/* Button */}
+          <div>
+            <StartGameButton
+              onClick={onFinishSetup}
+              className="w-full py-1.5 px-4 text-sm"
+              disabled={setupPeeksRemaining > 0}
+            />
+          </div>
         </div>
       </div>
-    </div>
-  )
+    );
+  }
 );
 
 SetupPhaseIndicator.displayName = 'SetupPhaseIndicator';
@@ -506,3 +514,53 @@ const SwapPositionIndicator = observer(
 );
 
 SwapPositionIndicator.displayName = 'SwapPositionIndicator';
+
+const CardReferences: FC = () => {
+  const allCards: Array<{ rank: Rank; isAction: boolean }> = [
+    ...((['7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const).map(rank => ({ rank, isAction: true }))),
+    ...((['2', '3', '4', '5', '6', 'Joker'] as const).map(rank => ({ rank, isAction: false }))),
+  ];
+
+  return (
+    <div className="space-y-3 max-h-[80vh] overflow-y-auto">
+      <p className="text-xs font-semibold text-primary">Card Reference Guide</p>
+
+      {/* Grid layout for cards - 2 columns */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        {allCards.map(({ rank, isAction }) => (
+          <div key={rank} className="flex gap-1.5 items-start min-w-0">
+            <div
+              className="flex-shrink-0"
+              style={{ width: '28px', height: '42px' }}
+            >
+              <CardComponent
+                rank={rank}
+                revealed={true}
+                size="sm"
+                selectionState="default"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-2xs font-medium text-primary leading-tight">
+                {getCardName(rank)} ({getCardValue(rank)}{Math.abs(getCardValue(rank)) === 1 ? 'pt' : 'pts'})
+              </p>
+              <p className="text-3xs text-secondary leading-tight mt-0.5">
+                {isAction ? getCardShortDescription(rank) : rank === 'Joker' ? 'Best card!' : 'No action'}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="pt-2 border-t border-border-secondary">
+        <p className="text-3xs text-muted leading-tight">
+          <span className="text-success">•</span> Action cards (7-A) have special abilities
+        </p>
+        <p className="text-3xs text-muted leading-tight">
+          <span className="text-secondary">•</span> Number cards (2-6) and Joker have no actions
+        </p>
+      </div>
+    </div>
+  );
+};

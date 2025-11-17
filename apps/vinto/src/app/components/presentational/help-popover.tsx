@@ -8,31 +8,49 @@ import { getCardHelpText, Rank } from '@vinto/shapes';
 
 interface HelpPopoverProps {
   title: string;
-  content?: string;
+  content?: string | React.ReactNode;
   rank?: Rank;
+  showPulseUntilOpen?: boolean;
 }
 
 export const HelpPopover: React.FC<HelpPopoverProps> = ({
   title,
   content,
   rank,
+  showPulseUntilOpen = false,
 }) => {
   const [showHelp, setShowHelp] = useState(false);
+  const [hasBeenOpened, setHasBeenOpened] = useState(false);
 
   const helpText = rank ? getCardHelpText(rank) : content;
+  const isStringContent = typeof helpText === 'string';
 
   const handleToggle = () => {
+    if (!showHelp && !hasBeenOpened) {
+      setHasBeenOpened(true);
+    }
     setShowHelp(!showHelp);
   };
 
+  const shouldShowPulse = showPulseUntilOpen && !hasBeenOpened;
+
   const helpContent = (
     <div
-      className="bg-surface-primary border border-primary rounded p-3 max-w-sm shadow-lg"
-      style={{ zIndex: 9999 }}
+      className="bg-surface-primary border border-primary rounded p-3 shadow-lg"
+      style={{ 
+        zIndex: 9999,
+        maxWidth: isStringContent ? '24rem' : '40rem',
+      }}
     >
       <div className="text-sm text-secondary space-y-2">
-        <p className="font-semibold text-primary">{title}</p>
-        <div className="text-xs whitespace-pre-line">{helpText}</div>
+        {isStringContent ? (
+          <>
+            <p className="font-semibold text-primary">{title}</p>
+            <div className="text-xs whitespace-pre-line">{helpText}</div>
+          </>
+        ) : (
+          helpText
+        )}
       </div>
     </div>
   );
@@ -61,7 +79,14 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({
       )}
       onClickOutside={() => setShowHelp(false)}
     >
-      <HelpButton onClick={handleToggle} />
+      <div className="relative inline-flex items-center gap-1">
+        {shouldShowPulse && (
+          <div className="animate-bounce text-base pointer-events-none">
+            👉
+          </div>
+        )}
+        <HelpButton onClick={handleToggle} />
+      </div>
     </Popover>
   );
 };
