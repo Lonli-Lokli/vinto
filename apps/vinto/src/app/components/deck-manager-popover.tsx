@@ -174,7 +174,7 @@ export const DeckManagerPopover = observer(
                           />
                         </div>
                         <div className="text-xs text-center mt-1 font-semibold">
-                          Pos {index}
+                          Pos {index + 1}
                         </div>
                       </button>
                     ))}

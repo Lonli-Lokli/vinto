@@ -517,8 +517,14 @@ SwapPositionIndicator.displayName = 'SwapPositionIndicator';
 
 const CardReferences: FC = () => {
   const allCards: Array<{ rank: Rank; isAction: boolean }> = [
-    ...((['7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const).map(rank => ({ rank, isAction: true }))),
-    ...((['2', '3', '4', '5', '6', 'Joker'] as const).map(rank => ({ rank, isAction: false }))),
+    ...(['7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const).map((rank) => ({
+      rank,
+      isAction: true,
+    })),
+    ...(['2', '3', '4', '5', '6', 'Joker'] as const).map((rank) => ({
+      rank,
+      isAction: false,
+    })),
   ];
 
   return (
@@ -542,10 +548,15 @@ const CardReferences: FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-2xs font-medium text-primary leading-tight">
-                {getCardName(rank)} ({getCardValue(rank)}{Math.abs(getCardValue(rank)) === 1 ? 'pt' : 'pts'})
+                {getCardName(rank)} ({getCardValue(rank)}
+                {Math.abs(getCardValue(rank)) === 1 ? 'pt' : 'pts'})
               </p>
               <p className="text-3xs text-secondary leading-tight mt-0.5">
-                {isAction ? getCardShortDescription(rank) : rank === 'Joker' ? 'Best card!' : 'No action'}
+                {isAction
+                  ? getCardShortDescription(rank)
+                  : rank === 'Joker'
+                  ? 'Best card!'
+                  : 'No action'}
               </p>
             </div>
           </div>
@@ -555,10 +566,12 @@ const CardReferences: FC = () => {
       {/* Legend */}
       <div className="pt-2 border-t border-border-secondary">
         <p className="text-3xs text-muted leading-tight">
-          <span className="text-success">•</span> Action cards (7-A) have special abilities
+          <span className="text-success">•</span> Action cards (7-A) have
+          special abilities
         </p>
         <p className="text-3xs text-muted leading-tight">
-          <span className="text-secondary">•</span> Number cards (2-6) and Joker have no actions
+          <span className="text-secondary">•</span> Number cards (2-6) and Joker
+          have no actions
         </p>
       </div>
     </div>

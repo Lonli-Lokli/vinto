@@ -50,7 +50,10 @@ export class AnimationService {
   private uiStore: UIStore;
   private gameClient?: GameClient;
 
-  constructor(@inject(CardAnimationStore) animationStore: CardAnimationStore, @inject(UIStore) uiStore: UIStore) {
+  constructor(
+    @inject(CardAnimationStore) animationStore: CardAnimationStore,
+    @inject(UIStore) uiStore: UIStore
+  ) {
     this.animationStore = animationStore;
     this.uiStore = uiStore;
     // Register state update callback
@@ -140,7 +143,7 @@ export class AnimationService {
         this.handleSkipJackSwap(oldState, newState, action);
         break;
 
-      case 'PLAYER_TOSS_IN_FINISHED': 
+      case 'PLAYER_TOSS_IN_FINISHED':
         this.handlePlayerTossInFinished(oldState, newState, action);
         break;
 
@@ -368,16 +371,11 @@ export class AnimationService {
       );
       return;
     }
-    // parallel animation: play-action effect, then move to discard
-    // important: do not use sequential here as it will render old controls once
-    this.animationStore.startAnimationSequence('parallel', [
-      {
-        type: 'play-action',
-        rank: rank,
-        from: { type: 'drawn' },
-        duration: 2000,
-      },
-    ]);
+    this.animationStore.startPlayActionAnimation(
+      rank,
+      { type: 'drawn' },
+      2_000
+    );
   }
 
   /**
@@ -392,15 +390,11 @@ export class AnimationService {
     const card = newState.pendingAction?.card;
     if (!card) return;
 
-    // Sequential animation: play-action effect, then move to discard
-    this.animationStore.startAnimationSequence('parallel', [
-      {
-        type: 'play-action',
-        rank: card.rank,
-        from: { type: 'drawn' },
-        duration: 2000,
-      },
-    ]);
+    this.animationStore.startPlayActionAnimation(
+      card.rank,
+      { type: 'drawn' },
+      2_000
+    );
   }
 
   /**
@@ -552,6 +546,17 @@ export class AnimationService {
 
     if (!player || !targetPlayer || !oldTargetPlayer) return;
 
+    const steps: AnimationStep[] = [
+      {
+        type: 'discard',
+        rank: 'K',
+        from: { type: 'drawn' },
+        to: { type: 'discard' },
+        duration: 3_000,
+        revealed: true,
+      },
+    ];
+
     // Check if this card came from a swap declaration (has swapPosition)
     if (isCorrect) {
       // CORRECT DECLARATION
@@ -560,15 +565,6 @@ export class AnimationService {
       const steps: AnimationStep[] = [];
 
       // Step 1: King card to discard
-
-      steps.push({
-        type: 'discard',
-        rank: 'K',
-        from: { type: 'drawn' },
-        to: { type: 'discard' },
-        duration: 3_000,
-        revealed: true,
-      });
 
       steps.push({
         type: 'swap',
@@ -581,8 +577,6 @@ export class AnimationService {
         duration: 1_500,
         revealed: true,
       });
-
-      this.animationStore.startAnimationSequence('parallel', steps);
       console.log(
         '[AnimationService] Correct King declaration - King and selected card to discard'
       );
@@ -594,18 +588,6 @@ export class AnimationService {
       // 3. Penalty card: draw → hand
       const penaltyCardPosition = player.cards.length - 1;
       const penaltyCard = player.cards[penaltyCardPosition];
-
-      const steps: AnimationStep[] = [];
-
-      // Step 1: King card to discard
-      steps.push({
-        type: 'discard',
-        rank: 'K',
-        from: { type: 'drawn' },
-        to: { type: 'discard' },
-        duration: 2_000,
-        revealed: true,
-      });
 
       // Step 2: Penalty card from draw pile to hand
       // Note: The penalty card goes to the player who made the King declaration (playerId),
@@ -627,11 +609,12 @@ export class AnimationService {
         });
       }
 
-      this.animationStore.startAnimationSequence('sequential', steps);
       console.log(
         '[AnimationService] Incorrect King declaration - King to discard, penalty card drawn'
       );
     }
+
+    this.animationStore.startAnimationSequence('parallel', steps);
   }
 
   /**
@@ -683,7 +666,8 @@ export class AnimationService {
           cardIndex: position,
           coalitionLeaderId: newState.coalitionLeaderId,
           targetPlayer: targetPlayer,
-          temporarilyVisibleCards: this.uiStore.getTemporarilyVisibleCards(targetPlayerId),
+          temporarilyVisibleCards:
+            this.uiStore.getTemporarilyVisibleCards(targetPlayerId),
           gamePhase: newState.phase,
           observingPlayer: newState.players.find((p) => p.id === playerId)!,
         }),
@@ -751,31 +735,19 @@ export class AnimationService {
               type: 'draw',
               rank: penaltyCard.rank,
               from: {
-                type: 'draw'
+                type: 'draw',
               },
-              to: {type: 'player', 'playerId': targetPlayerId, position: penaltyCardPosition},
+              to: {
+                type: 'player',
+                playerId: targetPlayerId,
+                position: penaltyCardPosition,
+              },
               duration: 1_500,
               revealed: false,
-              fullRotation: false
-            })
+              fullRotation: false,
+            });
             // Start indicator and discard in parallel, then penalty card
             this.animationStore.startAnimationSequence('parallel', steps);
-
-            // // After penalty indicator completes, draw the penalty card
-            // setTimeout(() => {
-            //   this.animationStore.startDrawAnimation(
-            //     penaltyCard.rank,
-            //     { type: 'draw' },
-            //     {
-            //       type: 'player',
-            //       playerId: targetPlayerId,
-            //       position: penaltyCardPosition,
-            //     },
-            //     1500,
-            //     false, // Penalty cards are never revealed
-            //     false
-            //   );
-            // }, 1500);
 
             console.log(
               '[AnimationService] Ace action complete - penalty indicator, Ace to discard, then penalty card to target player'
@@ -1096,11 +1068,17 @@ export class AnimationService {
     _action: GameAction
   ): void {
     if (newState.pendingAction) {
-      this.animationStore.startPlayActionAnimation(newState.pendingAction.card.rank, {
-        type: 'discard'
-      }, 2_000 );
+      this.animationStore.startPlayActionAnimation(
+        newState.pendingAction.card.rank,
+        {
+          type: 'discard',
+        },
+        2_000
+      );
 
-      console.log('[AnimationService] Player toss-in finished - play action animation started');
+      console.log(
+        '[AnimationService] Player toss-in finished - play action animation started'
+      );
     }
   }
 

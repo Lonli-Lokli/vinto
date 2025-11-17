@@ -71,7 +71,7 @@ export const OpponentCardPeek = observer(() => {
               <Card
                 rank={cardRank}
                 revealed={true}
-                size="md"
+                size="xl"
                 selectionState="default"
               />
             )}

@@ -71,7 +71,7 @@ export const OwnCardPeek = observer(() => {
             <Card
               rank={cardRank}
               revealed={true}              
-              size="md"
+              size="xl"
               selectionState="default"
             />
             <p className="text-xs text-secondary">
