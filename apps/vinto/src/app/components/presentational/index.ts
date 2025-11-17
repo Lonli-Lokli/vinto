@@ -13,6 +13,8 @@ export * from './image';
 export * from './middle-area';
 export * from './player-avatar';
 export * from './player-cards';
+export * from './horizontal-player-cards';
+export * from './vertical-player-cards';
 export * from './theme-toggle';
 export * from './toast-provider';
 export * from './toss-in-area';

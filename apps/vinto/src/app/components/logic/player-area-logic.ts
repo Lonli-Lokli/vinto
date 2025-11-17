@@ -117,6 +117,7 @@ export function shouldHighlightCard(params: {
 
 /**
  * Get CSS classes for card container based on player position
+ * @deprecated Use HorizontalPlayerCards or VerticalPlayerCards components instead
  * Note: left/right cards are rotated 90°, so they need special spacing treatment.
  * The rotation keeps the original box dimensions (w-8 h-12 = 32×48px box),
  * but visually the card appears 48×32. Using negative margin compensates for this
@@ -130,6 +131,20 @@ export function getCardContainerClasses(position: PlayerPosition): string {
     right: 'flex flex-col flex-wrap gap-1 items-center max-h-full -space-y-2',
   };
   return classes[position];
+}
+
+/**
+ * Check if position should use horizontal card layout (top/bottom)
+ */
+export function isHorizontalPosition(position: PlayerPosition): boolean {
+  return position === 'top' || position === 'bottom';
+}
+
+/**
+ * Check if position should use vertical card layout (left/right)
+ */
+export function isVerticalPosition(position: PlayerPosition): boolean {
+  return position === 'left' || position === 'right';
 }
 
 /**

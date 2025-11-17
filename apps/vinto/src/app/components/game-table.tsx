@@ -181,8 +181,8 @@ export const GameTable = observer(() => {
 
             {/* Row 2: Left | Center piles | Right */}
             <div className="flex-1 flex items-start gap-1 sm:gap-2 min-h-0 pt-4">
-              {/* Left Player */}
-              <div className="flex-shrink-0 flex justify-start items-start">
+              {/* Left Player - with height constraint */}
+              <div className="flex-shrink-0 flex justify-start items-start h-full max-h-full">
                 {left && (
                   <PlayerArea
                     player={left.player}
@@ -228,8 +228,8 @@ export const GameTable = observer(() => {
                 />
               </div>
 
-              {/* Right Player */}
-              <div className="flex-shrink-0 flex justify-end items-start">
+              {/* Right Player - with height constraint */}
+              <div className="flex-shrink-0 flex justify-end items-start h-full max-h-full">
                 {right && (
                   <PlayerArea
                     player={right.player}
@@ -301,9 +301,9 @@ export const GameTable = observer(() => {
               </div>
             )}
 
-            {/* Left Player */}
+            {/* Left Player - with height constraint */}
             {left && (
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 max-h-[70vh]">
                 <PlayerArea
                   player={left.player}
                   position={left.position}
@@ -326,9 +326,9 @@ export const GameTable = observer(() => {
               </div>
             )}
 
-            {/* Right Player */}
+            {/* Right Player - with height constraint */}
             {right && (
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 max-h-[70vh]">
                 <PlayerArea
                   player={right.player}
                   position={right.position}
