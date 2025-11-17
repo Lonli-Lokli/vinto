@@ -1,5 +1,13 @@
 # Vinto Card Game
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://reactjs.org/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Lonli-Lokli/vinto)
+[![Nx](https://img.shields.io/badge/Nx-21-143055?logo=nx&logoColor=white)](https://nx.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A strategic multiplayer card game built with **Next.js**, **TypeScript**, and a **pure reducer-based architecture**. Vinto features 4-player gameplay with AI opponents, action cards with special abilities, and cloud-ready game engine.
 
 ## Features
