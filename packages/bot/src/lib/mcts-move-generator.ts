@@ -1,6 +1,12 @@
 // services/mcts-move-generator.ts
 
-import { CardAction, getCardAction, isRankActionable, logger, Rank } from '@vinto/shapes';
+import {
+  Card,
+  CardAction,
+  getCardAction,
+  isRankActionable,
+  Rank,
+} from '@vinto/shapes';
 import { MCTSGameState, MCTSMove, MCTSActionTarget } from './mcts-types';
 
 /**
@@ -28,6 +34,32 @@ interface PrioritizedPosition {
  * Generates all legal moves from a given game state
  */
 export class MCTSMoveGenerator {
+  /**
+   * COALITION HELPER: Identify the coalition champion (member with best chance to win)
+   * Returns player with lowest score (excluding Vinto caller)
+   */
+  private static getCoalitionChampion(state: MCTSGameState): string | null {
+    if (!state.vintoCallerId || !state.coalitionLeaderId) return null;
+
+    const coalitionMembers = state.players.filter(
+      (p) => p.id !== state.vintoCallerId
+    );
+
+    if (coalitionMembers.length === 0) return null;
+
+    let champion = coalitionMembers[0];
+    for (const member of coalitionMembers) {
+      if (member.score < champion.score) {
+        champion = member;
+      }
+    }
+
+    console.log(
+      `[Coalition] Champion identified: ${champion.id} (score: ${champion.score})`
+    );
+    return champion.id;
+  }
+
   /**
    * Generate all possible moves from current state
    */
@@ -163,12 +195,13 @@ export class MCTSMoveGenerator {
           if (opponent.id === currentPlayer.id) continue;
 
           // COALITION FILTER: Skip Vinto caller if bot is coalition member
+          // Game rule: "no one may interact with the Vinto caller's cards" during final round
           const isCoalitionMember =
             state.vintoCallerId &&
             state.coalitionLeaderId &&
             currentPlayer.id !== state.vintoCallerId;
           if (isCoalitionMember && opponent.id === state.vintoCallerId) {
-            continue; // Coalition cannot peek Vinto caller
+            continue; // Coalition cannot peek/interact with Vinto caller's cards (game rule)
           }
 
           for (let pos = 0; pos < opponent.cardCount; pos++) {
@@ -201,18 +234,40 @@ export class MCTSMoveGenerator {
       case 'force-draw':
         // Force each opponent to draw
         // Ace action requires selecting a target player (position doesn't matter, any valid position will do)
-        // COALITION: Don't target Vinto caller if bot is in coalition
+        // GAME RULE: "no one may interact with the Vinto caller's cards" during final round
+        const currentPlayerIsInCoalition =
+          state.vintoCallerId &&
+          state.coalitionLeaderId &&
+          currentPlayer.id !== state.vintoCallerId;
+
+        // COALITION COORDINATION: Identify champion to avoid forcing them to draw
+        const aceChampionId = this.getCoalitionChampion(state);
+
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
 
-          // COALITION FILTER: Skip Vinto caller if bot is coalition member
-          const isCoalitionMember =
-            state.vintoCallerId &&
-            state.coalitionLeaderId &&
-            currentPlayer.id !== state.vintoCallerId;
-          if (isCoalitionMember && opponent.id === state.vintoCallerId) {
-            continue; // Coalition cannot use Ace on Vinto caller
+          // COALITION FILTER: If current bot is in coalition, skip Vinto caller (cannot interact - game rule)
+          if (
+            currentPlayerIsInCoalition &&
+            opponent.id === state.vintoCallerId
+          ) {
+            continue; // Cannot interact with Vinto caller's cards
           }
+
+          // COALITION COORDINATION: Don't force champion to draw (hurts our chances!)
+          if (
+            currentPlayerIsInCoalition &&
+            aceChampionId &&
+            opponent.id === aceChampionId
+          ) {
+            console.log(
+              `[Coalition Ace] Skipping champion ${aceChampionId} - don't hurt our best player`
+            );
+            continue;
+          }
+
+          // If current bot is Vinto caller, can target all coalition members
+          // If no coalition exists yet, target anyone (no restrictions)
 
           // Select position 0 as a valid placeholder (Ace action targets player, not specific card)
           moves.push({
@@ -266,14 +321,17 @@ export class MCTSMoveGenerator {
   /**
    * IMPROVED King Declaration Strategy
    *
-   * Key insight: King is EXTREMELY powerful for removing OUR OWN cards, not opponents!
+   * King can declare ANY card (own or opponent's) to trigger toss-in cascade for that rank.
    *
-   * Priority:
-   * 1. TOSS-IN CASCADES: Declare ranks we have 2+ of (removes multiple cards at once)
-   * 2. HIGH VALUE REMOVAL: Declare our single high-value cards (10, J, Q)
-   * 3. STRATEGIC SYNERGY: Declare ranks that match other players' cards (force them to toss in too)
+   * Strategy priorities:
+   * 1. OWN TOSS-IN CASCADES: Declare ranks we have 2+ of (removes multiple OUR cards at once)
+   * 2. OWN HIGH VALUE REMOVAL: Declare our single high-value cards (10, J, Q)
+   * 3. OPPONENT HARASSMENT: Declare opponent's high-value cards (force them to toss in, hurt them)
+   * 4. COALITION ATTACK: If in coalition, declare Vinto caller's high cards to harm them
    *
-   * NEVER declare opponent cards unless in coalition (helps them, not us)
+   * Coalition rules:
+   * - Coalition members should prioritize declaring Vinto caller's cards (harm enemy)
+   * - Coalition members should avoid declaring own or other coalition members' cards (friendly fire)
    */
   static generateImprovedKingMoves(
     state: MCTSGameState,
@@ -283,41 +341,68 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer || currentPlayer.id !== currentPlayerId) return moves;
 
+    // Check coalition status
+    const isInCoalition =
+      state.vintoCallerId &&
+      state.coalitionLeaderId &&
+      currentPlayer.id !== state.vintoCallerId;
+
     console.log(
-      `[King Generator] Player ${currentPlayerId} has ${currentPlayer.cardCount} cards, ${currentPlayer.knownCards.size} known cards in memory`
+      `[King Generator] Player ${currentPlayerId} has ${currentPlayer.cardCount} cards, ${currentPlayer.knownCards.size} known cards in memory, coalition: ${isInCoalition}`
     );
 
-    // Build map: rank → positions we have
-    const ourRankMap = new Map<Rank, number[]>();
+    // Build map: rank → card locations (playerId, position)
+    type CardLocation = { playerId: string; position: number; card: Card };
+    const rankMap = new Map<Rank, CardLocation[]>();
 
+    // Collect bot's own known cards
     for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
-      // ONLY use known cards from the player's memory (high confidence)
-      // King declaration should NEVER use determinized/sampled cards
       const memory = currentPlayer.knownCards.get(pos);
 
       if (memory && memory.confidence > 0.5 && memory.card) {
         const card = memory.card;
         const rank = card.rank;
-        const positions = ourRankMap.get(rank) || [];
-        positions.push(pos);
-        ourRankMap.set(rank, positions);
+        const locations = rankMap.get(rank) || [];
+        locations.push({ playerId: currentPlayer.id, position: pos, card });
+        rankMap.set(rank, locations);
 
         console.log(
-          `[King Generator] Position ${pos}: ${rank} (confidence: ${memory.confidence.toFixed(
+          `[King Generator] Own card [${pos}]: ${rank} (confidence: ${memory.confidence.toFixed(
             2
           )})`
-        );
-      } else {
-        console.log(
-          `[King Generator] Position ${pos}: UNKNOWN (confidence: ${
-            memory?.confidence?.toFixed(2) || 'N/A'
-          })`
         );
       }
     }
 
+    // Collect opponent's known cards
+    for (const opponent of state.players) {
+      if (opponent.id === currentPlayer.id) continue;
+
+      // COALITION FILTER: Skip Vinto caller (cannot interact with their cards - game rule)
+      // Also skip other coalition members (strategic - they're allies)
+      if (isInCoalition) {
+        continue; // Coalition cannot declare ANY opponent cards (Vinto caller = game rule, others = strategic)
+      }
+
+      for (let pos = 0; pos < opponent.cardCount; pos++) {
+        const memory = opponent.knownCards.get(pos);
+
+        if (memory && memory.confidence > 0.5 && memory.card) {
+          const card = memory.card;
+          const rank = card.rank;
+          const locations = rankMap.get(rank) || [];
+          locations.push({ playerId: opponent.id, position: pos, card });
+          rankMap.set(rank, locations);
+
+          console.log(
+            `[King Generator] Opponent ${opponent.id} card [${pos}]: ${rank}`
+          );
+        }
+      }
+    }
+
     console.log(
-      `[King Generator] Found ${ourRankMap.size} distinct ranks in known cards`
+      `[King Generator] Found ${rankMap.size} distinct ranks across all known cards`
     );
 
     // Calculate strategic value for each possible King declaration
@@ -329,78 +414,122 @@ export class MCTSMoveGenerator {
       reason: string;
     }> = [];
 
-    // Evaluate each card we could declare
-    ourRankMap.forEach((positions, rank) => {
-      // Get card from memory (which we already used to build ourRankMap)
-      // Do NOT use hiddenCards here - it's empty until determinize() is called
-      const memory = currentPlayer.knownCards.get(positions[0]);
-      if (!memory || !memory.card) {
-        logger.warn(
-          `[King Generator] No card memory for position ${positions[0]} - this should not happen`
-        );
-        return;
-      }
-
-      const card = memory.card;
-
-      console.log(
-        `[King Generator] Evaluating declaration of ${rank} at position ${positions[0]}`
+    // Evaluate each rank we could declare
+    rankMap.forEach((locations, rank) => {
+      // Analyze the locations for this rank
+      const ownLocations = locations.filter(
+        (loc) => loc.playerId === currentPlayer.id
+      );
+      const opponentLocations = locations.filter(
+        (loc) => loc.playerId !== currentPlayer.id
       );
 
+      const card = locations[0].card; // Get card properties (value, etc.)
+
+      console.log(
+        `[King Generator] Evaluating ${rank}: ${ownLocations.length} own, ${opponentLocations.length} opponent`
+      );
+
+      // COALITION COORDINATION: If champion exists and has this rank, prioritize declaring it
+      const championId = this.getCoalitionChampion(state);
+      const championHasRank = locations.some(
+        (loc) => loc.playerId === championId
+      );
+
+      // Strategy: STRONGLY prefer declaring OWN cards
+      // COALITION: Also prioritize declaring champion's high cards to help them
+      // Only declare opponent cards in very specific beneficial cases:
+      // 1. Coalition attack on Vinto caller (worth the risk)
+      // 2. We have MORE of that rank than opponents (we benefit more from cascade)
+      let targetLocation: CardLocation;
       let strategicValue = 0;
       let reason = '';
 
-      // FACTOR 1: Toss-in cascade value (HIGHEST priority)
-      if (positions.length >= 2) {
-        // Multiple cards = cascade removal
-        const cascadeValue = positions.length * card.value;
-        strategicValue += cascadeValue * 10; // HUGE multiplier for cascades
-        reason = `CASCADE: Remove ${positions.length} ${rank}s at once (${cascadeValue} points)`;
+      // COALITION SPECIAL CASE: If champion has this rank and it's high value, strongly favor declaring
+      if (
+        championId &&
+        championHasRank &&
+        currentPlayer.id !== championId &&
+        card.value >= 9
+      ) {
+        // High priority: Remove champion's high-value cards
+        for (const location of locations) {
+          if (location.playerId === championId) {
+            declarations.push({
+              playerId: location.playerId,
+              position: location.position,
+              rank,
+              strategicValue: 90 + card.value, // Very high priority
+              reason: `COALITION: Remove champion's ${rank} (value ${card.value})`,
+            });
+            console.log(
+              `[Coalition King] HIGH PRIORITY - Remove champion ${championId}'s ${rank} (value ${card.value})`
+            );
+          }
+        }
+      }
 
-        // BONUS: If it's Kings, even better (King toss-ins are rare and powerful)
+      if (ownLocations.length >= 2) {
+        // OWN CASCADE: Multiple own cards (ALWAYS prioritize this)
+        targetLocation = ownLocations[0];
+        const cascadeValue = ownLocations.reduce(
+          (sum, loc) => sum + loc.card.value,
+          0
+        );
+        strategicValue += cascadeValue * 10; // HUGE multiplier for own cascades
+        reason = `OWN CASCADE: Remove ${ownLocations.length} ${rank}s (${cascadeValue} points)`;
+
         if (rank === 'K') {
-          strategicValue += 50;
+          strategicValue += 50; // Bonus for King cascades
           reason += ' [KING CASCADE!]';
         }
+
+        // Bonus if opponents also toss in
+        if (opponentLocations.length > 0) {
+          strategicValue += opponentLocations.length * 15;
+          reason += ` [+${opponentLocations.length} opp]`;
+        }
+      } else if (ownLocations.length === 1 && opponentLocations.length === 0) {
+        // SINGLE OWN CARD, no opponents have it: Good for high-value cards
+        targetLocation = ownLocations[0];
+        strategicValue += card.value * 3;
+        reason = `Remove own ${rank} (${card.value} points)`;
+
+        if (card.value >= 10) {
+          strategicValue += 20; // Extra bonus for high cards
+          reason += ` [HIGH VALUE]`;
+        }
+
+        // Penalty for action cards (might want to keep them)
+        if (rank === '7' || rank === '8' || rank === 'Q' || rank === 'J') {
+          strategicValue -= 5;
+          reason += ` [action card]`;
+        }
+      } else if (ownLocations.length === 1 && opponentLocations.length > 0) {
+        // Note: Coalition members won't reach this point (no opponent cards collected due to filter above)
+        // OWN + OPPONENT have same rank: Only declare if beneficial
+        // This is RARELY good because it helps opponent reduce hand
+        // Only do it if opponents have MORE of this rank (they lose more)
+        if (opponentLocations.length > 1) {
+          targetLocation = ownLocations[0];
+          const netBenefit =
+            opponentLocations.reduce((sum, loc) => sum + loc.card.value, 0) -
+            card.value;
+          strategicValue += netBenefit * 2; // Lower multiplier (risky move)
+          reason = `Cascade: We lose 1, opponents lose ${opponentLocations.length} (net +${netBenefit})`;
+        } else {
+          // Equal count - DON'T declare (helps opponent as much as us)
+          return;
+        }
       } else {
-        // Single card removal
-        strategicValue += card.value * 3; // Base value for removing high card
-        reason = `Remove single ${rank} (${card.value} points)`;
-      }
-
-      // FACTOR 2: Card value (prefer removing high-value cards)
-      if (card.value >= 10) {
-        strategicValue += 20; // Extra bonus for 10, J, Q, K
-        reason += ` [HIGH VALUE]`;
-      }
-
-      // FACTOR 3: Enable future plays (e.g., declaring 7 leaves us with peeking capability)
-      if (rank === '7' || rank === '8' || rank === 'Q' || rank === 'J') {
-        // Action cards have extra utility if kept
-        strategicValue -= 5; // Small penalty (might want to keep them)
-        reason += ` [action card - consider keeping]`;
-      }
-
-      // FACTOR 4: Opponent synergy (if others have matching cards, force them to toss in too)
-      let opponentMatchCount = 0;
-      state.players.forEach((opponent) => {
-        if (opponent.id === currentPlayer.id) return;
-
-        opponent.knownCards.forEach((memory) => {
-          if (memory.card && memory.card.rank === rank) {
-            opponentMatchCount++;
-          }
-        });
-      });
-
-      if (opponentMatchCount > 0) {
-        strategicValue += opponentMatchCount * 15; // Bonus for forcing opponent toss-ins
-        reason += ` [+${opponentMatchCount} opponent toss-ins]`;
+        // No own cards, only opponent cards - SKIP THIS
+        // Declaring opponent-only ranks helps them, not us!
+        return;
       }
 
       declarations.push({
-        playerId: currentPlayer.id,
-        position: positions[0],
+        playerId: targetLocation.playerId,
+        position: targetLocation.position,
         rank,
         strategicValue,
         reason,
@@ -509,12 +638,86 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer) return moves;
 
+    // COALITION COORDINATION: Identify champion if in coalition mode
+    const championId = this.getCoalitionChampion(state);
+    const isCoordinatingForChampion =
+      championId && championId !== currentPlayer.id;
+
     // Step 1: Categorize all positions by strategic value
     // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
 
     // Step 2: Generate ALL strategic swaps prioritized by value
-    // No arbitrary limits - generate all valuable combinations and let MCTS explore them
+    // COALITION: If we're not the champion, prioritize moves that help champion
+
+    const myCards = prioritizedPositions.filter(
+      (p) => p.target.playerId === currentPlayer.id
+    );
+
+    // COALITION PRIORITY 0: Give champion our Jokers (if we have them and champion doesn't)
+    if (isCoordinatingForChampion) {
+      const myJokers = prioritizedPositions.filter(
+        (p) => p.target.playerId === currentPlayer.id && p.value === -1
+      );
+      const championCards = prioritizedPositions.filter(
+        (p) => p.target.playerId === championId
+      );
+
+      for (const myJoker of myJokers) {
+        for (const champCard of championCards) {
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [myJoker.target, champCard.target],
+            shouldSwap: true,
+          });
+          console.log(
+            `[Coalition] Generated move: Give Joker to champion ${championId}`
+          );
+        }
+      }
+    }
+
+    // PRIORITY 1: Steal opponent's Jokers (value = -1, best card in game)
+    const opponentJokers = prioritizedPositions.filter(
+      (p) =>
+        p.target.playerId !== currentPlayer.id &&
+        p.target.playerId !== championId && // Don't steal from champion!
+        p.value === -1 // Joker
+    );
+
+    // COALITION: If champion exists, steal Jokers FOR the champion
+    if (isCoordinatingForChampion) {
+      const championCards = prioritizedPositions.filter(
+        (p) => p.target.playerId === championId
+      );
+
+      for (const champCard of championCards) {
+        for (const joker of opponentJokers) {
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [champCard.target, joker.target],
+            shouldSwap: true,
+          });
+          console.log(
+            `[Coalition] Generated move: Steal Joker FOR champion ${championId}`
+          );
+        }
+      }
+    }
+
+    // Normal mode: Steal Jokers for ourselves
+    for (const myCard of myCards) {
+      for (const joker of opponentJokers) {
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, joker.target],
+          shouldSwap: true,
+        });
+      }
+    }
 
     // Critical swaps: My known high cards with opponent's unknown cards
     const myHighCards = prioritizedPositions.filter(
@@ -532,7 +735,6 @@ export class MCTSMoveGenerator {
       for (const oppCard of opponentUnknown) {
         moves.push({
           type: 'use-action',
-
           playerId: currentPlayer.id,
           targets: [myCard.target, oppCard.target],
           shouldSwap: true,
@@ -540,12 +742,13 @@ export class MCTSMoveGenerator {
       }
     }
 
-    // High priority: My known high cards with opponent's known low cards
+    // High priority: My known high cards with opponent's known low cards (excluding Jokers)
     const opponentLowCards = prioritizedPositions.filter(
       (p) =>
         p.target.playerId !== currentPlayer.id &&
         p.priority === SwapPriority.CRITICAL &&
-        (p.value ?? 10) < 3 // Known low value
+        p.value !== -1 && // Exclude Jokers (already prioritized above)
+        (p.value ?? 10) < 3 // Known low value (2s, etc.)
     );
 
     for (const myCard of myHighCards) {
@@ -620,8 +823,36 @@ export class MCTSMoveGenerator {
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer) return moves;
 
+    // COALITION COORDINATION: Identify champion
+    const championId = this.getCoalitionChampion(state);
+    const isCoordinatingForChampion =
+      championId && championId !== currentPlayer.id;
+
     // NOTE: categorizePositionsForSwap already filters out Vinto caller for coalition members
     const prioritizedPositions = this.categorizePositionsForSwap(state);
+
+    // COALITION STRATEGY 0a: Peek champion's unknown cards to plan better
+    if (isCoordinatingForChampion) {
+      const championUnknown = prioritizedPositions.filter(
+        (p) =>
+          p.target.playerId === championId && p.priority === SwapPriority.LOW // Unknown cards
+      );
+
+      // Peek champion's cards to understand their hand better
+      for (let i = 0; i < Math.min(championUnknown.length - 1, 3); i++) {
+        for (let j = i + 1; j < Math.min(championUnknown.length, i + 3); j++) {
+          moves.push({
+            type: 'use-action',
+            playerId: currentPlayer.id,
+            targets: [championUnknown[i].target, championUnknown[j].target],
+            shouldSwap: false,
+          });
+          console.log(
+            `[Coalition] Generated Queen peek: Scout champion ${championId}'s cards`
+          );
+        }
+      }
+    }
 
     // For Queen, we want BOTH known and unknown cards:
     // - Known opponent low cards (Jokers, 2s) to steal
@@ -638,6 +869,15 @@ export class MCTSMoveGenerator {
     );
 
     // For opponents: separate known GOOD cards (worth stealing) from unknown/other cards
+    // CRITICAL: Prioritize Jokers first (value = -1, best card in game)
+    const opponentJokers = opponentPositions.filter((p) => {
+      const player = state.players.find((pl) => pl.id === p.target.playerId);
+      if (!player) return false;
+      const memory = player.knownCards.get(p.target.position);
+      const isKnown = memory && memory.confidence > 0.5 && memory.card;
+      return isKnown && memory.card && memory.card.value === -1; // Joker only
+    });
+
     const opponentKnownGoodCards = opponentPositions.filter((p) => {
       const player = state.players.find((pl) => pl.id === p.target.playerId);
       if (!player) return false;
@@ -647,8 +887,11 @@ export class MCTSMoveGenerator {
 
       const card = memory.card;
 
-      // 1. Joker or King - always steal
-      if (card.value === -1 || card.value === 0) return true;
+      // Skip Jokers (handled separately with highest priority)
+      if (card.value === -1) return false;
+
+      // 1. King - always steal
+      if (card.value === 0) return true;
 
       // 2. Low-value cards (2-5) - good to steal
       if (card.value <= 5) return true;
@@ -695,8 +938,31 @@ export class MCTSMoveGenerator {
       return true; // High-value cards with no strategic benefit
     });
 
-    // Strategy 0 (HIGHEST PRIORITY): Peek bot's card and opponent's known GOOD card to steal it
-    // This includes: Jokers, Kings, low cards (2-5), toss-in matches, and multi-toss-in enablers
+    // Strategy 0a (ABSOLUTE HIGHEST PRIORITY): Steal Jokers!
+    // Joker is -1 value, the best card in the game
+    // Generate ALL combinations of stealing Jokers
+    for (const myCard of myPositions) {
+      for (const joker of opponentJokers) {
+        // Generate peek-only move
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, joker.target],
+          shouldSwap: false,
+        });
+
+        // Generate peek-and-swap move (HIGHLY recommended)
+        moves.push({
+          type: 'use-action',
+          playerId: currentPlayer.id,
+          targets: [myCard.target, joker.target],
+          shouldSwap: true,
+        });
+      }
+    }
+
+    // Strategy 0b (HIGH PRIORITY): Peek bot's card and opponent's known GOOD card to steal it
+    // This includes: Kings, low cards (2-5), toss-in matches, and multi-toss-in enablers
     // Generate ALL combinations - these are high-value tactical moves
     for (const myCard of myPositions) {
       for (const oppGoodCard of opponentKnownGoodCards) {
@@ -720,6 +986,7 @@ export class MCTSMoveGenerator {
 
     // Strategy 1: Peek two opponent unknown/other cards (maximize information gain)
     // For these, we generate both "peek-only" and "peek-and-swap" variants
+    // Swapping two opponent cards CAN be strategic (disrupts their hands)
     // Limited to top 8 positions to avoid combinatorial explosion with unknown cards
     for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
       for (
@@ -744,6 +1011,7 @@ export class MCTSMoveGenerator {
           });
 
           // Generate peek-and-swap move (swap after peeking)
+          // Swapping two opponent cards can be strategic (disrupt their hands)
           moves.push({
             type: 'use-action',
             playerId: currentPlayer.id,
@@ -794,6 +1062,7 @@ export class MCTSMoveGenerator {
     if (!currentPlayer) return positions;
 
     // Check if bot is coalition member (needs to filter Vinto caller)
+    // Game rule: "no one may interact with the Vinto caller's cards" during final round
     const isCoalitionMember =
       state.vintoCallerId &&
       state.coalitionLeaderId &&
@@ -803,8 +1072,9 @@ export class MCTSMoveGenerator {
       const isBot = player.id === currentPlayer.id;
 
       // COALITION FILTER: Skip Vinto caller if bot is coalition member
+      // This prevents coalition from peeking/swapping Vinto caller's cards (game rule)
       if (isCoalitionMember && player.id === state.vintoCallerId) {
-        continue; // Coalition cannot target Vinto caller for swaps
+        continue; // Coalition cannot interact with Vinto caller's cards (game rule)
       }
 
       for (let pos = 0; pos < player.cardCount; pos++) {

@@ -1007,12 +1007,15 @@ export class BotAIAdapter {
   /**
    * Create bot decision context from current game state
    *
-   * MAJOR FIX: Properly populate opponentKnowledge from PlayerState
+   * COALITION ENHANCEMENT: When bot is coalition leader, aggregate knowledge from all coalition members
    *
    * The MCTS service relies heavily on imperfect information (what the bot
    * knows about opponents' cards) to make intelligent decisions. This method
    * now correctly reads the opponentKnowledge data from the GameState's
    * PlayerState and feeds it to the MCTS algorithm.
+   *
+   * In coalition mode, the leader gets perfect information about all coalition members' cards
+   * to enable coordinated strategic planning.
    */
   private createBotContext(botId: string): BotDecisionContext {
     const state = this.gameClient.state;
@@ -1021,6 +1024,12 @@ export class BotAIAdapter {
     if (!botPlayer) {
       throw new Error(`Bot player ${botId} not found`);
     }
+
+    // Check if this bot is the coalition leader
+    const isCoalitionLeader =
+      state.phase === 'final' &&
+      state.coalitionLeaderId === botId &&
+      state.vintoCallerId !== null;
 
     // CRITICAL: Extract opponent knowledge from bot player state
     // This is the data pipeline that feeds the MCTS imperfect information algorithm
@@ -1045,6 +1054,37 @@ export class BotAIAdapter {
           opponentKnowledge.set(opponentId, knownCardsMap);
           console.log(
             `[BotAI] ${botId} knows ${knownCardsMap.size} cards for opponent ${opponentId}`
+          );
+        }
+      }
+    }
+
+    // COALITION KNOWLEDGE SHARING: Leader gets full knowledge of all coalition members' cards
+    if (isCoalitionLeader) {
+      console.log(
+        `[Coalition] ${botId} is leader - aggregating coalition knowledge`
+      );
+
+      // Share all coalition members' cards with the leader
+      for (const player of state.players) {
+        // Skip Vinto caller (they're the enemy)
+        if (player.id === state.vintoCallerId) continue;
+
+        // Skip self (already have own cards)
+        if (player.id === botId) continue;
+
+        // This is a coalition member - share their full hand
+        const coalitionMemberCards = new Map<number, Card>();
+
+        for (let pos = 0; pos < player.cards.length; pos++) {
+          const card = player.cards[pos];
+          coalitionMemberCards.set(pos, card);
+        }
+
+        if (coalitionMemberCards.size > 0) {
+          opponentKnowledge.set(player.id, coalitionMemberCards);
+          console.log(
+            `[Coalition] Leader ${botId} now knows all ${coalitionMemberCards.size} cards for coalition member ${player.id}`
           );
         }
       }

@@ -184,13 +184,38 @@ export class MCTSBotDecisionService implements BotDecisionService {
       return false;
     }
 
-    // For other action cards (J, Q, 9, 10), run MCTS and cache the action plan
-    // This ensures we execute the planned action targets instead of re-evaluating
+    // For other action cards (J, Q, 9, 10, K), verify action can be executed before committing
+    // CRITICAL FIX: Check if action has valid targets before deciding to use it
     const gameState = this.constructGameState(context);
+
+    // First check if there are any valid action moves
+    const actionType = getCardAction(drawnCard.rank);
+    if (!actionType) {
+      console.log(
+        `[MCTS] No action type found for ${drawnCard.rank}, swapping instead`
+      );
+      this.cachedActionPlans.delete(context.botId);
+      return false;
+    }
+
+    const validActionMoves = MCTSMoveGenerator.generateActionMoves(
+      gameState,
+      actionType
+    );
+
+    if (validActionMoves.length === 0) {
+      console.log(
+        `[MCTS] No valid action moves for ${drawnCard.rank}, swapping instead`
+      );
+      this.cachedActionPlans.delete(context.botId);
+      return false;
+    }
+
+    // Valid action moves exist, now run MCTS to decide whether to use action or swap
     const result = this.runMCTSWithPlan(gameState);
 
     if (result.move.type === 'use-action') {
-      // Cache the action plan for Jack/Queen/9/10 actions
+      // Cache the action plan for Jack/Queen/9/10/K actions
       // These require complex target selection that should be planned ahead
       if (result.actionPlan) {
         this.cachedActionPlans.set(context.botId, result.actionPlan);
@@ -349,6 +374,26 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     let bestPosition = 0;
     let bestScore = -Infinity;
+    let shouldDiscard = false;
+
+    // First, evaluate the outcome of discarding the drawn card
+    const discardOutcome = this.simulateDiscardOutcome(
+      drawnCard,
+      context,
+      tempMemory
+    );
+    const discardScore = this.calculateOutcomeScore(discardOutcome);
+
+    console.log(
+      `[SwapSelector] Discard option: handSize=${discardOutcome.finalHandSize}, ` +
+        `known=${discardOutcome.finalKnownCards}/${context.botPlayer.cards.length}, ` +
+        `score=${discardOutcome.finalScore.toFixed(
+          1
+        )}, outcomeScore=${discardScore.toFixed(1)}`
+    );
+
+    bestScore = discardScore;
+    shouldDiscard = true;
 
     // Evaluate each possible swap position
     for (
@@ -376,7 +421,15 @@ export class MCTSBotDecisionService implements BotDecisionService {
       if (outcomeScore > bestScore) {
         bestScore = outcomeScore;
         bestPosition = position;
+        shouldDiscard = false;
       }
+    }
+
+    if (shouldDiscard) {
+      console.log(
+        `[SwapSelector] Selected DISCARD with score ${bestScore.toFixed(1)}`
+      );
+      return null;
     }
 
     console.log(
@@ -389,6 +442,39 @@ export class MCTSBotDecisionService implements BotDecisionService {
   }
 
   // ========== Turn Consequence Simulator ==========
+
+  /**
+   * Simulate the outcome of discarding the drawn card without swapping
+   */
+  private simulateDiscardOutcome(
+    drawnCard: Card,
+    context: BotDecisionContext,
+    _tempMemory: BotMemory
+  ): TurnOutcome {
+    const botPlayer = context.botPlayer;
+
+    // Discarding doesn't change hand size or score (card never enters hand)
+    const currentHandSize = botPlayer.cards.length;
+    const currentKnownCards = botPlayer.knownCardPositions.length;
+    const currentScore = this.calculateHandScore(botPlayer.cards);
+
+    // Simulate toss-in cascade from the discarded card
+    const { handSize: postTossInHandSize, score: postTossInScore } =
+      this.simulateTossInCascade(
+        drawnCard.rank,
+        currentHandSize,
+        currentScore,
+        context,
+        _tempMemory
+      );
+
+    // No knowledge gain from discarding (card never enters hand)
+    return {
+      finalHandSize: postTossInHandSize,
+      finalKnownCards: currentKnownCards,
+      finalScore: postTossInScore,
+    };
+  }
 
   /**
    * Simulate the full consequence of swapping the drawn card with a specific position
@@ -1436,12 +1522,16 @@ export class MCTSBotDecisionService implements BotDecisionService {
   /**
    * CRITICAL IMPROVEMENT: Evaluate states by understanding POTENTIAL, not just current state
    *
+   * COALITION MODE: When in coalition, evaluate if ANY coalition member can beat Vinto caller
+   * Instead of optimizing for "I win", optimize for "at least one of us beats Vinto caller"
+   *
    * Before: Only looked at current score and hand size
    * After: Evaluates:
    * 1. Toss-in potential (pairs, triples of matching ranks)
    * 2. Action card synergies (having King + action cards to declare)
    * 3. Information asymmetry (what we know vs what opponents know)
    * 4. Relative position (not absolute)
+   * 5. Coalition coordination (in final round)
    */
   private evaluateState(state: MCTSGameState, botPlayerId: string): number {
     const botPlayer = state.players.find((p) => p.id === botPlayerId);
@@ -1449,10 +1539,28 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     // Terminal state check
     if (state.isTerminal) {
+      // COALITION MODE: Win if ANY coalition member wins
+      if (state.vintoCallerId && state.coalitionLeaderId) {
+        // Check if winner is a coalition member (not Vinto caller)
+        const isCoalitionVictory = state.winner !== state.vintoCallerId;
+        return isCoalitionVictory ? 1.0 : 0.0;
+      }
+
+      // Normal mode: win if bot wins
       return state.winner === botPlayerId ? 1.0 : 0.0;
     }
 
-    // Component 1: Toss-in Potential (30% weight) - NEW!
+    // COALITION MODE: Evaluate coalition's best chance of winning
+    if (
+      state.vintoCallerId &&
+      state.coalitionLeaderId &&
+      botPlayerId !== state.vintoCallerId
+    ) {
+      return this.evaluateCoalitionState(state, botPlayerId);
+    }
+
+    // Normal mode evaluation (self-interested)
+    // Component 1: Toss-in Potential (30% weight)
     const tossInScore = evaluateTossInPotential(state, botPlayer);
 
     // Component 2: Relative Position (25% weight)
@@ -1475,6 +1583,81 @@ export class MCTSBotDecisionService implements BotDecisionService {
       threatScore * 0.1;
 
     return Math.max(0, Math.min(1, finalScore));
+  }
+
+  /**
+   * COALITION EVALUATION: Evaluate state from coalition's perspective
+   * Goal: Ensure at least ONE coalition member beats Vinto caller
+   *
+   * Strategy:
+   * 1. Identify coalition "champion" (member with best chance to win)
+   * 2. Evaluate champion's position vs Vinto caller
+   * 3. Consider how moves help/hurt champion's chances
+   */
+  private evaluateCoalitionState(
+    state: MCTSGameState,
+    _botPlayerId: string
+  ): number {
+    const vintoCallerId = state.vintoCallerId;
+    if (!vintoCallerId) return 0;
+
+    const vintoPlayer = state.players.find((p) => p.id === vintoCallerId);
+    if (!vintoPlayer) return 0;
+
+    // Find all coalition members (everyone except Vinto caller)
+    const coalitionMembers = state.players.filter(
+      (p) => p.id !== vintoCallerId
+    );
+
+    // Find the coalition "champion" - member with lowest score (best chance to win)
+    let championPlayer = coalitionMembers[0];
+    let championScore = championPlayer.score;
+
+    for (const member of coalitionMembers) {
+      if (member.score < championScore) {
+        championScore = member.score;
+        championPlayer = member;
+      }
+    }
+
+    console.log(
+      `[Coalition Eval] Champion: ${championPlayer.id} (score: ${championScore}), ` +
+        `Vinto: ${vintoCallerId} (score: ${vintoPlayer.score})`
+    );
+
+    // Evaluate champion's winning potential vs Vinto caller
+    const scoreDifference = vintoPlayer.score - championScore;
+    const cardDifference = vintoPlayer.cardCount - championPlayer.cardCount;
+
+    // Component 1: Score advantage (40% weight) - champion needs lower score
+    const scoreAdvantage = Math.max(
+      0,
+      Math.min(1, (scoreDifference + 10) / 30)
+    );
+
+    // Component 2: Card count advantage (30% weight) - champion needs fewer cards
+    const cardAdvantage = Math.max(0, Math.min(1, (cardDifference + 2) / 5));
+
+    // Component 3: Champion's toss-in potential (20% weight)
+    const championTossInScore = evaluateTossInPotential(state, championPlayer);
+
+    // Component 4: Vinto caller's threat level (10% weight) - penalize if they have good actions
+    const vintoThreatScore = 1.0 - evaluateActionCardValue(state, vintoPlayer);
+
+    const coalitionScore =
+      scoreAdvantage * 0.4 +
+      cardAdvantage * 0.3 +
+      championTossInScore * 0.2 +
+      vintoThreatScore * 0.1;
+
+    console.log(
+      `[Coalition Eval] Final score: ${coalitionScore.toFixed(3)} ` +
+        `(scoreAdv: ${scoreAdvantage.toFixed(
+          2
+        )}, cardAdv: ${cardAdvantage.toFixed(2)})`
+    );
+
+    return Math.max(0, Math.min(1, coalitionScore));
   }
   /**
    * Get current bot decision context (used for coalition evaluation)
