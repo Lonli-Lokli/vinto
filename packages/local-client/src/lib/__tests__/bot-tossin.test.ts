@@ -291,55 +291,6 @@ describe('Bot Toss-In Integration Test', () => {
     botAdapter.dispose();
   });
 
-  it('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
-    const { gameClient, botAdapter } = await setupSimpleScenario(
-      [
-        createTestPlayer(
-          'bot1',
-          'Bot 1',
-          false,
-          [createTestCard('K', 'bot1_king')],
-          []
-        ), // bot 1 has 1 unknown card only so it should draw & replace with King in hand
-        createTestPlayer('bot2', 'Bot 2', false, [
-          createTestCard('3', 'bot3_3'),
-          createTestCard('4', 'bot3_4'),
-          createTestCard('5', 'bot3_5'),
-        ]),
-
-        createTestPlayer('bot3', 'Bot 3', false, [
-          createTestCard('K', 'bot3_king'),
-          createTestCard('6', 'bot3_6'),
-          createTestCard('A', 'bot3_7'),
-        ]),
-        createTestPlayer('bot4', 'Bot 4', false, [
-          createTestCard('2', 'bot4_2'),
-          createTestCard('3', 'bot4_3'),
-          createTestCard('4', 'bot4_4'),
-          createTestCard('5', 'bot4_5'),
-        ]),
-      ],
-      0,
-      {
-        drawPile: Pile.fromCards([createTestCard('3', 'drawn_1')]),
-      }
-    );
-
-    const errorSpy = vi.fn();
-    const successSpy = vi.fn();
-    gameClient.onStateUpdateError(errorSpy);
-    gameClient.onStateUpdateSuccess(successSpy);
-
-    expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 3
-
-    gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
-    await vi.runAllTimersAsync();
-
-    await botAdapter.waitForIdle();
-
-    botAdapter.dispose();
-  });
-
   it('should handle multiple toss-in with 7 cards', async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [

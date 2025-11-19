@@ -240,34 +240,20 @@ export class MCTSMoveGenerator {
           state.coalitionLeaderId &&
           currentPlayer.id !== state.vintoCallerId;
 
-        // COALITION COORDINATION: Identify champion to avoid forcing them to draw
-        const aceChampionId = this.getCoalitionChampion(state);
+        // COALITION COORDINATION: Don't use Ace at all if in coalition!
+        // Using Ace on ANY coalition member is harmful (makes them draw and increase score)
+        // Using Ace on Vinto caller violates game rules
+        // Result: Coalition members should NEVER generate Ace moves - swap or discard instead
+        if (currentPlayerIsInCoalition) {
+          console.log(
+            `[Coalition Ace] Skipping ALL Ace moves - harmful to coalition, should swap/discard instead`
+          );
+          break; // Generate NO moves for Ace when in coalition
+        }
 
+        // Normal mode (not in coalition): Can target all opponents
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
-
-          // COALITION FILTER: If current bot is in coalition, skip Vinto caller (cannot interact - game rule)
-          if (
-            currentPlayerIsInCoalition &&
-            opponent.id === state.vintoCallerId
-          ) {
-            continue; // Cannot interact with Vinto caller's cards
-          }
-
-          // COALITION COORDINATION: Don't force champion to draw (hurts our chances!)
-          if (
-            currentPlayerIsInCoalition &&
-            aceChampionId &&
-            opponent.id === aceChampionId
-          ) {
-            console.log(
-              `[Coalition Ace] Skipping champion ${aceChampionId} - don't hurt our best player`
-            );
-            continue;
-          }
-
-          // If current bot is Vinto caller, can target all coalition members
-          // If no coalition exists yet, target anyone (no restrictions)
 
           // Select position 0 as a valid placeholder (Ace action targets player, not specific card)
           moves.push({

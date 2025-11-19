@@ -25,6 +25,7 @@ export interface GameState {
   // Vinto state
   vintoCallerId: string | null;
   coalitionLeaderId: string | null;
+  playersCompletedFinalTurn: string[]; // Track which players have taken their final turn
 
   // Deck state
   drawPile: Pile;
@@ -299,6 +300,7 @@ export function createInitialGameState(
     currentPlayerIndex: 0,
     vintoCallerId: null,
     coalitionLeaderId: null,
+    playersCompletedFinalTurn: [],
     drawPile: Pile.fromCards(deck),
     discardPile: new Pile(),
     pendingAction: null,

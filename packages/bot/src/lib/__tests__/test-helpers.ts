@@ -99,9 +99,10 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     activeTossIn: null,
     turnActions: [],
     roundActions: [],
-    difficulty: 'moderate',
+    difficulty: 'hard', // Use 'hard' for deterministic test behavior
     botVersion: 'v1',
     roundFailedAttempts: [],
+    playersCompletedFinalTurn: []
   };
 
   return {

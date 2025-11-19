@@ -69,11 +69,18 @@ export class BotAIAdapter {
   private isDisposed = false;
   private currentDifficulty: GameClientState['difficulty'];
   private currentBotVersion: GameClientState['botVersion'];
+  private skipDelays = false; // Skip delays in test environment
 
-  constructor(private gameClient: GameClient) {
+  constructor(
+    private gameClient: GameClient,
+    options?: { skipDelays?: boolean }
+  ) {
     // Initialize current difficulty and bot version
     this.currentDifficulty = this.gameClient.state.difficulty;
     this.currentBotVersion = this.gameClient.state.botVersion;
+
+    // Allow skipping delays for tests
+    this.skipDelays = options?.skipDelays ?? false;
 
     // Use existing bot decision service factory
     this.botDecisionService = BotDecisionServiceFactory.create(
@@ -146,6 +153,11 @@ export class BotAIAdapter {
   private async runQueuedReaction(snapshot: ReactionSnapshot): Promise<void> {
     const state = this.gameClient.state;
     const isBot = this.gameClient.currentPlayer.isBot;
+
+    // CRITICAL: Don't execute bot turns when game is over
+    if (state.phase === 'scoring' || state.phase === 'setup') {
+      return;
+    }
 
     // Check if difficulty or bot version changed and recreate bot decision service if needed
     if (
@@ -529,8 +541,15 @@ export class BotAIAdapter {
       this.gameClient.dispatch(GameActions.playDiscard(botId));
       console.log(`[BotAI] ${botId} took from discard`);
     } else {
-      // Clear cache when drawing (fresh decision needed)
-      this.cachedActionDecision = null;
+      // Draw card - cache action plan if provided (for coalition actions from hand)
+      if (decision.actionDecision) {
+        this.cachedActionDecision = decision.actionDecision;
+        console.log(
+          `[BotAI] ${botId} cached action plan from draw decision (will use action from hand)`
+        );
+      } else {
+        this.cachedActionDecision = null;
+      }
       this.gameClient.dispatch(GameActions.drawCard(botId));
       console.log(`[BotAI] ${botId} drew card`);
     }
@@ -570,7 +589,7 @@ export class BotAIAdapter {
     const isFinalRound = this.gameClient.state.phase === 'final';
     await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
-    // First, check if the card has an action and if we should use it
+    // First, check if the drawn card has an action and if we should use it
     if (isRankActionable(drawnCard.rank)) {
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,
@@ -598,10 +617,16 @@ export class BotAIAdapter {
 
       // If it's an action card and bot knows about it, declare its rank
       const shouldDeclare =
+        cardAtPosition &&
         cardAtPosition.actionText &&
         context.botPlayer.knownCardPositions.includes(swapPosition);
       const declaredRank = shouldDeclare ? cardAtPosition.rank : undefined;
 
+      console.log(
+        `[BotAI] ${botId} ABOUT TO DISPATCH swap at position ${swapPosition}, declared: ${
+          declaredRank || 'none'
+        }`
+      );
       this.gameClient.dispatch(
         GameActions.swapCard(botId, swapPosition, declaredRank)
       );
@@ -1110,6 +1135,9 @@ export class BotAIAdapter {
         state.phase === 'final' &&
         state.vintoCallerId !== botId &&
         state.vintoCallerId !== null,
+      // Phase for routing to coalition solver
+      phase: state.phase,
+      vintoCallerId: state.vintoCallerId,
     };
   }
 
@@ -1117,6 +1145,10 @@ export class BotAIAdapter {
    * Delay helper for bot "thinking" time
    */
   private delay(ms: number): Promise<void> {
+    // Skip delays in test environment for faster tests
+    if (this.skipDelays) {
+      return Promise.resolve();
+    }
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 

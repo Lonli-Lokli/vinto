@@ -23,6 +23,9 @@ export interface BotDecisionContext {
   // Coalition context (for final round)
   coalitionLeaderId?: string | null; // ID of the coalition leader (if in final round)
   isCoalitionMember?: boolean; // True if bot is part of coalition against Vinto caller
+  // Game phase (needed to route to coalition solver)
+  phase?: 'setup' | 'playing' | 'final' | 'scoring';
+  vintoCallerId?: string | null; // ID of player who called Vinto
 }
 
 export interface BotActionTarget {

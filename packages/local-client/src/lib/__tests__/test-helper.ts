@@ -106,6 +106,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     difficulty: 'moderate',
     botVersion: 'v1',
     roundFailedAttempts: [],
+    playersCompletedFinalTurn: [],
   };
 
   return {
@@ -212,7 +213,7 @@ export async function setupSimpleScenario(
   additionalSetup?.(gameClient);
 
   // bots start listening for game events
-  const botAdapter = new BotAIAdapter(gameClient);
+  const botAdapter = new BotAIAdapter(gameClient, { skipDelays: true });
 
   return { gameClient, botAdapter };
 }

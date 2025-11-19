@@ -62,19 +62,6 @@ export function handleCallVinto(
         newState.turnNumber++;
       }
 
-      // Check if game should end (if we've returned to the vinto caller)
-      if (
-        newState.players[newState.currentPlayerIndex].id ===
-        newState.vintoCallerId
-      ) {
-        newState.phase = 'scoring';
-        newState.subPhase = 'idle';
-        console.log(
-          '[handleCallVinto] Vinto caller completed turn, game ending'
-        );
-        return newState;
-      }
-
       // Set appropriate subPhase for next player
       const nextPlayer = newState.players[newState.currentPlayerIndex];
       newState.subPhase = nextPlayer.isBot ? 'ai_thinking' : 'idle';
