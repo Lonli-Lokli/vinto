@@ -212,7 +212,7 @@ export async function setupSimpleScenario(
   additionalSetup?.(gameClient);
 
   // bots start listening for game events
-  const botAdapter = new BotAIAdapter(gameClient);
+  const botAdapter = new BotAIAdapter(gameClient, {skipDelays: true});
 
   return { gameClient, botAdapter };
 }

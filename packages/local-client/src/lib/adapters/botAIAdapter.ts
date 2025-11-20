@@ -69,11 +69,18 @@ export class BotAIAdapter {
   private isDisposed = false;
   private currentDifficulty: GameClientState['difficulty'];
   private currentBotVersion: GameClientState['botVersion'];
+  private skipDelays = false; // Skip delays in test environment
 
-  constructor(private gameClient: GameClient) {
+  constructor(
+    private gameClient: GameClient,
+    options?: { skipDelays?: boolean }
+  ) {
     // Initialize current difficulty and bot version
     this.currentDifficulty = this.gameClient.state.difficulty;
     this.currentBotVersion = this.gameClient.state.botVersion;
+
+    // Allow skipping delays for tests
+    this.skipDelays = options?.skipDelays ?? false;
 
     // Use existing bot decision service factory
     this.botDecisionService = BotDecisionServiceFactory.create(
@@ -1117,6 +1124,10 @@ export class BotAIAdapter {
    * Delay helper for bot "thinking" time
    */
   private delay(ms: number): Promise<void> {
+    // Skip delays in test environment for faster tests
+    if (this.skipDelays) {
+      return Promise.resolve();
+    }
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
