@@ -140,6 +140,45 @@ function handleCorrectDeclaration(
     .filter((pos: number) => pos !== position)
     .map((pos: number) => (pos > position ? pos - 1 : pos));
 
+  // CHECK FOR CASCADE: Count all cards of declared rank across all players
+  const totalCardsOfRank = newState.players.reduce((count, p) => {
+    return count + p.cards.filter((c) => c.rank === declaredRank).length;
+  }, 0);
+
+  const isActionCard = ['7', '8', '9', '10', 'J', 'Q', 'A'].includes(declaredRank);
+  const cascadeThreshold = isActionCard ? 2 : 1;
+  const shouldCascade = totalCardsOfRank >= cascadeThreshold;
+
+  if (shouldCascade) {
+    console.log('[handleDeclareKingAction] CASCADE triggered:', {
+      declaredRank,
+      totalCards: totalCardsOfRank,
+      threshold: cascadeThreshold,
+    });
+
+    // Remove ALL cards of this rank from ALL players
+    for (const player of newState.players) {
+      const initialCount = player.cards.length;
+      player.cards = player.cards.filter((c) => c.rank !== declaredRank);
+      const removedCount = initialCount - player.cards.length;
+
+      if (removedCount > 0) {
+        console.log(`[CASCADE] Removed ${removedCount} cards (rank ${declaredRank}) from ${player.id}`);
+        console.log(`[CASCADE] ${player.id} now has ${player.cards.length} cards remaining`);
+        
+        // Update known positions after cascade removal
+        player.knownCardPositions = player.knownCardPositions.filter((pos: number) => {
+          return pos < player.cards.length;
+        });
+      }
+
+      // Safety check: If player has 0 cards, something went wrong
+      if (player.cards.length === 0) {
+        console.error(`[CASCADE ERROR] ${player.id} has 0 cards after cascade! This should not happen during final round.`);
+      }
+    }
+  }
+
   // Check if declared card is actionable
   const targetType = getTargetTypeFromRank(selectedCard.rank);
 

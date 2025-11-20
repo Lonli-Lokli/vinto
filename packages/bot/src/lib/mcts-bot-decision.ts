@@ -188,6 +188,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     // (since leader makes decisions for all coalition members)
     const currentPlayerId =
       context.gameState.players[context.gameState.currentPlayerIndex].id;
+    
     const result = executeCoalitionStep(
       context.gameState,
       plan,
@@ -220,8 +221,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
       } else if (
         result.action.actionType === 'swap-jack' ||
         result.action.actionType === 'peek-swap-queen' ||
-        result.action.actionType === 'peek-7' ||
-        result.action.actionType === 'peek-8'
+        result.action.actionType === 'peek-own' ||
+        result.action.actionType === 'peek-opponent'
       ) {
         // Action card usage from hand - draw a card, then use the action in choosing phase
         // The action plan will be cached and used when the bot decides what to do with drawn card
@@ -269,6 +270,30 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private convertCoalitionActionToDecision(
     action: CoalitionAction
   ): BotActionDecision | null {
+    // For actions from hand (with drawnCardSwapWith), we need to include
+    // the swap position as the first target
+    if (action.drawnCardSwapWith !== undefined) {
+      const swapTarget = {
+        playerId: action.playerId,
+        position: action.drawnCardSwapWith,
+      };
+
+      // If there are additional action targets (for Jack/Queen/etc), include them
+      const actionTargets = action.targets
+        ? action.targets.map((t) => ({
+            playerId: t.playerId,
+            position: t.cardIndex,
+          }))
+        : [];
+
+      return {
+        targets: [swapTarget, ...actionTargets],
+        shouldSwap: action.shouldSwap,
+        declaredRank: action.declaredRank,
+      };
+    }
+
+    // For actions without swap (direct from drawn card or discard)
     if (!action.targets || action.targets.length === 0) {
       return null;
     }

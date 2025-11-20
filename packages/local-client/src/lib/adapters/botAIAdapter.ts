@@ -589,6 +589,26 @@ export class BotAIAdapter {
     const isFinalRound = this.gameClient.state.phase === 'final';
     await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
+    // Check if we have a cached action decision from coalition planning
+    // This means we should swap drawn card with a specific position and declare a rank
+    if (this.cachedActionDecision && this.cachedActionDecision.declaredRank) {
+      // Coalition plan: swap drawn card with action card in hand, then declare and use it
+      const swapTarget = this.cachedActionDecision.targets?.[0];
+      if (swapTarget && swapTarget.playerId === botId) {
+        const swapPosition = swapTarget.position;
+        const declaredRank = this.cachedActionDecision.declaredRank;
+        
+        console.log(
+          `[BotAI] ${botId} executing cached coalition action: swap at position ${swapPosition}, declare ${declaredRank}`
+        );
+        this.gameClient.dispatch(
+          GameActions.swapCard(botId, swapPosition, declaredRank)
+        );
+        console.log(`[BotAI] ${botId} swapped at position ${swapPosition}, declared: ${declaredRank}`);
+        return; // Action decision remains cached for awaiting_action phase
+      }
+    }
+
     // First, check if the drawn card has an action and if we should use it
     if (isRankActionable(drawnCard.rank)) {
       const shouldUseAction = this.botDecisionService.shouldUseAction(
@@ -831,16 +851,22 @@ export class BotAIAdapter {
       // Cache the decision for subsequent steps
       this.cachedActionDecision = decision;
 
-      if (decision.targets.length >= 2) {
+      // If decision has 3 targets, the first one is the swap position (for coalition actions from hand)
+      // Skip it and use targets[1] and targets[2] for Jack swap
+      const startIdx = decision.targets.length === 3 && decision.targets[0].playerId === botId ? 1 : 0;
+      const target1 = decision.targets[startIdx];
+      const target2 = decision.targets[startIdx + 1];
+
+      if (target1 && target2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
-            decision.targets[0].playerId,
-            decision.targets[0].position
+            target1.playerId,
+            target1.position
           )
         );
         console.log(
-          `[BotAI] ${botId} selected first Jack target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+          `[BotAI] ${botId} selected first Jack target: ${target1.playerId} pos ${target1.position}`
         );
       } else {
         // No valid moves available - discard the card instead
@@ -857,16 +883,21 @@ export class BotAIAdapter {
         ? this.cachedActionDecision
         : this.botDecisionService.selectActionTargets(context);
 
-      if (decision.targets.length >= 2) {
+      // If decision has 3 targets, the first one is the swap position (for coalition actions from hand)
+      // Use targets[2] as the second Jack swap target
+      const startIdx = decision.targets.length === 3 && decision.targets[0].playerId === botId ? 1 : 0;
+      const target2 = decision.targets[startIdx + 1];
+
+      if (target2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
-            decision.targets[1].playerId,
-            decision.targets[1].position
+            target2.playerId,
+            target2.position
           )
         );
         console.log(
-          `[BotAI] ${botId} selected second Jack target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+          `[BotAI] ${botId} selected second Jack target: ${target2.playerId} pos ${target2.position}`
         );
       }
     } else if (targetsSelected === 2) {
@@ -910,16 +941,22 @@ export class BotAIAdapter {
       // Cache the decision for subsequent steps
       this.cachedActionDecision = decision;
 
-      if (decision.targets.length >= 2) {
+      // If decision has 3 targets, the first one is the swap position (for coalition actions from hand)
+      // Skip it and use targets[1] and targets[2] for Queen peek
+      const startIdx = decision.targets.length === 3 && decision.targets[0].playerId === botId ? 1 : 0;
+      const target1 = decision.targets[startIdx];
+      const target2 = decision.targets[startIdx + 1];
+
+      if (target1 && target2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
-            decision.targets[0].playerId,
-            decision.targets[0].position
+            target1.playerId,
+            target1.position
           )
         );
         console.log(
-          `[BotAI] ${botId} selected first Queen target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+          `[BotAI] ${botId} selected first Queen target: ${target1.playerId} pos ${target1.position}`
         );
       } else {
         // No valid moves available - discard the card instead
@@ -936,16 +973,21 @@ export class BotAIAdapter {
         ? this.cachedActionDecision
         : this.botDecisionService.selectActionTargets(context);
 
-      if (decision.targets.length >= 2) {
+      // If decision has 3 targets, the first one is the swap position (for coalition actions from hand)
+      // Use targets[2] as the second Queen peek target
+      const startIdx = decision.targets.length === 3 && decision.targets[0].playerId === botId ? 1 : 0;
+      const target2 = decision.targets[startIdx + 1];
+
+      if (target2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
-            decision.targets[1].playerId,
-            decision.targets[1].position
+            target2.playerId,
+            target2.position
           )
         );
         console.log(
-          `[BotAI] ${botId} selected second Queen target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+          `[BotAI] ${botId} selected second Queen target: ${target2.playerId} pos ${target2.position}`
         );
       }
     } else if (targetsSelected === 2) {
@@ -993,9 +1035,12 @@ export class BotAIAdapter {
       // Cache the decision for step 2
       this.cachedActionDecision = decision;
 
-      if (decision.targets.length > 0) {
-        const target = decision.targets[0];
+      // If decision has 2 targets, the first one is the swap position (for coalition actions from hand)
+      // Skip it and use targets[1] for the action target
+      const startIdx = decision.targets.length === 2 && decision.targets[0].playerId === botId ? 1 : 0;
+      const target = decision.targets[startIdx];
 
+      if (target) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,

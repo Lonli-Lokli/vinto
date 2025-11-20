@@ -47,6 +47,7 @@ export interface CoalitionAction {
   targets?: { playerId: string; cardIndex: number }[]; // For peeks/swaps
   declaredRank?: Rank; // For King declarations
   tossInCards?: number[]; // Additional cards to toss in during declare
+  tossInDeclarations?: Rank[]; // For Kings: what rank each tossed-in King declares
   shouldSwap?: boolean; // For Queen: whether to swap after peeking
   description: string;
 }
@@ -211,6 +212,11 @@ export function createCoalitionPlan(
   // Otherwise, evaluate ALL potential champions and pick the best one
   const vintoCallerId = state.vintoCallerId!;
 
+  console.log('[Coalition] === Creating Coalition Plan ===');
+  console.log('[Coalition] Known cards:', knownCards.size);
+  console.log('[Coalition] Known cards detail:', Array.from(knownCards.entries()).map(([key, card]) => `${key}=${card.rank}`).join(', '));
+  console.log('[Coalition] Players:', state.players.map(p => `${p.id}: ${p.cards.length} cards (known: ${p.knownCardPositions.length})`).join(', '));
+
   // Build base coalition state without champion selected
   const baseState = buildCoalitionState(state, knownCards, pendingCard, null);
 
@@ -296,6 +302,24 @@ function buildPlanForChampion(coalitionState: CoalitionState): CoalitionPlan {
     bestSequence.forEach((action, idx) => {
       console.log(`  ${idx + 1}. ${action.description}`);
     });
+  }
+  
+  // Debug: For p3, log the champion's final hand after best sequence
+  if (coalitionState.championId === 'p3') {
+    console.log(`[Coalition DEBUG] Simulating best sequence for p3...`);
+    let simState = coalitionState;
+    for (const action of bestSequence) {
+      simState = applyAction(simState, action);
+    }
+    const p3FinalHand = simState.players.get('p3');
+    if (p3FinalHand) {
+      console.log(`[Coalition DEBUG] p3 final hand: ${p3FinalHand.cards.length} cards`);
+      p3FinalHand.cards.forEach((card, idx) => {
+        const rankStr = card.isKnown && card.card ? card.card.rank : 'unknown';
+        const valueStr = card.isKnown && card.card ? card.card.value : '?';
+        console.log(`  [${idx}]: ${rankStr} (value: ${valueStr})`);
+      });
+    }
   }
 
   return {
@@ -383,10 +407,12 @@ function getAllPossibleActions(
           if (!target.isKnown) {
             actions.push({
               playerId,
+              drawnCardSwapWith: cardIndex, // Draw, swap with 7/8 position, declare rank
               cardIndex,
               actionType: 'peek-own',
+              declaredRank: rank, // Declare 7 or 8 to use its action
               targets: [{ playerId, cardIndex: targetIdx }],
-              description: `${playerId} uses ${rank} to peek own card ${targetIdx}`,
+              description: `${playerId} uses ${rank}[${cardIndex}] to peek own card ${targetIdx}`,
             });
           }
         });
@@ -401,10 +427,12 @@ function getAllPossibleActions(
             if (!target.isKnown) {
               actions.push({
                 playerId,
+                drawnCardSwapWith: cardIndex, // Draw, swap with 9/10 position, declare rank
                 cardIndex,
                 actionType: 'peek-opponent',
+                declaredRank: rank, // Declare 9 or 10 to use its action
                 targets: [{ playerId: targetId, cardIndex: targetIdx }],
-                description: `${playerId} uses ${rank} to peek ${targetId}'s card ${targetIdx}`,
+                description: `${playerId} uses ${rank}[${cardIndex}] to peek ${targetId}'s card ${targetIdx}`,
               });
             }
           });
@@ -427,14 +455,16 @@ function getAllPossibleActions(
               player2Hand.cards.forEach((_, idx2) => {
                 actions.push({
                   playerId,
+                  drawnCardSwapWith: cardIndex, // Draw, swap with Jack position, declare Jack
                   cardIndex,
                   actionType: 'swap-jack',
+                  declaredRank: 'J', // Declare Jack to use its action
                   targets: [
                     { playerId: player1Id, cardIndex: idx1 },
                     { playerId: player2Id, cardIndex: idx2 },
                   ],
                   shouldSwap: true, // Jack always swaps
-                  description: `${playerId} swaps ${player1Id}[${idx1}] with ${player2Id}[${idx2}]`,
+                  description: `${playerId} uses J[${cardIndex}] to swap ${player1Id}[${idx1}] with ${player2Id}[${idx2}]`,
                 });
               });
             });
@@ -459,26 +489,30 @@ function getAllPossibleActions(
                   // Generate both: peek without swap, and peek with swap
                   actions.push({
                     playerId,
+                    drawnCardSwapWith: cardIndex, // Draw, swap with Queen position, declare Queen
                     cardIndex,
                     actionType: 'peek-swap-queen',
+                    declaredRank: 'Q', // Declare Queen to use its action
                     targets: [
                       { playerId: player1Id, cardIndex: idx1 },
                       { playerId: player2Id, cardIndex: idx2 },
                     ],
                     shouldSwap: false,
-                    description: `${playerId} peeks ${player1Id}[${idx1}] and ${player2Id}[${idx2}], no swap`,
+                    description: `${playerId} uses Q[${cardIndex}] to peek ${player1Id}[${idx1}] and ${player2Id}[${idx2}], no swap`,
                   });
 
                   actions.push({
                     playerId,
+                    drawnCardSwapWith: cardIndex, // Draw, swap with Queen position, declare Queen
                     cardIndex,
                     actionType: 'peek-swap-queen',
+                    declaredRank: 'Q', // Declare Queen to use its action
                     targets: [
                       { playerId: player1Id, cardIndex: idx1 },
                       { playerId: player2Id, cardIndex: idx2 },
                     ],
                     shouldSwap: true,
-                    description: `${playerId} peeks and swaps ${player1Id}[${idx1}] with ${player2Id}[${idx2}]`,
+                    description: `${playerId} uses Q[${cardIndex}] to peek and swap ${player1Id}[${idx1}] with ${player2Id}[${idx2}]`,
                   });
                 }
               });
@@ -488,7 +522,12 @@ function getAllPossibleActions(
       }
 
       if (rank === 'K') {
-        // Generate declare actions for all ranks
+        // Find all Kings in hand (excluding the current one being used)
+        const kingIndices = hand.cards
+          .map((c, idx) => (c.isKnown && c.card?.rank === 'K' && idx !== cardIndex ? idx : -1))
+          .filter(idx => idx !== -1);
+
+        // Generate simple single King declarations
         const allRanks: Rank[] = [
           'K',
           '2',
@@ -512,20 +551,14 @@ function getAllPossibleActions(
           ).length;
 
           // Only generate cascade action if there are cards to cascade
-          // For non-action cards (2-6, K, Joker): need at least 1 to cascade
-          // For action cards (7-A): need at least 2 to cascade (one to use, one to cascade)
-          // Exception: Can declare same rank to cascade self + others
           const isActionCard = ['7', '8', '9', '10', 'J', 'Q', 'A'].includes(
             declareRank
           );
           const isSelfDeclaration = declareRank === rank;
 
           const shouldGenerate =
-            // Non-action cards: cascade if 1+ exists
             (!isActionCard && countInHand >= 1) ||
-            // Action cards: cascade if 2+ exist (including self-declaration)
             (isActionCard && countInHand >= 2) ||
-            // Self-declaration: action card declares itself to cascade with others
             (isSelfDeclaration && countInHand >= 1);
 
           if (shouldGenerate) {
@@ -534,8 +567,79 @@ function getAllPossibleActions(
               cardIndex,
               actionType: 'declare-king',
               declaredRank: declareRank,
-              description: `${playerId} uses ${rank} to declare ${declareRank} (cascade ${countInHand} cards)`,
+              description: `${playerId} uses K[${cardIndex}] to declare ${declareRank} (cascade ${countInHand} cards)`,
             });
+          }
+        }
+
+        // ADVANCED: Generate multi-King toss-in sequences
+        // If player has additional Kings, generate sequences where they toss in Kings and each declares different ranks
+        if (kingIndices.length >= 1) {
+          // Find all non-K ranks in hand that could be cascaded
+          const ranksInHand = Array.from(
+            new Set(
+              hand.cards
+                .filter(c => c.isKnown && c.card && c.card.rank !== 'K')
+                .map(c => c.card!.rank)
+            )
+          );
+
+          // Sort by value (descending) to prioritize removing high-value cards
+          ranksInHand.sort((a, b) => getCardValue(b) - getCardValue(a));
+
+          // Total Kings available: 1 (being used) + kingIndices.length (can be tossed)
+          const totalKingsAvailable = 1 + kingIndices.length;
+
+          // Generate strategy: First K declares one rank, tossed Kings each declare additional ranks
+          // With 3 Kings total, p3 can declare up to 3 different ranks
+          const maxDeclarations = Math.min(totalKingsAvailable, ranksInHand.length + 1); // +1 for 'K' itself
+          
+          // Strategy: Use all Kings to remove all ranks (including K itself)
+          if (ranksInHand.length > 0) {
+            // Include 'K' in the list of ranks to remove
+            const allRanksToRemove = ['K', ...ranksInHand];
+            
+            console.log(`[Coalition DEBUG] ${playerId} multi-King generation:`, {
+              cardIndex,
+              totalKingsAvailable,
+              allRanksToRemove,
+              kingIndices,
+              ranksInHand,
+            });
+            
+            // Check if we have enough Kings to remove all ranks
+            if (totalKingsAvailable >= allRanksToRemove.length) {
+              // FULL CASCADE: First K declares 'K', tossed Kings declare other ranks
+              console.log(`[Coalition DEBUG] Generating FULL CASCADE action for ${playerId}`);
+              actions.push({
+                playerId,
+                cardIndex,
+                actionType: 'declare-king',
+                declaredRank: 'K', // First K declares K (triggers K cascade)
+                tossInCards: kingIndices.slice(0, ranksInHand.length),
+                tossInDeclarations: ranksInHand, // Each tossed King declares a different rank
+                description: `${playerId} uses K[${cardIndex}] declares K, tosses ${ranksInHand.length} Kings declaring [${ranksInHand.join(', ')}] - FULL CASCADE`,
+              });
+            }
+            
+            // Generate partial cascades with different starting ranks
+            for (let firstRankIdx = 0; firstRankIdx < Math.min(allRanksToRemove.length, totalKingsAvailable); firstRankIdx++) {
+              const firstRank = allRanksToRemove[firstRankIdx];
+              const remainingRanks = allRanksToRemove.filter((r, idx) => idx !== firstRankIdx);
+              const numTossIns = Math.min(kingIndices.length, remainingRanks.length);
+              
+              if (numTossIns > 0) {
+                actions.push({
+                  playerId,
+                  cardIndex,
+                  actionType: 'declare-king',
+                  declaredRank: firstRank as Rank,
+                  tossInCards: kingIndices.slice(0, numTossIns),
+                  tossInDeclarations: remainingRanks.slice(0, numTossIns) as Rank[],
+                  description: `${playerId} uses K[${cardIndex}] declares ${firstRank}, tosses ${numTossIns} Kings declaring [${remainingRanks.slice(0, numTossIns).join(', ')}]`,
+                });
+              }
+            }
           }
         }
       }
@@ -769,6 +873,18 @@ function applyAction(
       if (action.cardIndex >= 0 && action.cardIndex < player.cards.length) {
         player.cards.splice(action.cardIndex, 1);
       }
+      
+      // Remove tossed-in Kings (in reverse order to preserve indices)
+      if (action.tossInCards && action.tossInCards.length > 0) {
+        const sortedIndices = [...action.tossInCards].sort((a, b) => b - a);
+        for (const idx of sortedIndices) {
+          // Adjust index if it's after the already-removed cardIndex
+          const adjustedIdx = idx > action.cardIndex ? idx - 1 : idx;
+          if (adjustedIdx >= 0 && adjustedIdx < player.cards.length) {
+            player.cards.splice(adjustedIdx, 1);
+          }
+        }
+      }
       // Cascade is handled after the switch statement (affects ALL players)
       break;
 
@@ -780,28 +896,38 @@ function applyAction(
       break;
   }
 
-  // After action, handle cascade for declared rank (already handled toss-in removal above)
+  // After action, handle cascade for declared ranks
   if (action.declaredRank && action.actionType === 'declare-king') {
-    // Count total cards of declared rank across ALL players
-    let totalCount = 0;
-    for (const [, hand] of newState.players) {
-      totalCount += hand.cards.filter(
-        (c) => c.isKnown && c.card?.rank === action.declaredRank
-      ).length;
+    // Collect ALL ranks declared (main declaration + toss-in declarations)
+    const declaredRanks: Rank[] = [action.declaredRank];
+    
+    if (action.tossInDeclarations && action.tossInDeclarations.length > 0) {
+      declaredRanks.push(...action.tossInDeclarations);
     }
 
-    // Determine if cascade triggers
-    const isActionCard = ['7', '8', '9', '10', 'J', 'Q', 'A'].includes(
-      action.declaredRank
-    );
-    const shouldCascade = isActionCard ? totalCount >= 2 : totalCount >= 1;
-
-    if (shouldCascade) {
-      // CASCADE AFFECTS ALL PLAYERS! Remove declared rank from everyone's hand
+    // Process cascades for each declared rank
+    for (const declaredRank of declaredRanks) {
+      // Count total cards of this rank across ALL players
+      let totalCount = 0;
       for (const [, hand] of newState.players) {
-        hand.cards = hand.cards.filter(
-          (c) => !c.isKnown || c.card?.rank !== action.declaredRank
-        );
+        totalCount += hand.cards.filter(
+          (c) => c.isKnown && c.card?.rank === declaredRank
+        ).length;
+      }
+
+      // Determine if cascade triggers
+      const isActionCard = ['7', '8', '9', '10', 'J', 'Q', 'A'].includes(
+        declaredRank
+      );
+      const shouldCascade = isActionCard ? totalCount >= 2 : totalCount >= 1;
+
+      if (shouldCascade) {
+        // CASCADE AFFECTS ALL PLAYERS! Remove this rank from everyone's hand
+        for (const [, hand] of newState.players) {
+          hand.cards = hand.cards.filter(
+            (c) => !c.isKnown || c.card?.rank !== declaredRank
+          );
+        }
       }
     }
   }
