@@ -1,6 +1,6 @@
 // Pure functions for simulating turn outcomes
 
-import { Card, PlayerState, Rank, getCardValue } from '@vinto/shapes';
+import { Card, PlayerState, Rank } from '@vinto/shapes';
 import { BotMemory } from './bot-memory';
 import { TurnOutcome, BotDecisionContext } from './shapes';
 import { calculateHandScore, countUnknownCards } from './mcts-bot-heuristics';

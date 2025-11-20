@@ -11,7 +11,6 @@ import {
   getCardAction,
   getCardShortDescription,
   getCardValue,
-  PlayerState,
   Rank,
 } from '@vinto/shapes';
 import {
@@ -34,8 +33,6 @@ import {
   shouldAlwaysUsePeekAction,
   shouldUseAceAction,
   shouldParticipateInTossIn,
-  countUnknownCards,
-  calculateHandScore,
 } from './mcts-bot-heuristics';
 import {
   simulateDiscardOutcome,
@@ -75,9 +72,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
     );
 
     // HEURISTIC: Always take peek cards from discard if bot has unknown cards
-    if (shouldAlwaysTakeDiscardPeekCard(context.discardTop, context.botPlayer)) {
+    if (
+      shouldAlwaysTakeDiscardPeekCard(context.discardTop ?? null, context.botPlayer)
+    ) {
       console.log(
-        `[MCTS] Heuristic: Always taking ${context.discardTop!.rank} from discard (has unknown cards)`
+        `[MCTS] Heuristic: Always taking ${
+          context.discardTop!.rank
+        } from discard (has unknown cards)`
       );
       return { action: 'take-discard' };
     }
@@ -121,9 +122,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       );
 
       if (!useAction) {
-        console.log(
-          `[MCTS] Heuristic: Swapping Ace instead of using action`
-        );
+        console.log(`[MCTS] Heuristic: Swapping Ace instead of using action`);
         this.cachedActionPlans.delete(context.botId);
       } else {
         console.log(
@@ -194,7 +193,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
       this.cachedActionPlans.delete(context.botId); // Clear cache after use
       return cachedPlan;
     }
-
 
     const gameState = this.constructGameState(context);
     const bestMove = this.runMCTS(gameState);
@@ -369,7 +367,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     return bestPosition;
   }
 
-
   shouldCallVinto(context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
 
@@ -531,7 +528,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     };
   }
 
-
   /**
    * Main MCTS algorithm
    */
@@ -662,7 +658,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
     return evaluateState(currentState, this.botId);
   }
 
-
   /**
    * Deep copy a game state to prevent shared references
    */
@@ -783,7 +778,6 @@ export class MCTSBotDecisionService implements BotDecisionService {
       winner: null,
     };
   }
-
 
   /**
    * Generate possible moves from current state

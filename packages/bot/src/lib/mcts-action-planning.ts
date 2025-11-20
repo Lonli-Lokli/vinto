@@ -35,9 +35,12 @@ export function extractActionPlan(
 /**
  * Check if a move requires action plan extraction
  */
-export function shouldExtractActionPlan(
-  move: { type: string; actionCard?: any; declaredRank?: any; targets?: any[] }
-): boolean {
+export function shouldExtractActionPlan(move: {
+  type: string;
+  actionCard?: any;
+  declaredRank?: any;
+  targets?: any[];
+}): boolean {
   // take-discard with action card
   if (move.type === 'take-discard' && move.actionCard?.actionText) {
     return true;

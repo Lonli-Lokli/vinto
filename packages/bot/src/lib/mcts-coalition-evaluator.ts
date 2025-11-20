@@ -12,7 +12,7 @@ import {
  */
 export function evaluateCoalitionState(
   state: MCTSGameState,
-  botPlayerId: string
+  _botPlayerId: string
 ): number {
   const vintoCallerId = state.vintoCallerId;
   if (!vintoCallerId) return 0;
@@ -34,10 +34,7 @@ export function evaluateCoalitionState(
   const cardDifference = vintoPlayer.cardCount - champion.cardCount;
 
   // Component 1: Score advantage (40%)
-  const scoreAdvantage = Math.max(
-    0,
-    Math.min(1, (scoreDifference + 10) / 30)
-  );
+  const scoreAdvantage = Math.max(0, Math.min(1, (scoreDifference + 10) / 30));
 
   // Component 2: Card count advantage (30%)
   const cardAdvantage = Math.max(0, Math.min(1, (cardDifference + 2) / 5));
@@ -72,9 +69,7 @@ export function findCoalitionChampion(
   vintoCallerId: string
 ): MCTSPlayerState | null {
   // Find all coalition members (everyone except Vinto caller)
-  const coalitionMembers = state.players.filter(
-    (p) => p.id !== vintoCallerId
-  );
+  const coalitionMembers = state.players.filter((p) => p.id !== vintoCallerId);
 
   if (coalitionMembers.length === 0) return null;
 

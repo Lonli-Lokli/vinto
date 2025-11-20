@@ -1,6 +1,6 @@
 // Pure functions for estimating player scores
 
-import { PlayerState, getCardValue, Rank } from '@vinto/shapes';
+import { PlayerState, getCardValue } from '@vinto/shapes';
 import { BotMemory } from './bot-memory';
 
 /**

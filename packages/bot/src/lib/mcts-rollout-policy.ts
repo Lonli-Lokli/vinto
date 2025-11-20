@@ -20,11 +20,19 @@ export function selectRolloutMove(
   if (gameEndingMove) return gameEndingMove;
 
   // Priority 2: Information-Gathering
-  const infoGatheringMove = selectInfoGatheringMove(state, moves, currentPlayer);
+  const infoGatheringMove = selectInfoGatheringMove(
+    state,
+    moves,
+    currentPlayer
+  );
   if (infoGatheringMove) return infoGatheringMove;
 
   // Priority 3: Score Reduction
-  const scoreReductionMove = selectScoreReductionMove(state, moves, currentPlayer);
+  const scoreReductionMove = selectScoreReductionMove(
+    state,
+    moves,
+    currentPlayer
+  );
   if (scoreReductionMove) return scoreReductionMove;
 
   // Priority 4: Defensive Moves
@@ -51,8 +59,7 @@ function selectGameEndingMove(
       .filter((p) => p.id !== currentPlayer.id)
       .map((p) => p.score);
     const avgOpponentScore =
-      opponentScores.reduce((a, b) => a + b, 0) /
-      (opponentScores.length || 1);
+      opponentScores.reduce((a, b) => a + b, 0) / (opponentScores.length || 1);
 
     // Call vinto if bot score is significantly lower
     if (botScore < avgOpponentScore - 5) {

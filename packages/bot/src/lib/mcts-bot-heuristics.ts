@@ -15,7 +15,11 @@ export function shouldAlwaysTakeDiscardPeekCard(
   const { rank: discardRank, played } = discardTop;
   const hasUnknownCards = countUnknownCards(botPlayer) > 0;
 
-  return (discardRank === '7' || discardRank === '8' || discardRank === 'Q') && hasUnknownCards && !played;
+  return (
+    (discardRank === '7' || discardRank === '8' || discardRank === 'Q') &&
+    hasUnknownCards &&
+    !played
+  );
 }
 
 /**
@@ -29,7 +33,12 @@ export function shouldAlwaysUsePeekAction(
   if (!drawnCard.actionText || drawnCard.played) return false;
 
   const hasUnknownCards = countUnknownCards(botPlayer) > 0;
-  return (drawnCard.rank === '7' || drawnCard.rank === '8' || drawnCard.rank === 'Q') && hasUnknownCards;
+  return (
+    (drawnCard.rank === '7' ||
+      drawnCard.rank === '8' ||
+      drawnCard.rank === 'Q') &&
+    hasUnknownCards
+  );
 }
 
 /**
