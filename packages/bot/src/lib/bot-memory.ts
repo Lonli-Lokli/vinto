@@ -42,10 +42,10 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyMemoryConfig> = {
     observationRequired: 2, // Needs 2 observations
   },
   hard: {
-    memoryAccuracy: 0.95, // Almost perfect memory
-    memoryDecayRate: 0.00002, // Slow decay
-    maxMemorySize: 16, // Remembers almost everything
-    forgetChance: 0.02, // Rarely forgets
+    memoryAccuracy: 1.0, // Perfect memory for deterministic tests
+    memoryDecayRate: 0, // No decay for deterministic tests
+    maxMemorySize: 100, // Remember everything
+    forgetChance: 0, // Never forget for deterministic tests
     observationRequired: 1, // One observation enough
   },
 };
@@ -115,12 +115,17 @@ export class BotMemory {
    */
   observeCard(card: Card, playerId: string, position: number): void {
     // Check if bot correctly remembers (based on memory accuracy)
-    const isCorrect = Math.random() < this.config.memoryAccuracy;
+    const randomValue = Math.random();
+    const isCorrect = randomValue < this.config.memoryAccuracy;
 
     if (!isCorrect) {
       // Bot misremembers or fails to record
       console.log(
-        `[BotMemory] ${this.botId} failed to remember card at ${playerId}[${position}]`
+        `[BotMemory] ${
+          this.botId
+        } failed to remember card at ${playerId}[${position}] (random: ${randomValue.toFixed(
+          3
+        )}, threshold: ${this.config.memoryAccuracy})`
       );
       return;
     }

@@ -154,6 +154,11 @@ export class BotAIAdapter {
     const state = this.gameClient.state;
     const isBot = this.gameClient.currentPlayer.isBot;
 
+    // CRITICAL: Don't execute bot turns when game is over
+    if (state.phase === 'scoring' || state.phase === 'setup') {
+      return;
+    }
+
     // Check if difficulty or bot version changed and recreate bot decision service if needed
     if (
       snapshot.difficulty !== this.currentDifficulty ||

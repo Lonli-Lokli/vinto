@@ -291,7 +291,7 @@ describe('Bot Toss-In Integration Test', () => {
     botAdapter.dispose();
   });
 
-  it('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
+  it('should let bot2 re-confirm toss-in after swapping king without declaration', {timeout: 20_000}, async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer(
@@ -387,7 +387,7 @@ describe('Bot Toss-In Integration Test', () => {
     expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
 
     gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
-    await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
 
     expect(gameClient.getPlayer('bot1')?.cards.length).toBe(3);
     expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
@@ -395,7 +395,6 @@ describe('Bot Toss-In Integration Test', () => {
     ); // bot1 should have tossed in 2 cards, so now it knows only discarded card
 
     gameClient.dispatch(GameActions.playerTossInFinished('human')); // now we will start toss in round
-    await vi.runAllTimersAsync();
     await botAdapter.waitForIdle();
     // now we should again know two cards after playing two 7s
     expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(

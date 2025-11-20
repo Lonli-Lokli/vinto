@@ -98,8 +98,25 @@ export function advanceTurnAfterTossIn(
   // Save who started this turn before refreshing toss-in
   const originalPlayerIndex = state.activeTossIn.originalPlayerIndex;
 
+  // Calculate what the next player index would be
+  const nextPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
+
+    // Check if game should end BEFORE advancing (after vinto call, when we return to the vinto caller)
+  if (
+    state.phase === 'final' &&
+    state.players[nextPlayerIndex].id === state.vintoCallerId
+  ) {
+    // Final round complete - end the game
+    state.phase = 'scoring';
+    state.subPhase = 'idle';
+    state.activeTossIn = null; // Clear toss-in state
+
+    console.log(`[${context}] Final round complete, game finished`);
+    return;
+  }
+
   // Advance to next player from the ORIGINAL player who initiated the turn (circular)
-  state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
+  state.currentPlayerIndex = nextPlayerIndex;
 
   state.turnNumber++;
 
@@ -133,18 +150,6 @@ export function advanceTurnAfterTossIn(
   state.activeTossIn.failedAttempts = [];
   state.activeTossIn.originalPlayerIndex = state.currentPlayerIndex;
 
-  // Check if game should end (after vinto call, when we return to the vinto caller)
-  if (
-    state.phase === 'final' &&
-    state.players[state.currentPlayerIndex].id === state.vintoCallerId
-  ) {
-    // Final round complete - end the game
-    state.phase = 'scoring';
-    state.subPhase = 'idle';
-
-    console.log(`[${context}] Final round complete, game finished`);
-    return;
-  }
 
   // Get the new current player
   const nextPlayer = state.players[state.currentPlayerIndex];
