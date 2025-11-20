@@ -101,7 +101,7 @@ export function advanceTurnAfterTossIn(
   // Calculate what the next player index would be
   const nextPlayerIndex = (originalPlayerIndex + 1) % state.players.length;
 
-    // Check if game should end BEFORE advancing (after vinto call, when we return to the vinto caller)
+  // Check if game should end BEFORE advancing (after vinto call, when we return to the vinto caller)
   if (
     state.phase === 'final' &&
     state.players[nextPlayerIndex].id === state.vintoCallerId
@@ -149,7 +149,6 @@ export function advanceTurnAfterTossIn(
   );
   state.activeTossIn.failedAttempts = [];
   state.activeTossIn.originalPlayerIndex = state.currentPlayerIndex;
-
 
   // Get the new current player
   const nextPlayer = state.players[state.currentPlayerIndex];

@@ -11,6 +11,7 @@ import {
   BotTurnDecision,
   BotDecisionContext,
   BotActionDecision,
+  getCoalitionPlanForPlayer,
 } from '@vinto/bot';
 import { GameClient } from '../game-client';
 
@@ -557,6 +558,8 @@ export class BotAIAdapter {
    * COALITION LOGIC: Leader makes decision for coalition members
    */
   private async executeChoosingDecision(botId: string): Promise<void> {
+    console.log(`[BotAI] ═══ executeChoosingDecision START for ${botId} ═══`);
+
     const context = this.createBotContext(botId);
 
     // Coalition leader decides for coalition members
@@ -565,6 +568,10 @@ export class BotAIAdapter {
       effectiveDecisionMakerId === botId
         ? context
         : this.createBotContext(effectiveDecisionMakerId);
+
+    console.log(
+      `[BotAI] ${botId} effective decision maker: ${effectiveDecisionMakerId}`
+    );
 
     const drawnCard = this.gameClient.pendingCard;
 
@@ -576,54 +583,130 @@ export class BotAIAdapter {
       return;
     }
 
+    console.log(
+      `[BotAI] ${botId} drawn card: ${
+        drawnCard.rank
+      }, actionable: ${isRankActionable(drawnCard.rank)}`
+    );
+
     // Add delay so everyone can see the drawn card before bot makes a decision
     // This gives time for the draw animation to complete and for players to see what was drawn
     // Use even longer delay in final round
     const isFinalRound = this.gameClient.state.phase === 'final';
     await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
+    console.log(`[BotAI] ${botId} delay complete, proceeding with decision`);
+
     // First, check if the card has an action and if we should use it
     if (isRankActionable(drawnCard.rank)) {
+      console.log(`[BotAI] ${botId} calling shouldUseAction...`);
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,
         effectiveContext
       );
+      console.log(
+        `[BotAI] ${botId} shouldUseAction returned: ${shouldUseAction}`
+      );
 
       if (shouldUseAction) {
         // Use the action immediately
+        console.log(`[BotAI] ${botId} dispatching playCardAction`);
         this.gameClient.dispatch(GameActions.playCardAction(botId));
         console.log(`[BotAI] ${botId} chose to use ${drawnCard.rank} action`);
+        console.log(
+          `[BotAI] ═══ executeChoosingDecision END for ${botId} (used action) ═══`
+        );
         return; // State will transition to awaiting_action
       }
     }
 
     // Bot chose not to use action (or card has no action)
     // Now decide: swap or discard?
-    const swapPosition = this.botDecisionService.selectBestSwapPosition(
+    console.log(`[BotAI] ${botId} calling selectBestSwapPosition...`);
+    let swapPosition = this.botDecisionService.selectBestSwapPosition(
       drawnCard,
       effectiveContext
     );
+    console.log(
+      `[BotAI] ${botId} selectBestSwapPosition returned: ${swapPosition}`
+    );
 
     if (swapPosition !== null) {
+      console.log(
+        `[BotAI] ${botId} swapPosition is ${swapPosition}, entering swap block`
+      );
+
+      // COALITION FIX: Adjust swap position if hand has shrunk due to other coalition actions
+      // (Jack swaps, toss-ins, etc. can reduce hand size during final round)
+      const maxPosition = context.botPlayer.cards.length - 1;
+      if (swapPosition > maxPosition) {
+        console.log(
+          `[BotAI] ${botId} adjusting swapPosition from ${swapPosition} to ${maxPosition} (hand has ${context.botPlayer.cards.length} cards)`
+        );
+        swapPosition = maxPosition;
+      }
+
       // Look at current game state to see what card is at the swap position
       const cardAtPosition = context.botPlayer.cards[swapPosition];
 
-      // If it's an action card and bot knows about it, declare its rank
-      const shouldDeclare =
-        cardAtPosition.actionText &&
-        context.botPlayer.knownCardPositions.includes(swapPosition);
-      const declaredRank = shouldDeclare ? cardAtPosition.rank : undefined;
+      if (!cardAtPosition) {
+        console.log(
+          `[BotAI] ERROR: ${botId} has no card at position ${swapPosition}! Hand has ${context.botPlayer.cards.length} cards`
+        );
+        return; // Bail out to prevent crash
+      }
 
+      console.log(
+        `[BotAI] ${botId} cardAtPosition[${swapPosition}]: ${cardAtPosition.rank}`
+      );
+
+      // Check if coalition plan specifies a declaredRank
+      let declaredRank: Rank | undefined = undefined;
+
+      // COALITION: Use declaredRank from coalition plan if available
+      const coalitionPlan = this.getCoalitionPlanForBot(botId);
+      if (coalitionPlan && coalitionPlan.actionDecision?.declaredRank) {
+        declaredRank = coalitionPlan.actionDecision.declaredRank;
+        console.log(
+          `[BotAI] ${botId} using coalition plan declaredRank: ${declaredRank}`
+        );
+      } else {
+        // Otherwise, use default logic: declare if it's an action card we know
+        const shouldDeclare =
+          cardAtPosition.actionText &&
+          context.botPlayer.knownCardPositions.includes(swapPosition);
+        declaredRank = shouldDeclare ? cardAtPosition.rank : undefined;
+        console.log(
+          `[BotAI] ${botId} using default declaredRank logic: ${
+            declaredRank || 'none'
+          }`
+        );
+      }
+
+      console.log(
+        `[BotAI] ${botId} dispatching swapCard at position ${swapPosition}, declaredRank: ${
+          declaredRank || 'none'
+        }`
+      );
       this.gameClient.dispatch(
         GameActions.swapCard(botId, swapPosition, declaredRank)
       );
-      console.log(`[BotAI] ${botId} swapped at position ${swapPosition},
-  declared: ${declaredRank || 'none'}`);
+      console.log(
+        `[BotAI] ${botId} swapped at position ${swapPosition}, declared: ${
+          declaredRank || 'none'
+        }`
+      );
     } else {
       // Discard the drawn card
+      console.log(`[BotAI] ${botId} dispatching discardCard`);
       this.gameClient.dispatch(GameActions.discardCard(botId));
       console.log(`[BotAI] ${botId} discarded ${drawnCard.rank}`);
     }
+
+    console.log(`[BotAI] ═══ executeChoosingDecision END for ${botId} ═══`);
+    console.log(
+      `[BotAI] ${botId} after dispatch: phase=${this.gameClient.state.phase}, subPhase=${this.gameClient.state.subPhase}`
+    );
 
     // State will update and MobX reaction will trigger next phase
   }
@@ -1165,6 +1248,21 @@ export class BotAIAdapter {
 
     // This bot is a coalition member - the leader decides for them
     return state.coalitionLeaderId;
+  }
+
+  /**
+   * Get coalition plan for a specific bot
+   * Accesses the static shared coalition plans from the bot decision service
+   */
+  private getCoalitionPlanForBot(botId: string): BotTurnDecision | null {
+    const state = this.gameClient.state;
+
+    // Only relevant in final round with coalition
+    if (state.phase !== 'final' || !state.coalitionLeaderId) {
+      return null;
+    }
+
+    return getCoalitionPlanForPlayer(state.gameId, botId);
   }
 
   /**

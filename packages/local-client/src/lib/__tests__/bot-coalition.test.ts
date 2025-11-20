@@ -745,13 +745,9 @@ describe('Bot Coalition Coordination - Integration', () => {
         expect(gameClient.state.phase).toBe('scoring');
 
         // Verify coalition coordination achieved guaranteed best score
-        // With p2's cards changed to [Joker, 2, 3, 4, 5, 10], they cannot achieve -1
-        // because these cards have no cascade synergy with p3's [K, K, K, 9, 9, 8, 6].
-        // Only p3 should be selected as champion and achieve -1.
         expect(gameClient.state.coalitionLeaderId).not.toBeNull();
         expect(championResult).toBeDefined();
         expect(championResult.score).toBe(guaranteedBestScore); // -1
-        //expect(championResult.id).toBe('p3');
         expect(championResult.hasJoker).toBe(true);
 
         botAdapter.dispose();

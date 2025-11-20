@@ -35,9 +35,9 @@ export function handleCallVinto(
     player.isVintoCaller = player.id === playerId;
 
     if (!player.isVintoCaller) {
-      player.coalitionWith = newState.players.filter(
-        (p) => p.id !== playerId
-      ).map((p) => p.id);
+      player.coalitionWith = newState.players
+        .filter((p) => p.id !== playerId)
+        .map((p) => p.id);
     }
   }
 

@@ -6,3 +6,5 @@ export {
 } from './shapes';
 
 export { BotDecisionServiceFactory } from './bot-factory';
+
+export { getCoalitionPlanForPlayer } from './coalition-planner';
