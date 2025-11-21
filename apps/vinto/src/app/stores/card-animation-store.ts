@@ -18,7 +18,6 @@ export type AnimationType =
   | 'draw'
   | 'peek'
   | 'discard'
-  | 'toss-in'
   | 'highlight'
   | 'play-action'
   | 'shake'
@@ -677,7 +676,7 @@ export class CardAnimationStore {
    */
   isDrawnCardAnimating(): boolean {
     for (const animation of this.activeAnimations.values()) {
-      if (animation.from?.type === 'drawn' || animation.to?.type === 'drawn') {
+      if (animation.from?.type === 'drawn' || animation.to?.type === 'drawn' ) {
         return true;
       }
     }

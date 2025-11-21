@@ -61,7 +61,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
                   {tossInQueue.map((item, index) => (
                     <div
                       key={`queue-${item.playerId}-${index}`}
-                      className="flex items-center gap-1 bg-surface-primary/60 border border-primary/40 rounded px-1.5 py-0.5 shadow-sm"
+                      className="flex items-center justify-between gap-2 bg-surface-primary/60 border border-primary/40 rounded px-1.5 py-0.5 shadow-sm"
                     >
                       {/* Player name */}
                       <span
@@ -70,10 +70,7 @@ export const TossInArea: React.FC<TossInAreaProps> = observer(
                         {item.playerName}:
                       </span>
                       {/* Small card preview */}
-                      <div
-                        className="relative"
-                        style={{ width: '24px', height: '36px' }}
-                      >
+                      <div className="relative flex-shrink-0">
                         <Card
                           rank={item.rank}
                           revealed={true}
