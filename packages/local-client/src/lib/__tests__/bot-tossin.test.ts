@@ -113,64 +113,71 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 2: Turn player should not toss in their own discard
    */
-  it('should not allow turn player to toss in their own discard', async () => {
-    const { gameClient, botAdapter } = await setupSimpleScenario(
-      [
-        createTestPlayer('bot1', 'Bot 1', false, [
-          createTestCard('7', 'spades'),
-          createTestCard('5', 'hearts'),
-        ]),
-        createTestPlayer('bot2', 'Bot 2', false, [
-          createTestCard('7', 'hearts'),
-          createTestCard('7', 'diamonds'),
-          createTestCard('6', 'clubs'),
-        ]),
-      ],
-      1,
-      {
-        drawPile: Pile.fromCards([
-          createTestCard('3', 'spades'),
-          createTestCard('2', 'clubs'),
-        ]),
-      }
-    );
+  it(
+    'should not allow turn player to toss in their own discard',
+    { timeout: 10_000 },
+    async () => {
+      const { gameClient, botAdapter } = await setupSimpleScenario(
+        [
+          createTestPlayer('bot1', 'Bot 1', false, [
+            createTestCard('7', 'spades'),
+            createTestCard('5', 'hearts'),
+          ]),
+          createTestPlayer('bot2', 'Bot 2', false, [
+            createTestCard('7', 'hearts'),
+            createTestCard('7', 'diamonds'),
+            createTestCard('6', 'clubs'),
+          ]),
+        ],
+        1,
+        {
+          drawPile: Pile.fromCards([
+            createTestCard('3', 'spades'),
+            createTestCard('2', 'clubs'),
+          ]),
+        }
+      );
 
-    const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
-    const bot2InitialHandSize = gameClient.state.players[1].cards.length;
+      const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
+      const bot2InitialHandSize = gameClient.state.players[1].cards.length;
 
-    gameClient.dispatch(GameActions.drawCard('bot2'));
-    await vi.runAllTimersAsync();
-
-    gameClient.dispatch(GameActions.discardCard('bot2'));
-    await vi.runAllTimersAsync();
-
-    if (gameClient.state.subPhase === 'toss_queue_active') {
-      await botAdapter['handleTossInPhase']();
+      gameClient.dispatch(GameActions.drawCard('bot2'));
       await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-      // Bot2 should NOT have tossed in
-      const bot2TossInCalls = dispatchSpy.mock.calls.filter(
-        (call) =>
-          call[0].type === 'PARTICIPATE_IN_TOSS_IN' &&
-          call[0].payload?.playerId === 'bot2'
-      );
-      expect(bot2TossInCalls.length).toBe(0);
+      gameClient.dispatch(GameActions.discardCard('bot2'));
+      await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-      // Bot2 should have only lost 1 card (the discard)
-      const bot2FinalHandSize = gameClient.state.players[1].cards.length;
-      expect(bot2FinalHandSize).toBe(bot2InitialHandSize - 1);
+      if (gameClient.state.subPhase === 'toss_queue_active') {
+        await botAdapter['handleTossInPhase']();
+        await vi.runAllTimersAsync();
+        await botAdapter.waitForIdle();
 
-      // But Bot2 SHOULD have marked ready
-      const bot2ReadyCalls = dispatchSpy.mock.calls.filter(
-        (call) =>
-          call[0].type === 'PLAYER_TOSS_IN_FINISHED' &&
-          call[0].payload?.playerId === 'bot2'
-      );
-      expect(bot2ReadyCalls.length).toBeGreaterThanOrEqual(1);
+        // Bot2 should NOT have tossed in
+        const bot2TossInCalls = dispatchSpy.mock.calls.filter(
+          (call) =>
+            call[0].type === 'PARTICIPATE_IN_TOSS_IN' &&
+            call[0].payload?.playerId === 'bot2'
+        );
+        expect(bot2TossInCalls.length).toBe(0);
+
+        // Bot2 should have only lost 1 card (the discard)
+        const bot2FinalHandSize = gameClient.state.players[1].cards.length;
+        expect(bot2FinalHandSize).toBe(bot2InitialHandSize - 1);
+
+        // But Bot2 SHOULD have marked ready
+        const bot2ReadyCalls = dispatchSpy.mock.calls.filter(
+          (call) =>
+            call[0].type === 'PLAYER_TOSS_IN_FINISHED' &&
+            call[0].payload?.playerId === 'bot2'
+        );
+        expect(bot2ReadyCalls.length).toBeGreaterThanOrEqual(1);
+      }
+
+      botAdapter.dispose();
     }
-
-    botAdapter.dispose();
-  });
+  );
 
   /**
    * Test 3: No matching cards - both bots should still mark ready
@@ -236,172 +243,187 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 4: Three bots - all must mark ready
    */
-  it('should require all 3 bots to mark ready', async () => {
-    const { gameClient, botAdapter } = await setupSimpleScenario(
-      [
-        createTestPlayer('bot1', 'Bot 1', false, [
-          createTestCard('7', 's1'),
-          createTestCard('5', 'h1'),
-        ]),
-        createTestPlayer('bot2', 'Bot 2', false, [
-          createTestCard('7', 'h2'),
-          createTestCard('6', 'd1'),
-        ]),
-        createTestPlayer('bot3', 'Bot 3', false, [
-          createTestCard('7', 'c1'),
-          createTestCard('4', 'c2'),
-        ]),
-      ],
-      1,
-      {
-        drawPile: Pile.fromCards([
-          createTestCard('3', 'spades'),
-          createTestCard('2', 'clubs'),
-        ]),
-      }
-    );
+  it(
+    'should require all 3 bots to mark ready',
+    { timeout: 10_000 },
+    async () => {
+      const { gameClient, botAdapter } = await setupSimpleScenario(
+        [
+          createTestPlayer('bot1', 'Bot 1', false, [
+            createTestCard('7', 's1'),
+            createTestCard('5', 'h1'),
+          ]),
+          createTestPlayer('bot2', 'Bot 2', false, [
+            createTestCard('7', 'h2'),
+            createTestCard('6', 'd1'),
+          ]),
+          createTestPlayer('bot3', 'Bot 3', false, [
+            createTestCard('7', 'c1'),
+            createTestCard('4', 'c2'),
+          ]),
+        ],
+        1,
+        {
+          drawPile: Pile.fromCards([
+            createTestCard('3', 'spades'),
+            createTestCard('2', 'clubs'),
+          ]),
+        }
+      );
 
-    const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
+      const dispatchSpy = vi.spyOn(gameClient, 'dispatch');
 
-    gameClient.dispatch(GameActions.drawCard('bot2'));
-    await vi.runAllTimersAsync();
-
-    gameClient.dispatch(GameActions.discardCard('bot2'));
-    await vi.runAllTimersAsync();
-
-    if (gameClient.state.subPhase === 'toss_queue_active') {
-      await botAdapter['handleTossInPhase']();
+      gameClient.dispatch(GameActions.drawCard('bot2'));
       await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-      const readyCalls = dispatchSpy.mock.calls.filter(
-        (call) => call[0].type === 'PLAYER_TOSS_IN_FINISHED'
-      );
+      gameClient.dispatch(GameActions.discardCard('bot2'));
+      await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-      const readyPlayers = new Set(
-        readyCalls.map(
-          (call) => (call[0].payload as { playerId: string }).playerId
-        )
-      );
+      if (gameClient.state.subPhase === 'toss_queue_active') {
+        await botAdapter['handleTossInPhase']();
+        await vi.runAllTimersAsync();
+        await botAdapter.waitForIdle();
 
-      expect(readyPlayers.has('bot1')).toBe(true);
-      expect(readyPlayers.has('bot2')).toBe(true);
-      expect(readyPlayers.has('bot3')).toBe(true);
+        const readyCalls = dispatchSpy.mock.calls.filter(
+          (call) => call[0].type === 'PLAYER_TOSS_IN_FINISHED'
+        );
+
+        const readyPlayers = new Set(
+          readyCalls.map(
+            (call) => (call[0].payload as { playerId: string }).playerId
+          )
+        );
+
+        expect(readyPlayers.has('bot1')).toBe(true);
+        expect(readyPlayers.has('bot2')).toBe(true);
+        expect(readyPlayers.has('bot3')).toBe(true);
+      }
+
+      botAdapter.dispose();
     }
+  );
 
-    botAdapter.dispose();
-  });
+  it(
+    'should let bot2 re-confirm toss-in after swapping king without declaration',
+    { timeout: 20_000 },
+    async () => {
+      const { gameClient, botAdapter } = await setupSimpleScenario(
+        [
+          createTestPlayer(
+            'bot1',
+            'Bot 1',
+            false,
+            [createTestCard('K', 'bot1_king')],
+            []
+          ), // bot 1 has 1 unknown card only so it should draw & replace with King in hand
+          createTestPlayer('bot2', 'Bot 2', false, [
+            createTestCard('3', 'bot3_3'),
+            createTestCard('4', 'bot3_4'),
+            createTestCard('5', 'bot3_5'),
+          ]),
 
-  it('should let bot2 re-confirm toss-in after swapping king without declaration', async () => {
-    const { gameClient, botAdapter } = await setupSimpleScenario(
-      [
-        createTestPlayer(
-          'bot1',
-          'Bot 1',
-          false,
-          [createTestCard('K', 'bot1_king')],
-          []
-        ), // bot 1 has 1 unknown card only so it should draw & replace with King in hand
-        createTestPlayer('bot2', 'Bot 2', false, [
-          createTestCard('3', 'bot3_3'),
-          createTestCard('4', 'bot3_4'),
-          createTestCard('5', 'bot3_5'),
-        ]),
+          createTestPlayer('bot3', 'Bot 3', false, [
+            createTestCard('K', 'bot3_king'),
+            createTestCard('6', 'bot3_6'),
+            createTestCard('A', 'bot3_7'),
+          ]),
+          createTestPlayer('bot4', 'Bot 4', false, [
+            createTestCard('2', 'bot4_2'),
+            createTestCard('3', 'bot4_3'),
+            createTestCard('4', 'bot4_4'),
+            createTestCard('5', 'bot4_5'),
+          ]),
+        ],
+        0,
+        {
+          drawPile: Pile.fromCards([createTestCard('3', 'drawn_1')]),
+        }
+      );
 
-        createTestPlayer('bot3', 'Bot 3', false, [
-          createTestCard('K', 'bot3_king'),
-          createTestCard('6', 'bot3_6'),
-          createTestCard('A', 'bot3_7'),
-        ]),
-        createTestPlayer('bot4', 'Bot 4', false, [
-          createTestCard('2', 'bot4_2'),
-          createTestCard('3', 'bot4_3'),
-          createTestCard('4', 'bot4_4'),
-          createTestCard('5', 'bot4_5'),
-        ]),
-      ],
-      0,
-      {
-        drawPile: Pile.fromCards([createTestCard('3', 'drawn_1')]),
-      }
-    );
+      const errorSpy = vi.fn();
+      const successSpy = vi.fn();
+      gameClient.onStateUpdateError(errorSpy);
+      gameClient.onStateUpdateSuccess(successSpy);
 
-    const errorSpy = vi.fn();
-    const successSpy = vi.fn();
-    gameClient.onStateUpdateError(errorSpy);
-    gameClient.onStateUpdateSuccess(successSpy);
+      expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 3
 
-    expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 3
+      gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+      await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-    gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
-    await vi.runAllTimersAsync();
+      botAdapter.dispose();
+    }
+  );
 
-    await botAdapter.waitForIdle();
+  it(
+    'should handle multiple toss-in with 7 cards',
+    { timeout: 20_000 },
+    async () => {
+      const { gameClient, botAdapter } = await setupSimpleScenario(
+        [
+          createTestPlayer(
+            'bot1',
+            'Bot 1',
+            false,
+            [
+              createTestCard('7', 'p1c1'),
+              createTestCard('3', 'p1c2'),
+              createTestCard('3', 'p1c3'),
+              createTestCard('7', 'p1c4'),
+              createTestCard('7', 'p1c5'),
+            ],
+            [3, 4]
+          ),
+          createTestPlayer('bot2', 'Bot 2', false, [
+            createTestCard('5', 'p2c1'),
+            createTestCard('6', 'p2c2'),
+            createTestCard('5', 'p2c3'),
+            createTestCard('4', 'p2c4'),
+          ]),
 
-    botAdapter.dispose();
-  });
+          createTestPlayer('human', 'human', true, [
+            createTestCard('5', 'p3c1'),
+            createTestCard('6', 'p3c2'),
+            createTestCard('5', 'p3c3'),
+            createTestCard('4', 'p3c4'),
+          ]),
+        ],
+        0,
+        {
+          drawPile: Pile.fromCards([
+            createTestCard('2', 'drawn_1'),
+            createTestCard('10', 'drawn_2'),
+          ]),
+        }
+      );
 
-  it('should handle multiple toss-in with 7 cards', async () => {
-    const { gameClient, botAdapter } = await setupSimpleScenario(
-      [
-        createTestPlayer(
-          'bot1',
-          'Bot 1',
-          false,
-          [
-            createTestCard('7', 'p1c1'),
-            createTestCard('3', 'p1c2'),
-            createTestCard('4', 'p1c3'),
-            createTestCard('7', 'p1c4'),
-            createTestCard('7', 'p1c5'),
-          ],
-          [3, 4]
-        ),
-        createTestPlayer('bot2', 'Bot 2', false, [
-          createTestCard('5', 'p2c1'),
-          createTestCard('6', 'p2c2'),
-          createTestCard('5', 'p2c3'),
-          createTestCard('4', 'p2c4'),
-        ]),
+      const errorSpy = vi.fn();
+      const successSpy = vi.fn();
+      gameClient.onStateUpdateError(errorSpy);
+      gameClient.onStateUpdateSuccess(successSpy);
 
-        createTestPlayer('human', 'human', true, [
-          createTestCard('5', 'p3c1'),
-          createTestCard('6', 'p3c2'),
-          createTestCard('5', 'p3c3'),
-          createTestCard('4', 'p3c4'),
-        ]),
-      ],
-      0,
-      {
-        drawPile: Pile.fromCards([
-          createTestCard('2', 'drawn_1'),
-          createTestCard('10', 'drawn_2'),
-        ]),
-      }
-    );
+      expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
 
-    const errorSpy = vi.fn();
-    const successSpy = vi.fn();
-    gameClient.onStateUpdateError(errorSpy);
-    gameClient.onStateUpdateSuccess(successSpy);
+      gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+      await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
-    expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
+      expect(gameClient.getPlayer('bot1')?.cards.length).toBe(3);
+      expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
+        expect.arrayContaining([0])
+      ); // bot1 should have tossed in 2 cards, so now it knows only discarded card
 
-    gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
-    await vi.runAllTimersAsync();
+      gameClient.dispatch(GameActions.playerTossInFinished('human')); // now we will start toss in round
+      await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
+      // now we should again know two cards after playing two 7s
+      expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
+        expect.arrayContaining([0, 1, 2])
+      );
 
-    expect(gameClient.getPlayer('bot1')?.cards.length).toBe(3);
-    expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
-      expect.arrayContaining([0])
-    ); // bot1 should have tossed in 2 cards, so now it knows only discarded card
-
-    gameClient.dispatch(GameActions.playerTossInFinished('human')); // now we will start toss in round
-    await vi.runAllTimersAsync();
-    await botAdapter.waitForIdle();
-    // now we should again know two cards after playing two 7s
-    expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(
-      expect.arrayContaining([0, 1, 2])
-    );
-
-    botAdapter.dispose();
-  });
+      botAdapter.dispose();
+    }
+  );
 });

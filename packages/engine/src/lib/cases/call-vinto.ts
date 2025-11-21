@@ -35,9 +35,9 @@ export function handleCallVinto(
     player.isVintoCaller = player.id === playerId;
 
     if (!player.isVintoCaller) {
-      player.coalitionWith = newState.players.filter(
-        (p) => p.id !== playerId
-      ).map((p) => p.id);
+      player.coalitionWith = newState.players
+        .filter((p) => p.id !== playerId)
+        .map((p) => p.id);
     }
   }
 
@@ -60,19 +60,6 @@ export function handleCallVinto(
 
       if (newState.currentPlayerIndex === 0) {
         newState.turnNumber++;
-      }
-
-      // Check if game should end (if we've returned to the vinto caller)
-      if (
-        newState.players[newState.currentPlayerIndex].id ===
-        newState.vintoCallerId
-      ) {
-        newState.phase = 'scoring';
-        newState.subPhase = 'idle';
-        console.log(
-          '[handleCallVinto] Vinto caller completed turn, game ending'
-        );
-        return newState;
       }
 
       // Set appropriate subPhase for next player

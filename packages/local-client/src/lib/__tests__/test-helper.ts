@@ -6,9 +6,11 @@ import {
   Card,
   GameState,
   getCardShortDescription,
+  getCardValue,
   logger,
   Pile,
   PlayerState,
+  Rank,
 } from '@vinto/shapes';
 import { GameClient } from '../game-client';
 import { GameActions } from '@vinto/engine';
@@ -18,28 +20,11 @@ import { BotAIAdapter } from '../adapters/botAIAdapter';
 /**
  * Create a test card with proper value mapping
  */
-export function createTestCard(rank: Card['rank'], id: string): Card {
-  const values: Record<Card['rank'], number> = {
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    '10': 10,
-    J: 10,
-    Q: 10,
-    K: 0,
-    A: 1,
-    Joker: -1,
-  };
-
+export function createTestCard(rank: Rank, id: string): Card {
   return {
     id,
     rank,
-    value: values[rank],
+    value: getCardValue(rank),
     played: false,
     actionText: getCardShortDescription(rank),
   };
@@ -103,7 +88,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     activeTossIn: null,
     turnActions: [],
     roundActions: [],
-    difficulty: 'moderate',
+    difficulty: 'hard',
     botVersion: 'v1',
     roundFailedAttempts: [],
   };
@@ -212,7 +197,7 @@ export async function setupSimpleScenario(
   additionalSetup?.(gameClient);
 
   // bots start listening for game events
-  const botAdapter = new BotAIAdapter(gameClient);
+  const botAdapter = new BotAIAdapter(gameClient, { skipDelays: true });
 
   return { gameClient, botAdapter };
 }
