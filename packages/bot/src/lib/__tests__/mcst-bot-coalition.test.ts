@@ -104,7 +104,7 @@ describe('Coalition Round Solver', () => {
       bot4 = new MCTSBotDecisionService('hard');
     });
 
-    it('should coordinate all three coalition members to maximize champion advantage', () => {
+    it('should calculate best achievable score', () => {
       // Initial setup:
       // p1 (Vinto caller): score = 5 (2+3+K)
       // p2 (leader): has Jack to swap cards
@@ -138,6 +138,11 @@ describe('Coalition Round Solver', () => {
             createTestCard('10', 'p4-c3'), // High value - should be swapped out
           ]),
         ],
+        drawPile: toPile([
+          createTestCard('2', 'draw-1'),
+          createTestCard('2', 'draw-2'),
+          createTestCard('2', 'draw-3'),
+        ]),
       });
 
       // Set up bot contexts with coalition flags
@@ -480,7 +485,7 @@ describe('Coalition Round Solver', () => {
       expect(championId).toBe(p3); // Should select p3 (has Joker)
 
       // Use DP solver to plan all turns
-      const plans = solver.planAllTurnsWithDP();
+      const plans = solver.planAllTurns();
 
       // DP solver should return plans
       expect(plans).not.toBeNull();
@@ -572,7 +577,7 @@ describe('Coalition Round Solver', () => {
         drawPile
       );
 
-      const dpPlans = solverWithDP.planAllTurnsWithDP();
+      const dpPlans = solverWithDP.planAllTurns();
       expect(dpPlans).not.toBeNull();
 
       // Test WITHOUT draw pile (heuristics)
@@ -584,7 +589,7 @@ describe('Coalition Round Solver', () => {
         [] // Empty draw pile = no DP
       );
 
-      const heuristicPlans = solverWithoutDP.planAllTurnsWithDP();
+      const heuristicPlans = solverWithoutDP.planAllTurns();
       expect(heuristicPlans).toBeNull(); // Should return null (DP unavailable)
 
       // DP should provide plans while heuristics doesn't (in this test setup)

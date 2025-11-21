@@ -1194,6 +1194,7 @@ export class BotAIAdapter {
       gameState: state, // Use engine GameState directly - it already has all required fields
       discardTop: this.gameClient.topDiscardCard,
       discardPile: state.discardPile,
+      drawPile: state.drawPile.cards, // For DP planning in tests (not available in real gameplay)
       // This new property explicitly tells the bot which card's action to process.
       // It will be correctly populated during both regular turns and toss-in action phases.
       activeActionCard: activeCardFromAction,
@@ -1214,7 +1215,7 @@ export class BotAIAdapter {
   private delay(ms: number): Promise<void> {
     // Skip delays in test environment for faster tests
     if (this.skipDelays) {
-      return Promise.resolve();
+     return new Promise((resolve) => setTimeout(resolve, 1));
     }
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

@@ -19,9 +19,13 @@
       "Bash(npx nx test:*)",
       "Bash(npx vitest:*)",
       "Bash(timeout 30 npx vitest:*)",
-      "Bash(timeout 15 npx vitest:*)"
+      "Bash(timeout 15 npx vitest:*)",
+      "Bash(timeout 30 npx nx test:*)"
     ],
-    "deny": ["Bash(npx tsc:*)", "Bash(npm run typecheck:*)"],
+    "deny": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run typecheck:*)"
+    ],
     "ask": []
   }
 }

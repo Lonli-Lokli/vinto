@@ -141,25 +141,19 @@ export class MCTSBotDecisionService implements BotDecisionService {
       return false;
     }
 
-    // COALITION: Follow the plan if in coalition mode
-    if (context.coalitionLeaderId && context.isCoalitionMember) {
-      const plan = getCoalitionPlanForPlayer(
-        context.gameState.gameId,
-        this.botId
+    // COALITION: Use solver to decide based on drawn card
+    if (context.coalitionLeaderId && context.isCoalitionMember && this.coalitionSolver) {
+      console.log(
+        `[MCTS] ${this.botId} using coalition solver to decide on drawn card ${drawnCard.rank}`
       );
-      if (plan && plan.useAction !== undefined) {
-        console.log(
-          `[MCTS] ${this.botId} following coalition plan: useAction=${plan.useAction}`
-        );
-        return plan.useAction === true;
-      }
-      // If plan exists but useAction not specified, assume false
-      if (plan) {
-        console.log(
-          `[MCTS] ${this.botId} coalition plan has no useAction field, defaulting to false`
-        );
-        return false;
-      }
+      const decision = this.coalitionSolver.decideActionWithDrawnCard(
+        context,
+        drawnCard
+      );
+      console.log(
+        `[MCTS] ${this.botId} coalition decision: useAction=${decision.useAction}`
+      );
+      return decision.useAction;
     }
 
     // HEURISTIC: Always use peek actions if bot has unknown cards
@@ -259,6 +253,30 @@ export class MCTSBotDecisionService implements BotDecisionService {
           plan.actionDecision
         );
         return plan.actionDecision;
+      }
+
+      // COALITION: Check if solver has Jack swap targets
+      if (this.coalitionSolver) {
+        const jackSwapTargets = this.coalitionSolver.getJackSwapTargets();
+        if (jackSwapTargets) {
+          console.log(
+            `[Coalition] ${this.botId} using solver Jack swap targets:`,
+            jackSwapTargets
+          );
+          return {
+            targets: [
+              {
+                playerId: jackSwapTargets.fromPlayerId,
+                position: jackSwapTargets.fromPosition,
+              },
+              {
+                playerId: jackSwapTargets.toPlayerId,
+                position: jackSwapTargets.toPosition,
+              },
+            ],
+            shouldSwap: true,
+          };
+        }
       }
     }
 
@@ -386,31 +404,19 @@ export class MCTSBotDecisionService implements BotDecisionService {
       `[MCTS] ${this.botId} selectBestSwapPosition called for card ${drawnCard.rank}`
     );
 
-    // COALITION: Follow the plan if in coalition mode
-    if (context.coalitionLeaderId && context.isCoalitionMember) {
-      const plan = getCoalitionPlanForPlayer(
-        context.gameState.gameId,
-        this.botId
+    // COALITION: Use solver to decide based on drawn card
+    if (context.coalitionLeaderId && context.isCoalitionMember && this.coalitionSolver) {
+      console.log(
+        `[Coalition] ${this.botId} using coalition solver to decide swap for ${drawnCard.rank}`
+      );
+      const decision = this.coalitionSolver.decideActionWithDrawnCard(
+        context,
+        drawnCard
       );
       console.log(
-        `[Coalition] ${this.botId} checking plan:`,
-        plan ? `swapPosition=${plan.swapPosition}` : 'NO PLAN'
+        `[Coalition] ${this.botId} coalition decision: swapPosition=${decision.swapPosition}`
       );
-
-      if (plan && plan.swapPosition !== undefined) {
-        console.log(
-          `[Coalition] ${this.botId} swapping at position ${plan.swapPosition} (as planned)`
-        );
-        return plan.swapPosition;
-      }
-
-      // If plan exists but no swapPosition, discard the card
-      if (plan) {
-        console.log(
-          `[Coalition] ${this.botId} plan has no swapPosition, discarding card`
-        );
-        return null; // null means discard
-      }
+      return decision.swapPosition;
     }
 
     // Temporarily add drawn card to memory for accurate simulation
@@ -552,47 +558,78 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     const gameId = context.gameState.gameId;
 
-    // CRITICAL OPTIMIZATION: Only initialize ONCE per game
-    // Check if plans already exist for this game
+    // DP PLANNING: Leader plans optimal action sequence using non-draw actions
+    // (King cascade, Jack swaps) - works even without draw pile!
     if (!hasCoalitionPlan(gameId) && this.botId === context.coalitionLeaderId) {
       console.log(
-        `[Coalition] ${this.botId} planning ONCE for entire final round...`
+        `[Coalition] ${this.botId} using DP solver to plan non-draw action sequence...`
       );
       this.initializeCoalitionSolver(context, vintoCallerId);
-      console.log(`[Coalition] Planning complete, cached for all members`);
+
+      // Plan all turns using DP (focuses on non-draw actions when no draw pile)
+      const plans = this.coalitionSolver?.planAllTurns();
+      if (plans) {
+        console.log('[Coalition] Using DP-optimized plans ✓');
+        createCoalitionPlan(gameId);
+        plans.forEach((plan, playerId) => {
+          setCoalitionPlanForPlayer(gameId, playerId, plan);
+        });
+      }
     }
 
-    // Retrieve this member's plan from shared plans
+    // Check if we have a pre-computed plan (from DP)
     const memberPlan = getCoalitionPlanForPlayer(gameId, this.botId);
-
-    if (!memberPlan) {
+    if (memberPlan) {
       console.log(
-        `[Coalition] No plan found for ${this.botId}, using fallback`
+        `[Coalition] ${this.botId} executing DP plan:`,
+        memberPlan
       );
-      return { action: 'draw' };
+
+      const turnDecision: BotTurnDecision = {
+        action: memberPlan.action,
+      };
+
+      if (memberPlan.actionDecision) {
+        this.cachedActionPlans.set(this.botId, memberPlan.actionDecision);
+        turnDecision.actionDecision = memberPlan.actionDecision;
+      }
+
+      return turnDecision;
     }
 
+    // INCREMENTAL PLANNING MODE: No draw pile, decide as we go
+    if (!this.coalitionSolver) {
+      console.log(
+        `[Coalition] ${this.botId} initializing solver for incremental planning...`
+      );
+      this.initializeCoalitionSolver(context, vintoCallerId);
+    }
+
+    if (this.coalitionSolver) {
+      const decision = this.coalitionSolver.shouldTakeDiscard(
+        context,
+        context.discardTop || null
+      );
+
+      console.log(
+        `[Coalition] ${this.botId} turn decision (incremental): ${decision}`
+      );
+
+      return { action: decision };
+    }
+
+    // Fallback: always draw if no solver (should never happen)
     console.log(
-      `[Coalition] ${this.botId} executing pre-computed plan:`,
-      memberPlan
+      `[Coalition] No solver found for ${this.botId}, defaulting to draw`
     );
-
-    // Convert plan to turn decision
-    const turnDecision: BotTurnDecision = {
-      action: memberPlan.action,
-    };
-
-    // Cache action decision if present
-    if (memberPlan.actionDecision) {
-      this.cachedActionPlans.set(this.botId, memberPlan.actionDecision);
-      turnDecision.actionDecision = memberPlan.actionDecision;
-    }
-
-    return turnDecision;
+    return { action: 'draw' };
   }
 
   /**
-   * Initialize coalition solver (called by coalition leader)
+   * Initialize coalition solver (called by each coalition member)
+   *
+   * All coalition members initialize their own solver instance with the same perfect knowledge.
+   * This allows incremental planning where each member makes decisions based on their drawn cards.
    */
   private initializeCoalitionSolver(
     context: BotDecisionContext,
@@ -642,28 +679,34 @@ export class MCTSBotDecisionService implements BotDecisionService {
     }
 
     // Create solver
+    // Pass draw pile if available (for DP planning in tests)
     this.coalitionSolver = new CoalitionRoundSolver(
       this.botId,
       vintoCallerId,
       context.allPlayers,
-      perfectKnowledge
+      perfectKnowledge,
+      context.drawPile // For DP planning when draw pile is known (tests)
     );
 
     // Select champion
     this.coalitionChampionId = this.coalitionSolver.selectChampion();
 
-    // Plan for all coalition members
-    this.planAllCoalitionTurns(context);
+    // NOTE: No longer pre-planning all turns!
+    // We use incremental planning: each member calls decideActionWithDrawnCard()
+    // on their turn, AFTER drawing their card
+    console.log(
+      `[Coalition] Initialized with champion ${this.coalitionChampionId}, ` +
+        `ready for incremental planning`
+    );
   }
 
   /**
-   * Plan turns for all coalition members
+   * DEPRECATED: Pre-planning all turns
    *
-   * Strategy:
-   * 1. Try DP solver first (optimal, but requires known draw pile)
-   * 2. Fall back to heuristics if DP unavailable
+   * We now use incremental planning with decideActionWithDrawnCard()
+   * This method is kept for backward compatibility but is no longer called
    */
-  private planAllCoalitionTurns(context: BotDecisionContext): void {
+  private planAllCoalitionTurns_DEPRECATED(context: BotDecisionContext): void {
     if (!this.coalitionSolver || !this.coalitionChampionId) {
       return;
     }
@@ -674,11 +717,11 @@ export class MCTSBotDecisionService implements BotDecisionService {
       createCoalitionPlan(gameId);
     }
 
-    // STRATEGY 1: Try DP solver (optimal)
-    const dpPlans = this.coalitionSolver.planAllTurnsWithDP();
-    if (dpPlans) {
+    // STRATEGY: Run DP solver (optimal)
+    const plans = this.coalitionSolver.planAllTurns();
+    if (plans) {
       console.log('[Coalition] Using DP-optimized plans ✓');
-      dpPlans.forEach((plan, playerId) => {
+      plans.forEach((plan, playerId) => {
         setCoalitionPlanForPlayer(gameId, playerId, plan);
       });
       return;
@@ -751,7 +794,9 @@ export class MCTSBotDecisionService implements BotDecisionService {
     console.log(
       `[MCTS] Best move: ${bestChild.move.type} (visits: ${
         bestChild.visits
-      }, reward: ${bestChild.getAverageReward().toFixed(3)})`
+      }, reward: ${bestChild.getAverageReward().toFixed(3)}, targets: ${
+        bestChild.move.targets ? bestChild.move.targets.length : 'empty'
+      })`
     );
 
     // Extract action plan for moves that will require action target selection:
@@ -860,11 +905,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const bestChild = root.selectMostVisitedChild();
 
     if (bestChild && bestChild.move) {
-      console.log(
-        `[MCTS] Best move: ${bestChild.move.type} (visits: ${
-          bestChild.visits
-        }, reward: ${bestChild.getAverageReward().toFixed(3)})`
-      );
+     console.log(
+      `[MCTS] Best move: ${bestChild.move.type} (visits: ${
+        bestChild.visits
+      }, reward: ${bestChild.getAverageReward().toFixed(3)}, targets: ${
+        bestChild.move.targets ? bestChild.move.targets.length : 'empty'
+      })`
+    );
       return bestChild.move;
     }
 

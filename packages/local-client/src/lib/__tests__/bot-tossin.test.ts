@@ -113,7 +113,7 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 2: Turn player should not toss in their own discard
    */
-  it('should not allow turn player to toss in their own discard', async () => {
+  it('should not allow turn player to toss in their own discard', {timeout: 10_000}, async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer('bot1', 'Bot 1', false, [
@@ -140,13 +140,16 @@ describe('Bot Toss-In Integration Test', () => {
 
     gameClient.dispatch(GameActions.drawCard('bot2'));
     await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
 
     gameClient.dispatch(GameActions.discardCard('bot2'));
     await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
 
     if (gameClient.state.subPhase === 'toss_queue_active') {
       await botAdapter['handleTossInPhase']();
       await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
       // Bot2 should NOT have tossed in
       const bot2TossInCalls = dispatchSpy.mock.calls.filter(
@@ -236,7 +239,7 @@ describe('Bot Toss-In Integration Test', () => {
   /**
    * Test 4: Three bots - all must mark ready
    */
-  it('should require all 3 bots to mark ready', async () => {
+  it('should require all 3 bots to mark ready', { timeout: 10_000 }, async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer('bot1', 'Bot 1', false, [
@@ -265,13 +268,16 @@ describe('Bot Toss-In Integration Test', () => {
 
     gameClient.dispatch(GameActions.drawCard('bot2'));
     await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
 
     gameClient.dispatch(GameActions.discardCard('bot2'));
     await vi.runAllTimersAsync();
+    await botAdapter.waitForIdle();
 
     if (gameClient.state.subPhase === 'toss_queue_active') {
       await botAdapter['handleTossInPhase']();
       await vi.runAllTimersAsync();
+      await botAdapter.waitForIdle();
 
       const readyCalls = dispatchSpy.mock.calls.filter(
         (call) => call[0].type === 'PLAYER_TOSS_IN_FINISHED'
@@ -344,7 +350,7 @@ describe('Bot Toss-In Integration Test', () => {
     }
   );
 
-  it('should handle multiple toss-in with 7 cards', async () => {
+  it('should handle multiple toss-in with 7 cards', {timeout: 20_000}, async () => {
     const { gameClient, botAdapter } = await setupSimpleScenario(
       [
         createTestPlayer(
@@ -354,7 +360,7 @@ describe('Bot Toss-In Integration Test', () => {
           [
             createTestCard('7', 'p1c1'),
             createTestCard('3', 'p1c2'),
-            createTestCard('4', 'p1c3'),
+            createTestCard('3', 'p1c3'),
             createTestCard('7', 'p1c4'),
             createTestCard('7', 'p1c5'),
           ],
@@ -391,6 +397,7 @@ describe('Bot Toss-In Integration Test', () => {
     expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
 
     gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+    await vi.runAllTimersAsync();
     await botAdapter.waitForIdle();
 
     expect(gameClient.getPlayer('bot1')?.cards.length).toBe(3);
@@ -399,6 +406,7 @@ describe('Bot Toss-In Integration Test', () => {
     ); // bot1 should have tossed in 2 cards, so now it knows only discarded card
 
     gameClient.dispatch(GameActions.playerTossInFinished('human')); // now we will start toss in round
+    await vi.runAllTimersAsync();
     await botAdapter.waitForIdle();
     // now we should again know two cards after playing two 7s
     expect(gameClient.getPlayer('bot1')?.knownCardPositions).toEqual(

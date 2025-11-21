@@ -7,6 +7,7 @@ export interface BotDecisionContext {
   gameState: GameState;
   discardTop?: Card;
   discardPile: Pile; // Full discard pile history for tracking removed cards
+  drawPile?: Card[]; // ONLY for testing! Draw pile for DP planning (not available in real gameplay)
   pendingCard?: Card;
   activeActionCard?: Card;
   currentAction?: {
