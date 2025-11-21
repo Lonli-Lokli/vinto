@@ -26,10 +26,11 @@ export function evaluateState(
     return evaluateTerminalState(state, botPlayerId);
   }
 
-  // Coalition mode: evaluate coalition's best chance
+  // Coalition mode: evaluate coalition's best chance (DECENTRALIZED)
+  // Each bot evaluates from coalition perspective when in final phase
   if (
+    state.phase === 'final' &&
     state.vintoCallerId &&
-    state.coalitionLeaderId &&
     botPlayerId !== state.vintoCallerId
   ) {
     return evaluateCoalitionState(state, botPlayerId);
@@ -46,8 +47,12 @@ function evaluateTerminalState(
   state: MCTSGameState,
   botPlayerId: string
 ): number {
-  // Coalition mode: win if ANY coalition member wins
-  if (state.vintoCallerId && state.coalitionLeaderId) {
+  // Coalition mode: win if ANY coalition member wins (DECENTRALIZED)
+  if (
+    state.phase === 'final' &&
+    state.vintoCallerId &&
+    botPlayerId !== state.vintoCallerId
+  ) {
     const isCoalitionVictory = state.winner !== state.vintoCallerId;
     return isCoalitionVictory ? 1.0 : 0.0;
   }

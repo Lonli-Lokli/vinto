@@ -15,9 +15,13 @@
       "Bash(paste:*)",
       "Bash(sort:*)",
       "Bash(cut:*)",
-      "Bash(npx nx build:*)"
+      "Bash(npx nx build:*)",
+      "Bash(npx nx test:*)"
     ],
-    "deny": ["Bash(npx tsc:*)", "Bash(npm run typecheck:*)"],
+    "deny": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run typecheck:*)"
+    ],
     "ask": []
   }
 }

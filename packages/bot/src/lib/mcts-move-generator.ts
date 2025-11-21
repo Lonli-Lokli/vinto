@@ -36,10 +36,15 @@ interface PrioritizedPosition {
 export class MCTSMoveGenerator {
   /**
    * COALITION HELPER: Identify the coalition champion (member with best chance to win)
-   * Returns player with lowest score (excluding Vinto caller)
+   * Returns player with minimum total card value (score)
+   *
+   * DECENTRALIZED MODE: No longer requires coalitionLeaderId
+   * UPDATED: Uses score (total card value) to identify champion
+   * Champion = member with lowest total value, recalculated each turn
    */
   private static getCoalitionChampion(state: MCTSGameState): string | null {
-    if (!state.vintoCallerId || !state.coalitionLeaderId) return null;
+    // Coalition exists in final phase when someone called Vinto
+    if (state.phase !== 'final' || !state.vintoCallerId) return null;
 
     const coalitionMembers = state.players.filter(
       (p) => p.id !== state.vintoCallerId
@@ -47,7 +52,10 @@ export class MCTSMoveGenerator {
 
     if (coalitionMembers.length === 0) return null;
 
+    // Find member with minimum total card value (score)
+    // This is the member with best chance to beat Vinto caller
     let champion = coalitionMembers[0];
+
     for (const member of coalitionMembers) {
       if (member.score < champion.score) {
         champion = member;
@@ -55,7 +63,7 @@ export class MCTSMoveGenerator {
     }
 
     console.log(
-      `[Coalition] Champion identified: ${champion.id} (score: ${champion.score})`
+      `[Coalition] Champion identified: ${champion.id} (score: ${champion.score}, cards: ${champion.cardCount || champion.cards.length})`
     );
     return champion.id;
   }
@@ -197,8 +205,8 @@ export class MCTSMoveGenerator {
           // COALITION FILTER: Skip Vinto caller if bot is coalition member
           // Game rule: "no one may interact with the Vinto caller's cards" during final round
           const isCoalitionMember =
+            state.phase === 'final' &&
             state.vintoCallerId &&
-            state.coalitionLeaderId &&
             currentPlayer.id !== state.vintoCallerId;
           if (isCoalitionMember && opponent.id === state.vintoCallerId) {
             continue; // Coalition cannot peek/interact with Vinto caller's cards (game rule)
@@ -235,39 +243,24 @@ export class MCTSMoveGenerator {
         // Force each opponent to draw
         // Ace action requires selecting a target player (position doesn't matter, any valid position will do)
         // GAME RULE: "no one may interact with the Vinto caller's cards" during final round
+        // COALITION STRATEGY: AVOID using Ace during coalition (destructive to all players)
         const currentPlayerIsInCoalition =
+          state.phase === 'final' &&
           state.vintoCallerId &&
-          state.coalitionLeaderId &&
           currentPlayer.id !== state.vintoCallerId;
 
-        // COALITION COORDINATION: Identify champion to avoid forcing them to draw
-        const aceChampionId = this.getCoalitionChampion(state);
+        // COALITION FILTER: Don't generate ANY Ace moves during coalition
+        // Ace is destructive and doesn't align with coalition cooperation
+        if (currentPlayerIsInCoalition) {
+          console.log(
+            `[Coalition] Skipping ALL Ace moves - destructive action avoided during coalition`
+          );
+          break; // Don't generate any Ace moves
+        }
 
+        // Non-coalition mode: Generate Ace moves normally
         for (const opponent of state.players) {
           if (opponent.id === currentPlayer.id) continue;
-
-          // COALITION FILTER: If current bot is in coalition, skip Vinto caller (cannot interact - game rule)
-          if (
-            currentPlayerIsInCoalition &&
-            opponent.id === state.vintoCallerId
-          ) {
-            continue; // Cannot interact with Vinto caller's cards
-          }
-
-          // COALITION COORDINATION: Don't force champion to draw (hurts our chances!)
-          if (
-            currentPlayerIsInCoalition &&
-            aceChampionId &&
-            opponent.id === aceChampionId
-          ) {
-            console.log(
-              `[Coalition Ace] Skipping champion ${aceChampionId} - don't hurt our best player`
-            );
-            continue;
-          }
-
-          // If current bot is Vinto caller, can target all coalition members
-          // If no coalition exists yet, target anyone (no restrictions)
 
           // Select position 0 as a valid placeholder (Ace action targets player, not specific card)
           moves.push({
@@ -343,8 +336,8 @@ export class MCTSMoveGenerator {
 
     // Check coalition status
     const isInCoalition =
+      state.phase === 'final' &&
       state.vintoCallerId &&
-      state.coalitionLeaderId &&
       currentPlayer.id !== state.vintoCallerId;
 
     console.log(
@@ -1064,8 +1057,8 @@ export class MCTSMoveGenerator {
     // Check if bot is coalition member (needs to filter Vinto caller)
     // Game rule: "no one may interact with the Vinto caller's cards" during final round
     const isCoalitionMember =
+      state.phase === 'final' &&
       state.vintoCallerId &&
-      state.coalitionLeaderId &&
       currentPlayer.id !== state.vintoCallerId;
 
     for (const player of state.players) {
