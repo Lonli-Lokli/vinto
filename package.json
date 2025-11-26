@@ -8,6 +8,7 @@
     "format": "nx format:write",
     "lint": "nx run-many --all --target=lint --fix=true",
     "test": "nx run-many --all --target=test --passWithNoTests --silent --skip-nx-cache",
+    "test:coverage": "nx run-many --all --target=test --coverage --passWithNoTests && node tools/fix-coverage-paths.js",
     "update": "cross-env NX_SKIP_PROVENANCE_CHECK=true npx nx migrate latest && npm install && npx nx migrate --run-migrations",
     "deploy": "run-s test build"
   },
