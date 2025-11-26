@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Monitor, MonitorOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 /**
  * Wake Lock Toggle Component
@@ -20,15 +21,17 @@ export function WakeLockToggle() {
       setIsLocked(true);
 
       // Listen for wake lock release (e.g., when tab becomes inactive)
+      // Use { once: true } to prevent accumulating listeners on multiple toggles
       lock.addEventListener('release', () => {
         setIsLocked(false);
         wakeLockRef.current = null;
-      });
+      }, { once: true });
 
       console.log('[WakeLock] Screen wake lock activated');
     } catch (err) {
       console.warn('[WakeLock] Failed to activate:', err);
       setIsLocked(false);
+      toast.error('Could not activate screen lock');
     }
   }, []);
 
@@ -67,8 +70,11 @@ export function WakeLockToggle() {
   // Re-acquire wake lock when page becomes visible again (important for mobile)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isLocked && !wakeLockRef.current) {
-        void requestWakeLock();
+      // Only re-acquire if page is visible, user wants lock, and we don't have one
+      if (document.visibilityState === 'visible' && isLocked) {
+        if (!wakeLockRef.current) {
+          void requestWakeLock();
+        }
       }
     };
 
