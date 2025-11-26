@@ -763,29 +763,37 @@ export class MCTSMoveGenerator {
     }
 
     // Medium priority: Disrupt opponent - swap their cards with each other
-    // Limited to top 5 positions to avoid combinatorial explosion
-    const opponent1Positions = prioritizedPositions.filter(
-      (p) =>
-        p.target.playerId !== currentPlayer.id &&
-        p.priority !== SwapPriority.LOW
-    );
+    // LIMITED by Option 2: Only generate if bot knows ALL his cards AND no valuable opponent cards
+    // Otherwise, bot should prefer to include himself (swap own card with opponent card)
+    if (this.shouldGenerateTwoOpponentMoves(state, prioritizedPositions)) {
+      // Limited to top 5 positions to avoid combinatorial explosion
+      const opponent1Positions = prioritizedPositions.filter(
+        (p) =>
+          p.target.playerId !== currentPlayer.id &&
+          p.priority !== SwapPriority.LOW
+      );
 
-    for (let i = 0; i < Math.min(opponent1Positions.length - 1, 5); i++) {
-      for (let j = i + 1; j < Math.min(opponent1Positions.length, i + 3); j++) {
-        // Jack rule: Cannot swap two cards from the same player
-        if (
-          opponent1Positions[i].target.playerId !==
-          opponent1Positions[j].target.playerId
+      for (let i = 0; i < Math.min(opponent1Positions.length - 1, 5); i++) {
+        for (
+          let j = i + 1;
+          j < Math.min(opponent1Positions.length, i + 3);
+          j++
         ) {
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [
-              opponent1Positions[i].target,
-              opponent1Positions[j].target,
-            ],
-            shouldSwap: true,
-          });
+          // Jack rule: Cannot swap two cards from the same player
+          if (
+            opponent1Positions[i].target.playerId !==
+            opponent1Positions[j].target.playerId
+          ) {
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [
+                opponent1Positions[i].target,
+                opponent1Positions[j].target,
+              ],
+              shouldSwap: true,
+            });
+          }
         }
       }
     }
@@ -810,6 +818,56 @@ export class MCTSMoveGenerator {
     }
 
     return moves;
+  }
+
+  /**
+   * Check if bot should generate moves involving only opponent cards (no self-involvement)
+   * Returns true only when:
+   * 1. Bot knows ALL his own cards (no information to gain)
+   * 2. AND no valuable opponent cards are known (no Jokers, no low cards to steal)
+   */
+  private static shouldGenerateTwoOpponentMoves(
+    state: MCTSGameState,
+    prioritizedPositions: PrioritizedPosition[]
+  ): boolean {
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    if (!currentPlayer) return false;
+
+    // Check 1: Does bot know ALL his own cards?
+    let allOwnCardsKnown = true;
+    for (let pos = 0; pos < currentPlayer.cardCount; pos++) {
+      const memory = currentPlayer.knownCards.get(pos);
+      const isKnown = memory && memory.confidence > 0.5 && memory.card;
+      if (!isKnown) {
+        allOwnCardsKnown = false;
+        break;
+      }
+    }
+
+    if (!allOwnCardsKnown) {
+      // Bot doesn't know all his cards - should prefer to include himself
+      return false;
+    }
+
+    // Check 2: Are there any valuable opponent cards?
+    const hasValuableOpponentCards = prioritizedPositions.some((p) => {
+      if (p.target.playerId === currentPlayer.id) return false; // Skip own cards
+
+      // Valuable cards: Jokers, Kings, or low cards (2-5)
+      if (p.value === -1) return true; // Joker
+      if (p.value === 0) return true; // King
+      if (p.value !== undefined && p.value <= 5) return true; // Low cards
+
+      return false;
+    });
+
+    if (hasValuableOpponentCards) {
+      // There are valuable opponent cards - bot should include himself to steal them
+      return false;
+    }
+
+    // Both conditions met - OK to generate two-opponent moves
+    return true;
   }
 
   /**
@@ -987,40 +1045,44 @@ export class MCTSMoveGenerator {
     // Strategy 1: Peek two opponent unknown/other cards (maximize information gain)
     // For these, we generate both "peek-only" and "peek-and-swap" variants
     // Swapping two opponent cards CAN be strategic (disrupts their hands)
-    // Limited to top 8 positions to avoid combinatorial explosion with unknown cards
-    for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
-      for (
-        let j = i + 1;
-        j < Math.min(opponentUnknownOrOther.length, i + 5);
-        j++
-      ) {
-        // Queen rule: Cannot peek two cards from the same player
-        if (
-          opponentUnknownOrOther[i].target.playerId !==
-          opponentUnknownOrOther[j].target.playerId
+    // LIMITED by Option 2: Only generate if bot knows ALL his cards AND no valuable opponent cards
+    // Otherwise, bot should prefer to include himself (peek own card + opponent card)
+    if (this.shouldGenerateTwoOpponentMoves(state, prioritizedPositions)) {
+      // Limited to top 8 positions to avoid combinatorial explosion with unknown cards
+      for (let i = 0; i < Math.min(opponentUnknownOrOther.length - 1, 8); i++) {
+        for (
+          let j = i + 1;
+          j < Math.min(opponentUnknownOrOther.length, i + 5);
+          j++
         ) {
-          // Generate peek-only move (don't swap)
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [
-              opponentUnknownOrOther[i].target,
-              opponentUnknownOrOther[j].target,
-            ],
-            shouldSwap: false,
-          });
+          // Queen rule: Cannot peek two cards from the same player
+          if (
+            opponentUnknownOrOther[i].target.playerId !==
+            opponentUnknownOrOther[j].target.playerId
+          ) {
+            // Generate peek-only move (don't swap)
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [
+                opponentUnknownOrOther[i].target,
+                opponentUnknownOrOther[j].target,
+              ],
+              shouldSwap: false,
+            });
 
-          // Generate peek-and-swap move (swap after peeking)
-          // Swapping two opponent cards can be strategic (disrupt their hands)
-          moves.push({
-            type: 'use-action',
-            playerId: currentPlayer.id,
-            targets: [
-              opponentUnknownOrOther[i].target,
-              opponentUnknownOrOther[j].target,
-            ],
-            shouldSwap: true,
-          });
+            // Generate peek-and-swap move (swap after peeking)
+            // Swapping two opponent cards can be strategic (disrupts their hands)
+            moves.push({
+              type: 'use-action',
+              playerId: currentPlayer.id,
+              targets: [
+                opponentUnknownOrOther[i].target,
+                opponentUnknownOrOther[j].target,
+              ],
+              shouldSwap: true,
+            });
+          }
         }
       }
     }
