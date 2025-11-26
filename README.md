@@ -3,6 +3,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://reactjs.org/)
+[![codecov](https://codecov.io/gh/Lonli-Lokli/vinto/branch/master/graph/badge.svg)](https://codecov.io/gh/Lonli-Lokli/vinto)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Lonli-Lokli/vinto)
 [![Nx](https://img.shields.io/badge/Nx-21-143055?logo=nx&logoColor=white)](https://nx.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

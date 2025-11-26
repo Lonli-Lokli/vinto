@@ -18,8 +18,22 @@ export default defineConfig(() => ({
     setupFiles: ['src/lib/__tests__/setup-tests.ts'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: './test-output/vitest/coverage',
+      reportsDirectory: '../../coverage/packages/local-client',
       provider: 'v8' as const,
+      reporter: ['text', 'json', 'html', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/__tests__/**',
+        '**/node_modules/**',
+        '**/dist/**',
+      ],
+      all: true,
+      lines: 70,
+      functions: 70,
+      branches: 70,
+      statements: 70,
     },
   },
 }));

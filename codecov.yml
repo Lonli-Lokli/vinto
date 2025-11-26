@@ -1,0 +1,53 @@
+# Codecov configuration
+# See: https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        target: 70%           # Target coverage percentage
+        threshold: 2%         # Allow 2% drop before failing
+        if_ci_failed: error
+    patch:
+      default:
+        target: 70%           # New code should have 70% coverage
+        threshold: 5%
+
+comment:
+  layout: "header, diff, flags, components"
+  behavior: default
+  require_changes: false      # Always comment on PRs
+
+flags:
+  unittests:
+    paths:
+      - packages/
+      - apps/
+
+component_management:
+  individual_components:
+    - component_id: engine
+      name: Game Engine
+      paths:
+        - packages/engine/**
+    - component_id: bot
+      name: Bot AI
+      paths:
+        - packages/bot/**
+    - component_id: local-client
+      name: Local Client
+      paths:
+        - packages/local-client/**
+    - component_id: shapes
+      name: Shared Types
+      paths:
+        - packages/shapes/**
+
+ignore:
+  - "**/*.spec.ts"
+  - "**/*.test.ts"
+  - "**/__tests__/**"
+  - "**/node_modules/**"
+  - "**/test-output/**"
+  - "**/*.config.ts"
+  - "**/dist/**"

@@ -16,6 +16,9 @@ export default [
   {
     ignores: [
       '**/dist',
+      '**/coverage/**',
+      '**/test-output/**',
+      '**/.nyc_output/**',
       '**/next.config.js',
       '**/*.config.js',
       '**/*.config.ts',
