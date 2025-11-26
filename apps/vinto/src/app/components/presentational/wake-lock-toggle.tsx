@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Monitor, MonitorOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 /**
  * Wake Lock Toggle Component
@@ -20,15 +21,17 @@ export function WakeLockToggle() {
       setIsLocked(true);
 
       // Listen for wake lock release (e.g., when tab becomes inactive)
+      // Use { once: true } to prevent accumulating listeners on multiple toggles
       lock.addEventListener('release', () => {
         setIsLocked(false);
         wakeLockRef.current = null;
-      });
+      }, { once: true });
 
       console.log('[WakeLock] Screen wake lock activated');
     } catch (err) {
       console.warn('[WakeLock] Failed to activate:', err);
       setIsLocked(false);
+      toast.error('Could not activate screen lock');
     }
   }, []);
 
@@ -49,8 +52,9 @@ export function WakeLockToggle() {
     // Check if Wake Lock API is supported
     if ('wakeLock' in navigator) {
       setIsSupported(true);
-      // Request wake lock on mount (turned on by default)
-      void requestWakeLock();
+      // Note: We don't request wake lock on mount because the API requires
+      // user activation (a user gesture). The lock will be acquired when
+      // the user clicks the toggle button.
     }
 
     // Cleanup on unmount
@@ -61,7 +65,24 @@ export function WakeLockToggle() {
         });
       }
     };
-  }, [requestWakeLock]);
+  }, []);
+
+  // Re-acquire wake lock when page becomes visible again (important for mobile)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Only re-acquire if page is visible, user wants lock, and we don't have one
+      if (document.visibilityState === 'visible' && isLocked) {
+        if (!wakeLockRef.current) {
+          void requestWakeLock();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLocked, requestWakeLock]);
 
   const handleToggle = () => {
     if (isLocked) {
