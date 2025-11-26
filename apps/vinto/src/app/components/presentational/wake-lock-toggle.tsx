@@ -49,8 +49,9 @@ export function WakeLockToggle() {
     // Check if Wake Lock API is supported
     if ('wakeLock' in navigator) {
       setIsSupported(true);
-      // Request wake lock on mount (turned on by default)
-      void requestWakeLock();
+      // Note: We don't request wake lock on mount because the API requires
+      // user activation (a user gesture). The lock will be acquired when
+      // the user clicks the toggle button.
     }
 
     // Cleanup on unmount
@@ -61,7 +62,21 @@ export function WakeLockToggle() {
         });
       }
     };
-  }, [requestWakeLock]);
+  }, []);
+
+  // Re-acquire wake lock when page becomes visible again (important for mobile)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLocked && !wakeLockRef.current) {
+        void requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLocked, requestWakeLock]);
 
   const handleToggle = () => {
     if (isLocked) {
