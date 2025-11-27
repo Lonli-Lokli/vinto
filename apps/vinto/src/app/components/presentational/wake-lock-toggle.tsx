@@ -22,10 +22,14 @@ export function WakeLockToggle() {
 
       // Listen for wake lock release (e.g., when tab becomes inactive)
       // Use { once: true } to prevent accumulating listeners on multiple toggles
-      lock.addEventListener('release', () => {
-        setIsLocked(false);
-        wakeLockRef.current = null;
-      }, { once: true });
+      lock.addEventListener(
+        'release',
+        () => {
+          setIsLocked(false);
+          wakeLockRef.current = null;
+        },
+        { once: true }
+      );
 
       console.log('[WakeLock] Screen wake lock activated');
     } catch (err) {
@@ -69,6 +73,8 @@ export function WakeLockToggle() {
 
   // Re-acquire wake lock when page becomes visible again (important for mobile)
   useEffect(() => {
+    if (!isLocked) return; // Only listen when lock is active
+
     const handleVisibilityChange = () => {
       // Only re-acquire if page is visible, user wants lock, and we don't have one
       if (document.visibilityState === 'visible' && isLocked) {
@@ -106,7 +112,9 @@ export function WakeLockToggle() {
         transition-colors
         flex items-center gap-1"
       title={isLocked ? 'Screen wake lock active' : 'Screen wake lock inactive'}
-      aria-label={isLocked ? 'Disable screen wake lock' : 'Enable screen wake lock'}
+      aria-label={
+        isLocked ? 'Disable screen wake lock' : 'Enable screen wake lock'
+      }
     >
       {isLocked ? (
         <Monitor className="w-5 h-5 text-success" />

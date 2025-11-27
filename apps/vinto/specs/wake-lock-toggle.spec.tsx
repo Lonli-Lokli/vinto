@@ -1,6 +1,5 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WakeLockToggle } from '../src/app/components/presentational/wake-lock-toggle';
 
 // Mock toast
@@ -51,7 +50,9 @@ describe('WakeLockToggle', () => {
 
   it('should render when Wake Lock API is supported', () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
     expect(button).toBeTruthy();
   });
 
@@ -63,7 +64,9 @@ describe('WakeLockToggle', () => {
 
   it('should request wake lock when toggle is clicked', async () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     fireEvent.click(button);
 
@@ -74,7 +77,9 @@ describe('WakeLockToggle', () => {
 
   it('should add event listener with { once: true } option', async () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     fireEvent.click(button);
 
@@ -89,7 +94,9 @@ describe('WakeLockToggle', () => {
 
   it('should release wake lock when toggle is clicked again', async () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     // Enable
     fireEvent.click(button);
@@ -98,7 +105,9 @@ describe('WakeLockToggle', () => {
     });
 
     // Disable
-    const disableButton = screen.getByRole('button', { name: /disable screen wake lock/i });
+    const disableButton = screen.getByRole('button', {
+      name: /disable screen wake lock/i,
+    });
     fireEvent.click(disableButton);
 
     await waitFor(() => {
@@ -110,18 +119,24 @@ describe('WakeLockToggle', () => {
     mockWakeLock.request.mockRejectedValueOnce(new Error('Permission denied'));
 
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Could not activate screen lock');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Could not activate screen lock'
+      );
     });
   });
 
   it('should re-acquire wake lock when page becomes visible', async () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     // Enable wake lock
     fireEvent.click(button);
@@ -148,7 +163,9 @@ describe('WakeLockToggle', () => {
 
   it('should not re-acquire wake lock when page becomes visible if user disabled it', async () => {
     render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     // Enable wake lock
     fireEvent.click(button);
@@ -157,7 +174,9 @@ describe('WakeLockToggle', () => {
     });
 
     // User disables it
-    const disableButton = screen.getByRole('button', { name: /disable screen wake lock/i });
+    const disableButton = screen.getByRole('button', {
+      name: /disable screen wake lock/i,
+    });
     fireEvent.click(disableButton);
     await waitFor(() => {
       expect(mockSentinel.release).toHaveBeenCalled();
@@ -179,7 +198,9 @@ describe('WakeLockToggle', () => {
 
   it('should clean up wake lock on unmount', async () => {
     const { unmount } = render(<WakeLockToggle />);
-    const button = screen.getByRole('button', { name: /enable screen wake lock/i });
+    const button = screen.getByRole('button', {
+      name: /enable screen wake lock/i,
+    });
 
     // Enable wake lock
     fireEvent.click(button);
