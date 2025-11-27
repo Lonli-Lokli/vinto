@@ -8,6 +8,8 @@ import {
   SWAP_HAND_SIZE_WEIGHT,
   SWAP_KNOWLEDGE_WEIGHT,
   SWAP_SCORE_WEIGHT,
+  JOKER_PROTECTION_MULTIPLIER,
+  KING_PROTECTION_MULTIPLIER,
 } from './constants';
 
 /**
@@ -231,6 +233,46 @@ function simulateKnowledgeGainingSwap(
   }
 
   return 0;
+}
+
+/**
+ * Calculate strategic outcome score with special penalties for bad swaps
+ */
+export function calculateStrategicOutcomeScore(
+  outcome: TurnOutcome,
+  drawnCard: Card,
+  swappedOutCard: Card | null
+): number {
+  // Base outcome score
+  const baseScore = calculateOutcomeScore(outcome);
+
+  // Strategic penalties for bad swaps
+  let strategicPenalty = 0;
+
+  if (swappedOutCard) {
+    // MASSIVE PENALTY: Swapping out Joker (best card!)
+    if (swappedOutCard.rank === 'Joker') {
+      const scoreDelta = drawnCard.value - swappedOutCard.value;
+      strategicPenalty +=
+        scoreDelta * SWAP_SCORE_WEIGHT * JOKER_PROTECTION_MULTIPLIER * 100;
+    }
+
+    // LARGE PENALTY: Swapping out King (0 points + action)
+    if (swappedOutCard.rank === 'K') {
+      const scoreDelta = drawnCard.value - swappedOutCard.value;
+      strategicPenalty +=
+        scoreDelta * SWAP_SCORE_WEIGHT * KING_PROTECTION_MULTIPLIER * 100;
+    }
+
+    // General strategic penalty: swapping better card for worse
+    if (drawnCard.value > swappedOutCard.value) {
+      // Swapping low value for high value is bad
+      const scoreDelta = drawnCard.value - swappedOutCard.value;
+      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * 10;
+    }
+  }
+
+  return baseScore - strategicPenalty;
 }
 
 /**
