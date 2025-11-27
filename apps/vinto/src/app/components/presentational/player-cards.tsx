@@ -26,6 +26,7 @@ interface PlayerCardsProps {
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>; // Card positions with failed toss-in feedback
   landingCards?: Set<number>;
+  vintoCallerId?: string | null;
 }
 
 export const PlayerCards: React.FC<PlayerCardsProps> = observer(
@@ -45,6 +46,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
     actionTargets = [],
     failedTossInCards = new Set<number>(),
     landingCards = new Set<number>(),
+    vintoCallerId = null,
   }) => {
     // Use specialized components based on position
     const CardComponent = isHorizontalPosition(position)
@@ -68,6 +70,7 @@ export const PlayerCards: React.FC<PlayerCardsProps> = observer(
         actionTargets={actionTargets}
         failedTossInCards={failedTossInCards}
         landingCards={landingCards}
+        vintoCallerId={vintoCallerId}
       />
     );
   }

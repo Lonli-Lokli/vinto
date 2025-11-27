@@ -50,6 +50,8 @@ export interface CardProps {
   hidden?: boolean;
   // Disable flip animation - for cards that should not flip (drawn/discard pile)
   disableFlipAnimation?: boolean;
+  // Bot knowledge indicator - shows if this card is known by bots (for final round UI)
+  isBotKnown?: boolean;
 }
 
 export function Card({
@@ -69,6 +71,7 @@ export function Card({
   hidden = false,
   actionTargetSelected = false,
   disableFlipAnimation = false,
+  isBotKnown = false,
 }: CardProps) {
   const config = CARD_SIZE_CONFIG[size];
   // Build data attributes for animation tracking
@@ -136,6 +139,7 @@ export function Card({
         ${getCardStateClasses()}
         ${getIntentFeedbackClasses()}
         ${actionTargetSelected ? 'action-target-selected' : ''}
+        ${isBotKnown ? 'bot-known-card' : ''}
       `}
       style={
         isPeeked
@@ -144,6 +148,13 @@ export function Card({
                 '0 0 0 3px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4)',
               outline: '3px solid rgb(96, 165, 250)',
               outlineOffset: '2px',
+            }
+          : isBotKnown
+          ? {
+              boxShadow:
+                '0 0 0 2px rgba(234, 179, 8, 0.5), 0 0 15px rgba(234, 179, 8, 0.3)',
+              outline: '2px solid rgb(250, 204, 21)',
+              outlineOffset: '1px',
             }
           : highlighted && selectionState !== 'selectable'
           ? {

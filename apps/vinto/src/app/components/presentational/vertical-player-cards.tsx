@@ -31,6 +31,7 @@ interface VerticalPlayerCardsProps {
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>;
   landingCards?: Set<number>;
+  vintoCallerId?: string | null;
 }
 
 export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
@@ -50,6 +51,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
     actionTargets = [],
     failedTossInCards = new Set(),
     landingCards = new Set(),
+    vintoCallerId = null,
   }) => {
     const animationStore = useCardAnimationStore();
     const dimmedClasses =
@@ -128,6 +130,24 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
           const isAnimating = animationStore.isCardAnimating(player.id, index);
           const isPeeked = temporarilyVisibleCards.has(index);
 
+          // Determine if this card is known by bots (for final round UI)
+          // Show bot knowledge indicator when:
+          // 1. Human is the Vinto caller (observing player is Vinto caller)
+          // 2. We're in final phase
+          // 3. This is a bot player's card (coalition member)
+          // 4. This card is in the bot's own knownCardPositions OR any other bot has knowledge of it
+          let isBotKnown = false;
+          if (
+            gamePhase === 'final' &&
+            vintoCallerId === observingPlayer?.id &&
+            player.isBot
+          ) {
+            // Check if the bot knows this card (own knowledge)
+            if (player.knownCardPositions.includes(index)) {
+              isBotKnown = true;
+            }
+          }
+
           return (
             <ClickableCard
               key={`${card.id}-${index}`}
@@ -146,6 +166,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
+              isBotKnown={isBotKnown}
             />
           );
         })}
