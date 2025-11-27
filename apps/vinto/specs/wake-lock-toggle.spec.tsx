@@ -48,6 +48,10 @@ describe('WakeLockToggle', () => {
     delete (navigator as any).wakeLock;
   });
 
+  it('should have non-prod environment', () => {
+    expect(process.env.NODE_ENV).toBe('test');
+  });
+
   it('should render when Wake Lock API is supported', () => {
     render(<WakeLockToggle />);
     const button = screen.getByRole('button', {
