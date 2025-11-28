@@ -10,6 +10,9 @@ import {
   SWAP_SCORE_WEIGHT,
   JOKER_PROTECTION_MULTIPLIER,
   KING_PROTECTION_MULTIPLIER,
+  JOKER_PENALTY_AMPLIFIER,
+  KING_PENALTY_AMPLIFIER,
+  GENERAL_SWAP_PENALTY_MULTIPLIER,
 } from './constants';
 
 /**
@@ -250,25 +253,17 @@ export function calculateStrategicOutcomeScore(
   let strategicPenalty = 0;
 
   if (swappedOutCard) {
-    // MASSIVE PENALTY: Swapping out Joker (best card!)
+    const scoreDelta = drawnCard.value - swappedOutCard.value;
+
     if (swappedOutCard.rank === 'Joker') {
-      const scoreDelta = drawnCard.value - swappedOutCard.value;
-      strategicPenalty +=
-        scoreDelta * SWAP_SCORE_WEIGHT * JOKER_PROTECTION_MULTIPLIER * 100;
-    }
-
-    // LARGE PENALTY: Swapping out King (0 points + action)
-    if (swappedOutCard.rank === 'K') {
-      const scoreDelta = drawnCard.value - swappedOutCard.value;
-      strategicPenalty +=
-        scoreDelta * SWAP_SCORE_WEIGHT * KING_PROTECTION_MULTIPLIER * 100;
-    }
-
-    // General strategic penalty: swapping better card for worse
-    if (drawnCard.value > swappedOutCard.value) {
-      // Swapping low value for high value is bad
-      const scoreDelta = drawnCard.value - swappedOutCard.value;
-      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * 10;
+      // MASSIVE PENALTY: Swapping out Joker (best card!)
+      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * JOKER_PROTECTION_MULTIPLIER * JOKER_PENALTY_AMPLIFIER;
+    } else if (swappedOutCard.rank === 'K') {
+      // LARGE PENALTY: Swapping out King (0 points + action)
+      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * KING_PROTECTION_MULTIPLIER * KING_PENALTY_AMPLIFIER;
+    } else if (drawnCard.value > swappedOutCard.value) {
+      // General strategic penalty: swapping better card for worse
+      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * GENERAL_SWAP_PENALTY_MULTIPLIER;
     }
   }
 

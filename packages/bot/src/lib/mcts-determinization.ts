@@ -170,6 +170,10 @@ export function sampleCardFromPool(
   playerId: string,
   position: number
 ): Card {
+  if (availableRanks.length === 0) {
+    throw new Error('Cannot sample from empty card pool');
+  }
+
   // Build cumulative probability distribution
   const cumulative = buildCumulativeProbabilities(availableRanks);
 
