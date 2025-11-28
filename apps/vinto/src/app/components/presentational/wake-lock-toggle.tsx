@@ -11,7 +11,8 @@ import toast from 'react-hot-toast';
  */
 export function WakeLockToggle() {
   const [isSupported, setIsSupported] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(false); // User's intent: do they want the wake lock?
+  const [isLocked, setIsLocked] = useState(false); // Actual state: do we currently have a lock?
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const requestWakeLock = useCallback(async () => {
@@ -19,6 +20,7 @@ export function WakeLockToggle() {
       const lock = await navigator.wakeLock.request('screen');
       wakeLockRef.current = lock;
       setIsLocked(true);
+      setIsEnabled(true); // User wants the lock
 
       // Listen for wake lock release (e.g., when tab becomes inactive)
       // Use { once: true } to prevent accumulating listeners on multiple toggles
@@ -27,6 +29,9 @@ export function WakeLockToggle() {
         () => {
           setIsLocked(false);
           wakeLockRef.current = null;
+          // Note: We don't set isEnabled to false here, because the lock may have been
+          // released automatically by the browser (not by the user). We'll re-acquire
+          // when the page becomes visible again if isEnabled is still true.
         },
         { once: true }
       );
@@ -45,6 +50,7 @@ export function WakeLockToggle() {
         await wakeLockRef.current.release();
         wakeLockRef.current = null;
         setIsLocked(false);
+        setIsEnabled(false); // User no longer wants the lock
         console.log('[WakeLock] Screen wake lock released');
       } catch (err) {
         console.warn('[WakeLock] Failed to release:', err);
@@ -73,11 +79,11 @@ export function WakeLockToggle() {
 
   // Re-acquire wake lock when page becomes visible again (important for mobile)
   useEffect(() => {
-    if (!isLocked) return; // Only listen when lock is active
+    if (!isEnabled) return; // Only listen when user wants the lock
 
     const handleVisibilityChange = () => {
       // Only re-acquire if page is visible, user wants lock, and we don't have one
-      if (document.visibilityState === 'visible' && isLocked) {
+      if (document.visibilityState === 'visible' && isEnabled) {
         if (!wakeLockRef.current) {
           void requestWakeLock();
         }
@@ -88,7 +94,7 @@ export function WakeLockToggle() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isLocked, requestWakeLock]);
+  }, [isEnabled, requestWakeLock]);
 
   const handleToggle = () => {
     if (isLocked) {

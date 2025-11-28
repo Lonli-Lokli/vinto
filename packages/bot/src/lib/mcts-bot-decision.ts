@@ -38,6 +38,7 @@ import {
   simulateDiscardOutcome,
   simulateTurnOutcome,
   calculateOutcomeScore,
+  calculateStrategicOutcomeScore,
 } from './mcts-outcome-simulator';
 import { determinize } from './mcts-determinization';
 import { extractActionPlan } from './mcts-action-planning';
@@ -337,7 +338,12 @@ export class MCTSBotDecisionService implements BotDecisionService {
         tempMemory
       );
 
-      const outcomeScore = calculateOutcomeScore(outcome);
+      const swappedOutCard = context.botPlayer.cards[position];
+      const outcomeScore = calculateStrategicOutcomeScore(
+        outcome,
+        drawnCard,
+        swappedOutCard
+      );
 
       console.log(
         `[SwapSelector] Position ${position}: handSize=${outcome.finalHandSize}, ` +
