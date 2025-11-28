@@ -101,6 +101,7 @@ export const PlayerArea = observer(function PlayerArea({
       failedTossInCards={failedTossInCards}
       landingCards={landingCards}
       vintoCallerId={gameClient.visualState.vintoCallerId}
+      allPlayers={gameClient.visualState.players}
     />
   );
 

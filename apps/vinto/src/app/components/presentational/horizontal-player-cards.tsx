@@ -32,6 +32,7 @@ interface HorizontalPlayerCardsProps {
   failedTossInCards?: Set<number>;
   landingCards?: Set<number>;
   vintoCallerId?: string | null;
+  allPlayers?: PlayerState[];
 }
 
 export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = observer(
@@ -52,6 +53,7 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
     failedTossInCards = new Set(),
     landingCards = new Set(),
     vintoCallerId = null,
+    allPlayers = [],
   }) => {
     const animationStore = useCardAnimationStore();
     const dimmedClasses =
@@ -118,17 +120,32 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
           // 1. Human is the Vinto caller (observing player is Vinto caller)
           // 2. We're in final phase
           // 3. This is a bot player's card (coalition member)
-          // 4. This card is in the bot's own knownCardPositions
+          // 4. This card is known by ANY bot in the coalition (bots share knowledge)
           let isBotKnown = false;
           if (
             gamePhase === 'final' &&
             vintoCallerId === observingPlayer?.id &&
             player.isBot
           ) {
-            // Check if the bot knows this card (own knowledge)
-            if (player.knownCardPositions.includes(index)) {
-              isBotKnown = true;
-            }
+            // During coalition mode, bots share knowledge
+            // Check if ANY bot knows about this specific card position on this player
+            isBotKnown = allPlayers.some(bot => {
+              if (!bot.isBot) return false;
+
+              // Check if this bot knows about the current card position
+              // If the bot is viewing its own cards, check knownCardPositions directly
+              if (bot.id === player.id) {
+                return bot.knownCardPositions.includes(index);
+              }
+
+              // Check if this bot has opponent knowledge about this player's card
+              const opponentKnowledge = bot.opponentKnowledge?.[player.id];
+              if (opponentKnowledge?.knownCards?.[index]) {
+                return true;
+              }
+
+              return false;
+            });
           }
 
           return (
