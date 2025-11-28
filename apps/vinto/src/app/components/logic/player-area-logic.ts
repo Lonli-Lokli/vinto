@@ -160,3 +160,58 @@ export function shouldAvatarComeFirst(position: PlayerPosition): boolean {
 export function isSidePlayer(position: PlayerPosition): boolean {
   return position === 'left' || position === 'right';
 }
+
+/**
+ * Determine if a card is known by any bot in the coalition during final round
+ * Shows bot knowledge indicator when:
+ * 1. Human is the Vinto caller (observing player is Vinto caller)
+ * 2. We're in final phase
+ * 3. This is a bot player's card (coalition member)
+ * 4. This card is known by ANY bot in the coalition (bots share knowledge)
+ */
+export function isCardKnownByBots(params: {
+  cardIndex: number;
+  targetPlayer: PlayerState;
+  observingPlayer: PlayerState | undefined;
+  gamePhase: GamePhase;
+  vintoCallerId: string | null;
+  allPlayers: PlayerState[];
+}): boolean {
+  const {
+    cardIndex,
+    targetPlayer,
+    observingPlayer,
+    gamePhase,
+    vintoCallerId,
+    allPlayers,
+  } = params;
+
+  // Only show indicator during final phase when human is Vinto caller viewing bot cards
+  if (
+    gamePhase !== 'final' ||
+    vintoCallerId !== observingPlayer?.id ||
+    !targetPlayer.isBot
+  ) {
+    return false;
+  }
+
+  // During coalition mode, bots share knowledge
+  // Check if ANY bot knows about this specific card position on this player
+  return allPlayers.some(bot => {
+    if (!bot.isBot) return false;
+
+    // Check if this bot knows about the current card position
+    // If the bot is viewing its own cards, check knownCardPositions directly
+    if (bot.id === targetPlayer.id) {
+      return bot.knownCardPositions.includes(cardIndex);
+    }
+
+    // Check if this bot has opponent knowledge about this player's card
+    const opponentKnowledge = bot.opponentKnowledge?.[targetPlayer.id];
+    if (opponentKnowledge?.knownCards?.[cardIndex]) {
+      return true;
+    }
+
+    return false;
+  });
+}
