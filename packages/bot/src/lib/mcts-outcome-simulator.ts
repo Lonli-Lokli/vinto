@@ -253,17 +253,31 @@ export function calculateStrategicOutcomeScore(
   let strategicPenalty = 0;
 
   if (swappedOutCard) {
+    // Calculate score delta: positive means swapping for worse card (bad), negative means swapping for better card (good)
     const scoreDelta = drawnCard.value - swappedOutCard.value;
 
     if (swappedOutCard.rank === 'Joker') {
-      // MASSIVE PENALTY: Swapping out Joker (best card!)
-      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * JOKER_PROTECTION_MULTIPLIER * JOKER_PENALTY_AMPLIFIER;
+      // MASSIVE PENALTY: Swapping out Joker (best card: -1 point)
+      // Example: Swapping Joker (-1) for 6 → scoreDelta = 7, penalty = 7 × 15 × 3.0 × 100 = 31,500
+      strategicPenalty +=
+        scoreDelta *
+        SWAP_SCORE_WEIGHT *
+        JOKER_PROTECTION_MULTIPLIER *
+        JOKER_PENALTY_AMPLIFIER;
     } else if (swappedOutCard.rank === 'K') {
-      // LARGE PENALTY: Swapping out King (0 points + action)
-      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * KING_PROTECTION_MULTIPLIER * KING_PENALTY_AMPLIFIER;
-    } else if (drawnCard.value > swappedOutCard.value) {
-      // General strategic penalty: swapping better card for worse
-      strategicPenalty += scoreDelta * SWAP_SCORE_WEIGHT * GENERAL_SWAP_PENALTY_MULTIPLIER;
+      // LARGE PENALTY: Swapping out King (0 points + powerful action)
+      // Example: Swapping King (0) for 6 → scoreDelta = 6, penalty = 6 × 15 × 2.5 × 100 = 22,500
+      strategicPenalty +=
+        scoreDelta *
+        SWAP_SCORE_WEIGHT *
+        KING_PROTECTION_MULTIPLIER *
+        KING_PENALTY_AMPLIFIER;
+    } else if (scoreDelta > 0) {
+      // General strategic penalty: only apply when swapping for WORSE card (positive scoreDelta)
+      // Example: Swapping 2 for 6 → scoreDelta = 4, penalty = 4 × 15 × 10 = 600
+      // Example: Swapping 6 for 2 → scoreDelta = -4, NO penalty (this is a good swap!)
+      strategicPenalty +=
+        scoreDelta * SWAP_SCORE_WEIGHT * GENERAL_SWAP_PENALTY_MULTIPLIER;
     }
   }
 
