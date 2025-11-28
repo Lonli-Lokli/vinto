@@ -118,7 +118,7 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
           // 1. Human is the Vinto caller (observing player is Vinto caller)
           // 2. We're in final phase
           // 3. This is a bot player's card (coalition member)
-          // 4. This card is in the bot's own knownCardPositions OR any other bot has knowledge of it
+          // 4. This card is in the bot's own knownCardPositions
           let isBotKnown = false;
           if (
             gamePhase === 'final' &&
