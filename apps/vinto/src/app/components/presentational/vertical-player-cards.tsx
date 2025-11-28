@@ -31,6 +31,8 @@ interface VerticalPlayerCardsProps {
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>;
   landingCards?: Set<number>;
+  vintoCallerId?: string | null;
+  allPlayers?: PlayerState[];
 }
 
 export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
@@ -50,6 +52,8 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
     actionTargets = [],
     failedTossInCards = new Set(),
     landingCards = new Set(),
+    vintoCallerId = null,
+    allPlayers = [],
   }) => {
     const animationStore = useCardAnimationStore();
     const dimmedClasses =
@@ -93,13 +97,15 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
             isSelectingActionTarget,
           });
 
-          const canSeeCard = canSeePlayerCard({
+          const { canSee: canSeeCard, isBotKnown } = canSeePlayerCard({
             cardIndex: index,
             targetPlayer: player,
             gamePhase,
             temporarilyVisibleCards,
             coalitionLeaderId,
             observingPlayer,
+            vintoCallerId,
+            allPlayers,
           });
 
           const shouldHideCard = player.isHuman && isSelectingSwapPosition;
@@ -146,6 +152,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
+              isBotKnown={isBotKnown}
             />
           );
         })}

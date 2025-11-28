@@ -31,6 +31,8 @@ interface HorizontalPlayerCardsProps {
   actionTargets?: Array<{ playerId: string; position: number }>;
   failedTossInCards?: Set<number>;
   landingCards?: Set<number>;
+  vintoCallerId?: string | null;
+  allPlayers?: PlayerState[];
 }
 
 export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = observer(
@@ -50,6 +52,8 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
     actionTargets = [],
     failedTossInCards = new Set(),
     landingCards = new Set(),
+    vintoCallerId = null,
+    allPlayers = [],
   }) => {
     const animationStore = useCardAnimationStore();
     const dimmedClasses =
@@ -76,13 +80,15 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
             isSelectingActionTarget,
           });
 
-          const canSeeCard = canSeePlayerCard({
+          const { canSee: canSeeCard, isBotKnown } = canSeePlayerCard({
             cardIndex: index,
             targetPlayer: player,
             gamePhase,
             temporarilyVisibleCards,
             coalitionLeaderId,
             observingPlayer,
+            vintoCallerId,
+            allPlayers,
           });
 
           const shouldHideCard = player.isHuman && isSelectingSwapPosition;
@@ -129,6 +135,7 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
+              isBotKnown={isBotKnown}
             />
           );
         })}
