@@ -10,7 +10,6 @@ import {
   canSeePlayerCard,
   isCardSelectable,
   shouldHighlightCard,
-  isCardKnownByBots,
 } from '../logic/player-area-logic';
 import { useCardAnimationStore } from '../di-provider';
 import { ClickableCard } from './clickable-card';
@@ -98,13 +97,15 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
             isSelectingActionTarget,
           });
 
-          const canSeeCard = canSeePlayerCard({
+          const { canSee: canSeeCard, isBotKnown } = canSeePlayerCard({
             cardIndex: index,
             targetPlayer: player,
             gamePhase,
             temporarilyVisibleCards,
             coalitionLeaderId,
             observingPlayer,
+            vintoCallerId,
+            allPlayers,
           });
 
           const shouldHideCard = player.isHuman && isSelectingSwapPosition;
@@ -132,15 +133,6 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
           const hasFailedTossInFeedback = failedTossInCards.has(index);
           const isAnimating = animationStore.isCardAnimating(player.id, index);
           const isPeeked = temporarilyVisibleCards.has(index);
-
-          const isBotKnown = isCardKnownByBots({
-            cardIndex: index,
-            targetPlayer: player,
-            observingPlayer,
-            gamePhase,
-            vintoCallerId,
-            allPlayers,
-          });
 
           return (
             <ClickableCard
