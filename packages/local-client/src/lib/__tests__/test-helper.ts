@@ -150,6 +150,14 @@ export async function setupSimpleScenario(
     ...(stateOverrides ?? {}),
   });
 
+  // Auto-sync visual state after every dispatch to simulate AnimationService behavior
+  // This is critical for tests since BotAIAdapter reacts to visualState
+  const originalDispatch = gameClient.dispatch.bind(gameClient);
+  gameClient.dispatch = (action) => {
+    originalDispatch(action);
+    gameClient.syncVisualState(); // Simulate AnimationService completing animations
+  };
+
   // Track any errors during state updates
   const errors: string[] = [];
   gameClient.onStateUpdateError((reason) => {
