@@ -82,23 +82,25 @@ export function canSeePlayerCard(params: {
   ) {
     // During coalition mode, bots share knowledge
     // Check if ANY bot knows about this specific card position on this player
-    canSee = canSee || allPlayers.some(bot => {
-      if (!bot.isBot) return false;
+    canSee =
+      canSee ||
+      allPlayers.some((bot) => {
+        if (!bot.isBot) return false;
 
-      // Check if this bot knows about the current card position
-      // If the bot is viewing its own cards, check knownCardPositions directly
-      if (bot.id === targetPlayer.id) {
-        return bot.knownCardPositions.includes(cardIndex);
-      }
+        // Check if this bot knows about the current card position
+        // If the bot is viewing its own cards, check knownCardPositions directly
+        if (bot.id === targetPlayer.id) {
+          return bot.knownCardPositions.includes(cardIndex);
+        }
 
-      // Check if this bot has opponent knowledge about this player's card
-      const opponentKnowledge = bot.opponentKnowledge?.[targetPlayer.id];
-      if (opponentKnowledge?.knownCards?.[cardIndex]) {
-        return true;
-      }
+        // Check if this bot has opponent knowledge about this player's card
+        const opponentKnowledge = bot.opponentKnowledge?.[targetPlayer.id];
+        if (opponentKnowledge?.knownCards?.[cardIndex]) {
+          return true;
+        }
 
-      return false;
-    });
+        return false;
+      });
   }
 
   return canSee;
@@ -198,4 +200,3 @@ export function shouldAvatarComeFirst(position: PlayerPosition): boolean {
 export function isSidePlayer(position: PlayerPosition): boolean {
   return position === 'left' || position === 'right';
 }
-
