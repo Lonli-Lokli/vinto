@@ -97,7 +97,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
             isSelectingActionTarget,
           });
 
-          const { canSee: canSeeCard, isBotKnown } = canSeePlayerCard({
+          const canSeeCard = canSeePlayerCard({
             cardIndex: index,
             targetPlayer: player,
             gamePhase,
@@ -152,7 +152,6 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
-              isBotKnown={isBotKnown}
             />
           );
         })}

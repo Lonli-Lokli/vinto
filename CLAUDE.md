@@ -133,6 +133,23 @@
   Development Branch: test
   Current Branch: test (as of this session)
 
+  **Branch Naming for Issues:**
+  - Pattern: `issue-{ISSUE_NUMBER}`
+  - Example: Issue #10 → branch `issue-10`
+  - Do NOT append timestamps or prefixes
+  - Reuse existing issue branch if it exists
+
+  **Invoking Claude Code (GitHub App):**
+  When commenting on an issue to invoke Claude Code:
+  ```
+  @claude-code please work on this issue using branch issue-{ISSUE_NUMBER}
+  ```
+
+  Example for issue #15:
+  ```
+  @claude-code please fix this bug using branch issue-15
+  ```
+
   Pre-commit Hooks:
   Uses lefthook for git hooks
 

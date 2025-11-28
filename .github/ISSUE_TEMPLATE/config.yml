@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/Lonli-Lokli/vinto/blob/master/README.md
+    about: View the project documentation
+  - name: Game Rules
+    url: https://github.com/Lonli-Lokli/vinto/blob/master/docs/game-engine/VINTO_RULES.md
+    about: View the official Vinto game rules

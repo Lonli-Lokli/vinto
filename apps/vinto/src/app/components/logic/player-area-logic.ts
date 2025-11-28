@@ -23,7 +23,7 @@ export function canSeePlayerCard(params: {
   coalitionLeaderId: string | null;
   vintoCallerId?: string | null;
   allPlayers?: PlayerState[];
-}): { canSee: boolean; isBotKnown: boolean } {
+}): boolean {
   const {
     cardIndex,
     targetPlayer,
@@ -74,9 +74,6 @@ export function canSeePlayerCard(params: {
     canSee = true;
   }
 
-  // Check if card is known by bots (for indicator during final round)
-  // Only show indicator during final phase when human is Vinto caller viewing bot cards
-  let isBotKnown = false;
   if (
     gamePhase === 'final' &&
     vintoCallerId === observingPlayer?.id &&
@@ -85,7 +82,7 @@ export function canSeePlayerCard(params: {
   ) {
     // During coalition mode, bots share knowledge
     // Check if ANY bot knows about this specific card position on this player
-    isBotKnown = allPlayers.some(bot => {
+    canSee = canSee || allPlayers.some(bot => {
       if (!bot.isBot) return false;
 
       // Check if this bot knows about the current card position
@@ -104,7 +101,7 @@ export function canSeePlayerCard(params: {
     });
   }
 
-  return { canSee, isBotKnown };
+  return canSee;
 }
 
 /**

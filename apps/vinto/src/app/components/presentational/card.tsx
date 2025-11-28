@@ -50,8 +50,6 @@ export interface CardProps {
   hidden?: boolean;
   // Disable flip animation - for cards that should not flip (drawn/discard pile)
   disableFlipAnimation?: boolean;
-  // Bot knowledge indicator - shows if this card is known by bots (for final round UI)
-  isBotKnown?: boolean;
 }
 
 export function Card({
