@@ -670,7 +670,7 @@ export class AnimationService {
             this.uiStore.getTemporarilyVisibleCards(targetPlayerId),
           gamePhase: newState.phase,
           observingPlayer: newState.players.find((p) => p.id === playerId)!,
-        }),
+        }).canSee,
         this.getPlayerPosition(targetPlayerId, newState),
         2000 // 2 second highlight animation
       );
