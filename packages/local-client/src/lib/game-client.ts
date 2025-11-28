@@ -381,11 +381,20 @@ export class GameClient {
   // ==========================================
 
   /**
-   * Get the current player
+   * Get the current player (from logical state)
    */
   @computed
   get currentPlayer(): PlayerState {
     return this._state.players[this._state.currentPlayerIndex];
+  }
+
+  /**
+   * Get the current player from visual state
+   * Bot adapter should use this to avoid reacting before animations complete
+   */
+  @computed
+  get currentVisualPlayer(): PlayerState {
+    return this._visualState.players[this._visualState.currentPlayerIndex];
   }
 
   /**

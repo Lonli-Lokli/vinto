@@ -94,33 +94,36 @@ export class BotAIAdapter {
 
   /**
    * Setup MobX reaction to automatically execute bot turns
-   * CRITICAL FIX: Eliminated setTimeout from core reaction logic
+   * CRITICAL FIX: React to VISUAL state instead of logical state
    *
-   * The reaction now watches for the single, unambiguous state:
-   * "isBot && subPhase === 'idle'" - meaning it's a bot's turn and the game is ready.
+   * The reaction watches visual state, which only updates after animations complete.
+   * This prevents bots from drawing cards while toss-in animations are still playing.
+   *
+   * In production: AnimationService calls gameClient.syncVisualState() after animations
+   * In tests: Test helper auto-syncs visual state after each dispatch
    *
    * After dispatching an action, methods simply return. The reaction will
-   * automatically fire again when the game state transitions, creating a
-   * robust, self-triggering loop that is perfectly synchronized with the game state.
+   * automatically fire again when visual state transitions, creating a
+   * robust, self-triggering loop that is perfectly synchronized with animations.
    * Asynchronous work is queued to guarantee sequential execution.
    */
   private setupBotReaction(): void {
     this.disposeReaction = reaction<ReactionSnapshot>(
-      // Watch for bot turn state - EXPLICIT state watching only
+      // Watch for bot turn state - using VISUAL state to wait for animations
       () => ({
-        isBot: this.gameClient.currentPlayer.isBot,
-        subPhase: this.gameClient.state.subPhase,
-        turnCount: this.gameClient.state.turnNumber,
-        activeTossIn: this.gameClient.state.activeTossIn,
-        currentPlayerId: this.gameClient.currentPlayer.id,
+        isBot: this.gameClient.currentVisualPlayer.isBot,
+        subPhase: this.gameClient.visualState.subPhase,
+        turnCount: this.gameClient.visualState.turnNumber,
+        activeTossIn: this.gameClient.visualState.activeTossIn,
+        currentPlayerId: this.gameClient.currentVisualPlayer.id,
         // Watch for Vinto being called to select coalition leader
-        vintoCallerId: this.gameClient.state.vintoCallerId,
-        coalitionLeaderId: this.gameClient.state.coalitionLeaderId,
-        phase: this.gameClient.state.phase,
-        difficulty: this.gameClient.state.difficulty,
-        botVersion: this.gameClient.state.botVersion,
+        vintoCallerId: this.gameClient.visualState.vintoCallerId,
+        coalitionLeaderId: this.gameClient.visualState.coalitionLeaderId,
+        phase: this.gameClient.visualState.phase,
+        difficulty: this.gameClient.visualState.difficulty,
+        botVersion: this.gameClient.visualState.botVersion,
       }),
-      // Execute bot turn when state is ready
+      // Execute bot turn when visual state is ready
       // Reactions stay synchronous; async work is queued for sequential handling.
       (snapshot) => {
         this.queueReactionTask(snapshot);
