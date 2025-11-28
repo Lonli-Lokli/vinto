@@ -404,9 +404,10 @@ describe('Bot Toss-In Integration Test', () => {
       gameClient.onStateUpdateError(errorSpy);
       gameClient.onStateUpdateSuccess(successSpy);
 
-      expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // we are going to draw the 7
+      expect(gameClient.state.drawPile.peekTop()?.id).toBe('drawn_1'); // bot1 will draw the '2'
 
-      gameClient.dispatch(GameActions.empty()); // now our bot should start toss-in
+      // Manually trigger bot1's turn - draw the '2' card
+      gameClient.dispatch(GameActions.drawCard('bot1'));
       await vi.runAllTimersAsync();
       await botAdapter.waitForIdle();
 
