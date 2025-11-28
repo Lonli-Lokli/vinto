@@ -150,6 +150,15 @@ export async function setupSimpleScenario(
     ...(stateOverrides ?? {}),
   });
 
+  // Auto-sync visual state after every dispatch to simulate AnimationService behavior
+  // In production, AnimationService calls syncVisualState() after animations complete
+  // In tests, we sync immediately so bots can react to state changes
+  const originalDispatch = gameClient.dispatch.bind(gameClient);
+  gameClient.dispatch = (action) => {
+    originalDispatch(action);
+    gameClient.syncVisualState(); // Simulate AnimationService completing animations
+  };
+
   // Track any errors during state updates
   const errors: string[] = [];
   gameClient.onStateUpdateError((reason) => {
