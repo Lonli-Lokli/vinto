@@ -72,7 +72,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
       `[MCTS] ${this.botId} deciding turn action (${this.difficulty})`
     );
 
-    // HEURISTIC: Always take peek cards from discard if bot has unknown cards
+    // HEURISTIC: Always take high-value action cards from discard
+    // RULE: Can only take unused action cards (7-K, A) and MUST use action immediately
     if (
       shouldAlwaysTakeDiscardPeekCard(
         context.discardTop ?? null,
@@ -82,7 +83,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       console.log(
         `[MCTS] Heuristic: Always taking ${
           context.discardTop!.rank
-        } from discard (has unknown cards)`
+        } from discard (powerful action)`
       );
       return { action: 'take-discard' };
     }
@@ -109,10 +110,11 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     if (!drawnCard.actionText || drawnCard.played) return false;
 
-    // HEURISTIC: Always use peek actions if bot has unknown cards
+    // HEURISTIC: Always use powerful peek actions (7, 8, Q)
+    // These provide information value that exceeds their card value or swap potential
     if (shouldAlwaysUsePeekAction(drawnCard, context.botPlayer)) {
       console.log(
-        `[MCTS] Heuristic: Always using ${drawnCard.rank} peek action (has unknown cards)`
+        `[MCTS] Heuristic: Always using ${drawnCard.rank} action (powerful peek/information)`
       );
       return true;
     }
