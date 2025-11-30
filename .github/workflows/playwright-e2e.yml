@@ -1,0 +1,102 @@
+name: Playwright E2E Tests
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Vercel preview URL to test (optional)'
+        required: false
+        type: string
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for Vercel Preview Deployment
+        if: github.event_name == 'pull_request'
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
+        id: vercel-preview
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 10
+
+      - name: Run Playwright tests against Vercel Preview
+        if: github.event_name == 'pull_request' && steps.vercel-preview.outputs.url != ''
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.vercel-preview.outputs.url }}
+        run: npx playwright test
+
+      - name: Run Playwright tests against manual URL
+        if: github.event_name == 'workflow_dispatch' && inputs.preview_url != ''
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ inputs.preview_url }}
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+      - name: Comment PR with test results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsPath = 'test-results';
+
+            let message = '## 🎭 Playwright E2E Test Results\n\n';
+            message += `**Preview URL**: ${process.env.PLAYWRIGHT_TEST_BASE_URL || 'Local dev server'}\n\n`;
+
+            // Check if tests passed
+            if (fs.existsSync(resultsPath)) {
+              const files = fs.readdirSync(resultsPath);
+              const hasFailures = files.some(f => f.includes('failed'));
+
+              if (hasFailures) {
+                message += '❌ Some tests failed. Check the [test report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n';
+              } else {
+                message += '✅ All tests passed!\n';
+              }
+            }
+
+            message += '\n[View full report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
