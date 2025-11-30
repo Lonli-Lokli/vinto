@@ -11,6 +11,7 @@ import {
   BotTurnDecision,
   BotDecisionContext,
   BotActionDecision,
+  OpponentModeler,
 } from '@vinto/bot';
 import { GameClient } from '../game-client';
 
@@ -59,7 +60,9 @@ const FINAL_ROUND_DELAY = 2_000; // slower delay for final round actions (coalit
  */
 export class BotAIAdapter {
   private botDecisionService: BotDecisionService;
+  private opponentModeler: OpponentModeler;
   private disposeReaction?: () => void;
+  private disposeOpponentTracking?: () => void;
   private botsProcessedRanks = new Map<string, Set<Rank>>(); // botId -> set of ranks processed
   private lastTossInPlayerIndex = -1;
   // Cache action plan when bot commits to take-discard with action card
@@ -88,8 +91,21 @@ export class BotAIAdapter {
       this.gameClient.state.botVersion
     );
 
+    // Initialize opponent modeler
+    this.opponentModeler = new OpponentModeler();
+
+    // Initialize opponent beliefs for all players
+    for (const player of this.gameClient.state.players) {
+      if (!player.isBot) {
+        this.opponentModeler.initializePlayer(player.id);
+      }
+    }
+
     // Setup reactive bot turn execution
     this.setupBotReaction();
+
+    // Setup opponent action tracking
+    this.setupOpponentTracking();
   }
 
   /**
@@ -210,11 +226,54 @@ export class BotAIAdapter {
   }
 
   /**
+   * Setup MobX reaction to track opponent actions for modeling
+   */
+  private setupOpponentTracking(): void {
+    this.disposeOpponentTracking = reaction(
+      // Watch for state changes that indicate opponent actions
+      () => ({
+        discardPile: this.gameClient.state.discardPile,
+        currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
+        subPhase: this.gameClient.state.subPhase,
+      }),
+      // Track actions when discard pile changes (indicates a card was played/discarded)
+      (snapshot, previousSnapshot) => {
+        if (!previousSnapshot) return;
+
+        // Check if a new card was added to discard pile
+        if (snapshot.discardPile.length > previousSnapshot.discardPile.length) {
+          const newCard =
+            snapshot.discardPile[snapshot.discardPile.length - 1];
+          const previousPlayerIndex = previousSnapshot.currentPlayerIndex;
+          const previousPlayer =
+            this.gameClient.state.players[previousPlayerIndex];
+
+          // Only track non-bot actions
+          if (previousPlayer && !previousPlayer.isBot) {
+            // Check if this was a swap-from-discard action
+            // (player took from discard and then discarded a different card)
+            if (previousSnapshot.subPhase === 'choosing') {
+              // Player just discarded after choosing - this was a swap
+              this.opponentModeler.handleObservedAction({
+                type: 'swap-from-discard',
+                playerId: previousPlayer.id,
+                card: newCard,
+                position: 0, // We don't know exact position yet - would need more context
+              });
+            }
+          }
+        }
+      }
+    );
+  }
+
+  /**
    * Cleanup reactions when adapter is destroyed
    */
   dispose(): void {
     this.isDisposed = true;
     this.disposeReaction?.();
+    this.disposeOpponentTracking?.();
   }
 
   /**
@@ -1125,6 +1184,8 @@ export class BotAIAdapter {
         state.phase === 'final' &&
         state.vintoCallerId !== botId &&
         state.vintoCallerId !== null,
+      // Opponent modeling for intelligent inferences
+      opponentModeler: this.opponentModeler,
     };
   }
 

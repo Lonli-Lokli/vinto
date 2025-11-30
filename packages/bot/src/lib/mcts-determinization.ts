@@ -164,18 +164,44 @@ function buildCumulativeProbabilities(availableRanks: Rank[]): number[] {
 
 /**
  * Sample a card from available ranks pool using weighted probability
+ * Optionally constrained by beliefs about the card
  */
 export function sampleCardFromPool(
   availableRanks: Rank[],
   playerId: string,
-  position: number
+  position: number,
+  minValue?: number,
+  maxValue?: number
 ): Card {
   if (availableRanks.length === 0) {
     throw new Error('Cannot sample from empty card pool');
   }
 
+  // Apply belief constraints if provided
+  let constrainedRanks = availableRanks;
+  if (minValue !== undefined || maxValue !== undefined) {
+    constrainedRanks = availableRanks.filter((rank) => {
+      const value = getCardValue(rank);
+      if (minValue !== undefined && value < minValue) return false;
+      if (maxValue !== undefined && value > maxValue) return false;
+      return true;
+    });
+
+    // Fallback to unconstrained if no cards match
+    if (constrainedRanks.length === 0) {
+      console.log(
+        `[Determinize] No cards match constraint (minValue=${minValue}, maxValue=${maxValue}), falling back to full pool`
+      );
+      constrainedRanks = availableRanks;
+    } else {
+      console.log(
+        `[Determinize] Using belief constraint for ${playerId}[${position}]: minValue=${minValue}, maxValue=${maxValue} (${constrainedRanks.length}/${availableRanks.length} cards)`
+      );
+    }
+  }
+
   // Build cumulative probability distribution
-  const cumulative = buildCumulativeProbabilities(availableRanks);
+  const cumulative = buildCumulativeProbabilities(constrainedRanks);
 
   // Sample using weighted probabilities
   const random = Math.random();
@@ -187,8 +213,13 @@ export function sampleCardFromPool(
     }
   }
 
-  const sampledRank = availableRanks[idx];
-  availableRanks.splice(idx, 1);
+  const sampledRank = constrainedRanks[idx];
+
+  // Remove from original pool
+  const originalIdx = availableRanks.indexOf(sampledRank);
+  if (originalIdx >= 0) {
+    availableRanks.splice(originalIdx, 1);
+  }
 
   return {
     id: `${playerId}-${position}-sampled`,
@@ -202,6 +233,8 @@ export function sampleCardFromPool(
 /**
  * Determinize hidden information by sampling
  * Creates a consistent possible world for simulation
+ *
+ * ENHANCED: Now uses OpponentModeler beliefs to intelligently constrain sampling
  */
 export function determinize(state: MCTSGameState): MCTSGameState {
   // Use fast-copy for proper deep cloning
@@ -217,11 +250,26 @@ export function determinize(state: MCTSGameState): MCTSGameState {
       const memory = player.knownCards.get(pos);
 
       if (!memory || memory.confidence < 0.5) {
-        // Unknown card - sample from pool
+        // Unknown card - sample from pool with belief constraints
         let sampledCard: Card;
 
         if (availableRanks.length > 0) {
-          sampledCard = sampleCardFromPool(availableRanks, player.id, pos);
+          // Check if we have beliefs about this card
+          const belief = state.opponentModeler?.getBelief(player.id, pos);
+
+          if (belief) {
+            // Use belief constraints for intelligent sampling
+            sampledCard = sampleCardFromPool(
+              availableRanks,
+              player.id,
+              pos,
+              belief.minValue,
+              belief.maxValue
+            );
+          } else {
+            // No beliefs - use standard weighted sampling
+            sampledCard = sampleCardFromPool(availableRanks, player.id, pos);
+          }
         } else {
           // Fallback: use bot memory distribution
           const sampledRank =

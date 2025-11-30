@@ -1,4 +1,5 @@
 import { Card, GameState, Pile, PlayerState, Rank } from '@vinto/shapes';
+import { OpponentModeler } from './opponent-modeler';
 
 export interface BotDecisionContext {
   botId: string;
@@ -23,6 +24,8 @@ export interface BotDecisionContext {
   // Coalition context (for final round)
   coalitionLeaderId?: string | null; // ID of the coalition leader (if in final round)
   isCoalitionMember?: boolean; // True if bot is part of coalition against Vinto caller
+  // Opponent modeling - inferred beliefs about opponent hands
+  opponentModeler?: OpponentModeler; // Optional service for tracking opponent beliefs
 }
 
 export interface BotActionTarget {

@@ -1,6 +1,7 @@
 // services/mcts-types.ts
 import { Card, Pile, Rank } from '@vinto/shapes';
 import { BotMemory } from './bot-memory';
+import { OpponentModeler } from './opponent-modeler';
 
 /**
  * Type of move in the game
@@ -81,6 +82,9 @@ export interface MCTSGameState {
   // Coalition context (for final round)
   vintoCallerId: string | null; // Player who called Vinto
   coalitionLeaderId: string | null; // Coalition leader (if selected)
+
+  // Opponent modeling (for intelligent card sampling)
+  opponentModeler?: OpponentModeler; // Optional service for tracking opponent beliefs
 
   // For evaluation
   isTerminal: boolean;
