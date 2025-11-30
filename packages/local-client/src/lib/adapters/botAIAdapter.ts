@@ -11,6 +11,7 @@ import {
   BotTurnDecision,
   BotDecisionContext,
   BotActionDecision,
+  OpponentModeler,
 } from '@vinto/bot';
 import { GameClient } from '../game-client';
 
@@ -59,7 +60,9 @@ const FINAL_ROUND_DELAY = 2_000; // slower delay for final round actions (coalit
  */
 export class BotAIAdapter {
   private botDecisionService: BotDecisionService;
+  private opponentModeler: OpponentModeler;
   private disposeReaction?: () => void;
+  private disposeOpponentTracking?: () => void;
   private botsProcessedRanks = new Map<string, Set<Rank>>(); // botId -> set of ranks processed
   private lastTossInPlayerIndex = -1;
   // Cache action plan when bot commits to take-discard with action card
@@ -88,8 +91,21 @@ export class BotAIAdapter {
       this.gameClient.state.botVersion
     );
 
+    // Initialize opponent modeler
+    this.opponentModeler = new OpponentModeler();
+
+    // Initialize opponent beliefs for all players
+    for (const player of this.gameClient.state.players) {
+      if (!player.isBot) {
+        this.opponentModeler.initializePlayer(player.id);
+      }
+    }
+
     // Setup reactive bot turn execution
     this.setupBotReaction();
+
+    // Setup opponent action tracking
+    this.setupOpponentTracking();
   }
 
   /**
@@ -157,6 +173,11 @@ export class BotAIAdapter {
     const state = this.gameClient.state;
     const isBot = this.gameClient.currentPlayer.isBot;
 
+    // CRITICAL: Reset opponent modeler when starting a new round
+    if (state.phase === 'setup') {
+      this.opponentModeler.reset();
+    }
+
     // CRITICAL: Don't execute bot turns when game is over
     if (state.phase === 'scoring' || state.phase === 'setup') {
       return;
@@ -210,11 +231,201 @@ export class BotAIAdapter {
   }
 
   /**
+   * Setup MobX reaction to track opponent actions for modeling
+   *
+   * ENHANCED: Now tracks additional action types and captures positions where possible
+   * OPTIMIZED: Uses structural comparison to avoid unnecessary re-executions
+   */
+  private setupOpponentTracking(): void {
+    // Track the last swap position to correlate with discard
+    let lastSwapPosition: number | undefined = undefined;
+    let lastSwapPlayerId: string | undefined = undefined;
+
+    this.disposeOpponentTracking = reaction(
+      // Watch for state changes that indicate opponent actions
+      () => ({
+        discardPileLength: this.gameClient.state.discardPile.length,
+        discardTopId: this.gameClient.state.discardPile.at(-1)?.id,
+        currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
+        subPhase: this.gameClient.state.subPhase,
+        pendingActionId: this.gameClient.state.pendingAction?.card?.id,
+        pendingActionTargetCount: this.gameClient.state.pendingAction?.targets?.length || 0,
+        // Track card IDs instead of full card objects for efficient comparison
+        players: this.gameClient.state.players.map(p => ({
+          id: p.id,
+          cardIds: p.cards.map(c => c.id),
+        })),
+      }),
+      // Track actions when state changes
+      (snapshot, previousSnapshot) => {
+        if (!previousSnapshot) return;
+
+        const currentState = this.gameClient.state;
+
+        // Check if a new card was added to discard pile
+        if (snapshot.discardPileLength > previousSnapshot.discardPileLength) {
+          const newCard = currentState.discardPile.at(-1);
+          if (!newCard) return;
+
+          const previousPlayerIndex = previousSnapshot.currentPlayerIndex;
+          const previousPlayer =
+            currentState.players[previousPlayerIndex];
+
+          // Only track non-bot actions
+          if (previousPlayer && !previousPlayer.isBot) {
+            // Check if this was a swap-from-discard action
+            // (player took from discard and then discarded a different card)
+            if (previousSnapshot.subPhase === 'choosing') {
+              // Player just discarded after choosing - this was a swap
+              // Use tracked position if available
+              const position = (lastSwapPlayerId === previousPlayer.id) ? lastSwapPosition : undefined;
+
+              this.opponentModeler.handleObservedAction({
+                type: 'swap-from-discard',
+                playerId: previousPlayer.id,
+                card: newCard,
+                position,
+              });
+
+              // Clear tracked position after use
+              lastSwapPosition = undefined;
+              lastSwapPlayerId = undefined;
+            } else if (previousSnapshot.subPhase === 'idle' || previousSnapshot.subPhase === 'ai_thinking') {
+              // Player drew and immediately discarded
+              this.opponentModeler.handleObservedAction({
+                type: 'discard-drawn',
+                playerId: previousPlayer.id,
+                card: newCard,
+              });
+            } else if (newCard.played) {
+              // Card was played as an action
+              this.opponentModeler.handleObservedAction({
+                type: 'use-action',
+                playerId: previousPlayer.id,
+                card: newCard,
+              });
+            }
+          }
+        }
+
+        // Track swap actions by detecting card changes at specific positions
+        // This happens when subPhase transitions from choosing to idle (after swap)
+        if (previousSnapshot.subPhase === 'choosing' &&
+            (snapshot.subPhase === 'idle' || snapshot.subPhase === 'toss_queue_active')) {
+          const currentPlayerIndex = previousSnapshot.currentPlayerIndex;
+          const player = currentState.players[currentPlayerIndex];
+
+          if (player && !player.isBot) {
+            const previousPlayerState = previousSnapshot.players[currentPlayerIndex];
+
+            // Find which position changed (indicating a swap)
+            for (let pos = 0; pos < player.cards.length; pos++) {
+              const currentCardId = player.cards[pos].id;
+              const previousCardId = previousPlayerState.cardIds[pos];
+
+              if (currentCardId !== previousCardId) {
+                // This position was swapped - save it for correlation with discard
+                lastSwapPosition = pos;
+                lastSwapPlayerId = player.id;
+                break;
+              }
+            }
+          }
+        }
+
+        // Track peek actions - when pendingAction includes targets
+        const currentPendingAction = currentState.pendingAction;
+        if (snapshot.pendingActionTargetCount > previousSnapshot.pendingActionTargetCount && currentPendingAction) {
+          // Check if action card is a peek action (7, 8, 9, 10, Q)
+          if (currentPendingAction.card && ['7', '8', '9', '10', 'Q'].includes(currentPendingAction.card.rank)) {
+            // Target count increased - peek happened
+            if (currentPendingAction.targets && currentPendingAction.targets.length > 0) {
+              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
+              if (player && !player.isBot) {
+                // Determine if they peeked their own card or opponent's
+                const latestTarget = currentPendingAction.targets[currentPendingAction.targets.length - 1];
+                if (latestTarget.playerId === currentPendingAction.playerId) {
+                  this.opponentModeler.handleObservedAction({
+                    type: 'peek-own',
+                    playerId: currentPendingAction.playerId,
+                    card: currentPendingAction.card,
+                  });
+                }
+              }
+            }
+          }
+
+          // Track Jack/Queen swap actions (swap-own)
+          if (currentPendingAction.card && ['J', 'Q'].includes(currentPendingAction.card.rank)) {
+            // Check if swap was executed (targets selected and shouldSwap confirmed)
+            if (currentPendingAction.targets && currentPendingAction.targets.length === 2) {
+              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
+              if (player && !player.isBot) {
+                // Check if both targets are the player's own cards
+                const target1 = currentPendingAction.targets[0];
+                const target2 = currentPendingAction.targets[1];
+
+                if (target1.playerId === currentPendingAction.playerId && target2.playerId === currentPendingAction.playerId) {
+                  this.opponentModeler.handleObservedAction({
+                    type: 'swap-own',
+                    playerId: currentPendingAction.playerId,
+                    card: currentPendingAction.card,
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // Track toss-in actions - when cards are added to discard during toss-in phase
+        if (snapshot.subPhase === 'toss_queue_active' && previousSnapshot.subPhase === 'toss_queue_active') {
+          // Check if discard pile grew during toss-in (indicates a toss-in happened)
+          if (snapshot.discardPileLength > previousSnapshot.discardPileLength) {
+            const tossedCard = currentState.discardPile.at(-1);
+            if (tossedCard && tossedCard.played) {
+              // Find which player tossed in by checking who has fewer cards
+              for (let i = 0; i < currentState.players.length; i++) {
+                const player = currentState.players[i];
+                const previousPlayerCardIds = previousSnapshot.players[i].cardIds;
+
+                if (player.cards.length < previousPlayerCardIds.length && !player.isBot) {
+                  // This player tossed in - find which position
+                  // (we can infer position by comparing card IDs)
+                  for (let pos = 0; pos < previousPlayerCardIds.length; pos++) {
+                    const previousCardId = previousPlayerCardIds[pos];
+                    const matchingCard = player.cards.find(c => c.id === previousCardId);
+
+                    if (!matchingCard) {
+                      // This position was tossed in (card at this position is no longer in hand)
+                      this.opponentModeler.handleObservedAction({
+                        type: 'toss-in',
+                        playerId: player.id,
+                        card: tossedCard,
+                        position: pos,
+                      });
+
+                      // CRITICAL: Shift beliefs after toss-in to prevent stale position mappings
+                      this.opponentModeler.shiftCardBeliefs(player.id, pos);
+                      break;
+                    }
+                  }
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    );
+  }
+
+  /**
    * Cleanup reactions when adapter is destroyed
    */
   dispose(): void {
     this.isDisposed = true;
     this.disposeReaction?.();
+    this.disposeOpponentTracking?.();
   }
 
   /**
@@ -1184,6 +1395,8 @@ export class BotAIAdapter {
         state.phase === 'final' &&
         state.vintoCallerId !== botId &&
         state.vintoCallerId !== null,
+      // Opponent modeling for intelligent inferences
+      opponentModeler: this.opponentModeler,
     };
   }
 
