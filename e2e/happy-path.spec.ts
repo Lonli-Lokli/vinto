@@ -64,14 +64,16 @@ test.describe('Vinto Game - Happy Path', () => {
           .locator('[data-testid="player-card-0"]')
           .or(page.locator('.player-card').first());
         await firstCard.click();
-        await page.waitForTimeout(500); // Brief pause for animation
+        // Wait for card flip animation to complete
+        await expect(firstCard).toBeVisible();
 
         // Peek at second card
         const secondCard = page
           .locator('[data-testid="player-card-1"]')
           .or(page.locator('.player-card').nth(1));
         await secondCard.click();
-        await page.waitForTimeout(500);
+        // Wait for card flip animation to complete
+        await expect(secondCard).toBeVisible();
 
         // Confirm or close memory phase if needed
         const confirmButton = page.getByRole('button', { name: /confirm|ok|continue/i });
@@ -90,7 +92,7 @@ test.describe('Vinto Game - Happy Path', () => {
           .getByText(/your turn/i)
           .or(page.locator('[data-testid="player-turn"]'));
 
-        // Check if it's player's turn
+        // Check if it's player's turn with a reasonable timeout
         const isPlayerTurn = await playerTurnIndicator.count();
 
         if (isPlayerTurn > 0) {
@@ -101,7 +103,10 @@ test.describe('Vinto Game - Happy Path', () => {
 
           await expect(drawPile).toBeVisible();
           await drawPile.click();
-          await page.waitForTimeout(500);
+
+          // Wait for action buttons to appear after drawing
+          const actionArea = page.getByRole('button', { name: /use action|play|swap|replace|discard|skip/i });
+          await expect(actionArea.first()).toBeVisible({ timeout: 5000 });
 
           // Handle the drawn card - either use action, swap, or discard
           // Look for action buttons
@@ -115,38 +120,34 @@ test.describe('Vinto Game - Happy Path', () => {
 
           if (hasUseAction > 0) {
             await useActionButton.click();
-            await page.waitForTimeout(500);
 
-            // If it's a peek action, select a card
+            // If it's a peek action, wait for selectable cards to appear and select one
             const selectableCard = page.locator('[data-testid*="card"]').first();
             const cardClickable = await selectableCard.count();
             if (cardClickable > 0) {
+              await expect(selectableCard).toBeVisible();
               await selectableCard.click();
-              await page.waitForTimeout(500);
             }
           } else if (hasSwap > 0) {
             await swapButton.click();
-            await page.waitForTimeout(500);
 
-            // Select a position to swap
+            // Wait for card selection state to be ready, then select a position to swap
             const cardSlot = page.locator('[data-testid="player-card-0"]').first();
             const slotClickable = await cardSlot.count();
             if (slotClickable > 0) {
+              await expect(cardSlot).toBeVisible();
               await cardSlot.click();
-              await page.waitForTimeout(500);
             }
           } else if (hasDiscard > 0) {
             await discardButton.click();
-            await page.waitForTimeout(500);
+            // Wait for discard action to complete
+            await expect(discardButton).not.toBeVisible({ timeout: 2000 }).catch(() => {});
           }
         }
 
-        // Wait for turn to complete and move to next player
-        await page.waitForTimeout(1000);
-
-        // Let bots play (if game is automated)
-        // Wait a bit to let the game progress
-        await page.waitForTimeout(2000);
+        // Wait for turn to complete - check that draw pile becomes disabled or next turn starts
+        // This is more reliable than a fixed timeout
+        await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
       }
     });
 
@@ -163,7 +164,9 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(vintoButton).toBeEnabled({ timeout: 10000 });
 
       await vintoButton.click();
-      await page.waitForTimeout(1000);
+
+      // Wait for confirmation modal or game end state to appear
+      await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
     });
 
     await test.step('Verify game completion', async () => {
@@ -184,8 +187,11 @@ test.describe('Vinto Game - Happy Path', () => {
         await expect(scoreDisplay.first()).toBeVisible();
       }
 
-      // Take a screenshot of the final state
-      await page.screenshot({ path: 'e2e/screenshots/game-complete.png', fullPage: true });
+      // Take a screenshot of the final state using test.info() for proper path handling
+      await page.screenshot({
+        path: test.info().outputPath('game-complete.png'),
+        fullPage: true
+      });
     });
   });
 

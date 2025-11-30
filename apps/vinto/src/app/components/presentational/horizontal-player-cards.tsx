@@ -63,6 +63,7 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
       <div
         className={`flex flex-wrap gap-1 justify-center max-w-full ${dimmedClasses}`}
         data-player-cards={player.id}
+        data-testid={player.isHuman ? "player-hand" : `opponent-hand-${player.id}`}
       >
         {player.cards.map((card, index) => {
           const cardIsSelectable = isCardSelectable({
@@ -135,6 +136,7 @@ export const HorizontalPlayerCards: React.FC<HorizontalPlayerCardsProps> = obser
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
+              data-testid={player.isHuman ? `player-card-${index}` : `opponent-card-${player.id}-${index}`}
             />
           );
         })}

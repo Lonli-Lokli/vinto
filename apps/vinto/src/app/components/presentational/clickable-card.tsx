@@ -17,9 +17,12 @@ export function ClickableCard({
     }
   };
 
+  // Extract data-testid from cardProps if present
+  const { 'data-testid': dataTestId, ...restCardProps } = cardProps as any;
+
   return (
-    <div onClick={handleClick}>
-      <Card selectionState={selectionState} {...cardProps} />
+    <div onClick={handleClick} data-testid={dataTestId}>
+      <Card selectionState={selectionState} {...restCardProps} />
     </div>
   );
 }
