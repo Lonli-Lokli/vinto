@@ -3,8 +3,14 @@
 import { Card, PlayerState, Rank, getCardValue } from '@vinto/shapes';
 
 /**
- * Check if we should always take 7 or 8 from discard
- * These peek actions are STRICTLY better than drawing when we have unknown cards
+ * Check if we should always take action cards from discard
+ *
+ * RULE: Can only take from discard if top card is unused action card (7-K, A)
+ * and MUST use the action immediately (cannot swap into hand)
+ *
+ * This heuristic handles cards where using the action is always beneficial:
+ * - 7, 8: Peek one of your own cards (if we have unknown cards)
+ * - Q: Peek TWO cards from different players + optional swap (very powerful!)
  */
 export function shouldAlwaysTakeDiscardPeekCard(
   discardTop: Card | null,
@@ -15,16 +21,28 @@ export function shouldAlwaysTakeDiscardPeekCard(
   const { rank: discardRank, played } = discardTop;
   const hasUnknownCards = countUnknownCards(botPlayer) > 0;
 
-  return (
-    (discardRank === '7' || discardRank === '8' || discardRank === 'Q') &&
-    hasUnknownCards &&
-    !played
-  );
+  // Only take if card is an unused action card
+  if (played) return false;
+
+  // Always take Queen - it peeks TWO cards + optional swap (extremely valuable)
+  if (discardRank === 'Q') {
+    return true;
+  }
+
+  // Always take 7/8 if we have unknown cards (peek our own)
+  return (discardRank === '7' || discardRank === '8') && hasUnknownCards;
 }
 
 /**
- * Check if we should always use 7 or 8 peek action
- * These are STRICTLY better than swapping when we have unknown cards
+ * Check if we should always use peek action when drawn from deck
+ *
+ * When drawing from deck, player can choose to:
+ * 1. Use action immediately (discard card, apply effect)
+ * 2. Swap into hand (and optionally guess the swapped-out card's rank)
+ *
+ * This heuristic identifies when using the action is strictly better than swapping:
+ * - 7, 8: Low value (7-8 points), peek action is worth more than card value if we have unknowns
+ * - Q: Value 10, but action is VERY powerful (peek 2 + optional swap) - always worth using
  */
 export function shouldAlwaysUsePeekAction(
   drawnCard: Card,
@@ -33,12 +51,15 @@ export function shouldAlwaysUsePeekAction(
   if (!drawnCard.actionText || drawnCard.played) return false;
 
   const hasUnknownCards = countUnknownCards(botPlayer) > 0;
-  return (
-    (drawnCard.rank === '7' ||
-      drawnCard.rank === '8' ||
-      drawnCard.rank === 'Q') &&
-    hasUnknownCards
-  );
+
+  // Always use Queen - it peeks TWO cards + optional swap (extremely valuable)
+  if (drawnCard.rank === 'Q') {
+    return true;
+  }
+
+  // Always use 7/8 if we have unknown cards (peek our own)
+  // Low card value (7-8) makes the peek action more valuable than swapping
+  return (drawnCard.rank === '7' || drawnCard.rank === '8') && hasUnknownCards;
 }
 
 /**
