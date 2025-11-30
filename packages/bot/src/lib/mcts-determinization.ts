@@ -189,14 +189,7 @@ export function sampleCardFromPool(
 
     // Fallback to unconstrained if no cards match
     if (constrainedRanks.length === 0) {
-      console.log(
-        `[Determinize] No cards match constraint (minValue=${minValue}, maxValue=${maxValue}), falling back to full pool`
-      );
       constrainedRanks = availableRanks;
-    } else {
-      console.log(
-        `[Determinize] Using belief constraint for ${playerId}[${position}]: minValue=${minValue}, maxValue=${maxValue} (${constrainedRanks.length}/${availableRanks.length} cards)`
-      );
     }
   }
 

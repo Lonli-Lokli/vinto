@@ -173,6 +173,11 @@ export class BotAIAdapter {
     const state = this.gameClient.state;
     const isBot = this.gameClient.currentPlayer.isBot;
 
+    // CRITICAL: Reset opponent modeler when starting a new round
+    if (state.phase === 'setup') {
+      this.opponentModeler.reset();
+    }
+
     // CRITICAL: Don't execute bot turns when game is over
     if (state.phase === 'scoring' || state.phase === 'setup') {
       return;
@@ -235,18 +240,24 @@ export class BotAIAdapter {
         discardPile: this.gameClient.state.discardPile,
         currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
         subPhase: this.gameClient.state.subPhase,
+        pendingAction: this.gameClient.state.pendingAction,
       }),
-      // Track actions when discard pile changes (indicates a card was played/discarded)
+      // Track actions when state changes
       (snapshot, previousSnapshot) => {
         if (!previousSnapshot) return;
 
+        const currentState = this.gameClient.state;
+
         // Check if a new card was added to discard pile
         if (snapshot.discardPile.length > previousSnapshot.discardPile.length) {
-          const newCard =
-            snapshot.discardPile[snapshot.discardPile.length - 1];
+          const newCard = snapshot.discardPile.at(
+            snapshot.discardPile.length - 1
+          );
+          if (!newCard) return;
+
           const previousPlayerIndex = previousSnapshot.currentPlayerIndex;
           const previousPlayer =
-            this.gameClient.state.players[previousPlayerIndex];
+            currentState.players[previousPlayerIndex];
 
           // Only track non-bot actions
           if (previousPlayer && !previousPlayer.isBot) {
@@ -258,8 +269,48 @@ export class BotAIAdapter {
                 type: 'swap-from-discard',
                 playerId: previousPlayer.id,
                 card: newCard,
-                position: 0, // We don't know exact position yet - would need more context
+                // We don't know exact position - would need to track swap action
+                position: undefined,
               });
+            } else if (previousSnapshot.subPhase === 'idle' || previousSnapshot.subPhase === 'ai_thinking') {
+              // Player drew and immediately discarded
+              this.opponentModeler.handleObservedAction({
+                type: 'discard-drawn',
+                playerId: previousPlayer.id,
+                card: newCard,
+              });
+            } else if (newCard.played) {
+              // Card was played as an action
+              this.opponentModeler.handleObservedAction({
+                type: 'use-action',
+                playerId: previousPlayer.id,
+                card: newCard,
+              });
+            }
+          }
+        }
+
+        // Track peek actions - when pendingAction includes targets
+        if (snapshot.pendingAction && previousSnapshot.pendingAction) {
+          const action = snapshot.pendingAction;
+          const previousAction = previousSnapshot.pendingAction;
+
+          // Check if action card is a peek action (7, 8, 9, 10, Q)
+          if (action.card && ['7', '8', '9', '10', 'Q'].includes(action.card.rank)) {
+            // Check if targets changed (peek happened)
+            if (action.targets && action.targets.length > previousAction.targets?.length!) {
+              const player = currentState.players.find(p => p.id === action.playerId);
+              if (player && !player.isBot) {
+                // Determine if they peeked their own card or opponent's
+                const latestTarget = action.targets[action.targets.length - 1];
+                if (latestTarget.playerId === action.playerId) {
+                  this.opponentModeler.handleObservedAction({
+                    type: 'peek-own',
+                    playerId: action.playerId,
+                    card: action.card,
+                  });
+                }
+              }
             }
           }
         }
