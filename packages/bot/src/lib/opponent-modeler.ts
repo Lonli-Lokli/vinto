@@ -197,7 +197,7 @@ export class OpponentModeler {
     }
 
     const playerBeliefs = this.beliefs.get(action.playerId)!;
-    const discardedValue = getCardValue(action.card.rank);
+    const _discardedValue = getCardValue(action.card.rank);
 
     // Infer that their hand cards are likely better than what they discarded
     // Update global estimate slightly downward
