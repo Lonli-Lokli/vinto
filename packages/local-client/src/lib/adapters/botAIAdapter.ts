@@ -1074,13 +1074,17 @@ export class BotAIAdapter {
       }
     }
 
-    // COALITION KNOWLEDGE SHARING: Leader gets full knowledge of all coalition members' cards
-    if (isCoalitionLeader) {
+    // COALITION KNOWLEDGE SHARING: ALL coalition members get full knowledge of each other's cards
+    // This enables coordinated decision-making across the entire coalition
+    const isInFinalRound = state.phase === 'final' && state.vintoCallerId;
+    const isCoalitionMember = isInFinalRound && botId !== state.vintoCallerId;
+
+    if (isCoalitionMember) {
       console.log(
-        `[Coalition] ${botId} is leader - aggregating coalition knowledge`
+        `[Coalition] ${botId} is coalition member - sharing coalition knowledge`
       );
 
-      // Share all coalition members' cards with the leader
+      // Share all coalition members' cards
       for (const player of state.players) {
         // Skip Vinto caller (they're the enemy)
         if (player.id === state.vintoCallerId) continue;
@@ -1099,7 +1103,7 @@ export class BotAIAdapter {
         if (coalitionMemberCards.size > 0) {
           opponentKnowledge.set(player.id, coalitionMemberCards);
           console.log(
-            `[Coalition] Leader ${botId} now knows all ${coalitionMemberCards.size} cards for coalition member ${player.id}`
+            `[Coalition] ${botId} now knows all ${coalitionMemberCards.size} cards for coalition member ${player.id}`
           );
         }
       }

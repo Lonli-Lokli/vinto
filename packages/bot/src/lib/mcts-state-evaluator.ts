@@ -27,11 +27,13 @@ export function evaluateState(
   }
 
   // Coalition mode: evaluate coalition's best chance
-  if (
-    state.vintoCallerId &&
-    state.coalitionLeaderId &&
-    botPlayerId !== state.vintoCallerId
-  ) {
+  // Use coalition evaluation if we're in coalition mode,
+  // regardless of which specific bot is being evaluated
+  const isInCoalitionMode = !!(state.vintoCallerId && state.coalitionLeaderId);
+  const isCoalitionMember = botPlayerId !== state.vintoCallerId;
+
+  if (isInCoalitionMode && isCoalitionMember) {
+    // Use coalition evaluation for ANY coalition member
     return evaluateCoalitionState(state, botPlayerId);
   }
 
