@@ -189,7 +189,8 @@ export class OpponentModeler {
   /**
    * Inference: Opponent drew card and immediately discarded it
    *
-   * This suggests they have better cards in their hand already
+   * This suggests they have better cards in their hand already.
+   * We reduce their estimated score more aggressively for high-value discards.
    */
   private handleDiscardDrawn(action: ObservedAction): void {
     if (!action.card) {
@@ -197,13 +198,18 @@ export class OpponentModeler {
     }
 
     const playerBeliefs = this.beliefs.get(action.playerId)!;
-    const _discardedValue = getCardValue(action.card.rank);
+    const discardedValue = getCardValue(action.card.rank);
 
     // Infer that their hand cards are likely better than what they discarded
-    // Update global estimate slightly downward
+    // Reduce estimate more for high-value discards (they must have good cards to discard a high value)
+    const reduction = Math.max(
+      READINESS_ADJUSTMENT.DISCARD_DRAWN_SCORE_REDUCTION,
+      Math.floor(discardedValue / 3)
+    );
+
     playerBeliefs.estimatedScore = Math.max(
       0,
-      playerBeliefs.estimatedScore - READINESS_ADJUSTMENT.DISCARD_DRAWN_SCORE_REDUCTION
+      playerBeliefs.estimatedScore - reduction
     );
   }
 
@@ -212,6 +218,11 @@ export class OpponentModeler {
    *
    * Using peek actions suggests they're gathering information (early game)
    * Using swap actions suggests they're optimizing (mid/late game)
+   *
+   * CRITICAL: Queen is treated differently based on context:
+   * - If used primarily for peeking → information gathering (penalty)
+   * - If used with swap → optimization (boost)
+   * We apply a moderate boost for Queen to reflect its dual nature
    */
   private handleUseAction(action: ObservedAction): void {
     if (!action.card) {
@@ -220,18 +231,22 @@ export class OpponentModeler {
 
     const playerBeliefs = this.beliefs.get(action.playerId)!;
 
-    // Peek actions (7, 8, 9, 10, Q) suggest information gathering
-    if (['7', '8', '9', '10', 'Q'].includes(action.card.rank)) {
-      // Player is learning about their hand - they're not ready for Vinto yet
+    // Handle each card type with mutually exclusive logic
+    if (['7', '8', '9', '10'].includes(action.card.rank)) {
+      // Pure peek actions - player is still learning
       playerBeliefs.vintoReadiness = Math.max(
         0,
         playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.PEEK_ACTION_PENALTY
       );
-    }
-
-    // Swap actions (J, Q) suggest hand optimization
-    if (['J', 'Q'].includes(action.card.rank)) {
-      // Player is actively improving - getting closer to Vinto
+    } else if (action.card.rank === 'Q') {
+      // Queen: peek + optional swap (moderate boost reflecting dual capability)
+      // Assumes most Queen usage includes swap for optimization
+      playerBeliefs.vintoReadiness = Math.min(
+        1,
+        playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.SWAP_ACTION_BOOST * 0.7
+      );
+    } else if (action.card.rank === 'J') {
+      // Jack: pure swap action - strong optimization signal
       playerBeliefs.vintoReadiness = Math.min(
         1,
         playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.SWAP_ACTION_BOOST
@@ -335,6 +350,42 @@ export class OpponentModeler {
     }
 
     return mostLikelyPlayer;
+  }
+
+  /**
+   * Remove belief about a specific card position
+   * Call this when a card is removed from a player's hand (e.g., toss-in)
+   * to prevent stale beliefs pointing to wrong cards
+   */
+  public removeCardBelief(playerId: string, position: number): void {
+    const beliefs = this.beliefs.get(playerId);
+    if (beliefs) {
+      beliefs.cardBeliefs.delete(position);
+    }
+  }
+
+  /**
+   * Shift card beliefs after a card is removed at a position
+   * When a card at position N is removed, all cards at positions > N shift down
+   */
+  public shiftCardBeliefs(playerId: string, removedPosition: number): void {
+    const beliefs = this.beliefs.get(playerId);
+    if (!beliefs) return;
+
+    const newBeliefs = new Map<number, CardBelief>();
+
+    // Keep beliefs before removed position unchanged
+    for (const [pos, belief] of beliefs.cardBeliefs.entries()) {
+      if (pos < removedPosition) {
+        newBeliefs.set(pos, belief);
+      } else if (pos > removedPosition) {
+        // Shift down by 1
+        newBeliefs.set(pos - 1, belief);
+      }
+      // Skip belief at removedPosition (it's gone)
+    }
+
+    beliefs.cardBeliefs = newBeliefs;
   }
 
   /**

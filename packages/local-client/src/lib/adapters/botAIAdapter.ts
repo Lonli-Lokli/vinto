@@ -234,6 +234,7 @@ export class BotAIAdapter {
    * Setup MobX reaction to track opponent actions for modeling
    *
    * ENHANCED: Now tracks additional action types and captures positions where possible
+   * OPTIMIZED: Uses structural comparison to avoid unnecessary re-executions
    */
   private setupOpponentTracking(): void {
     // Track the last swap position to correlate with discard
@@ -243,13 +244,16 @@ export class BotAIAdapter {
     this.disposeOpponentTracking = reaction(
       // Watch for state changes that indicate opponent actions
       () => ({
-        discardPile: this.gameClient.state.discardPile,
+        discardPileLength: this.gameClient.state.discardPile.length,
+        discardTopId: this.gameClient.state.discardPile.at(-1)?.id,
         currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
         subPhase: this.gameClient.state.subPhase,
-        pendingAction: this.gameClient.state.pendingAction,
+        pendingActionId: this.gameClient.state.pendingAction?.card?.id,
+        pendingActionTargetCount: this.gameClient.state.pendingAction?.targets?.length || 0,
+        // Track card IDs instead of full card objects for efficient comparison
         players: this.gameClient.state.players.map(p => ({
           id: p.id,
-          cards: p.cards,
+          cardIds: p.cards.map(c => c.id),
         })),
       }),
       // Track actions when state changes
@@ -259,10 +263,8 @@ export class BotAIAdapter {
         const currentState = this.gameClient.state;
 
         // Check if a new card was added to discard pile
-        if (snapshot.discardPile.length > previousSnapshot.discardPile.length) {
-          const newCard = snapshot.discardPile.at(
-            snapshot.discardPile.length - 1
-          );
+        if (snapshot.discardPileLength > previousSnapshot.discardPileLength) {
+          const newCard = currentState.discardPile.at(-1);
           if (!newCard) return;
 
           const previousPlayerIndex = previousSnapshot.currentPlayerIndex;
@@ -318,10 +320,10 @@ export class BotAIAdapter {
 
             // Find which position changed (indicating a swap)
             for (let pos = 0; pos < player.cards.length; pos++) {
-              const currentCard = player.cards[pos];
-              const previousCard = previousPlayerState.cards[pos];
+              const currentCardId = player.cards[pos].id;
+              const previousCardId = previousPlayerState.cardIds[pos];
 
-              if (currentCard.id !== previousCard.id) {
+              if (currentCardId !== previousCardId) {
                 // This position was swapped - save it for correlation with discard
                 lastSwapPosition = pos;
                 lastSwapPlayerId = player.id;
@@ -332,23 +334,21 @@ export class BotAIAdapter {
         }
 
         // Track peek actions - when pendingAction includes targets
-        if (snapshot.pendingAction && previousSnapshot.pendingAction) {
-          const action = snapshot.pendingAction;
-          const previousAction = previousSnapshot.pendingAction;
-
+        const currentPendingAction = currentState.pendingAction;
+        if (snapshot.pendingActionTargetCount > previousSnapshot.pendingActionTargetCount && currentPendingAction) {
           // Check if action card is a peek action (7, 8, 9, 10, Q)
-          if (action.card && ['7', '8', '9', '10', 'Q'].includes(action.card.rank)) {
-            // Check if targets changed (peek happened)
-            if (action.targets && action.targets.length > previousAction.targets?.length!) {
-              const player = currentState.players.find(p => p.id === action.playerId);
+          if (currentPendingAction.card && ['7', '8', '9', '10', 'Q'].includes(currentPendingAction.card.rank)) {
+            // Target count increased - peek happened
+            if (currentPendingAction.targets && currentPendingAction.targets.length > 0) {
+              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
               if (player && !player.isBot) {
                 // Determine if they peeked their own card or opponent's
-                const latestTarget = action.targets[action.targets.length - 1];
-                if (latestTarget.playerId === action.playerId) {
+                const latestTarget = currentPendingAction.targets[currentPendingAction.targets.length - 1];
+                if (latestTarget.playerId === currentPendingAction.playerId) {
                   this.opponentModeler.handleObservedAction({
                     type: 'peek-own',
-                    playerId: action.playerId,
-                    card: action.card,
+                    playerId: currentPendingAction.playerId,
+                    card: currentPendingAction.card,
                   });
                 }
               }
@@ -356,20 +356,20 @@ export class BotAIAdapter {
           }
 
           // Track Jack/Queen swap actions (swap-own)
-          if (action.card && ['J', 'Q'].includes(action.card.rank)) {
+          if (currentPendingAction.card && ['J', 'Q'].includes(currentPendingAction.card.rank)) {
             // Check if swap was executed (targets selected and shouldSwap confirmed)
-            if (action.targets && action.targets.length === 2) {
-              const player = currentState.players.find(p => p.id === action.playerId);
+            if (currentPendingAction.targets && currentPendingAction.targets.length === 2) {
+              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
               if (player && !player.isBot) {
                 // Check if both targets are the player's own cards
-                const target1 = action.targets[0];
-                const target2 = action.targets[1];
+                const target1 = currentPendingAction.targets[0];
+                const target2 = currentPendingAction.targets[1];
 
-                if (target1.playerId === action.playerId && target2.playerId === action.playerId) {
+                if (target1.playerId === currentPendingAction.playerId && target2.playerId === currentPendingAction.playerId) {
                   this.opponentModeler.handleObservedAction({
                     type: 'swap-own',
-                    playerId: action.playerId,
-                    card: action.card,
+                    playerId: currentPendingAction.playerId,
+                    card: currentPendingAction.card,
                   });
                 }
               }
@@ -380,29 +380,32 @@ export class BotAIAdapter {
         // Track toss-in actions - when cards are added to discard during toss-in phase
         if (snapshot.subPhase === 'toss_queue_active' && previousSnapshot.subPhase === 'toss_queue_active') {
           // Check if discard pile grew during toss-in (indicates a toss-in happened)
-          if (snapshot.discardPile.length > previousSnapshot.discardPile.length) {
-            const tossedCard = snapshot.discardPile.at(snapshot.discardPile.length - 1);
+          if (snapshot.discardPileLength > previousSnapshot.discardPileLength) {
+            const tossedCard = currentState.discardPile.at(-1);
             if (tossedCard && tossedCard.played) {
               // Find which player tossed in by checking who has fewer cards
               for (let i = 0; i < currentState.players.length; i++) {
                 const player = currentState.players[i];
-                const previousPlayer = previousSnapshot.players[i];
+                const previousPlayerCardIds = previousSnapshot.players[i].cardIds;
 
-                if (player.cards.length < previousPlayer.cards.length && !player.isBot) {
+                if (player.cards.length < previousPlayerCardIds.length && !player.isBot) {
                   // This player tossed in - find which position
-                  // (we can infer position by comparing card arrays)
-                  for (let pos = 0; pos < previousPlayer.cards.length; pos++) {
-                    const previousCard = previousPlayer.cards[pos];
-                    const matchingCard = player.cards.find(c => c.id === previousCard.id);
+                  // (we can infer position by comparing card IDs)
+                  for (let pos = 0; pos < previousPlayerCardIds.length; pos++) {
+                    const previousCardId = previousPlayerCardIds[pos];
+                    const matchingCard = player.cards.find(c => c.id === previousCardId);
 
-                    if (!matchingCard && previousCard.rank === tossedCard.rank) {
-                      // This position was tossed in
+                    if (!matchingCard) {
+                      // This position was tossed in (card at this position is no longer in hand)
                       this.opponentModeler.handleObservedAction({
                         type: 'toss-in',
                         playerId: player.id,
                         card: tossedCard,
                         position: pos,
                       });
+
+                      // CRITICAL: Shift beliefs after toss-in to prevent stale position mappings
+                      this.opponentModeler.shiftCardBeliefs(player.id, pos);
                       break;
                     }
                   }
