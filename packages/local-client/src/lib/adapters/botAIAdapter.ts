@@ -1074,33 +1074,92 @@ export class BotAIAdapter {
       }
     }
 
-    // COALITION KNOWLEDGE SHARING: Leader gets full knowledge of all coalition members' cards
-    if (isCoalitionLeader) {
+    // COALITION KNOWLEDGE SHARING: Coalition members share their known cards with each other
+    // This enables coordinated decision-making across the entire coalition
+    // IMPORTANT: Only share cards that coalition members have actually learned about through game actions
+    //
+    // Bidirectional sharing includes:
+    // 1. Each coalition member's own known cards (knownCardPositions)
+    // 2. Each coalition member's opponentKnowledge about other players
+    const isInFinalRound = state.phase === 'final' && state.vintoCallerId;
+    const isCoalitionMember = isInFinalRound && botId !== state.vintoCallerId;
+
+    if (isCoalitionMember) {
       console.log(
-        `[Coalition] ${botId} is leader - aggregating coalition knowledge`
+        `[Coalition] ${botId} is coalition member - sharing coalition knowledge`
       );
 
-      // Share all coalition members' cards with the leader
-      for (const player of state.players) {
+      // Share knowledge from all coalition members
+      for (const coalitionPlayer of state.players) {
         // Skip Vinto caller (they're the enemy)
-        if (player.id === state.vintoCallerId) continue;
+        if (coalitionPlayer.id === state.vintoCallerId) continue;
 
         // Skip self (already have own cards)
-        if (player.id === botId) continue;
+        if (coalitionPlayer.id === botId) continue;
 
-        // This is a coalition member - share their full hand
-        const coalitionMemberCards = new Map<number, Card>();
+        // PART 1: Share coalition member's own known cards
+        // If Bot1 knows their own cards at positions [0, 2], Bot2 should know Bot1's cards
+        if (coalitionPlayer.knownCardPositions.length > 0) {
+          const memberKnownCards = new Map<number, Card>();
 
-        for (let pos = 0; pos < player.cards.length; pos++) {
-          const card = player.cards[pos];
-          coalitionMemberCards.set(pos, card);
+          for (const position of coalitionPlayer.knownCardPositions) {
+            const card = coalitionPlayer.cards[position];
+            if (card) {
+              memberKnownCards.set(position, card);
+            }
+          }
+
+          if (memberKnownCards.size > 0) {
+            // Merge into opponentKnowledge for this coalition member
+            const existingKnowledge = opponentKnowledge.get(coalitionPlayer.id);
+            if (existingKnowledge) {
+              for (const [pos, card] of memberKnownCards.entries()) {
+                existingKnowledge.set(pos, card);
+              }
+            } else {
+              opponentKnowledge.set(coalitionPlayer.id, memberKnownCards);
+            }
+
+            console.log(
+              `[Coalition] ${botId} learned ${memberKnownCards.size} own cards from coalition member ${coalitionPlayer.id}`
+            );
+          }
         }
 
-        if (coalitionMemberCards.size > 0) {
-          opponentKnowledge.set(player.id, coalitionMemberCards);
-          console.log(
-            `[Coalition] Leader ${botId} now knows all ${coalitionMemberCards.size} cards for coalition member ${player.id}`
-          );
+        // PART 2: Share coalition member's opponentKnowledge
+        // If Bot1 knows 2 cards from Bot2, Bot3 should also receive this knowledge
+        if (coalitionPlayer.opponentKnowledge) {
+          for (const [opponentId, serializedKnowledge] of Object.entries(
+            coalitionPlayer.opponentKnowledge
+          )) {
+            // Convert the coalition member's known cards to Map format
+            const knownCardsMap = new Map<number, Card>();
+
+            for (const [positionStr, card] of Object.entries(
+              serializedKnowledge.knownCards
+            )) {
+              const position = parseInt(positionStr, 10);
+              knownCardsMap.set(position, card);
+            }
+
+            if (knownCardsMap.size > 0) {
+              // Merge this knowledge into our opponentKnowledge
+              // If we already have knowledge about this opponent, merge it
+              const existingKnowledge = opponentKnowledge.get(opponentId);
+              if (existingKnowledge) {
+                // Merge the maps
+                for (const [pos, card] of knownCardsMap.entries()) {
+                  existingKnowledge.set(pos, card);
+                }
+              } else {
+                opponentKnowledge.set(opponentId, knownCardsMap);
+              }
+
+              console.log(
+                `[Coalition] ${botId} learned ${knownCardsMap.size} cards about ${opponentId} from coalition member ${coalitionPlayer.id}`
+              );
+            }
+          }
         }
       }
     }
