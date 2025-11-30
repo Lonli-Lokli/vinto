@@ -232,8 +232,14 @@ export class BotAIAdapter {
 
   /**
    * Setup MobX reaction to track opponent actions for modeling
+   *
+   * ENHANCED: Now tracks additional action types and captures positions where possible
    */
   private setupOpponentTracking(): void {
+    // Track the last swap position to correlate with discard
+    let lastSwapPosition: number | undefined = undefined;
+    let lastSwapPlayerId: string | undefined = undefined;
+
     this.disposeOpponentTracking = reaction(
       // Watch for state changes that indicate opponent actions
       () => ({
@@ -241,6 +247,10 @@ export class BotAIAdapter {
         currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
         subPhase: this.gameClient.state.subPhase,
         pendingAction: this.gameClient.state.pendingAction,
+        players: this.gameClient.state.players.map(p => ({
+          id: p.id,
+          cards: p.cards,
+        })),
       }),
       // Track actions when state changes
       (snapshot, previousSnapshot) => {
@@ -265,13 +275,19 @@ export class BotAIAdapter {
             // (player took from discard and then discarded a different card)
             if (previousSnapshot.subPhase === 'choosing') {
               // Player just discarded after choosing - this was a swap
+              // Use tracked position if available
+              const position = (lastSwapPlayerId === previousPlayer.id) ? lastSwapPosition : undefined;
+
               this.opponentModeler.handleObservedAction({
                 type: 'swap-from-discard',
                 playerId: previousPlayer.id,
                 card: newCard,
-                // We don't know exact position - would need to track swap action
-                position: undefined,
+                position,
               });
+
+              // Clear tracked position after use
+              lastSwapPosition = undefined;
+              lastSwapPlayerId = undefined;
             } else if (previousSnapshot.subPhase === 'idle' || previousSnapshot.subPhase === 'ai_thinking') {
               // Player drew and immediately discarded
               this.opponentModeler.handleObservedAction({
@@ -286,6 +302,31 @@ export class BotAIAdapter {
                 playerId: previousPlayer.id,
                 card: newCard,
               });
+            }
+          }
+        }
+
+        // Track swap actions by detecting card changes at specific positions
+        // This happens when subPhase transitions from choosing to idle (after swap)
+        if (previousSnapshot.subPhase === 'choosing' &&
+            (snapshot.subPhase === 'idle' || snapshot.subPhase === 'toss_queue_active')) {
+          const currentPlayerIndex = previousSnapshot.currentPlayerIndex;
+          const player = currentState.players[currentPlayerIndex];
+
+          if (player && !player.isBot) {
+            const previousPlayerState = previousSnapshot.players[currentPlayerIndex];
+
+            // Find which position changed (indicating a swap)
+            for (let pos = 0; pos < player.cards.length; pos++) {
+              const currentCard = player.cards[pos];
+              const previousCard = previousPlayerState.cards[pos];
+
+              if (currentCard.id !== previousCard.id) {
+                // This position was swapped - save it for correlation with discard
+                lastSwapPosition = pos;
+                lastSwapPlayerId = player.id;
+                break;
+              }
             }
           }
         }
@@ -309,6 +350,63 @@ export class BotAIAdapter {
                     playerId: action.playerId,
                     card: action.card,
                   });
+                }
+              }
+            }
+          }
+
+          // Track Jack/Queen swap actions (swap-own)
+          if (action.card && ['J', 'Q'].includes(action.card.rank)) {
+            // Check if swap was executed (targets selected and shouldSwap confirmed)
+            if (action.targets && action.targets.length === 2) {
+              const player = currentState.players.find(p => p.id === action.playerId);
+              if (player && !player.isBot) {
+                // Check if both targets are the player's own cards
+                const target1 = action.targets[0];
+                const target2 = action.targets[1];
+
+                if (target1.playerId === action.playerId && target2.playerId === action.playerId) {
+                  this.opponentModeler.handleObservedAction({
+                    type: 'swap-own',
+                    playerId: action.playerId,
+                    card: action.card,
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // Track toss-in actions - when cards are added to discard during toss-in phase
+        if (snapshot.subPhase === 'toss_queue_active' && previousSnapshot.subPhase === 'toss_queue_active') {
+          // Check if discard pile grew during toss-in (indicates a toss-in happened)
+          if (snapshot.discardPile.length > previousSnapshot.discardPile.length) {
+            const tossedCard = snapshot.discardPile.at(snapshot.discardPile.length - 1);
+            if (tossedCard && tossedCard.played) {
+              // Find which player tossed in by checking who has fewer cards
+              for (let i = 0; i < currentState.players.length; i++) {
+                const player = currentState.players[i];
+                const previousPlayer = previousSnapshot.players[i];
+
+                if (player.cards.length < previousPlayer.cards.length && !player.isBot) {
+                  // This player tossed in - find which position
+                  // (we can infer position by comparing card arrays)
+                  for (let pos = 0; pos < previousPlayer.cards.length; pos++) {
+                    const previousCard = previousPlayer.cards[pos];
+                    const matchingCard = player.cards.find(c => c.id === previousCard.id);
+
+                    if (!matchingCard && previousCard.rank === tossedCard.rank) {
+                      // This position was tossed in
+                      this.opponentModeler.handleObservedAction({
+                        type: 'toss-in',
+                        playerId: player.id,
+                        card: tossedCard,
+                        position: pos,
+                      });
+                      break;
+                    }
+                  }
+                  break;
                 }
               }
             }

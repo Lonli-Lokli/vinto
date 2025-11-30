@@ -4,6 +4,48 @@
 import { Card, Rank, getCardValue } from '@vinto/shapes';
 
 /**
+ * Constants for Vinto-readiness scoring
+ * These values tune how different actions affect the prediction of when a player will call Vinto
+ */
+const READINESS_ADJUSTMENT = {
+  // Peeking at cards suggests player is still gathering information (not ready)
+  PEEK_ACTION_PENALTY: -0.1,
+  // Using swap actions (J, Q) suggests player is optimizing their hand (getting ready)
+  SWAP_ACTION_BOOST: 0.15,
+  // Peeking at own cards suggests uncertainty about hand
+  PEEK_OWN_PENALTY: -0.05,
+  // Swapping cards within own hand suggests optimization
+  SWAP_OWN_BOOST: 0.1,
+  // When discarding a drawn card, reduce estimated score
+  DISCARD_DRAWN_SCORE_REDUCTION: 2,
+} as const;
+
+/**
+ * Constants for score-based readiness calculation
+ */
+const SCORE_READINESS = {
+  // Score at or below this = maximum readiness (1.0)
+  EXCELLENT_SCORE_THRESHOLD: 10,
+  // Score at or above this = minimum readiness (0.0)
+  POOR_SCORE_THRESHOLD: 30,
+  // Weight given to existing readiness vs new score-based readiness
+  EXISTING_READINESS_WEIGHT: 0.7,
+  NEW_SCORE_WEIGHT: 0.3,
+} as const;
+
+/**
+ * Default starting values for opponent beliefs
+ */
+const DEFAULT_BELIEFS = {
+  // Average starting hand estimate (5 cards * 5 points average)
+  INITIAL_ESTIMATED_SCORE: 25,
+  // Starting Vinto-readiness (neutral)
+  INITIAL_VINTO_READINESS: 0.0,
+  // Minimum confidence to use a belief constraint
+  MIN_SWAP_INFERENCE_CONFIDENCE: 0.8,
+} as const;
+
+/**
  * Belief about a specific hidden card
  */
 export interface CardBelief {
@@ -68,8 +110,8 @@ export class OpponentModeler {
       this.beliefs.set(playerId, {
         playerId,
         cardBeliefs: new Map(),
-        estimatedScore: 25, // Average starting estimate (5 cards * 5 points)
-        vintoReadiness: 0.0,
+        estimatedScore: DEFAULT_BELIEFS.INITIAL_ESTIMATED_SCORE,
+        vintoReadiness: DEFAULT_BELIEFS.INITIAL_VINTO_READINESS,
       });
     }
   }
@@ -138,14 +180,10 @@ export class OpponentModeler {
     const belief: CardBelief = {
       minValue: discardValue + 1,
       reason: `Swapped out for ${action.card.rank} (${discardValue} pts)`,
-      confidence: 0.8, // High confidence in this inference
+      confidence: DEFAULT_BELIEFS.MIN_SWAP_INFERENCE_CONFIDENCE,
     };
 
     playerBeliefs.cardBeliefs.set(action.position, belief);
-
-    console.log(
-      `[OpponentModeler] ${action.playerId} swapped ${action.card.rank} at pos ${action.position} - inferred minValue=${belief.minValue}`
-    );
   }
 
   /**
@@ -165,11 +203,7 @@ export class OpponentModeler {
     // Update global estimate slightly downward
     playerBeliefs.estimatedScore = Math.max(
       0,
-      playerBeliefs.estimatedScore - 2
-    );
-
-    console.log(
-      `[OpponentModeler] ${action.playerId} discarded drawn ${action.card.rank} - likely has better cards`
+      playerBeliefs.estimatedScore - READINESS_ADJUSTMENT.DISCARD_DRAWN_SCORE_REDUCTION
     );
   }
 
@@ -191,7 +225,7 @@ export class OpponentModeler {
       // Player is learning about their hand - they're not ready for Vinto yet
       playerBeliefs.vintoReadiness = Math.max(
         0,
-        playerBeliefs.vintoReadiness - 0.1
+        playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.PEEK_ACTION_PENALTY
       );
     }
 
@@ -200,7 +234,7 @@ export class OpponentModeler {
       // Player is actively improving - getting closer to Vinto
       playerBeliefs.vintoReadiness = Math.min(
         1,
-        playerBeliefs.vintoReadiness + 0.15
+        playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.SWAP_ACTION_BOOST
       );
     }
   }
@@ -238,7 +272,7 @@ export class OpponentModeler {
     // Peeking suggests they don't know their full hand yet
     playerBeliefs.vintoReadiness = Math.max(
       0,
-      playerBeliefs.vintoReadiness - 0.05
+      playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.PEEK_OWN_PENALTY
     );
   }
 
@@ -253,7 +287,7 @@ export class OpponentModeler {
     // Swapping suggests they're optimizing their hand
     playerBeliefs.vintoReadiness = Math.min(
       1,
-      playerBeliefs.vintoReadiness + 0.1
+      playerBeliefs.vintoReadiness + READINESS_ADJUSTMENT.SWAP_OWN_BOOST
     );
   }
 
@@ -274,22 +308,16 @@ export class OpponentModeler {
     }
 
     // Factor 1: Estimated score (lower score = higher readiness)
-    // Score of 10 or less = 1.0 readiness
-    // Score of 30 or more = 0.0 readiness
+    const scoreRange = SCORE_READINESS.POOR_SCORE_THRESHOLD - SCORE_READINESS.EXCELLENT_SCORE_THRESHOLD;
     const scoreReadiness = Math.max(
       0,
-      Math.min(1, (30 - playerBeliefs.estimatedScore) / 20)
+      Math.min(1, (SCORE_READINESS.POOR_SCORE_THRESHOLD - playerBeliefs.estimatedScore) / scoreRange)
     );
 
     // Combine with existing readiness (weighted average)
     playerBeliefs.vintoReadiness =
-      0.7 * playerBeliefs.vintoReadiness + 0.3 * scoreReadiness;
-
-    console.log(
-      `[OpponentModeler] ${playerId} Vinto readiness: ${playerBeliefs.vintoReadiness.toFixed(
-        2
-      )} (estimated score: ${playerBeliefs.estimatedScore})`
-    );
+      SCORE_READINESS.EXISTING_READINESS_WEIGHT * playerBeliefs.vintoReadiness +
+      SCORE_READINESS.NEW_SCORE_WEIGHT * scoreReadiness;
   }
 
   /**
