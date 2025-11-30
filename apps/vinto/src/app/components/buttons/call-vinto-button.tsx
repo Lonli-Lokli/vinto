@@ -21,6 +21,7 @@ export const CallVintoButton = ({
     disabled={disabled}
     fullWidth={fullWidth}
     className={className}
+    data-testid="call-vinto"
   >
     {children}
   </Button>

@@ -80,6 +80,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
           columnGap: '1rem', // becomes vertical gap between columns after rotation
         }}
         data-player-cards={player.id}
+        data-testid={player.isHuman ? "player-hand" : `opponent-hand-${player.id}`}
       >
         {player.cards.map((card, index) => {
           const cardIsSelectable = isCardSelectable({
@@ -152,6 +153,7 @@ export const VerticalPlayerCards: React.FC<VerticalPlayerCardsProps> = observer(
               actionTargetSelected={isActionTargetSelected}
               intent={hasFailedTossInFeedback ? 'failure' : undefined}
               hidden={landingCards.has(index) || isAnimating}
+              data-testid={player.isHuman ? `player-card-${index}` : `opponent-card-${player.id}-${index}`}
             />
           );
         })}
