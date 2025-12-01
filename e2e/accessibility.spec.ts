@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Accessibility E2E Tests for Vinto Card Game
@@ -9,7 +11,105 @@ import AxeBuilder from '@axe-core/playwright';
  *
  * Tests are performed on both light and dark themes to ensure accessibility
  * across all color schemes.
+ *
+ * If violations are found, the test fails and generates a detailed accessibility-report.md file.
  */
+
+/**
+ * Generates a detailed accessibility report in Markdown format
+ */
+function generateAccessibilityReport(
+  url: string,
+  violations: any[],
+  theme: string
+): string {
+  let report = `# Accessibility Test Report\n\n`;
+  report += `**Test Date**: ${new Date().toISOString()}\n`;
+  report += `**URL**: ${url}\n`;
+  report += `**Theme**: ${theme}\n`;
+  report += `**Total Violations**: ${violations.length}\n\n`;
+
+  if (violations.length === 0) {
+    report += `✅ **No accessibility violations found!**\n`;
+    return report;
+  }
+
+  report += `## Violations Summary\n\n`;
+
+  // Group violations by impact
+  const byImpact = violations.reduce((acc, v) => {
+    const impact = v.impact || 'unknown';
+    if (!acc[impact]) acc[impact] = [];
+    acc[impact].push(v);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  Object.keys(byImpact)
+    .sort((a, b) => {
+      const order = ['critical', 'serious', 'moderate', 'minor', 'unknown'];
+      return order.indexOf(a) - order.indexOf(b);
+    })
+    .forEach((impact) => {
+      report += `- **${impact.toUpperCase()}**: ${byImpact[impact].length} violation(s)\n`;
+    });
+
+  report += `\n---\n\n`;
+
+  // Detailed violations
+  violations.forEach((violation, index) => {
+    report += `## ${index + 1}. ${violation.id}\n\n`;
+    report += `**Description**: ${violation.description}\n\n`;
+    report += `**Impact**: ${violation.impact || 'unknown'}\n\n`;
+    report += `**WCAG Tags**: ${violation.tags.join(', ')}\n\n`;
+    report += `**Help**: ${violation.help}\n\n`;
+    report += `**Learn More**: [${violation.helpUrl}](${violation.helpUrl})\n\n`;
+    report += `**Affected Elements**: ${violation.nodes.length}\n\n`;
+
+    violation.nodes.forEach((node: any, nodeIndex: number) => {
+      report += `### Element ${nodeIndex + 1}\n\n`;
+      report += `**CSS Selector**: \`${node.target.join(' ')}\`\n\n`;
+      report += `**HTML**:\n\`\`\`html\n${node.html}\n\`\`\`\n\n`;
+      report += `**How to Fix**:\n${node.failureSummary}\n\n`;
+
+      if (node.any && node.any.length > 0) {
+        report += `**Fix any of the following**:\n`;
+        node.any.forEach((fix: any) => {
+          report += `- ${fix.message}\n`;
+        });
+        report += `\n`;
+      }
+
+      if (node.all && node.all.length > 0) {
+        report += `**Fix all of the following**:\n`;
+        node.all.forEach((fix: any) => {
+          report += `- ${fix.message}\n`;
+        });
+        report += `\n`;
+      }
+
+      if (node.none && node.none.length > 0) {
+        report += `**Fix none of the following**:\n`;
+        node.none.forEach((fix: any) => {
+          report += `- ${fix.message}\n`;
+        });
+        report += `\n`;
+      }
+
+      report += `---\n\n`;
+    });
+  });
+
+  return report;
+}
+
+/**
+ * Saves the accessibility report to a file
+ */
+function saveAccessibilityReport(report: string, filename = 'accessibility-report.md'): void {
+  const reportPath = path.join(process.cwd(), filename);
+  fs.writeFileSync(reportPath, report, 'utf-8');
+  console.log(`\n📄 Accessibility report saved to: ${reportPath}\n`);
+}
 
 test.describe('Accessibility Tests', () => {
   test.describe('Homepage Accessibility', () => {
@@ -42,21 +142,28 @@ test.describe('Accessibility Tests', () => {
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
-      // Log violations for debugging if any are found
+      // If violations found, generate report and fail
       if (accessibilityScanResults.violations.length > 0) {
-        console.log('Accessibility violations found (light theme):');
+        const report = generateAccessibilityReport(
+          page.url(),
+          accessibilityScanResults.violations,
+          'light'
+        );
+        saveAccessibilityReport(report, 'accessibility-report-homepage-light.md');
+
+        console.log('❌ Accessibility violations found (light theme):');
         accessibilityScanResults.violations.forEach((violation) => {
           console.log(`- ${violation.id}: ${violation.description}`);
           console.log(`  Impact: ${violation.impact}`);
           console.log(`  Help: ${violation.helpUrl}`);
           console.log(`  Affected elements: ${violation.nodes.length}`);
-          violation.nodes.forEach((node) => {
-            console.log(`    - ${node.html}`);
-          });
         });
+
+        // Fail the test
+        expect(accessibilityScanResults.violations).toEqual([]);
       }
 
-      // Assert that there are no violations
+      // Pass if no violations
       expect(accessibilityScanResults.violations).toEqual([]);
     });
 
@@ -88,21 +195,28 @@ test.describe('Accessibility Tests', () => {
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
-      // Log violations for debugging if any are found
+      // If violations found, generate report and fail
       if (accessibilityScanResults.violations.length > 0) {
-        console.log('Accessibility violations found (dark theme):');
+        const report = generateAccessibilityReport(
+          page.url(),
+          accessibilityScanResults.violations,
+          'dark'
+        );
+        saveAccessibilityReport(report, 'accessibility-report-homepage-dark.md');
+
+        console.log('❌ Accessibility violations found (dark theme):');
         accessibilityScanResults.violations.forEach((violation) => {
           console.log(`- ${violation.id}: ${violation.description}`);
           console.log(`  Impact: ${violation.impact}`);
           console.log(`  Help: ${violation.helpUrl}`);
           console.log(`  Affected elements: ${violation.nodes.length}`);
-          violation.nodes.forEach((node) => {
-            console.log(`    - ${node.html}`);
-          });
         });
+
+        // Fail the test
+        expect(accessibilityScanResults.violations).toEqual([]);
       }
 
-      // Assert that there are no violations
+      // Pass if no violations
       expect(accessibilityScanResults.violations).toEqual([]);
     });
   });
@@ -192,12 +306,22 @@ test.describe('Accessibility Tests', () => {
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
-      // Log violations if any
+      // If violations found, generate report and fail
       if (accessibilityScanResults.violations.length > 0) {
-        console.log('Accessibility violations found on game board (light theme):');
+        const report = generateAccessibilityReport(
+          page.url(),
+          accessibilityScanResults.violations,
+          'light'
+        );
+        saveAccessibilityReport(report, 'accessibility-report-game-light.md');
+
+        console.log('❌ Accessibility violations found on game board (light theme):');
         accessibilityScanResults.violations.forEach((violation) => {
           console.log(`- ${violation.id}: ${violation.description}`);
         });
+
+        // Fail the test
+        expect(accessibilityScanResults.violations).toEqual([]);
       }
 
       expect(accessibilityScanResults.violations).toEqual([]);
@@ -224,12 +348,22 @@ test.describe('Accessibility Tests', () => {
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
-      // Log violations if any
+      // If violations found, generate report and fail
       if (accessibilityScanResults.violations.length > 0) {
-        console.log('Accessibility violations found on game board (dark theme):');
+        const report = generateAccessibilityReport(
+          page.url(),
+          accessibilityScanResults.violations,
+          'dark'
+        );
+        saveAccessibilityReport(report, 'accessibility-report-game-dark.md');
+
+        console.log('❌ Accessibility violations found on game board (dark theme):');
         accessibilityScanResults.violations.forEach((violation) => {
           console.log(`- ${violation.id}: ${violation.description}`);
         });
+
+        // Fail the test
+        expect(accessibilityScanResults.violations).toEqual([]);
       }
 
       expect(accessibilityScanResults.violations).toEqual([]);
