@@ -1,7 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { Result as AxeResult, NodeResult } from 'axe-core';
 
 /**
  * Accessibility E2E Tests for Vinto Card Game
@@ -15,12 +16,14 @@ import * as path from 'path';
  * If violations are found, the test fails and generates a detailed accessibility-report.md file.
  */
 
+const THEME_TRANSITION_TIMEOUT = 5000;
+
 /**
  * Generates a detailed accessibility report in Markdown format
  */
 function generateAccessibilityReport(
   url: string,
-  violations: any[],
+  violations: AxeResult[],
   theme: string
 ): string {
   let report = `# Accessibility Test Report\n\n`;
@@ -42,7 +45,7 @@ function generateAccessibilityReport(
     if (!acc[impact]) acc[impact] = [];
     acc[impact].push(v);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, AxeResult[]>);
 
   Object.keys(byImpact)
     .sort((a, b) => {
@@ -65,7 +68,7 @@ function generateAccessibilityReport(
     report += `**Learn More**: [${violation.helpUrl}](${violation.helpUrl})\n\n`;
     report += `**Affected Elements**: ${violation.nodes.length}\n\n`;
 
-    violation.nodes.forEach((node: any, nodeIndex: number) => {
+    violation.nodes.forEach((node: NodeResult, nodeIndex: number) => {
       report += `### Element ${nodeIndex + 1}\n\n`;
       report += `**CSS Selector**: \`${node.target.join(' ')}\`\n\n`;
       report += `**HTML**:\n\`\`\`html\n${node.html}\n\`\`\`\n\n`;
@@ -73,7 +76,7 @@ function generateAccessibilityReport(
 
       if (node.any && node.any.length > 0) {
         report += `**Fix any of the following**:\n`;
-        node.any.forEach((fix: any) => {
+        node.any.forEach((fix) => {
           report += `- ${fix.message}\n`;
         });
         report += `\n`;
@@ -81,7 +84,7 @@ function generateAccessibilityReport(
 
       if (node.all && node.all.length > 0) {
         report += `**Fix all of the following**:\n`;
-        node.all.forEach((fix: any) => {
+        node.all.forEach((fix) => {
           report += `- ${fix.message}\n`;
         });
         report += `\n`;
@@ -89,7 +92,7 @@ function generateAccessibilityReport(
 
       if (node.none && node.none.length > 0) {
         report += `**Fix none of the following**:\n`;
-        node.none.forEach((fix: any) => {
+        node.none.forEach((fix) => {
           report += `- ${fix.message}\n`;
         });
         report += `\n`;
@@ -103,12 +106,70 @@ function generateAccessibilityReport(
 }
 
 /**
- * Saves the accessibility report to a file
+ * Saves the accessibility report to a file using Playwright's test artifact system
  */
 function saveAccessibilityReport(report: string, filename = 'accessibility-report.md'): void {
-  const reportPath = path.join(process.cwd(), filename);
+  // Use test.info().outputPath() to save in Playwright's test results directory
+  const reportPath = test.info().outputPath(filename);
   fs.writeFileSync(reportPath, report, 'utf-8');
   console.log(`\n📄 Accessibility report saved to: ${reportPath}\n`);
+}
+
+/**
+ * Sets the theme and waits for it to be applied
+ */
+async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.evaluate((t) => {
+    localStorage.setItem('theme', t);
+  }, theme);
+
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+
+  // Wait for the theme class to be applied to the html element
+  await page.locator(`html.${theme}`).waitFor({
+    state: 'attached',
+    timeout: THEME_TRANSITION_TIMEOUT
+  });
+
+  // Verify theme is active
+  const htmlClass = await page.locator('html').getAttribute('class');
+  expect(htmlClass).toContain(theme);
+}
+
+/**
+ * Runs accessibility scan and generates report if violations are found
+ */
+async function runAccessibilityScan(
+  page: Page,
+  theme: string,
+  reportFilename: string
+): Promise<void> {
+  // Run accessibility scan with WCAG 2.1 AA standards
+  const accessibilityScanResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  // If violations found, generate report and fail
+  if (accessibilityScanResults.violations.length > 0) {
+    const report = generateAccessibilityReport(
+      page.url(),
+      accessibilityScanResults.violations,
+      theme
+    );
+    saveAccessibilityReport(report, reportFilename);
+
+    console.log(`❌ Accessibility violations found (${theme} theme):`);
+    accessibilityScanResults.violations.forEach((violation) => {
+      console.log(`- ${violation.id}: ${violation.description}`);
+      console.log(`  Impact: ${violation.impact}`);
+      console.log(`  Help: ${violation.helpUrl}`);
+      console.log(`  Affected elements: ${violation.nodes.length}`);
+    });
+
+    // Fail the test
+    expect(accessibilityScanResults.violations).toEqual([]);
+  }
 }
 
 test.describe('Accessibility Tests', () => {
@@ -116,108 +177,25 @@ test.describe('Accessibility Tests', () => {
     test('should not have accessibility violations on homepage (light theme)', async ({ page }) => {
       // Navigate to the page
       await page.goto('/');
-
-      // Wait for the page to fully load
       await page.waitForLoadState('domcontentloaded');
 
       // Set theme to light
-      // The theme is controlled by next-themes which uses localStorage
-      await page.evaluate(() => {
-        localStorage.setItem('theme', 'light');
-      });
+      await setTheme(page, 'light');
 
-      // Reload to apply theme
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
-
-      // Wait a bit for theme to be applied
-      await page.waitForTimeout(500);
-
-      // Verify light theme is active by checking the class on html element
-      const htmlClass = await page.locator('html').getAttribute('class');
-      expect(htmlClass).toContain('light');
-
-      // Run accessibility scan with WCAG 2.1 AA standards
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
-
-      // If violations found, generate report and fail
-      if (accessibilityScanResults.violations.length > 0) {
-        const report = generateAccessibilityReport(
-          page.url(),
-          accessibilityScanResults.violations,
-          'light'
-        );
-        saveAccessibilityReport(report, 'accessibility-report-homepage-light.md');
-
-        console.log('❌ Accessibility violations found (light theme):');
-        accessibilityScanResults.violations.forEach((violation) => {
-          console.log(`- ${violation.id}: ${violation.description}`);
-          console.log(`  Impact: ${violation.impact}`);
-          console.log(`  Help: ${violation.helpUrl}`);
-          console.log(`  Affected elements: ${violation.nodes.length}`);
-        });
-
-        // Fail the test
-        expect(accessibilityScanResults.violations).toEqual([]);
-      }
-
-      // Pass if no violations
-      expect(accessibilityScanResults.violations).toEqual([]);
+      // Run accessibility scan
+      await runAccessibilityScan(page, 'light', 'accessibility-report-homepage-light.md');
     });
 
     test('should not have accessibility violations on homepage (dark theme)', async ({ page }) => {
       // Navigate to the page
       await page.goto('/');
-
-      // Wait for the page to fully load
       await page.waitForLoadState('domcontentloaded');
 
       // Set theme to dark
-      await page.evaluate(() => {
-        localStorage.setItem('theme', 'dark');
-      });
+      await setTheme(page, 'dark');
 
-      // Reload to apply theme
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
-
-      // Wait a bit for theme to be applied
-      await page.waitForTimeout(500);
-
-      // Verify dark theme is active
-      const htmlClass = await page.locator('html').getAttribute('class');
-      expect(htmlClass).toContain('dark');
-
-      // Run accessibility scan with WCAG 2.1 AA standards
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
-
-      // If violations found, generate report and fail
-      if (accessibilityScanResults.violations.length > 0) {
-        const report = generateAccessibilityReport(
-          page.url(),
-          accessibilityScanResults.violations,
-          'dark'
-        );
-        saveAccessibilityReport(report, 'accessibility-report-homepage-dark.md');
-
-        console.log('❌ Accessibility violations found (dark theme):');
-        accessibilityScanResults.violations.forEach((violation) => {
-          console.log(`- ${violation.id}: ${violation.description}`);
-          console.log(`  Impact: ${violation.impact}`);
-          console.log(`  Help: ${violation.helpUrl}`);
-          console.log(`  Affected elements: ${violation.nodes.length}`);
-        });
-
-        // Fail the test
-        expect(accessibilityScanResults.violations).toEqual([]);
-      }
-
-      // Pass if no violations
-      expect(accessibilityScanResults.violations).toEqual([]);
+      // Run accessibility scan
+      await runAccessibilityScan(page, 'dark', 'accessibility-report-homepage-dark.md');
     });
   });
 
@@ -290,41 +268,14 @@ test.describe('Accessibility Tests', () => {
       await page.goto('/');
 
       // Set theme to light
-      await page.evaluate(() => {
-        localStorage.setItem('theme', 'light');
-      });
-
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
+      await setTheme(page, 'light');
 
       // Wait for game board to be visible
       const gameBoard = page.locator('[data-testid="game-board"]').or(page.getByRole('main'));
       await expect(gameBoard).toBeVisible({ timeout: 15000 });
 
       // Run accessibility scan
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
-
-      // If violations found, generate report and fail
-      if (accessibilityScanResults.violations.length > 0) {
-        const report = generateAccessibilityReport(
-          page.url(),
-          accessibilityScanResults.violations,
-          'light'
-        );
-        saveAccessibilityReport(report, 'accessibility-report-game-light.md');
-
-        console.log('❌ Accessibility violations found on game board (light theme):');
-        accessibilityScanResults.violations.forEach((violation) => {
-          console.log(`- ${violation.id}: ${violation.description}`);
-        });
-
-        // Fail the test
-        expect(accessibilityScanResults.violations).toEqual([]);
-      }
-
-      expect(accessibilityScanResults.violations).toEqual([]);
+      await runAccessibilityScan(page, 'light', 'accessibility-report-game-light.md');
     });
 
     test('should not have accessibility violations on game board (dark theme)', async ({ page }) => {
@@ -332,41 +283,14 @@ test.describe('Accessibility Tests', () => {
       await page.goto('/');
 
       // Set theme to dark
-      await page.evaluate(() => {
-        localStorage.setItem('theme', 'dark');
-      });
-
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
+      await setTheme(page, 'dark');
 
       // Wait for game board to be visible
       const gameBoard = page.locator('[data-testid="game-board"]').or(page.getByRole('main'));
       await expect(gameBoard).toBeVisible({ timeout: 15000 });
 
       // Run accessibility scan
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
-
-      // If violations found, generate report and fail
-      if (accessibilityScanResults.violations.length > 0) {
-        const report = generateAccessibilityReport(
-          page.url(),
-          accessibilityScanResults.violations,
-          'dark'
-        );
-        saveAccessibilityReport(report, 'accessibility-report-game-dark.md');
-
-        console.log('❌ Accessibility violations found on game board (dark theme):');
-        accessibilityScanResults.violations.forEach((violation) => {
-          console.log(`- ${violation.id}: ${violation.description}`);
-        });
-
-        // Fail the test
-        expect(accessibilityScanResults.violations).toEqual([]);
-      }
-
-      expect(accessibilityScanResults.violations).toEqual([]);
+      await runAccessibilityScan(page, 'dark', 'accessibility-report-game-dark.md');
     });
   });
 
