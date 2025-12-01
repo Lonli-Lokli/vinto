@@ -76,6 +76,29 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      - name: Get artifact download URL
+        if: always()
+        id: artifact-url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+
+            const artifact = artifacts.data.artifacts.find(a => a.name === 'playwright-report');
+            if (!artifact) {
+              console.log('No playwright-report artifact found.');
+              return { url: '' };
+            }
+
+            // GitHub provides an API download URL; the UI link is different.
+            // This URL works directly in a browser and downloads the zip.
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/suites/${context.runId}/artifacts/${artifact.id}`;
+            return { url };
+
       - name: Generate test report summary
         if: always()
         id: report-summary
@@ -111,7 +134,12 @@ jobs:
               message += '✅ Tests completed.\n';
             }
 
-            message += `\n📊 [View full Playwright report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            message += `\n📊 [View full Playwright report](${github.server_url}/${github.repository}/actions/runs/${github.runId})`;
+
+            const artifactUrl = '${{ steps.artifact-url.outputs.url }}';
+            if (artifactUrl) {
+              message += `\n📦 [Download report ZIP](${artifactUrl})`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,

@@ -1,8 +1,6 @@
 /* eslint-disable playwright/expect-expect */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import * as fs from 'fs';
-import path from 'path';
 import type { Result as AxeResult, NodeResult } from 'axe-core';
 
 /**
@@ -24,7 +22,7 @@ test.describe('Accessibility Tests', () => {
     test.describe(`Homepage Accessibility (${theme} theme)`, () => {
       test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
         page,
-      }) => {
+      }, testInfo) => {
         // Navigate to the page
         await page.goto('/');
         await page.waitForLoadState('domcontentloaded');
@@ -36,7 +34,8 @@ test.describe('Accessibility Tests', () => {
         await runAccessibilityScan(
           page,
           theme,
-          `accessibility-report-homepage-${theme}.md`
+          `accessibility-report-homepage-${theme}.md`,
+          testInfo
         );
       });
     });
@@ -113,7 +112,7 @@ test.describe('Accessibility Tests', () => {
     test.describe(`Game Interface Accessibility (${theme} theme)`, () => {
       test(`should not have accessibility violations on game board (${theme} theme)`, async ({
         page,
-      }) => {
+      }, testInfo) => {
         // Navigate to the page
         await page.goto('/');
 
@@ -129,7 +128,8 @@ test.describe('Accessibility Tests', () => {
         await runAccessibilityScan(
           page,
           theme,
-          `accessibility-report-game-${theme}.md`
+          `accessibility-report-game-${theme}.md`,
+          testInfo
         );
       });
     });
@@ -276,31 +276,6 @@ function generateAccessibilityReport(
 }
 
 /**
- * Saves the accessibility report to a file using Playwright's test artifact system
- */
-function saveAccessibilityReport(report: string, filename: string): void {
-  // Get workspace root by going up from test file location
-  // In CI: /home/runner/work/vinto/vinto/apps/vinto/e2e -> ../../.. -> /home/runner/work/vinto/vinto
-  // Locally: D:\github\vinto\apps\vinto\e2e -> ../../.. -> D:\github\vinto
-  const workspaceRoot = path.resolve(__dirname, '..', '..', '..');
-  const reportDir = path.join(workspaceRoot, 'playwright-report');
-
-  console.log(`\n🔍 Debug: __dirname = ${__dirname}`);
-  console.log(`🔍 Debug: Workspace root = ${workspaceRoot}`);
-  console.log(`🔍 Debug: Report directory = ${reportDir}\n`);
-
-  // Create directory if it doesn't exist
-  if (!fs.existsSync(reportDir)) {
-    fs.mkdirSync(reportDir, { recursive: true });
-    console.log(`✅ Created report directory: ${reportDir}`);
-  }
-
-  const reportPath = path.join(reportDir, filename);
-  fs.writeFileSync(reportPath, report, 'utf-8');
-  console.log(`📄 Accessibility report saved to: ${reportPath}\n`);
-}
-
-/**
  * Sets the theme and waits for it to be applied
  */
 async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
@@ -328,7 +303,8 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
 async function runAccessibilityScan(
   page: Page,
   theme: string,
-  reportFilename: string
+  reportFilename: string,
+  testInfo: TestInfo
 ): Promise<void> {
   // Run accessibility scan with WCAG 2.1 AA standards
   const accessibilityScanResults = await new AxeBuilder({ page })
@@ -342,7 +318,11 @@ async function runAccessibilityScan(
     accessibilityScanResults.violations,
     theme
   );
-  saveAccessibilityReport(report, reportFilename);
+
+  await testInfo.attach(reportFilename, {
+    body: report,
+    contentType: 'text/markdown',
+  });
 
   // If violations found, log details and fail
   if (accessibilityScanResults.violations.length > 0) {
