@@ -156,7 +156,7 @@ test.describe('Accessibility Tests', () => {
 
         // Wait for game board to be visible
         const gameBoard = page
-          .locator('[data-testid="game-board"]')
+          .locator('[data-testid="middle-area"]')
           .or(page.getByRole('main'));
         await expect(gameBoard).toBeVisible({ timeout: 15000 });
 
