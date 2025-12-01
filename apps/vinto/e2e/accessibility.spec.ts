@@ -333,6 +333,7 @@ async function runAccessibilityScan(
   // Run accessibility scan with WCAG 2.1 AA standards
   const accessibilityScanResults = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .disableRules(['meta-viewport']) // we do not want them
     .analyze();
 
   // Always generate and save report (for both pass and fail cases)
