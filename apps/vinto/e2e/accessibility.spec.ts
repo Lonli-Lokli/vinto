@@ -19,44 +19,6 @@ import type { Result as AxeResult, NodeResult } from 'axe-core';
 
 const THEME_TRANSITION_TIMEOUT = 5000;
 
-/**
- * Runs accessibility scan and generates report if violations are found
- */
-async function runAccessibilityScan(
-  page: Page,
-  theme: string,
-  reportFilename: string
-): Promise<void> {
-  // Run accessibility scan with WCAG 2.1 AA standards
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-
-  // Always generate and save report (for both pass and fail cases)
-  const report = generateAccessibilityReport(
-    page.url(),
-    accessibilityScanResults.violations,
-    theme
-  );
-  saveAccessibilityReport(report, reportFilename);
-
-  // If violations found, log details and fail
-  if (accessibilityScanResults.violations.length > 0) {
-    console.log(`❌ Accessibility violations found (${theme} theme):`);
-    accessibilityScanResults.violations.forEach((violation) => {
-      console.log(`- ${violation.id}: ${violation.description}`);
-      console.log(`  Impact: ${violation.impact}`);
-      console.log(`  Help: ${violation.helpUrl}`);
-      console.log(`  Affected elements: ${violation.nodes.length}`);
-    });
-
-    // Fail the test
-    expect(accessibilityScanResults.violations).toEqual([]);
-  } else {
-    console.log(`✅ No accessibility violations found (${theme} theme)`);
-  }
-}
-
 test.describe('Accessibility Tests', () => {
   (['light', 'dark'] as const).forEach((theme) => {
     test.describe(`Homepage Accessibility (${theme} theme)`, () => {
@@ -317,18 +279,25 @@ function generateAccessibilityReport(
  * Saves the accessibility report to a file using Playwright's test artifact system
  */
 function saveAccessibilityReport(report: string, filename: string): void {
-  // Use process.cwd() which reliably gives workspace root when running via nx/playwright
-  // Playwright runs from workspace root, so cwd() is the workspace root
-  const reportDir = path.join(process.cwd(), 'playwright-report');
+  // Get workspace root by going up from test file location
+  // In CI: /home/runner/work/vinto/vinto/apps/vinto/e2e -> ../../.. -> /home/runner/work/vinto/vinto
+  // Locally: D:\github\vinto\apps\vinto\e2e -> ../../.. -> D:\github\vinto
+  const workspaceRoot = path.resolve(__dirname, '..', '..', '..');
+  const reportDir = path.join(workspaceRoot, 'playwright-report');
+
+  console.log(`\n🔍 Debug: __dirname = ${__dirname}`);
+  console.log(`🔍 Debug: Workspace root = ${workspaceRoot}`);
+  console.log(`🔍 Debug: Report directory = ${reportDir}\n`);
 
   // Create directory if it doesn't exist
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
+    console.log(`✅ Created report directory: ${reportDir}`);
   }
 
   const reportPath = path.join(reportDir, filename);
   fs.writeFileSync(reportPath, report, 'utf-8');
-  console.log(`\n📄 Accessibility report saved to: ${reportPath}\n`);
+  console.log(`📄 Accessibility report saved to: ${reportPath}\n`);
 }
 
 /**
@@ -351,4 +320,42 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   // Verify theme is active
   const htmlClass = await page.locator('html').getAttribute('class');
   expect(htmlClass).toContain(theme);
+}
+
+/**
+ * Runs accessibility scan and generates report if violations are found
+ */
+async function runAccessibilityScan(
+  page: Page,
+  theme: string,
+  reportFilename: string
+): Promise<void> {
+  // Run accessibility scan with WCAG 2.1 AA standards
+  const accessibilityScanResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  // Always generate and save report (for both pass and fail cases)
+  const report = generateAccessibilityReport(
+    page.url(),
+    accessibilityScanResults.violations,
+    theme
+  );
+  saveAccessibilityReport(report, reportFilename);
+
+  // If violations found, log details and fail
+  if (accessibilityScanResults.violations.length > 0) {
+    console.log(`❌ Accessibility violations found (${theme} theme):`);
+    accessibilityScanResults.violations.forEach((violation) => {
+      console.log(`- ${violation.id}: ${violation.description}`);
+      console.log(`  Impact: ${violation.impact}`);
+      console.log(`  Help: ${violation.helpUrl}`);
+      console.log(`  Affected elements: ${violation.nodes.length}`);
+    });
+
+    // Fail the test
+    expect(accessibilityScanResults.violations).toEqual([]);
+  } else {
+    console.log(`✅ No accessibility violations found (${theme} theme)`);
+  }
 }

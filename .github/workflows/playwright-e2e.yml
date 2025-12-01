@@ -34,7 +34,8 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
+        # Installs chromium, firefox, and webkit for cross-browser testing
 
       - name: Wait for Vercel Preview Deployment
         if: github.event_name == 'pull_request'
@@ -69,8 +70,11 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            !playwright-report/**/*.log
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Generate test report summary
         if: always()
