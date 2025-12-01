@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, Project } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
@@ -6,6 +6,48 @@ import { workspaceRoot } from '@nx/devkit';
 const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const isCI = !!process.env.CI;
 const isVercelPreview = !!process.env.PLAYWRIGHT_TEST_BASE_URL;
+const isPR = !!process.env.IS_PR;
+const isNightly = !!process.env.IS_NIGHTLY;
+const prBrowsers: Project[] = [
+  {
+    name: 'chromium',
+    use: { ...devices['Desktop Chrome'] },
+  },
+  {
+    name: 'Mobile Chrome',
+    use: { ...devices['Pixel 5'] },
+  },
+];
+const nightlyBrowsers: Project[] = [
+  {
+    name: 'chromium',
+    use: { ...devices['Desktop Chrome'] },
+  },
+  {
+    name: 'Mobile Chrome',
+    use: { ...devices['Pixel 5'] },
+  },
+  {
+    name: 'firefox',
+    use: { ...devices['Desktop Firefox'] },
+  },
+
+  {
+    name: 'webkit',
+    use: { ...devices['Desktop Safari'] },
+  },
+  {
+    name: 'Mobile Safari',
+    use: { ...devices['iPhone 12'] },
+  },
+];
+
+const defaultBrowsers: Project[] = [
+  {
+    name: 'Mobile Chrome',
+    use: { ...devices['Pixel 5'] },
+  },
+];
 
 /**
  * Read environment variables from file.
@@ -22,7 +64,12 @@ export default defineConfig({
   use: {
     baseURL,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: isCI ? 'retain-on-failure' : 'on-first-retry',
+    screenshot: isCI ? 'only-on-failure' : 'off',
+    video: 'off',
+    launchOptions: {
+      args: ['--disable-dev-shm-usage'],
+    },
   },
   /* Run your local dev server before starting the tests */
   webServer: isVercelPreview
@@ -37,9 +84,7 @@ export default defineConfig({
   forbidOnly: isCI,
   // Retry on CI only
   retries: isCI ? 2 : 0,
-
-  // Opt out of parallel tests on CI
-  workers: isCI ? 1 : undefined,
+  workers: isCI ? '50%' : undefined,
   reporter: isCI
     ? [
         ['html', { outputFolder: '../../playwright-report' }],
@@ -53,40 +98,5 @@ export default defineConfig({
         ['list'],
       ],
 
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    // Uncomment for mobile browsers support
-    /* {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    }, */
-
-    // Uncomment for branded browsers
-    /* {
-      name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
-      name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    } */
-  ],
+  projects: isPR ? prBrowsers : isNightly ? nightlyBrowsers : defaultBrowsers,
 });

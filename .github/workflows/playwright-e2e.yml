@@ -6,19 +6,21 @@ permissions:
   
 on:
   pull_request:
-    branches: [master]
-  workflow_dispatch:
-    inputs:
-      preview_url:
-        description: 'Vercel preview URL to test (optional)'
-        required: false
-        type: string
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "0 2 * * *"
 
 jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      IS_PR: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+      IS_NIGHTLY: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+      PROD_URL: "https://vinto-game.vercel.app/"
 
     steps:
       - name: Checkout repository
@@ -47,6 +49,10 @@ jobs:
           max_timeout: 300
           check_interval: 10
 
+      - name: Set PLAYWRIGHT_TEST_BASE_URL for entire job (PR)
+        if: github.event_name == 'pull_request' && steps.vercel-preview.outputs.url != ''
+        run: echo "PLAYWRIGHT_TEST_BASE_URL=${{ steps.vercel-preview.outputs.url }}" >> $GITHUB_ENV
+
       - name: Run Playwright tests against Vercel Preview
         if: github.event_name == 'pull_request' && steps.vercel-preview.outputs.url != ''
         env:
@@ -57,6 +63,12 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.preview_url != ''
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ inputs.preview_url }}
+        run: npm run test:e2e
+
+      - name: Run Playwright tests against production (nightly/master)
+        if: github.event_name == 'schedule' || github.event_name == 'push'
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ env.PROD_URL }}
         run: npm run test:e2e
 
       - name: Run Playwright tests locally (fallback)
@@ -134,7 +146,7 @@ jobs:
               message += '✅ Tests completed.\n';
             }
 
-            message += `\n📊 [View full Playwright report](${github.server_url}/${github.repository}/actions/runs/${github.runId})`;
+            message += `\n📊 [View full Playwright report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
 
             const artifactUrl = '${{ steps.artifact-url.outputs.url }}';
             if (artifactUrl) {
