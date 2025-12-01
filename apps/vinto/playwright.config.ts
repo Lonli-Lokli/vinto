@@ -3,7 +3,7 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
 // For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:4200';
+const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const isCI = !!process.env.CI;
 const isVercelPreview = !!process.env.PLAYWRIGHT_TEST_BASE_URL;
 
@@ -42,11 +42,11 @@ export default defineConfig({
   workers: isCI ? 1 : undefined,
   reporter: isCI
     ? [
-        ['html', { outputFolder: 'playwright-report' }],
+        ['html', { outputFolder: '../../playwright-report' }],
         ['list'],
         ['github' as const],
       ]
-    : [['html', { outputFolder: 'playwright-report' }], ['list']],
+    : [['html', { outputFolder: '../../playwright-report' }], ['list']],
 
   projects: [
     {

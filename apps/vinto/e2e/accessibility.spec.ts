@@ -1,6 +1,8 @@
+/* eslint-disable playwright/expect-expect */
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import * as fs from 'fs';
+import path from 'path';
 import type { Result as AxeResult, NodeResult } from 'axe-core';
 
 /**
@@ -16,6 +18,209 @@ import type { Result as AxeResult, NodeResult } from 'axe-core';
  */
 
 const THEME_TRANSITION_TIMEOUT = 5000;
+
+/**
+ * Runs accessibility scan and generates report if violations are found
+ */
+async function runAccessibilityScan(
+  page: Page,
+  theme: string,
+  reportFilename: string
+): Promise<void> {
+  // Run accessibility scan with WCAG 2.1 AA standards
+  const accessibilityScanResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  // If violations found, generate report and fail
+  if (accessibilityScanResults.violations.length > 0) {
+    const report = generateAccessibilityReport(
+      page.url(),
+      accessibilityScanResults.violations,
+      theme
+    );
+    saveAccessibilityReport(report, reportFilename);
+
+    console.log(`❌ Accessibility violations found (${theme} theme):`);
+    accessibilityScanResults.violations.forEach((violation) => {
+      console.log(`- ${violation.id}: ${violation.description}`);
+      console.log(`  Impact: ${violation.impact}`);
+      console.log(`  Help: ${violation.helpUrl}`);
+      console.log(`  Affected elements: ${violation.nodes.length}`);
+    });
+
+    // Fail the test
+    expect(accessibilityScanResults.violations).toEqual([]);
+  }
+}
+
+test.describe('Accessibility Tests', () => {
+  (['light', 'dark'] as const).forEach((theme) => {
+    test.describe(`Homepage Accessibility (${theme} theme)`, () => {
+      test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
+        page,
+      }) => {
+        // Navigate to the page
+        await page.goto('/');
+        await page.waitForLoadState('domcontentloaded');
+
+        // Set theme to light
+        await setTheme(page, theme);
+
+        // Run accessibility scan
+        await runAccessibilityScan(
+          page,
+          theme,
+          `accessibility-report-homepage-${theme}.md`
+        );
+      });
+    });
+
+    test.describe(`Color Contrast Validation (${theme} theme)`, () => {
+      test('should detect color contrast violations when present', async ({
+        page,
+      }) => {
+        // Create a page with known bad contrast for validation
+        await page.setContent(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Color Contrast Test</title>
+          </head>
+          <body>
+            <button style="background-color: #888; color: #999; padding: 10px;">
+              Low Contrast Button
+            </button>
+            <p style="color: #777; background-color: #888;">
+              Low contrast text
+            </p>
+          </body>
+        </html>
+      `);
+
+        // Run accessibility scan
+        const accessibilityScanResults = await new AxeBuilder({
+          page,
+        }).analyze();
+
+        // Expect violations to be found
+        expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
+
+        // Check that at least one violation is related to color contrast
+        const contrastViolation = accessibilityScanResults.violations.find(
+          (v) => v.id === 'color-contrast'
+        );
+        expect(contrastViolation).toBeDefined();
+      });
+
+      test('should pass with good color contrast', async ({ page }) => {
+        // Create a page with good contrast
+        await page.setContent(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Good Contrast Test</title>
+          </head>
+          <body>
+            <button style="background-color: #000; color: #fff; padding: 10px;">
+              Good Contrast Button
+            </button>
+            <p style="color: #000; background-color: #fff;">
+              Good contrast text
+            </p>
+          </body>
+        </html>
+      `);
+
+        // Run accessibility scan
+        const accessibilityScanResults = await new AxeBuilder({
+          page,
+        }).analyze();
+
+        // Should have no color contrast violations
+        const contrastViolation = accessibilityScanResults.violations.find(
+          (v) => v.id === 'color-contrast'
+        );
+        expect(contrastViolation).toBeUndefined();
+      });
+    });
+
+    test.describe(`Game Interface Accessibility (${theme} theme)`, () => {
+      test(`should not have accessibility violations on game board (${theme} theme)`, async ({
+        page,
+      }) => {
+        // Navigate to the page
+        await page.goto('/');
+
+        await setTheme(page, theme);
+
+        // Wait for game board to be visible
+        const gameBoard = page
+          .locator('[data-testid="game-board"]')
+          .or(page.getByRole('main'));
+        await expect(gameBoard).toBeVisible({ timeout: 15000 });
+
+        // Run accessibility scan
+        await runAccessibilityScan(
+          page,
+          theme,
+          `accessibility-report-game-${theme}.md`
+        );
+      });
+
+    });
+
+    test.describe(`Specific WCAG Rules (${theme} theme)`, () => {
+      test('should have valid ARIA attributes', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('domcontentloaded');
+
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa'])
+          .analyze();
+
+        // Check for ARIA-related violations
+        const ariaViolations = accessibilityScanResults.violations.filter((v) =>
+          Boolean(v.id.includes('aria') || v.tags.includes('aria'))
+        );
+
+        expect(ariaViolations).toEqual([]);
+      });
+
+      test('should have proper heading hierarchy', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('domcontentloaded');
+
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa'])
+          .analyze();
+
+        // Check for heading order violations
+        const headingViolations = accessibilityScanResults.violations.filter(
+          (v) => v.id === 'heading-order'
+        );
+
+        expect(headingViolations).toEqual([]);
+      });
+
+      test('should have accessible form controls', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('domcontentloaded');
+
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa'])
+          .analyze();
+
+        // Check for form-related violations
+        const formViolations = accessibilityScanResults.violations.filter((v) =>
+          Boolean(v.id.includes('label') || v.id.includes('form'))
+        );
+
+        expect(formViolations).toEqual([]);
+      });
+    });
+  });
+});
 
 /**
  * Generates a detailed accessibility report in Markdown format
@@ -52,7 +257,9 @@ function generateAccessibilityReport(
       return order.indexOf(a) - order.indexOf(b);
     })
     .forEach((impact) => {
-      report += `- **${impact.toUpperCase()}**: ${byImpact[impact].length} violation(s)\n`;
+      report += `- **${impact.toUpperCase()}**: ${
+        byImpact[impact].length
+      } violation(s)\n`;
     });
 
   report += `\n---\n\n`;
@@ -107,9 +314,19 @@ function generateAccessibilityReport(
 /**
  * Saves the accessibility report to a file using Playwright's test artifact system
  */
-function saveAccessibilityReport(report: string, filename = 'accessibility-report.md'): void {
-  // Use test.info().outputPath() to save in Playwright's test results directory
-  const reportPath = test.info().outputPath(filename);
+function saveAccessibilityReport(
+  report: string,
+  filename: string
+): void {
+  // Save to playwright-report folder in workspace root (../../playwright-report from e2e folder)
+  const reportDir = path.join(__dirname, '..', '..', '..', 'playwright-report');
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+  }
+
+  const reportPath = path.join(reportDir, filename);
   fs.writeFileSync(reportPath, report, 'utf-8');
   console.log(`\n📄 Accessibility report saved to: ${reportPath}\n`);
 }
@@ -128,218 +345,10 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   // Wait for the theme class to be applied to the html element
   await page.locator(`html.${theme}`).waitFor({
     state: 'attached',
-    timeout: THEME_TRANSITION_TIMEOUT
+    timeout: THEME_TRANSITION_TIMEOUT,
   });
 
   // Verify theme is active
   const htmlClass = await page.locator('html').getAttribute('class');
   expect(htmlClass).toContain(theme);
 }
-
-/**
- * Runs accessibility scan and generates report if violations are found
- */
-async function runAccessibilityScan(
-  page: Page,
-  theme: string,
-  reportFilename: string
-): Promise<void> {
-  // Run accessibility scan with WCAG 2.1 AA standards
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-
-  // If violations found, generate report and fail
-  if (accessibilityScanResults.violations.length > 0) {
-    const report = generateAccessibilityReport(
-      page.url(),
-      accessibilityScanResults.violations,
-      theme
-    );
-    saveAccessibilityReport(report, reportFilename);
-
-    console.log(`❌ Accessibility violations found (${theme} theme):`);
-    accessibilityScanResults.violations.forEach((violation) => {
-      console.log(`- ${violation.id}: ${violation.description}`);
-      console.log(`  Impact: ${violation.impact}`);
-      console.log(`  Help: ${violation.helpUrl}`);
-      console.log(`  Affected elements: ${violation.nodes.length}`);
-    });
-
-    // Fail the test
-    expect(accessibilityScanResults.violations).toEqual([]);
-  }
-}
-
-test.describe('Accessibility Tests', () => {
-  test.describe('Homepage Accessibility', () => {
-    test('should not have accessibility violations on homepage (light theme)', async ({ page }) => {
-      // Navigate to the page
-      await page.goto('/');
-      await page.waitForLoadState('domcontentloaded');
-
-      // Set theme to light
-      await setTheme(page, 'light');
-
-      // Run accessibility scan
-      await runAccessibilityScan(page, 'light', 'accessibility-report-homepage-light.md');
-    });
-
-    test('should not have accessibility violations on homepage (dark theme)', async ({ page }) => {
-      // Navigate to the page
-      await page.goto('/');
-      await page.waitForLoadState('domcontentloaded');
-
-      // Set theme to dark
-      await setTheme(page, 'dark');
-
-      // Run accessibility scan
-      await runAccessibilityScan(page, 'dark', 'accessibility-report-homepage-dark.md');
-    });
-  });
-
-  test.describe('Color Contrast Validation', () => {
-    test('should detect color contrast violations when present', async ({ page }) => {
-      // Create a page with known bad contrast for validation
-      await page.setContent(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Color Contrast Test</title>
-          </head>
-          <body>
-            <button style="background-color: #888; color: #999; padding: 10px;">
-              Low Contrast Button
-            </button>
-            <p style="color: #777; background-color: #888;">
-              Low contrast text
-            </p>
-          </body>
-        </html>
-      `);
-
-      // Run accessibility scan
-      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-
-      // Expect violations to be found
-      expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
-
-      // Check that at least one violation is related to color contrast
-      const contrastViolation = accessibilityScanResults.violations.find(
-        (v) => v.id === 'color-contrast'
-      );
-      expect(contrastViolation).toBeDefined();
-    });
-
-    test('should pass with good color contrast', async ({ page }) => {
-      // Create a page with good contrast
-      await page.setContent(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Good Contrast Test</title>
-          </head>
-          <body>
-            <button style="background-color: #000; color: #fff; padding: 10px;">
-              Good Contrast Button
-            </button>
-            <p style="color: #000; background-color: #fff;">
-              Good contrast text
-            </p>
-          </body>
-        </html>
-      `);
-
-      // Run accessibility scan
-      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-
-      // Should have no color contrast violations
-      const contrastViolation = accessibilityScanResults.violations.find(
-        (v) => v.id === 'color-contrast'
-      );
-      expect(contrastViolation).toBeUndefined();
-    });
-  });
-
-  test.describe('Game Interface Accessibility', () => {
-    test('should not have accessibility violations on game board (light theme)', async ({ page }) => {
-      // Navigate to the page
-      await page.goto('/');
-
-      // Set theme to light
-      await setTheme(page, 'light');
-
-      // Wait for game board to be visible
-      const gameBoard = page.locator('[data-testid="game-board"]').or(page.getByRole('main'));
-      await expect(gameBoard).toBeVisible({ timeout: 15000 });
-
-      // Run accessibility scan
-      await runAccessibilityScan(page, 'light', 'accessibility-report-game-light.md');
-    });
-
-    test('should not have accessibility violations on game board (dark theme)', async ({ page }) => {
-      // Navigate to the page
-      await page.goto('/');
-
-      // Set theme to dark
-      await setTheme(page, 'dark');
-
-      // Wait for game board to be visible
-      const gameBoard = page.locator('[data-testid="game-board"]').or(page.getByRole('main'));
-      await expect(gameBoard).toBeVisible({ timeout: 15000 });
-
-      // Run accessibility scan
-      await runAccessibilityScan(page, 'dark', 'accessibility-report-game-dark.md');
-    });
-  });
-
-  test.describe('Specific WCAG Rules', () => {
-    test('should have valid ARIA attributes', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('domcontentloaded');
-
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
-        .analyze();
-
-      // Check for ARIA-related violations
-      const ariaViolations = accessibilityScanResults.violations.filter(
-        (v) => Boolean(v.id.includes('aria') || v.tags.includes('aria'))
-      );
-
-      expect(ariaViolations).toEqual([]);
-    });
-
-    test('should have proper heading hierarchy', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('domcontentloaded');
-
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
-        .analyze();
-
-      // Check for heading order violations
-      const headingViolations = accessibilityScanResults.violations.filter(
-        (v) => v.id === 'heading-order'
-      );
-
-      expect(headingViolations).toEqual([]);
-    });
-
-    test('should have accessible form controls', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('domcontentloaded');
-
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
-        .analyze();
-
-      // Check for form-related violations
-      const formViolations = accessibilityScanResults.violations.filter(
-        (v) => Boolean(v.id.includes('label') || v.id.includes('form'))
-      );
-
-      expect(formViolations).toEqual([]);
-    });
-  });
-});

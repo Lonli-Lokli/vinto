@@ -9,9 +9,9 @@
     "lint": "nx run-many --all --target=lint --fix=true",
     "test": "nx run-many --all --target=test --passWithNoTests --silent",
     "test:coverage": "nx run-many --all --target=test --coverage --passWithNoTests && node tools/fix-coverage-paths.js",
-    "test:e2e": "nx e2e",
-    "test:e2e:ui": "nx e2e --ui",
-    "test:e2e:debug": "nx e2e --debug",
+    "test:e2e": "nx run-many --all --target=e2e",
+    "test:e2e:ui": "nx run-many --all --target=e2e --ui",
+    "test:e2e:debug": "nx run-many --all --target=e2e --debug",
     "test:e2e:report": "playwright show-report",
     "update": "cross-env NX_SKIP_PROVENANCE_CHECK=true npx nx migrate latest && npm install && npx nx migrate --run-migrations",
     "deploy": "run-s test build"
