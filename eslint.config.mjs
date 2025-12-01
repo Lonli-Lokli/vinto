@@ -31,6 +31,7 @@ export default [
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
       '**/vitest.workspace.ts',
+      '**/test-output',
     ],
   },
   {

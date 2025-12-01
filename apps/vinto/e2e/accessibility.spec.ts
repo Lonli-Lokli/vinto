@@ -1,7 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import * as fs from 'fs';
-import * as path from 'path';
 import type { Result as AxeResult, NodeResult } from 'axe-core';
 
 /**
@@ -305,7 +304,7 @@ test.describe('Accessibility Tests', () => {
 
       // Check for ARIA-related violations
       const ariaViolations = accessibilityScanResults.violations.filter(
-        (v) => v.id.includes('aria') || v.tags.includes('aria')
+        (v) => Boolean(v.id.includes('aria') || v.tags.includes('aria'))
       );
 
       expect(ariaViolations).toEqual([]);
@@ -337,7 +336,7 @@ test.describe('Accessibility Tests', () => {
 
       // Check for form-related violations
       const formViolations = accessibilityScanResults.violations.filter(
-        (v) => v.id.includes('label') || v.id.includes('form')
+        (v) => Boolean(v.id.includes('label') || v.id.includes('form'))
       );
 
       expect(formViolations).toEqual([]);

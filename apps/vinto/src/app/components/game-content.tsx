@@ -33,20 +33,20 @@ export const GameContent = observer(() => {
       {/* Main Game Layout */}
       {isDesktop ? (
         /* Desktop Layout: Middle area fills all available space, Bottom area on right */
-        <div className="flex flex-1 min-h-0 justify-center items-stretch w-full h-full" data-testid="game-board">
+        <div className="flex flex-1 min-h-0 justify-center items-stretch w-full h-full">
           <div className="flex-1 min-w-0 w-full h-full">
-            <MiddleArea />
+            <MiddleArea data-testid="middle-area" />
           </div>
           <div className="w-104 min-w-104 max-w-104 flex-shrink-0 border-l border-primary bg-surface-primary/80 flex flex-col justify-end">
-            <UserControlsArea />
+            <UserControlsArea data-testid="user-controls-area" />
           </div>
         </div>
       ) : (
         /* Mobile Layout: Vertical stack */
-        <div data-testid="game-board">
-          <MiddleArea />
-          <UserControlsArea />
-        </div>
+        <>
+          <MiddleArea data-testid="middle-area" />
+          <UserControlsArea data-testid="user-controls-area" />
+        </>
       )}
 
       <AnimatedCardOverlay />
