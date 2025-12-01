@@ -32,15 +32,16 @@ async function runAccessibilityScan(
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
 
-  // If violations found, generate report and fail
-  if (accessibilityScanResults.violations.length > 0) {
-    const report = generateAccessibilityReport(
-      page.url(),
-      accessibilityScanResults.violations,
-      theme
-    );
-    saveAccessibilityReport(report, reportFilename);
+  // Always generate and save report (for both pass and fail cases)
+  const report = generateAccessibilityReport(
+    page.url(),
+    accessibilityScanResults.violations,
+    theme
+  );
+  saveAccessibilityReport(report, reportFilename);
 
+  // If violations found, log details and fail
+  if (accessibilityScanResults.violations.length > 0) {
     console.log(`❌ Accessibility violations found (${theme} theme):`);
     accessibilityScanResults.violations.forEach((violation) => {
       console.log(`- ${violation.id}: ${violation.description}`);
@@ -51,6 +52,8 @@ async function runAccessibilityScan(
 
     // Fail the test
     expect(accessibilityScanResults.violations).toEqual([]);
+  } else {
+    console.log(`✅ No accessibility violations found (${theme} theme)`);
   }
 }
 
@@ -314,8 +317,9 @@ function generateAccessibilityReport(
  * Saves the accessibility report to a file using Playwright's test artifact system
  */
 function saveAccessibilityReport(report: string, filename: string): void {
-  // Save to playwright-report folder in workspace root (../../playwright-report from e2e folder)
-  const reportDir = path.join(__dirname, '..', '..', '..', 'playwright-report');
+  // Use process.cwd() which reliably gives workspace root when running via nx/playwright
+  // Playwright runs from workspace root, so cwd() is the workspace root
+  const reportDir = path.join(process.cwd(), 'playwright-report');
 
   // Create directory if it doesn't exist
   if (!fs.existsSync(reportDir)) {

@@ -43,10 +43,15 @@ export default defineConfig({
   reporter: isCI
     ? [
         ['html', { outputFolder: '../../playwright-report' }],
+        ['json', { outputFile: '../../playwright-report/results.json' }],
         ['list'],
         ['github' as const],
       ]
-    : [['html', { outputFolder: '../../playwright-report' }], ['list']],
+    : [
+        ['html', { outputFolder: '../../playwright-report' }],
+        ['json', { outputFile: '../../playwright-report/results.json' }],
+        ['list'],
+      ],
 
   projects: [
     {
