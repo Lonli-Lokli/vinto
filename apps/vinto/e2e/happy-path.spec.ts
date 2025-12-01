@@ -17,14 +17,18 @@ test.describe('Vinto Game - Happy Path', () => {
     await page.goto('/');
   });
 
-  test('should complete a full game from start to calling Vinto', async ({ page }) => {
+  test('should complete a full game from start to calling Vinto', async ({
+    page,
+  }) => {
     await test.step('Load the game', async () => {
       // Wait for the page to load
       await expect(page).toHaveTitle(/Vinto/i);
 
       // Look for game initialization elements
       // This may vary based on your actual UI - adjust selectors as needed
-      const gameBoard = page.locator('[data-testid="game-board"]').or(page.getByRole('main'));
+      const gameBoard = page
+        .locator('[data-testid="middle-area"]')
+        .or(page.getByRole('main'));
       await expect(gameBoard).toBeVisible({ timeout: 15000 });
     });
 
@@ -43,7 +47,9 @@ test.describe('Vinto Game - Happy Path', () => {
 
       // Verify the game board is visible
       await expect(
-        page.locator('[data-testid="player-hand"]').or(page.locator('.player-cards'))
+        page
+          .locator('[data-testid="player-hand"]')
+          .or(page.locator('.player-cards'))
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -76,7 +82,9 @@ test.describe('Vinto Game - Happy Path', () => {
         await expect(secondCard).toBeVisible();
 
         // Confirm or close memory phase if needed
-        const confirmButton = page.getByRole('button', { name: /confirm|ok|continue/i });
+        const confirmButton = page.getByRole('button', {
+          name: /confirm|ok|continue/i,
+        });
         const confirmVisible = await confirmButton.count();
         if (confirmVisible > 0) {
           await confirmButton.click();
@@ -105,14 +113,22 @@ test.describe('Vinto Game - Happy Path', () => {
           await drawPile.click();
 
           // Wait for action buttons to appear after drawing
-          const actionArea = page.getByRole('button', { name: /use action|play|swap|replace|discard|skip/i });
+          const actionArea = page.getByRole('button', {
+            name: /use action|play|swap|replace|discard|skip/i,
+          });
           await expect(actionArea.first()).toBeVisible({ timeout: 5000 });
 
           // Handle the drawn card - either use action, swap, or discard
           // Look for action buttons
-          const useActionButton = page.getByRole('button', { name: /use action|play/i });
-          const swapButton = page.getByRole('button', { name: /swap|replace/i });
-          const discardButton = page.getByRole('button', { name: /discard|skip/i });
+          const useActionButton = page.getByRole('button', {
+            name: /use action|play/i,
+          });
+          const swapButton = page.getByRole('button', {
+            name: /swap|replace/i,
+          });
+          const discardButton = page.getByRole('button', {
+            name: /discard|skip/i,
+          });
 
           const hasUseAction = await useActionButton.count();
           const hasSwap = await swapButton.count();
@@ -122,7 +138,9 @@ test.describe('Vinto Game - Happy Path', () => {
             await useActionButton.click();
 
             // If it's a peek action, wait for selectable cards to appear and select one
-            const selectableCard = page.locator('[data-testid*="card"]').first();
+            const selectableCard = page
+              .locator('[data-testid*="card"]')
+              .first();
             const cardClickable = await selectableCard.count();
             if (cardClickable > 0) {
               await expect(selectableCard).toBeVisible();
@@ -132,7 +150,9 @@ test.describe('Vinto Game - Happy Path', () => {
             await swapButton.click();
 
             // Wait for card selection state to be ready, then select a position to swap
-            const cardSlot = page.locator('[data-testid="player-card-0"]').first();
+            const cardSlot = page
+              .locator('[data-testid="player-card-0"]')
+              .first();
             const slotClickable = await cardSlot.count();
             if (slotClickable > 0) {
               await expect(cardSlot).toBeVisible();
@@ -140,14 +160,18 @@ test.describe('Vinto Game - Happy Path', () => {
             }
           } else if (hasDiscard > 0) {
             await discardButton.click();
-            // Wait for discard action to complete
-            await expect(discardButton).not.toBeVisible({ timeout: 2000 }).catch(() => {});
+            // Wait for discard action to complete - ignore if timeout
+            try {
+              await expect(discardButton).not.toBeVisible({ timeout: 2000 });
+            } catch {
+              // Ignore timeout if button is still visible
+            }
           }
         }
 
         // Wait for turn to complete - check that draw pile becomes disabled or next turn starts
-        // This is more reliable than a fixed timeout
-        await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
+        // Use a short delay to allow for turn transition
+        await page.waitForTimeout(500);
       }
     });
 
@@ -166,7 +190,7 @@ test.describe('Vinto Game - Happy Path', () => {
       await vintoButton.click();
 
       // Wait for confirmation modal or game end state to appear
-      await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(1000);
     });
 
     await test.step('Verify game completion', async () => {
@@ -190,7 +214,7 @@ test.describe('Vinto Game - Happy Path', () => {
       // Take a screenshot of the final state using test.info() for proper path handling
       await page.screenshot({
         path: test.info().outputPath('game-complete.png'),
-        fullPage: true
+        fullPage: true,
       });
     });
   });
@@ -201,7 +225,9 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(page).toHaveTitle(/Vinto/i);
 
       // Check for key UI elements
-      const mainContent = page.getByRole('main').or(page.locator('[data-testid="game-board"]'));
+      const mainContent = page
+        .getByRole('main')
+        .or(page.locator('[data-testid="middle-area"]'));
       await expect(mainContent).toBeVisible();
     });
   });
@@ -209,11 +235,8 @@ test.describe('Vinto Game - Happy Path', () => {
   test('should display game interface elements', async ({ page }) => {
     await test.step('Check for game UI elements', async () => {
       // This is a smoke test to verify core UI elements exist
-      const body = await page.textContent('body');
-
-      // Just verify the page has content
-      expect(body).toBeTruthy();
-      expect(body!.length).toBeGreaterThan(0);
+      // Use web-first assertion to verify page has content
+      await expect(page.locator('body')).not.toBeEmpty();
     });
   });
 });

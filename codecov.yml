@@ -10,8 +10,8 @@ coverage:
         if_ci_failed: error
     patch:
       default:
-        target: 70%           # New code should have 70% coverage
-        threshold: 5%
+        target: auto
+        threshold: -0.1%
 
 comment:
   layout: "header, diff, flags, components"

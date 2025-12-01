@@ -17,7 +17,9 @@
       "Bash(cut:*)",
       "Bash(npx nx build:*)",
       "Bash(npx nx run:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(npx nx show:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [
       "Bash(npx tsc:*)",
