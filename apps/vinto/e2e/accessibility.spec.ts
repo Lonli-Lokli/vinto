@@ -167,7 +167,6 @@ test.describe('Accessibility Tests', () => {
           `accessibility-report-game-${theme}.md`
         );
       });
-
     });
 
     test.describe(`Specific WCAG Rules (${theme} theme)`, () => {
@@ -314,10 +313,7 @@ function generateAccessibilityReport(
 /**
  * Saves the accessibility report to a file using Playwright's test artifact system
  */
-function saveAccessibilityReport(
-  report: string,
-  filename: string
-): void {
+function saveAccessibilityReport(report: string, filename: string): void {
   // Save to playwright-report folder in workspace root (../../playwright-report from e2e folder)
   const reportDir = path.join(__dirname, '..', '..', '..', 'playwright-report');
 

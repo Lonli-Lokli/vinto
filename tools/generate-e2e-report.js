@@ -98,8 +98,17 @@ function main() {
     summary: generateAccessibilitySummary(accessibilityData),
   };
 
-  // Output JSON for GitHub Actions to parse
-  console.log(JSON.stringify(result, null, 2));
+  // When run in GitHub Actions, write to output file
+  if (process.env.GITHUB_OUTPUT) {
+    const outputFile = process.env.GITHUB_OUTPUT;
+    // Use base64 encoding to safely pass JSON through GitHub Actions
+    const jsonBase64 = Buffer.from(JSON.stringify(result)).toString('base64');
+    fs.appendFileSync(outputFile, `report=${jsonBase64}\n`);
+    console.log('Report data written to GITHUB_OUTPUT');
+  } else {
+    // When run locally, output pretty JSON to console
+    console.log(JSON.stringify(result, null, 2));
+  }
 }
 
 main();
