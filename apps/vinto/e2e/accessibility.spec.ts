@@ -33,9 +33,14 @@ test.describe('Accessibility Tests', () => {
   // Ensure accessibility-reports directory exists before any tests run
   test.beforeAll(() => {
     const reportDir = path.join(process.cwd(), 'accessibility-reports');
-    if (!fs.existsSync(reportDir)) {
-      fs.mkdirSync(reportDir, { recursive: true });
-    }
+  console.log(`Attempting to create directory at: ${reportDir}`);
+
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+    console.log(`Directory created successfully at: ${reportDir}`);
+  } else {
+    console.log(`Directory already exists at: ${reportDir}`);
+  }
 
     // Create README to ensure directory is never empty (for artifact upload)
     const readmePath = path.join(reportDir, 'README.md');
