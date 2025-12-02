@@ -11,8 +11,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const reportPath = path.join(__dirname, '..', 'playwright-report');
-const resultsPath = path.join(reportPath, 'results.json');
+const playwrightReportPath = path.join(__dirname, '..', 'playwright-report');
+const accessibilityReportPath = path.join(
+  __dirname,
+  '..',
+  'accessibility-reports'
+);
+const resultsPath = path.join(playwrightReportPath, 'results.json');
 
 /**
  * Parses Playwright test results JSON
@@ -52,7 +57,9 @@ function parseTestResults() {
               failedTests.push({
                 title: spec.title,
                 file: spec.file || suite.file,
-                error: spec.tests?.[0]?.results?.[0]?.error?.message || 'Test failed',
+                error:
+                  spec.tests?.[0]?.results?.[0]?.error?.message ||
+                  'Test failed',
               });
             }
           });
@@ -76,45 +83,68 @@ function parseTestResults() {
 }
 
 /**
- * Parses accessibility report files and extracts violation counts
+ * Parses accessibility report files and extracts violation counts and tickets
  */
 function parseAccessibilityReports() {
   const reports = [];
   let totalViolations = 0;
+  let totalTickets = 0;
 
-  console.log(`Looking for reports in: ${reportPath}`);
+  console.log(
+    `Looking for accessibility reports in: ${accessibilityReportPath}`
+  );
 
-  if (!fs.existsSync(reportPath)) {
-    console.log('Report directory does not exist');
-    return { reports, totalViolations, hasReports: false };
+  if (!fs.existsSync(accessibilityReportPath)) {
+    console.log('Accessibility report directory does not exist');
+    return { reports, totalViolations, totalTickets, hasReports: false };
   }
 
   try {
-    const files = fs.readdirSync(reportPath);
-    console.log(`Found ${files.length} files in report directory`);
+    const files = fs.readdirSync(accessibilityReportPath);
+    console.log(
+      `Found ${files.length} files in accessibility report directory`
+    );
 
     const accessibilityFiles = files.filter(
-      (f) => f.startsWith('accessibility-report-') && f.endsWith('.md')
+      (f) =>
+        f.startsWith('accessibility-report-') &&
+        f.endsWith('.md') &&
+        f !== 'README.md'
     );
-    console.log(`Found ${accessibilityFiles.length} accessibility report files`);
+    console.log(
+      `Found ${accessibilityFiles.length} accessibility report files`
+    );
 
     for (const file of accessibilityFiles) {
-      const filePath = path.join(reportPath, file);
+      const filePath = path.join(accessibilityReportPath, file);
       const content = fs.readFileSync(filePath, 'utf-8');
 
-      // Extract violation count from the report
+      // Extract issue count from the new format
+      const issueMatch = content.match(/\*\*Total Issues\*\*:\s*(\d+)/);
+      // Also check old format for backward compatibility
       const violationMatch = content.match(/\*\*Total Violations\*\*:\s*(\d+)/);
-      if (violationMatch) {
-        const count = parseInt(violationMatch[1], 10);
-        totalViolations += count;
-        console.log(`  ${file}: ${count} violations`);
 
-        reports.push({
-          file,
-          violations: count,
-          status: count === 0 ? 'passed' : 'failed',
-        });
-      }
+      const count = issueMatch
+        ? parseInt(issueMatch[1], 10)
+        : violationMatch
+        ? parseInt(violationMatch[1], 10)
+        : 0;
+
+      // Count tickets in the new format
+      const ticketMatches = content.match(/## Ticket \d+:/g) || [];
+      const ticketCount = ticketMatches.length;
+
+      totalViolations += count;
+      totalTickets += ticketCount;
+      console.log(`  ${file}: ${count} violations, ${ticketCount} tickets`);
+
+      reports.push({
+        file,
+        violations: count,
+        tickets: ticketCount,
+        status: count === 0 ? 'passed' : 'failed',
+        content: content,
+      });
     }
   } catch (error) {
     console.error('Error reading accessibility reports:', error.message);
@@ -123,8 +153,18 @@ function parseAccessibilityReports() {
   return {
     reports,
     totalViolations,
+    totalTickets,
     hasReports: reports.length > 0,
   };
+}
+
+/**
+ * Strips ANSI escape codes from text
+ */
+function stripAnsi(text) {
+  // Remove ANSI escape codes (color, formatting, etc.)
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
 /**
@@ -139,7 +179,9 @@ function generateTestSummary(testResults) {
   let summary = '### 🎭 Test Results\n\n';
 
   // Overall status
-  if (stats.failed === 0) {
+  if (stats.total === 0) {
+    summary += `⚠️ **No tests were run!** Check for syntax errors or test collection failures.\n\n`;
+  } else if (stats.failed === 0) {
     summary += `✅ **All tests passed!** (${stats.passed}/${stats.total})\n\n`;
   } else {
     summary += `❌ **${stats.failed} test(s) failed** (${stats.passed}/${stats.total} passed)\n\n`;
@@ -155,9 +197,11 @@ function generateTestSummary(testResults) {
     failedTests.forEach((test) => {
       summary += `- ❌ ${test.title}\n`;
       if (test.error) {
-        // Truncate error message if too long
-        const errorMsg = test.error.split('\n')[0];
-        const truncatedError = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg;
+        // Strip ANSI codes and truncate error message if too long
+        const cleanError = stripAnsi(test.error);
+        const errorMsg = cleanError.split('\n')[0];
+        const truncatedError =
+          errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg;
         summary += `  \`\`\`\n  ${truncatedError}\n  \`\`\`\n`;
       }
     });
@@ -168,7 +212,7 @@ function generateTestSummary(testResults) {
 }
 
 /**
- * Generates markdown summary for accessibility reports
+ * Generates markdown summary for accessibility reports with collapsible details
  */
 function generateAccessibilitySummary(accessibilityData) {
   if (!accessibilityData.hasReports) {
@@ -177,22 +221,49 @@ function generateAccessibilitySummary(accessibilityData) {
 
   let summary = '### ♿ Accessibility Reports\n\n';
 
-  for (const report of accessibilityData.reports) {
-    const icon = report.status === 'passed' ? '✅' : '❌';
-    summary += `- ${icon} **${report.file}**: ${
-      report.violations === 0 ? 'No violations found' : `${report.violations} violation(s) found`
-    }\n`;
+  if (accessibilityData.totalViolations === 0) {
+    summary += '✅ **No accessibility violations detected**\n\n';
+    return summary;
   }
 
-  summary += '\n';
+  // Overall summary
+  summary += `⚠️ **Total Violations**: ${accessibilityData.totalViolations}\n`;
+  summary += `🎫 **Total Tickets**: ${accessibilityData.totalTickets}\n\n`;
 
-  if (accessibilityData.totalViolations > 0) {
-    summary += `⚠️ **Total Accessibility Violations**: ${accessibilityData.totalViolations}\n`;
-  } else {
-    summary += '✅ **No accessibility violations detected**\n';
+  // Generate collapsible sections for each report with violations
+  for (const report of accessibilityData.reports) {
+    if (report.violations === 0) {
+      summary += `✅ **${getSuiteName(report.file)}**: No violations\n\n`;
+      continue;
+    }
+
+    const suiteName = getSuiteName(report.file);
+    summary += `<details>\n`;
+    summary += `<summary>`;
+    summary += `❌ <strong>${suiteName}</strong>: ${report.violations} violation(s) - ${report.tickets} ticket(s) ready to report`;
+    summary += `</summary>\n\n`;
+
+    // Include the full report content
+    summary += report.content + '\n';
+
+    summary += `</details>\n\n`;
   }
 
   return summary;
+}
+
+/**
+ * Extracts a human-readable suite name from filename
+ */
+function getSuiteName(filename) {
+  // Convert filename like "accessibility-report-homepage-accessibility.md" to "Homepage Accessibility"
+  const match = filename.match(/accessibility-report-(.+)\.md/);
+  if (!match) return filename;
+
+  return match[1]
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /**
@@ -212,7 +283,7 @@ function main() {
   }
 
   const result = {
-    hasReport: fs.existsSync(reportPath),
+    hasReport: fs.existsSync(playwrightReportPath),
     testResults,
     accessibility: accessibilityData,
     summary,

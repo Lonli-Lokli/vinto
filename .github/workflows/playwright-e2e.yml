@@ -3,14 +3,15 @@ permissions:
   contents: read
   pull-requests: write
   deployments: read
-  
+
 on:
   pull_request:
   push:
     branches:
       - master
   schedule:
-    - cron: "0 2 * * *"
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   e2e:
@@ -20,7 +21,7 @@ jobs:
     env:
       IS_PR: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
       IS_NIGHTLY: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
-      PROD_URL: "https://vinto-game.vercel.app/"
+      PROD_URL: 'https://vinto-game.vercel.app/'
 
     steps:
       - name: Checkout repository
@@ -82,15 +83,57 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: |
-            playwright-report/
-            !playwright-report/**/*.log
+          path: playwright-report/
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Get artifact download URL
+      - name: Upload accessibility reports
+        uses: actions/upload-artifact@v4
         if: always()
-        id: artifact-url
+        with:
+          name: accessibility-reports
+          path: accessibility-reports/
+          retention-days: 30
+          if-no-files-found: ignore
+
+  comment:
+    name: Post Test Results Comment
+    needs: e2e
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download Playwright report
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+        continue-on-error: true
+
+      - name: Download accessibility reports
+        uses: actions/download-artifact@v4
+        with:
+          name: accessibility-reports
+          path: accessibility-reports/
+        continue-on-error: true
+
+      - name: Generate test report summary
+        id: report-summary
+        run: node tools/generate-e2e-report.js
+
+      - name: Get artifact URLs
+        id: artifact-urls
         uses: actions/github-script@v7
         with:
           script: |
@@ -100,60 +143,75 @@ jobs:
               run_id: context.runId,
             });
 
-            const artifact = artifacts.data.artifacts.find(a => a.name === 'playwright-report');
-            if (!artifact) {
-              console.log('No playwright-report artifact found.');
-              return { url: '' };
-            }
+            const playwrightArtifact = artifacts.data.artifacts.find(a => a.name === 'playwright-report');
+            const accessibilityArtifact = artifacts.data.artifacts.find(a => a.name === 'accessibility-reports');
 
-            // GitHub provides an API download URL; the UI link is different.
-            // This URL works directly in a browser and downloads the zip.
-            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/suites/${context.runId}/artifacts/${artifact.id}`;
-            return { url };
+            const baseUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts`;
 
-      - name: Generate test report summary
-        if: always()
-        id: report-summary
-        run: node tools/generate-e2e-report.js
+            return {
+              playwright: playwrightArtifact ? `${baseUrl}/${playwrightArtifact.id}` : '',
+              accessibility: accessibilityArtifact ? `${baseUrl}/${accessibilityArtifact.id}` : ''
+            };
 
       - name: Comment PR with test results
-        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            // Decode base64-encoded report from script output
             const reportBase64 = '${{ steps.report-summary.outputs.report }}';
+            const e2eJobStatus = '${{ needs.e2e.result }}';
+            const artifactUrls = ${{ steps.artifact-urls.outputs.result }};
 
             if (!reportBase64) {
-              console.log('No report data available');
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🎭 Playwright E2E Test Results\n\n` +
+                      `❌ **E2E Job**: ${e2eJobStatus}\n\n` +
+                      `⚠️ Test report generation failed. [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+              });
               return;
             }
 
             const reportJson = Buffer.from(reportBase64, 'base64').toString('utf-8');
             const report = JSON.parse(reportJson);
 
-            let message = '## 🎭 Playwright E2E Test Results\n\n';
-            message += `**Preview URL**: ${process.env.PLAYWRIGHT_TEST_BASE_URL || 'Local dev server'}\n\n`;
+            // Build status line based on e2e job and test results
+            let statusLine = '';
+            if (e2eJobStatus !== 'success') {
+              statusLine = `❌ **E2E Job**: ${e2eJobStatus}\n\n`;
+            } else if (report.testResults?.stats.total === 0) {
+              statusLine = `⚠️ **E2E Job**: Tests did not run\n\n`;
+            } else if (report.testResults?.stats.failed > 0 || report.accessibility?.totalViolations > 0) {
+              statusLine = `❌ **E2E Job**: Tests failed\n\n`;
+            } else {
+              statusLine = `✅ **E2E Job**: All passed\n\n`;
+            }
 
-            // Add test results and accessibility summary if available
+            let message = '## 🎭 Playwright E2E Test Results\n\n';
+            message += statusLine;
+
+            // Add test results and accessibility summary
             if (report.summary && report.summary.length > 0) {
               message += report.summary;
             } else if (!report.hasReport) {
-              message += '⚠️ Test report not found. Tests may have failed to run.\n';
-            } else if (!report.testResults && !report.accessibility?.hasReports) {
-              message += '⚠️ No test results or accessibility reports found.\n';
+              message += '⚠️ No report data found\n';
             } else {
-              message += '✅ Tests completed.\n';
+              message += '✅ Tests completed\n';
             }
 
-            message += `\n📊 [View full Playwright report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            message += `\n---\n\n`;
+            message += `📊 [View full test run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
 
-            const artifactUrl = '${{ steps.artifact-url.outputs.url }}';
-            if (artifactUrl) {
-              message += `\n📦 [Download report ZIP](${artifactUrl})`;
+            // Add artifact download links
+            if (artifactUrls?.playwright) {
+              message += `📦 [Download Playwright report](${artifactUrls.playwright})\n`;
+            }
+            if (artifactUrls?.accessibility) {
+              message += `♿ [Download accessibility reports](${artifactUrls.accessibility})\n`;
             }
 
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

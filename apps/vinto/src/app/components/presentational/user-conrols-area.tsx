@@ -14,7 +14,8 @@ import { useGameClient } from '@vinto/local-client';
 export const UserControlsArea = observer(() => {
   const animationStore = useCardAnimationStore();
   const gameClient = useGameClient();
-  const hideGameControls = gameClient.isFinalTurn && gameClient.visualState.phase !== 'scoring';
+  const hideGameControls =
+    gameClient.isFinalTurn && gameClient.visualState.phase !== 'scoring';
   const hasBlockingAnimations = animationStore.hasBlockingAnimations;
 
   return (
@@ -25,6 +26,7 @@ export const UserControlsArea = observer(() => {
         minHeight: '100px',
         maxHeight: '260px',
       }}
+      data-testid="user-controls-area"
     >
       <div className="h-full w-full relative">
         {/* Coalition Status - Always visible during final round, even during animations */}

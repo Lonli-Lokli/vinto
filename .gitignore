@@ -67,3 +67,5 @@ vitest.config.*.timestamp*
 
 # Accessibility test reports
 accessibility-report*.md
+# Accessibility E2E reports
+accessibility-reports/
