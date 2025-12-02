@@ -131,16 +131,39 @@ jobs:
           script: |
             // Decode base64-encoded report from script output
             const reportBase64 = '${{ steps.report-summary.outputs.report }}';
+            const jobStatus = '${{ job.status }}';
 
             if (!reportBase64) {
               console.log('No report data available');
+              // Still post a comment about the failure
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🎭 Playwright E2E Test Results\n\n` +
+                      `❌ **Job Status**: ${jobStatus}\n\n` +
+                      `⚠️ Test report generation failed. [View workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+              });
               return;
             }
 
             const reportJson = Buffer.from(reportBase64, 'base64').toString('utf-8');
             const report = JSON.parse(reportJson);
 
+            // Build status indicator based on job status and test results
+            let statusLine = '';
+            if (jobStatus !== 'success') {
+              statusLine = `❌ **Job Status**: ${jobStatus}\n\n`;
+            } else if (report.testResults?.stats.total === 0) {
+              statusLine = `⚠️ **Job Status**: Tests did not run properly\n\n`;
+            } else if (report.testResults?.stats.failed > 0 || report.accessibility?.totalViolations > 0) {
+              statusLine = `❌ **Job Status**: Tests failed\n\n`;
+            } else {
+              statusLine = `✅ **Job Status**: All tests passed\n\n`;
+            }
+
             let message = '## 🎭 Playwright E2E Test Results\n\n';
+            message += statusLine;
             message += `**Preview URL**: ${process.env.PLAYWRIGHT_TEST_BASE_URL || 'Local dev server'}\n\n`;
 
             // Add test results and accessibility summary if available

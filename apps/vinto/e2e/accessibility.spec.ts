@@ -31,7 +31,6 @@ test.describe('Accessibility Tests', () => {
     test.describe(`Homepage Accessibility (${theme} theme)`, () => {
       const suiteName = 'Homepage Accessibility';
 
-      // eslint-disable-next-line playwright/expect-expect
       test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
         page,
       }) => {
@@ -51,7 +50,7 @@ test.describe('Accessibility Tests', () => {
         );
       });
 
-      test.afterAll(async (_fixtures, testInfo) => {
+      test.afterAll(async (testInfo) => {
         // Generate consolidated report for this suite
         await generateConsolidatedReport(suiteName, testInfo);
       });
@@ -152,7 +151,7 @@ test.describe('Accessibility Tests', () => {
         );
       });
 
-      test.afterAll(async (_fixtures, testInfo) => {
+      test.afterAll(async (testInfo) => {
         // Generate consolidated report for this suite
         await generateConsolidatedReport(suiteName, testInfo);
       });

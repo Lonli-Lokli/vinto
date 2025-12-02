@@ -154,7 +154,9 @@ function generateTestSummary(testResults) {
   let summary = '### 🎭 Test Results\n\n';
 
   // Overall status
-  if (stats.failed === 0) {
+  if (stats.total === 0) {
+    summary += `⚠️ **No tests were run!** Check for syntax errors or test collection failures.\n\n`;
+  } else if (stats.failed === 0) {
     summary += `✅ **All tests passed!** (${stats.passed}/${stats.total})\n\n`;
   } else {
     summary += `❌ **${stats.failed} test(s) failed** (${stats.passed}/${stats.total} passed)\n\n`;
