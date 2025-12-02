@@ -96,7 +96,7 @@ function parseAccessibilityReports() {
     console.log(`Found ${files.length} files in accessibility report directory`);
 
     const accessibilityFiles = files.filter(
-      (f) => f.startsWith('accessibility-report-') && f.endsWith('.md')
+      (f) => f.startsWith('accessibility-report-') && f.endsWith('.md') && f !== 'README.md'
     );
     console.log(`Found ${accessibilityFiles.length} accessibility report files`);
 
