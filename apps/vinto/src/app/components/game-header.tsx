@@ -117,9 +117,15 @@ export const GameHeader = observer(() => {
                   <ThemeToggle />
                   <WakeLockToggle />
                 </div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-title-gradient">
+                <a
+                  href="https://vinto.game/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xl font-bold text-transparent bg-clip-text bg-title-gradient"
+                  title="Open vinto.game"
+                >
                   VINTO
-                </h1>
+                </a>
 
                 <a
                   href="/VintoRules.pdf"

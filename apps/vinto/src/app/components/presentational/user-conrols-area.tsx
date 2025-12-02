@@ -25,6 +25,7 @@ export const UserControlsArea = observer(() => {
         minHeight: '100px',
         maxHeight: '260px',
       }}
+      data-testid="user-controls-area"
     >
       <div className="h-full w-full relative">
         {/* Coalition Status - Always visible during final round, even during animations */}
