@@ -6,15 +6,23 @@ permissions:
   
 on:
   pull_request:
+    types: [labeled, synchronize]
   push:
     branches:
       - master
   schedule:
     - cron: "0 2 * * *"
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   e2e:
     name: E2E Tests
+    # Run if:
+    # 1. Not a PR (push to master, schedule, manual trigger)
+    # 2. PR has 'run-e2e' label (only maintainers can add)
+    if: |
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'run-e2e')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
