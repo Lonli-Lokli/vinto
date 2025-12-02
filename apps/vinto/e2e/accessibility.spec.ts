@@ -2,6 +2,8 @@
 import { test, expect, type Page, TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Result as AxeResult, NodeResult } from 'axe-core';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Accessibility E2E Tests for Vinto Card Game
@@ -265,14 +267,20 @@ async function generateConsolidatedReport(
   }
 
   const report = generateJiraReadyReport(suiteName, records);
+  const filename = `accessibility-report-${suiteName.toLowerCase().replace(/\s+/g, '-')}.md`;
 
-  await testInfo.attach(
-    `accessibility-report-${suiteName.toLowerCase().replace(/\s+/g, '-')}.md`,
-    {
-      body: report,
-      contentType: 'text/markdown',
-    }
-  );
+  // Attach to Playwright test results
+  await testInfo.attach(filename, {
+    body: report,
+    contentType: 'text/markdown',
+  });
+
+  // Write to accessibility-reports directory (separate from playwright-report to avoid cleanup)
+  const reportDir = path.join(process.cwd(), 'accessibility-reports');
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(reportDir, filename), report, 'utf-8');
 
   // Clear violations for this suite
   suiteViolations.delete(suiteName);

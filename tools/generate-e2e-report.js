@@ -11,8 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const reportPath = path.join(__dirname, '..', 'playwright-report');
-const resultsPath = path.join(reportPath, 'results.json');
+const playwrightReportPath = path.join(__dirname, '..', 'playwright-report');
+const accessibilityReportPath = path.join(__dirname, '..', 'accessibility-reports');
+const resultsPath = path.join(playwrightReportPath, 'results.json');
 
 /**
  * Parses Playwright test results JSON
@@ -83,16 +84,16 @@ function parseAccessibilityReports() {
   let totalViolations = 0;
   let totalTickets = 0;
 
-  console.log(`Looking for reports in: ${reportPath}`);
+  console.log(`Looking for accessibility reports in: ${accessibilityReportPath}`);
 
-  if (!fs.existsSync(reportPath)) {
-    console.log('Report directory does not exist');
+  if (!fs.existsSync(accessibilityReportPath)) {
+    console.log('Accessibility report directory does not exist');
     return { reports, totalViolations, totalTickets, hasReports: false };
   }
 
   try {
-    const files = fs.readdirSync(reportPath);
-    console.log(`Found ${files.length} files in report directory`);
+    const files = fs.readdirSync(accessibilityReportPath);
+    console.log(`Found ${files.length} files in accessibility report directory`);
 
     const accessibilityFiles = files.filter(
       (f) => f.startsWith('accessibility-report-') && f.endsWith('.md')
@@ -100,7 +101,7 @@ function parseAccessibilityReports() {
     console.log(`Found ${accessibilityFiles.length} accessibility report files`);
 
     for (const file of accessibilityFiles) {
-      const filePath = path.join(reportPath, file);
+      const filePath = path.join(accessibilityReportPath, file);
       const content = fs.readFileSync(filePath, 'utf-8');
 
       // Extract issue count from the new format
@@ -256,7 +257,7 @@ function main() {
   }
 
   const result = {
-    hasReport: fs.existsSync(reportPath),
+    hasReport: fs.existsSync(playwrightReportPath),
     testResults,
     accessibility: accessibilityData,
     summary,
