@@ -32,7 +32,7 @@ const suiteViolations: Map<string, ViolationRecord[]> = new Map();
 test.describe('Accessibility Tests', () => {
   // Ensure accessibility-reports directory exists before any tests run
   test.beforeAll(() => {
-    const reportDir = path.join(process.cwd(), 'accessibility-reports');
+    const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
   console.log(`Attempting to create directory at: ${reportDir}`);
 
   if (!fs.existsSync(reportDir)) {
