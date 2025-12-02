@@ -144,6 +144,15 @@ function parseAccessibilityReports() {
 }
 
 /**
+ * Strips ANSI escape codes from text
+ */
+function stripAnsi(text) {
+  // Remove ANSI escape codes (color, formatting, etc.)
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+/**
  * Generates markdown summary for test results
  */
 function generateTestSummary(testResults) {
@@ -173,8 +182,9 @@ function generateTestSummary(testResults) {
     failedTests.forEach((test) => {
       summary += `- ❌ ${test.title}\n`;
       if (test.error) {
-        // Truncate error message if too long
-        const errorMsg = test.error.split('\n')[0];
+        // Strip ANSI codes and truncate error message if too long
+        const cleanError = stripAnsi(test.error);
+        const errorMsg = cleanError.split('\n')[0];
         const truncatedError = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg;
         summary += `  \`\`\`\n  ${truncatedError}\n  \`\`\`\n`;
       }
