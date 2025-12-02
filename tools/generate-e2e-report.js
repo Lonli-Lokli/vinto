@@ -12,7 +12,11 @@ const fs = require('fs');
 const path = require('path');
 
 const playwrightReportPath = path.join(__dirname, '..', 'playwright-report');
-const accessibilityReportPath = path.join(__dirname, '..', 'accessibility-reports');
+const accessibilityReportPath = path.join(
+  __dirname,
+  '..',
+  'accessibility-reports'
+);
 const resultsPath = path.join(playwrightReportPath, 'results.json');
 
 /**
@@ -53,7 +57,9 @@ function parseTestResults() {
               failedTests.push({
                 title: spec.title,
                 file: spec.file || suite.file,
-                error: spec.tests?.[0]?.results?.[0]?.error?.message || 'Test failed',
+                error:
+                  spec.tests?.[0]?.results?.[0]?.error?.message ||
+                  'Test failed',
               });
             }
           });
@@ -84,7 +90,9 @@ function parseAccessibilityReports() {
   let totalViolations = 0;
   let totalTickets = 0;
 
-  console.log(`Looking for accessibility reports in: ${accessibilityReportPath}`);
+  console.log(
+    `Looking for accessibility reports in: ${accessibilityReportPath}`
+  );
 
   if (!fs.existsSync(accessibilityReportPath)) {
     console.log('Accessibility report directory does not exist');
@@ -93,12 +101,19 @@ function parseAccessibilityReports() {
 
   try {
     const files = fs.readdirSync(accessibilityReportPath);
-    console.log(`Found ${files.length} files in accessibility report directory`);
+    console.log(
+      `Found ${files.length} files in accessibility report directory`
+    );
 
     const accessibilityFiles = files.filter(
-      (f) => f.startsWith('accessibility-report-') && f.endsWith('.md') && f !== 'README.md'
+      (f) =>
+        f.startsWith('accessibility-report-') &&
+        f.endsWith('.md') &&
+        f !== 'README.md'
     );
-    console.log(`Found ${accessibilityFiles.length} accessibility report files`);
+    console.log(
+      `Found ${accessibilityFiles.length} accessibility report files`
+    );
 
     for (const file of accessibilityFiles) {
       const filePath = path.join(accessibilityReportPath, file);
@@ -185,7 +200,8 @@ function generateTestSummary(testResults) {
         // Strip ANSI codes and truncate error message if too long
         const cleanError = stripAnsi(test.error);
         const errorMsg = cleanError.split('\n')[0];
-        const truncatedError = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg;
+        const truncatedError =
+          errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg;
         summary += `  \`\`\`\n  ${truncatedError}\n  \`\`\`\n`;
       }
     });

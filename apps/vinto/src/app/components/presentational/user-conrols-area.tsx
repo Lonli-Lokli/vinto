@@ -14,7 +14,8 @@ import { useGameClient } from '@vinto/local-client';
 export const UserControlsArea = observer(() => {
   const animationStore = useCardAnimationStore();
   const gameClient = useGameClient();
-  const hideGameControls = gameClient.isFinalTurn && gameClient.visualState.phase !== 'scoring';
+  const hideGameControls =
+    gameClient.isFinalTurn && gameClient.visualState.phase !== 'scoring';
   const hasBlockingAnimations = animationStore.hasBlockingAnimations;
 
   return (

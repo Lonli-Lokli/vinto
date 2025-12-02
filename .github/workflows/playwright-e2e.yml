@@ -3,15 +3,15 @@ permissions:
   contents: read
   pull-requests: write
   deployments: read
-  
+
 on:
   pull_request:
   push:
     branches:
       - master
   schedule:
-    - cron: "0 2 * * *"
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   e2e:
@@ -21,7 +21,7 @@ jobs:
     env:
       IS_PR: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
       IS_NIGHTLY: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
-      PROD_URL: "https://vinto-game.vercel.app/"
+      PROD_URL: 'https://vinto-game.vercel.app/'
 
     steps:
       - name: Checkout repository
