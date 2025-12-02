@@ -1,3 +1,4 @@
+/* eslint-disable no-empty-pattern */
 import { test, expect, type Page, TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Result as AxeResult, NodeResult } from 'axe-core';
@@ -31,6 +32,7 @@ test.describe('Accessibility Tests', () => {
     test.describe(`Homepage Accessibility (${theme} theme)`, () => {
       const suiteName = 'Homepage Accessibility';
 
+      // eslint-disable-next-line playwright/expect-expect
       test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
         page,
       }) => {
@@ -50,7 +52,7 @@ test.describe('Accessibility Tests', () => {
         );
       });
 
-      test.afterAll(async (testInfo) => {
+      test.afterAll(async ({}, testInfo) => {
         // Generate consolidated report for this suite
         await generateConsolidatedReport(suiteName, testInfo);
       });
@@ -151,7 +153,7 @@ test.describe('Accessibility Tests', () => {
         );
       });
 
-      test.afterAll(async (testInfo) => {
+      test.afterAll(async ({}, testInfo) => {
         // Generate consolidated report for this suite
         await generateConsolidatedReport(suiteName, testInfo);
       });
