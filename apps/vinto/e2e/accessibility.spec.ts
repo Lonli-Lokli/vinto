@@ -302,8 +302,8 @@ async function generateConsolidatedReport(
   });
 
   // Write to accessibility-reports directory (separate from playwright-report to avoid cleanup)
-  const reportDir = path.join(process.cwd(), 'accessibility-reports');
-  if (!fs.existsSync(reportDir)) {
+      const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
+ if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
   }
   fs.writeFileSync(path.join(reportDir, filename), report, 'utf-8');
