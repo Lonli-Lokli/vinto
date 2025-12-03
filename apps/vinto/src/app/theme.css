@@ -107,7 +107,7 @@
   /* Primary Game Colors - Dark Mode (darker for WCAG AA compliance with white text) */
   --color-primary: 21 128 61; /* green-700 - darker for better contrast (4.6:1 with white) */
   --color-primary-hover: 20 83 45; /* green-800 */
-  --color-success: 22 163 74; /* green-600 - darker for WCAG AA compliance with white text (3.3:1 contrast) */
+  --color-success: 74 222 128; /* green-400 - lighter for text on dark backgrounds (5.2:1 contrast) */
 
   /* Surface Colors - Dark Mode */
   --color-surface-primary: 15 23 42; /* slate-900 - main dark backgrounds */
@@ -519,6 +519,18 @@
   pointer-events: none;
   animation: card-select-pulse 1.5s ease-in-out infinite;
   z-index: 10;
+}
+
+/* === DARK MODE ACCESSIBILITY OVERRIDES === */
+/* Context-specific overrides to meet WCAG AA contrast requirements */
+
+/* Success color needs different values for background vs text usage in dark mode */
+.dark .bg-success {
+  background-color: rgb(21 128 61); /* green-700 - 4.6:1 contrast with white text */
+}
+
+.dark .bg-success:hover {
+  background-color: rgb(20 83 45); /* green-800 - darker on hover */
 }
 
 /* Pending card (drawn card waiting for swap) animation */
