@@ -55,10 +55,10 @@ test.describe('Accessibility Tests', () => {
     }
   });
 
-  (['light', 'dark'] as const).forEach((theme) => {
-    test.describe(`Homepage Accessibility (${theme} theme)`, () => {
-      const suiteName = 'Homepage Accessibility';
+  test.describe('Homepage Accessibility', () => {
+    const suiteName = 'Homepage Accessibility';
 
+    (['light', 'dark'] as const).forEach((theme) => {
       test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
         page,
       }) => {
@@ -77,19 +77,20 @@ test.describe('Accessibility Tests', () => {
           suiteName
         );
       });
-
-      test.afterAll(async ({}, testInfo) => {
-        // Generate consolidated report for this suite
-        await generateConsolidatedReport(suiteName, testInfo);
-      });
     });
 
-    test.describe(`Color Contrast Validation (${theme} theme)`, () => {
-      test('should detect color contrast violations when present', async ({
-        page,
-      }) => {
-        // Create a page with known bad contrast for validation
-        await page.setContent(`
+    test.afterAll(async ({}, testInfo) => {
+      // Generate consolidated report for this suite
+      await generateConsolidatedReport(suiteName, testInfo);
+    });
+  });
+
+  test.describe('Color Contrast Validation', () => {
+    test('should detect color contrast violations when present', async ({
+      page,
+    }) => {
+      // Create a page with known bad contrast for validation
+      await page.setContent(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -106,24 +107,24 @@ test.describe('Accessibility Tests', () => {
         </html>
       `);
 
-        // Run accessibility scan
-        const accessibilityScanResults = await new AxeBuilder({
-          page,
-        }).analyze();
+      // Run accessibility scan
+      const accessibilityScanResults = await new AxeBuilder({
+        page,
+      }).analyze();
 
-        // Expect violations to be found
-        expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
+      // Expect violations to be found
+      expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
 
-        // Check that at least one violation is related to color contrast
-        const contrastViolation = accessibilityScanResults.violations.find(
-          (v) => v.id === 'color-contrast'
-        );
-        expect(contrastViolation).toBeDefined();
-      });
+      // Check that at least one violation is related to color contrast
+      const contrastViolation = accessibilityScanResults.violations.find(
+        (v) => v.id === 'color-contrast'
+      );
+      expect(contrastViolation).toBeDefined();
+    });
 
-      test('should pass with good color contrast', async ({ page }) => {
-        // Create a page with good contrast
-        await page.setContent(`
+    test('should pass with good color contrast', async ({ page }) => {
+      // Create a page with good contrast
+      await page.setContent(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -140,22 +141,23 @@ test.describe('Accessibility Tests', () => {
         </html>
       `);
 
-        // Run accessibility scan
-        const accessibilityScanResults = await new AxeBuilder({
-          page,
-        }).analyze();
+      // Run accessibility scan
+      const accessibilityScanResults = await new AxeBuilder({
+        page,
+      }).analyze();
 
-        // Should have no color contrast violations
-        const contrastViolation = accessibilityScanResults.violations.find(
-          (v) => v.id === 'color-contrast'
-        );
-        expect(contrastViolation).toBeUndefined();
-      });
+      // Should have no color contrast violations
+      const contrastViolation = accessibilityScanResults.violations.find(
+        (v) => v.id === 'color-contrast'
+      );
+      expect(contrastViolation).toBeUndefined();
     });
+  });
 
-    test.describe(`Game Interface Accessibility (${theme} theme)`, () => {
-      const suiteName = 'Game Interface Accessibility';
+  test.describe('Game Interface Accessibility', () => {
+    const suiteName = 'Game Interface Accessibility';
 
+    (['light', 'dark'] as const).forEach((theme) => {
       test(`should not have accessibility violations on game board (${theme} theme)`, async ({
         page,
       }) => {
@@ -178,14 +180,15 @@ test.describe('Accessibility Tests', () => {
           suiteName
         );
       });
-
-      test.afterAll(async ({}, testInfo) => {
-        // Generate consolidated report for this suite
-        await generateConsolidatedReport(suiteName, testInfo);
-      });
     });
 
-    test.describe(`Specific WCAG Rules (${theme} theme)`, () => {
+    test.afterAll(async ({}, testInfo) => {
+      // Generate consolidated report for this suite
+      await generateConsolidatedReport(suiteName, testInfo);
+    });
+  });
+
+  test.describe('Specific WCAG Rules', () => {
       test('should have valid ARIA attributes', async ({ page }) => {
         await page.goto('/');
         await page.waitForLoadState('domcontentloaded');
