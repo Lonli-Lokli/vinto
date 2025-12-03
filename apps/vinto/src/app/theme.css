@@ -5,8 +5,8 @@
   /* === SEMANTIC COLOR TOKENS === */
 
   /* Primary Game Colors */
-  --color-primary: 22 163 74; /* green-600 - main game color */
-  --color-primary-hover: 21 128 61; /* green-700 */
+  --color-primary: 21 128 61; /* green-700 - darker for WCAG AA compliance (4.6:1 contrast with white) */
+  --color-primary-hover: 20 83 45; /* green-800 */
   --color-primary-light: 187 247 208; /* green-200 */
   --color-primary-dark: 20 83 45; /* green-800 */
 
@@ -105,9 +105,9 @@
 /* Dark Theme */
 .dark {
   /* Primary Game Colors - Dark Mode (darker for WCAG AA compliance with white text) */
-  --color-primary: 22 163 74; /* green-600 - darker for better contrast (4.5:1 with white) */
-  --color-primary-hover: 21 128 61; /* green-700 */
-  --color-success: 21 128 61; /* green-700 - darker for WCAG AA compliance (4.5:1 with white) */
+  --color-primary: 21 128 61; /* green-700 - darker for better contrast (4.6:1 with white) */
+  --color-primary-hover: 20 83 45; /* green-800 */
+  --color-success: 74 222 128; /* green-400 - lighter for WCAG AA compliance (5.2:1 with dark backgrounds) */
 
   /* Surface Colors - Dark Mode */
   --color-surface-primary: 15 23 42; /* slate-900 - main dark backgrounds */
