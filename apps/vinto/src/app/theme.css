@@ -5,8 +5,8 @@
   /* === SEMANTIC COLOR TOKENS === */
 
   /* Primary Game Colors */
-  --color-primary: 22 163 74; /* green-600 - main game color */
-  --color-primary-hover: 21 128 61; /* green-700 */
+  --color-primary: 21 128 61; /* green-700 - darker for WCAG AA compliance (4.6:1 contrast with white) */
+  --color-primary-hover: 20 83 45; /* green-800 */
   --color-primary-light: 187 247 208; /* green-200 */
   --color-primary-dark: 20 83 45; /* green-800 */
 
@@ -104,10 +104,10 @@
 
 /* Dark Theme */
 .dark {
-  /* Primary Game Colors - Dark Mode (brighter for contrast) */
-  --color-primary: 34 197 94; /* green-500 - brighter main game color */
-  --color-primary-hover: 22 163 74; /* green-600 */
-  --color-success: 52 211 153; /* emerald-400 - brighter success for dark mode */
+  /* Primary Game Colors - Dark Mode (darker for WCAG AA compliance with white text) */
+  --color-primary: 21 128 61; /* green-700 - darker for better contrast (4.6:1 with white) */
+  --color-primary-hover: 20 83 45; /* green-800 */
+  --color-success: 74 222 128; /* green-400 - lighter for text on dark backgrounds (5.2:1 contrast) */
 
   /* Surface Colors - Dark Mode */
   --color-surface-primary: 15 23 42; /* slate-900 - main dark backgrounds */
@@ -121,7 +121,7 @@
   --color-text-tertiary: 176 190 207; /* custom lighter - muted text on dark (contrast: 7.2:1) */
   --color-text-quaternary: 160 174 192; /* custom lighter - disabled text on dark (contrast: 5.8:1) */
   --color-text-on-surface: 248 250 252; /* slate-50 - text on dark surfaces */
-  --color-text-on-primary: 17 24 39; /* gray-900 - for high contrast on bright green buttons */
+  --color-text-on-primary: 255 255 255; /* white - for WCAG AA contrast on green-700 (4.6:1) */
 
   /* Border Colors - Dark Mode */
   --color-border-primary: 71 85 105; /* slate-600 */
@@ -200,6 +200,9 @@
 /* Text Colors */
 .text-primary {
   color: rgb(var(--color-text-primary));
+}
+.text-primary-foreground {
+  color: rgb(var(--color-text-on-primary));
 }
 .text-secondary {
   color: rgb(var(--color-text-secondary));
@@ -516,6 +519,18 @@
   pointer-events: none;
   animation: card-select-pulse 1.5s ease-in-out infinite;
   z-index: 10;
+}
+
+/* === DARK MODE ACCESSIBILITY OVERRIDES === */
+/* Context-specific overrides to meet WCAG AA contrast requirements */
+
+/* Success color needs different values for background vs text usage in dark mode */
+.dark .bg-success {
+  background-color: rgb(21 128 61); /* green-700 - 4.6:1 contrast with white text */
+}
+
+.dark .bg-success:hover {
+  background-color: rgb(20 83 45); /* green-800 - darker on hover */
 }
 
 /* Pending card (drawn card waiting for swap) animation */
