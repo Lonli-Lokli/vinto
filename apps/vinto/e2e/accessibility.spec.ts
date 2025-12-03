@@ -291,7 +291,10 @@ async function generateConsolidatedReport(
 
   // Always generate a report, even if no violations (for transparency)
   const report = generateJiraReadyReport(suiteName, records);
-  const filename = `accessibility-report-${suiteName
+
+  // Include browser/project name in filename to prevent overwrites across different browser runs
+  const projectName = testInfo.project.name.toLowerCase().replace(/\s+/g, '-');
+  const filename = `accessibility-report-${projectName}-${suiteName
     .toLowerCase()
     .replace(/\s+/g, '-')}.md`;
 
