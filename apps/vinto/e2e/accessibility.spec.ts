@@ -238,7 +238,8 @@ test.describe('Accessibility Tests', () => {
 });
 
 /**
- * Collects accessibility violations without failing the test
+ * Collects accessibility violations and fails the test if any are found.
+ * Violations are stored for suite-level consolidated reporting in afterAll hooks.
  */
 async function collectAccessibilityViolations(
   page: Page,
@@ -252,7 +253,7 @@ async function collectAccessibilityViolations(
     .disableRules(['meta-viewport'])
     .analyze();
 
-  // Store violations for suite-level reporting
+  // Store violations for suite-level reporting (stored BEFORE test fails)
   if (!suiteViolations.has(suiteName)) {
     suiteViolations.set(suiteName, []);
   }
@@ -273,7 +274,7 @@ async function collectAccessibilityViolations(
     console.log(`✅ ${testName} (${theme} theme): No violations`);
   }
 
-  // Fail the test if violations found
+  // Fail the test if violations found (violations already stored above)
   expect(accessibilityScanResults.violations).toEqual([]);
 }
 
@@ -286,10 +287,7 @@ async function generateConsolidatedReport(
 ): Promise<void> {
   const records = suiteViolations.get(suiteName) || [];
 
-  if (records.length === 0) {
-    return;
-  }
-
+  // Always generate a report, even if no violations (for transparency)
   const report = generateJiraReadyReport(suiteName, records);
   const filename = `accessibility-report-${suiteName
     .toLowerCase()
@@ -302,11 +300,13 @@ async function generateConsolidatedReport(
   });
 
   // Write to accessibility-reports directory (separate from playwright-report to avoid cleanup)
-      const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
- if (!fs.existsSync(reportDir)) {
+  const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
+  if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
   }
   fs.writeFileSync(path.join(reportDir, filename), report, 'utf-8');
+
+  console.log(`Generated accessibility report: ${filename} (${records.length} test records, ${records.reduce((sum, r) => sum + r.violations.length, 0)} violations)`);
 
   // Clear violations for this suite
   suiteViolations.delete(suiteName);
