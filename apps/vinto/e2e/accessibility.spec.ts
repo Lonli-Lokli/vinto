@@ -237,7 +237,6 @@ test.describe('Accessibility Tests', () => {
         expect(formViolations).toEqual([]);
       });
     });
-  });
 });
 
 /**
