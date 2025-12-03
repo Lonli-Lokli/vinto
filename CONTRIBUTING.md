@@ -31,12 +31,20 @@ Thank you for your interest in contributing to Vinto! This document provides gui
    npm install
    ```
 
-3. Start the development server:
+3. **Git Hooks**: This project uses `lefthook` for pre-commit hooks
+   - Hooks run automatically on commit
+   - They enforce linting and formatting standards
+   - Configuration: `lefthook.yml`
+   - Pre-commit hooks will:
+     - Run ESLint with auto-fix on staged TypeScript/JavaScript files
+     - Format code with Prettier on staged files
+
+4. Start the development server:
    ```bash
    npm start
    ```
 
-4. Visit [http://localhost:4200](http://localhost:4200) to see the app running.
+5. Visit [http://localhost:4200](http://localhost:4200) to see the app running.
 
 ## Development Workflow
 
@@ -67,8 +75,10 @@ packages/
 ### Nx Commands
 
 - `npx nx graph` - View project dependency graph
-- `npx nx show project <project-name>` - Show project details
+- `npx nx show project game` - Show main app project details
 - `npx nx <target> <project-name>` - Run specific target for a project
+
+**Note**: The main app directory is `apps/vinto/` but the Nx project name is `game`.
 
 ## Dependency Management
 
@@ -146,6 +156,31 @@ schedule:
 
 **Configuration Location**: `.github/dependabot.yml`
 
+### Security Updates
+
+Dependabot also monitors for security vulnerabilities and creates PRs immediately when vulnerabilities are detected.
+
+#### How Security Updates Work
+
+- **Trigger**: Created immediately when a vulnerability is detected (not on schedule)
+- **Priority**: Security updates bypass major version ignore rules when necessary
+- **Labels**: Tagged with `dependencies` and `automated`
+- **Action Required**: Security PRs should be prioritized over feature development
+
+#### Reviewing Security PRs
+
+1. **Assess Severity**: Check the vulnerability details in the PR description
+2. **Review Changes**: Understand what's being updated and why
+3. **Test Thoroughly**: Security updates may include major version bumps
+4. **Merge Promptly**: Don't delay security fixes for non-critical reasons
+
+#### Enabling Security Alerts
+
+**For Repository Maintainers:**
+1. Go to repository **Settings → Security & analysis**
+2. Enable **Dependabot security updates**
+3. Enable **Dependabot alerts** to receive notifications
+
 ### Manual Dependency Updates
 
 For updates not handled by Dependabot (or major version upgrades):
@@ -216,7 +251,7 @@ npm run format
 ### E2E Tests
 
 - Framework: Playwright
-- Location: `apps/vinto-e2e/`
+- Location: `apps/vinto/e2e/`
 - Run tests: `npm run test:e2e`
 
 ### Writing Tests
@@ -247,7 +282,10 @@ test('renders button with correct text', () => {
 
 ### Before Submitting
 
-1. **Create a branch**: Use descriptive names (e.g., `feature/coalition-mode`, `fix/scoring-bug`)
+1. **Create a branch**:
+   - For GitHub issues: `issue-{ISSUE_NUMBER}` (e.g., `issue-42`)
+   - For features without issues: `feature/short-description` (e.g., `feature/coalition-mode`)
+   - For bug fixes without issues: `fix/short-description` (e.g., `fix/scoring-bug`)
 2. **Write tests**: Add tests for new features or bug fixes
 3. **Run checks locally**:
    ```bash
@@ -328,6 +366,31 @@ When contributing, keep these principles in mind:
 3. **Actions as Data**: All interactions are serializable actions
 4. **Cloud-Ready**: Game engine should be hostable remotely
 5. **Bot AI Integration**: Bots use the same action dispatch path as humans
+
+## Deployment
+
+### Vercel (Production)
+
+This project is deployed on Vercel with the following configuration:
+
+- **Automatic deploys** from `master` branch to production
+- **Preview deploys** for all pull requests
+- **Environment variables** managed in Vercel dashboard
+
+### Deployment Process
+
+For maintainers:
+
+1. Merge PR to `master` branch
+2. Vercel automatically builds and deploys
+3. Monitor deployment status in PR comments or [Vercel Dashboard](https://vercel.com/lonliloklis-projects/vinto)
+4. Verify deployment by visiting the production URL
+
+### Preview Deployments
+
+- Every PR gets a unique preview URL
+- Preview URLs are posted as PR comments by the Vercel bot
+- Use preview deployments to test changes before merging
 
 ## Questions?
 
