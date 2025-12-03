@@ -439,6 +439,28 @@ function generateJiraReadyReport(
     report += `- [WCAG Documentation](${firstViolation.helpUrl})\n`;
     report += `- [Axe Rule: ${violationId}](${firstViolation.helpUrl})\n\n`;
 
+    // Generate copyable issue text for GitHub
+    const issueTitle = `[A11y] ${firstViolation.help}`;
+    const issueBody = generateGitHubIssueBody(
+      firstViolation,
+      violationId,
+      priority,
+      impactLevel,
+      themeMap,
+      suiteName
+    );
+    const createIssueUrl = generateGitHubIssueUrl(issueTitle, issueBody);
+
+    // Add copy-friendly format and create issue button
+    report += `### 🎫 Create GitHub Issue\n\n`;
+    report += `[📝 Create Issue on GitHub](${createIssueUrl})\n\n`;
+    report += `<details>\n`;
+    report += `<summary>📋 <strong>Copy-friendly issue template</strong> (click to expand)</summary>\n\n`;
+    report += `\`\`\`markdown\n`;
+    report += issueBody;
+    report += `\n\`\`\`\n\n`;
+    report += `</details>\n\n`;
+
     ticketNumber++;
   });
 
@@ -461,6 +483,93 @@ function getJiraPriority(impact: string): string {
     default:
       return 'P3 - Medium';
   }
+}
+
+/**
+ * Generates a GitHub issue body from accessibility violation data
+ */
+function generateGitHubIssueBody(
+  violation: AxeResult,
+  violationId: string,
+  priority: string,
+  impactLevel: string,
+  themeMap: Map<string, { violation: AxeResult; record: ViolationRecord }[]>,
+  suiteName: string
+): string {
+  let body = `## Accessibility Issue\n\n`;
+  body += `**Priority**: ${priority}\n`;
+  body += `**Impact**: ${impactLevel.toUpperCase()}\n`;
+  body += `**Rule ID**: \`${violationId}\`\n`;
+  body += `**WCAG**: ${violation.tags
+    .filter((t) => t.startsWith('wcag'))
+    .join(', ')}\n`;
+  body += `**Test Suite**: ${suiteName}\n\n`;
+
+  body += `### Description\n\n`;
+  body += `${violation.description}\n\n`;
+
+  body += `### Affected Themes\n\n`;
+  themeMap.forEach((entries, theme) => {
+    const totalElements = entries.reduce(
+      (sum, e) => sum + e.violation.nodes.length,
+      0
+    );
+    body += `- **${theme}**: ${totalElements} element(s) affected\n`;
+  });
+  body += `\n`;
+
+  body += `### Technical Details\n\n`;
+  themeMap.forEach((entries, theme) => {
+    body += `**${theme} theme** - ${entries[0].violation.nodes.length} affected element(s)\n\n`;
+
+    entries[0].violation.nodes.slice(0, 3).forEach((node: NodeResult, idx: number) => {
+      body += `#### Element ${idx + 1}\n`;
+      body += `- **Selector**: \`${node.target.join(' ')}\`\n`;
+      body += `- **Issue**: ${node.failureSummary}\n`;
+      if (node.html) {
+        // Truncate long HTML for readability in issue
+        const truncatedHtml = node.html.length > 200
+          ? node.html.substring(0, 200) + '...'
+          : node.html;
+        body += `- **HTML**: \`${truncatedHtml}\`\n`;
+      }
+      body += `\n`;
+    });
+
+    if (entries[0].violation.nodes.length > 3) {
+      body += `_... and ${entries[0].violation.nodes.length - 3} more element(s)_\n\n`;
+    }
+  });
+
+  body += `### Acceptance Criteria\n\n`;
+  body += `- [ ] All \`${violationId}\` violations are resolved\n`;
+  body += `- [ ] Changes are verified in both light and dark themes\n`;
+  body += `- [ ] Accessibility tests pass without violations\n`;
+  body += `- [ ] Manual testing confirms proper functionality\n\n`;
+
+  body += `### Resources\n\n`;
+  body += `- [WCAG Documentation](${violation.helpUrl})\n`;
+  body += `- [Axe Rule: ${violationId}](${violation.helpUrl})\n`;
+
+  return body;
+}
+
+/**
+ * Generates a GitHub issue creation URL with pre-filled title and body
+ */
+function generateGitHubIssueUrl(title: string, body: string): string {
+  // Get repository info from environment or use a placeholder
+  const repo = process.env.GITHUB_REPOSITORY || 'owner/repo';
+  const baseUrl = `https://github.com/${repo}/issues/new`;
+
+  // URL encode the title and body
+  const params = new URLSearchParams({
+    title: title,
+    body: body,
+    labels: 'accessibility,bug'
+  });
+
+  return `${baseUrl}?${params.toString()}`;
 }
 
 /**
