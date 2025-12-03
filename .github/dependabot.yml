@@ -1,0 +1,121 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # Higher limit to accommodate security updates alongside scheduled updates
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    groups:
+      # Nx-related updates in separate group (most specific first)
+      nx-dependencies:
+        patterns:
+          - "@nx/*"
+          - "nx"
+        update-types:
+          - "minor"
+          - "patch"
+      # Next.js and related
+      nextjs-dependencies:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "eslint-config-next"
+        exclude-patterns:
+          - "@nx/next"
+        update-types:
+          - "minor"
+          - "patch"
+      # React ecosystem updates
+      react-dependencies:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "react-*"
+        exclude-patterns:
+          - "@nx/react"
+          - "eslint-plugin-react*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group production dependencies
+      production-dependencies:
+        applies-to: version-updates
+        dependency-type: "production"
+        exclude-patterns:
+          - "react"
+          - "react-dom"
+          - "react-*"
+          - "next"
+          - "@next/*"
+          - "@nx/*"
+          - "nx"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group development dependencies
+      development-dependencies:
+        applies-to: version-updates
+        dependency-type: "development"
+        exclude-patterns:
+          - "react*"
+          - "next*"
+          - "@nx/*"
+          - "nx"
+          - "eslint-plugin-react*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "automated"
+    reviewers:
+      - "Lonli-Lokli"
+    # Disable auto-rebase to let GitHub's merge queue handle conflicts
+    rebase-strategy: "disabled"
+    # Selectively ignore major version updates for stable frameworks
+    # Security updates are NOT affected by these ignores
+    ignore:
+      # Core frameworks - major updates require careful migration
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@nx/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "nx"
+        update-types: ["version-update:semver-major"]
+      # TypeScript major updates need careful testing
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    reviewers:
+      - "Lonli-Lokli"

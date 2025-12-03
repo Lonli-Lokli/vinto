@@ -55,10 +55,10 @@ test.describe('Accessibility Tests', () => {
     }
   });
 
-  (['light', 'dark'] as const).forEach((theme) => {
-    test.describe(`Homepage Accessibility (${theme} theme)`, () => {
-      const suiteName = 'Homepage Accessibility';
+  test.describe('Homepage Accessibility', () => {
+    const suiteName = 'Homepage Accessibility';
 
+    (['light', 'dark'] as const).forEach((theme) => {
       test(`should not have accessibility violations on homepage (${theme} theme)`, async ({
         page,
       }) => {
@@ -77,19 +77,20 @@ test.describe('Accessibility Tests', () => {
           suiteName
         );
       });
-
-      test.afterAll(async ({}, testInfo) => {
-        // Generate consolidated report for this suite
-        await generateConsolidatedReport(suiteName, testInfo);
-      });
     });
 
-    test.describe(`Color Contrast Validation (${theme} theme)`, () => {
-      test('should detect color contrast violations when present', async ({
-        page,
-      }) => {
-        // Create a page with known bad contrast for validation
-        await page.setContent(`
+    test.afterAll(async ({}, testInfo) => {
+      // Generate consolidated report for this suite
+      await generateConsolidatedReport(suiteName, testInfo);
+    });
+  });
+
+  test.describe('Color Contrast Validation', () => {
+    test('should detect color contrast violations when present', async ({
+      page,
+    }) => {
+      // Create a page with known bad contrast for validation
+      await page.setContent(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -106,24 +107,24 @@ test.describe('Accessibility Tests', () => {
         </html>
       `);
 
-        // Run accessibility scan
-        const accessibilityScanResults = await new AxeBuilder({
-          page,
-        }).analyze();
+      // Run accessibility scan
+      const accessibilityScanResults = await new AxeBuilder({
+        page,
+      }).analyze();
 
-        // Expect violations to be found
-        expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
+      // Expect violations to be found
+      expect(accessibilityScanResults.violations.length).toBeGreaterThan(0);
 
-        // Check that at least one violation is related to color contrast
-        const contrastViolation = accessibilityScanResults.violations.find(
-          (v) => v.id === 'color-contrast'
-        );
-        expect(contrastViolation).toBeDefined();
-      });
+      // Check that at least one violation is related to color contrast
+      const contrastViolation = accessibilityScanResults.violations.find(
+        (v) => v.id === 'color-contrast'
+      );
+      expect(contrastViolation).toBeDefined();
+    });
 
-      test('should pass with good color contrast', async ({ page }) => {
-        // Create a page with good contrast
-        await page.setContent(`
+    test('should pass with good color contrast', async ({ page }) => {
+      // Create a page with good contrast
+      await page.setContent(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -140,22 +141,23 @@ test.describe('Accessibility Tests', () => {
         </html>
       `);
 
-        // Run accessibility scan
-        const accessibilityScanResults = await new AxeBuilder({
-          page,
-        }).analyze();
+      // Run accessibility scan
+      const accessibilityScanResults = await new AxeBuilder({
+        page,
+      }).analyze();
 
-        // Should have no color contrast violations
-        const contrastViolation = accessibilityScanResults.violations.find(
-          (v) => v.id === 'color-contrast'
-        );
-        expect(contrastViolation).toBeUndefined();
-      });
+      // Should have no color contrast violations
+      const contrastViolation = accessibilityScanResults.violations.find(
+        (v) => v.id === 'color-contrast'
+      );
+      expect(contrastViolation).toBeUndefined();
     });
+  });
 
-    test.describe(`Game Interface Accessibility (${theme} theme)`, () => {
-      const suiteName = 'Game Interface Accessibility';
+  test.describe('Game Interface Accessibility', () => {
+    const suiteName = 'Game Interface Accessibility';
 
+    (['light', 'dark'] as const).forEach((theme) => {
       test(`should not have accessibility violations on game board (${theme} theme)`, async ({
         page,
       }) => {
@@ -178,14 +180,15 @@ test.describe('Accessibility Tests', () => {
           suiteName
         );
       });
-
-      test.afterAll(async ({}, testInfo) => {
-        // Generate consolidated report for this suite
-        await generateConsolidatedReport(suiteName, testInfo);
-      });
     });
 
-    test.describe(`Specific WCAG Rules (${theme} theme)`, () => {
+    test.afterAll(async ({}, testInfo) => {
+      // Generate consolidated report for this suite
+      await generateConsolidatedReport(suiteName, testInfo);
+    });
+  });
+
+  test.describe('Specific WCAG Rules', () => {
       test('should have valid ARIA attributes', async ({ page }) => {
         await page.goto('/');
         await page.waitForLoadState('domcontentloaded');
@@ -234,11 +237,11 @@ test.describe('Accessibility Tests', () => {
         expect(formViolations).toEqual([]);
       });
     });
-  });
 });
 
 /**
- * Collects accessibility violations without failing the test
+ * Collects accessibility violations and fails the test if any are found.
+ * Violations are stored for suite-level consolidated reporting in afterAll hooks.
  */
 async function collectAccessibilityViolations(
   page: Page,
@@ -252,7 +255,7 @@ async function collectAccessibilityViolations(
     .disableRules(['meta-viewport'])
     .analyze();
 
-  // Store violations for suite-level reporting
+  // Store violations for suite-level reporting (stored BEFORE test fails)
   if (!suiteViolations.has(suiteName)) {
     suiteViolations.set(suiteName, []);
   }
@@ -273,7 +276,7 @@ async function collectAccessibilityViolations(
     console.log(`✅ ${testName} (${theme} theme): No violations`);
   }
 
-  // Fail the test if violations found
+  // Fail the test if violations found (violations already stored above)
   expect(accessibilityScanResults.violations).toEqual([]);
 }
 
@@ -286,12 +289,12 @@ async function generateConsolidatedReport(
 ): Promise<void> {
   const records = suiteViolations.get(suiteName) || [];
 
-  if (records.length === 0) {
-    return;
-  }
-
+  // Always generate a report, even if no violations (for transparency)
   const report = generateJiraReadyReport(suiteName, records);
-  const filename = `accessibility-report-${suiteName
+
+  // Include browser/project name in filename to prevent overwrites across different browser runs
+  const projectName = testInfo.project.name.toLowerCase().replace(/\s+/g, '-');
+  const filename = `accessibility-report-${projectName}-${suiteName
     .toLowerCase()
     .replace(/\s+/g, '-')}.md`;
 
@@ -302,14 +305,17 @@ async function generateConsolidatedReport(
   });
 
   // Write to accessibility-reports directory (separate from playwright-report to avoid cleanup)
-      const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
- if (!fs.existsSync(reportDir)) {
+  const reportDir = path.join(process.cwd(),'..', '..', 'accessibility-reports');
+  if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
   }
   fs.writeFileSync(path.join(reportDir, filename), report, 'utf-8');
 
-  // Clear violations for this suite
-  suiteViolations.delete(suiteName);
+  console.log(`Generated accessibility report: ${filename} (${records.length} test records, ${records.reduce((sum, r) => sum + r.violations.length, 0)} violations)`);
+
+  // Don't clear violations here - they should persist across retries
+  // This ensures that if a test fails with violations and then retries,
+  // the report will still contain the violations from all attempts
 }
 
 /**
@@ -433,6 +439,28 @@ function generateJiraReadyReport(
     report += `- [WCAG Documentation](${firstViolation.helpUrl})\n`;
     report += `- [Axe Rule: ${violationId}](${firstViolation.helpUrl})\n\n`;
 
+    // Generate copyable issue text for GitHub
+    const issueTitle = `[A11y] ${firstViolation.help}`;
+    const issueBody = generateGitHubIssueBody(
+      firstViolation,
+      violationId,
+      priority,
+      impactLevel,
+      themeMap,
+      suiteName
+    );
+    const createIssueUrl = generateGitHubIssueUrl(issueTitle, issueBody);
+
+    // Add copy-friendly format and create issue button
+    report += `### 🎫 Create GitHub Issue\n\n`;
+    report += `[📝 Create Issue on GitHub](${createIssueUrl})\n\n`;
+    report += `<details>\n`;
+    report += `<summary>📋 <strong>Copy-friendly issue template</strong> (click to expand)</summary>\n\n`;
+    report += `\`\`\`markdown\n`;
+    report += issueBody;
+    report += `\n\`\`\`\n\n`;
+    report += `</details>\n\n`;
+
     ticketNumber++;
   });
 
@@ -455,6 +483,93 @@ function getJiraPriority(impact: string): string {
     default:
       return 'P3 - Medium';
   }
+}
+
+/**
+ * Generates a GitHub issue body from accessibility violation data
+ */
+function generateGitHubIssueBody(
+  violation: AxeResult,
+  violationId: string,
+  priority: string,
+  impactLevel: string,
+  themeMap: Map<string, { violation: AxeResult; record: ViolationRecord }[]>,
+  suiteName: string
+): string {
+  let body = `## Accessibility Issue\n\n`;
+  body += `**Priority**: ${priority}\n`;
+  body += `**Impact**: ${impactLevel.toUpperCase()}\n`;
+  body += `**Rule ID**: \`${violationId}\`\n`;
+  body += `**WCAG**: ${violation.tags
+    .filter((t) => t.startsWith('wcag'))
+    .join(', ')}\n`;
+  body += `**Test Suite**: ${suiteName}\n\n`;
+
+  body += `### Description\n\n`;
+  body += `${violation.description}\n\n`;
+
+  body += `### Affected Themes\n\n`;
+  themeMap.forEach((entries, theme) => {
+    const totalElements = entries.reduce(
+      (sum, e) => sum + e.violation.nodes.length,
+      0
+    );
+    body += `- **${theme}**: ${totalElements} element(s) affected\n`;
+  });
+  body += `\n`;
+
+  body += `### Technical Details\n\n`;
+  themeMap.forEach((entries, theme) => {
+    body += `**${theme} theme** - ${entries[0].violation.nodes.length} affected element(s)\n\n`;
+
+    entries[0].violation.nodes.slice(0, 3).forEach((node: NodeResult, idx: number) => {
+      body += `#### Element ${idx + 1}\n`;
+      body += `- **Selector**: \`${node.target.join(' ')}\`\n`;
+      body += `- **Issue**: ${node.failureSummary}\n`;
+      if (node.html) {
+        // Truncate long HTML for readability in issue
+        const truncatedHtml = node.html.length > 200
+          ? node.html.substring(0, 200) + '...'
+          : node.html;
+        body += `- **HTML**: \`${truncatedHtml}\`\n`;
+      }
+      body += `\n`;
+    });
+
+    if (entries[0].violation.nodes.length > 3) {
+      body += `_... and ${entries[0].violation.nodes.length - 3} more element(s)_\n\n`;
+    }
+  });
+
+  body += `### Acceptance Criteria\n\n`;
+  body += `- [ ] All \`${violationId}\` violations are resolved\n`;
+  body += `- [ ] Changes are verified in both light and dark themes\n`;
+  body += `- [ ] Accessibility tests pass without violations\n`;
+  body += `- [ ] Manual testing confirms proper functionality\n\n`;
+
+  body += `### Resources\n\n`;
+  body += `- [WCAG Documentation](${violation.helpUrl})\n`;
+  body += `- [Axe Rule: ${violationId}](${violation.helpUrl})\n`;
+
+  return body;
+}
+
+/**
+ * Generates a GitHub issue creation URL with pre-filled title and body
+ */
+function generateGitHubIssueUrl(title: string, body: string): string {
+  // Get repository info from environment or use a placeholder
+  const repo = process.env.GITHUB_REPOSITORY || 'owner/repo';
+  const baseUrl = `https://github.com/${repo}/issues/new`;
+
+  // URL encode the title and body
+  const params = new URLSearchParams({
+    title: title,
+    body: body,
+    labels: 'accessibility,bug'
+  });
+
+  return `${baseUrl}?${params.toString()}`;
 }
 
 /**
