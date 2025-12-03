@@ -310,8 +310,9 @@ async function generateConsolidatedReport(
 
   console.log(`Generated accessibility report: ${filename} (${records.length} test records, ${records.reduce((sum, r) => sum + r.violations.length, 0)} violations)`);
 
-  // Clear violations for this suite
-  suiteViolations.delete(suiteName);
+  // Don't clear violations here - they should persist across retries
+  // This ensures that if a test fails with violations and then retries,
+  // the report will still contain the violations from all attempts
 }
 
 /**
