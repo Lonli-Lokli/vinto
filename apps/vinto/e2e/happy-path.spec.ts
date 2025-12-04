@@ -87,9 +87,7 @@ test.describe('Vinto Game - Happy Path', () => {
 
         if (isPlayerTurn > 0) {
           // Draw a card from the deck
-          const drawPile = page
-            .locator('[data-testid="draw-pile"]')
-            .or(page.getByRole('button', { name: /draw|deck/i }));
+          const drawPile = page.locator('[data-testid="draw-pile"]');
 
           await expect(drawPile).toBeVisible();
           await drawPile.click();
