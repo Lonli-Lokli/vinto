@@ -32,24 +32,39 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(gameBoard).toBeVisible({ timeout: 15000 });
     });
 
-    await test.step('Start a new game', async () => {
-      // Look for "Start Game" or "New Game" button
-      // Try multiple possible selectors
+    await test.step('Complete setup phase and start game', async () => {
+      // Wait for Memory Phase indicator to appear
+      const memoryPhaseText = page.getByText(/memory phase/i);
+      await expect(memoryPhaseText).toBeVisible({ timeout: 10000 });
+
+      // Click on two player cards to complete the memory phase
+      // The game requires users to peek at 2 cards before starting
+      const firstCard = page
+        .locator('[data-testid="player-card-0"]')
+        .or(page.locator('.player-card').first());
+      await expect(firstCard).toBeVisible();
+      await firstCard.click();
+
+      // Wait a moment for the first card flip animation
+      await page.waitForTimeout(500);
+
+      const secondCard = page
+        .locator('[data-testid="player-card-1"]')
+        .or(page.locator('.player-card').nth(1));
+      await expect(secondCard).toBeVisible();
+      await secondCard.click();
+
+      // Wait a moment for the second card flip animation
+      await page.waitForTimeout(500);
+
+      // Now the "Start Game" button should be enabled
       const startButton = page
         .getByRole('button', { name: /start game|new game|play/i })
         .or(page.locator('[data-testid="start-game"]'));
 
-      // If the game auto-starts, this might not exist
-      // Check if button exists and is enabled before clicking
-      const buttonVisible = await startButton.count();
-      if (buttonVisible > 0) {
-        // Check if button is enabled (not disabled)
-        const isEnabled = await startButton.isEnabled().catch(() => false);
-        if (isEnabled) {
-          await startButton.click();
-        }
-        // If disabled, the game has likely auto-started, continue
-      }
+      // Wait for button to be enabled after clicking both cards
+      await expect(startButton).toBeEnabled({ timeout: 5000 });
+      await startButton.click();
 
       // Verify the game board is visible
       await expect(
@@ -57,45 +72,6 @@ test.describe('Vinto Game - Happy Path', () => {
           .locator('[data-testid="player-hand"]')
           .or(page.locator('.player-cards'))
       ).toBeVisible({ timeout: 10000 });
-    });
-
-    await test.step('Complete memory phase - peek at cards', async () => {
-      // Wait for memory phase to start
-      // Look for instructions or peek prompt
-      const memoryPhase = page
-        .getByText(/peek|memory|look at.*cards/i)
-        .or(page.locator('[data-testid="memory-phase"]'));
-
-      const hasMemoryPhase = await memoryPhase.count();
-
-      if (hasMemoryPhase > 0) {
-        await expect(memoryPhase.first()).toBeVisible();
-
-        // Peek at first card
-        const firstCard = page
-          .locator('[data-testid="player-card-0"]')
-          .or(page.locator('.player-card').first());
-        await firstCard.click();
-        // Wait for card flip animation to complete
-        await expect(firstCard).toBeVisible();
-
-        // Peek at second card
-        const secondCard = page
-          .locator('[data-testid="player-card-1"]')
-          .or(page.locator('.player-card').nth(1));
-        await secondCard.click();
-        // Wait for card flip animation to complete
-        await expect(secondCard).toBeVisible();
-
-        // Confirm or close memory phase if needed
-        const confirmButton = page.getByRole('button', {
-          name: /confirm|ok|continue/i,
-        });
-        const confirmVisible = await confirmButton.count();
-        if (confirmVisible > 0) {
-          await confirmButton.click();
-        }
-      }
     });
 
     await test.step('Play through several turns', async () => {
