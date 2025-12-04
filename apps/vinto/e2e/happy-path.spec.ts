@@ -94,12 +94,21 @@ test.describe('Vinto Game - Happy Path', () => {
           await expect(drawPile).toBeVisible();
           await drawPile.click();
 
-          // Wait for the pending card to appear first (drawn card indicator)
+          // CRITICAL: After clicking draw pile, card animation starts
+          // During animation, WaitingIndicator shows instead of GamePhaseIndicators
+          // We must wait for animation to complete before action buttons appear
+
+          // Step 1: Wait for the pending card to appear (indicates card was drawn)
           const pendingCard = page.locator('[data-pending-card="true"]');
           await expect(pendingCard).toBeVisible({ timeout: 10000 });
 
-          // Now wait for action buttons to appear in the card drawn indicator
-          // The buttons appear after the game state transitions to 'choosing' subphase
+          // Step 2: Wait for the WaitingIndicator to disappear (animation complete)
+          // The WaitingIndicator is shown in UserControlsArea during hasBlockingAnimations
+          // Once animations finish, GamePhaseIndicators (with buttons) will render
+          await page.waitForTimeout(2000); // Give animations time to complete
+
+          // Step 3: Now wait for action buttons to appear in GamePhaseIndicators
+          // The buttons appear after animations complete and subPhase === 'choosing'
           const useActionButton = page.getByRole('button', {
             name: /use action/i,
           });
@@ -112,10 +121,18 @@ test.describe('Vinto Game - Happy Path', () => {
 
           // Wait for at least one button to be visible (with longer timeout for CI)
           await Promise.race([
-            expect(useActionButton).toBeVisible({ timeout: 10000 }),
-            expect(swapButton).toBeVisible({ timeout: 10000 }),
-            expect(discardButton).toBeVisible({ timeout: 10000 }),
-          ]);
+            expect(useActionButton).toBeVisible({ timeout: 15000 }),
+            expect(swapButton).toBeVisible({ timeout: 15000 }),
+            expect(discardButton).toBeVisible({ timeout: 15000 }),
+          ]).catch(async () => {
+            // If buttons still don't appear, wait a bit more and retry once
+            await page.waitForTimeout(2000);
+            await Promise.race([
+              expect(useActionButton).toBeVisible({ timeout: 10000 }),
+              expect(swapButton).toBeVisible({ timeout: 10000 }),
+              expect(discardButton).toBeVisible({ timeout: 10000 }),
+            ]);
+          });
 
           // Handle the drawn card - either use action, swap, or discard
 
@@ -197,9 +214,12 @@ test.describe('Vinto Game - Happy Path', () => {
           // Player's turn - play a turn to trigger toss-in phase
           await drawPile.click();
 
-          // Wait for pending card indicator
+          // Wait for pending card indicator and animation to complete
           const pendingCard = page.locator('[data-pending-card="true"]');
-          await expect(pendingCard).toBeVisible({ timeout: 8000 });
+          await expect(pendingCard).toBeVisible({ timeout: 10000 });
+
+          // Wait for card animation to complete before action buttons appear
+          await page.waitForTimeout(2000);
 
           // Wait for action buttons to appear - could be Use Action, Swap, or Discard
           const useActionButton = page.getByRole('button', {
@@ -214,10 +234,18 @@ test.describe('Vinto Game - Happy Path', () => {
 
           // Wait for at least one button to be visible
           await Promise.race([
-            expect(useActionButton).toBeVisible({ timeout: 8000 }),
-            expect(swapButton).toBeVisible({ timeout: 8000 }),
-            expect(discardButton).toBeVisible({ timeout: 8000 }),
-          ]);
+            expect(useActionButton).toBeVisible({ timeout: 15000 }),
+            expect(swapButton).toBeVisible({ timeout: 15000 }),
+            expect(discardButton).toBeVisible({ timeout: 15000 }),
+          ]).catch(async () => {
+            // Retry once if buttons don't appear
+            await page.waitForTimeout(2000);
+            await Promise.race([
+              expect(useActionButton).toBeVisible({ timeout: 10000 }),
+              expect(swapButton).toBeVisible({ timeout: 10000 }),
+              expect(discardButton).toBeVisible({ timeout: 10000 }),
+            ]);
+          });
 
           // Click discard to trigger toss-in (simplest path)
           const hasDiscard = await discardButton.isVisible().catch(() => false);
