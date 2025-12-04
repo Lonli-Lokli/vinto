@@ -94,20 +94,20 @@ test.describe('Vinto Game - Happy Path', () => {
 
           // Wait for action buttons to appear after drawing
           const actionArea = page.getByRole('button', {
-            name: /use action|play|swap|replace|discard|skip/i,
+            name: /use action|swap cards|discard/i,
           });
           await expect(actionArea.first()).toBeVisible({ timeout: 5000 });
 
           // Handle the drawn card - either use action, swap, or discard
           // Look for action buttons
           const useActionButton = page.getByRole('button', {
-            name: /use action|play/i,
+            name: /use action/i,
           });
           const swapButton = page.getByRole('button', {
-            name: /swap|replace/i,
+            name: /swap cards/i,
           });
           const discardButton = page.getByRole('button', {
-            name: /discard|skip/i,
+            name: /discard/i,
           });
 
           const hasUseAction = await useActionButton.count();
