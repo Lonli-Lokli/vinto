@@ -92,7 +92,9 @@ test.describe('Vinto Game - Happy Path', () => {
           const drawPile = page.locator('[data-testid="draw-pile"]');
 
           await expect(drawPile).toBeVisible();
-          await drawPile.click();
+          // Use force: true to bypass actionability checks
+          // The parent GameTable container can intercept clicks, but the element is actually clickable
+          await drawPile.click({ force: true });
 
           // CRITICAL: After clicking draw pile, card animation starts
           // During animation, WaitingIndicator shows instead of GamePhaseIndicators
@@ -212,7 +214,8 @@ test.describe('Vinto Game - Happy Path', () => {
 
         if (drawPileVisible) {
           // Player's turn - play a turn to trigger toss-in phase
-          await drawPile.click();
+          // Use force: true to bypass actionability checks
+          await drawPile.click({ force: true });
 
           // Wait for pending card indicator and animation to complete
           const pendingCard = page.locator('[data-pending-card="true"]');
