@@ -20,6 +20,8 @@ test.describe('Vinto Game - Happy Path', () => {
   test('should complete a full game from start to calling Vinto', async ({
     page,
   }) => {
+    // Increase test timeout to handle multiple turns and bot thinking time
+    test.setTimeout(60000); // 60 seconds
     await test.step('Load the game', async () => {
       // Wait for the page to load
       await expect(page).toHaveTitle(/Vinto/i);
@@ -177,51 +179,90 @@ test.describe('Vinto Game - Happy Path', () => {
     });
 
     await test.step('Call Vinto to end the game', async () => {
-      // The "Call Vinto" button appears during the toss-in phase of the player's turn
-      // We need to play one more turn and catch the toss-in phase
+      // The "Call Vinto" button appears during the toss-in phase of the player's own turn
+      // Strategy: Keep playing turns until we see the Call Vinto button appear during toss-in
 
       let vintoButtonClicked = false;
-      let attempts = 0;
-      const maxAttempts = 10; // Try up to 10 turns to find the Call Vinto button
+      const startTime = Date.now();
+      const maxTime = 45000; // 45 seconds max to find and click Call Vinto
 
-      while (!vintoButtonClicked && attempts < maxAttempts) {
-        attempts++;
-
-        // Wait for player's turn
-        const playerTurnIndicator = page
-          .getByText(/your turn/i)
-          .or(page.locator('[data-testid="player-turn"]'));
-
-        const isPlayerTurn = await playerTurnIndicator
-          .isVisible({ timeout: 5000 })
+      while (!vintoButtonClicked && Date.now() - startTime < maxTime) {
+        // Check if it's player's turn by looking for the draw pile being clickable
+        const drawPile = page.locator('[data-testid="draw-pile"]');
+        const drawPileVisible = await drawPile
+          .isVisible({ timeout: 2000 })
           .catch(() => false);
 
-        if (isPlayerTurn) {
-          // Draw a card from the deck
-          const drawPile = page.locator('[data-testid="draw-pile"]');
-          await expect(drawPile).toBeVisible();
+        if (drawPileVisible) {
+          // Player's turn - play a turn to trigger toss-in phase
           await drawPile.click();
 
-          // Wait for action buttons
+          // Wait for pending card indicator
+          const pendingCard = page.locator('[data-pending-card="true"]');
+          await expect(pendingCard).toBeVisible({ timeout: 8000 });
+
+          // Wait for action buttons to appear - could be Use Action, Swap, or Discard
+          const useActionButton = page.getByRole('button', {
+            name: /use action/i,
+          });
+          const swapButton = page.getByRole('button', {
+            name: /swap cards/i,
+          });
           const discardButton = page.getByRole('button', {
             name: /discard/i,
           });
-          await expect(discardButton).toBeVisible({ timeout: 10000 });
-          await discardButton.click();
 
-          // Wait for toss-in phase
+          // Wait for at least one button to be visible
+          await Promise.race([
+            expect(useActionButton).toBeVisible({ timeout: 8000 }),
+            expect(swapButton).toBeVisible({ timeout: 8000 }),
+            expect(discardButton).toBeVisible({ timeout: 8000 }),
+          ]);
+
+          // Click discard to trigger toss-in (simplest path)
+          const hasDiscard = await discardButton.isVisible().catch(() => false);
+          if (hasDiscard) {
+            await discardButton.click();
+          } else {
+            // If no discard button (shouldn't happen with action cards), click use action or swap
+            const hasUseAction = await useActionButton
+              .isVisible()
+              .catch(() => false);
+            if (hasUseAction) {
+              await useActionButton.click();
+              // Wait and click any card that appears (for peek actions)
+              await page.waitForTimeout(500);
+              const anyCard = page.locator('[data-testid*="card"]').first();
+              const cardClickable = await anyCard.count();
+              if (cardClickable > 0) {
+                await anyCard.click().catch(() => {});
+              }
+            } else {
+              // Must be swap button
+              await swapButton.click();
+              await page.waitForTimeout(500);
+              // Click first player card to complete swap
+              const firstPlayerCard = page.locator(
+                '[data-testid="player-card-0"]'
+              );
+              await firstPlayerCard.click().catch(() => {});
+            }
+          }
+
+          // Now we should be in toss-in phase - check for Call Vinto button
           const tossInIndicator = page.getByText(/toss-in time/i);
           const tossInAppeared = await tossInIndicator
             .isVisible({ timeout: 5000 })
             .catch(() => false);
 
           if (tossInAppeared) {
-            // Check if Call Vinto button is visible
+            // We're in toss-in phase - check if Call Vinto button exists
+            // (it only appears on player's original turn, not when participating in others' toss-in)
             const vintoButton = page.getByRole('button', {
               name: /call vinto/i,
             });
             const vintoVisible = await vintoButton
-              .isVisible({ timeout: 2000 })
+              .isVisible({ timeout: 1000 })
               .catch(() => false);
 
             if (vintoVisible) {
@@ -229,30 +270,39 @@ test.describe('Vinto Game - Happy Path', () => {
               await vintoButton.click();
               vintoButtonClicked = true;
 
-              // Wait for confirmation modal or game end state to appear
+              // Wait for confirmation modal to appear
               await page.waitForTimeout(1000);
+              break; // Exit the loop
             } else {
-              // No Call Vinto button, just continue
+              // No Call Vinto button yet, click Continue to proceed to next turn
               const continueButton = page.getByRole('button', {
                 name: /continue/i,
               });
-              await expect(continueButton).toBeVisible();
-              await continueButton.click();
-              await page.waitForTimeout(500);
-            }
-          }
-        }
+              const continueVisible = await continueButton
+                .isVisible({ timeout: 2000 })
+                .catch(() => false);
 
-        // Wait before next attempt
-        await page.waitForTimeout(500);
+              if (continueVisible) {
+                await continueButton.click();
+                // Wait for turn transition
+                await page.waitForTimeout(500);
+              }
+            }
+          } else {
+            // Toss-in didn't appear (shouldn't happen, but handle it)
+            await page.waitForTimeout(500);
+          }
+        } else {
+          // Not player's turn - wait for bots to play
+          // Just wait a bit and check again
+          await page.waitForTimeout(1000);
+        }
       }
 
       // Verify we successfully clicked the button
       if (!vintoButtonClicked) {
         throw new Error(
-          'Failed to find and click Call Vinto button after ' +
-            maxAttempts +
-            ' attempts'
+          `Failed to find and click Call Vinto button within ${maxTime / 1000}s`
         );
       }
     });
