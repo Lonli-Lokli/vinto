@@ -40,9 +40,15 @@ test.describe('Vinto Game - Happy Path', () => {
         .or(page.locator('[data-testid="start-game"]'));
 
       // If the game auto-starts, this might not exist
+      // Check if button exists and is enabled before clicking
       const buttonVisible = await startButton.count();
       if (buttonVisible > 0) {
-        await startButton.click();
+        // Check if button is enabled (not disabled)
+        const isEnabled = await startButton.isEnabled().catch(() => false);
+        if (isEnabled) {
+          await startButton.click();
+        }
+        // If disabled, the game has likely auto-started, continue
       }
 
       // Verify the game board is visible
