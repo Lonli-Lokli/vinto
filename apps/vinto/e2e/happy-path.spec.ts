@@ -92,14 +92,12 @@ test.describe('Vinto Game - Happy Path', () => {
           await expect(drawPile).toBeVisible();
           await drawPile.click();
 
-          // Wait for action buttons to appear after drawing
-          const actionArea = page.getByRole('button', {
-            name: /use action|swap cards|discard/i,
-          });
-          await expect(actionArea.first()).toBeVisible({ timeout: 5000 });
+          // Wait for the pending card to appear first (drawn card indicator)
+          const pendingCard = page.locator('[data-pending-card="true"]');
+          await expect(pendingCard).toBeVisible({ timeout: 10000 });
 
-          // Handle the drawn card - either use action, swap, or discard
-          // Look for action buttons
+          // Now wait for action buttons to appear in the card drawn indicator
+          // The buttons appear after the game state transitions to 'choosing' subphase
           const useActionButton = page.getByRole('button', {
             name: /use action/i,
           });
@@ -109,6 +107,15 @@ test.describe('Vinto Game - Happy Path', () => {
           const discardButton = page.getByRole('button', {
             name: /discard/i,
           });
+
+          // Wait for at least one button to be visible (with longer timeout for CI)
+          await Promise.race([
+            expect(useActionButton).toBeVisible({ timeout: 10000 }),
+            expect(swapButton).toBeVisible({ timeout: 10000 }),
+            expect(discardButton).toBeVisible({ timeout: 10000 }),
+          ]);
+
+          // Handle the drawn card - either use action, swap, or discard
 
           const hasUseAction = await useActionButton.count();
           const hasSwap = await swapButton.count();
