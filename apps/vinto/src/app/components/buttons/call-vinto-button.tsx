@@ -7,12 +7,14 @@ export const CallVintoButton = ({
   fullWidth = false,
   className = '',
   children = 'Call Vinto',
+  'data-testid': dataTestId = 'call-vinto',
 }: {
   onClick: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
   children?: React.ReactNode;
+  'data-testid'?: string;
 }) => (
   <Button
     variant="call-vinto"
@@ -21,7 +23,7 @@ export const CallVintoButton = ({
     disabled={disabled}
     fullWidth={fullWidth}
     className={className}
-    data-testid="call-vinto"
+    data-testid={dataTestId}
   >
     {children}
   </Button>

@@ -26,7 +26,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
     <div className="flex flex-col items-center justify-center gap-1 md:gap-2">
       {/* Mobile: Combined avatar + name in rounded box */}
       <div
-        data-testid={isCurrentPlayer ? 'active-player-indicator' : undefined}
+        data-testid={isCurrentPlayer ? 'active-player-indicator-mobile' : undefined}
         data-player-name={playerName}
         data-is-current-player={isCurrentPlayer}
         className={`
@@ -65,7 +65,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
       {/* Desktop: Separate avatar and name */}
       <div
         className="hidden md:flex md:flex-col md:items-center md:justify-center md:gap-2"
-        data-testid={isCurrentPlayer ? 'active-player-indicator' : undefined}
+        data-testid={isCurrentPlayer ? 'active-player-indicator-desktop' : undefined}
         data-player-name={playerName}
         data-is-current-player={isCurrentPlayer}
       >

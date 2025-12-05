@@ -68,12 +68,12 @@ Lower card totals are better during the round, but game points are awarded by fi
   };
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" data-testid="game-end">
       <div className="h-full bg-surface-primary border border-primary rounded-lg p-1.5 shadow-theme-sm flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-1 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h3 className="text-xs md:text-sm font-semibold text-primary leading-tight truncate">
+            <h3 className="text-xs md:text-sm font-semibold text-primary leading-tight truncate" data-testid="score">
               {getWinnerText()}
             </h3>
             {hasCoalition && vintoCaller && (

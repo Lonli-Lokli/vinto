@@ -191,6 +191,7 @@ export const CoalitionLeaderModal = observer(() => {
               onClick={handleConfirm}
               disabled={!selectedLeaderId}
               className="w-full"
+              data-testid="confirm-coalition-leader"
             >
               Confirm Leader
             </ContinueButton>

@@ -28,7 +28,6 @@ export const DrawCard: React.FC<DrawCardProps> = ({
           : '') + ' flex flex-col items-center justify-center'
       }
       onClick={clickable ? onClick : undefined}
-      data-testid="draw-pile"
     >
       <Card size={size} selectionState="default" />
     </div>

@@ -13,6 +13,7 @@ export const StartGameButton = ({
 }) => (
   <Button
     variant="start-game"
+    data-testid="start-game"
     onClick={onClick}
     disabled={disabled}
     fullWidth={fullWidth}

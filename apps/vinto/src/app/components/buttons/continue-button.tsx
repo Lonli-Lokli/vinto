@@ -7,12 +7,14 @@ export const ContinueButton = ({
   fullWidth = false,
   className = '',
   children = 'Continue',
+  'data-testid': dataTestId,
 }: {
   onClick: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
   children?: React.ReactNode;
+  'data-testid'?: string;
 }) => (
   <Button
     variant="continue-toss"
@@ -22,6 +24,7 @@ export const ContinueButton = ({
     className={`px-3 whitespace-nowrap ${
       fullWidth ? '' : 'flex-shrink-0'
     } ${className}`}
+    data-testid={dataTestId}
   >
     <span className="flex items-center gap-1">
       {children}
