@@ -54,7 +54,7 @@ export const GamePhaseIndicators = observer(() => {
   // Setup Phase
   if (phase === 'setup' && sessionActive) {
     return (
-      <div data-testid="game-phase-setup" data-phase="setup">
+      <div data-testid="game-phase-setup" data-phase="setup" className="h-full w-full">
         <SetupPhaseIndicator
           setupPeeksRemaining={setupPeeksRemaining}
           onFinishSetup={() => {

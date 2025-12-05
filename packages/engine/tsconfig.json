@@ -4,9 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "../shapes"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {
