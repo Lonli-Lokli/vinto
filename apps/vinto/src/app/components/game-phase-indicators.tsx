@@ -73,7 +73,7 @@ export const GamePhaseIndicators = observer(() => {
     const isCurrentPlayerWaiting =
       gameClient.visualState.subPhase === 'ai_thinking';
     return (
-      <div data-testid="game-phase-toss-in" data-phase="playing" data-subphase="toss_queue_active">
+      <div data-testid="game-phase-toss-in" data-phase="playing" data-subphase="toss_queue_active" className="h-full w-full">
         <TossInIndicator
           tossInRanks={tossInRanks}
           onContinue={() => {
@@ -100,7 +100,7 @@ export const GamePhaseIndicators = observer(() => {
 
     // Otherwise show swap position selector
     return (
-      <div data-testid="game-phase-swap" data-phase="playing" data-subphase="selecting_swap">
+      <div data-testid="game-phase-swap" data-phase="playing" data-subphase="selecting_swap" className="h-full w-full">
         <SwapPositionIndicator
           onDiscard={() => {
             if (!humanPlayer) return;
@@ -115,7 +115,7 @@ export const GamePhaseIndicators = observer(() => {
   // Card Drawn - Choosing Action (only for human players)
   if (isChoosingCardAction && pendingCard && currentPlayer?.isHuman) {
     return (
-      <div data-testid="game-phase-choosing" data-phase="playing" data-subphase="choosing">
+      <div data-testid="game-phase-choosing" data-phase="playing" data-subphase="choosing" className="h-full w-full">
         <CardDrawnIndicator
           pendingCard={pendingCard}
           onUseAction={() => {
