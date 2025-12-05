@@ -75,7 +75,7 @@ export default defineConfig({
   webServer: isVercelPreview
     ? undefined
     : {
-        command: 'npx nx serve @vinto/game',
+        command: 'npx nx dev @vinto/game',
         url: 'http://localhost:3000',
         reuseExistingServer: true,
         cwd: workspaceRoot,

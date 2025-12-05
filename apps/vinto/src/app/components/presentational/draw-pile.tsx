@@ -22,7 +22,7 @@ export const DrawPile: React.FC<DrawPileProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="flex" data-deck-pile="true">
+      <div className="flex" data-deck-pile="true" data-testid="draw-pile">
         <DrawCard size={size} clickable={clickable} onClick={onClick} />
       </div>
       <div

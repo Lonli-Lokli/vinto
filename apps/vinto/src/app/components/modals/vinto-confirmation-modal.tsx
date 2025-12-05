@@ -78,6 +78,7 @@ export const VintoConfirmationModal = observer(() => {
               }}
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
+              data-testid="confirm-vinto"
             >
               Yes, Call Vinto
             </CallVintoButton>
@@ -86,6 +87,7 @@ export const VintoConfirmationModal = observer(() => {
               fullWidth
               className="py-3 px-4 text-base font-bold min-h-[48px]"
               autoFocus
+              data-testid="cancel-vinto"
             />
           </menu>
         </footer>

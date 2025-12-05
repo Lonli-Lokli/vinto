@@ -19,7 +19,10 @@ test.describe('Vinto Game - Happy Path', () => {
 
   test('should complete a full game from start to calling Vinto', async ({
     page,
+    isMobile,
   }) => {
+    // Increase test timeout to handle multiple turns and bot thinking time
+    test.setTimeout(60000); // 60 seconds
     await test.step('Load the game', async () => {
       // Wait for the page to load
       await expect(page).toHaveTitle(/Vinto/i);
@@ -32,18 +35,39 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(gameBoard).toBeVisible({ timeout: 15000 });
     });
 
-    await test.step('Start a new game', async () => {
-      // Look for "Start Game" or "New Game" button
-      // Try multiple possible selectors
-      const startButton = page
-        .getByRole('button', { name: /start game|new game|play/i })
-        .or(page.locator('[data-testid="start-game"]'));
+    await test.step('Complete setup phase and start game', async () => {
+      // Wait for Memory Phase indicator to appear using test ID
+      const setupPhaseIndicator = page.locator(
+        '[data-testid="game-phase-setup"]'
+      );
+      await expect(setupPhaseIndicator).toBeVisible({ timeout: 10000 });
 
-      // If the game auto-starts, this might not exist
-      const buttonVisible = await startButton.count();
-      if (buttonVisible > 0) {
-        await startButton.click();
-      }
+      // Click on two player cards to complete the memory phase
+      // The game requires users to peek at 2 cards before starting
+      const firstCard = page
+        .locator('[data-testid="player-card-0"]')
+        .or(page.locator('.player-card').first());
+      await expect(firstCard).toBeVisible();
+      await firstCard.click();
+
+      // Wait a moment for the first card flip animation
+      await page.waitForTimeout(500);
+
+      const secondCard = page
+        .locator('[data-testid="player-card-1"]')
+        .or(page.locator('.player-card').nth(1));
+      await expect(secondCard).toBeVisible();
+      await secondCard.click();
+
+      // Wait a moment for the second card flip animation
+      await page.waitForTimeout(500);
+
+      // Now the "Start Game" button should be enabled
+      const startButton = page.locator('[data-testid="start-game"]');
+
+      // Wait for button to be enabled after clicking both cards
+      await expect(startButton).toBeEnabled({ timeout: 5000 });
+      await startButton.click();
 
       // Verify the game board is visible
       await expect(
@@ -53,153 +77,110 @@ test.describe('Vinto Game - Happy Path', () => {
       ).toBeVisible({ timeout: 10000 });
     });
 
-    await test.step('Complete memory phase - peek at cards', async () => {
-      // Wait for memory phase to start
-      // Look for instructions or peek prompt
-      const memoryPhase = page
-        .getByText(/peek|memory|look at.*cards/i)
-        .or(page.locator('[data-testid="memory-phase"]'));
+    await test.step('Play one turn and call Vinto', async () => {
+      // Determine if we're on mobile or desktop based on viewport
+      const testIdSuffix = isMobile ? '-mobile' : '-desktop';
 
-      const hasMemoryPhase = await memoryPhase.count();
+      // Wait for active player indicator (works for both player and bot turns)
+      // In a 4-player game, the first turn might be a bot
+      const activePlayerIndicator = page.locator(
+        `[data-testid="active-player-indicator${testIdSuffix}"]`
+      );
 
-      if (hasMemoryPhase > 0) {
-        await expect(memoryPhase.first()).toBeVisible();
+      // Wait up to 30 seconds for it to be the player's turn
+      // This handles the case where bots go first
+      await expect(activePlayerIndicator).toBeVisible({ timeout: 30000 });
 
-        // Peek at first card
-        const firstCard = page
+      // Now it's the player's turn - wait for draw pile to be clickable
+      const drawPile = page.locator('[data-testid="draw-pile"]');
+      await expect(drawPile).toBeVisible();
+
+      // Click draw pile
+      await drawPile.click();
+
+      // Wait for choosing phase indicator - this means the card has been drawn
+      const choosingPhase = page.locator('[data-testid="game-phase-choosing"]');
+      await expect(choosingPhase).toBeVisible({ timeout: 5000 });
+
+      // Prefer to discard for simplicity, but handle other cases
+      const discardButton = page.getByRole('button', { name: /discard/i });
+      const useActionButton = page.getByRole('button', { name: /use action/i });
+      const swapButton = page.getByRole('button', { name: /swap cards/i });
+
+      // Try discard first (simplest path)
+      if (await discardButton.isVisible().catch(() => false)) {
+        await discardButton.click();
+      }
+      // If no discard, try use action
+      else if (await useActionButton.isVisible().catch(() => false)) {
+        await useActionButton.click();
+        // For peek actions, click the first available card
+        await page
+          .locator('[data-testid*="card"]')
+          .first()
+          .click({ timeout: 3000 })
+          .catch(() => { /* empty */ });
+      }
+      // Otherwise must be swap
+      else {
+        await swapButton.click();
+        // Click first player card to complete swap
+        await page
           .locator('[data-testid="player-card-0"]')
-          .or(page.locator('.player-card').first());
-        await firstCard.click();
-        // Wait for card flip animation to complete
-        await expect(firstCard).toBeVisible();
-
-        // Peek at second card
-        const secondCard = page
-          .locator('[data-testid="player-card-1"]')
-          .or(page.locator('.player-card').nth(1));
-        await secondCard.click();
-        // Wait for card flip animation to complete
-        await expect(secondCard).toBeVisible();
-
-        // Confirm or close memory phase if needed
-        const confirmButton = page.getByRole('button', {
-          name: /confirm|ok|continue/i,
-        });
-        const confirmVisible = await confirmButton.count();
-        if (confirmVisible > 0) {
-          await confirmButton.click();
-        }
+          .first()
+          .click({ timeout: 3000 });
       }
-    });
 
-    await test.step('Play through several turns', async () => {
-      // Play at least 3 turns
-      for (let turn = 0; turn < 3; turn++) {
-        // Wait for player's turn (skip if it's a bot's turn)
-        const playerTurnIndicator = page
-          .getByText(/your turn/i)
-          .or(page.locator('[data-testid="player-turn"]'));
+      // Wait for toss-in phase - this is a deterministic game state change
+      const tossInPhase = page.locator('[data-testid="game-phase-toss-in"]');
+      await expect(tossInPhase).toBeVisible({ timeout: 5000 });
 
-        // Check if it's player's turn with a reasonable timeout
-        const isPlayerTurn = await playerTurnIndicator.count();
+      // Click "Call Vinto" button in toss-in phase
+      const callVintoButton = page.locator('[data-testid="call-vinto"]').first();
+      await expect(callVintoButton).toBeVisible({ timeout: 3000 });
+      await callVintoButton.click();
 
-        if (isPlayerTurn > 0) {
-          // Draw a card from the deck
-          const drawPile = page
-            .locator('[data-testid="draw-pile"]')
-            .or(page.getByRole('button', { name: /draw|deck/i }));
+      // Wait for and confirm the Vinto confirmation dialog
+      const confirmVintoButton = page.locator('[data-testid="confirm-vinto"]');
+      await expect(confirmVintoButton).toBeVisible({ timeout: 3000 });
+      await confirmVintoButton.click();
 
-          await expect(drawPile).toBeVisible();
-          await drawPile.click();
+      // Wait for confirmation dialog to close
+      await expect(confirmVintoButton).toBeHidden({ timeout: 3000 });
 
-          // Wait for action buttons to appear after drawing
-          const actionArea = page.getByRole('button', {
-            name: /use action|play|swap|replace|discard|skip/i,
-          });
-          await expect(actionArea.first()).toBeVisible({ timeout: 5000 });
+      // Handle coalition selection dialog (only appears if a bot called Vinto)
+      // If the human called Vinto, this dialog won't appear
+      const coalitionConfirmButton = page.locator(
+        '[data-testid="confirm-coalition-leader"]'
+      );
+      const hasCoalitionDialog = await coalitionConfirmButton
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
 
-          // Handle the drawn card - either use action, swap, or discard
-          // Look for action buttons
-          const useActionButton = page.getByRole('button', {
-            name: /use action|play/i,
-          });
-          const swapButton = page.getByRole('button', {
-            name: /swap|replace/i,
-          });
-          const discardButton = page.getByRole('button', {
-            name: /discard|skip/i,
-          });
+      if (hasCoalitionDialog) {
+        // Click the first coalition member button to select them as leader
+        const firstCoalitionMember = page
+          .getByRole('button')
+          .filter({ hasText: /bot [123]|you/i })
+          .first();
+        await expect(firstCoalitionMember).toBeVisible();
+        await firstCoalitionMember.click();
 
-          const hasUseAction = await useActionButton.count();
-          const hasSwap = await swapButton.count();
-          const hasDiscard = await discardButton.count();
+        // Click "Confirm Leader" button using test ID
+        await coalitionConfirmButton.click();
 
-          if (hasUseAction > 0) {
-            await useActionButton.click();
-
-            // If it's a peek action, wait for selectable cards to appear and select one
-            const selectableCard = page
-              .locator('[data-testid*="card"]')
-              .first();
-            const cardClickable = await selectableCard.count();
-            if (cardClickable > 0) {
-              await expect(selectableCard).toBeVisible();
-              await selectableCard.click();
-            }
-          } else if (hasSwap > 0) {
-            await swapButton.click();
-
-            // Wait for card selection state to be ready, then select a position to swap
-            const cardSlot = page
-              .locator('[data-testid="player-card-0"]')
-              .first();
-            const slotClickable = await cardSlot.count();
-            if (slotClickable > 0) {
-              await expect(cardSlot).toBeVisible();
-              await cardSlot.click();
-            }
-          } else if (hasDiscard > 0) {
-            await discardButton.click();
-            // Wait for discard action to complete - ignore if timeout
-            try {
-              await expect(discardButton).not.toBeVisible({ timeout: 2000 });
-            } catch {
-              // Ignore timeout if button is still visible
-            }
-          }
-        }
-
-        // Wait for turn to complete - check that draw pile becomes disabled or next turn starts
-        // Use a short delay to allow for turn transition
-        await page.waitForTimeout(500);
+        // Wait for dialog to close
+        await expect(coalitionConfirmButton).toBeHidden({ timeout: 3000 });
       }
-    });
-
-    await test.step('Call Vinto to end the game', async () => {
-      // Look for "Call Vinto" button
-      const vintoButton = page
-        .getByRole('button', { name: /call vinto|vinto|end game/i })
-        .or(page.locator('[data-testid="call-vinto"]'));
-
-      // Wait for the button to be available (might need to wait for player's turn)
-      await expect(vintoButton).toBeVisible({ timeout: 30000 });
-
-      // Wait for button to be enabled
-      await expect(vintoButton).toBeEnabled({ timeout: 10000 });
-
-      await vintoButton.click();
-
-      // Wait for confirmation modal or game end state to appear
-      await page.waitForTimeout(1000);
     });
 
     await test.step('Verify game completion', async () => {
-      // Look for game over / final round indicators
-      const gameEnd = page
-        .getByText(/final round|game over|winner|vinto!/i)
-        .or(page.locator('[data-testid="game-end"]'));
+      // After calling Vinto, wait for the final round to complete
+      // This requires all 3 bots to take their final turns, which may take time
+      const gameEnd = page.locator('[data-testid="game-end"]');
 
-      await expect(gameEnd).toBeVisible({ timeout: 20000 });
+      // Wait up to 60 seconds for all bot turns to complete and scoring to appear
+      await expect(gameEnd).toBeVisible({ timeout: 60_000 });
 
       // Look for score display
       const scoreDisplay = page

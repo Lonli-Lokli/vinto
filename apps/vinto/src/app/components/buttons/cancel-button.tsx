@@ -7,6 +7,7 @@ export const CancelButton = ({
   className = '',
   autoFocus = false,
   children = 'Cancel',
+  'data-testid': dataTestId,
 }: {
   onClick: () => void;
   disabled?: boolean;
@@ -14,6 +15,7 @@ export const CancelButton = ({
   className?: string;
   autoFocus?: boolean;
   children?: React.ReactNode;
+  'data-testid'?: string;
 }) => (
   <Button
     variant="cancel"
@@ -22,6 +24,7 @@ export const CancelButton = ({
     disabled={disabled}
     fullWidth={fullWidth}
     className={className}
+    data-testid={dataTestId}
   >
     {children}
   </Button>

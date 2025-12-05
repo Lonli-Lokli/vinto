@@ -54,13 +54,15 @@ export const GamePhaseIndicators = observer(() => {
   // Setup Phase
   if (phase === 'setup' && sessionActive) {
     return (
-      <SetupPhaseIndicator
-        setupPeeksRemaining={setupPeeksRemaining}
-        onFinishSetup={() => {
-          if (!humanPlayer) return;
-          gameClient.dispatch(GameActions.finishSetup(humanPlayer.id));
-        }}
-      />
+      <div data-testid="game-phase-setup" data-phase="setup">
+        <SetupPhaseIndicator
+          setupPeeksRemaining={setupPeeksRemaining}
+          onFinishSetup={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.finishSetup(humanPlayer.id));
+          }}
+        />
+      </div>
     );
   }
 
@@ -71,16 +73,18 @@ export const GamePhaseIndicators = observer(() => {
     const isCurrentPlayerWaiting =
       gameClient.visualState.subPhase === 'ai_thinking';
     return (
-      <TossInIndicator
-        tossInRanks={tossInRanks}
-        onContinue={() => {
-          if (!humanPlayer) return;
-          // Engine will check if all humans are ready and auto-advance turn
-          gameClient.dispatch(GameActions.playerTossInFinished(humanPlayer.id));
-        }}
-        currentPlayer={currentPlayer}
-        isCurrentPlayerWaiting={isCurrentPlayerWaiting}
-      />
+      <div data-testid="game-phase-toss-in" data-phase="playing" data-subphase="toss_queue_active">
+        <TossInIndicator
+          tossInRanks={tossInRanks}
+          onContinue={() => {
+            if (!humanPlayer) return;
+            // Engine will check if all humans are ready and auto-advance turn
+            gameClient.dispatch(GameActions.playerTossInFinished(humanPlayer.id));
+          }}
+          currentPlayer={currentPlayer}
+          isCurrentPlayerWaiting={isCurrentPlayerWaiting}
+        />
+      </div>
     );
   }
 
@@ -96,39 +100,43 @@ export const GamePhaseIndicators = observer(() => {
 
     // Otherwise show swap position selector
     return (
-      <SwapPositionIndicator
-        onDiscard={() => {
-          if (!humanPlayer) return;
-          uiStore.cancelSwapSelection();
-          gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
-        }}
-      />
+      <div data-testid="game-phase-swap" data-phase="playing" data-subphase="selecting_swap">
+        <SwapPositionIndicator
+          onDiscard={() => {
+            if (!humanPlayer) return;
+            uiStore.cancelSwapSelection();
+            gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
+          }}
+        />
+      </div>
     );
   }
 
   // Card Drawn - Choosing Action (only for human players)
   if (isChoosingCardAction && pendingCard && currentPlayer?.isHuman) {
     return (
-      <CardDrawnIndicator
-        pendingCard={pendingCard}
-        onUseAction={() => {
-          if (!humanPlayer || !pendingCard) return;
-          gameClient.dispatch(GameActions.playCardAction(humanPlayer.id));
-        }}
-        onSwapDiscard={() => {
-          console.log('[CardDrawnIndicator] Swap button clicked');
-          // Start swap selection (UI-only state)
-          uiStore.startSelectingSwapPosition();
-          console.log(
-            '[CardDrawnIndicator] isSelectingSwapPosition set to:',
-            uiStore.isSelectingSwapPosition
-          );
-        }}
-        onDiscard={() => {
-          if (!humanPlayer) return;
-          gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
-        }}
-      />
+      <div data-testid="game-phase-choosing" data-phase="playing" data-subphase="choosing">
+        <CardDrawnIndicator
+          pendingCard={pendingCard}
+          onUseAction={() => {
+            if (!humanPlayer || !pendingCard) return;
+            gameClient.dispatch(GameActions.playCardAction(humanPlayer.id));
+          }}
+          onSwapDiscard={() => {
+            console.log('[CardDrawnIndicator] Swap button clicked');
+            // Start swap selection (UI-only state)
+            uiStore.startSelectingSwapPosition();
+            console.log(
+              '[CardDrawnIndicator] isSelectingSwapPosition set to:',
+              uiStore.isSelectingSwapPosition
+            );
+          }}
+          onDiscard={() => {
+            if (!humanPlayer) return;
+            gameClient.dispatch(GameActions.discardCard(humanPlayer.id));
+          }}
+        />
+      </div>
     );
   }
 
