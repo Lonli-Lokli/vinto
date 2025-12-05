@@ -77,20 +77,27 @@ test.describe('Vinto Game - Happy Path', () => {
     });
 
     await test.step('Play through several turns', async () => {
-      // Play at least 3 turns
-      for (let turn = 0; turn < 3; turn++) {
-        // Wait for player's turn (skip if it's a bot's turn)
-        const playerTurnIndicator = page
-          .getByText(/your turn/i)
-          .or(page.locator('[data-testid="player-turn"]'));
+      // Play at least 3 player turns (not just any 3 turns)
+      let playerTurnsPlayed = 0;
+      const maxAttempts = 20; // Reasonable limit to prevent infinite loops
+      let attempts = 0;
 
-        // Check if it's player's turn with a reasonable timeout
-        const isPlayerTurn = await playerTurnIndicator.count();
+      while (playerTurnsPlayed < 3 && attempts < maxAttempts) {
+        attempts++;
 
-        if (isPlayerTurn > 0) {
+        // Wait for player's turn to arrive
+        const drawPile = page.locator('[data-testid="draw-pile"]');
+
+        // Wait for draw pile to be visible, indicating it's the player's turn
+        // If timeout, it means it's still a bot's turn, so we wait and retry
+        const isPlayerTurn = await drawPile
+          .isVisible({ timeout: 3000 })
+          .catch(() => false);
+
+        if (isPlayerTurn) {
+          playerTurnsPlayed++;
+
           // Draw a card from the deck
-          const drawPile = page.locator('[data-testid="draw-pile"]');
-
           await expect(drawPile).toBeVisible();
           // Use force: true to bypass actionability checks
           // The parent GameTable container can intercept clicks, but the element is actually clickable
@@ -189,11 +196,13 @@ test.describe('Vinto Game - Happy Path', () => {
             // Wait a moment for the turn transition after clicking Continue
             await page.waitForTimeout(500);
           }
-        }
 
-        // Wait for turn to complete - check that draw pile becomes disabled or next turn starts
-        // Use a short delay to allow for turn transition
-        await page.waitForTimeout(500);
+          // Wait for turn to complete and transition to next player
+          await page.waitForTimeout(1000);
+        } else {
+          // Not player's turn yet, wait for bots to play
+          await page.waitForTimeout(1000);
+        }
       }
     });
 
