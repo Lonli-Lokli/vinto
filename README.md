@@ -15,7 +15,7 @@ A strategic multiplayer card game built with **Next.js**, **TypeScript**, and a 
 ## Features
 
 - **4-Player Game**: One human player vs three AI opponents
-- **Strategic Gameplay**: Action cards (7-K) with special abilities
+- **Strategic Gameplay**: Action cards (7-A) with special abilities
 - **Cloud-Ready Architecture**: Pure GameEngine that can be hosted remotely
 - **Responsive Design**: Optimized for both mobile and desktop
 - **Type-Safe**: Full TypeScript implementation with strict mode

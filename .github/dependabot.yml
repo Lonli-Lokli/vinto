@@ -1,3 +1,12 @@
+# Dependabot Configuration
+#
+# IMPORTANT: Nx updates should NOT be handled by Dependabot!
+# Use the manual update script instead: npm run update
+# This runs: npx nx migrate latest && npm install && npx nx migrate --run-migrations
+#
+# Nx uses a migration system that includes code transformations, configuration
+# updates, and breaking change handling that cannot be automated by Dependabot.
+
 version: 2
 updates:
   # Enable version updates for npm
@@ -15,14 +24,6 @@ updates:
       prefix-development: "chore(deps-dev)"
       include: "scope"
     groups:
-      # Nx-related updates in separate group (most specific first)
-      nx-dependencies:
-        patterns:
-          - "@nx/*"
-          - "nx"
-        update-types:
-          - "minor"
-          - "patch"
       # Next.js and related
       nextjs-dependencies:
         patterns:
@@ -45,6 +46,43 @@ updates:
         exclude-patterns:
           - "@nx/react"
           - "eslint-plugin-react*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Testing dependencies
+      testing-dependencies:
+        patterns:
+          - "@testing-library/*"
+          - "@playwright/*"
+          - "vitest"
+          - "@vitest/*"
+          - "jsdom"
+        update-types:
+          - "minor"
+          - "patch"
+      # ESLint ecosystem
+      eslint-dependencies:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "typescript-eslint"
+        exclude-patterns:
+          - "@nx/eslint*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Build tools (excluding Nx)
+      build-tools:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "postcss"
+          - "autoprefixer"
+          - "tailwindcss"
+          - "typescript"
+          - "ts-node"
+          - "tslib"
         update-types:
           - "minor"
           - "patch"
@@ -72,7 +110,15 @@ updates:
           - "next*"
           - "@nx/*"
           - "nx"
-          - "eslint-plugin-react*"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "@testing-library/*"
+          - "@playwright/*"
+          - "vitest"
+          - "@vitest/*"
+          - "vite"
+          - "@vitejs/*"
         update-types:
           - "minor"
           - "patch"
@@ -83,9 +129,19 @@ updates:
       - "Lonli-Lokli"
     # Disable auto-rebase to let GitHub's merge queue handle conflicts
     rebase-strategy: "disabled"
-    # Selectively ignore major version updates for stable frameworks
+    # Allow Dependabot to access private registries if needed
+    # registries: "*"
+    # Versioning strategy - increase semantic versions
+    versioning-strategy: increase
+    # Selectively ignore updates that require manual migration
     # Security updates are NOT affected by these ignores
     ignore:
+      # Nx - MUST use manual migration via npm run update
+      # Nx has its own migration system with code transformations
+      - dependency-name: "@nx/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "nx"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
       # Core frameworks - major updates require careful migration
       - dependency-name: "react"
         update-types: ["version-update:semver-major"]
@@ -93,12 +149,11 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "@nx/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "nx"
-        update-types: ["version-update:semver-major"]
       # TypeScript major updates need careful testing
       - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Node types should match Node engine version
+      - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
 
   # GitHub Actions updates

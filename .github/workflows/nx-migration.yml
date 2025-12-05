@@ -1,0 +1,35 @@
+name: Nx Migration
+
+on:
+  schedule:
+    # Run every Monday at 9:00 UTC (same as Dependabot)
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggers
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - run: npm ci
+    
+    - uses: timonmasberg/nx-migration-gh-action@v1.0.0
+      with:
+        repoToken: ${{ secrets.GITHUB_TOKEN }}
+        # Optional:
+        prTitle: 'feat: Migrates NX to $VERSION'
+        includeMigrationsFile: false
+        base: 'master'
