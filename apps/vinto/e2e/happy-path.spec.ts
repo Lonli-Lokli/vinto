@@ -35,9 +35,9 @@ test.describe('Vinto Game - Happy Path', () => {
     });
 
     await test.step('Complete setup phase and start game', async () => {
-      // Wait for Memory Phase indicator to appear
-      const memoryPhaseText = page.getByText(/memory phase/i);
-      await expect(memoryPhaseText).toBeVisible({ timeout: 10000 });
+      // Wait for Memory Phase indicator to appear using test ID
+      const setupPhaseIndicator = page.locator('[data-testid="game-phase-setup"]');
+      await expect(setupPhaseIndicator).toBeVisible({ timeout: 10000 });
 
       // Click on two player cards to complete the memory phase
       // The game requires users to peek at 2 cards before starting
@@ -85,17 +85,17 @@ test.describe('Vinto Game - Happy Path', () => {
       while (playerTurnsPlayed < 3 && attempts < maxAttempts) {
         attempts++;
 
-        // Wait for player's turn to arrive
-        const drawPile = page.locator('[data-testid="draw-pile"]');
-
-        // Wait for draw pile to be visible, indicating it's the player's turn
-        // If timeout, it means it's still a bot's turn, so we wait and retry
-        const isPlayerTurn = await drawPile
+        // Check if it's player's turn by looking for active player indicator
+        const activePlayerIndicator = page.locator('[data-testid="active-player-indicator"]');
+        const isPlayerTurn = await activePlayerIndicator
           .isVisible({ timeout: 3000 })
           .catch(() => false);
 
         if (isPlayerTurn) {
           playerTurnsPlayed++;
+
+          // Wait for draw pile to be available
+          const drawPile = page.locator('[data-testid="draw-pile"]');
 
           // Draw a card from the deck
           await expect(drawPile).toBeVisible();
@@ -103,21 +103,12 @@ test.describe('Vinto Game - Happy Path', () => {
           // The parent GameTable container can intercept clicks, but the element is actually clickable
           await drawPile.click({ force: true });
 
-          // CRITICAL: After clicking draw pile, card animation starts
-          // During animation, WaitingIndicator shows instead of GamePhaseIndicators
-          // We must wait for animation to complete before action buttons appear
+          // Wait for the choosing phase indicator to appear
+          // This is more reliable than waiting for individual buttons
+          const choosingPhase = page.locator('[data-testid="game-phase-choosing"]');
+          await expect(choosingPhase).toBeVisible({ timeout: 15000 });
 
-          // Step 1: Wait for the pending card to appear (indicates card was drawn)
-          const pendingCard = page.locator('[data-pending-card="true"]');
-          await expect(pendingCard).toBeVisible({ timeout: 10000 });
-
-          // Step 2: Wait for the WaitingIndicator to disappear (animation complete)
-          // The WaitingIndicator is shown in UserControlsArea during hasBlockingAnimations
-          // Once animations finish, GamePhaseIndicators (with buttons) will render
-          await page.waitForTimeout(2000); // Give animations time to complete
-
-          // Step 3: Now wait for action buttons to appear in GamePhaseIndicators
-          // The buttons appear after animations complete and subPhase === 'choosing'
+          // Now get the action buttons
           const useActionButton = page.getByRole('button', {
             name: /use action/i,
           });
@@ -126,21 +117,6 @@ test.describe('Vinto Game - Happy Path', () => {
           });
           const discardButton = page.getByRole('button', {
             name: /discard/i,
-          });
-
-          // Wait for at least one button to be visible (with longer timeout for CI)
-          await Promise.race([
-            expect(useActionButton).toBeVisible({ timeout: 15000 }),
-            expect(swapButton).toBeVisible({ timeout: 15000 }),
-            expect(discardButton).toBeVisible({ timeout: 15000 }),
-          ]).catch(async () => {
-            // If buttons still don't appear, wait a bit more and retry once
-            await page.waitForTimeout(2000);
-            await Promise.race([
-              expect(useActionButton).toBeVisible({ timeout: 10000 }),
-              expect(swapButton).toBeVisible({ timeout: 10000 }),
-              expect(discardButton).toBeVisible({ timeout: 10000 }),
-            ]);
           });
 
           // Handle the drawn card - either use action, swap, or discard
@@ -177,15 +153,15 @@ test.describe('Vinto Game - Happy Path', () => {
             await discardButton.click();
           }
 
-          // Wait for toss-in phase to appear
+          // Wait for toss-in phase to appear using test ID
           // After a card is discarded, the toss-in indicator should appear
-          const tossInIndicator = page.getByText(/toss-in time/i);
+          const tossInPhase = page.locator('[data-testid="game-phase-toss-in"]');
           const continueButton = page.getByRole('button', {
             name: /continue/i,
           });
 
           // Wait for either toss-in or next turn (sometimes toss-in is skipped)
-          const tossInAppeared = await tossInIndicator
+          const tossInAppeared = await tossInPhase
             .isVisible({ timeout: 3000 })
             .catch(() => false);
 
@@ -215,25 +191,23 @@ test.describe('Vinto Game - Happy Path', () => {
       const maxTime = 45000; // 45 seconds max to find and click Call Vinto
 
       while (!vintoButtonClicked && Date.now() - startTime < maxTime) {
-        // Check if it's player's turn by looking for the draw pile being clickable
-        const drawPile = page.locator('[data-testid="draw-pile"]');
-        const drawPileVisible = await drawPile
+        // Check if it's player's turn using active player indicator
+        const activePlayerIndicator = page.locator('[data-testid="active-player-indicator"]');
+        const isPlayerTurn = await activePlayerIndicator
           .isVisible({ timeout: 2000 })
           .catch(() => false);
 
-        if (drawPileVisible) {
+        if (isPlayerTurn) {
+          const drawPile = page.locator('[data-testid="draw-pile"]');
           // Player's turn - play a turn to trigger toss-in phase
           // Use force: true to bypass actionability checks
           await drawPile.click({ force: true });
 
-          // Wait for pending card indicator and animation to complete
-          const pendingCard = page.locator('[data-pending-card="true"]');
-          await expect(pendingCard).toBeVisible({ timeout: 10000 });
+          // Wait for the choosing phase indicator to appear
+          const choosingPhase = page.locator('[data-testid="game-phase-choosing"]');
+          await expect(choosingPhase).toBeVisible({ timeout: 15000 });
 
-          // Wait for card animation to complete before action buttons appear
-          await page.waitForTimeout(2000);
-
-          // Wait for action buttons to appear - could be Use Action, Swap, or Discard
+          // Get action buttons
           const useActionButton = page.getByRole('button', {
             name: /use action/i,
           });
@@ -242,21 +216,6 @@ test.describe('Vinto Game - Happy Path', () => {
           });
           const discardButton = page.getByRole('button', {
             name: /discard/i,
-          });
-
-          // Wait for at least one button to be visible
-          await Promise.race([
-            expect(useActionButton).toBeVisible({ timeout: 15000 }),
-            expect(swapButton).toBeVisible({ timeout: 15000 }),
-            expect(discardButton).toBeVisible({ timeout: 15000 }),
-          ]).catch(async () => {
-            // Retry once if buttons don't appear
-            await page.waitForTimeout(2000);
-            await Promise.race([
-              expect(useActionButton).toBeVisible({ timeout: 10000 }),
-              expect(swapButton).toBeVisible({ timeout: 10000 }),
-              expect(discardButton).toBeVisible({ timeout: 10000 }),
-            ]);
           });
 
           // Click discard to trigger toss-in (simplest path)
@@ -289,9 +248,9 @@ test.describe('Vinto Game - Happy Path', () => {
             }
           }
 
-          // Now we should be in toss-in phase - check for Call Vinto button
-          const tossInIndicator = page.getByText(/toss-in time/i);
-          const tossInAppeared = await tossInIndicator
+          // Now we should be in toss-in phase - check for Call Vinto button using test ID
+          const tossInPhase = page.locator('[data-testid="game-phase-toss-in"]');
+          const tossInAppeared = await tossInPhase
             .isVisible({ timeout: 5000 })
             .catch(() => false);
 
