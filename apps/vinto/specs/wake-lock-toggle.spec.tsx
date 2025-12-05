@@ -186,6 +186,11 @@ describe('WakeLockToggle', () => {
       expect(mockSentinel.release).toHaveBeenCalled();
     });
 
+    // Wait for React to finish processing state updates and effect cleanup
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /enable screen wake lock/i })).toBeInTheDocument();
+    });
+
     // Simulate page becoming visible again
     Object.defineProperty(document, 'visibilityState', {
       value: 'visible',
