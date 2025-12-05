@@ -1,0 +1,42 @@
+name: Nx Migration
+
+on:
+  schedule:
+    # Run every Monday at 9:00 UTC (same as Dependabot)
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggers
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Run Nx Migration
+        uses: rx-angular/nx-migration-action@v1
+        with:
+          # Create PR when migrations are available
+          create-pr: true
+          # PR title
+          pr-title: 'chore(deps): migrate Nx to latest version'
+          # PR branch name
+          pr-branch: 'nx-migration/automated'
+          # Commit message prefix
+          commit-prefix: 'chore(deps)'
+          # Assign reviewers
+          reviewers: Lonli-Lokli
+          # Labels for the PR
+          labels: dependencies,nx-migration,automated
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
