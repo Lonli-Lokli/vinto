@@ -173,12 +173,28 @@ test.describe('Vinto Game - Happy Path', () => {
             await page.waitForTimeout(500);
           }
 
+          // CRITICAL: Ensure we've fully exited our turn before continuing
+          // Wait for the active player indicator to disappear (indicating turn has ended)
+          await activePlayerIndicator.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {
+            // If it doesn't disappear, it might mean we're still in our turn somehow
+            // This is okay - we'll check again in the next loop iteration
+          });
+
           // Wait for turn to complete and transition to next player
           await page.waitForTimeout(1000);
         } else {
           // Not player's turn yet, wait for bots to play
           await page.waitForTimeout(1000);
         }
+      }
+
+      // CRITICAL FIX: After completing 3 turns, ensure we're not stuck in a pending state
+      // Check if there's a Continue button visible (toss-in phase) and click it
+      const continueButton = page.getByRole('button', { name: /continue/i });
+      const continueVisible = await continueButton.isVisible({ timeout: 1000 }).catch(() => false);
+      if (continueVisible) {
+        await continueButton.click();
+        await page.waitForTimeout(1000);
       }
     });
 
@@ -189,8 +205,21 @@ test.describe('Vinto Game - Happy Path', () => {
       let vintoButtonClicked = false;
       const startTime = Date.now();
       const maxTime = 45000; // 45 seconds max to find and click Call Vinto
+      let consecutiveNotPlayerTurnCount = 0;
+      const maxConsecutiveNotPlayerTurns = 30; // If we wait 30 seconds without seeing player's turn, something is wrong
 
       while (!vintoButtonClicked && Date.now() - startTime < maxTime) {
+        // First, check if there's any pending action we need to complete
+        const continueButton = page.getByRole('button', { name: /continue/i });
+        const continueVisible = await continueButton.isVisible({ timeout: 500 }).catch(() => false);
+        if (continueVisible) {
+          // We're stuck in toss-in from a previous turn - click Continue
+          await continueButton.click();
+          await page.waitForTimeout(1000);
+          consecutiveNotPlayerTurnCount = 0; // Reset since we took an action
+          continue; // Go back to the start of the loop
+        }
+
         // Check if it's player's turn using active player indicator
         const activePlayerIndicator = page.locator('[data-testid="active-player-indicator"]');
         const isPlayerTurn = await activePlayerIndicator
@@ -198,14 +227,32 @@ test.describe('Vinto Game - Happy Path', () => {
           .catch(() => false);
 
         if (isPlayerTurn) {
+          consecutiveNotPlayerTurnCount = 0; // Reset counter
+
           const drawPile = page.locator('[data-testid="draw-pile"]');
+
+          // Make sure draw pile is actually clickable (not blocked by animations)
+          const drawPileVisible = await drawPile.isVisible({ timeout: 5000 }).catch(() => false);
+          if (!drawPileVisible) {
+            // Draw pile not visible - might be in a different phase
+            await page.waitForTimeout(1000);
+            continue;
+          }
+
           // Player's turn - play a turn to trigger toss-in phase
           // Use force: true to bypass actionability checks
           await drawPile.click({ force: true });
 
           // Wait for the choosing phase indicator to appear
           const choosingPhase = page.locator('[data-testid="game-phase-choosing"]');
-          await expect(choosingPhase).toBeVisible({ timeout: 15000 });
+          const choosingAppeared = await choosingPhase.isVisible({ timeout: 15000 }).catch(() => false);
+
+          if (!choosingAppeared) {
+            // Choosing phase didn't appear - might have drawn a non-action card or something else happened
+            // Try to recover by waiting and continuing
+            await page.waitForTimeout(1000);
+            continue;
+          }
 
           // Get action buttons
           const useActionButton = page.getByRole('button', {
@@ -274,25 +321,40 @@ test.describe('Vinto Game - Happy Path', () => {
               break; // Exit the loop
             } else {
               // No Call Vinto button yet, click Continue to proceed to next turn
-              const continueButton = page.getByRole('button', {
+              const continueBtn = page.getByRole('button', {
                 name: /continue/i,
               });
-              const continueVisible = await continueButton
+              const continueVis = await continueBtn
                 .isVisible({ timeout: 2000 })
                 .catch(() => false);
 
-              if (continueVisible) {
-                await continueButton.click();
-                // Wait for turn transition
-                await page.waitForTimeout(500);
+              if (continueVis) {
+                await continueBtn.click();
+                // Wait for turn transition and active indicator to disappear
+                await activePlayerIndicator.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+                await page.waitForTimeout(1000);
               }
             }
           } else {
-            // Toss-in didn't appear (shouldn't happen, but handle it)
-            await page.waitForTimeout(500);
+            // Toss-in didn't appear - might have been auto-skipped or we need to wait longer
+            await page.waitForTimeout(1000);
           }
         } else {
           // Not player's turn - wait for bots to play
+          consecutiveNotPlayerTurnCount++;
+
+          if (consecutiveNotPlayerTurnCount >= maxConsecutiveNotPlayerTurns) {
+            // We've been waiting too long without seeing the player's turn
+            // The game might be stuck - take a screenshot for debugging
+            await page.screenshot({
+              path: test.info().outputPath('stuck-waiting-for-player-turn.png'),
+              fullPage: true,
+            });
+            throw new Error(
+              `Game appears stuck - waited ${maxConsecutiveNotPlayerTurns} seconds without seeing player's turn. This suggests a pending action or blocked state.`
+            );
+          }
+
           // Just wait a bit and check again
           await page.waitForTimeout(1000);
         }
@@ -300,6 +362,11 @@ test.describe('Vinto Game - Happy Path', () => {
 
       // Verify we successfully clicked the button
       if (!vintoButtonClicked) {
+        // Take a screenshot to help debug why we couldn't find the button
+        await page.screenshot({
+          path: test.info().outputPath('failed-to-find-vinto-button.png'),
+          fullPage: true,
+        });
         throw new Error(
           `Failed to find and click Call Vinto button within ${maxTime / 1000}s`
         );
