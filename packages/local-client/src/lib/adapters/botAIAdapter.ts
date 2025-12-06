@@ -1252,6 +1252,7 @@ export class BotAIAdapter {
     }
 
     // Check if this bot is the coalition leader
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const isCoalitionLeader =
       state.phase === 'final' &&
       state.coalitionLeaderId === botId &&
