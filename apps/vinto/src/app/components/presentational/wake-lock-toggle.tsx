@@ -14,8 +14,16 @@ export function WakeLockToggle() {
   const [isEnabled, setIsEnabled] = useState(false); // User's intent: do they want the wake lock?
   const [isLocked, setIsLocked] = useState(false); // Actual state: do we currently have a lock?
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const isRequestingRef = useRef(false); // Guard against concurrent requests
 
   const requestWakeLock = useCallback(async () => {
+    // Guard: prevent concurrent requests or duplicate locks
+    if (isRequestingRef.current || wakeLockRef.current) {
+      return;
+    }
+
+    isRequestingRef.current = true;
+
     try {
       const lock = await navigator.wakeLock.request('screen');
       wakeLockRef.current = lock;
@@ -41,6 +49,8 @@ export function WakeLockToggle() {
       console.warn('[WakeLock] Failed to activate:', err);
       setIsLocked(false);
       toast.error('Could not activate screen lock');
+    } finally {
+      isRequestingRef.current = false;
     }
   }, []);
 
@@ -55,6 +65,9 @@ export function WakeLockToggle() {
       } catch (err) {
         console.warn('[WakeLock] Failed to release:', err);
       }
+    } else {
+      // No active lock, but user clicked to disable - update intent
+      setIsEnabled(false);
     }
   }, []);
 
@@ -83,10 +96,8 @@ export function WakeLockToggle() {
 
     const handleVisibilityChange = () => {
       // Only re-acquire if page is visible, user wants lock, and we don't have one
-      if (document.visibilityState === 'visible' && isEnabled) {
-        if (!wakeLockRef.current) {
-          void requestWakeLock();
-        }
+      if (document.visibilityState === 'visible' && !wakeLockRef.current) {
+        void requestWakeLock();
       }
     };
 
@@ -97,7 +108,7 @@ export function WakeLockToggle() {
   }, [isEnabled, requestWakeLock]);
 
   const handleToggle = () => {
-    if (isLocked) {
+    if (isLocked || wakeLockRef.current) {
       void releaseWakeLock();
     } else {
       void requestWakeLock();
@@ -112,11 +123,7 @@ export function WakeLockToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="    px-2 py-1 rounded 
-        bg-surface-secondary hover:bg-surface-tertiary
-        text-secondary hover:text-primary
-        transition-colors
-        flex items-center gap-1"
+      className="px-2 py-1 rounded bg-surface-secondary hover:bg-surface-tertiary text-secondary hover:text-primary transition-colors flex items-center gap-1"
       title={isLocked ? 'Screen wake lock active' : 'Screen wake lock inactive'}
       aria-label={
         isLocked ? 'Disable screen wake lock' : 'Enable screen wake lock'

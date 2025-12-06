@@ -17,6 +17,7 @@ export default defineConfig(() => ({
       NODE_ENV: 'test' as const
     },
     environment: 'jsdom',
+    setupFiles: ['./test-setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'specs/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
