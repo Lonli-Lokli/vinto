@@ -39,7 +39,7 @@ jobs:
           files: ./coverage/**/lcov.info
           flags: unittests
           name: codecov-vinto
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
 
       - name: Upload coverage artifacts

@@ -6,17 +6,19 @@ coverage:
     project:
       default:
         target: 70%           # Target coverage percentage
-        threshold: 2%         # Allow 2% drop before failing
         if_ci_failed: error
     patch:
       default:
         target: auto
-        threshold: -0.1%
+        if_ci_failed: error
 
 comment:
-  layout: "header, diff, flags, components"
+  layout: "header, diff, flags, components, footer"  # Add footer for trends
   behavior: default
-  require_changes: false      # Always comment on PRs
+  require_changes: false
+  require_base: yes        # Only comment if there's a base to compare
+  require_head: yes        # Only comment if head has coverage
+  show_carryforward_flags: false
 
 flags:
   unittests:
