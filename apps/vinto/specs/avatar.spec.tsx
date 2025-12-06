@@ -8,77 +8,77 @@ describe('Avatar Component', () => {
       const { container } = render(<Avatar playerName="you" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('you');
+      expect(img?.alt).toBe('You');
     });
 
     it('should render You avatar for "You" name (case-insensitive)', () => {
       const { container } = render(<Avatar playerName="You" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('you');
+      expect(img?.alt).toBe('You');
     });
 
     it('should render Michelangelo avatar for "michelangelo" name', () => {
       const { container } = render(<Avatar playerName="michelangelo" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('michelangelo');
+      expect(img?.alt).toBe('Michelangelo');
     });
 
     it('should render Michelangelo avatar for "Michelangelo" name (case-insensitive)', () => {
       const { container } = render(<Avatar playerName="Michelangelo" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('michelangelo');
+      expect(img?.alt).toBe('Michelangelo');
     });
 
     it('should render Michelangelo avatar for "mikey" nickname', () => {
       const { container } = render(<Avatar playerName="mikey" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('michelangelo');
+      expect(img?.alt).toBe('Michelangelo');
     });
 
     it('should render Donatello avatar for "donatello" name', () => {
       const { container } = render(<Avatar playerName="donatello" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('donatello');
+      expect(img?.alt).toBe('Donatello');
     });
 
     it('should render Donatello avatar for "Donatello" name (case-insensitive)', () => {
       const { container } = render(<Avatar playerName="Donatello" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('donatello');
+      expect(img?.alt).toBe('Donatello');
     });
 
     it('should render Donatello avatar for "donnie" nickname', () => {
       const { container } = render(<Avatar playerName="donnie" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('donatello');
+      expect(img?.alt).toBe('Donatello');
     });
 
     it('should render Raphael avatar for "raphael" name', () => {
       const { container } = render(<Avatar playerName="raphael" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('raphael');
+      expect(img?.alt).toBe('Raphael');
     });
 
     it('should render Raphael avatar for "Raphael" name (case-insensitive)', () => {
       const { container } = render(<Avatar playerName="Raphael" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('raphael');
+      expect(img?.alt).toBe('Raphael');
     });
 
     it('should render Raphael avatar for "raph" nickname', () => {
       const { container } = render(<Avatar playerName="raph" />);
       const img = container.querySelector('img');
       expect(img).toBeTruthy();
-      expect(img?.src).toContain('raphael');
+      expect(img?.alt).toBe('Raphael');
     });
 
     it('should render default robot emoji for unknown player name', () => {

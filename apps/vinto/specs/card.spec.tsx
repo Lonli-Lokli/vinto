@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { Card } from '../src/app/components/presentational/card';
-import { Rank } from '@vinto/shapes';
 
 describe('Card Component', () => {
   describe('Basic Rendering', () => {
@@ -15,7 +14,7 @@ describe('Card Component', () => {
 
     it('should render revealed card with rank', () => {
       const { container } = render(
-        <Card rank={Rank.ACE} revealed={true} selectionState="default" />
+        <Card rank="A" revealed={true} selectionState="default" />
       );
       const card = container.querySelector('[data-revealed="true"]');
       expect(card).toBeTruthy();
@@ -23,7 +22,7 @@ describe('Card Component', () => {
 
     it('should not render rank image when unrevealed', () => {
       const { container } = render(
-        <Card rank={Rank.KING} revealed={false} selectionState="default" />
+        <Card rank="K" revealed={false} selectionState="default" />
       );
       // Card back should be shown instead of rank
       const card = container.querySelector('[data-revealed="false"]');
@@ -301,7 +300,7 @@ describe('Card Component', () => {
   describe('Flip Animation', () => {
     it('should render flip container by default', () => {
       const { container } = render(
-        <Card rank={Rank.KING} revealed={true} selectionState="default" />
+        <Card rank="K" revealed={true} selectionState="default" />
       );
       const flipContainer = container.querySelector('.flip-card-container');
       expect(flipContainer).toBeTruthy();
@@ -310,7 +309,7 @@ describe('Card Component', () => {
     it('should not render flip container when disableFlipAnimation is true', () => {
       const { container } = render(
         <Card
-          rank={Rank.KING}
+          rank="K"
           revealed={true}
           selectionState="default"
           disableFlipAnimation={true}
@@ -322,7 +321,7 @@ describe('Card Component', () => {
 
     it('should render flip-card-revealed class when revealed', () => {
       const { container } = render(
-        <Card rank={Rank.KING} revealed={true} selectionState="default" />
+        <Card rank="K" revealed={true} selectionState="default" />
       );
       const flipInner = container.querySelector('.flip-card-inner');
       expect(flipInner?.className).toContain('flip-card-revealed');
@@ -330,7 +329,7 @@ describe('Card Component', () => {
 
     it('should not render flip-card-revealed class when unrevealed', () => {
       const { container } = render(
-        <Card rank={Rank.KING} revealed={false} selectionState="default" />
+        <Card rank="K" revealed={false} selectionState="default" />
       );
       const flipInner = container.querySelector('.flip-card-inner');
       expect(flipInner?.className).not.toContain('flip-card-revealed');
@@ -350,7 +349,7 @@ describe('Card Component', () => {
     it('should render with all props combined', () => {
       const { container } = render(
         <Card
-          rank={Rank.QUEEN}
+          rank="Q"
           revealed={true}
           size="lg"
           highlighted={true}
