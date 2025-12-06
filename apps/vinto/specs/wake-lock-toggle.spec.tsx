@@ -152,6 +152,12 @@ describe('WakeLockToggle', () => {
     const releaseCallback = mockSentinel.addEventListener.mock.calls[0][1];
     releaseCallback();
 
+    // Wait for React to fully process the release state update
+    // This ensures isLocked is false and the UI has updated before we fire visibility change
+    await waitFor(() => {
+      screen.getByRole('button', { name: /enable screen wake lock/i });
+    });
+
     // Simulate page becoming visible again
     Object.defineProperty(document, 'visibilityState', {
       value: 'visible',
