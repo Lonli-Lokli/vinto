@@ -24,6 +24,10 @@ jobs:
       issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
+    allowedTools:
+      - "Bash(npm:*)"
+      - "Bash(git checkout:*)"
+      - "Bash(git switch:*)"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
