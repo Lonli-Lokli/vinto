@@ -108,6 +108,11 @@ describe('WakeLockToggle', () => {
       expect(mockWakeLock.request).toHaveBeenCalled();
     });
 
+    // Wait for UI to update to "disable" state
+    await waitFor(() => {
+      screen.getByRole('button', { name: /disable screen wake lock/i });
+    });
+
     // Disable
     const disableButton = screen.getByRole('button', {
       name: /disable screen wake lock/i,
@@ -181,6 +186,11 @@ describe('WakeLockToggle', () => {
     fireEvent.click(button);
     await waitFor(() => {
       expect(mockWakeLock.request).toHaveBeenCalledTimes(1);
+    });
+
+    // Wait for UI to update to "disable" state
+    await waitFor(() => {
+      screen.getByRole('button', { name: /disable screen wake lock/i });
     });
 
     // User disables it
