@@ -84,7 +84,7 @@
     "eslint-plugin-react-hooks": "5.0.0",
     "jiti": "2.6.1",
     "jsdom": "~22.1.0",
-    "lefthook": "^1.13.4",
+    "lefthook": "^2.0.9",
     "npm-run-all2": "^8.0.4",
     "nx": "22.1.3",
     "postcss": "8.5.6",
