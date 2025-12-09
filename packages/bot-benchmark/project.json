@@ -1,0 +1,31 @@
+{
+  "name": "bot-benchmark",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/bot-benchmark/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/bot-benchmark",
+        "main": "packages/bot-benchmark/src/index.ts",
+        "tsConfig": "packages/bot-benchmark/tsconfig.lib.json",
+        "assets": ["packages/bot-benchmark/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/packages/bot-benchmark"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "../../coverage/packages/bot-benchmark"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": ["type:lib"]
+}
