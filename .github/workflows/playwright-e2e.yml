@@ -134,7 +134,7 @@ jobs:
 
       - name: Get artifact URLs
         id: artifact-urls
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -154,7 +154,7 @@ jobs:
             };
 
       - name: Comment PR with test results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const reportBase64 = '${{ steps.report-summary.outputs.report }}';
