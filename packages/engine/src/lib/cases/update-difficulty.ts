@@ -2,7 +2,7 @@
 // Handle UPDATE_DIFFICULTY action
 
 import { GameState, UpdateDifficultyAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 /**
  * Update game difficulty setting
  *

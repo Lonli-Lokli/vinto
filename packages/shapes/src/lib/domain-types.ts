@@ -1,5 +1,5 @@
 import { shuffleCards } from './utils';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 // types/game.ts
 export interface Card {
   id: string;

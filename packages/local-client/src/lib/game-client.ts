@@ -4,7 +4,7 @@
 import { makeObservable, observable, action, computed } from 'mobx';
 import { deepEqual } from 'fast-equals';
 
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import {
   type GameState,
   type GameAction,

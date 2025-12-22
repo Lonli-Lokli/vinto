@@ -2,7 +2,7 @@
 // Handle UPDATE_BOT_VERSION action
 
 import { GameState, UpdateBotVersionAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * Update bot version setting

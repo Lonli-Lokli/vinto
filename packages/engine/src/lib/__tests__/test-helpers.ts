@@ -11,7 +11,7 @@ import {
   PlayerState,
 } from '@vinto/shapes';
 import { GameEngine } from '../game-engine';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { GameActions } from '../game-actions';
 
 /**

@@ -1,6 +1,6 @@
 // services/mcts-state-transition.ts
 import { Card, Rank } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { MCTSGameState, MCTSMove } from './mcts-types';
 
 /**

@@ -1,5 +1,5 @@
 import { EmptyAction, GameState } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * EMPTY Handler

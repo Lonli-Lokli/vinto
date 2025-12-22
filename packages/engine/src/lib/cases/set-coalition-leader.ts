@@ -1,5 +1,5 @@
 import { GameState, SetCoalitionLeaderAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * SET_COALITION_LEADER Handler

@@ -2,7 +2,7 @@
 // Handle SWAP_HAND_WITH_DECK action (debug/testing only)
 
 import { GameState, logger, SwapHandWithDeckAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * Handle SWAP_HAND_WITH_DECK action

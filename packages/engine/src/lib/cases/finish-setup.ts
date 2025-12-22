@@ -1,5 +1,5 @@
 import { GameState, FinishSetupAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * FINISH_SETUP Handler
