@@ -1,5 +1,5 @@
 // services/mcts-bot-decision.ts
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { BotMemory } from './bot-memory';
 import { MCTSMoveGenerator } from './mcts-move-generator';
 import { MCTSStateTransition } from './mcts-state-transition';

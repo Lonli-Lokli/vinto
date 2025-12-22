@@ -1,5 +1,5 @@
 import { GameState, CallVintoAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * CALL_VINTO Handler

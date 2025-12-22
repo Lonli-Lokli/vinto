@@ -1,5 +1,5 @@
 import { GameState, PlayDiscardAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 
 /**

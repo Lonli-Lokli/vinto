@@ -1,5 +1,5 @@
 import { GameState, ProcessAITurnAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * PROCESS_AI_TURN Handler
