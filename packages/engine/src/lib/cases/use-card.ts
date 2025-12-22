@@ -1,4 +1,4 @@
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
 import { GameState, logger, UseCardActionAction } from '@vinto/shapes';
 import {

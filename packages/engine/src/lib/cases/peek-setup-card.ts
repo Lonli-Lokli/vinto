@@ -1,5 +1,5 @@
 import { GameState, PeekSetupCardAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * PEEK_SETUP_CARD Handler

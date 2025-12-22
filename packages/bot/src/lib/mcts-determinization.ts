@@ -1,6 +1,6 @@
 // Pure functions for MCTS determinization (sampling hidden information)
 
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import {
   Card,
   Rank,

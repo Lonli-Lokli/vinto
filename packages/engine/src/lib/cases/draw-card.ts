@@ -1,5 +1,5 @@
 import { GameState, DrawCardAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * DRAW_CARD Handler

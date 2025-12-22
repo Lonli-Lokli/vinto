@@ -2,7 +2,7 @@
 // Handle SET_NEXT_DRAW_CARD action (debug/testing only)
 
 import { GameState, SetNextDrawCardAction, logger } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * Handle SET_NEXT_DRAW_CARD action

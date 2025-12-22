@@ -1,5 +1,5 @@
 import { GameState, ParticipateInTossInAction, Card } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 
 /**
  * PARTICIPATE_IN_TOSS_IN Handler

@@ -1,5 +1,5 @@
 import { GameState, FinishTossInPeriodAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { getAutomaticallyReadyPlayers } from '../utils/toss-in-utils';
 
 /**

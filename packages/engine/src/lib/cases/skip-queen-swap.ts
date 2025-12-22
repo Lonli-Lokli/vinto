@@ -1,5 +1,5 @@
 import { GameState, SkipQueenSwapAction } from '@vinto/shapes';
-import copy from 'fast-copy';
+import { copy } from 'fast-copy';
 import { clearTossInAfterActionableCard } from '../utils/toss-in-utils';
 
 /**
