@@ -242,7 +242,7 @@ export function determinize(state: MCTSGameState): MCTSGameState {
     for (let pos = 0; pos < player.cardCount; pos++) {
       const memory = player.knownCards.get(pos);
 
-      if (!memory || memory.confidence < 0.5) {
+      if (!memory || !memory.card || memory.confidence < 0.5) {
         // Unknown card - sample from pool with belief constraints
         let sampledCard: Card;
 
