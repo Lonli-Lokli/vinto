@@ -69,7 +69,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     this.initializeIfNeeded(context);
 
     console.log(
-      `[MCTS] ${this.botId} deciding turn action (${this.difficulty})`
+      `[MCTS] ${this.botId} deciding turn action (${this.difficulty})`,
     );
 
     // HEURISTIC: Always take high-value action cards from discard
@@ -77,13 +77,13 @@ export class MCTSBotDecisionService implements BotDecisionService {
     if (
       shouldAlwaysTakeDiscardPeekCard(
         context.discardTop ?? null,
-        context.botPlayer
+        context.botPlayer,
       )
     ) {
       console.log(
         `[MCTS] Heuristic: Always taking ${
           context.discardTop!.rank
-        } from discard (powerful action)`
+        } from discard (powerful action)`,
       );
       return { action: 'take-discard' };
     }
@@ -114,7 +114,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     // These provide information value that exceeds their card value or swap potential
     if (shouldAlwaysUsePeekAction(drawnCard, context.botPlayer)) {
       console.log(
-        `[MCTS] Heuristic: Always using ${drawnCard.rank} action (powerful peek/information)`
+        `[MCTS] Heuristic: Always using ${drawnCard.rank} action (powerful peek/information)`,
       );
       return true;
     }
@@ -124,7 +124,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       const useAction = shouldUseAceAction(
         context.botPlayer,
         context.allPlayers,
-        context.botId
+        context.botId,
       );
 
       if (!useAction) {
@@ -132,7 +132,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         this.cachedActionPlans.delete(context.botId);
       } else {
         console.log(
-          `[MCTS] Heuristic: Using Ace action (defensive - opponent near Vinto)`
+          `[MCTS] Heuristic: Using Ace action (defensive - opponent near Vinto)`,
         );
         this.cachedActionPlans.delete(context.botId);
       }
@@ -147,7 +147,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const actionType = getCardAction(drawnCard.rank);
     if (!actionType) {
       console.log(
-        `[MCTS] No action type found for ${drawnCard.rank}, swapping instead`
+        `[MCTS] No action type found for ${drawnCard.rank}, swapping instead`,
       );
       this.cachedActionPlans.delete(context.botId);
       return false;
@@ -155,12 +155,12 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     const validActionMoves = MCTSMoveGenerator.generateActionMoves(
       gameState,
-      actionType
+      actionType,
     );
 
     if (validActionMoves.length === 0) {
       console.log(
-        `[MCTS] No valid action moves for ${drawnCard.rank}, swapping instead`
+        `[MCTS] No valid action moves for ${drawnCard.rank}, swapping instead`,
       );
       this.cachedActionPlans.delete(context.botId);
       return false;
@@ -174,7 +174,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         this.cachedActionPlans.set(context.botId, result.actionPlan);
         console.log(
           `[Use Action] Caching action plan for ${context.botId} with ${drawnCard.rank}:`,
-          result.actionPlan
+          result.actionPlan,
         );
       } else {
         this.cachedActionPlans.delete(context.botId);
@@ -194,7 +194,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     if (cachedPlan) {
       console.log(
         `[Action Targets] Using cached action plan for ${context.botId}`,
-        cachedPlan
+        cachedPlan,
       );
       this.cachedActionPlans.delete(context.botId); // Clear cache after use
       return cachedPlan;
@@ -220,7 +220,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   shouldSwapAfterPeek(
     peekedCards: Card[],
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): boolean {
     this.initializeIfNeeded(context);
 
@@ -231,7 +231,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
           this.botMemory.observeCard(
             peekedCards[index],
             target.playerId,
-            target.position
+            target.position,
           );
         }
       });
@@ -256,7 +256,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         this.cachedActionPlans.set(context.botId, result.actionPlan);
         console.log(
           `[King Declaration] Caching action plan for ${context.botId} with declared ${result.move.declaredRank}:`,
-          result.actionPlan
+          result.actionPlan,
         );
       } else {
         this.cachedActionPlans.delete(context.botId);
@@ -277,7 +277,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
    */
   shouldParticipateInTossIn(
     discardedRanks: [Rank, ...Rank[]],
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): boolean {
     this.initializeIfNeeded(context);
     return shouldParticipateInTossIn(discardedRanks, context.botPlayer);
@@ -285,7 +285,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
   selectBestSwapPosition(
     drawnCard: Card,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number | null {
     this.initializeIfNeeded(context);
 
@@ -311,7 +311,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       drawnCard,
       context.botPlayer,
       context,
-      tempMemory
+      tempMemory,
     );
     const discardScore = calculateOutcomeScore(discardOutcome);
 
@@ -319,8 +319,8 @@ export class MCTSBotDecisionService implements BotDecisionService {
       `[SwapSelector] Discard option: handSize=${discardOutcome.finalHandSize}, ` +
         `known=${discardOutcome.finalKnownCards}/${context.botPlayer.cards.length}, ` +
         `score=${discardOutcome.finalScore.toFixed(
-          1
-        )}, outcomeScore=${discardScore.toFixed(1)}`
+          1,
+        )}, outcomeScore=${discardScore.toFixed(1)}`,
     );
 
     bestScore = discardScore;
@@ -337,22 +337,22 @@ export class MCTSBotDecisionService implements BotDecisionService {
         position,
         context.botPlayer,
         context,
-        tempMemory
+        tempMemory,
       );
 
       const swappedOutCard = context.botPlayer.cards[position];
       const outcomeScore = calculateStrategicOutcomeScore(
         outcome,
         drawnCard,
-        swappedOutCard
+        swappedOutCard,
       );
 
       console.log(
         `[SwapSelector] Position ${position}: handSize=${outcome.finalHandSize}, ` +
           `known=${outcome.finalKnownCards}/${context.botPlayer.cards.length}, ` +
           `score=${outcome.finalScore.toFixed(
-            1
-          )}, outcomeScore=${outcomeScore.toFixed(1)}`
+            1,
+          )}, outcomeScore=${outcomeScore.toFixed(1)}`,
       );
 
       if (outcomeScore > bestScore) {
@@ -364,15 +364,15 @@ export class MCTSBotDecisionService implements BotDecisionService {
 
     if (shouldDiscard) {
       console.log(
-        `[SwapSelector] Selected DISCARD with score ${bestScore.toFixed(1)}`
+        `[SwapSelector] Selected DISCARD with score ${bestScore.toFixed(1)}`,
       );
       return null;
     }
 
     console.log(
       `[SwapSelector] Selected position ${bestPosition} with score ${bestScore.toFixed(
-        1
-      )}`
+        1,
+      )}`,
     );
 
     return bestPosition;
@@ -409,7 +409,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const validation = solver.validateVintoCall(
       context.botPlayer.cards,
       opponents,
-      context.discardPile
+      context.discardPile,
     );
 
     // Only call Vinto if:
@@ -465,7 +465,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     }
 
     console.log(
-      `[MCTS] Completed ${iterations} iterations in ${Date.now() - startTime}ms`
+      `[MCTS] Completed ${iterations} iterations in ${Date.now() - startTime}ms`,
     );
 
     // Select best move based on visit count (most robust)
@@ -483,7 +483,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     console.log(
       `[MCTS] Best move: ${bestChild.move.type} (visits: ${
         bestChild.visits
-      }, reward: ${bestChild.getAverageReward().toFixed(3)})`
+      }, reward: ${bestChild.getAverageReward().toFixed(3)})`,
     );
 
     // Extract action plan for moves that will require action target selection:
@@ -509,7 +509,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         actionPlan = extractActionPlan(bestChild);
         console.log(
           `[MCTS] King declaring action card ${bestChild.move.declaredRank}, extracted plan:`,
-          actionPlan
+          actionPlan,
         );
       }
     } else if (
@@ -529,7 +529,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       };
       console.log(
         `[MCTS] Direct use-action move with targets, caching plan:`,
-        actionPlan
+        actionPlan,
       );
     }
 
@@ -581,7 +581,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     }
 
     console.log(
-      `[MCTS] Completed ${iterations} iterations in ${Date.now() - startTime}ms`
+      `[MCTS] Completed ${iterations} iterations in ${Date.now() - startTime}ms`,
     );
 
     // Select best move based on visit count (most robust)
@@ -591,7 +591,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
       console.log(
         `[MCTS] Best move: ${bestChild.move.type} (visits: ${
           bestChild.visits
-        }, reward: ${bestChild.getAverageReward().toFixed(3)})`
+        }, reward: ${bestChild.getAverageReward().toFixed(3)})`,
       );
       return bestChild.move;
     }
@@ -697,7 +697,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
   private updateMemoryFromContext(context: BotDecisionContext): void {
     console.log(
       `[Memory Update] ${this.botId} has ${context.botPlayer.knownCardPositions.length} known card positions:`,
-      context.botPlayer.knownCardPositions
+      context.botPlayer.knownCardPositions,
     );
 
     // Update from bot's own known cards
@@ -706,7 +706,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
         const existing = this.botMemory.getCardMemory(this.botId, position);
         if (!existing || existing.card?.id !== card.id) {
           console.log(
-            `[Memory Update] ${this.botId} observing own card at position ${position}: ${card.rank}`
+            `[Memory Update] ${this.botId} observing own card at position ${position}: ${card.rank}`,
           );
           this.botMemory.observeCard(card, this.botId, position);
         }
@@ -731,7 +731,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     const players = context.allPlayers.map((p) => {
       const playerMemory = this.botMemory.getPlayerMemory(p.id);
       console.log(
-        `[GameState] Player ${p.id} memory: ${playerMemory.size} cards known`
+        `[GameState] Player ${p.id} memory: ${playerMemory.size} cards known`,
       );
       return {
         id: p.id,
@@ -764,7 +764,7 @@ export class MCTSBotDecisionService implements BotDecisionService {
     return {
       players,
       currentPlayerIndex: context.allPlayers.findIndex(
-        (p) => p.id === context.botId
+        (p) => p.id === context.botId,
       ),
       botPlayerId: context.botId,
       discardPileTop: simulationDiscardTop,

@@ -1,28 +1,32 @@
 import playwright from 'eslint-plugin-playwright';
-import { FlatCompat } from '@eslint/eslintrc';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import js from '@eslint/js';
-import { fixupConfigRules } from '@eslint/compat';
+import nextEslintPluginNext from '@next/eslint-plugin-next';
 import nx from '@nx/eslint-plugin';
+import reactHooks from 'eslint-plugin-react-hooks';
 import baseConfig from '../../eslint.config.mjs';
-const compat = new FlatCompat({
-  baseDirectory: dirname(fileURLToPath(import.meta.url)),
-  recommendedConfig: js.configs.recommended,
-});
 
 export default [
-  playwright.configs['flat/recommended'],
-  ...fixupConfigRules(compat.extends('next')),
-  ...fixupConfigRules(compat.extends('next/core-web-vitals')),
-  ...nx.configs['flat/react-typescript'],
   ...baseConfig,
+  playwright.configs['flat/recommended'],
+  ...nx.configs['flat/react-typescript'],
   {
-    ignores: ['.next/**/*', '**/out-tsc', 'test-setup.ts'],
+    ignores: ['.next/**/*', '**/out-tsc'],
   },
   {
-    files: ['**/*.ts', '**/*.js'],
-    // Override or add rules here
-    rules: {},
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      '@next/next': nextEslintPluginNext,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
   },
 ];

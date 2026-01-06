@@ -1,4 +1,4 @@
-/* eslint-disable no-empty-pattern */
+ 
 import { test, expect, type Page, TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Result as AxeResult, NodeResult } from 'axe-core';

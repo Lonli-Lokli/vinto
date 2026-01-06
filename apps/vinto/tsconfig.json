@@ -29,7 +29,8 @@
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "../../apps/vinto/test-setup.ts"
   ],
   "exclude": [
     "out-tsc",
@@ -38,6 +39,7 @@
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     ".next",
+
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"

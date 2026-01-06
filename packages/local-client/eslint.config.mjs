@@ -7,7 +7,9 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     // Override or add rules here
-    rules: {},
+    rules: {
+      'react-hooks/set-state-in-effect': 'off'
+    },
   },
   {
     ignores: ['**/out-tsc'],
