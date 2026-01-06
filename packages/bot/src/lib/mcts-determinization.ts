@@ -279,7 +279,7 @@ export function determinize(state: MCTSGameState): MCTSGameState {
         newState.hiddenCards.set(`${player.id}-${pos}`, sampledCard);
       } else {
         // Known card - use from memory
-        newState.hiddenCards.set(`${player.id}-${pos}`, memory.card!);
+        newState.hiddenCards.set(`${player.id}-${pos}`, memory.card);
       }
     }
   }
