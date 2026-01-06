@@ -171,7 +171,7 @@ export function sampleCardFromPool(
   playerId: string,
   position: number,
   minValue?: number,
-  maxValue?: number
+  maxValue?: number,
 ): Card {
   if (availableRanks.length === 0) {
     throw new Error('Cannot sample from empty card pool');
@@ -257,7 +257,7 @@ export function determinize(state: MCTSGameState): MCTSGameState {
               player.id,
               pos,
               belief.minValue,
-              belief.maxValue
+              belief.maxValue,
             );
           } else {
             // No beliefs - use standard weighted sampling
