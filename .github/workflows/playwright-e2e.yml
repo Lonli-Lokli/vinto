@@ -42,7 +42,7 @@ jobs:
 
       - name: Wait for Vercel Preview Deployment
         if: github.event_name == 'pull_request'
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.3
         id: vercel-preview
         continue-on-error: true
         with:
