@@ -70,3 +70,5 @@ accessibility-report*.md
 # Accessibility E2E reports
 accessibility-reports/
 .claude/settings.local.json
+
+.claude/worktrees
