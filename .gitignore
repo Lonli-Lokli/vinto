@@ -72,3 +72,4 @@ accessibility-reports/
 .claude/settings.local.json
 
 .claude/worktrees
+.nx/polygraph
