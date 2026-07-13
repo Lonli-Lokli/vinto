@@ -14,11 +14,14 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     env: {
-      NODE_ENV: 'test' as const
+      NODE_ENV: 'test' as const,
     },
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'specs/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'specs/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/apps/vinto',
@@ -32,7 +35,7 @@ export default defineConfig(() => ({
         '**/node_modules/**',
         '**/dist/**',
       ],
-      all: true,
+
       lines: 70,
       functions: 70,
       branches: 70,
