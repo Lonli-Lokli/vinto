@@ -11,7 +11,8 @@
     ],
     "module": "esnext",
     "moduleResolution": "bundler",
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "vite.config.ts",
