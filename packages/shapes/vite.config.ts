@@ -27,7 +27,7 @@ export default defineConfig(() => ({
         '**/node_modules/**',
         '**/dist/**',
       ],
-      all: true,
+
       lines: 70,
       functions: 70,
       branches: 70,
