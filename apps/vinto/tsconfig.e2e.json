@@ -5,7 +5,8 @@
     "outDir": "out-tsc/playwright",
     "sourceMap": false,
     "lib": ["dom", "esnext"],
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
   },
   "include": ["e2e/**/*.ts", "e2e/**/*.js", "playwright.config.ts"],
   "exclude": [
