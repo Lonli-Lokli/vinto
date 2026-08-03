@@ -18,5 +18,8 @@
     {
       "path": "./packages/bot"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0"
+  }
 }
