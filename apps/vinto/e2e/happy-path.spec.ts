@@ -23,6 +23,7 @@ test.describe('Vinto Game - Happy Path', () => {
   }) => {
     // Increase test timeout to handle multiple turns and bot thinking time
     test.setTimeout(60000); // 60 seconds
+
     await test.step('Load the game', async () => {
       // Wait for the page to load
       await expect(page).toHaveTitle(/Vinto/i);

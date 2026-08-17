@@ -1,0 +1,111 @@
+schema: spec-driven
+
+# Project context — shown to the AI when creating/updating OpenSpec artifacts.
+context: |
+  ## Purpose
+  Vinto is a strategic multiplayer card game: one human vs three MCTS-driven bots
+  (every game is exactly 4 players). Players minimise their hand total; a player who believes
+  they are lowest calls "Vinto", the others form a coalition for one final round, and the
+  round is scored caller-vs-lowest-coalition-hand.
+
+  Long-term goal: a native mobile game (Android + iOS) on Kotlin Multiplatform + Compose
+  Multiplatform, sharing one engine between clients and a future multiplayer server. The
+  TypeScript implementation is the reference: every rule, edge case and reproducible
+  recorded game must behave identically in Kotlin (see change
+  migrate-to-kotlin-multiplatform, which depends on add-game-recording-replay).
+
+  ## Tech stack (current, TypeScript)
+  - Nx 22 monorepo, Node 22, TypeScript 5.9 strict, Vitest, ESLint, Prettier (CRLF, single quotes)
+  - packages/shapes: GameState/PlayerState/Card/Rank/Pile, card configs, GameAction union
+  - packages/engine: pure reducer GameEngine.reduce(state, action); action-validator.ts;
+    one handler per action in cases/; utils/ (toss-in flow, scoring)
+  - packages/bot: MCTS bot (mcts-*.ts), heuristics, opponent modeler,
+    coalition-planner.ts (final-round joint planner for the coalition)
+  - packages/local-client: MobX GameClient (logical + visual state, animation sync),
+    BotAIAdapter (drives bots from MobX reactions), initializeGame.ts
+  - apps/vinto: Next.js 15 / React 19 / Tailwind, framer-motion, Sentry, Vercel
+  - Docs: docs/game-engine/VINTO_RULES.md, SCENARIOS.md
+
+  ## Tech stack (target, Kotlin)
+  - Kotlin 2.x, KMP targets androidTarget / iosArm64 / iosSimulatorArm64 / jvm
+  - Compose Multiplatform for the app UI (single composeApp for Android + iOS)
+  - kotlinx.serialization (JSON), kotlinx.coroutines, kotlinx.datetime, Koin, kotlin.test
+  - Gradle (Kotlin DSL) multi-module workspace under kmp/ in this monorepo
+
+  ## Architecture rules
+  - Single source of truth: GameState is immutable and authoritative; UI stores hold UI state only.
+  - Pure engine: reducers have no side effects, no async, no ambient randomness or clocks.
+    All randomness comes from GameState.rngState (seeded mulberry32 PRNG); engine ids and
+    history timestamps are derived from state.
+  - Actions as data: every interaction is a serialisable JSON GameAction; bots dispatch
+    through the same path as humans.
+  - Visual vs logical state: bots react to visual (post-animation) state only.
+  - Reproducibility: a game is fully described by (initialState, actions[]); a
+    GameRecording JSON (format v1) replays in any implementation to identical states
+    (canonical JSON + SHA-256 per action). Recording fixtures live in fixtures/recordings/
+    and are the cross-implementation parity gate.
+
+  ## Conventions
+  - TypeScript: kebab-case files, named exports, one component per file, interface over
+    type, copy() for state updates, feature-oriented folders.
+  - Kotlin: data class / sealed interface for state and actions, pure functions in the
+    engine, no platform APIs in shared modules, JSON field names identical to TypeScript.
+  - Git: master is main; issue branches issue-{N}; lefthook pre-commit runs lint --fix and
+    nx format:write. Never bypass hooks; commit only when asked.
+
+  ## Testing
+  - Engine: unit tests per handler + rules/scenario tests (SCENARIOS.md is the spec).
+  - Bot: deterministic parts (heuristics, coalition planner) tested exactly; MCTS statistically.
+  - Client: adapter integration tests with fake timers / virtual time.
+  - Parity: replay every committed recording through every engine implementation;
+    hashes after every action must match; both directions (TS↔KT) run in CI.
+
+  ## Domain
+  - Deck 52 + 2 Jokers. Values: 2–6 face, 7=7, 8=8, 9=9, 10=10, J/Q=10, K=0, A=1, Joker=−1.
+  - Actions: 7/8 peek own; 9/10 peek opponent; J swap two cards of two players; Q peek two
+    then optional swap; K declare a card's rank → the card leaves the hand and its action
+    plays; A force-draw.
+  - Toss-in: after any discard anyone may toss matching-rank cards; wrong rank → penalty;
+    the Vinto caller cannot toss in.
+  - Final round: each non-caller gets one turn; coalition may not target the caller;
+    coalition wins iff lowest coalition total < caller total (tie → caller).
+
+  ## Product decisions (2026-08)
+  - Exactly one bot engine: v1 (MCTS) vs v2 (strategic) is decided by a TypeScript
+    tournament before the Kotlin port; the loser is deleted; botVersion goes away.
+  - Every game is exactly 4 players, no exceptions (no player-count setting anywhere).
+  - Play with humans: 1 human vs 3 bots offline; 2–4 humans online in a 4-seat room with
+    bots filling empty seats; all-human tables of 4. Server-authoritative Ktor service running the
+    same shared engine + bots on the JVM; clients receive per-seat redacted PlayerViews.
+    Guest identity only; hot-seat on one device is out of scope.
+  - Crash reporting: Sentry (mobile via Sentry KMP, server via Sentry JVM, web as today).
+  - End state is a single (Kotlin) game engine; the web follow-up change retires the
+    TypeScript engine after the parity gate.
+
+  ## Constraints
+  - Engine determinism is mandatory (replay/parity, future server authority).
+  - Bot search must not block the UI thread on mobile.
+  - Mobile UI: light/dark themes, accessibility semantics.
+  - The web app stays on the TypeScript engine until the Kotlin engine passes the parity gate.
+
+rules:
+  proposal:
+    - Always state which other changes this change depends on
+    - Include a "Non-goals" line
+  specs:
+    - Every requirement uses SHALL/MUST and has at least one scenario
+    - Requirements about engine behaviour must be verifiable by replaying a recording
+  design:
+    - Prefer choices that are trivially implementable identically in TypeScript and Kotlin
+  tasks:
+    - Group tasks by phase; parity/verification tasks are explicit checkboxes
+
+operations:
+  apply:
+    guidance:
+      - Run the affected Nx project tests (nx test <project>) and lint before marking a task done
+      - Never run npx tsc; use nx build @vinto/game to typecheck across packages
+      - Any engine behaviour change must keep fixtures/recordings replaying (or regenerate them with a justification)
+  archive:
+    guidance:
+      - Summarize which specs were created/updated and any fixture regeneration performed
