@@ -13,3 +13,14 @@ export {
   type OpponentBeliefs,
   type ObservedAction,
 } from './opponent-modeler';
+
+export {
+  buildCoalitionPlanInput,
+  planCoalitionTurnStart,
+  planCoalitionDrawnCard,
+  planCoalitionActionTargets,
+  planCoalitionTossIn,
+  shouldCoalitionUseAction,
+  type CoalitionPlanInput,
+  type CoalitionDrawnCardDecision,
+} from './coalition-planner';

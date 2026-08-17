@@ -15,7 +15,7 @@ import { getAutomaticallyReadyPlayers } from '../utils/toss-in-utils';
  */
 export function handleSwapCard(
   state: GameState,
-  action: SwapCardAction
+  action: SwapCardAction,
 ): GameState {
   const { playerId, position, declaredRank } = action.payload;
 
@@ -67,17 +67,17 @@ export function handleSwapCard(
   }
 
   // Initialize toss-in phase
-  // Players who called VINTO and coalition members are automatically marked as ready (can't participate in toss-in)
+  // Players who called VINTO are automatically marked as ready (can't participate in toss-in)
   newState.activeTossIn = {
     ranks: [cardFromHand.rank],
     initiatorId: playerId,
     originalPlayerIndex: newState.currentPlayerIndex,
     participants: [],
     queuedActions: [],
-    waitingForInput: true,    
+    waitingForInput: true,
     playersReadyForNextTurn: getAutomaticallyReadyPlayers(
       newState.players,
-      newState.coalitionLeaderId
+      newState.coalitionLeaderId,
     ),
   };
 
@@ -113,7 +113,8 @@ export function handleSwapCard(
           if (!p.opponentKnowledge[playerId]) {
             p.opponentKnowledge[playerId] = { knownCards: {} };
           }
-          p.opponentKnowledge[playerId].knownCards[position] = player.cards[position];
+          p.opponentKnowledge[playerId].knownCards[position] =
+            player.cards[position];
         }
       }
     }
@@ -137,7 +138,7 @@ export function handleSwapCard(
           rank: cardFromHand.rank,
           targetType: getTargetTypeFromRank(cardFromHand.rank),
           swapPosition: position,
-        }
+        },
       );
       return newState;
     }

@@ -16,7 +16,7 @@ import { Card, PlayerState } from '@vinto/shapes';
  */
 export function calculateFinalScores(
   players: PlayerState[],
-  vintoCallerId: string | null
+  vintoCallerId: string | null,
 ): Record<string, number> {
   const scores: Record<string, number> = {};
 
@@ -41,10 +41,8 @@ export function calculateFinalScores(
   // Calculate Vinto caller's score
   scores[vintoCaller.id] = calculateCardTotal(vintoCaller.cards);
 
-  // Find coalition members (players who are in coalition with the caller)
-  const coalitionMembers = players.filter(
-    (p) => p.id !== vintoCallerId && p.coalitionWith.includes(vintoCallerId)
-  );
+  // Every other player forms the coalition against the caller
+  const coalitionMembers = players.filter((p) => p.id !== vintoCallerId);
 
   // Calculate best (lowest) coalition score
   let bestCoalitionScore = Infinity;

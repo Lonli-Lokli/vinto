@@ -12,6 +12,13 @@ import {
   BotDecisionContext,
   BotActionDecision,
   OpponentModeler,
+  CoalitionPlanInput,
+  buildCoalitionPlanInput,
+  planCoalitionTurnStart,
+  planCoalitionDrawnCard,
+  planCoalitionActionTargets,
+  planCoalitionTossIn,
+  shouldCoalitionUseAction,
 } from '@vinto/bot';
 import { GameClient } from '../game-client';
 
@@ -76,7 +83,7 @@ export class BotAIAdapter {
 
   constructor(
     private gameClient: GameClient,
-    options?: { skipDelays?: boolean }
+    options?: { skipDelays?: boolean },
   ) {
     // Initialize current difficulty and bot version
     this.currentDifficulty = this.gameClient.state.difficulty;
@@ -88,7 +95,7 @@ export class BotAIAdapter {
     // Use existing bot decision service factory
     this.botDecisionService = BotDecisionServiceFactory.create(
       this.gameClient.state.difficulty,
-      this.gameClient.state.botVersion
+      this.gameClient.state.botVersion,
     );
 
     // Initialize opponent modeler
@@ -143,7 +150,7 @@ export class BotAIAdapter {
       // Reactions stay synchronous; async work is queued for sequential handling.
       (snapshot) => {
         this.queueReactionTask(snapshot);
-      }
+      },
     );
   }
 
@@ -189,13 +196,13 @@ export class BotAIAdapter {
       snapshot.botVersion !== this.currentBotVersion
     ) {
       console.log(
-        `[BotAI] Bot settings changed from ${this.currentDifficulty}/${this.currentBotVersion} to ${snapshot.difficulty}/${snapshot.botVersion}, recreating bot decision service`
+        `[BotAI] Bot settings changed from ${this.currentDifficulty}/${this.currentBotVersion} to ${snapshot.difficulty}/${snapshot.botVersion}, recreating bot decision service`,
       );
       this.currentDifficulty = snapshot.difficulty;
       this.currentBotVersion = snapshot.botVersion;
       this.botDecisionService = BotDecisionServiceFactory.create(
         snapshot.difficulty,
-        snapshot.botVersion
+        snapshot.botVersion,
       );
     }
 
@@ -249,11 +256,12 @@ export class BotAIAdapter {
         currentPlayerIndex: this.gameClient.state.currentPlayerIndex,
         subPhase: this.gameClient.state.subPhase,
         pendingActionId: this.gameClient.state.pendingAction?.card?.id,
-        pendingActionTargetCount: this.gameClient.state.pendingAction?.targets?.length || 0,
+        pendingActionTargetCount:
+          this.gameClient.state.pendingAction?.targets?.length || 0,
         // Track card IDs instead of full card objects for efficient comparison
-        players: this.gameClient.state.players.map(p => ({
+        players: this.gameClient.state.players.map((p) => ({
           id: p.id,
-          cardIds: p.cards.map(c => c.id),
+          cardIds: p.cards.map((c) => c.id),
         })),
       }),
       // Track actions when state changes
@@ -268,8 +276,7 @@ export class BotAIAdapter {
           if (!newCard) return;
 
           const previousPlayerIndex = previousSnapshot.currentPlayerIndex;
-          const previousPlayer =
-            currentState.players[previousPlayerIndex];
+          const previousPlayer = currentState.players[previousPlayerIndex];
 
           // Only track non-bot actions
           if (previousPlayer && !previousPlayer.isBot) {
@@ -278,7 +285,10 @@ export class BotAIAdapter {
             if (previousSnapshot.subPhase === 'choosing') {
               // Player just discarded after choosing - this was a swap
               // Use tracked position if available
-              const position = (lastSwapPlayerId === previousPlayer.id) ? lastSwapPosition : undefined;
+              const position =
+                lastSwapPlayerId === previousPlayer.id
+                  ? lastSwapPosition
+                  : undefined;
 
               this.opponentModeler.handleObservedAction({
                 type: 'swap-from-discard',
@@ -290,7 +300,10 @@ export class BotAIAdapter {
               // Clear tracked position after use
               lastSwapPosition = undefined;
               lastSwapPlayerId = undefined;
-            } else if (previousSnapshot.subPhase === 'idle' || previousSnapshot.subPhase === 'ai_thinking') {
+            } else if (
+              previousSnapshot.subPhase === 'idle' ||
+              previousSnapshot.subPhase === 'ai_thinking'
+            ) {
               // Player drew and immediately discarded
               this.opponentModeler.handleObservedAction({
                 type: 'discard-drawn',
@@ -310,13 +323,17 @@ export class BotAIAdapter {
 
         // Track swap actions by detecting card changes at specific positions
         // This happens when subPhase transitions from choosing to idle (after swap)
-        if (previousSnapshot.subPhase === 'choosing' &&
-            (snapshot.subPhase === 'idle' || snapshot.subPhase === 'toss_queue_active')) {
+        if (
+          previousSnapshot.subPhase === 'choosing' &&
+          (snapshot.subPhase === 'idle' ||
+            snapshot.subPhase === 'toss_queue_active')
+        ) {
           const currentPlayerIndex = previousSnapshot.currentPlayerIndex;
           const player = currentState.players[currentPlayerIndex];
 
           if (player && !player.isBot) {
-            const previousPlayerState = previousSnapshot.players[currentPlayerIndex];
+            const previousPlayerState =
+              previousSnapshot.players[currentPlayerIndex];
 
             // Find which position changed (indicating a swap)
             for (let pos = 0; pos < player.cards.length; pos++) {
@@ -335,15 +352,30 @@ export class BotAIAdapter {
 
         // Track peek actions - when pendingAction includes targets
         const currentPendingAction = currentState.pendingAction;
-        if (snapshot.pendingActionTargetCount > previousSnapshot.pendingActionTargetCount && currentPendingAction) {
+        if (
+          snapshot.pendingActionTargetCount >
+            previousSnapshot.pendingActionTargetCount &&
+          currentPendingAction
+        ) {
           // Check if action card is a peek action (7, 8, 9, 10, Q)
-          if (currentPendingAction.card && ['7', '8', '9', '10', 'Q'].includes(currentPendingAction.card.rank)) {
+          if (
+            currentPendingAction.card &&
+            ['7', '8', '9', '10', 'Q'].includes(currentPendingAction.card.rank)
+          ) {
             // Target count increased - peek happened
-            if (currentPendingAction.targets && currentPendingAction.targets.length > 0) {
-              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
+            if (
+              currentPendingAction.targets &&
+              currentPendingAction.targets.length > 0
+            ) {
+              const player = currentState.players.find(
+                (p) => p.id === currentPendingAction.playerId,
+              );
               if (player && !player.isBot) {
                 // Determine if they peeked their own card or opponent's
-                const latestTarget = currentPendingAction.targets[currentPendingAction.targets.length - 1];
+                const latestTarget =
+                  currentPendingAction.targets[
+                    currentPendingAction.targets.length - 1
+                  ];
                 if (latestTarget.playerId === currentPendingAction.playerId) {
                   this.opponentModeler.handleObservedAction({
                     type: 'peek-own',
@@ -356,16 +388,27 @@ export class BotAIAdapter {
           }
 
           // Track Jack/Queen swap actions (swap-own)
-          if (currentPendingAction.card && ['J', 'Q'].includes(currentPendingAction.card.rank)) {
+          if (
+            currentPendingAction.card &&
+            ['J', 'Q'].includes(currentPendingAction.card.rank)
+          ) {
             // Check if swap was executed (targets selected and shouldSwap confirmed)
-            if (currentPendingAction.targets && currentPendingAction.targets.length === 2) {
-              const player = currentState.players.find(p => p.id === currentPendingAction.playerId);
+            if (
+              currentPendingAction.targets &&
+              currentPendingAction.targets.length === 2
+            ) {
+              const player = currentState.players.find(
+                (p) => p.id === currentPendingAction.playerId,
+              );
               if (player && !player.isBot) {
                 // Check if both targets are the player's own cards
                 const target1 = currentPendingAction.targets[0];
                 const target2 = currentPendingAction.targets[1];
 
-                if (target1.playerId === currentPendingAction.playerId && target2.playerId === currentPendingAction.playerId) {
+                if (
+                  target1.playerId === currentPendingAction.playerId &&
+                  target2.playerId === currentPendingAction.playerId
+                ) {
                   this.opponentModeler.handleObservedAction({
                     type: 'swap-own',
                     playerId: currentPendingAction.playerId,
@@ -378,7 +421,10 @@ export class BotAIAdapter {
         }
 
         // Track toss-in actions - when cards are added to discard during toss-in phase
-        if (snapshot.subPhase === 'toss_queue_active' && previousSnapshot.subPhase === 'toss_queue_active') {
+        if (
+          snapshot.subPhase === 'toss_queue_active' &&
+          previousSnapshot.subPhase === 'toss_queue_active'
+        ) {
           // Check if discard pile grew during toss-in (indicates a toss-in happened)
           if (snapshot.discardPileLength > previousSnapshot.discardPileLength) {
             const tossedCard = currentState.discardPile.at(-1);
@@ -386,14 +432,20 @@ export class BotAIAdapter {
               // Find which player tossed in by checking who has fewer cards
               for (let i = 0; i < currentState.players.length; i++) {
                 const player = currentState.players[i];
-                const previousPlayerCardIds = previousSnapshot.players[i].cardIds;
+                const previousPlayerCardIds =
+                  previousSnapshot.players[i].cardIds;
 
-                if (player.cards.length < previousPlayerCardIds.length && !player.isBot) {
+                if (
+                  player.cards.length < previousPlayerCardIds.length &&
+                  !player.isBot
+                ) {
                   // This player tossed in - find which position
                   // (we can infer position by comparing card IDs)
                   for (let pos = 0; pos < previousPlayerCardIds.length; pos++) {
                     const previousCardId = previousPlayerCardIds[pos];
-                    const matchingCard = player.cards.find(c => c.id === previousCardId);
+                    const matchingCard = player.cards.find(
+                      (c) => c.id === previousCardId,
+                    );
 
                     if (!matchingCard) {
                       // This position was tossed in (card at this position is no longer in hand)
@@ -415,7 +467,7 @@ export class BotAIAdapter {
             }
           }
         }
-      }
+      },
     );
   }
 
@@ -459,7 +511,7 @@ export class BotAIAdapter {
 
     if (pendingAction && pendingAction.playerId !== botId) {
       console.log(
-        `[BotAI] ${botId} skipping turn execution - pending action is for another player`
+        `[BotAI] ${botId} skipping turn execution - pending action is for another player`,
       );
       return;
     }
@@ -473,7 +525,7 @@ export class BotAIAdapter {
       this.gameClient.state.pendingAction?.actionPhase === 'selecting-target';
 
     console.log(
-      `[BotAI] ${botId} executing turn in subPhase: ${subPhase}, skipDelay: ${skipDelay}`
+      `[BotAI] ${botId} executing turn in subPhase: ${subPhase}, skipDelay: ${skipDelay}`,
     );
 
     if (!skipDelay) {
@@ -550,7 +602,7 @@ export class BotAIAdapter {
     // (originalPlayerIndex changes means we've advanced to a new turn)
     if (this.lastTossInPlayerIndex !== activeTossIn.originalPlayerIndex) {
       console.log(
-        `[BotAI] New toss-in turn detected (player ${this.lastTossInPlayerIndex} -> ${activeTossIn.originalPlayerIndex}), clearing processed ranks`
+        `[BotAI] New toss-in turn detected (player ${this.lastTossInPlayerIndex} -> ${activeTossIn.originalPlayerIndex}), clearing processed ranks`,
       );
       this.botsProcessedRanks.clear();
       this.lastTossInPlayerIndex = activeTossIn.originalPlayerIndex;
@@ -565,7 +617,7 @@ export class BotAIAdapter {
     // Process each bot player
     const botPlayers = this.gameClient.state.players.filter((p) => p.isBot);
     console.log(
-      `[BotAI] Found ${botPlayers.length} bot players to process for toss-in`
+      `[BotAI] Found ${botPlayers.length} bot players to process for toss-in`,
     );
 
     for (const botPlayer of botPlayers) {
@@ -613,6 +665,28 @@ export class BotAIAdapter {
       for (const rank of newRanks) {
         console.log(`[BotAI] ${botId} processing new rank: ${rank}`);
 
+        // Coalition final round: shed every matching card the coalition can
+        // afford to lose (positions read from the CURRENT state, so earlier
+        // toss-ins in this loop cannot shift them)
+        const coalition = this.coalitionPlanInput(botId);
+        if (coalition) {
+          const positions = planCoalitionTossIn(coalition, [rank]);
+          if (positions.length > 0) {
+            console.log(
+              `[BotAI][Coalition] ${botId} tossing in positions [${positions.join(',')}] for rank ${rank}`,
+            );
+            this.gameClient.dispatch(
+              GameActions.participateInTossIn(
+                botId,
+                positions as [number, ...number[]],
+              ),
+            );
+            await this.delay(SMALL_DELAY * 2);
+          }
+          processedRanks.add(rank);
+          continue;
+        }
+
         // Create decision context for this bot
         const context = this.createBotContext(botId);
 
@@ -620,7 +694,7 @@ export class BotAIAdapter {
         const shouldParticipate =
           this.botDecisionService.shouldParticipateInTossIn(
             [rank] as [Rank, ...Rank[]],
-            context
+            context,
           );
 
         if (shouldParticipate) {
@@ -629,32 +703,32 @@ export class BotAIAdapter {
             .map((card, index) =>
               card.rank === rank && botPlayer.knownCardPositions.includes(index)
                 ? { card: card, position: index }
-                : null
+                : null,
             )
             .filter((item) => item !== null);
 
           if (matchingCards.length > 0) {
             console.log(
-              `[BotAI] ${botId} tossing in ${matchingCards.length} cards for rank ${rank}`
+              `[BotAI] ${botId} tossing in ${matchingCards.length} cards for rank ${rank}`,
             );
 
             const positions = matchingCards.map(({ position }) => position);
             this.gameClient.dispatch(
               GameActions.participateInTossIn(
                 botId,
-                positions as [number, ...number[]]
-              )
+                positions as [number, ...number[]],
+              ),
             );
 
             await this.delay(SMALL_DELAY * 2);
           } else {
             console.log(
-              `[BotAI] ${botId} wants to toss in but has no matching ${rank}`
+              `[BotAI] ${botId} wants to toss in but has no matching ${rank}`,
             );
           }
         } else {
           console.log(
-            `[BotAI] ${botId} chose not to participate for rank ${rank}`
+            `[BotAI] ${botId} chose not to participate for rank ${rank}`,
           );
         }
 
@@ -666,7 +740,7 @@ export class BotAIAdapter {
       // Bot is ready when they've processed ALL current ranks
       const currentRanks = this.gameClient.state.activeTossIn?.ranks || [];
       const hasProcessedAll = currentRanks.every((rank) =>
-        processedRanks.has(rank)
+        processedRanks.has(rank),
       );
 
       if (hasProcessedAll) {
@@ -691,7 +765,7 @@ export class BotAIAdapter {
 
             if (shouldCallVinto) {
               console.log(
-                `[BotAI] ${botId} calling Vinto instead of marking ready!`
+                `[BotAI] ${botId} calling Vinto instead of marking ready!`,
               );
               this.gameClient.dispatch(GameActions.callVinto(botId));
               return; // Don't mark as ready, Vinto was called
@@ -700,14 +774,14 @@ export class BotAIAdapter {
 
           console.log(
             `[BotAI] ${botId} processed all ranks [${currentRanks.join(
-              ','
-            )}], marking ready`
+              ',',
+            )}], marking ready`,
           );
           this.gameClient.dispatch(GameActions.playerTossInFinished(botId));
         }
       } else {
         console.log(
-          `[BotAI] ${botId} NOT marking ready - still has unprocessed ranks`
+          `[BotAI] ${botId} NOT marking ready - still has unprocessed ranks`,
         );
       }
 
@@ -717,38 +791,48 @@ export class BotAIAdapter {
     console.log('[BotAI] All bots processed for current toss-in ranks');
   }
   /**
-   * Phase 1: Draw or Take Discard
+   * Coalition planner input for a bot in the final round (null otherwise).
    *
-   * COALITION LOGIC:
-   * - If this bot is a coalition member but NOT the leader, the leader makes the decision
-   * - If this bot IS the coalition leader, it makes decisions for itself
-   * - Leader uses its MCTS to evaluate what's best for the coalition as a whole
+   * COALITION LOGIC (final round, bot is not the Vinto caller):
+   * The whole coalition is planned as ONE agent by the coalition planner. It
+   * pools every coalition member's cards and everything the coalition knows
+   * about the Vinto caller, searches the remaining coalition turns (draws,
+   * swaps, declarations, Jack/Queen/King actions, toss-ins) and picks the line
+   * that maximises the chance that SOME member ends below the caller.
+   * It is re-run at every decision point, so the plan adapts as cards are drawn.
+   */
+  private coalitionPlanInput(botId: string): CoalitionPlanInput | null {
+    return buildCoalitionPlanInput(this.gameClient.state, botId);
+  }
+
+  /**
+   * Phase 1: Draw or Take Discard
    */
   private executeTurnDecision(botId: string): void {
-    const context = this.createBotContext(botId);
-
-    // CRITICAL: Coalition leader makes decisions for all coalition members
-    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
-    const effectiveContext =
-      effectiveDecisionMakerId === botId
-        ? context
-        : this.createBotContext(effectiveDecisionMakerId);
-
-    if (effectiveDecisionMakerId !== botId) {
-      console.log(
-        `[BotAI] ${botId} is coalition member - leader ${effectiveDecisionMakerId} making decision`
-      );
+    const coalition = this.coalitionPlanInput(botId);
+    if (coalition) {
+      const plan = planCoalitionTurnStart(coalition);
+      this.cachedActionDecision = null;
+      if (plan.action === 'take-discard') {
+        this.gameClient.dispatch(GameActions.playDiscard(botId));
+        console.log(`[BotAI][Coalition] ${botId} took from discard`);
+      } else {
+        this.gameClient.dispatch(GameActions.drawCard(botId));
+        console.log(`[BotAI][Coalition] ${botId} drew card`);
+      }
+      return;
     }
 
+    const context = this.createBotContext(botId);
     const decision: BotTurnDecision =
-      this.botDecisionService.decideTurnAction(effectiveContext);
+      this.botDecisionService.decideTurnAction(context);
 
     if (decision.action === 'take-discard') {
       // Cache the action plan if bot committed to using the action
       if (decision.actionDecision) {
         this.cachedActionDecision = decision.actionDecision;
         console.log(
-          `[BotAI] ${botId} cached action plan from take-discard decision`
+          `[BotAI] ${botId} cached action plan from take-discard decision`,
         );
       }
 
@@ -767,19 +851,8 @@ export class BotAIAdapter {
   /**
    * Phase 2: Decide whether to use action, swap, or discard drawn card
    * This is the 'choosing' phase where bot evaluates the drawn card
-   *
-   * COALITION LOGIC: Leader makes decision for coalition members
    */
   private async executeChoosingDecision(botId: string): Promise<void> {
-    const context = this.createBotContext(botId);
-
-    // Coalition leader decides for coalition members
-    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
-    const effectiveContext =
-      effectiveDecisionMakerId === botId
-        ? context
-        : this.createBotContext(effectiveDecisionMakerId);
-
     const drawnCard = this.gameClient.pendingCard;
 
     if (!drawnCard) {
@@ -796,11 +869,42 @@ export class BotAIAdapter {
     const isFinalRound = this.gameClient.state.phase === 'final';
     await this.delay(isFinalRound ? LARGE_DELAY + 1000 : LARGE_DELAY);
 
+    const coalition = this.coalitionPlanInput(botId);
+    if (coalition) {
+      const plan = planCoalitionDrawnCard(coalition, drawnCard);
+      this.cachedActionDecision = null;
+      switch (plan.choice) {
+        case 'use-action':
+          this.gameClient.dispatch(GameActions.playCardAction(botId));
+          console.log(
+            `[BotAI][Coalition] ${botId} uses ${drawnCard.rank} action`,
+          );
+          break;
+        case 'swap':
+          this.gameClient.dispatch(
+            GameActions.swapCard(botId, plan.position, plan.declaredRank),
+          );
+          console.log(
+            `[BotAI][Coalition] ${botId} swapped at position ${plan.position}, declared: ${plan.declaredRank ?? 'none'}`,
+          );
+          break;
+        case 'discard':
+          this.gameClient.dispatch(GameActions.discardCard(botId));
+          console.log(
+            `[BotAI][Coalition] ${botId} discarded ${drawnCard.rank}`,
+          );
+          break;
+      }
+      return;
+    }
+
+    const context = this.createBotContext(botId);
+
     // First, check if the card has an action and if we should use it
     if (isRankActionable(drawnCard.rank)) {
       const shouldUseAction = this.botDecisionService.shouldUseAction(
         drawnCard,
-        effectiveContext
+        context,
       );
 
       if (shouldUseAction) {
@@ -815,7 +919,7 @@ export class BotAIAdapter {
     // Now decide: swap or discard?
     const swapPosition = this.botDecisionService.selectBestSwapPosition(
       drawnCard,
-      effectiveContext
+      context,
     );
 
     if (swapPosition !== null) {
@@ -829,7 +933,7 @@ export class BotAIAdapter {
       const declaredRank = shouldDeclare ? cardAtPosition.rank : undefined;
 
       this.gameClient.dispatch(
-        GameActions.swapCard(botId, swapPosition, declaredRank)
+        GameActions.swapCard(botId, swapPosition, declaredRank),
       );
       console.log(`[BotAI] ${botId} swapped at position ${swapPosition},
   declared: ${declaredRank || 'none'}`);
@@ -844,19 +948,9 @@ export class BotAIAdapter {
 
   /**
    * Phase 3: Use Action or Discard
-   *
-   * COALITION LOGIC: Leader makes decision for coalition members
+   * (also reached for queued toss-in actions of bots: subPhase 'selecting')
    */
   private executeActionDecision(botId: string): void {
-    const context = this.createBotContext(botId);
-
-    // Coalition leader decides for coalition members
-    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
-    const effectiveContext =
-      effectiveDecisionMakerId === botId
-        ? context
-        : this.createBotContext(effectiveDecisionMakerId);
-
     const cardInHand = this.gameClient.pendingCard;
 
     if (!cardInHand) {
@@ -867,11 +961,13 @@ export class BotAIAdapter {
       return;
     }
 
-    // Use MCTS to decide: use action or discard?
-    const shouldUseAction = this.botDecisionService.shouldUseAction(
-      cardInHand,
-      effectiveContext
-    );
+    const coalition = this.coalitionPlanInput(botId);
+    const shouldUseAction = coalition
+      ? shouldCoalitionUseAction(coalition, cardInHand)
+      : this.botDecisionService.shouldUseAction(
+          cardInHand,
+          this.createBotContext(botId),
+        );
 
     if (shouldUseAction && isRankActionable(cardInHand.rank)) {
       // Has action - use it
@@ -890,19 +986,9 @@ export class BotAIAdapter {
 
   /**
    * Phase 4: Select Action Targets (for card actions)
-   *
-   * COALITION LOGIC: Leader makes decision for coalition members
    */
   private async executeTargetSelection(botId: string): Promise<void> {
     const context = this.createBotContext(botId);
-
-    // Coalition leader decides for coalition members
-    const effectiveDecisionMakerId = this.getEffectiveDecisionMaker(botId);
-    const effectiveContext =
-      effectiveDecisionMakerId === botId
-        ? context
-        : this.createBotContext(effectiveDecisionMakerId);
-
     const actionCard = this.gameClient.pendingCard;
 
     if (!actionCard) {
@@ -916,17 +1002,38 @@ export class BotAIAdapter {
     // Special handling for different card types
     if (actionCard.rank === 'K') {
       // King: Declare a rank
-      await this.executeKingDeclaration(botId, effectiveContext);
+      await this.executeKingDeclaration(botId, context);
     } else if (actionCard.rank === 'J') {
       // Jack: Select 2 cards to swap
-      this.executeJackAction(botId, effectiveContext);
+      this.executeJackAction(botId, context);
     } else if (actionCard.rank === 'Q') {
       // Queen: Select 2 cards to peek/swap
-      this.executeQueenAction(botId, effectiveContext);
+      this.executeQueenAction(botId, context);
     } else {
       // Other actions: Select target (7, 8, 9, 10, A)
-      this.executeStandardAction(botId, effectiveContext);
+      this.executeStandardAction(botId, context);
     }
+  }
+
+  /**
+   * Choose action targets for the pending action card.
+   * In the coalition final round the planner decides; otherwise MCTS.
+   */
+  private selectActionTargetsFor(
+    botId: string,
+    context: BotDecisionContext,
+  ): BotActionDecision {
+    const coalition = this.coalitionPlanInput(botId);
+    const pendingCard = this.gameClient.pendingCard;
+    if (coalition && pendingCard) {
+      const decision = planCoalitionActionTargets(coalition, pendingCard);
+      console.log(
+        `[BotAI][Coalition] ${botId} targets for ${pendingCard.rank}:`,
+        decision,
+      );
+      return decision;
+    }
+    return this.botDecisionService.selectActionTargets(context);
   }
 
   /**
@@ -939,7 +1046,7 @@ export class BotAIAdapter {
    */
   private async executeKingDeclaration(
     botId: string,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): Promise<void> {
     const targets = this.gameClient.state.pendingAction?.targets || [];
 
@@ -948,7 +1055,7 @@ export class BotAIAdapter {
       // Use cached action plan if available, otherwise run MCTS fresh
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       if (decision.targets.length > 0) {
         const target = decision.targets[0];
@@ -960,12 +1067,12 @@ export class BotAIAdapter {
           GameActions.selectActionTarget(
             botId,
             target.playerId,
-            target.position
-          )
+            target.position,
+          ),
         );
 
         console.log(
-          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}`
+          `[BotAI] ${botId} selected card for King: ${target.playerId} pos ${target.position}`,
         );
 
         // Small delay before declaring rank
@@ -973,7 +1080,7 @@ export class BotAIAdapter {
       } else {
         // No valid moves available - discard the card instead
         console.log(
-          `[BotAI] ${botId} cannot use King action (no valid moves), discarding`
+          `[BotAI] ${botId} cannot use King action (no valid moves), discarding`,
         );
         this.gameClient.dispatch(GameActions.confirmPeek(botId));
         this.cachedActionDecision = null;
@@ -986,7 +1093,7 @@ export class BotAIAdapter {
 
       // Find the target player and look at what card is actually at that  position NOW
       const targetPlayer = context.allPlayers.find(
-        (p) => p.id === target.playerId
+        (p) => p.id === target.playerId,
       );
       if (!targetPlayer) {
         logger.error(`[BotAI] Target player ${target.playerId} not found`);
@@ -996,7 +1103,7 @@ export class BotAIAdapter {
       const cardAtPosition = targetPlayer.cards[target.position];
       if (!cardAtPosition) {
         logger.error(
-          `[BotAI] No card at ${target.playerId}[${target.position}]`
+          `[BotAI] No card at ${target.playerId}[${target.position}]`,
         );
         return;
       }
@@ -1007,10 +1114,10 @@ export class BotAIAdapter {
       this.cachedActionDecision = null;
 
       this.gameClient.dispatch(
-        GameActions.declareKingAction(botId, declaredRank)
+        GameActions.declareKingAction(botId, declaredRank),
       );
       console.log(
-        `[BotAI] ${botId} declared King action: ${declaredRank} at ${target.playerId}[${target.position}]`
+        `[BotAI] ${botId} declared King action: ${declaredRank} at ${target.playerId}[${target.position}]`,
       );
     }
   }
@@ -1027,7 +1134,7 @@ export class BotAIAdapter {
       // Use cached action plan if available, otherwise run MCTS fresh
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       // Cache the decision for subsequent steps
       this.cachedActionDecision = decision;
@@ -1037,16 +1144,16 @@ export class BotAIAdapter {
           GameActions.selectActionTarget(
             botId,
             decision.targets[0].playerId,
-            decision.targets[0].position
-          )
+            decision.targets[0].position,
+          ),
         );
         console.log(
-          `[BotAI] ${botId} selected first Jack target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+          `[BotAI] ${botId} selected first Jack target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`,
         );
       } else {
         // No valid moves available - discard the card instead
         console.log(
-          `[BotAI] ${botId} cannot use Jack action (no valid moves), discarding`
+          `[BotAI] ${botId} cannot use Jack action (no valid moves), discarding`,
         );
         this.gameClient.dispatch(GameActions.skipJackSwap(botId));
         this.cachedActionDecision = null;
@@ -1056,18 +1163,18 @@ export class BotAIAdapter {
       // Use cached decision from step 1
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       if (decision.targets.length >= 2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
             decision.targets[1].playerId,
-            decision.targets[1].position
-          )
+            decision.targets[1].position,
+          ),
         );
         console.log(
-          `[BotAI] ${botId} selected second Jack target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+          `[BotAI] ${botId} selected second Jack target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`,
         );
       }
     } else if (targetsSelected === 2) {
@@ -1106,7 +1213,7 @@ export class BotAIAdapter {
       // Use cached action plan if available, otherwise run MCTS fresh
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       // Cache the decision for subsequent steps
       this.cachedActionDecision = decision;
@@ -1116,16 +1223,16 @@ export class BotAIAdapter {
           GameActions.selectActionTarget(
             botId,
             decision.targets[0].playerId,
-            decision.targets[0].position
-          )
+            decision.targets[0].position,
+          ),
         );
         console.log(
-          `[BotAI] ${botId} selected first Queen target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`
+          `[BotAI] ${botId} selected first Queen target: ${decision.targets[0].playerId} pos ${decision.targets[0].position}`,
         );
       } else {
         // No valid moves available - discard the card instead
         console.log(
-          `[BotAI] ${botId} cannot use Queen action (no valid moves), discarding`
+          `[BotAI] ${botId} cannot use Queen action (no valid moves), discarding`,
         );
         this.gameClient.dispatch(GameActions.skipQueenSwap(botId));
         this.cachedActionDecision = null;
@@ -1135,18 +1242,18 @@ export class BotAIAdapter {
       // Use cached decision from step 1
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       if (decision.targets.length >= 2) {
         this.gameClient.dispatch(
           GameActions.selectActionTarget(
             botId,
             decision.targets[1].playerId,
-            decision.targets[1].position
-          )
+            decision.targets[1].position,
+          ),
         );
         console.log(
-          `[BotAI] ${botId} selected second Queen target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`
+          `[BotAI] ${botId} selected second Queen target: ${decision.targets[1].playerId} pos ${decision.targets[1].position}`,
         );
       }
     } else if (targetsSelected === 2) {
@@ -1179,7 +1286,7 @@ export class BotAIAdapter {
    */
   private executeStandardAction(
     botId: string,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): void {
     const pendingAction = this.gameClient.state.pendingAction;
     const targetsSelected = pendingAction?.targets?.length || 0;
@@ -1189,7 +1296,7 @@ export class BotAIAdapter {
       // Use cached action plan if available, otherwise run MCTS fresh
       const decision: BotActionDecision = this.cachedActionDecision
         ? this.cachedActionDecision
-        : this.botDecisionService.selectActionTargets(context);
+        : this.selectActionTargetsFor(botId, context);
 
       // Cache the decision for step 2
       this.cachedActionDecision = decision;
@@ -1201,17 +1308,17 @@ export class BotAIAdapter {
           GameActions.selectActionTarget(
             botId,
             target.playerId,
-            target.position
-          )
+            target.position,
+          ),
         );
 
         console.log(
-          `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`
+          `[BotAI] ${botId} selected target: ${target.playerId} pos ${target.position}`,
         );
       } else {
         // No valid moves available - discard the card instead
         console.log(
-          `[BotAI] ${botId} cannot use action (no valid moves), discarding`
+          `[BotAI] ${botId} cannot use action (no valid moves), discarding`,
         );
         this.gameClient.dispatch(GameActions.confirmPeek(botId));
         this.cachedActionDecision = null;
@@ -1265,13 +1372,13 @@ export class BotAIAdapter {
     if (botPlayer.opponentKnowledge) {
       // Convert serialized opponent knowledge to the format MCTS expects
       for (const [opponentId, serializedKnowledge] of Object.entries(
-        botPlayer.opponentKnowledge
+        botPlayer.opponentKnowledge,
       )) {
         const knownCardsMap = new Map<number, Card>();
 
         // Convert Record<number, Card> to Map<number, Card>
         for (const [positionStr, card] of Object.entries(
-          serializedKnowledge.knownCards
+          serializedKnowledge.knownCards,
         )) {
           const position = parseInt(positionStr, 10);
           knownCardsMap.set(position, card);
@@ -1280,7 +1387,7 @@ export class BotAIAdapter {
         if (knownCardsMap.size > 0) {
           opponentKnowledge.set(opponentId, knownCardsMap);
           console.log(
-            `[BotAI] ${botId} knows ${knownCardsMap.size} cards for opponent ${opponentId}`
+            `[BotAI] ${botId} knows ${knownCardsMap.size} cards for opponent ${opponentId}`,
           );
         }
       }
@@ -1298,7 +1405,7 @@ export class BotAIAdapter {
 
     if (isCoalitionMember) {
       console.log(
-        `[Coalition] ${botId} is coalition member - sharing coalition knowledge`
+        `[Coalition] ${botId} is coalition member - sharing coalition knowledge`,
       );
 
       // Share knowledge from all coalition members
@@ -1333,7 +1440,7 @@ export class BotAIAdapter {
             }
 
             console.log(
-              `[Coalition] ${botId} learned ${memberKnownCards.size} own cards from coalition member ${coalitionPlayer.id}`
+              `[Coalition] ${botId} learned ${memberKnownCards.size} own cards from coalition member ${coalitionPlayer.id}`,
             );
           }
         }
@@ -1342,13 +1449,13 @@ export class BotAIAdapter {
         // If Bot1 knows 2 cards from Bot2, Bot3 should also receive this knowledge
         if (coalitionPlayer.opponentKnowledge) {
           for (const [opponentId, serializedKnowledge] of Object.entries(
-            coalitionPlayer.opponentKnowledge
+            coalitionPlayer.opponentKnowledge,
           )) {
             // Convert the coalition member's known cards to Map format
             const knownCardsMap = new Map<number, Card>();
 
             for (const [positionStr, card] of Object.entries(
-              serializedKnowledge.knownCards
+              serializedKnowledge.knownCards,
             )) {
               const position = parseInt(positionStr, 10);
               knownCardsMap.set(position, card);
@@ -1368,7 +1475,7 @@ export class BotAIAdapter {
               }
 
               console.log(
-                `[Coalition] ${botId} learned ${knownCardsMap.size} cards about ${opponentId} from coalition member ${coalitionPlayer.id}`
+                `[Coalition] ${botId} learned ${knownCardsMap.size} cards about ${opponentId} from coalition member ${coalitionPlayer.id}`,
               );
             }
           }
@@ -1413,43 +1520,12 @@ export class BotAIAdapter {
   }
 
   /**
-   * Determine who should make the decision for this bot
-   *
-   * In coalition play:
-   * - Coalition leader makes decisions for ALL coalition members
-   * - This enables coordinated strategy where leader plans for the whole team
-   *
-   * Returns: the ID of the bot who should actually make the decision
-   */
-  private getEffectiveDecisionMaker(botId: string): string {
-    const state = this.gameClient.state;
-
-    // Not in final phase? Bot makes its own decisions
-    if (state.phase !== 'final') {
-      return botId;
-    }
-
-    // No coalition leader selected yet? Bot makes its own decisions
-    if (!state.coalitionLeaderId) {
-      return botId;
-    }
-
-    // Is this bot the Vinto caller? They always decide for themselves
-    if (botId === state.vintoCallerId) {
-      return botId;
-    }
-
-    // This bot is a coalition member - the leader decides for them
-    return state.coalitionLeaderId;
-  }
-
-  /**
    * Check if all non-Vinto players are bots
    */
   private allPlayersAreBots(): boolean {
     const vintoCallerId = this.gameClient.state.vintoCallerId;
     const coalitionPlayers = this.gameClient.state.players.filter(
-      (p) => p.id !== vintoCallerId
+      (p) => p.id !== vintoCallerId,
     );
     return coalitionPlayers.every((p) => p.isBot);
   }
@@ -1458,15 +1534,17 @@ export class BotAIAdapter {
    * Automatically select coalition leader for bot-only games
    * Simply selects the first coalition bot as leader
    *
-   * The leader will make coordinated decisions for ALL coalition members
-   * to maximize the chance that at least one member beats the Vinto caller
+   * The leader is a nominal role (engine flag + UI); every coalition bot's
+   * decisions are made jointly by the coalition planner, which pools all
+   * coalition knowledge and maximises the chance that at least one member
+   * beats the Vinto caller.
    */
   private selectCoalitionLeaderForBots(): void {
     console.log('[BotAI] Automatically selecting coalition leader for bots');
 
     const vintoCallerId = this.gameClient.state.vintoCallerId;
     const coalitionBots = this.gameClient.state.players.filter(
-      (p) => p.id !== vintoCallerId && p.isBot
+      (p) => p.id !== vintoCallerId && p.isBot,
     );
 
     if (coalitionBots.length === 0) {
@@ -1478,7 +1556,7 @@ export class BotAIAdapter {
     const leader = coalitionBots[0];
 
     console.log(
-      `[BotAI] Selected ${leader.name} as coalition leader (will coordinate all coalition members)`
+      `[BotAI] Selected ${leader.name} as coalition leader (nominal; coalition planner coordinates all members)`,
     );
 
     // Dispatch action to set coalition leader

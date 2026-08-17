@@ -15,33 +15,20 @@ import { getTargetTypeFromRank } from './action-utils';
  * Get the list of player IDs who should be automatically marked as ready for toss-in.
  * This includes:
  * - Players who have called Vinto (they cannot participate in toss-in after calling Vinto)
- * - Players in a coalition who are not the leader (they don't control their own turns)
+ *
+ * Coalition members (leader or not) keep their toss-in rights during the final
+ * round: shedding matching cards is one of the coalition's main tools against
+ * the Vinto caller.
  *
  * @param players - Array of all players in the game
- * @param coalitionLeaderId - ID of the coalition leader (if any)
+ * @param _coalitionLeaderId - ID of the coalition leader (if any); kept for call-site compatibility
  * @returns Array of player IDs who are automatically ready
  */
 export function getAutomaticallyReadyPlayers(
   players: PlayerState[],
-  coalitionLeaderId: string | null
+  _coalitionLeaderId: string | null,
 ): string[] {
-  return players
-    .filter((p) => {
-      // Vinto callers are automatically ready
-      if (p.isVintoCaller) return true;
-
-      // Coalition members who are not the leader are automatically ready
-      if (
-        coalitionLeaderId &&
-        p.coalitionWith.length > 0 &&
-        p.id !== coalitionLeaderId
-      ) {
-        return true;
-      }
-
-      return false;
-    })
-    .map((p) => p.id);
+  return players.filter((p) => p.isVintoCaller).map((p) => p.id);
 }
 
 /**
@@ -58,7 +45,7 @@ export function clearTossInReadyList(state: GameState): void {
   if (state.activeTossIn) {
     state.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
       state.players,
-      state.coalitionLeaderId
+      state.coalitionLeaderId,
     );
   }
 }
@@ -88,7 +75,7 @@ export function areAllPlayersReady(state: GameState): boolean {
  */
 export function advanceTurnAfterTossIn(
   state: GameState,
-  context: string
+  context: string,
 ): void {
   if (!state.activeTossIn) {
     console.warn(`[${context}] No active toss-in to complete`);
@@ -145,7 +132,7 @@ export function advanceTurnAfterTossIn(
   state.activeTossIn.waitingForInput = false;
   state.activeTossIn.playersReadyForNextTurn = getAutomaticallyReadyPlayers(
     state.players,
-    state.coalitionLeaderId
+    state.coalitionLeaderId,
   );
   state.activeTossIn.failedAttempts = [];
   state.activeTossIn.originalPlayerIndex = state.currentPlayerIndex;
@@ -172,7 +159,7 @@ export function advanceTurnAfterTossIn(
 
 export function addTossInCard(
   currentTossInRanks: [Rank, ...Rank[]],
-  rank?: Rank
+  rank?: Rank,
 ): [Rank, ...Rank[]] {
   if (rank && !currentTossInRanks.includes(rank)) {
     return currentTossInRanks.includes('K')
@@ -184,7 +171,7 @@ export function addTossInCard(
 export function clearTossInAfterActionableCard(
   pendingCard: Card | undefined,
   newState: GameState,
-  playerId: string
+  playerId: string,
 ): void {
   if (newState.activeTossIn && newState.activeTossIn.queuedActions.length > 0) {
     // card is from toss in queue, move it to discard pile to be below top, possible unplayed card
@@ -208,7 +195,7 @@ export function clearTossInAfterActionableCard(
         waitingForInput: true,
         playersReadyForNextTurn: getAutomaticallyReadyPlayers(
           newState.players,
-          newState.coalitionLeaderId
+          newState.coalitionLeaderId,
         ),
       };
     }
@@ -218,7 +205,7 @@ export function clearTossInAfterActionableCard(
     newState.subPhase = 'toss_queue_active';
 
     console.log(
-      '[clearTossInAfterActionableCard] Peek confirmed, toss-in active'
+      '[clearTossInAfterActionableCard] Peek confirmed, toss-in active',
     );
   } else if (newState.activeTossIn.queuedActions.length === 0) {
     // ADD or REPLACE this card's rank to toss-in ranks if not already present if same turn
@@ -227,7 +214,7 @@ export function clearTossInAfterActionableCard(
         ? [newState.pendingAction.card.rank]
         : addTossInCard(
             newState.activeTossIn.ranks,
-            newState.pendingAction?.card.rank
+            newState.pendingAction?.card.rank,
           );
 
     newState.pendingAction = null;
@@ -242,7 +229,7 @@ export function clearTossInAfterActionableCard(
       {
         ranks: newState.activeTossIn.ranks,
         restoredCurrentPlayerIndex: newState.currentPlayerIndex,
-      }
+      },
     );
   } else if (newState.activeTossIn.queuedActions.length > 0) {
     // Clear pending action
@@ -255,7 +242,7 @@ export function clearTossInAfterActionableCard(
       '[clearTossInAfterActionableCard] Action completed during toss-in queue processing',
       {
         remainingActions: newState.activeTossIn.queuedActions.length,
-      }
+      },
     );
 
     // Check if there are more queued actions
@@ -281,7 +268,7 @@ export function clearTossInAfterActionableCard(
 
       // Set currentPlayerIndex to the player executing this queued action
       const actionPlayerIndex = newState.players.findIndex(
-        (p) => p.id === nextAction.playerId
+        (p) => p.id === nextAction.playerId,
       );
       if (actionPlayerIndex !== -1) {
         newState.currentPlayerIndex = actionPlayerIndex;
@@ -295,7 +282,7 @@ export function clearTossInAfterActionableCard(
           playerId: nextAction.playerId,
           rank: nextAction.rank,
           currentPlayerIndex: newState.currentPlayerIndex,
-        }
+        },
       );
     } else {
       // Clear the ready list so players can confirm again for this new toss-in round
