@@ -9,6 +9,7 @@
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { copy } from 'fast-copy';
 import { join } from 'node:path';
 import {
   GAME_RECORDING_FORMAT_VERSION,
@@ -93,7 +94,10 @@ async function playGame(
     dispatch(action);
     if (client.recordedActionCount > before) {
       actions.push(action);
-      states.push(client.state);
+      // Deep-copy at capture time. Hashes are computed once the game ends, and engine
+      // utilities such as advanceTurnAfterTossIn mutate state in place, so holding a
+      // live reference would hash a state that has moved on since the action.
+      states.push(copy(client.state));
     }
     client.syncVisualState();
   };

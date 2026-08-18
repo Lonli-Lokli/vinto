@@ -3,7 +3,7 @@ import { copy } from 'fast-copy';
 import { BotMemory } from './bot-memory';
 import { MCTSMoveGenerator } from './mcts-move-generator';
 import { MCTSStateTransition } from './mcts-state-transition';
-import { VintoRoundSolver } from './vinto-round-solver';
+import { shouldCallVintoByScore } from './vinto-call-rule';
 
 import {
   Card,
@@ -378,45 +378,18 @@ export class MCTSBotDecisionService implements BotDecisionService {
     return bestPosition;
   }
 
+  /**
+   * Vinto is decided by a direct rule rather than by MCTS.
+   *
+   * The previous implementation asked MCTS for a best move and required it to be
+   * `call-vinto`. That gate could never pass: the only caller (`BotAIAdapter`) asks
+   * during the toss-in window, `constructGameState` therefore sets `isTossInPhase`, and
+   * `MCTSMoveGenerator.generateMoves` returns only `pass`/`toss-in` in that branch — the
+   * `call-vinto` move was unreachable, so bots never called Vinto and games never ended.
+   */
   shouldCallVinto(context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
-
-    // Never call Vinto too early
-    if (context.gameState.turnNumber < context.allPlayers.length * 2) {
-      return false;
-    }
-
-    // Step 1: Run MCTS to see if it suggests calling Vinto
-    const gameState = this.constructGameState(context);
-    const bestMove = this.runMCTS(gameState);
-
-    if (bestMove.type !== 'call-vinto') {
-      return false;
-    }
-
-    // Step 2: MCTS suggests calling Vinto - now validate with worst-case analysis
-    const solver = new VintoRoundSolver(this.botId, this.botMemory);
-
-    // Build opponent list
-    const opponents = context.allPlayers
-      .filter((p) => p.id !== this.botId)
-      .map((p) => ({
-        id: p.id,
-        cardCount: p.cards.length,
-      }));
-
-    // Run worst-case validation
-    const validation = solver.validateVintoCall(
-      context.botPlayer.cards,
-      opponents,
-      context.discardPile,
-    );
-
-    // Only call Vinto if:
-    // 1. MCTS suggests it (already passed)
-    // 2. VintoRoundSolver confirms it's safe
-    // 3. Confidence is reasonable (> 40%)
-    return validation.shouldCallVinto && validation.confidence > 0.4;
+    return shouldCallVintoByScore(context);
   }
 
   // ========== MCTS Core Algorithm ==========

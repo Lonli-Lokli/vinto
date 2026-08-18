@@ -10,6 +10,7 @@ import {
   isRankActionable,
 } from '@vinto/shapes';
 import { BotMemory } from './bot-memory';
+import { shouldCallVintoByScore } from './vinto-call-rule';
 import {
   BotActionDecision,
   BotDecisionContext,
@@ -60,7 +61,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
     }
 
     console.log(
-      `[Strategic Bot] Initialized with difficulty: ${this.difficulty}, thinkingDepth: ${this.thinkingDepth}, evaluationAccuracy: ${this.evaluationAccuracy}`
+      `[Strategic Bot] Initialized with difficulty: ${this.difficulty}, thinkingDepth: ${this.thinkingDepth}, evaluationAccuracy: ${this.evaluationAccuracy}`,
     );
   }
 
@@ -75,7 +76,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
     console.log(
       `[Strategic Bot] Take discard value: ${takeDiscardValue.toFixed(2)}, ` +
-        `Draw value: ${drawValue.toFixed(2)}`
+        `Draw value: ${drawValue.toFixed(2)}`,
     );
 
     if (takeDiscardValue > drawValue) {
@@ -97,9 +98,9 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
     console.log(
       `[Strategic Bot] ${drawnCard.rank} - Use action: ${useActionValue.toFixed(
-        2
+        2,
       )}, ` +
-        `Swap: ${swapValue.toFixed(2)}, Discard: ${discardValue.toFixed(2)}`
+        `Swap: ${swapValue.toFixed(2)}, Discard: ${discardValue.toFixed(2)}`,
     );
 
     return useActionValue > swapValue && useActionValue > discardValue;
@@ -119,7 +120,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
   selectBestSwapPosition(
     drawnCard: Card,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number | null {
     this.initializeIfNeeded(context);
 
@@ -137,8 +138,8 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
     console.log(
       `[Strategic Bot] Best swap position: ${bestPosition} (value: ${bestValue.toFixed(
-        2
-      )})`
+        2,
+      )})`,
     );
 
     return bestPosition;
@@ -146,7 +147,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
   shouldSwapAfterPeek(
     peekedCards: Card[],
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): boolean {
     this.initializeIfNeeded(context);
 
@@ -157,7 +158,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
           this.botMemory.observeCard(
             peekedCards[index],
             target.playerId,
-            target.position
+            target.position,
           );
         }
       });
@@ -208,8 +209,8 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
     console.log(
       `[Strategic Bot] Best King declaration: ${bestRank} (value: ${bestValue.toFixed(
-        2
-      )})`
+        2,
+      )})`,
     );
 
     return bestRank;
@@ -217,11 +218,11 @@ export class StrategicBotDecisionService implements BotDecisionService {
 
   shouldParticipateInTossIn(
     discardedRanks: [Rank, ...Rank[]],
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): boolean {
     this.initializeIfNeeded(context);
     const ranksToCheck: Rank[] = discardedRanks.filter(
-      (rank) => getCardValue(rank) >= 0 // never toss in Joker
+      (rank) => getCardValue(rank) >= 0, // never toss in Joker
     );
 
     // Simple: always toss in if we have matching cards
@@ -229,39 +230,21 @@ export class StrategicBotDecisionService implements BotDecisionService {
     return context.botPlayer.cards.some(
       (card, index) =>
         context.botPlayer.knownCardPositions.includes(index) &&
-        ranksToCheck.includes(card.rank)
+        ranksToCheck.includes(card.rank),
     );
   }
 
+  /**
+   * Vinto is decided by the shared rule, so both bot versions behave identically here.
+   *
+   * The previous implementation compared the bot's score against every opponent's score
+   * computed from `p.cards` — that is, from their actual hidden hands. Besides never
+   * firing (it required a 5-point lead over the average *and* 2 over the best, which
+   * symmetric self-play never produces), it read information a player cannot see.
+   */
   shouldCallVinto(context: BotDecisionContext): boolean {
     this.initializeIfNeeded(context);
-
-    const botScore = this.calculateScore(context.botPlayer.cards);
-    const opponentScores = context.allPlayers
-      .filter((p) => p.id !== this.botId)
-      .map((p) => this.calculateScore(p.cards));
-
-    const minOpponentScore = Math.min(...opponentScores);
-    const avgOpponentScore =
-      opponentScores.reduce((a, b) => a + b, 0) / opponentScores.length;
-
-    // Call Vinto if:
-    // 1. We have a significant lead over average (5+ points)
-    // 2. We're better than the best opponent (2+ points)
-    // 3. Not too early in the game
-    const hasLead = botScore < avgOpponentScore - 5;
-    const beatsBest = botScore < minOpponentScore - 2;
-    const notTooEarly =
-      context.gameState.turnNumber >= context.allPlayers.length * 3;
-
-    console.log(
-      `[Strategic Bot] Vinto check - Bot: ${botScore}, Min opp: ${minOpponentScore}, ` +
-        `Avg opp: ${avgOpponentScore.toFixed(1)} - Call: ${
-          hasLead && beatsBest && notTooEarly
-        }`
-    );
-
-    return hasLead && beatsBest && notTooEarly;
+    return shouldCallVintoByScore(context);
   }
 
   // ========== Evaluation Functions ==========
@@ -306,7 +289,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
    */
   private evaluateBestSwap(
     drawnCard: Card,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number {
     let bestValue = -Infinity;
 
@@ -329,7 +312,8 @@ export class StrategicBotDecisionService implements BotDecisionService {
     // Check toss-in potential
     const matchingCards = context.botPlayer.cards.filter(
       (c, i) =>
-        context.botPlayer.knownCardPositions.includes(i) && c.rank === card.rank
+        context.botPlayer.knownCardPositions.includes(i) &&
+        c.rank === card.rank,
     );
 
     if (matchingCards.length > 0) {
@@ -350,7 +334,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
   private evaluateSwapAtPosition(
     drawnCard: Card,
     position: number,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number {
     const oldCard = context.botPlayer.cards[position];
     const isKnown = context.botPlayer.knownCardPositions.includes(position);
@@ -404,7 +388,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
    */
   private evaluateTossInCascade(
     discardedRank: Rank,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number {
     let value = 0;
 
@@ -412,7 +396,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
     const matchingCards = context.botPlayer.cards.filter(
       (c, i) =>
         context.botPlayer.knownCardPositions.includes(i) &&
-        c.rank === discardedRank
+        c.rank === discardedRank,
     );
 
     if (matchingCards.length > 0) {
@@ -434,7 +418,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
   private evaluateActionCardValue(
     action: CardAction,
     card: Card,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number {
     switch (action) {
       case 'peek-own':
@@ -601,7 +585,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
       const value = this.evaluateActionCardValue(
         action,
         { id: 'temp', rank: 'K', value: 0, actionText: '', played: false },
-        context
+        context,
       );
       bestActionValue = Math.max(bestActionValue, value);
     }
@@ -617,7 +601,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
    */
   private evaluateKingDeclaration(
     rank: Rank,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): number {
     // Evaluate declaring this rank
     let value = 0;
@@ -638,7 +622,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
           actionText: '',
           played: false,
         },
-        context
+        context,
       );
       value += actionValue;
     }
@@ -654,7 +638,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
    */
   private selectBestActionTargets(
     action: CardAction,
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): BotActionDecision {
     switch (action) {
       case 'peek-own':
@@ -695,7 +679,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
     // Prefer middle positions (heuristic: players tend to peek edge cards first)
     const middlePreference = unknownPositions.map((pos) => {
       const distanceFromMiddle = Math.abs(
-        pos - context.botPlayer.cards.length / 2
+        pos - context.botPlayer.cards.length / 2,
       );
       return { pos, score: -distanceFromMiddle };
     });
@@ -711,7 +695,7 @@ export class StrategicBotDecisionService implements BotDecisionService {
    * Select peek-opponent target (9, 10)
    */
   private selectPeekOpponentTargets(
-    context: BotDecisionContext
+    context: BotDecisionContext,
   ): BotActionDecision {
     // Peek opponent's most valuable unknown card
     let bestTarget = { playerId: '', position: 0 };
