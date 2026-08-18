@@ -42,10 +42,20 @@ the engine SHALL be derived from state (e.g. turn number, player id, rank, index
 use a deterministic `timestamp` equal to the zero-based index of the accepted action that
 produced them, not wall-clock time.
 
+History entries are excluded from the canonical state hash (see the `game-recording`
+capability), so this requirement exists for stable, diff-friendly exported recordings and
+readable debugging — not for cross-implementation parity. A second implementation is not
+required to reproduce history entries byte-for-byte.
+
 #### Scenario: History entry sequence numbers
 
 - **WHEN** the client applies the 12th accepted action of a game
 - **THEN** any history entry created for it has `timestamp === 11`
+
+#### Scenario: Exported recordings are stable across runs
+
+- **WHEN** the same seeded game is played twice and exported
+- **THEN** the two recordings are byte-identical, with no wall-clock values anywhere in `initialState` or `finalState`
 
 ### Requirement: Games always have exactly four players
 

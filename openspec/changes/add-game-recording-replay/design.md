@@ -54,17 +54,32 @@ t ^= t + imul(t ^ (t >>> 7), t | 61); out = (t ^ (t >>> 14)) >>> 0` → returns
   state: `tossin_queued_<turnNumber>_<playerId>_<rank>_<index>`.
 - `GameActionHistory.timestamp` becomes a deterministic sequence number (the index of the
   accepted action that produced it). If wall-clock display time is ever wanted it lives
-  in the recording metadata, not in `GameState`.
+  in the recording metadata, not in `GameState`. This keeps exported recordings
+  byte-stable across runs; it is **not** a parity requirement, since history is excluded
+  from the canonical hash (D4).
 - Rule (enforced by a lint rule + a unit test that greps the engine sources): the reducer
   path never references `Date`, `Math.random`, `crypto`, `uuid`, `performance.now`.
+- Note: `turnActions`/`roundActions` are written by `GameClient.addActionToHistory`, not
+  by the reducer, so the purity guard over `packages/engine/src` does not cover them.
 
 ### D4. Canonical JSON and state hash
 
 - Canonical form of a `GameState`: JSON with object keys sorted lexicographically at
   every level, arrays in order, `Pile` serialised as an array top-first (existing
   `toJSON`), `undefined` properties omitted, `null` kept, no whitespace, integers only
-  (assert: no non-integer numbers may appear in `GameState`; `PlayerState.botMemory` is
-  excluded because it is bot-internal and contains floats).
+  (assert: no non-integer numbers may appear in `GameState`).
+- **Excluded from the canonical form** (exactly three fields, everything else is hashed):
+  - `PlayerState.botMemory` — bot-internal, contains floats, and is in fact never written
+    into `GameState` by any engine or client code today.
+  - `GameState.turnActions` / `GameState.roundActions` — client-authored history. Each
+    entry carries a human-readable `description` string produced by the UI layer, so
+    hashing them would make **UI copy part of the cross-language contract**: every Kotlin
+    client would have to reproduce English action descriptions character-for-character,
+    and any wording change would invalidate the entire fixture corpus. History is
+    presentation, not game logic, and is excluded.
+  - `PlayerState.opponentKnowledge` is deliberately **not** excluded: it is written by
+    engine handlers (`declare-king-action`, `execute-queen-swap`, `participate-in-toss`,
+    `select-action-target`) deterministically from actions, and is real game state.
 - Hash = lowercase hex SHA-256 of the UTF-8 canonical string.
 - Node/tools use `node:crypto`; the browser export computes hashes with `crypto.subtle`
   (async, only at export time) or leaves them empty — hashes are optional in the file and
@@ -80,7 +95,7 @@ t ^= t + imul(t ^ (t >>> 7), t | 61); out = (t ^ (t >>> 14)) >>> 0` → returns
     "producer": "vinto-ts@<git sha or version>", // which implementation recorded it
     "label": "optional human note",
   },
-  "settings": { "botCount": 3, "humanPlayerName": "You", "difficulty": "hard", "seed": 123456789 },  // always 4 players
+  "settings": { "botCount": 3, "humanPlayerName": "You", "difficulty": "hard", "seed": 123456789 }, // always 4 players
   "initialState": {
     /* full GameState after dealing, phase 'setup' */
   },

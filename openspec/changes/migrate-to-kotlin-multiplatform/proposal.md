@@ -43,7 +43,7 @@ by replaying recorded TypeScript games and comparing state hashes after every ac
   parity).
 - **Online multiplayer with humans** (every game is exactly 4 players): 1 human vs 3 bots
   offline; 2–4 humans in a 4-seat room with bots filling empty seats; all-human tables of 4. A server-authoritative Ktor service runs the
-  *same* shared engine and bots on the JVM, validates every action, records the game, and
+  _same_ shared engine and bots on the JVM, validates every action, records the game, and
   sends each seat only what it may see (redacted views). Guest identity only.
 - **Web**: stays on the TypeScript engine until the Kotlin engine passes the parity gate;
   a mandatory follow-up change retires the TypeScript engine so exactly one engine remains.
@@ -53,7 +53,12 @@ by replaying recorded TypeScript games and comparing state hashes after every ac
 - Affected specs: `kmp-shared-engine`, `kmp-bot`, `kmp-game-client`, `mobile-app`,
   `cross-implementation-parity`, `online-multiplayer` (all new)
 - Depends on: change `add-game-recording-replay` (recording format v1, fixtures, PRNG
-  test vectors, `docs/game-engine/RECORDING.md`) — MUST be archived first
+  test vectors, `docs/game-engine/RECORDING.md`) — MUST be archived before **phase 2 and
+  everything after it**. The one exception is **phase 1** (the bot tournament and the
+  removal of `botVersion`): it needs only that change's determinism work (§1) and must
+  land **before** its fixture corpus is committed (§3.5), because removing `botVersion`
+  from `GameState` changes every canonical hash. This is the single point where the two
+  changes interleave; see the prerequisite note in `tasks.md`.
 - Affected code: new `kmp/` tree (incl. `server`); `fixtures/recordings/` consumed by
   both stacks; `.github/workflows` gains Kotlin jobs; `docs/` gains Kotlin developer docs;
   `tools/tournament.ts` added and the losing TypeScript bot deleted. Otherwise no removal

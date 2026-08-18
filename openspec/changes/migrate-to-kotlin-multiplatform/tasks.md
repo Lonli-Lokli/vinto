@@ -1,14 +1,30 @@
 # Tasks: migrate-to-kotlin-multiplatform
 
-Prerequisite: change `add-game-recording-replay` is implemented and archived
-(recording format v1, `fixtures/recordings/` corpus, PRNG test vectors, `RECORDING.md`).
+Prerequisites — the dependency on `add-game-recording-replay` is **not uniform across
+phases**:
+
+- **Phase 1 (one bot engine)** needs only the _determinism_ half of that change
+  (`add-game-recording-replay` §1: seeded PRNG, `rngState`, seeded `initializeGame`),
+  because the tournament requires reproducible seeded self-play. It must then land
+  **before** that change commits its fixture corpus (its task 3.5): phase 1 removes
+  `botVersion` from `GameState`, which changes every canonical hash. Running phase 1 after
+  the corpus is committed would force regenerating all ≥ 50 fixtures.
+- **Phases 2 onward** need `add-game-recording-replay` fully implemented and **archived**
+  (recording format v1, `fixtures/recordings/` corpus, PRNG test vectors at
+  `fixtures/prng/vectors.json`, `RECORDING.md`) — the Kotlin port has no fixed target
+  before then.
 
 ## 1. One bot engine (TypeScript, before any port)
 
-- [ ] 1.1 `tools/tournament.ts`: seeded self-play, v1-vs-v2 mixed tables, every difficulty, 4-player tables, ≥ 500 games per configuration; report win rate, mean final score, coalition win rate, decision latency (p50/p95)
-- [ ] 1.2 Run the tournament, commit the report under `docs/bot/TOURNAMENT-<date>.md`, decide the winner
-- [ ] 1.3 Delete the losing bot and `botVersion` (settings, `GameState`, UI selector, factory); recording readers ignore a legacy `botVersion` field; regenerate fixtures only if the field removal changes canonical hashes (it does — regenerate with justification "botVersion removed")
-- [ ] 1.4 Web + tests green after removal
+Runs after `add-game-recording-replay` §1 (determinism) and before its §3.5 (corpus commit).
+The headless seeded self-play runner built here is the same harness
+`tools/generate-recordings.ts` needs — build it once and share it.
+
+- [ ] 1.1 `tools/headless-selfplay.ts`: seeded 4-player bot-vs-bot runner reusing `BotAIAdapter` with `skipDelays`; shared by the tournament and the fixture generator
+- [ ] 1.2 `tools/tournament.ts`: seeded self-play, v1-vs-v2 mixed tables, every difficulty, 4-player tables, ≥ 500 games per configuration; report win rate, mean final score, coalition win rate, decision latency (p50/p95)
+- [ ] 1.3 Run the tournament, commit the report under `docs/bot/TOURNAMENT-<date>.md`, decide the winner. Note the starting asymmetry for the record: v1 (MCTS) is the default everywhere and has 9 test files; v2 (`strategic-bot-decision.ts`, 891 lines) has none
+- [ ] 1.4 Delete the losing bot and `botVersion` (`domain-types.ts`, `game-state-types.ts`, `action-types.ts` `UpdateBotVersionAction`, `cases/update-bot-version.ts`, `game-actions.ts`, `game-engine.ts`, `bot-factory.ts`, `botAIAdapter.ts`, `initializeGame.ts`, `game-header.tsx`, `mobile-settings.tsx`); recording readers ignore a legacy `botVersion` field. No fixture regeneration is required, because no corpus has been committed yet
+- [ ] 1.5 Web + tests green after removal; `grep -rn "botVersion\|BotVersion" packages apps` returns no non-test hits
 
 ## 2. Workspace, tooling, CI skeleton
 

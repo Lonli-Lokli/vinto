@@ -60,8 +60,10 @@ kmp/
 - Serialisation config: `encodeDefaults = true`, `explicitNulls = false` (TS omits
   `undefined`), `ignoreUnknownKeys = false` in parity tests (strict) / `true` in the app.
 - Canonical JSON for hashing is produced by a dedicated writer (sorted keys, no
-  whitespace, `botMemory` excluded) — not by kotlinx's default encoder — to match
-  `RECORDING.md` byte for byte.
+  whitespace, excluding `botMemory`, `turnActions` and `roundActions`) — not by kotlinx's
+  default encoder — to match `RECORDING.md` byte for byte. Because history is outside the
+  hash, the Kotlin client is free to word its action descriptions however it likes;
+  `opponentKnowledge` **is** hashed and must match exactly.
 - Immutability via `copy()`; deep-copy semantics of `fast-copy` become explicit `copy`
   of nested lists (all state types are immutable, so structural sharing is safe).
 

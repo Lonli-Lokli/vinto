@@ -26,19 +26,31 @@ descriptive error.
 
 The system SHALL provide `canonicalizeGameState(state): string` (keys sorted
 lexicographically at every level, arrays in order, `Pile` as array top-first, `undefined`
-omitted, `null` kept, no whitespace, `PlayerState.botMemory` excluded) and
-`hashGameState(state): string` (lowercase hex SHA-256 of the UTF-8 canonical string).
-`GameState` SHALL contain integers only where numbers appear.
+omitted, `null` kept, no whitespace) and `hashGameState(state): string` (lowercase hex
+SHA-256 of the UTF-8 canonical string). `GameState` SHALL contain integers only where
+numbers appear.
+
+The canonical form SHALL exclude exactly three fields, which are presentation or
+bot-internal rather than game logic: `PlayerState.botMemory` (bot-internal, contains
+floats, never written by the engine), `GameState.turnActions` and `GameState.roundActions`
+(client-authored history whose `description` strings are user-facing prose). Every other
+field of `GameState` SHALL be included. The exclusion list is part of the format contract
+and SHALL be documented in `docs/game-engine/RECORDING.md`.
 
 #### Scenario: Canonical form is order-independent
 
 - **WHEN** two `GameState` objects differ only in property insertion order
 - **THEN** their canonical strings and hashes are identical
 
-#### Scenario: Any state difference changes the hash
+#### Scenario: Any game-logic difference changes the hash
 
-- **WHEN** a single card id, `rngState`, `knownCardPositions` entry or history entry differs
+- **WHEN** a single card id, `rngState`, `knownCardPositions` or `opponentKnowledge` entry differs
 - **THEN** the hashes differ
+
+#### Scenario: History and bot memory do not affect the hash
+
+- **WHEN** two `GameState` objects are equal except for their `turnActions`/`roundActions` entries (including `description` text and `timestamp`) or `PlayerState.botMemory`
+- **THEN** their canonical strings and hashes are identical, so a second implementation is free to word action descriptions differently without breaking parity
 
 ### Requirement: The client records every accepted action
 

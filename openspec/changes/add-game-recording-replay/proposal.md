@@ -53,3 +53,14 @@ Today that is impossible:
 - **BREAKING (internal)**: `shuffleCards(deck)` becomes `shuffleCards(deck, prng)`;
   `createInitialGameState` gains `rngState`. Saved games from before this change cannot be
   replayed (they were never reproducible anyway).
+- **Ordering constraint with `migrate-to-kotlin-multiplatform`**: that change's phase 1
+  (bot tournament → delete the losing bot → remove `botVersion`) removes a field from
+  `GameState`, which changes every canonical hash. The fixture corpus (task 3.5) is
+  therefore committed **after** that phase lands, not before; everything else in this
+  change is independent of it. This is the single point where the two changes interleave —
+  the rest of `migrate-to-kotlin-multiplatform` still requires this change to be archived
+  first.
+- **Hash scope decision**: the canonical hash covers game logic only. `turnActions` /
+  `roundActions` (client-authored history containing user-facing `description` prose) and
+  `PlayerState.botMemory` are excluded, so UI copy never becomes part of the
+  cross-implementation contract. See `game-recording` spec and design D4.
