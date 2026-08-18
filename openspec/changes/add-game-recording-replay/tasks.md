@@ -23,13 +23,14 @@
 
 ## 3. Replay
 
-- [ ] 3.1 `replayRecording()` in `@vinto/engine` (`replay.ts`) with divergence reporting; unit tests for faithful replay, hash mismatch, rejected action, unknown version
+- [x] 3.1 `replayRecording()` in `@vinto/engine` (`replay.ts`) with divergence reporting; unit tests for faithful replay, hash mismatch, rejected action, unknown version. Comparison is by canonical hash, not deep equality: replay reconstructs engine state only, and `turnActions`/`roundActions` are client-written, so a replayed state legitimately has no history
 - [ ] 3.2 `tools/replay-recording.ts` CLI (file or directory, PASS/FAIL lines, divergence report file, non-zero exit)
 - [ ] 3.3 `tools/generate-recordings.ts` (seeded headless self-play via `BotAIAdapter` with `skipDelays`, always 4 players, hashes filled in)
+  - **3.2 and 3.3 are blocked on a TypeScript runner.** Nothing in the repo can execute a `tools/*.ts` script that imports `@vinto/*`: the packages' `exports` point at `.ts` source, and `ts-node` does not compile sources reached through `node_modules` workspace symlinks. Neither `tsx` nor `vite-node` is installed, and `npx tsc` is denied by project policy. This needs a devDependency decision (`vite-node` is the closest fit — same family as the vitest already in use) before either CLI can be written. The replay logic itself (3.1) is done and runner-independent, so both tools become thin wrappers once a runner exists
 - [ ] 3.4 Export scenario-test action sequences as `fixtures/recordings/scenario-*.json`
 - [ ] 3.5 Commit initial corpus: ≥ 50 self-play games, all scenarios, at least one game with a mid-game reshuffle and one with a coalition final round
   - **Prerequisite — do not commit the corpus before the state model is frozen.** Phase 1 of change `migrate-to-kotlin-multiplatform` (bot tournament → delete the losing bot → remove `botVersion`) mutates `GameState` (`packages/shapes/src/lib/game-state-types.ts:48`), so every canonical hash changes when it lands. Committing ≥ 50 fixtures first guarantees regenerating all of them and sets a bad precedent for fixture governance in the very first corpus commit. Tasks 3.1–3.4 and all of phase 2 may proceed in parallel with that work; only this commit blocks on it.
-- [ ] 3.6 Vitest parity suite in `packages/engine` replaying every fixture; add to `nx test engine`
+- [x] 3.6 Vitest parity suite in `packages/engine` replaying every fixture; add to `nx test engine`. Verified in both directions: it replays a real generated fixture green, and fails with a readable divergence report (action index, reason, both hashes) when a hash is corrupted. While the corpus is absent it skips with a stated reason rather than passing vacuously, and once the directory exists it asserts the corpus is non-empty and that every recorded action carries a state hash
 
 ## 4. UI
 
