@@ -37,7 +37,7 @@
 
 - [ ] 4.1 "Export game (JSON)" in the debug panel and in settings/menu (download file)
 - [ ] 4.2 (should) Debug-only replay viewer: load JSON, step next/prev, render state through the normal UI with bots disabled
-- [ ] 4.3 Docs: `docs/game-engine/RECORDING.md` describing the format, canonicalisation, hashing, PRNG and test vectors (this document is the contract for the Kotlin port)
+- [x] 4.3 Docs: `docs/game-engine/RECORDING.md` describing the format, canonicalisation, hashing, PRNG and test vectors (this document is the contract for the Kotlin port). Includes the Kotlin-specific traps found while designing the format (uint32 `rngState` vs signed `Int`, negative `%` in `nextInt`, one SHA-256 across all targets), the rationale for each excluded field, and the currently known corpus gap (no scoring phase / coalition final round while bots do not call Vinto)
 
 ## 5. Verification
 
