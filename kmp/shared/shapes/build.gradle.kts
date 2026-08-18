@@ -8,11 +8,20 @@ plugins {
  * behind a host check. On Windows or Linux the build simply has fewer targets; on macOS
  * the iOS targets appear with no further configuration.
  *
- * Consequence to be aware of: the set of targets differs per machine, so a `commonMain`
- * change that breaks iOS will only surface on a Mac (or on the macOS CI runner). Run
- * `./gradlew build` on macOS before trusting a shared-code change.
+ * macOS is now the primary development machine, so the reduced target set is the exception
+ * rather than the norm — and a `commonMain` change that breaks iOS would be invisible on a
+ * host that never compiles it. The build therefore says so out loud instead of silently
+ * building less than you think. Do not make these targets unconditional: on a non-Mac host
+ * that is a hard toolchain failure, not a warning.
  */
 val isMacOs = System.getProperty("os.name").startsWith("Mac", ignoreCase = true)
+
+if (!isMacOs) {
+    logger.warn(
+        "shared:shapes — building WITHOUT the iOS targets on ${System.getProperty("os.name")}. " +
+            "Apple targets require macOS; shared-code breakage on iOS will not surface here.",
+    )
+}
 
 /**
  * Embeds `fixtures/prng/vectors.json` into a generated Kotlin constant for the tests.

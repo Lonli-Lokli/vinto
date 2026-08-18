@@ -77,3 +77,8 @@ kmp/.gradle/
 kmp/.kotlin/
 kmp/kotlin-js-store/
 kmp/local.properties
+
+# Xcode per-user state; the shared scheme in xcshareddata/ is committed on purpose.
+xcuserdata/
+*.xcuserstate
+DerivedData/

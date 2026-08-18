@@ -42,42 +42,48 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   and why)
 - `kmp/gradle.properties` added: the Compose/Wasm production compile ran out of memory on
   the Kotlin daemon's default heap (§7)
+- **`composeApp` now targets Android, iOS and web from one `commonMain`**, with the `iosApp`
+  Xcode project embedding the Compose framework. Verified by _running_, not just building:
+  the same UI renders on the iOS simulator and on an Android emulator (§5 steps 3–4)
 
 **Next**
 
-1. `composeApp` Android + iOS targets and the `iosApp` Xcode project (§5 steps 3–4).
-   **Blocked on this machine**: no Android SDK installed
-2. Remaining gate items: MCTS inside the Durable Object CPU budget; two clients through one
+1. Remaining gate items: MCTS inside the Durable Object CPU budget; two clients through one
    Durable Object
-3. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
-   behind the parity gate
+2. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
+   behind the parity gate. Note `shapes` still has no `androidTarget`/`wasmJs`, so
+   `composeApp` cannot depend on it yet — add those when the port starts
 
 ---
 
 ## 2. Prerequisites
 
-| Tool        | Version used  | Notes                                                                          |
-| ----------- | ------------- | ------------------------------------------------------------------------------ |
-| JDK         | 17 (Temurin)  | Gradle toolchain; 17+ is fine                                                  |
-| Gradle      | 8.14          | Via the committed wrapper — do not install system Gradle                       |
-| Node        | 24            | For the TypeScript side and `vite-node` tools                                  |
-| Xcode       | latest stable | **macOS only**; needed for the iOS targets                                     |
-| wrangler    | 4.x           | `npx wrangler` — no global install needed                                      |
-| Android SDK | API 35        | Not yet needed; required once `composeApp` gains `androidTarget()` (§5 step 3) |
+| Tool        | Version used  | Notes                                                                                                      |
+| ----------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
+| JDK         | 17 (Temurin)  | Gradle toolchain; 17+ is fine                                                                              |
+| Gradle      | 8.14          | Via the committed wrapper — do not install system Gradle                                                   |
+| Node        | 24            | For the TypeScript side and `vite-node` tools                                                              |
+| Xcode       | latest stable | **macOS only**; needed for the iOS targets                                                                 |
+| wrangler    | 4.x           | `npx wrangler` — no global install needed                                                                  |
+| Android SDK | platform 36   | For `composeApp`'s Android target. Point Gradle at it via `sdk.dir` in `kmp/local.properties` (gitignored) |
 
 ```bash
 git clone <repo> && cd vinto
 npm ci                 # TypeScript side
 cd kmp && ./gradlew --version   # bootstraps Gradle 8.14 on first run
+
+# Android only: tell Gradle where the SDK is (local.properties is gitignored).
+echo "sdk.dir=$ANDROID_HOME" > local.properties
 ```
 
 ## 3. Module map (`kmp/`)
 
-| Module          | Targets                                         | Purpose                                                                           |
-| --------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- |
-| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS) | Types + `Prng`. The port starts here. Its tests run on every target above.        |
-| `worker`        | js                                              | Cloudflare Worker / Durable Object bundle. Currently the platform-gate payload.   |
-| `composeApp`    | wasmJs                                          | Compose UI. Currently the platform-gate payload; Android/iOS targets to be added. |
+| Module          | Targets                                                 | Purpose                                                                                                   |
+| --------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS)         | Types + `Prng`. The port starts here. Its tests run on every target above.                                |
+| `worker`        | js                                                      | Cloudflare Worker / Durable Object bundle. Currently the platform-gate payload.                           |
+| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients. Still the gate payload UI; real screens are phase 7. |
+| `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                |
 
 The full intended layout is in design D1. Modules are added as they are ported rather than
 scaffolded empty.
@@ -90,6 +96,13 @@ scaffolded empty.
 ./gradlew :shared:shapes:jvmTest              # just the JVM leg, when iterating
 ./gradlew :worker:jsNodeProductionRun         # run the Kotlin/JS gate payload
 ./gradlew :composeApp:wasmJsBrowserDistribution   # build the Compose web bundle
+./gradlew :composeApp:assembleDebug           # Android APK
+./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64   # just the iOS framework
+
+# --- iOS app (run from kmp/iosApp/) ---
+# The Xcode build invokes Gradle itself, via its "Build Kotlin framework" phase.
+xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ./gradlew build                               # everything available on this host
 
 # --- TypeScript (run from repo root) ---
@@ -137,17 +150,45 @@ Instead, the Gradle task `:shared:shapes:generatePrngVectorsSource` reads
 Resource bundling was rejected because Kotlin/Native test binaries have no straightforward
 resource access without an extra plugin, and it would have bought nothing over this.
 
-### Step 3 — `composeApp` on Android and iOS ⬜ not started
+### Step 3 — `composeApp` on Android and iOS ✅ done
 
-Add `androidTarget()` and the iOS targets to `composeApp`, plus the `iosApp` Xcode project
-(design D1). **Blocked on the current machine**: no Android SDK is installed (`ANDROID_HOME`
-unset, no `~/Library/Android/sdk`). The iOS half could be done first if you want to split it.
+`composeApp` now has `androidTarget()`, `wasmJs` and (on macOS) both iOS targets, with the
+UI in `commonMain` and one small entry point per platform:
 
-### Step 4 — revisit the host check ⬜ not started
+| Platform | Entry point                                  |
+| -------- | -------------------------------------------- |
+| Android  | `androidMain/.../MainActivity.kt` + manifest |
+| iOS      | `iosMain/.../MainViewController.kt`          |
+| Web      | `wasmJsMain/.../Main.kt`                     |
 
-Now that macOS is the primary dev machine, consider making the iOS targets unconditional and
-guarding on non-Mac hosts instead, so shared-code breakage surfaces immediately rather than
-only on a Mac.
+`kmp/iosApp` is a plain Xcode project whose "Build Kotlin framework" phase shells out to
+`./gradlew :composeApp:embedAndSignAppleFrameworkForXcode`, so building in Xcode builds the
+Kotlin side too. `ContentView.swift` wraps `MainViewController()` from the exported
+`ComposeApp` framework — renaming either side breaks the other, and nothing checks that for
+you.
+
+Verified by **running**, not just compiling: the same `App()` renders on the iOS simulator
+("Running on: iOS 26.5") and on an Android emulator ("Running on: Android 34"). The
+`platformName()` `expect`/`actual` exists precisely to make that visible — it is the cheapest
+proof the multiplatform wiring is real before storage and clocks depend on it.
+
+Two things that will bite anyone repeating this:
+
+- Compose Multiplatform's Android artifacts are AndroidX, so `android.useAndroidX=true` is
+  required in `gradle.properties`; without it the build fails at `checkDebugAarMetadata`.
+- A headless emulator (`-no-window`) returns an all-black `screencap` under the default GPU
+  mode. Use `-gpu swiftshader_indirect` if you need a screenshot; the app itself was fine,
+  only the framebuffer was.
+
+### Step 4 — revisit the host check ✅ done
+
+Left conditional, but no longer silent. Making the Apple targets unconditional would just
+turn a non-Mac build into a hard toolchain failure, which helps nobody. Instead both
+`shared/shapes` and `composeApp` now `logger.warn` when they skip the iOS targets, so a host
+that cannot compile them says so rather than quietly building less than you asked for.
+
+The underlying hazard is unchanged and worth restating: a `commonMain` change that breaks
+iOS cannot fail on a non-Mac host. Build on macOS before trusting a shared-code change.
 
 ## 6. Decisions already made — do not silently reopen
 
@@ -200,6 +241,12 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   silently depend on how much RAM the developer happens to have. If it still OOMs, raise the
   Kotlin daemon figure first, and run `./gradlew --stop` after changing either value —
   a running daemon keeps its old heap.
+- **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
+  Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
+  It lives in `kmp/gradle.properties`.
+- **A headless emulator (`-no-window`) screenshots all black** under the default GPU mode —
+  the app is running fine, the framebuffer just is not. Boot with `-gpu swiftshader_indirect`
+  when you need `adb exec-out screencap` to show anything.
 - **Backticked test names with spaces are JVM-only.** Kotlin rejects them for JS and Native,
   so anything in `commonTest` must use camelCase names. This is why `PrngVectorsTest` reads
   `reproducesEveryPublishedShuffle` and not `` `reproduces every published shuffle` ``.
