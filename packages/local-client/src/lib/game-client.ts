@@ -12,10 +12,21 @@ import {
   type PlayerState,
   type Card,
   type Rank,
+  type GameRecordingSettings,
   logger,
   rehydrateGameState,
 } from '@vinto/shapes';
 import { GameEngine } from '@vinto/engine';
+import { GameRecorder } from './game-recorder';
+import { recordingSettingsFromState } from './initializeGame';
+import { RecordingAutoSave } from './recording-auto-save';
+
+export interface GameClientOptions {
+  /** Defaults to settings derived from the initial state. */
+  recordingSettings?: GameRecordingSettings;
+  /** Omit to disable persistence (headless tools, tests). */
+  autoSave?: RecordingAutoSave;
+}
 
 /**
  * GameClient - Observable wrapper around GameEngine
@@ -93,10 +104,30 @@ export class GameClient {
    */
   private onStateError?: (reason: string) => void;
 
-  constructor(initialState: GameState) {
+  /** Records every accepted action so the game can be replayed or exported. */
+  private _recorder: GameRecorder;
+
+  private _autoSave?: RecordingAutoSave;
+
+  constructor(initialState: GameState, options: GameClientOptions = {}) {
     this._state = initialState;
     this._visualState = copy(initialState); // Visual state starts synchronized
+    this._recorder = new GameRecorder(
+      options.recordingSettings ?? recordingSettingsFromState(initialState),
+      initialState,
+    );
+    this._autoSave = options.autoSave;
+    this._autoSave?.clear();
     makeObservable(this);
+  }
+
+  /** The current game as a replayable `GameRecording` JSON document. */
+  exportRecording(): string {
+    return this._recorder.toJSON(this._state);
+  }
+
+  get recordedActionCount(): number {
+    return this._recorder.actionCount;
   }
 
   /**
@@ -130,6 +161,11 @@ export class GameClient {
 
       // Update observable state
       this._state = newState;
+
+      // Record only accepted actions: a rejected action never mutated state, so
+      // replaying it would diverge.
+      this._recorder.record(action, newState);
+      this._autoSave?.schedule(() => this._recorder.toJSON(newState));
 
       // Trigger side effects
       if (this.onStateChange) {

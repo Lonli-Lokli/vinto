@@ -3,6 +3,7 @@
 
 import {
   Card,
+  GameRecordingSettings,
   GameState,
   Pile,
   Prng,
@@ -28,6 +29,32 @@ export interface GameSettings {
    * the same game.
    */
   seed?: number;
+}
+
+/** Prefix of the deterministic `gameId`; the remainder is the seed. */
+const GAME_ID_PREFIX = 'vinto-';
+
+/**
+ * Reconstructs the settings a recording needs from a state. `gameId` is defined as
+ * `vinto-<seed>` (see `initializeGame`), so the seed round-trips through the state
+ * without needing a separate field. The seed is informational — a recording embeds the
+ * full `initialState`, so replay never depends on re-running the deal.
+ */
+export function recordingSettingsFromState(
+  state: GameState,
+): GameRecordingSettings {
+  const human = state.players.find((player) => player.isHuman);
+  const seed = Number(state.gameId.slice(GAME_ID_PREFIX.length));
+
+  return {
+    humanPlayerName: human?.nickname ?? 'You',
+    difficulty: state.difficulty,
+    botVersion: state.botVersion,
+    seed:
+      state.gameId.startsWith(GAME_ID_PREFIX) && Number.isInteger(seed)
+        ? seed
+        : 0,
+  };
 }
 
 /**

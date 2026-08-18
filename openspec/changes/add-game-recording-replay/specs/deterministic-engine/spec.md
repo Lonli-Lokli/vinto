@@ -55,7 +55,8 @@ required to reproduce history entries byte-for-byte.
 #### Scenario: Exported recordings are stable across runs
 
 - **WHEN** the same seeded game is played twice and exported
-- **THEN** the two recordings are byte-identical, with no wall-clock values anywhere in `initialState` or `finalState`
+- **THEN** the `initialState`, `actions` and `finalState` of the two recordings are identical, and contain no wall-clock or uuid values
+- **AND** only `meta` differs, which is informational: `meta.recordedAt` is a real timestamp and is excluded from every hash
 
 ### Requirement: Games always have exactly four players
 

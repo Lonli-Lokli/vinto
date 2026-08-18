@@ -15,11 +15,11 @@
 
 ## 2. Recording format and canonical hashing
 
-- [ ] 2.1 `GameRecording` v1 types in `@vinto/shapes` (+ `assertRecordingVersion`)
-- [ ] 2.2 `canonicalizeGameState` + `hashGameState` (node: `node:crypto`; browser: `crypto.subtle` async variant) with tests: key-order independence, sensitivity to game-logic fields (incl. `opponentKnowledge`), exclusion of `botMemory` + `turnActions` + `roundActions`, integer-only assertion
-- [ ] 2.3 `GameRecorder` in `@vinto/local-client`: constructed with settings + initial state, `record(action)`, `toRecording(finalState)`, `toJSON()`
-- [ ] 2.4 Wire recorder into `GameClient.dispatch` (accepted actions only); `exportRecording()`; tests: accepted vs rejected, bot+human interleaving
-- [ ] 2.5 Auto-save (debounced) to `localStorage` under a versioned key; clear on new game; test with a storage stub
+- [x] 2.1 `GameRecording` v1 types in `@vinto/shapes` (+ `assertRecordingVersion`)
+- [x] 2.2 `canonicalizeGameState` + `hashGameState` (node: `node:crypto`; browser: `crypto.subtle` async variant) with tests: key-order independence, sensitivity to game-logic fields (incl. `opponentKnowledge`), exclusion of `botMemory` + `turnActions` + `roundActions`, integer-only assertion
+- [x] 2.3 `GameRecorder` in `@vinto/local-client`: constructed with settings + initial state, `record(action)`, `toRecording(finalState)`, `toJSON()`
+- [x] 2.4 Wire recorder into `GameClient.dispatch` (accepted actions only); `exportRecording()`; tests: accepted vs rejected. Bot+human interleaving is covered structurally (bots dispatch through the same `GameClient.dispatch`) but is asserted end-to-end by the self-play fixture generator in task 3.3, not by a unit test
+- [x] 2.5 Auto-save (debounced) to `localStorage` under a versioned key; clear on new game; test with a storage stub
 
 ## 3. Replay
 

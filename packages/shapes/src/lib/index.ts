@@ -3,5 +3,7 @@ export * from './action-types';
 export * from './game-state-types';
 export * from './constants';
 export * from './logger';
+export * from './canonical-json';
+export * from './game-recording-types';
 export * from './prng';
 export * from './utils';
