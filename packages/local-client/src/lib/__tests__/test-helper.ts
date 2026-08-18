@@ -90,6 +90,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     roundActions: [],
     difficulty: 'hard',
     botVersion: 'v1',
+    rngState: 0,
     roundFailedAttempts: [],
   };
 

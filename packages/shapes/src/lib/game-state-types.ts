@@ -46,6 +46,13 @@ export interface GameState {
   // Configuration
   difficulty: Difficulty;
   botVersion: BotVersion;
+
+  /**
+   * Seeded PRNG state (mulberry32, unsigned 32-bit). The engine's only source of
+   * randomness — every handler that consumes it must store the advanced state back.
+   * See `Prng` and `fixtures/prng/vectors.json`.
+   */
+  rngState: number;
 }
 
 /**
@@ -279,34 +286,14 @@ export interface SerializedOpponentKnowledge {
 }
 
 /**
- * Create initial game state
+ * Rebuilds a `GameState` parsed from JSON, restoring the `Pile` instances that
+ * `JSON.parse` flattens into plain arrays. Without this, the first `drawTop()` on a
+ * deserialised state throws. Used by state import and by recording replay.
  */
-export function createInitialGameState(
-  gameId: string,
-  players: PlayerState[],
-  difficulty: Difficulty,
-  botVersion: BotVersion,
-  deck: Card[]
-): GameState {
+export function rehydrateGameState(parsed: GameState): GameState {
   return {
-    gameId,
-    roundNumber: 1,
-    turnNumber: 0,
-    phase: 'setup',
-    subPhase: 'idle',
-    finalTurnTriggered: false,
-    players,
-    currentPlayerIndex: 0,
-    vintoCallerId: null,
-    coalitionLeaderId: null,
-    drawPile: Pile.fromCards(deck),
-    discardPile: new Pile(),
-    pendingAction: null,
-    activeTossIn: null,
-    turnActions: [],
-    roundActions: [],
-    difficulty,
-    botVersion,
-    roundFailedAttempts: [],
+    ...parsed,
+    drawPile: Pile.fromCards(parsed.drawPile),
+    discardPile: Pile.fromCards(parsed.discardPile),
   };
 }

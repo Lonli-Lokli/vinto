@@ -1,17 +1,16 @@
 import { Card, NeverError, Rank } from './domain-types';
+import { Prng } from './prng';
 
-export const shuffleCards = (deck: Card[]): Card[] => {
-  const shuffled = [...deck];
-
-  // Use crypto.getRandomValues for better entropy
-  const randomBytes = new Uint32Array(shuffled.length);
-  crypto.getRandomValues(randomBytes);
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor((randomBytes[i] / 0x100000000) * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
+/**
+ * Shuffles with an explicit generator state so the result is reproducible.
+ * Callers MUST store the returned `rngState` back into `GameState.rngState`.
+ */
+export const shuffleCards = (
+  deck: Card[],
+  rngState: number,
+): { deck: Card[]; rngState: number } => {
+  const shuffled = Prng.shuffle(deck, rngState);
+  return { deck: shuffled.items, rngState: shuffled.state };
 };
 
 export const getEnvironment = () => {

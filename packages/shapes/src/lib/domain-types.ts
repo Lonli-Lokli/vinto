@@ -108,17 +108,27 @@ export class Pile implements Iterable<Card> {
     return [...this._cards];
   }
 
-  reshuffleFrom(otherPile: Pile): void {
+  /**
+   * Reshuffles `otherPile` (minus its top card) into this pile.
+   * Returns the advanced generator state, which the caller MUST store back into
+   * `GameState.rngState` — otherwise the next reshuffle repeats this one.
+   */
+  reshuffleFrom(otherPile: Pile, rngState: number): number {
     const [otherTopCard, ...cardsToShuffle] = otherPile.toArray();
     const thisTopCard = this.drawTop();
-    this._cards = [
-      ...(thisTopCard ? [{ ...copy(thisTopCard), played: false }] : []),
-      ...shuffleCards([
+    const shuffled = shuffleCards(
+      [
         ...cardsToShuffle.map((card) => ({ ...copy(card), played: false })),
         ...this._cards.map((card) => ({ ...copy(card), played: false })),
-      ]),
+      ],
+      rngState,
+    );
+    this._cards = [
+      ...(thisTopCard ? [{ ...copy(thisTopCard), played: false }] : []),
+      ...shuffled.deck,
     ];
     otherPile.replace([otherTopCard]);
+    return shuffled.rngState;
   }
 
   replace(cards: Iterable<Card>): void {

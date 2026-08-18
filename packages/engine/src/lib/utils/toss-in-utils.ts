@@ -50,6 +50,22 @@ export function clearTossInReadyList(state: GameState): void {
   }
 }
 
+/**
+ * Deterministic id for the materialised card of a queued toss-in action.
+ *
+ * Derived entirely from state so replays reproduce it exactly. The queue only ever
+ * shrinks while a turn's queued actions are processed, so `remaining` distinguishes
+ * successive materialisations within the same turn.
+ */
+export function queuedTossInCardId(
+  turnNumber: number,
+  playerId: string,
+  rank: string,
+  remaining: number,
+): string {
+  return `tossin_queued_${turnNumber}_${playerId}_${rank}_${remaining}`;
+}
+
 export function areAllPlayersReady(state: GameState): boolean {
   if (!state.activeTossIn) {
     return false;
@@ -114,7 +130,10 @@ export function advanceTurnAfterTossIn(
   }
 
   if (state.drawPile.length === 1) {
-    state.drawPile.reshuffleFrom(state.discardPile);
+    state.rngState = state.drawPile.reshuffleFrom(
+      state.discardPile,
+      state.rngState,
+    );
   }
 
   if (state.pendingAction) {
@@ -255,7 +274,12 @@ export function clearTossInAfterActionableCard(
           // todo: consider using real card from player
           rank: nextAction.rank,
           played: false,
-          id: `[toss-in-utils]_${Date.now().toString()}`,
+          id: queuedTossInCardId(
+            newState.turnNumber,
+            nextAction.playerId,
+            nextAction.rank,
+            newState.activeTossIn.queuedActions.length,
+          ),
           value: getCardValue(nextAction.rank),
           actionText: getCardShortDescription(nextAction.rank),
         },

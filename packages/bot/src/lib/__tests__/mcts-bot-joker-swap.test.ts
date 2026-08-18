@@ -49,7 +49,13 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has a known Joker at position 0
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      {
+        id: 'j1',
+        rank: 'Joker',
+        value: -1,
+        actionText: undefined,
+        played: false,
+      },
       { id: 'c2', rank: '6', value: 6, actionText: undefined, played: false },
       { id: 'c3', rank: '6', value: 6, actionText: undefined, played: false },
       { id: 'c4', rank: '6', value: 6, actionText: undefined, played: false },
@@ -101,7 +107,13 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has Joker at position 0, other unknown cards
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      {
+        id: 'j1',
+        rank: 'Joker',
+        value: -1,
+        actionText: undefined,
+        played: false,
+      },
       { id: 'c2', rank: '10', value: 10, actionText: undefined, played: false },
       { id: 'c3', rank: '10', value: 10, actionText: undefined, played: false },
       { id: 'c4', rank: '10', value: 10, actionText: undefined, played: false },
@@ -141,7 +153,13 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has Joker at position 0
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      {
+        id: 'j1',
+        rank: 'Joker',
+        value: -1,
+        actionText: undefined,
+        played: false,
+      },
       { id: 'c2', rank: '10', value: 10, actionText: undefined, played: false },
       { id: 'c3', rank: '10', value: 10, actionText: undefined, played: false },
       { id: 'c4', rank: '10', value: 10, actionText: undefined, played: false },

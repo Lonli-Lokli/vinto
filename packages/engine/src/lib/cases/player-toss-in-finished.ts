@@ -7,7 +7,7 @@ import {
 } from '@vinto/shapes';
 import { copy } from 'fast-copy';
 import { getTargetTypeFromRank } from '../utils/action-utils';
-import { areAllPlayersReady } from '../utils/toss-in-utils';
+import { areAllPlayersReady, queuedTossInCardId } from '../utils/toss-in-utils';
 
 /**
  * PLAYER_TOSS_IN_FINISHED Handler
@@ -28,7 +28,7 @@ import { areAllPlayersReady } from '../utils/toss-in-utils';
  */
 export function handlePlayerTossInFinished(
   state: GameState,
-  action: PlayerTossInFinishedAction
+  action: PlayerTossInFinishedAction,
 ): GameState {
   const { playerId } = action.payload;
 
@@ -60,7 +60,7 @@ export function handlePlayerTossInFinished(
         {
           queuedCount: newState.activeTossIn.queuedActions.length,
           queuedCards: newState.activeTossIn.queuedActions.map((a) => a.rank),
-        }
+        },
       );
 
       // Start processing first queued action
@@ -72,7 +72,12 @@ export function handlePlayerTossInFinished(
         card: {
           rank: firstAction.rank,
           played: false,
-          id: `tossin_queued_${Date.now()}`,
+          id: queuedTossInCardId(
+            newState.turnNumber,
+            firstAction.playerId,
+            firstAction.rank,
+            newState.activeTossIn.queuedActions.length,
+          ),
           value: getCardValue(firstAction.rank),
           actionText: getCardShortDescription(firstAction.rank),
         },
@@ -89,12 +94,12 @@ export function handlePlayerTossInFinished(
           playerId: firstAction.playerId,
           rank: firstAction.rank,
           actionPhase: 'choosing-action', // Logged for clarity
-        }
+        },
       );
 
       // Set currentPlayerIndex to action player
       const actionPlayerIndex = newState.players.findIndex(
-        (p) => p.id === firstAction.playerId
+        (p) => p.id === firstAction.playerId,
       );
       if (actionPlayerIndex !== -1) {
         newState.currentPlayerIndex = actionPlayerIndex;
@@ -114,7 +119,7 @@ export function handlePlayerTossInFinished(
       newState.activeTossIn.waitingForInput = false;
     } else {
       console.log(
-        '[handlePlayerTossInFinished] All players ready, no queued actions'
+        '[handlePlayerTossInFinished] All players ready, no queued actions',
       );
 
       // Clear pendingAction - GameEngine will handle turn advancement

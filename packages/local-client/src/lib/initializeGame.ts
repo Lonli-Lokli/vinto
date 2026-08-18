@@ -5,22 +5,39 @@ import {
   Card,
   GameState,
   Pile,
+  Prng,
   getCardConfig,
   PlayerState,
   Rank,
   shuffleCards,
 } from '@vinto/shapes';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Game initialization settings
+ * Game initialization settings.
+ *
+ * Every Vinto game has exactly 4 players (1 human + 3 bots), so there is no
+ * player-count option.
  */
 export interface GameSettings {
-  playerCount: number;
-  botCount: number;
   humanPlayerName: string;
   difficulty: GameState['difficulty'];
   botVersion: GameState['botVersion'];
+  /**
+   * Seed for the deal (unsigned 32-bit). Omit to have one generated; the resulting
+   * `rngState` and `gameId` are derived from it, so the same seed always reproduces
+   * the same game.
+   */
+  seed?: number;
+}
+
+/**
+ * Picks a seed outside the engine. The engine itself never touches ambient randomness —
+ * that is what makes a game replayable from `(seed, actions[])`.
+ */
+export function generateSeed(): number {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return bytes[0] >>> 0;
 }
 
 /**
@@ -69,7 +86,7 @@ export const createDeck = (): Card[] => {
   const jokerConfig = getCardConfig('Joker');
   deck.push(
     { id: 'Joker1', rank: 'Joker', value: jokerConfig.value, played: false },
-    { id: 'Joker2', rank: 'Joker', value: jokerConfig.value, played: false }
+    { id: 'Joker2', rank: 'Joker', value: jokerConfig.value, played: false },
   );
 
   return deck;
@@ -129,7 +146,7 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
       knownCardPositions: [0, 1],
       isVintoCaller: false,
       coalitionWith: [],
-    }
+    },
   );
 
   return players;
@@ -145,23 +162,24 @@ function createPlayers(_settings: GameSettings): PlayerState[] {
  */
 function dealCards(
   deck: Card[],
-  players: PlayerState[]
-): { players: PlayerState[]; drawPile: Card[] } {
+  players: PlayerState[],
+  rngState: number,
+): { players: PlayerState[]; drawPile: Card[]; rngState: number } {
   const cardsPerPlayer = 5;
-  const shuffledDeck = shuffleCards(deck);
+  const shuffled = shuffleCards(deck, rngState);
 
   let cardIndex = 0;
 
   // Deal cards to each player
   for (const player of players) {
-    player.cards = shuffledDeck.slice(cardIndex, cardIndex + cardsPerPlayer);
+    player.cards = shuffled.deck.slice(cardIndex, cardIndex + cardsPerPlayer);
     cardIndex += cardsPerPlayer;
   }
 
   // Remaining cards go to draw pile
-  const drawPile = shuffledDeck.slice(cardIndex);
+  const drawPile = shuffled.deck.slice(cardIndex);
 
-  return { players, drawPile };
+  return { players, drawPile, rngState: shuffled.rngState };
 }
 
 /**
@@ -175,24 +193,24 @@ function dealCards(
  * 5. Return initial game state
  */
 export function initializeGame(settings: GameSettings): GameState {
-  // Validate settings
-  const totalPlayers = 1 + settings.botCount; // 1 human + N bots
-  if (totalPlayers < 4 || totalPlayers > 5) {
-    throw new Error('Vinto requires 4-5 players');
-  }
+  const seed = Prng.seed(settings.seed ?? generateSeed());
 
-  // Create players
+  // Create players — always exactly 4 (1 human + 3 bots)
   const players = createPlayers(settings);
 
-  // Create and shuffle deck
+  // Create the deck in fixed order, then shuffle it with the seeded generator
   const deck = createDeck();
 
   // Deal cards
-  const { players: dealtPlayers, drawPile } = dealCards(deck, players);
+  const {
+    players: dealtPlayers,
+    drawPile,
+    rngState,
+  } = dealCards(deck, players, seed);
 
   // Create initial game state
   const gameState: GameState = {
-    gameId: uuidv4(),
+    gameId: `vinto-${seed}`,
     roundNumber: 1,
     turnNumber: 1,
     phase: 'setup', // Start in setup phase (players peek at 2 cards)
@@ -211,37 +229,27 @@ export function initializeGame(settings: GameSettings): GameState {
     difficulty: settings.difficulty,
     botVersion: settings.botVersion,
     roundFailedAttempts: [],
+    rngState,
   };
 
   return gameState;
 }
 
 /**
- * Quick start: Initialize a standard 2-player game (1 human vs 1 bot)
- */
-export function quickStartGame(playerName = 'You'): GameState {
-  return initializeGame({
-    playerCount: 2,
-    botCount: 1,
-    humanPlayerName: playerName,
-    difficulty: 'moderate',
-    botVersion: 'v1',
-  });
-}
-
-/**
- * Initialize a 4-player game (1 human vs 3 bots)
+ * Initialize a 4-player game (1 human vs 3 bots).
+ *
+ * Pass `seed` to reproduce a specific game; omit it for a fresh one.
  */
 export function fourPlayerGame(
   playerName = 'You',
   difficulty: GameState['difficulty'] = 'moderate',
-  botVersion: GameState['botVersion'] = 'v1'
+  botVersion: GameState['botVersion'] = 'v1',
+  seed?: number,
 ): GameState {
   return initializeGame({
-    playerCount: 4,
-    botCount: 3,
     humanPlayerName: playerName,
     difficulty,
     botVersion,
+    seed,
   });
 }

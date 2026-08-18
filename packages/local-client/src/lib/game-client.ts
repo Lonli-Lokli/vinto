@@ -13,6 +13,7 @@ import {
   type Card,
   type Rank,
   logger,
+  rehydrateGameState,
 } from '@vinto/shapes';
 import { GameEngine } from '@vinto/engine';
 
@@ -55,6 +56,13 @@ export class GameClient {
   private _actionHistory: Array<{ action: GameAction; timestamp: number }> = [];
 
   /**
+   * Count of actions the engine has accepted. Used as the deterministic `timestamp` on
+   * `GameActionHistory` entries, so a replayed game produces byte-identical history.
+   * Deliberately separate from `_actionHistory`, which also records rejected actions.
+   */
+  private _acceptedActionCount = 0;
+
+  /**
    * Public readonly accessor for logical game state
    * Used by bot AI and game logic
    */
@@ -78,7 +86,7 @@ export class GameClient {
   private onStateChange?: (
     oldState: GameState,
     newState: GameState,
-    action: GameAction
+    action: GameAction,
   ) => void;
 
   /**  * Error callback (optional)
@@ -111,12 +119,14 @@ export class GameClient {
     this._actionHistory.push({ action, timestamp: Date.now() });
 
     if (result.success) {
-      // Add action to history (for UI display)
+      // Add action to history (for UI display) — reads _acceptedActionCount as the
+      // deterministic timestamp, so increment only after it has been used.
       const newState = this.addActionToHistory(
         this._state,
         result.state,
-        action
+        action,
       );
+      this._acceptedActionCount++;
 
       // Update observable state
       this._state = newState;
@@ -148,7 +158,7 @@ export class GameClient {
   private addActionToHistory(
     oldState: GameState,
     state: GameState,
-    action: GameAction
+    action: GameAction,
   ): GameState {
     // Only track certain actions for display
     const description = this.getActionDescription(oldState, state, action);
@@ -168,7 +178,7 @@ export class GameClient {
       playerId: player.id,
       playerName: player.nickname,
       description,
-      timestamp: Date.now(),
+      timestamp: this._acceptedActionCount,
       turnNumber: state.turnNumber,
       roundNumber: state.roundNumber,
     };
@@ -176,11 +186,11 @@ export class GameClient {
     const newState = copy(state);
     // Only keep actions from the latest turnNumber
     newState.turnActions = [...state.turnActions, historyEntry].filter(
-      (a) => a.turnNumber === historyEntry.turnNumber
+      (a) => a.turnNumber === historyEntry.turnNumber,
     );
 
     newState.roundActions = [...state.roundActions, historyEntry].filter(
-      (a) => a.roundNumber === historyEntry.roundNumber
+      (a) => a.roundNumber === historyEntry.roundNumber,
     );
 
     return newState;
@@ -192,7 +202,7 @@ export class GameClient {
   private getActionDescription(
     oldState: GameState,
     newState: GameState,
-    action: GameAction
+    action: GameAction,
   ): string | null {
     const oldPlayer = oldState.players.find((p) => {
       if ('payload' in action && 'playerId' in action.payload) {
@@ -279,11 +289,11 @@ export class GameClient {
             return pendingAction.targets.length === 2
               ? `peeking at ${
                   newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[0].playerId
+                    (p) => p.id === newState.pendingAction?.targets[0].playerId,
                   )?.nickname
                 } (pos ${pendingAction?.targets[0].position + 1}) and ${
                   newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[1].playerId
+                    (p) => p.id === newState.pendingAction?.targets[1].playerId,
                   )?.nickname
                 } (pos ${pendingAction?.targets[1].position + 1})`
               : null;
@@ -291,25 +301,25 @@ export class GameClient {
             return pendingAction.targets.length === 2
               ? `thinking about ${
                   newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[0].playerId
+                    (p) => p.id === newState.pendingAction?.targets[0].playerId,
                   )?.nickname
                 } (pos ${pendingAction?.targets[0].position + 1}) and ${
                   newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[1].playerId
+                    (p) => p.id === newState.pendingAction?.targets[1].playerId,
                   )?.nickname
                 } (pos ${pendingAction?.targets[1].position + 1})`
               : null;
           case 'force-draw':
             return `forcing ${
               newState.players.find(
-                (p) => p.id === action.payload.targetPlayerId
+                (p) => p.id === action.payload.targetPlayerId,
               )?.nickname
             } to draw`;
           case 'opponent-card':
             return pendingAction.targets.length === 1
               ? `peeked at ${
                   newState.players.find(
-                    (p) => p.id === newState.pendingAction?.targets[0].playerId
+                    (p) => p.id === newState.pendingAction?.targets[0].playerId,
                   )?.nickname
                 }'s card  (pos ${pendingAction?.targets[0].position + 1})`
               : null;
@@ -342,8 +352,8 @@ export class GameClient {
     callback: (
       oldState: GameState,
       newState: GameState,
-      action: GameAction
-    ) => void
+      action: GameAction,
+    ) => void,
   ): void {
     this.onStateChange = callback;
   }
@@ -600,7 +610,9 @@ export class GameClient {
   @action
   importState(json: string): void {
     try {
-      const newState = JSON.parse(json) as GameState;
+      // JSON.parse flattens the Pile instances into plain arrays; without rehydrating
+      // them the next drawTop() throws.
+      const newState = rehydrateGameState(JSON.parse(json) as GameState);
       this._state = newState;
     } catch (error) {
       logger.error('Failed to import state:', error);
@@ -631,7 +643,7 @@ export class GameClient {
             : null,
       },
       null,
-      2
+      2,
     );
   }
 }
