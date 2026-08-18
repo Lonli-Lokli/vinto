@@ -22,7 +22,6 @@ import {
 export interface GameSettings {
   humanPlayerName: string;
   difficulty: GameState['difficulty'];
-  botVersion: GameState['botVersion'];
   /**
    * Seed for the deal (unsigned 32-bit). Omit to have one generated; the resulting
    * `rngState` and `gameId` are derived from it, so the same seed always reproduces
@@ -49,7 +48,6 @@ export function recordingSettingsFromState(
   return {
     humanPlayerName: human?.nickname ?? 'You',
     difficulty: state.difficulty,
-    botVersion: state.botVersion,
     seed:
       state.gameId.startsWith(GAME_ID_PREFIX) && Number.isInteger(seed)
         ? seed
@@ -254,7 +252,6 @@ export function initializeGame(settings: GameSettings): GameState {
     turnActions: [],
     roundActions: [],
     difficulty: settings.difficulty,
-    botVersion: settings.botVersion,
     roundFailedAttempts: [],
     rngState,
   };
@@ -270,13 +267,11 @@ export function initializeGame(settings: GameSettings): GameState {
 export function fourPlayerGame(
   playerName = 'You',
   difficulty: GameState['difficulty'] = 'moderate',
-  botVersion: GameState['botVersion'] = 'v1',
   seed?: number,
 ): GameState {
   return initializeGame({
     humanPlayerName: playerName,
     difficulty,
-    botVersion,
     seed,
   });
 }

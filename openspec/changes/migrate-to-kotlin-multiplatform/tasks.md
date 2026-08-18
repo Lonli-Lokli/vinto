@@ -3,12 +3,13 @@
 Prerequisites — the dependency on `add-game-recording-replay` is **not uniform across
 phases**:
 
-- **Phase 1 (one bot engine)** needs only the _determinism_ half of that change
-  (`add-game-recording-replay` §1: seeded PRNG, `rngState`, seeded `initializeGame`),
-  because the tournament requires reproducible seeded self-play. It must then land
-  **before** that change commits its fixture corpus (its task 3.5): phase 1 removes
-  `botVersion` from `GameState`, which changes every canonical hash. Running phase 1 after
-  the corpus is committed would force regenerating all ≥ 50 fixtures.
+- **Phase 1 (one bot engine) — DONE.** It needed only the _determinism_ half of that
+  change (`add-game-recording-replay` §1: seeded PRNG, `rngState`, seeded
+  `initializeGame`) to produce seeded self-play games. It had to land **before** that
+  change commits its fixture corpus (its task 3.5), because phase 1 removes `botVersion`
+  from `GameState` and so changes every canonical hash; committing the corpus first would
+  have forced regenerating all ≥ 50 fixtures. That sequencing held — no fixtures existed
+  when `botVersion` was removed, so none needed regenerating.
 - **Phases 2 onward** need `add-game-recording-replay` fully implemented and **archived**
   (recording format v1, `fixtures/recordings/` corpus, PRNG test vectors at
   `fixtures/prng/vectors.json`, `RECORDING.md`) — the Kotlin port has no fixed target
@@ -20,11 +21,11 @@ Runs after `add-game-recording-replay` §1 (determinism) and before its §3.5 (c
 The headless seeded self-play runner built here is the same harness
 `tools/generate-recordings.ts` needs — build it once and share it.
 
-- [ ] 1.1 `tools/headless-selfplay.ts`: seeded 4-player bot-vs-bot runner reusing `BotAIAdapter` with `skipDelays`; shared by the tournament and the fixture generator
-- [ ] 1.2 `tools/tournament.ts`: seeded self-play, v1-vs-v2 mixed tables, every difficulty, 4-player tables, ≥ 500 games per configuration; report win rate, mean final score, coalition win rate, decision latency (p50/p95)
-- [ ] 1.3 Run the tournament, commit the report under `docs/bot/TOURNAMENT-<date>.md`, decide the winner. Note the starting asymmetry for the record: v1 (MCTS) is the default everywhere and has 9 test files; v2 (`strategic-bot-decision.ts`, 891 lines) has none
-- [ ] 1.4 Delete the losing bot and `botVersion` (`domain-types.ts`, `game-state-types.ts`, `action-types.ts` `UpdateBotVersionAction`, `cases/update-bot-version.ts`, `game-actions.ts`, `game-engine.ts`, `bot-factory.ts`, `botAIAdapter.ts`, `initializeGame.ts`, `game-header.tsx`, `mobile-settings.tsx`); recording readers ignore a legacy `botVersion` field. No fixture regeneration is required, because no corpus has been committed yet
-- [ ] 1.5 Web + tests green after removal; `grep -rn "botVersion\|BotVersion" packages apps` returns no non-test hits
+- [x] 1.1 Headless seeded 4-player bot-vs-bot runner. Built as `tools/generate-recordings.ts` (run with `npm run recordings:generate`) rather than a separate `headless-selfplay.ts`: the tournament was cancelled, so the fixture generator is the only consumer and a second harness would have been dead code
+- [x] 1.2 / 1.3 **Tournament cancelled — decision recorded in `docs/bot/BOT-ENGINE-DECISION.md` in place of a tournament report.** v2 read opponents' hidden hands in three places (`strategic-bot-decision.ts` Vinto check, threat assessment at :549, target selection at :835), each explicitly skipping the bot itself and then calling `calculateScore(player.cards)`; v1 uses `estimatePlayerScore` from `BotMemory`. A head-to-head result would have measured how much cheating is worth, and could not have justified deleting the honest bot. Measured cost was also ~75s/game (500 games x 3 difficulties ~= 31 hours), and `BotAIAdapter` holds one decision service for all four seats (`botAIAdapter.ts:96`), so mixed tables would have required changing production code purely to run the tournament
+- [x] 1.4 Deleted v2 (`strategic-bot-decision.ts`) and `botVersion` throughout: `domain-types.ts` (`BotVersion`), `game-state-types.ts` (field), `action-types.ts` (`UpdateBotVersionAction`), `cases/update-bot-version.ts` (file), `game-actions.ts`, `game-engine.ts`, `action-validator.ts`, `bot-factory.ts` (now takes difficulty only), `botAIAdapter.ts`, `initializeGame.ts`, `GameRecordingSettings`, both UI selectors, and all test helpers. No fixtures needed regenerating — the corpus was deliberately sequenced after this
+- [x] 1.5 Verified: 552 tests green across 5 projects, all 5 typecheck, lint clean, and a fresh self-play game reaches `scoring` and replays cleanly. `grep -rniE "botversion|strategicbot"` over `packages/*/src`, `apps/vinto/src` and `tools/` returns only the explanatory comment in `bot-factory.ts`
+  - Side effect worth noting: installing `vite-node` bumped several loosely-ranged packages in the lockfile, including `react-error-boundary` to 6.1.3, whose v6 types widened `error` to `unknown`. `apps/vinto/.../error-boundary.tsx` was updated to use the library's own `FallbackProps` and narrow once via a `toError` helper
 
 ## 2. Workspace, tooling, CI skeleton
 
@@ -58,7 +59,7 @@ The headless seeded self-play runner built here is the same harness
 - [ ] 5.2 Port `coalition-planner` with its scenario tests (identical decisions)
 - [ ] 5.3 Port the search/decision core (if MCTS: types, node, move generator, state transition, determinization, rollout policy, evaluators) with injected `Random` and iteration budget; port its tests with fixed seeds
 - [ ] 5.4 `BotDecisionServiceFactory.create(difficulty)`; `suspend` decision API on `Dispatchers.Default`
-- [ ] 5.5 Kotlin tournament tool (JVM main): seeded self-play report; compare with the TypeScript report from 1.2 — within 5 pp
+- [ ] 5.5 Kotlin self-play strength check (JVM main). There is no TypeScript tournament report to compare against — phase 1 was decided on code evidence, not a tournament (see `docs/bot/BOT-ENGINE-DECISION.md`). Instead, generate a TypeScript baseline with `npm run recordings:generate` and compare the Kotlin bot's aggregate results (final scores, coalition win rate, decision latency) against it over the same number of seeded games
 
 ## 6. Client port: `GameSession` (parity gate #2, round trip)
 

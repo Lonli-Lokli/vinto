@@ -25,7 +25,7 @@ function createStorageStub(): RecordingStorage & { data: Map<string, string> } {
  * two of their own cards before FINISH_SETUP is legal.
  */
 function startedGame(seed = 4242, autoSave?: RecordingAutoSave) {
-  const client = new GameClient(fourPlayerGame('You', 'moderate', 'v1', seed), {
+  const client = new GameClient(fourPlayerGame('You', 'moderate', seed), {
     autoSave,
   });
   const humanId = client.state.players[0].id;
@@ -164,7 +164,7 @@ describe('RecordingAutoSave', () => {
     storage.setItem('vinto:recording:v1', 'stale');
 
     const autoSave = new RecordingAutoSave({ storage });
-    new GameClient(fourPlayerGame('You', 'moderate', 'v1', 1), { autoSave });
+    new GameClient(fourPlayerGame('You', 'moderate', 1), { autoSave });
 
     expect(storage.data.has('vinto:recording:v1')).toBe(false);
   });

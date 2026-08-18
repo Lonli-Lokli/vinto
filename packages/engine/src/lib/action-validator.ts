@@ -716,7 +716,6 @@ export function actionValidator(
 
     case 'EMPTY':
     case 'UPDATE_DIFFICULTY':
-    case 'UPDATE_BOT_VERSION':
     case 'SET_NEXT_DRAW_CARD':
     case 'SWAP_HAND_WITH_DECK':
       // Always valid (configuration/debug actions)

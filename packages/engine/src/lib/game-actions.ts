@@ -3,7 +3,6 @@ import {
   ConfirmPeekAction,
   DeclareKingActionAction,
   Difficulty,
-  BotVersion,
   DiscardCardAction,
   DrawCardAction,
   ExecuteQueenSwapAction,
@@ -22,7 +21,6 @@ import {
   SwapHandWithDeckAction,
   PlayDiscardAction,
   UpdateDifficultyAction,
-  UpdateBotVersionAction,
   UseCardActionAction,
   ExecuteJackSwapAction,
   SkipJackSwapAction,
@@ -175,10 +173,6 @@ export const GameActions = {
     payload: { difficulty },
   }),
 
-  updateBotVersion: (botVersion: BotVersion): UpdateBotVersionAction => ({
-    type: 'UPDATE_BOT_VERSION',
-    payload: { botVersion },
-  }),
 
   setNextDrawCard: (rank: Rank): SetNextDrawCardAction => ({
     type: 'SET_NEXT_DRAW_CARD',

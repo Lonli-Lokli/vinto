@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { MCTSBotDecisionService } from '../mcts-bot-decision';
-import { StrategicBotDecisionService } from '../strategic-bot-decision';
 import { shouldCallVintoByScore } from '../vinto-call-rule';
 import {
   createBotContext,
@@ -110,7 +109,7 @@ describe('shouldCallVintoByScore', () => {
   });
 });
 
-describe('both bot services agree on Vinto', () => {
+describe('MCTS bot Vinto decision', () => {
   const winning = () =>
     contextFor([
       { rank: 'Joker', id: 'j' },
@@ -127,12 +126,4 @@ describe('both bot services agree on Vinto', () => {
     },
   );
 
-  it.each(['easy', 'moderate', 'hard'] as const)(
-    'strategic bot (%s) matches',
-    (difficulty) => {
-      const service = new StrategicBotDecisionService(difficulty);
-      expect(service.shouldCallVinto(winning())).toBe(true);
-      expect(service.shouldCallVinto(losing())).toBe(false);
-    },
-  );
 });

@@ -99,7 +99,6 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
     turnActions: [],
     roundActions: [],
     difficulty: 'moderate',
-    botVersion: 'v1',
     rngState: 0,
     roundFailedAttempts: [],
   };
@@ -107,7 +106,7 @@ export function createTestState(overrides?: Partial<GameState>): GameState {
   const mergedState = {
     ...baseState,
     ...overrides,
-  } as GameState;
+  };
 
   return {
     ...mergedState,

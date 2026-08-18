@@ -60,7 +60,6 @@ async function buildRecording(
     settings: {
       humanPlayerName: 'You',
       difficulty: 'moderate',
-      botVersion: 'v1',
       seed: 123,
     },
     initialState,

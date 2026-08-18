@@ -35,7 +35,6 @@ type ReactionSnapshot = {
   turnCount: GameClientState['turnNumber'];
   currentPlayerId: GameClientInstance['currentPlayer']['id'];
   difficulty: GameClientState['difficulty'];
-  botVersion: GameClientState['botVersion'];
 };
 
 const NORMAL_DELAY = 1_000; // delay before running any MCST action
@@ -78,7 +77,6 @@ export class BotAIAdapter {
   private reactionQueue: Promise<void> = Promise.resolve();
   private isDisposed = false;
   private currentDifficulty: GameClientState['difficulty'];
-  private currentBotVersion: GameClientState['botVersion'];
   private skipDelays = false; // Skip delays in test environment
 
   constructor(
@@ -87,7 +85,6 @@ export class BotAIAdapter {
   ) {
     // Initialize current difficulty and bot version
     this.currentDifficulty = this.gameClient.state.difficulty;
-    this.currentBotVersion = this.gameClient.state.botVersion;
 
     // Allow skipping delays for tests
     this.skipDelays = options?.skipDelays ?? false;
@@ -95,7 +92,6 @@ export class BotAIAdapter {
     // Use existing bot decision service factory
     this.botDecisionService = BotDecisionServiceFactory.create(
       this.gameClient.state.difficulty,
-      this.gameClient.state.botVersion,
     );
 
     // Initialize opponent modeler
@@ -144,7 +140,6 @@ export class BotAIAdapter {
         coalitionLeaderId: this.gameClient.visualState.coalitionLeaderId,
         phase: this.gameClient.visualState.phase,
         difficulty: this.gameClient.visualState.difficulty,
-        botVersion: this.gameClient.visualState.botVersion,
       }),
       // Execute bot turn when visual state is ready
       // Reactions stay synchronous; async work is queued for sequential handling.
@@ -190,19 +185,14 @@ export class BotAIAdapter {
       return;
     }
 
-    // Check if difficulty or bot version changed and recreate bot decision service if needed
-    if (
-      snapshot.difficulty !== this.currentDifficulty ||
-      snapshot.botVersion !== this.currentBotVersion
-    ) {
+    // Recreate the bot decision service if the difficulty changed
+    if (snapshot.difficulty !== this.currentDifficulty) {
       console.log(
-        `[BotAI] Bot settings changed from ${this.currentDifficulty}/${this.currentBotVersion} to ${snapshot.difficulty}/${snapshot.botVersion}, recreating bot decision service`,
+        `[BotAI] Difficulty changed from ${this.currentDifficulty} to ${snapshot.difficulty}, recreating bot decision service`,
       );
       this.currentDifficulty = snapshot.difficulty;
-      this.currentBotVersion = snapshot.botVersion;
       this.botDecisionService = BotDecisionServiceFactory.create(
         snapshot.difficulty,
-        snapshot.botVersion,
       );
     }
 

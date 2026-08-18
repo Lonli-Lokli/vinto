@@ -80,7 +80,7 @@ async function playGame(
   timeoutMs: number,
   maxActions: number,
 ): Promise<PlayedGame> {
-  const initialState = allBots(fourPlayerGame('Bot 0', difficulty, 'v1', seed));
+  const initialState = allBots(fourPlayerGame('Bot 0', difficulty, seed));
   const client = new GameClient(initialState);
 
   // The AnimationService normally advances visual state once an animation finishes;

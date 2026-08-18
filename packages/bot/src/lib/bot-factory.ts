@@ -1,22 +1,17 @@
-import { BotVersion, Difficulty, NeverError } from '@vinto/shapes';
-import { StrategicBotDecisionService } from './strategic-bot-decision';
+import { Difficulty } from '@vinto/shapes';
 import { BotDecisionService } from './shapes';
 import { MCTSBotDecisionService } from './mcts-bot-decision';
 
-// Factory for creating bot decision services
+/**
+ * Creates the bot decision service.
+ *
+ * There is exactly one bot engine. The former `v2` (`StrategicBotDecisionService`) was
+ * removed because it read opponents' hidden hands; see
+ * `docs/bot/BOT-ENGINE-DECISION.md`.
+ */
 export class BotDecisionServiceFactory {
-  static create(
-    difficulty: Difficulty,
-    botVersion: BotVersion
-  ): BotDecisionService {
-    switch (botVersion) {
-      case 'v1':
-        // Difficulty controls memory accuracy and MCTS iterations, not decision quality
-        return new MCTSBotDecisionService(difficulty);
-      case 'v2':
-        return new StrategicBotDecisionService(difficulty);
-      default:
-        throw new NeverError(botVersion);
-    }
+  static create(difficulty: Difficulty): BotDecisionService {
+    // Difficulty controls memory accuracy and MCTS iterations, not decision quality
+    return new MCTSBotDecisionService(difficulty);
   }
 }

@@ -1,5 +1,5 @@
 import { GameAction } from './action-types';
-import { BotVersion, Difficulty } from './domain-types';
+import { Difficulty } from './domain-types';
 import { GameState } from './game-state-types';
 
 /**
@@ -20,7 +20,6 @@ export const GAME_RECORDING_FORMAT_VERSION = 1;
 export interface GameRecordingSettings {
   humanPlayerName: string;
   difficulty: Difficulty;
-  botVersion: BotVersion;
   seed: number;
 }
 

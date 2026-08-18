@@ -50,7 +50,6 @@ function state(overrides: Partial<GameState> = {}): GameState {
     roundActions: [],
     roundFailedAttempts: [],
     difficulty: 'moderate',
-    botVersion: 'v1',
     rngState: 12345,
     ...overrides,
   };

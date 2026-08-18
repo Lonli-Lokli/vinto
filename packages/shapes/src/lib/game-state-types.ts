@@ -1,7 +1,7 @@
 // engine/types/GameState.ts
 // Authoritative game state - the single source of truth
 
-import { Card, Difficulty, BotVersion, Pile, Rank } from './domain-types';
+import { Card, Difficulty, Pile, Rank } from './domain-types';
 
 /**
  * Complete, serializable game state
@@ -45,7 +45,6 @@ export interface GameState {
 
   // Configuration
   difficulty: Difficulty;
-  botVersion: BotVersion;
 
   /**
    * Seeded PRNG state (mulberry32, unsigned 32-bit). The engine's only source of

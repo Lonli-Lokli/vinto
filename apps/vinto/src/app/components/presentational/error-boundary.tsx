@@ -2,17 +2,25 @@
 'use client';
 
 import React from 'react';
-import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
+import {
+  ErrorBoundary as ReactErrorBoundary,
+  type FallbackProps,
+} from 'react-error-boundary';
 import * as Sentry from '@sentry/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { TryAgainButton } from '../buttons';
 
-interface ErrorFallbackProps {
-  error: Error;
-  resetErrorBoundary: () => void;
+/**
+ * react-error-boundary types thrown values as `unknown`, since anything can be thrown.
+ * Narrow once here so the UI below can rely on `message`/`stack`.
+ */
+function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
 }
 
-function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
+function ErrorFallback({ error: thrown, resetErrorBoundary }: FallbackProps) {
+  const error = toError(thrown);
+
   return (
     <div className="min-h-screen bg-page-gradient flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-surface-primary rounded-lg shadow-lg p-6 space-y-4">
@@ -59,9 +67,9 @@ interface ErrorBoundaryProps {
 }
 
 export function ErrorBoundary({ children }: ErrorBoundaryProps) {
-  const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
+  const handleError = (error: unknown, errorInfo: React.ErrorInfo) => {
     // Log to Sentry with additional context
-    Sentry.captureException(error, {
+    Sentry.captureException(toError(error), {
       contexts: {
         react: {
           componentStack: errorInfo.componentStack,

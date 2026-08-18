@@ -26,7 +26,6 @@ export type Rank =
   | 'Joker';
 
 export type Difficulty = 'easy' | 'moderate' | 'hard';
-export type BotVersion = 'v1' | 'v2';
 export type CardAction =
   | 'peek-own'
   | 'peek-opponent'

@@ -9,7 +9,6 @@ describe('initializeGame', () => {
   const settings = {
     humanPlayerName: 'You',
     difficulty: 'moderate' as const,
-    botVersion: 'v1' as const,
   };
 
   it('produces structurally identical states for the same seed', () => {
@@ -67,7 +66,7 @@ describe('initializeGame', () => {
   });
 
   it('fourPlayerGame forwards its seed', () => {
-    const viaWrapper = fourPlayerGame('You', 'moderate', 'v1', 123);
+    const viaWrapper = fourPlayerGame('You', 'moderate', 123);
     const direct = initializeGame({ ...settings, seed: 123 });
 
     expect(JSON.stringify(viaWrapper)).toBe(JSON.stringify(direct));
