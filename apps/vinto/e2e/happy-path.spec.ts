@@ -39,7 +39,7 @@ test.describe('Vinto Game - Happy Path', () => {
     await test.step('Complete setup phase and start game', async () => {
       // Wait for Memory Phase indicator to appear using test ID
       const setupPhaseIndicator = page.locator(
-        '[data-testid="game-phase-setup"]'
+        '[data-testid="game-phase-setup"]',
       );
       await expect(setupPhaseIndicator).toBeVisible({ timeout: 10000 });
 
@@ -74,7 +74,7 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(
         page
           .locator('[data-testid="player-hand"]')
-          .or(page.locator('.player-cards'))
+          .or(page.locator('.player-cards')),
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -85,7 +85,7 @@ test.describe('Vinto Game - Happy Path', () => {
       // Wait for active player indicator (works for both player and bot turns)
       // In a 4-player game, the first turn might be a bot
       const activePlayerIndicator = page.locator(
-        `[data-testid="active-player-indicator${testIdSuffix}"]`
+        `[data-testid="active-player-indicator${testIdSuffix}"]`,
       );
 
       // Wait up to 30 seconds for it to be the player's turn
@@ -120,7 +120,9 @@ test.describe('Vinto Game - Happy Path', () => {
           .locator('[data-testid*="card"]')
           .first()
           .click({ timeout: 3000 })
-          .catch(() => { /* empty */ });
+          .catch(() => {
+            /* empty */
+          });
       }
       // Otherwise must be swap
       else {
@@ -137,7 +139,9 @@ test.describe('Vinto Game - Happy Path', () => {
       await expect(tossInPhase).toBeVisible({ timeout: 5000 });
 
       // Click "Call Vinto" button in toss-in phase
-      const callVintoButton = page.locator('[data-testid="call-vinto"]').first();
+      const callVintoButton = page
+        .locator('[data-testid="call-vinto"]')
+        .first();
       await expect(callVintoButton).toBeVisible({ timeout: 3000 });
       await callVintoButton.click();
 
@@ -152,7 +156,7 @@ test.describe('Vinto Game - Happy Path', () => {
       // Handle coalition selection dialog (only appears if a bot called Vinto)
       // If the human called Vinto, this dialog won't appear
       const coalitionConfirmButton = page.locator(
-        '[data-testid="confirm-coalition-leader"]'
+        '[data-testid="confirm-coalition-leader"]',
       );
       const hasCoalitionDialog = await coalitionConfirmButton
         .isVisible({ timeout: 2000 })
