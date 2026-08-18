@@ -14,7 +14,9 @@
     "test:e2e:debug": "nx run-many --all --target=e2e --debug",
     "test:e2e:report": "playwright show-report",
     "update": "cross-env NX_SKIP_PROVENANCE_CHECK=true npx nx migrate latest && npm install && npx nx migrate --run-migrations",
-    "deploy": "run-s test build"
+    "deploy": "run-s test build",
+    "recordings:generate": "vite-node tools/generate-recordings.ts --",
+    "recordings:replay": "vite-node tools/replay-recording.ts --"
   },
   "private": true,
   "dependencies": {
@@ -29,7 +31,7 @@
     "lucide-react": "^0.564.0",
     "mobx": "^6.15.0",
     "mobx-react-lite": "^4.1.1",
-    "next": "15.5.11",
+    "next": "15.5.23",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -39,7 +41,7 @@
     "react-tiny-popover": "^8.1.6",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
@@ -48,7 +50,7 @@
     "@eslint/compat": "^2.0.5",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.2",
-    "@next/eslint-plugin-next": "^15.5.6",
+    "@next/eslint-plugin-next": "^15.5.23",
     "@nx/devkit": "22.5.2",
     "@nx/eslint": "22.5.2",
     "@nx/eslint-plugin": "22.5.2",
@@ -96,6 +98,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.58.2",
     "vite": "^7.3.1",
+    "vite-node": "^6.0.0",
     "vitest": "4.1.4"
   },
   "workspaces": [
@@ -103,6 +106,6 @@
     "packages/*"
   ],
   "engines": {
-    "node": "^22"
+    "node": "^24"
   }
 }

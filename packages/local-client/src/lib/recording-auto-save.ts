@@ -37,8 +37,7 @@ export class RecordingAutoSave {
     this.storage = options.storage;
     this.debounceMs = options.debounceMs ?? 500;
     this.key = options.key ?? RECORDING_AUTOSAVE_KEY;
-    this.setTimer =
-      options.setTimer ?? ((fn, ms) => setTimeout(fn, ms) as unknown);
+    this.setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
     this.clearTimer =
       options.clearTimer ??
       ((handle) => clearTimeout(handle as ReturnType<typeof setTimeout>));

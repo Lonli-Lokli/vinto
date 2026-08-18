@@ -11,7 +11,12 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./headless": {
+      "types": "./src/headless.ts",
+      "import": "./src/headless.ts",
+      "default": "./src/headless.ts"
+    }
   },
   "dependencies": {}
 }
