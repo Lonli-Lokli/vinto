@@ -70,3 +70,9 @@ accessibility-report*.md
 # Accessibility E2E reports
 accessibility-reports/
 .claude/settings.local.json
+
+# Kotlin / Gradle
+kmp/**/build/
+kmp/.gradle/
+kmp/kotlin-js-store/
+kmp/local.properties
