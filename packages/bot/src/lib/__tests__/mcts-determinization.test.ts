@@ -4,7 +4,7 @@ import {
   sampleCardFromPool,
   buildAvailableRanksPool,
 } from '../mcts-determinization';
-import { Rank } from '@vinto/shapes';
+import { Pile, Rank } from '@vinto/shapes';
 import { MCTSGameState } from '../mcts-types';
 import { BotMemory } from '../bot-memory';
 
@@ -159,22 +159,22 @@ describe('MCTS Determinization - Strategic Weighted Sampling', () => {
         currentPlayerIndex: 0,
         botPlayerId: 'bot1',
         discardPileTop: null,
-        discardPile: [
+        discardPile: Pile.fromCards([
           {
             id: 'd1',
             rank: 'A',
             value: 1,
-            actionText: null,
+            actionText: undefined,
             played: true,
           },
           {
             id: 'd2',
             rank: 'A',
             value: 1,
-            actionText: null,
+            actionText: undefined,
             played: true,
           },
-        ],
+        ]),
         deckSize: 54,
         botMemory: new BotMemory('bot1', 'easy'),
         hiddenCards: new Map(),
@@ -202,7 +202,7 @@ describe('MCTS Determinization - Strategic Weighted Sampling', () => {
           id: 'k1',
           rank: 'K',
           value: 0,
-          actionText: null,
+          actionText: undefined,
           played: false,
         },
         confidence: 1.0,
@@ -220,7 +220,7 @@ describe('MCTS Determinization - Strategic Weighted Sampling', () => {
         currentPlayerIndex: 0,
         botPlayerId: 'bot1',
         discardPileTop: null,
-        discardPile: [],
+        discardPile: new Pile(),
         deckSize: 54,
         botMemory: new BotMemory('bot1', 'easy'),
         hiddenCards: new Map(),
@@ -247,7 +247,7 @@ describe('MCTS Determinization - Strategic Weighted Sampling', () => {
         currentPlayerIndex: 0,
         botPlayerId: 'bot1',
         discardPileTop: null,
-        discardPile: [],
+        discardPile: new Pile(),
         deckSize: 54,
         botMemory: new BotMemory('bot1', 'easy'),
         hiddenCards: new Map(),

@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { OpponentModeler, ObservedAction } from '../opponent-modeler';
-import { Card } from '@vinto/shapes';
+import { createTestCard } from './test-helpers';
 
 describe('OpponentModeler', () => {
   let modeler: OpponentModeler;
@@ -38,7 +38,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'swap-from-discard',
         playerId,
-        card: { rank: '5', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('5', 'card-1'),
         position: 2,
       };
 
@@ -55,7 +55,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'swap-from-discard',
         playerId,
-        card: { rank: 'Q', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('Q', 'card-1'),
         position: 0,
       };
 
@@ -70,7 +70,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'swap-from-discard',
         playerId,
-        card: { rank: '5', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('5', 'card-1'),
         // position undefined
       };
 
@@ -88,7 +88,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'discard-drawn',
         playerId,
-        card: { rank: '6', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('6', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -104,7 +104,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'discard-drawn',
         playerId,
-        card: { rank: '6', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('6', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -122,7 +122,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'use-action',
         playerId,
-        card: { rank: '7', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('7', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -138,7 +138,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'use-action',
         playerId,
-        card: { rank: 'J', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('J', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -154,7 +154,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'use-action',
         playerId,
-        card: { rank: 'Q', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('Q', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -169,7 +169,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'toss-in',
         playerId,
-        card: { rank: '5', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('5', 'card-1'),
         position: 3,
       };
 
@@ -191,7 +191,7 @@ describe('OpponentModeler', () => {
       const action: ObservedAction = {
         type: 'peek-own',
         playerId,
-        card: { rank: '7', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('7', 'card-1'),
       };
 
       modeler.handleObservedAction(action);
@@ -280,7 +280,7 @@ describe('OpponentModeler', () => {
       modeler.handleObservedAction({
         type: 'swap-from-discard',
         playerId,
-        card: { rank: '5', suit: 'hearts', id: 'card-1' } as Card,
+        card: createTestCard('5', 'card-1'),
         position: 2,
       });
 
@@ -325,7 +325,9 @@ describe('OpponentModeler', () => {
         type: 'peek-own',
         playerId,
       });
-      expect(modeler.getPlayerBeliefs(playerId)!.vintoReadiness).toBeGreaterThanOrEqual(0);
+      expect(
+        modeler.getPlayerBeliefs(playerId)!.vintoReadiness,
+      ).toBeGreaterThanOrEqual(0);
 
       // Try to push above 1
       beliefs!.vintoReadiness = 0.95;
@@ -333,7 +335,9 @@ describe('OpponentModeler', () => {
         type: 'swap-own',
         playerId,
       });
-      expect(modeler.getPlayerBeliefs(playerId)!.vintoReadiness).toBeLessThanOrEqual(1);
+      expect(
+        modeler.getPlayerBeliefs(playerId)!.vintoReadiness,
+      ).toBeLessThanOrEqual(1);
     });
   });
 });

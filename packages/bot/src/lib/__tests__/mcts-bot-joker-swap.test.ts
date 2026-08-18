@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { MCTSBotDecisionService } from '../mcts-bot-decision';
 import { BotDecisionContext } from '../shapes';
-import { Card, PlayerState, GamePhase, GameSubPhase } from '@vinto/shapes';
+import { Card } from '@vinto/shapes';
+import {
+  createBotContext,
+  createTestCard,
+  createTestPlayer,
+  createTestState,
+} from './test-helpers';
 
 /**
  * Test suite for Joker swap bug fix
@@ -14,53 +20,28 @@ describe('MCTS Bot - Joker Protection', () => {
   function createTestContext(
     botCards: Card[],
     knownPositions: number[],
-    drawnCard: Card
+    drawnCard: Card,
   ): BotDecisionContext {
-    const botPlayer: PlayerState = {
-      id: 'bot1',
-      cards: botCards,
-      knownCardPositions: knownPositions,
-      roundPoints: 0,
-      gamePoints: 0,
-      turnSkipped: false,
-      eliminatedFromRound: false,
-    };
+    const botPlayer = createTestPlayer('bot1', 'Bot 1', false, botCards);
+    botPlayer.knownCardPositions = knownPositions;
 
-    const opponent: PlayerState = {
-      id: 'human1',
-      cards: [
-        { id: 'h1', rank: '6', value: 6, actionText: null, played: false },
-        { id: 'h2', rank: '6', value: 6, actionText: null, played: false },
-        { id: 'h3', rank: '6', value: 6, actionText: null, played: false },
-        { id: 'h4', rank: '6', value: 6, actionText: null, played: false },
-        { id: 'h5', rank: '6', value: 6, actionText: null, played: false },
-      ],
-      knownCardPositions: [],
-      roundPoints: 0,
-      gamePoints: 0,
-      turnSkipped: false,
-      eliminatedFromRound: false,
-    };
+    const opponent = createTestPlayer('human1', 'Human 1', true, [
+      createTestCard('6', 'h1'),
+      createTestCard('6', 'h2'),
+      createTestCard('6', 'h3'),
+      createTestCard('6', 'h4'),
+      createTestCard('6', 'h5'),
+    ]);
 
-    return {
-      botId: 'bot1',
-      botPlayer,
-      allPlayers: [botPlayer, opponent],
-      pendingCard: drawnCard,
-      activeActionCard: null,
-      discardTop: null,
-      discardPile: [],
-      opponentKnowledge: new Map(),
-      gameState: {
-        phase: 'play' as GamePhase,
-        subPhase: 'play_turn' as GameSubPhase,
-        currentPlayerId: 'bot1',
-        vintoCallerId: null,
-        finalTurnTriggered: false,
-        turnNumber: 5,
-        activeTossIn: null,
-      },
-    };
+    const state = createTestState({
+      phase: 'playing',
+      subPhase: 'idle',
+      turnNumber: 5,
+      currentPlayerIndex: 0,
+      players: [botPlayer, opponent],
+    });
+
+    return createBotContext('bot1', state, { pendingCard: drawnCard });
   }
 
   it('should NEVER swap a known Joker for any card', () => {
@@ -68,17 +49,17 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has a known Joker at position 0
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: null, played: false },
-      { id: 'c2', rank: '6', value: 6, actionText: null, played: false },
-      { id: 'c3', rank: '6', value: 6, actionText: null, played: false },
-      { id: 'c4', rank: '6', value: 6, actionText: null, played: false },
-      { id: 'c5', rank: '6', value: 6, actionText: null, played: false },
+      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      { id: 'c2', rank: '6', value: 6, actionText: undefined, played: false },
+      { id: 'c3', rank: '6', value: 6, actionText: undefined, played: false },
+      { id: 'c4', rank: '6', value: 6, actionText: undefined, played: false },
+      { id: 'c5', rank: '6', value: 6, actionText: undefined, played: false },
     ];
 
     // Test with various drawn cards
     const testCards: Card[] = [
-      { id: 'd1', rank: '2', value: 2, actionText: null, played: false },
-      { id: 'd2', rank: '6', value: 6, actionText: null, played: false },
+      { id: 'd1', rank: '2', value: 2, actionText: undefined, played: false },
+      { id: 'd2', rank: '6', value: 6, actionText: undefined, played: false },
       {
         id: 'd3',
         rank: '10',
@@ -100,7 +81,7 @@ describe('MCTS Bot - Joker Protection', () => {
 
       const selectedPosition = botService.selectBestSwapPosition(
         drawnCard,
-        context
+        context,
       );
 
       // Bot should NEVER select position 0 (the Joker)
@@ -120,11 +101,11 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has Joker at position 0, other unknown cards
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: null, played: false },
-      { id: 'c2', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c3', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c4', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c5', rank: '10', value: 10, actionText: null, played: false },
+      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      { id: 'c2', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c3', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c4', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c5', rank: '10', value: 10, actionText: undefined, played: false },
     ];
 
     // Draw a Jack (swap action)
@@ -147,7 +128,7 @@ describe('MCTS Bot - Joker Protection', () => {
     // The key test is that if bot DOES swap, it won't swap the Joker
     const selectedPosition = botService.selectBestSwapPosition(
       drawnJack,
-      context
+      context,
     );
 
     if (selectedPosition !== null) {
@@ -160,11 +141,11 @@ describe('MCTS Bot - Joker Protection', () => {
 
     // Bot has Joker at position 0
     const botCards: Card[] = [
-      { id: 'j1', rank: 'Joker', value: -1, actionText: null, played: false },
-      { id: 'c2', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c3', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c4', rank: '10', value: 10, actionText: null, played: false },
-      { id: 'c5', rank: '10', value: 10, actionText: null, played: false },
+      { id: 'j1', rank: 'Joker', value: -1, actionText: undefined, played: false },
+      { id: 'c2', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c3', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c4', rank: '10', value: 10, actionText: undefined, played: false },
+      { id: 'c5', rank: '10', value: 10, actionText: undefined, played: false },
     ];
 
     // Test with all card ranks
@@ -189,14 +170,14 @@ describe('MCTS Bot - Joker Protection', () => {
         id: `d-${rank}`,
         rank: rank as Card['rank'],
         value: rank === 'K' ? 0 : rank === 'A' ? 1 : parseInt(rank) || 10,
-        actionText: null,
+        actionText: undefined,
         played: false,
       };
 
       const context = createTestContext(botCards, [0], drawnCard);
       const selectedPosition = botService.selectBestSwapPosition(
         drawnCard,
-        context
+        context,
       );
 
       // Bot should NEVER select position 0 (Joker) for ANY card
