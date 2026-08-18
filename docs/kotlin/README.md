@@ -1,7 +1,7 @@
 # Kotlin workspace — setup, state and handoff
 
-Everything needed to pick this migration up on another machine, in particular a Mac where
-the iOS targets can finally be built.
+Everything needed to pick this migration up on another machine. The iOS targets have now
+been built and tested on a Mac (§5); Android is the remaining untried platform.
 
 - **Plan of record**: `openspec/changes/migrate-to-kotlin-multiplatform/` (proposal, design, tasks)
 - **Cross-language contract**: `docs/game-engine/RECORDING.md`
@@ -33,9 +33,20 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - Platform gate measured: Worker bundle 123 KB gzipped (4% of the 3 MB budget);
   Compose/Wasm 3.7 MB gzipped (accepted by the product owner)
 
+**Done — first macOS session**
+
+- The iOS targets of `shared:shapes` **compile for the first time** (`iosArm64`,
+  `iosSimulatorArm64`); `Prng` needed no changes, so the toolchain is sound
+- `PrngVectorsTest` moved to `commonTest` and now runs on **JVM, JS/Node and the iOS
+  simulator** — 6 tests on each — against the one shared vector file (§5 step 2 records how
+  and why)
+- `kmp/gradle.properties` added: the Compose/Wasm production compile ran out of memory on
+  the Kotlin daemon's default heap (§7)
+
 **Next**
 
-1. iOS bring-up on the Mac (§5) — this is why the machine changed
+1. `composeApp` Android + iOS targets and the `iosApp` Xcode project (§5 steps 3–4).
+   **Blocked on this machine**: no Android SDK installed
 2. Remaining gate items: MCTS inside the Durable Object CPU budget; two clients through one
    Durable Object
 3. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
@@ -45,13 +56,14 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 ## 2. Prerequisites
 
-| Tool     | Version used  | Notes                                                    |
-| -------- | ------------- | -------------------------------------------------------- |
-| JDK      | 17 (Temurin)  | Gradle toolchain; 17+ is fine                            |
-| Gradle   | 8.14          | Via the committed wrapper — do not install system Gradle |
-| Node     | 24            | For the TypeScript side and `vite-node` tools            |
-| Xcode    | latest stable | **macOS only**; needed for the iOS targets               |
-| wrangler | 4.x           | `npx wrangler` — no global install needed                |
+| Tool        | Version used  | Notes                                                                          |
+| ----------- | ------------- | ------------------------------------------------------------------------------ |
+| JDK         | 17 (Temurin)  | Gradle toolchain; 17+ is fine                                                  |
+| Gradle      | 8.14          | Via the committed wrapper — do not install system Gradle                       |
+| Node        | 24            | For the TypeScript side and `vite-node` tools                                  |
+| Xcode       | latest stable | **macOS only**; needed for the iOS targets                                     |
+| wrangler    | 4.x           | `npx wrangler` — no global install needed                                      |
+| Android SDK | API 35        | Not yet needed; required once `composeApp` gains `androidTarget()` (§5 step 3) |
 
 ```bash
 git clone <repo> && cd vinto
@@ -63,7 +75,7 @@ cd kmp && ./gradlew --version   # bootstraps Gradle 8.14 on first run
 
 | Module          | Targets                                         | Purpose                                                                           |
 | --------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- |
-| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS) | Types + `Prng`. The port starts here.                                             |
+| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS) | Types + `Prng`. The port starts here. Its tests run on every target above.        |
 | `worker`        | js                                              | Cloudflare Worker / Durable Object bundle. Currently the platform-gate payload.   |
 | `composeApp`    | wasmJs                                          | Compose UI. Currently the platform-gate payload; Android/iOS targets to be added. |
 
@@ -74,7 +86,8 @@ scaffolded empty.
 
 ```bash
 # --- Kotlin (run from kmp/) ---
-./gradlew :shared:shapes:jvmTest              # cross-language PRNG parity check
+./gradlew :shared:shapes:allTests             # PRNG parity on every target (JVM, JS, iOS sim)
+./gradlew :shared:shapes:jvmTest              # just the JVM leg, when iterating
 ./gradlew :worker:jsNodeProductionRun         # run the Kotlin/JS gate payload
 ./gradlew :composeApp:wasmJsBrowserDistribution   # build the Compose web bundle
 ./gradlew build                               # everything available on this host
@@ -86,28 +99,55 @@ npm run recordings:replay -- fixtures/recordings    # parity gate via CLI
 npm run recordings:generate -- --games 5 --seed 1   # ~75 s per game
 ```
 
-## 5. iOS bring-up (do this first on the Mac)
+## 5. iOS bring-up
 
 iOS targets are declared behind a host check in `kmp/shared/shapes/build.gradle.kts`, so
-they activate automatically on macOS. **They have never been compiled** — no Mac was
-available — so expect to fix things.
+they activate automatically on macOS.
 
-1. `cd kmp && ./gradlew :shared:shapes:build` — this is the first time `iosArm64` and
-   `iosSimulatorArm64` will ever compile. `Prng` is pure Kotlin with no platform APIs, so it
-   should pass; if it does, the toolchain is sound.
-2. Run the parity check on an iOS simulator target to prove the contract holds on Apple
-   platforms, not just JVM/JS. Note `PrngVectorsTest` is currently **jvmTest only** because
-   it reads the vectors file from disk; on iOS the fixture must be bundled as a resource or
-   the vectors embedded at build time. Decide which, and prefer keeping the single shared
-   file if at all possible — the whole point is that both languages read the _same_ bytes.
-3. Add `androidTarget()` and the iOS targets to `composeApp`, plus the `iosApp` Xcode
-   project (design D1).
-4. Revisit the host check: once macOS is the primary dev machine, consider making iOS
-   targets unconditional and instead guarding on non-Mac hosts, so shared-code breakage
-   surfaces immediately.
+**Why this was deferred until a Mac existed**: Kotlin/Native cannot build Apple targets on
+Windows at all. It is a hard toolchain limitation, not a configuration gap.
 
-**Why this was deferred**: Kotlin/Native cannot build Apple targets on Windows at all. It is
-a hard toolchain limitation, not a configuration gap.
+### Step 1 — first compile ✅ done
+
+`./gradlew :shared:shapes:build` compiled `iosArm64` and `iosSimulatorArm64` for the first
+time. `Prng` is pure Kotlin with no platform APIs and needed **no changes**, so the
+toolchain is sound and nothing in the shared code was Windows-shaped.
+
+### Step 2 — parity on iOS ✅ done
+
+`PrngVectorsTest` now lives in `commonTest` and runs on JVM, JS/Node and the iOS simulator —
+6 tests on each, all green. Verify with `./gradlew :shared:shapes:allTests`.
+
+Getting the fixture onto a target with no filesystem needed a decision. The options were to
+bundle `vectors.json` as a Kotlin/Native resource, or to embed it. **Embedding won**, but
+not by transcribing the numbers into Kotlin — a hand-copied table can drift from the file
+TypeScript reads, and the parity test would then pass while proving nothing.
+
+Instead, the Gradle task `:shared:shapes:generatePrngVectorsSource` reads
+`fixtures/prng/vectors.json` and emits it as a Kotlin string constant. So:
+
+- there is still exactly **one** shared file, and it is a declared task input, so changing it
+  regenerates the constant — no second copy to keep in sync
+- the JSON is embedded **verbatim**; the test parses the same bytes with the same serializer
+  it used before (a round-trip check confirmed the embedded literal is byte-identical to the
+  file)
+- the wiring was verified negatively: perturbing one `finalState` in the fixture by 1 made
+  the iOS test fail, so the check is not vacuous
+
+Resource bundling was rejected because Kotlin/Native test binaries have no straightforward
+resource access without an extra plugin, and it would have bought nothing over this.
+
+### Step 3 — `composeApp` on Android and iOS ⬜ not started
+
+Add `androidTarget()` and the iOS targets to `composeApp`, plus the `iosApp` Xcode project
+(design D1). **Blocked on the current machine**: no Android SDK is installed (`ANDROID_HOME`
+unset, no `~/Library/Android/sdk`). The iOS half could be done first if you want to split it.
+
+### Step 4 — revisit the host check ⬜ not started
+
+Now that macOS is the primary dev machine, consider making the iOS targets unconditional and
+guarding on non-Mac hosts instead, so shared-code breakage surfaces immediately rather than
+only on a Mac.
 
 ## 6. Decisions already made — do not silently reopen
 
@@ -152,6 +192,17 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
 
 **Kotlin**
 
+- **The Compose/Wasm production compile needs more heap than the Kotlin daemon's default.**
+  On an 8 GB Mac `:composeApp:compileProductionExecutableKotlinWasmJs` failed with "Not
+  enough memory to run compilation" — while the same task had succeeded on a larger machine
+  with no `gradle.properties` at all. `kmp/gradle.properties` now pins
+  `kotlin.daemon.jvmargs=-Xmx3g` and `org.gradle.jvmargs=-Xmx2g` so the build does not
+  silently depend on how much RAM the developer happens to have. If it still OOMs, raise the
+  Kotlin daemon figure first, and run `./gradlew --stop` after changing either value —
+  a running daemon keeps its old heap.
+- **Backticked test names with spaces are JVM-only.** Kotlin rejects them for JS and Native,
+  so anything in `commonTest` must use camelCase names. This is why `PrngVectorsTest` reads
+  `reproducesEveryPublishedShuffle` and not `` `reproduces every published shuffle` ``.
 - `gradlew` **must stay LF** or it fails on Linux/CI with "bad interpreter". Pinned in
   `.gitattributes`; don't undo it.
 - Kotlin/JS **tree-shakes to the exported surface** — a library build with nothing
@@ -175,7 +226,7 @@ npm ci
 npm test                                       # expect ~608 passing across 5 projects
 npx nx run-many --target=typecheck --all --skip-nx-cache   # expect 5 green
 npm run recordings:replay -- fixtures/recordings           # expect 50/50 clean
-cd kmp && ./gradlew :shared:shapes:jvmTest                 # expect 6 tests, PRNG parity
+cd kmp && ./gradlew :shared:shapes:allTests                # expect 6 PRNG tests per target
 ./gradlew :worker:jsNodeProductionRun                      # expect "gate ok: rngState=2583707619"
 ```
 

@@ -180,6 +180,13 @@ kmp/
   state).
 - Gate policy: any divergence blocks merge; fixture regeneration requires a rules
   justification and updates both implementations in the same PR.
+- **Shared fixtures reach filesystem-less targets by generation, never transcription.**
+  Kotlin/Native has no filesystem for a test to read `fixtures/prng/vectors.json` from, and
+  the same will apply to the recording corpus on iOS. The rule: a Gradle task takes the
+  committed fixture as a declared input and emits it verbatim as a Kotlin constant (see
+  `:shared:shapes:generatePrngVectorsSource`). Hand-copying fixture values into Kotlin is
+  forbidden — a copy can drift from the file TypeScript reads, and the parity test would
+  then pass while proving nothing. One file, one source of truth, in both languages.
 
 ### D8. Delivery
 

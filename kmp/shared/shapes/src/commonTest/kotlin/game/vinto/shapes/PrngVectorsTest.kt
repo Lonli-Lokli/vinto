@@ -1,6 +1,5 @@
 package game.vinto.shapes
 
-import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -10,10 +9,19 @@ import kotlin.test.assertTrue
 /**
  * The first genuine cross-language parity check.
  *
- * This reads `fixtures/prng/vectors.json` — the very same committed file the TypeScript
- * test reads — rather than a Kotlin copy of the numbers. If the two implementations ever
- * disagree, this fails before any engine code is ported, which is the cheapest possible
- * place to find out.
+ * The vectors are the contents of `fixtures/prng/vectors.json` — the very same committed
+ * file the TypeScript test reads — embedded at build time by
+ * `:shared:shapes:generatePrngVectorsSource` rather than transcribed into Kotlin. A
+ * transcription could drift from the file TypeScript reads, and this test would then pass
+ * while proving nothing.
+ *
+ * This lives in `commonTest` so it runs on every configured target, including iOS, where
+ * there is no filesystem to read a fixture from. If the two implementations ever disagree,
+ * it fails before any engine code is ported, which is the cheapest possible place to find
+ * out.
+ *
+ * Test names are camelCase, not backticked prose: Kotlin only permits spaces in identifiers
+ * on the JVM, and this must compile for JS and Native too.
  */
 class PrngVectorsTest {
 
@@ -40,22 +48,20 @@ class PrngVectorsTest {
         val finalState: Long,
     )
 
-    private val vectors: Vectors = run {
-        // kmp/shared/shapes -> repo root
-        val file = File("../../../fixtures/prng/vectors.json")
-        assertTrue(file.exists(), "missing shared vector file at ${file.absolutePath}")
-        Json { ignoreUnknownKeys = true }.decodeFromString(file.readText())
+    private companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+        val vectors: Vectors = json.decodeFromString(PrngVectorsFixture.JSON)
     }
 
     @Test
-    fun `reads the shared vector file`() {
+    fun readsTheSharedVectorFile() {
         assertEquals("mulberry32", vectors.algorithm)
         assertEquals(0x6D2B79F5L, vectors.increment)
         assertTrue(vectors.sequences.isNotEmpty())
     }
 
     @Test
-    fun `reproduces every published sequence`() {
+    fun reproducesEveryPublishedSequence() {
         for (sequence in vectors.sequences) {
             var state = Prng.seed(sequence.seed)
             val produced = sequence.values.map {
@@ -70,7 +76,7 @@ class PrngVectorsTest {
     }
 
     @Test
-    fun `reproduces every published bounded sequence`() {
+    fun reproducesEveryPublishedBoundedSequence() {
         for (bounded in vectors.boundedSequences) {
             var state = Prng.seed(bounded.seed)
             val produced = bounded.values.map {
@@ -88,7 +94,7 @@ class PrngVectorsTest {
     }
 
     @Test
-    fun `reproduces every published shuffle`() {
+    fun reproducesEveryPublishedShuffle() {
         for (shuffleVector in vectors.shuffles) {
             val deck = (0 until shuffleVector.deckSize).toList()
             val result = Prng.shuffle(deck, Prng.seed(shuffleVector.seed))
@@ -103,7 +109,7 @@ class PrngVectorsTest {
     }
 
     @Test
-    fun `state stays within uint32 across many draws`() {
+    fun stateStaysWithinUint32AcrossManyDraws() {
         // The trap this guards: holding the state in a signed Int silently corrupts any
         // value at or above 2^31.
         var state = Prng.seed(0xFFFFFFFFL)
@@ -116,7 +122,7 @@ class PrngVectorsTest {
     }
 
     @Test
-    fun `nextInt is never negative`() {
+    fun nextIntIsNeverNegative() {
         // Kotlin's % is negative for a negative left operand; JavaScript's would not be.
         var state = Prng.seed(7)
         repeat(500) {

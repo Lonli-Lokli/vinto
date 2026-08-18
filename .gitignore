@@ -74,5 +74,6 @@ accessibility-reports/
 # Kotlin / Gradle
 kmp/**/build/
 kmp/.gradle/
+kmp/.kotlin/
 kmp/kotlin-js-store/
 kmp/local.properties
