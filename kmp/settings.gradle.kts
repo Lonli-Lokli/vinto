@@ -4,12 +4,15 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
+        google()
     }
 }
 
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        // Compose Multiplatform pulls androidx artifacts from Google's Maven.
+        google()
     }
 }
 
@@ -17,3 +20,4 @@ dependencyResolutionManagement {
 // openspec/changes/migrate-to-kotlin-multiplatform/design.md (D1) is added as it is ported.
 include(":shared:shapes")
 include(":worker")
+include(":composeApp")

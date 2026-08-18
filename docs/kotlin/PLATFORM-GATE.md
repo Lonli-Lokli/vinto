@@ -50,11 +50,33 @@ Cannot be measured until the bot is ported (phase 6). What is known:
 The headroom looks ample, but this stays **open** until measured with the real ported bot.
 It is not a blocker for starting the port.
 
-## 2a.2 — Compose/Wasm bundle: NOT YET MEASURED
+## 2a.2 — Compose/Wasm bundle: MEASURED, and it is the problem
 
-Outstanding. Compose for web is the least mature Compose target and its bundle is expected
-to be far larger than the Worker's. This is now **the largest remaining platform risk**,
-and it gates the decision to rewrite the web client in Compose.
+`kmp/composeApp` is a hello-world: `MaterialTheme`, one `Column`, two `Text`s and one
+`Button` with a tap counter. Production `wasmJsBrowserDistribution`:
+
+| Artefact                |                      Raw |                Gzipped |
+| ----------------------- | -----------------------: | ---------------------: |
+| skiko runtime (`.wasm`) |                8,401,120 |              3,232,928 |
+| app code (`.wasm`)      |                1,464,595 |                458,410 |
+| `composeApp.js`         |                  554,874 |                100,928 |
+| **Total**               | **10,421,887 (10.2 MB)** | **3,792,573 (3.7 MB)** |
+
+For comparison, the entire existing Next.js client — the whole game, all chunks, some of
+them lazy-loaded — is **2.0 MB raw / 620 KB gzipped**.
+
+**A Compose/Wasm hello-world is therefore about 6× the gzipped payload of the complete
+existing web app, before a single line of game UI.** The bulk is skiko, the Skia renderer
+compiled to WebAssembly; it is a fixed cost, so the real UI would grow this sublinearly —
+but the floor is the floor.
+
+This does **not** affect Compose on Android or iOS, which are native and carry no such
+payload. The finding is specific to the web target.
+
+Judgement: acceptable for an installed app or a returning player with a warm cache;
+questionable for a casual card game that people open from a shared link on a phone. This
+is a product call, not a technical blocker — recorded here so it is made with the number
+in hand rather than in the abstract.
 
 ## 2a.3 — Two clients through one Durable Object: NOT YET MEASURED
 
