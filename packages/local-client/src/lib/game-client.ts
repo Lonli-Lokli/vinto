@@ -13,6 +13,7 @@ import {
   type Card,
   type Rank,
   type GameRecordingSettings,
+  type GameRecording,
   logger,
   rehydrateGameState,
 } from '@vinto/shapes';
@@ -124,6 +125,14 @@ export class GameClient {
   /** The current game as a replayable `GameRecording` JSON document. */
   exportRecording(): string {
     return this._recorder.toJSON(this._state);
+  }
+
+  /**
+   * The current game with per-action state hashes filled in, for fixtures and parity
+   * checks. Hashing is async, so this cannot happen inline during dispatch.
+   */
+  exportRecordingWithHashes(): Promise<GameRecording> {
+    return this._recorder.toRecordingWithHashes(this._state);
   }
 
   get recordedActionCount(): number {

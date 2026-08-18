@@ -16,6 +16,13 @@ import {
  */
 export class GameRecorder {
   private readonly actions: RecordedAction[] = [];
+  /**
+   * The state each action produced, captured inside `dispatch` before any observer can
+   * react. Snapshotting `client.state` after `dispatch()` returns is not equivalent:
+   * `dispatch` is a MobX action, so reactions fire as it completes and the bot adapter
+   * can dispatch again re-entrantly, leaving `client.state` several actions ahead.
+   */
+  private readonly statesAfter: GameState[] = [];
   private latestState: GameState;
 
   constructor(
@@ -34,6 +41,7 @@ export class GameRecorder {
 
   record(action: GameAction, stateAfter: GameState): void {
     this.actions.push({ action });
+    this.statesAfter.push(stateAfter);
     this.latestState = stateAfter;
   }
 
@@ -58,18 +66,15 @@ export class GameRecorder {
    * rather than required data.
    */
   async toRecordingWithHashes(
-    replayStates: GameState[],
     finalState: GameState = this.latestState,
   ): Promise<GameRecording> {
     const recording = this.toRecording(finalState);
 
     recording.actions = await Promise.all(
-      recording.actions.map(async (entry, index) => {
-        const stateAfter = replayStates[index];
-        return stateAfter
-          ? { ...entry, stateHash: await hashGameState(stateAfter) }
-          : entry;
-      }),
+      recording.actions.map(async (entry, index) => ({
+        ...entry,
+        stateHash: await hashGameState(this.statesAfter[index]),
+      })),
     );
     recording.finalStateHash = await hashGameState(finalState);
 

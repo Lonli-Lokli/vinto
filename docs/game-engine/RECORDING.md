@@ -232,10 +232,19 @@ replays the whole corpus; any divergence blocks the release.
 Regenerating the corpus requires a stated justification, and the change must update every
 implementation together.
 
-### Known gap
+### What the corpus must cover
 
-The corpus currently contains **no scoring phase and no coalition final round**, because
-bots do not call Vinto and a Vinto call is the only way a game ends — so all-bot self-play
-never terminates. Generation is capped with `--max-actions`, producing valid mid-game
-recordings. Until the bot's Vinto decision is fixed, the corpus does not exercise final
-scoring or the coalition rules.
+Replaying cleanly is not enough. A corpus that never reaches scoring, never reshuffles and
+never plays a coalition round would look like a gate while exercising only the easy half of
+the engine, so `replay-fixtures.test.ts` also asserts that the committed corpus contains:
+
+- at least 50 recordings, each with a `stateHash` on every action
+- at least one game that reaches the `scoring` phase
+- at least one coalition final round (`vintoCallerId` and `coalitionLeaderId` both set)
+- at least one **mid-game draw-pile reshuffle** — the engine's only consumer of `rngState`,
+  so without one the seeded generator is never exercised end to end
+- at least one occurrence of each of `DRAW_CARD`, `DISCARD_CARD`, `USE_CARD_ACTION`,
+  `SELECT_ACTION_TARGET`, `PARTICIPATE_IN_TOSS_IN`, `DECLARE_KING_ACTION` and `CALL_VINTO`
+
+Games are capped by `--max-actions` rather than wall-clock, so generation does not depend
+on machine speed. A recording that hits the cap is a valid mid-game fixture.

@@ -11,19 +11,12 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { copy } from 'fast-copy';
 import { join } from 'node:path';
-import {
-  GAME_RECORDING_FORMAT_VERSION,
-  GameAction,
-  GameRecording,
-  GameState,
-  hashGameState,
-} from '@vinto/shapes';
+import { GameAction, GameRecording, GameState } from '@vinto/shapes';
 import { GameActions } from '@vinto/engine';
 import {
   BotAIAdapter,
   GameClient,
   fourPlayerGame,
-  recordingSettingsFromState,
 } from '@vinto/local-client/headless';
 
 const FIXTURES_DIR = join(process.cwd(), 'fixtures', 'recordings');
@@ -86,19 +79,9 @@ async function playGame(
   // The AnimationService normally advances visual state once an animation finishes;
   // headless, we advance it immediately so bots react without waiting.
   const dispatch = client.dispatch.bind(client);
-  const actions: GameAction[] = [];
-  const states: GameState[] = [];
 
   client.dispatch = (action: GameAction) => {
-    const before = client.recordedActionCount;
     dispatch(action);
-    if (client.recordedActionCount > before) {
-      actions.push(action);
-      // Deep-copy at capture time. Hashes are computed once the game ends, and engine
-      // utilities such as advanceTurnAfterTossIn mutate state in place, so holding a
-      // live reference would hash a state that has moved on since the action.
-      states.push(copy(client.state));
-    }
     client.syncVisualState();
   };
 
@@ -131,40 +114,23 @@ async function playGame(
   const deadline = Date.now() + timeoutMs;
   while (
     client.state.phase !== 'scoring' &&
-    actions.length < maxActions &&
+    client.recordedActionCount < maxActions &&
     Date.now() < deadline
   ) {
     await sleep(2);
   }
 
   const finished = client.state.phase === 'scoring';
-  const stalled = !finished && actions.length < maxActions;
+  const stalled = !finished && client.recordedActionCount < maxActions;
   adapter.dispose();
 
-  // Snapshot the action list first and derive finalState from it, rather than reading
-  // client.state: an in-flight bot sequence can still dispatch after dispose(), and a
-  // finalState that included an action missing from the list would fail its own replay.
-  const recordedActions = [...actions];
-  const recordedStates = states.slice(0, recordedActions.length);
-  const finalState = recordedStates.at(-1) ?? initialState;
-
-  const recording: GameRecording = {
-    formatVersion: GAME_RECORDING_FORMAT_VERSION,
-    meta: {
-      recordedAt: new Date().toISOString(),
-      producer: 'vinto-ts/generate-recordings',
-      label: `selfplay seed=${seed} difficulty=${difficulty}`,
-    },
-    settings: recordingSettingsFromState(initialState),
-    initialState,
-    actions: await Promise.all(
-      recordedActions.map(async (action, index) => ({
-        action,
-        stateHash: await hashGameState(recordedStates[index]),
-      })),
-    ),
-    finalState,
-    finalStateHash: await hashGameState(finalState),
+  // The recorder captured the state each action produced inside dispatch, before any
+  // observer could react, so its hashes are aligned with its actions by construction.
+  const recording = await client.exportRecordingWithHashes();
+  recording.meta = {
+    recordedAt: new Date().toISOString(),
+    producer: 'vinto-ts/generate-recordings',
+    label: `selfplay seed=${seed} difficulty=${difficulty}`,
   };
 
   return {
@@ -212,18 +178,17 @@ async function main(): Promise<void> {
   // while testing far less than it appears to.
   if (unfinished > 0) {
     console.warn(
-      `NOTE: ${unfinished}/${written} game(s) did not reach 'scoring'. Bots do not ` +
-        `currently call Vinto, and a Vinto call is the only way a game ends, so all-bot ` +
-        `self-play runs indefinitely. These are valid mid-game recordings (capped at ` +
-        `--max-actions ${options.maxActions}) and replay fine, but the corpus contains ` +
-        `no scoring phase and no coalition final round until that is addressed.`,
+      `NOTE: ${unfinished}/${written} game(s) did not reach 'scoring'. These are valid ` +
+        `mid-game recordings and replay fine, but they contribute no final scoring or ` +
+        `coalition round to the corpus. A game ends only when a bot calls Vinto, which ` +
+        `needs a fully known hand worth <= 0, so some games simply run long.`,
     );
   }
   if (stalledGames > 0) {
     console.warn(
       `WARNING: ${stalledGames} game(s) stopped on the ${options.timeoutMs}ms wall-clock ` +
-        `timeout before reaching --max-actions. Raise --timeout; a time-based cut makes ` +
-        `output depend on machine speed.`,
+        `timeout before reaching --max-actions ${options.maxActions}. Raise --timeout if ` +
+        `you want them to finish; a time-based cut makes output depend on machine speed.`,
     );
   }
 }

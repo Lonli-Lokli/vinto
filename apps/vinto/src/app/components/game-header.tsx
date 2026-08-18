@@ -14,6 +14,7 @@ import {
 import { SettingsPopover } from './mobile-settings';
 import { BugReportModal } from './modals';
 import { GameActions } from '@vinto/engine';
+import { downloadRecording } from '../utils/download-recording';
 import { useGameClient } from '@vinto/local-client';
 
 export const GameHeader = observer(() => {
@@ -85,6 +86,18 @@ export const GameHeader = observer(() => {
                     />
                   ))}
                 </div>
+
+                {/* Export the current game as a replayable recording */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadRecording(gameClient.exportRecording())
+                  }
+                  title="Export game (JSON) — replayable, useful for bug reports"
+                  className="px-2 py-1 text-xs rounded border border-primary/20 bg-surface-secondary text-primary hover:bg-surface-primary transition-colors"
+                >
+                  Export
+                </button>
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { useRef, useEffect } from 'react';
 import { DifficultyButton } from './buttons';
 import { useGameClient } from '@vinto/local-client';
 import { GameActions } from '@vinto/engine';
+import { downloadRecording } from '../utils/download-recording';
 
 export const SettingsPopover = observer(
   ({
@@ -62,6 +63,24 @@ export const SettingsPopover = observer(
                 />
               ))}
             </div>
+          </div>
+
+          {/* Export */}
+          <div>
+            <label className="block text-base font-medium text-primary mb-2">
+              Game recording
+            </label>
+            <button
+              type="button"
+              onClick={() => downloadRecording(gameClient.exportRecording())}
+              className="w-full px-3 py-2 text-base rounded-md border border-primary/20 bg-surface-secondary text-primary hover:bg-surface-primary transition-colors"
+            >
+              Export game (JSON)
+            </button>
+            <p className="mt-1 text-xs text-secondary">
+              Replayable with <code>npm run recordings:replay</code>. Attach it
+              to a bug report to reproduce the exact game.
+            </p>
           </div>
         </div>
       </div>
