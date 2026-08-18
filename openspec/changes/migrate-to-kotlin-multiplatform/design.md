@@ -254,6 +254,13 @@ kmp/
   places — Android, iOS, browser (Wasm) and the Durable Object (JS). There is no separate
   "retire the TypeScript engine" follow-up any more: the web rewrite in Compose is what
   retires it, inside this change.
+- **Compose/Wasm bundle size: measured and accepted.** A hello-world Compose web build is
+  10.2 MB raw / **3.7 MB gzipped** (8.4 MB of it the skiko renderer), against 2.0 MB /
+  620 KB gzipped for the entire current Next.js client. The product owner accepted this
+  cost on 2026-08-18 in exchange for one UI codebase across Android, iOS and web. Numbers
+  and method in `docs/kotlin/PLATFORM-GATE.md`; do not reopen without new measurements.
+  Note it is a floor, not a ceiling — skiko is fixed cost, so the real UI grows it
+  sublinearly.
 - **Kotlin-to-web bundle size is the biggest unknown, and it is load-bearing twice.** The
   Worker must fit a Kotlin/JS bundle containing the engine _and_ MCTS within Cloudflare's
   script-size limit, and the browser must ship a Compose/Wasm bundle users will actually
