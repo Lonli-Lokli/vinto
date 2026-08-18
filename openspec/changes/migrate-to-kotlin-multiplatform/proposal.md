@@ -2,11 +2,13 @@
 
 ## Why
 
-Vinto should become a native mobile game on Android and iOS. The current stack (Next.js /
-React / MobX) is web-first; wrapping it in a webview would give a poor game feel and no
-shared path to a future authoritative multiplayer server. Kotlin Multiplatform lets one
-Kotlin codebase provide the engine, bot and client logic for Android, iOS and (later) a
-JVM server, and Compose Multiplatform lets one UI target both phones.
+Vinto should become a native game on Android and iOS, with the existing web client joining
+the same online games. The current stack (Next.js / React / MobX) is web-first; wrapping it
+in a webview would give a poor game feel and no shared path to an authoritative multiplayer
+server. Kotlin Multiplatform lets one Kotlin codebase provide the engine, bot and client
+logic for **all four runtimes** — Android native, iOS native, the browser (Kotlin/Wasm) and
+the server (Kotlin/JS inside a Cloudflare Durable Object) — and Compose Multiplatform lets
+one UI target all three clients.
 
 The existing architecture is well suited to the port: a pure reducer engine over an
 immutable, serialisable `GameState`, actions as JSON data, bots dispatching through the
@@ -42,11 +44,19 @@ by replaying recorded TypeScript games and comparing state hashes after every ac
   reporting, CI on GitHub Actions (JVM tests, Android build, iOS build + simulator tests,
   parity).
 - **Online multiplayer with humans** (every game is exactly 4 players): 1 human vs 3 bots
-  offline; 2–4 humans in a 4-seat room with bots filling empty seats; all-human tables of 4. A server-authoritative Ktor service runs the
-  _same_ shared engine and bots on the JVM, validates every action, records the game, and
-  sends each seat only what it may see (redacted views). Guest identity only.
-- **Web**: stays on the TypeScript engine until the Kotlin engine passes the parity gate;
-  a mandatory follow-up change retires the TypeScript engine so exactly one engine remains.
+  offline; 2–4 humans in a 4-seat room with bots filling empty seats; all-human tables of 4.
+  A server-authoritative **Cloudflare Durable Object per room** runs the _same_ shared
+  engine and bots (as a Kotlin/JS bundle), validates every action, records the game, and
+  sends each seat only what it may see (redacted views). Guest identity only. There is no
+  JVM server — the target is Cloudflare's free tier, which runs JS/Wasm — and bots must run
+  in the room process, since a client cannot decide a bot's move without being handed that
+  seat's hidden cards.
+- **Web**: rewritten as a Compose Multiplatform (Kotlin/Wasm) client, so Android, iOS and
+  the browser share one UI codebase and one engine and can play in the same game. The
+  existing Next.js app keeps running until that client reaches parity, then it and
+  `packages/engine`/`packages/bot` are retired **inside this change** — the previously
+  planned follow-up change is no longer needed. Accepted cost: the current Playwright e2e
+  suite and WCAG 2.1 AA work must be re-established in Compose.
 
 ## Impact
 

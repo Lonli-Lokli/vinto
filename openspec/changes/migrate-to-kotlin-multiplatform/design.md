@@ -13,12 +13,13 @@ gate is green in CI in both directions.
 
 ## Goals / Non-Goals
 
-- Goals: one Kotlin codebase for Android + iOS; exact engine parity; exactly one bot
+- Goals: one Kotlin codebase for Android, iOS **and web**; exact engine parity; exactly one bot
   engine, at least as strong as the better of today's two; game feel (animations) at least
   equal to the web app; online play with humans (always 4 seats, bots fill) on a
-  server-authoritative Ktor service that runs the same shared engine.
-- Non-goals (this change): web in Kotlin (mandatory follow-up change), accounts,
-  monetisation, hot-seat on one device, spectators, tablets/desktop layouts beyond "works".
+  server-authoritative Cloudflare Durable Object per room that runs the same shared engine.
+- Non-goals (this change): accounts, monetisation, hot-seat on one device, spectators,
+  tablets/desktop layouts beyond "works". Web in Kotlin is now **in** scope (D1, D6), so
+  there is no separate follow-up change.
 
 ## Decisions
 
@@ -33,16 +34,28 @@ kmp/
   shared/bot         # heuristics, opponent modeler, coalition planner, MCTS
   shared/client      # GameSession (Local/Remote), BotAIAdapter, GameRecorder, initializeGame
   shared/protocol    # WebSocket message types (join/action/event/resync/error)
-  server             # Ktor: rooms, authoritative engine, server-side bots, recordings
+  worker             # Cloudflare Worker + Durable Object room (Kotlin/JS bundle)
   parity-tests       # JVM tests replaying ../fixtures/recordings + TS↔KT round trips
-  composeApp         # Compose Multiplatform UI (androidMain, iosMain, commonMain)
+  composeApp         # Compose Multiplatform UI (androidMain, iosMain, wasmJsMain, commonMain)
   iosApp             # Xcode project embedding composeApp framework
 ```
 
 - Kept in the same repo so fixtures, docs and CI live next to the reference. Nx may wrap
   Gradle via `@nx/gradle` later; not required.
-- Kotlin 2.x, KMP targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`
-  (tests, tools, server). Compose Multiplatform ≥ 1.8 (iOS stable).
+- Kotlin 2.x, KMP targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`,
+  `js(IR)` (the Cloudflare Worker), `wasmJs` (Compose web client) and `jvm`
+  (tests and tooling only). Compose Multiplatform ≥ 1.8 (iOS stable).
+- **There is no JVM server target.** The deployment platform is Cloudflare's free tier,
+  which runs JavaScript and WebAssembly, not a JVM — so the authoritative room is a
+  Durable Object fed by a Kotlin/JS bundle (D9), not a Ktor container.
+- The engine therefore runs in **four** places from one source: Android native, iOS
+  native, the browser (Kotlin/Wasm, inside `composeApp`) and the server (Kotlin/JS,
+  inside the Durable Object). That is what lets web, Android and iOS share one game, and
+  it removes the previously planned "retire the TypeScript engine later" follow-up: there
+  is only ever one engine.
+- Note the two distinct web toolchains: the **Worker** is Kotlin/JS (`js(IR)`), while the
+  **browser client** is Kotlin/Wasm. They are separate build outputs with separate size
+  budgets, and both are validated by the prototype gate before any port work begins.
 - Libraries: kotlinx.serialization-json, kotlinx.coroutines, kotlinx.datetime, Koin,
   kotlin.test (+ Turbine for flows), Okio (files) or platform APIs behind `expect/actual`,
   a small SHA-256 (e.g. `org.kotlincrypto` or hand-written) so hashing is identical on
@@ -82,14 +95,14 @@ kmp/
 
 ### D4. Bot port — exactly one bot engine
 
-- **Only one bot decision engine is ported.** Today there are two (`v1` MCTS in
-  `mcts-bot-decision.ts`, `v2` in `strategic-bot-decision.ts`) and it is not known which is
-  stronger. Before any bot code is ported, a TypeScript tournament tool
-  (`tools/tournament.ts`: seeded self-play, v1-vs-v2 mixed tables, ≥ 500 games per
-  difficulty, 4-player tables, reporting win rate, mean final score, coalition win rate and
-  decision latency) decides the winner; the loser is deleted from the TypeScript codebase
-  in the same change so both stacks have one bot. `botVersion` disappears from
-  `GameState`/settings (recording format stays v1: the field becomes optional-ignored).
+- **Only one bot decision engine exists — decided and done.** The planned v1-vs-v2
+  tournament was cancelled because its premise failed: v2 (`strategic-bot-decision.ts`)
+  read opponents' actual hidden hands in three places, so a head-to-head would have
+  measured how much cheating is worth rather than which bot is stronger. v1 (MCTS, which
+  estimates opponents from `BotMemory`) was kept; v2 and `botVersion` are deleted. Full
+  reasoning in `docs/bot/BOT-ENGINE-DECISION.md`.
+- Consequence for the port: there is exactly one `BotDecisionService` to port, and
+  `BotDecisionServiceFactory.create` takes only a difficulty.
 - The winner's deterministic components (heuristics, evaluation helpers, opponent modeler,
   Vinto round solver, `coalition-planner`) are ported exactly and their TS unit tests
   ported 1:1 (the coalition planner tests are pure input → decision).
@@ -97,10 +110,15 @@ kmp/
   (`kotlin.random.Random(seed)`) and the budget is `iterations` and/or `timeLimit`; tests
   use a fixed iteration budget so results are reproducible; production keeps a wall-clock
   cap per difficulty.
-- Strength validation: seeded self-play tournaments KT-vs-KT compared to TS-vs-TS win rates
-  and coalition win rates over ≥ 500 games per configuration; regressions > 5 pp block.
+- Strength validation: there is no TypeScript tournament report to compare against, since
+  phase 1 was decided on code evidence. Generate a TypeScript baseline with
+  `npm run recordings:generate` and compare the Kotlin bot over the same number of seeded
+  games (final scores, coalition win rate, decision latency). Budget the sample
+  deliberately: a self-play game costs ~75 s on a developer machine.
 - Threading: `BotDecisionService` methods are `suspend` and run on `Dispatchers.Default`
-  (client) or a worker pool (server); the caller awaits them from the session coroutine.
+  on clients. Inside the Durable Object there is one thread and a 30 s CPU budget per
+  request — which is precisely what makes server-side MCTS possible on the free tier — so
+  the object awaits the decision inline rather than fanning out to a pool.
 
 ### D5. Client port — one `GameSession` abstraction for local and online play
 
@@ -181,11 +199,24 @@ kmp/
   (online, `RemoteGameSession`); all-human tables of 4. Room is
   created by a host, joined by code/link, seats are assigned, host starts. Guest identity
   (device id + nickname) only — no accounts in this change.
-- **Server**: Ktor on the JVM target of the shared modules. One coroutine per room owns
-  the full `GameState`, validates and applies every incoming `GameAction` with the _same_
-  `GameEngine.reduce`, records to a `GameRecording` (authoritative log), runs bots with
-  the same `BotAIAdapter`, and broadcasts to each seat `{ acceptedAction, index,
-view = projectView(state, seat) }`. Clients never see other players' hidden cards.
+- **Server**: a **Cloudflare Durable Object per room**, reached through a thin Worker that
+  does nothing but route (its 10 ms CPU budget allows nothing more). The Durable Object
+  owns the full `GameState`, validates and applies every incoming `GameAction` with the
+  _same_ `GameEngine.reduce` compiled to Kotlin/JS, records to a `GameRecording`
+  (authoritative log), runs bots with the same `BotAIAdapter`, and broadcasts to each seat
+  `{ acceptedAction, index, view = projectView(state, seat) }`. Clients never see other
+  players' hidden cards.
+- **Why a Durable Object rather than a Worker**: a plain Worker is capped at **10 ms CPU
+  per invocation** on the free plan, which an MCTS decision cannot fit. A Durable Object
+  gets **30 s of CPU per request** (raisable to 5 min via `limits.cpu_ms`), so bots run
+  server-side. A Durable Object is also a single-threaded object with identity, which is
+  exactly the "one coroutine owns one room" shape the design already wanted.
+- **Bots must run server-side, not on a client.** A client cannot compute a bot's move for
+  a seat it does not own without being handed that seat's hidden cards, which would break
+  the redaction model and hand that player a cheat. This is a correctness constraint, not
+  a preference.
+- **WebSocket Hibernation** keeps idle rooms free: the object evicts from memory while its
+  sockets stay open, so a room waiting on a slow player costs no duration.
 - **Protocol**: WebSocket, JSON messages (`join`, `action`, `event`, `resync`, `error`)
   reusing the `GameAction`/`PlayerView` serialisers; the recording index is the sync
   cursor — a reconnecting client sends its last index and receives the missing events or
@@ -196,10 +227,17 @@ view = projectView(state, seat) }`. Clients never see other players' hidden card
   period (rules-neutral because bots use the same action path).
 - **Fairness/anti-cheat**: hidden information exists only on the server; the client
   cannot ask for other cards; all validation is server-side (identical validator).
-- **Deployment**: single container (Fly.io/Cloud Run-class), horizontal by room
-  sharding later; Sentry JVM; recordings persisted (object storage) for debugging/replay.
-- **Parity**: the server runs `shared/engine`, so the parity gate covers it; a Node client
-  harness can also drive the server end-to-end with recorded human actions.
+- **Deployment**: `wrangler deploy` from CI. Sharding is automatic — one Durable Object
+  per room is the unit of isolation. Finished recordings persist to the object's SQLite
+  storage (or R2 if they outgrow it) so every bug report can be replayed.
+- **Free-tier budget** (verified against Cloudflare docs, 2026-08): 100k requests/day,
+  13,000 GB-s/day duration, 5 GB total SQLite storage, 100k row writes/day. At ~300
+  actions per game the binding limits are requests and row writes, which land at roughly
+  **300 games/day**, with 5 GB holding about **55,000 recordings**. Ample for hobby scale;
+  a paid plan is a pricing decision, not a re-architecture. Durable Objects on the free
+  plan are SQLite-backed only.
+- **Parity**: the Durable Object runs `shared/engine`, so the parity gate covers the server
+  too; a scripted multi-client harness can drive it end-to-end with recorded human actions.
 
 ## Risks / Trade-offs
 
@@ -212,9 +250,20 @@ view = projectView(state, seat) }`. Clients never see other players' hidden card
   recordings capture chosen actions and the engine is exact.
 - **Two game-engine implementations for a while**: the web stays on TS until the Kotlin
   engine passes the parity gate; every rules change must land in both with fixtures
-  updated (enforced by the gate). The end state is **one engine (Kotlin)** — the follow-up
-  web change (Kotlin/JS-backed engine or Compose Web) is mandatory, not optional, and
-  retires `packages/engine`/`packages/bot`.
+  updated (enforced by the gate). The end state is **one engine (Kotlin)** running in four
+  places — Android, iOS, browser (Wasm) and the Durable Object (JS). There is no separate
+  "retire the TypeScript engine" follow-up any more: the web rewrite in Compose is what
+  retires it, inside this change.
+- **Kotlin-to-web bundle size is the biggest unknown, and it is load-bearing twice.** The
+  Worker must fit a Kotlin/JS bundle containing the engine _and_ MCTS within Cloudflare's
+  script-size limit, and the browser must ship a Compose/Wasm bundle users will actually
+  wait for. Compose for web is the least mature Compose target. Both are measured by the
+  prototype gate **before** any porting begins, because a failure there changes the design
+  (a thinner server-side bot, or a different web strategy) rather than just the schedule.
+- **Retiring the Next.js app has a cost worth naming**: the existing web UI, its Playwright
+  e2e suite and the WCAG 2.1 AA work go with it. That is accepted in exchange for one UI
+  codebase across all three clients, but the accessibility and e2e coverage should be
+  re-established in Compose rather than quietly dropped.
 - **Online multiplayer** adds a server, a protocol and hidden-information redaction; the
   session abstraction (D5) and the shared engine on the JVM keep this to "same engine, new
   transport", but it is real work and is scheduled after the single-player app is solid.
@@ -224,19 +273,27 @@ view = projectView(state, seat) }`. Clients never see other players' hidden card
 ## Migration Plan (phases; see tasks.md)
 
 0. Prerequisite: `add-game-recording-replay` archived; corpus + `RECORDING.md` exist.
-1. Bot engine decision in TypeScript: tournament v1 vs v2, delete the loser (one bot).
-2. Workspace + CI skeleton; `shapes` + PRNG + recording/hashing (test vectors pass).
-3. Engine port behind the parity gate (corpus replays green on JVM; then iOS/Android),
+1. ~~Bot engine decision by tournament~~ — **done**, decided on code evidence instead; see
+   `docs/bot/BOT-ENGINE-DECISION.md`. One bot engine (v1/MCTS), `botVersion` removed.
+2. Workspace + CI skeleton.
+3. **Platform prototype gate — before any porting.** Build a trivial Kotlin/JS bundle
+   containing `shared/engine` + MCTS, deploy it to a Durable Object, and measure: does it
+   fit the Worker script-size limit, and can it complete an MCTS decision inside the
+   Durable Object CPU budget? Separately, build a hello-world Compose/Wasm page and
+   measure its bundle. **A failure here changes the design, so it must not be discovered
+   after the UI is written.**
+4. `shapes` + PRNG + recording/hashing (test vectors pass).
+5. Engine port behind the parity gate (corpus replays green on JVM; then iOS/Android/JS),
    incl. `projectView` redaction.
-4. Bot port (unit parity + statistical strength).
-5. Client port: `GameSession`/`LocalGameSession` (adapter integration tests green under
+6. Bot port (unit parity + statistical strength).
+7. Client port: `GameSession`/`LocalGameSession` (adapter integration tests green under
    virtual time; Kotlin recordings replay in TS).
-6. Compose UI, single player (prototype gate → full feature parity → polish/a11y).
-7. Platform delivery (stores, Sentry), docs.
-8. Online multiplayer: server (Ktor, shared engine), protocol, `RemoteGameSession`, lobby
-   UI, reconnection, timeouts, deployment.
-9. Web follow-up change: retire the TypeScript engine (Kotlin/JS-backed web or Compose
-   Web) so exactly one engine remains.
+8. Compose UI, single player (device prototype → full feature parity → polish/a11y),
+   targeting Android, iOS **and web** from one codebase.
+9. Online multiplayer: Worker + Durable Object room, protocol, `RemoteGameSession`, lobby
+   UI, reconnection, timeouts, `wrangler` deployment.
+10. Retire the Next.js app and `packages/engine`/`packages/bot` once the Compose web
+    client reaches parity — this replaces the previously separate follow-up change.
 
 ## Resolved Questions
 

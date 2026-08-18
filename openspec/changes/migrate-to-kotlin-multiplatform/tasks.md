@@ -29,10 +29,20 @@ The headless seeded self-play runner built here is the same harness
 
 ## 2. Workspace, tooling, CI skeleton
 
-- [ ] 2.1 Create `kmp/` Gradle workspace (Kotlin 2.x, KMP plugin, Compose Multiplatform, version catalog); modules `shared:shapes`, `shared:engine`, `shared:recording`, `shared:bot`, `shared:client`, `shared:protocol`, `server`, `parity-tests`, `composeApp`, `iosApp`
-- [ ] 2.2 Targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`; kotlinx.serialization/coroutines/datetime, Koin, Ktor (client + server), kotlin.test, Turbine
-- [ ] 2.3 GitHub Actions: `kmp-jvm` (unit + parity), `kmp-android` (assemble), `kmp-ios` (macos: build framework + simulator tests), `kmp-server` (tests + container build), Gradle/Konan caching
-- [ ] 2.4 Developer docs: `docs/kotlin/README.md` (setup, module map, how to run parity, how to run the server locally)
+- [ ] 2.1 Create `kmp/` Gradle workspace (Kotlin 2.x, KMP plugin, Compose Multiplatform, version catalog); modules `shared:shapes`, `shared:engine`, `shared:recording`, `shared:bot`, `shared:client`, `shared:protocol`, `worker`, `parity-tests`, `composeApp`, `iosApp`
+- [ ] 2.2 Targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `js(IR)` (Cloudflare Worker), `wasmJs` (Compose web) and `jvm` (tests/tooling only — there is no JVM server); kotlinx.serialization/coroutines/datetime, Koin, Ktor **client** only, kotlin.test, Turbine
+- [ ] 2.3 GitHub Actions: `kmp-jvm` (unit + parity), `kmp-android` (assemble), `kmp-ios` (macos: build framework + simulator tests), `kmp-worker` (Kotlin/JS bundle + `wrangler deploy --dry-run`, asserting the bundle stays under the Worker script-size limit), Gradle/Konan caching
+- [ ] 2.4 Developer docs: `docs/kotlin/README.md` (setup, module map, how to run parity, how to run the Worker locally with `wrangler dev`)
+
+## 2a. Platform prototype gate (before any porting)
+
+A failure here changes the design rather than the schedule, so it runs before the ports —
+not after the UI is built.
+
+- [ ] 2a.1 Kotlin/JS bundle containing `shared/engine` + MCTS, deployed to a Durable Object: measure the bundle against the Worker script-size limit and confirm an MCTS decision completes inside the Durable Object CPU budget (30 s default, raisable to 5 min via `limits.cpu_ms`)
+- [ ] 2a.2 Hello-world Compose/Wasm page: measure bundle size and cold-load time on a mid-range phone browser; Compose for web is the least mature Compose target
+- [ ] 2a.3 End-to-end smoke: two WebSocket clients join one Durable Object room, exchange actions, and the object survives hibernation and resume
+- [ ] 2a.4 Record the measurements in `docs/kotlin/PLATFORM-GATE.md`; if either bundle does not fit, decide and record the fallback (thinner server-side bot, or a non-Compose web client) before proceeding
 
 ## 3. Shared shapes, PRNG, recording
 
@@ -93,11 +103,11 @@ The headless seeded self-play runner built here is the same harness
 ## 9. Online multiplayer
 
 - [ ] 9.1 `shared/protocol`: message types (`join`, `action`, `event{index, action, view}`, `resync`, `error`) with serializers shared by client and server; protocol doc `docs/kotlin/PROTOCOL.md`
-- [ ] 9.2 `server` (Ktor): rooms (create/join by code, always 4 seats, host start, bot fill), room coroutine owning `GameState`, authoritative validate/apply via `shared/engine`, server-side `BotAIAdapter`, per-seat `projectView` broadcast, `GameRecorder` per room
+- [ ] 9.2 `worker` (Cloudflare Worker + Durable Object per room, Kotlin/JS): rooms (create/join by code, always 4 seats, host start, bot fill), the Durable Object owning `GameState`, authoritative validate/apply via `shared/engine`, `BotAIAdapter` running in the object (never on a client — a client cannot decide a bot move without that seat’s hidden cards), per-seat `projectView` broadcast, `GameRecorder` per room, WebSocket Hibernation so idle rooms cost no duration
 - [ ] 9.3 Reconnection/resync by recording index; idempotent (seat, index) handling; grace period → bot takeover of a disconnected seat
 - [ ] 9.4 Human pacing: toss-in ready timeout, coalition-leader selection timeout (configurable per room)
 - [ ] 9.5 Guest identity (device-bound id + nickname), room codes/links
-- [ ] 9.6 `RemoteGameSession` (Ktor client WebSocket) implementing `GameSession`; offline detection and reconnect UX
+- [ ] 9.6 `RemoteGameSession` (Ktor client WebSocket, or platform WebSocket on Wasm) implementing `GameSession`; offline detection and reconnect UX
 - [ ] 9.7 Lobby UI (create/join/seats/start), in-game connection indicators; seat-agnostic game screen verified with 2 humans + 2 bots and 4 humans
 - [ ] 9.8 Multi-client test harness (scripted human clients + bots vs a local server) producing recordings; add to `parity-roundtrip`
 - [ ] 9.9 Server observability: Sentry JVM (game id + action index), recordings persisted for finished games; container build + deployment (provider decided here); load test with 100 concurrent rooms

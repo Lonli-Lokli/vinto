@@ -22,11 +22,19 @@ shared engine, validator, bot engine and recording format.
 
 ### Requirement: Server-authoritative game state
 
-An online game SHALL be owned by a Kotlin server (Ktor, JVM target of the shared modules)
-that holds the full `GameState`, validates and applies every action with the shared
-`GameEngine.reduce`, runs bot seats with the shared `BotAIAdapter`, records the game as
-a `GameRecording` v1 (authoritative log), and rejects any action that the validator
+An online game SHALL be owned by a single authoritative room process running the shared
+Kotlin modules, which holds the full `GameState`, validates and applies every action with
+the shared `GameEngine.reduce`, runs bot seats with the shared `BotAIAdapter`, records the
+game as a `GameRecording` v1 (authoritative log), and rejects any action that the validator
 rejects. Clients SHALL never hold hidden information of other seats.
+
+Bot seats SHALL be computed by the room process, never delegated to a client: a client
+cannot decide a bot's move without being given that seat's hidden cards, which would defeat
+the redaction rule above.
+
+(The chosen host is a Cloudflare Durable Object per room — see design D9 — but this
+requirement is deliberately platform-neutral: what matters is that exactly one authoritative
+process owns a room's state and hidden information.)
 
 #### Scenario: Invalid action rejected server-side
 
