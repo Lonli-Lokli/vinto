@@ -18,7 +18,7 @@ const ROOM_KEY = 'room';
 
 /**
  * Largest recording `/replay` will accept. The endpoint is public and CPU-bound — roughly
- * 0.46 ms per action — so an unbounded body is an invitation to spend someone else's compute.
+ * 1 ms per action — so an unbounded body is an invitation to spend someone else's compute.
  * The largest recording in the corpus is 141 KB; 1 MB leaves room without leaving a hole.
  */
 const MAX_REPLAY_BYTES = 1_000_000;
