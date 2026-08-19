@@ -54,13 +54,13 @@ not after the UI is built.
 
 ## 4. Engine port (parity gate #1)
 
-- [ ] 4.1 `ActionValidator` + `GameEngine.reduce` + `ReduceResult`
-- [ ] 4.2 Port `utils/` (toss-in flow incl. `getAutomaticallyReadyPlayers`, `advanceTurnAfterTossIn` with seeded reshuffle, `clearTossInAfterActionableCard`, action-utils, scoring)
-- [ ] 4.3 Port every case handler file-for-file (draw, play-discard, swap-card w/ declaration, discard, use-card, select-action-target, confirm/skip peek, jack/queen execute/skip, declare-king-action, participate-in-toss, player-toss-in-finished, finish-toss-in, call-vinto, set-coalition-leader, peek-setup-card, finish-setup, process-ai-turn, set-next-draw-card, swap-hand-with-deck, update-difficulty)
+- [~] 4.1 `GameEngine.reduce` + `ReduceResult`: **done**. `ActionValidator`: **not started** — it currently permits everything, which is safe for the parity gate (every recorded action was accepted when written, so a permissive validator cannot change a replay) and unsafe for anything else. It cannot be finished by the corpus; it needs the ported TypeScript validator tests (4.4). Nothing may run this engine against untrusted input until then — the Durable Object especially (D9)
+- [x] 4.2 Port `utils/`: **done** — toss-in flow (`getAutomaticallyReadyPlayers`, `advanceTurnAfterTossIn` with seeded reshuffle, `clearTossInAfterActionableCard`, `addTossInCard`, `queuedTossInCardId`), action-utils and scoring
+- [~] 4.3 Port every case handler file-for-file: **13 of 25 done** — draw, play-discard, swap-card (with declaration), discard, use-card, confirm/skip peek, set-coalition-leader, peek-setup-card, finish-setup, process-ai-turn, update-difficulty, empty. Remaining, in the order the parity harness asks for them: select-action-target, player-toss-in-finished, participate-in-toss, finish-toss-in, jack/queen execute+skip, declare-king-action, call-vinto, set-next-draw-card, swap-hand-with-deck
 - [ ] 4.4 Port TypeScript engine tests (rules, scenarios, card-actions, toss-in-state) to kotlin.test — all green
 - [ ] 4.5 `projectView(state, playerId): PlayerView` redaction + property test "no hidden card leaks" over recorded states; coalition-leader visibility rule
-- [ ] 4.6 `replayRecording()` in Kotlin with divergence report
-- [ ] 4.7 `parity-tests`: replay full `fixtures/recordings/` corpus on JVM — green; wire into `kmp-jvm`
+- [x] 4.6 `replayRecording()` in Kotlin with divergence report: **done**, and used from the start rather than at the end — it is what tells the port which handler to write next
+- [~] 4.7 Replay the full corpus on JVM: harness **done** and running as a ratchet (`CorpusReplayTest`). **250 actions currently replay with hashes matching TypeScript**, 0 of 50 recordings complete. A hash mismatch fails the build outright — a ported handler producing the wrong state is never acceptable — while an unported handler only stops that recording. Raise the ratchet as handlers land; when the port is complete, replace it with `assertTrue(results.all { it.ok })`. Not yet wired into CI
 - [ ] 4.8 Run the corpus on Android emulator + iOS simulator (CI job, nightly/pre-release) — green
 
 ## 5. Bot port (the single winner from phase 1)
