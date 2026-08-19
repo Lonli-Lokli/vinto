@@ -12,7 +12,9 @@
 //   2. Per-socket state (which seat) rides on the socket via serializeAttachment, which
 //      survives hibernation; a Map keyed by socket would not.
 
-import { newRoom, joinRoom, applyAction, eventsSince, viewForSeat, replayRecordingJson } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
+import {
+  newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
+} from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
 
@@ -30,17 +32,38 @@ const MAX_REPLAY_BYTES = 1_000_000;
  */
 const REPLAY_SHARDS = 8;
 
+/**
+ * A 32-byte secret, base64url, generated where the platform's random source is.
+ *
+ * The room issues one per seat and stores only its SHA-256 (design R3). The raw value exists
+ * in exactly two places: the client that owns it, and the single message that delivered it.
+ * Kotlin never reaches for randomness itself — the same rule the engine follows.
+ */
+function mintToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 export class Room {
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
   }
 
-  async #load(roomId, seed, difficulty = 'moderate') {
+  async #load(roomId, difficulty = 'moderate') {
     const stored = await this.ctx.storage.get(ROOM_KEY);
     if (stored) return stored;
-    // Dealing happens here, on the server, from the room's seed: the same seed deals the
-    // same table anywhere, which is what makes a room reproducible from its id alone.
+
+    // The seed is the server's, always (design R9). It used to come off the query string,
+    // which let a client reload until it liked its hand. TEST_SEED exists so the gate
+    // harnesses stay deterministic; it is an environment variable, never a request.
+    const seed = this.env.TEST_SEED
+      ? Number(this.env.TEST_SEED)
+      : crypto.getRandomValues(new Uint32Array(1))[0];
+
     const fresh = newRoom(roomId, seed, difficulty);
     await this.ctx.storage.put(ROOM_KEY, fresh);
     return fresh;
@@ -53,6 +76,23 @@ export class Room {
    * the Kotlin projection, which replaces cards the seat may not see with a token carrying
    * nothing at all — not even an id, since a card id spells out its rank.
    */
+  /**
+   * Seats as everybody else may see them.
+   *
+   * `tokenHash` is not a secret in the way the token is, but it is a credential's shadow and
+   * it has no business on the wire. Stripping it in one place beats remembering to per
+   * message type.
+   */
+  #publicSeats(state) {
+    return state.seats.map((seat) => ({
+      index: seat.index,
+      playerId: seat.playerId,
+      nickname: seat.nickname,
+      ownerId: seat.ownerId,
+      occupied: seat.tokenHash !== null,
+    }));
+  }
+
   #viewFor(stateJson, seat) {
     const result = JSON.parse(viewForSeat(stateJson, seat));
     return result.view ?? null;
@@ -104,18 +144,17 @@ export class Room {
     }
 
     const roomId = url.searchParams.get('room') ?? 'default';
-    const seed = Number(url.searchParams.get('seed') ?? '42');
 
     // A plain GET reports room state — used by the harness to inspect the object without a
     // socket, and to prove state survived an eviction.
     if (request.headers.get('Upgrade') !== 'websocket') {
-      const stateJson = await this.#load(roomId, seed);
+      const stateJson = await this.#load(roomId);
       return new Response(stateJson, {
         headers: { 'content-type': 'application/json' },
       });
     }
 
-    await this.#load(roomId, seed);
+    await this.#load(roomId);
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
@@ -123,7 +162,7 @@ export class Room {
     // acceptWebSocket (rather than server.accept()) is what allows the object to be
     // evicted while the socket stays open — the hibernation API.
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ seat: null, clientId: null });
+    server.serializeAttachment({ seat: null, token: null });
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -143,33 +182,43 @@ export class Room {
 
     switch (msg.type) {
       case 'join': {
-        const result = JSON.parse(joinRoom(stateJson, msg.clientId, msg.nickname ?? ''));
+        // A token in the message means "I already have a seat here"; no token means "give
+        // me one". Either way the seat comes back from the room, never from the client.
+        const token = msg.token ?? mintToken();
+        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? ''));
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }
         await this.#save(JSON.stringify(result.state));
         const savedJson = JSON.stringify(result.state);
-        ws.serializeAttachment({ seat: result.seat, clientId: msg.clientId });
+        ws.serializeAttachment({ seat: result.seat, token });
+
+        // The one and only message that carries the raw token. It goes to this socket alone;
+        // #sendPerSeat and #broadcast never see it, and no view contains it.
         ws.send(JSON.stringify({
           type: 'joined',
           seat: result.seat,
-          seats: result.state.seats,
+          token,
+          seats: this.#publicSeats(result.state),
           nextIndex: result.state.log.length,
           view: this.#viewFor(savedJson, result.seat),
         }));
         return this.#broadcast(
-          { type: 'presence', seats: result.state.seats },
+          { type: 'presence', seats: this.#publicSeats(result.state) },
           null,
         );
       }
 
       case 'action': {
-        const { seat } = ws.deserializeAttachment() ?? {};
-        if (seat === null || seat === undefined) {
+        // The token, not the socket's memory of a seat, is what authorises this. An
+        // attachment is state the room set; a token is a claim the client has to keep
+        // making, and the room re-checks it every single time.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before acting' }));
         }
         const result = JSON.parse(
-          applyAction(stateJson, seat, JSON.stringify(msg.action ?? {})),
+          applyAction(stateJson, token, JSON.stringify(msg.action ?? {})),
         );
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
@@ -221,7 +270,8 @@ export class Room {
 
   async webSocketClose(ws, code, reason, wasClean) {
     // The seat is intentionally kept: design D9 has a disconnected human's seat played by a
-    // bot after a grace period, and joinRoom is idempotent by clientId so they get it back.
+    // bot after a grace period, and joinRoom is idempotent by *token* so they get it back —
+    // and only they can, which is the whole point of R3.
     ws.close(code === 1006 ? 1000 : code, reason);
   }
 

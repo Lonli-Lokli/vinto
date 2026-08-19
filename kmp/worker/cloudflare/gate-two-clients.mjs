@@ -16,7 +16,6 @@
 // the bots' that followed.
 
 const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
-const SEED = 12345;
 
 // `--verify <room>` re-checks an existing room without touching it. Used to prove the room
 // is rebuilt from storage after the object is gone: run the gate, restart `wrangler dev`
@@ -39,7 +38,7 @@ function check(label, actual, wanted) {
 
 /** A socket with a queue, so tests can await specific messages without racing. */
 function open(label) {
-  const url = `${BASE}/?room=${ROOM}&seed=${SEED}`.replace('http', 'ws');
+  const url = `${BASE}/?room=${ROOM}`.replace('http', 'ws');
   const ws = new WebSocket(url);
   const queue = [];
   const waiters = [];
@@ -80,13 +79,13 @@ function open(label) {
 
 const isEvents = (m) => m.type === 'events';
 
-console.log(`\nroom ${ROOM}, seed ${SEED}\n`);
+console.log(`\nroom ${ROOM}\n`);
 
 if (VERIFY_ONLY) {
-  const room = await (await fetch(`${BASE}/?room=${ROOM}&seed=${SEED}`)).json();
+  const room = await (await fetch(`${BASE}/?room=${ROOM}`)).json();
   console.log('rebuilt from storage after every instance was destroyed');
   check('the log survived', room.log.length > 0, true);
-  check('the seats survived', room.seats.filter((s) => s.clientId !== null).length, 2);
+  check('the seats survived', room.seats.filter((s) => s.tokenHash !== null).length >= 2, true);
   check('the dealt game survived', room.game.players.length, 4);
   check('the game moved past setup', room.game.phase, 'playing');
   console.log(`\n${failures === 0 ? 'RESUME CHECK PASS' : `RESUME CHECK FAIL (${failures})`}\n`);
@@ -98,9 +97,9 @@ const alice = open('alice');
 const bob = open('bob');
 await Promise.all([alice.ready, bob.ready]);
 
-alice.send({ type: 'join', clientId: 'alice', nickname: 'Alice' });
+alice.send({ type: 'join', nickname: 'Alice' });
 const aliceJoined = await alice.next((m) => m.type === 'joined');
-bob.send({ type: 'join', clientId: 'bob', nickname: 'Bob' });
+bob.send({ type: 'join', nickname: 'Bob' });
 const bobJoined = await bob.next((m) => m.type === 'joined');
 
 console.log('two clients through one Durable Object');
@@ -109,6 +108,18 @@ check('bob takes seat 1', bobJoined.seat, 1);
 check('room has exactly 4 seats', aliceJoined.seats.length, 4);
 check('alice is sent a view of her own', aliceJoined.view.viewerId, aliceJoined.seats[0].playerId);
 check('bob is sent a different one', bobJoined.view.viewerId, bobJoined.seats[1].playerId);
+
+console.log('\ntokens');
+check('each client is issued a token', [
+  typeof aliceJoined.token === 'string' && aliceJoined.token.length >= 32,
+  typeof bobJoined.token === 'string' && bobJoined.token.length >= 32,
+], [true, true]);
+check('the two tokens differ', aliceJoined.token !== bobJoined.token, true);
+check(
+  'no seat on the wire carries a token or its hash',
+  aliceJoined.seats.every((s) => s.token === undefined && s.tokenHash === undefined),
+  true,
+);
 
 // --- real actions, both sockets see every one ----------------------------------
 //
@@ -126,7 +137,7 @@ const sent = [
 const aliceBatches = [];
 const bobBatches = [];
 for (const action of sent) {
-  alice.send({ type: 'action', action });
+  alice.send({ type: 'action', token: aliceJoined.token, action });
   aliceBatches.push(await alice.next(isEvents));
   bobBatches.push(await bob.next(isEvents));
 }
@@ -156,15 +167,25 @@ check('bob is shown none of them',
 alice.close();
 const aliceAgain = open('alice-reconnected');
 await aliceAgain.ready;
-aliceAgain.send({ type: 'join', clientId: 'alice', nickname: 'Alice' });
+// Reconnecting means presenting the token you were issued, not asserting a name.
+aliceAgain.send({ type: 'join', token: aliceJoined.token, nickname: 'Alice' });
 const rejoined = await aliceAgain.next((m) => m.type === 'joined');
 
 const logLength = aliceEvents.length;
 
 console.log('\nreconnect');
-check('same clientId returns to the same seat', rejoined.seat, 0);
+check('the same token returns to the same seat', rejoined.seat, 0);
 check('the room survived the disconnect', rejoined.nextIndex, logLength);
 check('and hands back a view, not the room', typeof rejoined.view.viewerId, 'string');
+
+// A stranger asserting alice's nickname gets a *different* seat, not hers.
+const impostor = open('impostor');
+await impostor.ready;
+impostor.send({ type: 'join', nickname: 'Alice' });
+const impostorJoined = await impostor.next((m) => m.type === 'joined');
+check('a nickname does not reclaim a seat', impostorJoined.seat !== 0, true);
+check('and the impostor gets their own token', impostorJoined.token !== aliceJoined.token, true);
+impostor.close();
 
 aliceAgain.send({ type: 'resync', sinceIndex: logLength - 2 });
 const sync = await aliceAgain.next((m) => m.type === 'sync');
@@ -175,12 +196,12 @@ check('resync reports the next cursor', sync.nextIndex, logLength);
 // --- state lives in storage, not memory ----------------------------------------
 aliceAgain.close();
 bob.close();
-const persisted = await (await fetch(`${BASE}/?room=${ROOM}&seed=${SEED}`)).json();
+const persisted = await (await fetch(`${BASE}/?room=${ROOM}`)).json();
 
 console.log('\ndurability');
 check('the log persisted after every socket closed', persisted.log.length, logLength);
 check('the dealt game persisted with it', persisted.game.players.length, 4);
-check('and the seats did too', persisted.seats.filter((s) => s.clientId !== null).length, 2);
+check('and the seats did too', persisted.seats.filter((s) => s.tokenHash !== null).length >= 2, true);
 
 console.log(`\n${failures === 0 ? 'GATE 2a.3 PASS' : `GATE 2a.3 FAIL (${failures})`}\n`);
 process.exit(failures === 0 ? 0 : 1);

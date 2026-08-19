@@ -9,7 +9,7 @@
  *   node kmp/worker/cloudflare/gate-real-room.mjs
  */
 import {
-  newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatCount,
+  newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, seatCount,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 let failures = 0;
@@ -27,7 +27,8 @@ const parse = (json) => JSON.parse(json);
 console.log('\nRoom running the real engine\n');
 
 // --- dealing ---------------------------------------------------------------------------
-let stateJson = newRoom('gate-room', 1234, 'moderate');
+const SEED = 1234;
+let stateJson = newRoom('gate-room', SEED, 'moderate');
 let state = parse(stateJson);
 
 check('the room has four seats', state.seats.length === seatCount(), `${state.seats.length}`);
@@ -38,19 +39,47 @@ check(
 );
 check('the draw pile holds the rest', state.game.drawPile.length === 34, `${state.game.drawPile.length}`);
 check('the same seed deals the same table',
-  JSON.stringify(parse(newRoom('gate-room', 1234, 'moderate')).game) === JSON.stringify(state.game));
+  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate')).game) === JSON.stringify(state.game));
 
-// --- joining ---------------------------------------------------------------------------
-let result = parse(joinRoom(stateJson, 'client-a', 'Ada'));
+// --- joining, with server-issued tokens ------------------------------------------------
+//
+// The harness stands in for the socket layer, which mints the token. What matters here is
+// that the *room* decides which seat a token holds, and that nothing else does.
+const TOKEN_A = 'token-for-ada-32-bytes-worth-of-secret';
+const TOKEN_B = 'token-for-bo-32-bytes-worth-of-secret';
+const TOKEN_UNKNOWN = 'token-nobody-was-ever-issued';
+
+let result = parse(joinRoom(stateJson, TOKEN_A, 'Ada'));
 check('the first client takes seat 0', result.seat === 0, `seat ${result.seat}`);
 stateJson = JSON.stringify(result.state);
 
-result = parse(joinRoom(stateJson, 'client-b', 'Bo'));
+result = parse(joinRoom(stateJson, TOKEN_B, 'Bo'));
 check('the second client takes seat 1', result.seat === 1, `seat ${result.seat}`);
 stateJson = JSON.stringify(result.state);
 
-result = parse(joinRoom(stateJson, 'client-a', 'Ada'));
-check('rejoining returns the same seat', result.seat === 0, `seat ${result.seat}`);
+result = parse(joinRoom(stateJson, TOKEN_A, 'Ada'));
+check('rejoining with the same token returns the same seat', result.seat === 0, `seat ${result.seat}`);
+
+// --- the token is a credential, not a label ---------------------------------------------
+state = parse(stateJson);
+check(
+  'the room stores a hash, never the token',
+  state.seats.every((s) => s.tokenHash !== TOKEN_A && s.tokenHash !== TOKEN_B),
+);
+check(
+  'a seat that was taken has a hash and one that was not has none',
+  state.seats[0].tokenHash !== null && state.seats[2].tokenHash === null,
+);
+check(
+  'the account seam exists and is empty',
+  state.seats.every((s) => s.ownerId === null),
+);
+check('a token resolves to its seat', seatForToken(stateJson, TOKEN_A) === 0);
+check('an unissued token resolves to nothing', seatForToken(stateJson, TOKEN_UNKNOWN) === -1);
+check(
+  'sharing a nickname does not share a seat',
+  parse(joinRoom(stateJson, 'a-third-token', 'Ada')).seat === 2,
+);
 
 // --- redaction -------------------------------------------------------------------------
 const view0 = parse(viewForSeat(stateJson, 0)).view;
@@ -91,31 +120,54 @@ check(
   `${seenBySeat0.size} visible`,
 );
 
-// --- the seat boundary -----------------------------------------------------------------
-const otherPlayerId = state.seats[1].playerId;
-const impersonation = parse(applyAction(
-  stateJson, 0,
-  JSON.stringify({ type: 'PEEK_SETUP_CARD', payload: { playerId: otherPlayerId, position: 0 } }),
-));
+// --- what a token does and does not buy -------------------------------------------------
+const seat0Player = state.seats[0].playerId;
+const seat1Player = state.seats[1].playerId;
+const peek = (playerId) =>
+  JSON.stringify({ type: 'PEEK_SETUP_CARD', payload: { playerId, position: 0 } });
+
 check(
-  'a seat cannot act as another player',
-  Boolean(impersonation.error),
-  impersonation.error ? '' : 'the action was accepted',
+  'a valid token acts as its own player',
+  !parse(applyAction(stateJson, TOKEN_A, peek(seat0Player))).error,
+);
+check(
+  'a valid token cannot act as somebody else',
+  Boolean(parse(applyAction(stateJson, TOKEN_A, peek(seat1Player))).error),
+  'the action was accepted',
+);
+check(
+  'an unissued token acts as nobody',
+  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player))).error),
+);
+check(
+  'an empty token acts as nobody',
+  Boolean(parse(applyAction(stateJson, '', peek(seat0Player))).error),
+);
+check(
+  'a token that is one character off is not close enough',
+  Boolean(parse(applyAction(stateJson, `${TOKEN_A}x`, peek(seat0Player))).error),
+);
+check(
+  'an unoccupied seat has no token and so cannot act',
+  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(state.seats[3].playerId))).error),
+);
+check(
+  'a malformed action is refused rather than thrown',
+  Boolean(parse(applyAction(stateJson, TOKEN_A, '{"type":"NOT_A_REAL_ACTION"}')).error),
 );
 
-const unseated = parse(applyAction(
-  stateJson, 3,
-  JSON.stringify({ type: 'PEEK_SETUP_CARD', payload: { playerId: state.seats[3].playerId, position: 0 } }),
-));
-check('an unoccupied seat cannot act', Boolean(unseated.error));
-
-const nonsense = parse(applyAction(stateJson, 0, '{"type":"NOT_A_REAL_ACTION"}'));
-check('a malformed action is refused rather than thrown', Boolean(nonsense.error));
+// The one that decides games: a wrong token must not be answered with a view.
+const stolen = parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player)));
+check(
+  'a refused action returns no state anybody could read a hand from',
+  JSON.stringify(stolen.state) === JSON.stringify(state),
+  'the state came back changed',
+);
 
 // --- playing a game --------------------------------------------------------------------
-const seat0Player = state.seats[0].playerId;
+const tokenForSeat = [TOKEN_A, TOKEN_B];
 const act = (json, seat, action) => {
-  const outcome = parse(applyAction(json, seat, JSON.stringify(action)));
+  const outcome = parse(applyAction(json, tokenForSeat[seat], JSON.stringify(action)));
   if (outcome.error) throw new Error(`${action.type}: ${outcome.error}`);
   return outcome;
 };
@@ -165,7 +217,7 @@ for (let step = 0; step < 120; step++) {
   const tossIn = room.game.activeTossIn;
   if (tossIn) {
     const owed = room.seats.find(
-      (s) => s.clientId && !tossIn.playersReadyForNextTurn.includes(s.playerId),
+      (s) => s.tokenHash && !tossIn.playersReadyForNextTurn.includes(s.playerId),
     );
     if (owed) {
       try {
@@ -183,7 +235,7 @@ for (let step = 0; step < 120; step++) {
 
   // 2. Otherwise it is somebody's turn.
   const turnPlayerId = room.game.players[room.game.currentPlayerIndex].id;
-  const seat = room.seats.findIndex((s) => s.playerId === turnPlayerId && s.clientId);
+  const seat = room.seats.findIndex((s) => s.playerId === turnPlayerId && s.tokenHash);
   if (seat < 0) {
     check(`step ${step}: the room owed a bot move it did not make`, false, `waiting on ${turnPlayerId}`);
     break;

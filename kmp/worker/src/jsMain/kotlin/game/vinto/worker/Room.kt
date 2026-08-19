@@ -11,6 +11,7 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.Sha256
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -46,8 +47,8 @@ import kotlin.random.Random
  *
  * `VintoJson` omits defaults, which is exactly right for `GameState` — the canonical form has
  * to match TypeScript byte for byte, and TypeScript writes nothing for an absent field. It is
- * exactly wrong here: an unoccupied seat would arrive with no `clientId` at all, and
- * `seat.clientId !== null` on the JavaScript side is `undefined !== null`, which is *true*.
+ * exactly wrong here: an unoccupied seat would arrive with no `tokenHash` at all, and
+ * `seat.tokenHash !== null` on the JavaScript side is `undefined !== null`, which is *true*.
  * Every empty seat would read as taken. Annotating the room's own types keeps one serialiser
  * for both jobs.
  */
@@ -62,11 +63,24 @@ data class Seat(
     val index: Int,
     /** The engine's player id for this seat, fixed when the room is dealt. */
     val playerId: String,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val clientId: String? = null,
+    /**
+     * SHA-256 of the seat's token — never the token itself.
+     *
+     * Storing the hash means a leaked storage dump does not hand out seats, and it means the
+     * room can prove a claim without being able to make one. The raw token exists in exactly
+     * two places: the client that owns it, and the single message that delivered it.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tokenHash: String? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String? = null,
+    /**
+     * The account seam (design R3). Null for every anonymous player, which is all of them
+     * today. An account system later maps an account to an `ownerId` and lets it reclaim a
+     * seat; nothing else in the room has to change for that to work.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val ownerId: String? = null,
 ) {
     /** An unclaimed seat is played by a bot, per design D9. */
-    val occupied: Boolean get() = clientId != null
+    val occupied: Boolean get() = tokenHash != null
 }
 
 /**
@@ -125,9 +139,16 @@ private data class ViewResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
 )
 
-/** Deals a real game. The seed is the room's; the same seed deals the same table anywhere. */
+/**
+ * Deals a real game from a seed the **server** chose.
+ *
+ * The seed used to come off the query string, which meant a client could reload until it was
+ * dealt a Joker and a King. It is now generated where the platform's random source lives —
+ * `index.mjs` — and passed in. Kotlin never reaches for randomness itself; that is the same
+ * rule the engine follows and for the same reason.
+ */
 @JsExport
-fun newRoom(roomId: String, seed: Int, difficulty: String): String {
+fun newRoom(roomId: String, seed: Double, difficulty: String): String {
     val chosen = Difficulty.entries.firstOrNull { it.serialName == difficulty } ?: Difficulty.MODERATE
     val game = initializeGame(seed.toLong(), chosen)
 
@@ -142,17 +163,21 @@ fun newRoom(roomId: String, seed: Int, difficulty: String): String {
 }
 
 /**
- * Seats a client, idempotently by `clientId`.
+ * Seats a client, idempotently by the token they hold.
  *
  * A reconnecting player returns to the seat they had rather than consuming a new one, which
  * is the whole reconnect story in design D9 — and the reason a dropped player's seat can be
  * played by a bot in the meantime without losing it.
  */
 @JsExport
-fun joinRoom(stateJson: String, clientId: String, nickname: String): String {
+fun joinRoom(stateJson: String, token: String, nickname: String): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val hash = Sha256.hex(token)
 
-    state.seats.firstOrNull { it.clientId == clientId }?.let {
+    // A token that already holds a seat returns to it. This is the reconnect story, and it
+    // is safe in a way the old `clientId` was not: knowing somebody's *name* proves nothing,
+    // and the only thing that resumes a seat is the secret the room issued for it.
+    state.seats.firstOrNull { it.tokenHash == hash }?.let {
         return VintoJson.encodeToString(JoinResult(state, it.index))
     }
 
@@ -160,7 +185,7 @@ fun joinRoom(stateJson: String, clientId: String, nickname: String): String {
         ?: return VintoJson.encodeToString(JoinResult(state, -1, "room is full"))
 
     val seated = state.seats.map {
-        if (it.index == free.index) it.copy(clientId = clientId, nickname = nickname) else it
+        if (it.index == free.index) it.copy(tokenHash = hash, nickname = nickname) else it
     }
 
     // The engine player behind the seat becomes a human, and forgets what it was dealt.
@@ -192,14 +217,15 @@ fun joinRoom(stateJson: String, clientId: String, nickname: String): String {
  */
 @Suppress("ReturnCount")
 @JsExport
-fun applyAction(stateJson: String, seat: Int, actionJson: String): String {
+fun applyAction(stateJson: String, token: String, actionJson: String): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
-    val seatEntry = state.seats.getOrNull(seat)
-        ?: return VintoJson.encodeToString(ActionResult(state, error = "unknown seat $seat"))
-    if (!seatEntry.occupied) {
-        return VintoJson.encodeToString(ActionResult(state, error = "seat $seat is not occupied"))
-    }
+    // The seat is *derived* from the credential rather than asserted next to it. There is no
+    // seat parameter to disagree with the token, so there is no way to send one seat's token
+    // and another seat's number and see which check notices first.
+    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return VintoJson.encodeToString(ActionResult(state, error = "no seat holds that token"))
+    val seat = seatEntry.index
 
     val action = try {
         VintoJson.decodeFromString(GameAction.serializer(), actionJson)
@@ -299,6 +325,19 @@ fun viewForSeat(stateJson: String, seat: Int): String {
         ?: return VintoJson.encodeToString(ViewResult(error = "unknown seat $seat"))
 
     return VintoJson.encodeToString(ViewResult(view = projectView(state.game, seatEntry.playerId)))
+}
+
+/**
+ * Which seat a token holds, or -1.
+ *
+ * Lets the socket layer resolve a client to a seat without ever holding a seat number it did
+ * not derive from a credential.
+ */
+@JsExport
+fun seatForToken(stateJson: String, token: String): Int {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val hash = Sha256.hex(token)
+    return state.seats.firstOrNull { it.tokenHash == hash }?.index ?: -1
 }
 
 /** Events a reconnecting client has not seen. The log index is the cursor (design D9). */
