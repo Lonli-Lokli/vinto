@@ -388,7 +388,7 @@ What a deployment does answer:
 
 `/replay` is a pure function of the posted document — it holds no state and mutates nothing —
 which is what makes it safe to expose while the validator is missing. The 1 MB cap is there
-because it is public and CPU-bound at roughly 0.46 ms per action; the largest recording in the
+because it is public and CPU-bound at roughly 1 ms per action; the largest recording in the
 corpus is 141 KB.
 
 Tearing it down is `npx wrangler delete`, so this is a cheap thing to try and an easy thing to

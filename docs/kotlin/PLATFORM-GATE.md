@@ -167,10 +167,22 @@ ENGINE RUNTIME GATE PASS
 
 ### An early read on 2a.1b (MCTS inside the CPU budget)
 
-13,900 reductions in 6.45 s is **~0.46 ms per action**, including HTTP and JSON parsing on
-every recording. A Durable Object gets 30 s of CPU per request. The engine is therefore
-nowhere near the budget; whether MCTS fits is still a bot question and still open, but the
-engine half of it is now known to be negligible.
+Repeated runs of the full corpus through `wrangler dev`, in order: 6.5 s, 44.5 s, 24.8 s,
+13.7 s, 12.5 s. **The first figure was an outlier and should not be quoted** — an earlier
+revision of this document did, and the number was wrong by roughly 2x. Warm steady state is
+~12.5 s for 13,900 actions, so about **0.9 ms per action**, and the spread is wide enough that
+local `wrangler dev` should be treated as an order-of-magnitude reading rather than a benchmark.
+
+Two things that measurement includes which a live room does not: it parses a whole recording
+(up to 141 KB) per request, and it canonicalises and SHA-256-hashes the entire state after
+_every_ action to compare against the recorded hash. The hashing is the expensive half and it
+exists for parity checking.
+
+The useful framing is per request rather than per action, since that is what the limit is on: a
+whole 278-action game replays in ~250 ms against a Durable Object's **30 s** of CPU per request,
+and a live room does one reduction per request rather than a game's worth. The engine is not
+close to the budget. Whether **MCTS** fits remains the open half of 2a.1b and needs the ported
+bot (phase 6) — that is where the CPU actually goes.
 
 ## 2a.1 revisited — the real Worker bundle
 
