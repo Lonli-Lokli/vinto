@@ -287,7 +287,69 @@ counterparts do, and `reduce` freezes it on the way out. `reduce` stays a pure f
 mutation never escapes the call. Rewriting handlers idiomatically later is safe precisely
 because the gate holds the behaviour still.
 
-## 6c. Deploying the engine, with no UI
+## 6c. Hosting on kupalinka.app
+
+Vinto is hosted alongside the portfolio games in `~/sources/gulnya/games-portfolio-brief.md`.
+Two hostnames, two deploy targets:
+
+| host                       | what                                            | how                                            |
+| -------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| `vinto.kupalinka.app`      | the Compose/Wasm client                         | Cloudflare **Pages** project `vinto`           |
+| `vinto-room.kupalinka.app` | the room Worker + Durable Object, and `/replay` | `wrangler deploy` from `kmp/worker/cloudflare` |
+
+The Worker gets its own hostname rather than a path under `vinto.kupalinka.app`, because that
+host is a Pages project and layering a Worker route over a Pages custom domain is a precedence
+puzzle nobody should re-derive during an incident. It is still **same-site**, so the client's
+CSP needs one `connect-src` entry on its own site. `px.kupalinka.app` is a separate Worker for
+the same reason.
+
+**Compose for Web is an exception to the portfolio convention**, which says plain DOM over
+`:engine` and never Compose. Taken deliberately, with the 3.7 MB measurement in hand; the
+reasoning is in design **D1a** and must not be copied to another game without reading it.
+
+### What the exception does not excuse
+
+These are properties of the zone and of the visitor, not of the module shape, and they apply to
+`vinto.kupalinka.app` exactly as they do to every other game:
+
+- **Every script the page reaches carries a content hash.** The `kupalinka.app` zone's Browser
+  Cache TTL _overrides_ a weaker origin `Cache-Control`, so under fixed names a stale script
+  keeps naming a wasm binary the next deploy replaced — a 404 and a dead page, not a stale one.
+  This has taken portfolio sites down before; treat it as a hard invariant, not a preference.
+- **A newly-deployed asset fetched at its canonical URL before the edge has it** returns the
+  Pages SPA fallback: `index.html`, **200**, `text/html` — then cached `immutable` for a year by
+  a path-matched `_headers` rule. Content-addressing makes that permanent rather than momentary.
+  Probe with `?cb=`, and never point a headless browser at a fresh deploy.
+- **Usage counting from the loader**, not the bundle, so a visitor whose browser cannot run
+  WasmGC still counts. No cookie banner, an opt-out control, GPC/DNT honoured.
+- **The §3b gate**: responsive at 1440px as well as 380px, keyboard-complete, focus and scroll
+  surviving re-render, both themes at WCAG AA, `prefers-reduced-motion` honoured.
+
+### The shared machinery does not currently reach Vinto
+
+The first three of those live in `~/sources/gulnya/web-template/`, which exists precisely
+because copying them by hand went wrong: the brief records Niva shipping a deploy script with
+**no chain verification at all**, printing a green tick over a dead site, months after Vodar's
+grew that check. Nothing was wrong with either file — "copy this verbatim" is an instruction to
+a person, and people copy things once.
+
+`sync.mjs` mirrors a `web/` module layout. Vinto's web build is `kmp/composeApp` with a Gradle
+root one directory down, so it cannot participate as-is, and hand-copying `content-hash.js` and
+`web-deploy.sh` into this repo would make Vinto the **third** copy — exactly the outcome the
+brief warns about, and it names that as the moment to stop copying and move the verification
+into versioned tooling instead.
+
+Unresolved on purpose: it means editing shared tooling that two shipped games depend on, which
+is not a change to make casually or as a side effect of hosting Vinto. Until it is resolved,
+`vinto.kupalinka.app` has no deploy script — which is survivable only because the client is not
+ready to publish anyway.
+
+### The web client is not ready to deploy
+
+`composeApp` is still the platform-gate tap counter. Publishing `vinto.kupalinka.app` today
+would publish that. Phase 7 builds the real UI.
+
+## 6d. Deploying the engine, with no UI
 
 The Worker carries the real engine and exposes `POST /replay`: send a `GameRecording`, get
 back `ok` or the exact action that diverged. That is enough to verify the engine on a real
@@ -300,8 +362,13 @@ npx wrangler dev --port 8787 --local
 node gate-engine-replay.mjs            # 50/50, 13,900 actions
 
 # against a deployment
-GATE_URL=https://vinto-room.<subdomain>.workers.dev node gate-engine-replay.mjs
+npx wrangler deploy                    # needs `wrangler login` first
+GATE_URL=https://vinto-room.kupalinka.app node gate-engine-replay.mjs
 ```
+
+**Open question for the first deploy**: `vinto-room.kupalinka.app` must exist as a DNS record
+in the `kupalinka.app` zone. `custom_domain: true` makes wrangler create it, which is why the
+first `wrangler deploy` needs zone permissions and not just Workers ones.
 
 Why this is worth having rather than trusting the JVM gate: Kotlin/JS represents `Long` as a
 pair of `Int`s and uses a different serialiser backend, so passing on the JVM does not imply

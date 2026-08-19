@@ -14,5 +14,17 @@
       "tag": "v1",
       "new_sqlite_classes": ["Room"]
     }
-  ]
+  ],
+
+  // Routed at the zone rather than on a workers.dev subdomain, so the room is SAME-SITE with
+  // the client at vinto.kupalinka.app. That keeps the WebSocket origin a first-party one and
+  // means the page's CSP needs a single `connect-src` entry on its own site.
+  //
+  // Its own hostname rather than a path on vinto.kupalinka.app: that host is a Pages project,
+  // and layering a Worker route over a Pages custom domain is a precedence puzzle nobody
+  // should have to re-derive during an incident. The portfolio already does it this way —
+  // px.kupalinka.app is a separate Worker for the same reason.
+  "routes": [{ "pattern": "vinto-room.kupalinka.app", "custom_domain": true }],
+
+  "observability": { "enabled": true }
 }

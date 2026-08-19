@@ -61,6 +61,45 @@ kmp/
   a small SHA-256 (e.g. `org.kotlincrypto` or hand-written) so hashing is identical on
   every target.
 
+### D1a. Compose for Web is a deliberate exception to the portfolio convention
+
+Vinto is hosted at `vinto.kupalinka.app`, alongside the games in
+`~/sources/gulnya/games-portfolio-brief.md`. That brief states plainly, in §3: **never Compose
+for Web** — a web daily is plain DOM over the game's own `:engine` compiled to WasmGC, because
+Compose's canvas renderer is "multi-megabyte and screen-reader hostile".
+
+Vinto ships Compose for Web anyway. Recorded here because an undocumented exception is
+indistinguishable from drift, and the next game must not inherit this by copying Vinto.
+
+**The cost is known, not assumed.** `PLATFORM-GATE.md` §2a.2 measured a Compose/Wasm
+hello-world at **3.7 MB gzipped** — about 6× the entire existing Next.js client (620 KB), and
+that is the floor before any game UI. Accepted by the product owner with the number in hand.
+
+**Why the exception is taken:**
+
+- Vinto is not a web daily. The brief's convention exists for a single-player daily puzzle that
+  a stranger opens from a shared link and that funnels to a paid app. Vinto is a four-player
+  game with bots and server-authoritative online multiplayer (D9); its web build is a full
+  client, not a funnel page.
+- One UI across web, Android and iOS was the reason Compose Multiplatform was chosen at all
+  (D6). A plain-DOM web client means a second UI implementation of a game with animated card
+  movement, toss-in timing and coalition state — not the small surface a daily puzzle presents.
+
+**What the exception does not buy an escape from.** The infrastructure and accessibility parts
+of the brief still apply in full, because they are properties of the `kupalinka.app` zone and of
+the visitor, not of the module shape:
+
+- every script the page reaches carries a **content hash** (§3a) — the zone's Browser Cache TTL
+  overrides a weaker origin `Cache-Control`, so fixed names let a stale script outlive the wasm
+  it names;
+- usage counting via `px.kupalinka.app` from the loader, with no cookie banner and an opt-out;
+- the §3b gate on responsive layout, keyboard completeness, focus/scroll survival, contrast in
+  both themes and `prefers-reduced-motion`.
+
+**What would reopen this.** A measured Compose/Wasm bundle for the real UI that lands far above
+3.7 MB, or evidence that first-load abandonment on `vinto.kupalinka.app` is materially worse
+than the portfolio's other games — the counting is already there to answer that.
+
 ### D2. State and action model — JSON-identical to TypeScript
 
 - `data class GameState`, `PlayerState`, `Card`, `PendingAction`, `ActiveTossIn`, … with
