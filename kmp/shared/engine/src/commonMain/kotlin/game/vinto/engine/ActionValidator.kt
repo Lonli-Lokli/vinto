@@ -64,9 +64,24 @@ object ActionValidator {
             ?: state.requireSubPhase(GameSubPhase.IDLE, GameSubPhase.AI_THINKING) {
                 "Cannot take discard in phase ${state.subPhase.serialName}"
             }
-            ?: when {
-                state.discardPile.size == 0 -> Validation.Invalid("Discard pile is empty")
-                else -> Validation.Valid
+            ?: run {
+                // "Allowed only if the top discard is an unused action card (7-K, A)", and
+                // the player must then play it. Neither this nor the TypeScript enforced it,
+                // which left a client able to lift a Joker — the best card in the game — off
+                // the pile, or to re-play an action somebody had already spent. The
+                // TypeScript's own test for it is an empty stub saying the implementation
+                // "might not validate this strictly".
+                val top = state.discardPile.peekTop()
+                when {
+                    top == null -> Validation.Invalid("Discard pile is empty")
+                    top.actionText.isNullOrEmpty() ->
+                        Validation.Invalid("Cannot take ${top.rank.serialName} from discard: no action")
+
+                    top.played ->
+                        Validation.Invalid("Cannot take ${top.rank.serialName} from discard: already played")
+
+                    else -> Validation.Valid
+                }
             }
 
         is GameAction.UseCardAction -> state.requireTurn(action.payload.playerId, "USE_CARD_ACTION")
