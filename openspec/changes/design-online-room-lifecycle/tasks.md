@@ -16,13 +16,14 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 2. Registry and room codes
 
-- [ ] 2.1 `Registry` Durable Object: mint a 6-character code from the unambiguous alphabet,
+- [x] 2.1 `Registry` Durable Object: mint a 6-character code from the unambiguous alphabet,
       record the room, resolve a code to a room, forget a room when it dies
-- [ ] 2.2 `POST /rooms` creates through the registry; a WebSocket upgrade for an unknown code
+- [x] 2.2 `POST /rooms` creates through the registry; a WebSocket upgrade for an unknown code
       is refused **without** creating a Durable Object
-- [ ] 2.3 Public/private flag; the registry lists public rooms and sweeps entries whose room
-      is gone
-- [ ] 2.4 Gate: an invented code creates nothing (asserted by the object not existing, not by
+- [x] 2.3 Public/private flag; the registry lists public rooms. `forgetRoom` is implemented
+      and idempotent; the **caller** is task 4.5, when a room learns how to die — sweeping
+      needs liveness, and liveness needs the lifecycle
+- [x] 2.4 Gate: an invented code creates nothing (asserted by the object not existing, not by
       the response text); a private room is joinable by code and absent from the list
 
 ## 3. Lobby and start conditions

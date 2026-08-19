@@ -5,7 +5,12 @@
   "compatibility_date": "2026-08-01",
 
   "durable_objects": {
-    "bindings": [{ "name": "ROOM", "class_name": "Room" }]
+    "bindings": [
+      { "name": "ROOM", "class_name": "Room" },
+      // One object owns the room-code namespace (design R4). A code must exist before a room
+      // does, which is what stops a query string creating billable objects.
+      { "name": "REGISTRY", "class_name": "Registry" }
+    ]
   },
 
   "migrations": [
@@ -13,6 +18,10 @@
       // SQLite-backed classes are the only kind available on the free plan (design D9).
       "tag": "v1",
       "new_sqlite_classes": ["Room"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["Registry"]
     }
   ],
 

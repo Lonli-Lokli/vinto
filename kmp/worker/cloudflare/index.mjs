@@ -14,6 +14,7 @@
 
 import {
   newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
+  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
@@ -45,6 +46,89 @@ function mintToken() {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+const REGISTRY_KEY = 'registry';
+
+/**
+ * How many times to retry a code collision before giving up.
+ *
+ * At 900 million codes and a handful of live rooms a collision is vanishingly unlikely, so
+ * three attempts is not a tuning parameter — it is the difference between "impossible" and
+ * "impossible, and it says so if it happens".
+ */
+const MINT_ATTEMPTS = 3;
+
+/**
+ * The room-code namespace, as a single Durable Object (design R4).
+ *
+ * Everything that creates a room goes through here, which is exactly why it exists: a code
+ * has to be minted before `idFromName` is ever called, so a stranger cannot conjure objects
+ * out of query strings. It is also where the caps in phase 5 belong, since it is the only
+ * place that knows how many rooms are live.
+ */
+export class Registry {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async #load() {
+    const stored = await this.ctx.storage.get(REGISTRY_KEY);
+    if (stored) return stored;
+    const fresh = newRegistry();
+    await this.ctx.storage.put(REGISTRY_KEY, fresh);
+    return fresh;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    let registryJson = await this.#load();
+
+    if (request.method === 'POST' && url.pathname === '/mint') {
+      const body = await request.json();
+
+      // Retry on collision with fresh entropy rather than reusing an entry: "one code, one
+      // room" is an invariant the Kotlin side is allowed to assume absolutely.
+      for (let attempt = 0; attempt < MINT_ATTEMPTS; attempt++) {
+        const bytes = [...crypto.getRandomValues(new Uint8Array(6))].join(',');
+        const result = JSON.parse(
+          mintRoomCode(registryJson, bytes, Boolean(body.isPublic), body.hostNickname ?? ''),
+        );
+        if (!result.error) {
+          await this.ctx.storage.put(REGISTRY_KEY, JSON.stringify(result.state));
+          return Response.json({ code: result.room.code, roomId: result.room.roomId });
+        }
+        registryJson = JSON.stringify(result.state);
+      }
+      return Response.json({ error: 'could not mint a code' }, { status: 503 });
+    }
+
+    if (url.pathname === '/resolve') {
+      const code = url.searchParams.get('code') ?? '';
+      return new Response(resolveRoomCode(registryJson, code), {
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    if (url.pathname === '/public') {
+      return new Response(listPublicRooms(registryJson), {
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/forget') {
+      const code = url.searchParams.get('code') ?? '';
+      await this.ctx.storage.put(REGISTRY_KEY, forgetRoom(registryJson, code));
+      return Response.json({ ok: true });
+    }
+
+    if (url.pathname === '/size') {
+      return Response.json({ size: registrySize(registryJson) });
+    }
+
+    return new Response('not found', { status: 404 });
+  }
 }
 
 export class Room {
@@ -297,7 +381,6 @@ export class Room {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const roomId = url.searchParams.get('room') ?? 'default';
 
     // Reports what is deployed and what is switched on, so a deployment can be identified
     // without reading its source. `roomOpen` is the answer to "is this thing accepting play
@@ -331,10 +414,52 @@ export default {
       return stub.fetch(new Request(request.url, { method: 'POST', body }));
     }
 
-    // One Durable Object per room id — the unit of isolation (design D9). The Worker does
+    // --- the registry: everything that creates or finds a room ---------------------------
+    const registry = () => env.REGISTRY.get(env.REGISTRY.idFromName('registry'));
+
+    // Creating a room is a POST, and it is the *only* way to bring one into existence.
+    if (url.pathname === '/rooms' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const minted = await registry().fetch(
+        new Request('https://registry/mint', { method: 'POST', body: JSON.stringify(body) }),
+      );
+      return new Response(await minted.text(), {
+        status: minted.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    // The public list. Private rooms are simply absent from it; they are reachable by code.
+    if (url.pathname === '/rooms' && request.method === 'GET') {
+      const listed = await registry().fetch(new Request('https://registry/public'));
+      return new Response(await listed.text(), {
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    // --- reaching a room ------------------------------------------------------------------
+    //
+    // The code is resolved through the registry FIRST, and `idFromName` is reached only for a
+    // code it has issued. This is the whole of design R4: not a check that a room is
+    // legitimate, but the fact that an unknown code never touches a Durable Object at all,
+    // and therefore never creates or bills one.
+    const code = url.searchParams.get('room');
+    if (!code) {
+      return new Response('missing room code', { status: 400 });
+    }
+
+    const resolved = await (
+      await registry().fetch(new Request(`https://registry/resolve?code=${encodeURIComponent(code)}`))
+    ).json();
+
+    if (!resolved.known) {
+      return new Response('no such room', { status: 404 });
+    }
+
+    // One Durable Object per room — the unit of isolation (design D9). The Worker does
     // nothing but route, because its ~10 ms CPU budget allows nothing more; the engine work
     // happens inside the object, which is where the real CPU budget is.
-    const id = env.ROOM.idFromName(roomId);
+    const id = env.ROOM.idFromName(resolved.room.roomId);
     return env.ROOM.get(id).fetch(request);
   },
 };

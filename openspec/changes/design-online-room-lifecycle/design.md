@@ -167,8 +167,8 @@ A single `Registry` Durable Object owns the namespace. `POST /rooms` asks it for
 mints one, records the room, and only then does anyone call `idFromName`. A join with an
 unknown code is refused *by the registry*, so no object is created.
 
-**Codes** are 6 characters from a 32-symbol alphabet with the ambiguous glyphs removed
-(no `0/O`, `1/I/L`) — about 10⁹ combinations, short enough to read aloud. That is not enough
+**Codes** are 6 characters from a 31-symbol alphabet with the ambiguous glyphs removed
+(no `0/O`, `1/I/L`) — about 900 million combinations, short enough to read aloud. That is not enough
 entropy to be a secret on its own, which is why scanning is answered by rate limiting (R6)
 rather than by making codes longer and unspeakable.
 

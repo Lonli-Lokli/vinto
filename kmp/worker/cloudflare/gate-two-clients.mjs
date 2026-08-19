@@ -23,7 +23,22 @@ const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 // state that survives hibernation, which keeps no memory either.
 const verifyIdx = process.argv.indexOf('--verify');
 const VERIFY_ONLY = verifyIdx !== -1;
-const ROOM = VERIFY_ONLY ? process.argv[verifyIdx + 1] : (process.env.GATE_ROOM ?? `gate-${Date.now()}`);
+
+/**
+ * A room code has to be *minted* now — naming one into existence is exactly what the registry
+ * exists to prevent (design R4), and that applies to harnesses as much as to strangers.
+ */
+async function mintRoom() {
+  const response = await fetch(`${BASE}/rooms`, {
+    method: 'POST',
+    body: JSON.stringify({ isPublic: false, hostNickname: 'gate' }),
+  });
+  const body = await response.json();
+  if (!body.code) throw new Error(`could not mint a room: ${JSON.stringify(body)}`);
+  return body.code;
+}
+
+const ROOM = VERIFY_ONLY ? process.argv[verifyIdx + 1] : (process.env.GATE_ROOM ?? await mintRoom());
 
 let failures = 0;
 function check(label, actual, wanted) {
