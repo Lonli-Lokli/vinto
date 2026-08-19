@@ -29,13 +29,25 @@ private fun evaluateTerminalState(state: MctsGameState, botPlayerId: String): Do
     return if (state.winner == botPlayerId) 1.0 else 0.0
 }
 
-/** Five components, weighted. Toss-in potential dominates because it compounds. */
+/**
+ * Five components, weighted.
+ *
+ * Toss-in potential leads because it compounds: a pair sheds two cards in one turn and can
+ * cascade into an action. The rest describe the position; this one describes what the bot can
+ * still *do* about it.
+ */
+private const val TOSS_IN_WEIGHT = 0.3
+private const val POSITION_WEIGHT = 0.25
+private const val ACTION_CARD_WEIGHT = 0.2
+private const val INFORMATION_WEIGHT = 0.15
+private const val THREAT_WEIGHT = 0.1
+
 private fun evaluateNormalState(state: MctsGameState, botPlayer: MctsPlayerState): Double {
-    val score = evaluateTossInPotential(botPlayer) * 0.3 +
-        evaluateRelativePosition(state, botPlayer) * 0.25 +
-        evaluateActionCardValue(botPlayer) * 0.2 +
-        evaluateInformationAdvantage(state, botPlayer) * 0.15 +
-        evaluateThreatLevel(state, botPlayer) * 0.1
+    val score = evaluateTossInPotential(botPlayer) * TOSS_IN_WEIGHT +
+        evaluateRelativePosition(state, botPlayer) * POSITION_WEIGHT +
+        evaluateActionCardValue(botPlayer) * ACTION_CARD_WEIGHT +
+        evaluateInformationAdvantage(state, botPlayer) * INFORMATION_WEIGHT +
+        evaluateThreatLevel(state, botPlayer) * THREAT_WEIGHT
 
     return score.coerceIn(0.0, 1.0)
 }
@@ -44,6 +56,7 @@ private fun evaluateNormalState(state: MctsGameState, botPlayer: MctsPlayerState
  * The coalition needs exactly one member to beat the caller, so it is scored on its
  * *champion* — the lowest hand among them — rather than on any average.
  */
+@Suppress("MagicNumber")
 fun evaluateCoalitionState(state: MctsGameState): Double {
     val vintoCallerId = state.vintoCallerId ?: return 0.0
     val vintoPlayer = state.players.firstOrNull { it.id == vintoCallerId } ?: return 0.0
