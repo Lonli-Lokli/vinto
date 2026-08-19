@@ -1,6 +1,8 @@
 package game.vinto.bot
 
+import game.vinto.shapes.Difficulty
 import game.vinto.shapes.Rank
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -37,6 +39,26 @@ class VintoCallRuleTest {
         // needs to be strictly lower to beat it.
         assertTrue(shouldCallVintoByScore(contextWith(listOf(Rank.KING, Rank.JOKER))))
         assertTrue(shouldCallVintoByScore(contextWith(listOf(Rank.KING, Rank.KING))))
+    }
+
+    @Test
+    fun callsOnExactlyZeroBecauseTheCoalitionMustBeatTheCallerStrictly() {
+        // A tie goes to the caller (+3 / 0), so zero is worth calling on.
+        assertTrue(shouldCallVintoByScore(contextWith(listOf(Rank.KING))))
+    }
+
+    @Test
+    fun theServiceMakesTheSameCallAtEveryDifficulty() {
+        // Difficulty tunes memory accuracy and search budget; it must not turn the Vinto
+        // rule into a different rule, or an "easy" bot would end games a "hard" one would not.
+        val winning = contextWith(listOf(Rank.JOKER, Rank.KING))
+        val losing = contextWith(listOf(Rank.TEN))
+
+        for (difficulty in listOf(Difficulty.EASY, Difficulty.MODERATE, Difficulty.HARD)) {
+            val service = MctsBotDecisionService(difficulty, Random(5))
+            assertTrue(service.shouldCallVinto(winning), "${difficulty.serialName} refused a winning hand")
+            assertFalse(service.shouldCallVinto(losing), "${difficulty.serialName} called on a losing hand")
+        }
     }
 
     @Test
