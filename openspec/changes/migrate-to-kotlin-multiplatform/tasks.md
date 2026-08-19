@@ -46,10 +46,10 @@ not after the UI is built.
 
 ## 3. Shared shapes, PRNG, recording
 
-- [ ] 3.1 Port `shapes`: `Card`, `Rank`, `Pile`, `GameState`, `PlayerState`, `PendingAction`, `ActiveTossIn`, history types, enums with TS string values, `CARD_CONFIGS` and helpers
+- [x] 3.1 Port `shapes`: **done** — `Card`, `Rank`, `Pile` (immutable, since the Kotlin engine is a pure reducer), `GameState`, `PlayerState`, `PendingAction`, `ActiveTossIn`, history types, all enums carrying their TypeScript string values, `CARD_CONFIGS` and helpers. TypeScript's `field?: T` versus `field: T | null` distinction is reproduced with `@EncodeDefault(NEVER)` versus a plain nullable, because the canonical form preserves it and therefore so does the hash. Verified against all 50 recordings in `fixtures/recordings/` (see 3.4)
 - [ ] 3.2 `GameAction` sealed hierarchy + polymorphic serializer producing `{ type, payload }`; round-trip tests against JSON samples exported from TypeScript
 - [ ] 3.3 `Prng` (mulberry32) passing the published test vectors
-- [ ] 3.4 `shared/recording`: `GameRecording` v1 model, canonical JSON writer, SHA-256 (multiplatform), `hashGameState`; tests: canonical strings byte-equal to TypeScript samples
+- [~] 3.4 Canonical JSON writer, multiplatform SHA-256 and `hashGameState`: **done**; the `GameRecording` v1 model itself is not yet ported. **Deviation from D1**: these live in `shared/shapes`, not `shared/recording`, because that is where TypeScript keeps them (`packages/shapes/src/lib/canonical-json.ts`, `prng.ts`) and the port is file-for-file (D3). Verified more strongly than "byte-equal to samples": all 50 recordings carry a `finalStateHash` from TypeScript, and the Kotlin model decodes each state, re-encodes it, canonicalises and hashes it to the same value — one number covering lossless decode, correct optional-field handling, byte-identical canonical form and SHA-256 agreement. Negative controls confirmed the check is not vacuous
 - [ ] 3.5 Purity guard test for `shared/engine` sources (no clocks/random/uuid)
 
 ## 4. Engine port (parity gate #1)

@@ -1,6 +1,10 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.androidLibrary)
 }
 
 /**
@@ -89,14 +93,28 @@ val generatePrngVectorsSource =
     }
 
 kotlin {
-    // jvm  — tests and tooling only; there is no JVM server (see design D1).
-    // js   — the Cloudflare Worker bundle.
+    // jvm     — tests and tooling only; there is no JVM server (see design D1).
+    // js      — the Cloudflare Worker bundle.
+    // wasmJs  — the Compose web client.
+    // android — the Android app.
     jvm()
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     js(IR) {
         binaries.library()
         nodejs()
         useEsModules()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        binaries.library()
+        nodejs()
     }
 
     if (isMacOs) {
@@ -115,5 +133,19 @@ kotlin {
         // Passing the task provider carries the task dependency, so the sources are
         // generated before any target compiles its tests.
         commonTest.get().kotlin.srcDir(generatePrngVectorsSource)
+    }
+}
+
+android {
+    namespace = "game.vinto.shapes"
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
+
+    defaultConfig {
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }

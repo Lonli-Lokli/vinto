@@ -52,12 +52,19 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   cross-language check — Kotlin inside a Durable Object reproduces the numbers TypeScript
   verifies. Details, and the one sliver that needs a deployed Worker: `PLATFORM-GATE.md`
 
+- **`shapes` is ported** (task 3.1): `Card`, `Rank`, an immutable `Pile`, `GameState` and
+  every nested type, all enums carrying their TypeScript string values, `CARD_CONFIGS`, plus
+  the canonical JSON writer, a pure-Kotlin SHA-256 and `hashGameState`. It now builds for
+  **jvm, android, js, wasmJs and iOS**, so `composeApp` can depend on it.
+  The gate: all 50 recordings in `fixtures/recordings/` carry a `finalStateHash` written by
+  TypeScript, and Kotlin reproduces every one of them (§6a)
+
 **Next**
 
-1. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
-   behind the parity gate. Note `shapes` still has no `androidTarget`/`wasmJs`, so
-   `composeApp` cannot depend on it yet — add those when the port starts
-2. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
+1. `GameAction` sealed hierarchy + polymorphic `{ type, payload }` serializer (task 3.2).
+   The corpus holds 13,900 recorded actions to check it against
+2. Then the engine itself, behind the parity gate (phase 4)
+3. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
    cannot be measured until the bot is ported in phase 6, and it is not a blocker
 
 ---
@@ -202,6 +209,30 @@ that cannot compile them says so rather than quietly building less than you aske
 
 The underlying hazard is unchanged and worth restating: a `commonMain` change that breaks
 iOS cannot fail on a non-Mac host. Build on macOS before trusting a shared-code change.
+
+## 6a. How the ported `shapes` is verified
+
+Three layers, weakest to strongest:
+
+1. `Sha256Test`, `CanonicalJsonTest`, `PrngVectorsTest` — unit tests in `commonTest`, so they
+   run on **all five targets** (jvm, android, js, wasmJs, iOS simulator). They pin the rules
+   that the corpus cannot reach: the `botMemory` exclusion is never present in a real
+   recording, so it is asserted directly.
+2. `RecordingParityTest` (JVM only, it reads the 4.5 MB corpus from disk) — decodes each of
+   the 50 recordings' `finalState` into the Kotlin model with `ignoreUnknownKeys = false`,
+   so an unmodelled field is an error rather than a silent drop.
+3. The same test re-encodes that state, canonicalises and hashes it, and compares against the
+   `finalStateHash` **TypeScript wrote**. One number covers lossless decode, correct
+   optional-versus-nullable handling, a byte-identical canonical form, and SHA-256 agreeing
+   with WebCrypto. It cannot pass by accident.
+
+Confirmed non-vacuous: reversing the canonical key sort fails it, and so does dropping
+`turnActions` from the exclusions. (Dropping `botMemory` does **not**, which is why layer 1
+exists.)
+
+**Deviation from design D1**, recorded deliberately: canonical JSON, SHA-256 and `Prng` live
+in `shared/shapes` rather than a `shared/recording` module, because that is where TypeScript
+keeps them and the port is file-for-file (D3). Revisit when the `GameRecording` model lands.
 
 ## 6. Decisions already made — do not silently reopen
 
