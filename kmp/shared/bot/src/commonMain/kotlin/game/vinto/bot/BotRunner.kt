@@ -1,5 +1,6 @@
 package game.vinto.bot
 
+import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.Difficulty
@@ -109,10 +110,17 @@ class BotRunner(
             if (player.id in tossIn.playersReadyForNextTurn) continue
 
             val context = buildContext(state, player)
-            val positions = tossInPositions(player, tossIn.ranks)
+
+            // In the final round the coalition plans its toss-ins together: shed everything
+            // the coalition can afford to lose, which is not the same as what this seat would
+            // shed for itself.
+            val coalition = buildCoalitionPlanInput(state, player.id)
+            val positions =
+                if (coalition != null) planCoalitionTossIn(coalition, tossIn.ranks)
+                else tossInPositions(player, tossIn.ranks)
 
             if (positions.isNotEmpty() &&
-                serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context)
+                (coalition != null || serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context))
             ) {
                 return GameAction.ParticipateInTossIn(
                     ParticipateInTossInPayload(player.id, positions),
@@ -147,7 +155,17 @@ class BotRunner(
         val pending = state.pendingAction
         return when {
             pending == null -> turnStartAction(state, player)
+
             state.subPhase == GameSubPhase.CHOOSING -> drawnCardAction(state, player, pending)
+
+            // A card drawn *before* a toss-in window opened comes back as `awaiting_action`
+            // while its own phase is still `choosing-action`: `advanceTurnAfterTossIn` moves
+            // the sub-phase and leaves the action phase alone. Nothing can be done with it
+            // from there — use, swap and discard all need `choosing`, and declaring needs
+            // `selecting-target` — so the card is put down rather than played. Aiming it
+            // instead is how a bot ends up declaring a King the engine will not accept.
+            pending.actionPhase == ActionPhase.CHOOSING_ACTION -> abandonAction(player)
+
             else -> actionTargetAction(state, player, pending)
         }
     }
@@ -162,8 +180,13 @@ class BotRunner(
      * is the only thing left that moves the game forward.
      */
     private fun turnStartAction(state: GameState, player: PlayerState): GameAction? {
-        val decision = serviceFor(player.id).decideTurnAction(buildContext(state, player))
-        val wantsDiscard = decision.action == TurnAction.TAKE_DISCARD
+        val coalition = buildCoalitionPlanInput(state, player.id)
+        val wantsDiscard = if (coalition != null) {
+            planCoalitionTurnStart(coalition) == CoalitionTurnStart.TAKE_DISCARD
+        } else {
+            serviceFor(player.id).decideTurnAction(buildContext(state, player)).action ==
+                TurnAction.TAKE_DISCARD
+        }
 
         if (state.drawPile.isEmpty()) {
             if (canTakeDiscard(state)) return GameAction.PlayDiscard(PlayerIdPayload(player.id))
@@ -203,6 +226,10 @@ class BotRunner(
         val context = buildContext(state, player)
         val drawnCard = pending.card
 
+        buildCoalitionPlanInput(state, player.id)?.let { coalition ->
+            return coalitionDrawnCardAction(coalition, player, drawnCard)
+        }
+
         if (service.shouldUseAction(drawnCard, context)) {
             return GameAction.UseCardAction(PlayerIdPayload(player.id))
         }
@@ -219,6 +246,28 @@ class BotRunner(
     }
 
     /**
+     * The same decision, made for the coalition rather than for this seat.
+     *
+     * The planner searches every coalition hand together, so it will have one member take on
+     * points to shorten another's — the right play when only the lowest hand counts, and one
+     * that self-interested search does not look for.
+     */
+    private fun coalitionDrawnCardAction(
+        coalition: CoalitionPlanInput,
+        player: PlayerState,
+        drawnCard: Card,
+    ): GameAction = when (val plan = planCoalitionDrawnCard(coalition, drawnCard)) {
+        is CoalitionDrawnCardDecision.UseAction ->
+            GameAction.UseCardAction(PlayerIdPayload(player.id))
+
+        is CoalitionDrawnCardDecision.Swap ->
+            GameAction.SwapCard(SwapCardPayload(player.id, plan.position, plan.declaredRank))
+
+        CoalitionDrawnCardDecision.Discard ->
+            GameAction.DiscardCard(PlayerIdPayload(player.id))
+    }
+
+    /**
      * Aiming an action that is already in play.
      *
      * How many targets a card takes, and what closes it off, is the rule for that rank — so
@@ -231,7 +280,12 @@ class BotRunner(
         pending: PendingAction,
     ): GameAction? {
         val selected = pending.targets.size
-        val plan = serviceFor(player.id).selectActionTargets(buildContext(state, player))
+        val coalition = buildCoalitionPlanInput(state, player.id)
+        val plan = if (coalition != null) {
+            planCoalitionActionTargets(coalition, pending.card)
+        } else {
+            serviceFor(player.id).selectActionTargets(buildContext(state, player))
+        }
 
         return when (pending.card.rank) {
             // Peek one card, then acknowledge it.
