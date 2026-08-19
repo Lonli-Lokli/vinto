@@ -61,6 +61,13 @@ private const val QUARTER_TURN = 90f
 private const val CAMERA = 14f
 private const val PULSE_LOW = 0.45f
 private const val PULSE_HIGH = 1f
+private const val FLINCH_MS = 420
+private const val SHAKE_PX = 3f
+
+/** A turned card's footprint is its own, rotated — wide where it was tall. */
+private fun CardScale.footprintWidth(turned: Boolean) = if (turned) height else width
+
+private fun CardScale.footprintHeight(turned: Boolean) = if (turned) width else height
 
 /**
  * One card, drawn from the same artwork the web app uses.
@@ -103,11 +110,20 @@ fun CardFace(
     val shape = RoundedCornerShape(TableSizes.Corner)
     val density = LocalDensity.current
 
+    // A hand flinches when a penalty card lands in it. Small and quick — enough to catch the
+    // eye of somebody looking elsewhere, which is the entire job: a card appearing in your
+    // hand with no explanation is the most confusing thing this game does.
+    val shake by animateFloatAsState(
+        targetValue = if (state.flinching) 1f else 0f,
+        animationSpec = tween(FLINCH_MS, easing = FastOutSlowInEasing),
+        label = "flinch",
+    )
+
     Box(
         modifier = modifier
             .sizeIn(
-                minWidth = if (onClick != null) TapTarget else scale.width,
-                minHeight = scale.height,
+                minWidth = if (onClick != null) TapTarget else scale.footprintWidth(state.turned),
+                minHeight = scale.footprintHeight(state.turned),
             )
             .semantics { contentDescription = label ?: describe(card) },
         contentAlignment = Alignment.Center,
@@ -117,6 +133,10 @@ fun CardFace(
                 .size(scale.width, scale.height)
                 .graphicsLayer {
                     rotationY = turn
+                    // A quarter turn for the seats at the sides of the table, so their cards
+                    // lie the way cards lie in front of somebody sitting there.
+                    rotationZ = if (state.turned) QUARTER_TURN else 0f
+                    translationX = shake * SHAKE_PX * density.density
                     cameraDistance = CAMERA * density.density
                 }
                 .clip(shape)

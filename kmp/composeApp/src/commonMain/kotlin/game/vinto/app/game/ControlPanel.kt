@@ -8,13 +8,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,9 +40,6 @@ private val Half = 4.dp
 private val LogCorner = 6.dp
 private val HelpSize = 34.dp
 
-/** Roughly a third of a phone. Past that the table stops being a table. */
-private val PanelCeiling = 320.dp
-
 private const val RECENT_SHOWN = 2
 
 /**
@@ -72,14 +66,11 @@ fun ControlPanel(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxWidth(), color = RailFill) {
-        // Bounded and scrollable, because the panel's height is not ours to choose: a King
-        // puts fourteen rank buttons here, and at large font sizes that is most of a phone.
-        // The table has to survive the worst case rather than the usual one.
+        // No scrolling. A control you have to scroll to reach is one a player does not know
+        // is there, and the panel's worst case — a King's fourteen ranks — fits because those
+        // are drawn as a compact grid rather than as fourteen full-width buttons.
         Column(
-            modifier = Modifier
-                .padding(PanelPad)
-                .heightIn(max = PanelCeiling)
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.padding(PanelPad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             Heading(table = table, onHelp = onHelp)
@@ -110,6 +101,7 @@ fun ControlPanel(
                             label = rank.rank.serialName,
                             tone = ButtonTone.DECLARE,
                             onClick = { onMove(rank.move) },
+                            compact = true,
                         )
                     }
                 }

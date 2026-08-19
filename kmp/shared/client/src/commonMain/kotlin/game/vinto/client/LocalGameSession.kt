@@ -83,13 +83,19 @@ class LocalGameSession(
     private val _log = MutableStateFlow<List<String>>(emptyList())
     val log: StateFlow<List<String>> = _log.asStateFlow()
 
-    /** Cards that visibly moved on the last dispatch, in the order they moved. */
-    private val _flights = MutableSharedFlow<List<CardFlight>>(
+    /**
+     * What there is to see, in the order it happened.
+     *
+     * Scenes rather than states: this is the same stream a room's log will feed, so the
+     * screen above cannot tell a solo game from an online one — which is the point of
+     * deriving it from the view (design C1).
+     */
+    private val _scenes = MutableSharedFlow<List<Scene>>(
         replay = 1,
         extraBufferCapacity = EVENT_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val flights: SharedFlow<List<CardFlight>> = _flights.asSharedFlow()
+    val scenes: SharedFlow<List<Scene>> = _scenes.asSharedFlow()
 
     override suspend fun dispatch(action: GameAction): String? {
         // The seat boundary, the same one the Durable Object checks before the engine sees
@@ -111,17 +117,18 @@ class LocalGameSession(
         }
 
         val before = state
+        val seenBefore = _view.value
         state = when (val result = GameEngine.reduce(state, action)) {
             is ReduceResult.Success -> result.state
             is ReduceResult.Failure -> return refuse(result.reason)
         }
 
-        val moved = flightsFor(action, before, state, playerId).toMutableList()
+        publish()
+        val seen = choreograph(action, seenBefore, _view.value).toMutableList()
         record(action, before, state)
 
-        publish()
-        moved += playBots()
-        _flights.tryEmit(moved)
+        seen += playBots()
+        _scenes.tryEmit(seen)
         return null
     }
 
@@ -146,19 +153,18 @@ class LocalGameSession(
      * event's count. Publishing every intermediate state would make the UI flicker through
      * positions nobody was ever meant to see.
      */
-    private suspend fun playBots(): List<CardFlight> {
+    private suspend fun playBots(): List<Scene> {
         val start = state
         var moves = 0
-        val moved = mutableListOf<CardFlight>()
         val told = mutableListOf<Triple<GameAction, GameState, GameState>>()
 
         val next = onBotDispatcher {
             var working = start
             while (moves < MAX_BOT_STEPS && working.phase != GamePhase.SCORING) {
                 val action = nextBotAction(working) ?: break
-                val stepped = (GameEngine.reduce(working, action) as? ReduceResult.Success)?.state ?: break
+                val stepped = (GameEngine.reduce(working, action) as? ReduceResult.Success)?.state
+                    ?: break
 
-                moved += flightsFor(action, working, stepped, playerId)
                 told += Triple(action, working, stepped)
                 working = stepped
                 moves++
@@ -167,13 +173,21 @@ class LocalGameSession(
         }
 
         if (moves == 0) return emptyList()
+
+        // Choreographed from the *views*, not the states, so this is the same computation a
+        // client will do from a socket — the bots' moves arrive there as a log of actions and
+        // a new view, which is exactly what these three are.
+        val seen = told.flatMap { (action, was, now) ->
+            choreograph(action, projectView(was, playerId), projectView(now, playerId))
+        }
+
         told.forEach { (action, was, now) -> record(action, was, now) }
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.
         _events.tryEmit(SessionEvent.BotsPlayed(moves))
         publish()
-        return moved
+        return seen
     }
 
     /**

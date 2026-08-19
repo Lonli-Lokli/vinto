@@ -39,7 +39,7 @@ fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAga
     val log by holder.log.collectAsState()
     var helpOpen by rememberSaveable { mutableStateOf(false) }
 
-    CardStage(flights = holder.flights, sizes = TableSizes.forHeight(TableHeightGuess)) {
+    CardStage(scenes = holder.scenes, sizes = TableSizes.forHeight(TableHeightGuess)) {
         Column(modifier = Modifier.fillMaxSize()) {
             TableScreen(
                 view = holder.current,

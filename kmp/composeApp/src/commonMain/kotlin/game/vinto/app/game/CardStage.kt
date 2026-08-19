@@ -9,40 +9,53 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
 import game.vinto.client.Anchor
-import game.vinto.client.CardFlight
+import game.vinto.client.AnimationQueue
+import game.vinto.client.Beat
+import game.vinto.client.Scene
 import game.vinto.engine.CardView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlin.math.roundToInt
 
-private const val FLIGHT_MS = 340
+private const val MOVE_MS = 340
+private const val FLINCH_MS = 420
+private const val SAY_MS = 1400
+private const val BETWEEN_SCENES_MS = 60L
 
 /**
- * Where the table's fixed places are on the screen.
+ * Where the table's fixed places are on screen, and what is currently happening at them.
  *
- * Filled by the table itself as it lays out — each card, pile and pending slot reports its
- * position — and read by the overlay, which is the only part that needs to know. The game
- * works out *that* a card moved from the deck to a hand; this is the only thing that knows
- * where either of those is, and it changes with every screen size.
+ * Filled by the table as it lays out — each card, pile and pending slot reports its position —
+ * and read by the overlay, which is the only part that needs to know. The game works out
+ * *that* a card moved from the deck to a hand; this is the only thing that knows where either
+ * of those is, and it changes with every screen size.
  */
 class Stage {
     private val places = mutableStateMapOf<Anchor, Offset>()
     private var origin: Offset = Offset.Zero
 
     internal val flying = mutableStateListOf<Flight>()
+
+    /** Hands mid-flinch, and seats mid-sentence: what the table draws that is not a card. */
+    internal val flinching = mutableStateListOf<Anchor>()
+    internal val saying = mutableStateMapOf<String, String>()
+
+    fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
+        places[anchor] = coordinates.positionInRoot() - origin
+    }
 
     /**
      * Places whose card is currently in the air.
@@ -53,9 +66,9 @@ class Stage {
      */
     val inFlight: Set<Anchor> get() = flying.mapTo(mutableSetOf()) { it.landingAt }
 
-    fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
-        places[anchor] = coordinates.positionInRoot() - origin
-    }
+    fun isFlinching(anchor: Anchor): Boolean = anchor in flinching
+
+    fun lineFor(playerId: String): String? = saying[playerId]
 
     internal fun setOrigin(coordinates: LayoutCoordinates) {
         origin = coordinates.positionInRoot()
@@ -72,64 +85,61 @@ class Stage {
     )
 }
 
-/** Reports this composable's position as [anchor], so a card can be flown to or from it. */
+/** Reports this composable's position as [anchor], so a beat can be played at it. */
 fun Modifier.anchoredAt(stage: Stage, anchor: Anchor): Modifier =
     onGloballyPositioned { stage.place(anchor, it) }
 
 val LocalStage = compositionLocalOf { Stage() }
 
 /**
- * The table, with a layer above it for cards in transit.
+ * The table, with a layer above it for everything in motion.
  *
- * Cards move by being drawn *over* the table rather than by the table rearranging itself. The
- * web app does the same thing, and the reason is not laziness: a card moving from a hand to
- * the discard pile passes over three other hands, and a layout that tried to animate it in
- * place would have to make room for it in every one of them.
+ * Scenes are played one after another and the beats inside a scene together, which is what
+ * makes a swap read as two cards crossing rather than as two separate moves. What arrives
+ * faster than it can be played is dropped by the [AnimationQueue] rather than queued up — see
+ * the design note there; a client that fell behind lands on the current state.
  *
- * The table underneath updates immediately, which means for the third of a second a card is in
- * the air it is also already at its destination. In practice nobody sees it — the flight is
- * over before the eye finishes following it — and the alternative, holding the whole table a
- * beat behind the game, makes every tap feel late.
+ * Cards move by being drawn *over* the table rather than by the table rearranging itself. A
+ * card going from a hand to the discard pile passes over three other hands, and a layout that
+ * animated it in place would have to make room for it in every one of them.
  */
 @Composable
 fun CardStage(
-    flights: Flow<List<CardFlight>>,
+    scenes: Flow<List<Scene>>,
     sizes: TableSizes,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val stage = remember { Stage() }
+    val queue = remember { AnimationQueue() }
 
-    LaunchedEffect(flights) {
+    // Drains only while there is something to play, and then stops.
+    //
+    // The obvious shape — a `while (true)` asking for a frame each time round — spins for the
+    // life of the screen, and the cost is not the CPU: a composition that requests a frame
+    // forever is a composition that is never idle, so `waitForIdle` in a UI test never
+    // returns and neither does anything else built on idling. Collecting and draining per
+    // batch has the same effect and goes quiet in between.
+    LaunchedEffect(scenes) {
         var next = 0L
-        flights.collect { batch ->
-            // One frame first, so the table has re-laid-out and reported where things now are.
-            // A flight is worked out from the move, not from the drawing, and the drawing is
-            // always a frame behind — asking for positions in the same frame as the move gets
-            // the previous ones, or none at all for a slot that has only just appeared.
-            withFrameNanos { }
+        scenes.collect { batch ->
+            queue.submit(batch)
 
-            batch.forEach { flight ->
-                val from = stage.locate(flight.from)
-                val to = stage.locate(flight.to)
-                // A flight between two places the table has not laid out has nowhere to go.
-                // Skipping it is right: the card is already where it belongs.
-                if (from != null && to != null && from != to) {
-                    stage.flying += Stage.Flight(
-                        id = next++,
-                        card = flight.card?.let { CardView.Visible(it) } ?: CardView.Hidden,
-                        from = from,
-                        to = to,
-                        landingAt = flight.to,
-                    )
-                }
+            while (true) {
+                val scene = queue.next() ?: break
+
+                // One frame first, so the table has re-laid-out and reported where things
+                // now are. A scene is worked out from the move, and the drawing is always a
+                // frame behind — asking for positions in the same frame gets the previous
+                // ones, or none at all for a slot that has only just appeared.
+                withFrameNanos { }
+                next = stage.play(scene, next)
+                delay(BETWEEN_SCENES_MS)
             }
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) },
-    ) {
+    Box(modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) }) {
         CompositionLocalProvider(LocalStage provides stage) { content() }
 
         stage.flying.forEach { flight ->
@@ -138,12 +148,65 @@ fun CardStage(
     }
 }
 
+/**
+ * Starts every beat in a scene at once and returns when the longest has finished.
+ *
+ * Movement owns the clock; a flinch and a line run alongside it and clear themselves, because
+ * neither is something the next scene has to wait for.
+ */
+private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
+    var id = firstId
+    var longest = 0
+
+    scene.forEach { beat ->
+        when (beat) {
+            is Beat.Move -> {
+                val from = locate(beat.from)
+                val to = locate(beat.to)
+                // A beat between two places the table has not laid out has nowhere to go.
+                // Skipping it is right: the card is already where it belongs.
+                if (from != null && to != null && from != to) {
+                    flying += Stage.Flight(
+                        id = id++,
+                        card = beat.card?.let { CardView.Visible(it) } ?: CardView.Hidden,
+                        from = from,
+                        to = to,
+                        landingAt = beat.to,
+                    )
+                    longest = maxOf(longest, MOVE_MS)
+                }
+            }
+
+            is Beat.Flinch -> {
+                flinching += beat.at
+                longest = maxOf(longest, FLINCH_MS)
+            }
+
+            is Beat.Say -> saying[beat.playerId] = beat.line
+
+            // A card turning over and a seat lighting up are both drawn from the state the
+            // table already has, so there is nothing to start here — the beat exists so the
+            // scene takes the time they need.
+            is Beat.Turn -> longest = maxOf(longest, MOVE_MS)
+            is Beat.Attend -> Unit
+        }
+    }
+
+    if (longest > 0) delay(longest.toLong())
+    flinching.clear()
+    if (saying.isNotEmpty()) {
+        delay(SAY_MS.toLong())
+        saying.clear()
+    }
+    return id
+}
+
 @Composable
 private fun InFlight(flight: Stage.Flight, sizes: TableSizes, onArrival: () -> Unit) {
     val progress = remember { Animatable(0f) }
 
     LaunchedEffect(flight.id) {
-        progress.animateTo(1f, tween(FLIGHT_MS, easing = FastOutSlowInEasing))
+        progress.animateTo(1f, tween(MOVE_MS, easing = FastOutSlowInEasing))
         onArrival()
     }
 

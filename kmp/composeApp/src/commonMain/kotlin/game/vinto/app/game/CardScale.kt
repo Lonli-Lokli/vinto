@@ -6,8 +6,21 @@ import androidx.compose.ui.unit.dp
 /** How large one card is drawn. */
 data class CardScale(val width: Dp, val height: Dp)
 
-/** Whether a card can be touched now, and whether this action has already claimed it. */
-data class CardState(val tappable: Boolean = false, val chosen: Boolean = false)
+/**
+ * How one card is being drawn: what can be done to it, and what is happening to it.
+ *
+ * One object rather than five parameters, because they travel together — every caller that
+ * knows one knows all of them, and a card's *appearance* is a single idea.
+ */
+data class CardState(
+    val tappable: Boolean = false,
+    /** This action has already been aimed at it. */
+    val chosen: Boolean = false,
+    /** Lying sideways, as a card does in front of somebody at the side of the table. */
+    val turned: Boolean = false,
+    /** Flinching, because a penalty card just landed in this hand. */
+    val flinching: Boolean = false,
+)
 
 /**
  * The table's proportions, chosen from the height it actually has.

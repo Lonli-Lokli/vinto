@@ -36,8 +36,8 @@ class GameHolder(
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
 
-    /** Cards that visibly moved, for the overlay to fly. */
-    val flights get() = session.flights
+    /** What there is to see, for the stage to play. */
+    val scenes get() = session.scenes
 
     var question: Question by mutableStateOf(Question.None)
         private set

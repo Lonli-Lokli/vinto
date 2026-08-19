@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -182,7 +185,7 @@ private fun TopSeat(
         horizontalArrangement = Arrangement.spacedBy(Gap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Hand(seat, view, table, sizes.theirs, onMove)
+        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false))
         Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -198,10 +201,12 @@ private fun MiddleRow(
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
+    // and top-aligning it pools all the spare felt into one gap under the side seats.
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
         Piles(view, table, sizes)
@@ -213,6 +218,7 @@ private fun MiddleRow(
  * A seat down one edge: a column of cards, with the plate at the end nearest the rim — above
  * on the left, below on the right, so neither plate lands in the middle of the felt.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SideSeat(
     seat: PlayerSeatView?,
@@ -229,9 +235,21 @@ private fun SideSeat(
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
         if (plateFirst) Plate(seat, view, table, sizes, onMove)
-        seat.cards.forEachIndexed { position, card ->
-            SeatCard(seat, position, card, view, table, sizes.side, onMove)
+
+        // A quarter turn, the way cards lie in front of somebody sitting at the side of a
+        // table. It is not only decoration: turned, a card is wider than it is tall, so five
+        // of them stack down the edge in the height a phone actually has, and the seat reads
+        // as facing inwards rather than as a second copy of your own hand.
+        FlowColumn(
+            verticalArrangement = Arrangement.spacedBy(Tight),
+            horizontalArrangement = Arrangement.spacedBy(Tight),
+            maxItemsInEachColumn = HAND_ROW,
+        ) {
+            seat.cards.forEachIndexed { position, card ->
+                SeatCard(seat, position, card, Rendering(view, table, sizes.side), onMove, turned = true)
+            }
         }
+
         if (!plateFirst) Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -256,11 +274,19 @@ private fun MySeat(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Plate(seat, view, table, sizes, onMove)
-            Hand(seat, view, table, sizes.mine, onMove)
+            Hand(seat, view, table, sizes.mine, onMove, Modifier.weight(1f, fill = false))
         }
     }
 }
 
+/**
+ * A hand, wrapping onto a second row rather than running off the edge.
+ *
+ * Five cards is the deal and not the limit — every wrong declaration and every wrong toss-in
+ * adds one, and a hand of eight is an ordinary way to lose. A fixed row would push the extras
+ * off the screen, which is the one place a player must be able to count.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hand(
     seat: PlayerSeatView,
@@ -268,13 +294,22 @@ private fun Hand(
     table: Table,
     scale: CardScale,
     onMove: (Move) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Tight)) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(Tight),
+        verticalArrangement = Arrangement.spacedBy(Tight),
+        maxItemsInEachRow = HAND_ROW,
+    ) {
         seat.cards.forEachIndexed { position, card ->
-            SeatCard(seat, position, card, view, table, scale, onMove)
+            SeatCard(seat, position, card, Rendering(view, table, scale), onMove)
         }
     }
 }
+
+/** Five to a row: the size of a dealt hand, so the deal never wraps and a penalty does. */
+private const val HAND_ROW = 5
 
 @Composable
 private fun Plate(
@@ -291,14 +326,36 @@ private fun Plate(
         view.scores?.get(seat.id)?.let { add("$it") }
     }
     val tap = table.seatTaps[seat.id]
+    val line = LocalStage.current.lineFor(seat.id)
 
-    SeatPlate(
-        name = seat.nickname,
-        active = active,
-        marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
-        size = sizes.avatar,
-        onClick = tap?.let { { onMove(it) } },
-    )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Three bots that only ever move cards are furniture. A line at the right moment —
+        // announcing a Vinto, wincing at a penalty — is what makes the other seats read as
+        // opponents, and it costs one string.
+        line?.let {
+            Surface(
+                shape = RoundedCornerShape(FeltCorner),
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(bottom = 2.dp),
+            ) {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
+                )
+            }
+        }
+
+        SeatPlate(
+            name = seat.nickname,
+            active = active,
+            marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
+            size = sizes.avatar,
+            onClick = tap?.let { { onMove(it) } },
+        )
+    }
 }
 
 @Composable
@@ -306,18 +363,20 @@ private fun SeatCard(
     seat: PlayerSeatView,
     position: Int,
     card: CardView,
-    view: PlayerView,
-    table: Table,
-    scale: CardScale,
+    of: Rendering,
     onMove: (Move) -> Unit,
+    turned: Boolean = false,
 ) {
+    val (view, table, scale) = of
     val ref = CardRef(seat.id, position)
     val move = table.taps[ref]
     val stage = LocalStage.current
     val anchor = Anchor.Seat(seat.id, position)
 
     if (anchor in stage.inFlight) {
-        Box(modifier = Modifier.size(scale.width, scale.height).anchoredAt(stage, anchor))
+        val w = if (turned) scale.height else scale.width
+        val h = if (turned) scale.width else scale.height
+        Box(modifier = Modifier.size(w, h).anchoredAt(stage, anchor))
         return
     }
 
@@ -331,6 +390,8 @@ private fun SeatCard(
         state = CardState(
             tappable = move != null,
             chosen = ref.isTargeted(view),
+            turned = turned,
+            flinching = stage.isFlinching(anchor),
         ),
         label = "${seat.nickname}, card ${position + 1}",
         onClick = move?.let { { onMove(it) } },
@@ -470,6 +531,15 @@ private fun PendingCard(view: PlayerView, sizes: TableSizes) {
         }
     }
 }
+
+/**
+ * What a hand needs to draw itself: the game, what may be touched, and how big to draw it.
+ *
+ * Three things that always travel together and never separately — bundling them is what keeps
+ * the card composables to a readable signature rather than a list of arguments in a fixed
+ * order that nobody can check at a glance.
+ */
+private data class Rendering(val view: PlayerView, val table: Table, val scale: CardScale)
 
 /** Cards this action has already been aimed at, so the player can see what they have chosen. */
 private fun CardRef.isTargeted(view: PlayerView): Boolean =
