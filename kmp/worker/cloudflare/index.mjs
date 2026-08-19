@@ -199,7 +199,9 @@ export class Room {
     return state.seats.map((seat) => ({
       index: seat.index,
       playerId: seat.playerId,
-      nickname: seat.nickname,
+      // The whole profile, not a nickname picked out of it: whatever is added there next is
+      // display-only by construction, so it can travel without a decision each time.
+      profile: seat.profile,
       ownerId: seat.ownerId,
       occupied: seat.tokenHash !== null,
     }));

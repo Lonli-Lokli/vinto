@@ -93,12 +93,34 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 7. Single-player stays off the network
 
-- [ ] 7.1 `LocalGameSession` behind the same interface as the remote one, so the UI cannot
-      tell them apart (migrate-to-kotlin-multiplatform task 6.2)
-- [ ] 7.2 Guard: a single-player game opens no socket and creates no room. Asserted by a test
-      that fails if any network call is attempted, not by inspection
+- [x] 7.1 `LocalGameSession` behind the same interface as the remote one, so the UI cannot
+      tell them apart (migrate-to-kotlin-multiplatform task 6.2) — `:shared:client`, with
+      `GameSession` as the surface both will implement
+- [x] 7.2 Guard: a single-player game opens no socket and creates no room. Asserted by a test
+      that fails if any network call is attempted, not by inspection — `NoNetworkGuardTest`
+      plays a whole round under a `SecurityManager` that throws on any connect, listen or
+      accept, and proves the guard bites before trusting it
+
+Two things the guard turned up, both faithful ports of TypeScript gaps that only a UI was
+keeping shut:
+
+- [x] 7.3 The validator had **no phase gate**: every rule checks the turn and the *sub*-phase,
+      so `DRAW_CARD` passed during setup and again after scoring — reachable from a socket,
+      never from a button. Setup now admits only the setup actions and scoring admits none.
+      The corpus still replays hash-for-hash, since no recording ever drew out of phase
+- [x] 7.4 `PEEK_SETUP_CARD` validated the *named* player rather than the actor, so one player
+      could spend another's peeks. The seat check now lives in `shapes` as `GameAction.actorId`
+      and is read by both the Durable Object and the local session, rather than being copied
+- [x] 7.5 With the phase gate closed, it emerged that **online rounds were skipping setup
+      entirely**: the room deals humans with no peeks and goes straight to playing, and every
+      turn action was accepted while the engine sat in `setup`, so nobody ever saw two of their
+      own cards. `FINISH_SETUP` now takes the whole table being ready rather than whoever
+      pressed it first — in TypeScript those were the same thing, because only one player was
+      ever a person. Both room gates were relying on the hole and now run setup
 
 ## 8. Nicknames
 
-- [ ] 8.1 Validation: 1–16 characters, restricted character class, trimmed and collapsed
-- [ ] 8.2 Seat-based disambiguation in the view, since nicknames are not unique
+- [x] 8.1 Validation: 1–16 characters, restricted character class, trimmed and collapsed —
+      and carried as `PlayerProfile` per token rather than a bare string, so what a seat knows
+      about its player can grow without a wire-format change
+- [x] 8.2 Seat-based disambiguation in the view, since nicknames are not unique

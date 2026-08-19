@@ -11,6 +11,7 @@ import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.actorId
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.Prng
@@ -122,6 +123,42 @@ private const val SESSION_MS = 30 * 60 * 1000.0
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
 
+/**
+ * What is known about the person behind a token, beyond the fact that they hold a seat.
+ *
+ * A record rather than a bare nickname, because this is the thing that grows: an avatar, a
+ * preferred language, a pronoun, a "prefers no timer" — none of which are worth a schema change
+ * to the seat when they arrive. It also gives the account seam somewhere to land: an
+ * `ownerId` (design R3) eventually resolves to one of these, and a seat carries it either way.
+ *
+ * Everything in it is **display-only**. Nothing here identifies, authorises or seats anybody —
+ * that is the token's job, and keeping the two apart is why a nickname cannot be used to take
+ * somebody's place.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class PlayerProfile(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String = "",
+)
+
+/**
+ * Trims a nickname to something displayable, or gives it a name.
+ *
+ * 1–16 characters after collapsing whitespace, letters, digits, spaces and a little
+ * punctuation. Not unique, and not meant to be — two players may both be "Bob", and the view
+ * distinguishes them by seat. Rejecting duplicates would be a worse experience than the
+ * ambiguity, and would leak who is already in a room.
+ */
+internal fun sanitiseNickname(raw: String, seatIndex: Int): String {
+    val collapsed = raw.trim().replace(Regex("\\s+"), " ")
+    val allowed = collapsed.filter { it.isLetterOrDigit() || it == ' ' || it in "-_.'" }
+    val trimmed = allowed.take(MAX_NICKNAME_LENGTH).trim()
+
+    return trimmed.ifEmpty { "Player ${seatIndex + 1}" }
+}
+
+private const val MAX_NICKNAME_LENGTH = 16
+
 /** One finished round: what the hands came to, and what that was worth. */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -183,7 +220,14 @@ data class Seat(
      * two places: the client that owns it, and the single message that delivered it.
      */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tokenHash: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String? = null,
+    /**
+     * Everything display-related about whoever holds this seat.
+     *
+     * A record rather than a loose nickname so that the next thing anybody wants to show —
+     * an avatar, a flag, a pronoun — is a field here rather than a change to every message
+     * that carries a seat.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val profile: PlayerProfile? = null,
     /**
      * The account seam (design R3). Null for every anonymous player, which is all of them
      * today. An account system later maps an account to an `ownerId` and lets it reclaim a
@@ -452,7 +496,11 @@ fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double):
 
     val seated = state.seats.map {
         if (it.index == target.index) {
-            it.copy(tokenHash = hash, nickname = nickname, isBot = false)
+            it.copy(
+                tokenHash = hash,
+                profile = PlayerProfile(nickname = sanitiseNickname(nickname, it.index)),
+                isBot = false,
+            )
         } else {
             it
         }
@@ -486,7 +534,11 @@ fun addBot(stateJson: String, token: String, nowMs: Double): String {
         ?: return VintoJson.encodeToString(JoinResult(state, -1, "every seat is taken"))
 
     val seats = state.seats.map {
-        if (it.index == free.index) it.copy(isBot = true, nickname = "Bot ${free.index + 1}") else it
+        if (it.index == free.index) {
+            it.copy(isBot = true, profile = PlayerProfile(nickname = "Bot ${free.index + 1}"))
+        } else {
+            it
+        }
     }
 
     val next = withCountdown(state.copy(seats = seats), nowMs)
@@ -937,7 +989,7 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
 
     // The seat boundary, checked before the engine sees anything. An action whose payload
     // names another player is refused here whether or not it would have been legal for them.
-    actorOf(action)?.let { claimed ->
+    action.actorId?.let { claimed ->
         if (claimed != seatEntry.playerId) {
             return VintoJson.encodeToString(
                 ActionResult(charged, error = "seat $seat may only act as ${seatEntry.playerId}"),
@@ -990,7 +1042,7 @@ private fun playBots(start: RoomState): RoomState {
     while (steps++ < MAX_BOT_STEPS && state.game?.phase != GamePhase.SCORING) {
         val game = state.game ?: break
         val action = runner.nextAction(game) ?: break
-        val actor = actorOf(action)
+        val actor = action.actorId
         val seat = state.seats.firstOrNull { it.playerId == actor }
 
         // Three reasons to stop, all of them "this is not the room's move to make":
@@ -1066,44 +1118,6 @@ fun eventsSince(stateJson: String, sinceIndex: Int): String {
     return VintoJson.encodeToString(SyncResult(state.log.drop(from), state.nextIndex))
 }
 
-/**
- * Who an action claims to be from.
- *
- * `null` for the few actions that name nobody — setting the coalition leader, and the debug
- * ones — which are checked by the validator alone.
- */
-// Detekt reads this as complex; what it is measuring is the size of the action union, not
-// the difficulty of the code. An exhaustive `when` with no `else` is the point: a new action
-// becomes a compile error here, which is where a missing seat check would otherwise hide.
-@Suppress("CyclomaticComplexMethod")
-private fun actorOf(action: GameAction): String? = when (action) {
-    is GameAction.DrawCard -> action.payload.playerId
-    is GameAction.PlayDiscard -> action.payload.playerId
-    is GameAction.SwapCard -> action.payload.playerId
-    is GameAction.DiscardCard -> action.payload.playerId
-    is GameAction.UseCardAction -> action.payload.playerId
-    is GameAction.SelectActionTarget -> action.payload.playerId
-    is GameAction.ConfirmPeek -> action.payload.playerId
-    is GameAction.SkipPeek -> action.payload.playerId
-    is GameAction.ExecuteJackSwap -> action.payload.playerId
-    is GameAction.SkipJackSwap -> action.payload.playerId
-    is GameAction.ExecuteQueenSwap -> action.payload.playerId
-    is GameAction.SkipQueenSwap -> action.payload.playerId
-    is GameAction.DeclareKingAction -> action.payload.playerId
-    is GameAction.ParticipateInTossIn -> action.payload.playerId
-    is GameAction.PlayerTossInFinished -> action.payload.playerId
-    is GameAction.FinishTossInPeriod -> action.payload.initiatorId
-    is GameAction.CallVinto -> action.payload.playerId
-    is GameAction.ProcessAiTurn -> action.payload.playerId
-    is GameAction.PeekSetupCard -> action.payload.playerId
-    is GameAction.FinishSetup -> action.payload.playerId
-    is GameAction.SetCoalitionLeader -> null
-    is GameAction.UpdateDifficulty -> null
-    is GameAction.SetNextDrawCard -> null
-    is GameAction.SwapHandWithDeck -> null
-    is GameAction.Empty -> null
-}
-
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 private data class LobbySeat(
@@ -1144,7 +1158,7 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
                     occupied = it.occupied,
                     isBot = it.isBot,
                     removable = it.isFiller,
-                    nickname = it.nickname,
+                    nickname = it.profile?.nickname,
                 )
             },
             humans = state.humanCount,

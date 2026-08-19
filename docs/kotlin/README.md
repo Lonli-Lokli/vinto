@@ -126,6 +126,8 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 | --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS)         | Types + `Prng`. The port starts here. Its tests run on every target above.                                 |
 | `shared:engine` | jvm, android, js, wasmJs, (iOS on macOS)                | `GameEngine.reduce`, toss-in and scoring utils, the replay harness. Partly ported — see §6b.               |
+| `shared:bot`    | jvm, android, js, wasmJs, (iOS on macOS)                | MCTS decision service, coalition planner and `BotRunner`. Reads only what a seat may see.                   |
+| `shared:client` | jvm, android, js, wasmJs, (iOS on macOS)                | `GameSession` and `LocalGameSession` — a solo game with no room and no socket. See §6d.                     |
 | `worker`        | js                                                      | Cloudflare Worker + `Room` Durable Object. Kotlin room logic under a thin JS shim in `worker/cloudflare/`. |
 | `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients. Still the gate payload UI; real screens are phase 7.  |
 | `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                 |
@@ -525,6 +527,31 @@ illegal draw.
 | Bots call Vinto when hand is fully known and worth ≤ 0                      | `packages/bot/src/lib/vinto-call-rule.ts` |
 | Bot verification is rule-following, not decision parity                     | §6e, tasks 5.5/5.6                        |
 | One decision service **per bot**, not one shared across seats               | `BotRunner`; TypeScript wipes memory each turn |
+
+## 6d. Single-player runs on the device
+
+A solo game creates **no room, no token and no socket**. `shared:client` holds a `GameSession`
+interface that a local game and an online one both implement, so a screen cannot tell which it
+has — which is what keeps the free single-player mode free to host, rather than a Durable
+Object running three MCTS searches a turn for one person.
+
+`LocalGameSession` is the engine and `BotRunner` in-process. It reads the same redacted
+`PlayerView` the server sends, validates through the same `ActionValidator`, and enforces the
+same seat boundary from the same `GameAction.actorId` the Durable Object uses. A local game
+that let the UI act for a bot would be teaching the UI a habit that fails online.
+
+The claim is gated rather than asserted: `NoNetworkGuardTest` plays a whole round with a
+`SecurityManager` installed that throws on any connect, listen or accept, and proves the guard
+bites — three deliberate calls that must fail — before trusting the round that follows.
+
+Two things that gate turned up, both faithful ports of TypeScript behaviour that only a UI was
+keeping shut, and both fixed:
+
+- the validator had no **phase** gate, only turn and sub-phase checks, so `DRAW_CARD` passed
+  during setup and again after scoring. Never reachable from a button; entirely reachable from
+  a socket.
+- `PEEK_SETUP_CARD` validated the player it *named* rather than the one acting, so one player
+  could spend another's setup peeks.
 
 ## 7. Traps and known issues
 

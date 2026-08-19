@@ -30,8 +30,47 @@ sealed interface Validation {
  */
 object ActionValidator {
 
+    fun validate(state: GameState, action: GameAction): Validation =
+        state.requirePhaseAllows(action) ?: validateInPhase(state, action)
+
+    /**
+     * The phase gate, which the per-action rules below do not provide.
+     *
+     * Each rule checks whose turn it is and which *sub*-phase the turn is in, and the
+     * TypeScript does the same — so `DRAW_CARD` passes during setup and again after scoring,
+     * because in both the sub-phase is `idle` and seat zero is nominally on turn. That was
+     * never reachable there: the only caller was a UI that does not draw a card it has no
+     * button for. It is reachable here. A Durable Object accepts whatever a socket sends, so
+     * a client could deal itself a pending card before anyone had peeked, or keep playing a
+     * round that had already been scored.
+     *
+     * Setup admits only the two setup actions; scoring admits nothing at all. The debug hooks
+     * stay open in every phase — a harness uses them to arrange a position before play, which
+     * is the one legitimate reason to act outside a turn.
+     */
+    private fun GameState.requirePhaseAllows(action: GameAction): Validation? = when {
+        action is GameAction.SetNextDrawCard || action is GameAction.SwapHandWithDeck -> null
+
+        phase == GamePhase.SETUP && !action.isSetupAction() ->
+            Validation.Invalid("Cannot ${action.label()} during setup")
+
+        phase != GamePhase.SETUP && action.isSetupAction() ->
+            Validation.Invalid("Not in setup phase")
+
+        phase == GamePhase.SCORING ->
+            Validation.Invalid("Cannot ${action.label()} once the round has been scored")
+
+        else -> null
+    }
+
+    private fun GameAction.isSetupAction(): Boolean =
+        this is GameAction.PeekSetupCard || this is GameAction.FinishSetup
+
+    /** The action's own name, for a refusal a player can read. */
+    private fun GameAction.label(): String = this::class.simpleName ?: "act"
+
     @Suppress("CyclomaticComplexMethod", "LongMethod")
-    fun validate(state: GameState, action: GameAction): Validation = when (action) {
+    private fun validateInPhase(state: GameState, action: GameAction): Validation = when (action) {
 
         is GameAction.DrawCard -> state.requireTurn(action.payload.playerId, "DRAW_CARD")
             ?: state.requireSubPhase(GameSubPhase.IDLE, GameSubPhase.AI_THINKING) {
@@ -204,14 +243,24 @@ object ActionValidator {
             }
         }
 
+        // Finishing setup starts the round for the whole table, so it takes the whole table
+        // being ready — not merely whoever pressed the button. In TypeScript the two were the
+        // same thing, because only one player was ever a person and the bots are dealt their
+        // peeks. In a room with four people it is the difference between everyone seeing two
+        // of their cards and the quickest player starting the game over the others.
         is GameAction.FinishSetup -> {
             val player = state.playerById(action.payload.playerId)
+            val unready = state.players.filter { it.knownCardPositions.size < SETUP_PEEKS_REQUIRED }
             when {
                 state.phase != GamePhase.SETUP -> Validation.Invalid("Not in setup phase")
                 player == null -> Validation.Invalid("Player not found")
-                player.knownCardPositions.size < SETUP_PEEKS_REQUIRED -> Validation.Invalid(
-                    "Must peek at $SETUP_PEEKS_REQUIRED cards before finishing setup " +
-                        "(peeked ${player.knownCardPositions.size})",
+                // A count, not a list of names. The engine's names come from the deal, so in
+                // a room the seat a person occupies still carries whichever name that index
+                // was dealt — naming them in a refusal would tell a player they are waiting
+                // for somebody who is not there.
+                unready.isNotEmpty() -> Validation.Invalid(
+                    "Every player must peek at $SETUP_PEEKS_REQUIRED cards before the round " +
+                        "starts (waiting for ${unready.size})",
                 )
 
                 else -> Validation.Valid

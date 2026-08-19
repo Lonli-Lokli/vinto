@@ -74,8 +74,18 @@ not after the UI is built.
 
 ## 6. Client port: `GameSession` (parity gate #2, round trip)
 
-- [ ] 6.1 `GameSession` interface, `SessionEvent`, `PlayerView` flows (`view`, `visualView`, `syncVisualState()`)
-- [ ] 6.2 `LocalGameSession`: engine + recorder + bots in-process; history with deterministic sequence numbers
+- [~] 6.1 `GameSession` interface and `SessionEvent`: **done** in the new `shared/client`, with
+      `view` as a `StateFlow<PlayerView>`. The interface exists so a local game and an online one
+      are indistinguishable to the UI (design R1), which is what makes single-player free to host.
+      `visualView`/`syncVisualState()` are **not** ported: they are the TypeScript animation seam,
+      and whether Compose needs the same shape is a phase 7 question — porting them blind would
+      bake a React-era design into the UI layer before anything has asked for it
+- [~] 6.2 `LocalGameSession`: **engine + bots in-process, done and gated** — one human against
+      three bots, no room, no socket, proven by `NoNetworkGuardTest` playing a whole round under
+      a `SecurityManager` that throws on any network call, with the guard's own bite asserted
+      first. It reads the redacted `PlayerView` and enforces the same seat boundary the Durable
+      Object does, from the same `GameAction.actorId`. Recorder and history sequence numbers wait
+      on 6.4
 - [x] 6.3 `initializeGame` seeded: **done**, and verified beyond "samples" — every recording carries the seed it was dealt from, so all 50 are checked by dealing in Kotlin and comparing the canonical state hash against TypeScript's `initialState`. Lives in `shared/engine` rather than `shared/client`: the **server** deals, and a Durable Object must not depend on a client module to do it. The seed is a required parameter, unlike TypeScript where it falls back to `crypto` — picking a seed is ambient randomness and belongs outside the engine
 - [ ] 6.4 `GameRecorder` + export + local auto-save (`expect/actual` storage)
 - [ ] 6.5 `BotAIAdapter` coroutine port (sequential queue, injectable delays, all phases, coalition planner routing, leader auto-selection, opponent tracking) usable by `LocalGameSession` and the server

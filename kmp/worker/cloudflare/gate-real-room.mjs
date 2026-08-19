@@ -201,9 +201,28 @@ const act = (json, seat, action) => {
   return outcome;
 };
 
+// Both seated people peek before the round starts. One of them finishing setup alone would
+// begin the game over the other, which is why the engine now takes the whole table being
+// ready rather than whoever pressed the button first.
 let played = act(stateJson, 0, { type: 'PEEK_SETUP_CARD', payload: { playerId: seat0Player, position: 0 } });
 played = act(JSON.stringify(played.state), 0, {
   type: 'PEEK_SETUP_CARD', payload: { playerId: seat0Player, position: 1 },
+});
+
+check(
+  'one player cannot start the round while another has not looked at their cards',
+  Boolean(parse(applyAction(
+    JSON.stringify(played.state), TOKEN_A,
+    JSON.stringify({ type: 'FINISH_SETUP', payload: { playerId: seat0Player } }), NOW,
+  )).error),
+  'setup was finished with a player still to peek',
+);
+
+played = act(JSON.stringify(played.state), 1, {
+  type: 'PEEK_SETUP_CARD', payload: { playerId: seat1Player, position: 0 },
+});
+played = act(JSON.stringify(played.state), 1, {
+  type: 'PEEK_SETUP_CARD', payload: { playerId: seat1Player, position: 1 },
 });
 played = act(JSON.stringify(played.state), 0, { type: 'FINISH_SETUP', payload: { playerId: seat0Player } });
 

@@ -21,5 +21,6 @@ dependencyResolutionManagement {
 include(":shared:shapes")
 include(":shared:engine")
 include(":shared:bot")
+include(":shared:client")
 include(":worker")
 include(":composeApp")

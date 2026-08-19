@@ -158,5 +158,39 @@ check(
   Boolean(unbot(refilled, 'token-nobody', botSeat.index, T0).error),
 );
 
+// --- profiles ------------------------------------------------------------------------------
+//
+// A nickname lives in a *profile* on the seat rather than loose beside it, so the next thing
+// anybody wants to display — an avatar, a flag, a pronoun — is a field there rather than a
+// change to every message that carries a seat.
+const named = (raw) => parse(joinRoom(fresh(), `tok-${raw}`, raw, T0)).state.seats[0].profile.nickname;
+
+console.log('  — profiles');
+check('a nickname is carried in a profile record', typeof named('Ada') === 'string');
+check('padding is trimmed', named('   Ada   ') === 'Ada');
+check('inner whitespace is collapsed', named('Ada    Lovelace') === 'Ada Lovelace');
+check('an empty name gets one', named('') === 'Player 1', named(''));
+check('so does a blank one', named('   ') === 'Player 1');
+check('a long one is cut to sixteen', named('A'.repeat(40)).length === 16);
+check('markup is stripped rather than escaped', named('Ada<script>') === 'Adascript');
+check('ordinary punctuation survives', named("O'Brien-1.0_x") === "O'Brien-1.0_x");
+check(
+  'and so do non-Latin scripts, which a naive [A-Za-z] filter would delete',
+  named('\u65e5\u672c\u8a9e') === '\u65e5\u672c\u8a9e',
+  named('\u65e5\u672c\u8a9e'),
+);
+
+// Not unique, deliberately: two players may both be Bob and the view separates them by seat.
+// Rejecting duplicates would be worse than the ambiguity, and would leak who is already here.
+let twoBobs = fresh();
+twoBobs = JSON.stringify(parse(joinRoom(twoBobs, 'tok-1', 'Bob', T0)).state);
+const second = parse(joinRoom(twoBobs, 'tok-2', 'Bob', T0));
+check('two players may share a nickname', second.seat === 1 && !second.error, second.error);
+check(
+  'and are told apart by seat, not by name',
+  parse(JSON.stringify(second.state)).seats.slice(0, 2)
+    .every((s) => s.profile.nickname === 'Bob'),
+);
+
 console.log(`\n${failures === 0 ? 'LOBBY GATE PASS' : `LOBBY GATE FAIL (${failures})`}\n`);
 process.exit(failures === 0 ? 0 : 1);

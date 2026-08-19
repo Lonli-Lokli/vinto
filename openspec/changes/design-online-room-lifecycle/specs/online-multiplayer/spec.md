@@ -203,16 +203,96 @@ therefore the most expensive thing a client can ask for.
 - **WHEN** the number of live rooms reaches the cap
 - **THEN** further creation requests are refused with a reason, and existing rooms are unaffected
 
-### Requirement: Nicknames are display-only
+### Requirement: Nicknames are display-only metadata carried per token
 
 A nickname SHALL be 1–16 characters after trimming, restricted to letters, digits, spaces and
 a small punctuation set, and SHALL NOT be required to be unique. A nickname SHALL NOT be used
-to identify, authorise or seat a player.
+to identify, authorise or seat a player. A seat SHALL carry its nickname inside a player
+profile record rather than as a bare field, so that further per-player metadata can be added
+without changing the shape of the wire format or of stored rooms.
 
 #### Scenario: Two players share a nickname
 
 - **WHEN** two clients join the same room with the same nickname
 - **THEN** both are seated, each with their own token, and the view distinguishes them by seat
+
+#### Scenario: A nickname in a non-Latin script survives
+
+- **WHEN** a client joins with a nickname written in a non-Latin script
+- **THEN** it is preserved rather than stripped, and only markup characters are removed
+
+#### Scenario: An empty nickname still names a player
+
+- **WHEN** a client joins with a blank or whitespace-only nickname
+- **THEN** the seat is given a fallback name derived from its seat number
+
+### Requirement: An action may only be taken by the player it names
+
+The seat boundary SHALL be checked before the engine sees an action: an action whose payload
+names a player other than the one holding the socket's token SHALL be refused, whether or not
+it would have been legal for that player. The same check SHALL be used by every session,
+online or local, from a single definition, so that the two cannot disagree about who may act.
+
+#### Scenario: A client cannot act for another seat
+
+- **WHEN** a socket sends an action naming another player
+- **THEN** it is refused before validation, and the game state does not change
+
+#### Scenario: A local game refuses the same action
+
+- **WHEN** a single-player session dispatches an action naming a bot
+- **THEN** it is refused with a reason, exactly as the room would refuse it
+
+### Requirement: Actions are refused outside their phase
+
+The validator SHALL reject any action that does not belong to the current game phase: during
+setup only the setup actions, and once a round has been scored none at all. Turn-level and
+sub-phase checks alone are insufficient, because a socket can send what a user interface would
+never offer a button for.
+
+#### Scenario: A client cannot draw before the deal is finished
+
+- **WHEN** a socket sends a draw action while the game is still in setup
+- **THEN** it is refused, and no card leaves the draw pile
+
+#### Scenario: A scored round cannot be played on
+
+- **WHEN** a socket sends any game action after the round has reached scoring
+- **THEN** it is refused, and the final scores are unchanged
+
+### Requirement: A round starts only when every player has peeked
+
+Every player SHALL see two of their own cards before the round begins, and the action that ends
+setup SHALL be refused while any player still has peeks outstanding. Bots SHALL be dealt their
+peeks. A room SHALL therefore hold a newly dealt round in setup until the last human has looked
+at their cards, for every round of the session and not only the first.
+
+#### Scenario: One player cannot start the round over another
+
+- **WHEN** one player has taken both peeks and finishes setup while another has taken none
+- **THEN** it is refused, and the round stays in setup until the second player has looked
+
+#### Scenario: A later round has its own setup
+
+- **WHEN** the players agree to another round and it is dealt
+- **THEN** it begins in setup, and every human peeks again before any turn action is accepted
+
+### Requirement: A single-player game uses no server
+
+A single-player game SHALL run entirely on the device: it SHALL NOT create a room, obtain a
+token, or open a socket, and it SHALL present the same session interface as an online game so
+that the user interface cannot distinguish them. This SHALL be verified by a test that fails
+if any network call is attempted, rather than by inspection.
+
+#### Scenario: A solo round is played offline
+
+- **WHEN** a player starts a single-player game and plays a round to scoring
+- **THEN** no network call of any kind is made, and the round scores normally
+
+#### Scenario: The interface is the same one online play uses
+
+- **WHEN** the user interface is given a local session
+- **THEN** it reads the same redacted player view and dispatches the same actions as it would online
 
 ## MODIFIED Requirements
 

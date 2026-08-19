@@ -33,7 +33,40 @@ function dealtRoom(now = T0) {
   json = JSON.stringify(parse(startGame(json, now + countdownMs())).state);
   // Both humans are here. Without this the room is on the empty-room clock from the moment it
   // was made, and the buzzer never gets a look in — it is deleted first, correctly.
-  return JSON.stringify(parse(updatePresence(json, '0,1', now)).state);
+  json = JSON.stringify(parse(updatePresence(json, '0,1', now)).state);
+  return runSetup(json, now);
+}
+
+/**
+ * Every human peeks at two of their cards, and then the round begins.
+ *
+ * Not a formality: bots are dealt their two peeks, humans are not, and until the last of them
+ * has looked the engine is still in `setup` and refuses every turn action. The gate used to
+ * skip this and go straight to drawing, which the validator allowed — that hole is closed, and
+ * skipping it now leaves the room exactly where it should be: waiting for people to look at
+ * their cards.
+ */
+function runSetup(json, now) {
+  let clock = now;
+  const seats = parse(json).seats.filter((s) => s.tokenHash);
+
+  for (const seat of seats) {
+    for (const position of [0, 1]) {
+      clock += 100;
+      const out = parse(applyAction(json, tokens[seat.index], JSON.stringify({
+        type: 'PEEK_SETUP_CARD', payload: { playerId: seat.playerId, position },
+      }), clock));
+      if (out.error) throw new Error(`setup peek: ${out.error}`);
+      json = JSON.stringify(out.state);
+    }
+  }
+
+  const first = seats[0];
+  const done = parse(applyAction(json, tokens[first.index], JSON.stringify({
+    type: 'FINISH_SETUP', payload: { playerId: first.playerId },
+  }), clock + 100));
+  if (done.error) throw new Error(`finish setup: ${done.error}`);
+  return JSON.stringify(done.state);
 }
 
 const tokens = [A, B];
