@@ -54,6 +54,69 @@ SHALL be six characters from an alphabet that excludes visually ambiguous glyphs
 - **WHEN** a public and a private room both exist
 - **THEN** the registry lists the public one and does not list the private one, and both are joinable by code
 
+### Requirement: A game needs two humans, and the fourth seat starts a countdown
+
+A room SHALL have four seats and SHALL NOT start a game with fewer than two human players.
+Empty seats SHALL be fillable by bots, and any seated player — not only the creator — SHALL be
+able to add or remove a bot while the room has not started.
+
+Filling the fourth seat, by a human joining or by a bot being added, SHALL begin a
+ten-second countdown that is visible in the room and in the registry's public listing.
+Emptying any seat during the countdown SHALL cancel it and return the room to its lobby state;
+refilling SHALL begin a fresh countdown rather than resume the cancelled one. The countdown
+SHALL be held on a Durable Object alarm so that it survives hibernation.
+
+A human joining while the room has not started SHALL displace a bot if no seat is free. Once
+play has begun the table SHALL be fixed, and a bot playing a disconnected human's seat SHALL
+NOT be displaceable, because that seat belongs to its token.
+
+#### Scenario: A lone player cannot start
+
+- **WHEN** one human is in a room and adds bots to every other seat
+- **THEN** no countdown begins and the game does not start, because a game needs two humans
+
+#### Scenario: Two humans start by filling the table with bots
+
+- **WHEN** two humans are in a room and either of them adds bots to the remaining two seats
+- **THEN** a ten-second countdown begins, and at its end the game starts with two humans and two bots
+
+#### Scenario: A forced start can be undone
+
+- **WHEN** a player adds the fourth seat's bot and another player removes it before the countdown expires
+- **THEN** the countdown is cancelled, the room returns to its lobby state, and no game starts
+
+#### Scenario: Refilling restarts the full countdown
+
+- **WHEN** a seat empties at t=7s and is refilled immediately
+- **THEN** a fresh ten seconds begins rather than the remaining three
+
+#### Scenario: A late friend takes a bot's seat
+
+- **WHEN** a human joins during the countdown and every seat is filled, one of them by a bot
+- **THEN** the human takes the bot's seat, the countdown continues, and the table now has one more human
+
+#### Scenario: The countdown survives eviction
+
+- **WHEN** the Durable Object is evicted during the countdown and the countdown expires
+- **THEN** the game starts, because the countdown was an alarm rather than an in-memory timer
+
+### Requirement: A room does not host a game for one human
+
+When the number of connected humans in a running session falls below two, the room SHALL
+allow a grace period for one to return and SHALL then end the session and delete itself.
+Seat-level takeover by bots SHALL continue independently during that period, so that a game
+which recovers a second human remains playable.
+
+#### Scenario: The last player standing does not keep the server busy
+
+- **WHEN** three of four humans leave a running game and none returns within the grace period
+- **THEN** the room ends the session and deletes itself, and the remaining player is told the room closed
+
+#### Scenario: A recovered game continues
+
+- **WHEN** humans drop to one and a second reconnects within the grace period
+- **THEN** the session continues, and the seats that passed their own grace are played by bots
+
 ### Requirement: Rooms clean themselves up
 
 A room SHALL schedule an alarm on every state change and SHALL delete itself when: no human
@@ -110,8 +173,9 @@ to identify, authorise or seat a player.
 
 Every game SHALL have exactly 4 players, without exception. The system SHALL support:
 (a) one human vs 3 bots **offline and entirely on-device, with no server involvement**;
-(b) an online 4-seat room where 2–4 seats are humans on their own devices and the remaining
-seats are filled by bots; (c) all-human online tables of 4. Every mode SHALL use the same
+(b) an online 4-seat room with **two, three or four** humans on their own devices and the
+remaining seats filled by bots; (c) all-human online tables of 4. An online room SHALL NOT
+host a game with fewer than two humans, at the start or at any point afterwards. Every mode SHALL use the same
 shared engine, validator, bot engine and recording format.
 
 A single-player game SHALL NOT create a room, open a socket, or contact the server.

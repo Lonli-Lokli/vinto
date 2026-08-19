@@ -25,6 +25,10 @@ until Cloudflare is told otherwise.
   in the app on the shared engine and bot. Rooms exist for playing with other people.
 - **A room is a session of rounds**, not one deal — matching the written rules, which score
   cumulatively and award game points by rank.
+- **A game needs two humans.** Two, three or four are valid tables; bots fill the rest, and
+  any seated player may add or remove one. Filling the fourth seat starts a public ten-second
+  countdown, which any player can cancel by emptying a seat again. A room that drops below two
+  humans mid-session ends, because a lone player against bots belongs on the device.
 - **Identity becomes a server-issued capability token.** The room generates it on first join,
   returns it once, and every later message carries it. Nicknames are cosmetic and separate.
   A nullable `ownerId` on the seat leaves the seam for accounts later.
