@@ -15,6 +15,130 @@ import kotlin.test.assertTrue
  */
 class OpponentModelerTest {
 
+    // --- initialization -------------------------------------------------------------------
+
+    @Test
+    fun aNewPlayerStartsWithNoBeliefsAndAnAverageEstimate() {
+        val modeler = OpponentModeler()
+        modeler.initializePlayer("p2")
+
+        val beliefs = assertNotNull(modeler.getPlayerBeliefs("p2"))
+        assertEquals("p2", beliefs.playerId)
+        // Literal rather than referencing the constants, which are private to the
+        // implementation — a test that reads them would agree with any value they took.
+        assertEquals(25, beliefs.estimatedScore, "a fresh opponent should look average")
+        assertEquals(0.0, beliefs.vintoReadiness, "a fresh opponent should look like nobody in particular")
+        assertTrue(beliefs.cardBeliefs.isEmpty())
+    }
+
+    @Test
+    fun initializingTwiceDoesNotThrowAwayWhatWasLearned() {
+        val modeler = OpponentModeler()
+        modeler.handleObservedAction(
+            ObservedAction.TossIn("p2", testCard(Rank.FIVE, "5_0"), position = 0),
+        )
+        val learned = assertNotNull(modeler.getPlayerBeliefs("p2"))
+
+        modeler.initializePlayer("p2")
+
+        assertEquals(learned, modeler.getPlayerBeliefs("p2"), "a second initialize wiped the beliefs")
+    }
+
+    @Test
+    fun aPlayerIsTrackedFromTheirFirstObservedAction() {
+        val modeler = OpponentModeler()
+        assertNull(modeler.getPlayerBeliefs("p9"))
+
+        modeler.handleObservedAction(ObservedAction.PeekOwn("p9"))
+
+        assertNotNull(modeler.getPlayerBeliefs("p9"))
+    }
+
+    // --- inference from what was played ----------------------------------------------------
+
+    @Test
+    fun swappingInAnActionCardImpliesTheReplacedCardWasWorseThanTen() {
+        val modeler = OpponentModeler()
+        modeler.handleObservedAction(
+            ObservedAction.SwapFromDiscard("p2", testCard(Rank.QUEEN, "Q_0"), position = 0),
+        )
+
+        // A Queen is worth 10, so taking one only makes sense over something worth 11 or more.
+        assertEquals(11, modeler.getBelief("p2", 0)?.minValue)
+    }
+
+    @Test
+    fun anEstimateNeverFallsBelowZero() {
+        val modeler = OpponentModeler()
+        // Enough discards to drive the estimate past zero if nothing stopped it.
+        repeat(40) {
+            modeler.handleObservedAction(
+                ObservedAction.DiscardDrawn("p2", testCard(Rank.SIX, "6_$it")),
+            )
+        }
+
+        assertTrue(
+            (modeler.getPlayerBeliefs("p2")?.estimatedScore ?: -1) >= 0,
+            "the estimated score went negative",
+        )
+    }
+
+    @Test
+    fun aSwapActionLooksReadierThanAPeekWhicheverSwapItIs() {
+        fun readinessAfter(action: ObservedAction): Double {
+            val modeler = OpponentModeler()
+            modeler.handleObservedAction(action)
+            return modeler.getPlayerBeliefs("p2")?.vintoReadiness ?: 0.0
+        }
+
+        val peek = readinessAfter(ObservedAction.UseAction("p2", testCard(Rank.SEVEN, "7_0")))
+        val jack = readinessAfter(ObservedAction.UseAction("p2", testCard(Rank.JACK, "J_0")))
+        val queen = readinessAfter(ObservedAction.UseAction("p2", testCard(Rank.QUEEN, "Q_0")))
+
+        // Peeking is looking for information; swapping is acting on it.
+        assertTrue(jack > peek, "a Jack did not read as readier than a peek")
+        assertTrue(queen > peek, "a Queen did not read as readier than a peek")
+    }
+
+    @Test
+    fun swappingYourOwnCardsLooksReadierThanPeekingThem() {
+        fun readinessAfter(action: ObservedAction): Double {
+            val modeler = OpponentModeler()
+            modeler.handleObservedAction(action)
+            return modeler.getPlayerBeliefs("p2")?.vintoReadiness ?: 0.0
+        }
+
+        assertTrue(
+            readinessAfter(ObservedAction.SwapOwn("p2")) >
+                readinessAfter(ObservedAction.PeekOwn("p2")),
+        )
+    }
+
+    @Test
+    fun aPlayerBelievedToHaveALowScoreLooksReadierThanOneWithAHighScore() {
+        fun readinessWithEstimate(discards: Int): Double {
+            val modeler = OpponentModeler()
+            // Each discarded draw lowers the estimate, which is what drives readiness.
+            repeat(discards) {
+                modeler.handleObservedAction(
+                    ObservedAction.DiscardDrawn("p2", testCard(Rank.SIX, "6_$it")),
+                )
+            }
+            modeler.handleObservedAction(ObservedAction.SwapOwn("p2"))
+            return modeler.getPlayerBeliefs("p2")?.vintoReadiness ?: 0.0
+        }
+
+        assertTrue(
+            readinessWithEstimate(discards = 8) > readinessWithEstimate(discards = 0),
+            "a player believed to be doing well did not look closer to calling Vinto",
+        )
+    }
+
+    @Test
+    fun nobodyIsTheMostLikelyCallerWhenNobodyIsTracked() {
+        assertNull(OpponentModeler().getMostLikelyVintoCaller())
+    }
+
     @Test
     fun swapFromDiscardBoundsTheReplacedCardFromBelow() {
         val modeler = OpponentModeler()
