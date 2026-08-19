@@ -4,15 +4,19 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
 /**
- * The JSON configuration the wire format depends on. Both settings are contractual:
+ * The JSON configuration for the wire format.
  *
- *  - `encodeDefaults = false` is what makes `@EncodeDefault(NEVER)` omit an unset optional,
- *    matching TypeScript's absent property (see [Card]);
- *  - `explicitNulls = true` keeps a nullable-but-always-present field written as `null`,
- *    matching TypeScript's `T | null`.
+ * `explicitNulls = true` is contractual: it keeps a nullable-but-always-present field
+ * written as `null`, matching TypeScript's `T | null`.
  *
- * Changing either silently changes every state hash, so it lives here rather than being
- * configured at each call site.
+ * `encodeDefaults = false` is belt and braces rather than load-bearing. Omitting an unset
+ * optional is carried by the `@EncodeDefault(NEVER)` annotations themselves — verified by
+ * flipping this to `true` and watching the parity tests stay green — so a call site that
+ * builds its own `Json` cannot accidentally start emitting `"declaredRank":null` where
+ * TypeScript writes nothing.
+ *
+ * It lives here rather than at each call site because a change to it would move every
+ * state hash at once.
  */
 val VintoJson: Json = Json {
     encodeDefaults = false

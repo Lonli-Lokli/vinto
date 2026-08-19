@@ -4,6 +4,8 @@ import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -70,6 +72,38 @@ class RecordingParityTest {
             assertEquals(4, state.players.size, "${file.name}: every game is exactly 4 players")
             assertTrue(state.rngState in 0..0xFFFFFFFFL, "${file.name}: rngState escaped uint32")
         }
+    }
+
+    @Test
+    fun everyRecordedActionRoundTrips() {
+        val mismatches = mutableListOf<String>()
+        val seenTypes = mutableSetOf<String>()
+        var checked = 0
+
+        for (file in recordings) {
+            val recording = json.parseToJsonElement(file.readText()).jsonObject
+            for ((index, entry) in recording.getValue("actions").jsonArray.withIndex()) {
+                val original = entry.jsonObject.getValue("action").jsonObject
+                seenTypes += original.getValue("type").jsonPrimitive.content
+                checked++
+
+                val decoded = json.decodeFromJsonElement(GameActionSerializer, original)
+                val reencoded = VintoJson.encodeToJsonElement(GameActionSerializer, decoded).jsonObject
+
+                // Canonicalised on both sides so key order is not the thing under test —
+                // presence, absence and value are.
+                val before = CanonicalJson.of(original)
+                val after = CanonicalJson.of(reencoded)
+                if (before != after && mismatches.size < 10) {
+                    mismatches += "${'$'}{file.name}#${'$'}index: ${'$'}before != ${'$'}after"
+                }
+            }
+        }
+
+        assertTrue(checked > 13_000, "expected the full action corpus, saw ${'$'}checked")
+        assertEquals(emptyList(), mismatches, "action round-trip mismatches")
+        // Guards against a corpus that silently stops covering the union.
+        assertTrue(seenTypes.size >= 17, "corpus covered only ${'$'}{seenTypes.size} action types")
     }
 
     /**

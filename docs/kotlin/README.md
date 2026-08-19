@@ -59,12 +59,17 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   The gate: all 50 recordings in `fixtures/recordings/` carry a `finalStateHash` written by
   TypeScript, and Kotlin reproduces every one of them (§6a)
 
+- **`GameAction` is ported** (task 3.2): all 25 action types as a sealed hierarchy, with the
+  `{ type, payload }` wire shape built by hand — kotlinx's own polymorphism puts its
+  discriminator beside the payload's fields rather than above them. Every one of the 13,900
+  recorded actions round-trips to the same canonical form
+
 **Next**
 
-1. `GameAction` sealed hierarchy + polymorphic `{ type, payload }` serializer (task 3.2).
-   The corpus holds 13,900 recorded actions to check it against
-2. Then the engine itself, behind the parity gate (phase 4)
-3. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
+1. The engine itself, behind the parity gate (phase 4). `GameEngine.reduce` over the ported
+   shapes, then replay the corpus and compare per-action state hashes — the hashes are
+   already there in every recording, unused so far
+2. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
    cannot be measured until the bot is ported in phase 6, and it is not a blocker
 
 ---
@@ -220,15 +225,26 @@ Three layers, weakest to strongest:
    recording, so it is asserted directly.
 2. `RecordingParityTest` (JVM only, it reads the 4.5 MB corpus from disk) — decodes each of
    the 50 recordings' `finalState` into the Kotlin model with `ignoreUnknownKeys = false`,
-   so an unmodelled field is an error rather than a silent drop.
+   so an unmodelled field is an error rather than a silent drop. It also round-trips all
+   **13,900** recorded actions through `GameActionSerializer`, comparing canonical forms.
 3. The same test re-encodes that state, canonicalises and hashes it, and compares against the
    `finalStateHash` **TypeScript wrote**. One number covers lossless decode, correct
    optional-versus-nullable handling, a byte-identical canonical form, and SHA-256 agreeing
    with WebCrypto. It cannot pass by accident.
 
-Confirmed non-vacuous: reversing the canonical key sort fails it, and so does dropping
-`turnActions` from the exclusions. (Dropping `botMemory` does **not**, which is why layer 1
-exists.)
+Confirmed non-vacuous: reversing the canonical key sort fails it, dropping `turnActions`
+from the exclusions fails it, and forcing an unset optional to encode as `null` fails the
+action round-trip. (Dropping `botMemory` does **not**, which is why layer 1 exists.)
+
+The corpus reaches 17 of the 25 action types. The other eight, and the `rank: 'A'` variant
+of `SELECT_ACTION_TARGET` that appears in no recording, are pinned by layer 1 instead —
+which is the general shape of this: the corpus proves agreement on what real games do, and
+the unit tests cover what they happen not to.
+
+One deliberate check worth keeping: the optional-field rule is carried by the
+`@EncodeDefault(NEVER)` annotations alone, not by `VintoJson`'s configuration. Flipping
+`encodeDefaults` to `true` leaves every parity test green, so a call site that builds its own
+`Json` cannot start emitting `"declaredRank":null` where TypeScript writes nothing.
 
 **Deviation from design D1**, recorded deliberately: canonical JSON, SHA-256 and `Prng` live
 in `shared/shapes` rather than a `shared/recording` module, because that is where TypeScript
