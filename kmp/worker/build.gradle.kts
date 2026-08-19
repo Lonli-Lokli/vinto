@@ -15,6 +15,7 @@ kotlin {
     sourceSets {
         jsMain.dependencies {
             implementation(project(":shared:shapes"))
+            implementation(project(":shared:engine"))
             implementation(libs.kotlinx.serialization.json)
         }
     }

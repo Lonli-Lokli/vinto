@@ -68,6 +68,8 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   **all 50 recordings / 13,900 actions replay with canonical state hashes matching
   TypeScript's**, per action, plus final-state verification (§6b)
 - **detekt** runs over every Kotlin module with `maxIssues: 0`
+- **The engine runs correctly in the Cloudflare runtime**, not just on the JVM: the Worker
+  exposes `POST /replay` and all 50 recordings replay through it in workerd (§6c)
 
 **Next**
 
@@ -76,8 +78,8 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
    replays identically. It needs the TypeScript validator tests (task 4.4), and until then
    nothing may run this engine against untrusted input — the Durable Object especially
 2. Port the TypeScript engine tests (4.4) and `projectView` redaction (4.5)
-3. Point the Worker's `Room` at the real engine instead of its placeholder room logic, which
-   is what makes a first deploy worth doing (§6c)
+3. Point the Worker's `Room` **Durable Object** at the real engine — `/replay` already uses
+   it, but the room itself still runs placeholder logic (§6c)
 4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
    cannot be measured until the bot is ported in phase 6, and it is not a blocker
 
@@ -284,6 +286,35 @@ migration — the parity gate cannot tell a faithful restructuring from a subtly
 counterparts do, and `reduce` freezes it on the way out. `reduce` stays a pure function; the
 mutation never escapes the call. Rewriting handlers idiomatically later is safe precisely
 because the gate holds the behaviour still.
+
+## 6c. Deploying the engine, with no UI
+
+The Worker carries the real engine and exposes `POST /replay`: send a `GameRecording`, get
+back `ok` or the exact action that diverged. That is enough to verify the engine on a real
+deployment before any UI exists.
+
+```bash
+cd kmp/worker/cloudflare
+(cd ../.. && ./gradlew :worker:jsProductionExecutableCompileSync)
+npx wrangler dev --port 8787 --local
+node gate-engine-replay.mjs            # 50/50, 13,900 actions
+
+# against a deployment
+GATE_URL=https://vinto-room.<subdomain>.workers.dev node gate-engine-replay.mjs
+```
+
+Why this is worth having rather than trusting the JVM gate: Kotlin/JS represents `Long` as a
+pair of `Int`s and uses a different serialiser backend, so passing on the JVM does not imply
+passing on Cloudflare. It now passes on both.
+
+**What must be true before a deployment takes real client input.** `/replay` is safe to
+expose — it is a pure function of the posted document. The WebSocket room is not, because
+`ActionValidator` still permits everything, and design D9 puts server-side validation at the
+centre of the anti-cheat model. A deployment today is a self-test, not a service.
+
+Deploying needs a Cloudflare account and `wrangler login`; nothing in this repo has been
+deployed, and `wrangler deploy` should be a deliberate decision rather than a side effect of
+a build.
 
 ## 6. Decisions already made — do not silently reopen
 

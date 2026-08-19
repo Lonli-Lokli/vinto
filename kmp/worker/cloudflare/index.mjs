@@ -12,7 +12,7 @@
 //   2. Per-socket state (which seat) rides on the socket via serializeAttachment, which
 //      survives hibernation; a Map keyed by socket would not.
 
-import { newRoom, joinRoom, applyAction, eventsSince } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
+import { newRoom, joinRoom, applyAction, eventsSince, replayRecordingJson } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
 
@@ -146,6 +146,15 @@ export default {
 
     if (url.pathname === '/health') {
       return new Response('ok');
+    }
+
+    // Replays a recording through the real Kotlin engine, in the runtime that actually
+    // serves it. This is how the engine is verified on a deployment with no UI: POST a
+    // GameRecording and get back either ok, or the exact action where it diverged.
+    if (url.pathname === '/replay' && request.method === 'POST') {
+      return new Response(replayRecordingJson(await request.text()), {
+        headers: { 'content-type': 'application/json' },
+      });
     }
 
     // One Durable Object per room id — the unit of isolation (design D9). The Worker does

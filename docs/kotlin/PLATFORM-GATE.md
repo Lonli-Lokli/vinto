@@ -147,6 +147,31 @@ behaviour needs a deployed Worker to observe directly. The API contract that gov
 in use and the state it depends on is proven durable, so this is a confirmation to schedule,
 not an open design risk.
 
+## Engine in the Worker runtime: PASS
+
+Measured 2026-08-19 against `wrangler dev --local` (real workerd). The Worker now carries the
+ported engine and exposes `POST /replay`, which replays a `GameRecording` and returns either
+`ok` or the exact action that diverged.
+
+**All 50 recordings, 13,900 actions, replay correctly in the Worker runtime.**
+
+This is not a duplicate of the JVM parity gate; it closes a different risk. Everything
+proving the port ran on the JVM, while Cloudflare runs Kotlin/JS — where `Long` is a pair of
+`Int`s and the serialiser backend differs. Agreement on one does not imply the other, and now
+it is measured rather than assumed.
+
+```
+50/50 recordings replayed in the Worker runtime, 13900 actions, 6454 ms
+ENGINE RUNTIME GATE PASS
+```
+
+### An early read on 2a.1b (MCTS inside the CPU budget)
+
+13,900 reductions in 6.45 s is **~0.46 ms per action**, including HTTP and JSON parsing on
+every recording. A Durable Object gets 30 s of CPU per request. The engine is therefore
+nowhere near the budget; whether MCTS fits is still a bot question and still open, but the
+engine half of it is now known to be negligible.
+
 ## 2a.1 revisited — the real Worker bundle
 
 The 123 KB figure above was a synthetic payload. The actual Worker — routing, Durable
