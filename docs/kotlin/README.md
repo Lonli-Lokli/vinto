@@ -64,19 +64,21 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   discriminator beside the payload's fields rather than above them. Every one of the 13,900
   recorded actions round-trips to the same canonical form
 
-- **The engine port has started** (phase 4): `shared/engine` exists with `GameEngine.reduce`,
-  `ReduceResult`, the `utils/` layer and **13 of 25 case handlers**. The replay harness runs
-  as a ratchet — **250 actions currently replay with hashes matching TypeScript's** (§6b)
+- **The engine is ported and passes the parity gate** (phase 4): all 25 handlers, and
+  **all 50 recordings / 13,900 actions replay with canonical state hashes matching
+  TypeScript's**, per action, plus final-state verification (§6b)
+- **detekt** runs over every Kotlin module with `maxIssues: 0`
 
 **Next**
 
-1. Finish the handlers, in the order the harness asks for them. It names the frontier on
-   every run, so there is no guessing about what to write next
-2. **`ActionValidator` is not ported and currently permits everything.** The corpus cannot
+1. **`ActionValidator` is not ported and currently permits everything.** The corpus cannot
    catch that: every recorded action was legal when it was written, so a permissive validator
    replays identically. It needs the TypeScript validator tests (task 4.4), and until then
    nothing may run this engine against untrusted input — the Durable Object especially
-3. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
+2. Port the TypeScript engine tests (4.4) and `projectView` redaction (4.5)
+3. Point the Worker's `Room` at the real engine instead of its placeholder room logic, which
+   is what makes a first deploy worth doing (§6c)
+4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
    cannot be measured until the bot is ported in phase 6, and it is not a blocker
 
 ---
@@ -264,28 +266,16 @@ The harness came first, not last. `CorpusReplayTest` replays TypeScript's record
 the Kotlin engine and compares the canonical state hash **after every action**, so a wrong
 handler is localised to one action rather than showing up as "the final state differs".
 
-Because the engine is only part-ported, it runs as a **ratchet**: it records how far the
-corpus replays and fails if that goes down. The two failure modes are treated differently,
-which is the point:
+While the port was in progress this ran as a ratchet that named the frontier on every run,
+so the next handler to write was never a guess. It is now a **hard gate**: all 50 recordings,
+all 13,900 actions, plus final-state verification.
 
-- an **unported** handler stops that recording and nothing else — work not yet done is not
-  a broken build;
-- a **hash mismatch** fails outright. A handler that exists and produces a state TypeScript
-  did not is a bug, whatever the ratchet says.
+Confirmed non-vacuous — deleting one line of knowledge tracking from the Jack swap (the owner
+must _lose_ knowledge of a blind-swapped position) fails it.
 
-Every run prints the frontier, so the next handler to write is never a guess:
-
-```
-corpus replay: 250 actions applied with matching hashes
-  recordings fully replayed: 0 / 50
-  stopped at:
-    HANDLER_UNPORTED on SELECT_ACTION_TARGET: 35 recording(s)
-    HANDLER_UNPORTED on PLAYER_TOSS_IN_FINISHED: 13 recording(s)
-    HANDLER_UNPORTED on PARTICIPATE_IN_TOSS_IN: 2 recording(s)
-```
-
-Raise `MIN_ACTIONS_REPLAYED` as handlers land; when the port is done, replace the ratchet
-with `assertTrue(results.all { it.ok })`.
+What the gate cannot check is `ActionValidator`, because every action in the corpus was legal
+when it was recorded. A permissive validator replays identically to a correct one, which is
+exactly why the validator is called out separately in §1 rather than assumed finished.
 
 **Why the handlers mutate.** The TypeScript handlers deep-copy the state and then mutate it
 freely. Rewriting each into immutable `copy()` chains would be better Kotlin and a worse

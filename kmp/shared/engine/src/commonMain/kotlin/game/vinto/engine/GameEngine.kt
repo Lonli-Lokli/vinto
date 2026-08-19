@@ -5,13 +5,25 @@ import game.vinto.engine.cases.handleDiscardCard
 import game.vinto.engine.cases.handleDrawCard
 import game.vinto.engine.cases.handleEmpty
 import game.vinto.engine.cases.handleFinishSetup
+import game.vinto.engine.cases.handleFinishTossInPeriod
 import game.vinto.engine.cases.handlePeekSetupCard
 import game.vinto.engine.cases.handlePlayDiscard
 import game.vinto.engine.cases.handleSwapCard
 import game.vinto.engine.cases.handleUseCardAction
 import game.vinto.engine.cases.handleProcessAiTurn
+import game.vinto.engine.cases.handleExecuteJackSwap
+import game.vinto.engine.cases.handleExecuteQueenSwap
+import game.vinto.engine.cases.handleCallVinto
+import game.vinto.engine.cases.handleDeclareKingAction
+import game.vinto.engine.cases.handleParticipateInTossIn
+import game.vinto.engine.cases.handlePlayerTossInFinished
+import game.vinto.engine.cases.handleSelectActionTarget
+import game.vinto.engine.cases.handleSkipJackSwap
+import game.vinto.engine.cases.handleSkipQueenSwap
 import game.vinto.engine.cases.handleSetCoalitionLeader
+import game.vinto.engine.cases.handleSetNextDrawCard
 import game.vinto.engine.cases.handleSkipPeek
+import game.vinto.engine.cases.handleSwapHandWithDeck
 import game.vinto.engine.cases.handleUpdateDifficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameState
@@ -23,17 +35,6 @@ sealed interface ReduceResult {
     data class Success(override val state: GameState) : ReduceResult
     data class Failure(override val state: GameState, val reason: String) : ReduceResult
 }
-
-/**
- * Raised by a handler that has not been ported yet.
- *
- * Deliberately not a `Failure`: a rejection and a gap in the port mean different things,
- * and collapsing them would let the parity harness report "the engine rejected this" for
- * code that simply does not exist. The harness reports it separately, which is what makes
- * the remaining work measurable.
- */
-class UnportedHandlerException(val actionType: String) :
-    RuntimeException("handler for $actionType is not ported yet")
 
 /**
  * The authoritative game logic: state + action -> new state.
@@ -73,8 +74,8 @@ object GameEngine {
      *
      * Detekt reads this as highly complex; what it is measuring is the size of the action
      * union, not the difficulty of the code. An exhaustive `when` over the sealed hierarchy
-     * is exactly what makes adding an action a compile error at this site, which is worth
-     * more than the metric.
+     * is what makes adding an action a compile error at this site — and it is why there is
+     * no `else` branch: every action has a handler, and the compiler holds that true.
      */
     @Suppress("CyclomaticComplexMethod")
     private fun dispatch(working: MutableGameState, action: GameAction): Boolean =
@@ -92,23 +93,18 @@ object GameEngine {
             is GameAction.PlayDiscard -> handlePlayDiscard(working, action)
             is GameAction.UseCardAction -> handleUseCardAction(working, action)
             is GameAction.SwapCard -> handleSwapCard(working, action)
-
-            // Still to port (phase 4). Listed one by one rather than caught by an `else`,
-            // so finishing the port is a matter of emptying this list and the compiler
-            // keeps score.
-            is GameAction.SelectActionTarget,
-            is GameAction.CallVinto,
-            is GameAction.ExecuteJackSwap,
-            is GameAction.SkipJackSwap,
-            is GameAction.ExecuteQueenSwap,
-            is GameAction.SkipQueenSwap,
-            is GameAction.DeclareKingAction,
-            is GameAction.ParticipateInTossIn,
-            is GameAction.PlayerTossInFinished,
-            is GameAction.FinishTossInPeriod,
-            is GameAction.SetNextDrawCard,
-            is GameAction.SwapHandWithDeck,
-            -> throw UnportedHandlerException(action.type)
+            is GameAction.SelectActionTarget -> handleSelectActionTarget(working, action)
+            is GameAction.PlayerTossInFinished -> handlePlayerTossInFinished(working, action)
+            is GameAction.ParticipateInTossIn -> handleParticipateInTossIn(working, action)
+            is GameAction.DeclareKingAction -> handleDeclareKingAction(working, action)
+            is GameAction.CallVinto -> handleCallVinto(working, action)
+            is GameAction.FinishTossInPeriod -> handleFinishTossInPeriod(working, action)
+            is GameAction.SetNextDrawCard -> handleSetNextDrawCard(working, action)
+            is GameAction.SwapHandWithDeck -> handleSwapHandWithDeck(working, action)
+            is GameAction.ExecuteJackSwap -> handleExecuteJackSwap(working, action)
+            is GameAction.SkipJackSwap -> handleSkipJackSwap(working, action)
+            is GameAction.ExecuteQueenSwap -> handleExecuteQueenSwap(working, action)
+            is GameAction.SkipQueenSwap -> handleSkipQueenSwap(working, action)
         }
 
     /**

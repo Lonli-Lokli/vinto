@@ -20,16 +20,12 @@ import game.vinto.shapes.hashGameState
  * client, not the reducer, so a replayed state legitimately has no history — which is why
  * comparison is by canonical hash, and why the canonical form excludes history.
  *
- * Ported from `packages/engine/src/lib/replay.ts`, with one addition: `HANDLER_UNPORTED`,
- * which exists only while phase 4 is in progress.
+ * Ported from `packages/engine/src/lib/replay.ts`.
  */
 enum class DivergenceReason {
     ACTION_REJECTED,
     HASH_MISMATCH,
     FINAL_STATE_MISMATCH,
-
-    /** Temporary: the port has not reached this handler yet. */
-    HANDLER_UNPORTED,
 }
 
 data class ReplayDivergence(
@@ -61,21 +57,7 @@ fun replayRecording(recording: GameRecording, verifyFinalState: Boolean = true):
     var state = recording.initialState
 
     for ((index, entry) in recording.actions.withIndex()) {
-        val result = try {
-            GameEngine.reduce(state, entry.action)
-        } catch (unported: UnportedHandlerException) {
-            return ReplayResult(
-                ok = false,
-                steps = index,
-                finalState = state,
-                divergence = ReplayDivergence(
-                    index = index,
-                    reason = DivergenceReason.HANDLER_UNPORTED,
-                    action = entry.action,
-                    detail = "No Kotlin handler for ${unported.actionType} yet",
-                ),
-            )
-        }
+        val result = GameEngine.reduce(state, entry.action)
 
         if (result is ReduceResult.Failure) {
             return ReplayResult(
