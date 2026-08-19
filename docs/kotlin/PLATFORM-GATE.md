@@ -37,18 +37,36 @@ produced 781 bytes total — so only code reachable from the exported surface sh
 **Conclusion: bundle size is not a risk for the Worker. This was the single biggest
 unknown in the Cloudflare design and it is now closed.**
 
-## 2a.1b — MCTS inside the Durable Object CPU budget: NOT YET MEASURED
+## 2a.1b — MCTS inside the Durable Object CPU budget: PASS
 
-Cannot be measured until the bot is ported (phase 6). What is known:
+Measured 2026-08-19, now that the bot is ported and the room runs it. This was the last open
+item on the platform gate.
 
-- A Durable Object allows **30 s CPU per request**, raisable to 5 minutes via
-  `limits.cpu_ms` — versus **10 ms** for a plain Worker, which is why the room is a
-  Durable Object and not a Worker.
-- The TypeScript MCTS currently takes on the order of a second per decision (~75 s for a
-  full ~300-action self-play game, four bots).
+A Durable Object allows **30 s CPU per request** (raisable to 5 minutes via `limits.cpu_ms`),
+versus **10 ms** for a plain Worker — which is why the room is a Durable Object and not a
+Worker, and which the `/replay` incident below demonstrated the hard way.
 
-The headroom looks ample, but this stays **open** until measured with the real ported bot.
-It is not a blocker for starting the port.
+Three seeded games driven through the real room functions, timing every request end to end. A
+request costs one client action plus every bot turn it triggers, which is the unit that
+matters: it is what the Durable Object is charged for.
+
+| | per request |
+| --- | ---: |
+| mean | 131 ms |
+| p50 | 4 ms |
+| p95 | 590 ms |
+| **max** | **1,591 ms** |
+
+141 requests, 459 bot actions, `moderate` difficulty (2,000 MCTS iterations per decision).
+
+**The worst request observed uses ~5% of the budget**, and the median is nothing at all — most
+requests trigger no search, because the bots only move when the turn reaches them. The tail is
+a request that hands three bots a turn each and pays for three searches.
+
+Two caveats worth stating rather than burying. This is Node rather than workerd, so treat it
+as an order-of-magnitude reading — the same caution as the `/replay` timings below, and for
+the same reason. And `hard` difficulty is 5,000 iterations rather than 2,000, so its tail
+would be roughly 2.5x this one: still inside the budget, but it is the setting to watch.
 
 ## 2a.2 — Compose/Wasm bundle: MEASURED, and it is the problem
 
@@ -190,14 +208,16 @@ The 123 KB figure above was a synthetic payload. The actual Worker — routing, 
 Object, room logic, hibernation handlers and the Kotlin bundle — measured with
 `wrangler deploy --dry-run`:
 
-| Bundle                           |        Raw |    Gzipped |
-| -------------------------------- | ---------: | ---------: |
-| Gate payload (synthetic)         |     734 KB |     123 KB |
-| **Real Worker + Durable Object** | **768 KB** | **126 KB** |
+| Bundle                             |          Raw |    Gzipped |
+| ---------------------------------- | -----------: | ---------: |
+| Gate payload (synthetic)           |       734 KB |     123 KB |
+| Real Worker + Durable Object       |       768 KB |     126 KB |
+| **…plus the engine, bot and room** | **1,612 KB** | **244 KB** |
 
-A complete room implementation cost **~3 KB gzipped** over the synthetic floor, which is the
-projection in 2a.1 holding up: our code is small and the fixed cost is the Kotlin stdlib and
-kotlinx.serialization. Still **~4% of the 3 MB free-plan limit**.
+The room implementation cost ~3 KB gzipped over the synthetic floor. Adding the *whole ported
+game* — engine, validator, MCTS bot, coalition planner, room logic — took it to **244 KB
+gzipped**, still **~8% of the 3 MB free-plan limit**. The projection in 2a.1 holds: our code
+roughly doubled the bundle, and the fixed cost is the Kotlin stdlib and kotlinx.serialization.
 
 ---
 

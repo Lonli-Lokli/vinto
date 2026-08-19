@@ -12,7 +12,7 @@
 //   2. Per-socket state (which seat) rides on the socket via serializeAttachment, which
 //      survives hibernation; a Map keyed by socket would not.
 
-import { newRoom, joinRoom, applyAction, eventsSince, replayRecordingJson } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
+import { newRoom, joinRoom, applyAction, eventsSince, viewForSeat, replayRecordingJson } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
 
@@ -36,12 +36,26 @@ export class Room {
     this.env = env;
   }
 
-  async #load(roomId, seed) {
+  async #load(roomId, seed, difficulty = 'moderate') {
     const stored = await this.ctx.storage.get(ROOM_KEY);
     if (stored) return stored;
-    const fresh = newRoom(roomId, seed);
+    // Dealing happens here, on the server, from the room's seed: the same seed deals the
+    // same table anywhere, which is what makes a room reproducible from its id alone.
+    const fresh = newRoom(roomId, seed, difficulty);
     await this.ctx.storage.put(ROOM_KEY, fresh);
     return fresh;
+  }
+
+  /**
+   * What one seat is allowed to see.
+   *
+   * Never the room state: that holds every hand. Everything sent to a client goes through
+   * the Kotlin projection, which replaces cards the seat may not see with a token carrying
+   * nothing at all — not even an id, since a card id spells out its rank.
+   */
+  #viewFor(stateJson, seat) {
+    const result = JSON.parse(viewForSeat(stateJson, seat));
+    return result.view ?? null;
   }
 
   async #save(stateJson) {
@@ -67,23 +81,24 @@ export class Room {
       });
     }
 
-    // The room is closed until ActionValidator is ported, and the gate sits ABOVE everything
-    // else for a reason found on the first real deployment: the state endpoint below calls
-    // #load, which CREATES the Durable Object and writes it to storage. Reachable publicly,
-    // that let any stranger conjure an unbounded number of rooms out of query strings — each
-    // one storage and row writes against the free-tier budget in D9 — and read them back.
+    // The gate sits ABOVE everything else for a reason found on the first real deployment:
+    // the state endpoint below calls #load, which CREATES the Durable Object and writes it to
+    // storage. Reachable publicly, that let any stranger conjure an unbounded number of rooms
+    // out of query strings — each one storage and row writes against the free-tier budget in
+    // D9 — and read them back.
     //
     // Locally that was an inspection aid for the 2a.3 harness and entirely reasonable. The
     // difference is only that one of them is on the internet, which is exactly the class of
     // thing a deployment tells you and a local run cannot.
     //
-    // Opening the room is a deliberate act — set ROOM_OPEN="true" — not a default, because
-    // the validator currently permits everything and design D9 puts server-side validation at
-    // the centre of the anti-cheat model.
+    // The room now runs the real engine: ActionValidator on every action, the seat boundary
+    // above it, per-seat redacted views out, and bots server-side. Opening it is still a
+    // deliberate act — set ROOM_OPEN="true" — because a room that anyone can create is a
+    // resource question rather than a correctness one, and that decision is the operator's.
     if (this.env.ROOM_OPEN !== 'true') {
       return new Response(
-        'The room is closed: server-side action validation is not implemented yet ' +
-          '(see ActionValidator, task 4.4). POST /replay to exercise the engine.',
+        'The room is closed. Set ROOM_OPEN="true" to open it. ' +
+          'POST /replay to exercise the engine.',
         { status: 503, headers: { 'content-type': 'text/plain' } },
       );
     }
@@ -133,8 +148,15 @@ export class Room {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }
         await this.#save(JSON.stringify(result.state));
+        const savedJson = JSON.stringify(result.state);
         ws.serializeAttachment({ seat: result.seat, clientId: msg.clientId });
-        ws.send(JSON.stringify({ type: 'joined', seat: result.seat, state: result.state }));
+        ws.send(JSON.stringify({
+          type: 'joined',
+          seat: result.seat,
+          seats: result.state.seats,
+          nextIndex: result.state.log.length,
+          view: this.#viewFor(savedJson, result.seat),
+        }));
         return this.#broadcast(
           { type: 'presence', seats: result.state.seats },
           null,
@@ -146,14 +168,27 @@ export class Room {
         if (seat === null || seat === undefined) {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before acting' }));
         }
-        const result = JSON.parse(applyAction(stateJson, seat, msg.action ?? 'noop'));
+        const result = JSON.parse(
+          applyAction(stateJson, seat, JSON.stringify(msg.action ?? {})),
+        );
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }
-        await this.#save(JSON.stringify(result.state));
+        const nextJson = JSON.stringify(result.state);
+        await this.#save(nextJson);
+
         // Every socket sees every accepted action, the caller included — the server is
-        // authoritative, so clients never apply an action optimistically.
-        return this.#broadcast({ type: 'event', event: result.event });
+        // authoritative, so clients never apply an action optimistically. The bots' moves
+        // arrive in the same batch, so one send answers "what happened because of that".
+        //
+        // The view is per-seat and so cannot be broadcast as one message: each socket gets
+        // the events, which are public, plus its own redacted view.
+        return this.#sendPerSeat((seatIndex) => ({
+          type: 'events',
+          events: result.events,
+          nextIndex: result.state.log.length,
+          view: this.#viewFor(nextJson, seatIndex),
+        }));
       }
 
       case 'resync': {
@@ -163,6 +198,24 @@ export class Room {
 
       default:
         return ws.send(JSON.stringify({ type: 'error', message: `unknown type ${msg.type}` }));
+    }
+  }
+
+  /**
+   * Sends each socket a message built for its own seat.
+   *
+   * A plain broadcast cannot carry a view: two seats are entitled to different cards, and
+   * one shared payload would have to be the union of both.
+   */
+  #sendPerSeat(build) {
+    for (const socket of this.ctx.getWebSockets()) {
+      const { seat } = socket.deserializeAttachment() ?? {};
+      if (seat === null || seat === undefined) continue;
+      try {
+        socket.send(JSON.stringify(build(seat)));
+      } catch {
+        // A socket that has gone away is not an error worth failing the action over.
+      }
     }
   }
 

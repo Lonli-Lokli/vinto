@@ -81,14 +81,22 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   was, and is gated: four Kotlin bots play whole games through the real engine with every
   proposed action passing `ActionValidator` first, and games must reach `scoring` (§6e)
 
+- **The room runs the real game**: the `Room` Durable Object deals from a seed, validates
+  every action, checks the seat boundary above it, sends each socket its own redacted view,
+  and plays the bots server-side. Verified two ways — `gate-real-room.mjs` in plain Node for
+  the game questions, and `gate-two-clients.mjs` through workerd for sockets, hibernation and
+  reconnect (§6f)
+
+- **The platform gate is closed.** 2a.1b was the last open item and it passes: the worst
+  request observed costs 1.6 s of a Durable Object's 30 s budget (`PLATFORM-GATE.md`)
+
 **Next**
 
-1. Port the TypeScript engine tests (4.4) — `projectView` redaction (4.5) is done
-2. Point the Worker's `Room` **Durable Object** at the real engine and the ported bot —
-   `/replay` already uses the engine, but the room itself still runs placeholder logic (§6c)
-3. Open the room: set `ROOM_OPEN` to `"true"` once the room runs the real engine (§6d)
-4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) can now be measured — the bot
-   exists. It was never a blocker, and it is the last open item on the platform gate
+1. Open the room in a deployment: set `ROOM_OPEN` to `"true"` (§6d). The engine reason for
+   keeping it shut is gone; what remains is the operator's call about who may create rooms
+2. Phase 6: `GameSession` / `LocalGameSession`, the recorder, and the Koin wiring — the
+   client-side half that the Compose UI will sit on
+3. Phase 7: the Compose Multiplatform UI
 
 ---
 

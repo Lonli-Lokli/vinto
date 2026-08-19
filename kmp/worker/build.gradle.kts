@@ -16,6 +16,7 @@ kotlin {
         jsMain.dependencies {
             implementation(project(":shared:shapes"))
             implementation(project(":shared:engine"))
+            implementation(project(":shared:bot"))
             implementation(libs.kotlinx.serialization.json)
         }
     }
