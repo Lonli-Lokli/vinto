@@ -85,6 +85,19 @@ fun ColorScheme.onFelt(): Color = FeltInk
 
 private val FeltInk = Color(0xFFF2F5F0)
 
+/**
+ * The rail: the dark band under the felt where the controls live.
+ *
+ * The same in light and dark, as on the web. A card table has an edge, and the edge is not a
+ * page — a light panel here makes the felt look like a picture of a game inside an app rather
+ * than the game itself. It also keeps the button colours meaning one thing: they sit on a
+ * known background, so green is green whatever the phone is set to.
+ */
+val RailFill = Color(0xFF1B2430)
+val RailBorder = Color(0xFF33404F)
+val RailInk = Color(0xFFF1F5F9)
+val RailInkDim = Color(0xFFA9B6C4)
+
 private val FeltDarkTop = Color(0xFF14442F)
 private val FeltDarkBottom = Color(0xFF0A2A1D)
 private val FeltLightTop = Color(0xFF1E6B4C)

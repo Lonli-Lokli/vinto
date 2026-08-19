@@ -17,6 +17,7 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
+import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.getCardShortDescription
 
 /**
@@ -36,6 +37,14 @@ import game.vinto.shapes.getCardShortDescription
 data class Table(
     /** One line telling the player what is being asked of them. */
     val prompt: String,
+    /**
+     * The smaller line under it: the rule that applies, or what the card in play does.
+     *
+     * Separate from [prompt] because they are read differently — the prompt is what you are
+     * being asked, and this is what you need to know to answer it. Running them together is
+     * how a heading turns into a paragraph nobody reads.
+     */
+    val detail: String? = null,
     /** Buttons, in the order they should be shown. */
     val choices: List<Choice> = emptyList(),
     /** Cards that can be touched, and what touching one does. */
@@ -44,6 +53,16 @@ data class Table(
     val seatTaps: Map<String, Move> = emptyMap(),
     /** Ranks on offer, when a declaration is being asked for. */
     val ranks: List<RankChoice> = emptyList(),
+    /**
+     * The longer explanation, shown when the player asks for it.
+     *
+     * Every state has one. A card game's rules are the game — a Queen looks at two cards and
+     * then *may* swap them, a wrong toss-in costs you a card, a King names a rank and plays
+     * that rank's action — and a player who has to remember all of it before the first hand
+     * is a player who stops. The words come from `CARD_CONFIGS`, which is the same copy the
+     * web app shows, so the two teach the same game.
+     */
+    val help: String? = null,
     /** True when the player has nothing to do but watch. */
     val waiting: Boolean = false,
     /** The cards the screen may show face-up. See [revealedTo]. */
@@ -54,13 +73,40 @@ data class Table(
 data class CardRef(val playerId: String, val position: Int)
 
 /** A button. */
-data class Choice(val label: String, val move: Move, val tone: Tone = Tone.NORMAL)
+data class Choice(val label: String, val move: Move, val tone: Tone = Tone.NEUTRAL)
 
 /** A rank the player may name. */
 data class RankChoice(val rank: Rank, val move: Move)
 
-/** How prominent a choice is. Presentation, but the *ranking* is a rules judgement. */
-enum class Tone { PRIMARY, NORMAL, RISKY }
+/**
+ * What kind of move a button is.
+ *
+ * Ported from the web app's `BUTTON_ACTION_VARIANTS`, colour for colour, and the reason is
+ * stated in its own comment there: **muscle memory**. Green is always the move that gets on
+ * with the game, blue always puts a card into a hand, slate always declines, orange is the
+ * one that ends the round, amber is naming a rank. A player who has learned that on the web
+ * should not have to learn it again here, and a player who learns it here gets it for free
+ * when the same table appears online.
+ *
+ * It sits in the model rather than the theme because which kind a move *is* follows from the
+ * rules, not from how it looks.
+ */
+enum class Tone {
+    /** Get on with it: draw, play the action, continue. */
+    PLAY,
+
+    /** Put a card into a hand: swap, start the round. */
+    KEEP,
+
+    /** Decline: discard, skip, pass, go back. */
+    NEUTRAL,
+
+    /** Ends the round for everybody. */
+    STAKES,
+
+    /** Name a rank, and take the consequences if it is wrong. */
+    DECLARE,
+}
 
 /**
  * What touching something does.
@@ -91,8 +137,6 @@ sealed interface Question {
     /** Slot chosen — do I call the rank of the card going out, and gamble on it? */
     data class CallRank(val position: Int) : Question
 
-    /** Which of my cards am I tossing in? */
-    data class Tossing(val positions: List<Int> = emptyList()) : Question
 }
 
 private const val SETUP_PEEKS = 2
@@ -169,7 +213,7 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
         return coalitionTable(view).showing(view)
     }
 
-    tossInTable(view, question)?.let { return it.showing(view) }
+    tossInTable(view)?.let { return it.showing(view) }
 
     val pending = view.pendingAction
     if (pending != null && pending.playerId == view.viewerId) {
@@ -185,7 +229,51 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
     return turnStartTable(view).showing(view)
 }
 
-private fun Table.showing(view: PlayerView) = copy(revealed = revealedTo(view))
+private fun Table.showing(view: PlayerView) = copy(revealed = revealedTo(view), help = helpFor(view))
+
+/**
+ * What the "?" explains, for whatever is happening.
+ *
+ * The card in play if there is one, since that is nearly always what the player is unsure
+ * about, and otherwise the rule that governs the phase.
+ */
+private fun helpFor(view: PlayerView): String {
+    val pending = (view.pendingAction?.card as? CardView.Visible)?.card
+    if (pending != null && view.pendingAction?.playerId == view.viewerId) {
+        val config = getCardConfig(pending.rank)
+        val worth = "It is worth ${config.value}."
+        return if (config.action == null) {
+            "${config.name}. $worth It has no action, so it can only go into your hand or " +
+                "onto the pile."
+        } else {
+            "${config.name}. $worth ${config.longDescription}. ${config.helpText}"
+        }
+    }
+
+    return when {
+        view.phase == GamePhase.SETUP ->
+            "Look at two of your own cards and remember them — they go face-down again when " +
+                "the round starts. Everything after that is memory."
+
+        view.phase == GamePhase.SCORING ->
+            "Every hand is face-up. The lowest total wins the round; the player who called " +
+                "Vinto is scored against the best hand among everybody else."
+
+        view.activeTossIn != null ->
+            "Anybody holding a card of the same rank may throw it in, which gets it out of " +
+                "their hand for nothing. Get the rank wrong and you take a penalty card, and " +
+                "you cannot toss in again this round."
+
+        view.vintoCallerId != null ->
+            "Vinto has been called. Everybody else plays one last turn as a coalition, and " +
+                "only their best hand counts against the caller's."
+
+        else ->
+            "Draw from the deck, or take the top of the discard pile if it is an action card " +
+                "nobody has played. Keep what lowers your total; call Vinto when you think " +
+                "yours is the lowest."
+    }
+}
 
 // ---------------------------------------------------------------------------- setup
 
@@ -212,7 +300,11 @@ private fun setupTable(view: PlayerView, myId: String, peeked: List<Int>): Table
     return Table(
         prompt = "Ready when you are",
         choices = listOf(
-            Choice("Start the round", Move.Send(GameAction.FinishSetup(PlayerIdPayload(myId))), Tone.PRIMARY),
+            Choice(
+                "Start the round",
+                Move.Send(GameAction.FinishSetup(PlayerIdPayload(myId))),
+                Tone.KEEP,
+            ),
         ),
     )
 }
@@ -225,7 +317,7 @@ private fun turnStartTable(view: PlayerView): Table {
     val choices = mutableListOf<Choice>()
 
     if (view.drawPileSize > 0) {
-        choices += Choice("Draw a card", Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PRIMARY)
+        choices += Choice("Draw a card", Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PLAY)
     }
 
     // Only an action card nobody has played yet can be taken, and taking it commits you to
@@ -234,6 +326,7 @@ private fun turnStartTable(view: PlayerView): Table {
         choices += Choice(
             "Take the ${top.rank.serialName} and play it",
             Move.Send(GameAction.PlayDiscard(PlayerIdPayload(me))),
+            Tone.PLAY,
         )
     }
 
@@ -261,18 +354,19 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
         choices += Choice(
             "Play it — ${getCardShortDescription(card.rank)}",
             Move.Send(GameAction.UseCardAction(PlayerIdPayload(me))),
-            Tone.PRIMARY,
+            Tone.PLAY,
         )
     }
 
     // A card taken off the discard pile must be played; it cannot be kept.
     if (pending.canGoToHand) {
-        choices += Choice("Put it in your hand", Move.Ask(Question.WhichSlot))
+        choices += Choice("Put it in your hand", Move.Ask(Question.WhichSlot), Tone.KEEP)
         choices += Choice("Throw it away", Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
     }
 
     val what = card?.let { "You drew the ${it.rank.serialName}" } ?: "You drew a card"
-    return Table(prompt = what, choices = choices)
+    val does = card?.let { getCardConfig(it.rank) }?.takeIf { it.action != null }?.longDescription
+    return Table(prompt = what, detail = does, choices = choices)
 }
 
 private fun whichSlotTable(view: PlayerView): Table {
@@ -298,7 +392,7 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
             Choice(
                 "Say nothing",
                 Move.Send(GameAction.SwapCard(SwapCardPayload(me, position))),
-                Tone.PRIMARY,
+                Tone.KEEP,
             ),
             Choice("Back", Move.Ask(Question.WhichSlot)),
         ),
@@ -370,7 +464,7 @@ private fun peekTable(
             Choice(
                 "Done",
                 Move.Send(GameAction.ConfirmPeek(PlayerIdPayload(view.viewerId))),
-                Tone.PRIMARY,
+                Tone.PLAY,
             ),
         ),
     )
@@ -388,7 +482,7 @@ private fun twoCardTable(
     Table(
         prompt = "Swap them?",
         choices = listOf(
-            Choice("Swap", Move.Send(swap), Tone.PRIMARY),
+            Choice("Swap", Move.Send(swap), Tone.PLAY),
             Choice("Leave them", Move.Send(leave)),
         ),
     )
@@ -474,7 +568,7 @@ private fun positional(me: String, targetId: String, position: Int): Move = Move
 
 // ---------------------------------------------------------------------------- toss-in
 
-private fun tossInTable(view: PlayerView, question: Question): Table? {
+private fun tossInTable(view: PlayerView): Table? {
     val toss = view.activeTossIn ?: return null
     if (view.subPhase != GameSubPhase.TOSS_QUEUE_ACTIVE) return null
 
@@ -486,33 +580,20 @@ private fun tossInTable(view: PlayerView, question: Question): Table? {
     val matching = toss.ranks.joinToString(" or ") { it.serialName }
     val hand = view.players.first { it.id == me }.cards.indices
 
-    if (question is Question.Tossing) {
-        val picked = question.positions
-        return Table(
-            prompt = if (picked.isEmpty()) "Choose the cards you think match" else "${picked.size} chosen",
-            choices = buildList {
-                if (picked.isNotEmpty()) {
-                    add(
-                        Choice(
-                            "Toss ${picked.size} in",
-                            Move.Send(GameAction.ParticipateInTossIn(ParticipateInTossInPayload(me, picked))),
-                            Tone.RISKY,
-                        ),
-                    )
-                }
-                add(Choice("Back", Move.Ask(Question.None)))
-            },
-            taps = hand.associate { position ->
-                CardRef(me, position) to Move.Ask(Question.Tossing(picked.toggled(position)))
-            },
-        )
-    }
-
+    // A card is thrown in by touching it, as on the web, rather than by pressing a button and
+    // then touching it. It is the one move in the game with no confirmation step and that is
+    // deliberate on both sides: a toss-in is a race, and a wrong one costs a penalty card, so
+    // the risk that makes it worth confirming is exactly the risk that makes it a bad idea.
     return Table(
         prompt = "A $matching went down — toss in a match?",
+        detail = "Touch a card to throw it in. Wrong rank costs you a penalty card.",
+        taps = hand.associate { position ->
+            val throwIn = GameAction.ParticipateInTossIn(ParticipateInTossInPayload(me, listOf(position)))
+            CardRef(me, position) to Move.Send(throwIn)
+        },
         choices = buildList {
-            add(Choice("Toss in", Move.Ask(Question.Tossing()), Tone.PRIMARY))
-            add(Choice("Pass", Move.Send(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))))
+            val done = GameAction.PlayerTossInFinished(PlayerIdPayload(me))
+            add(Choice("Continue", Move.Send(done), Tone.PLAY))
 
             // Vinto is declared at the *end* of your own turn, which is this window and not
             // the one before you drew. The engine tolerates an early call, but taking it up
@@ -521,14 +602,11 @@ private fun tossInTable(view: PlayerView, question: Question): Table? {
             val mine = view.players.getOrNull(toss.originalPlayerIndex)?.id == me
             if (mine && view.vintoCallerId == null) {
                 val call = GameAction.CallVinto(PlayerIdPayload(me))
-                add(Choice("Call Vinto", Move.Send(call), Tone.RISKY))
+                add(Choice("Call Vinto", Move.Send(call), Tone.STAKES))
             }
         },
     )
 }
-
-private fun List<Int>.toggled(position: Int): List<Int> =
-    if (position in this) this - position else this + position
 
 // ---------------------------------------------------------------------------- endings
 

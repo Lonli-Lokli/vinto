@@ -21,14 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.RailInkDim
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.feltGradient
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
 import game.vinto.client.Move
-import game.vinto.client.Question
 import game.vinto.client.Table
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
@@ -39,6 +41,10 @@ private val Tight = 4.dp
 private val Edge = 6.dp
 private val FeltCorner = 14.dp
 private val Rim = 2.dp
+
+/** The wordmark's green, matching the web app's, and the deck badge it sits beside. */
+private val WordmarkGreen = Color(0xFF34D07A)
+private val DeckBadge = Color(0xFF14351F)
 
 /**
  * The table, laid out as the web app lays it out on a phone.
@@ -58,6 +64,7 @@ fun TableScreen(
     refusal: String?,
     recent: List<String>,
     onMove: (Move) -> Unit,
+    onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val me = view.viewerId
@@ -93,7 +100,13 @@ fun TableScreen(
             }
         }
 
-        ControlPanel(table = table, refusal = refusal, recent = recent, onMove = onMove)
+        ControlPanel(
+            table = table,
+            refusal = refusal,
+            recent = recent,
+            onMove = onMove,
+            onHelp = onHelp,
+        )
     }
 }
 
@@ -105,29 +118,33 @@ private fun TableHeader(view: PlayerView) {
         horizontalArrangement = Arrangement.spacedBy(Gap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // On the rail, so the rail's own ink — not the theme's, which is a page colour and
+        // reads as dark-on-dark here.
         Text(
             "VINTO",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.primary,
+            letterSpacing = 2.sp,
+            color = WordmarkGreen,
         )
         Text(
             "R${view.roundNumber} / T${view.turnNumber}",
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = RailInkDim,
         )
 
         Box(modifier = Modifier.weight(1f))
 
         Surface(
             shape = RoundedCornerShape(Tight),
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = DeckBadge,
+            border = androidx.compose.foundation.BorderStroke(1.dp, WordmarkGreen),
         ) {
             Text(
                 "${view.drawPileSize}",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = WordmarkGreen,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = Tight),
             )
         }
@@ -313,7 +330,7 @@ private fun SeatCard(
         scale = scale,
         state = CardState(
             tappable = move != null,
-            chosen = ref.isTargeted(view) || ref.isBeingTossed(table),
+            chosen = ref.isTargeted(view),
         ),
         label = "${seat.nickname}, card ${position + 1}",
         onClick = move?.let { { onMove(it) } },
@@ -457,10 +474,3 @@ private fun PendingCard(view: PlayerView, sizes: TableSizes) {
 /** Cards this action has already been aimed at, so the player can see what they have chosen. */
 private fun CardRef.isTargeted(view: PlayerView): Boolean =
     view.pendingAction?.targets.orEmpty().any { it.playerId == playerId && it.position == position }
-
-private fun CardRef.isBeingTossed(table: Table): Boolean {
-    val question = table.taps[this] as? Move.Ask ?: return false
-    val tossing = question.question as? Question.Tossing ?: return false
-    // The tap toggles: a card already chosen is one this tap would REMOVE.
-    return position !in tossing.positions
-}

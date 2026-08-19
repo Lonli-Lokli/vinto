@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import game.vinto.app.game.GameScreen
+import androidx.compose.foundation.layout.Box
+import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.VintoTheme
 import game.vinto.shapes.Difficulty
 
@@ -36,9 +38,11 @@ fun App(seeds: () -> Long = ::freshSeed) {
     VintoTheme {
         // Every phone has something drawn over its edges — a status bar, a gesture handle, a
         // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
-        // list, so anything under those is simply lost rather than reachable.
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Surface(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        // list, so anything under those is simply lost rather than reachable, and the content
+        // is inset out of their way. What is *behind* them is the rail rather than a page
+        // colour, so the bars read as the edge of the table instead of a border around it.
+        Surface(modifier = Modifier.fillMaxSize(), color = RailFill) {
+            Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
             when (val started = seed) {
                 null -> HomeScreen(
                     difficulty = difficulty,

@@ -101,9 +101,18 @@ not after the UI is built.
       the wrong shape here — a card going from a hand to the discard passes over three other
       hands, and animating it in place means making room for it in every one of them. Not yet
       run on a physical phone or on iOS
-- [~] 7.2 Design tokens (light/dark), typography, Material 3 theme: **done**, including the
-      felt, which is not a Material role — it is a playing surface that has to sit behind white
-      cards without competing with them. Reduced-motion is **not** honoured yet
+- [~] 7.2 Design tokens (light/dark), typography, theme: **done**, and deliberately *not*
+      Material-looking. Material's own button is a stadium, and it was the single thing that
+      made the screen read as an Android app rather than a game. The controls are now the web
+      app's: four-pixel corners, a solid colour, a small shadow, on a dark rail that stays dark
+      in both themes. The colours carry meaning, ported from `BUTTON_ACTION_VARIANTS` — green
+      gets on with the turn, blue puts a card in a hand, slate declines, orange ends the round,
+      amber names a rank — so a player who learned them on the web does not learn them twice.
+      Reduced-motion is **not** honoured yet
+- [x] 7.9 Help: a "?" on the panel opens what the rules say about whatever is happening — the
+      card in hand, or the phase — followed by every rank and what it does. The words are
+      `CARD_CONFIGS`, ported with the engine, so the web app and this teach the same game. A
+      drawn action card also explains itself inline, without being asked
 - [~] 7.3 Screens/navigation: home and game table done, two screens and a saveable seed. Lobby,
       final scores, help, settings and the debug screens are not started
 - [x] 7.4 Game table composables, seat-agnostic (rendered for `viewerId`): four-sided seating in

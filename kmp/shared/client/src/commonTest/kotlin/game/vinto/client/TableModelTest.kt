@@ -237,7 +237,7 @@ class TableModelTest {
     // ------------------------------------------------------------------ toss-in
 
     @Test
-    fun aDiscardOpensATossInThatCanBeTakenOrPassed() = runTest {
+    fun aDiscardOpensATossInYouTakeByTouchingACard() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -245,23 +245,43 @@ class TableModelTest {
 
         val table = session.table()
         assertTrue(table.prompt.startsWith("A 5 went down"), table.prompt)
+        assertTrue(table.send("Continue") is GameAction.PlayerTossInFinished)
         assertTrue(table.send("Call Vinto") is GameAction.CallVinto, "your own turn is ending")
-        assertEquals(Move.Ask(Question.Tossing()), table.choices.first { it.label == "Toss in" }.move)
-        assertTrue(table.send("Pass") is GameAction.PlayerTossInFinished)
 
-        // Choosing cards is a question the screen holds; only the final throw is a move.
-        val picking = session.table(Question.Tossing())
-        val toggled = picking.taps.getValue(CardRef(session.playerId, 1))
-        assertEquals(Move.Ask(Question.Tossing(listOf(1))), toggled, "tapping a card selects it")
-
-        val picked = session.table(Question.Tossing(listOf(1, 3)))
+        // Throwing a card in is one touch, with no confirmation step. The risk is what makes
+        // it a decision; a confirmation would only make a bad idea slower.
+        assertEquals(FIVE_CARDS, table.taps.size, "any of your cards can go in")
+        val thrown = (table.taps.getValue(CardRef(session.playerId, 3)) as Move.Send).action
         assertEquals(
-            Move.Ask(Question.Tossing(listOf(3))),
-            picked.taps.getValue(CardRef(session.playerId, 1)),
-            "tapping a selected card takes it back",
+            listOf(3),
+            (thrown as GameAction.ParticipateInTossIn).payload.positions,
+            "the card you touched, and only that one",
         )
-        val thrown = picked.send("Toss 2 in") as GameAction.ParticipateInTossIn
-        assertEquals(listOf(1, 3), thrown.payload.positions)
+    }
+
+    /** The rules of whatever is happening, so a player never has to leave the table. */
+    @Test
+    fun everyStateExplainsItself() = runTest {
+        val fresh = LocalGameSession(seed = 5L, difficulty = Difficulty.EASY)
+        assertTrue(fresh.table().help!!.contains("two of your own"), fresh.table().help!!)
+
+        val session = aiming(Rank.QUEEN)
+        val help = session.table().help!!
+        assertTrue(help.startsWith("Queen"), help)
+        assertTrue(help.contains("swap"), "it says what a Queen does: $help")
+        assertTrue(help.contains("10"), "and what it costs you to hold: $help")
+    }
+
+    /** A drawn action card says what it does without being asked. */
+    @Test
+    fun aDrawnActionCardExplainsItselfInline() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.KING)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val table = session.table()
+        assertEquals("You drew the K", table.prompt)
+        assertTrue(table.detail!!.contains("eclare"), table.detail!!)
     }
 
     // ------------------------------------------------------------------ what is shown

@@ -1,6 +1,8 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -8,15 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.RailBorder
+import game.vinto.app.theme.RailFill
+import game.vinto.app.theme.RailInk
+import game.vinto.app.theme.RailInkDim
 import game.vinto.client.Choice
 import game.vinto.client.Move
 import game.vinto.client.Table
@@ -32,25 +39,27 @@ import game.vinto.client.Tone
 
 private val PanelPad = 12.dp
 private val Gap = 8.dp
-private val MinTap = 48.dp
-private val PanelLift = 3.dp
-private val LogCorner = 8.dp
 private val Half = 4.dp
+private val LogCorner = 6.dp
+private val HelpSize = 34.dp
 
 /** Roughly a third of a phone. Past that the table stops being a table. */
-private val PanelCeiling = 300.dp
+private val PanelCeiling = 320.dp
 
 private const val RECENT_SHOWN = 2
-private const val LOG_ALPHA = 0.5f
 
 /**
  * What the player can do, and nothing else.
  *
- * Everything here comes from [Table], which is a pure function of the game view — so this
+ * A dark rail under the felt, in both light and dark, because that is what the web app does
+ * and because it is right: the panel is the edge of the table, not a page. A light card
+ * surface here makes the felt look like an image embedded in an app rather than the thing the
+ * app is.
+ *
+ * Everything shown comes from [Table], which is a pure function of the game view — so this
  * composable has no opinion about the rules and cannot develop one. If a button is missing,
  * the answer is in `TableModel.kt` and a test can be written for it in milliseconds; if a
- * button is ugly, the answer is here. Keeping those two questions apart is the whole reason
- * the split exists.
+ * button is ugly, the answer is here.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,16 +68,13 @@ fun ControlPanel(
     refusal: String?,
     recent: List<String>,
     onMove: (Move) -> Unit,
+    onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        tonalElevation = PanelLift,
-        shadowElevation = PanelLift,
-    ) {
+    Surface(modifier = modifier.fillMaxWidth(), color = RailFill) {
         // Bounded and scrollable, because the panel's height is not ours to choose: a King
-        // puts fourteen rank chips here, and at large font sizes that is most of a phone. The
-        // table has to survive the worst case rather than the usual one.
+        // puts fourteen rank buttons here, and at large font sizes that is most of a phone.
+        // The table has to survive the worst case rather than the usual one.
         Column(
             modifier = Modifier
                 .padding(PanelPad)
@@ -76,13 +82,7 @@ fun ControlPanel(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Text(
-                text = table.prompt,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
+            Heading(table = table, onHelp = onHelp)
 
             // The engine's own words, not a translation of them. A refusal is nearly always a
             // rule the player has not met yet, and paraphrasing it here would put a second,
@@ -90,8 +90,8 @@ fun ControlPanel(
             refusal?.let { reason ->
                 Text(
                     text = reason,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    fontSize = DetailSize,
+                    color = WarnInk,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
@@ -106,31 +106,68 @@ fun ControlPanel(
                     verticalArrangement = Arrangement.spacedBy(Half),
                 ) {
                     table.ranks.forEach { rank ->
-                        AssistChip(
+                        GameButton(
+                            label = rank.rank.serialName,
+                            tone = ButtonTone.DECLARE,
                             onClick = { onMove(rank.move) },
-                            label = { Text(rank.rank.serialName) },
                         )
                     }
                 }
             }
 
-            // A risky choice is set below a rule, as the web app sets Call Vinto below an
+            // A stakes move is set below a rule, as the web app sets Call Vinto below an
             // "or": it is not the next step in what you were doing, it is a different thing
             // to do, and the line is what stops a thumb finding it by accident.
-            val (ordinary, risky) = table.choices.partition { it.tone != Tone.RISKY }
+            val (ordinary, stakes) = table.choices.partition { it.tone != Tone.STAKES }
             ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
 
-            if (risky.isNotEmpty()) {
+            if (stakes.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text("or", style = MaterialTheme.typography.labelMedium)
-                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = RailBorder)
+                    Text("or", fontSize = DetailSize, color = RailInkDim)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = RailBorder)
                 }
-                risky.forEach { choice -> ChoiceButton(choice, onMove) }
+                stakes.forEach { choice -> ChoiceButton(choice, onMove) }
+            }
+        }
+    }
+}
+
+/** The prompt, the rule under it, and the way to ask for more. */
+@Composable
+private fun Heading(table: Table, onHelp: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = table.prompt,
+                fontSize = PromptSize,
+                fontWeight = FontWeight.Bold,
+                color = RailInk,
+            )
+            table.detail?.let {
+                Text(text = it, fontSize = DetailSize, color = RailInkDim)
+            }
+        }
+
+        // Always present, never in the way. A card game's rules are the game, and a player who
+        // has to leave the table to look one up is a player who guesses instead.
+        Surface(
+            onClick = onHelp,
+            modifier = Modifier.size(HelpSize),
+            shape = CircleShape,
+            color = RailFill,
+            border = BorderStroke(1.dp, RailBorder),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text("?", fontSize = PromptSize, fontWeight = FontWeight.Bold, color = RailInkDim)
             }
         }
     }
@@ -149,16 +186,13 @@ private fun RecentActions(recent: List<String>) {
 
     Surface(
         shape = RoundedCornerShape(LogCorner),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = LOG_ALPHA),
+        color = RailFill,
+        border = BorderStroke(1.dp, RailBorder),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(Gap)) {
             recent.takeLast(RECENT_SHOWN).forEach { line ->
-                Text(
-                    text = line,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(text = line, fontSize = DetailSize, color = RailInkDim)
             }
         }
     }
@@ -166,31 +200,24 @@ private fun RecentActions(recent: List<String>) {
 
 @Composable
 private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit) {
-    val modifier = Modifier.fillMaxWidth().heightIn(min = MinTap)
-    val label = @Composable { Text(choice.label) }
-
-    when (choice.tone) {
-        Tone.PRIMARY -> Button(onClick = { onMove(choice.move) }, modifier = modifier) { label() }
-
-        Tone.NORMAL -> OutlinedButton(onClick = { onMove(choice.move) }, modifier = modifier) { label() }
-
-        // Calling Vinto and throwing cards in are both bets. Colouring them as errors would
-        // say "you have gone wrong"; they are simply the moves you can lose by.
-        Tone.RISKY -> Button(
-            onClick = { onMove(choice.move) },
-            modifier = modifier,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-            ),
-        ) { label() }
-    }
+    GameButton(
+        label = choice.label,
+        tone = choice.tone.paint(),
+        onClick = { onMove(choice.move) },
+        modifier = Modifier.fillMaxWidth(),
+        leading = if (choice.tone == Tone.STAKES) "🏆" else null,
+    )
 }
 
-/** A one-word button, for the rare case of choosing a whole player rather than a card. */
-@Composable
-fun SmallAction(label: String, onClick: () -> Unit) {
-    androidx.compose.material3.TextButton(onClick = onClick) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
-    }
+/** The model says what kind of move it is; this says what that kind looks like. */
+private fun Tone.paint(): ButtonTone = when (this) {
+    Tone.PLAY -> ButtonTone.PLAY
+    Tone.KEEP -> ButtonTone.KEEP
+    Tone.NEUTRAL -> ButtonTone.NEUTRAL
+    Tone.STAKES -> ButtonTone.STAKES
+    Tone.DECLARE -> ButtonTone.DECLARE
 }
+
+private val PromptSize = 17.sp
+private val DetailSize = 13.sp
+private val WarnInk = androidx.compose.ui.graphics.Color(0xFFFFA39E)

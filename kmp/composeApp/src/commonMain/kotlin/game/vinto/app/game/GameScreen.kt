@@ -16,6 +16,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import game.vinto.shapes.Difficulty
 
 private val Pad = 16.dp
@@ -34,6 +37,7 @@ fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAga
     val holder = rememberGame(seed, difficulty)
     val act = rememberActor(holder)
     val log by holder.log.collectAsState()
+    var helpOpen by rememberSaveable { mutableStateOf(false) }
 
     CardStage(flights = holder.flights, sizes = TableSizes.forHeight(TableHeightGuess)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -43,6 +47,7 @@ fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAga
                 refusal = holder.refusal,
                 recent = log,
                 onMove = act,
+                onHelp = { helpOpen = true },
                 modifier = Modifier.weight(1f),
             )
 
@@ -50,6 +55,10 @@ fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAga
                 RoundOver(onPlayAgain = onPlayAgain, onQuit = onQuit)
             }
         }
+    }
+
+    if (helpOpen) {
+        HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
     }
 }
 
