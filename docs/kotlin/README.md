@@ -73,15 +73,22 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - **The engine runs correctly in the Cloudflare runtime**, not just on the JVM: the Worker
   exposes `POST /replay` and all 50 recordings replay through it in workerd (§6c)
 
+- **The bot is ported and follows the rules** (phase 5): all of `packages/bot` — memory,
+  opponent modeller, heuristics, evaluators, determinization, rollout policy, move generator,
+  state transition, outcome simulator, Vinto round solver, coalition planner, MCTS decision
+  service — plus `BotRunner`, which turns decisions into actions for a server that has no UI.
+  **Decision parity with TypeScript was not required and was not attempted**; rule-following
+  was, and is gated: four Kotlin bots play whole games through the real engine with every
+  proposed action passing `ActionValidator` first, and games must reach `scoring` (§6e)
+
 **Next**
 
-1. Port the TypeScript engine tests (4.4) and `projectView` redaction (4.5) — the redaction
-   is the other half of the anti-cheat model, and nothing checks it yet
-2. Open the room: set `ROOM_OPEN` to `"true"` now that the validator is real (§6d)
-3. Point the Worker's `Room` **Durable Object** at the real engine — `/replay` already uses
-   it, but the room itself still runs placeholder logic (§6c)
-4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
-   cannot be measured until the bot is ported in phase 6, and it is not a blocker
+1. Port the TypeScript engine tests (4.4) — `projectView` redaction (4.5) is done
+2. Point the Worker's `Room` **Durable Object** at the real engine and the ported bot —
+   `/replay` already uses the engine, but the room itself still runs placeholder logic (§6c)
+3. Open the room: set `ROOM_OPEN` to `"true"` once the room runs the real engine (§6d)
+4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) can now be measured — the bot
+   exists. It was never a blocker, and it is the last open item on the platform gate
 
 ---
 
@@ -440,13 +447,62 @@ pair of `Int`s and uses a different serialiser backend, so passing on the JVM do
 passing on Cloudflare. It now passes on both.
 
 **What must be true before a deployment takes real client input.** `/replay` is safe to
-expose — it is a pure function of the posted document. The WebSocket room is not, because
-`ActionValidator` still permits everything, and design D9 puts server-side validation at the
-centre of the anti-cheat model. A deployment today is a self-test, not a service.
+expose — it is a pure function of the posted document. The WebSocket room is not yet, but the
+reason has changed: `ActionValidator` is now ported in full and is the boundary design D9
+depends on, so what is missing is that the `Room` Durable Object still runs placeholder logic
+instead of calling `GameEngine.reduce`. `ROOM_OPEN` stays `"false"` until it does.
 
-Deploying needs a Cloudflare account and `wrangler login`; nothing in this repo has been
-deployed, and `wrangler deploy` should be a deliberate decision rather than a side effect of
-a build.
+Deploying needs a Cloudflare account and `wrangler login`; `wrangler deploy` should be a
+deliberate decision rather than a side effect of a build.
+
+## 6e. The bot, and what a self-play gate is for
+
+The bot is ported in full, and the verification is worth explaining because it is not the one
+the other phases use.
+
+The engine had a corpus: 50 recorded games with per-action hashes, so "did the port work" has
+an exact answer. **A bot has no such thing.** Its output is a decision, and two reasonable
+bots disagree constantly without either being wrong. Demanding decision parity would have
+meant transcribing every heuristic literally including its bugs, and would still not have
+produced it — MCTS is stochastic, and the two implementations sample different random streams.
+
+So the requirement was set differently: *the bot need not follow the TypeScript exactly, but
+it must follow the rules.* That is checkable. `SelfPlayGateTest` plays whole games with four
+Kotlin bots through the real `GameEngine`, and every action a bot proposes goes through
+`ActionValidator` before it is reduced — the same boundary a Durable Object runs, so anything
+rejected here would be rejected in a live room.
+
+Three things it asserts, each for a different failure:
+
+| assertion            | catches                                                             |
+| -------------------- | ------------------------------------------------------------------- |
+| every action is legal | a bot that cheats, or that gets stuck holding an action the engine refuses |
+| every game reaches `scoring` | a game where each action is legal but two states hand back and forth forever |
+| some game ends on a Vinto call | an endgame that is unreachable in practice, so games only end when the deck dries up |
+
+It earned its keep immediately, finding five defects that no unit test would have:
+
+- **Memories outlive the hands they describe.** A toss-in removes a card and renumbers
+  everything after it; the memory keeps its old index. A shrunken hand therefore "remembered"
+  a card past its own end, and the move generator offered it as a target the engine rejects.
+- **A tossed-in Jack or Queen was a dead end.** The validator allows `selecting` — where a bot
+  sits while resolving a tossed-in action — for `CONFIRM_PEEK`, `DECLARE_KING_ACTION` and
+  `SELECT_ACTION_TARGET`, and forbade it for exactly these two swaps. A bot could choose both
+  targets and then had no legal move at all. The same hole is in
+  `packages/engine/src/lib/action-validator.ts`.
+- **Cached action plans could go stale**, since they are read a ply deep in the search tree.
+- **Target selection answered the wrong question** once the engine had already committed a
+  card: "would I rather swap?" is no longer on the table at that point.
+- **The search could not see the deck run out** — `deckSize` was hardcoded to a full deck.
+
+**One dead end is deliberately left open.** The draw pile is refilled when a turn ends with
+one card on it, but a forced draw or a wrong-declaration penalty takes a card *without* ending
+a turn, so it can reach zero — and a turn that starts with no deck and nothing takeable on the
+discard has no legal move. Refilling at zero as well looks like a one-word fix and is not:
+`reshuffleFrom` advances `rngState` whether or not it moves anything, so recording
+`selfplay-moderate-18` diverges at action 322. Corpus parity is worth more than closing a rare
+dead end; the engine is untouched and `BotRunner` reports the position rather than proposing an
+illegal draw.
 
 ## 6. Decisions already made — do not silently reopen
 
@@ -459,6 +515,8 @@ a build.
 | Canonical hash excludes history + `botMemory`, includes `opponentKnowledge` | `RECORDING.md` §4                         |
 | Every game is exactly 4 players                                             | deterministic-engine spec                 |
 | Bots call Vinto when hand is fully known and worth ≤ 0                      | `packages/bot/src/lib/vinto-call-rule.ts` |
+| Bot verification is rule-following, not decision parity                     | §6e, tasks 5.5/5.6                        |
+| One decision service **per bot**, not one shared across seats               | `BotRunner`; TypeScript wipes memory each turn |
 
 ## 7. Traps and known issues
 
