@@ -95,11 +95,27 @@ not after the UI is built.
 
 ## 7. Compose Multiplatform UI (single player first)
 
-- [ ] 7.1 Prototype gate: game table layout + one animated card move + one bot turn on a physical iPhone and Android phone; decide animation approach (LookaheadScope vs overlay layer)
-- [ ] 7.2 Design tokens (light/dark), typography, Material 3 theme; reduced-motion support
-- [ ] 7.3 Screens/navigation: home (single player / create room / join room), new-game settings (difficulty), lobby, game table, final scores, help/rules, settings, debug (recordings list, replay stepper)
-- [ ] 7.4 Game table composables, seat-agnostic (render for `localPlayerId`): player areas (local seat bottom, others around), piles, pending card, action-target selection, rank declaration, King declaration, Jack/Queen flows, toss-in bar with continue, Vinto button, coalition leader modal, coalition status/turn indicator, waiting indicators
-- [ ] 7.5 Animation service port + `syncVisualState()` contract; bots proven to wait for animations (instrumented test)
+- [~] 7.1 Prototype gate: **decided — an overlay layer**, and it is built and running on an
+      Android emulator: a card leaves the deck, crosses the table and lands on the pile, drawn
+      above the felt rather than by rearranging it. `LookaheadScope` was the alternative and is
+      the wrong shape here — a card going from a hand to the discard passes over three other
+      hands, and animating it in place means making room for it in every one of them. Not yet
+      run on a physical phone or on iOS
+- [~] 7.2 Design tokens (light/dark), typography, Material 3 theme: **done**, including the
+      felt, which is not a Material role — it is a playing surface that has to sit behind white
+      cards without competing with them. Reduced-motion is **not** honoured yet
+- [~] 7.3 Screens/navigation: home and game table done, two screens and a saveable seed. Lobby,
+      final scores, help, settings and the debug screens are not started
+- [x] 7.4 Game table composables, seat-agnostic (rendered for `viewerId`): four-sided seating in
+      the web app's phone arrangement, name plates, piles, pending card, action targets, rank
+      declaration, King declaration, Jack/Queen flows, toss-in with pass, Vinto at the end of
+      your own turn, coalition leader choice, waiting indicators. The *decisions* live in
+      `TableModel.kt` as a pure function of the view and are covered by `TableModelTest`; the
+      composables draw what it returns and decide nothing
+- [~] 7.5 Animation: card flight, card flip on reveal, a pulse on what can be tapped and a glow
+      on the seat whose turn it is. The flights are derived by a pure `flightsFor` and tested;
+      the overlay draws them. **Bots do not yet wait for animations** — they play immediately
+      and the flight catches up
 - [ ] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape
 - [ ] 7.7 Export/share recording; restore last local game on relaunch
 - [ ] 7.8 UI tests: Compose UI tests for a scripted full game (bots with zero delay); screenshot tests for key screens light/dark

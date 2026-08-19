@@ -22,6 +22,16 @@ if (!isMacOs) {
 }
 
 kotlin {
+    /**
+     * A JVM target that ships nowhere.
+     *
+     * It exists so the Compose tree can be tested without a device: `runComposeUiTest` renders
+     * the real composables headlessly, which catches the failures the presenter tests cannot
+     * see — a composition that throws, a screen that draws nothing, a button whose label the
+     * player never gets. An emulator would catch those too, on a machine that has one.
+     */
+    jvm()
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
@@ -51,11 +61,39 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.components.resources)
+
+            // The game itself. `shared:client` brings the engine and the bots with it, so a
+            // single-player game needs nothing else — no network dependency appears here,
+            // and `NoNetworkGuardTest` is what keeps that true.
+            implementation(project(":shared:client"))
+            implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
+}
+
+/**
+ * The card art and the four player portraits, shared with the web app they were drawn for
+ * (`apps/vinto/src/app/images`). One deck, one set of faces: a second, plainer deck for the
+ * Kotlin clients would make them look like a different game rather than the same one.
+ */
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "game.vinto.app.art"
+    generateResClass = always
 }
 
 android {

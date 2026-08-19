@@ -1,0 +1,369 @@
+package game.vinto.client
+
+import game.vinto.engine.CardView
+import game.vinto.engine.projectView
+import game.vinto.shapes.Difficulty
+import game.vinto.shapes.GameAction
+import game.vinto.shapes.PlayerIdPayload
+import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
+import game.vinto.shapes.RankPayload
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * What the table offers, in each state a player can be in.
+ *
+ * Every case drives a real [LocalGameSession] rather than hand-building a view: a table read
+ * from a state the engine cannot produce proves nothing, and the states worth testing are
+ * exactly the awkward ones — a Jack half-aimed, a Queen that has looked and must now decide,
+ * a toss-in window with cards selected. `SET_NEXT_DRAW_CARD` puts a chosen rank on top of the
+ * deck, so each of those is two moves away rather than a hundred.
+ */
+class TableModelTest {
+
+    private suspend fun started(seed: Long = 77L): LocalGameSession {
+        val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(session.playerId)))
+        return session
+    }
+
+    /** Deals [rank] to the player and leaves it pending, having played its action. */
+    private suspend fun aiming(rank: Rank, seed: Long = 77L): LocalGameSession {
+        val session = started(seed)
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(rank)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.UseCardAction(PlayerIdPayload(session.playerId)))
+        return session
+    }
+
+    private fun LocalGameSession.table(question: Question = Question.None) = tableFor(view.value, question)
+
+    private fun Table.labels() = choices.map { it.label }
+
+    private fun Table.send(startsWith: String): GameAction {
+        val choice = choices.firstOrNull { it.label.startsWith(startsWith) }
+            ?: error("no choice starting '$startsWith' in ${labels()}")
+        return (choice.move as Move.Send).action
+    }
+
+    // ------------------------------------------------------------------ setup
+
+    @Test
+    fun setupAsksForTwoCardsAndThenToStart() = runTest {
+        val session = LocalGameSession(seed = 3L, difficulty = Difficulty.EASY)
+
+        val first = session.table()
+        assertEquals("Look at two of your cards", first.prompt)
+        assertEquals(FIVE_CARDS, first.taps.size, "every card of mine is offered")
+        assertTrue(first.taps.keys.all { it.playerId == session.playerId }, "and only mine")
+
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 2)))
+        val second = session.table()
+        assertEquals("One more card to look at", second.prompt)
+        assertEquals(FIVE_CARDS - 1, second.taps.size, "the card already seen is not offered again")
+
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 3)))
+        val ready = session.table()
+        assertTrue(ready.taps.isEmpty(), "no more peeking")
+        assertTrue(ready.send("Start") is GameAction.FinishSetup)
+    }
+
+    // ------------------------------------------------------------------ a turn
+
+    @Test
+    fun aTurnStartsWithADrawAndNoWayToEndItEarly() = runTest {
+        val table = started().table()
+
+        assertEquals("Your turn", table.prompt)
+        assertTrue(table.send("Draw") is GameAction.DrawCard)
+        assertTrue(table.taps.isEmpty(), "nothing to touch until a card is drawn")
+
+        // Vinto is declared at the end of a turn. The engine would accept it here and then
+        // still expect the turn to be played, which is a state no button should be able to
+        // produce — so the offer lives in the toss-in window instead.
+        assertFalse(
+            table.labels().any { it.contains("Vinto") },
+            "a turn cannot be ended before it has been taken: ${table.labels()}",
+        )
+    }
+
+    @Test
+    fun aPlainCardCannotBePlayedButCanBeKeptOrThrownAway() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val table = session.table()
+        assertEquals("You drew the 5", table.prompt)
+        assertFalse(table.labels().any { it.startsWith("Play it") }, "a 5 has no action: ${table.labels()}")
+        assertTrue(table.send("Throw it away") is GameAction.DiscardCard)
+    }
+
+    @Test
+    fun keepingACardAsksWhichSlotAndThenWhetherToCallIt() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val keep = session.table().choices.first { it.label.startsWith("Put it in") }.move
+        assertEquals(Move.Ask(Question.WhichSlot), keep, "keeping a card is a question, not a move")
+
+        val slots = session.table(Question.WhichSlot)
+        assertEquals(FIVE_CARDS, slots.taps.size)
+        assertEquals(Move.Ask(Question.CallRank(2)), slots.taps[CardRef(session.playerId, 2)])
+
+        val calling = session.table(Question.CallRank(2))
+        assertEquals(ALL_RANK_COUNT, calling.ranks.size, "any rank can be named")
+
+        val silent = calling.send("Say nothing") as GameAction.SwapCard
+        assertEquals(2, silent.payload.position)
+        assertNull(silent.payload.declaredRank, "saying nothing declares nothing")
+
+        val named = (calling.ranks.first { it.rank == Rank.KING }.move as Move.Send).action
+        assertEquals(Rank.KING, (named as GameAction.SwapCard).payload.declaredRank)
+    }
+
+    // ------------------------------------------------------------------ aiming actions
+
+    @Test
+    fun aPeekOwnOffersOnlyMyOwnCards() = runTest {
+        val session = aiming(Rank.SEVEN)
+        val table = session.table()
+
+        assertEquals("Look at one of your own cards", table.prompt)
+        assertTrue(table.taps.keys.all { it.playerId == session.playerId }, "only my hand")
+        assertEquals(FIVE_CARDS, table.taps.size)
+    }
+
+    @Test
+    fun aPeekOpponentOffersEveryHandButMine() = runTest {
+        val session = aiming(Rank.NINE)
+        val table = session.table()
+
+        assertEquals("Look at one card of another player", table.prompt)
+        assertTrue(table.taps.keys.none { it.playerId == session.playerId }, "not my own hand")
+        assertEquals(THREE_OPPONENTS * FIVE_CARDS, table.taps.size)
+    }
+
+    @Test
+    fun aPeekIsAcknowledgedOnceItHasBeenTaken() = runTest {
+        val session = aiming(Rank.SEVEN)
+        val target = session.table().taps.keys.first()
+
+        session.dispatch((session.table().taps.getValue(target) as Move.Send).action)
+
+        val seen = session.table()
+        assertEquals("Remember it", seen.prompt)
+        assertTrue(seen.taps.isEmpty(), "the peek is spent")
+        assertTrue(seen.send("Done") is GameAction.ConfirmPeek)
+    }
+
+    @Test
+    fun aJackTakesTwoCardsFromTwoDifferentPlayersAndThenAsks() = runTest {
+        val session = aiming(Rank.JACK)
+
+        val first = session.table()
+        assertEquals("Choose two cards, from two different players", first.prompt)
+        assertEquals(FOUR_SEATS * FIVE_CARDS, first.taps.size, "any card, to begin with")
+
+        val mine = CardRef(session.playerId, 0)
+        session.dispatch((first.taps.getValue(mine) as Move.Send).action)
+
+        val second = session.table()
+        assertTrue(
+            second.taps.keys.none { it.playerId == session.playerId },
+            "the rest of my hand is no longer a legal second target",
+        )
+
+        val theirs = second.taps.keys.first()
+        session.dispatch((second.taps.getValue(theirs) as Move.Send).action)
+
+        val decide = session.table()
+        assertEquals("Swap them?", decide.prompt)
+        assertTrue(decide.send("Swap") is GameAction.ExecuteJackSwap)
+        assertTrue(decide.send("Leave") is GameAction.SkipJackSwap)
+    }
+
+    @Test
+    fun aQueenLooksFirstAndThenOffersItsOwnSwap() = runTest {
+        val session = aiming(Rank.QUEEN)
+
+        assertEquals("Look at two cards, from two different players", session.table().prompt)
+
+        val mine = CardRef(session.playerId, 0)
+        session.dispatch((session.table().taps.getValue(mine) as Move.Send).action)
+        val theirs = session.table().taps.keys.first()
+        session.dispatch((session.table().taps.getValue(theirs) as Move.Send).action)
+
+        val decide = session.table()
+        assertEquals("Swap them?", decide.prompt)
+        assertTrue(decide.send("Swap") is GameAction.ExecuteQueenSwap, "a Queen's swap, not a Jack's")
+    }
+
+    @Test
+    fun aKingNamesACardAndThenARank() = runTest {
+        val session = aiming(Rank.KING)
+
+        val choosing = session.table()
+        assertEquals("Choose any card", choosing.prompt)
+        assertTrue(choosing.ranks.isEmpty(), "nothing to declare until a card is chosen")
+
+        session.dispatch((choosing.taps.values.first() as Move.Send).action)
+
+        val declaring = session.table()
+        assertEquals(ALL_RANK_COUNT, declaring.ranks.size)
+        val king = (declaring.ranks.first { it.rank == Rank.NINE }.move as Move.Send).action
+        assertEquals(Rank.NINE, (king as GameAction.DeclareKingAction).payload.declaredRank)
+    }
+
+    @Test
+    fun anAceNamesAPlayerRatherThanACard() = runTest {
+        val session = aiming(Rank.ACE)
+        val table = session.table()
+
+        assertEquals("Who draws a card?", table.prompt)
+        assertTrue(table.taps.isEmpty(), "an Ace has no card to aim at")
+        assertEquals(THREE_OPPONENTS, table.seatTaps.size, "and cannot be aimed at myself")
+        assertFalse(session.playerId in table.seatTaps)
+    }
+
+    // ------------------------------------------------------------------ toss-in
+
+    @Test
+    fun aDiscardOpensATossInThatCanBeTakenOrPassed() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+
+        val table = session.table()
+        assertTrue(table.prompt.startsWith("A 5 went down"), table.prompt)
+        assertTrue(table.send("Call Vinto") is GameAction.CallVinto, "your own turn is ending")
+        assertEquals(Move.Ask(Question.Tossing()), table.choices.first { it.label == "Toss in" }.move)
+        assertTrue(table.send("Pass") is GameAction.PlayerTossInFinished)
+
+        // Choosing cards is a question the screen holds; only the final throw is a move.
+        val picking = session.table(Question.Tossing())
+        val toggled = picking.taps.getValue(CardRef(session.playerId, 1))
+        assertEquals(Move.Ask(Question.Tossing(listOf(1))), toggled, "tapping a card selects it")
+
+        val picked = session.table(Question.Tossing(listOf(1, 3)))
+        assertEquals(
+            Move.Ask(Question.Tossing(listOf(3))),
+            picked.taps.getValue(CardRef(session.playerId, 1)),
+            "tapping a selected card takes it back",
+        )
+        val thrown = picked.send("Toss 2 in") as GameAction.ParticipateInTossIn
+        assertEquals(listOf(1, 3), thrown.payload.positions)
+    }
+
+    // ------------------------------------------------------------------ what is shown
+
+    /**
+     * The two cards you looked at during setup go face-down again when play starts.
+     *
+     * The view still carries them — the server has to know what a seat knows — and a screen
+     * that drew them would give the player a perfect memory of their own hand for the whole
+     * round. Remembering it is the game.
+     */
+    @Test
+    fun yourSetupPeeksAreYoursToRememberOncePlayBegins() = runTest {
+        val session = LocalGameSession(seed = 11L, difficulty = Difficulty.EASY)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 1)))
+
+        val duringSetup = session.table().revealed
+        assertEquals(
+            setOf(CardRef(session.playerId, 0), CardRef(session.playerId, 1)),
+            duringSetup,
+            "while you are told to look, you can see them",
+        )
+
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(session.playerId)))
+
+        assertTrue(session.table().revealed.isEmpty(), "and then they are yours to remember")
+        // The knowledge is still in the view — this is a decision about drawing, not a redaction.
+        val me = session.view.value.players.first { it.id == session.playerId }
+        assertEquals(listOf(0, 1), me.knownCardPositions)
+        assertTrue(me.cards[0] is CardView.Visible, "the view still carries what you know")
+    }
+
+    @Test
+    fun anActionShowsWhatItRevealsAndOnlyWhileItIsRunning() = runTest {
+        val session = aiming(Rank.SEVEN)
+        assertTrue(session.table().revealed.isEmpty(), "nothing yet")
+
+        val target = session.table().taps.keys.first()
+        session.dispatch((session.table().taps.getValue(target) as Move.Send).action)
+
+        assertEquals(setOf(target), session.table().revealed, "the card the 7 looked at")
+
+        session.dispatch(GameAction.ConfirmPeek(PlayerIdPayload(session.playerId)))
+        assertFalse(target in session.table().revealed, "and once the card is put down, not any more")
+    }
+
+    @Test
+    fun everyHandGoesFaceUpAtScoring() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(session.table().send("Call Vinto"))
+
+        assertTrue(session.isOver)
+        // Every card on the table, however many that has become — a round adds penalty cards
+        // and takes tossed-in ones away, so counting five a hand would be counting the deal
+        // rather than the game.
+        val onTable = session.view.value.players.sumOf { it.cards.size }
+        assertEquals(onTable, session.table().revealed.size)
+        assertTrue(onTable >= FOUR_SEATS, "there are hands to turn over")
+    }
+
+    // ------------------------------------------------------------------ watching
+
+    @Test
+    fun aSeatWithNothingToDoIsToldWhoIsPlaying() = runTest {
+        val session = started()
+        val someBot = session.view.value.players.first { it.isBot }.id
+
+        val theirs = tableFor(projectView(session.state, someBot))
+
+        assertTrue(theirs.waiting, "a bot's view of my turn is a waiting one")
+        assertTrue(theirs.prompt.endsWith("is playing"), theirs.prompt)
+        assertTrue(theirs.choices.isEmpty() && theirs.taps.isEmpty(), "and offers nothing")
+    }
+
+    @Test
+    fun aFinishedRoundSaysHowItWent() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+
+        // The window after your own discard is where Vinto belongs, and the only place the
+        // table offers it.
+        session.dispatch(session.table().send("Call Vinto"))
+
+        // Calling Vinto hands the round to the coalition: the bots nominate a leader and play
+        // their last turn between them, so by the time control returns the round is scored.
+        assertTrue(session.isOver, "the final round played itself out")
+
+        val table = session.table()
+        assertTrue(table.waiting)
+        assertTrue(table.prompt.startsWith("Round over"), table.prompt)
+    }
+
+    private companion object {
+        const val FIVE_CARDS = 5
+        const val FOUR_SEATS = 4
+        const val THREE_OPPONENTS = 3
+        const val ALL_RANK_COUNT = 14
+    }
+}

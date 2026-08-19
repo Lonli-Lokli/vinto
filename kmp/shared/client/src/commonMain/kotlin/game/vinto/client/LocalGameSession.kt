@@ -79,6 +79,18 @@ class LocalGameSession(
 
     override val isOver: Boolean get() = state.phase == GamePhase.SCORING
 
+    /** What has happened lately, newest last. Fed to the screen's recent-actions strip. */
+    private val _log = MutableStateFlow<List<String>>(emptyList())
+    val log: StateFlow<List<String>> = _log.asStateFlow()
+
+    /** Cards that visibly moved on the last dispatch, in the order they moved. */
+    private val _flights = MutableSharedFlow<List<CardFlight>>(
+        replay = 1,
+        extraBufferCapacity = EVENT_BUFFER,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val flights: SharedFlow<List<CardFlight>> = _flights.asSharedFlow()
+
     override suspend fun dispatch(action: GameAction): String? {
         // The seat boundary, the same one the Durable Object checks before the engine sees
         // anything. There is nobody to keep honest in a solo game — the point is that the
@@ -98,14 +110,26 @@ class LocalGameSession(
             Validation.Valid -> Unit
         }
 
+        val before = state
         state = when (val result = GameEngine.reduce(state, action)) {
             is ReduceResult.Success -> result.state
             is ReduceResult.Failure -> return refuse(result.reason)
         }
 
+        val moved = flightsFor(action, before, state, playerId).toMutableList()
+        record(action, before, state)
+
         publish()
-        playBots()
+        moved += playBots()
+        _flights.tryEmit(moved)
         return null
+    }
+
+    /** Adds one line to the log, keeping only the recent past. */
+    private fun record(action: GameAction, before: GameState, after: GameState) {
+        narrate(action, before, after, playerId)?.let { line ->
+            _log.value = (_log.value + line).takeLast(LOG_LENGTH)
+        }
     }
 
     /** Announces a refusal and hands the reason back to the caller. */
@@ -122,39 +146,48 @@ class LocalGameSession(
      * event's count. Publishing every intermediate state would make the UI flicker through
      * positions nobody was ever meant to see.
      */
-    private suspend fun playBots() {
-        val before = state
+    private suspend fun playBots(): List<CardFlight> {
+        val start = state
         var moves = 0
+        val moved = mutableListOf<CardFlight>()
+        val told = mutableListOf<Triple<GameAction, GameState, GameState>>()
 
         val next = onBotDispatcher {
-            var working = before
+            var working = start
             while (moves < MAX_BOT_STEPS && working.phase != GamePhase.SCORING) {
-                working = botMove(working) ?: break
+                val action = nextBotAction(working) ?: break
+                val stepped = (GameEngine.reduce(working, action) as? ReduceResult.Success)?.state ?: break
+
+                moved += flightsFor(action, working, stepped, playerId)
+                told += Triple(action, working, stepped)
+                working = stepped
                 moves++
             }
             working
         }
 
-        if (moves == 0) return
+        if (moves == 0) return emptyList()
+        told.forEach { (action, was, now) -> record(action, was, now) }
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.
         _events.tryEmit(SessionEvent.BotsPlayed(moves))
         publish()
+        return moved
     }
 
     /**
-     * One bot move, or null for every reason the room stops making them: the runner has
-     * nothing to say, the move belongs to the person holding the phone, or the engine will
-     * not have it. The last is not defensive — a bot the validator refuses is a bug worth
-     * seeing as a stuck game rather than one papered over by trying the next move.
+     * The bots' next move, or null for every reason the room stops making them: the runner has
+     * nothing to say, the move belongs to the person holding the phone, or the engine will not
+     * have it. The last is not defensive — a bot the validator refuses is a bug worth seeing
+     * as a stuck game rather than one papered over by trying the next move.
      */
-    private fun botMove(from: GameState): GameState? {
+    private fun nextBotAction(from: GameState): GameAction? {
         val action = runner.nextAction(from) ?: return null
         if (action.actorId == playerId) return null
         if (ActionValidator.validate(from, action) is Validation.Invalid) return null
 
-        return (GameEngine.reduce(from, action) as? ReduceResult.Success)?.state
+        return action
     }
 
     private suspend fun <T> onBotDispatcher(block: () -> T): T =
@@ -180,5 +213,8 @@ class LocalGameSession(
 
         /** Room for a whole turn's worth of events before the oldest is dropped. */
         const val EVENT_BUFFER = 64
+
+        /** Enough to see a turn go by, not enough to become a transcript. */
+        const val LOG_LENGTH = 6
     }
 }
