@@ -45,14 +45,20 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - **`composeApp` now targets Android, iOS and web from one `commonMain`**, with the `iosApp`
   Xcode project embedding the Compose framework. Verified by _running_, not just building:
   the same UI renders on the iOS simulator and on an Android emulator (§5 steps 3–4)
+- **Platform gate 2a.3 passes**: `kmp/worker` is a real Cloudflare Worker with a `Room`
+  Durable Object. Two WebSocket clients join one room, exchange actions and resync, and the
+  room rebuilds from storage after every instance is destroyed. The harness asserts the
+  Durable Object's values against `fixtures/prng/vectors.json`, so it doubles as a
+  cross-language check — Kotlin inside a Durable Object reproduces the numbers TypeScript
+  verifies. Details, and the one sliver that needs a deployed Worker: `PLATFORM-GATE.md`
 
 **Next**
 
-1. Remaining gate items: MCTS inside the Durable Object CPU budget; two clients through one
-   Durable Object
-2. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
+1. Port `shapes` proper (`GameState`, `Card`, `GameAction` + serializers), then the engine
    behind the parity gate. Note `shapes` still has no `androidTarget`/`wasmJs`, so
    `composeApp` cannot depend on it yet — add those when the port starts
+2. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
+   cannot be measured until the bot is ported in phase 6, and it is not a blocker
 
 ---
 
@@ -78,12 +84,12 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 ## 3. Module map (`kmp/`)
 
-| Module          | Targets                                                 | Purpose                                                                                                   |
-| --------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS)         | Types + `Prng`. The port starts here. Its tests run on every target above.                                |
-| `worker`        | js                                                      | Cloudflare Worker / Durable Object bundle. Currently the platform-gate payload.                           |
-| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients. Still the gate payload UI; real screens are phase 7. |
-| `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                |
+| Module          | Targets                                                 | Purpose                                                                                                    |
+| --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS)         | Types + `Prng`. The port starts here. Its tests run on every target above.                                 |
+| `worker`        | js                                                      | Cloudflare Worker + `Room` Durable Object. Kotlin room logic under a thin JS shim in `worker/cloudflare/`. |
+| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients. Still the gate payload UI; real screens are phase 7.  |
+| `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                 |
 
 The full intended layout is in design D1. Modules are added as they are ported rather than
 scaffolded empty.
@@ -94,16 +100,23 @@ scaffolded empty.
 # --- Kotlin (run from kmp/) ---
 ./gradlew :shared:shapes:allTests             # PRNG parity on every target (JVM, JS, iOS sim)
 ./gradlew :shared:shapes:jvmTest              # just the JVM leg, when iterating
-./gradlew :worker:jsNodeProductionRun         # run the Kotlin/JS gate payload
+./gradlew :worker:jsNodeProductionRun         # PRNG self-check (prints the gate number)
 ./gradlew :composeApp:wasmJsBrowserDistribution   # build the Compose web bundle
 ./gradlew :composeApp:assembleDebug           # Android APK
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64   # just the iOS framework
+./gradlew build                               # everything available on this host
 
 # --- iOS app (run from kmp/iosApp/) ---
 # The Xcode build invokes Gradle itself, via its "Build Kotlin framework" phase.
 xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
-./gradlew build                               # everything available on this host
+
+# --- Cloudflare Worker (run from kmp/worker/cloudflare/) ---
+# Build the Kotlin bundle first: the shim imports it out of build/compileSync/.
+(cd ../.. && ./gradlew :worker:jsProductionExecutableCompileSync)
+npx wrangler dev --port 8787 --local          # local workerd; deploys nothing
+node gate-two-clients.mjs                     # platform gate 2a.3
+npx wrangler deploy --dry-run --outdir /tmp/w # measure the real Worker bundle
 
 # --- TypeScript (run from repo root) ---
 npm test                                      # all 5 projects

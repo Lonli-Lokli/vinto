@@ -41,7 +41,7 @@ not after the UI is built.
 
 - [ ] 2a.1 Kotlin/JS bundle containing `shared/engine` + MCTS, deployed to a Durable Object: measure the bundle against the Worker script-size limit and confirm an MCTS decision completes inside the Durable Object CPU budget (30 s default, raisable to 5 min via `limits.cpu_ms`)
 - [ ] 2a.2 Hello-world Compose/Wasm page: measure bundle size and cold-load time on a mid-range phone browser; Compose for web is the least mature Compose target
-- [ ] 2a.3 End-to-end smoke: two WebSocket clients join one Durable Object room, exchange actions, and the object survives hibernation and resume
+- [x] 2a.3 End-to-end smoke: **PASS** — `kmp/worker` is now a real Worker with a `Room` Durable Object over Kotlin room logic; two clients join, exchange actions, resync from the log cursor, and reconnect to the same seat. Sockets use the hibernation API (`ctx.acceptWebSocket`), proven by messages arriving at `webSocketMessage()`, which only fires for hibernatable sockets; no authoritative state is held in memory. Resume verified by destroying every instance (restarting `wrangler dev`) and re-reading the room. Eviction with live sockets attached cannot be forced locally and needs a deployed Worker — the one open sliver. Results in `docs/kotlin/PLATFORM-GATE.md`
 - [ ] 2a.4 Record the measurements in `docs/kotlin/PLATFORM-GATE.md`; if either bundle does not fit, decide and record the fallback (thinner server-side bot, or a non-Compose web client) before proceeding
 
 ## 3. Shared shapes, PRNG, recording

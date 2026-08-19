@@ -23,6 +23,16 @@ private fun deal(seed: Long): Deal {
 }
 
 fun main() {
+    // Cloudflare loads this same module to reach the exports in `Room.kt`, and module-level
+    // work runs on every isolate start. The self-check is for `jsNodeProductionRun`, so it
+    // stays out of the Worker's path: a Worker isolate has no `process`.
+    val isNode = js(
+        "typeof globalThis.process !== 'undefined' && " +
+            "globalThis.process.versions != null && " +
+            "globalThis.process.versions.node != null",
+    ) as Boolean
+    if (!isNode) return
+
     val json = Json { prettyPrint = false }
 
     // Deal, serialise, parse back, and verify the round trip — the same shape of work the

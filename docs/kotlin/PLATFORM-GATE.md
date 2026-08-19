@@ -78,9 +78,89 @@ questionable for a casual card game that people open from a shared link on a pho
 is a product call, not a technical blocker — recorded here so it is made with the number
 in hand rather than in the abstract.
 
-## 2a.3 — Two clients through one Durable Object: NOT YET MEASURED
+## 2a.3 — Two clients through one Durable Object: PASS
 
-Outstanding. Needs the protocol module and a deployed Worker.
+Measured 2026-08-19 on macOS (Xcode 26.6, wrangler 4.124.0) against `wrangler dev --local`,
+which runs the real workerd runtime. **Nothing was deployed to Cloudflare** — every result
+below is from the local runtime, and the one thing that needs a deployed Worker is called
+out at the end.
+
+`kmp/worker` is now a real Worker rather than a Node self-check: a thin routing Worker plus
+a `Room` Durable Object (`worker/cloudflare/index.mjs`) over Kotlin room logic
+(`worker/src/jsMain/.../Room.kt`). The split is deliberate — the JavaScript moves bytes and
+sockets, and every decision about room state is Kotlin, which is where `GameEngine.reduce`
+lands once the engine is ported.
+
+`worker/cloudflare/gate-two-clients.mjs` drives it. All 14 checks in the main run pass
+(a further 4 belong to the resume check below):
+
+| Property                                                 | Result |
+| -------------------------------------------------------- | ------ |
+| Two clients join one room and are seated 0 and 1         | pass   |
+| Room has exactly 4 seats (design D9)                     | pass   |
+| Six alternating actions; both clients see all six        | pass   |
+| Log indices monotonic from 0, seats alternate            | pass   |
+| Reconnect with the same `clientId` returns the same seat | pass   |
+| `resync` from a cursor returns only unseen events        | pass   |
+| State survives every socket closing                      | pass   |
+
+### The gate doubles as a cross-language check
+
+The room seed is **12345** because `fixtures/prng/vectors.json` publishes the bounded
+sequence for seed 12345 / bound 54. Every accepted action draws from it, so the harness
+asserts the Durable Object's event values against the same committed file the TypeScript and
+Kotlin unit tests read:
+
+```
+action values match the published sequence   [9, 24, 16, 16, 30, 43]
+```
+
+That is Kotlin compiled to JavaScript, running inside a Durable Object, reproducing the
+numbers TypeScript verifies. The parity contract now holds on the server too.
+
+### Hibernation
+
+The sockets are accepted with `ctx.acceptWebSocket()`, not `server.accept()`. This is
+checkable rather than asserted: the `webSocketMessage()` handler on the Durable Object class
+**only fires for hibernation-API sockets** — a `server.accept()` socket delivers to an event
+listener instead and would never reach it. Every message in the run above arrived there, so
+the object is hibernatable.
+
+What makes that safe is that the object holds no authoritative state in memory: the room is
+read from storage at the start of each handler, and each socket's seat rides on the socket
+via `serializeAttachment`, which survives hibernation where a `Map` keyed by socket would
+not.
+
+Resume was verified by destroying every instance — stopping `wrangler dev` entirely,
+restarting it, and re-reading the room (`gate-two-clients.mjs --verify <room>`):
+
+```
+log survived · seats survived · generator state survived · replays to the published sequence
+```
+
+A process restart is strictly harsher than hibernation on state, since hibernation keeps
+storage and the sockets while losing only memory.
+
+**The remaining sliver**: eviction-and-resume with _live sockets still attached_ cannot be
+forced locally — workerd exposes no way to trigger it, and it is timing-dependent. That one
+behaviour needs a deployed Worker to observe directly. The API contract that governs it is
+in use and the state it depends on is proven durable, so this is a confirmation to schedule,
+not an open design risk.
+
+## 2a.1 revisited — the real Worker bundle
+
+The 123 KB figure above was a synthetic payload. The actual Worker — routing, Durable
+Object, room logic, hibernation handlers and the Kotlin bundle — measured with
+`wrangler deploy --dry-run`:
+
+| Bundle                           |        Raw |    Gzipped |
+| -------------------------------- | ---------: | ---------: |
+| Gate payload (synthetic)         |     734 KB |     123 KB |
+| **Real Worker + Durable Object** | **768 KB** | **126 KB** |
+
+A complete room implementation cost **~3 KB gzipped** over the synthetic floor, which is the
+projection in 2a.1 holding up: our code is small and the fixed cost is the Kotlin stdlib and
+kotlinx.serialization. Still **~4% of the 3 MB free-plan limit**.
 
 ---
 
@@ -106,7 +186,9 @@ including the one written for it.
 
 ## What this means for sequencing
 
-- The Worker half of the Cloudflare design is **de-risked**. Porting can proceed.
+- The Worker half of the Cloudflare design is **de-risked** — bundle size (2a.1) and the
+  multi-client Durable Object room (2a.3) both pass, the latter against the real workerd
+  runtime. Porting can proceed.
 - The Compose/Wasm measurement (2a.2) should happen before committing to the web rewrite,
   since it is the remaining decision-changing unknown.
 - iOS targets are absent from `kmp/` deliberately: Kotlin/Native cannot build them on

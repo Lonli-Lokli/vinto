@@ -82,3 +82,6 @@ kmp/local.properties
 xcuserdata/
 *.xcuserstate
 DerivedData/
+
+# Wrangler local dev state (the local Durable Object SQLite lives here).
+kmp/worker/cloudflare/.wrangler/
