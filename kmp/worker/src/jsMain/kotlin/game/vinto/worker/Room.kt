@@ -5,12 +5,15 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
+import game.vinto.engine.calculateFinalScores
+import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.Prng
 import game.vinto.shapes.Sha256
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
@@ -107,8 +110,58 @@ private const val BUCKET_REFILL_PER_SECOND = 1.0
 
 private const val MILLIS_PER_SECOND = 1000.0
 
+/**
+ * How long a session lasts, from `VINTO_RULES.md` — "Play continues for a set time".
+ *
+ * Wall clock, and therefore the room's business and never the engine's: the reducer is pure
+ * and the purity guard fails the build on any clock in it. A session ending is expressed to
+ * the engine as "no further rounds", which is a fact about the room rather than about time.
+ */
+private const val SESSION_MS = 30 * 60 * 1000.0
+
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
+
+/** One finished round: what the hands came to, and what that was worth. */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class RoundResult(
+    val roundNumber: Int,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val vintoCallerId: String? = null,
+    /** Hand totals, coalition members scored on their best (see `calculateFinalScores`). */
+    val scores: Map<String, Int>,
+    /** What the round paid, per `VINTO_RULES.md`: +3/-1, a tie to the caller. */
+    val points: Map<String, Int>,
+)
+
+/**
+ * A session: several rounds, one clock, cumulative points.
+ *
+ * The room holds this rather than the engine, because the engine deals with a *round*. A
+ * session is scheduling and bookkeeping, and neither belongs in a pure reducer.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SessionState(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val rounds: List<RoundResult> = emptyList(),
+    /** Thirty minutes from the **first deal**, not from when the room was made. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val endsAtEpochMs: Double? = null,
+    /**
+     * The round the buzzer threw away, if any.
+     *
+     * Recorded because the standings cannot be recomputed from the round recordings alone —
+     * the engine replays every round it is given and has no idea one of them did not count.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val discardedRound: Int? = null,
+    /** Seats who have agreed to another round. Cleared when one is dealt. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val readyForNext: List<Int> = emptyList(),
+) {
+    /** Cumulative round points, which is what the final ranking is made of. */
+    val standings: Map<String, Int>
+        get() = rounds.flatMap { it.points.entries }
+            .groupBy({ it.key }, { it.value })
+            .mapValues { (_, values) -> values.sum() }
+}
 
 /** A leaky bucket: tokens left, and when that was last computed. */
 @OptIn(ExperimentalSerializationApi::class)
@@ -232,6 +285,8 @@ data class RoomState(
      * room was evicted, which is exactly when a flood would be cheapest to run.
      */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val buckets: Map<Int, Bucket> = emptyMap(),
+    /** Rounds played, points carried, and what the clock says (design R2, R2b). */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val session: SessionState = SessionState(),
 ) {
     val nextIndex: Int get() = log.size
 
@@ -271,6 +326,7 @@ data class RoomState(
             } else {
                 null
             },
+            session.endsAtEpochMs,
         ).plus(seatGrace.values).minOrNull()
 }
 
@@ -496,7 +552,7 @@ fun startGame(stateJson: String, nowMs: Double): String {
         }
     }
 
-    val dealt = initializeGame(state.seed, state.difficulty)
+    val dealt = initializeGame(seedForRound(state.seed, state.session.rounds.size), state.difficulty)
 
     // The engine's idea of who is human is made to match the room's. A seat with a token is a
     // person and starts having seen nothing; a seat without one is a bot and keeps its peek.
@@ -516,6 +572,12 @@ fun startGame(stateJson: String, nowMs: Double): String {
         startsAtEpochMs = null,
         seats = seats,
         game = dealt.copy(players = players),
+        session = state.session.copy(
+            // The clock starts at the FIRST deal, so a lobby that took a while to fill does
+            // not eat into the game. Later rounds inherit the deadline they were dealt under.
+            endsAtEpochMs = state.session.endsAtEpochMs ?: (nowMs + SESSION_MS),
+            readyForNext = emptyList(),
+        ),
     )
 
     return VintoJson.encodeToString(JoinResult(playBots(started), 0))
@@ -564,6 +626,137 @@ private data class LifecycleResult(
     /** Seats a bot has just taken over, so their owners can be told when they return. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tookOver: List<Int> = emptyList(),
 )
+
+/**
+ * A round that has reached scoring, filed and put away.
+ *
+ * Whether the session continues turns on the clock, and this is the only place that asks: past
+ * the buzzer the session ends here rather than dealing again, which is how "a declared Vinto
+ * plays out" works — the round finishes normally and *then* finds the session over.
+ */
+private fun settleRound(state: RoomState, nowMs: Double): RoomState {
+    if (state.game?.phase != GamePhase.SCORING) return state
+
+    val recorded = recordRoundEnd(state)
+    val sessionOver = recorded.session.endsAtEpochMs?.let { nowMs >= it } == true
+
+    return if (sessionOver) {
+        recorded.copy(
+            phase = RoomPhase.FINISHED,
+            game = null,
+            finishedAtEpochMs = nowMs,
+        )
+    } else {
+        recorded.copy(phase = RoomPhase.BETWEEN_ROUNDS)
+    }
+}
+
+/**
+ * Agreeing to another round.
+ *
+ * Every *connected* human has to agree, and the last one to say so is what deals it. Somebody
+ * who declines simply leaves — their seat becomes a bot, the table carries on if two humans
+ * remain, and the lonely grace takes it from there if not. One mechanism rather than two.
+ */
+@Suppress("ReturnCount")
+@JsExport
+fun readyForNextRound(stateJson: String, token: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    val seat = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return VintoJson.encodeToString(JoinResult(state, -1, "no seat holds that token"))
+    if (state.phase != RoomPhase.BETWEEN_ROUNDS) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "there is no round to agree to"))
+    }
+
+    val agreed = (state.session.readyForNext + seat.index).distinct()
+
+    // Everyone connected has to agree — but if presence has not been recorded at all, fall
+    // back to every seated human rather than to nobody. Counting an empty set would make one
+    // click deal the round, which is the opposite of what "everyone agrees" means.
+    val connectedHumanSeats = state.seats.count { it.tokenHash != null && it.index in state.connectedSeats }
+    val waitingOn = if (connectedHumanSeats > 0) {
+        connectedHumanSeats
+    } else {
+        state.seats.count { it.tokenHash != null }
+    }
+
+    val ready = state.copy(session = state.session.copy(readyForNext = agreed))
+    if (agreed.size < waitingOn) {
+        return VintoJson.encodeToString(JoinResult(ready, seat.index))
+    }
+
+    // Everyone agreed. A new round is always dealt while the session is live, even with a
+    // minute left — no cutoff to tune, and nothing to explain about why the game refused.
+    val dealt = VintoJson.decodeFromString(
+        JoinResult.serializer(),
+        startGame(
+            VintoJson.encodeToString(ready.copy(phase = RoomPhase.STARTING, startsAtEpochMs = nowMs)),
+            nowMs,
+        ),
+    )
+    return VintoJson.encodeToString(JoinResult(dealt.state, seat.index, error = dealt.error))
+}
+
+/**
+ * The seed for round `n`, derived from the session's.
+ *
+ * Advancing the same generator the engine uses, `n` times, rather than adding `n` to the seed:
+ * nearby seeds produce unrelated shuffles in mulberry32 so either would *look* fine, but this
+ * one means a whole session is reproducible from one number by walking the same path the
+ * engine walks, with no second rule to keep in step.
+ */
+private fun seedForRound(sessionSeed: Long, round: Int): Long {
+    var state = Prng.seed(sessionSeed)
+    repeat(round) { state = Prng.next(state).state }
+    return state
+}
+
+/**
+ * Whether the session is over, and what happens to the round in progress (design R2b).
+ *
+ * At the buzzer a round where Vinto has been declared plays out and is scored — the overrun is
+ * bounded and short, one turn per coalition member. Any other round is discarded, and that
+ * applies uniformly, including when no round has completed: a session can end with no winner.
+ * Uniform beats special-cased here, and the visible clock is what makes it fair.
+ */
+private fun closeSession(state: RoomState, nowMs: Double): RoomState {
+    val game = state.game
+    val vintoDeclared = game?.vintoCallerId != null
+
+    // A declared Vinto is allowed to finish. The room stays in play and the buzzer is left
+    // behind — the round ending is what closes the session, in [recordRoundEnd].
+    if (vintoDeclared && game?.phase != GamePhase.SCORING) return state
+
+    val scored = if (game != null && game.phase == GamePhase.SCORING) {
+        recordRoundEnd(state)
+    } else {
+        // Discarded: recorded as such, because the standings cannot be recomputed from the
+        // round recordings alone.
+        state.copy(session = state.session.copy(discardedRound = state.session.rounds.size + 1))
+    }
+
+    return scored.copy(
+        phase = RoomPhase.FINISHED,
+        game = null,
+        startsAtEpochMs = null,
+        finishedAtEpochMs = nowMs,
+    )
+}
+
+/** Files a finished round into the session: hand totals, and what the round paid. */
+private fun recordRoundEnd(state: RoomState): RoomState {
+    val game = state.game ?: return state
+
+    val result = RoundResult(
+        roundNumber = state.session.rounds.size + 1,
+        vintoCallerId = game.vintoCallerId,
+        scores = calculateFinalScores(game.players, game.vintoCallerId),
+        points = calculateRoundPoints(game.players, game.vintoCallerId),
+    )
+
+    return state.copy(session = state.session.copy(rounds = state.session.rounds + result))
+}
 
 /**
  * Recomputes every deadline from who is connected.
@@ -651,7 +844,18 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
         )
     }
 
-    // 3. The countdown.
+    // 3. The buzzer. A round with Vinto declared is left to finish — `closeSession` returns
+    //    the state untouched — and the session ends when that round reaches scoring instead.
+    if (due(state.session.endsAtEpochMs) && state.inSession) {
+        val closed = closeSession(state, nowMs)
+        if (closed !== state) {
+            return VintoJson.encodeToString(
+                LifecycleResult(closed, nextAlarmAtEpochMs = closed.nextAlarmAt),
+            )
+        }
+    }
+
+    // 4. The countdown.
     if (due(state.startsAtEpochMs) && state.canStart) {
         val started = VintoJson.decodeFromString(
             JoinResult.serializer(),
@@ -665,7 +869,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
         }
     }
 
-    // 4. Seats whose grace has run out are played by bots. The seat keeps its token — it is
+    // 5. Seats whose grace has run out are played by bots. The seat keeps its token — it is
     //    held for its owner, not handed to anybody else (design R2a).
     val expired = state.seatGrace.filterValues { nowMs >= it }.keys
     if (expired.isNotEmpty()) {
@@ -762,8 +966,10 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
     )
 
     val afterBots = playBots(charged.copy(game = reduced, log = charged.log + accepted))
+    val settled = settleRound(afterBots, nowMs)
+
     return VintoJson.encodeToString(
-        ActionResult(afterBots, events = afterBots.log.drop(charged.log.size)),
+        ActionResult(settled, events = settled.log.drop(charged.log.size)),
     )
 }
 
@@ -824,7 +1030,7 @@ private fun playBots(start: RoomState): RoomState {
  * exists to prevent.
  */
 @JsExport
-fun viewForSeat(stateJson: String, seat: Int): String {
+fun viewForSeat(stateJson: String, seat: Int, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val seatEntry = state.seats.getOrNull(seat)
         ?: return VintoJson.encodeToString(ViewResult(error = "unknown seat $seat"))
@@ -833,7 +1039,10 @@ fun viewForSeat(stateJson: String, seat: Int): String {
     val playerId = seatEntry.playerId
         ?: return VintoJson.encodeToString(ViewResult(error = "seat $seat has no player yet"))
 
-    return VintoJson.encodeToString(ViewResult(view = projectView(game, playerId)))
+    // The clock is handed to the projection rather than looked up by it: the engine has none,
+    // and a session length is the room's business.
+    val remaining = state.session.endsAtEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
+    return VintoJson.encodeToString(ViewResult(view = projectView(game, playerId, remaining)))
 }
 
 /**
@@ -960,6 +1169,10 @@ fun seatCount(): Int = SEAT_COUNT
 @JsExport
 fun nextAlarmAt(stateJson: String): Double =
     VintoJson.decodeFromString(RoomState.serializer(), stateJson).nextAlarmAt ?: 0.0
+
+/** The session length, so a harness cannot drift from the implementation. */
+@JsExport
+fun sessionMs(): Double = SESSION_MS
 
 /** The countdown length, so a harness cannot drift from the implementation. */
 @JsExport

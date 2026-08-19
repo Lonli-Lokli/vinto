@@ -106,8 +106,8 @@ check(
 );
 
 // --- redaction -------------------------------------------------------------------------
-const view0 = parse(viewForSeat(stateJson, 0)).view;
-const view1 = parse(viewForSeat(stateJson, 1)).view;
+const view0 = parse(viewForSeat(stateJson, 0, NOW)).view;
+const view1 = parse(viewForSeat(stateJson, 1, NOW)).view;
 
 check('a seat gets a view of its own', view0 !== null && view0.viewerId === state.seats[0].playerId);
 check('two seats get different views', JSON.stringify(view0) !== JSON.stringify(view1));
@@ -209,7 +209,7 @@ played = act(JSON.stringify(played.state), 0, { type: 'FINISH_SETUP', payload: {
 
 check('setup moves the game into play', played.state.game.phase === 'playing', played.state.game.phase);
 
-const peeked = parse(viewForSeat(JSON.stringify(played.state), 0)).view;
+const peeked = parse(viewForSeat(JSON.stringify(played.state), 0, clock)).view;
 const seatSees = visibleIn(peeked);
 check(
   'a peeked card becomes visible to the seat that peeked it',
@@ -339,7 +339,7 @@ check('resync returns only what was missed', sync.events.length === 3, `${sync.e
 // fellow coalition members, who pool their cards by design. Note what is *not* on that list:
 // `projectView` hides a drawn card from everyone but the player who drew it, which is
 // stricter than the written rule that a card drawn from the deck is revealed publicly.
-const midGame = parse(viewForSeat(current, 0)).view;
+const midGame = parse(viewForSeat(current, 0, clock)).view;
 const viewerId = midGame.viewerId;
 const callerId = finalRoom.game.vintoCallerId;
 const inCoalition = callerId !== null && viewerId !== callerId;

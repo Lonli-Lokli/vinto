@@ -97,6 +97,16 @@ data class PlayerView(
     val difficulty: Difficulty,
     /** Only once the game is over; before then a score is a hand nobody has revealed. */
     val scores: Map<String, Int>? = null,
+    /**
+     * Milliseconds left in the session, or null outside one.
+     *
+     * **Passed in, never read.** The engine has no clock and the purity guard fails the build
+     * on one; a session length is the room's business. It is here rather than beside the view
+     * because of what the rule does: past the buzzer an undeclared round is discarded, so the
+     * only way to bank one near the end is to call Vinto first — a real decision, and only if
+     * the player can see the deadline they are playing against.
+     */
+    val sessionMsRemaining: Long? = null,
 )
 
 /**
@@ -124,7 +134,7 @@ data class PlayerView(
  * Never included at all: the draw pile's contents, other seats' `opponentKnowledge`, and
  * `botMemory`. Bots do not use views — they run in the same process as the full state.
  */
-fun projectView(state: GameState, playerId: String): PlayerView {
+fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = null): PlayerView {
     val viewer = state.players.firstOrNull { it.id == playerId }
 
     val revealedToViewer = revealedByCurrentAction(state, playerId)
@@ -214,6 +224,7 @@ fun projectView(state: GameState, playerId: String): PlayerView {
         } else {
             null
         },
+        sessionMsRemaining = sessionMsRemaining,
     )
 }
 

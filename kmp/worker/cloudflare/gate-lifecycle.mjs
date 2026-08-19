@@ -41,8 +41,15 @@ console.log('\nRoom lifecycle\n');
 // --- one alarm, whichever is soonest --------------------------------------------------------
 let json = playingRoom();
 let result = parse(updatePresence(json, '0,1', T0));
-check('with everyone present nothing is pending', result.nextAlarmAtEpochMs === null,
-  `${result.nextAlarmAtEpochMs}`);
+// With everyone present the only thing still due is the session buzzer — thirty minutes from
+// the deal, which happened when the countdown expired.
+check(
+  'with everyone present, the session clock is the only thing pending',
+  result.nextAlarmAtEpochMs === parse(json).session.endsAtEpochMs,
+  `${result.nextAlarmAtEpochMs} vs ${parse(json).session.endsAtEpochMs}`,
+);
+check('and that is thirty minutes from the deal',
+  parse(json).session.endsAtEpochMs === T0 + countdownMs() + 30 * 60 * 1000);
 
 // --- seat grace: the seat is held, then played, and it stays yours ----------------------------
 result = parse(updatePresence(json, '0', T0));              // Bo drops

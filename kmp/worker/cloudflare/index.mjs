@@ -14,7 +14,7 @@
 
 import {
   newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
-  addBot, removeBot, startGame, lobbyView, updatePresence, onAlarm, nextAlarmAt,
+  addBot, removeBot, startGame, lobbyView, updatePresence, onAlarm, nextAlarmAt, readyForNextRound,
   newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -206,7 +206,7 @@ export class Room {
   }
 
   #viewFor(stateJson, seat) {
-    const result = JSON.parse(viewForSeat(stateJson, seat));
+    const result = JSON.parse(viewForSeat(stateJson, seat, Date.now()));
     return result.view ?? null;
   }
 
@@ -451,6 +451,26 @@ export class Room {
       //
       // Any seated player, not only whoever made the room. The countdown is what keeps that
       // safe: adding a bot is a proposal that stands for ten seconds, not a decision.
+      // Agreeing to another round. Every connected human has to; the last to say so deals it.
+      case 'next-round': {
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before agreeing' }));
+        }
+        const result = JSON.parse(readyForNextRound(stateJson, token, Date.now()));
+        if (result.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+        }
+        const nextJson = JSON.stringify(result.state);
+        await this.#save(nextJson);
+        return this.#sendPerSeat((seat) => ({
+          type: result.state.phase === 'PLAYING' ? 'started' : 'between-rounds',
+          view: this.#viewFor(nextJson, seat),
+          standings: result.state.session.rounds,
+          nextIndex: result.state.log.length,
+        }));
+      }
+
       case 'add-bot':
       case 'remove-bot': {
         const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;

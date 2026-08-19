@@ -71,24 +71,25 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 6. Sessions of rounds
 
-- [ ] 6.1 `SessionState`: completed round results, cumulative points, current `GameState`
-- [ ] 6.2 Round scoring per the rules (caller vs lowest coalition, tie to the caller) and game
+- [x] 6.1 `SessionState`: completed round results, cumulative points, current `GameState`
+- [x] 6.2 Round scoring per the rules (caller vs lowest coalition, tie to the caller) and game
       points by final rank
-- [ ] 6.3 Per-round seeds derived from the session seed; a whole session replays from one number
-- [ ] 6.4 Between-rounds agreement flow, and what happens when somebody declines
-- [ ] 6.5 Session clock: 30 minutes from the **first deal**, held on an alarm in the room. The
+- [x] 6.3 Per-round seeds derived from the session seed; a whole session replays from one number
+- [x] 6.4 Between-rounds agreement flow, and what happens when somebody declines
+- [x] 6.5 Session clock: 30 minutes from the **first deal**, held on an alarm in the room. The
       engine is never given wall-clock time — the purity guard already enforces that and must
       keep passing
-- [ ] 6.6 At the buzzer: a round with Vinto declared plays out and is scored; any other round
+- [x] 6.6 At the buzzer: a round with Vinto declared plays out and is scored; any other round
       is discarded. Uniformly, including when no round has completed — a session may end with
       no winner. A new round is always dealt while the session is live
-- [ ] 6.7 Remaining time in `PlayerView`, because the discard rule only makes calling Vinto a
+- [x] 6.7 Remaining time in `PlayerView`, because the discard rule only makes calling Vinto a
       decision if players can see the deadline
-- [ ] 6.8 The room's log records which round was discarded; standings cannot be recomputed from
+- [x] 6.8 The room's log records which round was discarded; standings cannot be recomputed from
       the round recordings alone
-- [ ] 6.9 Gate: a two-round session replays from its session seed with every state hash
-      matching; a buzzer with Vinto declared finishes and scores; a buzzer without one
-      discards; a session whose first round is still running ends with no winner
+- [x] 6.9 Gate: both buzzer rules, the two-round flow, the visible clock and per-round seeds
+      (`gate-sessions.mjs`, 25 checks). **Not yet**: replaying a whole recorded session from its
+      session seed — that needs the recorder (migrate task 6.4), which does not exist. The
+      *per-round* determinism it would rest on is asserted here; the end-to-end replay is not
 
 ## 7. Single-player stays off the network
 
