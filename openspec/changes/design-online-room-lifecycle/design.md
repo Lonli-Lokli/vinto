@@ -93,6 +93,52 @@ to its token (R3).
 alarm; a `setTimeout` would be lost the moment the object hibernates, which is precisely when
 a lobby with nobody typing is most likely to be evicted.
 
+### R2b. A session lasts thirty minutes, and the clock belongs to the room
+
+`VINTO_RULES.md` sets a session at a fixed wall-clock length — thirty minutes. The clock
+starts at the **first deal**, not at room creation, so a lobby that took a while to fill does
+not eat into the game.
+
+**The engine never learns what time it is.** The reducer is pure and the purity guard fails
+the build on any clock in the reducer path; a session ending is a *room* decision that
+happens to be expressed as "no further rounds". This is not fastidiousness — a clock in the
+engine would make a recording unreplayable, which is the property the whole migration is
+verified against.
+
+**At the buzzer:**
+
+- If **Vinto has been declared** in the round in progress, that round plays to its end and is
+  scored. The overrun is bounded and short: the final round is exactly one turn for each
+  coalition member, not an open-ended continuation.
+- Otherwise the round in progress is **discarded**, and the final standings come from
+  completed rounds only.
+
+That is a **deliberate deviation** from the written rule, which says only "at time limit,
+finish the current round". Recorded here so that nobody later corrects it back: a round with
+no Vinto call has no natural end, so finishing it could add many minutes to a fixed-length
+session.
+
+**Two uniform rules, chosen over special cases:**
+
+- A new round is **always** dealt while the session is live, even at minute twenty-nine. No
+  cutoff constant to tune, and no explaining why the game refused to deal.
+- The discard rule applies **even when no round has completed**, so a session can end with no
+  winner at all. Uniform and predictable; the cost is that a slow first round can produce
+  nothing, and that is accepted.
+
+**The remaining time is public, and this is load-bearing rather than a nicety.** Those two
+rules together mean the only way to bank a round near the end is to call Vinto before the
+buzzer. That is a real decision — but only if the players can see the clock. A hidden
+deadline turns it into a coin flip, so `PlayerView` carries the remaining time and every
+client shows it.
+
+The clock does **not** pause when players disconnect. A room that has lost its humans is
+being ended by the lonely grace (R5) long before the pause would matter.
+
+**Consequence for replay**: the room's log must record *which* round was discarded and why,
+because the standings cannot be recomputed from the round recordings alone. The rounds replay
+in the engine; the session outcome is the room's to record.
+
 ### R3. Identity is a server-issued capability token
 
 The room generates a random 32-byte `playerToken` when a client first takes a seat, returns
@@ -138,6 +184,7 @@ leaves dead rooms billing, so each concern gets its own timer.
 | timer | starts when | fires after | effect |
 | --- | --- | --- | ---: |
 | **countdown** | the fourth seat fills | 10 s | the game starts |
+| **session** | the first deal | 30 min | the session ends — see R2b for what happens to the round in progress |
 | **seat grace** | a seat's last socket closes | 30 s | a bot plays that seat; the seat stays reserved by its token |
 | **lonely grace** | humans in the room drop below two, mid-session | 60 s | the room ends and is deleted |
 | **room TTL** | the last human socket closes | 2 min | the room is deleted |
@@ -225,15 +272,17 @@ through a test-only path guarded by an environment variable, never a request par
 - **Two humans can be one person with two devices.** Nothing detects it and nothing should
   try: it costs the attacker two connections to obtain a game they could have played offline
   for free, so it is not a budget attack. The limits in R6 bound it like any other traffic.
+- **A round dealt near the buzzer is usually thrown away.** Accepted in exchange for a rule
+  with no cutoff to explain or tune. The public clock is what makes it fair: a player who
+  wants to bank the round can call Vinto, and can see that they need to.
+- **A session can end with nothing to show** if the first round is still running at thirty
+  minutes. Uniform beats special-cased here, and the clock warns anyone who is watching it.
 - **Ending a room when humans drop below two will occasionally annoy the survivor**, who
   wanted to finish against bots. The answer is that they can — locally, instantly, for free —
   and that hosting it is the one thing that costs money for no gain.
 
 ## Open Questions
 
-- Does a session end on a round count, a wall-clock limit (the rules say ~30 minutes), or when
-  players stop agreeing to another round? A wall clock in a room is a scheduling question, not
-  an engine one, so it does not threaten determinism — but it needs a decision.
 - Should the countdown be visible to a player who has not joined — that is, does the registry
   listing carry `startsAt`, or only a "starting" flag? Carrying the timestamp is friendlier
   and leaks nothing, but it does mean the registry is written to on every countdown.

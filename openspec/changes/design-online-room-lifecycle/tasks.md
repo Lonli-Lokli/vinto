@@ -69,7 +69,19 @@ independently verifiable through the gate harnesses; none of it needs the Compos
       points by final rank
 - [ ] 6.3 Per-round seeds derived from the session seed; a whole session replays from one number
 - [ ] 6.4 Between-rounds agreement flow, and what happens when somebody declines
-- [ ] 6.5 Gate: a two-round session replays from its session seed with every state hash matching
+- [ ] 6.5 Session clock: 30 minutes from the **first deal**, held on an alarm in the room. The
+      engine is never given wall-clock time — the purity guard already enforces that and must
+      keep passing
+- [ ] 6.6 At the buzzer: a round with Vinto declared plays out and is scored; any other round
+      is discarded. Uniformly, including when no round has completed — a session may end with
+      no winner. A new round is always dealt while the session is live
+- [ ] 6.7 Remaining time in `PlayerView`, because the discard rule only makes calling Vinto a
+      decision if players can see the deadline
+- [ ] 6.8 The room's log records which round was discarded; standings cannot be recomputed from
+      the round recordings alone
+- [ ] 6.9 Gate: a two-round session replays from its session seed with every state hash
+      matching; a buzzer with Vinto declared finishes and scores; a buzzer without one
+      discards; a session whose first round is still running ends with no winner
 
 ## 7. Single-player stays off the network
 

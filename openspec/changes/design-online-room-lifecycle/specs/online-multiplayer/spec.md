@@ -100,6 +100,53 @@ NOT be displaceable, because that seat belongs to its token.
 - **WHEN** the Durable Object is evicted during the countdown and the countdown expires
 - **THEN** the game starts, because the countdown was an alarm rather than an in-memory timer
 
+### Requirement: A session lasts thirty minutes of wall clock
+
+A session SHALL end thirty minutes after its first deal. The room SHALL own that clock; the
+engine SHALL NOT be given access to wall-clock time, because a clock in the reducer would make
+a recording unreplayable.
+
+When the limit is reached, if Vinto has been declared in the round in progress that round
+SHALL play to its end and be scored; otherwise the round in progress SHALL be discarded and
+the final standings SHALL be computed from completed rounds only. This SHALL apply uniformly,
+including when no round has completed, in which case the session ends with no winner.
+
+A new round SHALL be dealt whenever the session is live, regardless of how little time
+remains. The remaining time SHALL be present in every player's view.
+
+The room's log SHALL record which round was discarded, because the standings cannot be
+recomputed from the round recordings alone.
+
+#### Scenario: A declared Vinto is allowed to finish
+
+- **WHEN** the thirty minutes elapse in a round where Vinto has been called
+- **THEN** the final round plays out, that round is scored, and only then does the session end
+
+#### Scenario: A round with no Vinto is discarded
+
+- **WHEN** the thirty minutes elapse in a round where nobody has called Vinto
+- **THEN** the round is discarded, and the standings shown to every player come from the completed rounds only
+
+#### Scenario: A session can end with no winner
+
+- **WHEN** the thirty minutes elapse during the first round and no Vinto has been called
+- **THEN** the session ends with no completed rounds and no winner, and every player is told so
+
+#### Scenario: A round is dealt even with a minute left
+
+- **WHEN** a round finishes with one minute of the session remaining and the players agree to another
+- **THEN** a new round is dealt, and it is discarded at the buzzer unless somebody calls Vinto first
+
+#### Scenario: Players can see the deadline they are playing against
+
+- **WHEN** any player receives their view during a live session
+- **THEN** it carries the time remaining, so calling Vinto before the buzzer is a decision rather than a guess
+
+#### Scenario: The engine never sees the clock
+
+- **WHEN** the engine sources are scanned by the purity guard
+- **THEN** no wall-clock or ambient time source appears in the reducer path, and every recorded round still replays
+
 ### Requirement: A room does not host a game for one human
 
 When the number of connected humans in a running session falls below two, the room SHALL
