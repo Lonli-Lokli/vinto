@@ -28,7 +28,7 @@ let registryJson = newRegistry();
 check('a fresh registry is empty', registrySize(registryJson) === 0);
 
 // --- minting -----------------------------------------------------------------------------
-let result = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, 'Ada'));
+let result = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, 'Ada', 'gate-source'));
 check('minting returns a room', Boolean(result.room) && !result.error);
 check('the code is six characters', result.room.code.length === 6, result.room.code);
 
@@ -39,7 +39,7 @@ check(
   result.room.code,
 );
 check('the code is deterministic in its bytes', 
-  parse(mintRoomCode(newRegistry(), bytes(0, 1, 2, 3, 4, 5), false, '')).room.code === result.room.code);
+  parse(mintRoomCode(newRegistry(), bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source')).room.code === result.room.code);
 
 registryJson = JSON.stringify(result.state);
 const privateCode = result.room.code;
@@ -62,7 +62,7 @@ check(
 );
 
 // --- collisions --------------------------------------------------------------------------
-const collision = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, ''));
+const collision = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source'));
 check(
   'the same bytes twice is refused rather than silently reusing a room',
   Boolean(collision.error),
@@ -71,7 +71,7 @@ check(
 check('and the registry is unchanged by the refusal', registrySize(JSON.stringify(collision.state)) === 1);
 
 // --- public and private ------------------------------------------------------------------
-result = parse(mintRoomCode(registryJson, bytes(9, 9, 9, 9, 9, 9), true, 'Bo'));
+result = parse(mintRoomCode(registryJson, bytes(9, 9, 9, 9, 9, 9), true, 'Bo', 'gate-source'));
 registryJson = JSON.stringify(result.state);
 const publicCode = result.room.code;
 
@@ -83,11 +83,20 @@ check(
   parse(resolveRoomCode(registryJson, privateCode)).known === true,
 );
 check('the listing carries the host nickname', listed.rooms[0].hostNickname === 'Bo');
-const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled', 'startsAtEpochMs'];
+const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled',
+  'startsAtEpochMs', 'sourceId'];
 check(
-  'and no listing leaks anything beyond the room itself',
+  'the listing carries no field beyond the room itself',
   Object.keys(listed.rooms[0]).every((k) => LISTABLE.includes(k)),
   Object.keys(listed.rooms[0]).join(','),
+);
+// `sourceId` is written as a key because the room type always encodes its defaults, but it is
+// nulled on the way out: it exists to enforce a per-source cap, not to tell one visitor which
+// rooms another visitor opened. Asserting the *value* is stronger than banning the key.
+check(
+  'and the source of every listed room is stripped',
+  listed.rooms.every((r) => r.sourceId === null),
+  JSON.stringify(listed.rooms.map((r) => r.sourceId)),
 );
 
 // --- what a lobby browser needs -----------------------------------------------------------

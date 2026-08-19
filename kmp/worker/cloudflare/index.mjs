@@ -61,6 +61,22 @@ const REGISTRY_KEY = 'registry';
 const MINT_ATTEMPTS = 3;
 
 /**
+ * The largest message a client may send.
+ *
+ * A game action is a few hundred bytes. This is not a tuning parameter so much as a refusal to
+ * parse something that cannot be a move — JSON parsing is CPU, and CPU is what gets billed.
+ */
+const MAX_MESSAGE_BYTES = 8 * 1024;
+
+/**
+ * Sockets one room will hold.
+ *
+ * Four seats and a little slack for a reconnect racing its own close. Beyond that the extra
+ * sockets are not players, and every one of them is memory the object has to carry.
+ */
+const MAX_SOCKETS_PER_ROOM = 8;
+
+/**
  * The room-code namespace, as a single Durable Object (design R4).
  *
  * Everything that creates a room goes through here, which is exactly why it exists: a code
@@ -94,7 +110,8 @@ export class Registry {
       for (let attempt = 0; attempt < MINT_ATTEMPTS; attempt++) {
         const bytes = [...crypto.getRandomValues(new Uint8Array(6))].join(',');
         const result = JSON.parse(
-          mintRoomCode(registryJson, bytes, Boolean(body.isPublic), body.hostNickname ?? ''),
+          mintRoomCode(registryJson, bytes, Boolean(body.isPublic), body.hostNickname ?? '',
+            body.sourceId ?? ''),
         );
         if (!result.error) {
           await this.ctx.storage.put(REGISTRY_KEY, JSON.stringify(result.state));
@@ -359,6 +376,12 @@ export class Room {
 
     await this.#load(roomId);
 
+    // A room is four people. Sockets beyond that are not players, and each one is memory the
+    // object carries for as long as it lives.
+    if (this.ctx.getWebSockets().length >= MAX_SOCKETS_PER_ROOM) {
+      return new Response('too many connections to this room', { status: 429 });
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -371,6 +394,12 @@ export class Room {
   }
 
   async webSocketMessage(ws, raw) {
+    // Checked before parsing, not after. Parsing is the cost being avoided, so measuring it
+    // first and refusing second would pay for exactly what the cap exists to refuse.
+    if (typeof raw === 'string' && raw.length > MAX_MESSAGE_BYTES) {
+      return ws.send(JSON.stringify({ type: 'error', message: 'message too large' }));
+    }
+
     let msg;
     try {
       msg = JSON.parse(raw);
@@ -453,10 +482,18 @@ export class Room {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before acting' }));
         }
         const result = JSON.parse(
-          applyAction(stateJson, token, JSON.stringify(msg.action ?? {})),
+          applyAction(stateJson, token, JSON.stringify(msg.action ?? {}), Date.now()),
         );
         if (result.error) {
-          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+          // A throttled action still costs a storage write, because the budget it spent has
+          // to be remembered — an in-memory bucket would refill on every eviction, which is
+          // exactly when a flood is cheapest to run.
+          if (result.retryAfterMs) await this.#save(JSON.stringify(result.state));
+          return ws.send(JSON.stringify({
+            type: 'error',
+            message: result.error,
+            retryAfterMs: result.retryAfterMs ?? undefined,
+          }));
         }
         const nextJson = JSON.stringify(result.state);
         await this.#save(nextJson);
@@ -596,8 +633,20 @@ export default {
     // Creating a room is a POST, and it is the *only* way to bring one into existence.
     if (url.pathname === '/rooms' && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
+
+      // Who asked, as an opaque id. The registry enforces a per-source cap and never sees an
+      // address: hashing here keeps the cap enforceable without storing anything anybody would
+      // mind being stored.
+      const address = request.headers.get('cf-connecting-ip') ?? 'local';
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(address));
+      const sourceId = [...new Uint8Array(digest)].slice(0, 8)
+        .map((b) => b.toString(16).padStart(2, '0')).join('');
+
       const minted = await registry().fetch(
-        new Request('https://registry/mint', { method: 'POST', body: JSON.stringify(body) }),
+        new Request('https://registry/mint', {
+          method: 'POST',
+          body: JSON.stringify({ ...body, sourceId }),
+        }),
       );
       return new Response(await minted.text(), {
         status: minted.status,

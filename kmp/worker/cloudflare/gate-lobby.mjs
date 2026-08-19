@@ -145,7 +145,7 @@ check('joining a started game is refused', Boolean(join(playing, 'token-dee', 'D
 check('adding a bot to a started game is refused', Boolean(bot(playing, 'token-ada', T0 + 30000).error));
 check(
   'and an action in a lobby is refused before it reaches the engine',
-  Boolean(parse(applyAction(state, 'token-ada', '{"type":"DRAW_CARD","payload":{"playerId":"human-1"}}')).error),
+  Boolean(parse(applyAction(state, 'token-ada', '{"type":"DRAW_CARD","payload":{"playerId":"human-1"}}', T0)).error),
 );
 
 // --- only seated players may touch the seats ------------------------------------------------------

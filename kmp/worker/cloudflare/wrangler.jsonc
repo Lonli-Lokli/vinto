@@ -42,4 +42,22 @@
   "vars": { "ROOM_OPEN": "false" },
 
   "observability": { "enabled": true }
+
+  // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
+  //
+  // NOT configured here, and deliberately not half-configured. Cloudflare's rate limiting for
+  // these two paths is a zone-level rule rather than a Worker binding, so it cannot be
+  // expressed in this file, and it cannot be exercised by `wrangler dev` either — which means
+  // a config block here would be a claim nothing verifies.
+  //
+  // What belongs in the dashboard, on the vinto-room.kupalinka.app zone:
+  //
+  //   1. POST /rooms          — 5 requests per minute per IP, action: block
+  //   2. WebSocket upgrades   — 30 per minute per IP, action: block
+  //
+  // These bound the *slope* of abuse. The things that bound the total are in the code and are
+  // tested: the registry's global and per-source room caps (Registry.kt), the per-seat action
+  // budget (Room.kt), the socket cap and the message size cap (index.mjs). That split is the
+  // point — an edge rule cannot see inside a WebSocket, and an in-room limit cannot stop
+  // somebody opening ten thousand of them.
 }

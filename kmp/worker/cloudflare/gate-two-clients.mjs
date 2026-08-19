@@ -34,7 +34,15 @@ async function mintRoom() {
     body: JSON.stringify({ isPublic: false, hostNickname: 'gate' }),
   });
   const body = await response.json();
-  if (!body.code) throw new Error(`could not mint a room: ${JSON.stringify(body)}`);
+  if (!body.code) {
+    // Almost always the per-source cap, which every local run shares: rooms from earlier runs
+    // stay live for ten minutes. That is the cap working, not the gate breaking — restart
+    // `wrangler dev` on a clean `.wrangler/state`.
+    throw new Error(
+      `could not mint a room (${JSON.stringify(body)}). ` +
+      'If this says a cap, clear .wrangler/state and restart wrangler dev.',
+    );
+  }
   return body.code;
 }
 

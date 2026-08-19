@@ -67,8 +67,18 @@ state = parse(stateJson);
 
 check('a real game was dealt', state.game.players.length === 4);
 check('every player holds five cards', state.game.players.every((p) => p.cards.length === 5));
+// Deal the same room twice from the same seed and compare the games, not the rooms: a room
+// carries tokens and timestamps, and only the deal is supposed to be reproducible.
+const dealAgain = (() => {
+  let json = newRoom('gate-room', SEED, 'moderate', NOW);
+  json = JSON.stringify(parse(joinRoom(json, TOKEN_A, 'Ada', NOW)).state);
+  json = JSON.stringify(parse(joinRoom(json, TOKEN_B, 'Bo', NOW)).state);
+  json = JSON.stringify(parse(addBot(json, TOKEN_A, NOW)).state);
+  json = JSON.stringify(parse(addBot(json, TOKEN_A, NOW)).state);
+  return parse(startGame(json, NOW + countdownMs())).state.game;
+})();
 check('the same seed deals the same table',
-  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate', NOW))) !== JSON.stringify(state));
+  JSON.stringify(dealAgain) === JSON.stringify(state.game));
 
 // --- the token is a credential, not a label ---------------------------------------------
 state = parse(stateJson);
@@ -142,36 +152,36 @@ const peek = (playerId) =>
 
 check(
   'a valid token acts as its own player',
-  !parse(applyAction(stateJson, TOKEN_A, peek(seat0Player))).error,
+  !parse(applyAction(stateJson, TOKEN_A, peek(seat0Player), NOW)).error,
 );
 check(
   'a valid token cannot act as somebody else',
-  Boolean(parse(applyAction(stateJson, TOKEN_A, peek(seat1Player))).error),
+  Boolean(parse(applyAction(stateJson, TOKEN_A, peek(seat1Player), NOW)).error),
   'the action was accepted',
 );
 check(
   'an unissued token acts as nobody',
-  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player))).error),
+  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player), NOW)).error),
 );
 check(
   'an empty token acts as nobody',
-  Boolean(parse(applyAction(stateJson, '', peek(seat0Player))).error),
+  Boolean(parse(applyAction(stateJson, '', peek(seat0Player), NOW)).error),
 );
 check(
   'a token that is one character off is not close enough',
-  Boolean(parse(applyAction(stateJson, `${TOKEN_A}x`, peek(seat0Player))).error),
+  Boolean(parse(applyAction(stateJson, `${TOKEN_A}x`, peek(seat0Player), NOW)).error),
 );
 check(
   'an unoccupied seat has no token and so cannot act',
-  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(state.seats[3].playerId))).error),
+  Boolean(parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(state.seats[3].playerId), NOW)).error),
 );
 check(
   'a malformed action is refused rather than thrown',
-  Boolean(parse(applyAction(stateJson, TOKEN_A, '{"type":"NOT_A_REAL_ACTION"}')).error),
+  Boolean(parse(applyAction(stateJson, TOKEN_A, '{"type":"NOT_A_REAL_ACTION"}', NOW)).error),
 );
 
 // The one that decides games: a wrong token must not be answered with a view.
-const stolen = parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player)));
+const stolen = parse(applyAction(stateJson, TOKEN_UNKNOWN, peek(seat0Player), NOW));
 check(
   'a refused action returns no state anybody could read a hand from',
   JSON.stringify(stolen.state) === JSON.stringify(state),
@@ -180,8 +190,13 @@ check(
 
 // --- playing a game --------------------------------------------------------------------
 const tokenForSeat = [TOKEN_A, TOKEN_B];
+
+// The clock advances a second per action, because a rate limit applies to a harness exactly as
+// it applies to a client: playing twenty turns at one instant is a flood (design R6).
+let clock = NOW;
 const act = (json, seat, action) => {
-  const outcome = parse(applyAction(json, tokenForSeat[seat], JSON.stringify(action)));
+  clock += 1000;
+  const outcome = parse(applyAction(json, tokenForSeat[seat], JSON.stringify(action), clock));
   if (outcome.error) throw new Error(`${action.type}: ${outcome.error}`);
   return outcome;
 };

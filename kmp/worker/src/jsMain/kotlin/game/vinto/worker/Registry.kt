@@ -29,6 +29,18 @@ private const val CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
 
 private const val CODE_LENGTH = 6
 
+/**
+ * Caps, which are what actually protect a budget over an hour (design R6).
+ *
+ * Rate limits bound the *slope* of abuse; these bound the total. An attacker who is happy to
+ * wait can defeat a rate limit and cannot defeat a cap, and the free tier cares about how many
+ * objects exist rather than how quickly they appeared.
+ */
+private const val MAX_LIVE_ROOMS = 200
+
+/** One person should not be able to hold the whole namespace open, however patient they are. */
+private const val MAX_ROOMS_PER_SOURCE = 5
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RegisteredRoom(
@@ -41,6 +53,14 @@ data class RegisteredRoom(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val humans: Int = 0,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val seatsFilled: Int = 0,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
+    /**
+     * Who asked for this room, as an opaque id.
+     *
+     * A hash of the connecting address, computed by `index.mjs` — the registry never sees an
+     * IP, which keeps the per-source cap enforceable without the registry storing anything
+     * anybody would mind it storing.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val sourceId: String? = null,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -91,13 +111,27 @@ private fun codeFrom(bytes: List<Int>): String =
  * bytes, which is one line there and keeps the "one code, one room" invariant absolute here.
  */
 @JsExport
+@Suppress("ReturnCount")
 fun mintRoomCode(
     registryJson: String,
     randomBytes: String,
     isPublic: Boolean,
     hostNickname: String,
+    sourceId: String,
 ): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+
+    // Caps before entropy: refusing is cheaper than minting and then discarding, and the
+    // reason returned is the one the caller can act on.
+    if (state.rooms.size >= MAX_LIVE_ROOMS) {
+        return VintoJson.encodeToString(MintResult(state, error = "too many rooms are open"))
+    }
+    if (sourceId.isNotBlank() && state.rooms.count { it.sourceId == sourceId } >= MAX_ROOMS_PER_SOURCE) {
+        return VintoJson.encodeToString(
+            MintResult(state, error = "you already have $MAX_ROOMS_PER_SOURCE rooms open"),
+        )
+    }
+
     val bytes = randomBytes.split(",").mapNotNull { it.trim().toIntOrNull() }
     val code = codeFrom(bytes)
 
@@ -110,6 +144,7 @@ fun mintRoomCode(
         roomId = "room-$code",
         isPublic = isPublic,
         hostNickname = hostNickname.takeIf { it.isNotBlank() },
+        sourceId = sourceId.takeIf { it.isNotBlank() },
     )
     return VintoJson.encodeToString(
         MintResult(state.copy(rooms = state.rooms + room), room = room),
@@ -129,14 +164,26 @@ fun resolveRoomCode(registryJson: String, code: String): String {
     return VintoJson.encodeToString(ResolveResult(known = room != null, room = room))
 }
 
-/** The public rooms, as a stranger browsing may see them. Private ones are simply absent. */
+/**
+ * The public rooms, as a stranger browsing may see them.
+ *
+ * Private ones are absent, and `sourceId` is stripped from all of them: it exists to enforce a
+ * cap, not to tell one visitor which rooms another visitor opened.
+ */
 @JsExport
 fun listPublicRooms(registryJson: String): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     return VintoJson.encodeToString(
-        RegistryState(rooms = state.rooms.filter { it.isPublic }),
+        RegistryState(rooms = state.rooms.filter { it.isPublic }.map { it.copy(sourceId = null) }),
     )
 }
+
+/** The caps, exported so a harness cannot drift from what is enforced. */
+@JsExport
+fun maxLiveRooms(): Int = MAX_LIVE_ROOMS
+
+@JsExport
+fun maxRoomsPerSource(): Int = MAX_ROOMS_PER_SOURCE
 
 /**
  * Forgets a room.

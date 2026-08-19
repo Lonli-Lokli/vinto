@@ -91,8 +91,32 @@ private const val LOBBY_TTL_MS = 600_000.0
 /** Long enough for everyone to read the scoreboard, and no longer. */
 private const val FINISHED_TTL_MS = 600_000.0
 
+/**
+ * How many actions a seat may fire off at once, and how fast it earns more (design R6).
+ *
+ * This is the limit that matters, and not because actions are frequent — because they are
+ * *expensive*. One action can hand three bots a turn each and cost 1.6 s of CPU
+ * (`PLATFORM-GATE.md` 2a.1b), which is the dimension Cloudflare actually bills. An edge rule
+ * cannot see inside a WebSocket, so this has to live here.
+ *
+ * A burst of ten with a sustained rate of one a second is far above anything a person does
+ * with a card game and far below anything that costs money.
+ */
+private const val BUCKET_CAPACITY = 10.0
+private const val BUCKET_REFILL_PER_SECOND = 1.0
+
+private const val MILLIS_PER_SECOND = 1000.0
+
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
+
+/** A leaky bucket: tokens left, and when that was last computed. */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class Bucket(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tokens: Double = BUCKET_CAPACITY,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val lastRefillMs: Double = 0.0,
+)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -200,6 +224,14 @@ data class RoomState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val finishedAtEpochMs: Double? = null,
     /** Seats with a live socket. Sockets are the platform's, so this arrives from `index.mjs`. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val connectedSeats: List<Int> = emptyList(),
+    /**
+     * Seat index → how much budget it has left, and when that was last worked out.
+     *
+     * Kept in the room's own state rather than in memory, because the object hibernates
+     * between messages: an in-memory bucket would refill itself completely every time the
+     * room was evicted, which is exactly when a flood would be cheapest to run.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val buckets: Map<Int, Bucket> = emptyMap(),
 ) {
     val nextIndex: Int get() = log.size
 
@@ -258,6 +290,8 @@ private data class ActionResult(
     val state: RoomState,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val events: List<LoggedAction> = emptyList(),
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
+    /** Set when the refusal was a rate limit, so a client can back off rather than hammer. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val retryAfterMs: Double? = null,
 )
 
 @Serializable
@@ -487,6 +521,38 @@ fun startGame(stateJson: String, nowMs: Double): String {
     return VintoJson.encodeToString(JoinResult(playBots(started), 0))
 }
 
+/** What a bucket had to say: either a charge went through, or how long to wait. */
+private data class Spend(val state: RoomState, val retryAfterMs: Double?)
+
+/**
+ * Charges one action to a seat's budget.
+ *
+ * Refill is computed from elapsed time rather than accrued on a tick, because there are no
+ * ticks: the object sleeps between messages, and the only clock it has is the one that arrives
+ * with the next one.
+ */
+private fun spendBudget(state: RoomState, seat: Int, nowMs: Double): Spend {
+    val bucket = state.buckets[seat] ?: Bucket(lastRefillMs = nowMs)
+    val elapsedSeconds = maxOf(0.0, nowMs - bucket.lastRefillMs) / MILLIS_PER_SECOND
+    val available = minOf(BUCKET_CAPACITY, bucket.tokens + elapsedSeconds * BUCKET_REFILL_PER_SECOND)
+
+    if (available < 1.0) {
+        // Refused, and the refusal is *cheap* — no validation, no reduce, and above all no bot
+        // search. Serving a throttled action at a discount would defeat the point of throttling
+        // the expensive thing.
+        val waitSeconds = (1.0 - available) / BUCKET_REFILL_PER_SECOND
+        return Spend(
+            state.copy(buckets = state.buckets + (seat to Bucket(available, nowMs))),
+            retryAfterMs = waitSeconds * MILLIS_PER_SECOND,
+        )
+    }
+
+    return Spend(
+        state.copy(buckets = state.buckets + (seat to Bucket(available - 1.0, nowMs))),
+        retryAfterMs = null,
+    )
+}
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 private data class LifecycleResult(
@@ -631,7 +697,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
  */
 @Suppress("ReturnCount")
 @JsExport
-fun applyAction(stateJson: String, token: String, actionJson: String): String {
+fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
     // The seat is *derived* from the credential rather than asserted next to it. There is no
@@ -641,15 +707,28 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
         ?: return VintoJson.encodeToString(ActionResult(state, error = "no seat holds that token"))
     val seat = seatEntry.index
 
+    // The budget is charged before anything else costs anything. Order matters: validating
+    // first would be cheap, but reducing and then running three bot searches is not, and a
+    // flood is only bounded if the refusal happens before the expensive part.
+    val spend = spendBudget(state, seat, nowMs)
+    spend.retryAfterMs?.let {
+        return VintoJson.encodeToString(
+            ActionResult(spend.state, error = "too many actions", retryAfterMs = it),
+        )
+    }
+    val charged = spend.state
+
     // No game, nothing to act on. A lobby refuses game actions rather than dealing one on
     // demand, or the countdown would be advisory.
-    val game = state.game
-        ?: return VintoJson.encodeToString(ActionResult(state, error = "the game has not started"))
+    val game = charged.game
+        ?: return VintoJson.encodeToString(ActionResult(charged, error = "the game has not started"))
 
     val action = try {
         VintoJson.decodeFromString(GameAction.serializer(), actionJson)
     } catch (failure: IllegalArgumentException) {
-        return VintoJson.encodeToString(ActionResult(state, error = "unreadable action: ${failure.message}"))
+        return VintoJson.encodeToString(
+            ActionResult(charged, error = "unreadable action: ${failure.message}"),
+        )
     }
 
     // The seat boundary, checked before the engine sees anything. An action whose payload
@@ -657,33 +736,34 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
     actorOf(action)?.let { claimed ->
         if (claimed != seatEntry.playerId) {
             return VintoJson.encodeToString(
-                ActionResult(state, error = "seat $seat may only act as ${seatEntry.playerId}"),
+                ActionResult(charged, error = "seat $seat may only act as ${seatEntry.playerId}"),
             )
         }
     }
 
     when (val validation = ActionValidator.validate(game, action)) {
         is Validation.Invalid ->
-            return VintoJson.encodeToString(ActionResult(state, error = validation.reason))
+            return VintoJson.encodeToString(ActionResult(charged, error = validation.reason))
 
         Validation.Valid -> Unit
     }
 
     val reduced = when (val result = GameEngine.reduce(game, action)) {
         is ReduceResult.Success -> result.state
-        is ReduceResult.Failure -> return VintoJson.encodeToString(ActionResult(state, error = result.reason))
+        is ReduceResult.Failure ->
+            return VintoJson.encodeToString(ActionResult(charged, error = result.reason))
     }
 
     val accepted = LoggedAction(
-        index = state.nextIndex,
+        index = charged.nextIndex,
         seat = seat,
         playerId = seatEntry.playerId ?: "",
         action = action,
     )
 
-    val afterBots = playBots(state.copy(game = reduced, log = state.log + accepted))
+    val afterBots = playBots(charged.copy(game = reduced, log = charged.log + accepted))
     return VintoJson.encodeToString(
-        ActionResult(afterBots, events = afterBots.log.drop(state.log.size)),
+        ActionResult(afterBots, events = afterBots.log.drop(charged.log.size)),
     )
 }
 

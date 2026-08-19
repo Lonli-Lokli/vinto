@@ -6,7 +6,12 @@
  *
  * `gate-registry.mjs` checks the Kotlin resolver refuses an unissued code. This checks the
  * thing that actually matters and that no unit test can see: that a refused code **creates no
- * Durable Object**. It is asserted by counting objects with stored data through wrangler's
+ * Durable Object**.
+ *
+ * Start `wrangler dev` on a clean `.wrangler/state`. Not fastidiousness: rooms from an earlier
+ * run are still live for ten minutes, and every local run shares one source address, so the
+ * fifth run in a row trips the per-source cap and the gate fails for the right reason at the
+ * wrong time. It is asserted by counting objects with stored data through wrangler's
  * local explorer, before and after — not by reading a 404, which a broken build would also
  * return while quietly having created something first.
  */
@@ -100,11 +105,19 @@ check(
 );
 // What a lobby browser needs and nothing else: how full, how soon, and how to get in. No
 // tokens, no hashes, no game.
-const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled', 'startsAtEpochMs'];
+const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled',
+  'startsAtEpochMs', 'sourceId'];
 check(
-  'the listing carries nothing but the room',
+  'the listing carries no field beyond the room itself',
   listing.rooms.every((r) => Object.keys(r).every((k) => LISTABLE.includes(k))),
   listing.rooms.length ? Object.keys(listing.rooms[0]).join(',') : 'empty',
+);
+// The key is present because the room type always encodes its defaults; the *value* is
+// stripped. It exists to enforce a per-source cap, not to tell one visitor which rooms
+// another opened, so asserting the value is the stronger check.
+check(
+  'and no listed room says who opened it',
+  listing.rooms.every((r) => r.sourceId === null),
 );
 
 console.log(`\n${failures === 0 ? 'ROOM CODE GATE PASS' : `ROOM CODE GATE FAIL (${failures})`}\n`);

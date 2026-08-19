@@ -57,14 +57,17 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 5. Abuse limits
 
-- [ ] 5.1 In-room token bucket over actions per socket (burst 10, sustained 1/s), refusing
+- [x] 5.1 In-room token bucket over actions per socket (burst 10, sustained 1/s), refusing
       with a retry signal rather than serving. This is the expensive path: one action can be
       1.6 s of CPU
-- [ ] 5.2 Registry caps: global live rooms, per-source concurrent rooms
-- [ ] 5.3 Edge rate limiting rules for `POST /rooms` and WebSocket upgrades, recorded in
-      `wrangler.jsonc` or as documented dashboard configuration
-- [ ] 5.4 Message size cap and a maximum socket count per room
-- [ ] 5.5 Gate: an action flood is throttled and performs no bot search; the room cap holds
+- [x] 5.2 Registry caps: global live rooms, per-source concurrent rooms
+- [x] 5.3 Edge rate limiting **documented** in `wrangler.jsonc`, not configured there: these are
+      zone rules rather than Worker bindings, so they cannot live in that file and cannot be
+      exercised by `wrangler dev` either. A config block would have been a claim nothing
+      verifies. The limits that *are* code — registry caps, action budget, socket and message
+      caps — are tested
+- [x] 5.4 Message size cap and a maximum socket count per room
+- [x] 5.5 Gate: an action flood is throttled and performs no bot search; the room cap holds
 
 ## 6. Sessions of rounds
 
