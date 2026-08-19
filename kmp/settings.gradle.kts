@@ -20,5 +20,6 @@ dependencyResolutionManagement {
 // openspec/changes/migrate-to-kotlin-multiplatform/design.md (D1) is added as it is ported.
 include(":shared:shapes")
 include(":shared:engine")
+include(":shared:bot")
 include(":worker")
 include(":composeApp")
