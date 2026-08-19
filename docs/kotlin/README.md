@@ -68,16 +68,16 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
   **all 50 recordings / 13,900 actions replay with canonical state hashes matching
   TypeScript's**, per action, plus final-state verification (§6b)
 - **detekt** runs over every Kotlin module with `maxIssues: 0`
+- **`ActionValidator` is ported**, and tested by re-attributing every seat-bound action in the
+  corpus to all three other players — 18,066 attempts, none accepted (§6b)
 - **The engine runs correctly in the Cloudflare runtime**, not just on the JVM: the Worker
   exposes `POST /replay` and all 50 recordings replay through it in workerd (§6c)
 
 **Next**
 
-1. **`ActionValidator` is not ported and currently permits everything.** The corpus cannot
-   catch that: every recorded action was legal when it was written, so a permissive validator
-   replays identically. It needs the TypeScript validator tests (task 4.4), and until then
-   nothing may run this engine against untrusted input — the Durable Object especially
-2. Port the TypeScript engine tests (4.4) and `projectView` redaction (4.5)
+1. Port the TypeScript engine tests (4.4) and `projectView` redaction (4.5) — the redaction
+   is the other half of the anti-cheat model, and nothing checks it yet
+2. Open the room: set `ROOM_OPEN` to `"true"` now that the validator is real (§6d)
 3. Point the Worker's `Room` **Durable Object** at the real engine — `/replay` already uses
    it, but the room itself still runs placeholder logic (§6c)
 4. Gate item 2a.1b (MCTS inside the Durable Object CPU budget) stays open **by design**: it
@@ -275,9 +275,24 @@ all 13,900 actions, plus final-state verification.
 Confirmed non-vacuous — deleting one line of knowledge tracking from the Jack swap (the owner
 must _lose_ knowledge of a blind-swapped position) fails it.
 
-What the gate cannot check is `ActionValidator`, because every action in the corpus was legal
-when it was recorded. A permissive validator replays identically to a correct one, which is
-exactly why the validator is called out separately in §1 rather than assumed finished.
+### The validator needed a different kind of test
+
+The corpus cannot check `ActionValidator` at all: every action in it was legal when recorded,
+so a validator that returned `Valid` unconditionally replays all 13,900 identically. Replaying
+with the real validator live therefore proves one direction only — that nothing legal is
+rejected.
+
+The other direction is the one that matters, since this is the anti-cheat boundary D9 rests on.
+`ValidatorImpersonationTest` gets it from the corpus anyway: replay every recording and, at
+each step, re-attribute the action that genuinely happened to **every other player at the
+table**. Each is an attempt to act out of turn in a position that actually arose.
+**18,066 attempts, none accepted.**
+
+Rule-specific cases the sweep cannot reach — the coalition may not target the Vinto caller, a
+failed toss-in ends participation for the round, setup peek limits — are posed against corpus
+states in `ValidatorRulesTest` rather than hand-built ones: a fabricated state proves a branch
+is reachable, a real one proves the rule bites where it matters. Deleting either rule fails its
+test.
 
 **Why the handlers mutate.** The TypeScript handlers deep-copy the state and then mutate it
 freely. Rewriting each into immutable `copy()` chains would be better Kotlin and a worse
