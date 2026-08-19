@@ -394,6 +394,32 @@ corpus is 141 KB.
 Tearing it down is `npx wrangler delete`, so this is a cheap thing to try and an easy thing to
 undo.
 
+### What the first real deployment taught, that local could not
+
+Deployed 2026-08-19 to `vinto-room.kupalinka.app`. All 50 recordings and 13,900 actions replay
+on the live edge. Three things surfaced that `wrangler dev` had no way to show:
+
+- **`/replay` belonged in the Durable Object, not the Worker.** A plain Worker gets ~10 ms of
+  CPU per invocation; a Durable Object gets 30 s per request. Replaying one game costs ~250 ms,
+  so production answered `error code: 1102` — the exact limit design D9 cites as the reason the
+  room is a Durable Object at all. `wrangler dev` enforces no CPU limit whatsoever, and the
+  production limit is applied on a rolling average, so single requests passed while a batch did
+  not. D9 was right; the endpoint was in the wrong place.
+- **A plain `GET /?room=anything` created a Durable Object and wrote it to storage**, for any
+  name a stranger cared to invent, and read it back. Locally that was a reasonable inspection
+  aid for the 2a.3 harness. The `ROOM_OPEN` gate now sits above it, so a closed deployment
+  creates nothing and discloses nothing. The only thing that had changed about the code was
+  that it was on the internet.
+- **Propagation is not atomic, and it caught me twice.** Verifying seconds after `wrangler
+deploy` returned the _old_ behaviour and sent me chasing a second bug that did not exist; then
+  one probe seeing the new behaviour did not mean every edge node had it. Poll until the
+  behaviour changes, then keep checking. Same hazard the portfolio brief documents for Pages
+  deploys, in a different costume.
+
+Run `GATE_URL=https://vinto-room.kupalinka.app node gate-engine-replay.mjs` after any deploy.
+It backs off on 503 and **counts** the retries, so throughput pressure stays visible instead of
+being quietly absorbed.
+
 Why this is worth having rather than trusting the JVM gate: Kotlin/JS represents `Long` as a
 pair of `Int`s and uses a different serialiser backend, so passing on the JVM does not imply
 passing on Cloudflare. It now passes on both.
