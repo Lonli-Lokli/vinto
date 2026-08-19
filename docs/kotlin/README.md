@@ -366,9 +366,33 @@ npx wrangler deploy                    # needs `wrangler login` first
 GATE_URL=https://vinto-room.kupalinka.app node gate-engine-replay.mjs
 ```
 
-**Open question for the first deploy**: `vinto-room.kupalinka.app` must exist as a DNS record
-in the `kupalinka.app` zone. `custom_domain: true` makes wrangler create it, which is why the
-first `wrangler deploy` needs zone permissions and not just Workers ones.
+**The first deploy needs zone permissions**, not just Workers ones: `custom_domain: true`
+makes wrangler create the `vinto-room.kupalinka.app` DNS record in the `kupalinka.app` zone.
+
+### A deployment today is a self-test, and the code enforces that
+
+`ROOM_OPEN` defaults to `"false"`, and a WebSocket upgrade against a closed room is refused
+with **503** and the reason. This is a gate in `index.mjs`, not a note here, because the
+consequence of forgetting is a deployed Durable Object accepting _any_ action from _any_
+client — `ActionValidator` permits everything, and design D9 puts server-side validation at the
+centre of the anti-cheat model. Flip it to `"true"` in the same commit that lands the
+validator, never before.
+
+What a deployment does answer:
+
+| endpoint          |                                                                             |
+| ----------------- | --------------------------------------------------------------------------- |
+| `GET /health`     | `{"ok":true,"service":"vinto-room","engine":"kotlin","roomOpen":false}`     |
+| `POST /replay`    | replays a `GameRecording` through the real engine; bodies over 1 MB refused |
+| WebSocket upgrade | 503, with the reason                                                        |
+
+`/replay` is a pure function of the posted document — it holds no state and mutates nothing —
+which is what makes it safe to expose while the validator is missing. The 1 MB cap is there
+because it is public and CPU-bound at roughly 0.46 ms per action; the largest recording in the
+corpus is 141 KB.
+
+Tearing it down is `npx wrangler delete`, so this is a cheap thing to try and an easy thing to
+undo.
 
 Why this is worth having rather than trusting the JVM gate: Kotlin/JS represents `Long` as a
 pair of `Int`s and uses a different serialiser backend, so passing on the JVM does not imply

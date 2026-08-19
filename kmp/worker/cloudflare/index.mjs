@@ -16,6 +16,13 @@ import { newRoom, joinRoom, applyAction, eventsSince, replayRecordingJson } from
 
 const ROOM_KEY = 'room';
 
+/**
+ * Largest recording `/replay` will accept. The endpoint is public and CPU-bound — roughly
+ * 0.46 ms per action — so an unbounded body is an invitation to spend someone else's compute.
+ * The largest recording in the corpus is 141 KB; 1 MB leaves room without leaving a hole.
+ */
+const MAX_REPLAY_BYTES = 1_000_000;
+
 export class Room {
   constructor(ctx, env) {
     this.ctx = ctx;
@@ -46,6 +53,19 @@ export class Room {
       return new Response(stateJson, {
         headers: { 'content-type': 'application/json' },
       });
+    }
+
+    // The room is closed until ActionValidator is ported. This is a code-level gate rather
+    // than a note in a document because the consequence of forgetting is that a deployed
+    // Durable Object accepts *any* action from *any* client: the validator currently permits
+    // everything, and design D9 puts server-side validation at the centre of the anti-cheat
+    // model. Opening it is a deliberate act — set ROOM_OPEN="true" — not a default.
+    if (this.env.ROOM_OPEN !== 'true') {
+      return new Response(
+        'The room is closed: server-side action validation is not implemented yet ' +
+          '(see ActionValidator, task 4.4). POST /replay to exercise the engine.',
+        { status: 503, headers: { 'content-type': 'text/plain' } },
+      );
     }
 
     await this.#load(roomId, seed);
@@ -144,15 +164,30 @@ export default {
     const url = new URL(request.url);
     const roomId = url.searchParams.get('room') ?? 'default';
 
+    // Reports what is deployed and what is switched on, so a deployment can be identified
+    // without reading its source. `roomOpen` is the answer to "is this thing accepting play
+    // yet", which is the question worth being able to ask from outside.
     if (url.pathname === '/health') {
-      return new Response('ok');
+      return Response.json({
+        ok: true,
+        service: 'vinto-room',
+        engine: 'kotlin',
+        roomOpen: env.ROOM_OPEN === 'true',
+      });
     }
 
     // Replays a recording through the real Kotlin engine, in the runtime that actually
     // serves it. This is how the engine is verified on a deployment with no UI: POST a
     // GameRecording and get back either ok, or the exact action where it diverged.
     if (url.pathname === '/replay' && request.method === 'POST') {
-      return new Response(replayRecordingJson(await request.text()), {
+      const body = await request.text();
+      if (body.length > MAX_REPLAY_BYTES) {
+        return Response.json(
+          { ok: false, error: `recording exceeds ${MAX_REPLAY_BYTES} bytes` },
+          { status: 413 },
+        );
+      }
+      return new Response(replayRecordingJson(body), {
         headers: { 'content-type': 'application/json' },
       });
     }

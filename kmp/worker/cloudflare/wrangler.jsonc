@@ -26,5 +26,11 @@
   // px.kupalinka.app is a separate Worker for the same reason.
   "routes": [{ "pattern": "vinto-room.kupalinka.app", "custom_domain": true }],
 
+  // The WebSocket room stays shut until ActionValidator is ported (task 4.4). Until then a
+  // deployment is a self-test of the engine, not a service: /health and /replay answer, and
+  // an upgrade request is refused with the reason. Flip this to "true" in the same commit
+  // that lands the validator, never before.
+  "vars": { "ROOM_OPEN": "false" },
+
   "observability": { "enabled": true }
 }
