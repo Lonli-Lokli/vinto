@@ -5,13 +5,13 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 1. Close what is open (security, before anything else)
 
-- [ ] 1.1 Server-issued `playerToken`: minted on first seat, returned once in `joined`, stored
+- [x] 1.1 Server-issued `playerToken`: minted on first seat, returned once in `joined`, stored
       as a SHA-256 hash, required on every later message. `clientId` from the client is
       removed entirely rather than kept alongside
-- [ ] 1.2 `Seat.ownerId: String?` added and left null — the account seam, populated by nothing
-- [ ] 1.3 Server-chosen session seed; `?seed=` removed from the request surface. A test-only
+- [x] 1.2 `Seat.ownerId: String?` added and left null — the account seam, populated by nothing
+- [x] 1.3 Server-chosen session seed; `?seed=` removed from the request surface. A test-only
       seed path stays, guarded by an env var, so the gate harnesses remain deterministic
-- [ ] 1.4 Gate: a socket that sends another seat's token, no token, or a wrong token is refused
+- [x] 1.4 Gate: a socket that sends another seat's token, no token, or a wrong token is refused
       and is never sent that seat's view. Negative controls confirm each check bites
 
 ## 2. Registry and room codes
