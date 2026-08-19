@@ -1,8 +1,11 @@
 // Platform gate 2a.3 — two WebSocket clients through one Durable Object.
 //
 // Run against a local `wrangler dev` (see docs/kotlin/PLATFORM-GATE.md):
-//   npx wrangler dev --port 8787 --local     # in kmp/worker/cloudflare
+//   npx wrangler dev --port 8787 --local --var ROOM_OPEN:true   # in kmp/worker/cloudflare
 //   node gate-two-clients.mjs
+//
+// ROOM_OPEN must be set: the room refuses every request while it is shut, which is how a
+// deployment stays a self-test until ActionValidator lands.
 //
 // The room seed is 12345 because `fixtures/prng/vectors.json` publishes the bounded
 // sequence for seed 12345 / bound 54. Each accepted action draws from that sequence, so

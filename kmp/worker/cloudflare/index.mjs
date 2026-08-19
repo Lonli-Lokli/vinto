@@ -23,6 +23,13 @@ const ROOM_KEY = 'room';
  */
 const MAX_REPLAY_BYTES = 1_000_000;
 
+/**
+ * How many Durable Objects share the replay load. A Durable Object is single-threaded, so
+ * one object would queue a batch of recordings behind each other; replay holds no state, so
+ * spreading it costs nothing.
+ */
+const REPLAY_SHARDS = 8;
+
 export class Room {
   constructor(ctx, env) {
     this.ctx = ctx;
@@ -43,29 +50,54 @@ export class Room {
 
   async fetch(request) {
     const url = new URL(request.url);
-    const roomId = url.searchParams.get('room') ?? 'default';
-    const seed = Number(url.searchParams.get('seed') ?? '42');
 
-    // A plain GET reports room state — used by the harness to inspect the object without
-    // a socket, and to prove state survived an eviction.
-    if (request.headers.get('Upgrade') !== 'websocket') {
-      const stateJson = await this.#load(roomId, seed);
-      return new Response(stateJson, {
+    // Replay runs HERE rather than in the Worker's own fetch handler, and the reason is a
+    // hard platform limit rather than tidiness: a plain Worker gets ~10 ms of CPU per
+    // invocation on the free plan, while a Durable Object gets 30 s per request. Replaying
+    // one game costs ~250 ms, so in the Worker it exceeded the limit and Cloudflare returned
+    // `error code: 1102`.
+    //
+    // It passed locally and it passed as single requests. `wrangler dev` enforces no CPU
+    // limit at all, and in production the limit is applied on a rolling average, so spaced
+    // requests slip through while a tight loop does not — which is exactly the shape of bug
+    // that only a real deployment under real load will show you.
+    if (url.pathname === '/replay') {
+      return new Response(replayRecordingJson(await request.text()), {
         headers: { 'content-type': 'application/json' },
       });
     }
 
-    // The room is closed until ActionValidator is ported. This is a code-level gate rather
-    // than a note in a document because the consequence of forgetting is that a deployed
-    // Durable Object accepts *any* action from *any* client: the validator currently permits
-    // everything, and design D9 puts server-side validation at the centre of the anti-cheat
-    // model. Opening it is a deliberate act — set ROOM_OPEN="true" — not a default.
+    // The room is closed until ActionValidator is ported, and the gate sits ABOVE everything
+    // else for a reason found on the first real deployment: the state endpoint below calls
+    // #load, which CREATES the Durable Object and writes it to storage. Reachable publicly,
+    // that let any stranger conjure an unbounded number of rooms out of query strings — each
+    // one storage and row writes against the free-tier budget in D9 — and read them back.
+    //
+    // Locally that was an inspection aid for the 2a.3 harness and entirely reasonable. The
+    // difference is only that one of them is on the internet, which is exactly the class of
+    // thing a deployment tells you and a local run cannot.
+    //
+    // Opening the room is a deliberate act — set ROOM_OPEN="true" — not a default, because
+    // the validator currently permits everything and design D9 puts server-side validation at
+    // the centre of the anti-cheat model.
     if (this.env.ROOM_OPEN !== 'true') {
       return new Response(
         'The room is closed: server-side action validation is not implemented yet ' +
           '(see ActionValidator, task 4.4). POST /replay to exercise the engine.',
         { status: 503, headers: { 'content-type': 'text/plain' } },
       );
+    }
+
+    const roomId = url.searchParams.get('room') ?? 'default';
+    const seed = Number(url.searchParams.get('seed') ?? '42');
+
+    // A plain GET reports room state — used by the harness to inspect the object without a
+    // socket, and to prove state survived an eviction.
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      const stateJson = await this.#load(roomId, seed);
+      return new Response(stateJson, {
+        headers: { 'content-type': 'application/json' },
+      });
     }
 
     await this.#load(roomId, seed);
@@ -187,13 +219,18 @@ export default {
           { status: 413 },
         );
       }
-      return new Response(replayRecordingJson(body), {
-        headers: { 'content-type': 'application/json' },
-      });
+
+      // Forwarded to a Durable Object for its CPU budget — see Room.fetch. Sharded across a
+      // few objects so a batch of recordings is not serialised through one single-threaded
+      // object; they hold no state, so which one answers does not matter.
+      const shard = `replay-${Math.floor(Math.random() * REPLAY_SHARDS)}`;
+      const stub = env.ROOM.get(env.ROOM.idFromName(shard));
+      return stub.fetch(new Request(request.url, { method: 'POST', body }));
     }
 
     // One Durable Object per room id — the unit of isolation (design D9). The Worker does
-    // nothing but route, because its 10 ms CPU budget allows nothing more.
+    // nothing but route, because its ~10 ms CPU budget allows nothing more; the engine work
+    // happens inside the object, which is where the real CPU budget is.
     const id = env.ROOM.idFromName(roomId);
     return env.ROOM.get(id).fetch(request);
   },
