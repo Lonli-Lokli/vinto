@@ -98,10 +98,13 @@ check(
   'but the private room is still reachable by its code',
   (await fetch(`${BASE}/?room=${minted.code}`)).status === 200,
 );
+// What a lobby browser needs and nothing else: how full, how soon, and how to get in. No
+// tokens, no hashes, no game.
+const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled', 'startsAtEpochMs'];
 check(
   'the listing carries nothing but the room',
-  listing.rooms.every((r) =>
-    Object.keys(r).every((k) => ['code', 'roomId', 'isPublic', 'hostNickname'].includes(k))),
+  listing.rooms.every((r) => Object.keys(r).every((k) => LISTABLE.includes(k))),
+  listing.rooms.length ? Object.keys(listing.rooms[0]).join(',') : 'empty',
 );
 
 console.log(`\n${failures === 0 ? 'ROOM CODE GATE PASS' : `ROOM CODE GATE FAIL (${failures})`}\n`);

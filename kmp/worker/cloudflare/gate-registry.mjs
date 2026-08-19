@@ -9,7 +9,7 @@
  * refused code leaves the Durable Object count unchanged.
  */
 import {
-  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize,
+  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 let failures = 0;
@@ -83,10 +83,26 @@ check(
   parse(resolveRoomCode(registryJson, privateCode)).known === true,
 );
 check('the listing carries the host nickname', listed.rooms[0].hostNickname === 'Bo');
+const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled', 'startsAtEpochMs'];
 check(
   'and no listing leaks anything beyond the room itself',
-  Object.keys(listed.rooms[0]).every((k) => ['code', 'roomId', 'isPublic', 'hostNickname'].includes(k)),
+  Object.keys(listed.rooms[0]).every((k) => LISTABLE.includes(k)),
   Object.keys(listed.rooms[0]).join(','),
+);
+
+// --- what a lobby browser needs -----------------------------------------------------------
+const touched = touchRoom(registryJson, publicCode, 3, 4, 1_234_567);
+const browsing = parse(listPublicRooms(touched)).rooms.find((r) => r.code === publicCode);
+check('a touched room reports how full it is', browsing.humans === 3 && browsing.seatsFilled === 4);
+check('and when it starts', browsing.startsAtEpochMs === 1_234_567);
+check(
+  'zero means no countdown rather than a start at the epoch',
+  parse(listPublicRooms(touchRoom(touched, publicCode, 2, 2, 0)))
+    .rooms.find((r) => r.code === publicCode).startsAtEpochMs === null,
+);
+check(
+  'touching a code the registry does not know changes nothing',
+  registrySize(touchRoom(registryJson, 'ZZZZZZ', 4, 4, 1)) === registrySize(registryJson),
 );
 
 // --- forgetting --------------------------------------------------------------------------

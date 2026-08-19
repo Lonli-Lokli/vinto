@@ -65,6 +65,32 @@ private const val MIN_HUMANS = 2
 /** Long enough to notice and object to, short enough not to be a wait. */
 private const val COUNTDOWN_MS = 10_000.0
 
+/**
+ * How long a seat is held before a bot plays it (design R5).
+ *
+ * Long enough for a tunnel, short enough that the other three are not left waiting on
+ * somebody's signal. The seat is *held*, not given away — it still belongs to its token.
+ */
+private const val SEAT_GRACE_MS = 30_000.0
+
+/**
+ * How long a running session survives with fewer than two humans connected.
+ *
+ * Separate from the seat grace and answering a different question: seat grace asks whether the
+ * game can continue, this asks whether it *should*. A lone human against three bots is what
+ * the device does for free, so hosting it costs CPU and buys nothing (design R1).
+ */
+private const val LONELY_GRACE_MS = 60_000.0
+
+/** No human connected at all: the room is over, whatever state it was in. */
+private const val ROOM_TTL_MS = 120_000.0
+
+/** Created and never started. A lobby nobody came to is still a storage row. */
+private const val LOBBY_TTL_MS = 600_000.0
+
+/** Long enough for everyone to read the scoreboard, and no longer. */
+private const val FINISHED_TTL_MS = 600_000.0
+
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
 
@@ -97,6 +123,13 @@ data class Seat(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val isBot: Boolean = false,
     /** The engine player behind this seat once the game is dealt; null in the lobby. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val playerId: String? = null,
+    /**
+     * A bot has played this seat since its owner was last here (design R5).
+     *
+     * Reported once on reconnect and then cleared. Without it, coming back to a hand that has
+     * changed reads as a bug rather than as the thirty seconds you were gone.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botPlayedWhileAway: Boolean = false,
 ) {
     val occupied: Boolean get() = tokenHash != null || isBot
 
@@ -149,6 +182,24 @@ data class RoomState(
     /** Null until the game is dealt, which happens when the countdown expires — not before. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val game: GameState? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val log: List<LoggedAction> = emptyList(),
+
+    // --- deadlines (design R5) -------------------------------------------------------------
+    //
+    // Five of them, and a Durable Object has one alarm. They are therefore kept as data and
+    // the alarm is scheduled for whichever is earliest ([nextAlarmAt]); when it fires, every
+    // deadline is evaluated rather than the one that was expected. That is the difference
+    // between a lifecycle that survives eviction and one that works until it does not.
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val createdAtEpochMs: Double = 0.0,
+    /** Seat index → when a bot takes it over. Removed on reconnect. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val seatGrace: Map<Int, Double> = emptyMap(),
+    /** When a session with fewer than two humans ends. Null while two or more are connected. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val lonelyUntilEpochMs: Double? = null,
+    /** When a room with nobody connected is deleted. Null while anybody is. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val emptyUntilEpochMs: Double? = null,
+    /** When a finished room is deleted, so the scoreboard outlives the game but not by much. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val finishedAtEpochMs: Double? = null,
+    /** Seats with a live socket. Sockets are the platform's, so this arrives from `index.mjs`. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val connectedSeats: List<Int> = emptyList(),
 ) {
     val nextIndex: Int get() = log.size
 
@@ -163,6 +214,32 @@ data class RoomState(
      * the device does for free, so hosting it buys nothing (design R1).
      */
     val canStart: Boolean get() = allSeatsFilled && humanCount >= MIN_HUMANS
+
+    /** Humans with a socket open right now, as opposed to humans who hold a seat. */
+    val connectedHumans: Int
+        get() = seats.count { it.tokenHash != null && it.index in connectedSeats }
+
+    val inSession: Boolean
+        get() = phase == RoomPhase.PLAYING || phase == RoomPhase.BETWEEN_ROUNDS
+
+    /**
+     * The earliest thing that has to happen, or null if nothing is pending.
+     *
+     * The whole point of keeping deadlines as data: one alarm, whichever comes first, and the
+     * handler works out what actually expired rather than assuming.
+     */
+    val nextAlarmAt: Double?
+        get() = listOfNotNull(
+            startsAtEpochMs,
+            lonelyUntilEpochMs,
+            emptyUntilEpochMs,
+            finishedAtEpochMs?.plus(FINISHED_TTL_MS),
+            if (phase == RoomPhase.LOBBY || phase == RoomPhase.STARTING) {
+                createdAtEpochMs + LOBBY_TTL_MS
+            } else {
+                null
+            },
+        ).plus(seatGrace.values).minOrNull()
 }
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -171,6 +248,8 @@ private data class JoinResult(
     val state: RoomState,
     val seat: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
+    /** Set on a reconnect where a bot took a turn in the meantime; see [Seat.botPlayedWhileAway]. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botPlayedWhileAway: Boolean = false,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -200,7 +279,7 @@ private data class ViewResult(
  * rule the engine follows and for the same reason.
  */
 @JsExport
-fun newRoom(roomId: String, seed: Double, difficulty: String): String {
+fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): String {
     val chosen = Difficulty.entries.firstOrNull { it.serialName == difficulty } ?: Difficulty.MODERATE
 
     val state = RoomState(
@@ -209,6 +288,10 @@ fun newRoom(roomId: String, seed: Double, difficulty: String): String {
         difficulty = chosen,
         seats = (0 until SEAT_COUNT).map { Seat(index = it) },
         phase = RoomPhase.LOBBY,
+        createdAtEpochMs = nowMs,
+        // A room nobody ever connects to is already on the clock. Without this a lobby that
+        // failed to attract anybody would sit in storage until somebody noticed.
+        emptyUntilEpochMs = nowMs + ROOM_TTL_MS,
     )
     return VintoJson.encodeToString(state)
 }
@@ -251,8 +334,18 @@ fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double):
     // A token that already holds a seat returns to it. This is the reconnect story, and it is
     // safe in a way the old `clientId` was not: knowing somebody's *name* proves nothing, and
     // the only thing that resumes a seat is the secret the room issued for it.
-    state.seats.firstOrNull { it.tokenHash == hash }?.let {
-        return VintoJson.encodeToString(JoinResult(state, it.index))
+    state.seats.firstOrNull { it.tokenHash == hash }?.let { seat ->
+        // Coming back. If a bot played while they were away the hand has moved on, so say so
+        // once and clear it — and hand the seat back, which means it stops being a bot.
+        val resumed = state.copy(
+            seats = state.seats.map {
+                if (it.index == seat.index) it.copy(isBot = false, botPlayedWhileAway = false) else it
+            },
+            seatGrace = state.seatGrace - seat.index,
+        )
+        return VintoJson.encodeToString(
+            JoinResult(resumed, seat.index, botPlayedWhileAway = seat.botPlayedWhileAway),
+        )
     }
 
     if (state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING) {
@@ -392,6 +485,141 @@ fun startGame(stateJson: String, nowMs: Double): String {
     )
 
     return VintoJson.encodeToString(JoinResult(playBots(started), 0))
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private data class LifecycleResult(
+    val state: RoomState,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nextAlarmAtEpochMs: Double? = null,
+    /** The room asked to be deleted. The caller owns storage, so the caller does it. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val deleted: Boolean = false,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val started: Boolean = false,
+    /** Seats a bot has just taken over, so their owners can be told when they return. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tookOver: List<Int> = emptyList(),
+)
+
+/**
+ * Recomputes every deadline from who is connected.
+ *
+ * Called whenever a socket opens or closes. Presence is the platform's business — sockets
+ * survive hibernation and `ctx.getWebSockets()` is authoritative after a wake — so the caller
+ * passes the seats it can see rather than the room trying to remember.
+ */
+@JsExport
+fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val connected = connectedSeatsCsv.split(",").mapNotNull { it.trim().toIntOrNull() }
+
+    val present = state.copy(connectedSeats = connected)
+
+    // A seat whose socket came back keeps its seat and loses its grace. A seat whose socket
+    // went away starts one — the seat is held, not surrendered, because it belongs to a token.
+    val grace = present.seats
+        .filter { it.tokenHash != null }
+        .fold(present.seatGrace) { acc, seat ->
+            when {
+                seat.index in connected -> acc - seat.index
+                acc.containsKey(seat.index) -> acc
+                seat.isBot -> acc // already taken over; nothing further to schedule
+                else -> acc + (seat.index to nowMs + SEAT_GRACE_MS)
+            }
+        }
+
+    val humans = present.connectedHumans
+
+    // Two clocks, two questions. `lonely` asks whether a session should continue at all;
+    // `empty` asks whether the room should exist. They overlap on purpose — a game losing its
+    // last human trips both, and the earlier one wins, which is the lonely one.
+    val lonely = when {
+        !present.inSession -> null
+        humans >= MIN_HUMANS -> null
+        present.lonelyUntilEpochMs != null -> present.lonelyUntilEpochMs
+        else -> nowMs + LONELY_GRACE_MS
+    }
+
+    val empty = when {
+        humans > 0 -> null
+        present.emptyUntilEpochMs != null -> present.emptyUntilEpochMs
+        else -> nowMs + ROOM_TTL_MS
+    }
+
+    val next = present.copy(seatGrace = grace, lonelyUntilEpochMs = lonely, emptyUntilEpochMs = empty)
+    return VintoJson.encodeToString(LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt))
+}
+
+/**
+ * Whatever was due. Called from the alarm, and never assumes which deadline woke it.
+ *
+ * Order matters and is not arbitrary: deletion is checked before takeover, because a room
+ * that is ending has no use for a bot playing one more turn, and doing it the other way round
+ * would burn a search on a game nobody is left to see.
+ */
+@Suppress("ReturnCount")
+@JsExport
+fun onAlarm(stateJson: String, nowMs: Double): String {
+    var state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    val due = { at: Double? -> at != null && nowMs >= at }
+
+    // 1. The room is over, for any of three reasons.
+    val lobbyExpired = (state.phase == RoomPhase.LOBBY || state.phase == RoomPhase.STARTING) &&
+        nowMs >= state.createdAtEpochMs + LOBBY_TTL_MS
+    val finishedExpired = state.finishedAtEpochMs?.let { nowMs >= it + FINISHED_TTL_MS } == true
+
+    if (due(state.emptyUntilEpochMs) || lobbyExpired || finishedExpired) {
+        return VintoJson.encodeToString(LifecycleResult(state, deleted = true))
+    }
+
+    // 2. A session with nobody left to play it ends, and is then deleted on the finished TTL
+    //    like any other finished room — the scoreboard is still worth a moment.
+    if (due(state.lonelyUntilEpochMs)) {
+        state = state.copy(
+            phase = RoomPhase.FINISHED,
+            lonelyUntilEpochMs = null,
+            startsAtEpochMs = null,
+            finishedAtEpochMs = nowMs,
+        )
+        return VintoJson.encodeToString(
+            LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt),
+        )
+    }
+
+    // 3. The countdown.
+    if (due(state.startsAtEpochMs) && state.canStart) {
+        val started = VintoJson.decodeFromString(
+            JoinResult.serializer(),
+            startGame(VintoJson.encodeToString(state), nowMs),
+        )
+        if (started.error == null) {
+            val next = started.state
+            return VintoJson.encodeToString(
+                LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt, started = true),
+            )
+        }
+    }
+
+    // 4. Seats whose grace has run out are played by bots. The seat keeps its token — it is
+    //    held for its owner, not handed to anybody else (design R2a).
+    val expired = state.seatGrace.filterValues { nowMs >= it }.keys
+    if (expired.isNotEmpty()) {
+        val seats = state.seats.map {
+            if (it.index in expired) it.copy(isBot = true, botPlayedWhileAway = true) else it
+        }
+        state = state.copy(seats = seats, seatGrace = state.seatGrace - expired)
+        state = playBots(state)
+        return VintoJson.encodeToString(
+            LifecycleResult(
+                state,
+                nextAlarmAtEpochMs = state.nextAlarmAt,
+                tookOver = expired.toList(),
+            ),
+        )
+    }
+
+    return VintoJson.encodeToString(
+        LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt),
+    )
 }
 
 /**
@@ -640,6 +868,18 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
 /** Exposed for the gate harness; `SEAT_COUNT` is a design constant, not a setting. */
 @JsExport
 fun seatCount(): Int = SEAT_COUNT
+
+/**
+ * The earliest deadline this room is waiting on, or 0 for none.
+ *
+ * Exported rather than recomputed in JavaScript, which is where the first version of this put
+ * it: five deadlines duplicated across two languages is a drift waiting to happen, and the
+ * symptom would be an alarm that fires at the wrong time — which looks like nothing at all
+ * until a room fails to clean itself up.
+ */
+@JsExport
+fun nextAlarmAt(stateJson: String): Double =
+    VintoJson.decodeFromString(RoomState.serializer(), stateJson).nextAlarmAt ?: 0.0
 
 /** The countdown length, so a harness cannot drift from the implementation. */
 @JsExport

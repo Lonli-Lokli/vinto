@@ -30,7 +30,7 @@ console.log('\nRoom running the real engine\n');
 // --- dealing ---------------------------------------------------------------------------
 const SEED = 1234;
 const NOW = 1_000_000;
-let stateJson = newRoom('gate-room', SEED, 'moderate');
+let stateJson = newRoom('gate-room', SEED, 'moderate', NOW);
 let state = parse(stateJson);
 
 check('the room has four seats', state.seats.length === seatCount(), `${state.seats.length}`);
@@ -68,7 +68,7 @@ state = parse(stateJson);
 check('a real game was dealt', state.game.players.length === 4);
 check('every player holds five cards', state.game.players.every((p) => p.cards.length === 5));
 check('the same seed deals the same table',
-  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate'))) !== JSON.stringify(state));
+  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate', NOW))) !== JSON.stringify(state));
 
 // --- the token is a credential, not a label ---------------------------------------------
 state = parse(stateJson);
@@ -88,9 +88,9 @@ check('a token resolves to its seat', seatForToken(stateJson, TOKEN_A) === 0);
 check('an unissued token resolves to nothing', seatForToken(stateJson, TOKEN_UNKNOWN) === -1);
 check(
   'sharing a nickname does not share a seat',
-  parse(joinRoom(JSON.stringify(parse(newRoom('n', SEED, 'moderate'))), 'tok1', 'Ada', NOW)).seat === 0 &&
+  parse(joinRoom(JSON.stringify(parse(newRoom('n', SEED, 'moderate', NOW))), 'tok1', 'Ada', NOW)).seat === 0 &&
     parse(joinRoom(
-      JSON.stringify(parse(joinRoom(newRoom('n', SEED, 'moderate'), 'tok1', 'Ada', NOW)).state),
+      JSON.stringify(parse(joinRoom(newRoom('n', SEED, 'moderate', NOW), 'tok1', 'Ada', NOW)).state),
       'tok2', 'Ada', NOW,
     )).seat === 1,
 );

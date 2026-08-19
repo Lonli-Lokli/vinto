@@ -14,8 +14,8 @@
 
 import {
   newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
-  addBot, removeBot, startGame, lobbyView,
-  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize,
+  addBot, removeBot, startGame, lobbyView, updatePresence, onAlarm, nextAlarmAt,
+  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
@@ -118,6 +118,16 @@ export class Registry {
       });
     }
 
+    if (request.method === 'POST' && url.pathname === '/touch') {
+      const body = await request.json();
+      await this.ctx.storage.put(
+        REGISTRY_KEY,
+        touchRoom(registryJson, body.code ?? '', body.humans ?? 0, body.seatsFilled ?? 0,
+          body.startsAtEpochMs ?? 0),
+      );
+      return Response.json({ ok: true });
+    }
+
     if (request.method === 'POST' && url.pathname === '/forget') {
       const code = url.searchParams.get('code') ?? '';
       await this.ctx.storage.put(REGISTRY_KEY, forgetRoom(registryJson, code));
@@ -149,7 +159,7 @@ export class Room {
       ? Number(this.env.TEST_SEED)
       : crypto.getRandomValues(new Uint32Array(1))[0];
 
-    const fresh = newRoom(roomId, seed, difficulty);
+    const fresh = newRoom(roomId, seed, difficulty, Date.now());
     await this.ctx.storage.put(ROOM_KEY, fresh);
     return fresh;
   }
@@ -195,9 +205,46 @@ export class Room {
   async #save(stateJson) {
     await this.ctx.storage.put(ROOM_KEY, stateJson);
 
-    const startsAt = JSON.parse(stateJson).startsAtEpochMs;
-    if (startsAt) await this.ctx.storage.setAlarm(startsAt);
+    // One alarm, five possible deadlines. The room works out which is soonest; scheduling it
+    // here rather than at each call site is what stops a transition writing a deadline and
+    // forgetting to wake for it — a failure that looks like a slow lobby, not a broken one.
+    // The room works out which of its five deadlines is soonest. Computing that here instead
+    // would mean the same rule in two languages, and the symptom of drift would be an alarm
+    // at the wrong time — which looks like nothing at all until a room fails to clean up.
+    const at = nextAlarmAt(stateJson);
+    if (at > 0) await this.ctx.storage.setAlarm(at);
     else await this.ctx.storage.deleteAlarm();
+  }
+
+  /** Seats with a socket open, which is what every deadline is computed from. */
+  #connectedSeats() {
+    return this.ctx.getWebSockets()
+      .map((socket) => (socket.deserializeAttachment() ?? {}).seat)
+      .filter((seat) => seat !== null && seat !== undefined);
+  }
+
+  /** Recomputes the deadlines from who is actually here, and reschedules. */
+  async #refreshPresence(stateJson) {
+    const result = JSON.parse(
+      updatePresence(stateJson, this.#connectedSeats().join(','), Date.now()),
+    );
+    const nextJson = JSON.stringify(result.state);
+    await this.#save(nextJson);
+    return nextJson;
+  }
+
+  /** Tells the registry what a lobby browser would want to know, and forgets a dead room. */
+  async #tellRegistry(path, body) {
+    try {
+      const registry = this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry'));
+      await registry.fetch(new Request(`https://registry${path}`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }));
+    } catch {
+      // A registry that is briefly unreachable must not take a room down with it. The public
+      // list going stale is recoverable; a game dying because a listing failed is not.
+    }
   }
 
   /**
@@ -210,16 +257,46 @@ export class Room {
     const stateJson = await this.ctx.storage.get(ROOM_KEY);
     if (!stateJson) return;
 
-    const result = JSON.parse(startGame(stateJson, Date.now()));
-    if (result.error) return; // The room stopped being startable while the alarm was pending.
+    // The room decides what was due. It is deliberately not told which alarm fired, because
+    // after an eviction, or a late wake, more than one deadline may have passed.
+    const result = JSON.parse(onAlarm(stateJson, Date.now()));
+
+    if (result.deleted) {
+      const code = JSON.parse(stateJson).roomId.replace(/^room-/, '');
+      await this.#tellRegistry('/forget', { code });
+      this.#broadcast({ type: 'closed', reason: 'the room ended' });
+      for (const socket of this.ctx.getWebSockets()) {
+        try { socket.close(1000, 'room closed'); } catch { /* already gone */ }
+      }
+      await this.ctx.storage.deleteAll();
+      return;
+    }
 
     const nextJson = JSON.stringify(result.state);
     await this.#save(nextJson);
-    this.#sendPerSeat((seat) => ({
-      type: 'started',
-      view: this.#viewFor(nextJson, seat),
-      nextIndex: result.state.log.length,
-    }));
+
+    if (result.started) {
+      return this.#sendPerSeat((seat) => ({
+        type: 'started',
+        view: this.#viewFor(nextJson, seat),
+        nextIndex: result.state.log.length,
+      }));
+    }
+
+    if (result.tookOver.length > 0) {
+      return this.#sendPerSeat((seat) => ({
+        type: 'events',
+        events: result.state.log.slice(JSON.parse(stateJson).log.length),
+        nextIndex: result.state.log.length,
+        view: this.#viewFor(nextJson, seat),
+      }));
+    }
+
+    if (result.state.phase === 'FINISHED') {
+      return this.#broadcast({ type: 'ended', reason: 'not enough players' });
+    }
+
+    return undefined;
   }
 
   /** The lobby as everyone in it sees it: seats and a countdown, never hands or hashes. */
@@ -334,7 +411,11 @@ export class Room {
           lobby: JSON.parse(lobbyView(savedJson, Date.now())),
           view: this.#viewFor(savedJson, result.seat),
         }));
-        return this.#broadcastLobby(savedJson);
+        // A socket arriving cancels a grace and may cancel the lonely clock, so presence is
+        // recomputed here rather than only on disconnect.
+        const withPresence = await this.#refreshPresence(savedJson);
+        await this.#reflectInRegistry(withPresence);
+        return this.#broadcastLobby(withPresence);
       }
 
       // --- lobby seat management (design R2a) ---------------------------------------------
@@ -359,6 +440,7 @@ export class Room {
 
         const nextJson = JSON.stringify(result.state);
         await this.#save(nextJson);
+        await this.#reflectInRegistry(nextJson);
         return this.#broadcastLobby(nextJson);
       }
 
@@ -421,11 +503,36 @@ export class Room {
     }
   }
 
+  /**
+   * Tells the registry what a lobby browser wants: how full, and how soon it starts.
+   *
+   * On transitions rather than on a timer, so the write count is bounded by play. A private
+   * room is touched too — the registry knows about it either way, and branching here would be
+   * one more thing to get wrong for no saving.
+   */
+  async #reflectInRegistry(stateJson) {
+    const state = JSON.parse(stateJson);
+    await this.#tellRegistry('/touch', {
+      code: state.roomId.replace(/^room-/, ''),
+      humans: state.seats.filter((s) => s.tokenHash !== null).length,
+      seatsFilled: state.seats.filter((s) => s.tokenHash !== null || s.isBot).length,
+      startsAtEpochMs: state.startsAtEpochMs ?? 0,
+    });
+  }
+
   async webSocketClose(ws, code, reason, wasClean) {
     // The seat is intentionally kept: design D9 has a disconnected human's seat played by a
     // bot after a grace period, and joinRoom is idempotent by *token* so they get it back —
     // and only they can, which is the whole point of R3.
     ws.close(code === 1006 ? 1000 : code, reason);
+
+    // Closing starts the clocks: a grace on this seat, and the lonely clock if the table has
+    // dropped below two people. Both are computed from who is left, not from who just went.
+    const stateJson = await this.ctx.storage.get(ROOM_KEY);
+    if (stateJson) {
+      const refreshed = await this.#refreshPresence(stateJson);
+      this.#broadcastLobby(refreshed);
+    }
   }
 
   async webSocketError(ws, error) {

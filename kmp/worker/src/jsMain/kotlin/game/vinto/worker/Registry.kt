@@ -37,6 +37,10 @@ data class RegisteredRoom(
     val roomId: String,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val isPublic: Boolean = false,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val hostNickname: String? = null,
+    /** What a browser needs to decide whether to join: how full, and how soon. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val humans: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val seatsFilled: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -146,6 +150,43 @@ fun forgetRoom(registryJson: String, code: String): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     return VintoJson.encodeToString(
         state.copy(rooms = state.rooms.filterNot { it.code == code.uppercase() }),
+    )
+}
+
+/**
+ * Records what a lobby browser needs to see without opening a socket.
+ *
+ * Called by the room on the transitions that change it — a countdown starting or being
+ * cancelled, a seat filling — rather than on a timer, so the write count is bounded by play
+ * rather than by clock ticks.
+ */
+@JsExport
+fun touchRoom(
+    registryJson: String,
+    code: String,
+    humans: Int,
+    seatsFilled: Int,
+    startsAtEpochMs: Double,
+): String {
+    val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+    val wanted = code.uppercase()
+
+    return VintoJson.encodeToString(
+        state.copy(
+            rooms = state.rooms.map {
+                if (it.code == wanted) {
+                    it.copy(
+                        humans = humans,
+                        seatsFilled = seatsFilled,
+                        // Zero means "no countdown"; a nullable Double across the JS boundary
+                        // is more trouble than the sentinel is worth here.
+                        startsAtEpochMs = startsAtEpochMs.takeIf { at -> at > 0 },
+                    )
+                } else {
+                    it
+                }
+            },
+        ),
     )
 }
 

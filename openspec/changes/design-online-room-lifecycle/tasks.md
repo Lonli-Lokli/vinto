@@ -35,24 +35,24 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 - [x] 3.4 A human displaces a bot in `LOBBY`/`STARTING`; a bot holding a disconnected human's
       seat is not displaceable, because that seat belongs to its token
 - [x] 3.5 The countdown is broadcast to everyone in the room (`type: 'lobby'`, carrying
-      `msUntilStart`). **Not yet reflected in the registry listing** — that is a write to the
-      registry on every countdown transition, and it is worth doing alongside the room→registry
-      call that task 4.5 already needs, rather than inventing a second one now
+      `msUntilStart`) **and reflected in the registry listing** — `touchRoom` carries humans,
+      seats filled and `startsAtEpochMs`, written on transitions rather than on a timer, so the
+      write count is bounded by play. Landed with 4.5, which needed the same room→registry call
 - [x] 3.6 Gate: a lone player with three bots never starts; a forced start is undone by removing
       the bot; a seat emptied at t=7s restarts the full countdown; the countdown survives an
       eviction (driven by firing the alarm, not by waiting)
 
 ## 4. Lifecycle
 
-- [ ] 4.1 Room states `LOBBY → STARTING → PLAYING ⇄ BETWEEN_ROUNDS → FINISHED`, with the alarm
+- [x] 4.1 Room states `LOBBY → STARTING → PLAYING ⇄ BETWEEN_ROUNDS → FINISHED`, with the alarm
       rescheduled on every transition
-- [ ] 4.2 Seat grace (30 s) → bot takes over, seat stays reserved by token
-- [ ] 4.3 Lonely grace (60 s below two humans, mid-session) → the room ends and deletes itself,
+- [x] 4.2 Seat grace (30 s) → bot takes over, seat stays reserved by token
+- [x] 4.3 Lonely grace (60 s below two humans, mid-session) → the room ends and deletes itself,
       running in parallel with seat grace rather than instead of it
-- [ ] 4.4 Room TTL (2 min with no human), lobby TTL (10 min unstarted), finished TTL (10 min)
-- [ ] 4.5 Deletion tells the registry, so the public list cannot outlive its rooms
-- [ ] 4.6 Reconnect after a takeover tells the client its hand changed while it was away
-- [ ] 4.7 Gate: an abandoned room is actually gone — asserted by a later join being refused,
+- [x] 4.4 Room TTL (2 min with no human), lobby TTL (10 min unstarted), finished TTL (10 min)
+- [x] 4.5 Deletion tells the registry, so the public list cannot outlive its rooms
+- [x] 4.6 Reconnect after a takeover tells the client its hand changed while it was away
+- [x] 4.7 Gate: an abandoned room is actually gone — asserted by a later join being refused,
       with the alarm driven rather than waited for; and a game that drops to one human ends
 
 ## 5. Abuse limits

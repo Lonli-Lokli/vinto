@@ -23,7 +23,7 @@ const parse = JSON.parse;
 const T0 = 1_000_000;
 const COUNTDOWN = countdownMs();
 
-const fresh = () => newRoom('lobby-room', 4242, 'moderate');
+const fresh = () => newRoom('lobby-room', 4242, 'moderate', T0);
 const join = (json, token, name, now) => parse(joinRoom(json, token, name, now));
 const bot = (json, token, now) => parse(addBot(json, token, now));
 const unbot = (json, token, seat, now) => parse(removeBot(json, token, seat, now));
