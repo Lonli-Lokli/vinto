@@ -73,13 +73,17 @@ const roomResponse = await fetch(`${BASE}/?room=${minted.code}`);
 check('the minted code reaches a room', roomResponse.status === 200, `status ${roomResponse.status}`);
 
 const room = await roomResponse.json();
-check('which is a real dealt game', room.game?.players?.length === 4);
+// A room is a *lobby* now: reaching it does not deal a game, and nothing is dealt until two
+// people and a full table have run the countdown down (design R2a).
+check('which is a lobby with four seats', room.phase === 'LOBBY' && room.seats.length === 4);
+check('and no game dealt yet', room.game === null);
 check('the room object now exists', (await roomObjectCount()) === before + 1);
 
 check(
   'the same code twice is the same room, not a second one',
-  (await (await fetch(`${BASE}/?room=${minted.code}`)).json()).game.gameId === room.game.gameId,
+  (await (await fetch(`${BASE}/?room=${minted.code}`)).json()).roomId === room.roomId,
 );
+check('and reaching it twice created only one object', (await roomObjectCount()) === before + 1);
 
 // --- public and private -------------------------------------------------------------------
 const publicRoom = await (await fetch(`${BASE}/rooms`, {

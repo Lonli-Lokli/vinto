@@ -54,6 +54,17 @@ import kotlin.random.Random
  */
 private const val SEAT_COUNT = 4
 
+/**
+ * A game needs two people (design R2a).
+ *
+ * One human against three bots is precisely what `LocalGameSession` does on the device, for
+ * free and offline. Hosting it would cost CPU and buy nothing, so the room refuses to.
+ */
+private const val MIN_HUMANS = 2
+
+/** Long enough to notice and object to, short enough not to be a wait. */
+private const val COUNTDOWN_MS = 10_000.0
+
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
 
@@ -61,8 +72,6 @@ private const val MAX_BOT_STEPS = 200
 @Serializable
 data class Seat(
     val index: Int,
-    /** The engine's player id for this seat, fixed when the room is dealt. */
-    val playerId: String,
     /**
      * SHA-256 of the seat's token — never the token itself.
      *
@@ -78,9 +87,21 @@ data class Seat(
      * seat; nothing else in the room has to change for that to work.
      */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val ownerId: String? = null,
+    /**
+     * A bot somebody added to fill the table (design R2a).
+     *
+     * Distinct from `tokenHash == null`, and the distinction is load-bearing: a seat can be a
+     * bot *and* still belong to a token, which is what a disconnected human's seat looks like
+     * once a bot has taken it over. Only the first kind may be displaced by a newcomer.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val isBot: Boolean = false,
+    /** The engine player behind this seat once the game is dealt; null in the lobby. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val playerId: String? = null,
 ) {
-    /** An unclaimed seat is played by a bot, per design D9. */
-    val occupied: Boolean get() = tokenHash != null
+    val occupied: Boolean get() = tokenHash != null || isBot
+
+    /** A seat a newcomer may take: filler, not somebody's place. */
+    val isFiller: Boolean get() = isBot && tokenHash == null
 }
 
 /**
@@ -100,6 +121,16 @@ data class LoggedAction(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val byBot: Boolean = false,
 )
 
+/**
+ * Where a room is in its life (design R2a, R5).
+ *
+ * `LOBBY` and `STARTING` differ only by whether a countdown is running, but they are separate
+ * states rather than a nullable deadline because the transition between them is where the
+ * alarm is set and cleared, and a transition is easier to get right than an invariant.
+ */
+@Serializable
+enum class RoomPhase { LOBBY, STARTING, PLAYING, BETWEEN_ROUNDS, FINISHED }
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RoomState(
@@ -107,10 +138,31 @@ data class RoomState(
     val seed: Long,
     val difficulty: Difficulty,
     val seats: List<Seat>,
-    val game: GameState,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val phase: RoomPhase = RoomPhase.LOBBY,
+    /**
+     * When the countdown expires, in epoch milliseconds. Null unless [phase] is `STARTING`.
+     *
+     * Wall clock, and therefore not the engine's business: it arrives from `index.mjs` on
+     * every call that could move it, the same way the seed and the tokens do.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
+    /** Null until the game is dealt, which happens when the countdown expires — not before. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val game: GameState? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val log: List<LoggedAction> = emptyList(),
 ) {
     val nextIndex: Int get() = log.size
+
+    val humanCount: Int get() = seats.count { it.tokenHash != null }
+
+    val allSeatsFilled: Boolean get() = seats.all { it.occupied }
+
+    /**
+     * Whether a game could start right now.
+     *
+     * Two humans is the floor and it is not negotiable: one person against three bots is what
+     * the device does for free, so hosting it buys nothing (design R1).
+     */
+    val canStart: Boolean get() = allSeatsFilled && humanCount >= MIN_HUMANS
 }
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -150,16 +202,37 @@ private data class ViewResult(
 @JsExport
 fun newRoom(roomId: String, seed: Double, difficulty: String): String {
     val chosen = Difficulty.entries.firstOrNull { it.serialName == difficulty } ?: Difficulty.MODERATE
-    val game = initializeGame(seed.toLong(), chosen)
 
     val state = RoomState(
         roomId = roomId,
         seed = seed.toLong(),
         difficulty = chosen,
-        seats = game.players.mapIndexed { index, player -> Seat(index = index, playerId = player.id) },
-        game = game,
+        seats = (0 until SEAT_COUNT).map { Seat(index = it) },
+        phase = RoomPhase.LOBBY,
     )
     return VintoJson.encodeToString(state)
+}
+
+/**
+ * Recomputes whether a countdown should be running, after any seat change.
+ *
+ * The deadline is set **only on the transition into `STARTING`**, never refreshed while it is
+ * already running. That is what makes the two rules in R2a hold at once: a human taking a
+ * bot's seat at t=8s does not push the start back, while emptying a seat and refilling it
+ * gives everybody the full ten seconds again — because emptying passed through `LOBBY` first.
+ */
+private fun withCountdown(state: RoomState, nowMs: Double): RoomState = when {
+    state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING -> state
+
+    state.canStart && state.phase == RoomPhase.LOBBY ->
+        state.copy(phase = RoomPhase.STARTING, startsAtEpochMs = nowMs + COUNTDOWN_MS)
+
+    state.canStart -> state
+
+    state.phase == RoomPhase.STARTING ->
+        state.copy(phase = RoomPhase.LOBBY, startsAtEpochMs = null)
+
+    else -> state
 }
 
 /**
@@ -169,43 +242,156 @@ fun newRoom(roomId: String, seed: Double, difficulty: String): String {
  * is the whole reconnect story in design D9 — and the reason a dropped player's seat can be
  * played by a bot in the meantime without losing it.
  */
+@Suppress("ReturnCount")
 @JsExport
-fun joinRoom(stateJson: String, token: String, nickname: String): String {
+fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val hash = Sha256.hex(token)
 
-    // A token that already holds a seat returns to it. This is the reconnect story, and it
-    // is safe in a way the old `clientId` was not: knowing somebody's *name* proves nothing,
-    // and the only thing that resumes a seat is the secret the room issued for it.
+    // A token that already holds a seat returns to it. This is the reconnect story, and it is
+    // safe in a way the old `clientId` was not: knowing somebody's *name* proves nothing, and
+    // the only thing that resumes a seat is the secret the room issued for it.
     state.seats.firstOrNull { it.tokenHash == hash }?.let {
         return VintoJson.encodeToString(JoinResult(state, it.index))
     }
 
-    val free = state.seats.firstOrNull { !it.occupied }
+    if (state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "the game has already started"))
+    }
+
+    // A free seat first; failing that, displace a bot somebody added as filler. A bot playing
+    // a *disconnected human's* seat is not filler and is not displaceable — that seat belongs
+    // to its token, and a stranger taking it while its owner reconnects would make the token
+    // guarantee meaningless in the one situation it exists for.
+    val target = state.seats.firstOrNull { !it.occupied }
+        ?: state.seats.firstOrNull { it.isFiller }
         ?: return VintoJson.encodeToString(JoinResult(state, -1, "room is full"))
 
     val seated = state.seats.map {
-        if (it.index == free.index) it.copy(tokenHash = hash, nickname = nickname) else it
-    }
-
-    // The engine player behind the seat becomes a human, and forgets what it was dealt.
-    //
-    // `initializeGame` deals one human and three bots, and the bots start knowing two of
-    // their own cards — the peek every player is entitled to, taken for them because a bot
-    // has no setup step. Seating a person on one of those without this would hand them two
-    // cards they never looked at, and would leave the room's own bot driver playing that
-    // seat, because `BotRunner` decides who it may act for from `isBot`.
-    val players = state.game.players.map { player ->
-        if (player.id == state.seats[free.index].playerId) {
-            player.copy(isHuman = true, isBot = false, knownCardPositions = emptyList())
+        if (it.index == target.index) {
+            it.copy(tokenHash = hash, nickname = nickname, isBot = false)
         } else {
-            player
+            it
         }
     }
 
-    return VintoJson.encodeToString(
-        JoinResult(state.copy(seats = seated, game = state.game.copy(players = players)), free.index),
+    val next = withCountdown(state.copy(seats = seated), nowMs)
+    return VintoJson.encodeToString(JoinResult(next, target.index))
+}
+
+/**
+ * Adds a bot to the first empty seat.
+ *
+ * **Any seated player may do this, not only whoever made the room.** A lobby where only the
+ * creator can act stalls the moment the creator is the one who wandered off, and the countdown
+ * is what keeps the flattening safe: a start somebody else did not want is undoable for ten
+ * seconds by taking the bot back out.
+ */
+@Suppress("ReturnCount")
+@JsExport
+fun addBot(stateJson: String, token: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    if (state.seats.none { it.tokenHash == Sha256.hex(token) }) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "only a seated player may add a bot"))
+    }
+    if (state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "the game has already started"))
+    }
+
+    val free = state.seats.firstOrNull { !it.occupied }
+        ?: return VintoJson.encodeToString(JoinResult(state, -1, "every seat is taken"))
+
+    val seats = state.seats.map {
+        if (it.index == free.index) it.copy(isBot = true, nickname = "Bot ${free.index + 1}") else it
+    }
+
+    val next = withCountdown(state.copy(seats = seats), nowMs)
+    return VintoJson.encodeToString(JoinResult(next, free.index))
+}
+
+/**
+ * Takes a bot back out, which cancels a countdown if one was running.
+ *
+ * This is the other half of "anyone may add one". Without it, adding a bot is a unilateral
+ * decision to start the game; with it, it is a proposal that stands for ten seconds.
+ */
+@Suppress("ReturnCount")
+@JsExport
+fun removeBot(stateJson: String, token: String, seatIndex: Int, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    if (state.seats.none { it.tokenHash == Sha256.hex(token) }) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "only a seated player may remove a bot"))
+    }
+    if (state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "the game has already started"))
+    }
+
+    val seat = state.seats.getOrNull(seatIndex)
+        ?: return VintoJson.encodeToString(JoinResult(state, -1, "unknown seat $seatIndex"))
+    if (!seat.isFiller) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "seat $seatIndex is not a bot"))
+    }
+
+    val seats = state.seats.map {
+        if (it.index == seatIndex) Seat(index = it.index) else it
+    }
+
+    val next = withCountdown(state.copy(seats = seats), nowMs)
+    return VintoJson.encodeToString(JoinResult(next, seatIndex))
+}
+
+/**
+ * Deals the game. Called when the countdown expires — from the alarm, never from a message.
+ *
+ * Dealing here rather than at room creation is what makes the lobby honest. `initializeGame`
+ * deals one human and three bots, and its bots begin knowing two of their own cards — the peek
+ * a person has to take for themselves. Handing a seat like that to somebody who joined later
+ * would give them two cards they never looked at.
+ */
+@Suppress("ReturnCount")
+@JsExport
+fun startGame(stateJson: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    if (state.phase != RoomPhase.STARTING) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "the room is not starting"))
+    }
+    if (!state.canStart) {
+        return VintoJson.encodeToString(
+            JoinResult(state, -1, "a game needs $MIN_HUMANS humans and four seats"),
+        )
+    }
+    state.startsAtEpochMs?.let { deadline ->
+        if (nowMs < deadline) {
+            return VintoJson.encodeToString(JoinResult(state, -1, "the countdown has not expired"))
+        }
+    }
+
+    val dealt = initializeGame(state.seed, state.difficulty)
+
+    // The engine's idea of who is human is made to match the room's. A seat with a token is a
+    // person and starts having seen nothing; a seat without one is a bot and keeps its peek.
+    val players = dealt.players.mapIndexed { index, player ->
+        val seat = state.seats[index]
+        if (seat.tokenHash != null) {
+            player.copy(isHuman = true, isBot = false, knownCardPositions = emptyList())
+        } else {
+            player.copy(isHuman = false, isBot = true)
+        }
+    }
+
+    val seats = state.seats.mapIndexed { index, seat -> seat.copy(playerId = players[index].id) }
+
+    val started = state.copy(
+        phase = RoomPhase.PLAYING,
+        startsAtEpochMs = null,
+        seats = seats,
+        game = dealt.copy(players = players),
     )
+
+    return VintoJson.encodeToString(JoinResult(playBots(started), 0))
 }
 
 /**
@@ -227,6 +413,11 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
         ?: return VintoJson.encodeToString(ActionResult(state, error = "no seat holds that token"))
     val seat = seatEntry.index
 
+    // No game, nothing to act on. A lobby refuses game actions rather than dealing one on
+    // demand, or the countdown would be advisory.
+    val game = state.game
+        ?: return VintoJson.encodeToString(ActionResult(state, error = "the game has not started"))
+
     val action = try {
         VintoJson.decodeFromString(GameAction.serializer(), actionJson)
     } catch (failure: IllegalArgumentException) {
@@ -243,14 +434,14 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
         }
     }
 
-    when (val validation = ActionValidator.validate(state.game, action)) {
+    when (val validation = ActionValidator.validate(game, action)) {
         is Validation.Invalid ->
             return VintoJson.encodeToString(ActionResult(state, error = validation.reason))
 
         Validation.Valid -> Unit
     }
 
-    val reduced = when (val result = GameEngine.reduce(state.game, action)) {
+    val reduced = when (val result = GameEngine.reduce(game, action)) {
         is ReduceResult.Success -> result.state
         is ReduceResult.Failure -> return VintoJson.encodeToString(ActionResult(state, error = result.reason))
     }
@@ -258,7 +449,7 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
     val accepted = LoggedAction(
         index = state.nextIndex,
         seat = seat,
-        playerId = seatEntry.playerId,
+        playerId = seatEntry.playerId ?: "",
         action = action,
     )
 
@@ -276,24 +467,30 @@ fun applyAction(stateJson: String, token: String, actionJson: String): String {
  * driver that it would refuse from a player, the two would be playing different games.
  */
 private fun playBots(start: RoomState): RoomState {
+    if (start.game == null) return start
+
     val runner = BotRunner(start.difficulty, Random(start.seed))
     var state = start
     var steps = 0
 
-    while (steps++ < MAX_BOT_STEPS && state.game.phase != GamePhase.SCORING) {
-        val action = runner.nextAction(state.game) ?: break
+    while (steps++ < MAX_BOT_STEPS && state.game?.phase != GamePhase.SCORING) {
+        val game = state.game ?: break
+        val action = runner.nextAction(game) ?: break
         val actor = actorOf(action)
         val seat = state.seats.firstOrNull { it.playerId == actor }
 
         // Three reasons to stop, all of them "this is not the room's move to make":
-        //  - it belongs to a seated person, whatever the runner thinks;
+        //  - it belongs to a seated *person*, whatever the runner thinks. `tokenHash`, not
+        //    `occupied`: since the lobby landed, an occupied seat may be a bot the room is
+        //    supposed to play, and using `occupied` here made the room refuse to move its
+        //    own bots — a game that stopped dead the first time a window opened;
         //  - the validator refuses it, which would mean the room and its own driver
         //    disagreed about the rules;
         //  - the engine refuses it after validation, which should be impossible.
         val reduced = when {
-            seat != null && seat.occupied -> null
-            ActionValidator.validate(state.game, action) is Validation.Invalid -> null
-            else -> (GameEngine.reduce(state.game, action) as? ReduceResult.Success)?.state
+            seat != null && seat.tokenHash != null -> null
+            ActionValidator.validate(game, action) is Validation.Invalid -> null
+            else -> (GameEngine.reduce(game, action) as? ReduceResult.Success)?.state
         } ?: break
 
         state = state.copy(
@@ -323,8 +520,12 @@ fun viewForSeat(stateJson: String, seat: Int): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val seatEntry = state.seats.getOrNull(seat)
         ?: return VintoJson.encodeToString(ViewResult(error = "unknown seat $seat"))
+    val game = state.game
+        ?: return VintoJson.encodeToString(ViewResult(error = "the game has not started"))
+    val playerId = seatEntry.playerId
+        ?: return VintoJson.encodeToString(ViewResult(error = "seat $seat has no player yet"))
 
-    return VintoJson.encodeToString(ViewResult(view = projectView(state.game, seatEntry.playerId)))
+    return VintoJson.encodeToString(ViewResult(view = projectView(game, playerId)))
 }
 
 /**
@@ -386,6 +587,60 @@ private fun actorOf(action: GameAction): String? = when (action) {
     is GameAction.Empty -> null
 }
 
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private data class LobbySeat(
+    val index: Int,
+    val occupied: Boolean,
+    val isBot: Boolean,
+    /** True only for a bot somebody added as filler — the ones a newcomer may displace. */
+    val removable: Boolean,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String? = null,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private data class LobbyView(
+    val phase: RoomPhase,
+    val seats: List<LobbySeat>,
+    val humans: Int,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val msUntilStart: Double? = null,
+)
+
+/**
+ * The lobby, as anybody in it may see it.
+ *
+ * Deliberately not [RoomState]: that holds token hashes and, once dealt, every hand. This is
+ * seat occupancy and a countdown, which is all a lobby screen needs and all it should get.
+ */
+@JsExport
+fun lobbyView(stateJson: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    return VintoJson.encodeToString(
+        LobbyView(
+            phase = state.phase,
+            seats = state.seats.map {
+                LobbySeat(
+                    index = it.index,
+                    occupied = it.occupied,
+                    isBot = it.isBot,
+                    removable = it.isFiller,
+                    nickname = it.nickname,
+                )
+            },
+            humans = state.humanCount,
+            startsAtEpochMs = state.startsAtEpochMs,
+            msUntilStart = state.startsAtEpochMs?.let { maxOf(0.0, it - nowMs) },
+        ),
+    )
+}
+
 /** Exposed for the gate harness; `SEAT_COUNT` is a design constant, not a setting. */
 @JsExport
 fun seatCount(): Int = SEAT_COUNT
+
+/** The countdown length, so a harness cannot drift from the implementation. */
+@JsExport
+fun countdownMs(): Double = COUNTDOWN_MS

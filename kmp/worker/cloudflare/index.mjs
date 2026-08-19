@@ -14,6 +14,7 @@
 
 import {
   newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
+  addBot, removeBot, startGame, lobbyView,
   newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -182,8 +183,49 @@ export class Room {
     return result.view ?? null;
   }
 
+  /** Seats as everybody else may see them, with the lobby's own occupancy. */
+
+  /**
+   * Stores the room and keeps the alarm in step with it.
+   *
+   * One function rather than two calls, because the failure it prevents is invisible: a
+   * transition that writes `startsAtEpochMs` and forgets to schedule leaves a countdown that
+   * never fires, and a lobby that sits there forever looks exactly like a slow one.
+   */
   async #save(stateJson) {
     await this.ctx.storage.put(ROOM_KEY, stateJson);
+
+    const startsAt = JSON.parse(stateJson).startsAtEpochMs;
+    if (startsAt) await this.ctx.storage.setAlarm(startsAt);
+    else await this.ctx.storage.deleteAlarm();
+  }
+
+  /**
+   * The countdown expiring.
+   *
+   * This is why the deadline is an alarm and not a `setTimeout`: a lobby with nobody typing is
+   * precisely when the object is evicted, and an in-memory timer would go with it.
+   */
+  async alarm() {
+    const stateJson = await this.ctx.storage.get(ROOM_KEY);
+    if (!stateJson) return;
+
+    const result = JSON.parse(startGame(stateJson, Date.now()));
+    if (result.error) return; // The room stopped being startable while the alarm was pending.
+
+    const nextJson = JSON.stringify(result.state);
+    await this.#save(nextJson);
+    this.#sendPerSeat((seat) => ({
+      type: 'started',
+      view: this.#viewFor(nextJson, seat),
+      nextIndex: result.state.log.length,
+    }));
+  }
+
+  /** The lobby as everyone in it sees it: seats and a countdown, never hands or hashes. */
+  #broadcastLobby(stateJson) {
+    const view = JSON.parse(lobbyView(stateJson, Date.now()));
+    this.#broadcast({ type: 'lobby', lobby: view });
   }
 
   async fetch(request) {
@@ -269,7 +311,7 @@ export class Room {
         // A token in the message means "I already have a seat here"; no token means "give
         // me one". Either way the seat comes back from the room, never from the client.
         const token = msg.token ?? mintToken();
-        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? ''));
+        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now()));
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }
@@ -279,18 +321,45 @@ export class Room {
 
         // The one and only message that carries the raw token. It goes to this socket alone;
         // #sendPerSeat and #broadcast never see it, and no view contains it.
+        // In a lobby there is no game and therefore no view — `#viewFor` returns null and
+        // the client gets the lobby instead. Sending a made-up empty view would be worse
+        // than sending none: the client could not tell "not dealt" from "dealt, nothing to
+        // see", and those need different screens.
         ws.send(JSON.stringify({
           type: 'joined',
           seat: result.seat,
           token,
           seats: this.#publicSeats(result.state),
           nextIndex: result.state.log.length,
+          lobby: JSON.parse(lobbyView(savedJson, Date.now())),
           view: this.#viewFor(savedJson, result.seat),
         }));
-        return this.#broadcast(
-          { type: 'presence', seats: this.#publicSeats(result.state) },
-          null,
+        return this.#broadcastLobby(savedJson);
+      }
+
+      // --- lobby seat management (design R2a) ---------------------------------------------
+      //
+      // Any seated player, not only whoever made the room. The countdown is what keeps that
+      // safe: adding a bot is a proposal that stands for ten seconds, not a decision.
+      case 'add-bot':
+      case 'remove-bot': {
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before changing seats' }));
+        }
+
+        const result = JSON.parse(
+          msg.type === 'add-bot'
+            ? addBot(stateJson, token, Date.now())
+            : removeBot(stateJson, token, msg.seat ?? -1, Date.now()),
         );
+        if (result.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+        }
+
+        const nextJson = JSON.stringify(result.state);
+        await this.#save(nextJson);
+        return this.#broadcastLobby(nextJson);
       }
 
       case 'action': {

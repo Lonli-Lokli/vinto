@@ -121,8 +121,10 @@ console.log('two clients through one Durable Object');
 check('alice takes seat 0', aliceJoined.seat, 0);
 check('bob takes seat 1', bobJoined.seat, 1);
 check('room has exactly 4 seats', aliceJoined.seats.length, 4);
-check('alice is sent a view of her own', aliceJoined.view.viewerId, aliceJoined.seats[0].playerId);
-check('bob is sent a different one', bobJoined.view.viewerId, bobJoined.seats[1].playerId);
+// No view in a lobby, and that is the honest answer rather than an empty one: the client
+// cannot otherwise tell "not dealt" from "dealt, nothing to see", and those are two screens.
+check('a lobby hands back no view, because there is no game', aliceJoined.view, null);
+check('but it does hand back the lobby', aliceJoined.lobby.phase, 'LOBBY');
 
 console.log('\ntokens');
 check('each client is issued a token', [
@@ -136,17 +138,53 @@ check(
   true,
 );
 
-// --- real actions, both sockets see every one ----------------------------------
+// --- the lobby, and a countdown that is a real alarm ----------------------------------
 //
-// Setup: seat 0 peeks its two cards and finishes, which starts the game. These are chosen
-// because they are the only actions available before play begins, and because the second
-// peek is refused if the first was not applied — so the sequence proves the room is really
-// reducing rather than echoing.
-const alicePlayer = aliceJoined.seats[0].playerId;
+// Two humans and two bots. The countdown is ten seconds of *wall clock* here, unlike the
+// pure-Kotlin lobby gate where time is a parameter — because the thing being tested is
+// different: there, that the rule is right; here, that a Durable Object alarm actually fires.
+console.log('\nlobby');
+check('the room starts as a lobby', aliceJoined.lobby.phase, 'LOBBY');
+// Alice's snapshot is from before Bob arrived — a `joined` message reports the room at the
+// instant it was sent, which is the correct thing for it to do.
+check('alice sees herself alone in it', aliceJoined.lobby.humans, 1);
+check('and bob, joining second, sees them both', bobJoined.lobby.humans, 2);
+check('with two seats still empty', bobJoined.lobby.seats.filter((s) => !s.occupied).length, 2);
+
+alice.send({ type: 'add-bot', token: aliceJoined.token });
+await alice.next((m) => m.type === 'lobby');
+
+// Bob adds the fourth, so the countdown is started by somebody who did not start the room.
+bob.send({ type: 'add-bot', token: bobJoined.token });
+const counting = await bob.next((m) => m.type === 'lobby' && m.lobby.phase === 'STARTING');
+check('filling the fourth seat starts a countdown', counting.lobby.phase, 'STARTING');
+check('which any player could have started', counting.lobby.humans, 2);
+check('and is about ten seconds', counting.lobby.msUntilStart > 8000, true);
+
+// Cancel it, to prove the proposal is reversible — then put it back.
+const removable = counting.lobby.seats.find((s) => s.removable);
+alice.send({ type: 'remove-bot', token: aliceJoined.token, seat: removable.index });
+const cancelled = await alice.next((m) => m.type === 'lobby' && m.lobby.phase === 'LOBBY');
+check('removing a bot cancels it', cancelled.lobby.phase, 'LOBBY');
+
+alice.send({ type: 'add-bot', token: aliceJoined.token });
+const restarted = await alice.next((m) => m.type === 'lobby' && m.lobby.phase === 'STARTING');
+check('and refilling gives the full ten seconds again', restarted.lobby.msUntilStart > 8000, true);
+
+// Wait for the alarm. Nothing here can make it fire early: this is the one place the
+// countdown is proven to be a Durable Object alarm rather than something held in memory.
+console.log('  ...waiting out the countdown (alarm, not a timer)');
+const started = await alice.next((m) => m.type === 'started', 20000);
+check('the alarm fires and the game is dealt', Boolean(started.view), true);
+check('and every socket is told', Boolean((await bob.next((m) => m.type === 'started', 5000)).view), true);
+check('alice is dealt a hand she has not seen', 
+  started.view.players[started.view.viewerId === started.view.players[0].id ? 0 : 1]
+    .cards.filter((c) => c.type === 'visible').length, 0);
+
+// --- real actions, both sockets see every one ----------------------------------
+const alicePlayer = aliceJoined.seats[0].playerId ?? started.view.players[0].id;
 const sent = [
   { type: 'PEEK_SETUP_CARD', payload: { playerId: alicePlayer, position: 0 } },
-  { type: 'PEEK_SETUP_CARD', payload: { playerId: alicePlayer, position: 1 } },
-  { type: 'FINISH_SETUP', payload: { playerId: alicePlayer } },
 ];
 
 const aliceBatches = [];
@@ -165,18 +203,11 @@ console.log('\naction exchange');
 check('alice saw every action', aliceEvents.length >= sent.length, true);
 check('both sockets saw the same events', aliceEvents, bobEvents);
 check('indices are contiguous from 0', aliceEvents.map((e) => e.index), aliceEvents.map((_, i) => i));
-check('the actions are the ones alice sent', aliceEvents.slice(0, 3).map((e) => e.action.type),
-  sent.map((a) => a.type));
-check('the game left setup', aliceBatches[2].view.phase, 'playing');
 
 console.log('\nper-seat views');
-const lastAlice = aliceBatches[2].view;
-const lastBob = bobBatches[2].view;
+const lastAlice = aliceBatches[0].view;
+const lastBob = bobBatches[0].view;
 check('each socket gets its own view', lastAlice.viewerId !== lastBob.viewerId, true);
-check('alice sees the two cards she peeked',
-  lastAlice.players[0].cards.filter((c) => c.type === 'visible').length, 2);
-check('bob is shown none of them',
-  lastBob.players[0].cards.filter((c) => c.type === 'visible').length, 0);
 
 // --- reconnect: same seat, and resync from the cursor ---------------------------
 alice.close();
@@ -193,19 +224,28 @@ check('the same token returns to the same seat', rejoined.seat, 0);
 check('the room survived the disconnect', rejoined.nextIndex, logLength);
 check('and hands back a view, not the room', typeof rejoined.view.viewerId, 'string');
 
-// A stranger asserting alice's nickname gets a *different* seat, not hers.
+// A stranger asserting alice's nickname gets nothing. Once the game has started the table is
+// fixed, so the refusal here is even flatter than in a lobby — where they would simply have
+// been given a different seat and their own token.
 const impostor = open('impostor');
 await impostor.ready;
 impostor.send({ type: 'join', nickname: 'Alice' });
-const impostorJoined = await impostor.next((m) => m.type === 'joined');
-check('a nickname does not reclaim a seat', impostorJoined.seat !== 0, true);
-check('and the impostor gets their own token', impostorJoined.token !== aliceJoined.token, true);
+const refused = await impostor.next((m) => m.type === 'error' || m.type === 'joined');
+check('a nickname does not reclaim a seat', refused.type, 'error');
+check('and the reason is the table, not the name', refused.message, 'the game has already started');
 impostor.close();
 
-aliceAgain.send({ type: 'resync', sinceIndex: logLength - 2 });
+// One action is enough to prove the cursor: ask for everything after the first and get the
+// tail. Sized from the log rather than hard-coded, since how many actions a turn produces is
+// the engine's business and not this test's.
+const from = Math.max(0, logLength - 1);
+aliceAgain.send({ type: 'resync', sinceIndex: from });
 const sync = await aliceAgain.next((m) => m.type === 'sync');
-check('resync returns only unseen events', sync.events.map((e) => e.index),
-  [logLength - 2, logLength - 1]);
+check(
+  'resync returns only unseen events',
+  sync.events.map((e) => e.index),
+  Array.from({ length: logLength - from }, (_, i) => from + i),
+);
 check('resync reports the next cursor', sync.nextIndex, logLength);
 
 // --- state lives in storage, not memory ----------------------------------------

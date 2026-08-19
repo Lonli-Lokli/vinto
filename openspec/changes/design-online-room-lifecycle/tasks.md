@@ -28,14 +28,17 @@ independently verifiable through the gate harnesses; none of it needs the Compos
 
 ## 3. Lobby and start conditions
 
-- [ ] 3.1 Four seats; any seated player may add or remove a bot while the room has not started
-- [ ] 3.2 A game may not start with fewer than two humans, however the seats are filled
-- [ ] 3.3 The fourth seat filling begins a 10 s countdown, held on an **alarm** so it survives
+- [x] 3.1 Four seats; any seated player may add or remove a bot while the room has not started
+- [x] 3.2 A game may not start with fewer than two humans, however the seats are filled
+- [x] 3.3 The fourth seat filling begins a 10 s countdown, held on an **alarm** so it survives
       hibernation; emptying a seat cancels it and refilling restarts the full ten seconds
-- [ ] 3.4 A human displaces a bot in `LOBBY`/`STARTING`; a bot holding a disconnected human's
+- [x] 3.4 A human displaces a bot in `LOBBY`/`STARTING`; a bot holding a disconnected human's
       seat is not displaceable, because that seat belongs to its token
-- [ ] 3.5 The countdown is public: broadcast to the room and reflected in the registry listing
-- [ ] 3.6 Gate: a lone player with three bots never starts; a forced start is undone by removing
+- [x] 3.5 The countdown is broadcast to everyone in the room (`type: 'lobby'`, carrying
+      `msUntilStart`). **Not yet reflected in the registry listing** — that is a write to the
+      registry on every countdown transition, and it is worth doing alongside the room→registry
+      call that task 4.5 already needs, rather than inventing a second one now
+- [x] 3.6 Gate: a lone player with three bots never starts; a forced start is undone by removing
       the bot; a seat emptied at t=7s restarts the full countdown; the countdown survives an
       eviction (driven by firing the alarm, not by waiting)
 

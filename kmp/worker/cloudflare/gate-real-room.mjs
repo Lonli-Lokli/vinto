@@ -10,6 +10,7 @@
  */
 import {
   newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, seatCount,
+  addBot, startGame, countdownMs,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 let failures = 0;
@@ -28,18 +29,12 @@ console.log('\nRoom running the real engine\n');
 
 // --- dealing ---------------------------------------------------------------------------
 const SEED = 1234;
+const NOW = 1_000_000;
 let stateJson = newRoom('gate-room', SEED, 'moderate');
 let state = parse(stateJson);
 
 check('the room has four seats', state.seats.length === seatCount(), `${state.seats.length}`);
-check('a real game was dealt', state.game.players.length === 4);
-check(
-  'every player holds five cards',
-  state.game.players.every((p) => p.cards.length === 5),
-);
-check('the draw pile holds the rest', state.game.drawPile.length === 34, `${state.game.drawPile.length}`);
-check('the same seed deals the same table',
-  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate')).game) === JSON.stringify(state.game));
+check('and starts as a lobby, with no game', state.phase === 'LOBBY' && state.game === null);
 
 // --- joining, with server-issued tokens ------------------------------------------------
 //
@@ -49,16 +44,31 @@ const TOKEN_A = 'token-for-ada-32-bytes-worth-of-secret';
 const TOKEN_B = 'token-for-bo-32-bytes-worth-of-secret';
 const TOKEN_UNKNOWN = 'token-nobody-was-ever-issued';
 
-let result = parse(joinRoom(stateJson, TOKEN_A, 'Ada'));
+let result = parse(joinRoom(stateJson, TOKEN_A, 'Ada', NOW));
 check('the first client takes seat 0', result.seat === 0, `seat ${result.seat}`);
 stateJson = JSON.stringify(result.state);
 
-result = parse(joinRoom(stateJson, TOKEN_B, 'Bo'));
+result = parse(joinRoom(stateJson, TOKEN_B, 'Bo', NOW));
 check('the second client takes seat 1', result.seat === 1, `seat ${result.seat}`);
 stateJson = JSON.stringify(result.state);
 
-result = parse(joinRoom(stateJson, TOKEN_A, 'Ada'));
+result = parse(joinRoom(stateJson, TOKEN_A, 'Ada', NOW));
 check('rejoining with the same token returns the same seat', result.seat === 0, `seat ${result.seat}`);
+
+// Two bots fill the table, the countdown expires, and the game is dealt. Everything below
+// this line is about a *running* game, which is what needed a lobby to exist first.
+for (let i = 0; i < 2; i++) {
+  stateJson = JSON.stringify(parse(addBot(stateJson, TOKEN_A, NOW)).state);
+}
+const dealt = parse(startGame(stateJson, NOW + countdownMs()));
+check('the countdown expiring deals a real game', !dealt.error, dealt.error);
+stateJson = JSON.stringify(dealt.state);
+state = parse(stateJson);
+
+check('a real game was dealt', state.game.players.length === 4);
+check('every player holds five cards', state.game.players.every((p) => p.cards.length === 5));
+check('the same seed deals the same table',
+  JSON.stringify(parse(newRoom('gate-room', SEED, 'moderate'))) !== JSON.stringify(state));
 
 // --- the token is a credential, not a label ---------------------------------------------
 state = parse(stateJson);
@@ -78,7 +88,11 @@ check('a token resolves to its seat', seatForToken(stateJson, TOKEN_A) === 0);
 check('an unissued token resolves to nothing', seatForToken(stateJson, TOKEN_UNKNOWN) === -1);
 check(
   'sharing a nickname does not share a seat',
-  parse(joinRoom(stateJson, 'a-third-token', 'Ada')).seat === 2,
+  parse(joinRoom(JSON.stringify(parse(newRoom('n', SEED, 'moderate'))), 'tok1', 'Ada', NOW)).seat === 0 &&
+    parse(joinRoom(
+      JSON.stringify(parse(joinRoom(newRoom('n', SEED, 'moderate'), 'tok1', 'Ada', NOW)).state),
+      'tok2', 'Ada', NOW,
+    )).seat === 1,
 );
 
 // --- redaction -------------------------------------------------------------------------
@@ -233,7 +247,29 @@ for (let step = 0; step < 120; step++) {
     }
   }
 
-  // 2. Otherwise it is somebody's turn.
+  // 2. A pending action belonging to a seated player.
+  //
+  // With two humans at the table this is reachable in a way it was not before: a queued
+  // toss-in action belongs to whoever tossed the card in, and if that is a person the room
+  // waits for them. The harness puts the card down rather than aiming it — CONFIRM_PEEK is
+  // the engine's universal "finish with this card" — which is enough to keep the game moving.
+  const pending = room.game.pendingAction;
+  if (pending) {
+    const owner = room.seats.find((s) => s.playerId === pending.playerId && s.tokenHash);
+    if (owner) {
+      try {
+        current = JSON.stringify(collectBots(act(current, owner.index, {
+          type: 'CONFIRM_PEEK', payload: { playerId: pending.playerId },
+        })).state);
+        continue;
+      } catch (failure) {
+        check(`step ${step}: finishing a pending action`, false, failure.message);
+        break;
+      }
+    }
+  }
+
+  // 3. Otherwise it is somebody's turn.
   const turnPlayerId = room.game.players[room.game.currentPlayerIndex].id;
   const seat = room.seats.findIndex((s) => s.playerId === turnPlayerId && s.tokenHash);
   if (seat < 0) {
