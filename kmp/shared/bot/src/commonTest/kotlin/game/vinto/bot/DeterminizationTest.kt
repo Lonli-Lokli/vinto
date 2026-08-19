@@ -91,7 +91,10 @@ class DeterminizationTest {
 
     @Test
     fun samplingIsReproducibleFromASeed() {
-        fun ranks() = determinize(state(), Random(77)).hiddenCards.toSortedMap().values.map { it.rank }
+        // Sorted by key rather than `toSortedMap`, which the stdlib only offers on the JVM.
+        fun ranks() = determinize(state(), Random(77)).hiddenCards.entries
+            .sortedBy { it.key }
+            .map { it.value.rank }
         assertEquals(ranks(), ranks())
     }
 
