@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -130,5 +131,75 @@ class PrngVectorsTest {
             assertTrue(result.value in 0..53, "nextInt out of range: ${result.value}")
             state = result.state
         }
+    }
+
+    // --- properties the vectors cannot state ------------------------------------------------
+
+    @Test
+    fun nextIsAPureFunctionOfTheState() {
+        // Everything downstream — replay, parity, a seeded deal — rests on this one line.
+        val state = Prng.seed(2026)
+        assertEquals(Prng.next(state), Prng.next(state))
+    }
+
+    @Test
+    fun nextIntStaysInsideItsBound() {
+        var state = Prng.seed(7)
+        repeat(500) {
+            val result = Prng.nextInt(state, 54)
+            assertTrue(result.value >= 0, "nextInt returned ${result.value}")
+            assertTrue(result.value < 54, "nextInt returned ${result.value}")
+            state = result.state
+        }
+    }
+
+    @Test
+    fun aBoundOfOneAlwaysGivesZero() {
+        assertEquals(0, Prng.nextInt(Prng.seed(99), 1).value)
+    }
+
+    @Test
+    fun anImpossibleBoundIsRefused() {
+        for (bound in listOf(0, -1)) {
+            assertFailsWith<IllegalArgumentException>("bound $bound was accepted") {
+                Prng.nextInt(Prng.seed(1), bound)
+            }
+        }
+    }
+
+    @Test
+    fun aShuffleIsAPermutationAndLeavesItsInputAlone() {
+        val deck = (0 until 54).toList()
+        val result = Prng.shuffle(deck, Prng.seed(31337))
+
+        assertEquals((0 until 54).toList(), deck, "shuffle mutated the list it was given")
+        assertEquals(deck, result.items.sorted(), "cards were lost or duplicated")
+    }
+
+    @Test
+    fun differentSeedsGiveDifferentOrders() {
+        val deck = (0 until 54).toList()
+
+        assertTrue(
+            Prng.shuffle(deck, Prng.seed(1)).items != Prng.shuffle(deck, Prng.seed(2)).items,
+            "two seeds produced the same shuffle",
+        )
+    }
+
+    @Test
+    fun shufflingNothingOrOneThingIsNotASpecialCase() {
+        assertEquals(emptyList(), Prng.shuffle(emptyList<Int>(), Prng.seed(1)).items)
+        assertEquals(listOf(42), Prng.shuffle(listOf(42), Prng.seed(1)).items)
+    }
+
+    @Test
+    fun seedingNormalisesToUnsignedThirtyTwoBits() {
+        // TypeScript stores the state in a `number` and masks it; Kotlin carries it in a Long
+        // because a signed Int would corrupt anything at or above 2^31. Both must land on the
+        // same value or every later draw diverges.
+        assertEquals(0L, Prng.seed(0))
+        assertEquals(1L, Prng.seed(1))
+        assertEquals(0xFFFFFFFFL, Prng.seed(-1))
+        assertEquals(0L, Prng.seed(0x1_0000_0000L))
     }
 }
