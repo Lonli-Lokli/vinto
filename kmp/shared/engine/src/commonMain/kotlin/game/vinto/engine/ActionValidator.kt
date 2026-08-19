@@ -24,8 +24,8 @@ sealed interface Validation {
  * in particular depends on server-side validation being real (design D9).
  */
 object ActionValidator {
-    fun validate(
-        @Suppress("UNUSED_PARAMETER") state: GameState,
-        @Suppress("UNUSED_PARAMETER") action: GameAction,
-    ): Validation = Validation.Valid
+    // Both parameters are unused only because the rules are not ported yet; the signature
+    // is the one the real validator needs.
+    @Suppress("FunctionOnlyReturningConstant", "UnusedParameter")
+    fun validate(state: GameState, action: GameAction): Validation = Validation.Valid
 }

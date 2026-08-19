@@ -25,6 +25,9 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 const val SEAT_COUNT = 4
 
+/** A 52-card deck plus two jokers — the bound every action draws against. */
+private const val DECK_SIZE = 54
+
 @Serializable
 data class Seat(
     val index: Int,
@@ -60,7 +63,11 @@ data class RoomState(
 private data class JoinResult(val state: RoomState, val seat: Int, val error: String? = null)
 
 @Serializable
-private data class ActionResult(val state: RoomState, val event: LoggedAction? = null, val error: String? = null)
+private data class ActionResult(
+    val state: RoomState,
+    val event: LoggedAction? = null,
+    val error: String? = null,
+)
 
 @Serializable
 private data class SyncResult(val events: List<LoggedAction>, val nextIndex: Int)
@@ -114,7 +121,7 @@ fun applyAction(stateJson: String, seat: Int, type: String): String {
         return json.encodeToString(ActionResult(state, null, "seat $seat is not occupied"))
     }
 
-    val draw = Prng.nextInt(state.rngState, 54)
+    val draw = Prng.nextInt(state.rngState, DECK_SIZE)
     val event = LoggedAction(
         index = state.nextIndex,
         seat = seat,

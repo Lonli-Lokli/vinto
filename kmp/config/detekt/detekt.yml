@@ -1,0 +1,78 @@
+# Overrides on top of detekt's defaults (buildUponDefaultConfig = true), so this file holds
+# only the decisions specific to this project rather than a copy of the whole ruleset.
+
+build:
+  # No warnings tolerated: a finding either gets fixed or gets an explicit, justified
+  # @Suppress. A budget just lets findings accumulate silently.
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    # The engine handlers are a file-for-file port of the TypeScript ones (design D3).
+    # Splitting them up would make the parity review harder, which is the opposite of what
+    # this migration needs.
+    threshold: 90
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 12  # GameState mirrors the TypeScript interface field-for-field
+  CyclomaticComplexMethod:
+    threshold: 20
+  NestedBlockDepth:
+    threshold: 5
+  TooManyFunctions:
+    thresholdInFiles: 30
+    thresholdInClasses: 30
+    thresholdInObjects: 30
+    thresholdInEnums: 30
+    ignorePrivate: true
+
+style:
+  MaxLineLength:
+    maxLineLength: 110
+    excludes:
+      # Tests assert against whole canonical JSON strings. Wrapping them would make a
+      # failing diff harder to read, which is the one moment the line matters.
+      - '**/*Test.kt'
+  ReturnCount:
+    # Engine handlers guard-clause heavily, which reads better than one nested expression.
+    max: 8
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreNamedArgument: true
+    ignoreEnums: true
+    excludes:
+      # Prng and Sha256 transcribe published algorithms. Their literals — mulberry32's
+      # shift amounts, SHA-256's round constants and rotations — *are* the specification,
+      # and naming them individually would hide the correspondence a reviewer checks
+      # against the spec. Both files are covered by test vectors instead.
+      - '**/Prng.kt'
+      - '**/Sha256.kt'
+      # Test data is expected to be literal.
+      - '**/*Test.kt'
+  UnusedPrivateMember:
+    active: true
+  ForbiddenComment:
+    # TODO markers are how the unfinished parts of the port are tracked; they are recorded
+    # in tasks.md rather than banned here.
+    active: false
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 3
+
+naming:
+  FunctionNaming:
+    # Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'  # VintoJson is a configured instance, not a constant
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+  SwallowedException:
+    active: true
+
+performance:
+  SpreadOperator:
+    active: false

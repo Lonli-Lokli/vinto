@@ -52,8 +52,33 @@ object GameEngine {
         }
 
         val working = state.toMutable()
+        val changed = dispatch(working, action)
 
-        val changed = when (action) {
+        if (!changed) {
+            return ReduceResult.Failure(
+                state,
+                "Action handler for ${action.type} did not modify state",
+            )
+        }
+
+        if (shouldAdvanceTurn(working, action)) {
+            advanceTurnAfterTossIn(working)
+        }
+
+        return ReduceResult.Success(working.freeze())
+    }
+
+    /**
+     * Routes an action to its handler.
+     *
+     * Detekt reads this as highly complex; what it is measuring is the size of the action
+     * union, not the difficulty of the code. An exhaustive `when` over the sealed hierarchy
+     * is exactly what makes adding an action a compile error at this site, which is worth
+     * more than the metric.
+     */
+    @Suppress("CyclomaticComplexMethod")
+    private fun dispatch(working: MutableGameState, action: GameAction): Boolean =
+        when (action) {
             is GameAction.DrawCard -> handleDrawCard(working, action)
             is GameAction.DiscardCard -> handleDiscardCard(working, action)
             is GameAction.ConfirmPeek -> handleConfirmPeek(working, action)
@@ -86,25 +111,17 @@ object GameEngine {
             -> throw UnportedHandlerException(action.type)
         }
 
-        if (!changed) {
-            return ReduceResult.Failure(
-                state,
-                "Action handler for ${action.type} did not modify state",
-            )
-        }
+    /**
+     * Whether the turn should advance now: the toss-in queue has drained, nothing is
+     * pending, and every player has confirmed. EMPTY is excluded so a no-op cannot end a
+     * turn.
+     */
+    private fun shouldAdvanceTurn(working: MutableGameState, action: GameAction): Boolean {
+        if (action is GameAction.Empty) return false
+        val tossIn = working.activeTossIn ?: return false
 
-        // Post-action: advance the turn once the toss-in queue has drained and everyone is
-        // ready. EMPTY is excluded so a no-op cannot end a turn.
-        val tossIn = working.activeTossIn
-        if (tossIn != null &&
-            tossIn.queuedActions.isEmpty() &&
+        return tossIn.queuedActions.isEmpty() &&
             working.pendingAction == null &&
-            tossIn.playersReadyForNextTurn.size == working.players.size &&
-            action !is GameAction.Empty
-        ) {
-            advanceTurnAfterTossIn(working)
-        }
-
-        return ReduceResult.Success(working.freeze())
+            tossIn.playersReadyForNextTurn.size == working.players.size
     }
 }

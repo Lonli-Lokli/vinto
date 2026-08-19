@@ -4,6 +4,8 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -12,6 +14,7 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -256,7 +259,7 @@ object SelectActionTargetPayloadSerializer : KSerializer<SelectActionTargetPaylo
 
     override fun serialize(encoder: Encoder, value: SelectActionTargetPayload) {
         val output = encoder as? JsonEncoder
-            ?: throw IllegalStateException("SelectActionTargetPayload is JSON-only")
+            ?: error("SelectActionTargetPayload is JSON-only")
 
         // `rank` is not a field on either class — it exists purely as the discriminator, so
         // it is written here rather than duplicated into both payloads as a constant.
@@ -273,13 +276,13 @@ object SelectActionTargetPayloadSerializer : KSerializer<SelectActionTargetPaylo
         val discriminator = if (value is SelectActionTargetPayload.Ace) "A" else "Any"
 
         output.encodeJsonElement(
-            JsonObject(mapOf("rank" to kotlinx.serialization.json.JsonPrimitive(discriminator)) + body.jsonObject),
+            JsonObject(mapOf("rank" to JsonPrimitive(discriminator)) + body.jsonObject),
         )
     }
 
     override fun deserialize(decoder: Decoder): SelectActionTargetPayload {
         val input = decoder as? JsonDecoder
-            ?: throw IllegalStateException("SelectActionTargetPayload is JSON-only")
+            ?: error("SelectActionTargetPayload is JSON-only")
         val element = input.decodeJsonElement().jsonObject
         val body = JsonObject(element - "rank")
 
@@ -306,40 +309,49 @@ object SelectActionTargetPayloadSerializer : KSerializer<SelectActionTargetPaylo
 object GameActionSerializer : KSerializer<GameAction> {
 
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("GameAction") {
-        element("type", kotlinx.serialization.descriptors.PrimitiveSerialDescriptor("type", kotlinx.serialization.descriptors.PrimitiveKind.STRING))
+        element("type", PrimitiveSerialDescriptor("type", PrimitiveKind.STRING))
         element("payload", buildClassSerialDescriptor("payload"))
     }
 
+    /**
+     * Detekt reads this as highly complex. What it measures is the size of the action union,
+     * not the difficulty of the code: an exhaustive `when` over the sealed hierarchy is what
+     * makes adding an action a compile error here, which is worth more than the metric.
+     */
+    @Suppress("CyclomaticComplexMethod")
     override fun serialize(encoder: Encoder, value: GameAction) {
         val output = encoder as? JsonEncoder
-            ?: throw IllegalStateException("GameAction is JSON-only")
+            ?: error("GameAction is JSON-only")
         val json = output.json
 
+        fun <T> enc(serializer: KSerializer<T>, payload: T): JsonElement =
+            json.encodeToJsonElement(serializer, payload)
+
         val payload: JsonElement = when (value) {
-            is GameAction.DrawCard -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.PlayDiscard -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SwapCard -> json.encodeToJsonElement(SwapCardPayload.serializer(), value.payload)
-            is GameAction.DiscardCard -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.UseCardAction -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SelectActionTarget -> json.encodeToJsonElement(SelectActionTargetPayloadSerializer, value.payload)
-            is GameAction.ConfirmPeek -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SkipPeek -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.ExecuteJackSwap -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SkipJackSwap -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.ExecuteQueenSwap -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SkipQueenSwap -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.DeclareKingAction -> json.encodeToJsonElement(DeclareKingActionPayload.serializer(), value.payload)
-            is GameAction.ParticipateInTossIn -> json.encodeToJsonElement(ParticipateInTossInPayload.serializer(), value.payload)
-            is GameAction.PlayerTossInFinished -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.FinishTossInPeriod -> json.encodeToJsonElement(InitiatorIdPayload.serializer(), value.payload)
-            is GameAction.CallVinto -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.SetCoalitionLeader -> json.encodeToJsonElement(LeaderIdPayload.serializer(), value.payload)
-            is GameAction.ProcessAiTurn -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.PeekSetupCard -> json.encodeToJsonElement(PositionPayload.serializer(), value.payload)
-            is GameAction.FinishSetup -> json.encodeToJsonElement(PlayerIdPayload.serializer(), value.payload)
-            is GameAction.UpdateDifficulty -> json.encodeToJsonElement(DifficultyPayload.serializer(), value.payload)
-            is GameAction.SetNextDrawCard -> json.encodeToJsonElement(RankPayload.serializer(), value.payload)
-            is GameAction.SwapHandWithDeck -> json.encodeToJsonElement(SwapHandWithDeckPayload.serializer(), value.payload)
+            is GameAction.DrawCard -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.PlayDiscard -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SwapCard -> enc(SwapCardPayload.serializer(), value.payload)
+            is GameAction.DiscardCard -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.UseCardAction -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SelectActionTarget -> enc(SelectActionTargetPayloadSerializer, value.payload)
+            is GameAction.ConfirmPeek -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SkipPeek -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.ExecuteJackSwap -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SkipJackSwap -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.ExecuteQueenSwap -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SkipQueenSwap -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.DeclareKingAction -> enc(DeclareKingActionPayload.serializer(), value.payload)
+            is GameAction.ParticipateInTossIn -> enc(ParticipateInTossInPayload.serializer(), value.payload)
+            is GameAction.PlayerTossInFinished -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.FinishTossInPeriod -> enc(InitiatorIdPayload.serializer(), value.payload)
+            is GameAction.CallVinto -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.SetCoalitionLeader -> enc(LeaderIdPayload.serializer(), value.payload)
+            is GameAction.ProcessAiTurn -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.PeekSetupCard -> enc(PositionPayload.serializer(), value.payload)
+            is GameAction.FinishSetup -> enc(PlayerIdPayload.serializer(), value.payload)
+            is GameAction.UpdateDifficulty -> enc(DifficultyPayload.serializer(), value.payload)
+            is GameAction.SetNextDrawCard -> enc(RankPayload.serializer(), value.payload)
+            is GameAction.SwapHandWithDeck -> enc(SwapHandWithDeckPayload.serializer(), value.payload)
             is GameAction.Empty -> value.payload
         }
 
@@ -351,9 +363,11 @@ object GameActionSerializer : KSerializer<GameAction> {
         )
     }
 
+    /** Complex for the same reason [serialize] is: one branch per action type. */
+    @Suppress("CyclomaticComplexMethod")
     override fun deserialize(decoder: Decoder): GameAction {
         val input = decoder as? JsonDecoder
-            ?: throw IllegalStateException("GameAction is JSON-only")
+            ?: error("GameAction is JSON-only")
         val json = input.json
         val element = input.decodeJsonElement().jsonObject
 
@@ -362,33 +376,36 @@ object GameActionSerializer : KSerializer<GameAction> {
         val payload = element["payload"]
             ?: throw IllegalArgumentException("action '$type' has no 'payload'")
 
-        fun playerId() = json.decodeFromJsonElement(PlayerIdPayload.serializer(), payload)
+        fun <T> dec(serializer: KSerializer<T>): T =
+            json.decodeFromJsonElement(serializer, payload)
+        fun playerId() = dec(PlayerIdPayload.serializer())
 
         return when (type) {
             "DRAW_CARD" -> GameAction.DrawCard(playerId())
             "PLAY_DISCARD" -> GameAction.PlayDiscard(playerId())
-            "SWAP_CARD" -> GameAction.SwapCard(json.decodeFromJsonElement(SwapCardPayload.serializer(), payload))
+            "SWAP_CARD" -> GameAction.SwapCard(dec(SwapCardPayload.serializer()))
             "DISCARD_CARD" -> GameAction.DiscardCard(playerId())
             "USE_CARD_ACTION" -> GameAction.UseCardAction(playerId())
-            "SELECT_ACTION_TARGET" -> GameAction.SelectActionTarget(json.decodeFromJsonElement(SelectActionTargetPayloadSerializer, payload))
+            "SELECT_ACTION_TARGET" -> GameAction.SelectActionTarget(dec(SelectActionTargetPayloadSerializer))
             "CONFIRM_PEEK" -> GameAction.ConfirmPeek(playerId())
             "SKIP_PEEK" -> GameAction.SkipPeek(playerId())
             "EXECUTE_JACK_SWAP" -> GameAction.ExecuteJackSwap(playerId())
             "SKIP_JACK_SWAP" -> GameAction.SkipJackSwap(playerId())
             "EXECUTE_QUEEN_SWAP" -> GameAction.ExecuteQueenSwap(playerId())
             "SKIP_QUEEN_SWAP" -> GameAction.SkipQueenSwap(playerId())
-            "DECLARE_KING_ACTION" -> GameAction.DeclareKingAction(json.decodeFromJsonElement(DeclareKingActionPayload.serializer(), payload))
-            "PARTICIPATE_IN_TOSS_IN" -> GameAction.ParticipateInTossIn(json.decodeFromJsonElement(ParticipateInTossInPayload.serializer(), payload))
+            "DECLARE_KING_ACTION" -> GameAction.DeclareKingAction(dec(DeclareKingActionPayload.serializer()))
+            "PARTICIPATE_IN_TOSS_IN" ->
+                GameAction.ParticipateInTossIn(dec(ParticipateInTossInPayload.serializer()))
             "PLAYER_TOSS_IN_FINISHED" -> GameAction.PlayerTossInFinished(playerId())
-            "FINISH_TOSS_IN_PERIOD" -> GameAction.FinishTossInPeriod(json.decodeFromJsonElement(InitiatorIdPayload.serializer(), payload))
+            "FINISH_TOSS_IN_PERIOD" -> GameAction.FinishTossInPeriod(dec(InitiatorIdPayload.serializer()))
             "CALL_VINTO" -> GameAction.CallVinto(playerId())
-            "SET_COALITION_LEADER" -> GameAction.SetCoalitionLeader(json.decodeFromJsonElement(LeaderIdPayload.serializer(), payload))
+            "SET_COALITION_LEADER" -> GameAction.SetCoalitionLeader(dec(LeaderIdPayload.serializer()))
             "PROCESS_AI_TURN" -> GameAction.ProcessAiTurn(playerId())
-            "PEEK_SETUP_CARD" -> GameAction.PeekSetupCard(json.decodeFromJsonElement(PositionPayload.serializer(), payload))
+            "PEEK_SETUP_CARD" -> GameAction.PeekSetupCard(dec(PositionPayload.serializer()))
             "FINISH_SETUP" -> GameAction.FinishSetup(playerId())
-            "UPDATE_DIFFICULTY" -> GameAction.UpdateDifficulty(json.decodeFromJsonElement(DifficultyPayload.serializer(), payload))
-            "SET_NEXT_DRAW_CARD" -> GameAction.SetNextDrawCard(json.decodeFromJsonElement(RankPayload.serializer(), payload))
-            "SWAP_HAND_WITH_DECK" -> GameAction.SwapHandWithDeck(json.decodeFromJsonElement(SwapHandWithDeckPayload.serializer(), payload))
+            "UPDATE_DIFFICULTY" -> GameAction.UpdateDifficulty(dec(DifficultyPayload.serializer()))
+            "SET_NEXT_DRAW_CARD" -> GameAction.SetNextDrawCard(dec(RankPayload.serializer()))
+            "SWAP_HAND_WITH_DECK" -> GameAction.SwapHandWithDeck(dec(SwapHandWithDeckPayload.serializer()))
             "EMPTY" -> GameAction.Empty(payload)
             else -> throw IllegalArgumentException("unknown action type '$type'")
         }

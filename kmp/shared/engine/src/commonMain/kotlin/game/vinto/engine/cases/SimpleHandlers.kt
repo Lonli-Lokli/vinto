@@ -30,8 +30,14 @@ fun handlePeekSetupCard(state: MutableGameState, action: GameAction.PeekSetupCar
     return true
 }
 
-/** FINISH_SETUP — everyone has peeked; the game proper begins. */
-fun handleFinishSetup(state: MutableGameState, @Suppress("UNUSED_PARAMETER") action: GameAction.FinishSetup): Boolean {
+/**
+ * FINISH_SETUP — everyone has peeked; the game proper begins.
+ *
+ * `action` is unused: every handler takes the same pair so the dispatch in [GameEngine] is
+ * uniform, and this one needs nothing from the payload.
+ */
+@Suppress("UnusedParameter")
+fun handleFinishSetup(state: MutableGameState, action: GameAction.FinishSetup): Boolean {
     if (state.phase == GamePhase.SETUP) {
         state.phase = GamePhase.PLAYING
         state.subPhase = GameSubPhase.IDLE
@@ -110,8 +116,13 @@ fun handleSetCoalitionLeader(state: MutableGameState, action: GameAction.SetCoal
 /**
  * PROCESS_AI_TURN — a marker. The bot's real moves arrive as ordinary actions through the
  * same path a human uses, which is what keeps bots rules-neutral.
+ *
+ * Returning a constant is the whole behaviour, not an oversight: TypeScript's handler copies
+ * the state and changes nothing, and `reduce` still counts that as a success.
  */
-fun handleProcessAiTurn(@Suppress("UNUSED_PARAMETER") state: MutableGameState, @Suppress("UNUSED_PARAMETER") action: GameAction.ProcessAiTurn): Boolean = true
+@Suppress("FunctionOnlyReturningConstant", "UnusedParameter")
+fun handleProcessAiTurn(state: MutableGameState, action: GameAction.ProcessAiTurn): Boolean = true
 
-/** EMPTY — a no-op that still counts as a successful reduction. */
-fun handleEmpty(@Suppress("UNUSED_PARAMETER") state: MutableGameState, @Suppress("UNUSED_PARAMETER") action: GameAction.Empty): Boolean = true
+/** EMPTY — a no-op that still counts as a successful reduction, for the same reason. */
+@Suppress("FunctionOnlyReturningConstant", "UnusedParameter")
+fun handleEmpty(state: MutableGameState, action: GameAction.Empty): Boolean = true

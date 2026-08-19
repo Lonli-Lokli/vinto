@@ -28,6 +28,10 @@ import kotlinx.serialization.json.JsonPrimitive
  */
 object CanonicalJson {
 
+    /** `\uXXXX` is four hex digits, and JSON escapes every character below U+0020. */
+    private const val UNICODE_ESCAPE_DIGITS = 4
+    private const val HEX_RADIX = 16
+
     /** Client-authored history whose `description` strings are user-facing prose. */
     val EXCLUDED_STATE_FIELDS = setOf("turnActions", "roundActions")
 
@@ -81,20 +85,21 @@ object CanonicalJson {
 
         return when (val content = value.content) {
             "true", "false" -> content
-            else -> {
-                val number = content.toDoubleOrNull()
-                    ?: throw IllegalArgumentException("Unsupported value at $path: $content")
-                if (number.isNaN() || number.isInfinite()) {
-                    throw IllegalArgumentException("Non-finite number at $path: $content")
-                }
-                content.toLongOrNull()?.toString()
-                    ?: throw IllegalArgumentException(
-                        "Non-integer number at $path: $content. GameState must contain " +
-                            "integers only - TypeScript prints 1 where Kotlin prints 1.0, " +
-                            "which would break parity.",
-                    )
-            }
+            else -> canonicalizeNumber(content, path)
         }
+    }
+
+    private fun canonicalizeNumber(content: String, path: String): String {
+        val number = content.toDoubleOrNull()
+        require(number != null) { "Unsupported value at $path: $content" }
+        require(!number.isNaN() && !number.isInfinite()) { "Non-finite number at $path: $content" }
+
+        val asLong = content.toLongOrNull()
+        require(asLong != null) {
+            "Non-integer number at $path: $content. GameState must contain integers only - " +
+                "TypeScript prints 1 where Kotlin prints 1.0, which would break parity."
+        }
+        return asLong.toString()
     }
 
     /**
@@ -115,7 +120,7 @@ object CanonicalJson {
                 '\t' -> append("\\t")
                 else -> if (char < ' ') {
                     append("\\u")
-                    append(char.code.toString(16).padStart(4, '0'))
+                    append(char.code.toString(HEX_RADIX).padStart(UNICODE_ESCAPE_DIGITS, '0'))
                 } else {
                     append(char)
                 }

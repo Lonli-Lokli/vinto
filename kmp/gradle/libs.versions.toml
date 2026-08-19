@@ -5,6 +5,8 @@ kotlinxCoroutines = "1.10.2"
 composeMultiplatform = "1.8.0"
 agp = "8.10.1"
 androidxActivityCompose = "1.10.1"
+# 1.23.8 is the last 1.x line; it runs on Kotlin 2.1 for the rules used here.
+detekt = "1.23.8"
 
 # Android API levels. minSdk 24 matches Compose Multiplatform's floor and covers ~97% of
 # devices; there is nothing in this app that would justify dropping older phones further.
@@ -24,3 +26,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

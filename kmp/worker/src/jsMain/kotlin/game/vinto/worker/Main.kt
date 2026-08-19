@@ -14,11 +14,19 @@ import kotlinx.serialization.encodeToString
  * bundle it produces is a realistic floor for the engine bundle that follows.
  */
 
+/** A 52-card deck plus two jokers. */
+private const val DECK_SIZE = 54
+
+/** The seed the cross-language gate number is published for; see the verification checklist. */
+private const val GATE_SEED = 42L
+
+private const val GATE_PREVIEW_CARDS = 5
+
 @Serializable
 private data class Deal(val seed: Long, val order: List<Int>, val rngState: Long)
 
 private fun deal(seed: Long): Deal {
-    val shuffled = Prng.shuffle((0 until 54).toList(), Prng.seed(seed))
+    val shuffled = Prng.shuffle((0 until DECK_SIZE).toList(), Prng.seed(seed))
     return Deal(seed = seed, order = shuffled.items, rngState = shuffled.state)
 }
 
@@ -37,14 +45,14 @@ fun main() {
 
     // Deal, serialise, parse back, and verify the round trip — the same shape of work the
     // Durable Object will do on every action.
-    val dealt = deal(42)
+    val dealt = deal(GATE_SEED)
     val encoded = json.encodeToString(dealt)
     val decoded = json.decodeFromString<Deal>(encoded)
 
     check(decoded == dealt) { "serialisation round trip failed" }
-    check(decoded.order.size == 54) { "deck size wrong" }
+    check(decoded.order.size == DECK_SIZE) { "deck size wrong" }
     // toSortedSet() is JVM-only stdlib; toSet() is available on every target.
-    check(decoded.order.toSet().size == 54) { "shuffle is not a permutation" }
+    check(decoded.order.toSet().size == DECK_SIZE) { "shuffle is not a permutation" }
 
-    println("gate ok: rngState=${decoded.rngState} first5=${decoded.order.take(5)}")
+    println("gate ok: rngState=${decoded.rngState} first5=${decoded.order.take(GATE_PREVIEW_CARDS)}")
 }

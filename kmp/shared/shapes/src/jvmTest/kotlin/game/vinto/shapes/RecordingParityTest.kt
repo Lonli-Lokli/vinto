@@ -95,15 +95,15 @@ class RecordingParityTest {
                 val before = CanonicalJson.of(original)
                 val after = CanonicalJson.of(reencoded)
                 if (before != after && mismatches.size < 10) {
-                    mismatches += "${'$'}{file.name}#${'$'}index: ${'$'}before != ${'$'}after"
+                    mismatches += "${file.name}#$index: $before != $after"
                 }
             }
         }
 
-        assertTrue(checked > 13_000, "expected the full action corpus, saw ${'$'}checked")
+        assertTrue(checked > 13_000, "expected the full action corpus, saw $checked")
         assertEquals(emptyList(), mismatches, "action round-trip mismatches")
         // Guards against a corpus that silently stops covering the union.
-        assertTrue(seenTypes.size >= 17, "corpus covered only ${'$'}{seenTypes.size} action types")
+        assertTrue(seenTypes.size >= 17, "corpus covered only ${seenTypes.size} action types")
     }
 
     /**
