@@ -355,8 +355,18 @@ object MoveGenerator {
         return state.players.filter { it.id != state.vintoCallerId }.minByOrNull { it.score }
     }
 
+    /**
+     * What the bot is sure of, bounded by the hand that actually exists.
+     *
+     * The bound is not defensive tidying. Memories outlive the hands they describe — cards
+     * are tossed in and everything after them renumbers, but the memory keeps its old
+     * position — so a hand that has shrunk still remembers a card at an index past its end.
+     * Without the bound the generator offers a target the engine rejects outright, and the
+     * bot is left holding an action it cannot aim.
+     */
     private fun knownCards(player: MctsPlayerState): Map<Int, Card> =
         player.knownCards
+            .filterKeys { it in 0 until player.cardCount }
             .filterValues { it.confidence > TRUSTED_CONFIDENCE }
             .mapValues { it.value.card }
 
