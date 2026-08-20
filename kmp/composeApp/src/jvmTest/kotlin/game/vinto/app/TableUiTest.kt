@@ -3,10 +3,14 @@ package game.vinto.app
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.game.GameScreen
+import game.vinto.client.LocalGame
+import game.vinto.client.MemoryVault
 import game.vinto.app.theme.VintoTheme
 import game.vinto.shapes.Difficulty
 import kotlin.test.Test
@@ -27,7 +31,8 @@ class TableUiTest {
 
     @Test
     fun aGameCanBePlayedFromTheHomeScreenToTheFirstDraw() = runComposeUiTest {
-        setContent { VintoTheme { App(seeds = { FIXED_SEED }) } }
+        setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
+        waitForIdle()
 
         onNodeWithText("Play").assertIsDisplayed()
         onNodeWithText("Play").performClick()
@@ -55,13 +60,43 @@ class TableUiTest {
     }
 
     @Test
-    fun theTableRendersAtScoringWithoutFallingOver() = runComposeUiTest {
-        setContent { VintoTheme { GameScreen(FIXED_SEED, Difficulty.EASY, onQuit = {}, onPlayAgain = {}) } }
+    fun aFreshlyDealtTableComposes() = runComposeUiTest {
+        val game = LocalGame.start(MemoryVault(), FIXED_SEED, Difficulty.EASY)
+        setContent { VintoTheme { GameScreen(game, onQuit = {}) } }
         waitForIdle()
 
         // Nothing is asserted about the words; the point is that a freshly dealt table
         // composes at all. A throw in any of the four seats fails here rather than on a phone.
         onNodeWithText("Look at two of your cards").assertIsDisplayed()
+    }
+
+    /**
+     * The reason persistence exists: an app reopened offers to continue, and continuing lands
+     * you in the round you left rather than a new deal.
+     */
+    @Test
+    fun aSavedGameIsOfferedAndResumed() = runComposeUiTest {
+        val vault = MemoryVault()
+        LocalGame.start(vault, FIXED_SEED, Difficulty.EASY)
+
+        setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = vault) } }
+        waitForIdle()
+
+        onNodeWithText("Continue").assertIsDisplayed()
+        onNodeWithText("Continue").performClick()
+        waitForIdle()
+
+        onNodeWithText("Look at two of your cards").assertIsDisplayed()
+    }
+
+    /** With nothing saved, there is nothing to continue and the button is not there. */
+    @Test
+    fun aFirstRunOffersOnlyToPlay() = runComposeUiTest {
+        setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
+        waitForIdle()
+
+        onNodeWithText("Play").assertIsDisplayed()
+        onAllNodesWithText("Continue").assertCountEquals(0)
     }
 
     private companion object {

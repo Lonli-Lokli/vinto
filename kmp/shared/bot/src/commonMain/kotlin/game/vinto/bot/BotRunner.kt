@@ -190,11 +190,14 @@ class BotRunner(
 
         if (state.drawPile.isEmpty()) {
             if (canTakeDiscard(state)) return GameAction.PlayDiscard(PlayerIdPayload(player.id))
-            // Nothing to draw and nothing to take. Ending the round is the only move left that
-            // is both legal and forward; if Vinto has already been called, there is none, and
-            // saying so beats proposing a draw the engine will refuse.
+
+            // Nothing to draw and nothing to take. Calling Vinto is the move that is both
+            // legal and forward — unless somebody already has, which is the final round, and
+            // then there is no move at all. `END_ROUND` is the engine's exit from a position
+            // it can otherwise only sit in; without it the game stops with every seat waiting
+            // for another to act.
             if (state.vintoCallerId == null) return GameAction.CallVinto(PlayerIdPayload(player.id))
-            return null
+            return GameAction.EndRound(PlayerIdPayload(player.id))
         }
 
         return if (wantsDiscard && canTakeDiscard(state)) {
@@ -290,12 +293,12 @@ class BotRunner(
         return when (pending.card.rank) {
             // Peek one card, then acknowledge it.
             Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN ->
-                if (selected == 0) selectTarget(player, plan, index = 0) else abandonAction(player)
+                if (selected == 0) selectTarget(state, player, plan, index = 0) else abandonAction(player)
 
             // Two cards from two different players, then swap or walk away. A skip is only
             // legal once both targets exist, so before that the exit is to abandon the card.
             Rank.JACK -> when (selected) {
-                0, 1 -> selectTarget(player, plan, index = selected)
+                0, 1 -> selectTarget(state, player, plan, index = selected)
                 else -> if (plan.shouldSwap != false) {
                     GameAction.ExecuteJackSwap(PlayerIdPayload(player.id))
                 } else {
@@ -305,14 +308,14 @@ class BotRunner(
 
             // Same shape, except the peek happens first and the swap is genuinely optional.
             Rank.QUEEN -> when (selected) {
-                0, 1 -> selectTarget(player, plan, index = selected)
+                0, 1 -> selectTarget(state, player, plan, index = selected)
                 else -> queenSwapDecision(state, player, pending)
             }
 
             // Name a card, then declare what it is and play that rank's action.
             Rank.KING ->
                 if (selected == 0) {
-                    selectTarget(player, plan, index = 0)
+                    selectTarget(state, player, plan, index = 0)
                 } else {
                     declareKing(state, player, pending, plan)
                 }
@@ -324,11 +327,37 @@ class BotRunner(
         }
     }
 
-    private fun selectTarget(player: PlayerState, plan: BotActionDecision, index: Int): GameAction {
-        val target = plan.targets.getOrNull(index) ?: return abandonAction(player)
+    private fun selectTarget(
+        state: GameState,
+        player: PlayerState,
+        plan: BotActionDecision,
+        index: Int,
+    ): GameAction {
+        val target = plan.targets
+            .filter { state.mayTarget(player, it.playerId) }
+            .getOrNull(index)
+            ?: return abandonAction(player)
+
         return GameAction.SelectActionTarget(
             SelectActionTargetPayload.Positional(player.id, target.playerId, target.position),
         )
+    }
+
+    /**
+     * Whether [actor] is allowed to aim an action at [targetId] right now.
+     *
+     * The one case where it is not is the final round: everybody except the caller is a
+     * coalition against them, and a coalition may not touch the caller's cards. The validator
+     * enforces it — the bot has to *know* it, because an action the engine refuses is not a
+     * bad move, it is no move, and a bot with no move stops the game for everybody at the
+     * table. That is exactly how a full round used to hang: a coalition bot drew an Ace and
+     * aimed it at the caller, the engine said no, and nothing further happened.
+     */
+    private fun GameState.mayTarget(actor: PlayerState, targetId: String): Boolean {
+        if (phase != GamePhase.FINAL) return true
+        if (vintoCallerId == null || actor.id == vintoCallerId) return true
+
+        return targetId != vintoCallerId
     }
 
     /**
@@ -387,10 +416,11 @@ class BotRunner(
     }
 
     /** An Ace names a player rather than a card, so it carries the Ace-shaped payload. */
-    private fun aceTarget(state: GameState, player: PlayerState, plan: BotActionDecision): GameAction? {
-        val targetId = plan.targets.firstOrNull()?.playerId
-            ?: state.players.firstOrNull { it.id != player.id }?.id
-            ?: return null
+    private fun aceTarget(state: GameState, player: PlayerState, plan: BotActionDecision): GameAction {
+        val targetId = plan.targets.map { it.playerId }
+            .plus(state.players.map { it.id })
+            .firstOrNull { it != player.id && state.mayTarget(player, it) }
+            ?: return abandonAction(player)
 
         return GameAction.SelectActionTarget(SelectActionTargetPayload.Ace(player.id, targetId))
     }

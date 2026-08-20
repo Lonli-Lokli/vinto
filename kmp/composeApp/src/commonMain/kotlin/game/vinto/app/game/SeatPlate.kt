@@ -11,7 +11,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
@@ -39,6 +42,7 @@ import org.jetbrains.compose.resources.painterResource
 private val PlatePad = 4.dp
 private val PlateGap = 8.dp
 private val NamePad = 10.dp
+private val NameMax = 76.dp
 private val Hairline = 1.dp
 private val Ring = 2.dp
 
@@ -111,13 +115,28 @@ fun SeatPlate(
                     .clip(CircleShape)
                     .border(Hairline, edge, CircleShape),
             )
-            Text(
-                text = if (marks == null) name else "$name  $marks",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                color = if (active) scheme.secondary else scheme.onSurface,
-                modifier = Modifier.padding(end = NamePad),
-            )
+            // Capped, and the name gives way before the marks do. A plate that grows with
+            // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
+            // which is the one hand that has to stay in one piece.
+            Column(modifier = Modifier.padding(end = NamePad).widthIn(max = NameMax)) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                    color = if (active) scheme.secondary else scheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                marks?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = scheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }

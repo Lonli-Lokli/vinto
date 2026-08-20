@@ -38,6 +38,8 @@ val GameAction.actorId: String?
         is GameAction.PeekSetupCard -> payload.playerId
         is GameAction.FinishSetup -> payload.playerId
         is GameAction.SetCoalitionLeader -> null
+        // Nobody's move: the engine ends a round that cannot be played on.
+        is GameAction.EndRound -> null
         is GameAction.UpdateDifficulty -> null
         is GameAction.SetNextDrawCard -> null
         is GameAction.SwapHandWithDeck -> null

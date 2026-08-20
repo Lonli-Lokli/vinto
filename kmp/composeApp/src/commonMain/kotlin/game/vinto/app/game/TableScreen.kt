@@ -62,20 +62,19 @@ private val DeckBadge = Color(0xFF14351F)
  */
 @Composable
 fun TableScreen(
-    view: PlayerView,
-    table: Table,
-    refusal: String?,
-    recent: List<String>,
+    state: TableState,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val view = state.view
+    val table = state.table
     val me = view.viewerId
     val opponents = view.players.filter { it.id != me }
     val mine = view.players.first { it.id == me }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TableHeader(view)
+        TableHeader(view, state.round)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
             val sizes = TableSizes.forHeight(maxHeight)
@@ -105,17 +104,33 @@ fun TableScreen(
 
         ControlPanel(
             table = table,
-            refusal = refusal,
-            recent = recent,
+            refusal = state.refusal,
+            recent = state.recent,
             onMove = onMove,
             onHelp = onHelp,
         )
     }
 }
 
+/**
+ * Everything the table draws, in one place.
+ *
+ * Five values that always arrive together and never separately: the game as this seat sees
+ * it, what it may do, what it was last told it could not, what has happened lately, and which
+ * round of the game this is. Passing them individually is a signature nobody can read and an
+ * order nobody can check.
+ */
+data class TableState(
+    val view: PlayerView,
+    val table: Table,
+    val refusal: String?,
+    val recent: List<String>,
+    val round: Int,
+)
+
 /** Where the round is up to, and how much deck is left. */
 @Composable
-private fun TableHeader(view: PlayerView) {
+private fun TableHeader(view: PlayerView, round: Int) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
         horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -131,7 +146,9 @@ private fun TableHeader(view: PlayerView) {
             color = WordmarkGreen,
         )
         Text(
-            "R${view.roundNumber} / T${view.turnNumber}",
+            // The *game's* round, not the deal's. The engine counts rounds within one deal
+            // — it is a turn counter that wraps — while the player is counting hands played.
+            "R$round / T${view.turnNumber}",
             style = MaterialTheme.typography.labelLarge,
             color = RailInkDim,
         )
@@ -209,7 +226,7 @@ private fun MiddleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
-        Piles(view, table, sizes)
+        Piles(view, sizes)
         SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove)
     }
 }
@@ -400,7 +417,7 @@ private fun SeatCard(
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
-private fun Piles(view: PlayerView, table: Table, sizes: TableSizes) {
+private fun Piles(view: PlayerView, sizes: TableSizes) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(horizontalArrangement = Arrangement.spacedBy(Gap), verticalAlignment = Alignment.Top) {
             val stage = LocalStage.current
@@ -459,14 +476,6 @@ private fun Piles(view: PlayerView, table: Table, sizes: TableSizes) {
             }
         }
 
-        if (table.waiting) {
-            Text(
-                text = table.prompt,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onFelt(),
-                modifier = Modifier.padding(top = Gap),
-            )
-        }
     }
 }
 

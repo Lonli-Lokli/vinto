@@ -50,11 +50,20 @@ class LocalGameSession(
     difficulty: Difficulty = Difficulty.MODERATE,
     private val botDispatcher: CoroutineDispatcher? = null,
     random: Random = Random(seed),
+    /**
+     * A round already in progress, for a game being resumed.
+     *
+     * The bots' memories are not restored with it — they are rebuilt as they play, so a
+     * resumed opponent has forgotten what it saw before the app closed. That is a real
+     * difference and an acceptable one: it makes them slightly worse, never wrong, and the
+     * alternative is persisting a search's internal state to save a solo game.
+     */
+    resuming: GameState? = null,
 ) : GameSession {
 
     // Internal rather than private so the tests can drive the *person's* seat with the same
     // bot brain: choosing a move needs the full state, and the view is redacted by design.
-    internal var state: GameState = initializeGame(seed, difficulty)
+    internal var state: GameState = resuming ?: initializeGame(seed, difficulty)
         private set
 
     /** The seat the person is playing. `initializeGame` deals seat zero as the human. */

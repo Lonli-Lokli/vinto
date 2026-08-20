@@ -267,6 +267,26 @@ object ActionValidator {
             }
         }
 
+        /**
+         * Only when the round truly cannot go on.
+         *
+         * Gated tightly because it is the one action that ends a round without anybody
+         * winning it: the final round, an empty deck, nothing takeable on the discard, and no
+         * action still in flight. In that position the player on turn has no legal move — no
+         * draw, no take, no pass — and without this the game stops with everyone waiting for
+         * everyone. Outside the final round a player in the same position calls Vinto, which
+         * is legal and finite, so this stays unavailable there.
+         */
+        is GameAction.EndRound -> when {
+            state.phase != GamePhase.FINAL -> Validation.Invalid("The round can still be played")
+            state.drawPile.size > 0 -> Validation.Invalid("There are still cards to draw")
+            state.pendingAction != null -> Validation.Invalid("There is an action to finish")
+            state.discardPile.peekTop()?.let { it.actionText != null && !it.played } == true ->
+                Validation.Invalid("The discard can still be taken")
+
+            else -> Validation.Valid
+        }
+
         // Configuration and debug actions carry no legality conditions.
         is GameAction.Empty,
         is GameAction.UpdateDifficulty,

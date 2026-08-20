@@ -137,6 +137,27 @@ sealed interface GameAction {
         override val type get() = "SET_COALITION_LEADER"
     }
 
+    /**
+     * Ends a round nobody can play on.
+     *
+     * **Kotlin-only; TypeScript has no equivalent**, which is deliberate and is why this is an
+     * action rather than something the turn advance does by itself. The deck can empty in the
+     * final round with nothing takeable on the discard, and the player whose turn it is then
+     * has no legal move at all — they cannot draw, cannot take, and cannot pass. TypeScript
+     * stops there: two recordings in the parity corpus *end* in exactly that position, which
+     * is to say they recorded the hang.
+     *
+     * Ending it inside `advanceTurnAfterTossIn` would have been simpler and would have changed
+     * the final hash of those two recordings — the corpus is how we know the two engines still
+     * agree, and quietly rewriting what it expects is the one thing that must not happen. As
+     * an action it never appears in a recording, so all fifty still replay byte for byte,
+     * while a round that would have hung now ends and scores.
+     */
+    @Serializable
+    data class EndRound(val payload: PlayerIdPayload) : GameAction {
+        override val type get() = "END_ROUND"
+    }
+
     @Serializable
     data class ProcessAiTurn(val payload: PlayerIdPayload) : GameAction {
         override val type get() = "PROCESS_AI_TURN"
@@ -346,6 +367,7 @@ object GameActionSerializer : KSerializer<GameAction> {
             is GameAction.FinishTossInPeriod -> enc(InitiatorIdPayload.serializer(), value.payload)
             is GameAction.CallVinto -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.SetCoalitionLeader -> enc(LeaderIdPayload.serializer(), value.payload)
+            is GameAction.EndRound -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.ProcessAiTurn -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.PeekSetupCard -> enc(PositionPayload.serializer(), value.payload)
             is GameAction.FinishSetup -> enc(PlayerIdPayload.serializer(), value.payload)
@@ -400,6 +422,7 @@ object GameActionSerializer : KSerializer<GameAction> {
             "FINISH_TOSS_IN_PERIOD" -> GameAction.FinishTossInPeriod(dec(InitiatorIdPayload.serializer()))
             "CALL_VINTO" -> GameAction.CallVinto(playerId())
             "SET_COALITION_LEADER" -> GameAction.SetCoalitionLeader(dec(LeaderIdPayload.serializer()))
+            "END_ROUND" -> GameAction.EndRound(dec(PlayerIdPayload.serializer()))
             "PROCESS_AI_TURN" -> GameAction.ProcessAiTurn(playerId())
             "PEEK_SETUP_CARD" -> GameAction.PeekSetupCard(dec(PositionPayload.serializer()))
             "FINISH_SETUP" -> GameAction.FinishSetup(playerId())

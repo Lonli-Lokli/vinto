@@ -1,39 +1,48 @@
 package game.vinto.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import game.vinto.app.game.GameScreen
-import androidx.compose.foundation.layout.Box
 import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.VintoTheme
+import game.vinto.client.LocalGame
+import game.vinto.client.Vault
+import game.vinto.client.loadGame
 import game.vinto.shapes.Difficulty
+import kotlinx.coroutines.Dispatchers
 
 /**
  * The one UI, shared by Android, iOS and the browser. Each platform contributes only an
  * entry point (`MainActivity`, `MainViewController`, `main`) that hosts this composable.
  *
- * Navigation is two screens and a boolean. A library would buy back-stack handling and deep
+ * Three screens and a nullable game. A navigation library would buy a back stack and deep
  * links, neither of which a card game with a home screen and a table has any use for; when
  * rooms arrive and a link can point at one, that is the moment to take on a navigator.
  */
 @Composable
-fun App(seeds: () -> Long = ::freshSeed) {
-    // Saveable, not merely remembered. Android destroys and recreates an activity for a
-    // rotation, a font-size change, or simply because the system wanted the memory — and a
-    // plain `remember` loses the seed, which drops the player back to the home screen with
-    // their game gone. The seed is the whole game: keep it and the round comes back.
+fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault() }) {
     var difficulty by rememberSaveable { mutableStateOf(Difficulty.MODERATE) }
-    var seed: Long? by rememberSaveable { mutableStateOf(null) }
+    var screen by remember { mutableStateOf<Screen>(Screen.Opening) }
+
+    // Reading the saved game is the only thing between launching and playing, and on a cold
+    // start it lands in the same frame. The opening screen exists for the case where it does
+    // not — and, later, for a room that has to be reached over a network before anything can
+    // be drawn.
+    LaunchedEffect(Unit) {
+        screen = Screen.Home(canContinue = vault.loadGame() != null)
+    }
 
     VintoTheme {
         // Every phone has something drawn over its edges — a status bar, a gesture handle, a
@@ -43,23 +52,43 @@ fun App(seeds: () -> Long = ::freshSeed) {
         // colour, so the bars read as the edge of the table instead of a border around it.
         Surface(modifier = Modifier.fillMaxSize(), color = RailFill) {
             Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            when (val started = seed) {
-                null -> HomeScreen(
-                    difficulty = difficulty,
-                    onDifficulty = { difficulty = it },
-                    onPlay = { seed = seeds() },
-                )
+                when (val here = screen) {
+                    Screen.Opening -> OpeningScreen()
 
-                else -> GameScreen(
-                    seed = started,
-                    difficulty = difficulty,
-                    onQuit = { seed = null },
-                    onPlayAgain = { seed = seeds() },
-                )
-            }
+                    is Screen.Home -> HomeScreen(
+                        difficulty = difficulty,
+                        canContinue = here.canContinue,
+                        onDifficulty = { difficulty = it },
+                        onContinue = {
+                            LocalGame.resume(vault, Dispatchers.Default)?.let {
+                                screen = Screen.Playing(it)
+                            }
+                        },
+                        onPlay = {
+                            screen = Screen.Playing(
+                                LocalGame.start(vault, seeds(), difficulty, Dispatchers.Default),
+                            )
+                        },
+                    )
+
+                    is Screen.Playing -> GameScreen(
+                        game = here.game,
+                        onQuit = { screen = Screen.Home(canContinue = true) },
+                    )
+                }
             }
         }
     }
+}
+
+/** Where the app is. */
+private sealed interface Screen {
+    /** Finding out whether there is a game to come back to. */
+    data object Opening : Screen
+
+    data class Home(val canContinue: Boolean) : Screen
+
+    data class Playing(val game: LocalGame) : Screen
 }
 
 /**

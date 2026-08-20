@@ -4,6 +4,7 @@ import game.vinto.engine.cases.handleConfirmPeek
 import game.vinto.engine.cases.handleDiscardCard
 import game.vinto.engine.cases.handleDrawCard
 import game.vinto.engine.cases.handleEmpty
+import game.vinto.engine.cases.handleEndRound
 import game.vinto.engine.cases.handleFinishSetup
 import game.vinto.engine.cases.handleFinishTossInPeriod
 import game.vinto.engine.cases.handlePeekSetupCard
@@ -84,6 +85,8 @@ object GameEngine {
             is GameAction.DiscardCard -> handleDiscardCard(working, action)
             is GameAction.ConfirmPeek -> handleConfirmPeek(working, action)
             is GameAction.SkipPeek -> handleSkipPeek(working, action)
+            is GameAction.EndRound -> handleEndRound(working)
+
             is GameAction.SetCoalitionLeader -> handleSetCoalitionLeader(working, action)
             is GameAction.ProcessAiTurn -> handleProcessAiTurn(working, action)
             is GameAction.PeekSetupCard -> handlePeekSetupCard(working, action)

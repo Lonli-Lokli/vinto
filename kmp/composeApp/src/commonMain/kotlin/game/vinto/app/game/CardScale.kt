@@ -45,7 +45,7 @@ data class TableSizes(
         val Corner = 8.dp
 
         private val Roomy = TableSizes(
-            mine = CardScale(50.dp, 70.dp),
+            mine = CardScale(44.dp, 62.dp),
             theirs = CardScale(44.dp, 62.dp),
             side = CardScale(40.dp, 56.dp),
             avatar = 38.dp,
@@ -53,7 +53,7 @@ data class TableSizes(
         )
 
         private val Tight = TableSizes(
-            mine = CardScale(40.dp, 56.dp),
+            mine = CardScale(38.dp, 53.dp),
             theirs = CardScale(34.dp, 48.dp),
             side = CardScale(31.dp, 44.dp),
             avatar = 30.dp,

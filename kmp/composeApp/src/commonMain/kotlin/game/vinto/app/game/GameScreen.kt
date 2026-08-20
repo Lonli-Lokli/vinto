@@ -1,64 +1,105 @@
 package game.vinto.app.game
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import game.vinto.shapes.Difficulty
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.RailFill
+import game.vinto.client.LocalGame
 
-private val Pad = 16.dp
-private val Gap = 8.dp
+private val Pad = 12.dp
 
 /**
- * One round, from the deal to the score.
+ * A game: rounds, one after another, with the score carried between them.
  *
- * A round rather than a session: online, a room runs several rounds against a thirty-minute
- * clock, and locally there is no clock and nobody to wait for — so "play again" deals a new
- * game rather than continuing one. That difference lives here, in the screen, and not in the
- * session, which is the same on both sides of it.
+ * The table is one round. What makes it a game is what happens when a round ends — the hands
+ * go face-up, the points are banked, and the player decides whether to deal again. Online
+ * that decision belongs to the room and its thirty-minute clock; locally there is nobody to
+ * keep waiting, so it belongs to the player.
  */
 @Composable
-fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAgain: () -> Unit) {
-    val holder = rememberGame(seed, difficulty)
-    val act = rememberActor(holder)
-    val log by holder.log.collectAsState()
-    var helpOpen by rememberSaveable { mutableStateOf(false) }
+fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
+    // Keyed on the round, so dealing the next one rebuilds the table rather than trying to
+    // reconcile the old one against a fresh deal.
+    val round = game.round
+    val session = game.session
+    val holder = rememberHolder(session)
+    val act = rememberActor(holder, onEachMove = game::save)
+    val log by session.log.collectAsState()
 
-    CardStage(scenes = holder.scenes, sizes = TableSizes.forHeight(TableHeightGuess)) {
+    var helpOpen by remember { mutableStateOf(false) }
+    var scoreOpen by remember(round) { mutableStateOf(false) }
+
+    CardStage(scenes = session.scenes, sizes = TableSizes.forHeight(TableHeightGuess)) {
         Column(modifier = Modifier.fillMaxSize()) {
             TableScreen(
-                view = holder.current,
-                table = holder.table,
-                refusal = holder.refusal,
-                recent = log,
+                state = TableState(
+                    view = holder.current,
+                    table = holder.table,
+                    refusal = holder.refusal,
+                    recent = log,
+                    round = round,
+                ),
                 onMove = act,
                 onHelp = { helpOpen = true },
                 modifier = Modifier.weight(1f),
             )
 
-            if (holder.isOver) {
-                RoundOver(onPlayAgain = onPlayAgain, onQuit = onQuit)
-            }
+            if (holder.isOver) RoundOver(onSee = { scoreOpen = true })
         }
     }
 
     if (helpOpen) {
         HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
+    }
+
+    game.result?.takeIf { scoreOpen }?.let { result ->
+        StandingsSheet(
+            round = round,
+            you = game.playerId,
+            result = result,
+            standings = game.standings,
+            onNextRound = {
+                scoreOpen = false
+                game.nextRound()
+            },
+            onQuit = {
+                scoreOpen = false
+                onQuit()
+            },
+        )
+    }
+}
+
+/**
+ * The round is over; the hands are face-up and the score is one tap away.
+ *
+ * A button rather than the sheet opening itself, because the moment a round ends is the one
+ * moment a player wants to look at the table — every hand is turned over, including the ones
+ * they spent the round guessing at.
+ */
+@Composable
+private fun RoundOver(onSee: () -> Unit) {
+    Surface(modifier = Modifier.fillMaxWidth(), color = RailFill) {
+        Column(modifier = Modifier.padding(Pad)) {
+            GameButton(
+                label = "See the score",
+                tone = ButtonTone.PLAY,
+                onClick = onSee,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
@@ -70,22 +111,3 @@ fun GameScreen(seed: Long, difficulty: Difficulty, onQuit: () -> Unit, onPlayAga
  * own size is the compromise, and it is the one they are looking at.
  */
 private val TableHeightGuess = 640.dp
-
-@Composable
-private fun RoundOver(onPlayAgain: () -> Unit, onQuit: () -> Unit) {
-    Surface(tonalElevation = Gap / 2) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(Pad),
-            verticalArrangement = Arrangement.spacedBy(Gap),
-        ) {
-            Text(
-                "Every hand is turned over",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-            Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) { Text("Deal again") }
-            TextButton(onClick = onQuit, modifier = Modifier.fillMaxWidth()) { Text("Back") }
-        }
-    }
-}

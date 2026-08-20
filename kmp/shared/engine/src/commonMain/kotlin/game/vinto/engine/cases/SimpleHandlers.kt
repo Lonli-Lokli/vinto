@@ -126,3 +126,17 @@ fun handleProcessAiTurn(state: MutableGameState, action: GameAction.ProcessAiTur
 /** EMPTY — a no-op that still counts as a successful reduction, for the same reason. */
 @Suppress("FunctionOnlyReturningConstant", "UnusedParameter")
 fun handleEmpty(state: MutableGameState, action: GameAction.Empty): Boolean = true
+
+/**
+ * END_ROUND — the final round has reached a position nobody can play on, so it is scored.
+ *
+ * Reachable only through the validator's conditions: an empty deck, nothing takeable, and no
+ * action still in flight. Everything is already where it needs to be for scoring; the phase is
+ * the only thing that changes.
+ */
+fun handleEndRound(state: MutableGameState): Boolean {
+    state.phase = GamePhase.SCORING
+    state.subPhase = GameSubPhase.IDLE
+    state.activeTossIn = null
+    return true
+}

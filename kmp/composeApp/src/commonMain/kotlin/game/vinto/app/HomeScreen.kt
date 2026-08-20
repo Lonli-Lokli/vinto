@@ -48,7 +48,13 @@ private val ChipCorner = 5.dp
  * exists to protect.
  */
 @Composable
-fun HomeScreen(difficulty: Difficulty, onDifficulty: (Difficulty) -> Unit, onPlay: () -> Unit) {
+fun HomeScreen(
+    difficulty: Difficulty,
+    canContinue: Boolean,
+    onDifficulty: (Difficulty) -> Unit,
+    onContinue: () -> Unit,
+    onPlay: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -87,12 +93,30 @@ fun HomeScreen(difficulty: Difficulty, onDifficulty: (Difficulty) -> Unit, onPla
                 }
             }
 
-            GameButton(
-                label = "Play",
-                tone = ButtonTone.PLAY,
-                onClick = onPlay,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // Continuing comes first when there is something to continue. A game left
+            // half-played is the reason the app was opened; starting a new one over the top of
+            // it is the rarer intent and the destructive one.
+            if (canContinue) {
+                GameButton(
+                    label = "Continue",
+                    tone = ButtonTone.PLAY,
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                GameButton(
+                    label = "New game",
+                    tone = ButtonTone.NEUTRAL,
+                    onClick = onPlay,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                GameButton(
+                    label = "Play",
+                    tone = ButtonTone.PLAY,
+                    onClick = onPlay,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

@@ -113,8 +113,17 @@ not after the UI is built.
       card in hand, or the phase — followed by every rank and what it does. The words are
       `CARD_CONFIGS`, ported with the engine, so the web app and this teach the same game. A
       drawn action card also explains itself inline, without being asked
-- [~] 7.3 Screens/navigation: home and game table done, two screens and a saveable seed. Lobby,
-      final scores, help, settings and the debug screens are not started
+- [~] 7.3 Screens/navigation: opening, home (with **Continue** when there is a game to come
+      back to), game table, and an end-of-round score sheet with hand / round / game columns.
+      Lobby, settings and the debug screens are not started
+- [x] 7.10 Persistence: the whole game — difficulty, session seed, round number, standings and
+      the round in progress — is written down after every move and comes back on launch. The
+      *state* rather than a seed and a log: replaying from a seed restores the cards and not
+      the bots' memories, and would hand you three opponents who had forgotten the round they
+      were in the middle of
+- [x] 7.11 A game is a session of rounds with points carried between them, as the rules
+      describe. Locally there is no thirty-minute clock and nobody to keep waiting, so it ends
+      when the player says so
 - [x] 7.4 Game table composables, seat-agnostic (rendered for `viewerId`): four-sided seating in
       the web app's phone arrangement, name plates, piles, pending card, action targets, rank
       declaration, King declaration, Jack/Queen flows, toss-in with pass, Vinto at the end of

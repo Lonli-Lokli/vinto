@@ -14,8 +14,6 @@ import game.vinto.client.Question
 import game.vinto.client.Table
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
-import game.vinto.shapes.Difficulty
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -72,25 +70,29 @@ class GameHolder(
     }
 }
 
-/**
- * A game that survives recomposition, and the collectors that feed it.
- *
- * Keyed on the seed so that "play again" is a new key rather than a mutation — which is also
- * why the seed is a parameter here: choosing one is ambient randomness, and the session
- * refuses to do it for exactly that reason.
- */
+/** A holder for one round, rebuilt when the round is. */
 @Composable
-fun rememberGame(seed: Long, difficulty: Difficulty): GameHolder {
-    val session = remember(seed, difficulty) {
-        LocalGameSession(seed = seed, difficulty = difficulty, botDispatcher = Dispatchers.Default)
-    }
+fun rememberHolder(session: LocalGameSession): GameHolder {
     val view = session.view.collectAsState()
     return remember(session) { GameHolder(session, view) }
 }
 
-/** Dispatches [move] from the composition, on a scope tied to the screen. */
+/**
+ * Dispatches [move] from the composition, on a scope tied to the screen.
+ *
+ * @param onEachMove run after every move lands. The game is written down here rather than on
+ *   a timer or at the end: a card game that loses your round because the phone rang is one
+ *   you do not open again, and a round is a few kilobytes.
+ */
 @Composable
-fun rememberActor(holder: GameHolder): (Move) -> Unit {
+fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Unit {
     val scope = rememberCoroutineScope()
-    return remember(holder, scope) { { move -> scope.launch { holder.act(move) } } }
+    return remember(holder, scope) {
+        { move ->
+            scope.launch {
+                holder.act(move)
+                onEachMove()
+            }
+        }
+    }
 }
