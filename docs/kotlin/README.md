@@ -677,11 +677,13 @@ The design came out of a session with the `fable` model against the repo (`VINTO
   the lesson holds up every rank in the order they get harder: the plain 2–6, the two that look
   at one of yours, the two that look at one of theirs, then the three that nobody works out by
   watching — the Jack that swaps blind, the Queen that looks first, and the King. The King gets
-  two beats, because it is the one that needs an example: a correct declaration **takes that
-  card out of whichever hand it was in**, so naming your own 10 drops ten points off your
-  total, and naming an opponent's Joker takes their minus one away instead — and if what you
-  named has an action, you are the one who plays it. That is the answer to "why would I ever
-  point at somebody else's card", and it is not derivable from the rules text.
+  three beats, because it is the one nobody works out and it has two separate ideas in it.
+  First what it does. Then **what you name is what you get to play** — name a 7 or an 8 for a
+  look at one of your own, a Jack for its blind swap with *you* choosing both cards (which is
+  how a Joker you have spotted comes to you and your worst card goes the other way), a Queen to
+  look at two before trading. Then **whose card you name**: the named card leaves that hand, so
+  your own 10 comes off your total and an opponent's Joker comes off theirs. Neither idea is
+  derivable from the rules text; both come from reading `handleDeclareKingAction`.
 - **Cards explained as they are met, with the card.** The first time a rank becomes visible,
   the coach gives its name, value and action in `CARD_CONFIGS`' own words — beside the actual
   picture, dealt from the same art the table uses. The help sheet's gallery does the same, as

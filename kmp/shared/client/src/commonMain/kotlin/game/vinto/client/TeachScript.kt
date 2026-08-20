@@ -225,8 +225,7 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
             title = "Aim it",
             body = "This is the card's own action, and it is free — it costs you nothing to " +
                 "use, and the card goes on the pile afterwards either way.",
-            point = table.taps.keys.firstOrNull()
-                ?.let { Target.Place(Anchor.Seat(it.playerId, it.position)) },
+            point = worthLookingAt(view, table),
         )
 
         // Choosing which of your own cards the drawn one replaces.
@@ -359,23 +358,35 @@ private fun cardTour(taught: Taught): Lesson? = when {
     "cards_king" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
         title = "King — worth nothing, and does anything",
-        body = "Worth nothing at all, which alone makes it a card to keep. Its action points at any " +
-            "card on the table — yours or anybody's — and names it. Right, and that card is " +
-            "gone from the hand it was in and you play its action. Wrong, and everybody sees " +
-            "what it really was and you take a penalty card.",
+        body = "Worth nothing at all, which alone makes it worth keeping. Its action points at " +
+            "any card on the table — yours or anybody's — and names it. Right: that card " +
+            "leaves the hand it was in, and its action becomes yours to play. Wrong: everybody " +
+            "sees what it really was, and you take a penalty card.",
         cards = listOf(Rank.KING),
         talkId = "cards_king",
     )
 
-    "cards_king_why" !in taught.talked -> Lesson(
+    "cards_king_name" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "Why point at somebody else's card?",
-        body = "Because the card you name is taken out of that hand. Naming your own 10 takes ten " +
-            "points off your total. But if you have seen Don's Joker, naming that takes his " +
-            "minus one away and leaves him a card worse off — and if what you named has an " +
-            "action, you are the one who plays it.",
+        title = "What you name is what you get to play",
+        body = "So you are really choosing an action, out of the cards you have seen. Name a 7 " +
+            "or an 8 and you get a look at one of your own. Name a Jack and you get its blind " +
+            "swap — and you pick both cards, which is how a Joker you have spotted comes to " +
+            "you and your worst card goes the other way. Name a Queen and you look at two " +
+            "before deciding whether to trade.",
+        cards = listOf(Rank.SEVEN, Rank.JACK, Rank.QUEEN),
+        talkId = "cards_king_name",
+    )
+
+    "cards_king_whose" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "And whose card you name",
+        body = "Whoever was holding it, the card you name leaves their hand. Naming your own " +
+            "10 takes ten points off your total; naming Don's Joker takes his minus one away " +
+            "and leaves him a card worse off. One King, two jobs — which of them matters more " +
+            "is the read.",
         cards = listOf(Rank.KING, Rank.JOKER),
-        talkId = "cards_king_why",
+        talkId = "cards_king_whose",
     )
 
     "cards_odd" !in taught.talked -> Lesson(
@@ -498,6 +509,25 @@ internal fun visibleRanks(view: PlayerView): List<Rank> {
 
 private fun glossOnce(taught: Taught, id: String, line: String): String? =
     line.takeIf { id !in taught.glossed }
+
+/**
+ * Where to aim an action, when the coach can tell.
+ *
+ * A peek spent on a card you looked at a minute ago buys nothing, so for your own cards it
+ * points at one you have *not* seen. For anybody else's it takes the first on offer — every
+ * card in an opponent's hand is equally unknown, which is the whole problem with them.
+ */
+private fun worthLookingAt(view: PlayerView, table: Table): Target? {
+    val mine = view.players.first { it.id == view.viewerId }
+    val hand = mine.cards
+
+    val unseen = table.taps.keys.firstOrNull { ref ->
+        ref.playerId == mine.id && hand.getOrNull(ref.position) !is CardView.Visible
+    }
+    val chosen = unseen ?: table.taps.keys.firstOrNull() ?: return null
+
+    return Target.Place(Anchor.Seat(chosen.playerId, chosen.position))
+}
 
 /**
  * The card the player should most want rid of: the highest one they can actually see.

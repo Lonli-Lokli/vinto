@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +45,7 @@ import game.vinto.client.Target
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.card_discarded
@@ -63,6 +65,9 @@ private val Tight = 4.dp
 private val Edge = 6.dp
 private val FeltCorner = 14.dp
 private val Rim = 2.dp
+
+/** How far the card under the top one shows from behind it. */
+private val Peek = 5.dp
 private val HelpSize = 30.dp
 
 /** The wordmark's green, matching the web app's, and the deck badge it sits beside. */
@@ -499,23 +504,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
             }
 
             Pile(stringResource(Res.string.table_discard)) {
-                val pile = Modifier.anchoredAt(stage, Anchor.Discard)
-                // Nothing on the pile while a card is on its way to it — the overlay is
-                // drawing that card, and showing it at both ends makes the eye notice the
-                // copy rather than the movement.
-                val top = view.discardPile.lastOrNull()
-                    .takeIf { Anchor.Discard !in stage.inFlight }
-                if (top != null) {
-                    CardFace(
-                        CardView.Visible(top),
-                        sizes.theirs,
-                        modifier = pile,
-                        state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
-                        label = stringResource(Res.string.card_discarded, top.rank.serialName),
-                    )
-                } else {
-                    EmptySlot(sizes.theirs, "—", pile)
-                }
+                Discard(view, sizes, stage)
             }
         }
 
@@ -547,6 +536,60 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
     }
 }
 
+/**
+ * The discard pile: what is on top, what is just under it, and what is in play.
+ *
+ * Three things the single top card could not say, all of them seen on a phone:
+ *
+ * - **A card being played is on the table, not in somebody's hand.** A declared swap-out, a
+ *   card thrown in, a rank a King borrowed — the engine holds these as the *pending* action
+ *   while their action is aimed, and the pile is empty for as long as that takes. Drawn by the
+ *   player's own hand it looked like a card they were still holding; it belongs here, which is
+ *   where the toss-in window says it is.
+ * - **A card can land underneath.** An unplayed action card stays on top so the next player
+ *   can take it (`clearTossInAfterActionableCard`), so a card discarded during a toss-in queue
+ *   goes *beneath* it — and simply vanished. The one below now peeks out from behind.
+ * - Nothing is drawn here while a card is on its way: the overlay has that card, and showing
+ *   it at both ends makes the eye follow the copy rather than the movement.
+ */
+@Composable
+private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
+    val pile = Modifier.anchoredAt(stage, Anchor.Discard)
+    val arriving = Anchor.Discard in stage.inFlight
+
+    // A card in play came off the table, so it is drawn on the table.
+    val inPlay = (view.pendingAction?.card as? CardView.Visible)?.card
+        ?.takeIf { view.pendingAction?.from == PendingCardOrigin.HAND }
+
+    val top = (inPlay ?: view.discardPile.lastOrNull()).takeIf { !arriving }
+    val under = view.discardPile.lastOrNull()
+        ?.takeIf { inPlay != null || view.discardPile.size > 1 }
+        ?.takeIf { it.id != top?.id && !arriving }
+
+    if (top == null) {
+        EmptySlot(sizes.theirs, "—", pile)
+        return
+    }
+
+    Box(contentAlignment = Alignment.Center) {
+        under?.let {
+            CardFace(
+                card = CardView.Visible(it),
+                scale = sizes.theirs,
+                modifier = Modifier.offset(x = Peek, y = Peek),
+            )
+        }
+
+        CardFace(
+            card = CardView.Visible(top),
+            scale = sizes.theirs,
+            modifier = pile,
+            state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
+            label = stringResource(Res.string.card_discarded, top.rank.serialName),
+        )
+    }
+}
+
 @Composable
 private fun Pile(label: String, content: @Composable () -> Unit) {
     Column(
@@ -572,7 +615,12 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
  */
 @Composable
 private fun PendingCard(view: PlayerView, sizes: TableSizes) {
-    val pending = view.pendingAction?.takeIf { it.playerId == view.viewerId }
+    // Only a card that came off the **deck** waits here. One that came off the table — a
+    // declared swap-out, a card thrown in, a rank a King borrowed — is drawn on the discard
+    // pile, because that is where it is: face up, in play, and open to anybody holding a
+    // match. Drawn beside the hand it read as a card the player was still holding.
+    val pending = view.pendingAction
+        ?.takeIf { it.playerId == view.viewerId && it.from == PendingCardOrigin.DRAWING }
     val stage = LocalStage.current
     val landing = Anchor.Pending in stage.inFlight
 
