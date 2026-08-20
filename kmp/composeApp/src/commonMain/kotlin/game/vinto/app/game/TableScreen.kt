@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.feltEdge
@@ -64,6 +65,8 @@ private val DeckBadge = Color(0xFF14351F)
 @Composable
 fun TableScreen(
     state: TableState,
+    sizes: TableSizes,
+    panelFloor: Dp,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     onReport: () -> Unit,
@@ -79,8 +82,6 @@ fun TableScreen(
         TableHeader(view, state.round, onReport)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
-            val sizes = TableSizes.forHeight(maxHeight)
-
             Column(
                 modifier = Modifier.fillMaxSize().padding(Gap),
                 verticalArrangement = Arrangement.spacedBy(Gap),
@@ -110,6 +111,7 @@ fun TableScreen(
             recent = state.recent,
             onMove = onMove,
             onHelp = onHelp,
+            floor = panelFloor,
         )
     }
 }

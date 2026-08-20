@@ -1,12 +1,12 @@
 package game.vinto.client
 
 /**
- * Scenes waiting to be played.
+ * Frames waiting to be played.
  *
  * The reason this exists rather than "just animate it as it happens" is the gap between the
  * two machines: the engine runs in a Durable Object, the animation runs on a phone, and the
  * server does not wait (design C4). Between one tap and the next, three bots take their turns
- * in under a second — several scenes' worth of things to see, arriving together.
+ * in under a second — several frames' worth of things to see, arriving together.
  *
  * So the queue's job is not to hold work. It is to decide what to *skip*. A client that is
  * twelve events behind — a reconnect, a slow link, an app that was in somebody's pocket — has
@@ -17,40 +17,48 @@ package game.vinto.client
  * Speeding the backlog up instead was considered and rejected: it produces a screen that is
  * fastest exactly when it is least comprehensible.
  *
- * Nothing here is required for correctness. Drop every scene and the game is still right,
+ * Nothing here is required for correctness. Drop every frame and the game is still right,
  * only less legible — which is the property that lets the queue take this liberty at all.
+ *
+ * @param takesTime whether an item costs the player any time to watch. Items that do not are
+ *   still queued — a frame carries the table it leaves behind, and skipping it would strand
+ *   the screen a move in the past — but they are free, and a hundred of them do not make a
+ *   client "behind".
  */
-class AnimationQueue(private val budget: Int = DEFAULT_BUDGET) {
+class AnimationQueue<T>(
+    private val budget: Int = DEFAULT_BUDGET,
+    private val takesTime: (T) -> Boolean = { true },
+) {
 
-    private val waiting = ArrayDeque<Scene>()
+    private val waiting = ArrayDeque<T>()
 
-    /** Scenes still to play. */
+    /** Items still to play. */
     val pending: Int get() = waiting.size
 
-    /** How many scenes have been dropped for being too far behind, over the session. */
+    /** How many have been dropped for being too far behind, over the session. */
     var skipped: Int = 0
         private set
 
     /**
-     * Adds scenes, dropping the backlog if that puts the client too far behind.
+     * Adds items, dropping the backlog if that puts the client too far behind.
      *
      * Whole batches are dropped rather than trimmed to the budget: a scene is only legible in
      * the context of the ones around it, so half of a swap is more confusing than none of it.
      */
-    fun submit(scenes: List<Scene>) {
-        val meaningful = scenes.filter { it.isNotEmpty() }
-        if (meaningful.isEmpty()) return
+    fun submit(items: List<T>) {
+        if (items.isEmpty()) return
 
-        if (waiting.size + meaningful.size > budget) {
-            skipped += waiting.size + meaningful.size
+        val cost = waiting.count(takesTime) + items.count(takesTime)
+        if (cost > budget) {
+            skipped += waiting.size + items.size
             waiting.clear()
             return
         }
-        waiting.addAll(meaningful)
+        waiting.addAll(items)
     }
 
-    /** The next scene to play, or null when there is nothing waiting. */
-    fun next(): Scene? = waiting.removeFirstOrNull()
+    /** The next item to play, or null when there is nothing waiting. */
+    fun next(): T? = waiting.removeFirstOrNull()
 
     /**
      * Abandons everything pending.

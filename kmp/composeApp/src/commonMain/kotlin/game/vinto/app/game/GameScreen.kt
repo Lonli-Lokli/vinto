@@ -1,5 +1,6 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ import game.vinto.app.theme.RailInk
 import game.vinto.app.theme.RailInkDim
 import game.vinto.client.LocalGame
 import game.vinto.client.toJson
+import game.vinto.shapes.GamePhase
 
 private val Pad = 12.dp
 
@@ -51,32 +53,47 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
     var reported by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
 
-    CardStage(scenes = session.scenes, sizes = TableSizes.forHeight(TableHeightGuess)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            TableScreen(
-                state = TableState(
-                    view = holder.current,
-                    table = holder.table,
-                    refusal = holder.refusal,
-                    recent = log,
-                    round = round,
-                ),
-                onMove = act,
-                onHelp = { helpOpen = true },
-                // The whole game, in the format the replay harness already reads. A bug
-                // report for a card game is worth what it is reproducible for, and "the bots
-                // got stuck" is worth nothing — this is the seed, every action in order, and
-                // a hash after each one, so the exact deal can be played back and the first
-                // action that disagrees is the bug's address.
-                onReport = {
-                    val report = session.report(at = nowIso(), label = "reported from the table")
-                    clipboard.setText(AnnotatedString(report.toJson()))
-                    reported = true
-                },
-                modifier = Modifier.weight(1f),
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // Decided once, from the screen. Everything about how large a card is drawn — on the
+        // table and in flight — comes from here, so the two cannot disagree and neither can
+        // change while a round is being played.
+        val sizes = TableSizes.forScreen(maxHeight)
+        val floor = panelFloor(maxHeight)
 
-            if (holder.isOver) RoundOver(onSee = { scoreOpen = true })
+        CardStage(frames = session.frames, live = holder.current, sizes = sizes) { shown ->
+            Column(modifier = Modifier.fillMaxSize()) {
+                TableScreen(
+                    // `shown` rather than the live view: while the bots' moves are being played
+                    // out this is the table as it was after the move currently on screen, and it
+                    // catches up the moment there is nothing left to animate.
+                    state = TableState(
+                        view = shown,
+                        table = holder.tableFor(shown),
+                        refusal = holder.refusal,
+                        recent = log,
+                        round = round,
+                    ),
+                    sizes = sizes,
+                    panelFloor = floor,
+                    onMove = act,
+                    onHelp = { helpOpen = true },
+                    // The whole game, in the format the replay harness already reads. A bug
+                    // report for a card game is worth what it is reproducible for, and "the bots
+                    // got stuck" is worth nothing — this is the seed, every action in order, and
+                    // a hash after each one, so the exact deal can be played back and the first
+                    // action that disagrees is the bug's address.
+                    onReport = {
+                        val report = session.report(at = nowIso(), label = "reported from the table")
+                        clipboard.setText(AnnotatedString(report.toJson()))
+                        reported = true
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+
+                // On the shown table, not the live one: the round is over when the player has
+                // seen it end, which is a second or two after the engine says so.
+                if (shown.phase == GamePhase.SCORING) RoundOver(onSee = { scoreOpen = true })
+            }
         }
     }
 
@@ -149,11 +166,3 @@ private fun RoundOver(onSee: () -> Unit) {
     }
 }
 
-/**
- * The size a card in flight is drawn at.
- *
- * A card crossing the table between two seats of different sizes has to be drawn at *some*
- * size, and picking either end makes it appear to jump on arrival at the other. The player's
- * own size is the compromise, and it is the one they are looking at.
- */
-private val TableHeightGuess = 640.dp

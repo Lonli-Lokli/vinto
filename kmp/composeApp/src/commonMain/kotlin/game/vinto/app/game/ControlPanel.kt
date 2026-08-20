@@ -1,5 +1,6 @@
 package game.vinto.app.game
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.ButtonTone
@@ -61,17 +64,36 @@ fun ControlPanel(
     table: Table,
     refusal: String?,
     recent: List<String>,
+    floor: Dp,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = modifier.fillMaxWidth(), color = RailFill) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            // The panel keeps [floor] whether it needs it or not, and grows past it smoothly
+            // when it genuinely does — a King's fourteen ranks, or a refusal that runs to two
+            // lines. The felt above takes whatever is left, so a panel that changed height
+            // freely would move the whole table on every phase of every turn: cards, seats
+            // and piles all shifting under a thumb that is halfway to one of them.
+            .heightIn(min = floor)
+            .animateContentSize(),
+        color = RailFill,
+    ) {
+        // The Surface's minimum has to reach the content for the centring below to have room
+        // to work in; a wrapped Column would simply be as tall as its own children.
         // No scrolling. A control you have to scroll to reach is one a player does not know
         // is there, and the panel's worst case — a King's fourteen ranks — fits because those
         // are drawn as a compact grid rather than as fourteen full-width buttons.
+        //
+        // Centred inside the reserved height, so a short panel — "Raph is playing", and
+        // nothing to do about it — sits in the middle of the rail rather than clinging to the
+        // felt above a void. It is a no-op for every panel that fills the space, which is most
+        // of them, so the buttons do not move around between phases.
         Column(
-            modifier = Modifier.padding(PanelPad),
-            verticalArrangement = Arrangement.spacedBy(Gap),
+            modifier = Modifier.fillMaxWidth().padding(PanelPad),
+            verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
         ) {
             Heading(table = table, onHelp = onHelp)
 

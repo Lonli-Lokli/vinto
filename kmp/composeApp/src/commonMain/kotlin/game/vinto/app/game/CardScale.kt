@@ -66,5 +66,39 @@ data class TableSizes(
         private val ROOMY_FLOOR = 560.dp
 
         fun forHeight(height: Dp): TableSizes = if (height >= ROOMY_FLOOR) Roomy else Tight
+
+        /**
+         * The size to draw at, decided from the **screen** rather than from the felt.
+         *
+         * The felt is what is left once the control panel has taken what it needs, and what
+         * it needs changes with the phase — one button for a turn, fourteen rank chips for a
+         * King. Sizing the cards from that means every phase change is a chance for the whole
+         * table to change size, which on a phone reads as the game jumping under your thumb.
+         *
+         * So the decision is made once, from a quantity that does not move, using the panel's
+         * floor rather than its actual height. A panel that overflows its floor still pushes
+         * the felt up — there is nowhere else for it to go — but the cards keep their size and
+         * their positions relative to each other, and the felt's middle row absorbs it.
+         */
+        fun forScreen(screen: Dp): TableSizes = forHeight(screen - HeaderHeight - panelFloor(screen))
     }
 }
+
+/** The strip above the felt: the wordmark, the round, the bug button, the deck count. */
+val HeaderHeight = 44.dp
+
+/**
+ * The height the control panel holds on to whether or not it needs it.
+ *
+ * A panel that is exactly as tall as its contents is a panel that changes height on every
+ * phase of every turn, and since the felt takes what is left, the entire table shifts each
+ * time. Reserving the height of a *typical* panel — a prompt, a rule, and two buttons — means
+ * the common cases cost nothing at all: draw, swap, discard and toss-in all fit inside it and
+ * move nothing.
+ *
+ * Capped as a fraction of the screen so a small phone does not end up with a rail and no felt.
+ */
+fun panelFloor(screen: Dp): Dp = minOf(PANEL_FLOOR_MAX, screen * PANEL_FLOOR_FRACTION)
+
+private val PANEL_FLOOR_MAX = 268.dp
+private const val PANEL_FLOOR_FRACTION = 0.32f

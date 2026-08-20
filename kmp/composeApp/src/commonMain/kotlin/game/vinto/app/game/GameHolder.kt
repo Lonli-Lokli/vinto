@@ -35,7 +35,7 @@ class GameHolder(
     val log get() = session.log
 
     /** What there is to see, for the stage to play. */
-    val scenes get() = session.scenes
+    val frames get() = session.frames
 
     var question: Question by mutableStateOf(Question.None)
         private set
@@ -48,6 +48,16 @@ class GameHolder(
     val current: PlayerView get() = view.value
     val table: Table get() = tableFor(view.value, question)
     val isOver: Boolean get() = session.isOver
+
+    /**
+     * The table for a given view, which is not always the live one.
+     *
+     * While the bots' moves are being animated the screen is drawing a table a move or two in
+     * the past (see `CardStage`), and it has to draw the *controls* from the same moment —
+     * offering the buttons of a position the player cannot see yet is how a game gets played
+     * by accident.
+     */
+    fun tableFor(view: PlayerView): Table = tableFor(view, question)
 
     /**
      * Acts on whatever the player touched.

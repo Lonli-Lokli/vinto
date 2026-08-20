@@ -132,6 +132,29 @@ enum class Attention { TURN, VINTO, PENALTY, COALITION }
 typealias Scene = List<Beat>
 
 /**
+ * One action, everything it gives the player to see, and the table it leaves behind.
+ *
+ * The view travels *with* the scenes rather than being published separately, and that is the
+ * whole point of the type. Without it a client shows the state after the last move while the
+ * overlay is still flying cards from three moves ago — the bots' turns all land at once and
+ * then get narrated, which is the one arrangement guaranteed to be unreadable. Carrying the
+ * view here lets the screen step to each move as it is shown, so the table and the animation
+ * are describing the same moment.
+ *
+ * @param actorId whoever made the move, or null for the engine's own bookkeeping. Used to put
+ *   a pause between one player's turn and the next: three bot turns arriving in under a
+ *   second are otherwise a single blur of cards.
+ */
+data class Frame(
+    val actorId: String?,
+    val scenes: List<Scene>,
+    val view: PlayerView,
+) {
+    /** Whether this frame takes any time to play. Aiming a Jack moves nothing. */
+    val hasSomethingToSee: Boolean get() = scenes.any { it.isNotEmpty() }
+}
+
+/**
  * What the player should see, given what happened.
  *
  * Takes two **views** rather than two states, and that is the whole design (C1). A client

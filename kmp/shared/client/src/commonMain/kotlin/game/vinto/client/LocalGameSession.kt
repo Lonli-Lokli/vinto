@@ -103,18 +103,20 @@ class LocalGameSession(
     val log: StateFlow<List<String>> = _log.asStateFlow()
 
     /**
-     * What there is to see, in the order it happened.
+     * What there is to see, in the order it happened, each with the table it left behind.
      *
-     * Scenes rather than states: this is the same stream a room's log will feed, so the
+     * Frames rather than states: this is the same stream a room's log will feed, so the
      * screen above cannot tell a solo game from an online one — which is the point of
-     * deriving it from the view (design C1).
+     * deriving it from the view (design C1). Each frame is one action, so a screen can step
+     * through the bots' turns at the pace it draws them rather than jumping to the end and
+     * narrating backwards.
      */
-    private val _scenes = MutableSharedFlow<List<Scene>>(
+    private val _frames = MutableSharedFlow<List<Frame>>(
         replay = 1,
         extraBufferCapacity = EVENT_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val scenes: SharedFlow<List<Scene>> = _scenes.asSharedFlow()
+    val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
 
     override suspend fun dispatch(action: GameAction): String? {
         // The seat boundary, the same one the Durable Object checks before the engine sees
@@ -143,11 +145,17 @@ class LocalGameSession(
         }
 
         publish()
-        val seen = choreograph(action, seenBefore, _view.value).toMutableList()
+        val seen = mutableListOf(
+            Frame(
+                actorId = action.actorId,
+                scenes = choreograph(action, seenBefore, _view.value),
+                view = _view.value,
+            ),
+        )
         record(action, before, state)
 
         seen += playBots()
-        _scenes.tryEmit(seen)
+        _frames.tryEmit(seen)
         return null
     }
 
@@ -181,12 +189,13 @@ class LocalGameSession(
     /**
      * Runs every bot move that follows, off whatever thread called in.
      *
-     * The view is published *after* the bots have finished rather than per move: a card game
-     * has an animation layer that wants to show moves in sequence, and it can do that from the
-     * event's count. Publishing every intermediate state would make the UI flicker through
-     * positions nobody was ever meant to see.
+     * The authoritative view is published once, *after* the bots have finished: it is the
+     * state of the game, and the game really has moved on. What the screen shows is a
+     * different question, answered by the frames returned here — one per move, each carrying
+     * the table that move left behind, so the animation layer can walk them at a readable
+     * pace instead of jumping to the end and explaining afterwards.
      */
-    private suspend fun playBots(): List<Scene> {
+    private suspend fun playBots(): List<Frame> {
         val start = state
         var moves = 0
         val told = mutableListOf<Triple<GameAction, GameState, GameState>>()
@@ -210,8 +219,15 @@ class LocalGameSession(
         // Choreographed from the *views*, not the states, so this is the same computation a
         // client will do from a socket — the bots' moves arrive there as a log of actions and
         // a new view, which is exactly what these three are.
-        val seen = told.flatMap { (action, was, now) ->
-            choreograph(action, projectView(was, playerId), projectView(now, playerId))
+        //
+        // One frame per move rather than one batch for the lot. The engine finishes all three
+        // bots' turns before anything is drawn — it must, since each move depends on the last
+        // — but the screen is given them a move at a time, with the table each one left
+        // behind, so it can show them one after another instead of all at once.
+        val seen = told.map { (action, was, now) ->
+            val before = projectView(was, playerId)
+            val after = projectView(now, playerId)
+            Frame(action.actorId, choreograph(action, before, after), after)
         }
 
         told.forEach { (action, was, now) -> record(action, was, now) }

@@ -29,8 +29,10 @@ import game.vinto.client.Anchor
 import game.vinto.client.Attention
 import game.vinto.client.AnimationQueue
 import game.vinto.client.Beat
+import game.vinto.client.Frame
 import game.vinto.client.Scene
 import game.vinto.engine.CardView
+import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
@@ -38,7 +40,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
-private const val MOVE_MS = 340
+/**
+ * How long each thing takes.
+ *
+ * Tuned on a phone rather than on a desktop preview, and the first version was roughly twice
+ * this fast. The speed a card *can* cross the table is not the speed at which anybody learns
+ * anything from watching it: three bots take their turns between one tap and the next, and at
+ * 340 ms a move that is one continuous flicker with no seam between one player and the next.
+ * The pauses matter as much as the movements — [TURN_GAP_MS] is what separates "Raph did
+ * something, then Don did something" from "some cards moved".
+ */
+private const val MOVE_MS = 460
 private const val PEEK_MS = 1100
 
 /** The lift itself is quick; the card then stays up for the rest of the beat. */
@@ -57,7 +69,12 @@ private const val SWEEP_STAGGER = 0.12f
 private const val BESIDE_PX = 150f
 private const val FLINCH_MS = 420
 private const val SAY_MS = 1400
-private const val BETWEEN_SCENES_MS = 60L
+
+/** Between two scenes of the same move — the beat between a King's declaration and its work. */
+private const val BETWEEN_SCENES_MS = 140L
+
+/** Between two players' moves. The seam that makes a turn a turn. */
+private const val TURN_GAP_MS = 380L
 
 /**
  * Where the table's fixed places are on screen, and what is currently happening at them.
@@ -154,16 +171,32 @@ val LocalStage = compositionLocalOf { Stage() }
  * Cards move by being drawn *over* the table rather than by the table rearranging itself. A
  * card going from a hand to the discard pile passes over three other hands, and a layout that
  * animated it in place would have to make room for it in every one of them.
+ *
+ * **The table the content draws is the one being animated, not the one the engine is on.**
+ * The engine finishes all three bots' turns before a single card has moved — it has to, since
+ * each move depends on the last — so a screen wired straight to the live view shows the
+ * *final* position and then narrates the past over the top of it: cards fly out of hands they
+ * are no longer in, towards a pile that already has them. Each frame carries the table its own
+ * move left behind, and [content] is given that instead, catching up to the live view as soon
+ * as there is nothing left to play.
+ *
+ * @param live where the game actually is. Shown whenever nothing is being animated, which is
+ *   every moment the player can act.
  */
 @Composable
 fun CardStage(
-    scenes: Flow<List<Scene>>,
+    frames: Flow<List<Frame>>,
+    live: PlayerView,
     sizes: TableSizes,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable (PlayerView) -> Unit,
 ) {
     val stage = remember { Stage() }
-    val queue = remember { AnimationQueue() }
+    val queue = remember { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
+
+    // The move being shown, while it is behind the one the engine is on. Null means caught up,
+    // which is both the resting state and the only state the player is asked to act in.
+    var behind by remember { mutableStateOf<PlayerView?>(null) }
 
     // Drains only while there is something to play, and then stops.
     //
@@ -172,27 +205,47 @@ fun CardStage(
     // forever is a composition that is never idle, so `waitForIdle` in a UI test never
     // returns and neither does anything else built on idling. Collecting and draining per
     // batch has the same effect and goes quiet in between.
-    LaunchedEffect(scenes) {
+    LaunchedEffect(frames) {
         var next = 0L
-        scenes.collect { batch ->
+        var lastActor: String? = null
+
+        frames.collect { batch ->
             queue.submit(batch)
 
             while (true) {
-                val scene = queue.next() ?: break
+                val frame = queue.next() ?: break
 
-                // One frame first, so the table has re-laid-out and reported where things
-                // now are. A scene is worked out from the move, and the drawing is always a
-                // frame behind — asking for positions in the same frame gets the previous
-                // ones, or none at all for a slot that has only just appeared.
-                withFrameNanos { }
-                next = stage.play(scene, next)
-                delay(BETWEEN_SCENES_MS)
+                // A pause when the turn passes. Without it three bot turns are one long
+                // stream of cards with no way to tell whose move any of them was.
+                if (frame.hasSomethingToSee) {
+                    if (lastActor != null && frame.actorId != lastActor) delay(TURN_GAP_MS)
+                    lastActor = frame.actorId
+                }
+
+                // The table steps to this move before its cards fly, because the overlay
+                // draws a gap where a card is landing: the seat has to be showing the card
+                // for the gap to be in the right place.
+                behind = frame.view
+
+                for (scene in frame.scenes) {
+                    // One frame first, so the table has re-laid-out and reported where things
+                    // now are. A scene is worked out from the move, and the drawing is always
+                    // a frame behind — asking for positions in the same frame gets the
+                    // previous ones, or none at all for a slot that has only just appeared.
+                    withFrameNanos { }
+                    next = stage.play(scene, next)
+                    delay(BETWEEN_SCENES_MS)
+                }
             }
+
+            // Caught up — and the only path when a batch was dropped for being too far
+            // behind, which is what makes the drop land on the present rather than nowhere.
+            behind = null
         }
     }
 
     Box(modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) }) {
-        CompositionLocalProvider(LocalStage provides stage) { content() }
+        CompositionLocalProvider(LocalStage provides stage) { content(behind ?: live) }
 
         stage.peeking.forEach { (anchor, card) -> BeingLookedAt(stage, anchor, card, sizes) }
 

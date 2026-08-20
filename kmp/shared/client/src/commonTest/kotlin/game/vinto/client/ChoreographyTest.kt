@@ -29,9 +29,18 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class) // `runCurrent`, to drain the scene collector deterministically.
 class ChoreographyTest {
 
+    /**
+     * The scenes a session has emitted, one entry per dispatch.
+     *
+     * A dispatch emits one frame per *move* — the player's, then each bot's — and these cases
+     * are about what the player is shown rather than about whose move it was, so the frames
+     * are flattened back to their scenes here.
+     */
     private fun TestScope.scenesOf(session: LocalGameSession): List<List<Scene>> {
         val seen = mutableListOf<List<Scene>>()
-        backgroundScope.launch { session.scenes.collect { seen.add(it) } }
+        backgroundScope.launch {
+            session.frames.collect { batch -> seen.add(batch.flatMap { it.scenes }) }
+        }
         runCurrent()
         return seen
     }
