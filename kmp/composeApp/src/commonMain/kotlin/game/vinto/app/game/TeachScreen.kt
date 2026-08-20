@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
@@ -32,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import androidx.compose.foundation.BorderStroke
 import game.vinto.app.theme.RailBorder
+import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.RailInkDim
 import game.vinto.client.Chapter
 import game.vinto.client.Lesson
@@ -61,9 +64,11 @@ import org.jetbrains.compose.resources.stringResource
 private val Pad = 12.dp
 private val Tight = 4.dp
 private val DotSize = 8.dp
+private val Corner = 12.dp
+private val Lift = 8.dp
 
 /** As much of the rail as the coach may take, mid-play, before it starts scrolling. */
-private val CoachMax = 210.dp
+private val CoachMax = 120.dp
 
 /**
  * And how much while it is talking.
@@ -73,7 +78,7 @@ private val CoachMax = 210.dp
  * of them will not read. Fixed rather than merely allowed, so "Go on" does not move between
  * one beat and the next.
  */
-private val TalkMax = 290.dp
+private val TalkMax = 260.dp
 
 /** Small enough to sit in a line of text, large enough to recognise on the felt. */
 private val NoteCard = 34.dp
@@ -165,31 +170,47 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
             labels = table.choices.associate { it.move to it.label }
             showing = lessonFor(shown, table, taught)
 
-            TableScreen(
-                state = TableState(
-                    view = shown,
-                    table = table,
-                    refusal = holder.refusal,
-                    recent = log,
-                    round = 1,
-                ),
-                layout = layout,
-                onMove = act,
-                onHelp = { helpOpen = true },
-                onReport = {},
-                modifier = Modifier.fillMaxSize(),
-                coach = {
-                    Coach(
-                        lesson = showing,
-                        prompt = table.prompt,
-                        taught = taught,
-                        finished = shown.phase == GamePhase.SCORING,
-                        strayed = strayed,
-                        onRead = { taught = taught.heard(showing) },
-                        onDone = onDone,
-                    )
-                },
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                TableScreen(
+                    state = TableState(
+                        view = shown,
+                        table = table,
+                        refusal = holder.refusal,
+                        recent = log,
+                        round = 1,
+                    ),
+                    layout = layout,
+                    onMove = act,
+                    onHelp = { helpOpen = true },
+                    onReport = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                // **Over the table, not inside the rail.**
+                //
+                // The lesson used to live in the control panel, which made the panel as tall
+                // as a lesson and the felt as short as whatever was left — four hands, two
+                // piles and three name plates crushed into a third of the screen, with the
+                // side seats' cards re-flowing into rows. A tutorial that deforms the game it
+                // is teaching is teaching the wrong game.
+                //
+                // So it floats above the rail instead, and the table underneath is laid out
+                // exactly as it is in a real round. What it covers is the middle of the felt,
+                // which is the emptiest part of it and the part nothing is happening in while
+                // the coach has something to say.
+                Coach(
+                    lesson = showing,
+                    taught = taught,
+                    finished = shown.phase == GamePhase.SCORING,
+                    strayed = strayed,
+                    onRead = { taught = taught.heard(showing) },
+                    onDone = onDone,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(horizontal = Pad)
+                        .padding(top = HeaderHeight + Pad),
+                )
+            }
         }
     }
 
@@ -211,51 +232,51 @@ private fun ignoredThePointer(lesson: Lesson?, chosen: String?): Boolean {
 }
 
 /**
- * The lesson strip: what is happening, why it matters, and how much of the game is left.
+ * The lesson, floating above the rail.
  *
- * It lives in the control rail's reserved height rather than in a band above the table.
- * Stacked above, it cost the felt 150 dp and the side seats' hands re-flowed into rows — the
- * lesson was being taught on a table that was not the one being learned.
+ * It began life inside the control panel, which was wrong in a way that only showed up on a
+ * phone: the panel became as tall as a lesson and the felt as short as whatever was left, so
+ * four hands, two piles and three name plates ended up crushed into a third of the screen with
+ * the side seats' cards re-flowing into rows. A tutorial that deforms the game it is teaching
+ * is teaching a different game.
+ *
+ * Above the rail it covers the middle of the felt instead — the emptiest part of the table,
+ * and the part where nothing is happening while the coach has something to say. The table
+ * underneath keeps exactly the layout it has in a real round.
+ *
+ * It is bounded and scrolls: a talk beat may take most of the felt, since the table is held
+ * for it anyway, but a lesson given *during* play stays small enough to see past.
  */
 @Composable
 private fun Coach(
     lesson: Lesson?,
-    prompt: String,
     taught: Taught,
     finished: Boolean,
     strayed: Boolean,
     onRead: () -> Unit,
     onDone: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    // The panel below already says what is being asked. The lesson names itself only when it
-    // is talking about something else — otherwise the same sentence is on screen twice.
-    val title = when {
-        finished -> stringResource(Res.string.teach_finished_title)
-        lesson?.title == null -> null
-        lesson.title.equals(prompt, ignoreCase = true) -> null
-        else -> lesson.title
-    }
+    val talking = lesson?.talkId != null || finished
+    if (lesson == null && !finished) return
 
-    val talking = lesson?.talkId != null
+    // Open while it is talking, because a talk beat holds the table and there is nothing else
+    // to look at. **Shut while the game is being played**, down to one line, because
+    // everything under it is something the player has to be able to see and touch — their own
+    // hand, the deck, the pile. One tap opens it for as long as they want it.
+    var open by remember(lesson?.talkId, lesson?.title) { mutableStateOf(false) }
+    val showing = talking || open
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Tight),
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(Corner),
+        color = RailFill,
+        border = BorderStroke(1.dp, RailBorder),
+        shadowElevation = Lift,
+        onClick = { if (!talking) open = !open },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                // Bounded, and scrolling inside if it has to. The rail is shared with the game's
-                // own controls, and a King's fourteen rank chips plus a three-line prompt plus a
-                // coach is more than a phone has — something has to give, and it should be the
-                // lesson's commentary rather than the table it is about.
-                //
-                // **Fixed** while the coach is talking, rather than merely bounded. Twelve beats
-                // are tapped through one after another, and a "Go on" that sits at a different
-                // height each time is one a thumb has to hunt for twelve times.
-                .then(if (talking) Modifier.height(TalkMax) else Modifier.heightIn(max = CoachMax))
-                .verticalScroll(rememberScrollState())
-                .animateContentSize(),
+            modifier = Modifier.padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Tight),
         ) {
             Row(
@@ -264,7 +285,10 @@ private fun Coach(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = title ?: stringResource(Res.string.teach_heading),
+                    text = when {
+                        finished -> stringResource(Res.string.teach_finished_title)
+                        else -> lesson?.title ?: stringResource(Res.string.teach_heading)
+                    },
                     fontSize = TitleSize,
                     fontWeight = FontWeight.Bold,
                     color = CoachInk,
@@ -273,11 +297,46 @@ private fun Coach(
                 Progress(taught.chapters)
             }
 
-            HeldUpCards(lesson?.cards.orEmpty())
+            if (showing) CoachBody(lesson, finished, strayed)
+
+            when {
+                finished -> GameButton(
+                    label = stringResource(Res.string.teach_done),
+                    tone = ButtonTone.PLAY,
+                    onClick = onDone,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                lesson?.talkId != null -> GameButton(
+                    label = stringResource(Res.string.teach_go_on),
+                    tone = ButtonTone.KEEP,
+                    onClick = onRead,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                else -> Unit
+            }
+        }
+    }
+}
+
+/**
+ * Everything the coach is saying, under its heading.
+ *
+ * Split out because the card around it has enough to think about — whether it is talking,
+ * whether the player has opened it, and what to do when they press the button.
+ */
+@Composable
+private fun CoachBody(lesson: Lesson?, finished: Boolean, strayed: Boolean) {
+    Column(
+        modifier = Modifier
+            .heightIn(max = if (lesson?.talkId != null || finished) TalkMax else CoachMax)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Tight),
+    ) {
+        HeldUpCards(lesson?.cards.orEmpty())
 
         if (strayed) {
-            // First, not last: the coach is a bounded box that scrolls, and an answer to
-            // "is this a real game or a rail?" is no use below the fold.
             Text(text = STRAYED, fontSize = DetailSize, color = NoteInk)
         }
 
@@ -291,52 +350,30 @@ private fun Coach(
             color = RailInkDim,
         )
 
-
-        lesson?.note?.let { note ->
-            // With the card beside it. "Queen — worth 10" is a fact about a picture the player
-            // is about to have to recognise across a table, and the words alone leave them to
-            // make that connection themselves.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Tight * 2),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                lesson.noteRank?.let { CardPicture(rank = it, width = NoteCard) }
-
-                Text(
-                    text = note,
-                    fontSize = DetailSize,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NoteInk,
-                )
-            }
-        }
+        lesson?.note?.let { note -> Note(note, lesson.noteRank) }
 
         lesson?.gloss?.let { gloss ->
             Text(text = gloss, fontSize = DetailSize, color = RailInkDim)
         }
+    }
+}
 
-        }
+/** A card being met for the first time, with the card. */
+@Composable
+private fun Note(note: String, rank: Rank?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Tight * 2),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        rank?.let { CardPicture(rank = it, width = NoteCard) }
 
-        when {
-            finished -> GameButton(
-                label = stringResource(Res.string.teach_done),
-                tone = ButtonTone.PLAY,
-                onClick = onDone,
-                modifier = Modifier.fillMaxWidth().padding(top = Tight),
-            )
-
-            lesson?.talkId != null -> GameButton(
-                label = stringResource(Res.string.teach_go_on),
-                tone = ButtonTone.KEEP,
-                onClick = onRead,
-                modifier = Modifier.fillMaxWidth().padding(top = Tight),
-            )
-
-            else -> Unit
-        }
-
-        HorizontalDivider(color = RailBorder, modifier = Modifier.padding(top = Tight))
+        Text(
+            text = note,
+            fontSize = DetailSize,
+            fontWeight = FontWeight.SemiBold,
+            color = NoteInk,
+        )
     }
 }
 

@@ -42,7 +42,6 @@ private val PanelPad = 12.dp
 private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
-private val HelpSize = 34.dp
 
 private const val RECENT_SHOWN = 2
 
@@ -65,16 +64,7 @@ fun ControlPanel(
     state: TableState,
     floor: Dp,
     onMove: (Move) -> Unit,
-    onHelp: () -> Unit,
     modifier: Modifier = Modifier,
-    /**
-     * Something to say above the controls — the lesson, when a lesson is being given.
-     *
-     * A slot rather than a screen of its own stacked over the table, because the rail already
-     * reserves height that a short panel does not use, and taking it from the felt instead
-     * makes the table smaller than the one being taught.
-     */
-    coach: (@Composable () -> Unit)? = null,
 ) {
     val table = state.table
     val stage = LocalStage.current
@@ -104,9 +94,7 @@ fun ControlPanel(
             modifier = Modifier.fillMaxWidth().padding(PanelPad),
             verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
         ) {
-            coach?.invoke()
-
-            Heading(table = table, onHelp = onHelp)
+            Heading(table = table)
 
             // The engine's own words, not a translation of them. A refusal is nearly always a
             // rule the player has not met yet, and paraphrasing it here would put a second,
@@ -163,49 +151,22 @@ fun ControlPanel(
     }
 }
 
-/** The prompt, the rule under it, and the way to ask for more. */
+/** The prompt, and the rule under it. */
 @Composable
-private fun Heading(table: Table, onHelp: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = table.prompt,
-                fontSize = PromptSize,
-                fontWeight = FontWeight.Bold,
-                color = RailInk,
-            )
-            table.detail?.let {
-                Text(text = it, fontSize = DetailSize, color = RailInkDim)
-            }
-        }
-
-        // Always present, never in the way. A card game's rules are the game, and a player who
-        // has to leave the table to look one up is a player who guesses instead.
-        Surface(
-            onClick = onHelp,
-            modifier = Modifier.size(HelpSize).markedAs(LocalStage.current, Target.HELP),
-            shape = CircleShape,
-            color = RailFill,
-            border = BorderStroke(1.dp, RailBorder),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text("?", fontSize = PromptSize, fontWeight = FontWeight.Bold, color = RailInkDim)
-            }
+private fun Heading(table: Table) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = table.prompt,
+            fontSize = PromptSize,
+            fontWeight = FontWeight.Bold,
+            color = RailInk,
+        )
+        table.detail?.let { detail ->
+            Text(text = detail, fontSize = DetailSize, color = RailInkDim)
         }
     }
 }
 
-/**
- * The last couple of moves, in words.
- *
- * Three bots take their turns in well under a second between one tap and the next, and
- * without this the player sees the discard pile change and has to work out what happened.
- * Two lines, not a transcript: it is there to be caught out of the corner of an eye.
- */
 @Composable
 private fun RecentActions(recent: List<String>) {
     if (recent.isEmpty()) return

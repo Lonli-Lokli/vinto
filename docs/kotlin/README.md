@@ -718,7 +718,19 @@ Two things are deliberately not free: the lesson runs at no less than **calm** p
 the setting says, and **Call Vinto is hidden until a bot calls it** — the one tap that ends the
 lesson before it starts, cannot be undone, and means nothing yet to the person pressing it.
 
-The coach sits in the control panel's reserved height rather than in a strip above the table.
+**The coach floats above the rail rather than living in it.** It began inside the control
+panel, which was wrong in a way only a phone shows: the panel became as tall as a lesson and
+the felt as short as whatever was left, so four hands, two piles and three name plates ended up
+crushed into a third of the screen with the side seats' cards re-flowing into rows. A tutorial
+that deforms the game it is teaching is teaching a different game. It is now a card over the
+top of the felt, and the table underneath keeps exactly the layout it has in a real round.
+
+It is also **shut while the game is being played** — one line and the progress dots, one tap to
+open — because everything under it is something the player has to see and touch. A talk beat
+opens it, since the table is held for it anyway.
+
+The old note about the panel's reserved height, kept because it is why the coach was ever put
+there:
 Stacking it above cost the felt 150 dp and the side seats' hands re-flowed into rows — the
 lesson was being taught on a table that was not the one being learned. It is bounded and
 scrolls inside its own box, so a King's fourteen rank chips plus a three-line prompt plus a

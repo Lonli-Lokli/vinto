@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.RailBorder
+import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.RailInkDim
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.feltGradient
@@ -60,6 +63,7 @@ private val Tight = 4.dp
 private val Edge = 6.dp
 private val FeltCorner = 14.dp
 private val Rim = 2.dp
+private val HelpSize = 30.dp
 
 /** The wordmark's green, matching the web app's, and the deck badge it sits beside. */
 private val WordmarkGreen = Color(0xFF34D07A)
@@ -84,8 +88,6 @@ fun TableScreen(
     onHelp: () -> Unit,
     onReport: () -> Unit,
     modifier: Modifier = Modifier,
-    /** Shown above the controls; see `ControlPanel`. */
-    coach: (@Composable () -> Unit)? = null,
 ) {
     val view = state.view
     val table = state.table
@@ -95,7 +97,7 @@ fun TableScreen(
     val sizes = layout.sizes
 
     Column(modifier = modifier.fillMaxSize()) {
-        TableHeader(view, state.round, onReport)
+        TableHeader(view, state.round, onHelp, onReport)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
             Column(
@@ -125,8 +127,6 @@ fun TableScreen(
             state = state,
             floor = layout.panelFloor,
             onMove = onMove,
-            onHelp = onHelp,
-            coach = coach,
         )
     }
 }
@@ -149,7 +149,12 @@ data class TableState(
 
 /** Where the round is up to, and how much deck is left. */
 @Composable
-private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
+private fun TableHeader(
+    view: PlayerView,
+    round: Int,
+    onHelp: () -> Unit,
+    onReport: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
         horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -173,6 +178,29 @@ private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
         )
 
         Box(modifier = Modifier.weight(1f))
+
+        // The rules, in the one place on the screen that never moves.
+        //
+        // It used to sit in the control panel beside the prompt, which meant it slid up and
+        // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
+        // button the next. A control that is always available and never changes belongs in
+        // the header, where nothing else changes either.
+        Surface(
+            onClick = onHelp,
+            modifier = Modifier.size(HelpSize).markedAs(LocalStage.current, Target.HELP),
+            shape = CircleShape,
+            color = RailFill,
+            border = androidx.compose.foundation.BorderStroke(1.dp, RailBorder),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "?",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = RailInkDim,
+                )
+            }
+        }
 
         // Always reachable, because the moment worth reporting is the moment it goes wrong
         // and nobody navigates to a menu to capture it.

@@ -56,6 +56,14 @@ sealed interface Target {
 /** What the coach is saying, and what it is pointing at while it says it. */
 data class Lesson(
     val chapter: Chapter,
+    /**
+     * What this beat is *about* — never what to do about it.
+     *
+     * The control panel underneath already gives the instruction ("Look at two of your
+     * cards"), and a coach that says the same thing in its own words has spent the top line of
+     * the rail on a sentence the player has already read. So the title is the reason, the
+     * consequence, or the thing nobody would guess: "The only look you get".
+     */
     val title: String?,
     val body: String,
     val point: Target? = null,
@@ -140,7 +148,7 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
 
         view.phase == GamePhase.SETUP && table.taps.isNotEmpty() -> Lesson(
             chapter = Chapter.PEEK,
-            title = "Look at two of them",
+            title = "The only look you get",
             body = "Everybody may look at two of their own cards before the round starts, once. " +
                 "From here on the game is memory: yours against three other people's.",
             point = Target.Place(Anchor.Seat(you.id, unknownOwn(view) ?: 0)),
@@ -158,7 +166,7 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
 
         table.ranks.isNotEmpty() -> Lesson(
             chapter = Chapter.DECLARE,
-            title = "Name it, and its action is yours",
+            title = "Only name one you have seen",
             body = "You looked at this card, so you know what it is. Name it right and you play " +
                 "its action for free. Name it wrong and you take a penalty card — so only " +
                 "name one you are sure of.",
@@ -251,7 +259,7 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
 
         table.choices.isNotEmpty() -> Lesson(
             chapter = Chapter.DRAW,
-            title = "Your turn",
+            title = "Every turn starts the same way",
             body = "A turn begins by taking a card. The deck is face down, so what you get is " +
                 "a surprise — that is the risk you are being paid for.",
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
