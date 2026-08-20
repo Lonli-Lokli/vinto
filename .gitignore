@@ -78,6 +78,12 @@ kmp/.kotlin/
 kmp/kotlin-js-store/
 kmp/local.properties
 
+# Android signing. Without these the release build falls back to the debug key
+# (kmp/composeApp/build.gradle.kts), which installs on a phone but cannot be published.
+kmp/keystore.properties
+*.jks
+*.keystore
+
 # Xcode per-user state; the shared scheme in xcshareddata/ is committed on purpose.
 xcuserdata/
 *.xcuserstate

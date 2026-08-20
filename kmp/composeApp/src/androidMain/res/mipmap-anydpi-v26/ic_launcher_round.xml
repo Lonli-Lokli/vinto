@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The `roundIcon` variant, for launchers that ask for one. Identical to `ic_launcher`:
+    an adaptive icon is already mask-agnostic, so there is nothing a round-specific version
+    would do differently. It exists because the manifest points `android:roundIcon` here,
+    and that attribute needs a target on API 26+ as much as on 25.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
+</adaptive-icon>

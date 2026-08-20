@@ -144,6 +144,8 @@ scaffolded empty.
 ./gradlew :worker:jsNodeProductionRun         # PRNG self-check (prints the gate number)
 ./gradlew :composeApp:wasmJsBrowserDistribution   # build the Compose web bundle
 ./gradlew :composeApp:assembleDebug           # Android APK
+./gradlew :composeApp:installDebug            # ...onto a connected phone or emulator
+./gradlew :composeApp:assembleRelease         # release APK; debug-signed unless §6f says otherwise
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64   # just the iOS framework
 ./gradlew build                               # everything available on this host
 
@@ -552,6 +554,54 @@ keeping shut, and both fixed:
   a socket.
 - `PEEK_SETUP_CARD` validated the player it *named* rather than the one acting, so one player
   could spend another's setup peeks.
+
+## 6f. Putting it on a phone
+
+The solo game is playable on Android today — `./gradlew :composeApp:installDebug` and it is on
+the device. What was missing was everything around the game rather than in it, and four of
+those are now done. None of them is the Play release (task 8.1 proper): there is still no CI,
+no upload key, no track.
+
+**A launcher icon.** The web app's own orange V (`apps/vinto/public/favicon.png`), regenerated
+into the three shapes Android has asked for over the years by
+`kmp/tools/make-launcher-icons.py` — adaptive for API 26+, the legacy square/round pair for the
+24–25 the app still supports, and a monochrome layer for themed icons on API 33+. The generated
+PNGs are committed; nothing at build time runs the script. It is the same mark as the browser
+deliberately: a different icon for the phone would make it a different game to anybody who has
+played both.
+
+**Portrait only.** The table sizes itself from the height it is given and has two sizes to step
+down through, not a continuum (`CardScale.kt`); a phone in landscape has less height than the
+smaller of them needs. Android 16 ignores the lock on large screens, which is the right place
+to ignore it. Landscape as a supported layout is task 7.6.
+
+**A window theme of its own** (`values/themes.xml`). It was inheriting
+`Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a
+white flash before the first composition. `Theme.Vinto` is dark Material with the rail as its
+window background, so the bars carry the light icon set by inheritance rather than by
+overriding a per-API flag, and the cold-start frames are the colour of the app.
+
+**A release variant that assembles anywhere.** `assembleRelease` signs with the upload key
+named by `kmp/keystore.properties` when that file exists, and with the debug key when it does
+not. The fallback is the point: a release build that fails on a missing secret is one that goes
+untested until the day it has to work. A debug-signed release APK installs and plays; it cannot
+be published, and cannot be upgraded in place by a properly signed build later, because Android
+treats a change of signing key as a different app.
+
+To sign it properly, create the key once and write `kmp/keystore.properties` (gitignored, and
+it names the keystore rather than containing it):
+
+```bash
+keytool -genkeypair -v -keystore ~/keys/vinto-upload.jks -alias vinto \
+  -keyalg RSA -keysize 4096 -validity 10000
+```
+
+```properties
+storeFile=/Users/you/keys/vinto-upload.jks
+storePassword=...
+keyAlias=vinto
+keyPassword=...
+```
 
 ## 7. Traps and known issues
 

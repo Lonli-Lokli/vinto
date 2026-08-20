@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window around Compose, and the only Android-side styling this app has.
+
+        Dark Material, not light: the rail is dark in both schemes, and the system bars draw
+        over it, so the status and navigation icons have to be the light set. Inheriting the
+        dark parent is what makes that true by default rather than by overriding a per-API
+        flag. The window background is the rail as well, so the frames before the first
+        composition — the cold-start splash on Android 12+, and a rotation or a resize — are
+        the colour of the app rather than a flash of white.
+    -->
+    <style name="Theme.Vinto" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/rail</item>
+        <!-- Ignored from Android 15 on, where edge-to-edge makes the bars transparent and
+             the rail behind them shows through anyway. Kept for older phones. -->
+        <item name="android:statusBarColor">@color/rail</item>
+        <item name="android:navigationBarColor">@color/rail</item>
+    </style>
+</resources>

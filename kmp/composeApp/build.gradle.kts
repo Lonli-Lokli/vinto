@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -113,11 +114,47 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    /**
+     * Signing a release build.
+     *
+     * Android will not install an unsigned APK, so `assembleRelease` needs a key even when
+     * the destination is one developer's own phone. Two paths, and which one is taken
+     * depends only on whether `kmp/keystore.properties` exists:
+     *
+     *   * It does — a real upload key, named by that file (gitignored, and the file names
+     *     the keystore rather than containing it). This is what a Play build uses.
+     *   * It does not — the debug key, so a release build still assembles and installs on a
+     *     machine that has never been given one. Such an APK is a real release build in
+     *     every respect except *who* signed it: no debugger, no `debuggable` flag. It just
+     *     cannot be published, and cannot be upgraded in place by a properly signed one
+     *     later — Android treats a change of signing key as a different app.
+     *
+     * The fallback is the point. A build that fails on a missing secret makes "put it on my
+     * phone" a task with a setup step in front of it, and the release variant then goes
+     * untested until the day it has to work.
+     */
+    val keystore = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { file ->
+        Properties().apply { file.inputStream().use(::load) }
+    }
+
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = rootProject.file(keystore.getProperty("storeFile"))
+                storePassword = keystore.getProperty("storePassword")
+                keyAlias = keystore.getProperty("keyAlias")
+                keyPassword = keystore.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         // No shrinking yet: there is no release pipeline until phase 8, and enabling R8
         // now would mean maintaining keep rules for code that is still being ported.
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
         }
     }
 }

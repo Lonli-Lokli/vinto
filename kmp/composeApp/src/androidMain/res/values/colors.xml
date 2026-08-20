@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The rail: the dark band the controls sit on, and the colour the whole window is
+        painted with before Compose draws anything (`theme/VintoTheme.kt`, `App.kt`). The
+        launcher icon opens on the same colour it lands on.
+    -->
+    <color name="rail">#FF1B2430</color>
+    <color name="launcher_background">#FF1B2430</color>
+</resources>
