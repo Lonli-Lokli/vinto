@@ -84,6 +84,20 @@ data class TableSizes(
     }
 }
 
+/**
+ * How much room each part of the screen gets.
+ *
+ * The two numbers travel together and are decided together, from the screen, once: the card
+ * size and the height the rail holds on to. Passing them separately is passing two halves of
+ * one decision, and the halves can disagree.
+ */
+data class TableLayout(val sizes: TableSizes, val panelFloor: Dp) {
+    companion object {
+        fun forScreen(screen: Dp): TableLayout =
+            TableLayout(TableSizes.forScreen(screen), panelFloor(screen))
+    }
+}
+
 /** The strip above the felt: the wordmark, the round, the bug button, the deck count. */
 val HeaderHeight = 44.dp
 

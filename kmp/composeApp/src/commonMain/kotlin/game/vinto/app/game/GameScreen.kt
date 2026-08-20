@@ -25,6 +25,7 @@ import game.vinto.app.nowIso
 import game.vinto.app.theme.RailInk
 import game.vinto.app.theme.RailInkDim
 import game.vinto.client.LocalGame
+import game.vinto.client.Pace
 import game.vinto.client.toJson
 import game.vinto.shapes.GamePhase
 
@@ -39,7 +40,7 @@ private val Pad = 12.dp
  * keep waiting, so it belongs to the player.
  */
 @Composable
-fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
+fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     // Keyed on the round, so dealing the next one rebuilds the table rather than trying to
     // reconcile the old one against a fresh deal.
     val round = game.round
@@ -57,10 +58,14 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
         // Decided once, from the screen. Everything about how large a card is drawn — on the
         // table and in flight — comes from here, so the two cannot disagree and neither can
         // change while a round is being played.
-        val sizes = TableSizes.forScreen(maxHeight)
-        val floor = panelFloor(maxHeight)
+        val layout = TableLayout.forScreen(maxHeight)
 
-        CardStage(frames = session.frames, live = holder.current, sizes = sizes) { shown ->
+        CardStage(
+            frames = session.frames,
+            live = holder.current,
+            sizes = layout.sizes,
+            pace = pace.scale,
+        ) { shown ->
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     // `shown` rather than the live view: while the bots' moves are being played
@@ -73,8 +78,7 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
                         recent = log,
                         round = round,
                     ),
-                    sizes = sizes,
-                    panelFloor = floor,
+                    layout = layout,
                     onMove = act,
                     onHelp = { helpOpen = true },
                     // The whole game, in the format the replay harness already reads. A bug

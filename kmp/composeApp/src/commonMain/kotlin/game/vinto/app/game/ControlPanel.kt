@@ -61,14 +61,21 @@ private const val RECENT_SHOWN = 2
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ControlPanel(
-    table: Table,
-    refusal: String?,
-    recent: List<String>,
+    state: TableState,
     floor: Dp,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Something to say above the controls — the lesson, when a lesson is being given.
+     *
+     * A slot rather than a screen of its own stacked over the table, because the rail already
+     * reserves height that a short panel does not use, and taking it from the felt instead
+     * makes the table smaller than the one being taught.
+     */
+    coach: (@Composable () -> Unit)? = null,
 ) {
+    val table = state.table
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -95,12 +102,14 @@ fun ControlPanel(
             modifier = Modifier.fillMaxWidth().padding(PanelPad),
             verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
         ) {
+            coach?.invoke()
+
             Heading(table = table, onHelp = onHelp)
 
             // The engine's own words, not a translation of them. A refusal is nearly always a
             // rule the player has not met yet, and paraphrasing it here would put a second,
             // drifting copy of the rules in the UI.
-            refusal?.let { reason ->
+            state.refusal?.let { reason ->
                 Text(
                     text = reason,
                     fontSize = DetailSize,
@@ -110,7 +119,7 @@ fun ControlPanel(
                 )
             }
 
-            RecentActions(recent)
+            RecentActions(state.recent)
 
             if (table.ranks.isNotEmpty()) {
                 FlowRow(

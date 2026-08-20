@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -31,6 +32,8 @@ import game.vinto.client.AnimationQueue
 import game.vinto.client.Beat
 import game.vinto.client.Frame
 import game.vinto.client.Scene
+import game.vinto.app.theme.Feedback
+import game.vinto.app.theme.LocalFeedback
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
@@ -112,6 +115,31 @@ class Stage {
     /** Seats the table is pointing at, and why. */
     internal val attention = mutableStateMapOf<String, Attention>()
 
+    /**
+     * The player's chosen speed, as a multiplier on every duration here.
+     *
+     * One number for the lot, so a card, a peek and the pause between turns keep their
+     * proportions to each other at either end of the dial — a table that sped up its
+     * movements but not its pauses would read as jerky rather than as quick.
+     */
+    internal var pace: Float by mutableStateOf(1f)
+
+    /**
+     * Whose phone this is, and what it can do about it.
+     *
+     * A penalty landing in a bot's hand is a thing to see; one landing in yours is a thing to
+     * feel. The stage is where both are known at once — the beat says which seat, and this
+     * says which seat is the one holding the phone.
+     */
+    internal var viewerId: String = ""
+    internal var feedback: Feedback = Feedback(haptics = null, enabled = false)
+
+    /** A duration, at the pace the player asked for. */
+    internal fun ms(base: Int): Int = (base * pace).toInt()
+
+    /** The same, for the pauses between things, which are counted in milliseconds of delay. */
+    internal fun paced(base: Long): Long = (base * pace).toLong()
+
     fun isPeeking(anchor: Anchor): Boolean = anchor in peeking
 
     fun verdictAt(anchor: Anchor): Boolean? = verdicts[anchor]
@@ -188,10 +216,17 @@ fun CardStage(
     frames: Flow<List<Frame>>,
     live: PlayerView,
     sizes: TableSizes,
+    pace: Float,
     modifier: Modifier = Modifier,
     content: @Composable (PlayerView) -> Unit,
 ) {
     val stage = remember { Stage() }
+    val feedback = LocalFeedback.current
+    SideEffect {
+        stage.pace = pace
+        stage.viewerId = live.viewerId
+        stage.feedback = feedback
+    }
     val queue = remember { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
 
     // The move being shown, while it is behind the one the engine is on. Null means caught up,
@@ -218,7 +253,7 @@ fun CardStage(
                 // A pause when the turn passes. Without it three bot turns are one long
                 // stream of cards with no way to tell whose move any of them was.
                 if (frame.hasSomethingToSee) {
-                    if (lastActor != null && frame.actorId != lastActor) delay(TURN_GAP_MS)
+                    if (lastActor != null && frame.actorId != lastActor) delay(stage.paced(TURN_GAP_MS))
                     lastActor = frame.actorId
                 }
 
@@ -234,7 +269,7 @@ fun CardStage(
                     // previous ones, or none at all for a slot that has only just appeared.
                     withFrameNanos { }
                     next = stage.play(scene, next)
-                    delay(BETWEEN_SCENES_MS)
+                    delay(stage.paced(BETWEEN_SCENES_MS))
                 }
             }
 
@@ -250,11 +285,13 @@ fun CardStage(
         stage.peeking.forEach { (anchor, card) -> BeingLookedAt(stage, anchor, card, sizes) }
 
         stage.flying.forEach { flight ->
-            key(flight.id) { InFlight(flight, sizes, onArrival = { stage.flying.remove(flight) }) }
+            key(flight.id) {
+                InFlight(flight, sizes, stage.ms(MOVE_MS)) { stage.flying.remove(flight) }
+            }
         }
 
-        stage.staged?.let { HeldUp(it, sizes, stage.centre()) }
-        stage.borrowed?.let { Borrowed(it, sizes, stage.centre()) }
+        stage.staged?.let { HeldUp(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
+        stage.borrowed?.let { Borrowed(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
         if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
     }
 }
@@ -282,7 +319,7 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     borrowed = null
     refilling = 0
     if (saying.isNotEmpty()) {
-        delay(SAY_MS.toLong())
+        delay(ms(SAY_MS).toLong())
         saying.clear()
     }
     return id
@@ -313,43 +350,46 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
                 landingAt = beat.to,
                 spin = beat.spin,
             )
-            MOVE_MS
+            ms(MOVE_MS)
         }
     }
 
     is Beat.Peek -> {
         peeking[beat.at] = beat.card.faceOrBack()
-        PEEK_MS
+        ms(PEEK_MS)
     }
 
     is Beat.Stage -> {
         staged = beat.card.faceOrBack()
-        STAGE_MS
+        ms(STAGE_MS)
     }
 
     is Beat.Borrowed -> {
         borrowed = beat.rank
-        STAGE_MS
+        ms(STAGE_MS)
     }
 
     is Beat.Reshuffle -> {
         refilling = beat.cards
-        RESHUFFLE_MS
+        ms(RESHUFFLE_MS)
     }
 
     is Beat.Verdict -> {
         verdicts[beat.at] = beat.correct
-        VERDICT_MS
+        ms(VERDICT_MS)
     }
 
     is Beat.Attend -> {
         attention[beat.playerId] = beat.kind
-        ATTEND_MS
+        ms(ATTEND_MS)
     }
 
     is Beat.Flinch -> {
         flinching += beat.at
-        FLINCH_MS
+        // Only for the hand it happened to. A buzz for somebody else's penalty is a buzz for
+        // something that is not your problem, which is how a phone teaches you to ignore it.
+        if ((beat.at as? Anchor.Seat)?.playerId == viewerId) feedback.refuse()
+        ms(FLINCH_MS)
     }
 
     // A line stays up on its own clock; the next scene does not wait for somebody to stop
@@ -388,7 +428,7 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
     val lift = remember { Animatable(0f) }
 
     LaunchedEffect(anchor) {
-        lift.animateTo(1f, tween(PEEK_LIFT_MS, easing = FastOutSlowInEasing))
+        lift.animateTo(1f, tween(stage.ms(PEEK_LIFT_MS), easing = FastOutSlowInEasing))
     }
 
     val towards = LIFT_FRACTION * lift.value
@@ -404,9 +444,9 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
 
 /** The action card, held up in the middle while what it does happens. */
 @Composable
-private fun HeldUp(card: CardView, sizes: TableSizes, centre: Offset) {
+private fun HeldUp(card: CardView, sizes: TableSizes, centre: Offset, growMs: Int) {
     val grow = remember { Animatable(START_SCALE) }
-    LaunchedEffect(card) { grow.animateTo(1f, tween(STAGE_GROW_MS, easing = FastOutSlowInEasing)) }
+    LaunchedEffect(card) { grow.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
 
     Box(
         modifier = Modifier
@@ -422,10 +462,10 @@ private fun HeldUp(card: CardView, sizes: TableSizes, centre: Offset) {
 
 /** The card a King is pretending to be, held up beside the King itself. */
 @Composable
-private fun Borrowed(rank: Rank, sizes: TableSizes, centre: Offset) {
+private fun Borrowed(rank: Rank, sizes: TableSizes, centre: Offset, growMs: Int) {
     val shown = remember(rank) { CardView.Visible(cardFor(rank)) }
     val grow = remember { Animatable(START_SCALE) }
-    LaunchedEffect(rank) { grow.animateTo(1f, tween(STAGE_GROW_MS, easing = FastOutSlowInEasing)) }
+    LaunchedEffect(rank) { grow.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
 
     Box(
         modifier = Modifier
@@ -452,7 +492,9 @@ private fun Reshuffling(cards: Int, sizes: TableSizes, stage: Stage) {
     val to = stage.locate(Anchor.Deck) ?: return
     val sweep = remember { Animatable(0f) }
 
-    LaunchedEffect(cards) { sweep.animateTo(1f, tween(RESHUFFLE_MS, easing = FastOutSlowInEasing)) }
+    LaunchedEffect(cards) {
+        sweep.animateTo(1f, tween(stage.ms(RESHUFFLE_MS), easing = FastOutSlowInEasing))
+    }
 
     repeat(minOf(cards, SWEEP_CARDS)) { index ->
         // Staggered, so it reads as a stack going back rather than one card.
@@ -467,11 +509,16 @@ private fun Reshuffling(cards: Int, sizes: TableSizes, stage: Stage) {
 }
 
 @Composable
-private fun InFlight(flight: Stage.Flight, sizes: TableSizes, onArrival: () -> Unit) {
+private fun InFlight(
+    flight: Stage.Flight,
+    sizes: TableSizes,
+    moveMs: Int,
+    onArrival: () -> Unit,
+) {
     val progress = remember { Animatable(0f) }
 
     LaunchedEffect(flight.id) {
-        progress.animateTo(1f, tween(MOVE_MS, easing = FastOutSlowInEasing))
+        progress.animateTo(1f, tween(moveMs, easing = FastOutSlowInEasing))
         onArrival()
     }
 

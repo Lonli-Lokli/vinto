@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
+import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.onFelt
 import game.vinto.app.art.card_10
 import game.vinto.app.art.card_2
@@ -121,6 +122,8 @@ fun CardFace(
         label = "flinch",
     )
 
+    val feedback = LocalFeedback.current
+
     Box(
         modifier = modifier
             .sizeIn(
@@ -145,7 +148,8 @@ fun CardFace(
                 .border(state.ringWidth(), state.ringColour(scheme), shape),
             shape = shape,
             color = Color.Transparent,
-            onClick = onClick ?: {},
+            // A card that can be touched answers under the thumb before the table has moved.
+            onClick = onClick?.let { act -> { feedback.touch(); act() } } ?: {},
             enabled = onClick != null,
         ) {
             Image(

@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import game.vinto.app.theme.LocalFeedback
 import game.vinto.client.LocalGameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
@@ -97,10 +98,14 @@ fun rememberHolder(session: LocalGameSession): GameHolder {
 @Composable
 fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Unit {
     val scope = rememberCoroutineScope()
-    return remember(holder, scope) {
+    val feedback = LocalFeedback.current
+    return remember(holder, scope, feedback) {
         { move ->
             scope.launch {
                 holder.act(move)
+                // A refusal is a rule the player has not met yet, and it arrives as a line of
+                // small text in a panel they are not looking at. The phone says it too.
+                if (holder.refusal != null) feedback.refuse()
                 onEachMove()
             }
         }

@@ -52,9 +52,13 @@ fun GameButton(
     val pressed by interaction.collectIsPressedAsState()
     val lift by animateDpAsState(if (pressed) 0.dp else Lift, label = "lift")
     val shape = RoundedCornerShape(Corner)
+    val feedback = LocalFeedback.current
 
     Surface(
-        onClick = onClick,
+        onClick = {
+            feedback.commit()
+            onClick()
+        },
         modifier = modifier.heightIn(min = if (compact) CompactTap else MinTap),
         shape = shape,
         color = Color.Transparent,
@@ -120,6 +124,14 @@ enum class ButtonTone(val high: Color, val low: Color, val rim: Color, val ink: 
 
     /** Amber, quieter than gold — naming a rank, of which there are fourteen at once. */
     DECLARE(Color(0xFF6B5A2E), Color(0xFF4A3D1C), Color(0xFF9A8347), Color(0xFFF6E6BC)),
+
+    /**
+     * Red — the one button that destroys something.
+     *
+     * Nothing in a round is this colour, and that is the point: red never appears while a game
+     * is being played, so when it does appear the hand slows down.
+     */
+    DANGER(Color(0xFFB3382F), Color(0xFF7E231C), Color(0xFFD9635A), Color.White),
 }
 
 private val Corner = 10.dp

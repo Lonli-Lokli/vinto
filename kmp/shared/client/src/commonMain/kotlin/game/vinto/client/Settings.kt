@@ -1,0 +1,83 @@
+package game.vinto.client
+
+import game.vinto.shapes.Difficulty
+import game.vinto.shapes.VintoJson
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+
+/**
+ * How fast the table plays what happened.
+ *
+ * A setting rather than a constant because the right answer is not the same for everybody or
+ * even for one person twice: learning the game, every card wants following; the twentieth
+ * round, the same animation is a wait. The scale multiplies every duration in the animation
+ * layer at once — one number, so a card, a peek and the pause between turns keep their
+ * proportions to each other whichever end of the dial it is on.
+ */
+@Serializable
+enum class Pace(val serialName: String, val scale: Float) {
+    /** For learning it, and for watching what the bots are up to. */
+    @SerialName("calm") CALM("calm", 1.5f),
+
+    @SerialName("steady") STEADY("steady", 1f),
+
+    /** For somebody who knows the game and wants their turn back. */
+    @SerialName("brisk") BRISK("brisk", 0.6f),
+}
+
+/** Which palette, regardless of what the phone is set to. */
+@Serializable
+enum class ThemeChoice(val serialName: String) {
+    @SerialName("system") SYSTEM("system"),
+    @SerialName("light") LIGHT("light"),
+    @SerialName("dark") DARK("dark"),
+}
+
+/**
+ * Everything the player has chosen, as opposed to everything they have played.
+ *
+ * Kept apart from [SavedGame] on purpose: a preference outlives the round it was set in, and
+ * abandoning a game must not reset the pace back to something the player has already decided
+ * they dislike.
+ */
+@Serializable
+data class Settings(
+    @SerialName("version") val version: Int = FORMAT,
+    val difficulty: Difficulty = Difficulty.MODERATE,
+    val pace: Pace = Pace.STEADY,
+    val theme: ThemeChoice = ThemeChoice.SYSTEM,
+    /** A small kick under the thumb when a card lands or a rule bites. */
+    val haptics: Boolean = true,
+) {
+    companion object {
+        /** Bumped when the shape changes; an older file is replaced by the defaults. */
+        const val FORMAT = 1
+    }
+}
+
+private const val KEY = "vinto.settings"
+
+/**
+ * The player's settings, or the defaults.
+ *
+ * Never throws, for the same reason [loadGame] does not: a preferences file this app wrote
+ * badly must not be a reason it cannot start.
+ */
+fun Vault.loadSettings(): Settings {
+    val stored = read(KEY) ?: return Settings()
+
+    return try {
+        VintoJson.decodeFromString(Settings.serializer(), stored)
+            .takeIf { it.version == Settings.FORMAT } ?: Settings()
+    } catch (_: SerializationException) {
+        Settings()
+    } catch (_: IllegalArgumentException) {
+        Settings()
+    }
+}
+
+/** Writes the settings. One small string, written when something is changed. */
+fun Vault.saveSettings(settings: Settings) {
+    write(KEY, VintoJson.encodeToString(Settings.serializer(), settings))
+}

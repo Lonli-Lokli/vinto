@@ -65,18 +65,20 @@ private val DeckBadge = Color(0xFF14351F)
 @Composable
 fun TableScreen(
     state: TableState,
-    sizes: TableSizes,
-    panelFloor: Dp,
+    layout: TableLayout,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     onReport: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown above the controls; see `ControlPanel`. */
+    coach: (@Composable () -> Unit)? = null,
 ) {
     val view = state.view
     val table = state.table
     val me = view.viewerId
     val opponents = view.players.filter { it.id != me }
     val mine = view.players.first { it.id == me }
+    val sizes = layout.sizes
 
     Column(modifier = modifier.fillMaxSize()) {
         TableHeader(view, state.round, onReport)
@@ -106,12 +108,11 @@ fun TableScreen(
         }
 
         ControlPanel(
-            table = table,
-            refusal = state.refusal,
-            recent = state.recent,
+            state = state,
+            floor = layout.panelFloor,
             onMove = onMove,
             onHelp = onHelp,
-            floor = panelFloor,
+            coach = coach,
         )
     }
 }

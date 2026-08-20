@@ -1,0 +1,228 @@
+package game.vinto.app
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.ChoiceRow
+import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.RailBorder
+import game.vinto.app.theme.RailFill
+import game.vinto.app.theme.RailInk
+import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.feltGradient
+import game.vinto.client.Pace
+import game.vinto.client.Settings
+import game.vinto.client.ThemeChoice
+import game.vinto.shapes.Difficulty
+
+private val Pad = 20.dp
+private val Gap = 12.dp
+private val Tight = 4.dp
+private val ColumnMax = 460.dp
+private val PanelCorner = 12.dp
+
+/**
+ * The handful of things worth choosing.
+ *
+ * Every one of them is here because playing the game raised it: the bots were too easy or too
+ * hard, the table moved faster than anybody could read, the phone's theme is not always the
+ * one you want at a table, and a saved game sometimes wants abandoning. Nothing is here to
+ * fill the screen — a settings list that mostly does not matter teaches players not to look
+ * in it for the one that does.
+ *
+ * Each setting says what it *does* rather than what it is called. "Calm / Steady / Brisk" is a
+ * label; "how quickly the table plays out what happened" is the setting.
+ */
+@Composable
+fun SettingsScreen(
+    settings: Settings,
+    canForget: Boolean,
+    onChange: (Settings) -> Unit,
+    onForget: () -> Unit,
+    onBack: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .widthIn(max = ColumnMax)
+                .verticalScroll(rememberScrollState())
+                .padding(Pad),
+            verticalArrangement = Arrangement.spacedBy(Gap),
+        ) {
+            Text(
+                "Settings",
+                fontSize = TitleSize,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+                color = RailInk,
+                modifier = Modifier.padding(bottom = Tight),
+            )
+
+            Bots(settings, onChange)
+            Pacing(settings, onChange)
+            Palette(settings, onChange)
+            Buzz(settings, onChange)
+
+            if (canForget) {
+                Setting(
+                    title = "Saved game",
+                    detail = "There is a round in progress. Forgetting it cannot be undone, " +
+                        "and the running score of the session goes with it.",
+                ) {
+                    GameButton(
+                        label = "Forget it",
+                        tone = ButtonTone.DANGER,
+                        onClick = onForget,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+
+            Text(
+                text = "Vinto v$VERSION",
+                fontSize = FootnoteSize,
+                color = RailInkDim,
+                modifier = Modifier.padding(top = Tight),
+            )
+
+            GameButton(
+                label = "Back",
+                tone = ButtonTone.NEUTRAL,
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun Bots(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(title = "Bots", detail = "How hard the three of them think about their move.") {
+        ChoiceRow(
+            options = Difficulty.entries,
+            selected = settings.difficulty,
+            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            onChoose = { onChange(settings.copy(difficulty = it)) },
+        )
+    }
+}
+
+@Composable
+private fun Pacing(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = "Pace",
+        detail = "How quickly the table plays out what happened. Three bots take their turns " +
+            "between one tap and the next, and this is how long you get to watch them.",
+    ) {
+        ChoiceRow(
+            options = Pace.entries,
+            selected = settings.pace,
+            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            onChoose = { onChange(settings.copy(pace = it)) },
+        )
+    }
+}
+
+@Composable
+private fun Palette(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = "Theme",
+        detail = "The felt is green either way. This is everything around it.",
+    ) {
+        ChoiceRow(
+            options = ThemeChoice.entries,
+            selected = settings.theme,
+            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            onChoose = { onChange(settings.copy(theme = it)) },
+        )
+    }
+}
+
+@Composable
+private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = "Haptics",
+        detail = "A small kick under the thumb when a card is touched, a move lands, or a " +
+            "rule bites.",
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = if (settings.haptics) "On" else "Off",
+                fontSize = BodySize,
+                color = RailInkDim,
+            )
+            Switch(
+                checked = settings.haptics,
+                onCheckedChange = { onChange(settings.copy(haptics = it)) },
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    uncheckedTrackColor = RailFill,
+                    uncheckedBorderColor = RailBorder,
+                ),
+            )
+        }
+    }
+}
+
+/** One thing to choose: what it is, what it does, and the control for it. */
+@Composable
+private fun Setting(title: String, detail: String, control: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PanelCorner),
+        color = RailFill,
+        border = BorderStroke(1.dp, RailBorder),
+    ) {
+        Column(
+            modifier = Modifier.padding(Gap),
+            verticalArrangement = Arrangement.spacedBy(Tight),
+        ) {
+            Text(title, fontSize = TitleRowSize, fontWeight = FontWeight.Bold, color = RailInk)
+            Text(
+                text = detail,
+                fontSize = DetailSize,
+                color = RailInkDim,
+                modifier = Modifier.padding(bottom = Tight),
+            )
+            control()
+        }
+    }
+}
+
+private val TitleSize = 32.sp
+private val TitleRowSize = 17.sp
+private val BodySize = 15.sp
+private val DetailSize = 13.sp
+private val FootnoteSize = 12.sp

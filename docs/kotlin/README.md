@@ -603,6 +603,64 @@ keyAlias=vinto
 keyPassword=...
 ```
 
+## 6g. The menu, the settings and the lesson
+
+The app opened straight onto a title and two buttons, because single player was the only
+thing there was. It now has a front door, and three things behind it.
+
+**Home.** A fan of five real cards from the game's own deck deals itself in behind the
+wordmark, and under it a panel holding the mode that is finished: single player, its
+difficulty on show rather than buried, and one button to a table. Below that, the three
+things that are not a game — online, the lesson, the settings.
+
+The arrangement follows what the premium card apps have converged on rather than what a
+settings-first Android app does. Two ideas were worth taking. Marvel Snap's UI team put it
+as *the cards take precedence in the visual hierarchy and the interface exists to highlight
+them*, which is why the menu is made of the deck instead of illustrated with it. The poker
+lobbies (Zynga, PokerStars) are built so the table everybody came for is one tap away and
+nothing is between you and it — hence the difficulty chips sitting *in* the play panel
+rather than behind a settings screen.
+
+**Online is a button that works.** It opens a dialog saying what actually exists — a Worker
+with a Durable Object per room, running this same engine, which two clients have already
+joined and played through — and what does not, which is this app's half. A greyed-out
+"coming soon" answers nothing; the question is a fair one and it has a real answer.
+
+**Settings** are four choices, each written as what it *does*:
+
+- **Bots**, the difficulty, shared with the home panel.
+- **Pace** — calm, steady, brisk — a single multiplier over every duration in the animation
+  layer, so the movements and the pauses keep their proportions at either end of the dial.
+  It exists because the right speed is not the same for somebody learning the game and
+  somebody on their twentieth round.
+- **Theme**, because a phone's night setting is not always the one you want at a table.
+- **Haptics**, and see below.
+
+They live under their own key in the same vault as the saved game, deliberately not inside
+`SavedGame`: a preference outlives the round it was set in, and abandoning a game must not
+reset a speed the player has already decided they dislike.
+
+**How to play is a real round.** Not a page of rules, and not a scripted walk with every
+button but one disabled — a tutorial that refuses your moves teaches the sequence rather than
+the game, and has to say no the first time you deviate. It is an ordinary deal against three
+easy bots on a fixed seed, with a coach line in the rail above the controls naming what is in
+front of you, and six dots that fill in as you meet each mechanic: peek, draw, keep or throw,
+use an action, throw in a match, call Vinto. Nothing is blocked and nothing can be failed;
+the checklist records what you have *done*, in whatever order the round happens to offer it.
+
+The coach sits in the control panel's reserved height rather than in a strip above the table.
+Stacking it above cost the felt 150 dp and the side seats' hands re-flowed into rows — the
+lesson was being taught on a table that was not the one being learned.
+
+**Haptics.** Three kicks and no more: something touched, a move committed, a rule bitten —
+that last only for the hand it happened to, since a buzz for a bot's penalty is a buzz for
+something that is not your problem. Off is one setting away, which is what keeps the three
+that remain meaningful.
+
+**Back works.** `SystemBack` is an `expect`/`actual` around Android's `BackHandler`; the other
+targets no-op and use the on-screen button. Without it, back from the settings screen closed
+the app, which looks exactly like a crash.
+
 ## 7. Traps and known issues
 
 **Repo-wide**

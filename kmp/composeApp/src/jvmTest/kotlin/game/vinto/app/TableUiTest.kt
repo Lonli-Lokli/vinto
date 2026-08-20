@@ -11,6 +11,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.game.GameScreen
 import game.vinto.client.LocalGame
 import game.vinto.client.MemoryVault
+import game.vinto.client.Pace
 import game.vinto.app.theme.VintoTheme
 import game.vinto.shapes.Difficulty
 import kotlin.test.Test
@@ -62,7 +63,7 @@ class TableUiTest {
     @Test
     fun aFreshlyDealtTableComposes() = runComposeUiTest {
         val game = LocalGame.start(MemoryVault(), FIXED_SEED, Difficulty.EASY)
-        setContent { VintoTheme { GameScreen(game, onQuit = {}) } }
+        setContent { VintoTheme { GameScreen(game, pace = Pace.STEADY, onQuit = {}) } }
         waitForIdle()
 
         // Nothing is asserted about the words; the point is that a freshly dealt table

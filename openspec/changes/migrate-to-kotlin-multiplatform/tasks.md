@@ -113,9 +113,17 @@ not after the UI is built.
       card in hand, or the phase — followed by every rank and what it does. The words are
       `CARD_CONFIGS`, ported with the engine, so the web app and this teach the same game. A
       drawn action card also explains itself inline, without being asked
-- [~] 7.3 Screens/navigation: opening, home (with **Continue** when there is a game to come
-      back to), game table, and an end-of-round score sheet with hand / round / game columns.
-      Lobby, settings and the debug screens are not started
+- [~] 7.3 Screens/navigation: opening, home, settings, the lesson, the game table, and an
+      end-of-round score sheet with hand / round / game columns. Home is now a front door
+      rather than a title and two buttons: the deck deals itself in behind the wordmark, single
+      player sits in a panel with its difficulty on show and one button to a table, and the
+      other three ways in are under it. **Online is a button that works** — it says what exists
+      (a Worker with a Durable Object per room, running this engine) and what does not (this
+      app's half), because a greyed-out "coming soon" answers nothing. Settings are four
+      choices — bots, pace, theme, haptics — kept under their own vault key, since a preference
+      outlives the round it was set in. Android's back button is honoured through an
+      `expect`/`actual` `SystemBack`; without it, back from the settings closed the app. **Not
+      started**: the lobby (it needs the online client, phase 9) and the debug screens
 - [x] 7.10 Persistence: the whole game — difficulty, session seed, round number, standings and
       the round in progress — is written down after every move and comes back on launch. The
       *state* rather than a seed and a log: replaying from a seed restores the cards and not
@@ -132,11 +140,23 @@ not after the UI is built.
       composables draw what it returns and decide nothing
 - [~] 7.5 Animation: card flight, card flip on reveal, a pulse on what can be tapped and a glow
       on the seat whose turn it is. The flights are derived by a pure `flightsFor` and tested;
-      the overlay draws them. **Bots do not yet wait for animations** — they play immediately
-      and the flight catches up
-- [ ] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape
+      the overlay draws them. **The screen no longer runs ahead of its own animation**: the
+      session emits one `Frame` per move — the scenes *and* the table that move left behind —
+      and the stage draws the frame it is playing, catching up to the live view when there is
+      nothing left to show. The engine still runs ahead, as it must, but the player is no
+      longer shown the final position while cards fly out of hands they have already left.
+      With that true the vocabulary could be slowed to something readable (460 ms a card, a
+      380 ms pause when the turn passes), and the speed is now a setting. **Still open**:
+      reduced motion (7.2), and a sound layer, which needs assets
+- [ ] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape.
+      Cards carry a `contentDescription` and chips a 44 dp target; the rest is unaudited, and
+      the app is portrait-locked until this is done (`AndroidManifest.xml` says why)
 - [ ] 7.7 Export/share recording; restore last local game on relaunch
-- [ ] 7.8 UI tests: Compose UI tests for a scripted full game (bots with zero delay); screenshot tests for key screens light/dark
+- [~] 7.8 UI tests: `TableUiTest` plays from the home screen to the first draw and back into a
+      saved game; `MenuUiTest` covers the four ways in, the online explanation, a setting
+      reaching the vault and the lesson opening on a real table; `VersionTest` keeps the
+      version on screen and the one in the APK from drifting. **Still open**: a scripted *full*
+      game, and screenshot tests for key screens in light and dark
 
 ## 8. Delivery (single player)
 
