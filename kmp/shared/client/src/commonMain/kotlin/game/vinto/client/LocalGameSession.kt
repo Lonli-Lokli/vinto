@@ -59,11 +59,23 @@ class LocalGameSession(
      * alternative is persisting a search's internal state to save a solo game.
      */
     resuming: GameState? = null,
+    /**
+     * A game dealt from a written-down deck rather than a seed — the lesson, and nothing else.
+     *
+     * Passed in rather than switched on by a flag, so the ordinary path cannot accidentally
+     * reach it and a room has no way to ask for one.
+     */
+    dealt: GameState? = null,
+    /**
+     * Somebody deciding the bots' moves in place of the search. Null in a real game, which is
+     * every game but the lesson. See [BotDirector].
+     */
+    private val director: BotDirector? = null,
 ) : GameSession {
 
     // Internal rather than private so the tests can drive the *person's* seat with the same
     // bot brain: choosing a move needs the full state, and the view is redacted by design.
-    internal var state: GameState = resuming ?: initializeGame(seed, difficulty)
+    internal var state: GameState = resuming ?: dealt ?: initializeGame(seed, difficulty)
         private set
 
     /** The seat the person is playing. `initializeGame` deals seat zero as the human. */
@@ -246,6 +258,13 @@ class LocalGameSession(
      * as a stuck game rather than one papered over by trying the next move.
      */
     private fun nextBotAction(from: GameState): GameAction? {
+        // The director speaks first, and only the lesson has one. A move it names still has to
+        // pass the validator below, and a refused one falls through to the search — a script
+        // that has drifted should cost the lesson its shape, not the game.
+        director?.nextAction(from)
+            ?.takeIf { it.actorId != playerId && ActionValidator.validate(from, it) is Validation.Valid }
+            ?.let { return it }
+
         val action = runner.nextAction(from) ?: return null
         if (action.actorId == playerId) return null
         if (ActionValidator.validate(from, action) is Validation.Invalid) return null

@@ -35,6 +35,7 @@ import game.vinto.app.theme.RailInkDim
 import game.vinto.client.Choice
 import game.vinto.client.Move
 import game.vinto.client.Table
+import game.vinto.client.Target
 import game.vinto.client.Tone
 
 private val PanelPad = 12.dp
@@ -76,6 +77,7 @@ fun ControlPanel(
     coach: (@Composable () -> Unit)? = null,
 ) {
     val table = state.table
+    val stage = LocalStage.current
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -132,6 +134,7 @@ fun ControlPanel(
                             label = rank.rank.serialName,
                             tone = ButtonTone.DECLARE,
                             onClick = { onMove(rank.move) },
+                            modifier = Modifier.markedAs(stage, "rank:${rank.rank.serialName}"),
                             compact = true,
                         )
                     }
@@ -184,7 +187,7 @@ private fun Heading(table: Table, onHelp: () -> Unit) {
         // has to leave the table to look one up is a player who guesses instead.
         Surface(
             onClick = onHelp,
-            modifier = Modifier.size(HelpSize),
+            modifier = Modifier.size(HelpSize).markedAs(LocalStage.current, Target.HELP),
             shape = CircleShape,
             color = RailFill,
             border = BorderStroke(1.dp, RailBorder),
@@ -211,7 +214,7 @@ private fun RecentActions(recent: List<String>) {
         shape = RoundedCornerShape(LogCorner),
         color = RailFill,
         border = BorderStroke(1.dp, RailBorder),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
     ) {
         Column(modifier = Modifier.padding(Gap)) {
             recent.takeLast(RECENT_SHOWN).forEach { line ->
@@ -227,7 +230,9 @@ private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit) {
         label = choice.label,
         tone = choice.tone.paint(),
         onClick = { onMove(choice.move) },
-        modifier = Modifier.fillMaxWidth(),
+        // By its label, which is what the lesson knows it by — the model chose the words and
+        // the coach quotes them, so a button the coach points at is the button on screen.
+        modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, "choice:${choice.label}"),
         leading = if (choice.tone == Tone.STAKES) "🏆" else null,
     )
 }

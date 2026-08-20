@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -22,10 +23,13 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.toSize
 import game.vinto.client.Anchor
 import game.vinto.client.Attention
 import game.vinto.client.AnimationQueue
@@ -33,6 +37,7 @@ import game.vinto.client.Beat
 import game.vinto.client.Frame
 import game.vinto.client.Pacing
 import game.vinto.client.Scene
+import game.vinto.client.Target
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.engine.CardView
@@ -42,6 +47,7 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlin.math.roundToInt
 
 /**
@@ -140,9 +146,34 @@ class Stage {
 
     fun attentionOn(playerId: String): Attention? = attention[playerId]
 
+    /**
+     * Where things are, in the stage's own coordinates, and how big they are.
+     *
+     * [places] is what the flights need — a point to fly from and one to land on. [bounds] is
+     * what the coach's pointer needs, because a hand pointing at the *centre* of a full-width
+     * button covers its label, and one pointing at a card has to know where the card's edge
+     * is. Both are filled as the table lays out, by whatever drew the thing.
+     */
+    private val bounds = mutableStateMapOf<String, Rect>()
+
+    /** The stage's own size, so a pointer near the bottom edge knows to point down instead. */
+    internal var size: Size = Size.Zero
+        private set
+
     fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
         places[anchor] = coordinates.positionInRoot() - origin
+        mark(anchor.key(), coordinates)
     }
+
+    /** Records a piece of furniture — a button, a chip, a seat plate, the log — by name. */
+    fun mark(id: String, coordinates: LayoutCoordinates) {
+        bounds[id] = Rect(
+            offset = coordinates.positionInRoot() - origin,
+            size = coordinates.size.toSize(),
+        )
+    }
+
+    internal fun boundsOf(id: String): Rect? = bounds[id]
 
     /**
      * Places whose card is currently in the air.
@@ -159,6 +190,7 @@ class Stage {
 
     internal fun setOrigin(coordinates: LayoutCoordinates) {
         origin = coordinates.positionInRoot()
+        size = coordinates.size.toSize()
     }
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
@@ -176,9 +208,44 @@ class Stage {
     internal fun centre(): Offset = locate(Anchor.Discard) ?: Offset.Zero
 }
 
+/**
+ * What a lesson is asking of the stage.
+ *
+ * @param hold whether to stop before playing the next move. A lesson holds it while the coach
+ *   has something to read. Nothing about the *game* pauses — the engine finished those moves
+ *   before any of them was drawn — it is the telling that waits, which is the one thing a
+ *   screen may take its time over.
+ * @param pointer what the coach's hand is pointing at. Drawn by the stage rather than by the
+ *   screen because this is the layer *above* the table: a pointer laid out as a sibling of the
+ *   felt ends up under the very card it is naming, and z-order between sibling subtrees is not
+ *   a fight worth having when there is already a layer whose whole job is being on top.
+ */
+data class Coaching(
+    val hold: () -> Boolean = { false },
+    val pointer: Target? = null,
+)
+
 /** Reports this composable's position as [anchor], so a beat can be played at it. */
 fun Modifier.anchoredAt(stage: Stage, anchor: Anchor): Modifier =
     onGloballyPositioned { stage.place(anchor, it) }
+
+/**
+ * Reports this composable's position under a name, so the coach can point at it.
+ *
+ * For everything that is not a card: buttons, rank chips, seat plates, the deck count, the
+ * box of recent moves. None of them is a place a card can be, which is why they are not
+ * [Anchor]s, and all of them are things a player has to be shown once.
+ */
+fun Modifier.markedAs(stage: Stage, id: String): Modifier =
+    onGloballyPositioned { stage.mark(id, it) }
+
+/** The name a place on the table goes by, so anchors and furniture share one registry. */
+fun Anchor.key(): String = when (this) {
+    Anchor.Deck -> "deck"
+    Anchor.Discard -> "discard"
+    Anchor.Pending -> "pending"
+    is Anchor.Seat -> "card:$playerId:$position"
+}
 
 val LocalStage = compositionLocalOf { Stage() }
 
@@ -212,6 +279,8 @@ fun CardStage(
     sizes: TableSizes,
     pace: Float,
     modifier: Modifier = Modifier,
+    /** What a lesson is asking of the stage, if one is running. See [Coaching]. */
+    coaching: Coaching = Coaching(),
     content: @Composable (PlayerView) -> Unit,
 ) {
     val stage = remember { Stage() }
@@ -243,6 +312,9 @@ fun CardStage(
 
             while (true) {
                 val frame = queue.next() ?: break
+
+                // Wait out whatever the coach is saying before showing the next move.
+                snapshotFlow(coaching.hold).first { !it }
 
                 // The beat where a person would be thinking. Without it, three bot turns are
                 // one long stream of cards with no way to tell whose move any of them was —
@@ -289,6 +361,8 @@ fun CardStage(
         stage.staged?.let { HeldUp(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
         stage.borrowed?.let { Borrowed(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
         if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
+
+        Pointer(stage = stage, target = coaching.pointer)
     }
 }
 

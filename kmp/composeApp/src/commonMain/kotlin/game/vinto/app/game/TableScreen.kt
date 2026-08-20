@@ -37,6 +37,7 @@ import game.vinto.client.Anchor
 import game.vinto.client.CardRef
 import game.vinto.client.Move
 import game.vinto.client.Table
+import game.vinto.client.Target
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
@@ -171,6 +172,7 @@ private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
         )
 
         Surface(
+            modifier = Modifier.markedAs(LocalStage.current, Target.BADGE),
             shape = RoundedCornerShape(Tight),
             color = DeckBadge,
             border = androidx.compose.foundation.BorderStroke(1.dp, WordmarkGreen),
@@ -385,6 +387,7 @@ private fun Plate(
         SeatPlate(
             name = seat.nickname,
             active = active,
+            modifier = Modifier.markedAs(stage, "seat:${seat.id}"),
             pointed = pointed,
             marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
             size = sizes.avatar,

@@ -640,17 +640,52 @@ They live under their own key in the same vault as the saved game, deliberately 
 `SavedGame`: a preference outlives the round it was set in, and abandoning a game must not
 reset a speed the player has already decided they dislike.
 
-**How to play is a real round.** Not a page of rules, and not a scripted walk with every
-button but one disabled — a tutorial that refuses your moves teaches the sequence rather than
-the game, and has to say no the first time you deviate. It is an ordinary deal against three
-easy bots on a fixed seed, with a coach line in the rail above the controls naming what is in
-front of you, and six dots that fill in as you meet each mechanic: peek, draw, keep or throw,
-use an action, throw in a match, call Vinto. Nothing is blocked and nothing can be failed;
-the checklist records what you have *done*, in whatever order the round happens to offer it.
+**How to play is a real round, on a deck somebody arranged.** Not a page of rules, and not a
+scripted walk with every button but one disabled — a tutorial that refuses your moves teaches
+the sequence rather than the game, and has to say no the first time you deviate.
+
+The design came out of a session with the `fable` model against the repo (`VINTO_RULES.md`,
+`SCENARIOS.md`, the client sources); what shipped follows it closely. Five parts:
+
+- **A stacked deal.** `initializeTeachingGame(deck)` takes a deck order instead of a seed, and
+  refuses anything that is not a permutation of the real 54 cards — so the lesson cannot deal a
+  hand that could not have been shuffled. `TeachingDeal` writes the order down: a 7 and a Joker
+  to peek at, an 8 to throw in later, a plain 4 to draw first, then a Queen, a King and finally
+  a Joker on the last turn. Seed search was considered and rejected: the constraints are joint
+  over a dozen named positions, and a seed found today would be silently invalidated by the
+  next bot or engine change. The recording contract is untouched, because `GameRecording`
+  carries `initialState` in full and `replayRecording` starts from it.
+- **A director for the bots.** The deck says what a bot *draws*, not what it does. A
+  `BotDirector` on `LocalGameSession` may name a bot's move before the search is asked;
+  whatever it names still passes `ActionValidator`, and a refused move falls through to MCTS —
+  a script that has drifted costs the lesson its shape, not its playability. It does two
+  things: bots put drawn cards down rather than swapping them into hand, and, once the round
+  has taught what it can, **Don calls Vinto** — so the final round, the coalition and the
+  scoring are played rather than described. Left alone a bot will not call inside a short
+  round: the rule wants eight rotations, a fully known hand and a total of zero or less.
+- **A coach derived from the position.** `lessonFor(view, table, taught)` is a pure function:
+  it reads the table and says what is in front of the player. That is what lets every legal
+  move stay legal — deviate and it simply talks about wherever you got to. Ordered talk beats
+  are the exception (the object of the game, the tour, the Vinto call, the coalition, the
+  scoring), because explaining scoring before the round is scored is not explaining.
+- **A pointing hand.** One white outlined arrow, at one thing, from just outside it: a card, a
+  seat plate, a rank chip, a button, the deck badge, the log box, the "?". White because every
+  other colour on this table already means something. It points down from above by default —
+  pointing up from below sits it on the next rank chip in the grid, naming the wrong card — and
+  from inside the left end of a full-width button, where it cannot cover the button below.
+- **Cards explained as they are met.** The first time a rank becomes visible, the coach gives
+  its name, value and action, in `CARD_CONFIGS`' own words. The help sheet's gallery is the
+  reference; this is the introduction.
+
+Two things are deliberately not free: the lesson runs at no less than **calm** pace whatever
+the setting says, and **Call Vinto is hidden until a bot calls it** — the one tap that ends the
+lesson before it starts, cannot be undone, and means nothing yet to the person pressing it.
 
 The coach sits in the control panel's reserved height rather than in a strip above the table.
 Stacking it above cost the felt 150 dp and the side seats' hands re-flowed into rows — the
-lesson was being taught on a table that was not the one being learned.
+lesson was being taught on a table that was not the one being learned. It is bounded and
+scrolls inside its own box, so a King's fourteen rank chips plus a three-line prompt plus a
+lesson cannot squeeze the felt out of existence.
 
 **Haptics.** Three kicks and no more: something touched, a move committed, a rule bitten —
 that last only for the hand it happened to, since a buzz for a bot's penalty is a buzz for

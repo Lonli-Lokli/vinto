@@ -21,6 +21,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -94,6 +95,17 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
 
             item {
                 Text(
+                    "What the table is telling you",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TitleSize,
+                    modifier = Modifier.padding(top = Gap),
+                )
+            }
+
+            items(SIGNALS) { signal -> SignalRow(signal) }
+
+            item {
+                Text(
                     "Every card in a hand counts against you, so the lowest total wins. " +
                         "Call Vinto when you think yours is lowest — everybody else then plays " +
                         "one more turn together, and only their best hand is compared to yours.",
@@ -102,6 +114,80 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                     modifier = Modifier.padding(vertical = Pad),
                 )
             }
+        }
+    }
+}
+
+/**
+ * The table's own vocabulary, written down.
+ *
+ * A card game teaches its rules and then leaves its *signals* to be worked out — which glow
+ * means "your turn", which means "this can be touched", which means "somebody just looked at
+ * that card". They are not decoration: each one is information a player at a real table would
+ * get from watching hands and faces, and a player who has not worked them out is playing a
+ * different, worse game.
+ *
+ * The colours here are the ones the table actually draws (`SeatPlate.kt`, `CardFace.kt`); if
+ * one changes there it must change here, which is the price of explaining anything.
+ */
+private data class Signal(val swatch: Color, val name: String, val meaning: String)
+
+private val SIGNALS = listOf(
+    Signal(
+        swatch = Color(0xFF6FD3A6),
+        name = "A green ring on a seat",
+        meaning = "Whose turn it is. It flashes as the turn arrives, because three bots can " +
+            "take theirs between one tap and the next.",
+    ),
+    Signal(
+        swatch = Color(0xFFE0A32A),
+        name = "A gold ring",
+        meaning = "That player has called Vinto. Nobody may touch their cards for the rest " +
+            "of the round.",
+    ),
+    Signal(
+        swatch = Color(0xFFE0674A),
+        name = "A red ring, and a hand that flinches",
+        meaning = "A penalty card just landed there — a wrong guess, or a wrong toss-in.",
+    ),
+    Signal(
+        swatch = Color(0xFF8AB4F8),
+        name = "A blue ring",
+        meaning = "The coalition: everybody except the Vinto caller, playing their last turn " +
+            "together against that one hand.",
+    ),
+    Signal(
+        swatch = Color(0xFFF2F5F0),
+        name = "A card that breathes",
+        meaning = "It can be touched right now. If nothing breathes, the table is waiting on " +
+            "somebody else.",
+    ),
+    Signal(
+        swatch = Color(0xFFF2C14E),
+        name = "A card that lifts towards the middle",
+        meaning = "Somebody is looking at it. Everyone sees *which* card was looked at — only " +
+            "the player entitled to it sees the face.",
+    ),
+)
+
+@Composable
+private fun SignalRow(signal: Signal) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(RowGap),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Surface(
+            modifier = Modifier.size(Chip),
+            shape = RoundedCornerShape(Corner),
+            color = RailFill,
+            border = BorderStroke(SwatchRing, signal.swatch),
+            content = {},
+        )
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(signal.name, fontWeight = FontWeight.SemiBold, fontSize = BodySize)
+            Text(signal.meaning, fontSize = BodySize, color = RailInkDim)
         }
     }
 }
@@ -142,6 +228,8 @@ private fun RankRow(config: CardConfig) {
         }
     }
 }
+
+private val SwatchRing = 3.dp
 
 private const val MAX_CHIP_CHARS = 3
 private val TitleSize = 16.sp

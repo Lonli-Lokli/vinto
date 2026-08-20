@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,12 +33,16 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.RailBorder
 import game.vinto.app.theme.RailInkDim
-import game.vinto.client.LocalGameSession
+import game.vinto.client.Chapter
+import game.vinto.client.Lesson
 import game.vinto.client.Move
 import game.vinto.client.Pace
 import game.vinto.client.Table
-import game.vinto.shapes.Difficulty
-import game.vinto.shapes.GameAction
+import game.vinto.client.Taught
+import game.vinto.client.Tone
+import game.vinto.client.chapterOf
+import game.vinto.client.lessonFor
+import game.vinto.client.teachingSession
 import game.vinto.shapes.GamePhase
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -43,41 +50,55 @@ private val Pad = 12.dp
 private val Tight = 4.dp
 private val DotSize = 8.dp
 
+/** As much of the rail as the coach may take before it starts scrolling. */
+private val CoachMax = 190.dp
+
 /**
  * How to play, by playing.
  *
- * Not a page of rules and not a scripted walk with the buttons locked. It is a **real round**
- * against three easy bots, on the real table, with a coach above it that names the thing in
- * front of you and ticks it off once you have done it. Every mechanic in the game is a move
- * somebody has to make, so the shortest way to teach the game is to let it be played and to
- * say, at each moment, what the moment is.
+ * Not a page of rules, and not a scripted walk with the buttons locked. It is a **real round**
+ * — same engine, same validator, same bots — dealt from a deck somebody arranged so that the
+ * cards the lesson needs turn up, with a director whispering to the bots and a coach in the
+ * rail that names whatever is in front of the player and points at it.
  *
- * Two things follow from that, and both are deliberate:
+ * Four things make it a lesson rather than a game with captions:
  *
- * - **Nothing is blocked.** A tutorial that refuses every button but one teaches the sequence
- *   rather than the game, and the first time a player deviates it has to say no — which is the
- *   moment they learn that this is not really the game. Here every legal move is legal.
- * - **It cannot be failed or fallen out of.** The checklist is what has been *seen*, not a set
- *   of tasks in order: draw first or toss in first, it ticks the one you did. The round ends
- *   like any other round, and by then the list is usually full.
+ * - **It talks in its own time.** A beat that is something to *read* holds the table until it
+ *   is acknowledged. Nothing about the game pauses — those moves were made before any of them
+ *   was drawn — it is the telling that waits, which is the one thing a screen may take its
+ *   time over.
+ * - **It points.** One white hand, at one thing, from just outside it. A card game is taught
+ *   at a table by somebody putting a finger on a card.
+ * - **It reads the position rather than a step counter.** Every legal move stays legal;
+ *   deviate and the coach talks about wherever you have got to instead. A tutorial that
+ *   refuses your moves teaches the sequence rather than the game, and the first refusal is the
+ *   moment a player learns this is not really it.
+ * - **The round ends properly.** The director has a bot call Vinto, so the final round, the
+ *   coalition and the scoring are *played* rather than described — the half of the game a
+ *   free-play tutorial never reaches.
  *
- * The seed is fixed so that the deal is the same for everybody it is explained to, and the
- * game is never saved: opening the lesson does not take somebody's half-played game away.
+ * One thing is held back: **Call Vinto is hidden until somebody calls it.** It is the single
+ * tap that would end the lesson before it began, it cannot be undone, and a newcomer cannot
+ * yet know what the gold button does. Everything else is theirs from the first frame.
  */
 @Composable
 fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> Unit) {
-    val session = remember { LocalGameSession(TEACHING_DEAL, Difficulty.EASY, botDispatcher) }
+    val session = remember { teachingSession(botDispatcher) }
     val holder = rememberHolder(session)
     val log by session.log.collectAsState()
-    var seen by remember { mutableStateOf(emptySet<Lesson>()) }
+    var taught by remember { mutableStateOf(Taught()) }
+    var showing by remember { mutableStateOf<Lesson?>(null) }
     var helpOpen by remember { mutableStateOf(false) }
 
     // Every move the player makes passes through here on its way to the engine, which is the
-    // one place that knows what they *did* rather than what the table now looks like. A swap
-    // and a discard leave the same phase behind; only the action says which one happened.
+    // one place that knows what they *did* rather than what the table now looks like: a swap
+    // and a discard leave the same phase behind, and only the action says which happened.
+    // Acting is also acknowledgement — whatever the coach was saying has been in front of
+    // them, and repeating it would be the coach not listening.
     val play = rememberActor(holder)
     val act: (Move) -> Unit = { move ->
-        if (move is Move.Send) lessonOf(move.action)?.let { seen = seen + it }
+        taught = taught.heard(showing)
+        if (move is Move.Send) chapterOf(move.action)?.let { taught = taught.withChapter(it) }
         play(move)
     }
 
@@ -88,13 +109,18 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
             frames = session.frames,
             live = holder.current,
             sizes = layout.sizes,
-            // A lesson runs at a lesson's speed. Somebody who has set the table to brisk has
-            // done so knowing the game; somebody in here does not, and the pauses are most of
-            // what is being taught — the beat where a player thinks, and the one where
-            // everybody else reads what they did.
+            // A lesson runs at a lesson's speed. Somebody who set the table to brisk did so
+            // knowing the game; somebody in here does not, and the pauses are most of what is
+            // being taught — the beat where a player thinks, and the one where everybody else
+            // reads what they did.
             pace = maxOf(pace.scale, Pace.CALM.scale),
+            coaching = Coaching(
+                hold = { showing?.talkId != null },
+                pointer = showing?.point,
+            ),
         ) { shown ->
-            val table = holder.tableFor(shown)
+            val table = holder.tableFor(shown).beforeTheEnd(shown.vintoCallerId != null)
+            showing = lessonFor(shown, table, taught)
 
             TableScreen(
                 state = TableState(
@@ -111,10 +137,11 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                 modifier = Modifier.fillMaxSize(),
                 coach = {
                     Coach(
-                        lesson = teaching(shown.phase, table, seen),
+                        lesson = showing,
                         prompt = table.prompt,
-                        seen = seen,
+                        taught = taught,
                         finished = shown.phase == GamePhase.SCORING,
+                        onRead = { taught = taught.heard(showing) },
                         onDone = onDone,
                     )
                 },
@@ -128,31 +155,40 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
 }
 
 /**
- * The lesson strip: what is happening, why it matters, and how much of the game is left to
- * meet.
+ * The lesson strip: what is happening, why it matters, and how much of the game is left.
  *
- * Above the table rather than over it. A coach that covers the cards teaches the player to
- * dismiss it, and everything it is talking about is on the felt underneath.
+ * It lives in the control rail's reserved height rather than in a band above the table.
+ * Stacked above, it cost the felt 150 dp and the side seats' hands re-flowed into rows — the
+ * lesson was being taught on a table that was not the one being learned.
  */
 @Composable
 private fun Coach(
     lesson: Lesson?,
     prompt: String,
-    seen: Set<Lesson>,
+    taught: Taught,
     finished: Boolean,
+    onRead: () -> Unit,
     onDone: () -> Unit,
 ) {
-    // The panel below already says what is being asked. The lesson only names itself when it
-    // is talking about something else — otherwise the same sentence is on the screen twice.
+    // The panel below already says what is being asked. The lesson names itself only when it
+    // is talking about something else — otherwise the same sentence is on screen twice.
     val title = when {
         finished -> "That is the whole game"
-        lesson == null -> null
+        lesson?.title == null -> null
         lesson.title.equals(prompt, ignoreCase = true) -> null
         else -> lesson.title
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier
+            .fillMaxWidth()
+            // Bounded, and scrolling inside if it has to. The rail is shared with the game's
+            // own controls, and a King's fourteen rank chips plus a three-line prompt plus a
+            // coach is more than a phone has — something has to give, and it should be the
+            // lesson's commentary rather than the table it is about.
+            .heightIn(max = CoachMax)
+            .verticalScroll(rememberScrollState())
+            .animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
         Row(
@@ -167,145 +203,87 @@ private fun Coach(
                 color = CoachInk,
                 modifier = Modifier.weight(1f),
             )
-            Progress(seen)
+            Progress(taught.chapters)
         }
 
         Text(
             text = when {
-                finished -> "The hands are face up and the round is scored. Every rule you " +
-                    "have met here is the same one a real game plays by — there is no " +
-                    "practice version of it."
-                lesson != null -> lesson.detail
-                else -> "The bots are taking their turns. Watching what they take from the " +
-                    "pile is how you learn what is in their hands."
+                finished -> "Every hand is face up and the round is scored. Every rule you met " +
+                "in here is one a real game plays by — there is no practice version of it."
+                lesson != null -> lesson.body
+                else -> "Watch what they take, and what they put back down."
             },
             fontSize = DetailSize,
             color = RailInkDim,
         )
 
-        if (finished || seen.size == Lesson.entries.size) {
-            GameButton(
-                label = if (finished) "Done" else "I have the idea",
+        lesson?.note?.let { note ->
+            Text(
+                text = note,
+                fontSize = DetailSize,
+                fontWeight = FontWeight.SemiBold,
+                color = NoteInk,
+            )
+        }
+
+        lesson?.gloss?.let { gloss ->
+            Text(text = gloss, fontSize = DetailSize, color = RailInkDim)
+        }
+
+        when {
+            finished -> GameButton(
+                label = "Done",
                 tone = ButtonTone.PLAY,
                 onClick = onDone,
                 modifier = Modifier.fillMaxWidth().padding(top = Tight),
             )
+
+            lesson?.talkId != null -> GameButton(
+                label = "Go on",
+                tone = ButtonTone.KEEP,
+                onClick = onRead,
+                modifier = Modifier.fillMaxWidth().padding(top = Tight),
+            )
+
+            else -> Unit
         }
 
         HorizontalDivider(color = RailBorder, modifier = Modifier.padding(top = Tight))
     }
 }
 
-/** A dot per lesson, filled once it has been met. Six of them; the whole game is six things. */
+/** A dot per chapter of the rules, filled once the player has met it. */
 @Composable
-private fun Progress(seen: Set<Lesson>) {
+private fun Progress(met: Set<Chapter>) {
     Row(horizontalArrangement = Arrangement.spacedBy(Tight)) {
-        Lesson.entries.forEach { lesson ->
-            Box(
-                modifier = Modifier.size(DotSize),
-            ) {
+        Chapter.entries.forEach { chapter ->
+            Box(modifier = Modifier.size(DotSize)) {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = CircleShape,
-                    color = if (lesson in seen) CoachInk else RailBorder,
-                    content = {},
-                )
+                modifier = Modifier.fillMaxSize(),
+                shape = CircleShape,
+                color = if (chapter in met) CoachInk else RailBorder,
+                content = {},
+            )
             }
         }
     }
 }
 
 /**
- * The six things there are to learn.
+ * The table, minus the one button that would end the lesson before it began.
  *
- * One per mechanic, in the order a round happens to meet them — which is not an order anybody
- * is held to. The words are the rules' own (`docs/game-engine/VINTO_RULES.md`), shortened to
- * what fits above a table.
+ * Calling Vinto on turn one is legal, irreversible, and the only deviation that cannot re-arm:
+ * the round is simply over, with nothing taught. It is a landmine under somebody who cannot
+ * yet know what the gold button does, so it is not offered until a bot has called and the
+ * coach has explained what that means. From then on it is there like anything else.
  */
-private enum class Lesson(val title: String, val detail: String) {
-    PEEK(
-        title = "Look at two of your cards",
-        detail = "Five cards, face down, and you may look at two of them before the round " +
-            "starts. Everybody else does the same. From here on it is memory: yours against " +
-            "three other people's.",
-    ),
-    DRAW(
-        title = "Take a card",
-        detail = "From the deck, sight unseen — or the top of the discard pile, but only if " +
-            "it is an action card nobody has used, and then you must use it.",
-    ),
-    DECIDE(
-        title = "Keep it or throw it",
-        detail = "Put the card into your hand — face down, in place of one you own, which " +
-            "goes face up on the pile — or throw it away. Low cards are worth keeping: the " +
-            "hand you want is the smallest one at the table.",
-    ),
-    ACTION(
-        title = "Use what the card does",
-        detail = "7 and 8 look at one of your own cards, 9 and 10 at somebody else's, a Jack " +
-            "swaps two cards blind, a Queen looks at two and then decides, a King borrows " +
-            "another rank's action. An Ace makes somebody draw.",
-    ),
-    TOSS(
-        title = "Throw in a match",
-        detail = "The moment a card goes on the pile, anybody holding that rank may throw " +
-            "theirs in and be rid of it — and use its action too. Guess wrong and you take a " +
-            "penalty card, and you are out of throwing in for the rest of the round.",
-    ),
-    VINTO(
-        title = "Call it",
-        detail = "At the end of your turn, if you think your hand is the lowest, call Vinto. " +
-            "Everybody else gets one more turn and nobody may touch your cards. Be right and " +
-            "you take the round; be wrong and the rest of the table takes it from you.",
-    ),
-}
-
-/** Which lesson a move is proof of. Null for the bookkeeping moves nobody has to understand. */
-private fun lessonOf(action: GameAction): Lesson? = when (action) {
-    is GameAction.PeekSetupCard -> Lesson.PEEK
-    is GameAction.DrawCard -> Lesson.DRAW
-    is GameAction.SwapCard, is GameAction.DiscardCard -> Lesson.DECIDE
-    is GameAction.UseCardAction, is GameAction.PlayDiscard, is GameAction.SelectActionTarget,
-    is GameAction.DeclareKingAction,
-    -> Lesson.ACTION
-    is GameAction.ParticipateInTossIn -> Lesson.TOSS
-    is GameAction.CallVinto -> Lesson.VINTO
-    else -> null
-}
-
-/**
- * What to talk about now.
- *
- * Driven by the table in front of the player rather than by a step counter, so the coach is
- * about the position rather than about the tutorial. A lesson already met is still shown when
- * its moment comes round again — a rule is not learned the first time it is read, and the
- * second King of the round is exactly when somebody wants to be told what a King does.
- */
-private fun teaching(phase: GamePhase, table: Table, seen: Set<Lesson>): Lesson? = when {
-    phase == GamePhase.SETUP -> Lesson.PEEK
-    table.ranks.isNotEmpty() -> Lesson.ACTION
-    table.tossable() -> Lesson.TOSS
-    table.choices.isEmpty() -> null
-    Lesson.DRAW !in seen -> Lesson.DRAW
-    Lesson.DECIDE !in seen -> Lesson.DECIDE
-    else -> Lesson.entries.firstOrNull { it !in seen }
-}
-
-/** Whether the table is offering to throw a card in — the one lesson with its own window. */
-private fun Table.tossable(): Boolean =
-    choices.any { (it.move as? Move.Send)?.action is GameAction.ParticipateInTossIn } ||
-        taps.values.any { (it as? Move.Send)?.action is GameAction.ParticipateInTossIn }
-
-/**
- * The deal everybody is taught on.
- *
- * Fixed, so that the lesson is the same one twice and a question about it has an answer. It is
- * an ordinary deal — nothing is stacked — because a hand arranged to make the rules look tidy
- * teaches a game nobody is about to play.
- */
-private const val TEACHING_DEAL = 20_260_820L
+private fun Table.beforeTheEnd(called: Boolean): Table =
+    if (called) this else copy(choices = choices.filterNot { it.tone == Tone.STAKES })
 
 private val CoachInk = Color(0xFF6FD3A6)
+
+/** A card being met for the first time: the same amber the game uses for a named rank. */
+private val NoteInk = Color(0xFFF2C14E)
 
 private val TitleSize = 16.sp
 private val DetailSize = 13.sp

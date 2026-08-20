@@ -73,21 +73,34 @@ class MenuUiTest {
     }
 
     /**
-     * The lesson is a real table with a coach over it, so what proves it opened is that both
-     * are on the screen at once.
+     * The lesson opens on the object of the game and holds the table until that has been read,
+     * which is the whole difference between a tutorial and a game with captions.
      */
     @Test
-    fun howToPlayOpensATableWithALessonOnIt() = runComposeUiTest {
+    fun howToPlayOpensByExplainingTheGame() = runComposeUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
         onNodeWithText("How to play").performClick()
         waitForIdle()
 
-        // The table's own prompt...
+        onNodeWithText("Four players, five cards each").assertIsDisplayed()
+        onNodeWithText("Go on").assertIsDisplayed()
+    }
+
+    /**
+     * And it is a real table underneath: acknowledge the opening and the game's own prompt is
+     * there, on the deal the lesson was dealt.
+     */
+    @Test
+    fun theLessonIsPlayedOnARealTable() = runComposeUiTest {
+        setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
+        waitForIdle()
+
+        onNodeWithText("How to play").performClick()
+        waitForIdle()
+
         onNodeWithText("Look at two of your cards").assertIsDisplayed()
-        // ...and the coach explaining why it is asking.
-        onNodeWithText("Learning the game").assertIsDisplayed()
     }
 
     private companion object {

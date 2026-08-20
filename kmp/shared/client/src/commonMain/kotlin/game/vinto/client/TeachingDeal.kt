@@ -1,0 +1,194 @@
+package game.vinto.client
+
+import game.vinto.engine.createDeck
+import game.vinto.engine.initializeTeachingGame
+import game.vinto.shapes.Difficulty
+import game.vinto.shapes.Card
+import game.vinto.shapes.GameAction
+import game.vinto.shapes.GamePhase
+import game.vinto.shapes.GameState
+import game.vinto.shapes.PendingCardOrigin
+import game.vinto.shapes.PlayerIdPayload
+import game.vinto.shapes.Rank
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlin.random.Random
+
+/**
+ * The deal every player is taught on.
+ *
+ * A lesson needs particular cards in particular places: something to peek at that pays off
+ * later, a rank the player knowingly holds when a matching card goes down, an unused action
+ * card left on the pile so taking from the discard can be shown, a Queen and a King to play,
+ * an Ace sitting in somebody's hand to be found, and a Joker arriving on the last turn so the
+ * round ends on the player's own good decision.
+ *
+ * None of that survives a shuffle, and none of it is worth searching a seed for — the
+ * constraints are joint over a dozen named positions, and a seed that satisfied them today
+ * would be quietly invalidated by the next engine or bot change. So the order is written down.
+ * It is still a **real deck**: `initializeTeachingGame` refuses anything that is not a
+ * permutation of the game's own 54 cards, so this cannot deal a hand that could not have been
+ * shuffled.
+ *
+ * Positions 0–4 go to the player, 5–9 to Raph, 10–14 to Mikey, 15–19 to Don, and the rest is
+ * the draw pile with position 20 on top.
+ */
+internal object TeachingDeal {
+
+    /** The player's hand: a 7 and a Joker to peek at, an 8 to throw in later. */
+    private val YOURS = listOf(Rank.THREE, Rank.SEVEN, Rank.EIGHT, Rank.JOKER, Rank.FIVE)
+
+    /** Raph keeps a 3 he knows about, for the moment a bot throws one in. */
+    private val RAPH = listOf(Rank.TWO, Rank.THREE, Rank.ACE, Rank.KING, Rank.TWO)
+
+    /** Mikey's King is what the Queen steals. */
+    private val MIKEY = listOf(Rank.KING, Rank.SIX, Rank.SIX, Rank.TEN, Rank.FOUR)
+
+    /** Don's Ace is found with a 9 and then declared by a King. */
+    private val DON = listOf(Rank.KING, Rank.ACE, Rank.TWO, Rank.TWO, Rank.SEVEN)
+
+    /**
+     * The top of the deck, in the order the lesson needs it.
+     *
+     * Your draws are the 4 (a plain card to keep and declare), the Queen, the King, and
+     * finally the Joker in the final round. The bots' draws are the cards they put back down:
+     * a 6 to watch, an 8 you can match, a 9 left unused on the pile, and fillers.
+     */
+    private val TOP = listOf(
+        Rank.FOUR, Rank.SIX, Rank.EIGHT, Rank.NINE,
+        Rank.FIVE, Rank.NINE, Rank.NINE, Rank.QUEEN,
+        Rank.SIX, Rank.FIVE, Rank.THREE, Rank.KING,
+        Rank.ACE, Rank.FOUR, Rank.TEN, Rank.THREE,
+        Rank.JOKER,
+    )
+
+    /**
+     * The whole deck, in deal order.
+     *
+     * Built by taking the named ranks out of a real deck one at a time and letting whatever is
+     * left fall in behind them, which is what makes it a permutation by construction rather
+     * than by hope. `TeachingDealTest` asserts it anyway — a stacked deck that is not a legal
+     * deck is a silent rules change.
+     */
+    fun deck(): List<Card> {
+        val remaining = createDeck().toMutableList()
+
+        fun take(rank: Rank): Card {
+            val index = remaining.indexOfFirst { it.rank == rank }
+            require(index >= 0) { "the teaching deal wants a $rank the deck does not have" }
+            return remaining.removeAt(index)
+        }
+
+        val ordered = (YOURS + RAPH + MIKEY + DON + TOP).map(::take)
+        return ordered + remaining
+    }
+}
+
+/**
+ * The round the lesson is played on.
+ *
+ * A real `LocalGameSession` in every respect — same engine, same validator, same seat
+ * boundary, same recorder — dealt from the written-down deck and with a director whispering to
+ * the bots. It saves nothing: opening the lesson must not take somebody's half-played game
+ * away.
+ *
+ * @param callVintoFromTurn which turn the director may have a bot call Vinto on. Late enough
+ *   that the player has met a card's action and a toss-in window; early enough that the final
+ *   round is reached while they are still paying attention.
+ */
+fun teachingSession(
+    botDispatcher: CoroutineDispatcher? = null,
+    callVintoFromTurn: Int = VINTO_ON_TURN,
+): LocalGameSession = LocalGameSession(
+    seed = TEACHING_SEED,
+    difficulty = Difficulty.EASY,
+    botDispatcher = botDispatcher,
+    random = Random(TEACHING_SEED),
+    dealt = initializeTeachingGame(TeachingDeal.deck(), Difficulty.EASY),
+    director = TeachingDirector(callVintoFromTurn),
+)
+
+/** Only used for the bots' own randomness; the cards come from the deck above. */
+private const val TEACHING_SEED = 20_260_820L
+
+/**
+ * The turn a bot calls Vinto on.
+ *
+ * Four rounds of the table: enough for the player to have drawn, kept, declared, played an
+ * action and seen a toss-in window, and few enough that the ending arrives while all of that
+ * is still fresh.
+ */
+private const val VINTO_ON_TURN = 4
+
+/**
+ * Somebody deciding the bots' moves in place of the search.
+ *
+ * The deck says what a bot *draws*; it cannot say what a bot *does*, and the lesson needs
+ * both — a 9 left unused on the pile so taking from the discard can be shown, and, at the
+ * end, somebody calling Vinto so the final round and the coalition can be played rather than
+ * described.
+ *
+ * A director returns an action for the state in front of it, or null to let the real bot
+ * think. Whatever it returns still goes through `ActionValidator` exactly as an MCTS move
+ * does, and a refused move falls through to the bot rather than stalling the game — a script
+ * that has drifted out of date should cost the lesson its shape, not its playability.
+ *
+ * There is deliberately no way for a *screen* to do this. The seat boundary in
+ * `LocalGameSession.dispatch` is a rule worth keeping whole; a tutorial that acted for the
+ * bots through the front door would be teaching the UI a habit that fails the moment there is
+ * a server.
+ */
+fun interface BotDirector {
+    fun nextAction(state: GameState): GameAction?
+}
+
+/**
+ * The director for the lesson.
+ *
+ * Two jobs, and it keeps out of the way otherwise.
+ *
+ * **Bots put their cards down.** Left to themselves the bots would swap good cards into their
+ * hands, which is correct play and ruins every lesson that depends on what is on the pile —
+ * the 8 you are meant to match, the 9 you are meant to take. So a directed bot holding a card
+ * it drew discards it.
+ *
+ * **Don calls Vinto.** A bot will not do it on its own inside a short round: the rule wants
+ * eight full rotations, a hand it knows entirely, and a total of zero or less. Waiting for
+ * that is waiting forever, and the final round is half the game. So once the lesson has run
+ * its course, Don calls it — a legal, validated, recorded action, taken on his own turn like
+ * anybody else's.
+ */
+internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirector {
+
+    /** So the call happens once, at the first moment it is legal. */
+    private var called = false
+
+    override fun nextAction(state: GameState): GameAction? {
+        val actor = state.players.getOrNull(state.currentPlayerIndex) ?: return null
+        if (actor.isHuman) return null
+
+        if (timeToCall(state)) {
+            called = true
+            return GameAction.CallVinto(PlayerIdPayload(actor.id))
+        }
+
+        val pending = state.pendingAction ?: return null
+        if (pending.playerId != actor.id) return null
+        if (pending.from != PendingCardOrigin.DRAWING) return null
+
+        // Down it goes, face up, where the lesson can point at it.
+        return GameAction.DiscardCard(PlayerIdPayload(actor.id))
+    }
+
+    /**
+     * Whether the round has taught what it can and should now end.
+     *
+     * Between turns rather than in the middle of one: a call is legal on the caller's own turn
+     * with nothing in play, which is exactly the moment a person would make it.
+     */
+    private fun timeToCall(state: GameState): Boolean {
+        if (called || state.phase != GamePhase.PLAYING) return false
+        if (state.turnNumber < callVintoFromTurn) return false
+
+        return state.vintoCallerId == null && state.pendingAction == null
+    }
+}

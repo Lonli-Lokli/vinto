@@ -148,6 +148,15 @@ not after the UI is built.
       With that true the vocabulary could be slowed to something readable (460 ms a card, a
       380 ms pause when the turn passes), and the speed is now a setting. **Still open**:
       reduced motion (7.2), and a sound layer, which needs assets
+- [x] 7.12 **How to play**: a real round on a written-down deck, with a director that makes the
+      bots play their parts and calls Vinto so the final round, the coalition and the scoring
+      are *played* rather than described; a coach derived from the position (so every legal
+      move stays legal); a pointing hand for cards, chips, buttons, seats and the screen's own
+      furniture; and each card explained in `CARD_CONFIGS`' words the first time it is seen.
+      Designed with the `fable` model against `VINTO_RULES.md` and the client sources; see
+      `docs/kotlin/README.md` §6g. Engine gained one entry point (`initializeTeachingGame`,
+      which refuses a deck that is not a permutation of the real one); the client gained
+      `BotDirector`, `TeachingDeal` and the pure `lessonFor`
 - [ ] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape.
       Cards carry a `contentDescription` and chips a 44 dp target; the rest is unaudited, and
       the app is portrait-locked until this is done (`AndroidManifest.xml` says why)

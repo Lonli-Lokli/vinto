@@ -161,6 +161,69 @@ fun initializeGame(seed: Long, difficulty: Difficulty = Difficulty.MODERATE): Ga
     )
 }
 
+/**
+ * Deals a game from a **deck somebody arranged**, for teaching.
+ *
+ * The lesson has to show a Queen being played, an Ace being found in somebody's hand and a
+ * Joker arriving on the last turn of the round. A shuffle that happens to do all of that does
+ * not exist to be searched for: the constraints are joint over a dozen named positions, and
+ * any change to the engine or the bots would silently invalidate a seed found today. So the
+ * order is written down instead, and this deals from it.
+ *
+ * It stays inside the engine's rules in the way that matters. The deck must be a permutation
+ * of [createDeck] — every rank, four of each, two Jokers — so this cannot deal a game that
+ * could not have been shuffled. `rngState` is still seeded, so a mid-round reshuffle is as
+ * deterministic as any other game's.
+ *
+ * The recording contract is untouched: a `GameRecording` carries `initialState` in full and
+ * `replayRecording` starts from it, so a taught round records and replays like any other, in
+ * either language.
+ *
+ * @throws IllegalArgumentException if [deck] is not a permutation of the real deck.
+ */
+fun initializeTeachingGame(
+    deck: List<Card>,
+    difficulty: Difficulty = Difficulty.EASY,
+    seed: Long = TEACHING_RNG_SEED,
+): GameState {
+    val real = createDeck()
+    require(deck.size == real.size && deck.map { it.id }.toSet() == real.map { it.id }.toSet()) {
+        "a teaching deck must be a permutation of the real deck: " +
+            "got ${deck.size} cards, expected ${real.size}"
+    }
+
+    val seeded = Prng.seed(seed)
+    val players = createPlayers().mapIndexed { index, player ->
+        val from = index * CARDS_PER_PLAYER
+        player.copy(cards = deck.subList(from, from + CARDS_PER_PLAYER))
+    }
+
+    return GameState(
+        gameId = "$GAME_ID_PREFIX$seeded",
+        roundNumber = 1,
+        turnNumber = 1,
+        phase = GamePhase.SETUP,
+        subPhase = GameSubPhase.IDLE,
+        finalTurnTriggered = false,
+        players = players,
+        currentPlayerIndex = 0,
+        vintoCallerId = null,
+        coalitionLeaderId = null,
+        drawPile = Pile(deck.drop(players.size * CARDS_PER_PLAYER)),
+        discardPile = Pile(),
+        pendingAction = null,
+        activeTossIn = null,
+        turnActions = emptyList(),
+        roundActions = emptyList(),
+        roundFailedAttempts = emptyList(),
+        difficulty = difficulty,
+        rngState = seeded,
+    )
+}
+
+/** Any constant will do; it only has to be the same one every time the lesson is opened. */
+private const val TEACHING_RNG_SEED = 1L
+
 /** Every rank appears in the deck; a missing one would be a silent rules change. */
 internal fun deckCoversEveryRank(): Boolean =
     createDeck().map { it.rank }.toSet() == ALL_RANKS.toSet()
