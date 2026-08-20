@@ -141,15 +141,19 @@ typealias Scene = List<Beat>
  * view here lets the screen step to each move as it is shown, so the table and the animation
  * are describing the same moment.
  *
- * @param actorId whoever made the move, or null for the engine's own bookkeeping. Used to put
- *   a pause between one player's turn and the next: three bot turns arriving in under a
- *   second are otherwise a single blur of cards.
+ * Carries the [action] itself as well, because how long the table should dwell on a move
+ * depends on what the move *was* — a card being drawn is something to read, aiming a Jack is
+ * not — and because a screen teaching the game has to say what just happened rather than only
+ * draw it.
  */
 data class Frame(
-    val actorId: String?,
+    val action: GameAction,
     val scenes: List<Scene>,
     val view: PlayerView,
 ) {
+    /** Whoever made the move, or null for the engine's own bookkeeping. */
+    val actorId: String? get() = action.actorId
+
     /** Whether this frame takes any time to play. Aiming a Jack moves nothing. */
     val hasSomethingToSee: Boolean get() = scenes.any { it.isNotEmpty() }
 }
@@ -176,14 +180,16 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     val penalty = penaltyScene(action, before, after)
 
     val main: Scene = when (action) {
-        // The deck to the space in front of you. Face-up only for the player who drew it —
-        // everyone else is watching a back move, and watching it turn over as it goes.
+        // The deck to the space in front of you, face up — the rules have the drawn card
+        // revealed publicly, and it is the single most informative moment of somebody else's
+        // turn. Somebody else's card still turns over on the way, which is what marks it as
+        // theirs rather than yours.
         is GameAction.DrawCard ->
             listOf(
                 Beat.Move(
                     from = Anchor.Deck,
                     to = Anchor.Pending,
-                    card = after.pendingCard().takeIf { mine },
+                    card = after.pendingCard(),
                     spin = !mine,
                 ),
             )
@@ -196,7 +202,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         is GameAction.SwapCard -> {
             val seat = Anchor.Seat(action.payload.playerId, action.payload.position)
             listOfNotNull(
-                Beat.Move(Anchor.Pending, seat, before.pendingCard().takeIf { mine }),
+                Beat.Move(Anchor.Pending, seat, before.pendingCard()),
                 after.discardPile.lastOrNull()?.let { Beat.Move(seat, Anchor.Discard, it) },
             )
         }

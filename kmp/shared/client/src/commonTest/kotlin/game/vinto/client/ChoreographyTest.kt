@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -105,9 +106,19 @@ class ChoreographyTest {
         assertEquals(seat to Anchor.Discard, out.from to out.to)
     }
 
-    /** A card somebody else drew is not yours to see, in the air any more than on the table. */
+    /**
+     * A card somebody else drew flies **face up**, and turns over on the way.
+     *
+     * The rules have the drawn card revealed publicly ("draws top card from draw pile and
+     * reveals it publicly"), and it is the most informative moment of anybody else's turn —
+     * what they drew, and what they then chose to do with it, is most of what there is to
+     * learn about a hand. The spin is what marks the card as theirs rather than yours.
+     *
+     * This asserted the opposite until it was played on a phone: three bots taking their
+     * turns behind a screen is not a game anybody can learn or play well.
+     */
     @Test
-    fun aCardDrawnByABotFliesFaceDown() = runTest {
+    fun aCardDrawnByABotFliesFaceUpAndTurnsOverOnTheWay() = runTest {
         val session = started()
         val scenes = scenesOf(session)
 
@@ -119,7 +130,10 @@ class ChoreographyTest {
 
         val draws = scenes.moves().filter { it.from == Anchor.Deck && it.to == Anchor.Pending }
         assertTrue(draws.size > 1, "the bots drew too: ${draws.size}")
-        assertNull(draws.last().card, "and what they drew is not shown")
+
+        val theirs = draws.last()
+        assertNotNull(theirs.card, "what a bot drew is on the table for everyone to read")
+        assertTrue(theirs.spin, "and it turns over on the way, so it reads as theirs")
     }
 
     /** A peek lifts a card where it lies. Nothing travels. */

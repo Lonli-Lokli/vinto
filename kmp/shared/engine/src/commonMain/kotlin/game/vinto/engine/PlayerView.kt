@@ -188,8 +188,19 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
     }
 
     val pending = state.pendingAction?.let { pendingAction ->
-        // The card in hand being played is known to the player playing it. Everyone else sees
-        // that an action is happening, not what it is — until it reaches the discard pile.
+        // **The card in play is public.** The rules are explicit about it — a player "draws
+        // the top card from the draw pile and *reveals it publicly*" — and every other way a
+        // card becomes pending is public too: taken off the discard pile, thrown in face-up,
+        // or borrowed by a King that is itself on the table. There is no pending card that
+        // arrived face-down.
+        //
+        // It was hidden here at first, on the reasonable-sounding principle that a card in
+        // somebody's hand is theirs. The cost was a game nobody could learn or play well:
+        // watching what an opponent drew and what they then did with it is most of the
+        // information in Vinto, and without it three bots take their turns behind a screen.
+        //
+        // What stays secret is what the action has *looked at* — a Queen peeking at two cards
+        // shows them to the player holding the Queen and to nobody else.
         val actorSeesCard = pendingAction.playerId == playerId
         PendingActionView(
             playerId = pendingAction.playerId,
@@ -197,7 +208,7 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
             from = pendingAction.from,
             targetType = pendingAction.targetType,
             declaredRank = pendingAction.declaredRank,
-            card = if (actorSeesCard) CardView.Visible(pendingAction.card) else CardView.Hidden,
+            card = CardView.Visible(pendingAction.card),
             targets = pendingAction.targets.map { target ->
                 PendingTargetView(
                     playerId = target.playerId,

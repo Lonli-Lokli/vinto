@@ -88,7 +88,11 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
             frames = session.frames,
             live = holder.current,
             sizes = layout.sizes,
-            pace = pace.scale,
+            // A lesson runs at a lesson's speed. Somebody who has set the table to brisk has
+            // done so knowing the game; somebody in here does not, and the pauses are most of
+            // what is being taught — the beat where a player thinks, and the one where
+            // everybody else reads what they did.
+            pace = maxOf(pace.scale, Pace.CALM.scale),
         ) { shown ->
             val table = holder.tableFor(shown)
 

@@ -147,7 +147,7 @@ class LocalGameSession(
         publish()
         val seen = mutableListOf(
             Frame(
-                actorId = action.actorId,
+                action = action,
                 scenes = choreograph(action, seenBefore, _view.value),
                 view = _view.value,
             ),
@@ -227,7 +227,7 @@ class LocalGameSession(
         val seen = told.map { (action, was, now) ->
             val before = projectView(was, playerId)
             val after = projectView(now, playerId)
-            Frame(action.actorId, choreograph(action, before, after), after)
+            Frame(action, choreograph(action, before, after), after)
         }
 
         told.forEach { (action, was, now) -> record(action, was, now) }

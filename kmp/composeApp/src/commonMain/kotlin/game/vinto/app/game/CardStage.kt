@@ -31,6 +31,7 @@ import game.vinto.client.Attention
 import game.vinto.client.AnimationQueue
 import game.vinto.client.Beat
 import game.vinto.client.Frame
+import game.vinto.client.Pacing
 import game.vinto.client.Scene
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
@@ -44,14 +45,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
 /**
- * How long each thing takes.
+ * How long each movement takes.
  *
- * Tuned on a phone rather than on a desktop preview, and the first version was roughly twice
+ * Tuned on a phone rather than in a desktop preview, and the first version was roughly twice
  * this fast. The speed a card *can* cross the table is not the speed at which anybody learns
- * anything from watching it: three bots take their turns between one tap and the next, and at
- * 340 ms a move that is one continuous flicker with no seam between one player and the next.
- * The pauses matter as much as the movements — [TURN_GAP_MS] is what separates "Raph did
- * something, then Don did something" from "some cards moved".
+ * anything from watching it. The pauses between the movements matter at least as much, and
+ * they live in `Pacing` — where they can be tested, because they are a decision rather than a
+ * drawing.
  */
 private const val MOVE_MS = 460
 private const val PEEK_MS = 1100
@@ -72,12 +72,6 @@ private const val SWEEP_STAGGER = 0.12f
 private const val BESIDE_PX = 150f
 private const val FLINCH_MS = 420
 private const val SAY_MS = 1400
-
-/** Between two scenes of the same move — the beat between a King's declaration and its work. */
-private const val BETWEEN_SCENES_MS = 140L
-
-/** Between two players' moves. The seam that makes a turn a turn. */
-private const val TURN_GAP_MS = 380L
 
 /**
  * Where the table's fixed places are on screen, and what is currently happening at them.
@@ -250,12 +244,11 @@ fun CardStage(
             while (true) {
                 val frame = queue.next() ?: break
 
-                // A pause when the turn passes. Without it three bot turns are one long
-                // stream of cards with no way to tell whose move any of them was.
-                if (frame.hasSomethingToSee) {
-                    if (lastActor != null && frame.actorId != lastActor) delay(stage.paced(TURN_GAP_MS))
-                    lastActor = frame.actorId
-                }
+                // The beat where a person would be thinking. Without it, three bot turns are
+                // one long stream of cards with no way to tell whose move any of them was —
+                // and with it, a turn arriving *feels* like somebody taking one.
+                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
+                if (frame.hasSomethingToSee) lastActor = frame.actorId
 
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
@@ -269,8 +262,11 @@ fun CardStage(
                     // previous ones, or none at all for a slot that has only just appeared.
                     withFrameNanos { }
                     next = stage.play(scene, next)
-                    delay(stage.paced(BETWEEN_SCENES_MS))
+                    delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
                 }
+
+                // And the beat after, so the table can be read before the next thing happens.
+                delay(stage.paced(Pacing.dwellAfter(frame, live.viewerId)))
             }
 
             // Caught up — and the only path when a batch was dropped for being too far
