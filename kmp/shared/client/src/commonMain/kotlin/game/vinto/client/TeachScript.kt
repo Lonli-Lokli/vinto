@@ -243,7 +243,8 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
             title = "Keep it or throw it",
             body = "Put it in your hand — face down, in place of a card you own, which goes " +
                 "face up on the pile — or throw it away. Every card in your hand counts " +
-                "against you, so a low one is worth keeping.",
+                "against you, so a low one is worth keeping. If it has an action, playing it " +
+                "now instead is the third choice, and it costs you nothing to take.",
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
         )
 
@@ -447,22 +448,34 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "coalition",
     )
 
+    view.vintoCallerId != null && "your_turn_to_call" !in taught.talked -> Lesson(
+        chapter = Chapter.VINTO,
+        title = "You can call it too",
+        body = "At the end of any turn of yours, the gold button is there: press it when you " +
+            "believe your hand is the lowest at the table. It was hidden while you were " +
+            "learning because it ends the round for everybody — from here on it is yours to " +
+            "press, and pressing it early is how most people lose their first game.",
+        talkId = "your_turn_to_call",
+    )
+
     view.phase == GamePhase.SCORING && "scoring" in taught.talked &&
         "session" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
         title = "And that is one round",
-        body = "A game is rounds, one after another, with those points carried between them. " +
-            "Whoever has the most when you stop takes first place. There is no shortcut — a " +
-            "round won by three points is worth the same whether you won it by one or twenty.",
+        body = "A game is rounds, one after another, with those points carried between them — " +
+            "around a table, until the time is up. Whoever has the most then comes first and " +
+            "takes 5 game points, second takes 3, third takes 2. A round won by three points " +
+            "counts the same whether you won it by one or by twenty.",
         talkId = "session",
     )
 
     view.phase == GamePhase.SCORING && "scoring" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
         title = "Every hand goes face up",
-        body = "The caller is compared with the best hand among everybody else. Lower, or " +
-            "level, and the caller takes +3 while the rest take nothing. Beaten, and the " +
-            "caller loses 1 while every one of the others takes +3.",
+        body = "The caller's hand is set against the best hand among everybody else. Lower, " +
+            "and the caller takes +3 while everybody else loses 1 each. Level counts as the " +
+            "caller's: +3 to them, nothing lost by anyone. Beaten, and the caller loses 1 " +
+            "while every one of the others takes +3.",
         talkId = "scoring",
     )
 

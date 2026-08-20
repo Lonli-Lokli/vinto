@@ -747,6 +747,42 @@ that remain meaningful.
 targets no-op and use the on-screen button. Without it, back from the settings screen closed
 the app, which looks exactly like a crash.
 
+### What the lesson covers, against the rules
+
+Audited beat by beat against `docs/game-engine/VINTO_RULES.md`:
+
+| Rule | Where it is taught |
+| --- | --- |
+| Objective — lowest hand wins | opening beat |
+| Four players, five cards each, face down | opening beat |
+| Peek at two of your own, once | setup lesson, pointed |
+| Every rank's value and action (2–6, 7·8, 9·10, J, Q, K, A, Joker) | eight card beats, each holding up the cards |
+| King: names any card, right takes it out of that hand and gives you its action | three beats, with the worked example |
+| Option A — draw from the deck | turn lesson, pointed |
+| Keep it, throw it, or play its action now | keep-or-throw lesson |
+| Declare the rank you put down; right plays its action, wrong costs a card | declaration lesson, pointed at a rank you have seen |
+| Option B — take an unused action card off the pile and play it at once | turn lesson (in words; pointed when the round offers it) |
+| Toss-in: anybody may match the rank; wrong costs a card and bars you | toss-in lesson, plus a bot demonstrating it |
+| Calling Vinto at the end of your own turn | the "you can call it too" beat, after a bot has called |
+| Final round — one more turn each | the call beat |
+| Coalition — best single hand counts, caller's cards untouchable | the coalition beat |
+| Scoring — +3 / −1 / level counts as the caller's | the scoring beat, pinned by a test |
+| A session is rounds; 5 / 3 / 2 game points by rank | the session beat |
+| The deck running out and the pile going back into it | help sheet ("what the table is telling you") |
+
+Two things worth knowing about that table:
+
+- The scoring line **was wrong** until it was audited: it said a caller who finishes lower
+  takes +3 "while the rest take nothing", when the rules and `calculateRoundPoints` both charge
+  the others a point each — nothing is what a *tie* costs them. `TeachScriptTest` now pins all
+  three outcomes, because a tutorial that teaches a scoring rule incorrectly is worse than one
+  that skips it: the player believes it.
+- **The engine deals no face-up card to start the discard pile**, which `VINTO_RULES.md` §
+  Components asks for ("Place one card face-up to form the discard pile"). `initializeGame`
+  starts it empty, faithfully to the TypeScript it was ported from — so this is a question
+  about the two engines rather than about the lesson, and changing it would move every hash in
+  the parity corpus.
+
 ## 6h. Words, and where they live
 
 Every string the **UI module** says is now in

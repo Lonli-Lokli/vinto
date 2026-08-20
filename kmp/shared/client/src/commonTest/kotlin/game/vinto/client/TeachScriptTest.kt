@@ -130,7 +130,53 @@ class TeachScriptTest {
 
         assertEquals(Chapter.SCORE, lesson.chapter)
         assertTrue(lesson.body.contains("+3"), "the numbers, as the rules give them")
-        assertTrue(lesson.body.contains("level"), "including the tie, which favours the caller")
+        assertTrue(
+            lesson.body.contains("Level", ignoreCase = true),
+            "including the tie, which favours the caller: ${lesson.body}",
+        )
+    }
+
+    /**
+     * The three outcomes of a round, all of them, with the right numbers.
+     *
+     * This is here because the copy got one wrong: it said a caller who finishes lower takes
+     * +3 "while the rest take nothing", when the rules and `calculateRoundPoints` both charge
+     * the others a point each — nothing is what a *tie* costs them. A tutorial that teaches a
+     * scoring rule incorrectly is worse than one that skips it, because the player believes it.
+     */
+    @Test
+    fun theScoringLessonGivesAllThreeOutcomes() = runTest {
+        val session = playToTheEnd()
+        val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "scoring")))
+
+        assertTrue(lesson.body.contains("+3"), "the winning number")
+        assertTrue(lesson.body.contains("loses 1"), "and the losing one")
+        assertTrue(
+            lesson.body.contains("everybody else loses 1"),
+            "a caller who finishes lower costs the others a point each: ${lesson.body}",
+        )
+        assertTrue(
+            lesson.body.contains("Level"),
+            "and only a tie leaves them on nothing: ${lesson.body}",
+        )
+    }
+
+    /**
+     * The button is hidden while the player is learning, so somebody has to tell them it is
+     * theirs afterwards — otherwise the lesson teaches a game they can never end.
+     */
+    @Test
+    fun thePlayerIsToldTheyMayCallItThemselves() = runTest {
+        val session = playToTheCall()
+        val lesson = assertNotNull(
+            teach(session, talkedThrough(session, stopAt = "your_turn_to_call")),
+        )
+
+        assertEquals("your_turn_to_call", lesson.talkId)
+        assertTrue(
+            lesson.body.contains("end of any turn of yours"),
+            "saying when it may be pressed: ${lesson.body}",
+        )
     }
 
     private suspend fun playToTheCall(): LocalGameSession {

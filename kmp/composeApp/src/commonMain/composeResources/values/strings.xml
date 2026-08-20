@@ -133,6 +133,8 @@
     <string name="signal_coalition_meaning">The coalition: everybody except the Vinto caller, playing their last turn together against that one hand.</string>
     <string name="signal_tappable">A card that breathes</string>
     <string name="signal_tappable_meaning">It can be touched right now. If nothing breathes, the table is waiting on somebody else.</string>
+    <string name="signal_reshuffle">Cards sweeping back into the deck</string>
+    <string name="signal_reshuffle_meaning">The deck ran out, so the pile was shuffled back into it. Everything anybody had learned from watching that pile is now out of date.</string>
     <string name="signal_peek">A card that lifts towards the middle</string>
     <string name="signal_peek_meaning">Somebody is looking at it. Everyone sees *which* card was looked at — only the player entitled to it sees the face.</string>
 
