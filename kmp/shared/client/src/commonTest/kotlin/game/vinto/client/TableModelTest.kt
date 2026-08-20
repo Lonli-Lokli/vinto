@@ -346,6 +346,39 @@ class TableModelTest {
         assertTrue(onTable >= FOUR_SEATS, "there are hands to turn over")
     }
 
+    /**
+     * Being barred from tossing in is said out loud.
+     *
+     * It is a rule a player breaks once and then cannot see they have broken: the window
+     * would simply stop taking cards, with nothing to tell "you are barred for the round"
+     * apart from "you were too slow".
+     */
+    @Test
+    fun aPlayerWhoThrewInAWrongCardIsToldTheyAreOut() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+
+        // Throw in a card that is almost certainly not a 5 — position 4 was never peeked.
+        val window = session.table()
+        session.dispatch((window.taps.getValue(CardRef(session.playerId, 4)) as Move.Send).action)
+
+        if (session.playerId !in session.view.value.barredFromTossIn) return@runTest // it matched
+
+        val after = session.table()
+        assertTrue(after.taps.isEmpty(), "no card can be thrown in any more")
+        assertTrue(
+            after.detail!!.contains("cannot toss in again"),
+            "and it says why: ${after.detail}",
+        )
+        assertTrue(after.send("Continue") is GameAction.PlayerTossInFinished)
+        assertTrue(
+            after.send("Call Vinto") is GameAction.CallVinto,
+            "and you can still end your own turn — being barred is not a second penalty",
+        )
+    }
+
     // ------------------------------------------------------------------ watching
 
     @Test

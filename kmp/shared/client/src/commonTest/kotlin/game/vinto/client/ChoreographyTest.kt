@@ -280,6 +280,50 @@ class ChoreographyTest {
         )
     }
 
+    /**
+     * The turn moving is its own beat, because it is nobody's move.
+     *
+     * It happens in the engine's bookkeeping at the end of whatever action finished a turn,
+     * which is exactly why it went unnoticed in the web app too: there is no action to hang
+     * it on, so nothing was hanging anything on it.
+     */
+    @Test
+    fun theTurnPassingIsAnnounced() = runTest {
+        val session = started()
+        val scenes = scenesOf(session)
+
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(session.playerId)))
+        runCurrent()
+
+        val handoffs = scenes.flatten().flatten()
+            .filterIsInstance<Beat.Attend>()
+            .filter { it.kind == Attention.TURN }
+
+        assertTrue(handoffs.isNotEmpty(), "the turn changed hands and said so")
+        assertTrue(
+            handoffs.none { it.playerId == session.playerId },
+            "and it was somebody else's: ${handoffs.map { it.playerId }}",
+        )
+    }
+
+    /** A King says what it is pretending to be before it does that card's job. */
+    @Test
+    fun aKingNamesWhatItBorrowed() = runTest {
+        val session = aiming(Rank.KING)
+        session.dispatch((session.table().taps.values.first() as Move.Send).action)
+
+        val scenes = scenesOf(session)
+        val nine = session.table().ranks.first { it.rank == Rank.NINE }
+        session.dispatch((nine.move as Move.Send).action)
+        runCurrent()
+
+        val borrowed = scenes.flatten().flatten().filterIsInstance<Beat.Borrowed>()
+        assertEquals(Rank.NINE, borrowed.singleOrNull()?.rank, "it said which: $borrowed")
+    }
+
     private fun Table.send(startsWith: String): GameAction {
         val choice = choices.first { it.label.startsWith(startsWith) }
         return (choice.move as Move.Send).action

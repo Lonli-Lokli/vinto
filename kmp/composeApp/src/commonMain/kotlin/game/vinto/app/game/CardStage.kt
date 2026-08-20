@@ -32,6 +32,8 @@ import game.vinto.client.Beat
 import game.vinto.client.Scene
 import game.vinto.engine.CardView
 import game.vinto.shapes.Card
+import game.vinto.shapes.Rank
+import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -49,6 +51,10 @@ private const val LIFT_FRACTION = 0.28f
 private const val STAGE_SCALE = 1.5f
 private const val START_SCALE = 0.6f
 private const val FULL_TURN = 360f
+private const val RESHUFFLE_MS = 900
+private const val SWEEP_CARDS = 5
+private const val SWEEP_STAGGER = 0.12f
+private const val BESIDE_PX = 150f
 private const val FLINCH_MS = 420
 private const val SAY_MS = 1400
 private const val BETWEEN_SCENES_MS = 60L
@@ -76,6 +82,12 @@ class Stage {
 
     /** A card held up in the middle of the table while its action happens. */
     internal var staged: CardView? by mutableStateOf(null)
+
+    /** A rank a King is borrowing, shown in the middle while it does that card's job. */
+    internal var borrowed: Rank? by mutableStateOf(null)
+
+    /** How many cards the deck has just taken back, while that is being drawn. */
+    internal var refilling: Int by mutableStateOf(0)
 
     /** Declarations answered: true for a right call, false for a wrong one. */
     internal val verdicts = mutableStateMapOf<Anchor, Boolean>()
@@ -189,6 +201,8 @@ fun CardStage(
         }
 
         stage.staged?.let { HeldUp(it, sizes, stage.centre()) }
+        stage.borrowed?.let { Borrowed(it, sizes, stage.centre()) }
+        if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
     }
 }
 
@@ -212,6 +226,8 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     verdicts.clear()
     attention.clear()
     staged = null
+    borrowed = null
+    refilling = 0
     if (saying.isNotEmpty()) {
         delay(SAY_MS.toLong())
         saying.clear()
@@ -258,6 +274,16 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
         STAGE_MS
     }
 
+    is Beat.Borrowed -> {
+        borrowed = beat.rank
+        STAGE_MS
+    }
+
+    is Beat.Reshuffle -> {
+        refilling = beat.cards
+        RESHUFFLE_MS
+    }
+
     is Beat.Verdict -> {
         verdicts[beat.at] = beat.correct
         VERDICT_MS
@@ -283,6 +309,24 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
 
 private fun Card?.faceOrBack(): CardView =
     this?.let { CardView.Visible(it) } ?: CardView.Hidden
+
+/**
+ * A card of a given rank, for showing an action nobody actually played.
+ *
+ * The King's borrowed rank is a rank and not a card — there is no such card on the table —
+ * so one is made up to draw. It never enters the game; `getCardConfig` supplies the value and
+ * the text, which is the same source the rest of the app reads.
+ */
+private fun cardFor(rank: Rank): Card {
+    val config = getCardConfig(rank)
+    return Card(
+        id = "borrowed_${rank.serialName}",
+        rank = rank,
+        value = config.value,
+        actionText = config.shortDescription.takeIf { it.isNotEmpty() },
+        played = false,
+    )
+}
 
 @Composable
 private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: TableSizes) {
@@ -320,6 +364,52 @@ private fun HeldUp(card: CardView, sizes: TableSizes, centre: Offset) {
             },
     ) {
         CardFace(card, sizes.mine, state = CardState(chosen = true))
+    }
+}
+
+/** The card a King is pretending to be, held up beside the King itself. */
+@Composable
+private fun Borrowed(rank: Rank, sizes: TableSizes, centre: Offset) {
+    val shown = remember(rank) { CardView.Visible(cardFor(rank)) }
+    val grow = remember { Animatable(START_SCALE) }
+    LaunchedEffect(rank) { grow.animateTo(1f, tween(STAGE_GROW_MS, easing = FastOutSlowInEasing)) }
+
+    Box(
+        modifier = Modifier
+            .offset { IntOffset((centre.x + BESIDE_PX).roundToInt(), centre.y.roundToInt()) }
+            .graphicsLayer {
+                scaleX = grow.value * STAGE_SCALE
+                scaleY = grow.value * STAGE_SCALE
+            },
+    ) {
+        CardFace(shown, sizes.mine, state = CardState(chosen = true))
+    }
+}
+
+/**
+ * The discard pile going back into the deck.
+ *
+ * Drawn as a handful of backs sweeping from the pile to the deck rather than as a number
+ * changing, because what actually happened is that everything anybody remembered about the
+ * pile stopped being true.
+ */
+@Composable
+private fun Reshuffling(cards: Int, sizes: TableSizes, stage: Stage) {
+    val from = stage.locate(Anchor.Discard) ?: return
+    val to = stage.locate(Anchor.Deck) ?: return
+    val sweep = remember { Animatable(0f) }
+
+    LaunchedEffect(cards) { sweep.animateTo(1f, tween(RESHUFFLE_MS, easing = FastOutSlowInEasing)) }
+
+    repeat(minOf(cards, SWEEP_CARDS)) { index ->
+        // Staggered, so it reads as a stack going back rather than one card.
+        val offset = (index * SWEEP_STAGGER).coerceAtMost(1f)
+        val t = ((sweep.value - offset) / (1f - offset)).coerceIn(0f, 1f)
+        val at = Offset(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t)
+
+        Box(modifier = Modifier.offset { IntOffset(at.x.roundToInt(), at.y.roundToInt()) }) {
+            CardFace(CardView.Hidden, sizes.theirs)
+        }
     }
 }
 

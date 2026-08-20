@@ -94,6 +94,15 @@ data class PlayerView(
     val discardPile: List<Card>,
     val pendingAction: PendingActionView?,
     val activeTossIn: ActiveTossIn?,
+    /**
+     * Who has already thrown in a wrong card this round, and is barred from trying again.
+     *
+     * Public by nature — a failed toss-in happens face-up, in front of everyone — and it is
+     * the kind of rule a player breaks once and then cannot see they have broken: without it
+     * the toss-in window simply refuses you, with no way to tell that it is refusing you
+     * *permanently* rather than because you were slow.
+     */
+    val barredFromTossIn: List<String> = emptyList(),
     val difficulty: Difficulty,
     /** Only once the game is over; before then a score is a hand nobody has revealed. */
     val scores: Map<String, Int>? = null,
@@ -218,6 +227,7 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
         discardPile = state.discardPile.toList(),
         pendingAction = pending,
         activeTossIn = state.activeTossIn,
+        barredFromTossIn = state.roundFailedAttempts.map { it.playerId }.distinct(),
         difficulty = state.difficulty,
         scores = if (state.phase == GamePhase.SCORING) {
             calculateFinalScores(state.players, state.vintoCallerId)

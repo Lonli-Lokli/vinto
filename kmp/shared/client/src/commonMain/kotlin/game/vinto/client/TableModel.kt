@@ -4,6 +4,7 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
+import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -406,8 +407,11 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
 
 private fun targetingTable(view: PlayerView, pending: PendingActionView): Table {
     val card = (pending.card as? CardView.Visible)?.card
+    val borrowed = pending.declaredRank?.let { rank ->
+        "The King declared a ${rank.serialName}: ${getCardShortDescription(rank)}"
+    }
 
-    return when (pending.targetType) {
+    return withBorrowed(borrowed) { when (pending.targetType) {
         TargetType.OWN_CARD -> peekTable(view, pending, "Look at one of your own cards", ownTaps(view))
         TargetType.OPPONENT_CARD ->
             peekTable(view, pending, "Look at one card of another player", opponentTaps(view))
@@ -437,7 +441,19 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
             prompt = card?.let { "The ${it.rank.serialName} is waiting" } ?: "Waiting",
             choices = listOf(giveUp(view.viewerId)),
         )
-    }
+    } }
+}
+
+/**
+ * Adds the King's borrowed action to whatever the table is asking.
+ *
+ * A King performs another rank's action, so the next question belongs to a card nobody
+ * played. Without naming it, "choose two cards from two different players" arrives with no
+ * explanation — the Queen it is imitating was never on the table.
+ */
+private inline fun withBorrowed(borrowed: String?, build: () -> Table): Table {
+    val table = build()
+    return if (borrowed == null) table else table.copy(detail = borrowed)
 }
 
 /**
@@ -578,6 +594,27 @@ private fun tossInTable(view: PlayerView): Table? {
     }
 
     val matching = toss.ranks.joinToString(" or ") { it.serialName }
+
+    // One wrong throw bars you for the rest of the round. Said out loud, because it is a rule
+    // a player breaks once and then cannot see they have broken: the window would simply stop
+    // accepting cards, with nothing to distinguish "you are barred" from "you were too slow".
+    if (me in view.barredFromTossIn) {
+        return Table(
+            prompt = "A $matching went down",
+            detail = "You threw in a wrong card this round, so you cannot toss in again.",
+            // Barred from *tossing in*, not from ending your turn. Losing the Vinto call
+            // along with it would be a second penalty the rules never mention, and it would
+            // land on the player who has just been punished once already.
+            choices = listOf(
+                Choice(
+                    "Continue",
+                    Move.Send(GameAction.PlayerTossInFinished(PlayerIdPayload(me))),
+                    Tone.PLAY,
+                ),
+            ) + vintoChoice(view, toss, me),
+        )
+    }
+
     val hand = view.players.first { it.id == me }.cards.indices
 
     // A card is thrown in by touching it, as on the web, rather than by pressing a button and
@@ -606,6 +643,22 @@ private fun tossInTable(view: PlayerView): Table? {
             }
         },
     )
+}
+
+/**
+ * Calling Vinto, when this window is the end of your own turn.
+ *
+ * The rules put the call at the end of a turn, which is this window and not the one before
+ * you drew. The engine tolerates an early call, but taking it up leaves you still owing the
+ * turn you just declared the end of — so the offer belongs here, which is also where the web
+ * app puts it.
+ */
+private fun vintoChoice(view: PlayerView, toss: ActiveTossIn, me: String): List<Choice> {
+    val mine = view.players.getOrNull(toss.originalPlayerIndex)?.id == me
+    if (!mine || view.vintoCallerId != null) return emptyList()
+
+    val call = GameAction.CallVinto(PlayerIdPayload(me))
+    return listOf(Choice("Call Vinto", Move.Send(call), Tone.STAKES))
 }
 
 // ---------------------------------------------------------------------------- endings

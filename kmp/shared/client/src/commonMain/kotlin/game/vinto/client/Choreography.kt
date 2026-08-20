@@ -4,6 +4,7 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.actorId
@@ -72,6 +73,26 @@ sealed interface Beat {
      * discarded in the same breath and nobody reads what it was.
      */
     data class Stage(val card: Card?) : Beat
+
+    /**
+     * The discard pile going back into the deck.
+     *
+     * A real event and currently a silent one in both clients: everything anybody has learned
+     * from watching the pile becomes stale at that moment, and the only sign of it is two
+     * numbers changing. [cards] is how many went back, which is what makes it read as a
+     * sweep rather than as one card moving the wrong way.
+     */
+    data class Reshuffle(val cards: Int) : Beat
+
+    /**
+     * The King's borrowed action.
+     *
+     * A King declares another rank and performs *that* card's action, which means the next
+     * thing the table is asked for belongs to a card nobody played. Naming it is the
+     * difference between "why is it asking me to pick two cards" and "ah, it declared a
+     * Queen".
+     */
+    data class Borrowed(val rank: Rank) : Beat
 
     /**
      * The answer to a declaration: green for right, red for wrong.
@@ -178,8 +199,11 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         is GameAction.SkipPeek,
         is GameAction.SkipJackSwap,
         is GameAction.SkipQueenSwap,
-        is GameAction.DeclareKingAction,
         -> discardScene(before, after)
+
+        // The King says what it is pretending to be, and then does that.
+        is GameAction.DeclareKingAction ->
+            listOf(Beat.Borrowed(action.payload.declaredRank)) + discardScene(before, after)
 
         // The two swaps that happen inside an action rather than as a move of their own, so
         // their endpoints come from the targets the action was aimed at.
@@ -199,8 +223,36 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     }
 
     val verdict = verdictScene(action, penalty != null)
+    val table = tableScene(before, after)
 
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty)
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty, table)
+}
+
+/**
+ * What happened to the table itself, rather than to anybody's cards.
+ *
+ * Read from the two views rather than from the action, because neither is anybody's *move*:
+ * the deck refills and the turn passes inside the engine's own bookkeeping, at the end of
+ * whatever action happened to finish a turn. There is no action to attach them to, which is
+ * exactly why both went unnoticed in the web app as well.
+ */
+private fun tableScene(before: PlayerView, after: PlayerView): Scene? {
+    val beats = mutableListOf<Beat>()
+
+    // The pile going back into the deck. The draw pile only ever grows this way.
+    val refilled = after.drawPileSize - before.drawPileSize
+    if (refilled > 0) beats += Beat.Reshuffle(refilled)
+
+    // The turn moving. Three bots take theirs in under a second between one tap and the
+    // next, and a ring that is simply *on* the active seat is easy to lose track of; a flash
+    // as it arrives is what makes the hand-off followable.
+    val was = before.players.getOrNull(before.currentPlayerIndex)?.id
+    val now = after.players.getOrNull(after.currentPlayerIndex)?.id
+    if (now != null && now != was && after.phase != GamePhase.SCORING) {
+        beats += Beat.Attend(now, Attention.TURN)
+    }
+
+    return beats.takeIf { it.isNotEmpty() }
 }
 
 /**
