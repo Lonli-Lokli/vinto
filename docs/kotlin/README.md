@@ -688,6 +688,13 @@ words either way and points at it when the round allows. The Vinto call is timed
 which is the third bot's **first** turn, and ended the lesson before the player had taken a
 second one.
 
+It also makes **one bot throw a card into a toss-in window**, once, the first time a bot is
+holding a match it has actually seen. The window is the one moment in Vinto that belongs to
+the whole table at once, and a player whose window only ever contains themselves learns it as
+"a prompt I dismiss"; when it happens the coach names whoever did it. "Has actually seen" is
+the bots' own rule rather than a convenience — guessing costs a penalty card and bars you from
+the rest of the round, so a bot tossing a card it had not read would be demonstrating bad play.
+
 The coach also answers, once and without reproach, the first time somebody presses a button
 other than the one being pointed at. That press is a player quietly testing whether this is a
 real game or a rail, and it deserves an answer.

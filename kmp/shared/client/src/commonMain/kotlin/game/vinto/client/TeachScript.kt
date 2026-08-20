@@ -161,9 +161,9 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
         tossWindow(table) -> Lesson(
             chapter = Chapter.TOSS,
             title = "Anybody holding that rank may throw it in",
-            body = "The moment a card lands face up, everyone gets a chance to be rid of a " +
-                "match — and to use its action. Wrong rank costs you a penalty card and bars " +
-                "you from throwing in for the rest of the round.",
+            body = alsoThrewIn(view) + "The moment a card lands face up, everyone gets a " +
+                "chance to be rid of a match — and to use its action. Wrong rank costs you a " +
+                "penalty card and bars you from throwing in for the rest of the round.",
             point = matchingOwnCard(view)?.let { Target.Place(it) }
                 ?: table.choices.firstOrNull()?.let { Target.Button(it.label) },
             glossId = "toss",
@@ -426,6 +426,19 @@ private fun matchingOwnCard(view: PlayerView): Anchor? {
         (card as? CardView.Visible)?.card?.rank in wanted
     }
     return position.takeIf { it >= 0 }?.let { Anchor.Seat(you.id, it) }
+}
+
+/**
+ * Whoever else has already thrown into this window, named.
+ *
+ * Watching an opponent do it is the difference between "a prompt I dismiss" and "a thing the
+ * whole table does at once" — so when it happens, the lesson says whose card that was.
+ */
+private fun alsoThrewIn(view: PlayerView): String {
+    val others = view.activeTossIn?.participants.orEmpty().filter { it != view.viewerId }
+    val names = others.mapNotNull { id -> view.players.firstOrNull { it.id == id }?.nickname }
+
+    return if (names.isEmpty()) "" else "${names.joinToString(" and ")} just threw one in. "
 }
 
 private fun tossWindow(table: Table): Boolean =

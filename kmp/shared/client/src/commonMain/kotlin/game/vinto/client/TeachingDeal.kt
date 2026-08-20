@@ -1,5 +1,7 @@
 package game.vinto.client
 
+import game.vinto.engine.ActionValidator
+import game.vinto.engine.Validation
 import game.vinto.engine.createDeck
 import game.vinto.engine.initializeTeachingGame
 import game.vinto.shapes.Difficulty
@@ -7,6 +9,8 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.GameSubPhase
+import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Rank
@@ -167,7 +171,14 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
     /** So the call happens once, at the first moment it is legal. */
     private var called = false
 
+    /** So a bot throws a card in exactly once, the first time one can. */
+    private var demonstrated = false
+
     override fun nextAction(state: GameState): GameAction? {
+        // Before anything else, and not restricted to whoever's turn it is: a toss-in belongs
+        // to the whole table, which is the point being made.
+        tossInDemo(state)?.let { return it }
+
         val actor = state.players.getOrNull(state.currentPlayerIndex) ?: return null
         if (actor.isHuman) return null
 
@@ -206,6 +217,43 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
         val player = state.players.indexOfFirst { it.isHuman }.takeIf { it >= 0 } ?: return null
         val before = (player - 1 + state.players.size) % state.players.size
         return state.players[before].id
+    }
+
+    /**
+     * A bot throwing in a match, once.
+     *
+     * The toss-in window is the one moment in Vinto that belongs to everybody at once, and a
+     * player whose window only ever contains themselves learns it as "a prompt I dismiss". So
+     * the first time a bot is holding a card it *knows* matches, it throws it in where the
+     * player can watch it happen.
+     *
+     * "Knows" is the bot's own rule, not a convenience: guessing costs a penalty card and bars
+     * you from the rest of the round, so a bot that tossed a card it had not seen would be
+     * demonstrating bad play rather than the rule.
+     *
+     * The move is validated here rather than hoped about, because the flag must only be spent
+     * on a toss-in that actually happens.
+     */
+    private fun tossInDemo(state: GameState): GameAction? {
+        if (demonstrated) return null
+        if (state.subPhase != GameSubPhase.TOSS_QUEUE_ACTIVE) return null
+
+        val wanted = state.activeTossIn?.ranks?.toSet() ?: return null
+
+        for (bot in state.players.filter { it.isBot }) {
+            val position = bot.knownCardPositions.firstOrNull { at ->
+                bot.cards.getOrNull(at)?.rank in wanted
+            } ?: continue
+
+            val toss = GameAction.ParticipateInTossIn(
+                ParticipateInTossInPayload(bot.id, listOf(position)),
+            )
+            if (ActionValidator.validate(state, toss) !is Validation.Valid) continue
+
+            demonstrated = true
+            return toss
+        }
+        return null
     }
 
     /**

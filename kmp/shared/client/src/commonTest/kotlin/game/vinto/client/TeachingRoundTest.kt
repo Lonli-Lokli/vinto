@@ -138,6 +138,35 @@ class TeachingRoundTest {
     }
 
     /**
+     * A bot throws a card in where the player can see it.
+     *
+     * The toss-in window is the one moment that belongs to the whole table at once, and a
+     * player whose window only ever contains themselves learns it as a prompt to dismiss. The
+     * director makes it happen once; this is what stops a deck edit or a bot change from
+     * quietly removing it.
+     */
+    @Test
+    fun aBotThrowsACardInWhereThePlayerCanSeeIt() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        SimplePlayer(session).play()
+
+        val tossed = session.report(at = "2026-08-20T00:00:00Z", label = "the lesson")
+            .actions
+            .map { it.action }
+            .filterIsInstance<GameAction.ParticipateInTossIn>()
+
+        assertTrue(
+            tossed.any { it.payload.playerId != me },
+            "the lesson claims anybody may throw in a match, so somebody else has to",
+        )
+    }
+
+    /**
      * The taught round is an ordinary game in the one sense that matters most: it records and
      * replays like any other, in either engine.
      *
