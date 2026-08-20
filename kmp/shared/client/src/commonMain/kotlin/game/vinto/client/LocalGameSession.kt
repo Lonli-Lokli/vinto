@@ -71,6 +71,16 @@ class LocalGameSession(
 
     private val runner = BotRunner(difficulty, random)
 
+    /**
+     * Everything that has happened, written down as it happens.
+     *
+     * Always on rather than switched on when something looks wrong: by then the interesting
+     * actions are already in the past. What it costs is an action and a hash per move; what
+     * it buys is that a bug report is a *recording* the replay harness can play back, in
+     * either language, and point at the exact action where the two engines disagree.
+     */
+    private val recorder = Recorder(seed, difficulty, state)
+
     private val _view = MutableStateFlow(projectView(state, playerId))
     override val view: StateFlow<PlayerView> = _view.asStateFlow()
 
@@ -141,12 +151,26 @@ class LocalGameSession(
         return null
     }
 
-    /** Adds one line to the log, keeping only the recent past. */
+    /**
+     * Notes one action: in words for the player, and in full for a bug report.
+     *
+     * The log is trimmed to the recent past because it is read at a glance; the recording is
+     * not, because it is read by a replay.
+     */
     private fun record(action: GameAction, before: GameState, after: GameState) {
+        recorder.record(action, after)
         narrate(action, before, after, playerId)?.let { line ->
             _log.value = (_log.value + line).takeLast(LOG_LENGTH)
         }
     }
+
+    /**
+     * This game, as a replayable recording.
+     *
+     * @param at a timestamp from the caller. The session has no clock — nothing inside the
+     *   engine or beside it may read one, or a recording stops being reproducible.
+     */
+    fun report(at: String, label: String): Recording = recorder.export(state, at, label)
 
     /** Announces a refusal and hands the reason back to the caller. */
     private fun refuse(reason: String): String {

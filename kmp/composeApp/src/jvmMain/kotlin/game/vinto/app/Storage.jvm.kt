@@ -18,3 +18,5 @@ private class FileVault(private val directory: File) : Vault {
         File(directory, key).delete()
     }
 }
+
+actual fun nowIso(): String = java.time.Instant.now().toString()

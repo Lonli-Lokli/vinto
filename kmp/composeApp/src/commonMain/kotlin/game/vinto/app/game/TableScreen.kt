@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -65,6 +66,7 @@ fun TableScreen(
     state: TableState,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
+    onReport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val view = state.view
@@ -74,7 +76,7 @@ fun TableScreen(
     val mine = view.players.first { it.id == me }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TableHeader(view, state.round)
+        TableHeader(view, state.round, onReport)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
             val sizes = TableSizes.forHeight(maxHeight)
@@ -130,7 +132,7 @@ data class TableState(
 
 /** Where the round is up to, and how much deck is left. */
 @Composable
-private fun TableHeader(view: PlayerView, round: Int) {
+private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
         horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -154,6 +156,16 @@ private fun TableHeader(view: PlayerView, round: Int) {
         )
 
         Box(modifier = Modifier.weight(1f))
+
+        // Always reachable, because the moment worth reporting is the moment it goes wrong
+        // and nobody navigates to a menu to capture it.
+        Text(
+            text = "🐞",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier
+                .clickable(onClick = onReport)
+                .padding(horizontal = Gap, vertical = Tight),
+        )
 
         Surface(
             shape = RoundedCornerShape(Tight),
@@ -343,7 +355,9 @@ private fun Plate(
         view.scores?.get(seat.id)?.let { add("$it") }
     }
     val tap = table.seatTaps[seat.id]
-    val line = LocalStage.current.lineFor(seat.id)
+    val stage = LocalStage.current
+    val line = stage.lineFor(seat.id)
+    val pointed = stage.attentionOn(seat.id)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // Three bots that only ever move cards are furniture. A line at the right moment —
@@ -368,6 +382,7 @@ private fun Plate(
         SeatPlate(
             name = seat.nickname,
             active = active,
+            pointed = pointed,
             marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
             size = sizes.avatar,
             onClick = tap?.let { { onMove(it) } },
@@ -390,7 +405,7 @@ private fun SeatCard(
     val stage = LocalStage.current
     val anchor = Anchor.Seat(seat.id, position)
 
-    if (anchor in stage.inFlight) {
+    if (anchor in stage.inFlight || stage.isPeeking(anchor)) {
         val w = if (turned) scale.height else scale.width
         val h = if (turned) scale.width else scale.height
         Box(modifier = Modifier.size(w, h).anchoredAt(stage, anchor))
@@ -443,6 +458,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
                         CardView.Visible(top),
                         sizes.theirs,
                         modifier = pile,
+                        state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
                         label = "discarded ${top.rank.serialName}",
                     )
                 } else {

@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -12,11 +14,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.RailFill
+import game.vinto.app.nowIso
+import game.vinto.app.theme.RailInk
+import game.vinto.app.theme.RailInkDim
 import game.vinto.client.LocalGame
+import game.vinto.client.toJson
 
 private val Pad = 12.dp
 
@@ -40,6 +48,8 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
 
     var helpOpen by remember { mutableStateOf(false) }
     var scoreOpen by remember(round) { mutableStateOf(false) }
+    var reported by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
 
     CardStage(scenes = session.scenes, sizes = TableSizes.forHeight(TableHeightGuess)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -53,11 +63,25 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
                 ),
                 onMove = act,
                 onHelp = { helpOpen = true },
+                // The whole game, in the format the replay harness already reads. A bug
+                // report for a card game is worth what it is reproducible for, and "the bots
+                // got stuck" is worth nothing — this is the seed, every action in order, and
+                // a hash after each one, so the exact deal can be played back and the first
+                // action that disagrees is the bug's address.
+                onReport = {
+                    val report = session.report(at = nowIso(), label = "reported from the table")
+                    clipboard.setText(AnnotatedString(report.toJson()))
+                    reported = true
+                },
                 modifier = Modifier.weight(1f),
             )
 
             if (holder.isOver) RoundOver(onSee = { scoreOpen = true })
         }
+    }
+
+    if (reported) {
+        ReportCopied(onDismiss = { reported = false })
     }
 
     if (helpOpen) {
@@ -80,6 +104,28 @@ fun GameScreen(game: LocalGame, onQuit: () -> Unit) {
             },
         )
     }
+}
+
+/** Says the report is on the clipboard, and where it can usefully go. */
+@Composable
+private fun ReportCopied(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = RailFill,
+        titleContentColor = RailInk,
+        textContentColor = RailInkDim,
+        title = { Text("Copied") },
+        text = {
+            Text(
+                "The whole game is on your clipboard — the deal it started from, every move " +
+                    "since, and a checksum after each one. Paste it into a bug report and it " +
+                    "can be replayed exactly, here or in the web app.",
+            )
+        },
+        confirmButton = {
+            GameButton(label = "Done", tone = ButtonTone.NEUTRAL, onClick = onDismiss)
+        },
+    )
 }
 
 /**

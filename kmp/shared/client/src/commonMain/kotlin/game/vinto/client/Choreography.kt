@@ -5,6 +5,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.actorId
 
 /**
@@ -39,11 +40,46 @@ sealed interface Beat {
      * @param card what to draw in flight, or null to draw a back. A card that arrives
      *   face-down flies face-down: showing a rank in mid-air and hiding it on landing tells
      *   the player something the game did not.
+     * @param spin a full turn on the way. Marks a card as somebody else's: a bot's draw and
+     *   yours are otherwise the same movement, and at a bot's speed the difference between
+     *   "I did that" and "that happened to me" is worth one rotation.
      */
-    data class Move(val from: Anchor, val to: Anchor, val card: Card? = null) : Beat
+    data class Move(
+        val from: Anchor,
+        val to: Anchor,
+        val card: Card? = null,
+        val spin: Boolean = false,
+    ) : Beat
 
-    /** A card turning over where it lies — a peek revealing it, or a round ending. */
-    data class Turn(val at: Anchor, val card: Card?) : Beat
+    /**
+     * A card being looked at.
+     *
+     * **Public.** Everyone sees *which* card was peeked — that is real information, and it is
+     * how you know a bot has just learned its own third card. Only the player entitled to it
+     * sees the face, which is what [card] being null means: somebody looked at that card, and
+     * you do not get to look with them.
+     *
+     * Drawn as a lift toward the middle of the table with a glow, rather than a flip in place,
+     * so that it reads at a glance across three other hands.
+     */
+    data class Peek(val at: Anchor, val card: Card? = null) : Beat
+
+    /**
+     * A card held up in the middle of the table while its action happens.
+     *
+     * The web app's two-stage "play action": the card leaves the hand, is shown large in the
+     * centre, and only then goes to the pile. Without the pause an action card is drawn and
+     * discarded in the same breath and nobody reads what it was.
+     */
+    data class Stage(val card: Card?) : Beat
+
+    /**
+     * The answer to a declaration: green for right, red for wrong.
+     *
+     * Declaring a rank is the one move in the game that is a gamble on your own memory, and
+     * the outcome is otherwise only visible as a penalty card appearing somewhere.
+     */
+    data class Verdict(val at: Anchor, val correct: Boolean) : Beat
 
     /** A hand flinching. Used for the penalty card a wrong guess or a wrong toss-in costs. */
     data class Flinch(val at: Anchor) : Beat
@@ -97,13 +133,16 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
 
     val main: Scene = when (action) {
         // The deck to the space in front of you. Face-up only for the player who drew it —
-        // everyone else is watching a back move.
+        // everyone else is watching a back move, and watching it turn over as it goes.
         is GameAction.DrawCard ->
-            listOf(Beat.Move(Anchor.Deck, Anchor.Pending, after.pendingCard().takeIf { mine }))
-
-        // Taking an action card off the pile, which everybody has already seen.
-        is GameAction.PlayDiscard ->
-            listOf(Beat.Move(Anchor.Discard, Anchor.Pending, before.discardPile.lastOrNull()))
+            listOf(
+                Beat.Move(
+                    from = Anchor.Deck,
+                    to = Anchor.Pending,
+                    card = after.pendingCard().takeIf { mine },
+                    spin = !mine,
+                ),
+            )
 
         is GameAction.DiscardCard ->
             listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardPile.lastOrNull()))
@@ -118,13 +157,23 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
             )
         }
 
-        // A peek does not move anything; it turns a card over where it lies, and only for the
-        // player doing the peeking.
-        is GameAction.SelectActionTarget -> turnScene(after, mine)
+        // Aiming an action. A peek is shown to the whole table; an Ace names a victim rather
+        // than a card, so there is nothing to lift and somebody to point at instead.
+        is GameAction.SelectActionTarget -> when (val payload = action.payload) {
+            is SelectActionTargetPayload.Ace -> listOf(
+                Beat.Attend(payload.targetPlayerId, Attention.PENALTY),
+                Beat.Say(payload.targetPlayerId, "Drawing…"),
+            )
+
+            is SelectActionTargetPayload.Positional -> peekScene(after, payload)
+        }
 
         // A played action ends with its card on the pile — but for a King or a Queen that is
         // several moves later, so it is driven by the pile growing rather than by the action.
-        is GameAction.UseCardAction,
+        // Held up in the middle before it goes anywhere, so the table can read it.
+        is GameAction.UseCardAction, is GameAction.PlayDiscard ->
+            listOf(Beat.Stage(before.pendingCard() ?: after.pendingCard()))
+
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,
         is GameAction.SkipJackSwap,
@@ -149,7 +198,28 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         else -> emptyList()
     }
 
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, penalty)
+    val verdict = verdictScene(action, penalty != null)
+
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty)
+}
+
+/**
+ * Whether a declaration was right, shown on the card it was about.
+ *
+ * Derived from whether a penalty followed rather than from comparing ranks: a wrong call costs
+ * a card and that is the only thing the rules do about it, so the penalty *is* the verdict.
+ * One check covers the swap declaration and the King, and would cover a third if one were
+ * added.
+ */
+private fun verdictScene(action: GameAction, penalised: Boolean): Scene? = when (action) {
+    is GameAction.SwapCard -> action.payload.declaredRank?.let {
+        listOf(Beat.Verdict(Anchor.Discard, correct = !penalised))
+    }
+
+    is GameAction.DeclareKingAction ->
+        listOf(Beat.Verdict(Anchor.Discard, correct = !penalised))
+
+    else -> null
 }
 
 /**
@@ -189,13 +259,25 @@ private fun reactionTo(action: GameAction, playerId: String): List<Beat> = when 
     else -> emptyList()
 }
 
-/** The card an action just revealed, turned over where it lies. */
-private fun turnScene(after: PlayerView, mine: Boolean): Scene {
-    if (!mine) return emptyList()
-    val target = after.pendingAction?.targets?.lastOrNull() ?: return emptyList()
-    val card = (target.card as? CardView.Visible)?.card
+/**
+ * The card an action was just aimed at, lifted for everyone to see.
+ *
+ * Aimed at the *payload's* target rather than the pending action's last entry, because the
+ * pending action is projected per seat and a watcher is not always given the list — but the
+ * action itself says what was aimed at, and that a card was looked at is public.
+ */
+private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Positional): Scene {
+    val at = Anchor.Seat(payload.targetPlayerId, payload.position)
 
-    return listOf(Beat.Turn(Anchor.Seat(target.playerId, target.position), card))
+    // The face comes from the seat, not from the pending action. A peek does not travel on the
+    // action — the engine records that the looker now *knows* the card, and the projection
+    // turns it face-up for whoever is entitled. Reading the target entry instead returns null
+    // even for your own peek, which is how this went out showing you nothing the first time.
+    val seen = after.players
+        .firstOrNull { it.id == payload.targetPlayerId }
+        ?.cards?.getOrNull(payload.position) as? CardView.Visible
+
+    return listOf(Beat.Peek(at, seen?.card))
 }
 
 private fun discardScene(before: PlayerView, after: PlayerView): Scene =

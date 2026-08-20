@@ -20,6 +20,8 @@ data class CardState(
     val turned: Boolean = false,
     /** Flinching, because a penalty card just landed in this hand. */
     val flinching: Boolean = false,
+    /** A declaration was answered on this card: true for a right call, false for a wrong one. */
+    val verdict: Boolean? = null,
 )
 
 /**

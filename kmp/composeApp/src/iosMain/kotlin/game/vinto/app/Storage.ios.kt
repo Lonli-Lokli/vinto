@@ -12,3 +12,8 @@ private class DefaultsVault : Vault {
     override fun write(key: String, value: String) = defaults.setObject(value, key)
     override fun erase(key: String) = defaults.removeObjectForKey(key)
 }
+
+actual fun nowIso(): String =
+    platform.Foundation.NSISO8601DateFormatter().stringFromDate(
+        platform.Foundation.NSDate(),
+    )

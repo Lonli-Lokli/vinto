@@ -36,3 +36,5 @@ private class PreferenceVault(
 }
 
 actual fun platformVault(): Vault = AndroidStorage.vault()
+
+actual fun nowIso(): String = java.time.Instant.now().toString()

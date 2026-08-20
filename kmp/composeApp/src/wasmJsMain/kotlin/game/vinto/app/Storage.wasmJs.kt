@@ -10,3 +10,5 @@ private class LocalStorageVault : Vault {
     override fun write(key: String, value: String) = localStorage.setItem(key, value)
     override fun erase(key: String) = localStorage.removeItem(key)
 }
+
+actual fun nowIso(): String = kotlin.js.Date().toISOString()

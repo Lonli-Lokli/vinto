@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -40,6 +41,15 @@ class ChoreographyTest {
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 0)))
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(session.playerId)))
+        return session
+    }
+
+    /** Deals [rank] to the player and leaves it pending, having played its action. */
+    private suspend fun aiming(rank: Rank, seed: Long = 8L): LocalGameSession {
+        val session = started(seed)
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(rank)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.UseCardAction(PlayerIdPayload(session.playerId)))
         return session
     }
 
@@ -103,9 +113,9 @@ class ChoreographyTest {
         assertNull(draws.last().card, "and what they drew is not shown")
     }
 
-    /** A peek turns a card over where it lies. Nothing travels. */
+    /** A peek lifts a card where it lies. Nothing travels. */
     @Test
-    fun aPeekTurnsACardOverRatherThanMovingIt() = runTest {
+    fun aPeekLiftsACardRatherThanMovingIt() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.SEVEN)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -116,10 +126,108 @@ class ChoreographyTest {
         session.dispatch((session.table().taps.getValue(target) as Move.Send).action)
         runCurrent()
 
-        val turns = scenes.flatten().flatten().filterIsInstance<Beat.Turn>()
-        assertEquals(1, turns.size, "one card turned over")
-        assertEquals(Anchor.Seat(target.playerId, target.position), turns.single().at)
-        assertTrue(scenes.moves().isEmpty(), "and nothing moved")
+        val peeks = scenes.flatten().flatten().filterIsInstance<Beat.Peek>()
+        assertEquals(1, peeks.size, "one card looked at")
+        assertEquals(Anchor.Seat(target.playerId, target.position), peeks.single().at)
+        assertTrue(peeks.single().card != null, "and you are the one looking, so you see it")
+        assertTrue(scenes.moves().isEmpty(), "nothing moved")
+    }
+
+    /**
+     * Somebody else's peek is public — which card, not what it was.
+     *
+     * This is real information rather than decoration: it is how you know a bot has just
+     * learned one of its own cards, or read one of yours. Before this, another player's peek
+     * was invisible and the only clue was a card changing hands two turns later.
+     */
+    @Test
+    fun anotherPlayersPeekIsSeenButNotRead() = runTest {
+        val session = started()
+        val scenes = scenesOf(session)
+
+        // Hand the turn to the bots and let them play until one peeks at something.
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(session.playerId)))
+        runCurrent()
+
+        val theirs = scenes.flatten().flatten()
+            .filterIsInstance<Beat.Peek>()
+            .filter { (it.at as Anchor.Seat).playerId != session.playerId }
+
+        if (theirs.isEmpty()) return@runTest // no bot happened to peek in this deal
+
+        assertTrue(
+            theirs.all { it.card == null },
+            "you see that they looked, never at what: ${theirs.map { it.card?.rank }}",
+        )
+    }
+
+    /** An Ace has no card to lift, so it points at the player instead. */
+    @Test
+    fun anAcePointsAtWhoeverHasToDraw() = runTest {
+        val session = aiming(Rank.ACE)
+        val scenes = scenesOf(session)
+
+        val victim = session.table().seatTaps.keys.first()
+        session.dispatch((session.table().seatTaps.getValue(victim) as Move.Send).action)
+        runCurrent()
+
+        val beats = scenes.flatten().flatten()
+        assertTrue(
+            beats.any { it is Beat.Attend && it.playerId == victim },
+            "the table points at them: $beats",
+        )
+    }
+
+    /** Playing an action card holds it up before it goes down. */
+    @Test
+    fun anActionCardIsHeldUpBeforeItIsPlayed() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val scenes = scenesOf(session)
+        session.dispatch(GameAction.UseCardAction(PlayerIdPayload(session.playerId)))
+        runCurrent()
+
+        val staged = scenes.flatten().flatten().filterIsInstance<Beat.Stage>()
+        assertEquals(Rank.NINE, staged.singleOrNull()?.card?.rank, "the 9 is shown: $staged")
+    }
+
+    /** A card somebody else drew turns over on the way, so it reads as theirs. */
+    @Test
+    fun aBotsDrawSpinsAndYoursDoesNot() = runTest {
+        val session = started()
+        val scenes = scenesOf(session)
+
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(session.playerId)))
+        runCurrent()
+
+        val draws = scenes.moves().filter { it.from == Anchor.Deck && it.to == Anchor.Pending }
+        assertFalse(draws.first().spin, "your own draw does not spin")
+        assertTrue(draws.drop(1).all { it.spin }, "everybody else's does")
+    }
+
+    /** A declaration is answered, in green or in red. */
+    @Test
+    fun aDeclarationGetsAVerdict() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val scenes = scenesOf(session)
+        session.dispatch(
+            GameAction.SwapCard(game.vinto.shapes.SwapCardPayload(session.playerId, 4, Rank.KING)),
+        )
+        runCurrent()
+
+        val verdicts = scenes.flatten().flatten().filterIsInstance<Beat.Verdict>()
+        assertEquals(1, verdicts.size, "the call was answered: $verdicts")
     }
 
     /**

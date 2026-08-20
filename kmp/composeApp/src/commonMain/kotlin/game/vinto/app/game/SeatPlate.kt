@@ -31,7 +31,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
+import androidx.compose.ui.graphics.Color
 import game.vinto.app.theme.onFelt
+import game.vinto.client.Attention
 import game.vinto.app.art.avatar_donatello
 import game.vinto.app.art.avatar_michelangelo
 import game.vinto.app.art.avatar_raphael
@@ -51,6 +53,19 @@ private const val GLOW_HIGH = 1f
 private const val GLOW_MS = 1200
 private const val QUIET = 0.45f
 
+/** What the table is saying about a seat, in one colour. */
+private fun Attention.colour(): Color = when (this) {
+    Attention.TURN -> TurnRing
+    Attention.VINTO -> VintoRing
+    Attention.PENALTY -> PenaltyRing
+    Attention.COALITION -> CoalitionRing
+}
+
+private val TurnRing = Color(0xFF6FD3A6)
+private val VintoRing = Color(0xFFE0A32A)
+private val PenaltyRing = Color(0xFFEF4444)
+private val CoalitionRing = Color(0xFF5A94F0)
+
 /**
  * A player: portrait and name in one pill, as on the web table.
  *
@@ -68,6 +83,7 @@ fun SeatPlate(
     active: Boolean,
     modifier: Modifier = Modifier,
     marks: String? = null,
+    pointed: Attention? = null,
     size: Dp = 40.dp,
     onClick: (() -> Unit)? = null,
 ) {
@@ -86,6 +102,9 @@ fun SeatPlate(
 
     val edge by animateColorAsState(
         when {
+            // Being pointed at wins over everything: it is the table saying *this* seat, now
+            // — the one drawing a penalty, the one who called Vinto, the one leading.
+            pointed != null -> pointed.colour()
             onClick != null -> scheme.secondary
             active -> scheme.secondary.copy(alpha = glow)
             else -> scheme.onFelt().copy(alpha = QUIET)

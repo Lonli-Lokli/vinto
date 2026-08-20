@@ -61,6 +61,8 @@ private const val QUARTER_TURN = 90f
 private const val CAMERA = 14f
 private const val PULSE_LOW = 0.45f
 private const val PULSE_HIGH = 1f
+private val RightCall = Color(0xFF22C55E)
+private val WrongCall = Color(0xFFEF4444)
 private const val FLINCH_MS = 420
 private const val SHAKE_PX = 3f
 
@@ -168,6 +170,9 @@ fun CardFace(
  */
 @Composable
 private fun CardState.ringColour(scheme: androidx.compose.material3.ColorScheme): Color {
+    // A declaration answered: green for a right call, red for a wrong one. Loudest, because
+    // it is the one moment in the game that is a gamble on your own memory.
+    verdict?.let { return if (it) RightCall else WrongCall }
     if (chosen) return scheme.secondary
     if (!tappable) return Color.Transparent
 
@@ -184,7 +189,7 @@ private fun CardState.ringColour(scheme: androidx.compose.material3.ColorScheme)
     return scheme.primary.copy(alpha = strength)
 }
 
-private fun CardState.ringWidth() = if (chosen || tappable) Ring else Hairline
+private fun CardState.ringWidth() = if (verdict != null || chosen || tappable) Ring else Hairline
 
 /** Which picture a card shows. A hidden one always shows the back, and knows nothing else. */
 private fun CardView.art(): DrawableResource = when (this) {
