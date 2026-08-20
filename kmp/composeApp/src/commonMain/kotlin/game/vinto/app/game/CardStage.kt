@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.snapshotFlow
@@ -176,6 +177,17 @@ class Stage {
     internal fun boundsOf(id: String): Rect? = bounds[id]
 
     /**
+     * Forgets where something was, because it is no longer anywhere.
+     *
+     * `onGloballyPositioned` reports a position and never reports its absence, so a button
+     * that has left the rail leaves its rectangle behind — and the coach goes on pointing at
+     * a place where nothing is. Composables that report themselves say so on the way out.
+     */
+    fun forget(id: String) {
+        bounds.remove(id)
+    }
+
+    /**
      * Places whose card is currently in the air.
      *
      * The table draws a gap at these, because the card is being drawn by the overlay instead.
@@ -236,8 +248,13 @@ fun Modifier.anchoredAt(stage: Stage, anchor: Anchor): Modifier =
  * box of recent moves. None of them is a place a card can be, which is why they are not
  * [Anchor]s, and all of them are things a player has to be shown once.
  */
-fun Modifier.markedAs(stage: Stage, id: String): Modifier =
-    onGloballyPositioned { stage.mark(id, it) }
+@Composable
+fun Modifier.markedAs(stage: Stage, id: String): Modifier {
+    // The pair matters: one half says where this is, the other says when it stopped being
+    // anywhere. Without the second, the pointer keeps aiming at the ghost of a button.
+    DisposableEffect(stage, id) { onDispose { stage.forget(id) } }
+    return onGloballyPositioned { stage.mark(id, it) }
+}
 
 /** The name a place on the table goes by, so anchors and furniture share one registry. */
 fun Anchor.key(): String = when (this) {

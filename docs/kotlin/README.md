@@ -673,6 +673,15 @@ The design came out of a session with the `fable` model against the repo (`VINTO
   other colour on this table already means something. It points down from above by default —
   pointing up from below sits it on the next rank chip in the grid, naming the wrong card — and
   from inside the left end of a full-width button, where it cannot cover the button below.
+- **The deck first, card by card.** Before the table is toured and before a card is dealt with,
+  the lesson holds up every rank in the order they get harder: the plain 2–6, the two that look
+  at one of yours, the two that look at one of theirs, then the three that nobody works out by
+  watching — the Jack that swaps blind, the Queen that looks first, and the King. The King gets
+  two beats, because it is the one that needs an example: a correct declaration **takes that
+  card out of whichever hand it was in**, so naming your own 10 drops ten points off your
+  total, and naming an opponent's Joker takes their minus one away instead — and if what you
+  named has an action, you are the one who plays it. That is the answer to "why would I ever
+  point at somebody else's card", and it is not derivable from the rules text.
 - **Cards explained as they are met, with the card.** The first time a rank becomes visible,
   the coach gives its name, value and action in `CARD_CONFIGS`' own words — beside the actual
   picture, dealt from the same art the table uses. The help sheet's gallery does the same, as
@@ -698,6 +707,12 @@ the rest of the round, so a bot tossing a card it had not read would be demonstr
 The coach also answers, once and without reproach, the first time somebody presses a button
 other than the one being pointed at. That press is a player quietly testing whether this is a
 real game or a rail, and it deserves an answer.
+
+Three things learned by tapping through it on a phone, all of them invisible in code review:
+the coach's box is a **fixed** height while it talks, so "Go on" does not move under a thumb
+that has twelve beats to press; the cards sit directly under the title rather than after the
+words, so a long paragraph cannot push them below the fold; and `**markdown**` in the copy
+reaches the player as literal asterisks, because Compose's `Text` is not a renderer.
 
 Two things are deliberately not free: the lesson runs at no less than **calm** pace whatever
 the setting says, and **Call Vinto is hidden until a bot calls it** — the one tap that ends the

@@ -54,11 +54,11 @@ fun Pointer(stage: Stage, target: Target?) {
     // written under a card — "DRAW", "DISCARD", a name.
     val clearance = with(density) { Clearance.toPx() }
 
-    // A wide thing is a button in the rail, and the rail's buttons are stacked: an arrow
-    // pointing up at one from below sits on top of the next one down, which is exactly the
-    // wrong thing for a hand whose only job is to say *this* one. So wide targets are pointed
-    // at from inside their own left end instead, where nothing else can be.
-    val wide = rect.width > stage.size.width * WIDE
+    // A wide *button* is pointed at from inside its own left end, because the rail's buttons
+    // are stacked and an arrow below one sits on top of the next. Everything else keeps the
+    // arrow outside it: the box of recent moves is also full width, and an arrow inside that
+    // one lands squarely on the words it is telling the player to read.
+    val wide = target is Target.Button && rect.width > stage.size.width * WIDE
 
     // From above, pointing down, unless there is no room up there. Below looks equally good
     // until the target is a rank chip in a grid, where the hand then sits squarely on the chip

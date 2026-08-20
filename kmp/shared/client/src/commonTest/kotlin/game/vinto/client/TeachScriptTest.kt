@@ -30,6 +30,25 @@ class TeachScriptTest {
         return lessonFor(view, tableFor(view), taught)
     }
 
+    /**
+     * Acknowledges the talk beats, as a player tapping "Go on" would, and stops either when
+     * the lesson becomes something to *do* or when it reaches [stopAt].
+     *
+     * Written as a walk rather than a set of ids on purpose: the point of these cases is what
+     * the coach says at a given position, and a test that had to be told the running order
+     * would break every time a beat was added — which is exactly what happened when the card
+     * tour arrived and eight of them were.
+     */
+    private fun talkedThrough(session: LocalGameSession, stopAt: String? = null): Taught {
+        var taught = Taught()
+        repeat(TALK_LIMIT) {
+            val lesson = teach(session, taught) ?: return taught
+            if (lesson.talkId == null || lesson.talkId == stopAt) return taught
+            taught = taught.heard(lesson)
+        }
+        return taught
+    }
+
     @Test
     fun itIntroducesTheTableBeforeAnythingElse() = runTest {
         val session = teachingSession()
@@ -47,13 +66,7 @@ class TeachScriptTest {
     @Test
     fun theTourEndsAndTheGameBegins() = runTest {
         val session = teachingSession()
-        var taught = Taught()
-
-        repeat(TOUR_LIMIT) {
-            val lesson = teach(session, taught) ?: return@repeat
-            if (lesson.talkId == null) return@repeat
-            taught = taught.heard(lesson)
-        }
+        val taught = talkedThrough(session)
 
         val lesson = assertNotNull(teach(session, taught))
         assertEquals(null, lesson.talkId, "after the tour the lesson is something to do")
@@ -66,12 +79,7 @@ class TeachScriptTest {
     fun meetingACardExplainsIt() = runTest {
         val session = teachingSession()
         val me = session.playerId
-        var taught = Taught()
-        repeat(TOUR_LIMIT) {
-            val lesson = teach(session, taught) ?: return@repeat
-            if (lesson.talkId == null) return@repeat
-            taught = taught.heard(lesson)
-        }
+        val taught = talkedThrough(session)
 
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
 
@@ -92,8 +100,7 @@ class TeachScriptTest {
         val session = playToTheCall()
         val caller = assertNotNull(session.state.vintoCallerId)
 
-        val everythingSoFar = Taught(talked = setOf("welcome", "tour", "seats", "help"))
-        val lesson = assertNotNull(teach(session, everythingSoFar))
+        val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "vinto")))
 
         assertEquals(Chapter.VINTO, lesson.chapter)
         assertEquals("vinto", lesson.talkId, "it stops the table to say it")
@@ -105,9 +112,7 @@ class TeachScriptTest {
     @Test
     fun theCoalitionIsExplainedAfterTheCall() = runTest {
         val session = playToTheCall()
-        val taught = Taught(talked = setOf("welcome", "tour", "seats", "help", "vinto"))
-
-        val lesson = assertNotNull(teach(session, taught))
+        val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "coalition")))
         assertEquals("coalition", lesson.talkId)
         assertTrue(
             lesson.body.contains("best single hand") && lesson.body.contains("caller's cards"),
@@ -121,8 +126,7 @@ class TeachScriptTest {
         val session = playToTheEnd()
         assertEquals(GamePhase.SCORING, session.state.phase)
 
-        val taught = Taught(talked = setOf("welcome", "tour", "seats", "help", "vinto", "coalition"))
-        val lesson = assertNotNull(teach(session, taught))
+        val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "scoring")))
 
         assertEquals(Chapter.SCORE, lesson.chapter)
         assertTrue(lesson.body.contains("+3"), "the numbers, as the rules give them")
@@ -160,7 +164,7 @@ class TeachScriptTest {
     }
 
     private companion object {
-        const val TOUR_LIMIT = 8
+        const val TALK_LIMIT = 40
         const val TURNS = 12
     }
 }

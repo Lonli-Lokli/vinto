@@ -65,6 +65,13 @@ data class Lesson(
      * speed of a card game is not explained.
      */
     val talkId: String? = null,
+    /**
+     * Cards to hold up while this is being said.
+     *
+     * A rank explained in words is a rank the player then has to match against a picture on
+     * the felt. The lesson shows the cards it is talking about.
+     */
+    val cards: List<Rank> = emptyList(),
     /** A card the player is meeting for the first time, said in the game's own words. */
     val note: String? = null,
     val noteRank: Rank? = null,
@@ -262,6 +269,17 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
  * Each waits for a tap, and nothing on the table moves while one is up — which is the only
  * way to explain a card game to somebody who does not yet know what any of it means.
  */
+/**
+ * The things to be read rather than done, in order.
+ *
+ * Each waits for a tap, and nothing on the table moves while one is up — which is the only
+ * way to explain a card game to somebody who does not yet know what any of it means.
+ *
+ * Three passes, in the order a person needs them: what the game is *for*, what the cards *do*,
+ * and where everything *is*. The cards come before the table because a player looking at four
+ * hands of face-down cards has no questions about the deck yet — they have one question, and
+ * it is "what am I holding".
+ */
 private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
     "welcome" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
@@ -271,6 +289,101 @@ private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "welcome",
     )
 
+    else -> cardTour(taught) ?: tableTour(view, taught) ?: endgameTalk(view, taught)
+}
+
+/**
+ * Every card in the deck, held up, in the order they get harder.
+ *
+ * Plain cards, then the two that look at your own, then the two that look at somebody else's,
+ * then the three that are genuinely difficult — the Jack that gambles, the Queen that does
+ * not, and the King, which is the one nobody works out by watching.
+ */
+private fun cardTour(taught: Taught): Lesson? = when {
+    "cards_numbers" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "2 to 6 — plain cards",
+        body = "Worth exactly what they say and nothing else. Small ones are what a winning " +
+            "hand is made of.",
+        cards = listOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX),
+        talkId = "cards_numbers",
+    )
+
+    "cards_own" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "7 and 8 — look at one of yours",
+        body = "Worth 7 and 8, which is a lot to be holding. What you get for it is a look at " +
+            "one of your own cards — and this game is memory, so a card you have seen is " +
+            "worth more to you than a card you have not.",
+        cards = listOf(Rank.SEVEN, Rank.EIGHT),
+        talkId = "cards_own",
+    )
+
+    "cards_theirs" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "9 and 10 — look at one of theirs",
+        body = "The same look, pointed the other way: one card in somebody else's hand. " +
+            "Remember where it was. Two turns later it is what tells you whether to call.",
+        cards = listOf(Rank.NINE, Rank.TEN),
+        talkId = "cards_theirs",
+    )
+
+    "cards_jack" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "Jack — swap two cards, blind",
+        body = "Worth 10. It swaps any two cards on the table, from two different players, " +
+            "and nobody looks at either of them first. Good for pushing a card you know is bad into " +
+            "somebody else's hand; a gamble with anything you know is good.",
+        cards = listOf(Rank.JACK),
+        talkId = "cards_jack",
+    )
+
+    "cards_queen" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "Queen — look at two, then decide",
+        body = "Also worth 10, and the strongest card in the game: look at any two cards from " +
+            "two different players, and only then choose whether to swap them. The Jack " +
+            "gambles. The Queen knows.",
+        cards = listOf(Rank.QUEEN),
+        talkId = "cards_queen",
+    )
+
+    "cards_king" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "King — worth nothing, and does anything",
+        body = "Worth nothing at all, which alone makes it a card to keep. Its action points at any " +
+            "card on the table — yours or anybody's — and names it. Right, and that card is " +
+            "gone from the hand it was in and you play its action. Wrong, and everybody sees " +
+            "what it really was and you take a penalty card.",
+        cards = listOf(Rank.KING),
+        talkId = "cards_king",
+    )
+
+    "cards_king_why" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "Why point at somebody else's card?",
+        body = "Because the card you name is taken out of that hand. Naming your own 10 takes ten " +
+            "points off your total. But if you have seen Don's Joker, naming that takes his " +
+            "minus one away and leaves him a card worse off — and if what you named has an " +
+            "action, you are the one who plays it.",
+        cards = listOf(Rank.KING, Rank.JOKER),
+        talkId = "cards_king_why",
+    )
+
+    "cards_odd" !in taught.talked -> Lesson(
+        chapter = Chapter.ACTIONS,
+        title = "Ace and Joker",
+        body = "An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is " +
+            "worth minus one — the best card in the deck, and the one never to give away.",
+        cards = listOf(Rank.ACE, Rank.JOKER),
+        talkId = "cards_odd",
+    )
+
+    else -> null
+}
+
+/** Where everything is, once the player knows what they are looking at. */
+private fun tableTour(view: PlayerView, taught: Taught): Lesson? = when {
     "tour" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
         title = "The deck and the pile",
@@ -298,13 +411,18 @@ private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "help",
     )
 
+    else -> null
+}
+
+/** The end of the round, which is a different game from the one that came before it. */
+private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
     view.vintoCallerId != null && "vinto" !in taught.talked -> vintoTalk(view)
 
     view.vintoCallerId != null && "coalition" !in taught.talked -> Lesson(
         chapter = Chapter.VINTO,
         title = "Everybody else plays as one",
         body = "You, and the two who did not call, are the coalition: you each take exactly " +
-            "one more turn, and only your **best single hand** is compared with the caller's. " +
+            "one more turn, and only your best single hand is compared with the caller's. " +
             "Nobody may touch the caller's cards — the engine will not let you.",
         point = Target.Seat(view.vintoCallerId!!),
         talkId = "coalition",

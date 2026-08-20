@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,6 +47,7 @@ import game.vinto.client.chapterOf
 import game.vinto.client.lessonFor
 import game.vinto.client.teachingSession
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Rank
 import kotlinx.coroutines.CoroutineDispatcher
 import game.vinto.app.art.Res
 import game.vinto.app.art.teach_done
@@ -60,11 +62,24 @@ private val Pad = 12.dp
 private val Tight = 4.dp
 private val DotSize = 8.dp
 
-/** As much of the rail as the coach may take before it starts scrolling. */
-private val CoachMax = 190.dp
+/** As much of the rail as the coach may take, mid-play, before it starts scrolling. */
+private val CoachMax = 210.dp
+
+/**
+ * And how much while it is talking.
+ *
+ * More, because nothing is happening on the table during a talk beat — it is being held for
+ * exactly this — and a paragraph the player has to discover is scrollable is a paragraph half
+ * of them will not read. Fixed rather than merely allowed, so "Go on" does not move between
+ * one beat and the next.
+ */
+private val TalkMax = 290.dp
 
 /** Small enough to sit in a line of text, large enough to recognise on the felt. */
 private val NoteCard = 34.dp
+
+/** Large enough to read the picture, small enough that five fit in a row. */
+private val TourCard = 46.dp
 
 /**
  * How to play, by playing.
@@ -221,32 +236,44 @@ private fun Coach(
         else -> lesson.title
     }
 
+    val talking = lesson?.talkId != null
+
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            // Bounded, and scrolling inside if it has to. The rail is shared with the game's
-            // own controls, and a King's fourteen rank chips plus a three-line prompt plus a
-            // coach is more than a phone has — something has to give, and it should be the
-            // lesson's commentary rather than the table it is about.
-            .heightIn(max = CoachMax)
-            .verticalScroll(rememberScrollState())
-            .animateContentSize(),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Pad),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                // Bounded, and scrolling inside if it has to. The rail is shared with the game's
+                // own controls, and a King's fourteen rank chips plus a three-line prompt plus a
+                // coach is more than a phone has — something has to give, and it should be the
+                // lesson's commentary rather than the table it is about.
+                //
+                // **Fixed** while the coach is talking, rather than merely bounded. Twelve beats
+                // are tapped through one after another, and a "Go on" that sits at a different
+                // height each time is one a thumb has to hunt for twelve times.
+                .then(if (talking) Modifier.height(TalkMax) else Modifier.heightIn(max = CoachMax))
+                .verticalScroll(rememberScrollState())
+                .animateContentSize(),
+            verticalArrangement = Arrangement.spacedBy(Tight),
         ) {
-            Text(
-                text = title ?: stringResource(Res.string.teach_heading),
-                fontSize = TitleSize,
-                fontWeight = FontWeight.Bold,
-                color = CoachInk,
-                modifier = Modifier.weight(1f),
-            )
-            Progress(taught.chapters)
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Pad),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title ?: stringResource(Res.string.teach_heading),
+                    fontSize = TitleSize,
+                    fontWeight = FontWeight.Bold,
+                    color = CoachInk,
+                    modifier = Modifier.weight(1f),
+                )
+                Progress(taught.chapters)
+            }
+
+            HeldUpCards(lesson?.cards.orEmpty())
 
         if (strayed) {
             // First, not last: the coach is a bounded box that scrolls, and an answer to
@@ -263,6 +290,7 @@ private fun Coach(
             fontSize = DetailSize,
             color = RailInkDim,
         )
+
 
         lesson?.note?.let { note ->
             // With the card beside it. "Queen — worth 10" is a fact about a picture the player
@@ -288,6 +316,8 @@ private fun Coach(
             Text(text = gloss, fontSize = DetailSize, color = RailInkDim)
         }
 
+        }
+
         when {
             finished -> GameButton(
                 label = stringResource(Res.string.teach_done),
@@ -307,6 +337,24 @@ private fun Coach(
         }
 
         HorizontalDivider(color = RailBorder, modifier = Modifier.padding(top = Tight))
+    }
+}
+
+/**
+ * The cards a lesson is talking about, held up.
+ *
+ * A rank explained in words is a rank the player then has to match against a picture on the
+ * felt. These are the same drawables the table deals from, so there is nothing to match.
+ */
+@Composable
+private fun HeldUpCards(cards: List<Rank>) {
+    if (cards.isEmpty()) return
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = Tight),
+        horizontalArrangement = Arrangement.spacedBy(Tight * 2),
+    ) {
+        cards.forEach { rank -> CardPicture(rank = rank, width = TourCard) }
     }
 }
 
