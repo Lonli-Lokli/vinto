@@ -32,6 +32,31 @@ import game.vinto.app.theme.RailInkDim
 import game.vinto.shapes.Rank
 import game.vinto.shapes.CardConfig
 import game.vinto.shapes.getCardConfig
+import game.vinto.app.art.Res
+import game.vinto.app.art.help_card_worth
+import game.vinto.app.art.help_closing
+import game.vinto.app.art.help_group_lookers
+import game.vinto.app.art.help_group_movers
+import game.vinto.app.art.help_group_numbers
+import game.vinto.app.art.help_group_odd
+import game.vinto.app.art.help_no_action
+import game.vinto.app.art.help_right_now
+import game.vinto.app.art.help_signals
+import game.vinto.app.art.help_the_cards
+import game.vinto.app.art.signal_coalition
+import game.vinto.app.art.signal_coalition_meaning
+import game.vinto.app.art.signal_peek
+import game.vinto.app.art.signal_peek_meaning
+import game.vinto.app.art.signal_penalty
+import game.vinto.app.art.signal_penalty_meaning
+import game.vinto.app.art.signal_tappable
+import game.vinto.app.art.signal_tappable_meaning
+import game.vinto.app.art.signal_turn
+import game.vinto.app.art.signal_turn_meaning
+import game.vinto.app.art.signal_vinto
+import game.vinto.app.art.signal_vinto_meaning
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 16.dp
 private val Gap = 10.dp
@@ -75,7 +100,11 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(modifier = Modifier.padding(Gap)) {
-                            Text("Right now", fontWeight = FontWeight.Bold, fontSize = TitleSize)
+                            Text(
+                                text = stringResource(Res.string.help_right_now),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = TitleSize,
+                            )
                             Text(it, fontSize = BodySize, color = RailInkDim)
                         }
                     }
@@ -84,7 +113,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
 
             item {
                 Text(
-                    "The cards",
+                    stringResource(Res.string.help_the_cards),
                     fontWeight = FontWeight.Bold,
                     fontSize = TitleSize,
                     modifier = Modifier.padding(top = Gap),
@@ -97,7 +126,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
             GROUPS.forEach { group ->
                 item {
                     Text(
-                        group.title,
+                        stringResource(group.title),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = BodySize,
                         color = RailInkDim,
@@ -109,7 +138,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
 
             item {
                 Text(
-                    "What the table is telling you",
+                    stringResource(Res.string.help_signals),
                     fontWeight = FontWeight.Bold,
                     fontSize = TitleSize,
                     modifier = Modifier.padding(top = Gap),
@@ -120,9 +149,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
 
             item {
                 Text(
-                    "Every card in a hand counts against you, so the lowest total wins. " +
-                        "Call Vinto when you think yours is lowest — everybody else then plays " +
-                        "one more turn together, and only their best hand is compared to yours.",
+                    stringResource(Res.string.help_closing),
                     fontSize = BodySize,
                     color = RailInkDim,
                     modifier = Modifier.padding(vertical = Pad),
@@ -133,17 +160,19 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
 }
 
 /** The four kinds of card there are, in the order a player meets them. */
-private data class Group(val title: String, val ranks: List<Rank>)
+private data class Group(val title: StringResource, val ranks: List<Rank>)
 
 private val GROUPS = listOf(
-    Group("Numbers — worth what they say, and nothing else", listOf(
-        Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX,
-    )),
-    Group("Lookers — buy you a card you can remember", listOf(
-        Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN,
-    )),
-    Group("Movers — put a card somewhere else", listOf(Rank.JACK, Rank.QUEEN)),
-    Group("The odd ones", listOf(Rank.KING, Rank.ACE, Rank.JOKER)),
+    Group(
+        Res.string.help_group_numbers,
+        listOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX),
+    ),
+    Group(
+        Res.string.help_group_lookers,
+        listOf(Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN),
+    ),
+    Group(Res.string.help_group_movers, listOf(Rank.JACK, Rank.QUEEN)),
+    Group(Res.string.help_group_odd, listOf(Rank.KING, Rank.ACE, Rank.JOKER)),
 )
 
 /**
@@ -158,44 +187,19 @@ private val GROUPS = listOf(
  * The colours here are the ones the table actually draws (`SeatPlate.kt`, `CardFace.kt`); if
  * one changes there it must change here, which is the price of explaining anything.
  */
-private data class Signal(val swatch: Color, val name: String, val meaning: String)
+private data class Signal(
+    val swatch: Color,
+    val name: StringResource,
+    val meaning: StringResource,
+)
 
 private val SIGNALS = listOf(
-    Signal(
-        swatch = Color(0xFF6FD3A6),
-        name = "A green ring on a seat",
-        meaning = "Whose turn it is. It flashes as the turn arrives, because three bots can " +
-            "take theirs between one tap and the next.",
-    ),
-    Signal(
-        swatch = Color(0xFFE0A32A),
-        name = "A gold ring",
-        meaning = "That player has called Vinto. Nobody may touch their cards for the rest " +
-            "of the round.",
-    ),
-    Signal(
-        swatch = Color(0xFFE0674A),
-        name = "A red ring, and a hand that flinches",
-        meaning = "A penalty card just landed there — a wrong guess, or a wrong toss-in.",
-    ),
-    Signal(
-        swatch = Color(0xFF8AB4F8),
-        name = "A blue ring",
-        meaning = "The coalition: everybody except the Vinto caller, playing their last turn " +
-            "together against that one hand.",
-    ),
-    Signal(
-        swatch = Color(0xFFF2F5F0),
-        name = "A card that breathes",
-        meaning = "It can be touched right now. If nothing breathes, the table is waiting on " +
-            "somebody else.",
-    ),
-    Signal(
-        swatch = Color(0xFFF2C14E),
-        name = "A card that lifts towards the middle",
-        meaning = "Somebody is looking at it. Everyone sees *which* card was looked at — only " +
-            "the player entitled to it sees the face.",
-    ),
+    Signal(Color(0xFF6FD3A6), Res.string.signal_turn, Res.string.signal_turn_meaning),
+    Signal(Color(0xFFE0A32A), Res.string.signal_vinto, Res.string.signal_vinto_meaning),
+    Signal(Color(0xFFE0674A), Res.string.signal_penalty, Res.string.signal_penalty_meaning),
+    Signal(Color(0xFF8AB4F8), Res.string.signal_coalition, Res.string.signal_coalition_meaning),
+    Signal(Color(0xFFF2F5F0), Res.string.signal_tappable, Res.string.signal_tappable_meaning),
+    Signal(Color(0xFFF2C14E), Res.string.signal_peek, Res.string.signal_peek_meaning),
 )
 
 @Composable
@@ -214,8 +218,12 @@ private fun SignalRow(signal: Signal) {
         )
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(signal.name, fontWeight = FontWeight.SemiBold, fontSize = BodySize)
-            Text(signal.meaning, fontSize = BodySize, color = RailInkDim)
+            Text(
+                text = stringResource(signal.name),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = BodySize,
+            )
+            Text(stringResource(signal.meaning), fontSize = BodySize, color = RailInkDim)
         }
     }
 }
@@ -234,12 +242,12 @@ private fun RankRow(config: CardConfig) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                "${config.name} — worth ${config.value}",
+                stringResource(Res.string.help_card_worth, config.name, config.value),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = BodySize,
             )
             Text(
-                text = config.longDescription.ifEmpty { "No action." },
+                text = config.longDescription.ifEmpty { stringResource(Res.string.help_no_action) },
                 fontSize = BodySize,
                 color = RailInkDim,
             )

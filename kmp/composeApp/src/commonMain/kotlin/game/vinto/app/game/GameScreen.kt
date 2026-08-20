@@ -28,6 +28,12 @@ import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.toJson
 import game.vinto.shapes.GamePhase
+import game.vinto.app.art.Res
+import game.vinto.app.art.report_body
+import game.vinto.app.art.report_dismiss
+import game.vinto.app.art.report_title
+import game.vinto.app.art.table_see_score
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
 
@@ -135,16 +141,14 @@ private fun ReportCopied(onDismiss: () -> Unit) {
         containerColor = RailFill,
         titleContentColor = RailInk,
         textContentColor = RailInkDim,
-        title = { Text("Copied") },
-        text = {
-            Text(
-                "The whole game is on your clipboard — the deal it started from, every move " +
-                    "since, and a checksum after each one. Paste it into a bug report and it " +
-                    "can be replayed exactly, here or in the web app.",
-            )
-        },
+        title = { Text(stringResource(Res.string.report_title)) },
+        text = { Text(stringResource(Res.string.report_body)) },
         confirmButton = {
-            GameButton(label = "Done", tone = ButtonTone.NEUTRAL, onClick = onDismiss)
+            GameButton(
+                label = stringResource(Res.string.report_dismiss),
+                tone = ButtonTone.NEUTRAL,
+                onClick = onDismiss,
+            )
         },
     )
 }
@@ -161,7 +165,7 @@ private fun RoundOver(onSee: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth(), color = RailFill) {
         Column(modifier = Modifier.padding(Pad)) {
             GameButton(
-                label = "See the score",
+                label = stringResource(Res.string.table_see_score),
                 tone = ButtonTone.PLAY,
                 onClick = onSee,
                 modifier = Modifier.fillMaxWidth(),

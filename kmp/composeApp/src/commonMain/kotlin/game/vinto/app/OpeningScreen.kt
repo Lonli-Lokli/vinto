@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.RailInk
 import game.vinto.app.theme.RailInkDim
 import game.vinto.app.theme.feltGradient
+import game.vinto.app.art.Res
+import game.vinto.app.art.app_name
+import game.vinto.app.art.opening_shuffling
+import org.jetbrains.compose.resources.stringResource
 
 private const val BOB_MS = 900
 private const val BOB_PX = -10f
@@ -65,8 +69,17 @@ fun OpeningScreen() {
                 color = RailInk,
                 modifier = Modifier.graphicsLayer { translationY = lift },
             )
-            Text("VINTO", fontSize = TitleSize, fontWeight = FontWeight.Black, color = RailInk)
-            Text("Shuffling…", fontSize = BodySize, color = RailInkDim)
+            Text(
+                text = stringResource(Res.string.app_name),
+                fontSize = TitleSize,
+                fontWeight = FontWeight.Black,
+                color = RailInk,
+            )
+            Text(
+                text = stringResource(Res.string.opening_shuffling),
+                fontSize = BodySize,
+                color = RailInkDim,
+            )
         }
     }
 }

@@ -25,6 +25,16 @@ import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.RailInk
 import game.vinto.app.theme.RailInkDim
 import game.vinto.client.RoundResult
+import game.vinto.app.art.Res
+import game.vinto.app.art.score_column_game
+import game.vinto.app.art.score_column_hand
+import game.vinto.app.art.score_column_round
+import game.vinto.app.art.score_next_round
+import game.vinto.app.art.score_round
+import game.vinto.app.art.score_stop
+import game.vinto.app.art.score_they_called
+import game.vinto.app.art.score_you_called
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 16.dp
 private val Gap = 10.dp
@@ -64,13 +74,17 @@ fun StandingsSheet(
             modifier = Modifier.padding(horizontal = Pad).fillMaxWidth().padding(bottom = Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Text("Round $round", fontSize = TitleSize, fontWeight = FontWeight.Bold)
+            Text(
+                text = stringResource(Res.string.score_round, round),
+                fontSize = TitleSize,
+                fontWeight = FontWeight.Bold,
+            )
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text("", modifier = Modifier.weight(1f))
-                Header("hand")
-                Header("round")
-                Header("game")
+                Header(stringResource(Res.string.score_column_hand))
+                Header(stringResource(Res.string.score_column_round))
+                Header(stringResource(Res.string.score_column_game))
             }
 
             result.seats.sortedBy { result.hands[it.first] ?: 0 }.forEach { (id, name) ->
@@ -88,22 +102,22 @@ fun StandingsSheet(
                 // their hand…" is the kind of sentence that makes a player wonder whose score
                 // they are looking at.
                 val line = if (callerId == you) {
-                    "You called Vinto, so your hand was set against the best of the others'."
+                    stringResource(Res.string.score_you_called)
                 } else {
-                    val who = result.seats.firstOrNull { it.first == callerId }?.second ?: "Someone"
-                    "$who called Vinto, so their hand was set against the best of yours."
+                    val who = result.seats.firstOrNull { it.first == callerId }?.second
+                    stringResource(Res.string.score_they_called, who.orEmpty())
                 }
                 Text(line, fontSize = BodySize, color = RailInkDim)
             }
 
             GameButton(
-                label = "Deal the next round",
+                label = stringResource(Res.string.score_next_round),
                 tone = ButtonTone.PLAY,
                 onClick = onNextRound,
                 modifier = Modifier.fillMaxWidth(),
             )
             GameButton(
-                label = "Stop here",
+                label = stringResource(Res.string.score_stop),
                 tone = ButtonTone.NEUTRAL,
                 onClick = onQuit,
                 modifier = Modifier.fillMaxWidth(),

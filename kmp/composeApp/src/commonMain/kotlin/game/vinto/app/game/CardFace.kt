@@ -44,6 +44,8 @@ import game.vinto.app.art.card_8
 import game.vinto.app.art.card_9
 import game.vinto.app.art.card_a
 import game.vinto.app.art.card_back
+import game.vinto.app.art.card_described
+import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_j
 import game.vinto.app.art.card_joker
 import game.vinto.app.art.card_k
@@ -52,6 +54,7 @@ import game.vinto.engine.CardView
 import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 private val Hairline = 1.dp
 private val Ring = 3.dp
@@ -126,13 +129,23 @@ fun CardFace(
 
     val feedback = LocalFeedback.current
 
+    // Read out loud when somebody cannot see it. A description is copy like any other: a
+    // screen reader announcing "a face-down card" in a Belarusian game is the same failure as
+    // an untranslated button, so it comes from resources too.
+    val spoken = label ?: when (card) {
+        is CardView.Visible ->
+            stringResource(Res.string.card_described, card.card.rank.serialName, card.card.value)
+
+        CardView.Hidden -> stringResource(Res.string.card_face_down)
+    }
+
     Box(
         modifier = modifier
             .sizeIn(
                 minWidth = if (onClick != null) TapTarget else scale.footprintWidth(state.turned),
                 minHeight = scale.footprintHeight(state.turned),
             )
-            .semantics { contentDescription = label ?: describe(card) },
+            .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,
     ) {
         Surface(
@@ -235,11 +248,6 @@ private fun artFor(rank: Rank): DrawableResource = when (rank) {
     Rank.KING -> Res.drawable.card_k
     Rank.ACE -> Res.drawable.card_a
     Rank.JOKER -> Res.drawable.card_joker
-}
-
-private fun describe(card: CardView): String = when (card) {
-    is CardView.Visible -> "${card.card.rank.serialName}, worth ${card.card.value}"
-    CardView.Hidden -> "a face-down card"
 }
 
 /** The gap a pile leaves when it runs out. */

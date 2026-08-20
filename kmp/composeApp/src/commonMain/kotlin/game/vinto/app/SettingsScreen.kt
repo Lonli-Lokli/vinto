@@ -25,6 +25,23 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.art.Res
+import game.vinto.app.art.settings_back
+import game.vinto.app.art.settings_bots
+import game.vinto.app.art.settings_bots_detail
+import game.vinto.app.art.settings_forget
+import game.vinto.app.art.settings_haptics
+import game.vinto.app.art.settings_haptics_detail
+import game.vinto.app.art.settings_off
+import game.vinto.app.art.settings_on
+import game.vinto.app.art.settings_pace
+import game.vinto.app.art.settings_pace_detail
+import game.vinto.app.art.settings_saved_game
+import game.vinto.app.art.settings_saved_game_detail
+import game.vinto.app.art.settings_theme
+import game.vinto.app.art.settings_theme_detail
+import game.vinto.app.art.settings_title
+import game.vinto.app.art.settings_version
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
@@ -37,6 +54,7 @@ import game.vinto.client.Pace
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
 import game.vinto.shapes.Difficulty
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 20.dp
 private val Gap = 12.dp
@@ -78,7 +96,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             Text(
-                "Settings",
+                stringResource(Res.string.settings_title),
                 fontSize = TitleSize,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 2.sp,
@@ -93,12 +111,11 @@ fun SettingsScreen(
 
             if (canForget) {
                 Setting(
-                    title = "Saved game",
-                    detail = "There is a round in progress. Forgetting it cannot be undone, " +
-                        "and the running score of the session goes with it.",
+                    title = stringResource(Res.string.settings_saved_game),
+                    detail = stringResource(Res.string.settings_saved_game_detail),
                 ) {
                     GameButton(
-                        label = "Forget it",
+                        label = stringResource(Res.string.settings_forget),
                         tone = ButtonTone.DANGER,
                         onClick = onForget,
                         modifier = Modifier.fillMaxWidth(),
@@ -107,14 +124,14 @@ fun SettingsScreen(
             }
 
             Text(
-                text = "Vinto v$VERSION",
+                text = stringResource(Res.string.settings_version, VERSION),
                 fontSize = FootnoteSize,
                 color = RailInkDim,
                 modifier = Modifier.padding(top = Tight),
             )
 
             GameButton(
-                label = "Back",
+                label = stringResource(Res.string.settings_back),
                 tone = ButtonTone.NEUTRAL,
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
@@ -125,11 +142,14 @@ fun SettingsScreen(
 
 @Composable
 private fun Bots(settings: Settings, onChange: (Settings) -> Unit) {
-    Setting(title = "Bots", detail = "How hard the three of them think about their move.") {
+    Setting(
+        title = stringResource(Res.string.settings_bots),
+        detail = stringResource(Res.string.settings_bots_detail),
+    ) {
         ChoiceRow(
             options = Difficulty.entries,
             selected = settings.difficulty,
-            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            label = { stringResource(it.label()) },
             onChoose = { onChange(settings.copy(difficulty = it)) },
         )
     }
@@ -138,14 +158,13 @@ private fun Bots(settings: Settings, onChange: (Settings) -> Unit) {
 @Composable
 private fun Pacing(settings: Settings, onChange: (Settings) -> Unit) {
     Setting(
-        title = "Pace",
-        detail = "How quickly the table plays out what happened. Three bots take their turns " +
-            "between one tap and the next, and this is how long you get to watch them.",
+        title = stringResource(Res.string.settings_pace),
+        detail = stringResource(Res.string.settings_pace_detail),
     ) {
         ChoiceRow(
             options = Pace.entries,
             selected = settings.pace,
-            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            label = { stringResource(it.label()) },
             onChoose = { onChange(settings.copy(pace = it)) },
         )
     }
@@ -154,13 +173,13 @@ private fun Pacing(settings: Settings, onChange: (Settings) -> Unit) {
 @Composable
 private fun Palette(settings: Settings, onChange: (Settings) -> Unit) {
     Setting(
-        title = "Theme",
-        detail = "The felt is green either way. This is everything around it.",
+        title = stringResource(Res.string.settings_theme),
+        detail = stringResource(Res.string.settings_theme_detail),
     ) {
         ChoiceRow(
             options = ThemeChoice.entries,
             selected = settings.theme,
-            label = { it.serialName.replaceFirstChar(Char::uppercase) },
+            label = { stringResource(it.label()) },
             onChoose = { onChange(settings.copy(theme = it)) },
         )
     }
@@ -169,9 +188,8 @@ private fun Palette(settings: Settings, onChange: (Settings) -> Unit) {
 @Composable
 private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
     Setting(
-        title = "Haptics",
-        detail = "A small kick under the thumb when a card is touched, a move lands, or a " +
-            "rule bites.",
+        title = stringResource(Res.string.settings_haptics),
+        detail = stringResource(Res.string.settings_haptics_detail),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -179,7 +197,9 @@ private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = if (settings.haptics) "On" else "Off",
+                text = stringResource(
+                    if (settings.haptics) Res.string.settings_on else Res.string.settings_off,
+                ),
                 fontSize = BodySize,
                 color = RailInkDim,
             )

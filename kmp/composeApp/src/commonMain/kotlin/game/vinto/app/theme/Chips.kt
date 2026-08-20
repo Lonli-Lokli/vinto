@@ -58,7 +58,12 @@ fun ChoiceChip(
 fun <T> ChoiceRow(
     options: List<T>,
     selected: T,
-    label: (T) -> String,
+    /**
+     * Composable, because a label is a *resource* now — the words for "Moderate" and "Calm"
+     * live in `strings.xml` where a translator can reach them, and reading one is a
+     * composition-scoped lookup rather than a property on an enum.
+     */
+    label: @Composable (T) -> String,
     onChoose: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {

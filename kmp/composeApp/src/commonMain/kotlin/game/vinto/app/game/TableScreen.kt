@@ -41,6 +41,19 @@ import game.vinto.client.Target
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
+import game.vinto.app.art.Res
+import game.vinto.app.art.app_name
+import game.vinto.app.art.card_discarded
+import game.vinto.app.art.card_in_hand
+import game.vinto.app.art.card_position
+import game.vinto.app.art.card_the_deck
+import game.vinto.app.art.table_discard
+import game.vinto.app.art.table_draw
+import game.vinto.app.art.table_leads_mark
+import game.vinto.app.art.table_round_turn
+import game.vinto.app.art.table_toss_in
+import game.vinto.app.art.table_vinto_mark
+import org.jetbrains.compose.resources.stringResource
 
 private val Gap = 6.dp
 private val Tight = 4.dp
@@ -145,7 +158,7 @@ private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
         // On the rail, so the rail's own ink — not the theme's, which is a page colour and
         // reads as dark-on-dark here.
         Text(
-            "VINTO",
+            stringResource(Res.string.app_name),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
             letterSpacing = 2.sp,
@@ -154,7 +167,7 @@ private fun TableHeader(view: PlayerView, round: Int, onReport: () -> Unit) {
         Text(
             // The *game's* round, not the deal's. The engine counts rounds within one deal
             // — it is a turn counter that wraps — while the player is counting hands played.
-            "R$round / T${view.turnNumber}",
+            stringResource(Res.string.table_round_turn, round, view.turnNumber),
             style = MaterialTheme.typography.labelLarge,
             color = RailInkDim,
         )
@@ -355,8 +368,8 @@ private fun Plate(
 ) {
     val active = view.players.getOrNull(view.currentPlayerIndex)?.id == seat.id
     val marks = buildList {
-        if (seat.isVintoCaller) add("Vinto")
-        if (seat.id == view.coalitionLeaderId) add("leads")
+        if (seat.isVintoCaller) add(stringResource(Res.string.table_vinto_mark))
+        if (seat.id == view.coalitionLeaderId) add(stringResource(Res.string.table_leads_mark))
         view.scores?.get(seat.id)?.let { add("$it") }
     }
     val tap = table.seatTaps[seat.id]
@@ -431,7 +444,7 @@ private fun SeatCard(
             turned = turned,
             flinching = stage.isFlinching(anchor),
         ),
-        label = "${seat.nickname}, card ${position + 1}",
+        label = stringResource(Res.string.card_position, seat.nickname, position + 1),
         onClick = move?.let { { onMove(it) } },
     )
 }
@@ -443,16 +456,21 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
         Row(horizontalArrangement = Arrangement.spacedBy(Gap), verticalAlignment = Alignment.Top) {
             val stage = LocalStage.current
 
-            Pile("DRAW") {
+            Pile(stringResource(Res.string.table_draw)) {
                 val deck = Modifier.anchoredAt(stage, Anchor.Deck)
                 if (view.drawPileSize > 0) {
-                    CardFace(CardView.Hidden, sizes.theirs, modifier = deck, label = "the deck")
+                    CardFace(
+                        card = CardView.Hidden,
+                        scale = sizes.theirs,
+                        modifier = deck,
+                        label = stringResource(Res.string.card_the_deck),
+                    )
                 } else {
                     EmptySlot(sizes.theirs, "—", deck)
                 }
             }
 
-            Pile("DISCARD") {
+            Pile(stringResource(Res.string.table_discard)) {
                 val pile = Modifier.anchoredAt(stage, Anchor.Discard)
                 // Nothing on the pile while a card is on its way to it — the overlay is
                 // drawing that card, and showing it at both ends makes the eye notice the
@@ -465,7 +483,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
                         sizes.theirs,
                         modifier = pile,
                         state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
-                        label = "discarded ${top.rank.serialName}",
+                        label = stringResource(Res.string.card_discarded, top.rank.serialName),
                     )
                 } else {
                     EmptySlot(sizes.theirs, "—", pile)
@@ -475,7 +493,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 
         view.activeTossIn?.let { toss ->
             Text(
-                "Toss-in",
+                stringResource(Res.string.table_toss_in),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onFelt(),
                 modifier = Modifier.padding(top = Tight),
@@ -545,7 +563,7 @@ private fun PendingCard(view: PlayerView, sizes: TableSizes) {
                 pending.card,
                 sizes.mine,
                 modifier = Modifier.anchoredAt(stage, Anchor.Pending),
-                label = "the card in your hand",
+                label = stringResource(Res.string.card_in_hand),
             )
         }
 

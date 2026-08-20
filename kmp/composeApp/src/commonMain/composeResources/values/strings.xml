@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Everything the app says, in the language it was written in.
+
+    A translation is a file beside this one — `values-be/strings.xml`, `values-uk/strings.xml`
+    — and nothing else changes. Which is the point: the words are here because a string typed
+    into a composable is a word that can only ever be English.
+
+    Two rules for anybody adding to this file:
+
+    * **Name a string for what it says, not where it sits.** `settings_pace_detail` survives
+      the panel being moved; `second_line_of_third_card` does not.
+    * **Never build a sentence out of two of them.** Word order is not universal, and a
+      translator handed half a sentence cannot fix the half they were not given. Use a format
+      argument and let the whole sentence live in one entry.
+-->
+<resources>
+
+    <!-- The name of the game. Not translated: it is what the game is called. -->
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">Shuffling…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">Lowest hand wins.</string>
+    <string name="home_solo_title">Single player · three bots</string>
+    <string name="home_continue">Continue</string>
+    <string name="home_new_game">New game</string>
+    <string name="home_play">Play</string>
+    <string name="home_online">Play online</string>
+    <string name="home_teach">How to play</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_version">v%1$s</string>
+
+    <!-- Online play, explained rather than greyed out. -->
+    <string name="online_title">Not in this build</string>
+    <string name="online_body">The room exists — a server that deals, holds the cards nobody may see, and fills the empty seats with bots. What is missing is this app\'s half of it: joining one, and drawing a table somebody else is playing on.\n\nSingle player needs none of that. It runs entirely on this phone, which is why it works on a plane.</string>
+    <string name="online_dismiss">Fair enough</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">Bots</string>
+    <string name="settings_bots_detail">How hard the three of them think about their move.</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_moderate">Moderate</string>
+    <string name="difficulty_hard">Hard</string>
+
+    <string name="settings_pace">Pace</string>
+    <string name="settings_pace_detail">How quickly the table plays out what happened. Three bots take their turns between one tap and the next, and this is how long you get to watch them.</string>
+    <string name="pace_calm">Calm</string>
+    <string name="pace_steady">Steady</string>
+    <string name="pace_brisk">Brisk</string>
+
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_detail">The felt is green either way. This is everything around it.</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <string name="settings_haptics">Haptics</string>
+    <string name="settings_haptics_detail">A small kick under the thumb when a card is touched, a move lands, or a rule bites.</string>
+    <string name="settings_on">On</string>
+    <string name="settings_off">Off</string>
+
+    <string name="settings_saved_game">Saved game</string>
+    <string name="settings_saved_game_detail">There is a round in progress. Forgetting it cannot be undone, and the running score of the session goes with it.</string>
+    <string name="settings_forget">Forget it</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">R%1$d / T%2$d</string>
+    <string name="table_draw">DRAW</string>
+    <string name="table_discard">DISCARD</string>
+    <string name="table_toss_in">Toss-in</string>
+    <string name="table_you">You</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">leads</string>
+    <string name="table_see_score">See the score</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s, worth %2$d</string>
+    <string name="card_face_down">a face-down card</string>
+    <string name="card_position">%1$s, card %2$d</string>
+    <string name="card_the_deck">the deck</string>
+    <string name="card_discarded">discarded %1$s</string>
+    <string name="card_in_hand">the card in your hand</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">Round %1$d</string>
+    <string name="score_column_hand">hand</string>
+    <string name="score_column_round">round</string>
+    <string name="score_column_game">game</string>
+    <string name="score_you_called">You called Vinto, so your hand was set against the best of the others\'.</string>
+    <string name="score_they_called">%1$s called Vinto, so their hand was set against the best of yours.</string>
+    <string name="score_next_round">Deal the next round</string>
+    <string name="score_stop">Stop here</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">Copied</string>
+    <string name="report_body">The whole game is on your clipboard — the deal it started from, every move since, and a checksum after each one. Paste it into a bug report and it can be replayed exactly, here or in the web app.</string>
+    <string name="report_dismiss">Done</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="teach_heading">Learning the game</string>
+    <string name="teach_finished_title">That is the whole game</string>
+    <string name="teach_finished_body">Every hand is face up and the round is scored. Every rule you met in here is one a real game plays by — there is no practice version of it.</string>
+    <string name="teach_watching">Watch what they take, and what they put back down.</string>
+    <string name="teach_go_on">Go on</string>
+    <string name="teach_done">Done</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">Right now</string>
+    <string name="help_the_cards">The cards</string>
+    <string name="help_signals">What the table is telling you</string>
+    <string name="help_group_numbers">Numbers — worth what they say, and nothing else</string>
+    <string name="help_group_lookers">Lookers — buy you a card you can remember</string>
+    <string name="help_group_movers">Movers — put a card somewhere else</string>
+    <string name="help_group_odd">The odd ones</string>
+    <string name="help_no_action">No action.</string>
+    <string name="help_card_worth">%1$s — worth %2$d</string>
+    <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
+
+    <string name="signal_turn">A green ring on a seat</string>
+    <string name="signal_turn_meaning">Whose turn it is. It flashes as the turn arrives, because three bots can take theirs between one tap and the next.</string>
+    <string name="signal_vinto">A gold ring</string>
+    <string name="signal_vinto_meaning">That player has called Vinto. Nobody may touch their cards for the rest of the round.</string>
+    <string name="signal_penalty">A red ring, and a hand that flinches</string>
+    <string name="signal_penalty_meaning">A penalty card just landed there — a wrong guess, or a wrong toss-in.</string>
+    <string name="signal_coalition">A blue ring</string>
+    <string name="signal_coalition_meaning">The coalition: everybody except the Vinto caller, playing their last turn together against that one hand.</string>
+    <string name="signal_tappable">A card that breathes</string>
+    <string name="signal_tappable_meaning">It can be touched right now. If nothing breathes, the table is waiting on somebody else.</string>
+    <string name="signal_peek">A card that lifts towards the middle</string>
+    <string name="signal_peek_meaning">Somebody is looking at it. Everyone sees *which* card was looked at — only the player entitled to it sees the face.</string>
+
+</resources>

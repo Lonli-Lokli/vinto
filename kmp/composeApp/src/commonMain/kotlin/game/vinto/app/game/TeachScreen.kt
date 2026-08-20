@@ -47,6 +47,14 @@ import game.vinto.client.lessonFor
 import game.vinto.client.teachingSession
 import game.vinto.shapes.GamePhase
 import kotlinx.coroutines.CoroutineDispatcher
+import game.vinto.app.art.Res
+import game.vinto.app.art.teach_done
+import game.vinto.app.art.teach_finished_body
+import game.vinto.app.art.teach_finished_title
+import game.vinto.app.art.teach_go_on
+import game.vinto.app.art.teach_heading
+import game.vinto.app.art.teach_watching
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
 private val Tight = 4.dp
@@ -207,7 +215,7 @@ private fun Coach(
     // The panel below already says what is being asked. The lesson names itself only when it
     // is talking about something else — otherwise the same sentence is on screen twice.
     val title = when {
-        finished -> "That is the whole game"
+        finished -> stringResource(Res.string.teach_finished_title)
         lesson?.title == null -> null
         lesson.title.equals(prompt, ignoreCase = true) -> null
         else -> lesson.title
@@ -231,7 +239,7 @@ private fun Coach(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = title ?: "Learning the game",
+                text = title ?: stringResource(Res.string.teach_heading),
                 fontSize = TitleSize,
                 fontWeight = FontWeight.Bold,
                 color = CoachInk,
@@ -248,10 +256,9 @@ private fun Coach(
 
         Text(
             text = when {
-                finished -> "Every hand is face up and the round is scored. Every rule you met " +
-                "in here is one a real game plays by — there is no practice version of it."
+                finished -> stringResource(Res.string.teach_finished_body)
                 lesson != null -> lesson.body
-                else -> "Watch what they take, and what they put back down."
+                else -> stringResource(Res.string.teach_watching)
             },
             fontSize = DetailSize,
             color = RailInkDim,
@@ -283,14 +290,14 @@ private fun Coach(
 
         when {
             finished -> GameButton(
-                label = "Done",
+                label = stringResource(Res.string.teach_done),
                 tone = ButtonTone.PLAY,
                 onClick = onDone,
                 modifier = Modifier.fillMaxWidth().padding(top = Tight),
             )
 
             lesson?.talkId != null -> GameButton(
-                label = "Go on",
+                label = stringResource(Res.string.teach_go_on),
                 tone = ButtonTone.KEEP,
                 onClick = onRead,
                 modifier = Modifier.fillMaxWidth().padding(top = Tight),

@@ -718,6 +718,48 @@ that remain meaningful.
 targets no-op and use the on-screen button. Without it, back from the settings screen closed
 the app, which looks exactly like a crash.
 
+## 6h. Words, and where they live
+
+Every string the **UI module** says is now in
+`kmp/composeApp/src/commonMain/composeResources/values/strings.xml`. A translation is a file
+beside it — `values-be/strings.xml`, `values-uk/strings.xml` — and nothing else changes, which
+is what the `translate-game` skill expects to find.
+
+Two rules for that file, written at the top of it as well: name a string for what it *says*
+rather than where it sits, and never build a sentence out of two of them. Word order is not
+universal, and a translator handed half a sentence cannot fix the half they were not given.
+
+Accessibility descriptions went in too. A screen reader announcing "a face-down card" in a
+Belarusian game is the same failure as an untranslated button.
+
+The choice labels moved off the enums. `Difficulty.serialName` is a **wire value** — it is in
+every saved game and every recording — and capitalising it to put on a button worked exactly as
+long as the app was English. `Labels.kt` maps each enum to a resource instead.
+
+### What is still English, and why it is harder
+
+Roughly two hundred strings remain in `shared/client`, and they cannot simply move: that module
+has no Compose, and its copy is not written as sentences to translate but *assembled* from
+grammar.
+
+- `Narration.kt` conjugates verbs — `youForm`/`theyForm`, "You draw" against "Raph draws". In
+  Belarusian or Ukrainian that is not a suffix swap; it is a different sentence.
+- `TableModel.kt` builds prompts and button labels with interpolation ("A 7 went down — toss in
+  a match?"), and the pointer keys off those labels.
+- `TeachScript.kt` is the lesson, which is mostly prose.
+- `CardConfig.kt` in `shared/shapes` carries the card names and descriptions, ported verbatim
+  from TypeScript so both clients teach the same game.
+
+The fix is the same in each case and it is **not** a string table in a non-UI module: those
+functions should return a *typed message* — the id and its arguments — and the UI should render
+it from resources. `Table.prompt: String` becomes something like `Table.prompt: Say`, and the
+tests get better rather than worse, because asserting `Say.YouDrew(SEVEN)` says what is meant
+where asserting an English sentence says what it currently reads.
+
+Until that lands the app is half-translated: menus, settings, the score sheet, the help sheet
+and the spoken descriptions follow the phone's language; the table's prompts, the move log and
+the lesson do not.
+
 ## 7. Traps and known issues
 
 **Repo-wide**

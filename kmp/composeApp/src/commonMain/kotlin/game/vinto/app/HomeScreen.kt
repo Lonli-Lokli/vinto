@@ -33,6 +33,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_back
+import game.vinto.app.art.home_continue
+import game.vinto.app.art.home_new_game
+import game.vinto.app.art.home_online
+import game.vinto.app.art.home_play
+import game.vinto.app.art.home_settings
+import game.vinto.app.art.home_solo_title
+import game.vinto.app.art.home_tagline
+import game.vinto.app.art.home_teach
+import game.vinto.app.art.home_version
+import game.vinto.app.art.app_name
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
@@ -44,6 +54,7 @@ import game.vinto.app.theme.feltGradient
 import game.vinto.client.Settings
 import game.vinto.shapes.Difficulty
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 20.dp
 private val Gap = 12.dp
@@ -109,7 +120,7 @@ fun HomeScreen(
             // client that joins one does not, which is a real answer and worth giving when
             // somebody asks — so the button works and says so.
             GameButton(
-                label = "Play online",
+                label = stringResource(Res.string.home_online),
                 tone = ButtonTone.NEUTRAL,
                 onClick = go.online,
                 modifier = Modifier.fillMaxWidth(),
@@ -120,13 +131,13 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(Gap),
             ) {
                 GameButton(
-                    label = "How to play",
+                    label = stringResource(Res.string.home_teach),
                     tone = ButtonTone.NEUTRAL,
                     onClick = go.teach,
                     modifier = Modifier.weight(1f),
                 )
                 GameButton(
-                    label = "Settings",
+                    label = stringResource(Res.string.home_settings),
                     tone = ButtonTone.NEUTRAL,
                     onClick = go.settings,
                     modifier = Modifier.weight(1f),
@@ -135,7 +146,7 @@ fun HomeScreen(
         }
 
         Text(
-            text = "v$VERSION",
+            text = stringResource(Res.string.home_version, VERSION),
             fontSize = FootnoteSize,
             color = RailInkDim,
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Gap),
@@ -186,14 +197,14 @@ private fun Hero() {
         }
 
         Text(
-            "VINTO",
+            stringResource(Res.string.app_name),
             fontSize = TitleSize,
             fontWeight = FontWeight.Black,
             letterSpacing = TitleTracking,
             color = RailInk,
         )
         Text(
-            "Lowest hand wins.",
+            stringResource(Res.string.home_tagline),
             fontSize = BodySize,
             color = RailInkDim,
             textAlign = TextAlign.Center,
@@ -227,7 +238,7 @@ private fun SoloPanel(
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             Text(
-                "Single player · three bots",
+                stringResource(Res.string.home_solo_title),
                 fontSize = LabelSize,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
@@ -237,7 +248,7 @@ private fun SoloPanel(
             ChoiceRow(
                 options = Difficulty.entries,
                 selected = difficulty,
-                label = { it.serialName.replaceFirstChar(Char::uppercase) },
+                label = { stringResource(it.label()) },
                 onChoose = onDifficulty,
             )
 
@@ -246,20 +257,20 @@ private fun SoloPanel(
             // it is the rarer intent and the destructive one.
             if (canContinue) {
                 GameButton(
-                    label = "Continue",
+                    label = stringResource(Res.string.home_continue),
                     tone = ButtonTone.PLAY,
                     onClick = onContinue,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 GameButton(
-                    label = "New game",
+                    label = stringResource(Res.string.home_new_game),
                     tone = ButtonTone.NEUTRAL,
                     onClick = onPlay,
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 GameButton(
-                    label = "Play",
+                    label = stringResource(Res.string.home_play),
                     tone = ButtonTone.PLAY,
                     onClick = onPlay,
                     modifier = Modifier.fillMaxWidth(),

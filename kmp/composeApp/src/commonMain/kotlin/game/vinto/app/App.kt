@@ -17,6 +17,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import game.vinto.app.art.Res
+import game.vinto.app.art.online_body
+import game.vinto.app.art.online_dismiss
+import game.vinto.app.art.online_title
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.TeachScreen
 import game.vinto.app.theme.ButtonTone
@@ -36,6 +40,7 @@ import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.saveSettings
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The one UI, shared by Android, iOS and the browser. Each platform contributes only an
@@ -159,18 +164,14 @@ private fun OnlineNotYet(onDismiss: () -> Unit) {
         containerColor = RailFill,
         titleContentColor = RailInk,
         textContentColor = RailInkDim,
-        title = { Text("Not in this build") },
-        text = {
-            Text(
-                "The room exists — a server that deals, holds the cards nobody may see, and " +
-                    "fills the empty seats with bots. What is missing is this app's half of " +
-                    "it: joining one, and drawing a table somebody else is playing on.\n\n" +
-                    "Single player needs none of that. It runs entirely on this phone, which " +
-                    "is why it works on a plane.",
-            )
-        },
+        title = { Text(stringResource(Res.string.online_title)) },
+        text = { Text(stringResource(Res.string.online_body)) },
         confirmButton = {
-            GameButton(label = "Fair enough", tone = ButtonTone.NEUTRAL, onClick = onDismiss)
+            GameButton(
+                label = stringResource(Res.string.online_dismiss),
+                tone = ButtonTone.NEUTRAL,
+                onClick = onDismiss,
+            )
         },
     )
 }
