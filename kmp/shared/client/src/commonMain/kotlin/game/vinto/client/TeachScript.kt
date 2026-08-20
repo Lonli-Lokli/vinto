@@ -73,6 +73,16 @@ data class Lesson(
     val glossId: String? = null,
 )
 
+/**
+ * What the coach says the first time somebody ignores it.
+ *
+ * Once, without reproach, and never again. The pointer is a suggestion and the lesson is
+ * derived from the position, so a player who does something else has not gone wrong — but they
+ * *have* just quietly tested whether this is a real game or a rail, and they deserve an answer.
+ */
+const val STRAYED = "Your table, not mine — nothing here is a wrong move. " +
+    "The lesson picks up wherever you take it."
+
 /** What the lesson has already said, so it does not say it twice. */
 data class Taught(
     val talked: Set<String> = emptySet(),

@@ -38,6 +38,8 @@ import game.vinto.client.Lesson
 import game.vinto.client.Move
 import game.vinto.client.Pace
 import game.vinto.client.Table
+import game.vinto.client.STRAYED
+import game.vinto.client.Target
 import game.vinto.client.Taught
 import game.vinto.client.Tone
 import game.vinto.client.chapterOf
@@ -93,6 +95,13 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
     var showing by remember { mutableStateOf<Lesson?>(null) }
     var helpOpen by remember { mutableStateOf(false) }
 
+    // What each button on the table is called, so the screen can tell "they pressed the one I
+    // pointed at" from "they pressed the other one" — the only deviation worth remarking on.
+    var labels by remember { mutableStateOf(emptyMap<Move, String>()) }
+    // Said once, on the move after the player first ignores the pointer, and then dropped.
+    var strayed by remember { mutableStateOf(false) }
+    var alreadySaid by remember { mutableStateOf(false) }
+
     // Every move the player makes passes through here on its way to the engine, which is the
     // one place that knows what they *did* rather than what the table now looks like: a swap
     // and a discard leave the same phase behind, and only the action says which happened.
@@ -100,6 +109,13 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
     // them, and repeating it would be the coach not listening.
     val play = rememberActor(holder)
     val act: (Move) -> Unit = { move ->
+        if (strayed) {
+            strayed = false
+            alreadySaid = true
+        } else if (!alreadySaid && ignoredThePointer(showing, labels[move])) {
+            strayed = true
+        }
+
         taught = taught.heard(showing)
         if (move is Move.Send) chapterOf(move.action)?.let { taught = taught.withChapter(it) }
         play(move)
@@ -123,6 +139,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
             ),
         ) { shown ->
             val table = holder.tableFor(shown).beforeTheEnd(shown.vintoCallerId != null)
+            labels = table.choices.associate { it.move to it.label }
             showing = lessonFor(shown, table, taught)
 
             TableScreen(
@@ -144,6 +161,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                         prompt = table.prompt,
                         taught = taught,
                         finished = shown.phase == GamePhase.SCORING,
+                        strayed = strayed,
                         onRead = { taught = taught.heard(showing) },
                         onDone = onDone,
                     )
@@ -155,6 +173,18 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
     if (helpOpen) {
         HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
     }
+}
+
+/**
+ * Whether the player pressed a different button from the one being pointed at.
+ *
+ * Only about buttons, and only when both are known: a tap on a card is usually the lesson's
+ * own instruction answered slightly differently — a different card of your own to peek at is
+ * not a deviation, it is a choice the rules give you.
+ */
+private fun ignoredThePointer(lesson: Lesson?, chosen: String?): Boolean {
+    val pointedAt = (lesson?.point as? Target.Button)?.label ?: return false
+    return chosen != null && chosen != pointedAt
 }
 
 /**
@@ -170,6 +200,7 @@ private fun Coach(
     prompt: String,
     taught: Taught,
     finished: Boolean,
+    strayed: Boolean,
     onRead: () -> Unit,
     onDone: () -> Unit,
 ) {
@@ -207,6 +238,12 @@ private fun Coach(
                 modifier = Modifier.weight(1f),
             )
             Progress(taught.chapters)
+        }
+
+        if (strayed) {
+            // First, not last: the coach is a bounded box that scrolls, and an answer to
+            // "is this a real game or a rail?" is no use below the fold.
+            Text(text = STRAYED, fontSize = DetailSize, color = NoteInk)
         }
 
         Text(

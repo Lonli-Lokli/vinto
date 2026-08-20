@@ -113,11 +113,16 @@ private const val TEACHING_SEED = 20_260_820L
 /**
  * The turn a bot calls Vinto on.
  *
- * Four rounds of the table: enough for the player to have drawn, kept, declared, played an
- * action and seen a toss-in window, and few enough that the ending arrives while all of that
- * is still fresh.
+ * `turnNumber` counts *turns*, not rotations — with four seats, the player takes turns 1, 5
+ * and 9, and Don takes 4, 8 and 12. Twelve is therefore Don's third turn, by which point the
+ * player has had three of their own: long enough to have drawn, kept, declared, played an
+ * action and answered a toss-in window, and short enough that the ending arrives while all of
+ * that is still fresh.
+ *
+ * The first version of this said 4, which is Don's *first* turn — the lesson called Vinto
+ * before the player had taken a second one.
  */
-private const val VINTO_ON_TURN = 4
+private const val VINTO_ON_TURN = 12
 
 /**
  * Somebody deciding the bots' moves in place of the search.
@@ -171,12 +176,36 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
             return GameAction.CallVinto(PlayerIdPayload(actor.id))
         }
 
-        val pending = state.pendingAction ?: return null
-        if (pending.playerId != actor.id) return null
+        val pending = state.pendingAction
+
+        // The seat just before the player draws rather than takes.
+        //
+        // The lesson claims there are two ways to start a turn, and the second one — taking an
+        // unused action card off the pile — can only be *shown* if there is one there when the
+        // player's turn begins. Left to themselves the bots take it first, correctly: it is
+        // free value. So the bot sitting immediately before the player is made to draw, and
+        // what it then throws away is what the player is offered.
+        if (pending == null && actor.id == seatBeforeThePlayer(state)) {
+            return GameAction.DrawCard(PlayerIdPayload(actor.id))
+        }
+
+        if (pending == null || pending.playerId != actor.id) return null
         if (pending.from != PendingCardOrigin.DRAWING) return null
 
         // Down it goes, face up, where the lesson can point at it.
         return GameAction.DiscardCard(PlayerIdPayload(actor.id))
+    }
+
+    /**
+     * Whoever plays immediately before the person being taught.
+     *
+     * Found by seat order rather than hard-coded, so it stays right if the deal ever puts the
+     * player somewhere other than seat zero.
+     */
+    private fun seatBeforeThePlayer(state: GameState): String? {
+        val player = state.players.indexOfFirst { it.isHuman }.takeIf { it >= 0 } ?: return null
+        val before = (player - 1 + state.players.size) % state.players.size
+        return state.players[before].id
     }
 
     /**

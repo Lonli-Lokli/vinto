@@ -29,7 +29,7 @@ import game.vinto.app.theme.RailBorder
 import game.vinto.app.theme.RailFill
 import game.vinto.app.theme.RailInk
 import game.vinto.app.theme.RailInkDim
-import game.vinto.shapes.ALL_RANKS
+import game.vinto.shapes.Rank
 import game.vinto.shapes.CardConfig
 import game.vinto.shapes.getCardConfig
 
@@ -91,7 +91,21 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                 )
             }
 
-            items(ALL_RANKS) { rank -> RankRow(getCardConfig(rank)) }
+            // Grouped by what a card *does*, because that is how a player has to think about
+            // them at the table: is this worth points, does it look, does it move cards, or is
+            // it one of the odd ones. Fourteen ranks in one column is a list to scroll past.
+            GROUPS.forEach { group ->
+                item {
+                    Text(
+                        group.title,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = BodySize,
+                        color = RailInkDim,
+                        modifier = Modifier.padding(top = Gap),
+                    )
+                }
+                items(group.ranks) { rank -> RankRow(getCardConfig(rank)) }
+            }
 
             item {
                 Text(
@@ -117,6 +131,20 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
         }
     }
 }
+
+/** The four kinds of card there are, in the order a player meets them. */
+private data class Group(val title: String, val ranks: List<Rank>)
+
+private val GROUPS = listOf(
+    Group("Numbers — worth what they say, and nothing else", listOf(
+        Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX,
+    )),
+    Group("Lookers — buy you a card you can remember", listOf(
+        Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN,
+    )),
+    Group("Movers — put a card somewhere else", listOf(Rank.JACK, Rank.QUEEN)),
+    Group("The odd ones", listOf(Rank.KING, Rank.ACE, Rank.JOKER)),
+)
 
 /**
  * The table's own vocabulary, written down.

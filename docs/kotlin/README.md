@@ -679,6 +679,19 @@ The design came out of a session with the `fable` model against the repo (`VINTO
   the web app's card reference already did: a player who learned "Q" from a list still has to
   match it against a picture on the felt, and showing the picture skips that step.
 
+The director has one more job than "make the bots play their parts": the seat immediately
+before the player **draws rather than takes**, so that an unused action card is still on the
+pile when the player's turn comes round and the second way to start a turn can be shown. A bot
+taking it first is correct play, not a fault, which is why the lesson teaches that rule in
+words either way and points at it when the round allows. The Vinto call is timed on
+`turnNumber`, which counts *turns* and not rotations — the first version called it on turn 4,
+which is the third bot's **first** turn, and ended the lesson before the player had taken a
+second one.
+
+The coach also answers, once and without reproach, the first time somebody presses a button
+other than the one being pointed at. That press is a player quietly testing whether this is a
+real game or a rail, and it deserves an answer.
+
 Two things are deliberately not free: the lesson runs at no less than **calm** pace whatever
 the setting says, and **Call Vinto is hidden until a bot calls it** — the one tap that ends the
 lesson before it starts, cannot be undone, and means nothing yet to the person pressing it.

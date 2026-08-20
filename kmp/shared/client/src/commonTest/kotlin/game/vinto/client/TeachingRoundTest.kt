@@ -2,16 +2,20 @@ package game.vinto.client
 
 import game.vinto.engine.createDeck
 import game.vinto.engine.projectView
+import game.vinto.engine.GameEngine
+import game.vinto.engine.ReduceResult
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.hashGameState
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * The lesson's round, played.
@@ -65,13 +69,7 @@ class TeachingRoundTest {
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
 
-        // The simplest player there is: take a card, throw it away, pass every window.
-        repeat(TURNS) {
-            if (session.isOver) return@repeat
-            session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
-            session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
-            session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
-        }
+        SimplePlayer(session).play()
 
         val caller = session.state.vintoCallerId
         assertNotNull(caller, "the lesson's director must have somebody call Vinto")
@@ -92,12 +90,7 @@ class TeachingRoundTest {
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
 
-        repeat(TURNS) {
-            if (session.isOver) return@repeat
-            session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
-            session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
-            session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
-        }
+        SimplePlayer(session).play()
 
         val caller = assertNotNull(session.state.vintoCallerId)
         val view = projectView(session.state, me)
@@ -110,8 +103,122 @@ class TeachingRoundTest {
         )
     }
 
-    /** Enough turns for the round to reach its end however the player dawdles. */
+    /**
+     * The deal exists to put two particular cards in the player's hands: a Queen, whose look
+     * is the best in the game, and a King, which borrows another rank's action. They are the
+     * two set-pieces the lesson is built around, and a deck edit that loses them would leave
+     * the coach with nothing to point at.
+     *
+     * Taking from the discard is *not* asserted here, deliberately. Whether an unused action
+     * card is still sitting on the pile when the player's turn comes round depends on what the
+     * bots did with it — and a bot taking it first is correct play, not a fault. The director
+     * makes the seat before the player draw rather than take, which helps; the rule itself is
+     * taught in words either way, and the pointed version happens when the round allows it.
+     */
+    @Test
+    fun theDealPutsAQueenAndAKingInThePlayersHands() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+
+        val player = SimplePlayer(session)
+        player.play()
+
+        assertTrue(
+            player.offered.any { it.contains("Peek 2 cards from 2 players") },
+            "the Queen has to reach the player: ${player.offered}",
+        )
+        assertTrue(
+            player.offered.any { it.contains("Declare any card's action") },
+            "and so does the King: ${player.offered}",
+        )
+    }
+
+    /**
+     * The taught round is an ordinary game in the one sense that matters most: it records and
+     * replays like any other, in either engine.
+     *
+     * This is what makes the stacked deck safe. A deal from a written-down deck could have been
+     * a special case that only the tutorial understands; instead the recording carries the
+     * whole initial state, so the replay harness — and the TypeScript one — can play it back
+     * without knowing it was arranged.
+     */
+    @Test
+    fun theTaughtRoundReplaysLikeAnyOther() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        SimplePlayer(session).play()
+
+        val recording = session.report(at = "2026-08-20T00:00:00Z", label = "the lesson")
+        assertTrue(recording.actions.isNotEmpty(), "a round was played")
+
+        var state = recording.initialState
+        recording.actions.forEachIndexed { index, recorded ->
+            state = when (val result = GameEngine.reduce(state, recorded.action)) {
+                is ReduceResult.Success -> result.state
+                is ReduceResult.Failure ->
+                    fail("action $index (${recorded.action}) was refused: ${result.reason}")
+            }
+            assertEquals(
+                recorded.stateHash,
+                hashGameState(state),
+                "the replay diverged at action $index — the taught round is not reproducible",
+            )
+        }
+
+        assertEquals(
+            recording.finalStateHash,
+            hashGameState(state),
+            "and it ends where it said it ended",
+        )
+    }
+
+}
+
+/**
+ * The simplest player there is, playing by what the table offers.
+ *
+ * Driven by [Table] rather than by the raw state, which is both more faithful and less
+ * fragile: `activeTossIn` outlives its window in `GameState` — it is cleared when the next
+ * card goes down, not when everybody has answered — so a test that reads it directly spends
+ * the rest of the round being told it has already confirmed. The table model knows that; a
+ * player only ever sees what it decided; so does this.
+ *
+ * It takes whatever move the table hands it, preferring the ones that need no follow-up tap.
+ * That makes it a bad player — it keeps nothing — which is exactly what these cases want: the
+ * pile stays stocked and every window stays open to somebody.
+ */
+private class SimplePlayer(private val session: LocalGameSession) {
+
+    /** Every label the table offered along the way — what the lesson has to teach from. */
+    val offered = mutableSetOf<String>()
+
+    suspend fun play(steps: Int = STEPS) {
+        repeat(steps) {
+            if (session.isOver) return
+
+            val table = tableFor(projectView(session.state, session.playerId))
+            offered += table.choices.map { it.label }
+
+            // Sends only: an Ask is a question the screen asks itself, and answering one needs
+            // a tap on a card rather than a move.
+            val move = table.choices
+                .mapNotNull { it.move as? Move.Send }
+                .firstOrNull { it.action !is GameAction.CallVinto }
+                ?: return
+
+            session.dispatch(move.action)
+        }
+    }
+
     private companion object {
-        const val TURNS = 12
+        const val STEPS = 80
     }
 }
