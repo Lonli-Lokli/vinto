@@ -53,6 +53,9 @@ private val DotSize = 8.dp
 /** As much of the rail as the coach may take before it starts scrolling. */
 private val CoachMax = 190.dp
 
+/** Small enough to sit in a line of text, large enough to recognise on the felt. */
+private val NoteCard = 34.dp
+
 /**
  * How to play, by playing.
  *
@@ -218,12 +221,23 @@ private fun Coach(
         )
 
         lesson?.note?.let { note ->
-            Text(
-                text = note,
-                fontSize = DetailSize,
-                fontWeight = FontWeight.SemiBold,
-                color = NoteInk,
-            )
+            // With the card beside it. "Queen — worth 10" is a fact about a picture the player
+            // is about to have to recognise across a table, and the words alone leave them to
+            // make that connection themselves.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Tight * 2),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                lesson.noteRank?.let { CardPicture(rank = it, width = NoteCard) }
+
+                Text(
+                    text = note,
+                    fontSize = DetailSize,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NoteInk,
+                )
+            }
         }
 
         lesson?.gloss?.let { gloss ->

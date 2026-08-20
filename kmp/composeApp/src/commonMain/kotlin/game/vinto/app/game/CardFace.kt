@@ -27,6 +27,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
 import game.vinto.app.theme.LocalFeedback
@@ -198,22 +200,41 @@ private fun CardState.ringWidth() = if (verdict != null || chosen || tappable) R
 /** Which picture a card shows. A hidden one always shows the back, and knows nothing else. */
 private fun CardView.art(): DrawableResource = when (this) {
     CardView.Hidden -> Res.drawable.card_back
-    is CardView.Visible -> when (card.rank) {
-        Rank.TWO -> Res.drawable.card_2
-        Rank.THREE -> Res.drawable.card_3
-        Rank.FOUR -> Res.drawable.card_4
-        Rank.FIVE -> Res.drawable.card_5
-        Rank.SIX -> Res.drawable.card_6
-        Rank.SEVEN -> Res.drawable.card_7
-        Rank.EIGHT -> Res.drawable.card_8
-        Rank.NINE -> Res.drawable.card_9
-        Rank.TEN -> Res.drawable.card_10
-        Rank.JACK -> Res.drawable.card_j
-        Rank.QUEEN -> Res.drawable.card_q
-        Rank.KING -> Res.drawable.card_k
-        Rank.ACE -> Res.drawable.card_a
-        Rank.JOKER -> Res.drawable.card_joker
-    }
+    is CardView.Visible -> artFor(card.rank)
+}
+
+/**
+ * The picture for a rank, for anywhere a card is *talked about* rather than played.
+ *
+ * The help sheet and the lesson both explain cards, and a rank explained as the letter "Q" is
+ * a rank a player then has to match against a picture on the table. Same art either way, so
+ * what they learn from the words is what they see on the felt.
+ */
+@Composable
+fun CardPicture(rank: Rank, width: Dp, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(artFor(rank)),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = modifier.width(width),
+    )
+}
+
+private fun artFor(rank: Rank): DrawableResource = when (rank) {
+    Rank.TWO -> Res.drawable.card_2
+    Rank.THREE -> Res.drawable.card_3
+    Rank.FOUR -> Res.drawable.card_4
+    Rank.FIVE -> Res.drawable.card_5
+    Rank.SIX -> Res.drawable.card_6
+    Rank.SEVEN -> Res.drawable.card_7
+    Rank.EIGHT -> Res.drawable.card_8
+    Rank.NINE -> Res.drawable.card_9
+    Rank.TEN -> Res.drawable.card_10
+    Rank.JACK -> Res.drawable.card_j
+    Rank.QUEEN -> Res.drawable.card_q
+    Rank.KING -> Res.drawable.card_k
+    Rank.ACE -> Res.drawable.card_a
+    Rank.JOKER -> Res.drawable.card_joker
 }
 
 private fun describe(card: CardView): String = when (card) {

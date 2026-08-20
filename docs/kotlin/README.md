@@ -673,9 +673,11 @@ The design came out of a session with the `fable` model against the repo (`VINTO
   other colour on this table already means something. It points down from above by default —
   pointing up from below sits it on the next rank chip in the grid, naming the wrong card — and
   from inside the left end of a full-width button, where it cannot cover the button below.
-- **Cards explained as they are met.** The first time a rank becomes visible, the coach gives
-  its name, value and action, in `CARD_CONFIGS`' own words. The help sheet's gallery is the
-  reference; this is the introduction.
+- **Cards explained as they are met, with the card.** The first time a rank becomes visible,
+  the coach gives its name, value and action in `CARD_CONFIGS`' own words — beside the actual
+  picture, dealt from the same art the table uses. The help sheet's gallery does the same, as
+  the web app's card reference already did: a player who learned "Q" from a list still has to
+  match it against a picture on the felt, and showing the picture skips that step.
 
 Two things are deliberately not free: the lesson runs at no less than **calm** pace whatever
 the setting says, and **Call Vinto is hidden until a bot calls it** — the one tap that ends the

@@ -199,20 +199,10 @@ private fun RankRow(config: CardConfig) {
         horizontalArrangement = Arrangement.spacedBy(RowGap),
         verticalAlignment = Alignment.Top,
     ) {
-        Surface(
-            modifier = Modifier.size(Chip),
-            shape = RoundedCornerShape(Corner),
-            color = RailFill,
-            border = BorderStroke(1.dp, RailBorder),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    config.rank.serialName.take(MAX_CHIP_CHARS),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TitleSize,
-                )
-            }
-        }
+        // The card itself, not its letter. A player who learned "Q" from a list still has to
+        // match it against a picture on the felt; showing the picture skips that step, and it
+        // is the same art the table deals.
+        CardPicture(rank = config.rank, width = Chip)
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -231,6 +221,5 @@ private fun RankRow(config: CardConfig) {
 
 private val SwatchRing = 3.dp
 
-private const val MAX_CHIP_CHARS = 3
 private val TitleSize = 16.sp
 private val BodySize = 14.sp
