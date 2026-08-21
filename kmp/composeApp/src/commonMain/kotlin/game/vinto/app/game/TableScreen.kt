@@ -25,6 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,8 +80,7 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
-import game.vinto.engine.discardTop
-import game.vinto.engine.discardUnder
+import game.vinto.engine.turnHolderId
 import game.vinto.shapes.Card
 import game.vinto.shapes.PendingCardOrigin
 import org.jetbrains.compose.resources.stringResource
@@ -500,7 +504,7 @@ private fun Plate(
     sizes: TableSizes,
     onMove: (Move) -> Unit,
 ) {
-    val active = view.players.getOrNull(view.currentPlayerIndex)?.id == seat.id
+    val active = view.turnHolderId == seat.id
     val marks = buildList {
         if (seat.isVintoCaller) add(stringResource(Res.string.table_vinto_mark))
         if (seat.id == view.coalitionLeaderId) add(stringResource(Res.string.table_leads_mark))
@@ -657,11 +661,25 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard)
 
+    val landing = Anchor.Discard in stage.inFlight
+
+    // What the pile was showing before the card now in the air was thrown at it.
+    //
+    // The engine sends the top card of the discard and nothing else — the rest of the pile is
+    // covered, and what went into it is a thing players remember rather than read. So this is
+    // the client remembering the last face it was shown, which is exactly what somebody at the
+    // table does, and it is only ever used to keep the pile from blinking empty while a card
+    // lands on it.
+    var covered by remember { mutableStateOf<Card?>(null) }
+    LaunchedEffect(view.discardTop?.id, landing) {
+        if (!landing) covered = view.discardTop
+    }
+
     val face = pileFace(
         top = view.discardTop,
-        under = view.discardUnder,
+        covered = covered,
         inPlay = view.cardInPlay,
-        landing = Anchor.Discard in stage.inFlight,
+        landing = landing,
     )
 
     if (face == null) {
@@ -689,12 +707,13 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
  * inline. While a card is on its way to the pile the overlay is drawing it, so the pile must
  * not draw it too — and hiding *everything* is what it used to do, which meant that throwing
  * a King onto a King emptied the pile for the length of the throw and filled it again. What
- * the pile shows while a card is in the air is the card that is about to be covered: the one
- * underneath, or the real top when a card from a hand is being played over it. Nothing, only
- * when there was nothing there to begin with.
+ * the pile shows while a card is in the air is the card about to be [covered] — remembered by
+ * the caller, since the engine sends only the top of the pile — or the real top when a card
+ * from a hand is being played over it. Nothing, only when there was nothing there to begin
+ * with.
  */
-internal fun pileFace(top: Card?, under: Card?, inPlay: Card?, landing: Boolean): Card? = when {
-    landing -> if (inPlay != null) top else under
+internal fun pileFace(top: Card?, covered: Card?, inPlay: Card?, landing: Boolean): Card? = when {
+    landing -> if (inPlay != null) top else covered
     inPlay != null -> inPlay
     else -> top
 }

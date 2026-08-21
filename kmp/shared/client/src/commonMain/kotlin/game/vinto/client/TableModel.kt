@@ -3,7 +3,6 @@ package game.vinto.client
 import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerView
-import game.vinto.engine.discardTop
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.DeclareKingActionPayload
@@ -393,7 +392,7 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
         detail = "Right plays its action; wrong costs you a card.",
         choices = listOf(
             Choice(
-                "Just Swap (No Declaration)",
+                "Just Swap",
                 Move.Send(GameAction.SwapCard(SwapCardPayload(me, position))),
                 Tone.KEEP,
             ),

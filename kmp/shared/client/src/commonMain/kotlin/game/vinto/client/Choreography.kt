@@ -2,7 +2,6 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
-import game.vinto.engine.discardTop
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -444,7 +443,7 @@ private fun tossScene(
     before: PlayerView,
     after: PlayerView,
 ): Scene {
-    val landed = after.discardPile.size - before.discardPile.size
+    val landed = after.discardCount - before.discardCount
     if (landed <= 0) return emptyList()
 
     return action.payload.positions.take(landed).map { position ->

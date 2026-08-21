@@ -92,11 +92,19 @@ data class PlayerView(
     /** A count, not the cards. Knowing the order of the draw pile would decide the game. */
     val drawPileSize: Int,
     /**
-     * Face up on the table, so it is sent in full — **top card first**, as [Pile] keeps it.
+     * The card face up on the discard pile, and how many are under it.
      *
-     * Read it through [discardTop] rather than by index. See the note there.
+     * The **top card only**, because the top card is the only one anybody can see: the rest
+     * of the pile is a stack of covered cards, and what went into it is something players
+     * remember rather than something they can read. The whole pile used to be sent, on the
+     * reasoning that a discard is public — but "public" is the top of it, and a client
+     * holding the order of every card discarded this round holds a perfect record of a game
+     * whose difficulty is remembering one.
+     *
+     * The count is public in the way a stack's thickness is: you can see how many.
      */
-    val discardPile: List<Card>,
+    val discardTop: Card?,
+    val discardCount: Int,
     val pendingAction: PendingActionView?,
     val activeTossIn: ActiveTossIn?,
     /**
@@ -250,7 +258,8 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
         vintoCallerId = state.vintoCallerId,
         coalitionLeaderId = state.coalitionLeaderId,
         drawPileSize = state.drawPile.size,
-        discardPile = state.discardPile.toList(),
+        discardTop = state.discardPile.peekTop(),
+        discardCount = state.discardPile.size,
         pendingAction = pending,
         activeTossIn = state.activeTossIn,
         barredFromTossIn = state.roundFailedAttempts.map { it.playerId }.distinct(),
@@ -319,22 +328,6 @@ internal fun hiddenFrom(state: GameState, playerId: String): List<Card> {
     }
 }
 
-/**
- * The card lying face up on the discard pile: the one that may be taken, matched, or seen.
- *
- * The pile is top-first — `Pile.peekTop()` is `at(0)`, `addToTop` prepends, and the
- * TypeScript engine agrees — so the top of it is the *first* element and never the last.
- * This exists because the port read it as the last one in eight places, and that is a
- * mistake with a delay built into it: while a round's pile holds a single card both ends
- * are the same card and everything looks right. From the second discard on, the table shows
- * the card the round *started* with, and goes on showing it — which is how a Queen went
- * down, the prompt said so, the toss-in window opened for Queens, and the pile sat there
- * displaying a two.
- */
-val PlayerView.discardTop: Card? get() = discardPile.firstOrNull()
-
-/** The one under it, which shows as a sliver behind the top card. */
-val PlayerView.discardUnder: Card? get() = discardPile.getOrNull(1)
 
 /**
  * The card whose action is being played, which is lying face up on the discard pile.
@@ -354,3 +347,19 @@ val PlayerView.cardInPlay: Card?
     get() = pendingAction
         ?.takeIf { it.actionPhase != ActionPhase.CHOOSING_ACTION }
         ?.let { (it.card as? CardView.Visible)?.card }
+
+/**
+ * Whose turn it is — which, during a toss-in window, is not who is acting.
+ *
+ * A toss-in happens *inside* somebody's turn: the window opens on the card they put down,
+ * anybody holding a match throws it in, and each thrown card's action is resolved for the
+ * player who threw it. The engine points `currentPlayerIndex` at that player while their
+ * action runs, because it is their action to aim — and the turn returns to the table's order
+ * the moment the window closes.
+ *
+ * Read literally, that made the table say somebody else's turn had begun: a player put down a
+ * King, the seat two along threw one in, and the ring moved to them while the window was still
+ * open on the first player's turn. The turn is where the window says it started.
+ */
+val PlayerView.turnHolderId: String?
+    get() = players.getOrNull(activeTossIn?.originalPlayerIndex ?: currentPlayerIndex)?.id

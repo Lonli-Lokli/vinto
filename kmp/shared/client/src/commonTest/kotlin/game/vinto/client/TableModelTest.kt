@@ -122,7 +122,7 @@ class TableModelTest {
         val calling = session.table(Question.CallRank(2))
         assertEquals(ALL_RANK_COUNT, calling.ranks.size, "any rank can be named")
 
-        val silent = calling.send("Just Swap (No Declaration)") as GameAction.SwapCard
+        val silent = calling.send("Just Swap") as GameAction.SwapCard
         assertEquals(2, silent.payload.position)
         assertNull(silent.payload.declaredRank, "saying nothing declares nothing")
 

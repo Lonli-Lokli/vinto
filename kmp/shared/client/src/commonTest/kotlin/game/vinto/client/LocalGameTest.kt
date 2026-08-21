@@ -43,8 +43,12 @@ class LocalGameTest {
 
         assertEquals(Difficulty.EASY, resumed.difficulty)
         assertEquals(
-            game.session.view.value.discardPile,
-            resumed.session.view.value.discardPile,
+            game.session.view.value.discardTop,
+            resumed.session.view.value.discardTop,
+        )
+        assertEquals(
+            game.session.view.value.discardCount,
+            resumed.session.view.value.discardCount,
         )
         assertEquals(
             Rank.NINE,

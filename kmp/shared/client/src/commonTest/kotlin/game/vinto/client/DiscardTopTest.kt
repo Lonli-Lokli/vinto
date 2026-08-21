@@ -1,7 +1,5 @@
 package game.vinto.client
 
-import game.vinto.engine.discardTop
-import game.vinto.engine.discardUnder
 import game.vinto.engine.projectView
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
@@ -43,7 +41,7 @@ class DiscardTopTest {
                     window.ranks.toSet(),
                     setOfNotNull(view.discardTop?.rank),
                     "the window is open for what is showing on the pile, and the pile has " +
-                        "${view.discardPile.size} cards on it",
+                        "${view.discardCount} cards on it",
                 )
             }
             session.play()
@@ -52,19 +50,22 @@ class DiscardTopTest {
         assertTrue(windows > 1, "the game got past its first discard: $windows windows")
     }
 
-    /** And the two ends of a pile are not the same end, which is the whole of the bug. */
+    /**
+     * And the pile a client is sent is one card deep, whatever is under it.
+     *
+     * The whole pile used to arrive, which is a perfect record of a round in a game about
+     * remembering one. What is public about a discard is its top card and its thickness.
+     */
     @Test
-    fun theTopAndTheBottomOfThePileAreDifferentCards() = runTest {
+    fun onlyTheTopOfThePileIsSent() = runTest {
         val session = dealt()
         repeat(TURNS) { if (!session.isOver) session.play() }
 
         val view = projectView(session.state, session.playerId)
-        assertTrue(view.discardPile.size > 1, "a pile worth reading: ${view.discardPile.size}")
+        assertTrue(view.discardCount > 1, "a pile worth covering up: ${view.discardCount}")
 
         val top = assertNotNull(view.discardTop)
-        assertEquals(view.discardPile.first().id, top.id, "the top is the first element")
-        assertEquals(view.discardPile[1].id, assertNotNull(view.discardUnder).id)
-        assertTrue(top.id != view.discardPile.last().id, "and not the last one")
+        assertEquals(session.state.discardPile.peekTop()?.id, top.id, "and it is the top one")
     }
 
     private suspend fun dealt(): LocalGameSession = teachingSession().also { session ->

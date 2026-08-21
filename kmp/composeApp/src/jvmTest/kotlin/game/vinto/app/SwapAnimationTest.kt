@@ -41,7 +41,7 @@ class SwapAnimationTest {
         onNodeWithContentDescription("Draw Card").performClick(); settle()
         onNodeWithContentDescription("Swap Cards").performClick(); settle()
         onNodeWithContentDescription(SLOT).performClick(); settle()
-        onNodeWithContentDescription("Just Swap (No Declaration)").performClick()
+        onNodeWithContentDescription("Just Swap").performClick()
 
         // Step through the animation looking for the moment the seat is empty.
         var sawTheGap = false

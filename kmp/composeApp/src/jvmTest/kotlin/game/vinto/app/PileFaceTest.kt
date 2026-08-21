@@ -24,26 +24,32 @@ class PileFaceTest {
 
     @Test
     fun aSettledPileShowsItsTopCard() {
-        assertEquals(king, pileFace(top = king, under = queen, inPlay = null, landing = false))
+        assertEquals(king, pileFace(top = king, covered = queen, inPlay = null, landing = false))
     }
 
     @Test
     fun anEmptyPileShowsNothing() {
-        assertNull(pileFace(top = null, under = null, inPlay = null, landing = false))
+        assertNull(pileFace(top = null, covered = null, inPlay = null, landing = false))
     }
 
     /** A card played from a hand is in play *on the pile*, so it is what the pile shows. */
     @Test
     fun aCardInPlaySitsOnTop() {
-        assertEquals(seven, pileFace(top = king, under = queen, inPlay = seven, landing = false))
+        assertEquals(seven, pileFace(top = king, covered = queen, inPlay = seven, landing = false))
     }
 
-    /** The bug: a second King thrown onto the first must not empty the pile. */
+    /**
+     * The bug: a second King thrown onto the first must not empty the pile.
+     *
+     * The covered card is the caller's memory of the last face it drew, not something the
+     * engine sends — a client is told the top of the pile and how thick it is, and nothing
+     * about what is under there.
+     */
     @Test
     fun aPileWithACardInTheAirShowsWhatIsAboutToBeCovered() {
         assertEquals(
             queen,
-            pileFace(top = king, under = queen, inPlay = null, landing = true),
+            pileFace(top = king, covered = queen, inPlay = null, landing = true),
             "the card underneath stays visible while the next one lands on it",
         )
     }
@@ -51,13 +57,13 @@ class PileFaceTest {
     /** And with a hand's card being played over the pile, the pile's own top holds the place. */
     @Test
     fun aPileUnderAPlayedCardShowsItsTopWhileSomethingLands() {
-        assertEquals(king, pileFace(top = king, under = queen, inPlay = seven, landing = true))
+        assertEquals(king, pileFace(top = king, covered = queen, inPlay = seven, landing = true))
     }
 
     /** Only a pile that really was empty shows nothing while a card arrives. */
     @Test
     fun theFirstCardOfARoundArrivesOnNothing() {
-        assertNull(pileFace(top = king, under = null, inPlay = null, landing = true))
+        assertNull(pileFace(top = king, covered = null, inPlay = null, landing = true))
     }
 
     private fun card(rank: Rank, id: String) =

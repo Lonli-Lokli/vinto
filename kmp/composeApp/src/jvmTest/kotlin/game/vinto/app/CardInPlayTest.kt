@@ -2,8 +2,6 @@ package game.vinto.app
 
 import game.vinto.app.game.pileFace
 import game.vinto.engine.cardInPlay
-import game.vinto.engine.discardTop
-import game.vinto.engine.discardUnder
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
@@ -46,7 +44,7 @@ class CardInPlayTest {
         val open = assertNotNull(view.activeTossIn, "the window is open for the King")
 
         val showing = assertNotNull(
-            pileFace(view.discardTop, view.discardUnder, view.cardInPlay, landing = false),
+            pileFace(view.discardTop, covered = null, inPlay = view.cardInPlay, landing = false),
             "and the pile is showing the card it is open for",
         )
         assertEquals(open.ranks.single(), showing.rank, "which is the King")
@@ -64,7 +62,7 @@ class CardInPlayTest {
         val drawn = session.view.value
         assertNull(drawn.cardInPlay, "a card being chosen about is not in play")
         assertNull(
-            pileFace(drawn.discardTop, drawn.discardUnder, drawn.cardInPlay, landing = false),
+            pileFace(drawn.discardTop, covered = null, inPlay = drawn.cardInPlay, landing = false),
             "so the pile is still empty",
         )
 

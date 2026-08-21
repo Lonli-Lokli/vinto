@@ -2,7 +2,6 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
-import game.vinto.engine.discardTop
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
