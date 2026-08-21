@@ -425,8 +425,9 @@ private fun tableTour(view: PlayerView, taught: Taught): Lesson? = when {
     "help" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
         title = "The ? is always there",
-        body = "It explains the moment you are in and what every card does — in a real game " +
-            "as much as in this one. Nobody is expected to hold fourteen ranks in their head.",
+        body = "It explains the moment you are in and what every card does. The boxed game " +
+            "comes with reminder cards for exactly this, one per player — nobody is expected " +
+            "to hold fourteen ranks in their head, here or at a table.",
         point = Target.Furniture(Target.HELP),
         talkId = "help",
     )
@@ -441,9 +442,10 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
     view.vintoCallerId != null && "coalition" !in taught.talked -> Lesson(
         chapter = Chapter.VINTO,
         title = "Everybody else plays as one",
-        body = "You, and the two who did not call, are the coalition: you each take exactly " +
-            "one more turn, and only your best single hand is compared with the caller's. " +
-            "Nobody may touch the caller's cards — the engine will not let you.",
+        body = "You, and the two who did not call, are the coalition: one turn each, and only " +
+            "your single best hand is compared with the caller's — so it is a team against " +
+            "one hand. At a real table you would talk it over and pool what you know. Nobody " +
+            "may touch the caller's cards, and the game will not let you try.",
         point = Target.Seat(view.vintoCallerId!!),
         talkId = "coalition",
     )
@@ -462,10 +464,11 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         "session" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
         title = "And that is one round",
-        body = "A game is rounds, one after another, with those points carried between them — " +
-            "around a table, until the time is up. Whoever has the most then comes first and " +
-            "takes 5 game points, second takes 3, third takes 2. A round won by three points " +
-            "counts the same whether you won it by one or by twenty.",
+        body = "A game is rounds, one after another, with those points carried between them, " +
+            "played to a clock somebody agrees beforehand — half an hour is usual. When the " +
+            "time is up the round in progress is finished, and whoever has the most points " +
+            "comes first for 5 game points, second for 3, third for 2. A round won by three " +
+            "counts the same whether you won it by one point or by twenty.",
         talkId = "session",
     )
 

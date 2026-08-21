@@ -1,5 +1,11 @@
 # Vinto — Official Rules (Markdown Extraction)
 
+> Transcribed from the official composite rules PDF (*Vinto — Official Composite*, 4 pages).
+> Where this file and that document disagree, the PDF wins and this file is the bug. Where the
+> **engines** and the PDF disagree, see "Where the implementation differs" at the foot of this
+> file — those are open decisions, because a rules change has to land in both engines and
+> regenerate the parity corpus.
+
 ## Objective
 
 Players aim to minimize the total value of their hand.
@@ -73,10 +79,14 @@ flowchart TD
 
 - Standard 52-card deck + 2 Jokers (total 54 cards).
 - For 4–5 players.
-- Each player is dealt **5 cards face-down**.
+- Each player is dealt **5 cards face-down**, arranged in a row in front of them.
 - Players may peek at **any 2** of their own cards once, then keep them face-down.
-- Remaining cards form a **draw pile**.
-- Place one card face-up to form the **discard pile**.
+- Remaining cards form the face-down **draw pile**.
+- The **discard pile is formed by the first card played or discarded** — the deal does not
+  place one there. (An earlier version of this document said it did; the official composite
+  does not, and `initializeGame` starts the pile empty.)
+- The physical game also has **6 "Kind Reminder" cards** so players can look up what a rank
+  does. In this app the **?** in the header is that card.
 
 ---
 
@@ -85,8 +95,8 @@ flowchart TD
 - **2–6** → Value = rank; no action.
 - **7, 8** → Value = 7 or 8; action = peek one of your own cards.
 - **9, 10** → Value = 9 or 10; action = peek one card of another player.
-- **Jack (J)** → Value = 10; action = swap any two facedown cards from two different players.
-- **Queen (Q)** → Value = 10; action = peek any two cards from two different players, then optionally swap them.
+- **Jack (J)** → Value = 10; action = swap any **two cards on the table**, face-down.
+- **Queen (Q)** → Value = 10; action = check any **two cards**, then swap them if you want.
 - **King (K)** → Value = 0; action = declare the value of any card and play its action.
 - **Ace (A)** → Value = 1; action = choose a player to draw one card from the deck face-down.
 - **Joker** → Value = −1; no action.
@@ -107,7 +117,8 @@ flowchart TD
 
 ### Option B — Take from Discard
 
-- Allowed only if the top discard is an **unused action card (7–K)**.
+- Allowed only if the top discard is an **action card (7–K) whose action has not been used**.
+  Note the range: the official text says 7–K, which does not include the Ace.
 - Player must play its action immediately.
 - Card **cannot** be swapped into hand.
 
@@ -115,9 +126,15 @@ flowchart TD
 
 ## Reaction: Toss In
 
-- After a card is placed on discard, any player may immediately toss in a card of the **same rank**.
-- Tossed-in card’s action resolves immediately, while action is still optional.
-- If wrong rank → player takes back their card and draws **1 penalty card face-down**, also no more tossin available during this round.
+- **During any other player's turn**, immediately after a card is placed on the discard pile,
+  a player who believes they hold the same rank may toss it in face-up on top and perform its
+  action at once.
+- If wrong → they take the card back and draw **1 penalty card face-down**.
+
+> **The implementation differs here, twice.** The engines let the player whose turn it is toss
+> into their own discard (171 such actions appear in the parity corpus), and they bar a player
+> from tossing in again for the rest of the round after a wrong attempt, which the official
+> rules do not say. See "Where the implementation differs" below.
 
 ---
 
@@ -126,6 +143,8 @@ flowchart TD
 - At the **end of a player’s turn**, they may declare **“Vinto”**.
 - This triggers the **Final Round**:
   - Each other player (the **Coalition**) takes exactly one more turn.
+  - The Coalition **may work together and share information** to help one of them beat the
+    Vinto player — only their single best hand is compared, so it is one team against one hand.
   - During Final Round, **no one may interact** with the Vinto caller’s cards.
 
 ---
@@ -136,19 +155,41 @@ flowchart TD
 2. Compute totals (sum of values).
 3. Compare the Vinto caller’s total vs the **lowest Coalition total**:
 
-- **If Vinto < Coalition lowest** → Vinto +3 points; each Coalition −1.
-- **If Coalition lowest < Vinto** → Vinto −1; each Coalition +3.
-- **If tie** → Vinto +3; Coalition 0.
+- **If the Vinto player wins** (their total ≤ the lowest Coalition total) → Vinto **+3**; each
+  Coalition player **−1**.
+- **If the Coalition wins** (lowest Coalition total < Vinto's) → Vinto **−1**; each Coalition
+  player **+3**.
+- **If they are level** (lowest Coalition total = Vinto's) → Vinto **+3**; each Coalition player
+  **0**.
+
+The second and third bullets settle the first: "≤" includes a tie, and a tie is the case where
+the Coalition takes nothing rather than losing a point.
 
 ---
 
 ## Game End
 
-- Play continues for a **set time** (e.g., 30 minutes).
-- At time limit, finish the current round.
-- Rank players by cumulative score.
-- Award **game points** by rank:
-  - 1st = 5
-  - 2nd = 3
-  - 3rd = 2
-- Player with highest game points wins.
+- Play continues for a **pre-agreed time** (e.g., 30 minutes).
+- When time is up, the current round is completed and players tally their cumulative scores.
+- Rank players and award **game points** by rank: 1st = **5**, 2nd = **3**, 3rd = **2**.
+- The player with the most **game points** wins.
+
+> **Ambiguity in the source.** §8.2 says players are "ranked from lowest total score to
+> highest", which with +3 / −1 round scoring would rank the worst player first. The engines
+> rank by cumulative round points, highest first, which is the only reading consistent with
+> §8.1.
+
+---
+
+## Where the implementation differs
+
+Found by reading the official composite against the engines — these are shared with the
+TypeScript engine, not Kotlin-only. Listed so nobody has to rediscover them, and so changing
+one is a decision rather than a surprise.
+
+| # | Official rule | What the engines do | Cost of matching |
+| --- | --- | --- | --- |
+| 1 | A wrong toss-in costs a penalty card | Also bars that player from tossing in for the rest of the round | Loosening. No recorded action depends on it (0 in the corpus) |
+| 2 | Toss-ins happen "during any other player's turn" | The player whose turn it is may toss into their own discard | Tightening. **171 corpus actions** become illegal: both engines and all 50 recordings would need regenerating |
+| 3 | Jack swaps any two cards; Queen checks any two | Both require the two cards to belong to different players | Loosening. Corpus-safe |
+| 4 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Tightening. **4 corpus actions** become illegal; corpus regeneration |

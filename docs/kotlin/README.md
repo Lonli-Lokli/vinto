@@ -770,6 +770,17 @@ Audited beat by beat against `docs/game-engine/VINTO_RULES.md`:
 | A session is rounds; 5 / 3 / 2 game points by rank | the session beat |
 | The deck running out and the pile going back into it | help sheet ("what the table is telling you") |
 
+Re-audited against the **official composite PDF** (the 4-page rules document) rather than only
+against the repo's markdown, which turned out to be wrong in places. Three more rules were
+added to the lesson as a result: the coalition **may confer and pool what they know**, the
+**?** is the reminder card the boxed game ships one of per player, and a session is played to
+**a clock agreed beforehand** before the 5 / 3 / 2 game points are awarded.
+
+Four places where the **engines** differ from the official text are listed at the foot of
+`docs/game-engine/VINTO_RULES.md`, with what each would cost to fix. Two are loosenings and
+corpus-safe; two are tightenings that would invalidate recorded actions (171 and 4 of them) and
+so need both engines changed and all fifty recordings regenerated.
+
 Two things worth knowing about that table:
 
 - The scoring line **was wrong** until it was audited: it said a caller who finishes lower
@@ -777,11 +788,10 @@ Two things worth knowing about that table:
   the others a point each — nothing is what a *tie* costs them. `TeachScriptTest` now pins all
   three outcomes, because a tutorial that teaches a scoring rule incorrectly is worse than one
   that skips it: the player believes it.
-- **The engine deals no face-up card to start the discard pile**, which `VINTO_RULES.md` §
-  Components asks for ("Place one card face-up to form the discard pile"). `initializeGame`
-  starts it empty, faithfully to the TypeScript it was ported from — so this is a question
-  about the two engines rather than about the lesson, and changing it would move every hash in
-  the parity corpus.
+- An earlier pass recorded a deviation here that was not one: the repo's markdown said the deal
+  places a card face up to start the discard pile, and the engine does not. The **official PDF
+  agrees with the engine** — "The Discard Pile is formed by the first card played or discarded"
+  — so the markdown was the bug, and it has been corrected.
 
 ## 6h. Words, and where they live
 

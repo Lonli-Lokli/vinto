@@ -115,7 +115,7 @@ class TeachScriptTest {
         val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "coalition")))
         assertEquals("coalition", lesson.talkId)
         assertTrue(
-            lesson.body.contains("best single hand") && lesson.body.contains("caller's cards"),
+            lesson.body.contains("single best hand") && lesson.body.contains("caller's cards"),
             "both halves of the rule: only the best hand counts, and the caller is untouchable",
         )
     }
