@@ -1,7 +1,9 @@
 package game.vinto.app
 
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -28,10 +30,10 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("Play").assertIsDisplayed()
-        onNodeWithText("Play online").assertIsDisplayed()
-        onNodeWithText("How to play").assertIsDisplayed()
-        onNodeWithText("Settings").assertIsDisplayed()
+        button("Play").assertIsDisplayed()
+        button("Play online").assertIsDisplayed()
+        button("How to play").assertIsDisplayed()
+        button("Settings").assertIsDisplayed()
     }
 
     /**
@@ -43,14 +45,14 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("Play online").performClick()
+        button("Play online").performClick()
         waitForIdle()
 
         onNodeWithText("Not in this build").assertIsDisplayed()
-        onNodeWithText("Fair enough").performClick()
+        button("Fair enough").performClick()
         waitForIdle()
 
-        onNodeWithText("Play").assertIsDisplayed()
+        button("Play").assertIsDisplayed()
     }
 
     /** A setting changed is a setting written down, or it is not a setting. */
@@ -60,16 +62,16 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = vault) } }
         waitForIdle()
 
-        onNodeWithText("Settings").performClick()
+        button("Settings").performClick()
         waitForIdle()
-        onNodeWithText("Calm").performClick()
+        button("Calm").performClick()
         waitForIdle()
 
         assertEquals(Pace.CALM, vault.loadSettings().pace, "the choice reached the vault")
 
-        onNodeWithText("Back").performClick()
+        button("Back").performClick()
         waitForIdle()
-        onNodeWithText("Play").assertIsDisplayed()
+        button("Play").assertIsDisplayed()
     }
 
     /**
@@ -81,11 +83,11 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("How to play").performClick()
+        button("How to play").performClick()
         waitForIdle()
 
         onNodeWithText("Four players, five cards each").assertIsDisplayed()
-        onNodeWithText("Go on").assertIsDisplayed()
+        button("Go on").assertIsDisplayed()
     }
 
     /**
@@ -97,7 +99,7 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("How to play").performClick()
+        button("How to play").performClick()
         waitForIdle()
 
         onNodeWithText("Look at two of your cards").assertIsDisplayed()
@@ -106,4 +108,12 @@ class MenuUiTest {
     private companion object {
         const val FIXED_SEED = 20260819L
     }
+
+    /**
+     * A button, by the words it was given.
+     *
+     * The face of a button is stamped in caps — `GameButton` uppercases it — while the name
+     * it answers to stays as written, for screen readers and for these cases.
+     */
+    private fun ComposeUiTest.button(label: String) = onNodeWithContentDescription(label)
 }

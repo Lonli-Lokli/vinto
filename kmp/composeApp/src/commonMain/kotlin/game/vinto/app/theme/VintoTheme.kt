@@ -7,6 +7,8 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -73,6 +75,39 @@ fun ColorScheme.feltGradient(): List<Color> =
     if (isDarkFelt()) listOf(FeltDarkTop, FeltDarkBottom) else listOf(FeltLightTop, FeltLightBottom)
 
 fun ColorScheme.feltEdge(): Color = if (isDarkFelt()) FeltRimDark else FeltRimLight
+
+/**
+ * The lamp over the table.
+ *
+ * A vertical gradient says "gradient"; a card table lit from above says *table*. This is the
+ * pool of light the cloth is lit by — brightest a third of the way down, where the piles sit,
+ * falling off towards the rim — laid over [feltGradient] rather than replacing it, so the
+ * cloth keeps its colour and gains a shape.
+ */
+fun ColorScheme.feltLamp(radius: Float): Brush = Brush.radialGradient(
+    colorStops = arrayOf(
+        0f to Color.White.copy(alpha = if (isDarkFelt()) LAMP_DARK else LAMP_LIGHT),
+        LAMP_MID to Color.White.copy(alpha = LAMP_FADE),
+        1f to Color.Transparent,
+    ),
+    center = Offset(radius * LAMP_X, radius * LAMP_Y),
+    radius = radius,
+)
+
+/** And the shadow the rim casts back onto the cloth, which is what makes it a rim. */
+fun ColorScheme.feltShade(): Brush = Brush.verticalGradient(
+    0f to Color.Black.copy(alpha = SHADE),
+    SHADE_DEPTH to Color.Transparent,
+)
+
+private const val LAMP_DARK = 0.055f
+private const val LAMP_LIGHT = 0.085f
+private const val LAMP_FADE = 0.02f
+private const val LAMP_MID = 0.55f
+private const val LAMP_X = 1f
+private const val LAMP_Y = 0.85f
+private const val SHADE = 0.22f
+private const val SHADE_DEPTH = 0.06f
 
 /**
  * Anything written *on* the felt.
@@ -195,19 +230,25 @@ private val Mint = Color(0xFF6FD3A6)
 private val Amber = Color(0xFFF2C14E)
 
 // Slate: the dark scheme's rail, and the table's furniture in both.
-private val SlateFill = Color(0xFF1B2430)
-private val SlateInk = Color(0xFFF1F5F9)
-private val SlateInkDim = Color(0xFFA9B6C4)
-private val SlateLine = Color(0xFF33404F)
-private val SlateEdge = Color(0xFF6E8093)
+//
+// Warm, not blue. The old values were a blue-grey — #1B2430 and a blue-white ink — which is
+// the neutral every dashboard and banking app is built from, and it is most of what made a
+// green card table read as a dark-mode form. A card room is lit by a warm lamp over a green
+// cloth: the darks go to charcoal with a green cast, and the ink to cream. Nothing else
+// about the design changed and the whole thing stopped looking like software.
+private val SlateFill = Color(0xFF19211C)
+private val SlateInk = Color(0xFFF3EFE6)
+private val SlateInkDim = Color(0xFFB3B5A6)
+private val SlateLine = Color(0xFF2E3830)
+private val SlateEdge = Color(0xFF6F7A6E)
 
 // Paper: the light scheme's rail. Warm rather than white, so the cards stay the brightest
 // thing on the screen — they are what a player is trying to read.
 private val PaperFill = Color(0xFFF4F1E8)
-private val PaperInk = Color(0xFF14181B)
-private val PaperInkDim = Color(0xFF4C555E)
+private val PaperInk = Color(0xFF191A15)
+private val PaperInkDim = Color(0xFF54584A)
 private val PaperLine = Color(0xFFD8D4C8)
-private val PaperEdge = Color(0xFF787E84)
+private val PaperEdge = Color(0xFF7A7C6C)
 private val DeepGold = Color(0xFF7A5C10)
 private val DeepBrand = Color(0xFF10703F)
 
@@ -229,6 +270,7 @@ private const val LOW_LUMINANCE = 1.0f
 fun VintoTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = if (dark) DarkScheme else LightScheme,
+        typography = vintoTypography(),
         content = content,
     )
 }

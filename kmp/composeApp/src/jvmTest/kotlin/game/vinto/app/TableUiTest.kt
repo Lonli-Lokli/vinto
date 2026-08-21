@@ -1,18 +1,19 @@
 package game.vinto.app
 
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.game.GameScreen
+import game.vinto.app.theme.VintoTheme
 import game.vinto.client.LocalGame
 import game.vinto.client.MemoryVault
 import game.vinto.client.Pace
-import game.vinto.app.theme.VintoTheme
 import game.vinto.shapes.Difficulty
 import kotlin.test.Test
 
@@ -35,8 +36,8 @@ class TableUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("Play").assertIsDisplayed()
-        onNodeWithText("Play").performClick()
+        button("Play").assertIsDisplayed()
+        button("Play").performClick()
         waitForIdle()
 
         // The deal: four seats, and the table asking for the two setup peeks.
@@ -48,16 +49,16 @@ class TableUiTest {
 
         onNodeWithContentDescription("You, card 2").performClick()
         waitForIdle()
-        onNodeWithText("Start the round").performClick()
+        button("Start the round").performClick()
         waitForIdle()
 
         onNodeWithText("Your turn").assertIsDisplayed()
-        onNodeWithText("Draw a card").performClick()
+        button("Draw a card").performClick()
         waitForIdle()
 
         // Something was drawn, and the panel offers what to do with it. Which card it is
         // depends on the seed, so the assertion is on the choice rather than on the rank.
-        onNodeWithText("Throw it away").assertIsDisplayed()
+        button("Throw it away").assertIsDisplayed()
     }
 
     @Test
@@ -83,8 +84,8 @@ class TableUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = vault) } }
         waitForIdle()
 
-        onNodeWithText("Continue").assertIsDisplayed()
-        onNodeWithText("Continue").performClick()
+        button("Continue").assertIsDisplayed()
+        button("Continue").performClick()
         waitForIdle()
 
         onNodeWithText("Look at two of your cards").assertIsDisplayed()
@@ -96,11 +97,19 @@ class TableUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        onNodeWithText("Play").assertIsDisplayed()
+        button("Play").assertIsDisplayed()
         onAllNodesWithText("Continue").assertCountEquals(0)
     }
 
     private companion object {
         const val FIXED_SEED = 20260819L
     }
+
+    /**
+     * A button, by the words it was given.
+     *
+     * The face of a button is stamped in caps — `GameButton` uppercases it — while the name
+     * it answers to stays as written, for screen readers and for these cases.
+     */
+    private fun ComposeUiTest.button(label: String) = onNodeWithContentDescription(label)
 }

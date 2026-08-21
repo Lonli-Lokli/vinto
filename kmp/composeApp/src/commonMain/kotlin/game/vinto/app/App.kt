@@ -97,7 +97,6 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
                         is Screen.Home -> HomeScreen(
                             settings = settings,
                             canContinue = here.canContinue,
-                            onDifficulty = { change(settings.copy(difficulty = it)) },
                             go = HomeActions(
                                 continueGame = {
                                     LocalGame.resume(vault, Dispatchers.Default)?.let {

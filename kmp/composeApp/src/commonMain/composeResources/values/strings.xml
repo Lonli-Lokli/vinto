@@ -24,7 +24,8 @@
 
     <!-- ================================================================ home -->
     <string name="home_tagline">Lowest hand wins.</string>
-    <string name="home_solo_title">Single player · three bots</string>
+    <!-- `%1$s` is the bot difficulty, which is chosen in Settings and only shown here. -->
+    <string name="home_solo_title">Single player · three bots · %1$s</string>
     <string name="home_continue">Continue</string>
     <string name="home_new_game">New game</string>
     <string name="home_play">Play</string>

@@ -144,9 +144,18 @@ fun CardFace(
 
     Box(
         modifier = modifier
-            .sizeIn(
-                minWidth = if (onClick != null) TapTarget else scale.footprintWidth(state.turned),
-                minHeight = scale.footprintHeight(state.turned),
+            // The footprint, fixed, and never smaller than a thumb.
+            //
+            // It used to be a pair of *minimums*, and a turned card came out square: the
+            // picture inside is measured unrotated — 38 wide by 53 tall — because a rotation
+            // is drawn rather than laid out, so a minimum height of 38 and a child of 53 gave
+            // a box of 53 by 53. Five of those need a third more height than five cards do,
+            // which is why the side seats ran out of table. Fixed, so it is also the same
+            // size whether or not the card can be tapped at this moment — a card that grew
+            // by four points when it became touchable would nudge the whole line.
+            .size(
+                width = maxOf(scale.footprintWidth(state.turned), TapTarget),
+                height = maxOf(scale.footprintHeight(state.turned), TapTarget),
             )
             .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,

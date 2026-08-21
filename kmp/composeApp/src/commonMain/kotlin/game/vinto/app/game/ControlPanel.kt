@@ -28,6 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -36,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
 import game.vinto.client.Move
 import game.vinto.client.Table
@@ -73,8 +79,31 @@ fun ControlPanel(
 ) {
     val table = state.table
     val stage = LocalStage.current
+    val edge = MaterialTheme.colorScheme.feltEdge()
     Surface(
-        modifier = modifier.fillMaxWidth().height(height),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            // The moulding between the cloth and the rail.
+            //
+            // Two fills meeting is a *layout*; a table has a beading where the felt is
+            // tucked under the edge, and drawing it is what stops the bottom third of the
+            // screen reading as a panel stuck below a picture of a game. Four strokes: the
+            // dark seam the cloth disappears into, the lit top face of the moulding, and
+            // the shadow it throws down onto the rail.
+            .drawBehind {
+                val seam = Seam.toPx()
+                drawRect(SeamDark, size = Size(size.width, seam))
+                drawRect(edge, topLeft = Offset(0f, seam), size = Size(size.width, seam))
+                drawRect(
+                    Brush.verticalGradient(
+                        0f to SeamShadow,
+                        1f to Color.Transparent,
+                        startY = seam * 2,
+                        endY = seam * SHADOW_DEPTH,
+                    ),
+                )
+            },
         color = Rail.fill,
     ) {
         // The Surface's minimum has to reach the content for the centring below to have room
@@ -262,6 +291,12 @@ private const val FreelyOffered = 2
 
 /** How long a player has to sit still before the rule appears anyway. */
 private const val HesitationMs = 5_000L
+
+/** The beading between felt and rail: thin, and the whole illusion. */
+private val Seam = 2.dp
+private val SeamDark = Color(0x66000000)
+private val SeamShadow = Color(0x40000000)
+private const val SHADOW_DEPTH = 9f
 
 private val PromptSize = 17.sp
 private val DetailSize = 13.sp

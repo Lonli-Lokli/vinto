@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import game.vinto.app.theme.Wordmark
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,7 +72,8 @@ fun OpeningScreen() {
             Text(
                 text = stringResource(Res.string.app_name),
                 fontSize = TitleSize,
-                fontWeight = FontWeight.Black,
+                fontFamily = Wordmark,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onFelt(),
             )
             Text(

@@ -46,18 +46,26 @@ data class TableSizes(
     companion object {
         val Corner = 8.dp
 
+        /**
+         * Your own hand is drawn a third larger than anybody else's.
+         *
+         * It was four percent larger, which is worse than drawing them all the same: too
+         * close to read as a hierarchy and too far apart to read as consistent, so it just
+         * looked wrong. A third is a decision. It is also the hand that is *read* — the
+         * other three are face down and only ever counted — and the one every tap lands on.
+         */
         private val Roomy = TableSizes(
-            mine = CardScale(44.dp, 62.dp),
-            theirs = CardScale(44.dp, 62.dp),
-            side = CardScale(40.dp, 56.dp),
+            mine = CardScale(56.dp, 78.dp),
+            theirs = CardScale(42.dp, 59.dp),
+            side = CardScale(38.dp, 53.dp),
             avatar = 38.dp,
             avatarMine = 42.dp,
         )
 
         private val Tight = TableSizes(
-            mine = CardScale(38.dp, 53.dp),
-            theirs = CardScale(34.dp, 48.dp),
-            side = CardScale(31.dp, 44.dp),
+            mine = CardScale(48.dp, 67.dp),
+            theirs = CardScale(36.dp, 50.dp),
+            side = CardScale(32.dp, 45.dp),
             avatar = 30.dp,
             avatarMine = 34.dp,
         )

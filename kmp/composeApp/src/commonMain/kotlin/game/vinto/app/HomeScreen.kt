@@ -44,9 +44,9 @@ import game.vinto.app.art.home_tagline
 import game.vinto.app.art.home_teach
 import game.vinto.app.art.home_version
 import game.vinto.app.theme.ButtonTone
-import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Settings
@@ -84,14 +84,13 @@ data class HomeActions(
  * dealt into a fan as the screen arrives, so the menu is made of the thing being played.
  *
  * One tap to a table is the rule the arrangement is built around — the mode everybody wants is
- * the one already open, with its difficulty on show rather than behind a settings screen, and
+ * the one already open, and
  * the primary button under a thumb. Everything else is a row of quieter buttons beneath it.
  */
 @Composable
 fun HomeScreen(
     settings: Settings,
     canContinue: Boolean,
-    onDifficulty: (Difficulty) -> Unit,
     go: HomeActions,
 ) {
     Box(
@@ -109,7 +108,6 @@ fun HomeScreen(
             SoloPanel(
                 difficulty = settings.difficulty,
                 canContinue = canContinue,
-                onDifficulty = onDifficulty,
                 onContinue = go.continueGame,
                 onPlay = go.newGame,
             )
@@ -196,8 +194,9 @@ private fun Hero() {
 
         Text(
             stringResource(Res.string.app_name),
+            fontFamily = Wordmark,
             fontSize = TitleSize,
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.Bold,
             letterSpacing = TitleTracking,
             // On the felt, so the felt's ink. The rail's is a page colour, and a page colour
             // on green cloth is a black wordmark on a dark table in the light scheme.
@@ -223,7 +222,6 @@ private fun Hero() {
 private fun SoloPanel(
     difficulty: Difficulty,
     canContinue: Boolean,
-    onDifficulty: (Difficulty) -> Unit,
     onContinue: () -> Unit,
     onPlay: () -> Unit,
 ) {
@@ -238,18 +236,11 @@ private fun SoloPanel(
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             Text(
-                stringResource(Res.string.home_solo_title),
+                stringResource(Res.string.home_solo_title, stringResource(difficulty.label())),
                 fontSize = LabelSize,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 color = Rail.inkDim,
-            )
-
-            ChoiceRow(
-                options = Difficulty.entries,
-                selected = difficulty,
-                label = { stringResource(it.label()) },
-                onChoose = onDifficulty,
             )
 
             // Continuing comes first when there is something to continue. A game left

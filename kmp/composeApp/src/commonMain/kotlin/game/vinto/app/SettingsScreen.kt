@@ -13,10 +13,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,6 +47,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.stamped
 import game.vinto.client.Pace
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
@@ -93,14 +93,7 @@ fun SettingsScreen(
                 .padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Text(
-                stringResource(Res.string.settings_title),
-                fontSize = TitleSize,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-                color = MaterialTheme.colorScheme.onFelt(),
-                modifier = Modifier.padding(bottom = Tight),
-            )
+            Plaque(stringResource(Res.string.settings_title))
 
             Bots(settings, onChange)
             Pacing(settings, onChange)
@@ -190,28 +183,39 @@ private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
         title = stringResource(Res.string.settings_haptics),
         detail = stringResource(Res.string.settings_haptics_detail),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(
-                    if (settings.haptics) Res.string.settings_on else Res.string.settings_off,
-                ),
-                fontSize = BodySize,
-                color = Rail.inkDim,
-            )
-            Switch(
-                checked = settings.haptics,
-                onCheckedChange = { onChange(settings.copy(haptics = it)) },
-                colors = SwitchDefaults.colors(
-                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    uncheckedTrackColor = Rail.fill,
-                    uncheckedBorderColor = Rail.edge,
-                ),
-            )
-        }
+        ChoiceRow(
+            options = listOf(true, false),
+            selected = settings.haptics,
+            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
+            onChoose = { on -> onChange(settings.copy(haptics = on)) },
+        )
+    }
+}
+
+/**
+ * A screen's name, engraved rather than headed.
+ *
+ * Caps, letterspaced, and set between two hairlines that stop short of the edges — the way a
+ * name is cut into a brass plate screwed to a table. A left-aligned bold sentence is how a
+ * page announces itself; this is how an object is labelled, and the settings are meant to
+ * read as part of the table rather than as a page about it.
+ *
+ * Not in the wordmark face: this string is translated, and the wordmark carries no Cyrillic.
+ */
+@Composable
+private fun Plaque(title: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = Gap),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+        Text(
+            text = title.uppercase(),
+            style = stamped(size = PlaqueSize, weight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.secondary,
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
     }
 }
 
@@ -240,9 +244,9 @@ private fun Setting(title: String, detail: String, control: @Composable () -> Un
     }
 }
 
-private val TitleSize = 32.sp
+private const val PlaqueSize = 17
+
 private val TitleRowSize = 17.sp
-private val BodySize = 15.sp
 private val DetailSize = 13.sp
 /** Second-rank text on the felt. */
 private const val Quiet = 0.75f

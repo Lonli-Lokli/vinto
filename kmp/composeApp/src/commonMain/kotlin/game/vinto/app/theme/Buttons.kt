@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -86,12 +88,20 @@ fun GameButton(
                 horizontalArrangement = Arrangement.spacedBy(Gap),
             ) {
                 leading?.let { Text(it, fontSize = LabelSize) }
+                // Stamped rather than written: caps and letterspaced, the way the word on a
+                // chip or a plaque is cut into it. A button that reads like a sentence is a
+                // form control; one that reads like a stamp is part of a table.
                 Text(
-                    text = label,
+                    text = label.uppercase(),
+                    // Stamped for the eye, spoken as it was written: a screen reader handed
+                    // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a
+                    // property of the plaque rather than of the words.
+                    modifier = Modifier.semantics { contentDescription = label },
                     fontWeight = FontWeight.Bold,
                     fontSize = if (compact) CompactLabel else LabelSize,
                     letterSpacing = Tracking,
                     textAlign = TextAlign.Center,
+                    maxLines = 2,
                 )
             }
         }
@@ -114,10 +124,16 @@ enum class ButtonTone(val high: Color, val low: Color, val rim: Color, val ink: 
     PLAY(Color(0xFF198845), Color(0xFF0F6B34), Color(0xFF3FD07A), Color.White),
 
     /** Blue — take a card into a hand, start the round. */
-    KEEP(Color(0xFF2F6FE0), Color(0xFF1B4CAE), Color(0xFF5A94F0), Color.White),
+    KEEP(Color(0xFF2A62C8), Color(0xFF1A4499), Color(0xFF5A94F0), Color.White),
 
-    /** Charcoal — decline, discard, go back. The default, and the quietest. */
-    NEUTRAL(Color(0xFF39434F), Color(0xFF262E38), Color(0xFF525E6C), Color(0xFFDDE4EB)),
+    /**
+     * Charcoal — decline, discard, go back. The default, and the quietest.
+     *
+     * Warm charcoal, not the blue-grey it was: this is the tone most of the buttons on most
+     * of the screens are, so it sets the temperature of the whole app, and a blue-grey slab
+     * on green cloth is the exact colour of a settings screen.
+     */
+    NEUTRAL(Color(0xFF3B4038), Color(0xFF272B24), Color(0xFF5A6152), Color(0xFFE9E5D9)),
 
     /** Gold — the move that ends the round for everybody. */
     STAKES(Color(0xFFE0A32A), Color(0xFFB37810), Color(0xFFF3C860), Color(0xFF201603)),
@@ -146,4 +162,4 @@ private val CompactPadV = 8.dp
 private val Gap = 8.dp
 private val LabelSize = 15.sp
 private val CompactLabel = 14.sp
-private val Tracking = 0.3.sp
+private val Tracking = 1.1.sp

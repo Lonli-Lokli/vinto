@@ -25,8 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,7 +48,10 @@ import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.theme.Brand
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.feltLamp
+import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Anchor
@@ -70,6 +76,7 @@ private val Rim = 2.dp
 /** How far the card under the top one shows from behind it. */
 private val Peek = 5.dp
 private val HelpSize = 30.dp
+private val WordmarkSize = 19.sp
 
 /** The deck badge the wordmark sits beside: a dark pill in both schemes, like the plates. */
 private val DeckBadge = Color(0xFF14351F)
@@ -174,8 +181,9 @@ private fun TableHeader(
         // reads as dark-on-dark here.
         Text(
             stringResource(Res.string.app_name),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Black,
+            fontFamily = Wordmark,
+            fontSize = WordmarkSize,
+            fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp,
             color = Rail.brand,
         )
@@ -245,11 +253,20 @@ private fun Felt(
     modifier: Modifier = Modifier,
     content: @Composable androidx.compose.foundation.layout.BoxWithConstraintsScope.() -> Unit,
 ) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(FeltCorner)
     BoxWithConstraints(
         modifier = modifier
-            .clip(RoundedCornerShape(FeltCorner))
-            .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient()))
-            .border(Rim, MaterialTheme.colorScheme.feltEdge(), RoundedCornerShape(FeltCorner)),
+            .clip(shape)
+            .background(Brush.verticalGradient(scheme.feltGradient()))
+            // Three passes over the same cloth, and together they are the difference between
+            // a green rectangle and a lit surface: the lamp above the middle of the table,
+            // the shadow the rim throws back onto the felt just inside it, and the rim.
+            .drawBehind {
+                drawRect(scheme.feltLamp(size.minDimension))
+                drawRect(scheme.feltShade())
+            }
+            .border(Rim, scheme.feltEdge(), shape),
         content = content,
     )
 }
@@ -325,11 +342,7 @@ private fun SideSeat(
         // table. It is not only decoration: turned, a card is wider than it is tall, so five
         // of them stack down the edge in the height a phone actually has, and the seat reads
         // as facing inwards rather than as a second copy of your own hand.
-        FlowColumn(
-            verticalArrangement = Arrangement.spacedBy(Tight),
-            horizontalArrangement = Arrangement.spacedBy(Tight),
-            maxItemsInEachColumn = HAND_ROW,
-        ) {
+        HandLine(vertical = true, modifier = Modifier.weight(1f, fill = false)) {
             seat.cards.forEachIndexed { position, card ->
                 SeatCard(seat, position, card, Rendering(view, table, sizes.side), onMove, turned = true)
             }
@@ -365,13 +378,8 @@ private fun MySeat(
 }
 
 /**
- * A hand, wrapping onto a second row rather than running off the edge.
- *
- * Five cards is the deal and not the limit — every wrong declaration and every wrong toss-in
- * adds one, and a hand of eight is an ordinary way to lose. A fixed row would push the extras
- * off the screen, which is the one place a player must be able to count.
+ * A hand: one line of cards, however many there are.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Hand(
     seat: PlayerSeatView,
@@ -381,20 +389,70 @@ private fun Hand(
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Tight),
-        verticalArrangement = Arrangement.spacedBy(Tight),
-        maxItemsInEachRow = HAND_ROW,
-    ) {
+    HandLine(vertical = false, modifier = modifier) {
         seat.cards.forEachIndexed { position, card ->
             SeatCard(seat, position, card, Rendering(view, table, scale), onMove)
         }
     }
 }
 
-/** Five to a row: the size of a dealt hand, so the deal never wraps and a penalty does. */
-private const val HAND_ROW = 5
+/**
+ * Cards laid along one axis, in a line whose length never exceeds the room it was given.
+ *
+ * Five cards is the deal and not the limit: a wrong guess, a wrong toss-in and an Ace each
+ * add one, and nothing but the end of the round takes any away, so a hand of eight or nine
+ * is an ordinary way to lose rather than a stress test. What was here before wrapped onto a
+ * second row — and a second row of five is a hand that is twice as tall, which pushed the
+ * middle of the table down until the side seats had a single card's height to lay nine cards
+ * in. They wrapped sideways, off the felt, and the fourth player disappeared from the game
+ * altogether. `CrowdedTableTest` measures exactly that and would fail again.
+ *
+ * So the line keeps its footprint instead: cards sit shoulder to shoulder while they fit,
+ * and slide over each other when they do not, the way a hand of cards actually behaves in a
+ * hand. Never past halfway, so every card keeps a strip of itself to be tapped by — and the
+ * strip belongs to the card on top, because that is the one whose face you can see.
+ */
+@Composable
+private fun HandLine(
+    vertical: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val cards = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
+        if (cards.isEmpty()) return@Layout layout(0, 0) {}
+
+        val along = { p: Placeable -> if (vertical) p.height else p.width }
+        val across = { p: Placeable -> if (vertical) p.width else p.height }
+        val card = cards.maxOf(along)
+        val room = if (vertical) constraints.maxHeight else constraints.maxWidth
+        val gap = Tight.roundToPx()
+
+        val pitch = when {
+            cards.size == 1 -> 0
+            card * cards.size + gap * (cards.size - 1) <= room -> card + gap
+            else -> ((room - card) / (cards.size - 1))
+                .coerceAtLeast((card * MIN_SHOWING).toInt())
+        }
+        val length = card + pitch * (cards.size - 1)
+        val breadth = cards.maxOf(across)
+
+        layout(
+            width = if (vertical) breadth else length,
+            height = if (vertical) length else breadth,
+        ) {
+            cards.forEachIndexed { i, card ->
+                // In order, so a card that overlaps its neighbour is the later one — and in
+                // Compose the last placed is both the one drawn on top and the one a finger
+                // lands on, which is what makes the exposed strip belong to the right card.
+                if (vertical) card.place(0, i * pitch) else card.place(i * pitch, 0)
+            }
+        }
+    }
+}
+
+/** How much of a card stays out from under the next one when a hand runs out of room. */
+private const val MIN_SHOWING = 0.55f
 
 @Composable
 private fun Plate(
