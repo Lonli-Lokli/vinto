@@ -20,8 +20,12 @@ import game.vinto.client.Question
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.GameAction
+import game.vinto.shapes.PlayerIdPayload
+import game.vinto.shapes.PositionPayload
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
 
 /**
  * Everything a thumb has to hit, measured.
@@ -51,6 +55,52 @@ class TouchTargetTest {
         assertTrue(box.width >= TAP && box.height >= TAP, tooSmall(what, box))
     }
 
+    /**
+     * And they are plaques rather than pills: wider than they are tall, and all one size.
+     *
+     * Left to size themselves the ranks came out narrow — a "2" is one character wide, and
+     * only the height was being held — so a King's fourteen answers read as a row of tally
+     * marks. Sharing the row evenly is also what keeps "JOKER" from wrapping and making its
+     * row taller than the other.
+     */
+    @Test
+    fun theRankChipsAreAllTheSameSizeAndWiderThanTall() = runComposeUiTest {
+        val view = drawn()
+        setContent {
+            VintoTheme {
+                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                    TableScreen(
+                        state = TableState(view, tableFor(view, Question.CallRank(0)), null, emptyList(), 1),
+                        layout = TableLayout.forScreen(PHONE_H),
+                        onMove = {},
+                        onHelp = {},
+                        onReport = {},
+                        onDeck = {},
+                    )
+                }
+            }
+        }
+        waitForIdle()
+
+        val ranks = tapTargets().filter { (what, _) -> what in RANKS }
+        assertTrue(ranks.size == RANKS.size, "all fourteen ranks: ${ranks.map { it.first }}")
+
+        val widths = ranks.map { it.second.width }
+        val heights = ranks.map { it.second.height }.toSet()
+
+        // A point either way, which is a row of seven divided into a width that is not a
+        // multiple of seven, and not something a player can see.
+        assertTrue(
+            widths.max() - widths.min() <= 1f,
+            "every rank is the same width: ${widths.toSet()}",
+        )
+        assertTrue(heights.size == 1, "and the same height, so no label wraps: $heights")
+        assertTrue(
+            widths.min() > heights.first(),
+            "a plaque is wider than it is tall: ${widths.min()} x ${heights.first()}",
+        )
+    }
+
     /** And the header, whose controls are the smallest things drawn. */
     @Test
     fun theHeaderControlsCanBeHit() = eachTapTarget(Question.None, header = true) { what, box ->
@@ -71,7 +121,7 @@ class TouchTargetTest {
         header: Boolean = false,
         check: (String, Rect) -> Unit,
     ) = runComposeUiTest {
-        val view = teachingSession().view.value
+        val view = drawn()
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
@@ -95,6 +145,28 @@ class TouchTargetTest {
         targets.forEach { (what, box) -> check(what, box) }
     }
 
+    /**
+     * A table with a card drawn and waiting to be placed.
+     *
+     * Not the dealt table: a question like [Question.CallRank] is answered against a *pending*
+     * card, and asking it of a table that has none quietly produces the ordinary turn instead.
+     * This case measured that turn for a while and reported that all fourteen rank chips were
+     * the right size, there being none.
+     */
+    private fun drawn(): PlayerView {
+        lateinit var view: PlayerView
+        runTest {
+            val session = teachingSession()
+            val me = session.playerId
+            session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+            session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+            session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+            session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+            view = session.view.value
+        }
+        return view
+    }
+
     private fun ComposeUiTest.tapTargets(): List<Pair<String, Rect>> =
         onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick))
             .fetchSemanticsNodes()
@@ -107,6 +179,9 @@ class TouchTargetTest {
 
     private companion object {
         const val TAP = 44f
+        val RANKS = listOf(
+            "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "Joker",
+        )
         const val HEADER = 44f
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp

@@ -389,8 +389,8 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
     val me = view.viewerId
 
     return Table(
-        prompt = "Name the card you are putting down? " +
-            "Right plays its action; wrong costs you a card.",
+        prompt = "Name the card you are putting down?",
+        detail = "Right plays its action; wrong costs you a card.",
         choices = listOf(
             Choice(
                 "Just Swap (No Declaration)",

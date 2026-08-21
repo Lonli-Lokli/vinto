@@ -101,7 +101,11 @@ fun GameButton(
                     fontSize = if (compact) CompactLabel else LabelSize,
                     letterSpacing = Tracking,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    // One line on a compact button: they sit in a grid, and a label that
+                    // wraps makes its own chip taller than the thirteen beside it. The size
+                    // and padding below are what make "JOKER" fit on one, which is the only
+                    // rank that does not fit trivially.
+                    maxLines = if (compact) 1 else 2,
                 )
             }
         }
@@ -157,9 +161,9 @@ private val MinTap = 50.dp
 private val CompactTap = 44.dp
 private val PadH = 16.dp
 private val PadV = 12.dp
-private val CompactPadH = 8.dp
+private val CompactPadH = 4.dp
 private val CompactPadV = 8.dp
 private val Gap = 8.dp
 private val LabelSize = 15.sp
-private val CompactLabel = 14.sp
+private val CompactLabel = 13.sp
 private val Tracking = 1.1.sp

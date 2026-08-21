@@ -44,6 +44,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
 import game.vinto.client.Move
+import game.vinto.client.RankChoice
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -154,29 +155,29 @@ fun ControlPanel(
             val crowded = table.ranks.isNotEmpty() || rows >= Crowded
             if (!crowded) RecentActions(state.recent.filterNot { it == table.prompt })
 
-            if (table.ranks.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Half),
-                    verticalArrangement = Arrangement.spacedBy(Half),
-                ) {
-                    table.ranks.forEach { rank ->
-                        GameButton(
-                            label = rank.rank.serialName,
-                            tone = ButtonTone.DECLARE,
-                            onClick = { onMove(rank.move) },
-                            modifier = Modifier.markedAs(stage, "rank:${rank.rank.serialName}"),
-                            compact = true,
-                        )
-                    }
-                }
-            }
+            RankGrid(table.ranks, stage, onMove)
 
             // A stakes move is set below a rule, as the web app sets Call Vinto below an
             // "or": it is not the next step in what you were doing, it is a different thing
             // to do, and the line is what stops a thumb finding it by accident.
             val (ordinary, stakes) = table.choices.partition { it.tone != Tone.STAKES }
-            ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
+
+            // Side by side under a rank grid, stacked everywhere else. Fourteen chips, a
+            // heading and two full-width buttons is more than the rail has: the last button
+            // was drawn six points tall against the bottom of the screen, which is a control
+            // that exists and cannot be pressed.
+            if (table.ranks.isNotEmpty() && ordinary.size > 1) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Half),
+                ) {
+                    ordinary.forEach { choice ->
+                        ChoiceButton(choice, onMove, Modifier.weight(1f))
+                    }
+                }
+            } else {
+                ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
+            }
 
             if (stakes.isNotEmpty()) {
                 Row(
@@ -262,14 +263,16 @@ private fun RecentActions(recent: List<String>) {
 }
 
 @Composable
-private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit) {
+private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modifier = Modifier) {
     GameButton(
         label = choice.label,
         tone = choice.tone.paint(),
         onClick = { onMove(choice.move) },
         // By its label, which is what the lesson knows it by — the model chose the words and
         // the coach quotes them, so a button the coach points at is the button on screen.
-        modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, "choice:${choice.label}"),
+        modifier = modifier
+            .fillMaxWidth()
+            .markedAs(LocalStage.current, "choice:${choice.label}"),
         leading = if (choice.tone == Tone.STAKES) "🏆" else null,
     )
 }
@@ -282,6 +285,42 @@ private fun Tone.paint(): ButtonTone = when (this) {
     Tone.STAKES -> ButtonTone.STAKES
     Tone.DECLARE -> ButtonTone.DECLARE
 }
+
+/**
+ * The fourteen answers to "name a card", in two rows of seven.
+ *
+ * Left to size themselves they came out as tall narrow pills — a "2" is one character wide
+ * and the button was only as wide as its padding, while the height was held at a thumb.
+ * Sharing each row out evenly makes them plaques instead: wider than they are tall, the same
+ * size whether they say 2 or Joker, and in the same place every time a King is played.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Unit) {
+    if (ranks.isEmpty()) return
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Half),
+        verticalArrangement = Arrangement.spacedBy(Half),
+        maxItemsInEachRow = RANKS_PER_ROW,
+    ) {
+        ranks.forEach { rank ->
+            GameButton(
+                label = rank.rank.serialName,
+                tone = ButtonTone.DECLARE,
+                onClick = { onMove(rank.move) },
+                modifier = Modifier
+                    .weight(1f)
+                    .markedAs(stage, "rank:${rank.rank.serialName}"),
+                compact = true,
+            )
+        }
+    }
+}
+
+/** Seven and seven: the fourteen ranks, in two rows that fill the rail's width. */
+private const val RANKS_PER_ROW = 7
 
 /** The number of full-width rows that leaves the rail no room for anything else. */
 private const val Crowded = 3

@@ -83,11 +83,15 @@ class ChoreographyTest {
 
     /**
      * A swap is two cards crossing, and the order is the point: the new one goes into the
-     * hand, the old one comes out onto the pile. They are one scene because they happen at
-     * once.
+     * hand, *then* the old one comes out onto the pile.
+     *
+     * Two scenes rather than one, which is a correction. Played together the pair reads as
+     * nothing at all — two cards passing at the same instant, over in a third of a second,
+     * and what the player sees is that the table changed. Played in order it is what a person
+     * does with their hands, and the beat between them is the one every pair of scenes gets.
      */
     @Test
-    fun aSwapIsOneSceneOfTwoCardsCrossing() = runTest {
+    fun aSwapIsTwoCardsCrossingInOrder() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -96,14 +100,17 @@ class ChoreographyTest {
         session.dispatch(GameAction.SwapCard(SwapCardPayload(session.playerId, 2)))
         runCurrent()
 
-        val scene = scenes.last().first()
-        assertEquals(2, scene.size, "one scene, two beats")
-
+        val move = scenes.last()
         val seat = Anchor.Seat(session.playerId, 2)
-        val (into, out) = scene.map { it as Beat.Move }
-        assertEquals(Anchor.Pending to seat, into.from to into.to)
+
+        val flights = move.flatten().filterIsInstance<Beat.Move>()
+        assertEquals(2, flights.size, "two cards move")
+        assertEquals(2, move.count { it.any { beat -> beat is Beat.Move } }, "one each, in turn")
+
+        val (into, out) = flights
+        assertEquals(Anchor.Pending to seat, into.from to into.to, "the drawn card goes in first")
         assertEquals(Rank.FIVE, into.card?.rank)
-        assertEquals(seat to Anchor.Discard, out.from to out.to)
+        assertEquals(seat to Anchor.Discard, out.from to out.to, "and the old one follows it out")
     }
 
     /**

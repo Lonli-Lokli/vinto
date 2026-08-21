@@ -255,7 +255,24 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     val verdict = verdictScene(action, penalty != null)
     val table = tableScene(before, after)
 
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty, table)
+    return mainScenes(action, main) + listOfNotNull(verdict, penalty, table)
+}
+
+/**
+ * The move, as one scene or as several.
+ *
+ * Everything is one scene — the beats of a move belong together and start together — except a
+ * swap, which is two cards passing each other and reads as nothing at all when they do it at
+ * the same instant. Split, it is what a person would do with their hands: the new card goes
+ * into the row, *then* the old one is laid face-up on the pile. The gap between them is
+ * `BETWEEN_SCENES_MS`, which is the same beat every other pair of scenes gets.
+ *
+ * The order comes from the choreography above, and it is already the right way round.
+ */
+private fun mainScenes(action: GameAction, main: Scene): List<Scene> = when {
+    main.isEmpty() -> emptyList()
+    action is GameAction.SwapCard -> main.map { listOf(it) }
+    else -> listOf(main)
 }
 
 /**
