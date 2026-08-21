@@ -74,6 +74,7 @@ import game.vinto.client.Target
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.cardInPlay
 import game.vinto.engine.discardTop
 import game.vinto.engine.discardUnder
 import game.vinto.shapes.Card
@@ -656,14 +657,10 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard)
 
-    // A card in play came off the table, so it is drawn on the table.
-    val inPlay = (view.pendingAction?.card as? CardView.Visible)?.card
-        ?.takeIf { view.pendingAction?.from == PendingCardOrigin.HAND }
-
     val face = pileFace(
         top = view.discardTop,
         under = view.discardUnder,
-        inPlay = inPlay,
+        inPlay = view.cardInPlay,
         landing = Anchor.Discard in stage.inFlight,
     )
 

@@ -8,6 +8,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PendingCardOrigin
+import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
 import kotlinx.serialization.SerialName
@@ -128,11 +129,12 @@ data class PlayerView(
  *
  * The rules, in the order they apply:
  *
- *  - **your own cards** only where `knownCardPositions` says you have looked;
- *  - **an opponent's card** only where your own `opponentKnowledge` records it — that is your
- *    memory of a peek, not a live window into their hand;
+ *  - **your own two cards during setup**, which the rules tell you to look at — and *only*
+ *    during setup. What a seat has since remembered is not sent: the engine knows it, the
+ *    player is supposed to;
  *  - **cards the current action has revealed to you**, and only to you: a Queen's peek is
- *    private to the player making it, so target cards are visible to the acting seat alone;
+ *    private to the player making it, so target cards are visible to the acting seat alone,
+ *    and only while the action is running;
  *  - **the coalition leader** sees every coalition member's hand — their own included, since
  *    the leader is a member — while the Vinto caller's stays hidden, which is the point of the
  *    coalition rule;
@@ -154,10 +156,9 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
     val viewerLeadsCoalition = state.vintoCallerId != null && state.coalitionLeaderId == playerId
     // Every hand is turned over once the game is scored.
     val everythingRevealed = state.phase == GamePhase.SCORING
+    val inSetup = state.phase == GamePhase.SETUP
 
     val seats = state.players.map { seat ->
-        val ownKnowledge = viewer?.opponentKnowledge?.get(seat.id)?.knownCards.orEmpty()
-
         // The coalition condition matches the web app's: a member is anyone with a coalition
         // list who is not the caller — which includes the leader's own hand.
         val seatIsCoalitionMember = seat.coalitionWith.isNotEmpty() && !seat.isVintoCaller
@@ -171,8 +172,17 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
                 // player's card showed it under `targets` and hid it in the hand.
                 revealedToViewer.contains(seat.id to position) -> true
                 viewerLeadsCoalition && seatIsCoalitionMember -> true
-                seat.id == playerId -> position in seat.knownCardPositions
-                ownKnowledge.containsKey(position) -> true
+                // The setup peek, and only during setup: the rules say look at two of your
+                // own, so for that phase they are yours to see.
+                //
+                // What is *not* here is the rest of the round. The engine remembers what
+                // every seat has learned — it must, for the bots and for scoring — and this
+                // used to send a seat its own remembered cards face-up for the whole round,
+                // with the screen politely declining to draw them. That is the wrong place
+                // for the rule to live: the client holds the answer and is trusted not to
+                // look, and a client we did not write is not trustworthy at all. Remembering
+                // your hand is the game; a client that cannot forget has already won it.
+                inSetup && seat.id == playerId -> position in seat.knownCardPositions
                 else -> false
             }
             if (visible) CardView.Visible(card) else CardView.Hidden
@@ -260,11 +270,34 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
 private fun revealedByCurrentAction(state: GameState, playerId: String): Set<Pair<String, Int>> {
     val pending = state.pendingAction ?: return emptySet()
     if (pending.playerId != playerId) return emptySet()
+    val viewer = state.players.firstOrNull { it.id == playerId }
 
     return pending.targets
-        .filter { it.card != null }
+        .filter { it.card != null || viewer.hasJustLearned(it.playerId, it.position, playerId) }
         .map { it.playerId to it.position }
         .toSet()
+}
+
+/**
+ * Whether the card this action is aimed at is one the viewer now knows.
+ *
+ * A Queen carries the cards it looked at on the action itself; a Seven does not — the engine
+ * records the peek by growing the looker's knowledge and leaves the target bare. So "what this
+ * action has shown me" is the two together: the card on the target, or a target the engine has
+ * just written into my memory.
+ *
+ * Reading knowledge *through the target* is what keeps it honest. The knowledge lasts the
+ * round and the target lasts the action, so a card is shown for exactly as long as the action
+ * that showed it — and a Jack, which swaps two cards without anybody looking, records no
+ * knowledge and so reveals nothing, which is the whole of that card.
+ */
+private fun PlayerState?.hasJustLearned(ownerId: String, position: Int, viewerId: String): Boolean {
+    if (this == null) return false
+    return if (ownerId == viewerId) {
+        position in knownCardPositions
+    } else {
+        opponentKnowledge?.get(ownerId)?.knownCards?.containsKey(position) == true
+    }
 }
 
 /**
@@ -301,3 +334,22 @@ val PlayerView.discardTop: Card? get() = discardPile.firstOrNull()
 
 /** The one under it, which shows as a sliver behind the top card. */
 val PlayerView.discardUnder: Card? get() = discardPile.getOrNull(1)
+
+/**
+ * The card whose action is being played, which is lying face up on the discard pile.
+ *
+ * Not the same thing as "a card is pending". A card that has just been drawn is pending and
+ * is *not* on the pile — it is in front of its player, being decided about. The moment its
+ * action is played it goes down on the pile, and everything that follows — the declaration a
+ * King asks for, the two cards a Queen looks at, the toss-in window that opens for its rank —
+ * happens with the card lying there for everyone to see.
+ *
+ * The engine models this by opening the toss-in window at that moment while keeping the card
+ * in `pendingAction` until the action resolves, which left the table with a window open for
+ * Kings and an empty discard pile under it. This is the same fact read from the view: it is
+ * on the pile, because that is where a card whose action you are watching actually is.
+ */
+val PlayerView.cardInPlay: Card?
+    get() = pendingAction
+        ?.takeIf { it.actionPhase != ActionPhase.CHOOSING_ACTION }
+        ?.let { (it.card as? CardView.Visible)?.card }

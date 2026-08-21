@@ -24,6 +24,9 @@ import kotlin.test.assertTrue
  */
 class ViewRedactionTest {
 
+    /** How many recordings the slower cases walk. Ten is a few thousand states. */
+    private val sample = 10
+
     private val recordings: List<Pair<String, GameRecording>> =
         File("../../../fixtures/recordings")
             .listFiles { file -> file.extension == "json" }
@@ -94,27 +97,69 @@ class ViewRedactionTest {
         }
     }
 
+    /**
+     * The counterweight to the leak test: a view that showed nothing would pass that one
+     * perfectly, so this asserts the things a seat is *supposed* to see.
+     *
+     * During setup, the two cards the rules tell you to look at.
+     */
     @Test
-    fun aSeatAlwaysSeesTheCardsItHasPeekedAt() {
-        // The redaction must not be so eager that it hides what a player legitimately knows —
-        // a view that shows nothing would pass the leak test perfectly.
+    fun aSeatSeesItsOwnTwoCardsWhileTheRulesSayToLookAtThem() {
         var confirmed = 0
-        for ((_, recording) in recordings.take(10)) {
-            for (state in statesOf(recording)) {
+        for ((_, recording) in recordings.take(sample)) {
+            for (state in statesOf(recording).filter { it.phase == GamePhase.SETUP }) {
                 for (seat in state.players) {
-                    val view = projectView(state, seat.id)
-                    val self = view.players.first { it.id == seat.id }
+                    val self = projectView(state, seat.id).players.first { it.id == seat.id }
                     for (position in seat.knownCardPositions) {
                         assertTrue(
                             self.cards[position] is CardView.Visible,
-                            "a seat could not see its own peeked card at $position",
+                            "a seat could not see its own peeked card at $position during setup",
                         )
                         confirmed++
                     }
                 }
             }
         }
-        assertTrue(confirmed > 1_000, "expected many peeked cards to check, saw $confirmed")
+        assertTrue(confirmed > 0, "expected setup peeks to check, saw $confirmed")
+    }
+
+    /**
+     * And once the round is running, it sees them no longer.
+     *
+     * The engine remembers what every seat has learned, because the bots and the scoring need
+     * it. Sending a seat its own remembered cards face-up put that memory in the client and
+     * left the *screen* responsible for not drawing it — which is no protection at all from a
+     * client we did not write, and remembering your own hand is most of what this game asks
+     * of you. What the view carries is `knownCardPositions`: which cards you have seen, which
+     * is public — everybody watches you peek — and not what they were.
+     */
+    @Test
+    fun aSeatIsNotSentItsOwnRememberedCardsOnceTheRoundStarts() {
+        var checked = 0
+        for ((name, recording) in recordings.take(sample)) {
+            for (state in statesOf(recording).filter { it.phase == GamePhase.PLAYING }) {
+                for (seat in state.players) {
+                    val view = projectView(state, seat.id)
+                    val self = view.players.first { it.id == seat.id }
+                    val shownNow = view.pendingAction
+                        ?.takeIf { it.playerId == seat.id }
+                        ?.targets
+                        ?.filter { it.playerId == seat.id }
+                        ?.map { it.position }
+                        .orEmpty()
+
+                    for (position in seat.knownCardPositions - shownNow.toSet()) {
+                        assertTrue(
+                            self.cards[position] !is CardView.Visible,
+                            "$name sent ${seat.id} its own card at $position, which it is only " +
+                                "supposed to remember",
+                        )
+                        checked++
+                    }
+                }
+            }
+        }
+        assertTrue(checked > 1_000, "expected many remembered cards to check, saw $checked")
     }
 
     @Test

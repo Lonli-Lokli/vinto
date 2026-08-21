@@ -279,11 +279,11 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         is GameAction.SkipPeek,
         is GameAction.SkipJackSwap,
         is GameAction.SkipQueenSwap,
-        -> discardScene(before, after)
+        -> discardScene()
 
         // The King says what it is pretending to be, and then does that.
         is GameAction.DeclareKingAction ->
-            listOf(Beat.Borrowed(action.payload.declaredRank)) + discardScene(before, after)
+            listOf(Beat.Borrowed(action.payload.declaredRank)) + discardScene()
 
         // The two swaps that happen inside an action rather than as a move of their own, so
         // their endpoints come from the targets the action was aimed at.
@@ -412,12 +412,16 @@ private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Posi
     return listOf(Beat.Peek(at, seen?.card))
 }
 
-private fun discardScene(before: PlayerView, after: PlayerView): Scene =
-    if (after.discardPile.size > before.discardPile.size) {
-        listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardTop))
-    } else {
-        emptyList()
-    }
+/**
+ * The end of an action, which moves nothing.
+ *
+ * A card whose action is being played is *on* the pile for the whole of it — that is why a
+ * toss-in window is open for its rank — so when the engine finally records the discard there
+ * is nothing left to animate. This used to fly the card from the pending slot to the pile,
+ * which was a card appearing beside the hand it had already left and flying to a place it was
+ * already lying in.
+ */
+private fun discardScene(): Scene = emptyList()
 
 /** A Jack or a Queen exchanging two cards, which cross. */
 private fun crossScene(before: PlayerView): Scene {

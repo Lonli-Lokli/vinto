@@ -287,11 +287,14 @@ class TableModelTest {
     // ------------------------------------------------------------------ what is shown
 
     /**
-     * The two cards you looked at during setup go face-down again when play starts.
+     * The two cards you looked at during setup go face-down again when play starts — and the
+     * view stops carrying them at all.
      *
-     * The view still carries them — the server has to know what a seat knows — and a screen
-     * that drew them would give the player a perfect memory of their own hand for the whole
-     * round. Remembering it is the game.
+     * It used to carry them all round, with the screen politely declining to draw them. That
+     * put the answer in the client and made not-looking a matter of trust, which is no
+     * protection from a client we did not write. The engine still knows what each seat has
+     * learned, because the bots and the scoring need it; the seat is told *which* cards it
+     * has seen, which is public, and not what they were.
      */
     @Test
     fun yourSetupPeeksAreYoursToRememberOncePlayBegins() = runTest {
@@ -309,10 +312,11 @@ class TableModelTest {
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(session.playerId)))
 
         assertTrue(session.table().revealed.isEmpty(), "and then they are yours to remember")
-        // The knowledge is still in the view — this is a decision about drawing, not a redaction.
+
         val me = session.view.value.players.first { it.id == session.playerId }
-        assertEquals(listOf(0, 1), me.knownCardPositions)
-        assertTrue(me.cards[0] is CardView.Visible, "the view still carries what you know")
+        assertEquals(listOf(0, 1), me.knownCardPositions, "which cards you looked at is public")
+        assertTrue(me.cards[0] !is CardView.Visible, "what they were is not sent any more")
+        assertTrue(me.cards[1] !is CardView.Visible)
     }
 
     @Test
