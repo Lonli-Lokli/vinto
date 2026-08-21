@@ -128,12 +128,12 @@ class TeachingRoundTest {
         player.play()
 
         assertTrue(
-            player.offered.any { it.contains("Peek 2 cards from 2 players") },
-            "the Queen has to reach the player: ${player.offered}",
+            player.said.any { it.contains("You drew the Q") },
+            "the Queen has to reach the player: ${player.said}",
         )
         assertTrue(
-            player.offered.any { it.contains("Declare any card's action") },
-            "and so does the King: ${player.offered}",
+            player.said.any { it.contains("You drew the K") },
+            "and so does the King: ${player.said}",
         )
     }
 
@@ -229,12 +229,20 @@ private class SimplePlayer(private val session: LocalGameSession) {
     /** Every label the table offered along the way — what the lesson has to teach from. */
     val offered = mutableSetOf<String>()
 
+    /**
+     * And everything it said. The buttons carry the web app's own short words now — "Use
+     * Action" rather than the card's whole effect — so what proves a particular card reached
+     * the player is the prompt above them, not the label on them.
+     */
+    val said = mutableSetOf<String>()
+
     suspend fun play(steps: Int = STEPS) {
         repeat(steps) {
             if (session.isOver) return
 
             val table = tableFor(projectView(session.state, session.playerId))
             offered += table.choices.map { it.label }
+            said += listOfNotNull(table.prompt, table.detail)
 
             // Sends only: an Ask is a question the screen asks itself, and answering one needs
             // a tap on a card rather than a move.

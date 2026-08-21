@@ -1,5 +1,6 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,11 +20,18 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
+import game.vinto.app.art.deck_body
+import game.vinto.app.art.deck_dismiss
+import game.vinto.app.art.deck_title
 import game.vinto.app.art.report_body
+import game.vinto.app.art.report_copy
 import game.vinto.app.art.report_dismiss
+import game.vinto.app.art.report_send
+import game.vinto.app.art.report_subject
 import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
 import game.vinto.app.nowIso
+import game.vinto.app.shareReport
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -55,7 +63,9 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
 
     var helpOpen by remember { mutableStateOf(false) }
     var scoreOpen by remember(round) { mutableStateOf(false) }
+    val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
+    var deckOpen by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -90,11 +100,8 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
                     // got stuck" is worth nothing — this is the seed, every action in order, and
                     // a hash after each one, so the exact deal can be played back and the first
                     // action that disagrees is the bug's address.
-                    onReport = {
-                        val report = session.report(at = nowIso(), label = "reported from the table")
-                        clipboard.setText(AnnotatedString(report.toJson()))
-                        reported = true
-                    },
+                    onReport = { reported = true },
+                    onDeck = { deckOpen = true },
                     modifier = Modifier.weight(1f),
                 )
 
@@ -106,7 +113,26 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     }
 
     if (reported) {
-        ReportCopied(onDismiss = { reported = false })
+        ReportProblem(
+            onSend = {
+                val report = session.report(at = nowIso(), label = "reported from the table")
+                val subject = reportSubject
+                if (!shareReport(subject, report.toJson())) {
+                    clipboard.setText(AnnotatedString(report.toJson()))
+                }
+                reported = false
+            },
+            onCopy = {
+                val report = session.report(at = nowIso(), label = "reported from the table")
+                clipboard.setText(AnnotatedString(report.toJson()))
+                reported = false
+            },
+            onDismiss = { reported = false },
+        )
+    }
+
+    if (deckOpen) {
+        DeckExplained(left = holder.current.drawPileSize, onDismiss = { deckOpen = false })
     }
 
     if (helpOpen) {
@@ -131,9 +157,18 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     }
 }
 
-/** Says the report is on the clipboard, and where it can usefully go. */
+/**
+ * Reporting a problem, offered rather than performed.
+ *
+ * It used to copy the game to the clipboard and then tell the player it had — which leaves
+ * them holding a wall of JSON and no idea where to put it, and is where most bug reports
+ * stop. Now it says what would be sent and what is *not* in it, and hands the sending to the
+ * platform's own share sheet, where the player already knows how to mail it, message it or
+ * keep it. The clipboard is still there as the second answer, and as the answer on platforms
+ * that have nothing to share with.
+ */
 @Composable
-private fun ReportCopied(onDismiss: () -> Unit) {
+private fun ReportProblem(onSend: () -> Unit, onCopy: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Rail.fill,
@@ -143,13 +178,56 @@ private fun ReportCopied(onDismiss: () -> Unit) {
         text = { Text(stringResource(Res.string.report_body)) },
         confirmButton = {
             GameButton(
-                label = stringResource(Res.string.report_dismiss),
+                label = stringResource(Res.string.report_send),
+                tone = ButtonTone.PLAY,
+                onClick = onSend,
+            )
+        },
+        dismissButton = {
+            Column(verticalArrangement = Arrangement.spacedBy(DialogGap)) {
+                GameButton(
+                    label = stringResource(Res.string.report_copy),
+                    tone = ButtonTone.NEUTRAL,
+                    onClick = onCopy,
+                )
+                GameButton(
+                    label = stringResource(Res.string.report_dismiss),
+                    tone = ButtonTone.NEUTRAL,
+                    onClick = onDismiss,
+                )
+            }
+        },
+    )
+}
+
+/**
+ * What the number in the corner is.
+ *
+ * It is the one figure on the screen that decides how a round ends, and it was silent: a
+ * count with no units and nothing to tap. The reshuffle is the part worth saying — everything
+ * anybody had learned from watching the pile becomes worthless the moment the deck runs dry,
+ * which is a reason to call Vinto rather than a curiosity.
+ */
+@Composable
+private fun DeckExplained(left: Int, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Rail.fill,
+        titleContentColor = Rail.ink,
+        textContentColor = Rail.inkDim,
+        title = { Text(stringResource(Res.string.deck_title)) },
+        text = { Text(stringResource(Res.string.deck_body, left)) },
+        confirmButton = {
+            GameButton(
+                label = stringResource(Res.string.deck_dismiss),
                 tone = ButtonTone.NEUTRAL,
                 onClick = onDismiss,
             )
         },
     )
 }
+
+private val DialogGap = 6.dp
 
 /**
  * The round is over; the hands are face-up and the score is one tap away.

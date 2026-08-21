@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +33,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +46,8 @@ import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
+import game.vinto.app.art.header_deck_left
+import game.vinto.app.art.header_report
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_leads_mark
@@ -50,9 +58,9 @@ import game.vinto.app.theme.Brand
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.feltLamp
 import game.vinto.app.theme.feltShade
-import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
@@ -75,7 +83,9 @@ private val Rim = 2.dp
 
 /** How far the card under the top one shows from behind it. */
 private val Peek = 5.dp
-private val HelpSize = 30.dp
+/** Every control in the header is a thumb wide, whatever is drawn inside it. */
+private val HeaderTap = 44.dp
+private val BadgeWidth = 26.dp
 private val WordmarkSize = 19.sp
 
 /** The deck badge the wordmark sits beside: a dark pill in both schemes, like the plates. */
@@ -99,6 +109,7 @@ fun TableScreen(
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
     onReport: () -> Unit,
+    onDeck: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val view = state.view
@@ -109,7 +120,7 @@ fun TableScreen(
     val sizes = layout.sizes
 
     Column(modifier = modifier.fillMaxSize()) {
-        TableHeader(view, state.round, onHelp, onReport)
+        TableHeader(view, state.round, onHelp, onReport, onDeck)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
             Column(
@@ -171,7 +182,10 @@ private fun TableHeader(
     round: Int,
     onHelp: () -> Unit,
     onReport: () -> Unit,
+    onDeck: () -> Unit,
 ) {
+    val report = stringResource(Res.string.header_report)
+    val deck = stringResource(Res.string.header_deck_left, view.drawPileSize)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
         horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -205,7 +219,7 @@ private fun TableHeader(
         // the header, where nothing else changes either.
         Surface(
             onClick = onHelp,
-            modifier = Modifier.size(HelpSize).markedAs(LocalStage.current, Target.HELP),
+            modifier = Modifier.size(HeaderTap).markedAs(LocalStage.current, Target.HELP),
             shape = CircleShape,
             color = Rail.fill,
             border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
@@ -222,16 +236,26 @@ private fun TableHeader(
 
         // Always reachable, because the moment worth reporting is the moment it goes wrong
         // and nobody navigates to a menu to capture it.
-        Text(
-            text = "🐞",
-            style = MaterialTheme.typography.labelLarge,
+        Box(
             modifier = Modifier
+                .size(HeaderTap)
                 .clickable(onClick = onReport)
-                .padding(horizontal = Gap, vertical = Tight),
-        )
+                .semantics { contentDescription = report },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "🐞", style = MaterialTheme.typography.labelLarge)
+        }
 
+        // The deck count, which answers when it is asked. It is the one number on the screen
+        // that decides how a round ends — when it runs out the pile is shuffled back in and
+        // everything anybody remembered about that pile is worthless — and a number nobody
+        // explains is a number nobody reads.
         Surface(
-            modifier = Modifier.markedAs(LocalStage.current, Target.BADGE),
+            onClick = onDeck,
+            modifier = Modifier
+                .heightIn(min = HeaderTap)
+                .markedAs(LocalStage.current, Target.BADGE)
+                .semantics { contentDescription = deck },
             shape = RoundedCornerShape(Tight),
             color = DeckBadge,
             border = androidx.compose.foundation.BorderStroke(1.dp, Brand),
@@ -241,7 +265,11 @@ private fun TableHeader(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = Brand,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = Tight),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .widthIn(min = BadgeWidth)
+                    .wrapContentHeight(),
             )
         }
     }

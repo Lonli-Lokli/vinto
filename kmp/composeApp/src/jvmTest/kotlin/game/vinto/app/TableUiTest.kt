@@ -53,12 +53,12 @@ class TableUiTest {
         waitForIdle()
 
         onNodeWithText("Your turn").assertIsDisplayed()
-        button("Draw a card").performClick()
+        button("Draw Card").performClick()
         waitForIdle()
 
         // Something was drawn, and the panel offers what to do with it. Which card it is
         // depends on the seed, so the assertion is on the choice rather than on the rank.
-        button("Throw it away").assertIsDisplayed()
+        button("Discard").assertIsDisplayed()
     }
 
     @Test

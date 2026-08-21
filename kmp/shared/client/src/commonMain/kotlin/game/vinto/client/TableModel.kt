@@ -20,6 +20,7 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
+import game.vinto.shapes.getCardName
 import game.vinto.shapes.getCardShortDescription
 
 /**
@@ -319,14 +320,14 @@ private fun turnStartTable(view: PlayerView): Table {
     val choices = mutableListOf<Choice>()
 
     if (view.drawPileSize > 0) {
-        choices += Choice("Draw a card", Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PLAY)
+        choices += Choice("Draw Card", Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PLAY)
     }
 
     // Only an action card nobody has played yet can be taken, and taking it commits you to
     // playing it — it cannot go into your hand.
     if (top != null && top.actionText != null && !top.played) {
         choices += Choice(
-            "Take the ${top.rank.serialName} and play it",
+            "Use ${getCardName(top.rank)}",
             Move.Send(GameAction.PlayDiscard(PlayerIdPayload(me))),
             Tone.PLAY,
         )
@@ -354,7 +355,7 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
     // already, which is what makes a discard-pile action card takeable exactly once.
     if (card != null && card.actionText != null && !card.played) {
         choices += Choice(
-            "Play it — ${getCardShortDescription(card.rank)}",
+            "Use Action",
             Move.Send(GameAction.UseCardAction(PlayerIdPayload(me))),
             Tone.PLAY,
         )
@@ -362,8 +363,8 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
 
     // A card taken off the discard pile must be played; it cannot be kept.
     if (pending.canGoToHand) {
-        choices += Choice("Put it in your hand", Move.Ask(Question.WhichSlot), Tone.KEEP)
-        choices += Choice("Throw it away", Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
+        choices += Choice("Swap Cards", Move.Ask(Question.WhichSlot), Tone.KEEP)
+        choices += Choice("Discard", Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
     }
 
     val what = card?.let { "You drew the ${it.rank.serialName}" } ?: "You drew a card"
@@ -392,7 +393,7 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
             "Right plays its action; wrong costs you a card.",
         choices = listOf(
             Choice(
-                "Say nothing",
+                "Just Swap (No Declaration)",
                 Move.Send(GameAction.SwapCard(SwapCardPayload(me, position))),
                 Tone.KEEP,
             ),
@@ -499,7 +500,7 @@ private fun twoCardTable(
     Table(
         prompt = "Swap them?",
         choices = listOf(
-            Choice("Swap", Move.Send(swap), Tone.PLAY),
+            Choice("Swap Cards", Move.Send(swap), Tone.PLAY),
             Choice("Leave them", Move.Send(leave)),
         ),
     )

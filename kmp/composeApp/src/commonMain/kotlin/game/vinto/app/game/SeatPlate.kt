@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -110,7 +111,9 @@ fun SeatPlate(
     )
 
     Surface(
-        modifier = modifier,
+        // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
+        // is at least a thumb tall even when the portrait inside it is not.
+        modifier = modifier.heightIn(min = PlateTap),
         shape = CircleShape,
         color = Slate.fill.copy(alpha = PLATE_ALPHA),
         border = BorderStroke(if (active || onClick != null) Ring else Hairline, edge),
@@ -170,6 +173,8 @@ private fun portraitFor(name: String): DrawableResource = when {
     name.startsWith("Don") -> Res.drawable.avatar_donatello
     else -> Res.drawable.avatar_you
 }
+
+private val PlateTap = 44.dp
 
 private const val PLATE_ALPHA = 0.9f
 

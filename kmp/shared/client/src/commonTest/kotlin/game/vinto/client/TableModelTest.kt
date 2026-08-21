@@ -102,8 +102,8 @@ class TableModelTest {
 
         val table = session.table()
         assertEquals("You drew the 5", table.prompt)
-        assertFalse(table.labels().any { it.startsWith("Play it") }, "a 5 has no action: ${table.labels()}")
-        assertTrue(table.send("Throw it away") is GameAction.DiscardCard)
+        assertFalse(table.labels().any { it == "Use Action" }, "a 5 has no action: ${table.labels()}")
+        assertTrue(table.send("Discard") is GameAction.DiscardCard)
     }
 
     @Test
@@ -112,7 +112,7 @@ class TableModelTest {
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
 
-        val keep = session.table().choices.first { it.label.startsWith("Put it in") }.move
+        val keep = session.table().choices.first { it.label == "Swap Cards" }.move
         assertEquals(Move.Ask(Question.WhichSlot), keep, "keeping a card is a question, not a move")
 
         val slots = session.table(Question.WhichSlot)
@@ -122,7 +122,7 @@ class TableModelTest {
         val calling = session.table(Question.CallRank(2))
         assertEquals(ALL_RANK_COUNT, calling.ranks.size, "any rank can be named")
 
-        val silent = calling.send("Say nothing") as GameAction.SwapCard
+        val silent = calling.send("Just Swap (No Declaration)") as GameAction.SwapCard
         assertEquals(2, silent.payload.position)
         assertNull(silent.payload.declaredRank, "saying nothing declares nothing")
 

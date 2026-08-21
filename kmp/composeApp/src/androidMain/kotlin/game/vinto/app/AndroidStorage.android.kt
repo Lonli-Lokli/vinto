@@ -14,7 +14,16 @@ import game.vinto.client.Vault
 object AndroidStorage {
     private var preferences: android.content.SharedPreferences? = null
 
+    /**
+     * The application context, for the two things that need one and are not storage: putting
+     * a report on the clipboard, and handing it to the share sheet. The application context
+     * rather than the activity's, for the reason above.
+     */
+    internal var context: Context? = null
+        private set
+
     fun attach(context: Context) {
+        this.context = context.applicationContext
         preferences = context.applicationContext.getSharedPreferences("vinto", Context.MODE_PRIVATE)
     }
 

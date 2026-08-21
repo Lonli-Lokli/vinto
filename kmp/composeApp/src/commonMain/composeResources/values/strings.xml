@@ -81,6 +81,15 @@
     <string name="table_leads_mark">leads</string>
     <string name="table_see_score">See the score</string>
 
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">Report a problem</string>
+    <string name="header_deck_left">%1$d cards left in the deck</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">The deck</string>
+    <string name="deck_body">%1$d cards left to draw from.\n\nWhen it runs out, the discard pile is shuffled back into it and everything anybody had learned from watching that pile stops being worth anything — including what you learned. A round that is nearly out of deck is a round to call Vinto in.</string>
+    <string name="deck_dismiss">Got it</string>
+
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, worth %2$d</string>
     <string name="card_face_down">a face-down card</string>
@@ -100,9 +109,13 @@
     <string name="score_stop">Stop here</string>
 
     <!-- ================================================================ bug report -->
-    <string name="report_title">Copied</string>
-    <string name="report_body">The whole game is on your clipboard — the deal it started from, every move since, and a checksum after each one. Paste it into a bug report and it can be replayed exactly, here or in the web app.</string>
-    <string name="report_dismiss">Done</string>
+    <string name="report_title">Report a problem</string>
+    <string name="report_body">Something the table did that it should not have? Send the game with it.\n\nWhat gets sent is the deal it started from, every move since, and a checksum after each one — enough to replay this exact game, here or in the web app, and see the same thing go wrong. No account, no device details, nothing about you.</string>
+    <string name="report_send">Send…</string>
+    <string name="report_copy">Copy instead</string>
+    <string name="report_copied">Copied to the clipboard</string>
+    <string name="report_dismiss">Not now</string>
+    <string name="report_subject">Vinto — problem report</string>
 
     <!-- ================================================================ the lesson -->
     <string name="teach_heading">Learning the game</string>

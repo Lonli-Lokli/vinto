@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -48,8 +50,8 @@ import game.vinto.app.art.card_j
 import game.vinto.app.art.card_joker
 import game.vinto.app.art.card_k
 import game.vinto.app.art.card_q
-import game.vinto.app.theme.Signal
 import game.vinto.app.theme.LocalFeedback
+import game.vinto.app.theme.Signal
 import game.vinto.app.theme.onFelt
 import game.vinto.engine.CardView
 import game.vinto.shapes.Rank
@@ -157,6 +159,17 @@ fun CardFace(
                 width = maxOf(scale.footprintWidth(state.turned), TapTarget),
                 height = maxOf(scale.footprintHeight(state.turned), TapTarget),
             )
+            // The tap goes on the *footprint*, not on the picture. A card smaller than a
+            // thumb reserves the space either way — see the size above — and hanging the
+            // click on the card itself meant an opponent's 36dp card offered a 36dp target
+            // inside a 44dp box, which is a miss waiting to happen with three bots watching.
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.clickable(
+                    role = Role.Button,
+                    onClick = { feedback.touch(); onClick() },
+                ),
+            )
             .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,
     ) {
@@ -175,9 +188,6 @@ fun CardFace(
                 .border(state.ringWidth(), state.ringColour(), shape),
             shape = shape,
             color = Color.Transparent,
-            // A card that can be touched answers under the thumb before the table has moved.
-            onClick = onClick?.let { act -> { feedback.touch(); act() } } ?: {},
-            enabled = onClick != null,
         ) {
             Image(
                 painter = painterResource(if (showingFace) card.art() else Res.drawable.card_back),

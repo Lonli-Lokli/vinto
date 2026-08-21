@@ -182,6 +182,8 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                     onMove = act,
                     onHelp = { helpOpen = true },
                     onReport = {},
+                    // Nothing to explain in here that the coach is not already explaining.
+                    onDeck = {},
                     modifier = Modifier.fillMaxSize(),
                 )
 

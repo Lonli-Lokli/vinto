@@ -74,7 +74,7 @@ class CrowdedTableTest {
             everyCard.drop(i + 1)
                 .filter { (whatB, _) -> whatB.substringBefore(",") != whatA.substringBefore(",") }
                 .forEach { (whatB, b) ->
-                    assertTrue(!a.overlaps(b), "$whatA is sitting on $whatB: $a vs $b")
+                    assertTrue(!a.touches(b), "$whatA is sitting on $whatB: $a vs $b")
                 }
         }
     }
@@ -95,11 +95,11 @@ class CrowdedTableTest {
         assertEquals(DEALT, mine.size, "five cards, dealt")
 
         mine.zipWithNext { (whatA, a), (whatB, b) ->
-            assertTrue(!a.overlaps(b), "$whatA and $whatB are touching: $a, $b")
+            assertTrue(!a.touches(b), "$whatA and $whatB are touching: $a, $b")
         }
     }
 
-    private fun Rect.overlaps(other: Rect): Boolean =
+    private fun Rect.touches(other: Rect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
     /** The table, at the size of an ordinary phone. */
@@ -113,6 +113,7 @@ class CrowdedTableTest {
                         onMove = {},
                         onHelp = {},
                         onReport = {},
+                        onDeck = {},
                     )
                 }
             }
