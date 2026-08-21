@@ -160,6 +160,56 @@ data class Frame(
 }
 
 /**
+ * Frames that happened at one moment, played at one moment.
+ *
+ * A toss-in window belongs to the whole table at once: it opens, and everybody who holds a
+ * match throws it in. The engine still resolves that one player at a time — it has to, since
+ * a wrong throw costs a card and the order decides who pays — and each of those resolutions
+ * arrives as its own frame, which played one after another turns a scramble into a queue.
+ * Four players throwing took four beats of screen time and read as four separate events.
+ *
+ * Consecutive throws are merged into a single frame here, with their flights in one scene so
+ * the cards leave together. Anything else those frames carried — a flinch for a wrong throw,
+ * the verdict on it — stays in the scenes behind, in the order it happened, because a penalty
+ * is not part of the scramble and should not land in the middle of it.
+ *
+ * The view kept is the last one, which is the table after all of them have thrown: the same
+ * table the flights are landing on.
+ */
+fun List<Frame>.tossedTogether(): List<Frame> {
+    val out = mutableListOf<Frame>()
+    var group = mutableListOf<Frame>()
+
+    fun flush() {
+        when (group.size) {
+            0 -> Unit
+            1 -> out += group.single()
+            else -> {
+                val flights = group.mapNotNull { it.scenes.firstOrNull() }.flatten()
+                val rest = group.flatMap { it.scenes.drop(1) }
+                out += Frame(
+                    action = group.last().action,
+                    scenes = listOfNotNull(flights.takeIf { it.isNotEmpty() }) + rest,
+                    view = group.last().view,
+                )
+            }
+        }
+        group = mutableListOf()
+    }
+
+    forEach { frame ->
+        if (frame.action is GameAction.ParticipateInTossIn) {
+            group += frame
+        } else {
+            flush()
+            out += frame
+        }
+    }
+    flush()
+    return out
+}
+
+/**
  * What the player should see, given what happened.
  *
  * Takes two **views** rather than two states, and that is the whole design (C1). A client
@@ -255,24 +305,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     val verdict = verdictScene(action, penalty != null)
     val table = tableScene(before, after)
 
-    return mainScenes(action, main) + listOfNotNull(verdict, penalty, table)
-}
-
-/**
- * The move, as one scene or as several.
- *
- * Everything is one scene — the beats of a move belong together and start together — except a
- * swap, which is two cards passing each other and reads as nothing at all when they do it at
- * the same instant. Split, it is what a person would do with their hands: the new card goes
- * into the row, *then* the old one is laid face-up on the pile. The gap between them is
- * `BETWEEN_SCENES_MS`, which is the same beat every other pair of scenes gets.
- *
- * The order comes from the choreography above, and it is already the right way round.
- */
-private fun mainScenes(action: GameAction, main: Scene): List<Scene> = when {
-    main.isEmpty() -> emptyList()
-    action is GameAction.SwapCard -> main.map { listOf(it) }
-    else -> listOf(main)
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty, table)
 }
 
 /**

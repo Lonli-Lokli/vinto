@@ -38,6 +38,7 @@ import game.vinto.client.AnimationQueue
 import game.vinto.client.Attention
 import game.vinto.client.Beat
 import game.vinto.client.Frame
+import game.vinto.client.tossedTogether
 import game.vinto.client.Pacing
 import game.vinto.client.Scene
 import game.vinto.client.Target
@@ -325,7 +326,7 @@ fun CardStage(
         var lastActor: String? = null
 
         frames.collect { batch ->
-            queue.submit(batch)
+            queue.submit(batch.tossedTogether())
 
             while (true) {
                 val frame = queue.next() ?: break

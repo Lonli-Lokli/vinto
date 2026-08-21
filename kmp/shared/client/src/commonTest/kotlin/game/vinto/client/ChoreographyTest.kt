@@ -82,16 +82,18 @@ class ChoreographyTest {
     }
 
     /**
-     * A swap is two cards crossing, and the order is the point: the new one goes into the
-     * hand, *then* the old one comes out onto the pile.
+     * A swap is two cards crossing, and they cross *at the same time*.
      *
-     * Two scenes rather than one, which is a correction. Played together the pair reads as
-     * nothing at all — two cards passing at the same instant, over in a third of a second,
-     * and what the player sees is that the table changed. Played in order it is what a person
-     * does with their hands, and the beat between them is the one every pair of scenes gets.
+     * One scene, therefore, which is what a scene is for: everything in it starts together
+     * and the scene lasts as long as its longest beat. Splitting the pair into two scenes was
+     * tried and is wrong — a swap is one gesture, not a card going in and later another
+     * coming out, and pulling it apart makes the table look like it is thinking between two
+     * halves of a move it already made.
+     *
+     * The order within the scene still says which is which: in first, out second.
      */
     @Test
-    fun aSwapIsTwoCardsCrossingInOrder() = runTest {
+    fun aSwapIsTwoCardsCrossingAtOnce() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -105,12 +107,16 @@ class ChoreographyTest {
 
         val flights = move.flatten().filterIsInstance<Beat.Move>()
         assertEquals(2, flights.size, "two cards move")
-        assertEquals(2, move.count { it.any { beat -> beat is Beat.Move } }, "one each, in turn")
+        assertEquals(
+            1,
+            move.count { scene -> scene.any { it is Beat.Move } },
+            "in one scene, so they cross together",
+        )
 
         val (into, out) = flights
-        assertEquals(Anchor.Pending to seat, into.from to into.to, "the drawn card goes in first")
+        assertEquals(Anchor.Pending to seat, into.from to into.to, "the drawn card goes in")
         assertEquals(Rank.FIVE, into.card?.rank)
-        assertEquals(seat to Anchor.Discard, out.from to out.to, "and the old one follows it out")
+        assertEquals(seat to Anchor.Discard, out.from to out.to, "as the old one comes out")
     }
 
     /**
