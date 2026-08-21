@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.discardTop
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -195,7 +196,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
             )
 
         is GameAction.DiscardCard ->
-            listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardPile.lastOrNull()))
+            listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardTop))
 
         // Two cards at once, and the order is the point: the new one goes in, the old one
         // comes out and lands face-up where everybody can read it.
@@ -203,7 +204,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
             val seat = Anchor.Seat(action.payload.playerId, action.payload.position)
             listOfNotNull(
                 Beat.Move(Anchor.Pending, seat, before.pendingCard()),
-                after.discardPile.lastOrNull()?.let { Beat.Move(seat, Anchor.Discard, it) },
+                after.discardTop?.let { Beat.Move(seat, Anchor.Discard, it) },
             )
         }
 
@@ -363,7 +364,7 @@ private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Posi
 
 private fun discardScene(before: PlayerView, after: PlayerView): Scene =
     if (after.discardPile.size > before.discardPile.size) {
-        listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardPile.lastOrNull()))
+        listOf(Beat.Move(Anchor.Pending, Anchor.Discard, after.discardTop))
     } else {
         emptyList()
     }
@@ -396,7 +397,7 @@ private fun tossScene(
         Beat.Move(
             Anchor.Seat(action.payload.playerId, position),
             Anchor.Discard,
-            after.discardPile.lastOrNull(),
+            after.discardTop,
         )
     }
 }

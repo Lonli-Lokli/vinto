@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,11 +26,9 @@ import game.vinto.app.game.TeachScreen
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalFeedback
-import game.vinto.app.theme.rememberFeedback
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
+import game.vinto.app.theme.rememberFeedback
 import game.vinto.client.LocalGame
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
@@ -80,14 +78,18 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
         screen = Screen.Home(canContinue = vault.loadGame() != null)
     }
 
-    VintoTheme(dark = settings.theme.isDark()) {
+    val dark = settings.theme.isDark()
+    SystemBars(dark)
+    VintoTheme(dark = dark) {
         CompositionLocalProvider(LocalFeedback provides rememberFeedback(settings.haptics)) {
             // Every phone has something drawn over its edges — a status bar, a gesture handle, a
             // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
             // list, so anything under those is simply lost rather than reachable, and the content
             // is inset out of their way. What is *behind* them is the rail rather than a page
-            // colour, so the bars read as the edge of the table instead of a border around it.
-            Surface(modifier = Modifier.fillMaxSize(), color = RailFill) {
+            // colour, so the bars read as the edge of the table instead of a border around it
+            // — and since the rail now has a light half, `SystemBars` above turns the icons
+            // in them the right way round to be seen against it.
+            Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
                 Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
                     when (val here = screen) {
                         Screen.Opening -> OpeningScreen()
@@ -161,9 +163,9 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
 private fun OnlineNotYet(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = RailFill,
-        titleContentColor = RailInk,
-        textContentColor = RailInkDim,
+        containerColor = Rail.fill,
+        titleContentColor = Rail.ink,
+        textContentColor = Rail.inkDim,
         title = { Text(stringResource(Res.string.online_title)) },
         text = { Text(stringResource(Res.string.online_body)) },
         confirmButton = {

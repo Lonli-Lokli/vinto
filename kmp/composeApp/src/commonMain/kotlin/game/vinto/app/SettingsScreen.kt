@@ -45,11 +45,9 @@ import game.vinto.app.art.settings_version
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.onFelt
 import game.vinto.client.Pace
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
@@ -100,7 +98,7 @@ fun SettingsScreen(
                 fontSize = TitleSize,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 2.sp,
-                color = RailInk,
+                color = MaterialTheme.colorScheme.onFelt(),
                 modifier = Modifier.padding(bottom = Tight),
             )
 
@@ -126,7 +124,8 @@ fun SettingsScreen(
             Text(
                 text = stringResource(Res.string.settings_version, VERSION),
                 fontSize = FootnoteSize,
-                color = RailInkDim,
+                // Below the last panel, so on the felt rather than on paper.
+                color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
                 modifier = Modifier.padding(top = Tight),
             )
 
@@ -201,15 +200,15 @@ private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
                     if (settings.haptics) Res.string.settings_on else Res.string.settings_off,
                 ),
                 fontSize = BodySize,
-                color = RailInkDim,
+                color = Rail.inkDim,
             )
             Switch(
                 checked = settings.haptics,
                 onCheckedChange = { onChange(settings.copy(haptics = it)) },
                 colors = SwitchDefaults.colors(
                     checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    uncheckedTrackColor = RailFill,
-                    uncheckedBorderColor = RailBorder,
+                    uncheckedTrackColor = Rail.fill,
+                    uncheckedBorderColor = Rail.edge,
                 ),
             )
         }
@@ -222,18 +221,18 @@ private fun Setting(title: String, detail: String, control: @Composable () -> Un
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PanelCorner),
-        color = RailFill,
-        border = BorderStroke(1.dp, RailBorder),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
     ) {
         Column(
             modifier = Modifier.padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Tight),
         ) {
-            Text(title, fontSize = TitleRowSize, fontWeight = FontWeight.Bold, color = RailInk)
+            Text(title, fontSize = TitleRowSize, fontWeight = FontWeight.Bold, color = Rail.ink)
             Text(
                 text = detail,
                 fontSize = DetailSize,
-                color = RailInkDim,
+                color = Rail.inkDim,
                 modifier = Modifier.padding(bottom = Tight),
             )
             control()
@@ -245,4 +244,7 @@ private val TitleSize = 32.sp
 private val TitleRowSize = 17.sp
 private val BodySize = 15.sp
 private val DetailSize = 13.sp
+/** Second-rank text on the felt. */
+private const val Quiet = 0.75f
+
 private val FootnoteSize = 12.sp

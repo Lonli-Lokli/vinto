@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.app_name
 import game.vinto.app.art.card_back
 import game.vinto.app.art.home_continue
 import game.vinto.app.art.home_new_game
@@ -42,15 +43,12 @@ import game.vinto.app.art.home_solo_title
 import game.vinto.app.art.home_tagline
 import game.vinto.app.art.home_teach
 import game.vinto.app.art.home_version
-import game.vinto.app.art.app_name
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.onFelt
 import game.vinto.client.Settings
 import game.vinto.shapes.Difficulty
 import org.jetbrains.compose.resources.painterResource
@@ -148,7 +146,7 @@ fun HomeScreen(
         Text(
             text = stringResource(Res.string.home_version, VERSION),
             fontSize = FootnoteSize,
-            color = RailInkDim,
+            color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Gap),
         )
     }
@@ -201,12 +199,14 @@ private fun Hero() {
             fontSize = TitleSize,
             fontWeight = FontWeight.Black,
             letterSpacing = TitleTracking,
-            color = RailInk,
+            // On the felt, so the felt's ink. The rail's is a page colour, and a page colour
+            // on green cloth is a black wordmark on a dark table in the light scheme.
+            color = MaterialTheme.colorScheme.onFelt(),
         )
         Text(
             stringResource(Res.string.home_tagline),
             fontSize = BodySize,
-            color = RailInkDim,
+            color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
             textAlign = TextAlign.Center,
         )
     }
@@ -230,8 +230,8 @@ private fun SoloPanel(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PanelCorner),
-        color = RailFill,
-        border = BorderStroke(1.dp, RailBorder),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
     ) {
         Column(
             modifier = Modifier.padding(Gap),
@@ -242,7 +242,7 @@ private fun SoloPanel(
                 fontSize = LabelSize,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
-                color = RailInkDim,
+                color = Rail.inkDim,
             )
 
             ChoiceRow(
@@ -301,4 +301,7 @@ private val TitleSize = 46.sp
 private val TitleTracking = 6.sp
 private val BodySize = 15.sp
 private val LabelSize = 12.sp
+/** Second-rank text on the felt: present, and not competing with the wordmark. */
+private const val Quiet = 0.75f
+
 private val FootnoteSize = 12.sp

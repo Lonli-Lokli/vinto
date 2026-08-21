@@ -1,6 +1,7 @@
 package game.vinto.app.game
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,18 +32,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.art.Res
+import game.vinto.app.art.teach_done
+import game.vinto.app.art.teach_finished_body
+import game.vinto.app.art.teach_finished_title
+import game.vinto.app.art.teach_go_on
+import game.vinto.app.art.teach_heading
+import game.vinto.app.art.teach_watching
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
-import androidx.compose.foundation.BorderStroke
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.Rail
 import game.vinto.client.Chapter
 import game.vinto.client.Lesson
 import game.vinto.client.Move
 import game.vinto.client.Pace
-import game.vinto.client.Table
 import game.vinto.client.STRAYED
+import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Taught
 import game.vinto.client.Tone
@@ -52,13 +57,6 @@ import game.vinto.client.teachingSession
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import kotlinx.coroutines.CoroutineDispatcher
-import game.vinto.app.art.Res
-import game.vinto.app.art.teach_done
-import game.vinto.app.art.teach_finished_body
-import game.vinto.app.art.teach_finished_title
-import game.vinto.app.art.teach_go_on
-import game.vinto.app.art.teach_heading
-import game.vinto.app.art.teach_watching
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
@@ -178,6 +176,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                         refusal = holder.refusal,
                         recent = log,
                         round = 1,
+                        teaching = true,
                     ),
                     layout = layout,
                     onMove = act,
@@ -270,8 +269,8 @@ private fun Coach(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Corner),
-        color = RailFill,
-        border = BorderStroke(1.dp, RailBorder),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
         shadowElevation = Lift,
         onClick = { if (!talking) open = !open },
     ) {
@@ -291,7 +290,7 @@ private fun Coach(
                     },
                     fontSize = TitleSize,
                     fontWeight = FontWeight.Bold,
-                    color = CoachInk,
+                    color = Rail.coach,
                     modifier = Modifier.weight(1f),
                 )
                 Progress(taught.chapters)
@@ -337,7 +336,7 @@ private fun CoachBody(lesson: Lesson?, finished: Boolean, strayed: Boolean) {
         HeldUpCards(lesson?.cards.orEmpty())
 
         if (strayed) {
-            Text(text = STRAYED, fontSize = DetailSize, color = NoteInk)
+            Text(text = STRAYED, fontSize = DetailSize, color = Rail.note)
         }
 
         Text(
@@ -347,13 +346,13 @@ private fun CoachBody(lesson: Lesson?, finished: Boolean, strayed: Boolean) {
                 else -> stringResource(Res.string.teach_watching)
             },
             fontSize = DetailSize,
-            color = RailInkDim,
+            color = Rail.inkDim,
         )
 
         lesson?.note?.let { note -> Note(note, lesson.noteRank) }
 
         lesson?.gloss?.let { gloss ->
-            Text(text = gloss, fontSize = DetailSize, color = RailInkDim)
+            Text(text = gloss, fontSize = DetailSize, color = Rail.inkDim)
         }
     }
 }
@@ -372,7 +371,7 @@ private fun Note(note: String, rank: Rank?) {
             text = note,
             fontSize = DetailSize,
             fontWeight = FontWeight.SemiBold,
-            color = NoteInk,
+            color = Rail.note,
         )
     }
 }
@@ -404,7 +403,7 @@ private fun Progress(met: Set<Chapter>) {
                 Surface(
                 modifier = Modifier.fillMaxSize(),
                 shape = CircleShape,
-                color = if (chapter in met) CoachInk else RailBorder,
+                color = if (chapter in met) Rail.coach else Rail.line,
                 content = {},
             )
             }
@@ -423,10 +422,8 @@ private fun Progress(met: Set<Chapter>) {
 private fun Table.beforeTheEnd(called: Boolean): Table =
     if (called) this else copy(choices = choices.filterNot { it.tone == Tone.STAKES })
 
-private val CoachInk = Color(0xFF6FD3A6)
 
-/** A card being met for the first time: the same amber the game uses for a named rank. */
-private val NoteInk = Color(0xFFF2C14E)
+
 
 private val TitleSize = 16.sp
 private val DetailSize = 13.sp

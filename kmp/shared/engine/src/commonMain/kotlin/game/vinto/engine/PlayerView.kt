@@ -90,7 +90,11 @@ data class PlayerView(
     val coalitionLeaderId: String?,
     /** A count, not the cards. Knowing the order of the draw pile would decide the game. */
     val drawPileSize: Int,
-    /** Face up on the table, so it is sent in full. */
+    /**
+     * Face up on the table, so it is sent in full — **top card first**, as [Pile] keeps it.
+     *
+     * Read it through [discardTop] rather than by index. See the note there.
+     */
     val discardPile: List<Card>,
     val pendingAction: PendingActionView?,
     val activeTossIn: ActiveTossIn?,
@@ -280,3 +284,20 @@ internal fun hiddenFrom(state: GameState, playerId: String): List<Card> {
         }
     }
 }
+
+/**
+ * The card lying face up on the discard pile: the one that may be taken, matched, or seen.
+ *
+ * The pile is top-first — `Pile.peekTop()` is `at(0)`, `addToTop` prepends, and the
+ * TypeScript engine agrees — so the top of it is the *first* element and never the last.
+ * This exists because the port read it as the last one in eight places, and that is a
+ * mistake with a delay built into it: while a round's pile holds a single card both ends
+ * are the same card and everything looks right. From the second discard on, the table shows
+ * the card the round *started* with, and goes on showing it — which is how a Queen went
+ * down, the prompt said so, the toss-in window opened for Queens, and the pile sat there
+ * displaying a two.
+ */
+val PlayerView.discardTop: Card? get() = discardPile.firstOrNull()
+
+/** The one under it, which shows as a sliver behind the top card. */
+val PlayerView.discardUnder: Card? get() = discardPile.getOrNull(1)

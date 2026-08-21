@@ -26,26 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import game.vinto.app.theme.feltEdge
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInkDim
-import game.vinto.app.theme.onFelt
-import game.vinto.app.theme.feltGradient
-import game.vinto.client.Anchor
-import game.vinto.client.CardRef
-import game.vinto.client.Move
-import game.vinto.client.Table
-import game.vinto.client.Target
-import game.vinto.engine.CardView
-import game.vinto.engine.PlayerSeatView
-import game.vinto.engine.PlayerView
-import game.vinto.shapes.PendingCardOrigin
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.card_discarded
@@ -58,6 +43,22 @@ import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_vinto_mark
+import game.vinto.app.theme.Brand
+import game.vinto.app.theme.Rail
+import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.onFelt
+import game.vinto.client.Anchor
+import game.vinto.client.CardRef
+import game.vinto.client.Move
+import game.vinto.client.Table
+import game.vinto.client.Target
+import game.vinto.engine.CardView
+import game.vinto.engine.PlayerSeatView
+import game.vinto.engine.PlayerView
+import game.vinto.engine.discardTop
+import game.vinto.engine.discardUnder
+import game.vinto.shapes.PendingCardOrigin
 import org.jetbrains.compose.resources.stringResource
 
 private val Gap = 6.dp
@@ -70,8 +71,7 @@ private val Rim = 2.dp
 private val Peek = 5.dp
 private val HelpSize = 30.dp
 
-/** The wordmark's green, matching the web app's, and the deck badge it sits beside. */
-private val WordmarkGreen = Color(0xFF34D07A)
+/** The deck badge the wordmark sits beside: a dark pill in both schemes, like the plates. */
 private val DeckBadge = Color(0xFF14351F)
 
 /**
@@ -150,6 +150,11 @@ data class TableState(
     val refusal: String?,
     val recent: List<String>,
     val round: Int,
+    /**
+     * Whether a coach is watching over this table, in which case the rule under the prompt
+     * is always spelled out. In a real game it fades — see `ControlPanel`.
+     */
+    val teaching: Boolean = false,
 )
 
 /** Where the round is up to, and how much deck is left. */
@@ -172,14 +177,14 @@ private fun TableHeader(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
             letterSpacing = 2.sp,
-            color = WordmarkGreen,
+            color = Rail.brand,
         )
         Text(
             // The *game's* round, not the deal's. The engine counts rounds within one deal
             // — it is a turn counter that wraps — while the player is counting hands played.
             stringResource(Res.string.table_round_turn, round, view.turnNumber),
             style = MaterialTheme.typography.labelLarge,
-            color = RailInkDim,
+            color = Rail.inkDim,
         )
 
         Box(modifier = Modifier.weight(1f))
@@ -194,15 +199,15 @@ private fun TableHeader(
             onClick = onHelp,
             modifier = Modifier.size(HelpSize).markedAs(LocalStage.current, Target.HELP),
             shape = CircleShape,
-            color = RailFill,
-            border = androidx.compose.foundation.BorderStroke(1.dp, RailBorder),
+            color = Rail.fill,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = "?",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = RailInkDim,
+                    color = Rail.inkDim,
                 )
             }
         }
@@ -221,13 +226,13 @@ private fun TableHeader(
             modifier = Modifier.markedAs(LocalStage.current, Target.BADGE),
             shape = RoundedCornerShape(Tight),
             color = DeckBadge,
-            border = androidx.compose.foundation.BorderStroke(1.dp, WordmarkGreen),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Brand),
         ) {
             Text(
                 "${view.drawPileSize}",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = WordmarkGreen,
+                color = Brand,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = Tight),
             )
         }
@@ -561,9 +566,10 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val inPlay = (view.pendingAction?.card as? CardView.Visible)?.card
         ?.takeIf { view.pendingAction?.from == PendingCardOrigin.HAND }
 
-    val top = (inPlay ?: view.discardPile.lastOrNull()).takeIf { !arriving }
-    val under = view.discardPile.lastOrNull()
-        ?.takeIf { inPlay != null || view.discardPile.size > 1 }
+    val top = (inPlay ?: view.discardTop).takeIf { !arriving }
+    // Whatever the top card is covering: the real pile top when a card from a hand is being
+    // played over it, and otherwise the second card down.
+    val under = (if (inPlay != null) view.discardTop else view.discardUnder)
         ?.takeIf { it.id != top?.id && !arriving }
 
     if (top == null) {

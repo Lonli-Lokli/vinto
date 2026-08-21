@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        The rail: the dark band the controls sit on, and the colour the whole window is
-        painted with before Compose draws anything (`theme/VintoTheme.kt`, `App.kt`). The
-        launcher icon opens on the same colour it lands on.
+        The window's own colour, painted before Compose draws anything: the cold-start splash
+        on Android 12+, and the frames during a rotation or a resize.
+
+        This one is the light rail, and `values-night/` holds the dark one. It follows the
+        *system* setting rather than the app's, which is the best that can be done — the app's
+        own choice lives in a file that has not been read yet at the moment this colour is
+        used. A player who overrides the theme in Settings sees one frame of the other
+        material on a cold start, and nothing after that.
     -->
-    <color name="rail">#FF1B2430</color>
+    <color name="rail">#FFF4F1E8</color>
+    <!-- The launcher icon's ground, which is the table rather than the room, so it does not
+         change: the icon opens on the same colour it lands on. -->
     <color name="launcher_background">#FF1B2430</color>
 </resources>

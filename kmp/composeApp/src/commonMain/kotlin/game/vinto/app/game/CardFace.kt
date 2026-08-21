@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,12 +28,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
-import game.vinto.app.theme.LocalFeedback
-import game.vinto.app.theme.onFelt
 import game.vinto.app.art.card_10
 import game.vinto.app.art.card_2
 import game.vinto.app.art.card_3
@@ -50,6 +48,9 @@ import game.vinto.app.art.card_j
 import game.vinto.app.art.card_joker
 import game.vinto.app.art.card_k
 import game.vinto.app.art.card_q
+import game.vinto.app.theme.Signal
+import game.vinto.app.theme.LocalFeedback
+import game.vinto.app.theme.onFelt
 import game.vinto.engine.CardView
 import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.DrawableResource
@@ -65,10 +66,13 @@ private const val PULSE_MS = 1100
 private const val HALF_TURN = 180f
 private const val QUARTER_TURN = 90f
 private const val CAMERA = 14f
-private const val PULSE_LOW = 0.45f
+// The trough of the breath, not its floor. A ring that fades to 45% is 1.8:1 against the
+// card for half of every cycle, which is a signal that flickers in and out of existence for
+// anybody who needs contrast; from 70% it stays at 3.2:1 at its dimmest and doubles at its
+// brightest, which is still plainly a breath.
+private const val PULSE_LOW = 0.7f
 private const val PULSE_HIGH = 1f
-private val RightCall = Color(0xFF22C55E)
-private val WrongCall = Color(0xFFEF4444)
+
 private const val FLINCH_MS = 420
 private const val SHAKE_PX = 3f
 
@@ -102,7 +106,6 @@ fun CardFace(
     label: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val scheme = MaterialTheme.colorScheme
     val faceUp = card is CardView.Visible
 
     val turn by animateFloatAsState(
@@ -160,7 +163,7 @@ fun CardFace(
                     cameraDistance = CAMERA * density.density
                 }
                 .clip(shape)
-                .border(state.ringWidth(), state.ringColour(scheme), shape),
+                .border(state.ringWidth(), state.ringColour(), shape),
             shape = shape,
             color = Color.Transparent,
             // A card that can be touched answers under the thumb before the table has moved.
@@ -188,11 +191,11 @@ fun CardFace(
  * many that are not — which on a card table reads as a fault rather than a hint.
  */
 @Composable
-private fun CardState.ringColour(scheme: androidx.compose.material3.ColorScheme): Color {
+private fun CardState.ringColour(): Color {
     // A declaration answered: green for a right call, red for a wrong one. Loudest, because
     // it is the one moment in the game that is a gamble on your own memory.
-    verdict?.let { return if (it) RightCall else WrongCall }
-    if (chosen) return scheme.secondary
+    verdict?.let { return if (it) Signal.rightCall else Signal.wrongCall }
+    if (chosen) return Signal.chosen
     if (!tappable) return Color.Transparent
 
     val pulse = rememberInfiniteTransition(label = "tappable")
@@ -205,7 +208,7 @@ private fun CardState.ringColour(scheme: androidx.compose.material3.ColorScheme)
         ),
         label = "pulse",
     )
-    return scheme.primary.copy(alpha = strength)
+    return Signal.tappable.copy(alpha = strength)
 }
 
 private fun CardState.ringWidth() = if (verdict != null || chosen || tappable) Ring else Hairline

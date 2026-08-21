@@ -18,13 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import game.vinto.app.theme.ButtonTone
-import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
-import game.vinto.client.RoundResult
 import game.vinto.app.art.Res
 import game.vinto.app.art.score_column_game
 import game.vinto.app.art.score_column_hand
@@ -34,6 +27,10 @@ import game.vinto.app.art.score_round
 import game.vinto.app.art.score_stop
 import game.vinto.app.art.score_they_called
 import game.vinto.app.art.score_you_called
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.Rail
+import game.vinto.client.RoundResult
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 16.dp
@@ -67,8 +64,8 @@ fun StandingsSheet(
     ModalBottomSheet(
         onDismissRequest = onNextRound,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = RailFill,
-        contentColor = RailInk,
+        containerColor = Rail.fill,
+        contentColor = Rail.ink,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = Pad).fillMaxWidth().padding(bottom = Pad),
@@ -107,7 +104,7 @@ fun StandingsSheet(
                     val who = result.seats.firstOrNull { it.first == callerId }?.second
                     stringResource(Res.string.score_they_called, who.orEmpty())
                 }
-                Text(line, fontSize = BodySize, color = RailInkDim)
+                Text(line, fontSize = BodySize, color = Rail.inkDim)
             }
 
             GameButton(
@@ -131,7 +128,7 @@ private fun Header(label: String) {
     Text(
         label,
         fontSize = SmallSize,
-        color = RailInkDim,
+        color = Rail.inkDim,
         modifier = Modifier.padding(horizontal = Gap),
     )
 }
@@ -140,8 +137,8 @@ private fun Header(label: String) {
 private fun Line(name: String, caller: Boolean, hand: Int?, round: Int?, total: Int?) {
     Surface(
         shape = RoundedCornerShape(Corner),
-        color = RailFill,
-        border = BorderStroke(1.dp, RailBorder),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -167,7 +164,7 @@ private fun Cell(text: String, dim: Boolean, bold: Boolean = false) {
         text = text,
         fontSize = BodySize,
         fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-        color = if (dim) RailInkDim else RailInk,
+        color = if (dim) Rail.inkDim else Rail.ink,
         modifier = Modifier.padding(horizontal = Gap),
     )
 }

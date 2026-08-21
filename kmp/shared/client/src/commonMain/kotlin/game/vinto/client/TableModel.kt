@@ -3,6 +3,7 @@ package game.vinto.client
 import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.discardTop
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.DeclareKingActionPayload
@@ -314,7 +315,7 @@ private fun setupTable(view: PlayerView, myId: String, peeked: List<Int>): Table
 
 private fun turnStartTable(view: PlayerView): Table {
     val me = view.viewerId
-    val top = view.discardPile.lastOrNull()
+    val top = view.discardTop
     val choices = mutableListOf<Choice>()
 
     if (view.drawPileSize > 0) {
@@ -600,7 +601,7 @@ private fun tossInTable(view: PlayerView): Table? {
     // accepting cards, with nothing to distinguish "you are barred" from "you were too slow".
     if (me in view.barredFromTossIn) {
         return Table(
-            prompt = "A $matching went down",
+            prompt = "The $matching went down",
             detail = "You threw in a wrong card this round, so you cannot toss in again.",
             // Barred from *tossing in*, not from ending your turn. Losing the Vinto call
             // along with it would be a second penalty the rules never mention, and it would
@@ -622,8 +623,8 @@ private fun tossInTable(view: PlayerView): Table? {
     // deliberate on both sides: a toss-in is a race, and a wrong one costs a penalty card, so
     // the risk that makes it worth confirming is exactly the risk that makes it a bad idea.
     return Table(
-        prompt = "A $matching went down — toss in a match?",
-        detail = "Touch a card to throw it in. Wrong rank costs you a penalty card.",
+        prompt = "The $matching went down — toss in a match?",
+        detail = "A wrong one costs you a penalty card.",
         taps = hand.associate { position ->
             val throwIn = GameAction.ParticipateInTossIn(ParticipateInTossInPayload(me, listOf(position)))
             CardRef(me, position) to Move.Send(throwIn)

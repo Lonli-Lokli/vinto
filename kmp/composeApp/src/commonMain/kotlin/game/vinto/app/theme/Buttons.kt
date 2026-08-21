@@ -111,7 +111,7 @@ fun GameButton(
  */
 enum class ButtonTone(val high: Color, val low: Color, val rim: Color, val ink: Color) {
     /** Green — draw, play the action, continue. */
-    PLAY(Color(0xFF1FA855), Color(0xFF13773A), Color(0xFF3FD07A), Color.White),
+    PLAY(Color(0xFF198845), Color(0xFF0F6B34), Color(0xFF3FD07A), Color.White),
 
     /** Blue — take a card into a hand, start the round. */
     KEEP(Color(0xFF2F6FE0), Color(0xFF1B4CAE), Color(0xFF5A94F0), Color.White),

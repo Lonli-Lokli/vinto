@@ -8,19 +8,24 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,15 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
+import game.vinto.app.theme.Rail
 import game.vinto.client.Choice
 import game.vinto.client.Move
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
+import kotlinx.coroutines.delay
 
 private val PanelPad = 12.dp
 private val Gap = 8.dp
@@ -72,7 +75,7 @@ fun ControlPanel(
     val stage = LocalStage.current
     Surface(
         modifier = modifier.fillMaxWidth().height(height),
-        color = RailFill,
+        color = Rail.fill,
     ) {
         // The Surface's minimum has to reach the content for the centring below to have room
         // to work in; a wrapped Column would simply be as tall as its own children.
@@ -92,7 +95,7 @@ fun ControlPanel(
                 .padding(PanelPad),
             verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
         ) {
-            Heading(table = table)
+            Heading(table = table, teaching = state.teaching)
 
             // The engine's own words, not a translation of them. A refusal is nearly always a
             // rule the player has not met yet, and paraphrasing it here would put a second,
@@ -107,10 +110,20 @@ fun ControlPanel(
                 )
             }
 
-            // The one thing that gives way when the rail is crowded. Naming a rank asks for
-            // fourteen chips and two buttons, and what happened three moves ago matters less
-            // than being able to reach them.
-            if (table.ranks.isEmpty()) RecentActions(state.recent)
+            // The one thing that gives way when the rail is crowded, and the rail is a fixed
+            // height, so something has to. Naming a rank asks for fourteen chips and two
+            // buttons; a drawn action card asks for three full-width ones. Either way what
+            // happened three moves ago matters less than being able to reach them — and the
+            // heading has already said what the moment is.
+            // The log is what happened *before* now. The prompt above is now, and the two
+            // are built from the same narration, so the top line of the log was routinely the
+            // heading again in smaller type — "You drew the A", under "You drew the A".
+            // Counted in full-width rows rather than in buttons, because a stakes move
+            // brings a rule and the word "or" down with it — which is what pushed "Call
+            // Vinto" off the bottom of the rail while the button count still said two.
+            val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
+            val crowded = table.ranks.isNotEmpty() || rows >= Crowded
+            if (!crowded) RecentActions(state.recent.filterNot { it == table.prompt })
 
             if (table.ranks.isNotEmpty()) {
                 FlowRow(
@@ -142,9 +155,9 @@ fun ControlPanel(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = RailBorder)
-                    Text("or", fontSize = DetailSize, color = RailInkDim)
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = RailBorder)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Rail.line)
+                    Text("or", fontSize = DetailSize, color = Rail.inkDim)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Rail.line)
                 }
                 stakes.forEach { choice -> ChoiceButton(choice, onMove) }
             }
@@ -152,20 +165,53 @@ fun ControlPanel(
     }
 }
 
-/** The prompt, and the rule under it. */
+/** The prompt, and — when it is still worth saying — the rule under it. */
 @Composable
-private fun Heading(table: Table) {
+private fun Heading(table: Table, teaching: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = table.prompt,
             fontSize = PromptSize,
             fontWeight = FontWeight.Bold,
-            color = RailInk,
+            color = Rail.ink,
         )
-        table.detail?.let { detail ->
-            Text(text = detail, fontSize = DetailSize, color = RailInkDim)
+        table.detail?.takeIf { worthSaying(it, teaching) }?.let { detail ->
+            Text(text = detail, fontSize = DetailSize, color = Rail.inkDim)
         }
     }
+}
+
+/**
+ * Whether to spell out the rule under the prompt.
+ *
+ * A hint is worth two lines of the rail the first couple of times a player meets it and is
+ * noise on the twentieth — "Wrong rank costs you a penalty card" under every toss-in window
+ * of every turn of every round. But dropping it outright is worse for the player it was
+ * written for, so it fades on the same terms a person would offer it on: said plainly to
+ * begin with, and after that only to somebody who has stopped to think.
+ *
+ * This is the pattern the card games worth copying use — the tutorial teaches, the table
+ * gets out of the way, and help comes back on hesitation rather than on a schedule. It costs
+ * nothing in layout, because the rail is a fixed height whether the line is there or not.
+ *
+ * Under a coach ([TableState.teaching]) it never fades: the whole point of that screen is the
+ * words.
+ */
+@Composable
+private fun worthSaying(detail: String, teaching: Boolean): Boolean {
+    if (teaching) return true
+
+    val met = remember { mutableMapOf<String, Int>() }
+    val before = met[detail] ?: 0
+    var hesitated by remember(detail) { mutableStateOf(false) }
+
+    LaunchedEffect(detail) {
+        met[detail] = before + 1
+        delay(HesitationMs)
+        hesitated = true
+    }
+
+    return before < FreelyOffered || hesitated
 }
 
 @Composable
@@ -174,13 +220,13 @@ private fun RecentActions(recent: List<String>) {
 
     Surface(
         shape = RoundedCornerShape(LogCorner),
-        color = RailFill,
-        border = BorderStroke(1.dp, RailBorder),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
         modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
     ) {
         Column(modifier = Modifier.padding(Gap)) {
             recent.takeLast(RECENT_SHOWN).forEach { line ->
-                Text(text = line, fontSize = DetailSize, color = RailInkDim)
+                Text(text = line, fontSize = DetailSize, color = Rail.inkDim)
             }
         }
     }
@@ -207,6 +253,15 @@ private fun Tone.paint(): ButtonTone = when (this) {
     Tone.STAKES -> ButtonTone.STAKES
     Tone.DECLARE -> ButtonTone.DECLARE
 }
+
+/** The number of full-width rows that leaves the rail no room for anything else. */
+private const val Crowded = 3
+
+/** How many times a hint is given before it waits to be asked for. */
+private const val FreelyOffered = 2
+
+/** How long a player has to sit still before the rule appears anyway. */
+private const val HesitationMs = 5_000L
 
 private val PromptSize = 17.sp
 private val DetailSize = 13.sp

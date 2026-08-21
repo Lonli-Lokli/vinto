@@ -13,9 +13,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,19 +25,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
-import androidx.compose.ui.graphics.Color
-import game.vinto.app.theme.onFelt
-import game.vinto.client.Attention
 import game.vinto.app.art.avatar_donatello
 import game.vinto.app.art.avatar_michelangelo
 import game.vinto.app.art.avatar_raphael
 import game.vinto.app.art.avatar_you
+import game.vinto.app.theme.Signal
+import game.vinto.app.theme.Slate
+import game.vinto.app.theme.onFelt
+import game.vinto.client.Attention
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
@@ -55,16 +57,11 @@ private const val QUIET = 0.45f
 
 /** What the table is saying about a seat, in one colour. */
 private fun Attention.colour(): Color = when (this) {
-    Attention.TURN -> TurnRing
-    Attention.VINTO -> VintoRing
-    Attention.PENALTY -> PenaltyRing
-    Attention.COALITION -> CoalitionRing
+    Attention.TURN -> Signal.turn
+    Attention.VINTO -> Signal.vinto
+    Attention.PENALTY -> Signal.penalty
+    Attention.COALITION -> Signal.coalition
 }
-
-private val TurnRing = Color(0xFF6FD3A6)
-private val VintoRing = Color(0xFFE0A32A)
-private val PenaltyRing = Color(0xFFEF4444)
-private val CoalitionRing = Color(0xFF5A94F0)
 
 /**
  * A player: portrait and name in one pill, as on the web table.
@@ -105,8 +102,8 @@ fun SeatPlate(
             // Being pointed at wins over everything: it is the table saying *this* seat, now
             // — the one drawing a penalty, the one who called Vinto, the one leading.
             pointed != null -> pointed.colour()
-            onClick != null -> scheme.secondary
-            active -> scheme.secondary.copy(alpha = glow)
+            onClick != null -> Slate.gold
+            active -> Slate.gold.copy(alpha = glow)
             else -> scheme.onFelt().copy(alpha = QUIET)
         },
         label = "edge",
@@ -115,7 +112,7 @@ fun SeatPlate(
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = scheme.surface.copy(alpha = PLATE_ALPHA),
+        color = Slate.fill.copy(alpha = PLATE_ALPHA),
         border = BorderStroke(if (active || onClick != null) Ring else Hairline, edge),
         onClick = onClick ?: {},
         enabled = onClick != null,
@@ -142,7 +139,7 @@ fun SeatPlate(
                     text = name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                    color = if (active) scheme.secondary else scheme.onSurface,
+                    color = if (active) Slate.gold else Slate.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -150,7 +147,7 @@ fun SeatPlate(
                     Text(
                         text = it,
                         style = MaterialTheme.typography.labelSmall,
-                        color = scheme.secondary,
+                        color = Slate.gold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

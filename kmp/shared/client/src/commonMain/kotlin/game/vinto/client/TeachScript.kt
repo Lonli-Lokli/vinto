@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.discardTop
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -520,7 +521,7 @@ internal fun visibleRanks(view: PlayerView): List<Rank> {
     val mine = view.players.first { it.id == view.viewerId }.cards
         .mapNotNull { (it as? CardView.Visible)?.card?.rank }
     val pending = ((view.pendingAction?.card as? CardView.Visible)?.card?.rank)?.let(::listOf).orEmpty()
-    val pile = view.discardPile.lastOrNull()?.rank?.let(::listOf).orEmpty()
+    val pile = view.discardTop?.rank?.let(::listOf).orEmpty()
     return mine + pending + pile
 }
 

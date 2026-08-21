@@ -39,9 +39,13 @@ fun ChoiceChip(
         onClick = onClick,
         modifier = modifier.heightIn(min = ChipTap).semantics { this.selected = selected },
         shape = RoundedCornerShape(ChipCorner),
-        color = if (selected) RailBorder else Color.Transparent,
-        contentColor = if (selected) RailInk else RailInkDim,
-        border = BorderStroke(1.dp, RailBorder),
+        // Inverted rather than merely tinted. A selected chip used to be a slightly lighter
+        // slate — 1.5:1 against the panel it sits in, which is a state you cannot see across
+        // a room or through a glare. Swapping ink and ground puts 14:1 between the chosen
+        // answer and the others, in both schemes, and reads as a pill rather than a smudge.
+        color = if (selected) Rail.ink else Color.Transparent,
+        contentColor = if (selected) Rail.fill else Rail.inkDim,
+        border = BorderStroke(1.dp, if (selected) Rail.ink else Rail.edge),
     ) {
         Box(modifier = Modifier.padding(vertical = ChipPadV), contentAlignment = Alignment.Center) {
             Text(

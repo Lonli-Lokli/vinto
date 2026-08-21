@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -86,17 +87,129 @@ fun ColorScheme.onFelt(): Color = FeltInk
 private val FeltInk = Color(0xFFF2F5F0)
 
 /**
- * The rail: the dark band under the felt where the controls live.
+ * The rail, and everything cut from the same material: the band under the felt, the home
+ * panel, the settings sections, the score sheet, the help sheet.
  *
- * The same in light and dark, as on the web. A card table has an edge, and the edge is not a
- * page — a light panel here makes the felt look like a picture of a game inside an app rather
- * than the game itself. It also keeps the button colours meaning one thing: they sit on a
- * known background, so green is green whatever the phone is set to.
+ * This is the half of the app that follows the phone. The felt does not — a card table is
+ * green cloth at noon and at midnight — and neither does the furniture standing on it
+ * ([Slate]). What changes is the material of the *room*: dark slate, or paper.
+ *
+ * Read as composable properties rather than constants because a colour that can change with
+ * the theme is no longer a value; `Rail.fill` costs a `MaterialTheme` lookup and reads at the
+ * call site exactly as the constant it replaced did.
  */
-val RailFill = Color(0xFF1B2430)
-val RailBorder = Color(0xFF33404F)
-val RailInk = Color(0xFFF1F5F9)
-val RailInkDim = Color(0xFFA9B6C4)
+object Rail {
+    /** The panel itself. */
+    val fill: Color @Composable @ReadOnlyComposable get() = pick(SlateFill, PaperFill)
+
+    /** Anything a player reads. */
+    val ink: Color @Composable @ReadOnlyComposable get() = pick(SlateInk, PaperInk)
+
+    /** The second line: detail, footnotes, the log. Still 4.5:1 on [fill]. */
+    val inkDim: Color @Composable @ReadOnlyComposable get() = pick(SlateInkDim, PaperInkDim)
+
+    /** A hairline between two things. Decorative: nothing is lost if it is not seen. */
+    val line: Color @Composable @ReadOnlyComposable get() = pick(SlateLine, PaperLine)
+
+    /**
+     * The outline of a control — a chip, a switch's track. Not decorative: it is what says
+     * where the thing you may press begins, so it clears 3:1 against [fill] in both schemes.
+     */
+    val edge: Color @Composable @ReadOnlyComposable get() = pick(SlateEdge, PaperEdge)
+
+    /**
+     * Gold, dark enough to read as text on whichever [fill] it lands on.
+     *
+     * The one colour that could not be shared. `secondary` was used for this and is a bright
+     * gold: 6.7:1 on slate and 1.9:1 on paper, which is the active player's own name turning
+     * invisible on a light phone.
+     */
+    val gold: Color @Composable @ReadOnlyComposable get() = pick(Gold, DeepGold)
+
+    /**
+     * The wordmark, and the hairline round the deck count beside it.
+     *
+     * The brand green is a bright one, chosen against slate. On paper it is 1.9:1 — the name
+     * of the game, at the top of every screen, in the one colour on it that cannot be read.
+     */
+    val brand: Color @Composable @ReadOnlyComposable get() = pick(Brand, DeepBrand)
+
+    /** The coach's own voice, and the chapter marks beside it. */
+    val coach: Color @Composable @ReadOnlyComposable get() = pick(Mint, DeepBrand)
+
+    /** What a card just turned over is, and other asides. Gold's quieter cousin. */
+    val note: Color @Composable @ReadOnlyComposable get() = pick(Amber, DeepGold)
+}
+
+@Composable
+@ReadOnlyComposable
+private fun pick(dark: Color, light: Color): Color =
+    if (MaterialTheme.colorScheme.isDarkFelt()) dark else light
+
+/**
+ * The table's own furniture: the seat plates, and anything else standing on the cloth.
+ *
+ * Fixed in both schemes, like the felt. A near-white pill on green felt is not a light
+ * theme, it is a sticker; and keeping the plates dark is also what keeps the four attention
+ * rings legible, since every one of them then has a dark neighbour on its inner edge.
+ */
+/**
+ * The colours that mean something rather than decorate something.
+ *
+ * Gathered here because each one is a claim that can be checked: a ring that says "your turn"
+ * or "this card can be touched" is information carried by colour alone, which WCAG 1.4.11 puts
+ * at 3:1 against whatever it is drawn against. `ContrastTest` holds every one of them to it,
+ * which it can only do if they live somewhere it can see.
+ */
+object Signal {
+    /** Rings round a seat plate. Drawn against [Slate.fill] on the inside, felt on the out. */
+    val turn = Color(0xFF6FD3A6)
+    val vinto = Color(0xFFE0A32A)
+    val penalty = Color(0xFFEF4444)
+    val coalition = Color(0xFF5A94F0)
+
+    /**
+     * Rings round a card, which is white in both schemes — so these are not scheme colours,
+     * and a good deal deeper than the ones above.
+     */
+    val tappable = Color(0xFF14713F)
+    val chosen = Color(0xFFA8801A)
+    val rightCall = Color(0xFF15A34A)
+    val wrongCall = Color(0xFFEF4444)
+}
+
+/** The white of a card face: what [Signal.tappable] and its neighbours are drawn against. */
+val CardWhite = Color(0xFFFFFFFF)
+
+object Slate {
+    val fill = SlateFill
+    val ink = SlateInk
+    val inkDim = SlateInkDim
+    val gold = Gold
+}
+
+/** The wordmark's green, matching the web app's. */
+val Brand = Color(0xFF34D07A)
+
+private val Mint = Color(0xFF6FD3A6)
+private val Amber = Color(0xFFF2C14E)
+
+// Slate: the dark scheme's rail, and the table's furniture in both.
+private val SlateFill = Color(0xFF1B2430)
+private val SlateInk = Color(0xFFF1F5F9)
+private val SlateInkDim = Color(0xFFA9B6C4)
+private val SlateLine = Color(0xFF33404F)
+private val SlateEdge = Color(0xFF6E8093)
+
+// Paper: the light scheme's rail. Warm rather than white, so the cards stay the brightest
+// thing on the screen — they are what a player is trying to read.
+private val PaperFill = Color(0xFFF4F1E8)
+private val PaperInk = Color(0xFF14181B)
+private val PaperInkDim = Color(0xFF4C555E)
+private val PaperLine = Color(0xFFD8D4C8)
+private val PaperEdge = Color(0xFF787E84)
+private val DeepGold = Color(0xFF7A5C10)
+private val DeepBrand = Color(0xFF10703F)
 
 private val FeltDarkTop = Color(0xFF14442F)
 private val FeltDarkBottom = Color(0xFF0A2A1D)

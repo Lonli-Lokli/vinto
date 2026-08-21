@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,13 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import game.vinto.app.theme.RailBorder
-import game.vinto.app.theme.RailFill
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
-import game.vinto.shapes.Rank
-import game.vinto.shapes.CardConfig
-import game.vinto.shapes.getCardConfig
 import game.vinto.app.art.Res
 import game.vinto.app.art.help_card_worth
 import game.vinto.app.art.help_closing
@@ -57,6 +50,10 @@ import game.vinto.app.art.signal_turn
 import game.vinto.app.art.signal_turn_meaning
 import game.vinto.app.art.signal_vinto
 import game.vinto.app.art.signal_vinto_meaning
+import game.vinto.app.theme.Rail
+import game.vinto.shapes.CardConfig
+import game.vinto.shapes.Rank
+import game.vinto.shapes.getCardConfig
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -83,8 +80,8 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = RailFill,
-        contentColor = RailInk,
+        containerColor = Rail.fill,
+        contentColor = Rail.ink,
         // Expanded, the sheet reaches the top of the screen, and without this the first line
         // sits under the clock.
         contentWindowInsets = { WindowInsets.systemBars },
@@ -97,8 +94,8 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                 item {
                     Surface(
                         shape = RoundedCornerShape(Corner),
-                        color = RailFill,
-                        border = BorderStroke(1.dp, RailBorder),
+                        color = Rail.fill,
+                        border = BorderStroke(1.dp, Rail.line),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(modifier = Modifier.padding(Gap)) {
@@ -107,7 +104,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                                 fontWeight = FontWeight.Bold,
                                 fontSize = TitleSize,
                             )
-                            Text(it, fontSize = BodySize, color = RailInkDim)
+                            Text(it, fontSize = BodySize, color = Rail.inkDim)
                         }
                     }
                 }
@@ -131,7 +128,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                         stringResource(group.title),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = BodySize,
-                        color = RailInkDim,
+                        color = Rail.inkDim,
                         modifier = Modifier.padding(top = Gap),
                     )
                 }
@@ -153,7 +150,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                 Text(
                     stringResource(Res.string.help_closing),
                     fontSize = BodySize,
-                    color = RailInkDim,
+                    color = Rail.inkDim,
                     modifier = Modifier.padding(vertical = Pad),
                 )
             }
@@ -215,7 +212,7 @@ private fun SignalRow(signal: Signal) {
         Surface(
             modifier = Modifier.size(Chip),
             shape = RoundedCornerShape(Corner),
-            color = RailFill,
+            color = Rail.fill,
             border = BorderStroke(SwatchRing, signal.swatch),
             content = {},
         )
@@ -226,7 +223,7 @@ private fun SignalRow(signal: Signal) {
                 fontWeight = FontWeight.SemiBold,
                 fontSize = BodySize,
             )
-            Text(stringResource(signal.meaning), fontSize = BodySize, color = RailInkDim)
+            Text(stringResource(signal.meaning), fontSize = BodySize, color = Rail.inkDim)
         }
     }
 }
@@ -252,7 +249,7 @@ private fun RankRow(config: CardConfig) {
             Text(
                 text = config.longDescription.ifEmpty { stringResource(Res.string.help_no_action) },
                 fontSize = BodySize,
-                color = RailInkDim,
+                color = Rail.inkDim,
             )
         }
     }

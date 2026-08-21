@@ -244,7 +244,7 @@ class TableModelTest {
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
 
         val table = session.table()
-        assertTrue(table.prompt.startsWith("A 5 went down"), table.prompt)
+        assertTrue(table.prompt.startsWith("The 5 went down"), table.prompt)
         assertTrue(table.send("Continue") is GameAction.PlayerTossInFinished)
         assertTrue(table.send("Call Vinto") is GameAction.CallVinto, "your own turn is ending")
 

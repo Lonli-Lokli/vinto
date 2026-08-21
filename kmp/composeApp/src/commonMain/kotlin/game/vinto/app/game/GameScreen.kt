@@ -18,21 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import game.vinto.app.theme.ButtonTone
-import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.RailFill
-import game.vinto.app.nowIso
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
-import game.vinto.client.LocalGame
-import game.vinto.client.Pace
-import game.vinto.client.toJson
-import game.vinto.shapes.GamePhase
 import game.vinto.app.art.Res
 import game.vinto.app.art.report_body
 import game.vinto.app.art.report_dismiss
 import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
+import game.vinto.app.nowIso
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.Rail
+import game.vinto.client.LocalGame
+import game.vinto.client.Pace
+import game.vinto.client.toJson
+import game.vinto.shapes.GamePhase
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
@@ -138,9 +136,9 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
 private fun ReportCopied(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = RailFill,
-        titleContentColor = RailInk,
-        textContentColor = RailInkDim,
+        containerColor = Rail.fill,
+        titleContentColor = Rail.ink,
+        textContentColor = Rail.inkDim,
         title = { Text(stringResource(Res.string.report_title)) },
         text = { Text(stringResource(Res.string.report_body)) },
         confirmButton = {
@@ -162,7 +160,7 @@ private fun ReportCopied(onDismiss: () -> Unit) {
  */
 @Composable
 private fun RoundOver(onSee: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth(), color = RailFill) {
+    Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
         Column(modifier = Modifier.padding(Pad)) {
             GameButton(
                 label = stringResource(Res.string.table_see_score),

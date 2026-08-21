@@ -21,12 +21,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import game.vinto.app.theme.RailInk
-import game.vinto.app.theme.RailInkDim
-import game.vinto.app.theme.feltGradient
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.opening_shuffling
+import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.onFelt
 import org.jetbrains.compose.resources.stringResource
 
 private const val BOB_MS = 900
@@ -66,19 +65,19 @@ fun OpeningScreen() {
             Text(
                 "🂡",
                 fontSize = CardSize,
-                color = RailInk,
+                color = MaterialTheme.colorScheme.onFelt(),
                 modifier = Modifier.graphicsLayer { translationY = lift },
             )
             Text(
                 text = stringResource(Res.string.app_name),
                 fontSize = TitleSize,
                 fontWeight = FontWeight.Black,
-                color = RailInk,
+                color = MaterialTheme.colorScheme.onFelt(),
             )
             Text(
                 text = stringResource(Res.string.opening_shuffling),
                 fontSize = BodySize,
-                color = RailInkDim,
+                color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
             )
         }
     }
@@ -88,3 +87,6 @@ private val Gap = 10.dp
 private val CardSize = 72.sp
 private val TitleSize = 28.sp
 private val BodySize = 15.sp
+
+/** The line under the wordmark: present, and not competing with it. */
+private const val Quiet = 0.75f
