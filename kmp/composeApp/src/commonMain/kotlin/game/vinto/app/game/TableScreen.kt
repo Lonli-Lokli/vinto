@@ -76,6 +76,7 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.discardTop
 import game.vinto.engine.discardUnder
+import game.vinto.shapes.Card
 import game.vinto.shapes.PendingCardOrigin
 import org.jetbrains.compose.resources.stringResource
 
@@ -89,8 +90,6 @@ private val Rim = 2.dp
 private const val SHADOW_DROP = 0.72f
 private const val SHADOW_SQUASH = 0.38f
 
-/** How far the card under the top one shows from behind it. */
-private val Peek = 5.dp
 /** Every control in the header is a thumb wide, whatever is drawn inside it. */
 private val HeaderTap = 44.dp
 private val BadgeWidth = 26.dp
@@ -656,40 +655,51 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 @Composable
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard)
-    val arriving = Anchor.Discard in stage.inFlight
 
     // A card in play came off the table, so it is drawn on the table.
     val inPlay = (view.pendingAction?.card as? CardView.Visible)?.card
         ?.takeIf { view.pendingAction?.from == PendingCardOrigin.HAND }
 
-    val top = (inPlay ?: view.discardTop).takeIf { !arriving }
-    // Whatever the top card is covering: the real pile top when a card from a hand is being
-    // played over it, and otherwise the second card down.
-    val under = (if (inPlay != null) view.discardTop else view.discardUnder)
-        ?.takeIf { it.id != top?.id && !arriving }
+    val face = pileFace(
+        top = view.discardTop,
+        under = view.discardUnder,
+        inPlay = inPlay,
+        landing = Anchor.Discard in stage.inFlight,
+    )
 
-    if (top == null) {
+    if (face == null) {
         EmptySlot(sizes.theirs, "—", pile)
         return
     }
 
-    Box(contentAlignment = Alignment.Center) {
-        under?.let {
-            CardFace(
-                card = CardView.Visible(it),
-                scale = sizes.theirs,
-                modifier = Modifier.offset(x = Peek, y = Peek),
-            )
-        }
+    CardFace(
+        card = CardView.Visible(face),
+        scale = sizes.theirs,
+        modifier = pile,
+        state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
+        label = stringResource(Res.string.card_discarded, face.rank.serialName),
+    )
+}
 
-        CardFace(
-            card = CardView.Visible(top),
-            scale = sizes.theirs,
-            modifier = pile,
-            state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
-            label = stringResource(Res.string.card_discarded, top.rank.serialName),
-        )
-    }
+/**
+ * The one card the discard pile shows.
+ *
+ * One, not two. A sliver of the card underneath was drawn as well, on the theory that a pile
+ * looks like a pile — but the discard is read rather than admired, and a second rank peeking
+ * out from behind the first is a second rank to mistake for the top one.
+ *
+ * The [landing] case is the whole reason this is a function rather than three expressions
+ * inline. While a card is on its way to the pile the overlay is drawing it, so the pile must
+ * not draw it too — and hiding *everything* is what it used to do, which meant that throwing
+ * a King onto a King emptied the pile for the length of the throw and filled it again. What
+ * the pile shows while a card is in the air is the card that is about to be covered: the one
+ * underneath, or the real top when a card from a hand is being played over it. Nothing, only
+ * when there was nothing there to begin with.
+ */
+internal fun pileFace(top: Card?, under: Card?, inPlay: Card?, landing: Boolean): Card? = when {
+    landing -> if (inPlay != null) top else under
+    inPlay != null -> inPlay
+    else -> top
 }
 
 @Composable
