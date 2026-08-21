@@ -8,7 +8,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PendingCardOrigin
-import game.vinto.shapes.PlayerState
+import game.vinto.shapes.PendingAction
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
 import kotlinx.serialization.SerialName
@@ -150,8 +150,6 @@ data class PlayerView(
  * `botMemory`. Bots do not use views — they run in the same process as the full state.
  */
 fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = null): PlayerView {
-    val viewer = state.players.firstOrNull { it.id == playerId }
-
     val revealedToViewer = revealedByCurrentAction(state, playerId)
     val viewerLeadsCoalition = state.vintoCallerId != null && state.coalitionLeaderId == playerId
     // Every hand is turned over once the game is scored.
@@ -215,7 +213,10 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
         //
         // What stays secret is what the action has *looked at* — a Queen peeking at two cards
         // shows them to the player holding the Queen and to nobody else.
-        val actorSeesCard = pendingAction.playerId == playerId
+        // The same rule as the seats above: a target carries its card only when the action
+        // aimed at it is one that looks. Anything else and a Jack's two cards arrive here
+        // instead of in the hand, which is the same leak through a different field.
+        val actorSeesCard = pendingAction.playerId == playerId && pendingAction.looks()
         PendingActionView(
             playerId = pendingAction.playerId,
             actionPhase = pendingAction.actionPhase,
@@ -270,34 +271,34 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
 private fun revealedByCurrentAction(state: GameState, playerId: String): Set<Pair<String, Int>> {
     val pending = state.pendingAction ?: return emptySet()
     if (pending.playerId != playerId) return emptySet()
-    val viewer = state.players.firstOrNull { it.id == playerId }
+    if (!pending.looks()) return emptySet()
 
-    return pending.targets
-        .filter { it.card != null || viewer.hasJustLearned(it.playerId, it.position, playerId) }
-        .map { it.playerId to it.position }
-        .toSet()
+    return pending.targets.map { it.playerId to it.position }.toSet()
 }
 
 /**
- * Whether the card this action is aimed at is one the viewer now knows.
+ * Whether the action in progress is one that *looks* at what it is aimed at.
  *
- * A Queen carries the cards it looked at on the action itself; a Seven does not — the engine
- * records the peek by growing the looker's knowledge and leaves the target bare. So "what this
- * action has shown me" is the two together: the card on the target, or a target the engine has
- * just written into my memory.
+ * This is the whole of the rule, and it is decided by the card rather than by what the player
+ * happens to remember. Three of them look — a Seven or Eight at one of your own, a Nine or Ten
+ * at somebody else's, a Queen at two before deciding whether to swap them — and the rest do
+ * not:
  *
- * Reading knowledge *through the target* is what keeps it honest. The knowledge lasts the
- * round and the target lasts the action, so a card is shown for exactly as long as the action
- * that showed it — and a Jack, which swaps two cards without anybody looking, records no
- * knowledge and so reveals nothing, which is the whole of that card.
+ *  * a **Jack** swaps two cards with nobody looking. The engine records the cards on the
+ *    action because it has to move them, and the view used to pass them straight to the player
+ *    who played it: two hidden cards read, every time, for free. That is the entire difference
+ *    between a Jack and a Queen, and it was worth ten points.
+ *  * a **King** is aimed *before* it is declared — you point at a card and say what it is — so
+ *    revealing what it is aimed at hands the player the answer to the question the card asks.
+ *
+ * Earlier this asked whether the viewer *knew* the card, which is not the same question and
+ * cannot be made into it: a card you peeked in setup is one you know, so a King aimed at it
+ * came back face-up and the declaration was free. What you remember is yours to keep track
+ * of; what the engine sends is what you are being shown right now.
  */
-private fun PlayerState?.hasJustLearned(ownerId: String, position: Int, viewerId: String): Boolean {
-    if (this == null) return false
-    return if (ownerId == viewerId) {
-        position in knownCardPositions
-    } else {
-        opponentKnowledge?.get(ownerId)?.knownCards?.containsKey(position) == true
-    }
+private fun PendingAction.looks(): Boolean = when (targetType) {
+    TargetType.OWN_CARD, TargetType.OPPONENT_CARD, TargetType.PEEK_THEN_SWAP -> true
+    TargetType.SWAP_CARDS, TargetType.FORCE_DRAW, TargetType.DECLARE_ACTION, null -> false
 }
 
 /**
