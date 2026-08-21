@@ -1,6 +1,5 @@
 package game.vinto.app.game
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +8,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,36 +64,32 @@ private const val RECENT_SHOWN = 2
 @Composable
 fun ControlPanel(
     state: TableState,
-    floor: Dp,
+    height: Dp,
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val table = state.table
     val stage = LocalStage.current
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            // The panel keeps [floor] whether it needs it or not, and grows past it smoothly
-            // when it genuinely does — a King's fourteen ranks, or a refusal that runs to two
-            // lines. The felt above takes whatever is left, so a panel that changed height
-            // freely would move the whole table on every phase of every turn: cards, seats
-            // and piles all shifting under a thumb that is halfway to one of them.
-            .heightIn(min = floor)
-            .animateContentSize(),
+        modifier = modifier.fillMaxWidth().height(height),
         color = RailFill,
     ) {
         // The Surface's minimum has to reach the content for the centring below to have room
         // to work in; a wrapped Column would simply be as tall as its own children.
-        // No scrolling. A control you have to scroll to reach is one a player does not know
-        // is there, and the panel's worst case — a King's fourteen ranks — fits because those
-        // are drawn as a compact grid rather than as fourteen full-width buttons.
+        // The rail is a fixed height, so this is what adapts. Centred, so a short panel —
+        // "Raph is playing", and nothing to do about it — sits in the middle rather than
+        // clinging to the felt above a void, and a full one fills the space either way, so the
+        // buttons stay where a thumb left them.
         //
-        // Centred inside the reserved height, so a short panel — "Raph is playing", and
-        // nothing to do about it — sits in the middle of the rail rather than clinging to the
-        // felt above a void. It is a no-op for every panel that fills the space, which is most
-        // of them, so the buttons do not move around between phases.
+        // Scrolling is the last resort rather than the design: the worst case is a King's
+        // fourteen ranks, which fit because they are a compact grid and because the box of
+        // recent moves stands aside for them (below). It exists so that a large system font
+        // cannot push a button off the bottom of the rail.
         Column(
-            modifier = Modifier.fillMaxWidth().padding(PanelPad),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(PanelPad),
             verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
         ) {
             Heading(table = table)
@@ -109,7 +107,10 @@ fun ControlPanel(
                 )
             }
 
-            RecentActions(state.recent)
+            // The one thing that gives way when the rail is crowded. Naming a rank asks for
+            // fourteen chips and two buttons, and what happened three moves ago matters less
+            // than being able to reach them.
+            if (table.ranks.isEmpty()) RecentActions(state.recent)
 
             if (table.ranks.isNotEmpty()) {
                 FlowRow(

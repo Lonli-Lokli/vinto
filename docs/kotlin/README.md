@@ -794,6 +794,20 @@ Two things worth knowing about that table:
   agrees with the engine** — "The Discard Pile is formed by the first card played or discarded"
   — so the markdown was the bug, and it has been corrected.
 
+**The rail is a fixed share of the screen** — `railHeight(screen)`, a third of it, clamped
+between 240 and 300 dp — and the felt is exactly what remains. Not a floor the contents can
+push past, which is what it was: a King's fourteen rank chips arrived and the table shrank,
+they went and it grew back. Animating that made it a slide rather than a jump, which is a nicer
+way to move something that should not move at all.
+
+What adapts now is the panel's contents rather than its height: the box of recent moves stands
+aside when a rank grid needs the room, and the column scrolls as a last resort so a large
+system font cannot push a button off the bottom. Measured on the device across five panel
+states — a toss-in prompt, a two-line prompt with a two-line log, bots playing, a turn, a drawn
+card — the felt's bottom edge stayed at the same pixel in every one.
+
+**The jump.** The felt took what the control panel left
+
 ## 6h. Words, and where they live
 
 Every string the **UI module** says is now in

@@ -55,9 +55,12 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
         is GameAction.UseCardAction ->
             "$who ${verb("play")} the ${before.pendingAction?.card?.rank?.serialName ?: "card"}"
 
+        // The rank, not a count. "Mikey tossed in 1 card" tells you somebody acted and nothing
+        // about the game; "Mikey tossed in a 6" is a card leaving a hand you are trying to
+        // remember. The web app says the rank too.
         is GameAction.ParticipateInTossIn -> {
-            val count = action.payload.positions.size
-            "$who tossed in $count ${if (count == 1) "card" else "cards"}"
+            val rank = after.discardPile.peekTop()?.rank?.serialName
+            if (rank != null) "$who tossed in the $rank" else "$who tossed in a card"
         }
 
         is GameAction.CallVinto -> "$who called Vinto"
@@ -68,7 +71,12 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
         is GameAction.DeclareKingAction ->
             "$who declared a ${action.payload.declaredRank.serialName}"
 
-        is GameAction.ConfirmPeek, is GameAction.SkipPeek -> "$who finished looking"
+        // Nothing. Confirming a peek says only that a player stopped looking at a card the
+        // reader was never shown — it is the end of a private moment, and putting it in the
+        // log spends a line saying so. The web app drops it for the same reason: "don't show
+        // if no card info". What the peek *was* is already narrated by the action that caused
+        // it, and drawn on the table by the lift and the glow.
+        is GameAction.ConfirmPeek, is GameAction.SkipPeek -> null
 
         is GameAction.PeekSetupCard -> null
         is GameAction.FinishSetup -> "the round begins"

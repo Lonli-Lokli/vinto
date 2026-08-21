@@ -75,44 +75,48 @@ data class TableSizes(
          * King. Sizing the cards from that means every phase change is a chance for the whole
          * table to change size, which on a phone reads as the game jumping under your thumb.
          *
-         * So the decision is made once, from a quantity that does not move, using the panel's
-         * floor rather than its actual height. A panel that overflows its floor still pushes
-         * the felt up — there is nowhere else for it to go — but the cards keep their size and
-         * their positions relative to each other, and the felt's middle row absorbs it.
+         * So the decision is made once, from a quantity that does not move: the screen, minus
+         * the header, minus the rail — and the rail is a fixed share of the screen rather than
+         * whatever its contents ask for. The felt is the remainder, and the remainder is the
+         * same in every phase of every turn.
          */
-        fun forScreen(screen: Dp): TableSizes = forHeight(screen - HeaderHeight - panelFloor(screen))
+        fun forScreen(screen: Dp): TableSizes = forHeight(screen - HeaderHeight - railHeight(screen))
     }
 }
 
 /**
  * How much room each part of the screen gets.
  *
- * The two numbers travel together and are decided together, from the screen, once: the card
- * size and the height the rail holds on to. Passing them separately is passing two halves of
- * one decision, and the halves can disagree.
+ * Both numbers are decided together, from the screen, once: how large a card is drawn and how
+ * tall the rail is. Passing them separately is passing two halves of one decision, and the
+ * halves can disagree.
  */
-data class TableLayout(val sizes: TableSizes, val panelFloor: Dp) {
+data class TableLayout(val sizes: TableSizes, val railHeight: Dp) {
     companion object {
         fun forScreen(screen: Dp): TableLayout =
-            TableLayout(TableSizes.forScreen(screen), panelFloor(screen))
+            TableLayout(TableSizes.forScreen(screen), railHeight(screen))
     }
 }
 
-/** The strip above the felt: the wordmark, the round, the bug button, the deck count. */
+/** The strip above the felt: the wordmark, the round, the help, the bug, the deck count. */
 val HeaderHeight = 44.dp
 
 /**
- * The height the control panel holds on to whether or not it needs it.
+ * How tall the control rail is: **a fixed share of the screen**, and never anything else.
  *
- * A panel that is exactly as tall as its contents is a panel that changes height on every
- * phase of every turn, and since the felt takes what is left, the entire table shifts each
- * time. Reserving the height of a *typical* panel — a prompt, a rule, and two buttons — means
- * the common cases cost nothing at all: draw, swap, discard and toss-in all fit inside it and
- * move nothing.
+ * It used to be a floor that content could push past, which meant the felt was whatever was
+ * left over — and the felt changed size whenever the panel did. A King's fourteen rank chips
+ * arrive, the table shrinks; the chips go, it grows back. Animating the change made it a slide
+ * rather than a jump, which is a nicer way to move something that should not be moving at all:
+ * every card, every seat and every pile shifts under a thumb already on its way to one of them.
  *
- * Capped as a fraction of the screen so a small phone does not end up with a rail and no felt.
+ * So the rail is a proportion, clamped at both ends — a third of a phone, but never so short
+ * that the controls crowd nor so tall that the table is a strip. Everything else follows from
+ * it: the felt is exactly what remains, on every screen and in every phase, and the panel's
+ * contents adapt to the rail rather than the other way round.
  */
-fun panelFloor(screen: Dp): Dp = minOf(PANEL_FLOOR_MAX, screen * PANEL_FLOOR_FRACTION)
+fun railHeight(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAIL_MAX)
 
-private val PANEL_FLOOR_MAX = 268.dp
-private const val PANEL_FLOOR_FRACTION = 0.32f
+private const val RAIL_FRACTION = 0.31f
+private val RAIL_MIN = 240.dp
+private val RAIL_MAX = 300.dp

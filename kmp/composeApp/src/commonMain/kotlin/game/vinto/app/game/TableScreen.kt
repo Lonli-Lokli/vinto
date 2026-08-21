@@ -130,7 +130,7 @@ fun TableScreen(
 
         ControlPanel(
             state = state,
-            floor = layout.panelFloor,
+            height = layout.railHeight,
             onMove = onMove,
         )
     }
