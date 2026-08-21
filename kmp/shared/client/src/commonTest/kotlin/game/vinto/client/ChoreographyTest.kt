@@ -1,5 +1,6 @@
 package game.vinto.client
 
+import game.vinto.engine.projectView
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
@@ -117,6 +118,44 @@ class ChoreographyTest {
         assertEquals(Anchor.Pending to seat, into.from to into.to, "the drawn card goes in")
         assertEquals(Rank.FIVE, into.card?.rank)
         assertEquals(seat to Anchor.Discard, out.from to out.to, "as the old one comes out")
+    }
+
+    /**
+     * A correct call sends the card it named to the front of the table, lit.
+     *
+     * Guessing right is the one moment in a turn a player has *proved* something, and the
+     * proof is the card: it comes out of the hand face up so the other three can read it, and
+     * it goes to the space in front of the player rather than to the pile, because its action
+     * is about to be played from there.
+     *
+     * It used to fly to the discard whatever was said — for a correct call, the wrong card to
+     * the wrong place, which is a swap the rest of the table cannot follow at all.
+     */
+    @Test
+    fun aCorrectCallShowsTheNamedCardRatherThanDiscardingIt() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+
+        val view = projectView(session.state, session.playerId)
+        val mine = view.players.first { it.id == session.playerId }
+        val calledPosition = 0
+        val calledRank = session.state.players
+            .first { it.id == session.playerId }.cards[calledPosition].rank
+
+        val scenes = scenesOf(session)
+        session.dispatch(
+            GameAction.SwapCard(SwapCardPayload(session.playerId, calledPosition, calledRank)),
+        )
+        runCurrent()
+
+        val seat = Anchor.Seat(session.playerId, calledPosition)
+        val out = scenes.last().flatten().filterIsInstance<Beat.Move>().first { it.from == seat }
+
+        assertEquals(Anchor.Pending, out.to, "the named card is played, not discarded")
+        assertEquals(calledRank, out.card?.rank, "and it is the card that was named")
+        assertTrue(out.shown, "travelling lit, because the table has to see the call was good")
+        assertTrue(mine.cards.isNotEmpty())
     }
 
     /**

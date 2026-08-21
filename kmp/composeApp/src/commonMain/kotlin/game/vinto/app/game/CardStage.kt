@@ -22,9 +22,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -38,16 +41,18 @@ import game.vinto.client.AnimationQueue
 import game.vinto.client.Attention
 import game.vinto.client.Beat
 import game.vinto.client.Frame
-import game.vinto.client.tossedTogether
 import game.vinto.client.Pacing
 import game.vinto.client.Scene
 import game.vinto.client.Target
+import game.vinto.client.tossedTogether
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
+import kotlin.math.PI
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -61,7 +66,19 @@ import kotlinx.coroutines.flow.first
  * they live in `Pacing` — where they can be tested, because they are a decision rather than a
  * drawing.
  */
-private const val MOVE_MS = 460
+/**
+ * How long a card takes to cross the table, and how long a card being *shown* takes.
+ *
+ * The web app moves a card in 1500ms and swells a played one over 2500, which is where the
+ * pace of this game was set and what it looks like: cards that travel, rather than cards that
+ * are suddenly somewhere else. This was 460 — a third of that — and every report about the
+ * table has been some version of "I could not see what happened".
+ *
+ * Both are scaled by the pace setting, so Brisk lands near the old speed and Calm past the
+ * web's.
+ */
+private const val MOVE_MS = 1_100
+private const val SHOWN_MS = 1_600
 private const val PEEK_MS = 1100
 
 /** The lift itself is quick; the card then stays up for the rest of the beat. */
@@ -74,6 +91,18 @@ private const val LIFT_FRACTION = 0.28f
 private const val STAGE_SCALE = 1.5f
 private const val START_SCALE = 0.6f
 private const val FULL_TURN = 360f
+
+/** How far a card swells at the top of its arc: a fifth, or half again when it is shown. */
+private const val SWELL = 0.2f
+private const val SHOWN_SWELL = 0.5f
+private const val WOBBLE = 10f
+private const val HALF = 0.5f
+
+/** The light a card travels in: a plain lift, or a green announcement. */
+private val ShownGlow = Color(0xFF22C55E)
+private const val LIFT = 0.28f
+private const val SHOWN_GLOW = 0.85f
+private const val GLOW_SPREAD = 0.8f
 private const val RESHUFFLE_MS = 900
 private const val SWEEP_CARDS = 5
 private const val SWEEP_STAGGER = 0.12f
@@ -215,6 +244,8 @@ class Stage {
         val to: Offset,
         val landingAt: Anchor,
         val spin: Boolean = false,
+        /** Lit on the way, for a card the table is being shown rather than merely moved. */
+        val shown: Boolean = false,
     )
 
     /** The middle of the table, which is where a peeked card lifts towards. */
@@ -437,8 +468,9 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
                 to = to,
                 landingAt = beat.to,
                 spin = beat.spin,
+                shown = beat.shown,
             )
-            ms(MOVE_MS)
+            ms(if (beat.shown) SHOWN_MS else MOVE_MS)
         }
     }
 
@@ -616,11 +648,34 @@ private fun InFlight(
         y = flight.from.y + (flight.to.y - flight.from.y) * t,
     )
 
+    // The web app's arc, which is most of why its table reads: a card lifts towards you as it
+    // crosses and settles again — 1 to 1.2 and back — with a small wobble, so it looks thrown
+    // rather than slid. A card being shown lifts further and carries its own light.
+    val arc = sin(t * PI).toFloat()
+    val swell = 1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL)
+    val wobble = if (flight.spin) t * FULL_TURN else arc * WOBBLE * if (t < HALF) 1f else -1f
+
     Box(
         modifier = Modifier
             .offset { IntOffset(at.x.roundToInt(), at.y.roundToInt()) }
-            // A full turn on the way, for a card that is somebody else's.
-            .graphicsLayer { rotationZ = if (flight.spin) t * FULL_TURN else 0f },
+            .graphicsLayer {
+                rotationZ = wobble
+                scaleX = swell
+                scaleY = swell
+            }
+            .drawBehind {
+                // The lift shadow every flight has, and the glow only a shown card has.
+                val glow = if (flight.shown) ShownGlow else Color.Black
+                val strength = if (flight.shown) arc * SHOWN_GLOW else LIFT
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(glow.copy(alpha = strength), Color.Transparent),
+                        center = center,
+                        radius = size.maxDimension * GLOW_SPREAD,
+                    ),
+                    radius = size.maxDimension * GLOW_SPREAD,
+                )
+            },
     ) {
         CardFace(flight.card, sizes.mine)
     }

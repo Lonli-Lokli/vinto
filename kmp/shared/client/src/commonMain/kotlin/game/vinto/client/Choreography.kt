@@ -50,6 +50,13 @@ sealed interface Beat {
         val to: Anchor,
         val card: Card? = null,
         val spin: Boolean = false,
+        /**
+         * A card the table is being *shown* rather than one merely being moved: it travels
+         * lit, so the moment reads as an announcement. The web app does the same thing with a
+         * green glow, and it is the difference between a card changing places and a player
+         * proving something.
+         */
+        val shown: Boolean = false,
     ) : Beat
 
     /**
@@ -249,11 +256,24 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
 
         // Two cards at once, and the order is the point: the new one goes in, the old one
         // comes out and lands face-up where everybody can read it.
+        // Two cards at once, and where the old one goes depends on what was said about it.
+        //
+        // Guess nothing, or guess wrong, and it is discarded. Guess *right* and it does not go
+        // to the pile at all — its action is played, so it comes out of the hand and into the
+        // space in front of the player, face up and lit, which is the whole point of having
+        // guessed: everybody else has to see that the call was good and what it was good for.
+        // This used to animate it onto the discard whatever happened, which for a correct call
+        // meant flying the wrong card to the wrong place.
         is GameAction.SwapCard -> {
             val seat = Anchor.Seat(action.payload.playerId, action.payload.position)
+            val called = after.pendingCard()?.takeIf { action.payload.declaredRank != null }
             listOfNotNull(
                 Beat.Move(Anchor.Pending, seat, before.pendingCard()),
-                after.discardTop?.let { Beat.Move(seat, Anchor.Discard, it) },
+                if (called != null) {
+                    Beat.Move(seat, Anchor.Pending, called, shown = true)
+                } else {
+                    after.discardTop?.let { Beat.Move(seat, Anchor.Discard, it) }
+                },
             )
         }
 
