@@ -95,8 +95,15 @@ flowchart TD
 - **2–6** → Value = rank; no action.
 - **7, 8** → Value = 7 or 8; action = peek one of your own cards.
 - **9, 10** → Value = 9 or 10; action = peek one card of another player.
-- **Jack (J)** → Value = 10; action = swap any **two cards on the table**, face-down.
-- **Queen (Q)** → Value = 10; action = check any **two cards**, then swap them if you want.
+- **Jack (J)** → Value = 10; action = swap two face-down cards **belonging to two different
+  players**.
+- **Queen (Q)** → Value = 10; action = check two cards **belonging to two different players**,
+  then swap them if you want.
+
+> The official PDF words these as "any 2 cards on the table" and "any 2 cards", without the
+> clause. **Decided: two different players**, confirmed by the product owner — a Jack that may
+> swap two of your own cards is a Jack that shuffles your hand for nothing, and a Queen that
+> may look at two of yours is a better 7. Both engines already enforce it.
 - **King (K)** → Value = 0; action = declare the value of any card and play its action.
 - **Ace (A)** → Value = 1; action = choose a player to draw one card from the deck face-down.
 - **Joker** → Value = −1; no action.
@@ -191,5 +198,8 @@ one is a decision rather than a surprise.
 | --- | --- | --- | --- |
 | 1 | A wrong toss-in costs a penalty card | Also bars that player from tossing in for the rest of the round | Loosening. No recorded action depends on it (0 in the corpus) |
 | 2 | Toss-ins happen "during any other player's turn" | The player whose turn it is may toss into their own discard | Tightening. **171 corpus actions** become illegal: both engines and all 50 recordings would need regenerating |
-| 3 | Jack swaps any two cards; Queen checks any two | Both require the two cards to belong to different players | Loosening. Corpus-safe |
-| 4 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Tightening. **4 corpus actions** become illegal; corpus regeneration |
+| 3 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Tightening. **4 corpus actions** become illegal; corpus regeneration |
+
+**Settled, so nobody re-opens it:** the Jack and Queen targeting two *different* players is the
+intended rule, confirmed by the product owner, even though the PDF's wording is looser. The
+engines are right; the sentence above them in this file now says so.

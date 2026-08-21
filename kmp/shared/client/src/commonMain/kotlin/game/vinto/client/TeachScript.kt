@@ -339,9 +339,10 @@ private fun cardTour(taught: Taught): Lesson? = when {
     "cards_jack" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
         title = "Jack — swap two cards, blind",
-        body = "Worth 10. It swaps any two cards on the table, from two different players, " +
-            "and nobody looks at either of them first. Good for pushing a card you know is bad into " +
-            "somebody else's hand; a gamble with anything you know is good.",
+        body = "Worth 10. It swaps two cards belonging to two different players — never two " +
+            "of anybody's own — and nobody looks at either of them first. Good for pushing a " +
+            "card you know is bad into somebody else's hand; a gamble with anything you know " +
+            "is good.",
         cards = listOf(Rank.JACK),
         talkId = "cards_jack",
     )

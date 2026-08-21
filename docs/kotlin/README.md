@@ -776,8 +776,10 @@ added to the lesson as a result: the coalition **may confer and pool what they k
 **?** is the reminder card the boxed game ships one of per player, and a session is played to
 **a clock agreed beforehand** before the 5 / 3 / 2 game points are awarded.
 
-Four places where the **engines** differ from the official text are listed at the foot of
-`docs/game-engine/VINTO_RULES.md`, with what each would cost to fix. Two are loosenings and
+Places where the **engines** differ from the official text are listed at the foot of
+`docs/game-engine/VINTO_RULES.md`, with what each would cost to fix. One of the four found —
+the Jack and Queen needing two *different* players, which the PDF words more loosely — has
+been settled in the engines' favour by the product owner. Of the rest, one is a loosening and
 corpus-safe; two are tightenings that would invalidate recorded actions (171 and 4 of them) and
 so need both engines changed and all fifty recordings regenerated.
 
