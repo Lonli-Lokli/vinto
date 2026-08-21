@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
@@ -54,14 +56,16 @@ import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_vinto_mark
-import game.vinto.app.theme.Brand
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.Slate
 import game.vinto.app.theme.Wordmark
+import game.vinto.app.theme.contactShadow
 import game.vinto.app.theme.feltEdge
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.feltLamp
 import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
 import game.vinto.client.Move
@@ -80,6 +84,10 @@ private val Tight = 4.dp
 private val Edge = 6.dp
 private val FeltCorner = 14.dp
 private val Rim = 2.dp
+
+/** How a contact shadow sits under the thing that casts it: low, and flattened. */
+private const val SHADOW_DROP = 0.72f
+private const val SHADOW_SQUASH = 0.38f
 
 /** How far the card under the top one shows from behind it. */
 private val Peek = 5.dp
@@ -258,13 +266,13 @@ private fun TableHeader(
                 .semantics { contentDescription = deck },
             shape = RoundedCornerShape(Tight),
             color = DeckBadge,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Brand),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Slate.gold),
         ) {
             Text(
                 "${view.drawPileSize}",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = Brand,
+                color = Slate.gold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
@@ -283,6 +291,7 @@ private fun Felt(
 ) {
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(FeltCorner)
+    val weave = rememberFeltWeave()
     BoxWithConstraints(
         modifier = modifier
             .clip(shape)
@@ -291,6 +300,7 @@ private fun Felt(
             // a green rectangle and a lit surface: the lamp above the middle of the table,
             // the shadow the rim throws back onto the felt just inside it, and the rim.
             .drawBehind {
+                drawRect(weave)
                 drawRect(scheme.feltLamp(size.minDimension))
                 drawRect(scheme.feltShade())
             }
@@ -688,7 +698,24 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        content()
+        // A pile of cards is the one thing on this table with real thickness, so it is the
+        // one that most obviously wants a shadow under it. Drawn behind rather than as an
+        // elevation, because the felt is not a Material surface and a Material shadow on it
+        // reads as a floating card in an app.
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .drawBehind {
+                        drawOval(
+                            brush = contactShadow(),
+                            topLeft = Offset(0f, size.height * SHADOW_DROP),
+                            size = Size(size.width, size.height * SHADOW_SQUASH),
+                        )
+                    },
+            )
+            content()
+        }
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,

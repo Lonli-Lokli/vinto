@@ -48,6 +48,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Settings
 import game.vinto.shapes.Difficulty
@@ -198,9 +199,8 @@ private fun Hero() {
             fontSize = TitleSize,
             fontWeight = FontWeight.Bold,
             letterSpacing = TitleTracking,
-            // On the felt, so the felt's ink. The rail's is a page colour, and a page colour
-            // on green cloth is a black wordmark on a dark table in the light scheme.
-            color = MaterialTheme.colorScheme.onFelt(),
+            // Gold leaf on baize. Not the rail's brass, which is 2.7:1 on the lighter felt.
+            color = MaterialTheme.colorScheme.feltGold(),
         )
         Text(
             stringResource(Res.string.home_tagline),

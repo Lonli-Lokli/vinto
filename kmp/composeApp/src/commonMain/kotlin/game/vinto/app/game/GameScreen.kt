@@ -176,24 +176,31 @@ private fun ReportProblem(onSend: () -> Unit, onCopy: () -> Unit, onDismiss: () 
         textContentColor = Rail.inkDim,
         title = { Text(stringResource(Res.string.report_title)) },
         text = { Text(stringResource(Res.string.report_body)) },
+        // All three stacked in the confirm slot rather than split across the dialog's two:
+        // a row of two and a wrapped third is what that produces, and these are three answers
+        // to one question, not two and an afterthought.
         confirmButton = {
-            GameButton(
-                label = stringResource(Res.string.report_send),
-                tone = ButtonTone.PLAY,
-                onClick = onSend,
-            )
-        },
-        dismissButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(DialogGap)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(DialogGap),
+            ) {
+                GameButton(
+                    label = stringResource(Res.string.report_send),
+                    tone = ButtonTone.PLAY,
+                    onClick = onSend,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 GameButton(
                     label = stringResource(Res.string.report_copy),
                     tone = ButtonTone.NEUTRAL,
                     onClick = onCopy,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 GameButton(
                     label = stringResource(Res.string.report_dismiss),
                     tone = ButtonTone.NEUTRAL,
                     onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },

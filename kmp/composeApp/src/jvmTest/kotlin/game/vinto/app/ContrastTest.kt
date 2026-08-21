@@ -11,6 +11,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.VintoTheme
+import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import kotlin.math.pow
@@ -73,6 +74,19 @@ class ContrastTest {
         text(Slate.ink, Slate.fill, "$scheme: a player's name")
         text(Slate.inkDim, Slate.fill, "$scheme: a plate's second line")
         text(Slate.gold, Slate.fill, "$scheme: the Vinto mark, and the active player's name")
+    }
+
+    /**
+     * The name of the game, in gold, on green cloth.
+     *
+     * The rail's brass is 2.7:1 here — this is the pair that made a third gold necessary.
+     */
+    @Test
+    fun theWordmarkOnTheFeltIsGoldThatCanBeRead() = bothSchemes { scheme ->
+        val gold = MaterialTheme.colorScheme.feltGold()
+        MaterialTheme.colorScheme.feltGradient().forEachIndexed { i, felt ->
+            text(gold, felt, "$scheme: the wordmark, at stop $i of the felt")
+        }
     }
 
     /** The felt is a gradient, so the label has to survive both ends of it. */

@@ -119,6 +119,20 @@ private const val SHADE_DEPTH = 0.06f
 @Suppress("UnusedReceiverParameter")
 fun ColorScheme.onFelt(): Color = FeltInk
 
+/**
+ * Gold, as it looks on green baize.
+ *
+ * The brass that works on the rail is 2.7:1 against the lighter felt — the name of the game,
+ * on the first screen of the app, in a colour that cannot be read on it. This is the same
+ * metal under the table's own lamp: pale enough to clear 4.9:1 on the light cloth and 8.4:1
+ * on the dark, which makes it gold leaf rather than gold paint, and the right of the two for
+ * something stamped on cloth anyway.
+ */
+@Suppress("UnusedReceiverParameter")
+fun ColorScheme.feltGold(): Color = LeafGold
+
+private val LeafGold = Color(0xFFF2DFA6)
+
 private val FeltInk = Color(0xFFF2F5F0)
 
 /**
@@ -162,15 +176,20 @@ object Rail {
     val gold: Color @Composable @ReadOnlyComposable get() = pick(Gold, DeepGold)
 
     /**
-     * The wordmark, and the hairline round the deck count beside it.
+     * The name of the game, and the app's one accent.
      *
-     * The brand green is a bright one, chosen against slate. On paper it is 1.9:1 — the name
-     * of the game, at the top of every screen, in the one colour on it that cannot be read.
+     * Gold rather than the web app's green, and gold used the way a card room uses metal:
+     * thin, and on the few things that are not ordinary — the name, a Vinto call, the
+     * hairlines either side of a screen's title. One accent is what stops a palette reading
+     * as a set of options; green is left to mean the table, and the word "go".
+     *
+     * Two values because it is a *material*: the same brass is dark on paper and bright on
+     * slate, which is what metal does, and either way it is read.
      */
-    val brand: Color @Composable @ReadOnlyComposable get() = pick(Brand, DeepBrand)
+    val brand: Color @Composable @ReadOnlyComposable get() = gold
 
     /** The coach's own voice, and the chapter marks beside it. */
-    val coach: Color @Composable @ReadOnlyComposable get() = pick(Mint, DeepBrand)
+    val coach: Color @Composable @ReadOnlyComposable get() = pick(Mint, DeepCoach)
 
     /** What a card just turned over is, and other asides. Gold's quieter cousin. */
     val note: Color @Composable @ReadOnlyComposable get() = pick(Amber, DeepGold)
@@ -223,7 +242,7 @@ object Slate {
     val gold = Gold
 }
 
-/** The wordmark's green, matching the web app's. */
+/** The green the web app's wordmark uses. Kept for the deck badge's own dark ground. */
 val Brand = Color(0xFF34D07A)
 
 private val Mint = Color(0xFF6FD3A6)
@@ -250,7 +269,7 @@ private val PaperInkDim = Color(0xFF54584A)
 private val PaperLine = Color(0xFFD8D4C8)
 private val PaperEdge = Color(0xFF7A7C6C)
 private val DeepGold = Color(0xFF7A5C10)
-private val DeepBrand = Color(0xFF10703F)
+private val DeepCoach = Color(0xFF10703F)
 
 private val FeltDarkTop = Color(0xFF14442F)
 private val FeltDarkBottom = Color(0xFF0A2A1D)

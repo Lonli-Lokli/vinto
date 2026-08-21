@@ -26,6 +26,7 @@ import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.opening_shuffling
 import game.vinto.app.theme.feltGradient
+import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.onFelt
 import org.jetbrains.compose.resources.stringResource
 
@@ -74,7 +75,8 @@ fun OpeningScreen() {
                 fontSize = TitleSize,
                 fontFamily = Wordmark,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onFelt(),
+                // The same gold leaf the home screen sets it in.
+                color = MaterialTheme.colorScheme.feltGold(),
             )
             Text(
                 text = stringResource(Res.string.opening_shuffling),
