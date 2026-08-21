@@ -70,7 +70,9 @@ flowchart TD
    - Correct → Use that card's action (if it has one)
    - Wrong → Draw penalty card
    - Skip → Card discarded with action unused (available for next player to take from discard)
-5. **Toss-In**: After discard, **any player** (including the current player) may toss in matching rank cards
+5. **Toss-In**: After discard, **any player** — including the current player — may toss in any
+   number of matching cards. A wrong one costs a penalty card and bars that player for the rest
+   of the round
 6. **Call Vinto**: At turn end, optionally declare Vinto to trigger final round
 
 ---
@@ -133,15 +135,22 @@ flowchart TD
 
 ## Reaction: Toss In
 
-- **During any other player's turn**, immediately after a card is placed on the discard pile,
-  a player who believes they hold the same rank may toss it in face-up on top and perform its
-  action at once.
-- If wrong → they take the card back and draw **1 penalty card face-down**.
+- Immediately after a card is placed on the discard pile, **any player** who believes they hold
+  the same rank may toss it in face-up on top and perform its action at once.
+- **Including the player whose turn it is**, and **any number of matching cards** — the PDF
+  words this as "during any other player's turn", but the decided rule is that your own turn is
+  no exception and you may throw in every match you hold. Confirmed by the product owner; both
+  engines already work this way.
+- If wrong → they take the card back and draw **1 penalty card face-down**, **and they may not
+  toss in again for the rest of the round** — including the final round after Vinto is called,
+  and including other players' turns. The PDF gives only the penalty card; the bar is the
+  decided rule.
 
-> **The implementation differs here, twice.** The engines let the player whose turn it is toss
-> into their own discard (171 such actions appear in the parity corpus), and they bar a player
-> from tossing in again for the rest of the round after a wrong attempt, which the official
-> rules do not say. See "Where the implementation differs" below.
+> **One thing the engines get wrong here.** The bar is cleared every time the turn comes back
+> round to the first seat (`advanceTurnAfterTossIn`), so it lasts one rotation rather than the
+> rest of the round. Measured against the corpus: it contains exactly **one** failed toss-in,
+> and **no** recorded toss-in would be refused by the longer bar — so the fix is legal for
+> every recorded action, but it changes state after that one failure and so moves its hashes.
 
 ---
 
@@ -196,10 +205,17 @@ one is a decision rather than a surprise.
 
 | # | Official rule | What the engines do | Cost of matching |
 | --- | --- | --- | --- |
-| 1 | A wrong toss-in costs a penalty card | Also bars that player from tossing in for the rest of the round | Loosening. No recorded action depends on it (0 in the corpus) |
-| 2 | Toss-ins happen "during any other player's turn" | The player whose turn it is may toss into their own discard | Tightening. **171 corpus actions** become illegal: both engines and all 50 recordings would need regenerating |
-| 3 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Tightening. **4 corpus actions** become illegal; corpus regeneration |
+| 1 | *(none — the rule itself)* | The toss-in bar is cleared once per rotation, not per round | **A bug against the decided rule.** Corpus: 1 failed toss-in, 0 actions become illegal, but hashes move after that failure |
+| 2 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Open. Tightening: **4 corpus actions** become illegal; both engines and the corpus |
 
-**Settled, so nobody re-opens it:** the Jack and Queen targeting two *different* players is the
-intended rule, confirmed by the product owner, even though the PDF's wording is looser. The
-engines are right; the sentence above them in this file now says so.
+**Settled, so nobody re-opens them from the PDF alone:**
+
+- **Jack and Queen take two _different_ players.** The PDF says "any 2 cards"; the stricter rule
+  is intended — a Jack that may swap two of your own cards shuffles your hand for nothing, and
+  a Queen that may look at two of yours is a worse 7. Both engines already enforce it.
+- **You may toss in on your own turn, and throw in every match you hold.** The PDF says "during
+  any other player's turn"; the decided rule is that your own turn is no exception. Both
+  engines already allow it, and 171 such actions sit in the parity corpus.
+- **A wrong toss-in bars you for the rest of the round.** The PDF gives only the penalty card.
+  The bar is intended, and it runs through the final round and through other players' turns —
+  which is the part the engines get wrong today (row 1).
