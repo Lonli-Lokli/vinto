@@ -123,10 +123,14 @@ export function advanceTurnAfterTossIn(
 
   state.turnNumber++;
 
-  // Increment turn count when wrapping back to first player
+  // Increment turn count when wrapping back to first player.
+  //
+  // The failed-toss-in list is deliberately NOT cleared here. A wrong toss-in bars that player
+  // for the rest of the round, and the round is the deal rather than one lap of the table:
+  // clearing it alongside `roundNumber` freed a barred player after three turns, and freed
+  // everybody for the whole final round. It is emptied where the deal starts, and nowhere else.
   if (state.currentPlayerIndex === 0) {
     state.roundNumber++;
-    state.roundFailedAttempts = [];
   }
 
   if (state.drawPile.length === 1) {

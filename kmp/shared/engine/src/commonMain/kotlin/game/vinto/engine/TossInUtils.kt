@@ -53,6 +53,21 @@ fun areAllPlayersReady(state: MutableGameState): Boolean {
  * discarded. If a King declared an Ace correctly the ranks are `[K, A]`, and both must
  * survive into the next turn.
  */
+/**
+ * A failed toss-in bars that player for the rest of the **round**, and the round is the deal —
+ * not one lap of the table.
+ *
+ * `roundNumber` here counts laps: it goes up every time the turn comes back to the first seat.
+ * Clearing `roundFailedAttempts` alongside it made the bar last one lap, so a player who threw
+ * a wrong card in could be throwing again three turns later, and was free again for the whole
+ * final round — which is exactly when a barred player would most like to dump a card. The bar
+ * now ends where the deal does, because that is the only place it is set back to empty
+ * (`initializeGame`).
+ *
+ * Hash-neutral over the parity corpus: fifty recordings contain a single failed toss-in, and
+ * that game ends before the turn wraps again, so no recorded state ever depended on the
+ * clearing. `CorpusReplayTest` is what says so rather than this comment.
+ */
 fun advanceTurnAfterTossIn(state: MutableGameState) {
     val tossIn = state.activeTossIn ?: return
 
@@ -72,7 +87,6 @@ fun advanceTurnAfterTossIn(state: MutableGameState) {
 
     if (state.currentPlayerIndex == 0) {
         state.roundNumber++
-        state.roundFailedAttempts = mutableListOf()
     }
 
     if (state.drawPile.length == 1) {

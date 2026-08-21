@@ -126,8 +126,9 @@ flowchart TD
 
 ### Option B — Take from Discard
 
-- Allowed only if the top discard is an **action card (7–K) whose action has not been used**.
-  Note the range: the official text says 7–K, which does not include the Ace.
+- Allowed only if the top discard is an **action card whose action has not been used**. The PDF
+  writes the range as 7–K; the decided rule is that the **Ace counts like any other action
+  card** and may be taken and played. Both engines already allow it.
 - Player must play its action immediately.
 - Card **cannot** be swapped into hand.
 
@@ -146,11 +147,11 @@ flowchart TD
   and including other players' turns. The PDF gives only the penalty card; the bar is the
   decided rule.
 
-> **One thing the engines get wrong here.** The bar is cleared every time the turn comes back
-> round to the first seat (`advanceTurnAfterTossIn`), so it lasts one rotation rather than the
-> rest of the round. Measured against the corpus: it contains exactly **one** failed toss-in,
-> and **no** recorded toss-in would be refused by the longer bar — so the fix is legal for
-> every recorded action, but it changes state after that one failure and so moves its hashes.
+> **Fixed.** The engines used to clear the bar every time the turn came back round to the first
+> seat, so it lasted one lap of the table rather than the round — and a barred player was free
+> again for the whole final round. Both engines now leave it alone; it is emptied only where a
+> deal starts. Held by `TossInBarTest`, and hash-neutral over the corpus, which contains one
+> failed toss-in in a game that ends before the turn wraps again.
 
 ---
 
@@ -199,23 +200,18 @@ the Coalition takes nothing rather than losing a point.
 
 ## Where the implementation differs
 
-Found by reading the official composite against the engines — these are shared with the
-TypeScript engine, not Kotlin-only. Listed so nobody has to rediscover them, and so changing
-one is a decision rather than a surprise.
+**Nothing, as of this pass.** Every difference found by reading the official composite against
+the engines has been either fixed or decided:
 
-| # | Official rule | What the engines do | Cost of matching |
-| --- | --- | --- | --- |
-| 1 | *(none — the rule itself)* | The toss-in bar is cleared once per rotation, not per round | **A bug against the decided rule.** Corpus: 1 failed toss-in, 0 actions become illegal, but hashes move after that failure |
-| 2 | Option B is limited to 7–K | Any unused action card may be taken, including an Ace | Open. Tightening: **4 corpus actions** become illegal; both engines and the corpus |
+| Question | Decision |
+| --- | --- |
+| Jack and Queen: "any 2 cards", or two different players? | **Two different players.** The PDF is loose; both engines were already right |
+| May you toss in on your own turn, and more than one card? | **Yes to both.** The PDF says "during any other player's turn"; the engines were already right, and 171 such actions sit in the corpus |
+| Does a wrong toss-in bar you, and for how long? | **It bars you for the rest of the round**, through the final round and other players' turns. The rule is not in the PDF, and the engines got its *lifetime* wrong — now fixed |
+| May an Ace be taken from the discard under Option B? | **Yes** — it is an action card like any other. The PDF's "7–K" is loose |
+| Does the discard start with a face-up card? | **No.** The PDF and the engines agree; this file was the thing that was wrong |
+| §8.2 ranks "from lowest total score to highest" | Read as most points first, the only reading consistent with §8.1's +3 / −1 |
 
-**Settled, so nobody re-opens them from the PDF alone:**
-
-- **Jack and Queen take two _different_ players.** The PDF says "any 2 cards"; the stricter rule
-  is intended — a Jack that may swap two of your own cards shuffles your hand for nothing, and
-  a Queen that may look at two of yours is a worse 7. Both engines already enforce it.
-- **You may toss in on your own turn, and throw in every match you hold.** The PDF says "during
-  any other player's turn"; the decided rule is that your own turn is no exception. Both
-  engines already allow it, and 171 such actions sit in the parity corpus.
-- **A wrong toss-in bars you for the rest of the round.** The PDF gives only the penalty card.
-  The bar is intended, and it runs through the final round and through other players' turns —
-  which is the part the engines get wrong today (row 1).
+A rules change lands in **both** engines and, if it moves any recorded state, regenerates the
+parity corpus. The one change above moved nothing: `CorpusReplayTest` and TypeScript's
+`replay-fixtures.test.ts` both stayed green without regenerating a fixture.
