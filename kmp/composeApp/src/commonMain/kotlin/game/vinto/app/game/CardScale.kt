@@ -22,6 +22,13 @@ data class CardState(
     val flinching: Boolean = false,
     /** A declaration was answered on this card: true for a right call, false for a wrong one. */
     val verdict: Boolean? = null,
+    /**
+     * This card is lying on the discard with its action unused, so the next player may take
+     * it and play it rather than draw. The one mark on the table that says what somebody did
+     * *not* do with a card — and the only thing that tells a played card from a discarded one
+     * once both have landed.
+     */
+    val live: Boolean = false,
 )
 
 /**

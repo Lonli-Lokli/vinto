@@ -74,6 +74,17 @@ sealed interface Beat {
     data class Peek(val at: Anchor, val card: Card? = null) : Beat
 
     /**
+     * A card being played, shown off where it lies before it goes anywhere.
+     *
+     * The web app's "play action": the card swells to two and a half times its size in the
+     * drawn slot, lit green, and settles — and only then does it go to the pile. It is the
+     * most emphatic thing that happens in a turn, and it is what tells the other three players
+     * that this card was *used* rather than merely put down, which changes what they can do
+     * next: a discarded action card is still there for the taking.
+     */
+    data class Flourish(val card: Card?) : Beat
+
+    /**
      * The discard pile going back into the deck.
      *
      * A real event and currently a silent one in both clients: everything anybody has learned
@@ -285,14 +296,12 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         // way — the web app's "play action", and the loudest movement in a turn. It used to
         // be lifted in place and set down again with the pile quietly filling in behind it,
         // which is a card teleporting with a flourish in front of it.
-        // Playing the card in front of you sends it to the pile, lit and swelling on the way
-        // — the web app's "play action", and the loudest movement in a turn.
+        // Playing a card is two beats, in this order: it is shown off where it lies, and then
+        // it goes to the pile. The flourish is the web app's, and the journey is ours — the
+        // engine opens the toss-in window the moment the action starts, so the card has to be
+        // lying on the pile the window is open for.
         is GameAction.UseCardAction ->
-            listOfNotNull(
-                (before.pendingCard() ?: after.pendingCard())?.let {
-                    Beat.Move(Anchor.Pending, Anchor.Discard, it, shown = true)
-                },
-            )
+            listOfNotNull((before.pendingCard() ?: after.pendingCard())?.let(Beat::Flourish))
 
         // Taking the top of the discard to play it moves nothing: the card is on the pile, and
         // a card whose action is being played is drawn on the pile. It never leaves.
@@ -328,7 +337,11 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     val verdict = verdictScene(action, penalty != null)
     val table = tableScene(before, after)
 
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, verdict, penalty, table)
+    val played = (before.pendingCard() ?: after.pendingCard())
+        ?.takeIf { action is GameAction.UseCardAction }
+        ?.let { listOf(Beat.Move(Anchor.Pending, Anchor.Discard, it, shown = true)) }
+
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict, penalty, table)
 }
 
 /**

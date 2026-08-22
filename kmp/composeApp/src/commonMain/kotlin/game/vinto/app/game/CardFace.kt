@@ -215,6 +215,7 @@ private fun CardState.ringColour(): Color {
     // it is the one moment in the game that is a gamble on your own memory.
     verdict?.let { return if (it) Signal.rightCall else Signal.wrongCall }
     if (chosen) return Signal.chosen
+    if (live) return Signal.live
     if (!tappable) return Color.Transparent
 
     val pulse = rememberInfiniteTransition(label = "tappable")
@@ -230,7 +231,10 @@ private fun CardState.ringColour(): Color {
     return Signal.tappable.copy(alpha = strength)
 }
 
-private fun CardState.ringWidth() = if (verdict != null || chosen || tappable) Ring else Hairline
+/** A card with something to say about it wears a ring; the rest wear a hairline. */
+private fun CardState.ringWidth() = if (marked()) Ring else Hairline
+
+private fun CardState.marked() = verdict != null || chosen || tappable || live
 
 /** Which picture a card shows. A hidden one always shows the back, and knows nothing else. */
 private fun CardView.art(): DrawableResource = when (this) {

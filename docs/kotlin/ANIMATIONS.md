@@ -19,7 +19,7 @@ somewhere else fails the build rather than the eye.
 | What you do | What flies, and where | What it looks like |
 | --- | --- | --- |
 | Draw a card | deck → drawn slot | flight |
-| Play the drawn card's action | drawn slot → discard | flight, lit |
+| Play the drawn card's action | drawn slot → discard | **the card swells and glows where it lies**, then a lit flight |
 | Throw the drawn card away | drawn slot → discard | flight |
 | Swap it in, saying nothing | drawn slot → your hand, your hand → discard | two flights, together |
 | Swap it in, calling the rank right | drawn slot → your hand, your hand → discard | two flights, the second lit; a green ring on the pile |
@@ -49,6 +49,7 @@ A flight is one word of several. These are all of them, and what drives each.
 
 | Animation | What it looks like | How long | What sets it off |
 | --- | --- | --- | --- |
+| **Flourish** | the card swells to 2.4× where it lies, lit green, and settles | 900ms | a `Flourish` beat — a card played for its action, and nothing else |
 | **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc and wobbling slightly, over a soft shadow | 1100ms | a `Move` beat |
 | **Lit flight** | the same, lifting half again and carrying a green light | 1600ms | a `Move` beat the table is being *shown* — a played card, a correct call |
 | **Turning flight** | a flight with a full rotation on the way | 1100ms | somebody else's draw: at a bot's speed it is what separates "I did that" from "that happened to me" |
@@ -66,6 +67,23 @@ Everything above except the **flip** and the **breath** is choreographed — the
 happened, `choreograph` turns it into beats, and the table plays them in order. Those two are
 the table reacting to what it is drawing: a card that becomes visible turns over, and a card
 that can be tapped breathes for as long as that is true.
+
+## Playing a card against putting one down
+
+These are two different moves and they must not look alike, because they leave the pile in
+different states: a card **played** for its action has spent it, while one **discarded** still
+carries it — and the next player may take that card and play it instead of drawing.
+
+The table says so three times over:
+
+* **as it happens** — a played card swells and glows where it lies before it travels, and
+  travels lit; a discarded one simply flies;
+* **afterwards** — the pile draws a gold ring round a card whose action nobody has used;
+* **in the log** — "Raph plays the 9" against "Raph throws away the 9".
+
+The web app does the first of those and the third. The ring is ours: the web only tells you by
+enabling or disabling the button on your own turn, which is no use to the other three players
+and no use at all until it is your turn again.
 
 ## The rules the table obeys
 

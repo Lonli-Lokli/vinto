@@ -22,6 +22,17 @@ import kotlinx.serialization.encoding.Encoder
  * hash stops matching TypeScript's.
  */
 @OptIn(ExperimentalSerializationApi::class)
+/**
+ * Whether this card's action is still there for the taking.
+ *
+ * The difference between a card that was *played* and one that was merely *discarded*, and it
+ * outlives the moment: a discarded action card sits on the pile with its action unused, and
+ * the next player may take it and play it instead of drawing (Option B). A played one is
+ * spent. Nothing about the two cards looks different once they have landed, which is why the
+ * table draws a ring round this one.
+ */
+fun Card.actionIsLive(): Boolean = actionText != null && !played
+
 @Serializable
 data class Card(
     val id: String,

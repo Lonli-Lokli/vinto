@@ -202,6 +202,7 @@ class AnimationMapTest {
             if (beat.shown) append(", lit")
         }
 
+        is Beat.Flourish -> "the card swells and glows where it lies"
         is Beat.Peek -> "a card lifts and glows" + if (beat.card == null) " (face hidden)" else ""
         is Beat.Verdict -> if (beat.correct) "a green ring on the pile" else "a red ring on the pile"
         is Beat.Flinch -> "the hand flinches"

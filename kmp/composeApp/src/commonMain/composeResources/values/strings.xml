@@ -96,6 +96,8 @@
     <string name="card_position">%1$s, card %2$d</string>
     <string name="card_the_deck">the deck</string>
     <string name="card_discarded">discarded %1$s</string>
+    <!-- The same card, still carrying its action, which the next player may take and play. -->
+    <string name="card_discarded_live">discarded %1$s, action unused</string>
     <string name="card_in_hand">the card in your hand</string>
 
     <!-- ================================================================ the score sheet -->
@@ -145,6 +147,8 @@
     <string name="signal_penalty_meaning">A penalty card just landed there — a wrong guess, or a wrong toss-in.</string>
     <string name="signal_coalition">A blue ring</string>
     <string name="signal_coalition_meaning">The coalition: everybody except the Vinto caller, playing their last turn together against that one hand.</string>
+    <string name="signal_live">A gold ring on the discard</string>
+    <string name="signal_live_meaning">That card was put down without its action being used, so the next player may take it and play it instead of drawing. A card whose action *was* played has no ring.</string>
     <string name="signal_tappable">A card that breathes</string>
     <string name="signal_tappable_meaning">It can be touched right now. If nothing breathes, the table is waiting on somebody else.</string>
     <string name="signal_reshuffle">Cards sweeping back into the deck</string>

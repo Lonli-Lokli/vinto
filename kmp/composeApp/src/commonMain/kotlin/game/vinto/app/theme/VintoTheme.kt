@@ -230,6 +230,13 @@ object Signal {
     val chosen = Color(0xFFA8801A)
     val rightCall = Color(0xFF15A34A)
     val wrongCall = Color(0xFFEF4444)
+
+    /**
+     * A card on the pile whose action nobody has used. Brass, like everything else on this
+     * table that is worth something: it is an offer, and it is only there until somebody
+     * takes it or covers it.
+     */
+    val live = Color(0xFFA8801A)
 }
 
 /** The white of a card face: what [Signal.tappable] and its neighbours are drawn against. */

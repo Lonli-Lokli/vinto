@@ -78,6 +78,14 @@ import kotlinx.coroutines.flow.first
  * Both are scaled by the pace setting, so Brisk lands near the old speed and Calm past the
  * web's.
  */
+/**
+ * How long a card is shown off for as it is played.
+ *
+ * The web app gives it two seconds, which at a bot's pace is most of their turn; this is a
+ * little under half of that, and the flight to the pile follows it.
+ */
+private const val FLOURISH_MS = 900
+
 private const val MOVE_MS = 1_100
 private const val SHOWN_MS = 1_600
 private const val PEEK_MS = 1100
@@ -251,6 +259,9 @@ class Stage {
         origin = coordinates.positionInRoot()
         size = coordinates.size.toSize()
     }
+
+    /** A card being shown off where it lies, with how far through that it is. */
+    internal var flourish: CardView? by mutableStateOf(null)
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
 
@@ -442,6 +453,10 @@ fun CardStage(
 
         stage.peeking.forEach { (anchor, card) -> BeingLookedAt(stage, anchor, card, sizes) }
 
+        stage.flourish?.let { card ->
+            Flourish(card, sizes, stage.locate(Anchor.Pending) ?: stage.centre(), stage.ms(FLOURISH_MS))
+        }
+
         stage.flying.forEach { flight ->
             key(flight.id) {
                 InFlight(flight, sizes, stage.ms(MOVE_MS)) { stage.flying.remove(flight) }
@@ -470,6 +485,7 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     }
 
     if (longest > 0) delay(longest.toLong())
+    flourish = null
     flinching.clear()
     peeking.clear()
     verdicts.clear()
@@ -512,6 +528,11 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
             )
             ms(if (beat.shown) SHOWN_MS else MOVE_MS)
         }
+    }
+
+    is Beat.Flourish -> {
+        flourish = beat.card.faceOrBack()
+        ms(FLOURISH_MS)
     }
 
     is Beat.Peek -> {
@@ -703,3 +724,44 @@ private fun InFlight(
         CardFace(flight.card, sizes.mine)
     }
 }
+
+/**
+ * A card played for its action, shown off where it lies.
+ *
+ * The web app's most emphatic moment: the card swells to two and a half times its size, lit
+ * green, and settles again — and it is the thing that tells the rest of the table this card
+ * was *used* rather than put down, which changes what they may do with the pile next.
+ */
+@Composable
+private fun Flourish(card: CardView, sizes: TableSizes, at: Offset, growMs: Int) {
+    val bloom = remember { Animatable(0f) }
+    LaunchedEffect(card) { bloom.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
+
+    val halo = remember {
+        Brush.radialGradient(colors = listOf(ShownGlow, Color.Transparent))
+    }
+
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                val arc = sin(bloom.value * PI).toFloat()
+                translationX = at.x
+                translationY = at.y
+                val swell = 1f + arc * (FLOURISH_SWELL - 1f)
+                scaleX = swell
+                scaleY = swell
+            }
+            .drawBehind {
+                drawCircle(
+                    brush = halo,
+                    radius = size.maxDimension * GLOW_SPREAD,
+                    alpha = sin(bloom.value * PI).toFloat() * SHOWN_GLOW,
+                )
+            },
+    ) {
+        CardFace(card, sizes.mine)
+    }
+}
+
+/** How large a played card grows before it settles. The web app uses two and a half. */
+private const val FLOURISH_SWELL = 2.4f

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.card_discarded
+import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
@@ -84,6 +85,7 @@ import game.vinto.engine.cardInPlay
 import game.vinto.engine.turnHolderId
 import game.vinto.shapes.Card
 import game.vinto.shapes.PendingCardOrigin
+import game.vinto.shapes.actionIsLive
 import org.jetbrains.compose.resources.stringResource
 
 private val Gap = 6.dp
@@ -787,8 +789,16 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
         card = CardView.Visible(face),
         scale = sizes.theirs,
         modifier = pile,
-        state = CardState(verdict = stage.verdictAt(Anchor.Discard)),
-        label = stringResource(Res.string.card_discarded, face.rank.serialName),
+        state = CardState(
+            verdict = stage.verdictAt(Anchor.Discard),
+            // Unused, so takeable: the difference between a card somebody played and one
+            // they only put down, which is otherwise invisible the moment it lands.
+            live = face.actionIsLive(),
+        ),
+        label = stringResource(
+            if (face.actionIsLive()) Res.string.card_discarded_live else Res.string.card_discarded,
+            face.rank.serialName,
+        ),
     )
 }
 

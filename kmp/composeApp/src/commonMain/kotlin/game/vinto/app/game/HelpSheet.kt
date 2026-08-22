@@ -38,6 +38,8 @@ import game.vinto.app.art.help_signals
 import game.vinto.app.art.help_the_cards
 import game.vinto.app.art.signal_coalition
 import game.vinto.app.art.signal_coalition_meaning
+import game.vinto.app.art.signal_live
+import game.vinto.app.art.signal_live_meaning
 import game.vinto.app.art.signal_peek
 import game.vinto.app.art.signal_peek_meaning
 import game.vinto.app.art.signal_penalty
@@ -197,6 +199,7 @@ private val SIGNALS = listOf(
     Signal(Color(0xFFE0A32A), Res.string.signal_vinto, Res.string.signal_vinto_meaning),
     Signal(Color(0xFFE0674A), Res.string.signal_penalty, Res.string.signal_penalty_meaning),
     Signal(Color(0xFF8AB4F8), Res.string.signal_coalition, Res.string.signal_coalition_meaning),
+    Signal(Color(0xFFA8801A), Res.string.signal_live, Res.string.signal_live_meaning),
     Signal(Color(0xFFF2F5F0), Res.string.signal_tappable, Res.string.signal_tappable_meaning),
     Signal(Color(0xFFF2C14E), Res.string.signal_peek, Res.string.signal_peek_meaning),
     Signal(Color(0xFF9AA5B1), Res.string.signal_reshuffle, Res.string.signal_reshuffle_meaning),
