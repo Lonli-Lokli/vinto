@@ -132,8 +132,6 @@ class Stage {
     /** Cards being looked at, and by extension hidden from their own place while they are. */
     internal val peeking = mutableStateMapOf<Anchor, CardView>()
 
-    /** A card held up in the middle of the table while its action happens. */
-    internal var staged: CardView? by mutableStateOf(null)
 
     /** A rank a King is borrowing, shown in the middle while it does that card's job. */
     internal var borrowed: Rank? by mutableStateOf(null)
@@ -450,7 +448,6 @@ fun CardStage(
             }
         }
 
-        stage.staged?.let { HeldUp(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
         stage.borrowed?.let { Borrowed(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
         if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
 
@@ -477,7 +474,6 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     peeking.clear()
     verdicts.clear()
     attention.clear()
-    staged = null
     borrowed = null
     refilling = 0
     if (saying.isNotEmpty()) {
@@ -523,10 +519,6 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
         ms(PEEK_MS)
     }
 
-    is Beat.Stage -> {
-        staged = beat.card.faceOrBack()
-        ms(STAGE_MS)
-    }
 
     is Beat.Borrowed -> {
         borrowed = beat.rank
@@ -606,23 +598,6 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
     }
 }
 
-/** The action card, held up in the middle while what it does happens. */
-@Composable
-private fun HeldUp(card: CardView, sizes: TableSizes, centre: Offset, growMs: Int) {
-    val grow = remember { Animatable(START_SCALE) }
-    LaunchedEffect(card) { grow.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
-
-    Box(
-        modifier = Modifier
-            .offset { IntOffset(centre.x.roundToInt(), centre.y.roundToInt()) }
-            .graphicsLayer {
-                scaleX = grow.value * STAGE_SCALE
-                scaleY = grow.value * STAGE_SCALE
-            },
-    ) {
-        CardFace(card, sizes.mine, state = CardState(chosen = true))
-    }
-}
 
 /** The card a King is pretending to be, held up beside the King itself. */
 @Composable

@@ -1,8 +1,9 @@
-# What moves, and where it moves to
+# What moves, and how
 
-Every card movement on the table, with where it starts and where it ends.
+Every animation on the table: what sets it off, where it starts, where it ends, and what it
+looks like when it gets there.
 
-**This table is generated, not written.** `AnimationMapTest` plays each move through a real
+**The first table is generated, not written.** `AnimationMapTest` plays each move through a real
 session and reports the flights the choreography produced, so it cannot describe an app that
 does not exist. To regenerate it:
 
@@ -13,21 +14,21 @@ cd kmp && ./gradlew :shared:client:jvmTest --tests "*AnimationMapTest*" -i
 The rows most easily got wrong are asserted in that case as well, so a change that moves a card
 somewhere else fails the build rather than the eye.
 
-## Flights
+## What each move looks like
 
-| What you do                        | What flies, and where |
-| ---------------------------------- | --------------------- |
-| Draw a card                        | deck → drawn slot |
-| Play the drawn card's action       | drawn slot → discard (lit) |
-| Throw the drawn card away          | drawn slot → discard |
-| Swap it in, saying nothing         | drawn slot → your hand, your hand → discard |
-| Swap it in, calling the rank right | drawn slot → your hand, your hand → discard (lit) |
-| Swap it in, calling the rank wrong | drawn slot → your hand, your hand → discard, deck → your hand |
-| Aim a peek (7, 8, 9, 10)           | nothing moves |
-| Finish looking                     | nothing moves |
-| Name a rank with a King            | nothing moves |
-| Throw a card in                    | your hand → discard |
-| Take the top of the discard to play it | nothing moves |
+| What you do | What flies, and where | What it looks like |
+| --- | --- | --- |
+| Draw a card | deck → drawn slot | flight |
+| Play the drawn card's action | drawn slot → discard | flight, lit |
+| Throw the drawn card away | drawn slot → discard | flight |
+| Swap it in, saying nothing | drawn slot → your hand, your hand → discard | two flights, together |
+| Swap it in, calling the rank right | drawn slot → your hand, your hand → discard | two flights, the second lit; a green ring on the pile |
+| Swap it in, calling the rank wrong | drawn slot → your hand, your hand → discard, deck → your hand | three flights; a red ring on the pile, the hand flinches, your seat rings, the seat says a line |
+| Aim a peek (7, 8, 9, 10) | nothing moves | the card lifts where it lies and glows |
+| Finish looking | nothing moves | the card settles back |
+| Name a rank with a King | nothing moves | the borrowed rank is held up; a green or red ring on the pile |
+| Throw a card in | your hand → discard | flight |
+| Take the top of the discard to play it | nothing moves | — |
 
 Two cards in one row fly **together**, not one after the other: a swap is one gesture.
 
@@ -42,16 +43,29 @@ They are the cases where a card is already where it is going.
   played: that is what makes its toss-in window legitimate, and it is drawn there throughout.
 - **Taking the top of the discard** to play its action never lifts it off the pile at all.
 
-## Movements that are not flights
+## The vocabulary
 
-| What happens | What you see |
-| --- | --- |
-| Somebody looks at a card | it lifts towards the middle of the table and settles back |
-| A penalty lands | the hand flinches, and a red ring marks the seat |
-| A declaration is answered | a green or red ring on the pile |
-| The deck runs out | the discard sweeps back into the deck |
-| The turn passes | the new seat's ring flashes |
-| A King borrows a rank | the borrowed card is held up beside the King |
+A flight is one word of several. These are all of them, and what drives each.
+
+| Animation | What it looks like | How long | What sets it off |
+| --- | --- | --- | --- |
+| **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc and wobbling slightly, over a soft shadow | 1100ms | a `Move` beat |
+| **Lit flight** | the same, lifting half again and carrying a green light | 1600ms | a `Move` beat the table is being *shown* — a played card, a correct call |
+| **Turning flight** | a flight with a full rotation on the way | 1100ms | somebody else's draw: at a bot's speed it is what separates "I did that" from "that happened to me" |
+| **Flip** | a card turns over on the spot, face to back or back to face | 420ms | **no beat at all** — `CardFace` animates it whenever a card becomes visible or hidden, so a card revealed by a peek, a wrong call, or the end of a round opens by itself |
+| **Lift** | a card rises towards the middle of the table and glows where it lies | the scene | a `Peek` beat. Everyone sees *which* card; only the entitled player sees the face |
+| **Flinch** | a hand shakes | 800ms | a `Flinch` beat, on the hand a penalty just landed in |
+| **Ring** | a green or red ring on the pile | the scene | a `Verdict` beat — a declaration answered |
+| **Seat ring** | a coloured ring flashes round a plate: green for the turn, gold for Vinto, red for a penalty, blue for the coalition | the scene | an `Attend` beat |
+| **Sweep** | the discard pile gathers itself back into the deck | with the count | a `Reshuffle` beat, when the deck runs dry |
+| **Held up** | the rank a King borrowed is shown beside it | the scene | a `Borrowed` beat |
+| **Line** | a seat says something short | 900ms | a `Say` beat |
+| **Breath** | a ring pulses slowly round a card that can be touched | continuous | not a beat: the card is tappable right now |
+
+Everything above except the **flip** and the **breath** is choreographed — the engine says what
+happened, `choreograph` turns it into beats, and the table plays them in order. Those two are
+the table reacting to what it is drawing: a card that becomes visible turns over, and a card
+that can be tapped breathes for as long as that is true.
 
 ## The rules the table obeys
 

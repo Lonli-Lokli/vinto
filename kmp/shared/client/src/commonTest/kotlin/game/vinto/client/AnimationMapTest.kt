@@ -144,7 +144,7 @@ class AnimationMapTest {
 
     // ------------------------------------------------------------------ the reading
 
-    private data class Row(val what: String, val flights: String)
+    private data class Row(val what: String, val flights: String, val seen: String)
 
     private var watching = false
 
@@ -176,16 +176,39 @@ class AnimationMapTest {
         val mine = seen.lastOrNull { it.actorId == me }
         val moves = mine?.scenes?.flatten()?.filterIsInstance<Beat.Move>().orEmpty()
 
+        val beats = mine?.scenes?.flatten().orEmpty()
+
         return Row(
             what = what,
-            flights = if (moves.isEmpty()) {
-                "nothing moves"
-            } else {
-                moves.joinToString { move ->
-                    "${place(move.from, me)} → ${place(move.to, me)}" + if (move.shown) " (lit)" else ""
-                }
+            flights = if (moves.isEmpty()) "nothing moves" else moves.joinToString { move ->
+                "${place(move.from, me)} → ${place(move.to, me)}" + if (move.shown) " (lit)" else ""
             },
+            seen = beats.joinToString(", ") { describe(it, me) }.ifEmpty { "—" },
         )
+    }
+
+    /**
+     * A beat in the words a player would use for it.
+     *
+     * The point of the column: a flight is only one of the things this table does, and three
+     * of the rows that say "nothing moves" are far from still — a peek lifts a card where it
+     * lies, a wrong call shakes the hand it cost, the deck running dry sweeps the pile back
+     * into it.
+     */
+    private fun describe(beat: Beat, me: String): String = when (beat) {
+        is Beat.Move -> buildString {
+            append("flight")
+            if (beat.spin) append(" turning over")
+            if (beat.shown) append(", lit")
+        }
+
+        is Beat.Peek -> "a card lifts and glows" + if (beat.card == null) " (face hidden)" else ""
+        is Beat.Verdict -> if (beat.correct) "a green ring on the pile" else "a red ring on the pile"
+        is Beat.Flinch -> "the hand flinches"
+        is Beat.Attend -> if (beat.playerId == me) "your seat rings" else "their seat rings"
+        is Beat.Reshuffle -> "the pile sweeps back into the deck"
+        is Beat.Borrowed -> "the borrowed rank is held up"
+        is Beat.Say -> "the seat says a line"
     }
 
     private fun place(anchor: Anchor, me: String) = when (anchor) {
@@ -200,16 +223,20 @@ class AnimationMapTest {
     )
 
     private fun table(rows: List<Row>): String {
-        val width = rows.maxOf { it.what.length }
+        val what = rows.maxOf { it.what.length }
+        val flies = maxOf(rows.maxOf { it.flights.length }, HEADING)
         return buildString {
             appendLine()
-            appendLine("| ${"What you do".padEnd(width)} | What flies, and where |")
-            appendLine("| ${"-".repeat(width)} | --------------------- |")
-            rows.forEach { appendLine("| ${it.what.padEnd(width)} | ${it.flights} |") }
+            appendLine("| ${"What you do".padEnd(what)} | ${"What flies, and where".padEnd(flies)} | What it looks like |")
+            appendLine("| ${"-".repeat(what)} | ${"-".repeat(flies)} | ------------------ |")
+            rows.forEach {
+                appendLine("| ${it.what.padEnd(what)} | ${it.flights.padEnd(flies)} | ${it.seen} |")
+            }
         }
     }
 
     private companion object {
         const val SLOT = 2
+        const val HEADING = 21
     }
 }

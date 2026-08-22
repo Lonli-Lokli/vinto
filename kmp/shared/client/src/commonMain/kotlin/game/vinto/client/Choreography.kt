@@ -74,15 +74,6 @@ sealed interface Beat {
     data class Peek(val at: Anchor, val card: Card? = null) : Beat
 
     /**
-     * A card held up in the middle of the table while its action happens.
-     *
-     * The web app's two-stage "play action": the card leaves the hand, is shown large in the
-     * centre, and only then goes to the pile. Without the pause an action card is drawn and
-     * discarded in the same breath and nobody reads what it was.
-     */
-    data class Stage(val card: Card?) : Beat
-
-    /**
      * The discard pile going back into the deck.
      *
      * A real event and currently a silent one in both clients: everything anybody has learned
