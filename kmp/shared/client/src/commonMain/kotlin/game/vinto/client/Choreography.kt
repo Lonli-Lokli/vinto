@@ -4,6 +4,7 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.getCardValue
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
@@ -291,8 +292,16 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         // A played action ends with its card on the pile — but for a King or a Queen that is
         // several moves later, so it is driven by the pile growing rather than by the action.
         // Held up in the middle before it goes anywhere, so the table can read it.
+        // Playing a card puts it on the pile, so it *goes* there, lit and swelling on the
+        // way — the web app's "play action", and the loudest movement in a turn. It used to
+        // be lifted in place and set down again with the pile quietly filling in behind it,
+        // which is a card teleporting with a flourish in front of it.
         is GameAction.UseCardAction, is GameAction.PlayDiscard ->
-            listOf(Beat.Stage(before.pendingCard() ?: after.pendingCard()))
+            listOfNotNull(
+                (before.pendingCard() ?: after.pendingCard())?.let {
+                    Beat.Move(Anchor.Pending, Anchor.Discard, it, shown = true)
+                },
+            )
 
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,
@@ -463,15 +472,34 @@ private fun tossScene(
     before: PlayerView,
     after: PlayerView,
 ): Scene {
-    val landed = after.discardCount - before.discardCount
-    if (landed <= 0) return emptyList()
+    val who = action.payload.playerId
+    val had = before.players.firstOrNull { it.id == who }?.cards?.size ?: return emptyList()
+    val has = after.players.firstOrNull { it.id == who }?.cards?.size ?: return emptyList()
+    val thrown = had - has
+    if (thrown <= 0) return emptyList()
 
-    return action.payload.positions.take(landed).map { position ->
-        Beat.Move(
-            Anchor.Seat(action.payload.playerId, position),
-            Anchor.Discard,
-            after.discardTop,
-        )
+    // Counted from the *hand*, not from the pile.
+    //
+    // A card thrown in leaves its hand at once and reaches the discard later — the engine
+    // queues the action and writes the card to the pile when it resolves — so a scene keyed
+    // on the pile growing produced nothing at all for the throw itself, and the card was gone
+    // from a hand and not yet anywhere else. Which is what a player sees as "there was no
+    // animation for the toss-in".
+    //
+    // What it looks like on the table is what a person does: the card goes onto the pile as
+    // it is thrown, face up, because a toss-in is a public claim about a rank.
+    val face = after.discardTop?.takeIf { after.discardCount > before.discardCount }
+        ?: after.activeTossIn?.queuedActions?.lastOrNull()?.let { queued ->
+            Card(
+                id = "thrown-${queued.playerId}-${queued.rank.serialName}",
+                rank = queued.rank,
+                value = getCardValue(queued.rank),
+                played = false,
+            )
+        }
+
+    return action.payload.positions.take(thrown).map { position ->
+        Beat.Move(Anchor.Seat(who, position), Anchor.Discard, face)
     }
 }
 

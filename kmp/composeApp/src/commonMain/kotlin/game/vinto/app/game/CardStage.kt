@@ -51,6 +51,7 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -226,6 +227,24 @@ class Stage {
      */
     val inFlight: Set<Anchor> get() = flying.mapTo(mutableSetOf()) { it.landingAt }
 
+    /**
+     * The hands a card is currently leaving, and from which slot.
+     *
+     * A hand closes up the instant a card leaves it, because the table has already stepped to
+     * the position the move produced — so a card thrown in from the middle of a hand slides
+     * the rest of that hand sideways *while it is still in the air*, and one thrown from the
+     * end leaves from a slot that no longer exists at all.
+     *
+     * The web app draws a transparent card in the space instead. This is the same idea from
+     * the other end: the hand keeps the gap until the flight lands, so nothing shifts under a
+     * card that is still moving, and the card leaves from where it actually was.
+     */
+    val leaving: Map<String, Set<Int>>
+        get() = flying
+            .mapNotNull { it.leftFrom as? Anchor.Seat }
+            .groupBy({ it.playerId }, { it.position })
+            .mapValues { (_, positions) -> positions.toSet() }
+
     fun isFlinching(anchor: Anchor): Boolean = anchor in flinching
 
     fun lineFor(playerId: String): String? = saying[playerId]
@@ -237,12 +256,36 @@ class Stage {
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
 
+    /**
+     * Where a card is, or failing that the nearest place in the same hand.
+     *
+     * A card leaving a hand is measured against a table that has already lost it: the scene
+     * is played after the table steps to the move, so a card thrown in from the last slot of
+     * a hand has no slot to leave from and the flight was quietly dropped. Toss in your fifth
+     * card and it did not move at all — it was simply gone from one place and present in
+     * another, which is the one thing this table is not allowed to do.
+     *
+     * The nearest remaining slot of the same hand is a few points away from the truth and
+     * infinitely closer than not animating it.
+     */
+    internal fun locateOrNearby(anchor: Anchor): Offset? = locate(anchor) ?: when (anchor) {
+        is Anchor.Seat -> places.keys
+            .filterIsInstance<Anchor.Seat>()
+            .filter { it.playerId == anchor.playerId }
+            .minByOrNull { abs(it.position - anchor.position) }
+            ?.let(places::get)
+
+        else -> null
+    }
+
     internal data class Flight(
         val id: Long,
         val card: CardView,
         val from: Offset,
         val to: Offset,
         val landingAt: Anchor,
+        /** Where it set off from, so the hand it left can hold the gap open. */
+        val leftFrom: Anchor,
         val spin: Boolean = false,
         /** Lit on the way, for a card the table is being shown rather than merely moved. */
         val shown: Boolean = false,
@@ -453,8 +496,8 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
  */
 private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
     is Beat.Move -> {
-        val from = locate(beat.from)
-        val to = locate(beat.to)
+        val from = locateOrNearby(beat.from)
+        val to = locateOrNearby(beat.to)
 
         // A beat between two places the table has not laid out has nowhere to go. Skipping it
         // is right: the card is already where it belongs.
@@ -467,6 +510,7 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
                 from = from,
                 to = to,
                 landingAt = beat.to,
+                leftFrom = beat.from,
                 spin = beat.spin,
                 shown = beat.shown,
             )

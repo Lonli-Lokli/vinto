@@ -342,10 +342,15 @@ internal fun hiddenFrom(state: GameState, playerId: String): List<Card> {
  * in `pendingAction` until the action resolves, which left the table with a window open for
  * Kings and an empty discard pile under it. This is the same fact read from the view: it is
  * on the pile, because that is where a card whose action you are watching actually is.
+ *
+ * A card that came off the *table* rather than off the deck — thrown in, or taken from the
+ * discard — is on the pile from the moment it is played, whatever phase its action is in.
+ * Only a freshly drawn card has a phase in which it is somewhere else: in front of its
+ * player, being decided about.
  */
 val PlayerView.cardInPlay: Card?
     get() = pendingAction
-        ?.takeIf { it.actionPhase != ActionPhase.CHOOSING_ACTION }
+        ?.takeIf { it.from != PendingCardOrigin.DRAWING || it.actionPhase != ActionPhase.CHOOSING_ACTION }
         ?.let { (it.card as? CardView.Visible)?.card }
 
 /**

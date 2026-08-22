@@ -201,11 +201,15 @@ class ChoreographyTest {
         session.dispatch((session.table().taps.getValue(target) as Move.Send).action)
         runCurrent()
 
-        val peeks = scenes.flatten().flatten().filterIsInstance<Beat.Peek>()
+        // The last batch is the aiming itself; the ones before it are the draw and the play,
+        // and the play flies the card to the pile, which is not what this case is about.
+        val aiming = scenes.last().flatten()
+
+        val peeks = aiming.filterIsInstance<Beat.Peek>()
         assertEquals(1, peeks.size, "one card looked at")
         assertEquals(Anchor.Seat(target.playerId, target.position), peeks.single().at)
         assertTrue(peeks.single().card != null, "and you are the one looking, so you see it")
-        assertTrue(scenes.moves().isEmpty(), "nothing moved")
+        assertTrue(aiming.filterIsInstance<Beat.Move>().isEmpty(), "nothing moved")
     }
 
     /**
@@ -256,9 +260,16 @@ class ChoreographyTest {
         )
     }
 
-    /** Playing an action card holds it up before it goes down. */
+    /**
+     * Playing an action card sends it to the pile, lit.
+     *
+     * It used to be lifted in place — held up in the middle of the felt and set down again
+     * while the pile quietly filled in behind it — which is a card teleporting with a flourish
+     * in front of it. Playing a card *puts it on the pile*, so it goes there, and the light it
+     * travels in is what makes the loudest moment of a turn read as one.
+     */
     @Test
-    fun anActionCardIsHeldUpBeforeItIsPlayed() = runTest {
+    fun playingAnActionCardSendsItToThePileLit() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -267,8 +278,10 @@ class ChoreographyTest {
         session.dispatch(GameAction.UseCardAction(PlayerIdPayload(session.playerId)))
         runCurrent()
 
-        val staged = scenes.flatten().flatten().filterIsInstance<Beat.Stage>()
-        assertEquals(Rank.NINE, staged.singleOrNull()?.card?.rank, "the 9 is shown: $staged")
+        val played = scenes.moves().single { it.to == Anchor.Discard }
+        assertEquals(Anchor.Pending, played.from, "from where it was waiting")
+        assertEquals(Rank.NINE, played.card?.rank)
+        assertTrue(played.shown, "and lit, because everybody is being shown it")
     }
 
     /** A card somebody else drew turns over on the way, so it reads as theirs. */

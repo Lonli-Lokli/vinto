@@ -386,9 +386,7 @@ private fun SideSeat(
         // of them stack down the edge in the height a phone actually has, and the seat reads
         // as facing inwards rather than as a second copy of your own hand.
         HandLine(vertical = true, modifier = Modifier.weight(1f, fill = false)) {
-            seat.cards.forEachIndexed { position, card ->
-                SeatCard(seat, position, card, Rendering(view, table, sizes.side), onMove, turned = true)
-            }
+            Cards(seat, view, table, sizes.side, onMove, turned = true)
         }
 
         if (!plateFirst) Plate(seat, view, table, sizes, onMove)
@@ -431,9 +429,41 @@ private fun Hand(
     modifier: Modifier = Modifier,
 ) {
     HandLine(vertical = false, modifier = modifier) {
-        seat.cards.forEachIndexed { position, card ->
-            SeatCard(seat, position, card, Rendering(view, table, scale), onMove)
+        Cards(seat, view, table, scale, onMove, turned = false)
+    }
+}
+
+/**
+ * One hand's cards, with a gap held open wherever one is in the air.
+ *
+ * A hand closes up the moment a card leaves it — the table has already stepped to the position
+ * the move produced — so without this the rest of the hand slides sideways underneath a card
+ * that is still flying, and a card thrown from the last slot leaves from nowhere. The gap is
+ * the web app's transparent card by another route: the space stays until the flight lands.
+ */
+@Composable
+private fun Cards(
+    seat: PlayerSeatView,
+    view: PlayerView,
+    table: Table,
+    scale: CardScale,
+    onMove: (Move) -> Unit,
+    turned: Boolean,
+) {
+    val stage = LocalStage.current
+    val gaps = stage.leaving[seat.id].orEmpty()
+    val rendering = Rendering(view, table, scale)
+
+    var position = 0
+    var card = 0
+    while (card < seat.cards.size || position in gaps) {
+        if (position in gaps) {
+            EmptySlot(scale, "", Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position)), turned)
+        } else {
+            SeatCard(seat, position, seat.cards[card], rendering, onMove, turned)
+            card++
         }
+        position++
     }
 }
 

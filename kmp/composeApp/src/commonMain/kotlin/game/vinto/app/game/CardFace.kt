@@ -272,12 +272,25 @@ private fun artFor(rank: Rank): DrawableResource = when (rank) {
     Rank.JOKER -> Res.drawable.card_joker
 }
 
-/** The gap a pile leaves when it runs out. */
+/**
+ * The gap a pile leaves when it runs out, and the one a hand holds open for a card in the air.
+ *
+ * @param turned for a seat at the side of the table, whose cards lie sideways — the gap has to
+ *   be the shape of the card that left it, or the hand shuffles along while the card flies.
+ */
 @Composable
-fun EmptySlot(scale: CardScale, caption: String, modifier: Modifier = Modifier) {
+fun EmptySlot(
+    scale: CardScale,
+    caption: String,
+    modifier: Modifier = Modifier,
+    turned: Boolean = false,
+) {
     Box(
         modifier = modifier
-            .size(scale.width, scale.height)
+            .size(
+                width = maxOf(scale.footprintWidth(turned), TapTarget),
+                height = maxOf(scale.footprintHeight(turned), TapTarget),
+            )
             .border(
                 Hairline,
                 MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
