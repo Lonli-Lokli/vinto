@@ -76,6 +76,11 @@ class EveryMoveIsSeenTest {
         // is counted rather than matched by id.
         val settled = before.cardInPlay != null && after.discardCount == before.discardCount + 1
 
+        // The mirror of it: a card taken off the pile to be played is still lying on the pile,
+        // because that is where a card whose action is running is drawn. Option B moves
+        // nothing at all.
+        val taken = before.discardTop != null && before.discardTop?.id == after.cardInPlay?.id
+
         // And a pending action appearing or vanishing is a movement only when the card was
         // not already lying on the pile at either end of it. A card in play is on the pile for
         // the whole of its action, so it neither arrives nor leaves when the action does: the
@@ -93,7 +98,7 @@ class EveryMoveIsSeenTest {
 
         val notes = buildList {
             addAll(hands)
-            if (pile != 0 && !settled) add("pile $pile")
+            if (pile != 0 && !settled && !taken) add("pile $pile")
             if (deck != 0) add("deck $deck")
             if (pending && !onThePile) add("pending changed")
         }

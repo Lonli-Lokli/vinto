@@ -257,23 +257,21 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
 
         // Two cards at once, and the order is the point: the new one goes in, the old one
         // comes out and lands face-up where everybody can read it.
-        // Two cards at once, and where the old one goes depends on what was said about it.
+        // Two cards at once: the drawn one into the hand, the old one onto the pile.
         //
-        // Guess nothing, or guess wrong, and it is discarded. Guess *right* and it does not go
-        // to the pile at all — its action is played, so it comes out of the hand and into the
-        // space in front of the player, face up and lit, which is the whole point of having
-        // guessed: everybody else has to see that the call was good and what it was good for.
-        // This used to animate it onto the discard whatever happened, which for a correct call
-        // meant flying the wrong card to the wrong place.
+        // Onto the pile in *every* case, which is worth stating because the engine reaches it
+        // by two different routes. Say nothing or guess wrong and the card is discarded
+        // outright. Guess right and it becomes the pending action instead, its own action
+        // about to be played — but a card in play lies on the discard, so that is where it
+        // goes and where it stays. A guess that came off travels lit, because the table has to
+        // see that the call was good.
         is GameAction.SwapCard -> {
             val seat = Anchor.Seat(action.payload.playerId, action.payload.position)
             val called = after.pendingCard()?.takeIf { action.payload.declaredRank != null }
             listOfNotNull(
                 Beat.Move(Anchor.Pending, seat, before.pendingCard()),
-                if (called != null) {
-                    Beat.Move(seat, Anchor.Pending, called, shown = true)
-                } else {
-                    after.discardTop?.let { Beat.Move(seat, Anchor.Discard, it) }
+                (called ?: after.discardTop)?.let {
+                    Beat.Move(seat, Anchor.Discard, it, shown = called != null)
                 },
             )
         }
@@ -296,12 +294,18 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         // way — the web app's "play action", and the loudest movement in a turn. It used to
         // be lifted in place and set down again with the pile quietly filling in behind it,
         // which is a card teleporting with a flourish in front of it.
-        is GameAction.UseCardAction, is GameAction.PlayDiscard ->
+        // Playing the card in front of you sends it to the pile, lit and swelling on the way
+        // — the web app's "play action", and the loudest movement in a turn.
+        is GameAction.UseCardAction ->
             listOfNotNull(
                 (before.pendingCard() ?: after.pendingCard())?.let {
                     Beat.Move(Anchor.Pending, Anchor.Discard, it, shown = true)
                 },
             )
+
+        // Taking the top of the discard to play it moves nothing: the card is on the pile, and
+        // a card whose action is being played is drawn on the pile. It never leaves.
+        is GameAction.PlayDiscard -> emptyList()
 
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,

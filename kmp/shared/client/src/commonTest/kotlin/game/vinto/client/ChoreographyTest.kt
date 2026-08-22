@@ -121,18 +121,19 @@ class ChoreographyTest {
     }
 
     /**
-     * A correct call sends the card it named to the front of the table, lit.
+     * A correct call sends the card it named to the pile, lit.
      *
      * Guessing right is the one moment in a turn a player has *proved* something, and the
-     * proof is the card: it comes out of the hand face up so the other three can read it, and
-     * it goes to the space in front of the player rather than to the pile, because its action
-     * is about to be played from there.
+     * proof is the card: it comes out of the hand face up so the other three can read it.
      *
-     * It used to fly to the discard whatever was said — for a correct call, the wrong card to
-     * the wrong place, which is a swap the rest of the table cannot follow at all.
+     * To the **pile**, like every other swapped-out card, which is worth a case of its own
+     * because the engine gets there by a different route: a correct call makes the card the
+     * pending action rather than discarding it outright. A card in play lies on the discard,
+     * so that is where it goes. Animating it to the drawn slot instead — which is what the
+     * pending action *sounds* like — sent it visibly to the wrong end of the table.
      */
     @Test
-    fun aCorrectCallShowsTheNamedCardRatherThanDiscardingIt() = runTest {
+    fun aCorrectCallShowsTheNamedCardOnItsWayToThePile() = runTest {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
@@ -152,7 +153,7 @@ class ChoreographyTest {
         val seat = Anchor.Seat(session.playerId, calledPosition)
         val out = scenes.last().flatten().filterIsInstance<Beat.Move>().first { it.from == seat }
 
-        assertEquals(Anchor.Pending, out.to, "the named card is played, not discarded")
+        assertEquals(Anchor.Discard, out.to, "onto the pile, where a card in play lies")
         assertEquals(calledRank, out.card?.rank, "and it is the card that was named")
         assertTrue(out.shown, "travelling lit, because the table has to see the call was good")
         assertTrue(mine.cards.isNotEmpty())
