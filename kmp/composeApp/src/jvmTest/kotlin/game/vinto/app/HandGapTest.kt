@@ -79,6 +79,8 @@ class HandGapTest {
             leftFrom = Anchor.Seat(playerId, position),
             fromSpan = 0f,
             toSpan = 0f,
+            fromTurn = 0f,
+            toTurn = 0f,
         )
     }
 

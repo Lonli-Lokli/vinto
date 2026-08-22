@@ -675,11 +675,18 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 @Composable
 private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val drawn = view.pendingAction?.takeIf { it.from == PendingCardOrigin.DRAWING }
-    val landing = Anchor.Pending in stage.inFlight
     val slot = Modifier.anchoredAt(stage, Anchor.Pending)
 
+    // Empty whenever the card is somewhere else: on its way in, on its way out, or being
+    // shown off before it goes. Each of those draws the card itself, and a slot that draws it
+    // as well is the same card in two places — which is what a played card looked like for
+    // the length of its flourish, sitting in the slot and lying on the pile at once.
+    val elsewhere = Anchor.Pending in stage.inFlight ||
+        stage.isLeaving(Anchor.Pending) ||
+        stage.flourish != null
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        if (drawn == null || landing) {
+        if (drawn == null || elsewhere) {
             EmptySlot(sizes.theirs, "", slot)
         } else {
             CardFace(
@@ -759,7 +766,11 @@ private const val TossFill = 0.15f
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard)
 
-    val landing = Anchor.Discard in stage.inFlight
+    // A card being shown off before it travels is drawn by the flourish, in the slot it is
+    // still sitting in — so the pile must not draw it as well, or the same card is in two
+    // places for the length of the flourish. It is the pile's card the moment it lands, and
+    // not before.
+    val landing = Anchor.Discard in stage.inFlight || stage.flourish != null
 
     // What the pile was showing before the card now in the air was thrown at it.
     //

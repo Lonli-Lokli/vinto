@@ -192,6 +192,7 @@ class Stage {
      */
     private val bounds = mutableStateMapOf<String, Rect>()
     private val spans = mutableMapOf<Anchor, Float>()
+    private val turns = mutableMapOf<Anchor, Boolean>()
 
     /** The stage's own size, so a pointer near the bottom edge knows to point down instead. */
     internal var size: Size = Size.Zero
@@ -199,10 +200,17 @@ class Stage {
 
     fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
         places[anchor] = coordinates.positionInRoot() - origin
-        // How big a card is *there*. The table draws cards at three sizes — your hand, the
-        // seats opposite, the piles — and a flight that ignores that lands at one size and
-        // becomes another, which is a card changing size the instant it arrives.
-        spans[anchor] = coordinates.size.width.toFloat()
+        // How big a card is *there*, and which way up. The table draws cards at three sizes
+        // and in two orientations — the seats at the sides lie theirs sideways — and a flight
+        // that ignores either lands at one size or angle and becomes another, which is a card
+        // changing shape the instant it arrives.
+        //
+        // A card is taller than it is wide, so the narrower side of the space it sits in is
+        // its width whichever way round it is lying, and the wider side says which way that
+        // is.
+        val box = coordinates.size
+        spans[anchor] = minOf(box.width, box.height).toFloat()
+        turns[anchor] = box.width > box.height
         mark(anchor.key(), coordinates)
     }
 
@@ -248,6 +256,9 @@ class Stage {
      * the other end: the hand keeps the gap until the flight lands, so nothing shifts under a
      * card that is still moving, and the card leaves from where it actually was.
      */
+    /** Whether a card is on its way *out* of [anchor], and so must not be drawn there. */
+    fun isLeaving(anchor: Anchor): Boolean = flying.any { it.leftFrom == anchor }
+
     val leaving: Map<String, Set<Int>>
         get() = flying
             .mapNotNull { it.leftFrom as? Anchor.Seat }
@@ -264,12 +275,19 @@ class Stage {
     }
 
     /** A card being shown off where it lies, with how far through that it is. */
-    internal var flourish: CardView? by mutableStateOf(null)
+    /**
+     * A card being shown off where it lies, or null. Read by the pile as well as drawn: while
+     * a card is being flourished it has not landed anywhere, so nothing else may draw it.
+     */
+    var flourish: CardView? by mutableStateOf(null)
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
 
     /** How wide a card is at [anchor], in pixels. */
     internal fun spanAt(anchor: Anchor): Float? = spans[anchor]
+
+    /** Whether a card lies sideways at [anchor], as it does in front of a seat at the side. */
+    internal fun turnedAt(anchor: Anchor): Boolean = turns[anchor] == true
 
     /**
      * Where a card is, or failing that the nearest place in the same hand.
@@ -304,6 +322,9 @@ class Stage {
         /** How wide a card is where it started and where it lands, in pixels. */
         val fromSpan: Float,
         val toSpan: Float,
+        /** And which way up it lies at each end: the seats at the sides lie theirs sideways. */
+        val fromTurn: Float,
+        val toTurn: Float,
         /** Lit on the way, for a card the table is being shown rather than merely moved. */
         val shown: Boolean = false,
     )
@@ -533,6 +554,8 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
                 leftFrom = beat.from,
                 fromSpan = spanAt(beat.from) ?: 0f,
                 toSpan = spanAt(beat.to) ?: 0f,
+                fromTurn = if (turnedAt(beat.from)) QUARTER else 0f,
+                toTurn = if (turnedAt(beat.to)) QUARTER else 0f,
                 shown = beat.shown,
             )
             ms(if (beat.shown) SHOWN_MS else MOVE_MS)
@@ -722,6 +745,12 @@ private fun InFlight(
                 val swell = fit * (1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL))
                 scaleX = swell
                 scaleY = swell
+
+                // Turning only as far as it has to. A card landing in a seat at the side of
+                // the table lies sideways there, so it arrives already turned rather than
+                // snapping a quarter circle on touchdown — and a card going anywhere else
+                // does not turn at all.
+                rotationZ = flight.fromTurn + (flight.toTurn - flight.fromTurn) * t
             }
             .drawBehind {
                 val arc = sin(progress.value * PI).toFloat()
@@ -773,6 +802,9 @@ private fun Flourish(card: CardView, sizes: TableSizes, at: Offset, growMs: Int)
         CardFace(card, sizes.mine)
     }
 }
+
+/** A card lying sideways, as the seats at the sides of the table lie theirs. */
+private const val QUARTER = 90f
 
 /** How large a played card grows before it settles. The web app uses two and a half. */
 private const val FLOURISH_SWELL = 2.4f

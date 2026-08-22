@@ -50,7 +50,7 @@ A flight is one word of several. These are all of them, and what drives each.
 | Animation | What it looks like | How long | What sets it off |
 | --- | --- | --- | --- |
 | **Flourish** | the card swells to 2.4× where it lies, lit green, and settles | 900ms | a `Flourish` beat — a card played for its action, and nothing else |
-| **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc over a soft shadow, and growing or shrinking to the size of the place it is landing in | 1100ms | a `Move` beat |
+| **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc over a soft shadow. It grows or shrinks to the size of the place it is landing in, and turns to the angle it lies at there — the seats at the sides lie their cards sideways, so a card going to one arrives already turned | 1100ms | a `Move` beat |
 | **Lit flight** | the same, lifting half again and carrying a green light | 1600ms | a `Move` beat the table is being *shown* — a played card, a correct call |
 | **Flip** | a card turns over on the spot, face to back or back to face | 420ms | **no beat at all** — `CardFace` animates it whenever a card becomes visible or hidden, so a card revealed by a peek, a wrong call, or the end of a round opens by itself |
 | **Lift** | a card rises towards the middle of the table and glows where it lies | the scene | a `Peek` beat. Everyone sees *which* card; only the entitled player sees the face |
@@ -76,7 +76,9 @@ carries it — and the next player may take that card and play it instead of dra
 The table says so three times over:
 
 * **as it happens** — a played card swells and glows where it lies before it travels, and
-  travels lit; a discarded one simply flies;
+  travels lit; a discarded one simply flies. While it is being shown off it is drawn *only*
+  by the flourish: the slot it is sitting in and the pile it is going to both leave it alone,
+  or the same card is in two places at once;
 * **afterwards** — the pile draws a gold ring round a card whose action nobody has used;
 * **in the log** — "Raph plays the 9" against "Raph throws away the 9".
 
