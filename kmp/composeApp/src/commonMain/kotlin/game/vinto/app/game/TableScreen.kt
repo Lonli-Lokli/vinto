@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -406,8 +407,6 @@ private fun MySeat(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
-        PendingCard(view, sizes)
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -590,10 +589,17 @@ private fun SeatCard(
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
 private fun Piles(view: PlayerView, sizes: TableSizes) {
+    val stage = LocalStage.current
+
+    // The web app's two-by-two, and the reason for it: what a player draws is public, so it
+    // belongs in the middle of the table under the deck it came from — not beside the hand of
+    // whoever drew it, where it reads as a card they are already holding, and where three
+    // quarters of the time it cannot be drawn at all because the seat is somebody else's.
+    //
+    //      DRAW      DISCARD
+    //      drawn     toss-in
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(horizontalArrangement = Arrangement.spacedBy(Gap), verticalAlignment = Alignment.Top) {
-            val stage = LocalStage.current
-
             Pile(stringResource(Res.string.table_draw)) {
                 val deck = Modifier.anchoredAt(stage, Anchor.Deck)
                 if (view.drawPileSize > 0) {
@@ -613,33 +619,93 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
             }
         }
 
-        view.activeTossIn?.let { toss ->
-            Text(
-                stringResource(Res.string.table_toss_in),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onFelt(),
-                modifier = Modifier.padding(top = Tight),
-            )
-            Surface(
-                shape = RoundedCornerShape(Tight),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.15f),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.onFelt(),
-                ),
-            ) {
-                Text(
-                    toss.ranks.joinToString(" ") { it.serialName },
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onFelt(),
-                    modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
-                )
-            }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.padding(top = Tight),
+        ) {
+            DrawnCard(view, sizes, stage)
+            TossIn(view, sizes)
         }
-
     }
 }
+
+/**
+ * What somebody has just drawn, under the deck it came from.
+ *
+ * Whoever drew it: the rules have the drawn card revealed publicly, and watching what an
+ * opponent took and what they then did with it is most of the information in this game. It
+ * used to be drawn only for the seat holding it, so for three turns out of four the card flew
+ * from the deck and vanished — which is exactly how it looked.
+ *
+ * The slot is always there, empty or not, so nothing moves when a card arrives in it.
+ */
+@Composable
+private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
+    val drawn = view.pendingAction?.takeIf { it.from == PendingCardOrigin.DRAWING }
+    val landing = Anchor.Pending in stage.inFlight
+    val slot = Modifier.anchoredAt(stage, Anchor.Pending)
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (drawn == null || landing) {
+            EmptySlot(sizes.theirs, "", slot)
+        } else {
+            CardFace(
+                drawn.card,
+                sizes.theirs,
+                modifier = slot,
+                label = stringResource(Res.string.card_in_hand),
+            )
+        }
+
+        // Who the action in progress has been aimed at, which is the other half of reading
+        // somebody else's turn.
+        drawn?.targets.orEmpty().forEach { target ->
+            val who = view.players.firstOrNull { it.id == target.playerId }?.nickname ?: "—"
+            val what = (target.card as? CardView.Visible)?.card?.rank?.serialName ?: "?"
+            Text(
+                "$who — $what",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+    }
+}
+
+/** The rank the table is waiting on, under the pile it went down on. */
+@Composable
+private fun TossIn(view: PlayerView, sizes: TableSizes) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(sizes.theirs.width),
+    ) {
+        val toss = view.activeTossIn ?: return@Column
+
+        Text(
+            stringResource(Res.string.table_toss_in),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onFelt(),
+        )
+        Surface(
+            shape = RoundedCornerShape(Tight),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = TossFill),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.onFelt(),
+            ),
+        ) {
+            Text(
+                toss.ranks.joinToString(" ") { it.serialName },
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onFelt(),
+                modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
+            )
+        }
+    }
+}
+
+private const val TossFill = 0.15f
 
 /**
  * The discard pile: what is on top, what is just under it, and what is in play.
@@ -750,57 +816,6 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
     }
 }
 
-/**
- * The card in hand awaiting a decision — apart from the hand, because it is not in it yet.
- *
- * The slot is always there, empty or not. Two reasons, and both are about not moving things
- * under the player: the table would otherwise jump every time a card is drawn, and a place
- * that does not exist has no position, so a card cannot be flown to it — which is exactly the
- * flight that matters most.
- */
-@Composable
-private fun PendingCard(view: PlayerView, sizes: TableSizes) {
-    // Only a card that came off the **deck** waits here. One that came off the table — a
-    // declared swap-out, a card thrown in, a rank a King borrowed — is drawn on the discard
-    // pile, because that is where it is: face up, in play, and open to anybody holding a
-    // match. Drawn beside the hand it read as a card the player was still holding.
-    val pending = view.pendingAction
-        ?.takeIf { it.playerId == view.viewerId && it.from == PendingCardOrigin.DRAWING }
-    val stage = LocalStage.current
-    val landing = Anchor.Pending in stage.inFlight
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-    ) {
-        if (pending == null || landing) {
-            Box(
-                modifier = Modifier
-                    .size(sizes.mine.width, sizes.mine.height)
-                    .anchoredAt(stage, Anchor.Pending),
-            )
-        } else {
-            CardFace(
-                pending.card,
-                sizes.mine,
-                modifier = Modifier.anchoredAt(stage, Anchor.Pending),
-                label = stringResource(Res.string.card_in_hand),
-            )
-        }
-
-        Column {
-            pending?.targets.orEmpty().forEach { target ->
-                val who = view.players.firstOrNull { it.id == target.playerId }?.nickname ?: "someone"
-                val what = (target.card as? CardView.Visible)?.card?.rank?.serialName ?: "a card"
-                Text(
-                    "$who — $what",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                )
-            }
-        }
-    }
-}
 
 /**
  * What a hand needs to draw itself: the game, what may be touched, and how big to draw it.

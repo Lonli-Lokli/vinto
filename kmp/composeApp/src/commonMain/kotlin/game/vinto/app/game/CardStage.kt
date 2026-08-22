@@ -642,38 +642,42 @@ private fun InFlight(
         onArrival()
     }
 
-    val t = progress.value
-    val at = Offset(
-        x = flight.from.x + (flight.to.x - flight.from.x) * t,
-        y = flight.from.y + (flight.to.y - flight.from.y) * t,
-    )
-
-    // The web app's arc, which is most of why its table reads: a card lifts towards you as it
-    // crosses and settles again — 1 to 1.2 and back — with a small wobble, so it looks thrown
-    // rather than slid. A card being shown lifts further and carries its own light.
-    val arc = sin(t * PI).toFloat()
-    val swell = 1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL)
-    val wobble = if (flight.spin) t * FULL_TURN else arc * WOBBLE * if (t < HALF) 1f else -1f
+    // The glow is built once and drawn with a changing alpha, rather than rebuilt every
+    // frame: a radial gradient allocated sixty times a second, per card in the air, is a lot
+    // of garbage for something that only fades.
+    val halo = remember(flight.shown) {
+        Brush.radialGradient(
+            colors = listOf(if (flight.shown) ShownGlow else Color.Black, Color.Transparent),
+        )
+    }
 
     Box(
         modifier = Modifier
-            .offset { IntOffset(at.x.roundToInt(), at.y.roundToInt()) }
+            // Everything the flight does happens in the layer: position, lift and turn. Read
+            // from the animation *here*, in the draw phase, none of it recomposes — which is
+            // the difference between a card that glides and a card that arrives in steps,
+            // because the alternative recomposed a whole card face on every frame of every
+            // flight.
             .graphicsLayer {
-                rotationZ = wobble
+                val t = progress.value
+                val arc = sin(t * PI).toFloat()
+
+                translationX = flight.from.x + (flight.to.x - flight.from.x) * t
+                translationY = flight.from.y + (flight.to.y - flight.from.y) * t
+
+                val swell = 1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL)
                 scaleX = swell
                 scaleY = swell
+                rotationZ =
+                    if (flight.spin) t * FULL_TURN
+                    else arc * WOBBLE * if (t < HALF) 1f else -1f
             }
             .drawBehind {
-                // The lift shadow every flight has, and the glow only a shown card has.
-                val glow = if (flight.shown) ShownGlow else Color.Black
-                val strength = if (flight.shown) arc * SHOWN_GLOW else LIFT
+                val arc = sin(progress.value * PI).toFloat()
                 drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(glow.copy(alpha = strength), Color.Transparent),
-                        center = center,
-                        radius = size.maxDimension * GLOW_SPREAD,
-                    ),
+                    brush = halo,
                     radius = size.maxDimension * GLOW_SPREAD,
+                    alpha = if (flight.shown) arc * SHOWN_GLOW else LIFT,
                 )
             },
     ) {
