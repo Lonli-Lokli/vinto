@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toSize
 import game.vinto.app.theme.Feedback
@@ -99,13 +100,10 @@ private const val ATTEND_MS = 700
 private const val LIFT_FRACTION = 0.28f
 private const val STAGE_SCALE = 1.5f
 private const val START_SCALE = 0.6f
-private const val FULL_TURN = 360f
 
 /** How far a card swells at the top of its arc: a fifth, or half again when it is shown. */
 private const val SWELL = 0.2f
 private const val SHOWN_SWELL = 0.5f
-private const val WOBBLE = 10f
-private const val HALF = 0.5f
 
 /** The light a card travels in: a plain lift, or a green announcement. */
 private val ShownGlow = Color(0xFF22C55E)
@@ -193,6 +191,7 @@ class Stage {
      * is. Both are filled as the table lays out, by whatever drew the thing.
      */
     private val bounds = mutableStateMapOf<String, Rect>()
+    private val spans = mutableMapOf<Anchor, Float>()
 
     /** The stage's own size, so a pointer near the bottom edge knows to point down instead. */
     internal var size: Size = Size.Zero
@@ -200,6 +199,10 @@ class Stage {
 
     fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
         places[anchor] = coordinates.positionInRoot() - origin
+        // How big a card is *there*. The table draws cards at three sizes — your hand, the
+        // seats opposite, the piles — and a flight that ignores that lands at one size and
+        // becomes another, which is a card changing size the instant it arrives.
+        spans[anchor] = coordinates.size.width.toFloat()
         mark(anchor.key(), coordinates)
     }
 
@@ -265,6 +268,9 @@ class Stage {
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
 
+    /** How wide a card is at [anchor], in pixels. */
+    internal fun spanAt(anchor: Anchor): Float? = spans[anchor]
+
     /**
      * Where a card is, or failing that the nearest place in the same hand.
      *
@@ -295,7 +301,9 @@ class Stage {
         val landingAt: Anchor,
         /** Where it set off from, so the hand it left can hold the gap open. */
         val leftFrom: Anchor,
-        val spin: Boolean = false,
+        /** How wide a card is where it started and where it lands, in pixels. */
+        val fromSpan: Float,
+        val toSpan: Float,
         /** Lit on the way, for a card the table is being shown rather than merely moved. */
         val shown: Boolean = false,
     )
@@ -523,7 +531,8 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
                 to = to,
                 landingAt = beat.to,
                 leftFrom = beat.from,
-                spin = beat.spin,
+                fromSpan = spanAt(beat.from) ?: 0f,
+                toSpan = spanAt(beat.to) ?: 0f,
                 shown = beat.shown,
             )
             ms(if (beat.shown) SHOWN_MS else MOVE_MS)
@@ -682,22 +691,23 @@ private fun InFlight(
         onArrival()
     }
 
-    // The glow is built once and drawn with a changing alpha, rather than rebuilt every
-    // frame: a radial gradient allocated sixty times a second, per card in the air, is a lot
-    // of garbage for something that only fades.
     val halo = remember(flight.shown) {
         Brush.radialGradient(
             colors = listOf(if (flight.shown) ShownGlow else Color.Black, Color.Transparent),
         )
     }
 
+    // A card is drawn at the size of the place it is going to, so it never has to change size
+    // on arrival. The table has three of them — your hand, the seats opposite, the piles — and
+    // a flight drawn at one and landing in another popped the moment it got there.
+    val drawn = sizes.mine
+    val base = with(LocalDensity.current) { drawn.width.toPx() }
+
     Box(
         modifier = Modifier
-            // Everything the flight does happens in the layer: position, lift and turn. Read
+            // Everything the flight does happens in the layer: position, lift and size. Read
             // from the animation *here*, in the draw phase, none of it recomposes — which is
-            // the difference between a card that glides and a card that arrives in steps,
-            // because the alternative recomposed a whole card face on every frame of every
-            // flight.
+            // the difference between a card that glides and a card that arrives in steps.
             .graphicsLayer {
                 val t = progress.value
                 val arc = sin(t * PI).toFloat()
@@ -705,12 +715,13 @@ private fun InFlight(
                 translationX = flight.from.x + (flight.to.x - flight.from.x) * t
                 translationY = flight.from.y + (flight.to.y - flight.from.y) * t
 
-                val swell = 1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL)
+                // Between the size it left and the size it is landing at, with the arc's lift
+                // on top. No turn of any kind: a card crossing a table does not spin.
+                val span = flight.fromSpan + (flight.toSpan - flight.fromSpan) * t
+                val fit = if (base > 0f && span > 0f) span / base else 1f
+                val swell = fit * (1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL))
                 scaleX = swell
                 scaleY = swell
-                rotationZ =
-                    if (flight.spin) t * FULL_TURN
-                    else arc * WOBBLE * if (t < HALF) 1f else -1f
             }
             .drawBehind {
                 val arc = sin(progress.value * PI).toFloat()
@@ -721,7 +732,7 @@ private fun InFlight(
                 )
             },
     ) {
-        CardFace(flight.card, sizes.mine)
+        CardFace(flight.card, drawn)
     }
 }
 

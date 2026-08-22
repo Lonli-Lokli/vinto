@@ -160,7 +160,7 @@ class ChoreographyTest {
     }
 
     /**
-     * A card somebody else drew flies **face up**, and turns over on the way.
+     * A card somebody else drew flies **face up**.
      *
      * The rules have the drawn card revealed publicly ("draws top card from draw pile and
      * reveals it publicly"), and it is the most informative moment of anybody else's turn —
@@ -169,9 +169,13 @@ class ChoreographyTest {
      *
      * This asserted the opposite until it was played on a phone: three bots taking their
      * turns behind a screen is not a game anybody can learn or play well.
+     *
+     * It used to turn over on the way as well, to mark the card as somebody else's. It does
+     * not any more: a card crossing a table does not spin, and the drawn slot in the middle
+     * already says whose turn it is.
      */
     @Test
-    fun aCardDrawnByABotFliesFaceUpAndTurnsOverOnTheWay() = runTest {
+    fun aCardDrawnByABotFliesFaceUp() = runTest {
         val session = started()
         val scenes = scenesOf(session)
 
@@ -186,7 +190,6 @@ class ChoreographyTest {
 
         val theirs = draws.last()
         assertNotNull(theirs.card, "what a bot drew is on the table for everyone to read")
-        assertTrue(theirs.spin, "and it turns over on the way, so it reads as theirs")
     }
 
     /** A peek lifts a card where it lies. Nothing travels. */
@@ -283,23 +286,6 @@ class ChoreographyTest {
         assertEquals(Anchor.Pending, played.from, "from where it was waiting")
         assertEquals(Rank.NINE, played.card?.rank)
         assertTrue(played.shown, "and lit, because everybody is being shown it")
-    }
-
-    /** A card somebody else drew turns over on the way, so it reads as theirs. */
-    @Test
-    fun aBotsDrawSpinsAndYoursDoesNot() = runTest {
-        val session = started()
-        val scenes = scenesOf(session)
-
-        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
-        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
-        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
-        session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(session.playerId)))
-        runCurrent()
-
-        val draws = scenes.moves().filter { it.from == Anchor.Deck && it.to == Anchor.Pending }
-        assertFalse(draws.first().spin, "your own draw does not spin")
-        assertTrue(draws.drop(1).all { it.spin }, "everybody else's does")
     }
 
     /** A declaration is answered, in green or in red. */

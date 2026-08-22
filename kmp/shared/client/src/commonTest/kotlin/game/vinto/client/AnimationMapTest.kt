@@ -196,11 +196,7 @@ class AnimationMapTest {
      * into it.
      */
     private fun describe(beat: Beat, me: String): String = when (beat) {
-        is Beat.Move -> buildString {
-            append("flight")
-            if (beat.spin) append(" turning over")
-            if (beat.shown) append(", lit")
-        }
+        is Beat.Move -> if (beat.shown) "flight, lit" else "flight"
 
         is Beat.Flourish -> "the card swells and glows where it lies"
         is Beat.Peek -> "a card lifts and glows" + if (beat.card == null) " (face hidden)" else ""

@@ -50,9 +50,8 @@ A flight is one word of several. These are all of them, and what drives each.
 | Animation | What it looks like | How long | What sets it off |
 | --- | --- | --- | --- |
 | **Flourish** | the card swells to 2.4× where it lies, lit green, and settles | 900ms | a `Flourish` beat — a card played for its action, and nothing else |
-| **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc and wobbling slightly, over a soft shadow | 1100ms | a `Move` beat |
+| **Flight** | a card crosses the table, lifting to 1.2× at the top of its arc over a soft shadow, and growing or shrinking to the size of the place it is landing in | 1100ms | a `Move` beat |
 | **Lit flight** | the same, lifting half again and carrying a green light | 1600ms | a `Move` beat the table is being *shown* — a played card, a correct call |
-| **Turning flight** | a flight with a full rotation on the way | 1100ms | somebody else's draw: at a bot's speed it is what separates "I did that" from "that happened to me" |
 | **Flip** | a card turns over on the spot, face to back or back to face | 420ms | **no beat at all** — `CardFace` animates it whenever a card becomes visible or hidden, so a card revealed by a peek, a wrong call, or the end of a round opens by itself |
 | **Lift** | a card rises towards the middle of the table and glows where it lies | the scene | a `Peek` beat. Everyone sees *which* card; only the entitled player sees the face |
 | **Flinch** | a hand shakes | 800ms | a `Flinch` beat, on the hand a penalty just landed in |

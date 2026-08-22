@@ -42,15 +42,11 @@ sealed interface Beat {
      * @param card what to draw in flight, or null to draw a back. A card that arrives
      *   face-down flies face-down: showing a rank in mid-air and hiding it on landing tells
      *   the player something the game did not.
-     * @param spin a full turn on the way. Marks a card as somebody else's: a bot's draw and
-     *   yours are otherwise the same movement, and at a bot's speed the difference between
-     *   "I did that" and "that happened to me" is worth one rotation.
      */
     data class Move(
         val from: Anchor,
         val to: Anchor,
         val card: Card? = null,
-        val spin: Boolean = false,
         /**
          * A card the table is being *shown* rather than one merely being moved: it travels
          * lit, so the moment reads as an announcement. The web app does the same thing with a
@@ -236,7 +232,6 @@ fun List<Frame>.tossedTogether(): List<Frame> {
  */
 @Suppress("ReturnCount", "CyclomaticComplexMethod")
 fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List<Scene> {
-    val mine = action.actorId == before.viewerId
     val penalty = penaltyScene(action, before, after)
 
     val main: Scene = when (action) {
@@ -250,7 +245,6 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
                     from = Anchor.Deck,
                     to = Anchor.Pending,
                     card = after.pendingCard(),
-                    spin = !mine,
                 ),
             )
 
