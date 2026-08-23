@@ -81,4 +81,35 @@ class TossedTogetherTest {
         scenes = listOf(listOf(Beat.Move(Anchor.Deck, Anchor.Discard, null))),
         view = view,
     )
+
+    /**
+     * A throw that missed is not part of the scramble.
+     *
+     * A failed toss-in never puts a card on the pile — it costs one instead — so its first
+     * scene is the penalty, not a flight. Merging it with the throws around it put the
+     * penalty card, the flinch and the line inside the joint scene, in the middle of
+     * everybody else's cards landing.
+     */
+    @Test
+    fun aFailedThrowIsNotSweptUpWithTheSuccessfulOnes() = runTest {
+        val session = teachingSession()
+        val view = projectView(session.state, session.playerId)
+
+        val failed = Frame(
+            action = throwBy("bot-2"),
+            scenes = listOf(
+                listOf(Beat.Move(Anchor.Deck, Anchor.Seat("bot-2", 4)), Beat.Flinch(Anchor.Seat("bot-2", 4))),
+            ),
+            view = view,
+        )
+
+        val merged = listOf(frame(view, throwBy("bot-1")), failed, frame(view, throwBy("bot-3")))
+            .tossedTogether()
+
+        assertEquals(3, merged.size, "the throws either side stay their own moments")
+        assertTrue(
+            merged[1].scenes.flatten().any { it is Beat.Flinch },
+            "and the penalty keeps its own scene",
+        )
+    }
 }

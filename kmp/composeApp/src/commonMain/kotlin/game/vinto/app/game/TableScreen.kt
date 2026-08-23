@@ -453,8 +453,19 @@ private fun Cards(
     turned: Boolean,
 ) {
     val stage = LocalStage.current
-    val gaps = stage.leaving[seat.id].orEmpty()
     val rendering = Rendering(view, table, scale)
+
+    // A gap is held open only where a card left and **nothing is arriving to fill it**.
+    //
+    // A swap does both at the same position: the drawn card lands in the slot the old one
+    // flew out of, and the hand is the same size afterwards. Holding a gap there as well
+    // inserted a slot the hand does not have — so the arriving card was drawn one place along
+    // (in the air *and* in the hand at once), the hand was a card wider for the length of the
+    // flight, and every anchor after it was off by one. `SeatCard` already draws the gap for a
+    // card that is landing; this is only for a hand that has actually lost one.
+    val gaps = stage.leaving[seat.id].orEmpty()
+        .filterNot { Anchor.Seat(seat.id, it) in stage.inFlight }
+        .toSet()
 
     var position = 0
     var card = 0
@@ -683,7 +694,7 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     // the length of its flourish, sitting in the slot and lying on the pile at once.
     val elsewhere = Anchor.Pending in stage.inFlight ||
         stage.isLeaving(Anchor.Pending) ||
-        stage.flourish != null
+        stage.isFlourishing(Anchor.Pending)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (drawn == null || elsewhere) {
@@ -771,7 +782,7 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     // still sitting in — so the pile must not draw it as well, or the same card is in two
     // places for the length of the flourish. It is the pile's card the moment it lands, and
     // not before.
-    val landing = Anchor.Discard in stage.inFlight || stage.flourish != null
+    val landing = Anchor.Discard in stage.inFlight || stage.isFlourishing(Anchor.Discard)
 
     // What the pile was showing *before* the card now in the air was thrown at it.
     //

@@ -256,6 +256,9 @@ class Stage {
      * the other end: the hand keeps the gap until the flight lands, so nothing shifts under a
      * card that is still moving, and the card leaves from where it actually was.
      */
+    /** Whether the card being shown off is lying at [anchor], and so is drawn by the flourish. */
+    fun isFlourishing(anchor: Anchor): Boolean = flourish?.second == anchor
+
     /** Whether a card is on its way *out* of [anchor], and so must not be drawn there. */
     fun isLeaving(anchor: Anchor): Boolean = flying.any { it.leftFrom == anchor }
 
@@ -279,7 +282,7 @@ class Stage {
      * A card being shown off where it lies, or null. Read by the pile as well as drawn: while
      * a card is being flourished it has not landed anywhere, so nothing else may draw it.
      */
-    var flourish: CardView? by mutableStateOf(null)
+    var flourish: Pair<CardView, Anchor>? by mutableStateOf(null)
 
     internal fun locate(anchor: Anchor): Offset? = places[anchor]
 
@@ -482,13 +485,16 @@ fun CardStage(
 
         stage.peeking.forEach { (anchor, card) -> BeingLookedAt(stage, anchor, card, sizes) }
 
-        stage.flourish?.let { card ->
-            Flourish(card, sizes, stage.locate(Anchor.Pending) ?: stage.centre(), stage.ms(FLOURISH_MS))
+        stage.flourish?.let { (card, at) ->
+            Flourish(card, sizes, stage.locate(at) ?: stage.centre(), stage.ms(FLOURISH_MS))
         }
 
         stage.flying.forEach { flight ->
             key(flight.id) {
-                InFlight(flight, sizes, stage.ms(MOVE_MS)) { stage.flying.remove(flight) }
+                // The same clock the scene is waiting on: a lit flight is given longer, and
+                // was flying in the shorter time and then sitting still for the difference.
+                val ms = stage.ms(if (flight.shown) SHOWN_MS else MOVE_MS)
+                InFlight(flight, sizes, ms) { stage.flying.remove(flight) }
             }
         }
 
@@ -563,7 +569,7 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
     }
 
     is Beat.Flourish -> {
-        flourish = beat.card.faceOrBack()
+        flourish = beat.card.faceOrBack() to beat.at
         ms(FLOURISH_MS)
     }
 

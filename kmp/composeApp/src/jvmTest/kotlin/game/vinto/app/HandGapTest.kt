@@ -68,6 +68,54 @@ class HandGapTest {
         assertTrue(closedUp < settled, "and closes up once it has landed: $closedUp vs $settled")
     }
 
+    /**
+     * A swap keeps the hand exactly as wide as it was.
+     *
+     * The card that leaves and the card that arrives share a slot, so the hand neither shrinks
+     * nor grows — and holding a gap open for the departure as well inserted a slot the hand
+     * does not have, drew the arriving card one place along while it was still in the air, and
+     * pushed every anchor after it off by one.
+     */
+    @Test
+    fun aSwapDoesNotWidenTheHand() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val me = whole.viewerId
+
+        val settled = handWidth(whole, Stage())
+        val swapping = handWidth(whole, swapping(me, GONE))
+
+        assertEquals(settled, swapping, "a card leaving and another arriving is one slot, not two")
+    }
+
+    /** A stage mid-swap: one card leaving a slot and another landing in the same one. */
+    private fun swapping(playerId: String, position: Int) = Stage().apply {
+        val seat = Anchor.Seat(playerId, position)
+        flying += Stage.Flight(
+            id = 1,
+            card = CardView.Hidden,
+            from = Offset.Zero,
+            to = Offset.Zero,
+            landingAt = Anchor.Discard,
+            leftFrom = seat,
+            fromSpan = 0f,
+            toSpan = 0f,
+            fromTurn = 0f,
+            toTurn = 0f,
+        )
+        flying += Stage.Flight(
+            id = 2,
+            card = CardView.Hidden,
+            from = Offset.Zero,
+            to = Offset.Zero,
+            landingAt = seat,
+            leftFrom = Anchor.Pending,
+            fromSpan = 0f,
+            toSpan = 0f,
+            fromTurn = 0f,
+            toTurn = 0f,
+        )
+    }
+
     /** A stage with one card in the air, having left [position] of [playerId]'s hand. */
     private fun leaving(playerId: String, position: Int) = Stage().apply {
         flying += Stage.Flight(

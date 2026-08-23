@@ -72,13 +72,17 @@ sealed interface Beat {
     /**
      * A card being played, shown off where it lies before it goes anywhere.
      *
-     * The web app's "play action": the card swells to two and a half times its size in the
-     * drawn slot, lit green, and settles — and only then does it go to the pile. It is the
-     * most emphatic thing that happens in a turn, and it is what tells the other three players
-     * that this card was *used* rather than merely put down, which changes what they can do
-     * next: a discarded action card is still there for the taking.
+     * The web app's "play action": the card swells to two and a half times its size, lit
+     * green, and settles. It is the most emphatic thing that happens in a turn, and it is what
+     * tells the other three players that this card was *used* rather than merely put down,
+     * which changes what they can do next: a discarded action card is still there for the
+     * taking.
+     *
+     * [at] is where the card is lying while it happens, and it is not always the drawn slot: a
+     * card taken off the discard, or one thrown in, is played from the pile. Fixing it at the
+     * drawn slot made those two teleport out of the pile, swell, and teleport back.
      */
-    data class Flourish(val card: Card?) : Beat
+    data class Flourish(val card: Card?, val at: Anchor = Anchor.Pending) : Beat
 
     /**
      * The discard pile going back into the deck.
@@ -181,6 +185,11 @@ data class Frame(
  * The view kept is the last one, which is the table after all of them have thrown: the same
  * table the flights are landing on.
  */
+private fun Frame.isAThrow(): Boolean {
+    val first = scenes.firstOrNull() ?: return false
+    return first.isNotEmpty() && first.all { it is Beat.Move && it.to == Anchor.Discard }
+}
+
 fun List<Frame>.tossedTogether(): List<Frame> {
     val out = mutableListOf<Frame>()
     var group = mutableListOf<Frame>()
@@ -203,7 +212,12 @@ fun List<Frame>.tossedTogether(): List<Frame> {
     }
 
     forEach { frame ->
-        if (frame.action is GameAction.ParticipateInTossIn) {
+        // A *throw* merges; a failed one does not. A failed throw's first scene is its
+        // penalty — the card never left the hand, so there is no flight to merge — and
+        // sweeping that into the joint scene puts the penalty, the flinch and the line in the
+        // middle of everybody else's throws, which is the one thing the merge is here to
+        // prevent.
+        if (frame.action is GameAction.ParticipateInTossIn && frame.isAThrow()) {
             group += frame
         } else {
             flush()
@@ -301,13 +315,30 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         // and a card whose action is being played is drawn on the pile — but it is still a
         // card being *played*, so it is shown off where it lies like any other.
         is GameAction.PlayDiscard ->
-            listOfNotNull(after.pendingCard()?.let(Beat::Flourish))
+            listOfNotNull(after.pendingCard()?.let { Beat.Flourish(it, Anchor.Discard) })
+
+        // The moment a thrown card's action begins. The card is already on the pile — it flew
+        // there when it was thrown — so nothing moves, but it is a card being *played* and the
+        // table says so, exactly as it does for one played from the hand.
+        is GameAction.PlayerTossInFinished ->
+            listOfNotNull(
+                after.pendingCard()
+                    ?.takeIf { before.pendingAction == null && after.pendingAction != null }
+                    ?.let { Beat.Flourish(it, Anchor.Discard) },
+            )
 
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,
-        is GameAction.SkipJackSwap,
-        is GameAction.SkipQueenSwap,
         -> discardScene()
+
+        // Declining a swap you had lined up. The two cards you were holding over stay where
+        // they are, so nothing travels — but "I looked and decided not to" is a decision the
+        // rest of the table should see, and it showed nothing at all. The web app shakes the
+        // pair; a flinch is this table's word for the same thing.
+        is GameAction.SkipJackSwap, is GameAction.SkipQueenSwap ->
+            before.pendingAction?.targets.orEmpty().map {
+                Beat.Flinch(Anchor.Seat(it.playerId, it.position))
+            }
 
         // The King says what it is pretending to be, and then does that.
         // A King names a card in somebody's hand and, if the name was right, that card comes

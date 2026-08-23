@@ -25,11 +25,13 @@ somewhere else fails the build rather than the eye.
 | Swap it in, calling the rank right | drawn slot → your hand, your hand → discard | two flights, the second lit; a green ring on the pile |
 | Swap it in, calling the rank wrong | drawn slot → your hand, your hand → discard, deck → your hand | three flights; a red ring on the pile, the hand flinches, your seat rings, the seat says a line |
 | Aim a peek (7, 8, 9, 10) | nothing moves | the card lifts where it lies and glows |
-| Finish looking | nothing moves | the card settles back |
+| Finish looking | nothing moves | the lifted card returns to the hand |
 | Name a rank with a King, correctly | your hand → discard | the borrowed rank is held up, then a lit flight; a green ring on the pile |
 | Name a rank with a King, wrongly | deck → your hand | the borrowed rank is held up; a red ring, the hand flinches, a penalty card flies in |
 | Throw a card in | your hand → discard | flight |
-| Take the top of the discard to play it | nothing moves | the card swells and glows where it lies — it is already on the pile |
+| Take the top of the discard to play it | nothing moves | the card swells and glows **on the pile**, where it is already lying |
+| A thrown card's action begins | nothing moves | the same, on the pile it was thrown onto |
+| Decline a Jack or Queen swap | nothing moves | the two cards jolt where they lie |
 
 Two cards in one row fly **together**, not one after the other: a swap is one gesture.
 
@@ -55,12 +57,12 @@ A flight is one word of several. These are all of them, and what drives each.
 | **Lit flight** | the same, lifting half again and carrying a green light | 1600ms | a `Move` beat the table is being *shown* — a played card, a correct call |
 | **Flip** | a card turns over on the spot, face to back or back to face | 420ms | **no beat at all** — `CardFace` animates it whenever a card becomes visible or hidden, so a card revealed by a peek, a wrong call, or the end of a round opens by itself |
 | **Lift** | a card rises towards the middle of the table and glows where it lies | the scene | a `Peek` beat. Everyone sees *which* card; only the entitled player sees the face |
-| **Flinch** | a hand shakes | 800ms | a `Flinch` beat, on the hand a penalty just landed in |
+| **Flinch** | a card jolts sideways and settles | 420ms | a `Flinch` beat — on the hand a penalty just landed in, or on a pair of cards somebody has decided *not* to swap |
 | **Ring** | a green or red ring on the pile | the scene | a `Verdict` beat — a declaration answered |
 | **Seat ring** | a coloured ring flashes round a plate: green for the turn, gold for Vinto, red for a penalty, blue for the coalition | the scene | an `Attend` beat |
 | **Sweep** | the discard pile gathers itself back into the deck | with the count | a `Reshuffle` beat, when the deck runs dry |
 | **Held up** | the rank a King borrowed is shown beside it | the scene | a `Borrowed` beat |
-| **Line** | a seat says something short | 900ms | a `Say` beat |
+| **Line** | a seat says something short | 1400ms | a `Say` beat |
 | **Breath** | a ring pulses slowly round a card that can be touched | continuous | not a beat: the card is tappable right now |
 
 Everything above except the **flip** and the **breath** is choreographed — the engine says what
