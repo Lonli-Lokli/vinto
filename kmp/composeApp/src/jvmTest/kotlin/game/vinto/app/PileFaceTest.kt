@@ -6,6 +6,7 @@ import game.vinto.shapes.Rank
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * What the discard pile shows, in the four positions it can be in.
@@ -68,4 +69,21 @@ class PileFaceTest {
 
     private fun card(rank: Rank, id: String) =
         Card(id = id, rank = rank, value = 10, played = false)
+
+    /**
+     * The covered card is the one *before* the card in the air, not the pile's current top.
+     *
+     * The table steps to the new position before the cards fly, so for one frame the pile's
+     * top is already the card about to be thrown at it. A pile that showed its own top while
+     * that card was flying drew it twice — a Joker on the discard and a Joker crossing the
+     * table at the same moment.
+     */
+    @Test
+    fun aLandingCardIsNeverAlsoDrawnOnThePile() {
+        val arriving = king
+        val shown = pileFace(top = arriving, covered = queen, inPlay = null, landing = true)
+
+        assertEquals(queen, shown, "the pile shows what the arriving card will cover")
+        assertTrue(shown != arriving, "and never the card that is still in the air")
+    }
 }

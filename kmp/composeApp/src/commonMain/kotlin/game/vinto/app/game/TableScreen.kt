@@ -657,7 +657,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
             modifier = Modifier.padding(top = Tight),
         ) {
             DrawnCard(view, sizes, stage)
-            TossIn(view, sizes)
+            TossIn(view)
         }
     }
 }
@@ -713,11 +713,8 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
 
 /** The rank the table is waiting on, under the pile it went down on. */
 @Composable
-private fun TossIn(view: PlayerView, sizes: TableSizes) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(sizes.theirs.width),
-    ) {
+private fun TossIn(view: PlayerView) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val toss = view.activeTossIn ?: return@Column
 
         Text(
@@ -733,11 +730,15 @@ private fun TossIn(view: PlayerView, sizes: TableSizes) {
                 MaterialTheme.colorScheme.onFelt(),
             ),
         ) {
+            // On one line, whatever the rank is called. Confined to a card's width, "Joker"
+            // broke across two and read as "Jok / er".
             Text(
                 toss.ranks.joinToString(" ") { it.serialName },
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onFelt(),
+                maxLines = 1,
+                softWrap = false,
                 modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
             )
         }
@@ -772,16 +773,24 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     // not before.
     val landing = Anchor.Discard in stage.inFlight || stage.flourish != null
 
-    // What the pile was showing before the card now in the air was thrown at it.
+    // What the pile was showing *before* the card now in the air was thrown at it.
     //
     // The engine sends the top card of the discard and nothing else — the rest of the pile is
-    // covered, and what went into it is a thing players remember rather than read. So this is
-    // the client remembering the last face it was shown, which is exactly what somebody at the
-    // table does, and it is only ever used to keep the pile from blinking empty while a card
-    // lands on it.
+    // covered, and what went into it is a thing players remember rather than read — so this is
+    // the client remembering, which is what somebody at the table does. It keeps the pile from
+    // blinking empty while a card lands on it.
+    //
+    // Two values rather than one, and that is the whole of it: the table steps to the new
+    // position *before* the cards fly, so for one frame the pile's top is already the card
+    // that is about to be thrown at it. Remembering "the last thing I drew" therefore
+    // remembered the card in the air, and drew it on the pile while it was still flying —
+    // a Joker on the discard and a Joker crossing the table, at once. What is wanted is the
+    // one before that.
+    var latest by remember { mutableStateOf<Card?>(null) }
     var covered by remember { mutableStateOf<Card?>(null) }
-    LaunchedEffect(view.discardTop?.id, landing) {
-        if (!landing) covered = view.discardTop
+    LaunchedEffect(view.discardTop?.id) {
+        covered = latest
+        latest = view.discardTop
     }
 
     val face = pileFace(
