@@ -725,7 +725,13 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
 /** The rank the table is waiting on, under the pile it went down on. */
 @Composable
 private fun TossIn(view: PlayerView) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    // The space is reserved whether or not a window is open. It used to appear with the first
+    // card that went down, which pushed the whole middle of the table up a line at the exact
+    // moment a card was landing there.
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.heightIn(min = TossHeight),
+    ) {
         val toss = view.activeTossIn ?: return@Column
 
         Text(
@@ -758,6 +764,9 @@ private fun TossIn(view: PlayerView) {
 
 private const val TossFill = 0.15f
 
+/** The room a toss-in window takes, kept whether one is open or not. */
+private val TossHeight = 46.dp
+
 /**
  * The discard pile: what is on top, what is just under it, and what is in play.
  *
@@ -778,37 +787,37 @@ private const val TossFill = 0.15f
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard)
 
-    // A card being shown off before it travels is drawn by the flourish, in the slot it is
-    // still sitting in — so the pile must not draw it as well, or the same card is in two
-    // places for the length of the flourish. It is the pile's card the moment it lands, and
-    // not before.
-    val landing = Anchor.Discard in stage.inFlight || stage.isFlourishing(Anchor.Discard)
+    // The pile draws every card that is lying on it, and never one that is somewhere else.
+    //
+    // Two things can be somewhere else: a card in the air on its way here, and a card being
+    // shown off before it travels. Both draw themselves, so the pile must not.
+    val arriving = stage.landingOn(Anchor.Discard)
+    val flourishing = stage.flourish != null
 
-    // What the pile was showing *before* the card now in the air was thrown at it.
-    //
-    // The engine sends the top card of the discard and nothing else — the rest of the pile is
-    // covered, and what went into it is a thing players remember rather than read — so this is
-    // the client remembering, which is what somebody at the table does. It keeps the pile from
-    // blinking empty while a card lands on it.
-    //
-    // Two values rather than one, and that is the whole of it: the table steps to the new
-    // position *before* the cards fly, so for one frame the pile's top is already the card
-    // that is about to be thrown at it. Remembering "the last thing I drew" therefore
-    // remembered the card in the air, and drew it on the pile while it was still flying —
-    // a Joker on the discard and a Joker crossing the table, at once. What is wanted is the
-    // one before that.
+    // What the pile was showing before all this. Kept as the *previous* top rather than the
+    // current one, because the table steps to the new position before the cards fly: for one
+    // frame the pile's top is already the card about to be thrown at it, and remembering that
+    // drew the card on the pile while it was still crossing the table.
     var latest by remember { mutableStateOf<Card?>(null) }
-    var covered by remember { mutableStateOf<Card?>(null) }
+    var previous by remember { mutableStateOf<Card?>(null) }
     LaunchedEffect(view.discardTop?.id) {
-        covered = latest
+        previous = latest
         latest = view.discardTop
     }
+
+    // And the card underneath the one arriving is only the *previous* top when the arriving
+    // card is the top already — which is what happens when the engine has recorded the
+    // discard before the card has finished travelling. A tossed-in card is queued instead, so
+    // the pile still holds the card it held before, and showing the one before *that* left the
+    // pile blank, or showing a card two moves old.
+    val arrivingIsTheTop = arriving is CardView.Visible && arriving.card.id == view.discardTop?.id
+    val covered = if (arrivingIsTheTop) previous else view.cardInPlay ?: view.discardTop
 
     val face = pileFace(
         top = view.discardTop,
         covered = covered,
         inPlay = view.cardInPlay,
-        landing = landing,
+        landing = arriving != null || flourishing,
     )
 
     if (face == null) {

@@ -256,6 +256,10 @@ class Stage {
      * the other end: the hand keeps the gap until the flight lands, so nothing shifts under a
      * card that is still moving, and the card leaves from where it actually was.
      */
+    /** The card on its way to [anchor], if one is. The pile asks so it never draws it twice. */
+    fun landingOn(anchor: Anchor): CardView? =
+        flying.firstOrNull { it.landingAt == anchor }?.card
+
     /** Whether the card being shown off is lying at [anchor], and so is drawn by the flourish. */
     fun isFlourishing(anchor: Anchor): Boolean = flourish?.second == anchor
 
@@ -652,7 +656,22 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
         y = from.y + (centre.y - from.y) * towards,
     )
 
-    Box(modifier = Modifier.offset { IntOffset(at.x.roundToInt(), at.y.roundToInt()) }) {
+    // At the size and angle of the seat it lifted from. Drawn at your own hand's size and
+    // upright, an opponent's card jumped bigger and straightened out as it lifted, and a seat
+    // at the side of the table — whose cards lie sideways — snapped a quarter turn each way.
+    val span = stage.spanAt(anchor)
+    val base = with(LocalDensity.current) { sizes.mine.width.toPx() }
+
+    Box(
+        modifier = Modifier.graphicsLayer {
+            translationX = at.x
+            translationY = at.y
+            val fit = if (base > 0f && span != null && span > 0f) span / base else 1f
+            scaleX = fit
+            scaleY = fit
+            rotationZ = if (stage.turnedAt(anchor)) QUARTER else 0f
+        },
+    ) {
         CardFace(card, sizes.mine, state = CardState(chosen = true))
     }
 }
