@@ -32,6 +32,7 @@ somewhere else fails the build rather than the eye.
 | Finish looking | nothing moves | the lifted card returns to the hand |
 | Name a rank with a King, correctly | your hand → discard | the borrowed rank is held up, then a lit flight; a green ring on the pile |
 | Name a rank with a King, wrongly | deck → your hand | the borrowed rank is held up; **the named card turns face up for everyone**, a red ring, the hand flinches, a penalty card flies in |
+| Make somebody draw with an Ace | deck → their hand | **the victim's seat rings, and keeps ringing** while their plate says a line and a card flies from the deck into their hand, which flinches |
 | Throw a card in | your hand → discard | flight |
 | Throw a card in, wrongly | deck → your hand | a penalty card flies in, the hand flinches, your seat rings, the seat says a line; then **the failed attempt turns face up for everyone**, where it lies |
 | Take the top of the discard to play it | nothing moves | the card swells and glows **on the pile**, where it is already lying |

@@ -9,12 +9,14 @@ import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.RankPayload
+import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Where every card animation starts and ends, read out of the game rather than written down.
@@ -105,6 +107,8 @@ class AnimationMapTest {
             session.dispatch(GameAction.DeclareKingAction(DeclareKingActionPayload(me, real)))
         }
 
+        rows += aceRow()
+
         rows += flightsFor("Throw a card in") { session, me ->
             session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
             session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
@@ -121,6 +125,18 @@ class AnimationMapTest {
 
         println(table(rows))
         check(rows)
+    }
+
+    /** An Ace: the one move whose whole effect lands on somebody else. */
+    private suspend fun aceRow(): Row = flightsFor("Make somebody draw, with an Ace") { session, me ->
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.ACE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.UseCardAction(PlayerIdPayload(me)))
+        val victim = session.state.players.first { it.id != me }.id
+        mark(session)
+        session.dispatch(
+            GameAction.SelectActionTarget(SelectActionTargetPayload.Ace(me, victim)),
+        )
     }
 
     /** The rows worth defending: each of these has been wrong at least once. */
@@ -145,6 +161,16 @@ class AnimationMapTest {
             "a King names a card and takes it out of the hand, which is a card moving",
         )
         assertEquals("nothing moves", map.getValue("Finish looking").flights)
+        assertEquals(
+            "deck → their hand",
+            map.getValue("Make somebody draw, with an Ace").flights,
+            "an Ace names a player and a card goes to them: the naming is the only part of " +
+                "the move nobody can read from the cards afterwards",
+        )
+        assertTrue(
+            "their seat rings" in map.getValue("Make somebody draw, with an Ace").seen,
+            "an Ace that does not point at anybody is a card appearing in a hand for no reason",
+        )
     }
 
     // ------------------------------------------------------------------ the reading

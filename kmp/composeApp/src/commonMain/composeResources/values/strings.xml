@@ -79,6 +79,10 @@
     <string name="table_you">You</string>
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">leads</string>
+    <string name="seat_pointed_turn">%1$s is playing</string>
+    <string name="seat_pointed_vinto">%1$s called Vinto</string>
+    <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
+    <string name="seat_pointed_coalition">%1$s leads the coalition</string>
     <string name="table_final_round">Final round</string>
     <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
     <string name="table_final_leader">You play the coalition’s hand against %1$s.</string>

@@ -122,7 +122,7 @@ blank — that is the only way two seats' scripts are ever allowed to differ.
 | Aim a King | nothing | a blank lift | nobody | a lift |
 | Declare a King, right | the named card: hand → pile | turns face up as it leaves the hand, lit | every seat | the borrowed rank held up, a lit flight, a green ring |
 | Declare a King, wrong | deck → the declarer's row | the named card turns face up **where it lies**, then back down | every seat, for the moment | the borrowed rank held up, a red ring, the penalty flight and flinch, then the reveal |
-| Aim an Ace | deck → the target's row | flies face down | nobody | the target's seat ringed, a line, the flight, a flinch |
+| Aim an Ace | deck → the target's row | flies face down | nobody | the target's seat ringed — and still ringed when the card lands, because the naming and the flight are one moment — a line, the flight, a flinch |
 | Toss in, right | your row → pile | face up as it flies | every seat | one flight per thrown card, thrown together |
 | Toss in, wrong | deck → your row | the attempt turns face up **where it lies**, then back down | every seat, for the moment | the penalty flight, flinch, ring and line, then the reveal |
 | A thrown action card starts | nothing — it flew when it was thrown | swells on the pile | every seat | a flourish on the pile |

@@ -504,6 +504,12 @@ fun CardStage(
 
                 // And the beat after, so the table can be read before the next thing happens.
                 delay(stage.paced(Pacing.dwellAfter(frame, live.viewerId)))
+
+                // Only now does the table stop pointing. A seat is pointed at for the whole
+                // of what is happening to it — an Ace names a victim in one scene and the
+                // card flies to them in the next, and a ring cleared between the two blinks
+                // off at the exact moment the player looks up to see who was named.
+                stage.attention.clear()
             }
 
             // Caught up — and the only path when a batch was dropped for being too far
@@ -556,7 +562,6 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     flinching.clear()
     settlePeeks()
     verdicts.clear()
-    attention.clear()
     borrowed = null
     refilling = 0
     if (saying.isNotEmpty()) {

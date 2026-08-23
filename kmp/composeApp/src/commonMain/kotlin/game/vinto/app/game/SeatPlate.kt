@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -37,12 +39,18 @@ import game.vinto.app.art.avatar_donatello
 import game.vinto.app.art.avatar_michelangelo
 import game.vinto.app.art.avatar_raphael
 import game.vinto.app.art.avatar_you
+import game.vinto.app.art.seat_pointed_coalition
+import game.vinto.app.art.seat_pointed_penalty
+import game.vinto.app.art.seat_pointed_turn
+import game.vinto.app.art.seat_pointed_vinto
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Attention
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 private val PlatePad = 4.dp
 private val PlateGap = 8.dp
@@ -50,6 +58,16 @@ private val NamePad = 10.dp
 private val NameMax = 76.dp
 private val Hairline = 1.dp
 private val Ring = 2.dp
+
+/**
+ * The ring on a seat the table is pointing at, which is thicker than any other.
+ *
+ * Being pointed at is the loudest thing a plate can say and it lasts a second or two — an Ace
+ * has just named this player, or a penalty has landed on them — while the ring saying it was
+ * the same two points as the one that means "it is your turn", in a colour the player has to
+ * remember the meaning of.
+ */
+private val PointedRing = 4.dp
 
 private const val GLOW_LOW = 0.35f
 private const val GLOW_HIGH = 1f
@@ -62,6 +80,21 @@ private fun Attention.colour(): Color = when (this) {
     Attention.VINTO -> Signal.vinto
     Attention.PENALTY -> Signal.penalty
     Attention.COALITION -> Signal.coalition
+}
+
+/**
+ * And in words, for a player who cannot see the colour.
+ *
+ * A ring is the whole of what the table says about a seat at these moments, so without this
+ * an Ace aimed at a screen-reader user is a card that appears in their hand for no stated
+ * reason — the one thing this game must never do, since the hand is what they are holding in
+ * their head.
+ */
+private fun Attention.spoken(): StringResource = when (this) {
+    Attention.TURN -> Res.string.seat_pointed_turn
+    Attention.VINTO -> Res.string.seat_pointed_vinto
+    Attention.PENALTY -> Res.string.seat_pointed_penalty
+    Attention.COALITION -> Res.string.seat_pointed_coalition
 }
 
 /**
@@ -110,13 +143,24 @@ fun SeatPlate(
         label = "edge",
     )
 
+    val said = pointed?.let { stringResource(it.spoken(), name) }
+
     Surface(
         // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
         // is at least a thumb tall even when the portrait inside it is not.
-        modifier = modifier.heightIn(min = PlateTap),
+        modifier = modifier
+            .heightIn(min = PlateTap)
+            .semantics { said?.let { contentDescription = it } },
         shape = CircleShape,
         color = Slate.fill.copy(alpha = PLATE_ALPHA),
-        border = BorderStroke(if (active || onClick != null) Ring else Hairline, edge),
+        border = BorderStroke(
+            when {
+                pointed != null -> PointedRing
+                active || onClick != null -> Ring
+                else -> Hairline
+            },
+            edge,
+        ),
         onClick = onClick ?: {},
         enabled = onClick != null,
     ) {
