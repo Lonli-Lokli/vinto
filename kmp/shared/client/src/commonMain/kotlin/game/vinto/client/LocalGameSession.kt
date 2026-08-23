@@ -219,17 +219,17 @@ class LocalGameSession(
     private suspend fun playBots(): List<Frame> {
         val start = state
         var moves = 0
-        val told = mutableListOf<Triple<GameAction, GameState, GameState>>()
+        val told = mutableListOf<BotMove>()
 
         val next = onBotDispatcher {
             var working = start
             while (moves < MAX_BOT_STEPS && working.phase != GamePhase.SCORING) {
                 val action = nextBotAction(working) ?: break
-                val stepped = (GameEngine.reduce(working, action) as? ReduceResult.Success)?.state
+                val result = GameEngine.reduce(working, action) as? ReduceResult.Success
                     ?: break
 
-                told += Triple(action, working, stepped)
-                working = stepped
+                told += BotMove(action, working, result.state, result.revealed)
+                working = result.state
                 moves++
             }
             working
@@ -245,13 +245,20 @@ class LocalGameSession(
         // bots' turns before anything is drawn — it must, since each move depends on the last
         // — but the screen is given them a move at a time, with the table each one left
         // behind, so it can show them one after another instead of all at once.
-        val seen = told.map { (action, was, now) ->
-            val before = projectView(was, playerId)
-            val after = projectView(now, playerId)
-            Frame(action, choreograph(action, before, after), after)
+        // Reveals ride with each move, exactly as they do for the human's own dispatch above.
+        // They used to be dropped here, which meant a bot's wrong King or failed throw turned
+        // a card face up for the table and the one person at it never saw the card.
+        val seen = told.map { move ->
+            val before = projectView(move.before, playerId)
+            val after = projectView(move.after, playerId)
+            Frame(
+                move.action,
+                choreograph(move.action, before, after) + revealScene(move.revealed),
+                after,
+            )
         }
 
-        told.forEach { (action, was, now) -> record(action, was, now) }
+        told.forEach { move -> record(move.action, move.before, move.after) }
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.
@@ -297,6 +304,18 @@ class LocalGameSession(
             ))
         }
     }
+
+    /**
+     * One bot move with everything the engine said about it. The reveals are here because
+     * they exist only on the reduce result — they are what happened, not what is — and a
+     * frame built without them silently swallows the moment.
+     */
+    private data class BotMove(
+        val action: GameAction,
+        val before: GameState,
+        val after: GameState,
+        val revealed: List<PublicReveal>,
+    )
 
     private companion object {
         /** A guard, not a rule: a bot loop this long has stopped being a game. */

@@ -3,6 +3,7 @@ package game.vinto.engine.cases
 import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePlayerState
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.FailedTossInAttempt
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.SerializedOpponentKnowledge
@@ -103,6 +104,13 @@ private fun applyFailedTossIn(
     }
 
     for ((card, position) in attempted) {
+        // The throw happened face up: the player put the whole attempt forward and the table
+        // watched it checked, so every attempted card is shown — not only the ones that
+        // missed. The web engine does the same. It is an event rather than state for the
+        // same reason a King's reveal is: the cards go back to being face-down cards
+        // everybody is expected to remember, so it rides out on the result, not the view.
+        state.revealed += PublicReveal(player.id, position, card.freeze())
+
         for (observer in state.players) {
             if (observer.id == player.id) {
                 if (!observer.knownCardPositions.contains(position)) {
