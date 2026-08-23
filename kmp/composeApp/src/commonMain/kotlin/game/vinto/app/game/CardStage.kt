@@ -87,6 +87,14 @@ import kotlinx.coroutines.flow.first
  */
 private const val FLOURISH_MS = 900
 
+/**
+ * How long a card turned face up for the table stays up.
+ *
+ * Longer than a peek, because a peek is one player looking and this is three of them being
+ * told: a King named this card wrongly, and here is what it really was.
+ */
+private const val REVEAL_MS = 1_800
+
 private const val MOVE_MS = 1_100
 private const val SHOWN_MS = 1_600
 private const val PEEK_MS = 1100
@@ -546,42 +554,15 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
  * simultaneous without any of them knowing about the rest.
  */
 private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
-    is Beat.Move -> {
-        val from = locateOrNearby(beat.from)
-        val to = locateOrNearby(beat.to)
+    is Beat.Move -> fly(beat, nextId)
+    is Beat.Reveal -> lift(beat.at, CardView.Visible(beat.card), ms(REVEAL_MS))
 
-        // A beat between two places the table has not laid out has nowhere to go. Skipping it
-        // is right: the card is already where it belongs.
-        if (from == null || to == null || from == to) {
-            0
-        } else {
-            flying += Stage.Flight(
-                id = nextId(),
-                card = beat.card.faceOrBack(),
-                from = from,
-                to = to,
-                landingAt = beat.to,
-                leftFrom = beat.from,
-                fromSpan = spanAt(beat.from) ?: 0f,
-                toSpan = spanAt(beat.to) ?: 0f,
-                fromTurn = if (turnedAt(beat.from)) QUARTER else 0f,
-                toTurn = if (turnedAt(beat.to)) QUARTER else 0f,
-                shown = beat.shown,
-            )
-            ms(if (beat.shown) SHOWN_MS else MOVE_MS)
-        }
-    }
+    is Beat.Peek -> lift(beat.at, beat.card.faceOrBack(), ms(PEEK_MS))
 
     is Beat.Flourish -> {
         flourish = beat.card.faceOrBack() to beat.at
         ms(FLOURISH_MS)
     }
-
-    is Beat.Peek -> {
-        peeking[beat.at] = beat.card.faceOrBack()
-        ms(PEEK_MS)
-    }
-
 
     is Beat.Borrowed -> {
         borrowed = beat.rank
@@ -676,6 +657,44 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
     }
 }
 
+
+/**
+ * Sends a card across the table, and says how long the scene should wait for it.
+ *
+ * A beat between two places the table has not laid out has nowhere to go, and skipping it is
+ * right: the card is already where it belongs.
+ */
+private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
+    val from = locateOrNearby(beat.from)
+    val to = locateOrNearby(beat.to)
+    if (from == null || to == null || from == to) return 0
+
+    flying += Stage.Flight(
+        id = nextId(),
+        card = beat.card.faceOrBack(),
+        from = from,
+        to = to,
+        landingAt = beat.to,
+        leftFrom = beat.from,
+        fromSpan = spanAt(beat.from) ?: 0f,
+        toSpan = spanAt(beat.to) ?: 0f,
+        fromTurn = if (turnedAt(beat.from)) QUARTER else 0f,
+        toTurn = if (turnedAt(beat.to)) QUARTER else 0f,
+        shown = beat.shown,
+    )
+    return ms(if (beat.shown) SHOWN_MS else MOVE_MS)
+}
+
+/**
+ * Holds a card up where it lies, and says how long the scene should wait for it.
+ *
+ * One card lifting is two different moments: a peek, which is one player looking and which
+ * shows the face only to them, and a reveal, which is the table being shown something.
+ */
+private fun Stage.lift(at: Anchor, card: CardView, holdMs: Int): Int {
+    peeking[at] = card
+    return holdMs
+}
 
 /** The card a King is pretending to be, held up beside the King itself. */
 @Composable

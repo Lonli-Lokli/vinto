@@ -26,14 +26,29 @@ import game.vinto.engine.cases.handleSetNextDrawCard
 import game.vinto.engine.cases.handleSkipPeek
 import game.vinto.engine.cases.handleSwapHandWithDeck
 import game.vinto.engine.cases.handleUpdateDifficulty
+import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameState
 
 /** The outcome of a reduction. An invalid action leaves the state untouched. */
+/**
+ * A card the table was shown, and by whom it is held.
+ *
+ * The rules turn a card face up in two places — a King's declaration and a failed toss-in —
+ * and in both the card stays in the hand it was in. It is public for that moment and private
+ * again afterwards, which makes it an *event* rather than a fact about the game: this is what
+ * a room would send its four clients, and what this engine hands back to the one it has.
+ */
+data class PublicReveal(val playerId: String, val position: Int, val card: Card)
+
 sealed interface ReduceResult {
     val state: GameState
 
-    data class Success(override val state: GameState) : ReduceResult
+    data class Success(
+        override val state: GameState,
+        /** What this action turned face up for everybody. Usually nothing. */
+        val revealed: List<PublicReveal> = emptyList(),
+    ) : ReduceResult
     data class Failure(override val state: GameState, val reason: String) : ReduceResult
 }
 
@@ -67,7 +82,7 @@ object GameEngine {
             advanceTurnAfterTossIn(working)
         }
 
-        return ReduceResult.Success(working.freeze())
+        return ReduceResult.Success(working.freeze(), working.revealed.toList())
     }
 
     /**

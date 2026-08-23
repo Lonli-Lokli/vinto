@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.getCardValue
@@ -83,6 +84,16 @@ sealed interface Beat {
      * drawn slot made those two teleport out of the pile, swell, and teleport back.
      */
     data class Flourish(val card: Card?, val at: Anchor = Anchor.Pending) : Beat
+
+    /**
+     * A card turned face up for the whole table, where it lies.
+     *
+     * The rules do this twice — a King naming a card, and a throw that missed — and both
+     * times the card stays in the hand it was in. Everybody is shown it, and then it goes
+     * back to being a card they are expected to remember, which is why it arrives beside the
+     * move rather than in the state: it is what happened, not what is.
+     */
+    data class Reveal(val at: Anchor, val card: Card) : Beat
 
     /**
      * The discard pile going back into the deck.
@@ -167,6 +178,13 @@ data class Frame(
     /** Whether this frame takes any time to play. Aiming a Jack moves nothing. */
     val hasSomethingToSee: Boolean get() = scenes.any { it.isNotEmpty() }
 }
+
+/** Everything this action turned face up, as a scene of its own. */
+fun revealScene(revealed: List<PublicReveal>): List<Scene> = revealed
+    .map { Beat.Reveal(Anchor.Seat(it.playerId, it.position), it.card) }
+    .takeIf { it.isNotEmpty() }
+    ?.let { listOf(it) }
+    .orEmpty()
 
 /**
  * Frames that happened at one moment, played at one moment.

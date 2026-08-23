@@ -4,6 +4,7 @@ import game.vinto.bot.BotRunner
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.engine.calculateFinalScores
@@ -151,8 +152,13 @@ class LocalGameSession(
 
         val before = state
         val seenBefore = _view.value
+        val revealed: List<PublicReveal>
         state = when (val result = GameEngine.reduce(state, action)) {
-            is ReduceResult.Success -> result.state
+            is ReduceResult.Success -> {
+                revealed = result.revealed
+                result.state
+            }
+
             is ReduceResult.Failure -> return refuse(result.reason)
         }
 
@@ -160,7 +166,10 @@ class LocalGameSession(
         val seen = mutableListOf(
             Frame(
                 action = action,
-                scenes = choreograph(action, seenBefore, _view.value),
+                // What the table was shown rides beside the move, because it is not in the
+                // state: a card turned face up by a wrong declaration is public for that
+                // moment and private again afterwards.
+                scenes = choreograph(action, seenBefore, _view.value) + revealScene(revealed),
                 view = _view.value,
             ),
         )

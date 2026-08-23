@@ -210,6 +210,20 @@ class MutableActiveTossIn(
 }
 
 class MutableGameState(source: GameState) {
+    /**
+     * Cards this action turned face up for the whole table.
+     *
+     * Not part of the game's state, and deliberately so: it is what *happened*, not what *is*.
+     * A card revealed to the table is revealed for a moment and then goes on being a
+     * face-down card everybody is expected to remember — the rules have it that way, and a
+     * state that carried the reveal would have to carry an expiry for it too, in both engines,
+     * and in every recorded hash.
+     *
+     * It rides out on [ReduceResult.Success] instead, which is where a room would put it when
+     * telling four clients what they just watched.
+     */
+    val revealed: MutableList<PublicReveal> = mutableListOf()
+
     var gameId: String = source.gameId
     var roundNumber: Int = source.roundNumber
     var turnNumber: Int = source.turnNumber

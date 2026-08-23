@@ -4,6 +4,7 @@ import game.vinto.engine.MutableActiveTossIn
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.MutablePlayerState
+import game.vinto.engine.PublicReveal
 import game.vinto.engine.clearTossInReadyList
 import game.vinto.engine.getAutomaticallyReadyPlayers
 import game.vinto.engine.getTargetTypeFromRank
@@ -96,6 +97,10 @@ private fun applyIncorrectDeclaration(
 ) {
     val player = state.playerById(playerId) ?: return
     val selectedCard = targetPlayer.cards.getOrNull(position) ?: return
+
+    // Face up for the table, for this moment: naming a card wrongly shows everybody what it
+    // really is, and then it goes back to being a card they are expected to remember.
+    state.revealed += PublicReveal(targetPlayer.id, position, selectedCard.freeze())
 
     // The card stays put but everyone now knows it.
     for (observer in state.players) {
