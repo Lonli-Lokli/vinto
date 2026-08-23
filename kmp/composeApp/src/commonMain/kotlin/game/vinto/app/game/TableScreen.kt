@@ -58,6 +58,10 @@ import game.vinto.app.art.card_the_deck
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.table_discard
+import game.vinto.app.art.table_final_ally
+import game.vinto.app.art.table_final_caller
+import game.vinto.app.art.table_final_leader
+import game.vinto.app.art.table_final_round
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
@@ -84,6 +88,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
 import game.vinto.engine.turnHolderId
 import game.vinto.shapes.Card
+import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
 import org.jetbrains.compose.resources.stringResource
@@ -136,6 +141,8 @@ fun TableScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         TableHeader(view, state.round, onHelp, onReport, onDeck)
+
+        FinalRoundLine(view)
 
         Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
             Column(
@@ -287,6 +294,52 @@ private fun TableHeader(
                     .wrapContentHeight(),
             )
         }
+    }
+}
+
+/**
+ * Who is playing for whom, once Vinto has been called.
+ *
+ * The final round is the one moment the rules change under the player: the other three stop
+ * being three opponents and become one hand, and only that hand is compared. The table says
+ * so in colour already — blue rings on the coalition, gold on the caller — but a colour is
+ * only as good as the player's memory of the legend, and this is the point of the game where
+ * they have least attention to spare for remembering it. So it is also said in words, for as
+ * long as it is true.
+ *
+ * Nothing is drawn before the coalition has picked who plays its hand, because until then the
+ * sentence has no subject — and the panel is asking that very question.
+ */
+@Composable
+private fun FinalRoundLine(view: PlayerView) {
+    if (view.phase == GamePhase.SCORING) return
+    val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
+    val leader = view.players.firstOrNull { it.id == view.coalitionLeaderId }
+
+    val said = when {
+        caller.id == view.viewerId -> stringResource(Res.string.table_final_caller)
+        leader == null -> return
+        leader.id == view.viewerId ->
+            stringResource(Res.string.table_final_leader, caller.nickname)
+        else -> stringResource(Res.string.table_final_ally, leader.nickname, caller.nickname)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Rail.fill)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(Res.string.table_final_round).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.gold,
+        )
+        Text(said, style = MaterialTheme.typography.labelMedium, color = Rail.ink)
     }
 }
 

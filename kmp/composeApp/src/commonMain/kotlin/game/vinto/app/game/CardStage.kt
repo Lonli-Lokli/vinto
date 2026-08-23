@@ -101,6 +101,16 @@ private const val PEEK_MS = 1100
 
 /** The lift itself is quick; the card then stays up for the rest of the beat. */
 private const val PEEK_LIFT_MS = 550
+
+/**
+ * And it goes back down again, rather than being taken away.
+ *
+ * A lifted card used to vanish the instant its scene ended, reappearing face-down in the hand
+ * — which reads as the table blinking rather than as a player putting a card back. The card
+ * lowers into its own place and turns over on the way, which is the same length as
+ * `CardFace`'s flip so that it is face-down exactly as it lands.
+ */
+private const val PEEK_SETTLE_MS = 420
 private const val STAGE_GROW_MS = 300
 private const val STAGE_MS = 900
 private const val VERDICT_MS = 900
@@ -145,6 +155,16 @@ class Stage {
 
     /** Cards being looked at, and by extension hidden from their own place while they are. */
     internal val peeking = mutableStateMapOf<Anchor, CardView>()
+
+    /**
+     * Whether those cards are on their way back down.
+     *
+     * One flag for the lot rather than one per card: peeks begin and end with their scene, so
+     * a Queen's two cards go up together and come back down together. The hand keeps its gap
+     * for the whole descent — [isPeeking] stays true — so the card lands in the space it left
+     * instead of the hand closing up underneath it.
+     */
+    internal var settling: Boolean by mutableStateOf(false)
 
 
     /** A rank a King is borrowing, shown in the middle while it does that card's job. */
@@ -534,7 +554,7 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     if (longest > 0) delay(longest.toLong())
     flourish = null
     flinching.clear()
-    peeking.clear()
+    settlePeeks()
     verdicts.clear()
     attention.clear()
     borrowed = null
@@ -544,6 +564,15 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
         saying.clear()
     }
     return id
+}
+
+/** Lowers whatever was being looked at back into its place, and only then lets it go. */
+private suspend fun Stage.settlePeeks() {
+    if (peeking.isEmpty()) return
+    settling = true
+    delay(ms(PEEK_SETTLE_MS).toLong())
+    peeking.clear()
+    settling = false
 }
 
 /**
@@ -626,9 +655,12 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
     val from = stage.locate(anchor) ?: return
     val centre = stage.centre()
     val lift = remember { Animatable(0f) }
+    val settling = stage.settling
 
-    LaunchedEffect(anchor) {
-        lift.animateTo(1f, tween(stage.ms(PEEK_LIFT_MS), easing = FastOutSlowInEasing))
+    LaunchedEffect(anchor, settling) {
+        val to = if (settling) 0f else 1f
+        val over = stage.ms(if (settling) PEEK_SETTLE_MS else PEEK_LIFT_MS)
+        lift.animateTo(to, tween(over, easing = FastOutSlowInEasing))
     }
 
     val towards = LIFT_FRACTION * lift.value
@@ -653,7 +685,14 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
             rotationZ = if (stage.turnedAt(anchor)) QUARTER else 0f
         },
     ) {
-        CardFace(card, sizes.mine, state = CardState(chosen = true))
+        // Face-down on the way back: the card turns over as it lowers, which is what a
+        // player does with a card they have finished looking at. `CardFace` animates the
+        // change itself, so handing it a hidden card *is* the flip.
+        CardFace(
+            if (settling) CardView.Hidden else card,
+            sizes.mine,
+            state = CardState(chosen = !settling),
+        )
     }
 }
 

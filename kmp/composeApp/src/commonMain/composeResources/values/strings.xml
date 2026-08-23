@@ -36,7 +36,7 @@
 
     <!-- Online play, explained rather than greyed out. -->
     <string name="online_title">Not in this build</string>
-    <string name="online_body">The room exists — a server that deals, holds the cards nobody may see, and fills the empty seats with bots. What is missing is this app\'s half of it: joining one, and drawing a table somebody else is playing on.\n\nSingle player needs none of that. It runs entirely on this phone, which is why it works on a plane.</string>
+    <string name="online_body">The room exists — a server that deals, holds the cards nobody may see, and fills the empty seats with bots. What is missing is this app’s half of it: joining one, and drawing a table somebody else is playing on.\n\nSingle player needs none of that. It runs entirely on this phone, which is why it works on a plane.</string>
     <string name="online_dismiss">Fair enough</string>
 
     <!-- ================================================================ settings -->
@@ -79,6 +79,10 @@
     <string name="table_you">You</string>
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">leads</string>
+    <string name="table_final_round">Final round</string>
+    <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
+    <string name="table_final_leader">You play the coalition’s hand against %1$s.</string>
+    <string name="table_final_ally">%1$s plays the coalition’s hand against %2$s.</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -105,7 +109,7 @@
     <string name="score_column_hand">hand</string>
     <string name="score_column_round">round</string>
     <string name="score_column_game">game</string>
-    <string name="score_you_called">You called Vinto, so your hand was set against the best of the others\'.</string>
+    <string name="score_you_called">You called Vinto, so your hand was set against the best of the others’.</string>
     <string name="score_they_called">%1$s called Vinto, so their hand was set against the best of yours.</string>
     <string name="score_next_round">Deal the next round</string>
     <string name="score_stop">Stop here</string>

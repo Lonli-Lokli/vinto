@@ -111,9 +111,9 @@ blank — that is the only way two seats' scripts are ever allowed to differ.
 | Swap, no declaration | drawn slot → your row **and** your row → pile, together | the incoming card turns face down on landing; the outgoing turns face up | every seat, both faces | two flights that cross |
 | Swap, declaring right | the same two flights, the second lit | same | every seat | plus a green ring on the pile |
 | Swap, declaring wrong | the same two flights, plus deck → your row | the penalty flies face down | every seat but the penalty | plus a red ring, a flinch, the seat ringed red, a line |
-| Aim a 7/8/9/10 | nothing | the aimed card lifts and glows | *actor* — but *which* card is public | a lift |
+| Aim a 7/8/9/10 | nothing | the aimed card lifts and glows, then lowers back into its place face-down | *actor* — but *which* card is public | a lift, and its return |
 | Confirm or skip the peek | nothing | nothing — the card has lain on the pile since it was played | — | nothing |
-| Aim a Queen (each card) | nothing | the same lift | *actor* | a lift |
+| Aim a Queen (each card) | nothing | the same lift, and the same return | *actor* | a lift, and its return |
 | Execute the Queen swap | first target ⇄ second target | neither turns over | *actor* sees both faces in flight | two crossing flights |
 | Skip the Queen swap | nothing | nothing | — | both cards flinch — "I looked and decided not to" is a decision the table sees |
 | Aim a Jack (each card) | nothing | a blank lift | nobody, the actor included — the Jack does not look | a lift |
@@ -127,7 +127,7 @@ blank — that is the only way two seats' scripts are ever allowed to differ.
 | Toss in, wrong | deck → your row | the attempt turns face up **where it lies**, then back down | every seat, for the moment | the penalty flight, flinch, ring and line, then the reveal |
 | A thrown action card starts | nothing — it flew when it was thrown | swells on the pile | every seat | a flourish on the pile |
 | Call Vinto | nothing | nothing | — | the caller's seat ringed gold, "Vinto!", then the turn ring moving on |
-| Coalition leader chosen | nothing | the hands the leader may now see turn over on that screen alone | leader | the leader's seat ringed blue; the flips are `CardFace`'s, not a beat |
+| Coalition leader chosen | nothing | the hands the leader may now see turn over on that screen alone | leader | the leader's seat ringed blue, and a line above the felt naming who plays for whom until the round ends; both are the table's own, not beats |
 | Reshuffle | pile → deck, minus the top card | the returning cards are face down again | nobody | a sweep, with the count, and the turn ring moving on |
 | Round scored | nothing | every card turns over where it lies | every seat | nothing — the score screen takes over |
 
