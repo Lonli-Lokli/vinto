@@ -26,9 +26,10 @@ somewhere else fails the build rather than the eye.
 | Swap it in, calling the rank wrong | drawn slot → your hand, your hand → discard, deck → your hand | three flights; a red ring on the pile, the hand flinches, your seat rings, the seat says a line |
 | Aim a peek (7, 8, 9, 10) | nothing moves | the card lifts where it lies and glows |
 | Finish looking | nothing moves | the card settles back |
-| Name a rank with a King | nothing moves | the borrowed rank is held up; a green or red ring on the pile |
+| Name a rank with a King, correctly | your hand → discard | the borrowed rank is held up, then a lit flight; a green ring on the pile |
+| Name a rank with a King, wrongly | deck → your hand | the borrowed rank is held up; a red ring, the hand flinches, a penalty card flies in |
 | Throw a card in | your hand → discard | flight |
-| Take the top of the discard to play it | nothing moves | — |
+| Take the top of the discard to play it | nothing moves | the card swells and glows where it lies — it is already on the pile |
 
 Two cards in one row fly **together**, not one after the other: a swap is one gesture.
 

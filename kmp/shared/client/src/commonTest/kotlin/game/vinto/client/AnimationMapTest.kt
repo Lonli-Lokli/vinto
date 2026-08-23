@@ -139,6 +139,11 @@ class AnimationMapTest {
             "a called card goes to the pile like any other — its action is simply played there",
         )
         assertEquals("nothing moves", map.getValue("Aim a peek (7, 8, 9, 10)").flights)
+        assertEquals(
+            "your hand → discard (lit)",
+            map.getValue("Name a rank with a King").flights,
+            "a King names a card and takes it out of the hand, which is a card moving",
+        )
         assertEquals("nothing moves", map.getValue("Finish looking").flights)
     }
 

@@ -297,9 +297,11 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         is GameAction.UseCardAction ->
             listOfNotNull((before.pendingCard() ?: after.pendingCard())?.let(Beat::Flourish))
 
-        // Taking the top of the discard to play it moves nothing: the card is on the pile, and
-        // a card whose action is being played is drawn on the pile. It never leaves.
-        is GameAction.PlayDiscard -> emptyList()
+        // Taking the top of the discard to play it moves nothing — the card is on the pile,
+        // and a card whose action is being played is drawn on the pile — but it is still a
+        // card being *played*, so it is shown off where it lies like any other.
+        is GameAction.PlayDiscard ->
+            listOfNotNull(after.pendingCard()?.let(Beat::Flourish))
 
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,
@@ -308,8 +310,16 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         -> discardScene()
 
         // The King says what it is pretending to be, and then does that.
+        // A King names a card in somebody's hand and, if the name was right, that card comes
+        // out of the hand: to the pile, or into play from the pile if it has an action of its
+        // own. Either way it *leaves a hand*, and it did so without moving — the one card in
+        // the game that could still teleport, because the case that watches for teleports
+        // never played a King.
+        //
+        // A wrong name leaves the card where it is, revealed, and costs a card: nothing moves
+        // but the penalty, which the penalty scene animates.
         is GameAction.DeclareKingAction ->
-            listOf(Beat.Borrowed(action.payload.declaredRank)) + discardScene()
+            listOf(Beat.Borrowed(action.payload.declaredRank)) + namedCardScene(before, after)
 
         // The two swaps that happen inside an action rather than as a move of their own, so
         // their endpoints come from the targets the action was aimed at.
@@ -452,6 +462,31 @@ private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Posi
  * already lying in.
  */
 private fun discardScene(): Scene = emptyList()
+
+/**
+ * The card a King named, on its way out of the hand it was named in.
+ *
+ * Only when the name was right, which is read from the hand rather than from the rank: a
+ * correct name takes the card out — to the pile, or into play from the pile if it has its own
+ * action — and a wrong one leaves it where it is. Either way the card is public by then, so it
+ * travels face up and lit: this is the moment the King's guess is answered.
+ */
+private fun namedCardScene(before: PlayerView, after: PlayerView): Scene {
+    val target = before.pendingAction?.targets?.firstOrNull() ?: return emptyList()
+    val had = before.players.firstOrNull { it.id == target.playerId }?.cards?.size
+    val has = after.players.firstOrNull { it.id == target.playerId }?.cards?.size
+    if (had == null || has == null || has >= had) return emptyList()
+
+    val named = after.pendingCard() ?: after.discardTop
+    return listOf(
+        Beat.Move(
+            Anchor.Seat(target.playerId, target.position),
+            Anchor.Discard,
+            named,
+            shown = true,
+        ),
+    )
+}
 
 /** A Jack or a Queen exchanging two cards, which cross. */
 private fun crossScene(before: PlayerView): Scene {

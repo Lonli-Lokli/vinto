@@ -47,6 +47,7 @@ class EveryMoveIsSeenTest {
         repeat(TURNS) {
             if (session.isOver) return@repeat
             frames.clear()
+
             session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
             session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
             session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
