@@ -88,6 +88,8 @@ class AnimationMapTest {
             session.dispatch(selectOwn(me, SLOT))
         }
 
+        rows += queenRow()
+
         rows += flightsFor("Finish looking") { session, me ->
             session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.SEVEN)))
             session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
@@ -127,6 +129,21 @@ class AnimationMapTest {
         check(rows)
     }
 
+    /** A Queen's second look: the first card must still be up while it happens. */
+    private suspend fun queenRow(): Row = flightsFor("Aim a Queen (second card)") { session, me ->
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.QUEEN)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.UseCardAction(PlayerIdPayload(me)))
+        val opp = session.view.value.players.first { it.id != me }.id
+        session.dispatch(
+            GameAction.SelectActionTarget(
+                SelectActionTargetPayload.Positional(me, opp, 0),
+            ),
+        )
+        mark(session)
+        session.dispatch(selectOwn(me, SLOT))
+    }
+
     /** An Ace: the one move whose whole effect lands on somebody else. */
     private suspend fun aceRow(): Row = flightsFor("Make somebody draw, with an Ace") { session, me ->
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.ACE)))
@@ -155,6 +172,15 @@ class AnimationMapTest {
             "a called card goes to the pile like any other — its action is simply played there",
         )
         assertEquals("nothing moves", map.getValue("Aim a peek (7, 8, 9, 10)").flights)
+        assertTrue(
+            "the card stays up" in map.getValue("Aim a peek (7, 8, 9, 10)").seen,
+            "a peeked card lowers only when the look ends, not when the scene does",
+        )
+        assertTrue(
+            "both cards stay up" in map.getValue("Aim a Queen (second card)").seen,
+            "a Queen's first card must still be up while her second is chosen — " +
+                "the defect this system was rebuilt around",
+        )
         assertEquals(
             "your hand → discard (lit)",
             map.getValue("Name a rank with a King").flights,
@@ -209,12 +235,22 @@ class AnimationMapTest {
 
         val beats = mine?.scenes?.flatten().orEmpty()
 
+        // What the move leaves in the air: the lift is a state, held by the view until the
+        // action resolves, so the column says it — beats alone cannot (CHOREOGRAPHY.md).
+        val stays = when (mine?.view?.heldUp().orEmpty().size) {
+            0 -> null
+            1 -> "and the card stays up"
+            else -> "and both cards stay up"
+        }
+
         return Row(
             what = what,
             flights = if (moves.isEmpty()) "nothing moves" else moves.joinToString { move ->
                 "${place(move.from, me)} → ${place(move.to, me)}" + if (move.shown) " (lit)" else ""
             },
-            seen = beats.joinToString(", ") { describe(it, me) }.ifEmpty { "—" },
+            seen = (beats.map { describe(it, me) } + listOfNotNull(stays))
+                .joinToString(", ")
+                .ifEmpty { "—" },
         )
     }
 

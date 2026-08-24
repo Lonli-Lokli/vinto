@@ -524,7 +524,12 @@ private fun Cards(
     var card = 0
     while (card < seat.cards.size || position in gaps) {
         if (position in gaps) {
-            EmptySlot(scale, "", Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position)), turned)
+            EmptySlot(
+                scale,
+                "",
+                Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position), scale),
+                turned,
+            )
         } else {
             SeatCard(seat, position, seat.cards[card], rendering, onMove, turned)
             card++
@@ -660,12 +665,12 @@ private fun SeatCard(
     if (anchor in stage.inFlight || stage.isPeeking(anchor)) {
         val w = if (turned) scale.height else scale.width
         val h = if (turned) scale.width else scale.height
-        Box(modifier = Modifier.size(w, h).anchoredAt(stage, anchor))
+        Box(modifier = Modifier.size(w, h).anchoredAt(stage, anchor, scale))
         return
     }
 
     CardFace(
-        modifier = Modifier.anchoredAt(stage, anchor),
+        modifier = Modifier.anchoredAt(stage, anchor, scale),
         // Face-up only where the table says so. The view carries more than that — everything
         // this seat *knows* — and drawing all of it would hand the player a perfect memory of
         // their own hand, which is the one thing this game asks them to keep themselves.
@@ -697,7 +702,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(horizontalArrangement = Arrangement.spacedBy(Gap), verticalAlignment = Alignment.Top) {
             Pile(stringResource(Res.string.table_draw)) {
-                val deck = Modifier.anchoredAt(stage, Anchor.Deck)
+                val deck = Modifier.anchoredAt(stage, Anchor.Deck, sizes.theirs)
                 if (view.drawPileSize > 0) {
                     CardFace(
                         card = CardView.Hidden,
@@ -739,7 +744,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
 @Composable
 private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
     val drawn = view.pendingAction?.takeIf { it.from == PendingCardOrigin.DRAWING }
-    val slot = Modifier.anchoredAt(stage, Anchor.Pending)
+    val slot = Modifier.anchoredAt(stage, Anchor.Pending, sizes.theirs)
 
     // Empty whenever the card is somewhere else: on its way in, on its way out, or being
     // shown off before it goes. Each of those draws the card itself, and a slot that draws it
@@ -838,7 +843,7 @@ private val TossHeight = 46.dp
  */
 @Composable
 private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
-    val pile = Modifier.anchoredAt(stage, Anchor.Discard)
+    val pile = Modifier.anchoredAt(stage, Anchor.Discard, sizes.theirs)
 
     // The pile draws every card that is lying on it, and never one that is somewhere else.
     //

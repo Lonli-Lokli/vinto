@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
@@ -97,8 +98,8 @@ class HandGapTest {
             to = Offset.Zero,
             landingAt = Anchor.Discard,
             leftFrom = seat,
-            fromSpan = 0f,
-            toSpan = 0f,
+            fromCard = Size.Zero,
+            toCard = Size.Zero,
             fromTurn = 0f,
             toTurn = 0f,
         )
@@ -109,8 +110,8 @@ class HandGapTest {
             to = Offset.Zero,
             landingAt = seat,
             leftFrom = Anchor.Pending,
-            fromSpan = 0f,
-            toSpan = 0f,
+            fromCard = Size.Zero,
+            toCard = Size.Zero,
             fromTurn = 0f,
             toTurn = 0f,
         )
@@ -125,8 +126,8 @@ class HandGapTest {
             to = Offset.Zero,
             landingAt = Anchor.Discard,
             leftFrom = Anchor.Seat(playerId, position),
-            fromSpan = 0f,
-            toSpan = 0f,
+            fromCard = Size.Zero,
+            toCard = Size.Zero,
             fromTurn = 0f,
             toTurn = 0f,
         )

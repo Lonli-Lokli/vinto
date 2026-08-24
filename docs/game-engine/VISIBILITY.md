@@ -98,9 +98,17 @@ rules are silent on and the project has chosen, with the reasoning beside it.
 
 What moves, what turns over or resizes, what is shown, and what the table draws — in the
 beat vocabulary of `Choreography.kt` (`ANIMATIONS.md` holds the visual vocabulary: what a
-flight, flourish, lift, ring or flinch actually looks like). Where the Shown column says
-*actor*, the actor's seat is shown the face and every other seat gets the same movement
-blank — that is the only way two seats' scripts are ever allowed to differ.
+flight, flourish, lift, ring or flinch actually looks like; `docs/kotlin/CHOREOGRAPHY.md`
+holds the design behind both). Where the Shown column says *actor*, the actor's seat is
+shown the face and every other seat gets the same movement blank — that is the only way two
+seats' scripts are ever allowed to differ.
+
+One thing in this table is a **state rather than a beat**: the lift. A card an action has
+taken up stays up for as long as the action runs — the view's `pendingAction.targets` holds
+it, `heldUp` reads it, and the table lowers the card only when a flight takes it or the
+action resolves. The matrix test writes this as a closing `hold` clause on each script, so a
+Queen's aim rows *end* holding two cards and her execute and skip rows end holding none —
+which is the fix for her first card lowering itself between taps, made executable.
 
 | Action | What moves (from → to) | Turns over / resizes | Shown | The table draws |
 | --- | --- | --- | --- | --- |
@@ -111,17 +119,17 @@ blank — that is the only way two seats' scripts are ever allowed to differ.
 | Swap, no declaration | drawn slot → your row **and** your row → pile, together | the incoming card turns face down on landing; the outgoing turns face up | every seat, both faces | two flights that cross |
 | Swap, declaring right | the same two flights, the second lit | same | every seat | plus a green ring on the pile |
 | Swap, declaring wrong | the same two flights, plus deck → your row | the penalty flies face down | every seat but the penalty | plus a red ring, a flinch, the seat ringed red, a line |
-| Aim a 7/8/9/10 | nothing | the aimed card lifts and glows, then lowers back into its place face-down | *actor* — but *which* card is public | a lift, and its return |
-| Confirm or skip the peek | nothing | nothing — the card has lain on the pile since it was played | — | nothing |
-| Aim a Queen (each card) | nothing | the same lift, and the same return | *actor* | a lift, and its return |
-| Execute the Queen swap | first target ⇄ second target | neither turns over | *actor* sees both faces in flight | two crossing flights |
-| Skip the Queen swap | nothing | nothing | — | both cards flinch — "I looked and decided not to" is a decision the table sees |
-| Aim a Jack (each card) | nothing | a blank lift | nobody, the actor included — the Jack does not look | a lift |
-| Execute the Jack swap | first target ⇄ second target | neither turns over | nobody | two crossing flights, blank |
-| Skip the Jack swap | nothing | nothing | — | both cards flinch |
-| Aim a King | nothing | a blank lift | nobody | a lift |
-| Declare a King, right | the named card: hand → pile | turns face up as it leaves the hand, lit | every seat | the borrowed rank held up, a lit flight, a green ring |
-| Declare a King, wrong | deck → the declarer's row | the named card turns face up **where it lies**, then back down | every seat, for the moment | the borrowed rank held up, a red ring, the penalty flight and flinch, then the reveal |
+| Aim a 7/8/9/10 | nothing | the aimed card lifts and glows, and stays up for as long as the peek runs | *actor* — but *which* card is public | a lift, held |
+| Confirm or skip the peek | nothing | the lifted card lowers back into its place, face-down | — | the hold ending — the card comes home; no beat |
+| Aim a Queen (each card) | nothing | the same lift — and **both cards stay up together** until the swap is answered | *actor* | a lift, held; after the second, two of them |
+| Execute the Queen swap | first target ⇄ second target | neither turns over | *actor* sees both faces in flight | two crossing flights, setting off from where the cards hover |
+| Skip the Queen swap | nothing | both cards lower home unswapped | — | both lifted cards flinch where they hover, then come home — "I looked and decided not to" is a decision the table sees |
+| Aim a Jack (each card) | nothing | a blank lift, held like the Queen's | nobody, the actor included — the Jack does not look | a lift, held |
+| Execute the Jack swap | first target ⇄ second target | neither turns over | nobody | two crossing flights, blank, from where the cards hover |
+| Skip the Jack swap | nothing | both cards lower home | — | both lifted cards flinch, then come home |
+| Aim a King | nothing | a blank lift, held through the declaration | nobody | a lift, held |
+| Declare a King, right | the named card: hand → pile | turns face up as it leaves, lit — the flight takes it from where it hovers | every seat | the borrowed rank held up, a lit flight, a green ring |
+| Declare a King, wrong | deck → the declarer's row | the named card turns face up **where it hovers**, still lifted through the verdict, then lowers face-down | every seat, for the moment | the borrowed rank held up, a red ring, the penalty flight and flinch, then the reveal |
 | Aim an Ace | deck → the target's row | flies face down | nobody | the target's seat ringed — and still ringed when the card lands, because the naming and the flight are one moment — a line, the flight, a flinch |
 | Toss in, right | your row → pile | face up as it flies | every seat | one flight per thrown card, thrown together |
 | Toss in, wrong | deck → your row | the attempt turns face up **where it lies**, then back down | every seat, for the moment | the penalty flight, flinch, ring and line, then the reveal |
@@ -140,6 +148,9 @@ blank — that is the only way two seats' scripts are ever allowed to differ.
 | No view ever carries a card the seat may not see, over the 50-recording corpus | `engine/.../ViewRedactionTest.kt` |
 | A peek is private to whoever peeked, at the byte level | `engine/.../PeekPrivacyTest.kt` |
 | Nothing on the table teleports — every change of place carries a flight | `client/.../EveryMoveIsSeenTest.kt` |
+| What the view holds up, per action and per seat — and that it all comes down when the action is answered | `client/.../HeldUpTest.kt` |
+| Both of a Queen's cards hover together until the swap is made or declined, on a real screen | `composeApp/.../QueenAimTest.kt` |
+| A card in the air is the card it becomes at rest, to the pixel | `composeApp/.../LandingTest.kt` |
 | A wrong King's reveal reaches the table and expires | `client/.../KingRevealTest.kt` |
 | A wrong throw's reveal reaches the table — through a player's dispatch and through the bot loop | `client/.../TossInRevealTest.kt` |
 | The animation map, generated from a live session | `client/.../AnimationMapTest.kt` → `docs/kotlin/ANIMATIONS.md` |

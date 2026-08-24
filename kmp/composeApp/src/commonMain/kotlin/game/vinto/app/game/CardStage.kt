@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -28,6 +29,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -43,6 +46,7 @@ import game.vinto.client.Attention
 import game.vinto.client.Beat
 import game.vinto.client.Frame
 import game.vinto.client.Pacing
+import game.vinto.client.heldUp
 import game.vinto.client.Scene
 import game.vinto.client.Target
 import game.vinto.client.tossedTogether
@@ -53,6 +57,7 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -97,9 +102,13 @@ private const val REVEAL_MS = 1_800
 
 private const val MOVE_MS = 1_100
 private const val SHOWN_MS = 1_600
+/** How long the table dwells on an aim — the rise and a beat to read it, not the lift's life. */
 private const val PEEK_MS = 1100
 
-/** The lift itself is quick; the card then stays up for the rest of the beat. */
+/**
+ * The rise is quick; how long the card then stays up is not a duration at all — the view
+ * holds it (`holdUp`) until the action that took the card up resolves.
+ */
 private const val PEEK_LIFT_MS = 550
 
 /**
@@ -144,7 +153,7 @@ private const val SAY_MS = 1400
  * of those is, and it changes with every screen size.
  */
 class Stage {
-    private val places = mutableStateMapOf<Anchor, Offset>()
+    private val berths = mutableStateMapOf<Anchor, Berth>()
     private var origin: Offset = Offset.Zero
 
     internal val flying = mutableStateListOf<Flight>()
@@ -153,18 +162,22 @@ class Stage {
     internal val flinching = mutableStateListOf<Anchor>()
     internal val saying = mutableStateMapOf<String, String>()
 
-    /** Cards being looked at, and by extension hidden from their own place while they are. */
+    /**
+     * Cards held up by the running action, and by extension hidden from their own place.
+     *
+     * The *rise* of each is a beat; how long it stays up is the view's to say — an aim lasts
+     * until the action resolves, on the game's clock, which is why this outlives any scene.
+     * `holdUp` reconciles it against the shown view after every frame.
+     */
     internal val peeking = mutableStateMapOf<Anchor, CardView>()
 
     /**
-     * Whether those cards are on their way back down.
-     *
-     * One flag for the lot rather than one per card: peeks begin and end with their scene, so
-     * a Queen's two cards go up together and come back down together. The hand keeps its gap
-     * for the whole descent — [isPeeking] stays true — so the card lands in the space it left
-     * instead of the hand closing up underneath it.
+     * The lifted cards on their way back down — still lifted, so their hands keep the gap
+     * open, but face-down and descending. Per card rather than one flag for the lot, because
+     * lifts no longer share a scene's lifetime: after a dropped backlog, one action's cards
+     * may be coming down at the moment another's are going up.
      */
-    internal var settling: Boolean by mutableStateOf(false)
+    internal val settling = mutableStateListOf<Anchor>()
 
 
     /** A rank a King is borrowing, shown in the middle while it does that card's job. */
@@ -213,32 +226,33 @@ class Stage {
     /**
      * Where things are, in the stage's own coordinates, and how big they are.
      *
-     * [places] is what the flights need — a point to fly from and one to land on. [bounds] is
+     * The berths are what the flights need — a place to fly from and one to land in. [bounds] is
      * what the coach's pointer needs, because a hand pointing at the *centre* of a full-width
      * button covers its label, and one pointing at a card has to know where the card's edge
      * is. Both are filled as the table lays out, by whatever drew the thing.
      */
     private val bounds = mutableStateMapOf<String, Rect>()
-    private val spans = mutableMapOf<Anchor, Float>()
-    private val turns = mutableMapOf<Anchor, Boolean>()
 
     /** The stage's own size, so a pointer near the bottom edge knows to point down instead. */
     internal var size: Size = Size.Zero
         private set
 
-    fun place(anchor: Anchor, coordinates: LayoutCoordinates) {
-        places[anchor] = coordinates.positionInRoot() - origin
-        // How big a card is *there*, and which way up. The table draws cards at three sizes
-        // and in two orientations — the seats at the sides lie theirs sideways — and a flight
-        // that ignores either lands at one size or angle and becomes another, which is a card
-        // changing shape the instant it arrives.
-        //
-        // A card is taller than it is wide, so the narrower side of the space it sits in is
-        // its width whichever way round it is lying, and the wider side says which way that
-        // is.
+    /**
+     * Records where a card lies and how it is drawn there. [card] is the size the *picture*
+     * is drawn at, handed in by whoever drew it — see [Berth] for why it cannot be read off
+     * the measured box, and why everything that flies or lifts navigates by these.
+     */
+    fun place(anchor: Anchor, coordinates: LayoutCoordinates, card: Size) {
+        val topLeft = coordinates.positionInRoot() - origin
         val box = coordinates.size
-        spans[anchor] = minOf(box.width, box.height).toFloat()
-        turns[anchor] = box.width > box.height
+        berths[anchor] = Berth(
+            topLeft = topLeft,
+            centre = topLeft + Offset(box.width / 2f, box.height / 2f),
+            card = card,
+            // A card is taller than it is wide, so a box wider than tall is a card lying
+            // sideways, as they lie in front of the seats at the sides of the table.
+            turned = box.width > box.height,
+        )
         mark(anchor.key(), coordinates)
     }
 
@@ -316,16 +330,12 @@ class Stage {
      */
     var flourish: Pair<CardView, Anchor>? by mutableStateOf(null)
 
-    internal fun locate(anchor: Anchor): Offset? = places[anchor]
+    internal fun locate(anchor: Anchor): Offset? = berths[anchor]?.topLeft
 
-    /** How wide a card is at [anchor], in pixels. */
-    internal fun spanAt(anchor: Anchor): Float? = spans[anchor]
-
-    /** Whether a card lies sideways at [anchor], as it does in front of a seat at the side. */
-    internal fun turnedAt(anchor: Anchor): Boolean = turns[anchor] == true
+    internal fun berthOf(anchor: Anchor): Berth? = berths[anchor]
 
     /**
-     * Where a card is, or failing that the nearest place in the same hand.
+     * Where a card lies, or failing that the nearest place in the same hand.
      *
      * A card leaving a hand is measured against a table that has already lost it: the scene
      * is played after the table steps to the move, so a card thrown in from the last slot of
@@ -336,12 +346,12 @@ class Stage {
      * The nearest remaining slot of the same hand is a few points away from the truth and
      * infinitely closer than not animating it.
      */
-    internal fun locateOrNearby(anchor: Anchor): Offset? = locate(anchor) ?: when (anchor) {
-        is Anchor.Seat -> places.keys
+    internal fun berthOrNearby(anchor: Anchor): Berth? = berths[anchor] ?: when (anchor) {
+        is Anchor.Seat -> berths.keys
             .filterIsInstance<Anchor.Seat>()
             .filter { it.playerId == anchor.playerId }
             .minByOrNull { abs(it.position - anchor.position) }
-            ?.let(places::get)
+            ?.let(berths::get)
 
         else -> null
     }
@@ -349,14 +359,15 @@ class Stage {
     internal data class Flight(
         val id: Long,
         val card: CardView,
+        /** The centres it travels between — see [Berth] for why centres, never corners. */
         val from: Offset,
         val to: Offset,
         val landingAt: Anchor,
         /** Where it set off from, so the hand it left can hold the gap open. */
         val leftFrom: Anchor,
-        /** How wide a card is where it started and where it lands, in pixels. */
-        val fromSpan: Float,
-        val toSpan: Float,
+        /** How large the card is drawn where it started and where it lands, in pixels. */
+        val fromCard: Size,
+        val toCard: Size,
         /** And which way up it lies at each end: the seats at the sides lie theirs sideways. */
         val fromTurn: Float,
         val toTurn: Float,
@@ -364,9 +375,35 @@ class Stage {
         val shown: Boolean = false,
     )
 
-    /** The middle of the table, which is where a peeked card lifts towards. */
-    internal fun centre(): Offset = locate(Anchor.Discard) ?: Offset.Zero
+    /** The middle of the table, which is where a lifted card rises towards. */
+    internal fun tableCentre(): Offset = berths[Anchor.Discard]?.centre ?: Offset.Zero
+
+    /** Where a card lifted from [berth] hovers, [fraction] of the way up. */
+    internal fun liftedCentre(berth: Berth, fraction: Float = 1f): Offset =
+        berth.centre + (tableCentre() - berth.centre) * (LIFT_FRACTION * fraction)
 }
+
+/**
+ * A place on the table a card can lie, measured by whatever drew it.
+ *
+ * Everything an overlay needs to draw a card *as it rests there*: where the slot is, where
+ * its middle is, how large the card's picture is drawn in it, and which way it lies. The
+ * picture size is handed in by the drawer rather than read off the measured box, because the
+ * box is padded out to the 44dp tap target — a flight that trusted the box landed at
+ * tap-target size on every card drawn smaller than a thumb, which is every opponent's card.
+ *
+ * Overlays align **centres** to a berth, never corners: the resting picture is centred in
+ * its padded box and a side seat's quarter-turn spins about the middle, so the centre is the
+ * one point every drawing of the card agrees on. Aligning the top-left corners of boxes of
+ * different sizes is how a landing card used to jump by half the size difference the moment
+ * it arrived. `LandingTest` measures both failures.
+ */
+internal data class Berth(
+    val topLeft: Offset,
+    val centre: Offset,
+    val card: Size,
+    val turned: Boolean,
+)
 
 /**
  * What a lesson is asking of the stage.
@@ -385,9 +422,18 @@ data class Coaching(
     val pointer: Target? = null,
 )
 
-/** Reports this composable's position as [anchor], so a beat can be played at it. */
-fun Modifier.anchoredAt(stage: Stage, anchor: Anchor): Modifier =
-    onGloballyPositioned { stage.place(anchor, it) }
+/**
+ * Reports this composable's position as [anchor], so a beat can be played at it.
+ *
+ * [card] is the size the card's picture is drawn at in this place, and it travels with the
+ * anchor because the measured box cannot say it — see [Berth]. Every place a card can lie
+ * knows its own scale, so the drawer states it and the flights inherit the truth.
+ */
+@Composable
+fun Modifier.anchoredAt(stage: Stage, anchor: Anchor, card: CardScale): Modifier {
+    val drawn = with(LocalDensity.current) { Size(card.width.toPx(), card.height.toPx()) }
+    return onGloballyPositioned { stage.place(anchor, it, drawn) }
+}
 
 /**
  * Reports this composable's position under a name, so the coach can point at it.
@@ -461,6 +507,11 @@ fun CardStage(
     // which is both the resting state and the only state the player is asked to act in.
     var behind by remember { mutableStateOf<PlayerView?>(null) }
 
+    // The view being shown right now, current across recompositions: the frame loop below
+    // reconciles the lifted cards against it after a drop, and a stale capture would lift
+    // what *was* aimed at rather than what is.
+    val current by rememberUpdatedState(live)
+
     // Drains only while there is something to play, and then stops.
     //
     // The obvious shape — a `while (true)` asking for a frame each time round — spins for the
@@ -471,6 +522,10 @@ fun CardStage(
     LaunchedEffect(frames) {
         var next = 0L
         var lastActor: String? = null
+
+        // A game opened mid-action — a resume, a reconnect — may already be holding cards
+        // up, and no frame is coming to say so: the lift is a state, so it is read.
+        stage.holdUp(current)
 
         frames.collect { batch ->
             queue.submit(batch.tossedTogether())
@@ -502,6 +557,13 @@ fun CardStage(
                     delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
                 }
 
+                // The lifted cards, brought into line with the table this move left behind.
+                // After the scenes rather than between them, so a card stays up through the
+                // whole of a verdict — a wrong King's target hovers through the red ring and
+                // the penalty and turns over where it hovers — and comes down once, at the
+                // end, if the view has let go of it.
+                stage.holdUp(frame.view)
+
                 // And the beat after, so the table can be read before the next thing happens.
                 delay(stage.paced(Pacing.dwellAfter(frame, live.viewerId)))
 
@@ -514,17 +576,24 @@ fun CardStage(
 
             // Caught up — and the only path when a batch was dropped for being too far
             // behind, which is what makes the drop land on the present rather than nowhere.
+            // The lifts land on the present too: whatever the current view holds up is up,
+            // and nothing else is.
             behind = null
+            stage.holdUp(current)
         }
     }
 
     Box(modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) }) {
         CompositionLocalProvider(LocalStage provides stage) { content(behind ?: live) }
 
-        stage.peeking.forEach { (anchor, card) -> BeingLookedAt(stage, anchor, card, sizes) }
+        // Keyed by anchor: two cards can hover at once now, and positional memoization over
+        // a map's iteration order would let one card's rise adopt another's animation state.
+        stage.peeking.forEach { (anchor, card) ->
+            key(anchor) { BeingLookedAt(stage, anchor, card, sizes) }
+        }
 
         stage.flourish?.let { (card, at) ->
-            Flourish(card, sizes, stage.locate(at) ?: stage.centre(), stage.ms(FLOURISH_MS))
+            Flourish(card, sizes, stage.berthOf(at), stage.tableCentre(), stage.ms(FLOURISH_MS))
         }
 
         stage.flying.forEach { flight ->
@@ -536,7 +605,7 @@ fun CardStage(
             }
         }
 
-        stage.borrowed?.let { Borrowed(it, sizes, stage.centre(), stage.ms(STAGE_GROW_MS)) }
+        stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.ms(STAGE_GROW_MS)) }
         if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
 
         Pointer(stage = stage, target = coaching.pointer)
@@ -547,7 +616,9 @@ fun CardStage(
  * Starts every beat in a scene at once and returns when the longest has finished.
  *
  * Movement owns the clock; a flinch and a line run alongside it and clear themselves, because
- * neither is something the next scene has to wait for.
+ * neither is something the next scene has to wait for. What a scene's end deliberately does
+ * *not* do is lower the lifted cards: a lift is a state, not a moment, and it outlives every
+ * scene until [holdUp] finds the view has let go of it or a flight takes the card away.
  */
 private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     var id = firstId
@@ -560,7 +631,6 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     if (longest > 0) delay(longest.toLong())
     flourish = null
     flinching.clear()
-    settlePeeks()
     verdicts.clear()
     borrowed = null
     refilling = 0
@@ -571,13 +641,35 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     return id
 }
 
-/** Lowers whatever was being looked at back into its place, and only then lets it go. */
-private suspend fun Stage.settlePeeks() {
-    if (peeking.isEmpty()) return
-    settling = true
-    delay(ms(PEEK_SETTLE_MS).toLong())
-    peeking.clear()
-    settling = false
+/**
+ * Brings the lifted cards into line with the view being shown.
+ *
+ * The rise of a lift is a beat; its lifetime is the view's (`heldUp`), which is why this
+ * reconciles rather than remembers: whatever the view holds up stays up — a Queen's first
+ * card through the choosing of her second, an aim through every toss-in that interrupts it —
+ * and whatever it has let go of lowers home together, face-down on the way, into the space
+ * its hand has held open. A card a flight took was already released by [fly], mid-air rather
+ * than lowering. Reconciliation is also what makes a dropped backlog safe: the animation
+ * queue lands on the present, and the present says exactly which cards are in the air.
+ */
+private suspend fun Stage.holdUp(view: PlayerView) {
+    val held = view.heldUp()
+
+    val released = peeking.keys.filter { it !in held }
+    if (released.isNotEmpty()) {
+        settling.addAll(released)
+        delay(ms(PEEK_SETTLE_MS).toLong())
+        released.forEach { anchor ->
+            peeking.remove(anchor)
+            settling.remove(anchor)
+        }
+    }
+
+    // Cards the view holds that no beat has raised — the path a dropped or missing frame
+    // takes. A beat-raised card is already here, and stays exactly as the beat drew it.
+    held.forEach { (anchor, card) ->
+        if (anchor !in peeking) peeking[anchor] = card
+    }
 }
 
 /**
@@ -657,10 +749,9 @@ private fun cardFor(rank: Rank): Card {
 
 @Composable
 private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: TableSizes) {
-    val from = stage.locate(anchor) ?: return
-    val centre = stage.centre()
+    val berth = stage.berthOf(anchor) ?: return
     val lift = remember { Animatable(0f) }
-    val settling = stage.settling
+    val settling = anchor in stage.settling
 
     LaunchedEffect(anchor, settling) {
         val to = if (settling) 0f else 1f
@@ -668,35 +759,30 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
         lift.animateTo(to, tween(over, easing = FastOutSlowInEasing))
     }
 
-    val towards = LIFT_FRACTION * lift.value
-    val at = Offset(
-        x = from.x + (centre.x - from.x) * towards,
-        y = from.y + (centre.y - from.y) * towards,
-    )
-
-    // At the size and angle of the seat it lifted from. Drawn at your own hand's size and
+    // At the size and angle of the seat it lifted from, centred exactly over the resting
+    // card at either end of the journey — see [Berth]. Drawn at your own hand's size and
     // upright, an opponent's card jumped bigger and straightened out as it lifted, and a seat
     // at the side of the table — whose cards lie sideways — snapped a quarter turn each way.
-    val span = stage.spanAt(anchor)
     val base = with(LocalDensity.current) { sizes.mine.width.toPx() }
 
     Box(
         modifier = Modifier.graphicsLayer {
-            translationX = at.x
-            translationY = at.y
-            val fit = if (base > 0f && span != null && span > 0f) span / base else 1f
-            scaleX = fit
-            scaleY = fit
-            rotationZ = if (stage.turnedAt(anchor)) QUARTER else 0f
+            val span = berth.card.width
+            cardTransform(
+                centre = stage.liftedCentre(berth, lift.value),
+                scale = if (base > 0f && span > 0f) span / base else 1f,
+                turn = if (berth.turned) QUARTER else 0f,
+            )
         },
     ) {
         // Face-down on the way back: the card turns over as it lowers, which is what a
         // player does with a card they have finished looking at. `CardFace` animates the
-        // change itself, so handing it a hidden card *is* the flip.
+        // change itself, so handing it a hidden card *is* the flip. And a lifted card can
+        // flinch — a Queen's pair jolts where it hovers when its player declines the swap.
         CardFace(
             if (settling) CardView.Hidden else card,
             sizes.mine,
-            state = CardState(chosen = !settling),
+            state = CardState(chosen = !settling, flinching = stage.isFlinching(anchor)),
         )
     }
 }
@@ -709,21 +795,28 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
  * right: the card is already where it belongs.
  */
 private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
-    val from = locateOrNearby(beat.from)
-    val to = locateOrNearby(beat.to)
-    if (from == null || to == null || from == to) return 0
+    val from = berthOrNearby(beat.from)
+    val to = berthOrNearby(beat.to)
+    if (from == null || to == null || from.centre == to.centre) return 0
+
+    // The handoff: a card the flight is taking out of the air is released in the same call
+    // that starts the flight, and the flight sets off from where the card is hovering — a
+    // Queen's swap crosses her two lifted cards from their lifted places, not from the slots
+    // they rose out of. One drawing owns the card at every moment.
+    val wasLifted = peeking.remove(beat.from) != null
+    if (wasLifted) settling.remove(beat.from)
 
     flying += Stage.Flight(
         id = nextId(),
         card = beat.card.faceOrBack(),
-        from = from,
-        to = to,
+        from = if (wasLifted) liftedCentre(from) else from.centre,
+        to = to.centre,
         landingAt = beat.to,
         leftFrom = beat.from,
-        fromSpan = spanAt(beat.from) ?: 0f,
-        toSpan = spanAt(beat.to) ?: 0f,
-        fromTurn = if (turnedAt(beat.from)) QUARTER else 0f,
-        toTurn = if (turnedAt(beat.to)) QUARTER else 0f,
+        fromCard = from.card,
+        toCard = to.card,
+        fromTurn = if (from.turned) QUARTER else 0f,
+        toTurn = if (to.turned) QUARTER else 0f,
         shown = beat.shown,
     )
     return ms(if (beat.shown) SHOWN_MS else MOVE_MS)
@@ -736,6 +829,8 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
  * shows the face only to them, and a reveal, which is the table being shown something.
  */
 private fun Stage.lift(at: Anchor, card: CardView, holdMs: Int): Int {
+    // A card caught on its way down turns and rises again — one entry, one drawing.
+    settling.remove(at)
     peeking[at] = card
     return holdMs
 }
@@ -823,22 +918,24 @@ private fun InFlight(
                 val t = progress.value
                 val arc = sin(t * PI).toFloat()
 
-                translationX = flight.from.x + (flight.to.x - flight.from.x) * t
-                translationY = flight.from.y + (flight.to.y - flight.from.y) * t
-
                 // Between the size it left and the size it is landing at, with the arc's lift
-                // on top. No turn of any kind: a card crossing a table does not spin.
-                val span = flight.fromSpan + (flight.toSpan - flight.fromSpan) * t
+                // on top — zero at both ends, so the landing frame is the resting size.
+                val span = flight.fromCard.width + (flight.toCard.width - flight.fromCard.width) * t
                 val fit = if (base > 0f && span > 0f) span / base else 1f
                 val swell = fit * (1f + arc * (if (flight.shown) SHOWN_SWELL else SWELL))
-                scaleX = swell
-                scaleY = swell
 
-                // Turning only as far as it has to. A card landing in a seat at the side of
-                // the table lies sideways there, so it arrives already turned rather than
-                // snapping a quarter circle on touchdown — and a card going anywhere else
-                // does not turn at all.
-                rotationZ = flight.fromTurn + (flight.toTurn - flight.fromTurn) * t
+                // The card's *centre* rides the line between the two berths' centres — see
+                // [Berth] for the jump that closes — turning only as far as it has to: a
+                // card landing in a seat at the side of the table lies sideways there, so it
+                // arrives already turned rather than snapping a quarter circle on touchdown.
+                cardTransform(
+                    centre = Offset(
+                        flight.from.x + (flight.to.x - flight.from.x) * t,
+                        flight.from.y + (flight.to.y - flight.from.y) * t,
+                    ),
+                    scale = swell,
+                    turn = flight.fromTurn + (flight.toTurn - flight.fromTurn) * t,
+                )
             }
             .drawBehind {
                 val arc = sin(progress.value * PI).toFloat()
@@ -853,31 +950,75 @@ private fun InFlight(
     }
 }
 
+/** Degrees in a half turn, for turning the layer's angle into radians. */
+private const val STRAIGHT_DEG = 180f
+
+/**
+ * Puts this layer's card at [centre], scaled and turned, about a pivot that cannot be wrong.
+ *
+ * The obvious way — centre-origin scale and rotation plus a corner translation — is correct
+ * only once the layer knows its own size, because the pivot is `transformOrigin × size`. On
+ * the frame a layer is *born* its transform can be applied about an unset pivot: the drawn
+ * properties were evaluated with the right values, but the measured bounds of a card that is
+ * scaled or turned come out somewhere else entirely — a side seat's card read forty-six
+ * pixels from where it was drawn, for exactly the frames `QueenAimTest` samples. So the
+ * pivot is folded into the translation instead: with the origin pinned to the top-left, the
+ * matrix is the same affine map whether or not the size has reached the pivot machinery, and
+ * a flight, lift or flourish measures where it draws from its first frame.
+ */
+private fun GraphicsLayerScope.cardTransform(centre: Offset, scale: Float, turn: Float) {
+    transformOrigin = TransformOrigin(0f, 0f)
+    scaleX = scale
+    scaleY = scale
+    rotationZ = turn
+
+    val rad = turn * (PI.toFloat() / STRAIGHT_DEG)
+    val toCentreX = size.width / 2f * scale
+    val toCentreY = size.height / 2f * scale
+    translationX = centre.x - (toCentreX * cos(rad) - toCentreY * sin(rad))
+    translationY = centre.y - (toCentreX * sin(rad) + toCentreY * cos(rad))
+}
+
 /**
  * A card played for its action, shown off where it lies.
  *
  * The web app's most emphatic moment: the card swells to two and a half times its size, lit
  * green, and settles again — and it is the thing that tells the rest of the table this card
  * was *used* rather than put down, which changes what they may do with the pile next.
+ *
+ * It swells *from the resting card*: centred on the berth, starting and ending at the size
+ * the card is drawn there, so the moment before the flourish and the moment after are the
+ * same pixels. It used to start at your own hand's size at the slot's corner, which on the
+ * pile was a card jumping larger and sideways in the instant it began to show off.
  */
 @Composable
-private fun Flourish(card: CardView, sizes: TableSizes, at: Offset, growMs: Int) {
+private fun Flourish(
+    card: CardView,
+    sizes: TableSizes,
+    berth: Berth?,
+    fallback: Offset,
+    growMs: Int,
+) {
     val bloom = remember { Animatable(0f) }
     LaunchedEffect(card) { bloom.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
 
     val halo = remember {
         Brush.radialGradient(colors = listOf(ShownGlow, Color.Transparent))
     }
+    val base = with(LocalDensity.current) { sizes.mine.width.toPx() }
+    val at = berth?.centre ?: fallback
 
     Box(
         modifier = Modifier
             .graphicsLayer {
                 val arc = sin(bloom.value * PI).toFloat()
-                translationX = at.x
-                translationY = at.y
-                val swell = 1f + arc * (FLOURISH_SWELL - 1f)
-                scaleX = swell
-                scaleY = swell
+                val span = berth?.card?.width ?: 0f
+                val fit = if (base > 0f && span > 0f) span / base else 1f
+                cardTransform(
+                    centre = at,
+                    scale = fit * (1f + arc * (FLOURISH_SWELL - 1f)),
+                    turn = 0f,
+                )
             }
             .drawBehind {
                 drawCircle(

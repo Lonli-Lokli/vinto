@@ -58,15 +58,22 @@ sealed interface Beat {
     ) : Beat
 
     /**
-     * A card being looked at.
+     * A card being taken up by an action.
      *
-     * **Public.** Everyone sees *which* card was peeked — that is real information, and it is
-     * how you know a bot has just learned its own third card. Only the player entitled to it
-     * sees the face, which is what [card] being null means: somebody looked at that card, and
-     * you do not get to look with them.
+     * **Public.** Everyone sees *which* card was aimed at — that is real information, and it
+     * is how you know a bot has just learned its own third card. Only the player entitled to
+     * it sees the face, which is what [card] being null means: somebody looked at that card,
+     * and you do not get to look with them.
      *
      * Drawn as a lift toward the middle of the table with a glow, rather than a flip in place,
      * so that it reads at a glance across three other hands.
+     *
+     * This beat is the *onset* only — the card rising, and the table dwelling on it. How long
+     * the card stays up is not the beat's to say: an aim is a state, held in the view's
+     * `pendingAction.targets` for as long as the action runs, and the stage keeps the card up
+     * while [heldUp] still names it. It comes down when a flight takes it or when the state
+     * ends. Encoding the lift's whole life in this beat was the bug that made a Queen's first
+     * card lower itself while its player was still choosing the second.
      */
     data class Peek(val at: Anchor, val card: Card? = null) : Beat
 
@@ -178,6 +185,30 @@ data class Frame(
     /** Whether this frame takes any time to play. Aiming a Jack moves nothing. */
     val hasSomethingToSee: Boolean get() = scenes.any { it.isNotEmpty() }
 }
+
+/**
+ * The cards the running action is holding up, and the face each one shows *this* seat.
+ *
+ * This is the state half of the lift — the beat half is [Beat.Peek], which is only the rise.
+ * An aim lasts from its tap until the action resolves, on the game's clock rather than the
+ * table's, so its lifetime cannot live in a beat: it lives here, read from the view after
+ * every frame. A Queen's two cards therefore stay up *together* until the swap happens or is
+ * declined, a King's target hovers through the declaration and its verdict, and a client that
+ * dropped a backlog of frames still lifts exactly what the present says is being aimed at.
+ *
+ * The face rides on the engine's decision and nobody else's, and it is read from the *seat*,
+ * not from the target entry — the same lesson [peekScene] carries: a plain peek's face does
+ * not travel on the action, the projection turns the card face-up in the hand of whoever is
+ * entitled. So the actor of a Queen holds two faces up while everybody else watches two
+ * backs, and a Jack's cards are backs on every screen including its player's, because a Jack
+ * does not look.
+ */
+fun PlayerView.heldUp(): Map<Anchor, CardView> =
+    pendingAction?.targets.orEmpty().associate { target ->
+        val seen = players.firstOrNull { it.id == target.playerId }
+            ?.cards?.getOrNull(target.position)
+        Anchor.Seat(target.playerId, target.position) to (seen ?: target.card)
+    }
 
 /** Everything this action turned face up, as a scene of its own. */
 fun revealScene(revealed: List<PublicReveal>): List<Scene> = revealed

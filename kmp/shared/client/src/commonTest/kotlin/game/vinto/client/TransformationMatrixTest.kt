@@ -1,5 +1,6 @@
 package game.vinto.client
 
+import game.vinto.engine.CardView
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.ReduceResult
@@ -51,6 +52,12 @@ import kotlin.test.assertTrue
  * rank it declared; `reshuffle n` the pile sweeping back into the deck. Beats joined with
  * `+` happen together; scenes joined with `;` happen in order. Seats are named for the
  * staging: `you` acts, `opp` is the seat most rows aim at, `bot2` watches.
+ *
+ * A final `hold a` clause is not a scene but a *state*: the cards the view still holds up
+ * once the action has landed, which the table keeps lifted until an action resolves them
+ * (see `heldUp` and `docs/kotlin/CHOREOGRAPHY.md`). A row without one leaves nothing in the
+ * air — so the Queen's aim rows *ending* with two holds, and her execute and skip rows
+ * ending with none, is the fix for the lowered-between-taps defect, written down.
  */
 class TransformationMatrixTest {
 
@@ -206,8 +213,8 @@ class TransformationMatrixTest {
     private fun peekRows() = listOf(
         Row(
             "SELECT_ACTION_TARGET (7/8, your own card)",
-            actorSees = "peek you[3] face",
-            othersSee = "peek you[3] blank",
+            actorSees = "peek you[3] face; hold you[3] face",
+            othersSee = "peek you[3] blank; hold you[3] blank",
         ) {
             val play = Play()
             play.draw(Rank.SEVEN)
@@ -217,8 +224,8 @@ class TransformationMatrixTest {
         },
         Row(
             "SELECT_ACTION_TARGET (9/10, an opponent's card)",
-            actorSees = "peek opp[0] face",
-            othersSee = "peek opp[0] blank",
+            actorSees = "peek opp[0] face; hold opp[0] face",
+            othersSee = "peek opp[0] blank; hold opp[0] blank",
         ) {
             val play = Play()
             play.draw(Rank.NINE)
@@ -256,8 +263,8 @@ class TransformationMatrixTest {
     private fun queenAndJackRows() = listOf(
         Row(
             "SELECT_ACTION_TARGET (Queen, each look)",
-            actorSees = "peek you[3] face",
-            othersSee = "peek you[3] blank",
+            actorSees = "peek you[3] face; hold opp[0] face + hold you[3] face",
+            othersSee = "peek you[3] blank; hold opp[0] blank + hold you[3] blank",
         ) {
             val play = Play().queenAimed()
             play.last()
@@ -282,8 +289,8 @@ class TransformationMatrixTest {
         },
         Row(
             "SELECT_ACTION_TARGET (Jack)",
-            actorSees = "peek you[3] blank",
-            othersSee = "peek you[3] blank",
+            actorSees = "peek you[3] blank; hold you[3] blank",
+            othersSee = "peek you[3] blank; hold you[3] blank",
         ) {
             val play = Play()
             play.draw(Rank.JACK)
@@ -314,8 +321,8 @@ class TransformationMatrixTest {
     private fun kingRows() = listOf(
         Row(
             "SELECT_ACTION_TARGET (King)",
-            actorSees = "peek you[3] blank",
-            othersSee = "peek you[3] blank",
+            actorSees = "peek you[3] blank; hold you[3] blank",
+            othersSee = "peek you[3] blank; hold you[3] blank",
         ) {
             val play = Play()
             play.draw(Rank.KING)
@@ -548,8 +555,18 @@ class TransformationMatrixTest {
         val after = projectView(staged.after, viewer)
         val scenes = choreograph(staged.action, before, after) + revealScene(staged.revealed)
 
-        return if (scenes.isEmpty()) "nothing"
-        else scenes.joinToString("; ") { scene -> scene.joinToString(" + ") { describe(it) } }
+        val played = scenes.joinToString("; ") { scene ->
+            scene.joinToString(" + ") { describe(it) }
+        }
+
+        // What the view leaves in the air — a state, not a scene, so it closes the script:
+        // the table keeps these lifted until a later action resolves them.
+        val holding = after.heldUp().entries.joinToString(" + ") { (anchor, card) ->
+            "hold ${place(anchor)}" + if (card is CardView.Visible) " face" else " blank"
+        }
+
+        val parts = listOf(played, holding).filter { it.isNotEmpty() }
+        return if (parts.isEmpty()) "nothing" else parts.joinToString("; ")
     }
 
     private fun describe(beat: Beat): String = when (beat) {

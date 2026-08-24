@@ -87,6 +87,24 @@ kotlin {
 }
 
 /**
+ * One JVM per test class.
+ *
+ * These are Compose *desktop* tests: each one stands up a real Skia surface on the AWT event
+ * thread, and they share that thread with each other when they share a JVM. Sharing it turned
+ * out to be a coin flip — with the whole suite in one process, a later test would deadlock
+ * about two runs in three, the worker waiting inside `EventQueue.invokeAndWait` while the AWT
+ * thread sat blocked on a Compose lock, and no test ever failed: the suite simply stopped.
+ * Measured at 4 hangs in 6 runs, in a suite that is otherwise green in under half a minute.
+ *
+ * Forking per class costs a JVM start apiece and buys a suite that finishes every time, which
+ * is the only kind that can guard anything. It is not a diagnosis of the underlying race —
+ * that is Compose's to answer — it is a refusal to share the thread that races.
+ */
+tasks.withType<Test>().configureEach {
+    forkEvery = 1
+}
+
+/**
  * The card art and the four player portraits, shared with the web app they were drawn for
  * (`apps/vinto/src/app/images`). One deck, one set of faces: a second, plainer deck for the
  * Kotlin clients would make them look like a different game rather than the same one.
