@@ -284,7 +284,23 @@ class Stage {
      * Without it a card is in two places at once for the third of a second it is moving, and
      * the eye notices the copy rather than the movement.
      */
-    val inFlight: Set<Anchor> get() = flying.mapTo(mutableSetOf()) { it.landingAt }
+    val inFlight: Set<Anchor> get() =
+        flying.mapTo(mutableSetOf()) { it.landingAt } + expecting.keys
+
+    /**
+     * Places a card is about to arrive at, from the moment the table steps to the move.
+     *
+     * The table shows the position a move produced *before* the cards fly, so that a card has
+     * a laid-out place to land in. For the frame or two in between, the engine's answer is
+     * already on screen while the card is still where it started — which drew the discard's
+     * new top card on the pile, then took it away again when the flight began, then put it
+     * back when the flight landed. One card, three appearances, and the middle one a blink.
+     *
+     * Filled from the frame's own beats before the view steps, and emptied as each flight
+     * takes over, so every place that asks "is something arriving here?" is told the truth
+     * from the first frame rather than the third.
+     */
+    internal val expecting = mutableStateMapOf<Anchor, CardView>()
 
     /**
      * The hands a card is currently leaving, and from which slot.
@@ -300,7 +316,7 @@ class Stage {
      */
     /** The card on its way to [anchor], if one is. The pile asks so it never draws it twice. */
     fun landingOn(anchor: Anchor): CardView? =
-        flying.firstOrNull { it.landingAt == anchor }?.card
+        flying.firstOrNull { it.landingAt == anchor }?.card ?: expecting[anchor]
 
     /** Whether the card being shown off is lying at [anchor], and so is drawn by the flourish. */
     fun isFlourishing(anchor: Anchor): Boolean = flourish?.second == anchor
@@ -542,6 +558,17 @@ fun CardStage(
                 delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
                 if (frame.hasSomethingToSee) lastActor = frame.actorId
 
+                // Everything this move is about to move, before the table steps to it: the
+                // places expecting a card must know that from the same frame the new position
+                // appears, or they draw the arrival early and blink when the flight starts.
+                stage.expecting.clear()
+                frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
+                    // The card as well as the place: a pile deciding what to draw underneath
+                    // an arrival has to know *which* card is arriving, or it cannot tell the
+                    // card on its way from the card already lying there.
+                    stage.expecting[move.to] = move.card.faceOrBack()
+                }
+
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
                 // for the gap to be in the right place.
@@ -556,6 +583,11 @@ fun CardStage(
                     next = stage.play(scene, next)
                     delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
                 }
+
+                // Nothing is expected any more: every flight this move had has started, and
+                // a beat that never flew (a card already where it was going) must not leave a
+                // place waiting for it.
+                stage.expecting.clear()
 
                 // The lifted cards, brought into line with the table this move left behind.
                 // After the scenes rather than between them, so a card stays up through the
@@ -803,6 +835,7 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
     // that starts the flight, and the flight sets off from where the card is hovering — a
     // Queen's swap crosses her two lifted cards from their lifted places, not from the slots
     // they rose out of. One drawing owns the card at every moment.
+    expecting.remove(beat.to)
     val wasLifted = peeking.remove(beat.from) != null
     if (wasLifted) settling.remove(beat.from)
 

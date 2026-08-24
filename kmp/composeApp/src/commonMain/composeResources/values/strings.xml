@@ -76,6 +76,8 @@
     <string name="table_draw">DRAW</string>
     <string name="table_discard">DISCARD</string>
     <string name="table_toss_in">Toss-in</string>
+    <string name="table_tossed">Tossed (%1$d)</string>
+    <string name="card_thrown_by">%1$s threw %2$s</string>
     <string name="table_you">You</string>
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">leads</string>

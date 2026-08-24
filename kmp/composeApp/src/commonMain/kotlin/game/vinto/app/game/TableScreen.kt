@@ -1,5 +1,6 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -65,7 +68,9 @@ import game.vinto.app.art.table_final_round
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
+import game.vinto.app.art.card_thrown_by
 import game.vinto.app.art.table_toss_in
+import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
@@ -87,10 +92,12 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
 import game.vinto.engine.turnHolderId
+import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private val Gap = 6.dp
@@ -766,16 +773,59 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
             )
         }
 
-        // Who the action in progress has been aimed at, which is the other half of reading
-        // somebody else's turn.
-        drawn?.targets.orEmpty().forEach { target ->
-            val who = view.players.firstOrNull { it.id == target.playerId }?.nickname ?: "—"
-            val what = (target.card as? CardView.Visible)?.card?.rank?.serialName ?: "?"
-            Text(
-                "$who — $what",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary,
-            )
+    }
+}
+
+/**
+ * The cards this toss-in window has taken, under the ranks it is asking for.
+ *
+ * The web app's toss-in area, and the half that was missing: it lists what has actually been
+ * thrown and by whom. The drawn slot used to carry a line per target instead — "Raph — ?"
+ * whenever the seat was not entitled to the face, which is a question mark where a fact
+ * should be, in the one place on the table reserved for the card *you* drew.
+ *
+ * A thrown card is public: it goes face-up on the pile, so its rank is in every seat's view
+ * and drawing it here reveals nothing the table has not already seen fly.
+ */
+@Composable
+private fun Thrown(view: PlayerView, toss: ActiveTossIn) {
+    // Drawn whether or not anything has gone in yet, and empty when nothing has: the space a
+    // thrown card will occupy is held from the moment the window opens. Reserving it with a
+    // measured minimum height instead left it two pixels short, and two pixels is enough to
+    // move the deck above it while a card is in the air on its way here.
+    val thrown = toss.queuedActions
+
+    Text(
+        if (thrown.isEmpty()) "" else stringResource(Res.string.table_tossed, thrown.size),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onFelt(),
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Tight),
+        modifier = Modifier.height(ThrownRow),
+    ) {
+        thrown.forEach { throw_ ->
+            val who = view.players.firstOrNull { it.id == throw_.playerId }?.nickname ?: "—"
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(
+                    painter = painterResource(artFor(throw_.rank)),
+                    contentDescription = stringResource(
+                        Res.string.card_thrown_by,
+                        who,
+                        throw_.rank.serialName,
+                    ),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .size(ThrownWidth, ThrownHeight)
+                        .clip(RoundedCornerShape(2.dp)),
+                )
+                Text(
+                    who,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onFelt(),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
@@ -817,13 +867,28 @@ private fun TossIn(view: PlayerView) {
                 modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
             )
         }
+
+        Thrown(view, toss)
     }
 }
 
 private const val TossFill = 0.15f
 
 /** The room a toss-in window takes, kept whether one is open or not. */
-private val TossHeight = 46.dp
+private val TossHeight = 96.dp
+
+/**
+ * A thrown card, drawn small because it is a record rather than a card in play.
+ *
+ * The room for one row of them is reserved whether or not any have been thrown — see the
+ * note on the toss-in area: this is the corner of the table that grows while a card is
+ * landing in it, and growing under a landing card moves the place it is landing.
+ */
+private val ThrownWidth = 20.dp
+private val ThrownHeight = 28.dp
+
+/** The card and the name under it: one row, one height, whatever it holds. */
+private val ThrownRow = 44.dp
 
 /**
  * The discard pile: what is on top, what is just under it, and what is in play.

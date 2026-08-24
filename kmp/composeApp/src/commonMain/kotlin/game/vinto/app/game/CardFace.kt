@@ -259,7 +259,8 @@ fun CardPicture(rank: Rank, width: Dp, modifier: Modifier = Modifier) {
     )
 }
 
-private fun artFor(rank: Rank): DrawableResource = when (rank) {
+/** The picture for a rank. Internal because the toss-in area draws thrown cards too. */
+internal fun artFor(rank: Rank): DrawableResource = when (rank) {
     Rank.TWO -> Res.drawable.card_2
     Rank.THREE -> Res.drawable.card_3
     Rank.FOUR -> Res.drawable.card_4
@@ -289,24 +290,35 @@ fun EmptySlot(
     modifier: Modifier = Modifier,
     turned: Boolean = false,
 ) {
+    // Two boxes, and the difference between them is the bug this fixes. The outer one is the
+    // *footprint*, padded out to a thumb like every other card's so that nothing on the table
+    // shifts when a slot fills or empties. The outline goes on the inner one, which is the
+    // size a card is actually drawn at — an outline on the footprint drew the empty draw,
+    // discard and toss-in slots wider than the cards that land in them, which on a table
+    // whose whole subject is cards reads as three cards of the wrong size.
     Box(
-        modifier = modifier
-            .size(
-                width = maxOf(scale.footprintWidth(turned), TapTarget),
-                height = maxOf(scale.footprintHeight(turned), TapTarget),
-            )
-            .border(
-                Hairline,
-                MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
-                RoundedCornerShape(TableSizes.Corner),
-            ),
+        modifier = modifier.size(
+            width = maxOf(scale.footprintWidth(turned), TapTarget),
+            height = maxOf(scale.footprintHeight(turned), TapTarget),
+        ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            caption,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
-        )
+        Box(
+            modifier = Modifier
+                .size(scale.footprintWidth(turned), scale.footprintHeight(turned))
+                .border(
+                    Hairline,
+                    MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
+                    RoundedCornerShape(TableSizes.Corner),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                caption,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
+            )
+        }
     }
 }
 
