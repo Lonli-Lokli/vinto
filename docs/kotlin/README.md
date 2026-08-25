@@ -533,6 +533,13 @@ round, all invisible to the parity corpus because no recorded game ever hits the
   accepted, and whose advance path could hand the round straight back to the caller. The
   validator now requires the caller to be `activeTossIn.originalPlayerIndex`'s seat.
 
+**`DECLARE_CARDS` is Kotlin-only**, like `END_ROUND` above it: coalition table talk, where a
+member claims out loud what they believe their own cards are (see `VISIBILITY.md`). It never
+appears in a parity recording and its state (`PlayerState.declaredCards`) serialises as
+absent until first used, so all fifty recordings hash unchanged. A Kotlin recording that
+*does* contain it replays fine here — `Replay.kt` is action-agnostic — but cannot be fed to
+the TypeScript replayer, which has no such action.
+
 ## 6. Decisions already made — do not silently reopen
 
 | Decision                                                                    | Where recorded                            |

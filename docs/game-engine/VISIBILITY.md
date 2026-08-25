@@ -90,7 +90,8 @@ rules are silent on and the project has chosen, with the reasoning beside it.
 | Toss in, wrong | the penalty card | no | no | — | "draw **1 penalty card face-down**" |
 | A thrown action card starts | the card in play | yes | yes | — | "perform its action **at once**" — it lies face-up on the pile it was thrown onto |
 | Call Vinto | — | nothing new | nothing new | — | calling reveals no card |
-| Coalition leader chosen | each coalition member's hand | — | the **leader only** | — | "The Coalition **may work together and share information**" — **DECIDED**: modelled as the leader seeing every member's hand, their own included; the caller's stays hidden, which is the point of "no one may interact with the Vinto caller's cards" |
+| Coalition leader chosen | — | nothing new | nothing new | — | **DECIDED (reversed)**: an earlier model showed the leader every member's real hand. "The Coalition **may work together and share information**" is now modelled as *table talk* instead — `DECLARE_CARDS`, below — so nobody's actual cards turn over and remembering a hand stays the game |
+| Declare cards (final round) | the claimed ranks, never the cards | every seat, the caller included | every seat | — | **DECIDED**: a coalition member says out loud what they *believe* their own cards are. Claims are public, optional, partial, never checked against the real cards — a wrong memory declares wrongly. A claim is cleared when a swap-in discards its card, shifted when a removal renumbers the hand, and **travels with its card** through a watched Jack or Queen swap |
 | Round scored | every card, and the scores | yes | yes | — | "All players **reveal their cards**" |
 | Reshuffle | the cards the deck takes back | no | no | — | **DECIDED**: they go back face-down; everything anyone learned from the pile goes stale at that moment |
 
