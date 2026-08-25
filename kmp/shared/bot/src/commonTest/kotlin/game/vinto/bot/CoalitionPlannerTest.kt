@@ -62,8 +62,14 @@ class CoalitionPlannerTest {
 
         val botIds = listOf(BOT1, BOT2, BOT3)
         val bots = listOf(bot1, bot2, bot3).mapIndexed { index, ranks ->
-            testPlayer(botIds[index], "Bot ${index + 1}", isHuman = false, cards = ranks.map(::card))
-                .copy(coalitionWith = botIds)
+            val cards = ranks.map(::card)
+            testPlayer(botIds[index], "Bot ${index + 1}", isHuman = false, cards = cards)
+                .copy(
+                    coalitionWith = botIds,
+                    // The scenarios assume a fully shared coalition picture, which now means
+                    // fully *declared*: every bot has said out loud what it holds, truthfully.
+                    declaredCards = cards.mapIndexed { position, c -> position to c.rank }.toMap(),
+                )
         }
 
         val knownIndices = knownHumanCards ?: caller.cards.indices.toList()

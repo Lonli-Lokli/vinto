@@ -198,6 +198,8 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         for (member in hands.indices) {
             for (position in hands[member].indices) {
                 val target = hands[member][position]
+                // A King cannot name a rank the plan does not know.
+                if (!target.known) continue
                 val removed = removeCard(hands, member, position)
                 val plan = CoalitionActionPlan(
                     targets = listOf(CoalitionActionTarget(memberIds[member], position)),
@@ -225,6 +227,7 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         for (member in hands.indices) {
             for (position in hands[member].indices) {
                 val target = hands[member][position]
+                if (!target.known) continue
                 val removed = removeCard(hands, member, position)
                 val value = evaluate(resolveTossIn(removed, listOf(Rank.KING, target.rank)).hands)
                 best.offer(Triple(member, position, removed), value)
@@ -372,6 +375,14 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
             val displaced = hands[actor][position]
             val swapped = replaceCard(hands, actor, position, card)
 
+            if (!displaced.known) {
+                // Displacing a card the plan cannot name: no declaration to offer, and the
+                // toss-in window its real rank opens cannot be modelled — so the swap is
+                // valued as-is, with the discard treated as buried.
+                options += DrawnOutcome(swapped, null, CoalitionDrawnCardDecision.Swap(position))
+                continue
+            }
+
             if (displaced.rank in COALITION_ACTION_RANKS) {
                 enumerateActionUse(swapped, displaced, mode).forEach {
                     options += DrawnOutcome(
@@ -414,7 +425,8 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         append(queueIndex)
         append('#')
         for (hand in hands) {
-            hand.map { it.rank }.sortedBy { it.ordinal }.joinTo(this, ",") { it.serialName }
+            // An unknown card keys as "?" — its placeholder rank is not information.
+            hand.map { if (it.known) it.rank.serialName else "?" }.sorted().joinTo(this, ",")
             append('|')
         }
         append(if (isTakeableAction(discardTop)) discardTop?.rank?.serialName else "-")

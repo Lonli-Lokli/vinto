@@ -102,7 +102,9 @@ class DeclareCardsTest {
     }
 
     @Test
-    fun aJackSwapClearsBothPositionsClaims() {
+    fun aSwapCarriesClaimsWithTheCards() {
+        // The whole table watches a Jack move two cards, so a standing claim about either
+        // card follows it to its new hand — still a claim, still possibly wrong.
         val p2 = member("p2", Rank.TWO, Rank.NINE).copy(declaredCards = mapOf(0 to Rank.TWO, 1 to Rank.NINE))
         val p3 = member("p3", Rank.SIX).copy(declaredCards = mapOf(0 to Rank.SIX))
         val state = finalRound(
@@ -117,9 +119,28 @@ class DeclareCardsTest {
 
         val next = unsafeReduce(state, GameAction.ExecuteJackSwap(PlayerIdPayload("p2")))
 
-        // Both moved cards lose their claims; the untouched position keeps its own.
-        assertEquals(mapOf(1 to Rank.NINE), next.players[1].declaredCards)
-        assertNull(next.players[2].declaredCards)
+        assertEquals(mapOf(0 to Rank.SIX, 1 to Rank.NINE), next.players[1].declaredCards)
+        assertEquals(mapOf(0 to Rank.TWO), next.players[2].declaredCards)
+    }
+
+    @Test
+    fun aSwapWithAnUndeclaredCardMovesTheOneClaimAndClearsTheOtherSide() {
+        val p2 = member("p2", Rank.TWO).copy(declaredCards = mapOf(0 to Rank.TWO))
+        val p3 = member("p3", Rank.SIX) // nothing declared
+        val state = finalRound(
+            listOf(caller(), p2, p3),
+            subPhase = GameSubPhase.AWAITING_ACTION,
+        ).copy(
+            pendingAction = pending(
+                testCard(Rank.JACK, "jack1"), "p2",
+                targets = listOf(ActionTarget("p2", 0), ActionTarget("p3", 0)),
+            ),
+        )
+
+        val next = unsafeReduce(state, GameAction.ExecuteJackSwap(PlayerIdPayload("p2")))
+
+        assertNull(next.players[1].declaredCards, "the undeclared card arrived with no claim")
+        assertEquals(mapOf(0 to Rank.TWO), next.players[2].declaredCards)
     }
 
     @Test

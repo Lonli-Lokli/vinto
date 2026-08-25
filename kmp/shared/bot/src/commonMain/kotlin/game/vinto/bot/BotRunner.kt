@@ -3,6 +3,7 @@ package game.vinto.bot
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
+import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -63,10 +64,12 @@ class BotRunner(
         state.phase == GamePhase.SCORING -> null
         state.phase == GamePhase.SETUP -> setupAction(state)
         state.vintoCallerId != null && state.coalitionLeaderId == null -> coalitionLeaderAction(state)
-        state.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE && state.activeTossIn != null ->
-            tossInAction(state, state.activeTossIn!!)
-
-        else -> turnAction(state)
+        else -> coalitionDeclarationAction(state)
+            ?: if (state.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE && state.activeTossIn != null) {
+                tossInAction(state, state.activeTossIn!!)
+            } else {
+                turnAction(state)
+            }
     }
 
     // ---------------------------------------------------------------- setup
@@ -85,11 +88,48 @@ class BotRunner(
         return GameAction.PeekSetupCard(PositionPayload(player.id, position))
     }
 
-    /** Somebody called Vinto; the coalition needs a nominal leader before it can act. */
+    /**
+     * Somebody called Vinto; the coalition needs a nominal leader before it can act.
+     *
+     * With a human in the coalition the choice is theirs: returning null here holds *all*
+     * bot play — the leader branch precedes every other in [nextAction] — until the human's
+     * `SET_COALITION_LEADER` arrives through the client. Safe to wait on: the caller's
+     * protection no longer depends on a leader being set. A bots-only coalition (the human
+     * called Vinto, or an all-bot table) still auto-picks.
+     */
     private fun coalitionLeaderAction(state: GameState): GameAction? {
+        if (state.players.any { !it.isBot && it.id != state.vintoCallerId }) return null
         val leader = state.players.firstOrNull { it.isBot && it.id != state.vintoCallerId }
             ?: return null
         return GameAction.SetCoalitionLeader(game.vinto.shapes.LeaderIdPayload(leader.id))
+    }
+
+    /**
+     * Once the leader is chosen, each coalition bot says out loud what it believes its own
+     * cards are — one `DECLARE_CARDS` per bot, in seat order, before any final-round play.
+     *
+     * The claims come from [BotDecisionService.believedOwnCards] — the bot's *memory*, not
+     * the engine's record — so on lower difficulties they can be wrong, which is the model:
+     * the coalition plans from what was said at the table, not from anyone's real hand. A
+     * bot re-declares only if its earlier claims were all invalidated (the field empties
+     * back to null when every claimed card has moved).
+     */
+    private fun coalitionDeclarationAction(state: GameState): GameAction? {
+        if (state.phase != GamePhase.FINAL || state.vintoCallerId == null) return null
+        if (state.coalitionLeaderId == null) return null
+
+        for (player in state.players) {
+            if (!player.isBot || player.id == state.vintoCallerId) continue
+            if (player.declaredCards != null) continue
+
+            val believed = serviceFor(player.id)
+                .believedOwnCards(buildContext(state, player))
+                .filterKeys { it in player.cards.indices }
+            if (believed.isEmpty()) continue
+
+            return GameAction.DeclareCards(DeclareCardsPayload(player.id, believed))
+        }
+        return null
     }
 
     // ---------------------------------------------------------------- toss-in
@@ -116,8 +156,16 @@ class BotRunner(
             // shed for itself.
             val coalition = buildCoalitionPlanInput(state, player.id)
             val positions =
-                if (coalition != null) planCoalitionTossIn(coalition, tossIn.ranks)
-                else tossInPositions(player, tossIn.ranks)
+                if (coalition != null) {
+                    // The planner already restricts itself to cards this seat has read
+                    // (unread positions are `known = false` in the plan); the filter is the
+                    // belt to that brace — a coalition bot never tosses a card it has not
+                    // actually seen.
+                    planCoalitionTossIn(coalition, tossIn.ranks)
+                        .filter { it in player.knownCardPositions }
+                } else {
+                    tossInPositions(player, tossIn.ranks)
+                }
 
             if (positions.isNotEmpty() &&
                 (coalition != null || serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context))
@@ -307,9 +355,19 @@ class BotRunner(
             }
 
             // Same shape, except the peek happens first and the swap is genuinely optional.
+            // In a coalition the swap was chosen by the coalition plan — asking the solo
+            // search instead is how a Queen refused to move its own Joker to a teammate.
             Rank.QUEEN -> when (selected) {
                 0, 1 -> selectTarget(state, player, plan, index = selected)
-                else -> queenSwapDecision(state, player, pending)
+                else -> if (coalition != null) {
+                    if (plan.shouldSwap != false) {
+                        GameAction.ExecuteQueenSwap(PlayerIdPayload(player.id))
+                    } else {
+                        GameAction.SkipQueenSwap(PlayerIdPayload(player.id))
+                    }
+                } else {
+                    queenSwapDecision(state, player, pending)
+                }
             }
 
             // Name a card, then declare what it is and play that rank's action.
@@ -317,7 +375,7 @@ class BotRunner(
                 if (selected == 0) {
                     selectTarget(state, player, plan, index = 0)
                 } else {
-                    declareKing(state, player, pending, plan)
+                    declareKing(state, player, pending, plan, trustPlan = coalition != null)
                 }
 
             // The victim draws; there is no position to name.
@@ -391,20 +449,31 @@ class BotRunner(
     /**
      * The declaration a King makes.
      *
-     * The plan may name a rank; if it does not, the bot declares what is actually at the
-     * position it chose, which is the safe answer — a wrong declaration costs a penalty card.
+     * Solo, the plan may name a rank, and if it does not the bot declares what is actually
+     * at the position it chose — the safe answer, since a wrong declaration costs a penalty
+     * card. In a coalition ([trustPlan]) the plan's rank is the *claimed* one and stands as
+     * said: reading the real card there would peek at a teammate's hand through a claim,
+     * and a claim that was wrong should fail the way a wrong memory fails.
      */
     private fun declareKing(
         state: GameState,
         player: PlayerState,
         pending: PendingAction,
         plan: BotActionDecision,
+        trustPlan: Boolean = false,
     ): GameAction {
+        val planned = plan.declaredRank
+        if (trustPlan && planned != null) {
+            return GameAction.DeclareKingAction(
+                game.vinto.shapes.DeclareKingActionPayload(player.id, planned),
+            )
+        }
+
         val target = pending.targets.lastOrNull()
         val cardAtTarget = target?.let { chosen ->
             state.players.firstOrNull { it.id == chosen.playerId }?.cards?.getOrNull(chosen.position)
         }
-        val declared = plan.declaredRank
+        val declared = planned
             ?: serviceFor(player.id).selectKingDeclaration(buildContext(state, player))
 
         return GameAction.DeclareKingAction(
