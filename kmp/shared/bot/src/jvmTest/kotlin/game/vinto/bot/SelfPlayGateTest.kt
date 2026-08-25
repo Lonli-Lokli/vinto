@@ -11,6 +11,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -92,6 +93,7 @@ class SelfPlayGateTest {
 
         var actions = 0
         var calledVinto = false
+        var callerFrozenHand: List<String>? = null
 
         while (actions < actionLimit && state.phase != GamePhase.SCORING) {
             val action = runner.nextAction(state) ?: return PlayedGame(
@@ -128,8 +130,22 @@ class SelfPlayGateTest {
                 )
             }
 
-            if (action is GameAction.CallVinto) calledVinto = true
+            if (action is GameAction.CallVinto) {
+                calledVinto = true
+                // The caller's hand is frozen from the call: the caller cannot toss in and
+                // the coalition cannot target it, so whatever it holds now, it scores.
+                callerFrozenHand = state.players
+                    .first { it.id == state.vintoCallerId }.cards.map { it.id }
+            }
             actions++
+        }
+
+        callerFrozenHand?.let { frozen ->
+            assertEquals(
+                frozen,
+                state.players.first { it.id == state.vintoCallerId }.cards.map { it.id },
+                "seed $seed: the caller's hand changed during the final round",
+            )
         }
 
         return PlayedGame(seed, actions, state.phase, calledVinto)

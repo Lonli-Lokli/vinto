@@ -232,6 +232,18 @@ class MctsBotDecisionService(
         return shouldCallVintoByScore(context)
     }
 
+    /**
+     * Declarations come from the memory model, not the engine's record: what this bot
+     * *thinks* it holds. On easy and moderate difficulty an observation can have recorded
+     * the wrong card, decayed, or been dropped — so a claim can be wrong or missing, and is
+     * exactly as wrong as the bot's play already was. Deterministic under the seeded
+     * [Random].
+     */
+    override fun believedOwnCards(context: BotDecisionContext): Map<Int, Rank> {
+        initializeIfNeeded(context)
+        return botMemory.believedOwnCards()
+    }
+
     // ---------------------------------------------------------------- the search
 
     private data class SearchResult(val move: MctsMove, val actionPlan: BotActionDecision? = null)

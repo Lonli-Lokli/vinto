@@ -142,6 +142,15 @@ class BotMemory(
 
     fun getPlayerMemory(playerId: String): Map<Int, CardMemory> = memoryFor(playerId).toMap()
 
+    /**
+     * What this bot would declare about its own hand: the positions it trusts, as ranks.
+     * On lower difficulties observation can record the wrong card or nothing at all, so a
+     * declaration built from this can be honestly wrong — which is the point.
+     */
+    fun believedOwnCards(): Map<Int, Rank> = ownCards
+        .filterValues { it.confidence > TRUSTED_CONFIDENCE }
+        .mapValues { (_, memory) -> memory.card.rank }
+
     fun getConfidence(playerId: String, position: Int): Double =
         getCardMemory(playerId, position)?.confidence ?: 0.0
 

@@ -56,10 +56,13 @@ class CoalitionFinalRoundTest {
         isHuman = isHuman,
         isBot = !isHuman,
         cards = ranks.mapIndexed { index, rank -> card(rank, "$id-c$index") },
-        // Coalition members share their hands, so every bot knows its own.
+        // Every bot has read its own hand.
         knownCardPositions = if (isHuman) emptyList() else ranks.indices.toList(),
         isVintoCaller = id == callerId,
         coalitionWith = if (isHuman) emptyList() else botIds,
+        // And has already declared it truthfully — the scenarios pin the *play*, not the
+        // declaration step, which CoalitionHumanMemberTest covers on its own.
+        declaredCards = if (isHuman) null else ranks.mapIndexed { i, r -> i to r }.toMap(),
     )
 
     private fun total(player: PlayerState) = player.cards.sumOf { it.value }
@@ -284,5 +287,142 @@ class CoalitionFinalRoundTest {
             payload.targetPlayerId to (payload as SelectActionTargetPayload.Positional).position,
             "the runner aimed where a solo search would, not where the coalition planner chose",
         )
+    }
+
+    @Test
+    fun aHumanCoalitionMemberPlaysTheirTurnAndTheRoundScores() {
+        // Scenario (b): a *bot* called Vinto and a person sits in the coalition. The bots
+        // hold until the human names the leader, the human takes exactly one ordinary turn,
+        // and the round still scores with the caller's hand untouched. The human here is a
+        // minimal script: choose a leader, draw, discard, wave toss-ins through.
+        val humanId = "human-1"
+        val botCaller = "bot-0"
+
+        fun member(id: String, isHuman: Boolean, ranks: List<Rank>) = PlayerState(
+            id = id,
+            name = id,
+            nickname = id,
+            isHuman = isHuman,
+            isBot = !isHuman,
+            cards = ranks.mapIndexed { index, rank -> card(rank, "$id-c$index") },
+            knownCardPositions = if (isHuman) emptyList() else ranks.indices.toList(),
+            isVintoCaller = id == botCaller,
+            coalitionWith = if (id == botCaller) emptyList() else listOf(humanId, "bot-1", "bot-2"),
+        )
+
+        var state = GameState(
+            gameId = "coalition-human-member",
+            roundNumber = 1,
+            turnNumber = 12,
+            phase = GamePhase.FINAL,
+            subPhase = GameSubPhase.IDLE,
+            finalTurnTriggered = true,
+            players = listOf(
+                member(botCaller, isHuman = false, ranks = listOf(Rank.KING, Rank.TWO)),
+                member(humanId, isHuman = true, ranks = listOf(Rank.NINE)),
+                member("bot-1", isHuman = false, ranks = listOf(Rank.FIVE, Rank.FIVE)),
+                member("bot-2", isHuman = false, ranks = listOf(Rank.SIX)),
+            ),
+            currentPlayerIndex = 1,
+            vintoCallerId = botCaller,
+            coalitionLeaderId = null,
+            drawPile = Pile((0..5).map { card(Rank.FOUR, "draw-$it") }),
+            discardPile = Pile(listOf(card(Rank.THREE, "discard-seed"))),
+            pendingAction = null,
+            activeTossIn = null,
+            turnActions = emptyList(),
+            roundActions = emptyList(),
+            roundFailedAttempts = emptyList(),
+            difficulty = Difficulty.MODERATE,
+            rngState = 0,
+        )
+        val callerRanks = state.players.first().cards.map { it.rank }
+
+        fun humanAction(s: GameState): GameAction? = when {
+            s.coalitionLeaderId == null ->
+                GameAction.SetCoalitionLeader(game.vinto.shapes.LeaderIdPayload("bot-1"))
+
+            s.activeTossIn != null &&
+                humanId !in s.activeTossIn!!.playersReadyForNextTurn ->
+                GameAction.PlayerTossInFinished(game.vinto.shapes.PlayerIdPayload(humanId))
+
+            s.players[s.currentPlayerIndex].id == humanId && s.pendingAction == null &&
+                s.subPhase == GameSubPhase.IDLE ->
+                GameAction.DrawCard(game.vinto.shapes.PlayerIdPayload(humanId))
+
+            s.players[s.currentPlayerIndex].id == humanId &&
+                s.subPhase == GameSubPhase.CHOOSING ->
+                GameAction.DiscardCard(game.vinto.shapes.PlayerIdPayload(humanId))
+
+            else -> null
+        }
+
+        val runner = BotRunner(Difficulty.MODERATE, Random(4))
+        var humanDraws = 0
+        var actions = 0
+
+        while (actions < 300 && state.phase != GamePhase.SCORING) {
+            val action = runner.nextAction(state)
+                ?: humanAction(state)
+                ?: fail("the round stalled: subPhase=${state.subPhase.serialName}")
+
+            if (action is GameAction.SetCoalitionLeader && state.coalitionLeaderId == null) {
+                assertTrue(
+                    runner.nextAction(state) == null,
+                    "the bots did not wait for the human's leader choice",
+                )
+            }
+            if (action is GameAction.DrawCard && action.payload.playerId == humanId) humanDraws++
+
+            when (val validation = ActionValidator.validate(state, action)) {
+                is Validation.Invalid ->
+                    fail("action #$actions: illegal ${action.type} — ${validation.reason}")
+
+                Validation.Valid -> Unit
+            }
+            state = when (val result = GameEngine.reduce(state, action)) {
+                is ReduceResult.Success -> result.state
+                is ReduceResult.Failure -> fail("engine rejected ${action.type}: ${result.reason}")
+            }
+            actions++
+        }
+
+        assertEquals(GamePhase.SCORING, state.phase, "the round never scored")
+        assertEquals(1, humanDraws, "the human should get exactly one final turn")
+        assertEquals(
+            callerRanks,
+            state.players.first().cards.map { it.rank },
+            "the coalition interfered with the bot caller's hand",
+        )
+    }
+
+    @Test
+    fun aWrongDeclarationFailsTheLineWithoutBreakingTheRound() {
+        // bot-1 has misdeclared its NINE as a QUEEN. Whatever the coalition builds on that
+        // claim — a King naming it, a swap-declare — the engine answers with the ordinary
+        // wrong-declaration penalty, and the round still finishes lawfully with the caller
+        // untouched. Wrongness is a memory problem, never a crash.
+        val human = listOf(Rank.TWO, Rank.THREE, Rank.ACE)
+        val base = finalRoundState(
+            human = human,
+            bot1 = listOf(Rank.NINE, Rank.FIVE),
+            bot2 = listOf(Rank.JOKER, Rank.TWO),
+            bot3 = listOf(Rank.SEVEN),
+            drawPile = listOf(Rank.KING, Rank.FOUR, Rank.FOUR, Rank.FOUR, Rank.FOUR, Rank.FOUR),
+        )
+        val misdeclared = base.copy(
+            players = base.players.map { player ->
+                if (player.id == "bot-1") {
+                    player.copy(declaredCards = mapOf(0 to Rank.QUEEN, 1 to Rank.FIVE))
+                } else {
+                    player
+                }
+            },
+        )
+
+        val result = playOut(misdeclared)
+
+        assertEquals(GamePhase.SCORING, result.state.phase, "the round never scored")
+        assertCallersCardsUntouched(result.state, human)
     }
 }

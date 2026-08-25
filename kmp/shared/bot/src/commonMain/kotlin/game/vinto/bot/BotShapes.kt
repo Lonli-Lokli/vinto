@@ -102,4 +102,14 @@ interface BotDecisionService {
     fun selectBestSwapPosition(drawnCard: Card, context: BotDecisionContext): Int?
 
     fun shouldCallVinto(context: BotDecisionContext): Boolean
+
+    /**
+     * What this bot would *say out loud* its own cards are — the claims it makes with
+     * `DECLARE_CARDS` when the coalition forms. The default reads the engine's record of
+     * what the seat has peeked, i.e. a perfect memory; a memory-modelling service overrides
+     * it so the claims are only as good as what the bot actually remembers, and can be
+     * wrong.
+     */
+    fun believedOwnCards(context: BotDecisionContext): Map<Int, Rank> =
+        context.opponentKnowledge[context.botId].orEmpty().mapValues { it.value.rank }
 }
