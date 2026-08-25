@@ -21,6 +21,7 @@ import game.vinto.engine.cases.handlePlayerTossInFinished
 import game.vinto.engine.cases.handleSelectActionTarget
 import game.vinto.engine.cases.handleSkipJackSwap
 import game.vinto.engine.cases.handleSkipQueenSwap
+import game.vinto.engine.cases.handleDeclareCards
 import game.vinto.engine.cases.handleSetCoalitionLeader
 import game.vinto.engine.cases.handleSetNextDrawCard
 import game.vinto.engine.cases.handleSkipPeek
@@ -103,6 +104,7 @@ object GameEngine {
             is GameAction.EndRound -> handleEndRound(working)
 
             is GameAction.SetCoalitionLeader -> handleSetCoalitionLeader(working, action)
+            is GameAction.DeclareCards -> handleDeclareCards(working, action)
             is GameAction.ProcessAiTurn -> handleProcessAiTurn(working, action)
             is GameAction.PeekSetupCard -> handlePeekSetupCard(working, action)
             is GameAction.FinishSetup -> handleFinishSetup(working, action)
@@ -131,7 +133,8 @@ object GameEngine {
      * turn.
      */
     private fun shouldAdvanceTurn(working: MutableGameState, action: GameAction): Boolean {
-        if (action is GameAction.Empty) return false
+        // Neither a no-op nor table talk may end a turn.
+        if (action is GameAction.Empty || action is GameAction.DeclareCards) return false
         val tossIn = working.activeTossIn ?: return false
 
         return tossIn.queuedActions.isEmpty() &&

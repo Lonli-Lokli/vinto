@@ -516,6 +516,23 @@ discard has no legal move. Refilling at zero as well looks like a one-word fix a
 dead end; the engine is untouched and `BotRunner` reports the position rather than proposing an
 illegal draw.
 
+**Three validator rules are deliberately stricter than TypeScript's**, all around the final
+round, all invisible to the parity corpus because no recorded game ever hits them:
+
+- **The coalition may not target the Vinto caller even before a leader is chosen.** The
+  TypeScript guard (and the first Kotlin port of it) only fired once `coalitionLeaderId` was
+  set, but choosing a leader is optional — every recording happens to pick one immediately
+  after the call, which is the only reason the hole never showed. The caller's protection now
+  starts at the call itself.
+- **The Vinto caller cannot toss in.** `getAutomaticallyReadyPlayers` always treated the
+  caller as done and the docs said the caller "may not participate", but nothing rejected the
+  action; now `PARTICIPATE_IN_TOSS_IN` from the caller is invalid.
+- **Vinto during a toss-in window belongs to the turn owner.** After a toss-in queue drains,
+  `currentPlayerIndex` can rest on the last toss-in actor, who then passed `requireTurn` for
+  `CALL_VINTO` — an out-of-seat call the UI and `BotRunner` never produce but the engine
+  accepted, and whose advance path could hand the round straight back to the caller. The
+  validator now requires the caller to be `activeTossIn.originalPlayerIndex`'s seat.
+
 ## 6. Decisions already made — do not silently reopen
 
 | Decision                                                                    | Where recorded                            |

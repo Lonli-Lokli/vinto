@@ -121,6 +121,7 @@ class MutablePlayerState(source: PlayerState) {
     var botMemory: JsonElement? = source.botMemory
     var opponentKnowledge: MutableMap<String, SerializedOpponentKnowledge>? =
         source.opponentKnowledge?.toMutableMap()
+    var declaredCards: MutableMap<Int, Rank>? = source.declaredCards?.toMutableMap()
 
     fun freeze() = PlayerState(
         id = id,
@@ -134,6 +135,9 @@ class MutablePlayerState(source: PlayerState) {
         coalitionWith = coalitionWith.toList(),
         botMemory = botMemory,
         opponentKnowledge = opponentKnowledge?.toMap(),
+        // An emptied map goes back to null so the field re-omits from serialisation — that
+        // is what keeps a state that never declared anything hashing exactly as before.
+        declaredCards = declaredCards?.takeIf { it.isNotEmpty() }?.toMap(),
     )
 }
 

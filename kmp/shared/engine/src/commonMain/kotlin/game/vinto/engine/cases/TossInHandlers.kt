@@ -4,6 +4,7 @@ import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.areAllPlayersReady
+import game.vinto.engine.clearDeclarationAt
 import game.vinto.engine.clearTossInAfterActionableCard
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.engine.queuedTossInCardId
@@ -99,6 +100,8 @@ fun handleExecuteJackSwap(state: MutableGameState, action: GameAction.ExecuteJac
 
     player1.knownCardPositions.remove(target1.position)
     player2.knownCardPositions.remove(target2.position)
+    player1.clearDeclarationAt(target1.position)
+    player2.clearDeclarationAt(target2.position)
 
     clearTossInAfterActionableCard(
         pending.card.copy().also { it.played = true },
@@ -128,6 +131,9 @@ fun handleExecuteQueenSwap(state: MutableGameState, action: GameAction.ExecuteQu
     val card2 = player2.cards[target2.position]
     player1.cards[target1.position] = card2
     player2.cards[target2.position] = card1
+
+    player1.clearDeclarationAt(target1.position)
+    player2.clearDeclarationAt(target2.position)
 
     val currentPlayer = state.players[state.currentPlayerIndex]
 

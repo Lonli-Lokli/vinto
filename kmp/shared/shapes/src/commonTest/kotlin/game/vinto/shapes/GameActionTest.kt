@@ -122,6 +122,7 @@ class GameActionTest {
             GameAction.FinishTossInPeriod(InitiatorIdPayload("p")),
             GameAction.CallVinto(PlayerIdPayload("p")),
             GameAction.SetCoalitionLeader(LeaderIdPayload("p")),
+            GameAction.DeclareCards(DeclareCardsPayload("p", mapOf(0 to Rank.QUEEN, 2 to Rank.JOKER))),
             GameAction.ProcessAiTurn(PlayerIdPayload("p")),
             GameAction.PeekSetupCard(PositionPayload("p", 4)),
             GameAction.FinishSetup(PlayerIdPayload("p")),
@@ -136,6 +137,21 @@ class GameActionTest {
         }
 
         // Every branch of the sealed hierarchy except EMPTY, which is covered above.
-        assertEquals(24, actions.map { it.type }.toSet().size)
+        assertEquals(25, actions.map { it.type }.toSet().size)
+    }
+
+    @Test
+    fun declareCardsCarriesPositionKeysAsStrings() {
+        // JSON object keys are strings, so the Int positions ride as "0"/"2" on the wire.
+        // Kotlin-only action — nothing on the TypeScript side ever reads this — but the
+        // shape is part of the recording format all the same.
+        val action = GameAction.DeclareCards(
+            DeclareCardsPayload("p", mapOf(0 to Rank.QUEEN, 2 to Rank.JOKER)),
+        )
+        val json = VintoJson.encodeToJsonElement(GameActionSerializer, action).toString()
+        assertEquals(
+            """{"type":"DECLARE_CARDS","payload":{"playerId":"p","claims":{"0":"Q","2":"Joker"}}}""",
+            json,
+        )
     }
 }

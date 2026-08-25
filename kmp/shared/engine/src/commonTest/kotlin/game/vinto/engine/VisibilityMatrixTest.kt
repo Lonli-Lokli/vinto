@@ -36,7 +36,7 @@ import kotlin.test.assertTrue
 class VisibilityMatrixTest {
 
     /** Who a card may be shown to once the action has happened. */
-    private enum class Shown { EVERYONE, ACTOR_ONLY, LEADER_ONLY, NOBODY }
+    private enum class Shown { EVERYONE, ACTOR_ONLY, NOBODY }
 
     /**
      * One row of Table A: an action, the card worth watching, who may see it afterwards, and
@@ -70,7 +70,6 @@ class VisibilityMatrixTest {
             val entitled: Set<String> = when (row.shown) {
                 Shown.EVERYONE -> seats.toSet()
                 Shown.ACTOR_ONLY -> setOf(staged.actor)
-                Shown.LEADER_ONLY -> setOf(checkNotNull(staged.leader))
                 Shown.NOBODY -> emptySet()
             }
 
@@ -101,7 +100,7 @@ class VisibilityMatrixTest {
         val rows = matrix()
         assertTrue(rows.size > 30, "Table A has more rows than ${rows.size}")
         assertTrue(rows.any { it.reveal }, "at least the wrong King and the wrong throw announce")
-        assertTrue(rows.any { it.shown == Shown.LEADER_ONLY }, "the coalition is in the table")
+        assertTrue(rows.any { it.action == "SET_COALITION_LEADER" }, "the coalition is in the table")
     }
 
     // ------------------------------------------------------------------ the table
@@ -366,7 +365,9 @@ class VisibilityMatrixTest {
             val play = Play().vintoCalled()
             play.staged(play.cardAt(play.me, 0))
         },
-        Row("SET_COALITION_LEADER", "a coalition member's card", Shown.LEADER_ONLY) {
+        // The leader used to be sent every member's real hand; coalition knowledge now
+        // travels as declared claims, so being nominated shows the leader nothing.
+        Row("SET_COALITION_LEADER", "a coalition member's card", Shown.NOBODY) {
             val play = Play().vintoCalled()
             play.act(GameAction.SetCoalitionLeader(LeaderIdPayload(play.opponent)))
             val member = play.state.players[2]

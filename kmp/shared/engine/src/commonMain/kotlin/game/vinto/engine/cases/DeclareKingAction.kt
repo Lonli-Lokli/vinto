@@ -6,6 +6,7 @@ import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.MutablePlayerState
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.clearTossInReadyList
+import game.vinto.engine.shiftDeclarationsAfterRemoval
 import game.vinto.engine.getAutomaticallyReadyPlayers
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.shapes.ActionPhase
@@ -69,6 +70,7 @@ private fun applyCorrectDeclaration(
         clear()
         addAll(shifted)
     }
+    targetPlayer.shiftDeclarationsAfterRemoval(position)
 
     val targetType = getTargetTypeFromRank(removedCard.rank)
     if (targetType != null) {

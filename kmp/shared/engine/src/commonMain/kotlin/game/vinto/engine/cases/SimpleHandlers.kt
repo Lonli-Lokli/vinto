@@ -114,6 +114,21 @@ fun handleSetCoalitionLeader(state: MutableGameState, action: GameAction.SetCoal
 }
 
 /**
+ * DECLARE_CARDS — a coalition member claims out loud what their own cards are.
+ *
+ * Claims merge over earlier ones, so a re-declared position is simply overwritten; nothing
+ * here reads the real cards, because a claim is memory speaking, not the engine. The claims
+ * are public state — every seat's view carries them.
+ */
+fun handleDeclareCards(state: MutableGameState, action: GameAction.DeclareCards): Boolean {
+    val player = state.playerById(action.payload.playerId) ?: return false
+    val declared = player.declaredCards ?: mutableMapOf<Int, game.vinto.shapes.Rank>()
+        .also { player.declaredCards = it }
+    declared.putAll(action.payload.claims)
+    return true
+}
+
+/**
  * PROCESS_AI_TURN — a marker. The bot's real moves arrive as ordinary actions through the
  * same path a human uses, which is what keeps bots rules-neutral.
  *

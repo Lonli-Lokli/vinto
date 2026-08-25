@@ -43,6 +43,13 @@ fun handleCallVinto(state: MutableGameState, action: GameAction.CallVinto): Bool
         return true
     }
 
+    // This advance intentionally differs from `advanceTurnAfterTossIn`: `turnNumber` moves
+    // only on wrap to seat 0, `roundNumber` never moves, and there is NO low-deck refill.
+    // That is what the TypeScript engine does — `selfplay-moderate-18` calls Vinto with one
+    // card on the deck and its recorded hash proves TS did not reshuffle — and forty-two
+    // parity recordings run through this path, so it stays byte-for-byte. None of it is a
+    // rules matter: the counters feed no legality check, and a final round that starts on a
+    // dry deck still ends lawfully through the FINAL-phase `END_ROUND` escape.
     state.currentPlayerIndex = (originalPlayerIndex + 1) % state.players.size
     if (state.currentPlayerIndex == 0) state.turnNumber++
 

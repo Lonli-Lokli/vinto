@@ -162,6 +162,26 @@ class StateHashTest {
         assertNotEquals(canonicalizeGameState(state()), canonicalizeGameState(withKnowledge))
     }
 
+    @Test
+    fun aStateWithoutDeclarationsHashesExactlyAsBefore() {
+        // `declaredCards` is Kotlin-only; a null field must be *absent* from the canonical
+        // form, or every TypeScript-recorded hash in the parity corpus would move.
+        assertTrue("declaredCards" !in canonicalizeGameState(state()))
+    }
+
+    @Test
+    fun declarationsChangeTheHashDeterministically() {
+        val declared = state(
+            players = listOf(
+                player("p1").copy(declaredCards = mapOf(0 to Rank.QUEEN)),
+                player("p2"), player("p3"), player("p4"),
+            ),
+        )
+
+        assertNotEquals(canonicalizeGameState(state()), canonicalizeGameState(declared))
+        assertEquals(canonicalizeGameState(declared), canonicalizeGameState(declared))
+    }
+
     // --- exclusions: presentation must not -----------------------------------------------------
 
     @Test
