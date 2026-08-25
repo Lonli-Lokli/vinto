@@ -4,6 +4,7 @@ import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePlayerState
 import game.vinto.engine.PublicReveal
+import game.vinto.engine.shiftDeclarationsAfterRemoval
 import game.vinto.shapes.FailedTossInAttempt
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.SerializedOpponentKnowledge
@@ -56,6 +57,7 @@ fun handleParticipateInTossIn(
             addAll(shifted)
         }
         shiftOpponentKnowledge(state, playerId, position)
+        player.shiftDeclarationsAfterRemoval(position)
 
         // An action card waits its turn in the queue; anything else goes straight to the
         // discard pile, beneath the top card so an unplayed action stays reachable.

@@ -138,6 +138,20 @@ sealed interface GameAction {
     }
 
     /**
+     * A coalition member says out loud what they believe their own cards are.
+     *
+     * **Kotlin-only; TypeScript has no equivalent.** Claims are table talk: public to every
+     * seat, optional, partial, and — crucially — never checked against the real cards. A
+     * player declares from memory, and memory can be wrong. Each action merges its claims
+     * over the player's earlier ones; the engine drops a claim when the card it described
+     * moves. Never appears in a parity recording, so the corpus is untouched.
+     */
+    @Serializable
+    data class DeclareCards(val payload: DeclareCardsPayload) : GameAction {
+        override val type get() = "DECLARE_CARDS"
+    }
+
+    /**
      * Ends a round nobody can play on.
      *
      * **Kotlin-only; TypeScript has no equivalent**, which is deliberate and is why this is an
@@ -211,6 +225,13 @@ data class InitiatorIdPayload(val initiatorId: String)
 
 @Serializable
 data class LeaderIdPayload(val leaderId: String)
+
+/**
+ * Position → claimed rank. JSON carries the positions as string keys, which is fine: this
+ * action is Kotlin-only and never crosses to the TypeScript replayer.
+ */
+@Serializable
+data class DeclareCardsPayload(val playerId: String, val claims: Map<Int, Rank>)
 
 @Serializable
 data class PositionPayload(val playerId: String, val position: Int)
@@ -367,6 +388,7 @@ object GameActionSerializer : KSerializer<GameAction> {
             is GameAction.FinishTossInPeriod -> enc(InitiatorIdPayload.serializer(), value.payload)
             is GameAction.CallVinto -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.SetCoalitionLeader -> enc(LeaderIdPayload.serializer(), value.payload)
+            is GameAction.DeclareCards -> enc(DeclareCardsPayload.serializer(), value.payload)
             is GameAction.EndRound -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.ProcessAiTurn -> enc(PlayerIdPayload.serializer(), value.payload)
             is GameAction.PeekSetupCard -> enc(PositionPayload.serializer(), value.payload)
@@ -422,6 +444,7 @@ object GameActionSerializer : KSerializer<GameAction> {
             "FINISH_TOSS_IN_PERIOD" -> GameAction.FinishTossInPeriod(dec(InitiatorIdPayload.serializer()))
             "CALL_VINTO" -> GameAction.CallVinto(playerId())
             "SET_COALITION_LEADER" -> GameAction.SetCoalitionLeader(dec(LeaderIdPayload.serializer()))
+            "DECLARE_CARDS" -> GameAction.DeclareCards(dec(DeclareCardsPayload.serializer()))
             "END_ROUND" -> GameAction.EndRound(dec(PlayerIdPayload.serializer()))
             "PROCESS_AI_TURN" -> GameAction.ProcessAiTurn(playerId())
             "PEEK_SETUP_CARD" -> GameAction.PeekSetupCard(dec(PositionPayload.serializer()))

@@ -54,6 +54,12 @@ data class PlayerSeatView(
     val knownCardPositions: List<Int>,
     val isVintoCaller: Boolean,
     val coalitionWith: List<String>,
+    /**
+     * Position → rank this seat has *claimed* its card to be during the final round. Table
+     * talk: public to every viewer, the caller included, and only as reliable as the
+     * claimant's memory. The real card stays hidden.
+     */
+    val declaredCards: Map<Int, Rank> = emptyMap(),
 )
 
 /** Pending-action metadata without the card, unless the viewer is entitled to it. */
@@ -143,32 +149,27 @@ data class PlayerView(
  *  - **cards the current action has revealed to you**, and only to you: a Queen's peek is
  *    private to the player making it, so target cards are visible to the acting seat alone,
  *    and only while the action is running;
- *  - **the coalition leader** sees every coalition member's hand — their own included, since
- *    the leader is a member — while the Vinto caller's stays hidden, which is the point of the
- *    coalition rule;
  *  - **everything, in `scoring`**, when the hands are turned over anyway;
  *  - **scores**, likewise only in `scoring`.
  *
- * One rule from the web app is deliberately **not** carried over: there, the Vinto caller can
- * see any bot card that any bot knows, on the reasoning that the bot coalition shares its
- * memory. That is a display affordance for a game whose opponents are all bots. Online, the
- * other seats are people, and it would hand the caller their cards.
+ * Two earlier rules are deliberately **not** here. The web app let the Vinto caller see any
+ * bot card that any bot knew — a display affordance for a game whose opponents are all bots;
+ * online the other seats are people, and it would hand the caller their cards. And an earlier
+ * Kotlin rule showed the coalition *leader* every member's real hand — replaced by
+ * `DECLARE_CARDS`: coalition members say what they believe they hold, the claims ride on
+ * every seat's view as [PlayerSeatView.declaredCards], and nobody's actual cards turn over.
+ * A claim is only as good as the claimant's memory, which is the game staying the game.
  *
  * Never included at all: the draw pile's contents, other seats' `opponentKnowledge`, and
  * `botMemory`. Bots do not use views — they run in the same process as the full state.
  */
 fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = null): PlayerView {
     val revealedToViewer = revealedByCurrentAction(state, playerId)
-    val viewerLeadsCoalition = state.vintoCallerId != null && state.coalitionLeaderId == playerId
     // Every hand is turned over once the game is scored.
     val everythingRevealed = state.phase == GamePhase.SCORING
     val inSetup = state.phase == GamePhase.SETUP
 
     val seats = state.players.map { seat ->
-        // The coalition condition matches the web app's: a member is anyone with a coalition
-        // list who is not the caller — which includes the leader's own hand.
-        val seatIsCoalitionMember = seat.coalitionWith.isNotEmpty() && !seat.isVintoCaller
-
         val cards = seat.cards.mapIndexed { position, card ->
             val visible = when {
                 everythingRevealed -> true
@@ -177,7 +178,6 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
                 // how the two halves of a view came to disagree: a Queen peeking at its own
                 // player's card showed it under `targets` and hid it in the hand.
                 revealedToViewer.contains(seat.id to position) -> true
-                viewerLeadsCoalition && seatIsCoalitionMember -> true
                 // The setup peek, and only during setup: the rules say look at two of your
                 // own, so for that phase they are yours to see.
                 //
@@ -204,6 +204,7 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
             knownCardPositions = seat.knownCardPositions,
             isVintoCaller = seat.isVintoCaller,
             coalitionWith = seat.coalitionWith,
+            declaredCards = seat.declaredCards ?: emptyMap(),
         )
     }
 

@@ -3,6 +3,7 @@ package game.vinto.engine
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameState
+import game.vinto.shapes.Rank
 import game.vinto.shapes.VintoJson
 import java.io.File
 import kotlin.test.Test
@@ -163,13 +164,20 @@ class ViewRedactionTest {
     }
 
     @Test
-    fun theCoalitionLeaderSeesTheCoalitionButNotTheCaller() {
+    fun theCoalitionLeaderIsSentNoHandsAtAll() {
+        // Being nominated leader changes nothing about what a seat may see: coalition
+        // knowledge travels as declared claims (`DECLARE_CARDS`), never as real cards. This
+        // used to assert the opposite — the leader seeing every member's hand — a rule
+        // replaced by declarations.
         val positions = recordings.asSequence()
             .flatMap { (_, recording) -> statesOf(recording) }
             .filter {
                 it.phase == GamePhase.FINAL &&
                     it.vintoCallerId != null &&
-                    it.coalitionLeaderId != null
+                    it.coalitionLeaderId != null &&
+                    // A running action may legitimately show the actor a card; what is being
+                    // asserted here is the *standing* view of a leader between actions.
+                    it.pendingAction == null
             }
             .take(20)
             .toList()
@@ -182,14 +190,39 @@ class ViewRedactionTest {
 
             for (seat in view.players) {
                 val hidden = seat.cards.count { it is CardView.Hidden }
-                if (seat.id == state.vintoCallerId) {
-                    assertTrue(hidden == seat.cards.size, "the leader could see the Vinto caller's hand")
-                } else {
-                    // The leader's own hand counts as a coalition member's — matching the web
-                    // app, where the condition is "has a coalition list and is not the caller".
-                    assertEquals(0, hidden, "the leader could not see coalition member ${seat.id}")
-                }
+                assertEquals(
+                    seat.cards.size,
+                    hidden,
+                    "the leader was sent ${seat.id}'s real cards — claims travel, cards do not",
+                )
             }
+        }
+    }
+
+    @Test
+    fun declaredRanksAreSentToEverySeatIncludingTheCaller() {
+        // A claim is table talk: every seat's view carries it, the caller's included, and
+        // the card underneath it stays hidden.
+        val base = recordings.asSequence()
+            .flatMap { (_, recording) -> statesOf(recording) }
+            .first {
+                it.phase == GamePhase.FINAL &&
+                    it.vintoCallerId != null &&
+                    it.players.any { seat -> !seat.isVintoCaller && seat.cards.isNotEmpty() }
+            }
+        val member = base.players.first { !it.isVintoCaller && it.cards.isNotEmpty() }
+        val declared = base.copy(
+            players = base.players.map { seat ->
+                if (seat.id == member.id) seat.copy(declaredCards = mapOf(0 to Rank.QUEEN))
+                else seat
+            },
+        )
+
+        for (viewer in declared.players) {
+            val view = projectView(declared, viewer.id)
+            val seat = view.players.first { it.id == member.id }
+            assertEquals(mapOf(0 to Rank.QUEEN), seat.declaredCards, "claim missing for ${viewer.id}")
+            assertTrue(seat.cards[0] is CardView.Hidden, "a claim must not turn the card over")
         }
     }
 

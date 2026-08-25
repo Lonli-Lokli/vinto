@@ -153,6 +153,16 @@ object ActionValidator {
         is GameAction.CallVinto -> state.requireTurn(action.payload.playerId, "CALL_VINTO")
             ?: when {
                 state.vintoCallerId != null -> Validation.Invalid("Vinto already called")
+                // Vinto is declared at the end of one's own turn. During a toss-in window
+                // `currentPlayerIndex` can rest on a toss-in actor while the queue drains,
+                // and that seat passing `requireTurn` must not let it call Vinto out of
+                // order — only the player whose turn the window closes may call.
+                state.activeTossIn?.let {
+                    state.players.getOrNull(it.originalPlayerIndex)?.id != action.payload.playerId
+                } == true -> Validation.Invalid(
+                    "Vinto can only be called at the end of your own turn",
+                )
+
                 else -> Validation.Valid
             }
 
@@ -215,6 +225,27 @@ object ActionValidator {
                     Validation.Invalid("Vinto caller cannot be coalition leader")
 
                 else -> Validation.Valid
+            }
+        }
+
+        is GameAction.DeclareCards -> {
+            // Table talk from a coalition member: legal in any sub-phase of the final round,
+            // never on the caller's behalf, and — deliberately — never compared against the
+            // real cards. A claim can be wrong; being wrong is a memory problem, not a rules
+            // problem.
+            val player = state.playerById(action.payload.playerId)
+            when {
+                state.phase != GamePhase.FINAL ->
+                    Validation.Invalid("Cards can only be declared in the final round")
+
+                player == null -> Validation.Invalid("Player not found")
+                player.id == state.vintoCallerId ->
+                    Validation.Invalid("The Vinto caller has no coalition to talk to")
+
+                action.payload.claims.isEmpty() -> Validation.Invalid("No claims provided")
+                else -> action.payload.claims.keys.firstOrNull { it !in player.cards.indices }
+                    ?.let { Validation.Invalid("Invalid card position $it") }
+                    ?: Validation.Valid
             }
         }
 
@@ -315,11 +346,10 @@ object ActionValidator {
 
         // Coalition rule: during the final round the coalition may not touch the Vinto
         // caller's cards. This is the rule that makes calling Vinto a commitment rather than
-        // a free option, so it is enforced here rather than left to the UI.
-        if (state.phase == GamePhase.FINAL &&
-            state.vintoCallerId != null &&
-            state.coalitionLeaderId != null
-        ) {
+        // a free option, so it is enforced here rather than left to the UI. The guard holds
+        // from the moment Vinto is called — choosing a coalition leader is optional and the
+        // caller's protection must not wait for it.
+        if (state.phase == GamePhase.FINAL && state.vintoCallerId != null) {
             val actor =
                 if (state.isProcessingTossInAction()) state.playerById(pending.playerId)
                 else state.players.getOrNull(state.currentPlayerIndex)
@@ -438,6 +468,12 @@ object ActionValidator {
 
         val player = state.playerById(action.payload.playerId)
             ?: return Validation.Invalid("Player not found")
+
+        // The Vinto caller's hand is frozen from the moment of the call: the coalition may
+        // not touch it, and the caller may not slim it down through toss-ins either.
+        if (state.vintoCallerId == action.payload.playerId) {
+            return Validation.Invalid("Vinto caller cannot participate in toss-in")
+        }
 
         val positions = action.payload.positions
         if (positions.isEmpty()) return Validation.Invalid("No positions provided")

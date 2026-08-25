@@ -4,6 +4,7 @@ import game.vinto.engine.MutableActiveTossIn
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.addTossInCard
+import game.vinto.engine.clearDeclarationAt
 import game.vinto.engine.getAutomaticallyReadyPlayers
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.shapes.ActionPhase
@@ -93,6 +94,7 @@ fun handleSwapCard(state: MutableGameState, action: GameAction.SwapCard): Boolea
 
     val cardFromHand = player.cards[position]
     player.cards[position] = pendingCard
+    player.clearDeclarationAt(position)
 
     if (!player.knownCardPositions.contains(position)) {
         player.knownCardPositions.add(position)

@@ -73,6 +73,16 @@ data class PlayerState(
 
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val opponentKnowledge: Map<String, SerializedOpponentKnowledge>? = null,
+
+    /**
+     * Position → rank this player has *claimed* their card to be, out loud, during the
+     * final round — table talk, never checked against the real card, so a claim can be
+     * wrong. Kotlin-only: `null` (the TypeScript states' shape) is omitted from
+     * serialisation, which is what keeps the parity corpus hashes untouched; the engine
+     * normalises an emptied map back to `null` for the same reason.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val declaredCards: Map<Int, Rank>? = null,
 )
 
 @Serializable
