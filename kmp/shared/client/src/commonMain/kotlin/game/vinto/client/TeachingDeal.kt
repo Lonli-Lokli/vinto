@@ -175,6 +175,15 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
     private var demonstrated = false
 
     override fun nextAction(state: GameState): GameAction? {
+        // Don has called and the coalition needs a leader. Outside the lesson the bots hold
+        // this choice open for the human; here the script keeps moving, so the director
+        // nominates the first bot the way the runner used to.
+        if (state.vintoCallerId != null && state.coalitionLeaderId == null) {
+            state.players.firstOrNull { it.isBot && it.id != state.vintoCallerId }?.let {
+                return GameAction.SetCoalitionLeader(game.vinto.shapes.LeaderIdPayload(it.id))
+            }
+        }
+
         // Before anything else, and not restricted to whoever's turn it is: a toss-in belongs
         // to the whole table, which is the point being made.
         tossInDemo(state)?.let { return it }

@@ -5,6 +5,7 @@ import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
+import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -69,6 +70,12 @@ data class Table(
     val waiting: Boolean = false,
     /** The cards the screen may show face-up. See [revealedTo]. */
     val revealed: Set<CardRef> = emptySet(),
+    /**
+     * Declared ranks worn by cards, for every seat to read: what a coalition member has
+     * *claimed* a card to be. A label on the card back, never the card itself — a claim is
+     * only as good as the memory it came from.
+     */
+    val badges: Map<CardRef, String> = emptyMap(),
 )
 
 /** A card on the table: whose, and which slot. */
@@ -139,6 +146,9 @@ sealed interface Question {
     /** Slot chosen — do I call the rank of the card going out, and gamble on it? */
     data class CallRank(val position: Int) : Question
 
+    /** Final round: which rank do I *claim* my card at this position is? */
+    data class DeclareRank(val position: Int) : Question
+
 }
 
 private const val SETUP_PEEKS = 2
@@ -162,8 +172,9 @@ private const val TWO_TARGETS = 2
  * So during play only what the *current action* has just revealed is shown, which is what the
  * web app does (`canSeePlayerCard` in `apps/vinto/src/app/components/logic`). The exceptions
  * are the two moments where the rules themselves turn cards over: setup, when you are told to
- * look at two of your own, and scoring, when every hand goes face-up. The coalition leader is
- * a third — they play their allies' hands, so they see them.
+ * look at two of your own, and scoring, when every hand goes face-up. The coalition leader
+ * used to be a third and is no longer: coalition knowledge travels as *declared* claims
+ * (`DECLARE_CARDS`, worn as [Table.badges]), never as real cards.
  */
 fun revealedTo(view: PlayerView): Set<CardRef> {
     if (view.phase == GamePhase.SCORING) {
@@ -182,21 +193,11 @@ fun revealedTo(view: PlayerView): Set<CardRef> {
     // knowledge the seat projection already reflects — the engine records that you now know
     // the card, and the projection turns it face-up for you. What is temporary is being
     // *shown* it, and that lasts exactly as long as the action does.
-    val shown = view.pendingAction
+    return view.pendingAction
         ?.takeIf { it.playerId == view.viewerId }
         ?.targets
         .orEmpty()
         .mapTo(mutableSetOf()) { CardRef(it.playerId, it.position) }
-
-    // The coalition plays as one hand and its leader plays it, so they see all of it — the
-    // Vinto caller's excepted, which is the whole point of the coalition rule.
-    if (view.coalitionLeaderId == view.viewerId) {
-        view.players
-            .filter { it.id != view.vintoCallerId }
-            .forEach { seat -> seat.cards.indices.forEach { shown += CardRef(seat.id, it) } }
-    }
-
-    return shown
 }
 
 @Suppress("ReturnCount")
@@ -215,6 +216,11 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
         return coalitionTable(view).showing(view)
     }
 
+    // The player tapped one of their own cards to declare it: the rank picker.
+    if (question is Question.DeclareRank && mayDeclare(view)) {
+        return declareOwnCardTable(view, question.position).showing(view)
+    }
+
     tossInTable(view)?.let { return it.showing(view) }
 
     val pending = view.pendingAction
@@ -225,13 +231,55 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
     val current = view.players.getOrNull(view.currentPlayerIndex)
     if (current?.id != view.viewerId || pending != null) {
         val who = current?.nickname ?: "Someone"
-        return Table(prompt = "$who is playing", waiting = true).showing(view)
+        val watching = Table(prompt = "$who is playing", waiting = true)
+        // A coalition member waiting through the final round can still talk: tapping one of
+        // their own cards opens the claim picker.
+        return if (mayDeclare(view)) {
+            watching.copy(
+                detail = "Tap one of your cards to say what you think it is.",
+                taps = me.cards.indices.associate { position ->
+                    CardRef(me.id, position) to Move.Ask(Question.DeclareRank(position))
+                },
+            ).showing(view)
+        } else {
+            watching.showing(view)
+        }
     }
 
     return turnStartTable(view).showing(view)
 }
 
-private fun Table.showing(view: PlayerView) = copy(revealed = revealedTo(view), help = helpFor(view))
+/** Table talk is for coalition members, during the final round, once a leader is chosen. */
+private fun mayDeclare(view: PlayerView): Boolean =
+    view.phase == GamePhase.FINAL &&
+        view.vintoCallerId != null &&
+        view.viewerId != view.vintoCallerId &&
+        view.coalitionLeaderId != null
+
+private fun declareOwnCardTable(view: PlayerView, position: Int): Table = Table(
+    prompt = "What do you say this card is?",
+    detail = "Table talk — the coalition takes your word for it, right or wrong.",
+    choices = listOf(Choice("Back", Move.Ask(Question.None))),
+    ranks = ALL_RANKS.map { rank ->
+        RankChoice(
+            rank,
+            Move.Send(
+                GameAction.DeclareCards(DeclareCardsPayload(view.viewerId, mapOf(position to rank))),
+            ),
+        )
+    },
+)
+
+/** Every standing claim, worn on the claimed card for the whole table to read. */
+private fun declaredBadges(view: PlayerView): Map<CardRef, String> =
+    view.players
+        .flatMap { seat ->
+            seat.declaredCards.map { (position, rank) -> CardRef(seat.id, position) to rank.serialName }
+        }
+        .toMap()
+
+private fun Table.showing(view: PlayerView) =
+    copy(revealed = revealedTo(view), help = helpFor(view), badges = declaredBadges(view))
 
 /**
  * What the "?" explains, for whatever is happening.

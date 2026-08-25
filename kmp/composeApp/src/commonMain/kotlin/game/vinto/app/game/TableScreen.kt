@@ -676,22 +676,42 @@ private fun SeatCard(
         return
     }
 
-    CardFace(
-        modifier = Modifier.anchoredAt(stage, anchor, scale),
-        // Face-up only where the table says so. The view carries more than that — everything
-        // this seat *knows* — and drawing all of it would hand the player a perfect memory of
-        // their own hand, which is the one thing this game asks them to keep themselves.
-        card = if (ref in table.revealed) card else CardView.Hidden,
-        scale = scale,
-        state = CardState(
-            tappable = move != null,
-            chosen = ref.isTargeted(view),
-            turned = turned,
-            flinching = stage.isFlinching(anchor),
-        ),
-        label = stringResource(Res.string.card_position, seat.nickname, position + 1),
-        onClick = move?.let { { onMove(it) } },
-    )
+    Box(modifier = Modifier.anchoredAt(stage, anchor, scale)) {
+        CardFace(
+            // Face-up only where the table says so. The view carries more than that —
+            // everything this seat *knows* — and drawing all of it would hand the player a
+            // perfect memory of their own hand, which is the one thing this game asks them
+            // to keep themselves.
+            card = if (ref in table.revealed) card else CardView.Hidden,
+            scale = scale,
+            state = CardState(
+                tappable = move != null,
+                chosen = ref.isTargeted(view),
+                turned = turned,
+                flinching = stage.isFlinching(anchor),
+            ),
+            label = stringResource(Res.string.card_position, seat.nickname, position + 1),
+            onClick = move?.let { { onMove(it) } },
+        )
+
+        // A declared claim, worn on the card's corner: what its owner *says* it is, readable
+        // by every seat and exactly as trustworthy as the memory it came from. A label on
+        // the back — never the card itself, which stays hidden.
+        table.badges[ref]?.let { claim ->
+            Surface(
+                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp),
+                shape = RoundedCornerShape(TableSizes.Corner),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+            ) {
+                Text(
+                    text = claim,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                )
+            }
+        }
+    }
 }
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
