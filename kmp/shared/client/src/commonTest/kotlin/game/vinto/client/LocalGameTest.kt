@@ -140,4 +140,23 @@ class LocalGameTest {
     private companion object {
         const val FOUR_SEATS = 4
     }
+
+    /**
+     * The opening deal is animated only for a table that was actually just dealt: a new
+     * game and each next round, never a resumed one — replaying the deal for a round that
+     * was mid-game when the app closed would animate an event that is not happening.
+     */
+    @Test
+    fun onlyAFreshDealIsFreshlyDealt() = runTest {
+        val vault = MemoryVault()
+        val game = LocalGame.start(vault, seed = 5L, difficulty = Difficulty.EASY)
+        assertTrue(game.freshlyDealt, "a started game was just dealt")
+
+        game.peekTwoAndStart()
+        val resumed = LocalGame.resume(vault)!!
+        assertTrue(!resumed.freshlyDealt, "a resumed round was not")
+
+        resumed.nextRound()
+        assertTrue(resumed.freshlyDealt, "the next round is dealt in front of the player")
+    }
 }

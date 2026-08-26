@@ -55,6 +55,13 @@ sealed interface Beat {
          * proving something.
          */
         val shown: Boolean = false,
+        /**
+         * Flown at a dealer's tempo rather than a play's. The opening deal is twenty cards,
+         * and twenty cards at the speed a move deserves to be read at is half a minute of
+         * watching the deck; a deal is dealt briskly because there is nothing to read on a
+         * card arriving face-down.
+         */
+        val quick: Boolean = false,
     ) : Beat
 
     /**
@@ -216,6 +223,54 @@ fun revealScene(revealed: List<PublicReveal>): List<Scene> = revealed
     .takeIf { it.isNotEmpty() }
     ?.let { listOf(it) }
     .orEmpty()
+
+/**
+ * The opening deal, as a dealer deals it: one card to every seat, five times round.
+ *
+ * The deal is not an action — the dealt table precedes the first `GameAction` — so it cannot
+ * be a [Frame]; it is played by the stage before any frame, over the freshly dealt view.
+ * Five scenes of four face-down flights: the beats within a wave fly together and the waves
+ * follow one another, which reads as dealing rather than as twenty cards materialising —
+ * which is what the table used to do, and it is the first thing anybody sees.
+ */
+fun dealScenes(view: PlayerView): List<Scene> {
+    val cards = view.players.maxOfOrNull { it.cards.size } ?: return emptyList()
+
+    return (0 until cards).map { position ->
+        view.players.mapNotNull { seat ->
+            if (position >= seat.cards.size) return@mapNotNull null
+            Beat.Move(Anchor.Deck, Anchor.Seat(seat.id, position), card = null, quick = true)
+        }
+    }.filter { it.isNotEmpty() }
+}
+
+/**
+ * The reveal at scoring: every hand turns over, seat by seat, in table order.
+ *
+ * All four used to flip at once, which spends the round's payoff in a single frame — the
+ * moment the player finally sees the three hands they spent the round guessing at. Seat by
+ * seat gives each hand its beat. Table order for every viewer, on purpose: an order that
+ * favoured the viewer (their own hand last, say) would give two seats different scripts for
+ * the same moment, and the visibility matrix holds that two scripts may differ only by a
+ * withheld face — never by the shape of what happens.
+ *
+ * Only cards *newly* face-up turn: what the viewer could already see — their own peeked
+ * cards, anything a wrong declaration exposed — is not news and does not flip again. Nothing
+ * happens on a view already at scoring (a resumed game), because a reveal that replays on
+ * every glance is a reveal that stops meaning anything.
+ */
+fun scoringScenes(before: PlayerView, after: PlayerView): List<Scene> {
+    if (before.phase == GamePhase.SCORING || after.phase != GamePhase.SCORING) return emptyList()
+
+    return after.players.mapNotNull { seat ->
+        val previously = before.players.firstOrNull { it.id == seat.id }?.cards.orEmpty()
+        seat.cards.mapIndexedNotNull { position, card ->
+            val now = card as? CardView.Visible ?: return@mapIndexedNotNull null
+            if (previously.getOrNull(position) is CardView.Visible) return@mapIndexedNotNull null
+            Beat.Reveal(Anchor.Seat(seat.id, position), now.card)
+        }.takeIf { it.isNotEmpty() }
+    }
+}
 
 /**
  * Frames that happened at one moment, played at one moment.
@@ -425,7 +480,10 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         ?.takeIf { action is GameAction.UseCardAction }
         ?.let { listOf(Beat.Move(Anchor.Pending, Anchor.Discard, it, shown = true)) }
 
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict, penalty, table)
+    // The reveal rides the round-ending frame as trailing scenes, so the hands turn over
+    // seat by seat after whatever the last move showed — see [scoringScenes].
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict, penalty, table) +
+        scoringScenes(before, after)
 }
 
 /**

@@ -44,9 +44,11 @@ import game.vinto.client.Anchor
 import game.vinto.client.AnimationQueue
 import game.vinto.client.Attention
 import game.vinto.client.Beat
+import game.vinto.client.CardRef
 import game.vinto.client.Frame
 import game.vinto.client.Pacing
 import game.vinto.client.heldUp
+import game.vinto.client.revealedTo
 import game.vinto.client.Scene
 import game.vinto.client.Target
 import game.vinto.client.tossedTogether
@@ -102,6 +104,13 @@ private const val REVEAL_MS = 1_800
 
 private const val MOVE_MS = 1_100
 private const val SHOWN_MS = 1_600
+
+/**
+ * A dealt card's flight. A deal is twenty cards, and twenty at [MOVE_MS] is most of half a
+ * minute watching the deck; nothing on a face-down card needs reading, so it travels at a
+ * dealer's speed and the waves keep the rhythm.
+ */
+private const val DEAL_MS = 420
 /** How long the table dwells on an aim — the rise and a beat to read it, not the lift's life. */
 private const val PEEK_MS = 1100
 
@@ -303,6 +312,19 @@ class Stage {
     internal val expecting = mutableStateMapOf<Anchor, CardView>()
 
     /**
+     * Cards the stepped view already shows face-up whose reveal has not been *played* yet.
+     *
+     * The table steps to the position a move produced before its scenes play, and at
+     * scoring that position has every hand face-up — so without this the whole table
+     * flashed over in one frame and the seat-by-seat reveal turned cards that were already
+     * showing. A concealed card draws its back until its reveal scene starts, and the flip
+     * is then `CardFace`'s own animation, in place, one seat at a time.
+     */
+    internal val concealing = mutableStateListOf<Anchor>()
+
+    fun isConcealing(anchor: Anchor): Boolean = anchor in concealing
+
+    /**
      * The hands a card is currently leaving, and from which slot.
      *
      * A hand closes up the instant a card leaves it, because the table has already stepped to
@@ -389,6 +411,8 @@ class Stage {
         val toTurn: Float,
         /** Lit on the way, for a card the table is being shown rather than merely moved. */
         val shown: Boolean = false,
+        /** Flown at the dealer's tempo. See [DEAL_MS]. */
+        val quick: Boolean = false,
     )
 
     /** The middle of the table, which is where a lifted card rises towards. */
@@ -499,6 +523,7 @@ val LocalStage = compositionLocalOf { Stage() }
  * @param live where the game actually is. Shown whenever nothing is being animated, which is
  *   every moment the player can act.
  */
+@Suppress("LongParameterList") // A stage has many optional knobs; callers name what they set.
 @Composable
 fun CardStage(
     frames: Flow<List<Frame>>,
@@ -508,6 +533,12 @@ fun CardStage(
     modifier: Modifier = Modifier,
     /** What a lesson is asking of the stage, if one is running. See [Coaching]. */
     coaching: Coaching = Coaching(),
+    /**
+     * Scenes to play once, before any frame: the opening deal (`dealScenes`). Not frames,
+     * because the deal is not an action — the dealt table precedes the first one — and not
+     * replayed on a resume, which is the caller's `freshlyDealt` to decide.
+     */
+    opening: List<Scene> = emptyList(),
     content: @Composable (PlayerView) -> Unit,
 ) {
     val stage = remember { Stage() }
@@ -539,6 +570,21 @@ fun CardStage(
         var next = 0L
         var lastActor: String? = null
 
+        // The deal, before anything else. Every slot a card will land in is marked as
+        // expecting first, so the whole table opens as gaps and fills wave by wave — the
+        // same machinery a mid-game arrival uses, played over the freshly dealt view.
+        if (opening.isNotEmpty()) {
+            opening.flatten().filterIsInstance<Beat.Move>().forEach { move ->
+                stage.expecting[move.to] = move.card.faceOrBack()
+            }
+            for (scene in opening) {
+                withFrameNanos { }
+                next = stage.play(scene, next)
+                delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
+            }
+            stage.expecting.clear()
+        }
+
         // A game opened mid-action — a resume, a reconnect — may already be holding cards
         // up, and no frame is coming to say so: the lift is a state, so it is read.
         stage.holdUp(current)
@@ -569,6 +615,19 @@ fun CardStage(
                     stage.expecting[move.to] = move.card.faceOrBack()
                 }
 
+                // And everything this move is about to *reveal* that the stepped view will
+                // already be showing — the scoring reveal — stays concealed until its scene
+                // turns it. Only reveals the view itself makes visible: a King's named card
+                // is transient and never in `revealedTo`, so it lifts as it always has.
+                stage.concealing.clear()
+                val visible = revealedTo(frame.view)
+                frame.scenes.flatten().filterIsInstance<Beat.Reveal>().forEach { reveal ->
+                    val seat = reveal.at as? Anchor.Seat ?: return@forEach
+                    if (CardRef(seat.playerId, seat.position) in visible) {
+                        stage.concealing += reveal.at
+                    }
+                }
+
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
                 // for the gap to be in the right place.
@@ -586,8 +645,10 @@ fun CardStage(
 
                 // Nothing is expected any more: every flight this move had has started, and
                 // a beat that never flew (a card already where it was going) must not leave a
-                // place waiting for it.
+                // place waiting for it. Concealment ends the same way: a reveal that never
+                // played must not leave a card wearing its back forever.
                 stage.expecting.clear()
+                stage.concealing.clear()
 
                 // The lifted cards, brought into line with the table this move left behind.
                 // After the scenes rather than between them, so a card stays up through the
@@ -632,7 +693,7 @@ fun CardStage(
             key(flight.id) {
                 // The same clock the scene is waiting on: a lit flight is given longer, and
                 // was flying in the shorter time and then sitting still for the difference.
-                val ms = stage.ms(if (flight.shown) SHOWN_MS else MOVE_MS)
+                val ms = stage.ms(flightMs(shown = flight.shown, quick = flight.quick))
                 InFlight(flight, sizes, ms) { stage.flying.remove(flight) }
             }
         }
@@ -713,7 +774,17 @@ private suspend fun Stage.holdUp(view: PlayerView) {
  */
 private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
     is Beat.Move -> fly(beat, nextId)
-    is Beat.Reveal -> lift(beat.at, CardView.Visible(beat.card), ms(REVEAL_MS))
+
+    // Two kinds of reveal, told apart by whether the table's own view already shows the
+    // face. A transient one — a King's named card, a throw that missed — lifts the card for
+    // the table and puts it back. A *concealed* one is the scoring reveal: the stepped view
+    // has the card face-up and this stage has been drawing its back, so removing the
+    // concealment IS the flip — `CardFace` animates it in place, and the scene dwells on it.
+    is Beat.Reveal -> if (concealing.remove(beat.at)) {
+        ms(REVEAL_MS)
+    } else {
+        lift(beat.at, CardView.Visible(beat.card), ms(REVEAL_MS))
+    }
 
     is Beat.Peek -> lift(beat.at, beat.card.faceOrBack(), ms(PEEK_MS))
 
@@ -851,8 +922,16 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
         fromTurn = if (from.turned) QUARTER else 0f,
         toTurn = if (to.turned) QUARTER else 0f,
         shown = beat.shown,
+        quick = beat.quick,
     )
-    return ms(if (beat.shown) SHOWN_MS else MOVE_MS)
+    return ms(flightMs(shown = beat.shown, quick = beat.quick))
+}
+
+/** How long a flight takes: a dealt card is brisk, a shown one lingers, the rest walk. */
+private fun flightMs(shown: Boolean, quick: Boolean): Int = when {
+    quick -> DEAL_MS
+    shown -> SHOWN_MS
+    else -> MOVE_MS
 }
 
 /**

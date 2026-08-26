@@ -11,6 +11,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
+import game.vinto.client.dealScenes
 import game.vinto.client.toJson
 import game.vinto.shapes.GamePhase
 import org.jetbrains.compose.resources.stringResource
@@ -77,11 +79,20 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
         // arrangement too: a rotation is the one thing that re-decides it mid-round.
         val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
+        // The opening deal, played once per fresh deal: read before the effect that marks it
+        // shown, and remembered per round so a rebuilt screen — a rotation — does not deal
+        // the same cards twice.
+        val opening = remember(round) {
+            if (game.freshlyDealt) dealScenes(session.view.value) else emptyList()
+        }
+        LaunchedEffect(round) { game.dealShown() }
+
         CardStage(
             frames = session.frames,
             live = holder.current,
             sizes = layout.sizes,
             pace = pace.scale,
+            opening = opening,
         ) { shown ->
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(

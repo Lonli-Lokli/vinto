@@ -436,9 +436,13 @@ class TransformationMatrixTest {
             play.last()
         },
         Row(
+            // The reveal at scoring: every hand turns over, one seat per scene, in table
+            // order — the same script for every viewer, because favouring the viewer would
+            // make two seats' scripts differ by more than a withheld face. Each seat here
+            // holds one card, so each scene is one reveal.
             "END_ROUND (scoring)",
-            actorSees = "nothing",
-            othersSee = "nothing",
+            actorSees = "reveal you[0]; reveal opp[0]; reveal bot2[0]; reveal bot3[0]",
+            othersSee = "reveal you[0]; reveal opp[0]; reveal bot2[0]; reveal bot3[0]",
         ) {
             val play = Play(deadFinalRound())
             play.act(GameAction.EndRound(PlayerIdPayload(play.me)))
