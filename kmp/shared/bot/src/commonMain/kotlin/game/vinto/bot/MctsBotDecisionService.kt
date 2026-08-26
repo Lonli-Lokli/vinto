@@ -43,6 +43,12 @@ class MctsBotDecisionService(
     private var botId: String = ""
     private var botMemory: BotMemory = BotMemory(botId = "", difficulty, random)
 
+    /** The deal this memory belongs to; a new gameId starts it over. */
+    private var lastGameId: String = ""
+
+    /** The last turn this bot thought about, so elapsed turns become memory ticks. */
+    private var lastSeenTurnNumber: Int = -1
+
     /**
      * Plans made at one decision point and spent at the next, keyed by bot.
      *
@@ -381,10 +387,28 @@ class MctsBotDecisionService(
      * Changing bot means starting from nothing — one bot's memories are not another's.
      */
     private fun initializeIfNeeded(context: BotDecisionContext) {
-        if (botId != context.botId) {
+        // A new deal is a new gameId (never keyed on roundNumber, which counts table laps
+        // within one deal): the hands this memory described no longer exist, so it starts
+        // over. Client and worker already rebuild their runners per deal; this is the
+        // deterministic backstop for any service that survives one.
+        if (botId != context.botId || lastGameId != context.gameState.gameId) {
             botId = context.botId
+            lastGameId = context.gameState.gameId
+            lastSeenTurnNumber = -1
+            cachedActionPlans.clear()
             botMemory = BotMemory(context.botId, difficulty, random)
         }
+
+        // Time passes at turn boundaries, never off a clock: each turn the state has
+        // advanced since this bot last thought is one tick of forgetting and decay. HARD
+        // draws nothing from Random here (forget chance and decay rate are both zero), so
+        // perfect-memory fixtures are bit-identical.
+        val turn = context.gameState.turnNumber
+        if (lastSeenTurnNumber in 0 until turn) {
+            repeat(turn - lastSeenTurnNumber) { botMemory.processTurnBoundary() }
+        }
+        lastSeenTurnNumber = turn
+
         updateMemoryFromContext(context)
     }
 

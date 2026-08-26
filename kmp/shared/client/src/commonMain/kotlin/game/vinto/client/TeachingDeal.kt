@@ -59,10 +59,10 @@ internal object TeachingDeal {
      */
     private val TOP = listOf(
         Rank.FOUR, Rank.SIX, Rank.EIGHT, Rank.NINE,
-        Rank.FIVE, Rank.NINE, Rank.NINE, Rank.QUEEN,
-        Rank.SIX, Rank.FIVE, Rank.THREE, Rank.KING,
-        Rank.ACE, Rank.FOUR, Rank.TEN, Rank.THREE,
-        Rank.JOKER,
+        Rank.QUEEN, Rank.FIVE, Rank.NINE, Rank.NINE,
+        Rank.KING, Rank.SIX, Rank.FIVE, Rank.THREE,
+        Rank.JOKER, Rank.ACE, Rank.FOUR, Rank.TEN,
+        Rank.THREE,
     )
 
     /**
@@ -198,14 +198,17 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
 
         val pending = state.pendingAction
 
-        // The seat just before the player draws rather than takes.
+        // Every directed bot draws rather than takes.
         //
-        // The lesson claims there are two ways to start a turn, and the second one — taking an
-        // unused action card off the pile — can only be *shown* if there is one there when the
-        // player's turn begins. Left to themselves the bots take it first, correctly: it is
-        // free value. So the bot sitting immediately before the player is made to draw, and
-        // what it then throws away is what the player is offered.
-        if (pending == null && actor.id == seatBeforeThePlayer(state)) {
+        // Two reasons, one per audience. For the player: the lesson claims there are two
+        // ways to start a turn, and the second — taking an unused action card off the pile —
+        // can only be *shown* if one is still there when the player's turn begins; left to
+        // themselves the bots take it first, correctly, since it is free value. For the
+        // deck: the deal is written down card by card, and it only lands if every bot turn
+        // consumes exactly one card — a bot free to take instead of draw shifts every
+        // position after it whenever the bot brain changes its mind, and the lesson breaks
+        // for reasons that have nothing to do with the lesson.
+        if (pending == null && actor.isBot) {
             return GameAction.DrawCard(PlayerIdPayload(actor.id))
         }
 
