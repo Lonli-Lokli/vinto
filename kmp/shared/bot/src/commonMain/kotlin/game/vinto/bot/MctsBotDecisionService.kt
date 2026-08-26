@@ -162,10 +162,26 @@ class MctsBotDecisionService(
         initializeIfNeeded(context)
 
         // The peek already happened; the bot knows these cards now whatever it decides next.
-        context.currentAction?.peekTargets?.forEachIndexed { index, target ->
+        val targets = context.currentAction?.peekTargets.orEmpty()
+        targets.forEachIndexed { index, target ->
             peekedCards.getOrNull(index)?.let { botMemory.observeCard(it, target.playerId, target.position) }
         }
 
+        // The two targets are committed — the only question left is swap or walk away, and
+        // the peek has answered it. When one of the cards is the bot's own, swap exactly
+        // when it sheds points. (Re-running the search here was wrong twice over: it
+        // re-planned targets that are no longer up for choice, and its answer was read
+        // against a move type that node can never produce — so the Queen always skipped.)
+        if (targets.size == 2 && peekedCards.size == 2) {
+            val ownIndex = targets.indexOfFirst { it.playerId == context.botId }
+            if (ownIndex >= 0) {
+                return peekedCards[ownIndex].value > peekedCards[1 - ownIndex].value
+            }
+            // Both cards belong to rivals: no modelled upside in shuffling their hands.
+            return false
+        }
+
+        // No committed targets reached us (a hand-built context): fall back to the search.
         val bestMove = runMcts(constructGameState(context))
         return bestMove.type == MctsMoveType.SWAP && bestMove.shouldSwap == true
     }
