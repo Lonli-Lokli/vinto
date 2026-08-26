@@ -34,10 +34,35 @@
     <string name="home_settings">Settings</string>
     <string name="home_version">v%1$s</string>
 
-    <!-- Online play, explained rather than greyed out. -->
-    <string name="online_title">Not in this build</string>
-    <string name="online_body">The room exists — a server that deals, holds the cards nobody may see, and fills the empty seats with bots. What is missing is this app’s half of it: joining one, and drawing a table somebody else is playing on.\n\nSingle player needs none of that. It runs entirely on this phone, which is why it works on a plane.</string>
-    <string name="online_dismiss">Fair enough</string>
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">Play online</string>
+    <string name="online_nickname">Your name at the table</string>
+    <string name="online_nickname_detail">What the other seats see. Not an account — there are none.</string>
+    <string name="online_code">Room code</string>
+    <string name="online_code_detail">Six characters from whoever opened the room.</string>
+    <string name="online_join">Join the room</string>
+    <string name="online_create">Open a new room</string>
+    <string name="online_failed">The room could not be reached: %1$s</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">Room %1$s</string>
+    <string name="lobby_seat_open">Open seat</string>
+    <string name="lobby_seat_you">%1$s — you</string>
+    <string name="lobby_add_bot">Add a bot</string>
+    <string name="lobby_remove_bot">Remove the bot in seat %1$d</string>
+    <string name="lobby_leave">Leave the room</string>
+    <string name="lobby_connecting">Reaching the room…</string>
+    <string name="lobby_needs_human">A game needs two people. Share the code — bots can fill the rest of the table.</string>
+    <string name="lobby_fill_seats">Every seat plays. Fill the empty ones with people or bots, and the deal counts itself down.</string>
+    <string name="lobby_counting_down">All set — dealing in %1$d…</string>
+    <string name="lobby_over">The room has ended.</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">Connected</string>
+    <string name="net_connecting">Connecting…</string>
+    <string name="net_reconnecting">Reconnecting…</string>
+    <string name="net_closed">Disconnected</string>
+    <string name="online_session_over">The session is over: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Settings</string>

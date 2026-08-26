@@ -37,19 +37,20 @@ class MenuUiTest {
     }
 
     /**
-     * The online button is not a stub that does nothing: it says what is missing, which is a
-     * client rather than a server.
+     * The online button opens the way into a room: a name, a code to join, a room to make.
+     * The way back works without ever touching the network.
      */
     @Test
-    fun onlinePlaySaysWhatIsMissingRatherThanNothing() = runComposeUiTest {
+    fun onlinePlayOpensTheWayIntoARoom() = runComposeUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
         button("Play online").performClick()
         waitForIdle()
 
-        onNodeWithText("Not in this build").assertIsDisplayed()
-        button("Fair enough").performClick()
+        button("Join the room").assertIsDisplayed()
+        button("Open a new room").assertIsDisplayed()
+        button("Back").performClick()
         waitForIdle()
 
         button("Play").assertIsDisplayed()
