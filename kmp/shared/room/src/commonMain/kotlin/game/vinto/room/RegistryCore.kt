@@ -1,4 +1,4 @@
-package game.vinto.worker
+package game.vinto.room
 
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
@@ -73,7 +73,7 @@ data class RegistryState(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class MintResult(
+internal data class MintResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val state: RegistryState,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val room: RegisteredRoom? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
@@ -81,12 +81,11 @@ private data class MintResult(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class ResolveResult(
+internal data class ResolveResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val known: Boolean,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val room: RegisteredRoom? = null,
 )
 
-@JsExport
 fun newRegistry(): String = VintoJson.encodeToString(RegistryState())
 
 /**
@@ -110,7 +109,6 @@ private fun codeFrom(bytes: List<Int>): String =
  * live room is refused rather than silently reusing the entry — the caller retries with fresh
  * bytes, which is one line there and keeps the "one code, one room" invariant absolute here.
  */
-@JsExport
 @Suppress("ReturnCount")
 fun mintRoomCode(
     registryJson: String,
@@ -157,7 +155,6 @@ fun mintRoomCode(
  * This is the gate that replaces create-by-URL: the socket layer asks first and only reaches
  * a Durable Object for a code that comes back known.
  */
-@JsExport
 fun resolveRoomCode(registryJson: String, code: String): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     val room = state.rooms.firstOrNull { it.code == code.uppercase() }
@@ -170,7 +167,6 @@ fun resolveRoomCode(registryJson: String, code: String): String {
  * Private ones are absent, and `sourceId` is stripped from all of them: it exists to enforce a
  * cap, not to tell one visitor which rooms another visitor opened.
  */
-@JsExport
 fun listPublicRooms(registryJson: String): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     return VintoJson.encodeToString(
@@ -179,10 +175,8 @@ fun listPublicRooms(registryJson: String): String {
 }
 
 /** The caps, exported so a harness cannot drift from what is enforced. */
-@JsExport
 fun maxLiveRooms(): Int = MAX_LIVE_ROOMS
 
-@JsExport
 fun maxRoomsPerSource(): Int = MAX_ROOMS_PER_SOURCE
 
 /**
@@ -192,7 +186,6 @@ fun maxRoomsPerSource(): Int = MAX_ROOMS_PER_SOURCE
  * Idempotent: forgetting a code that is already gone is not an error, because a room that
  * dies twice is a retry rather than a bug.
  */
-@JsExport
 fun forgetRoom(registryJson: String, code: String): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     return VintoJson.encodeToString(
@@ -207,7 +200,6 @@ fun forgetRoom(registryJson: String, code: String): String {
  * cancelled, a seat filling — rather than on a timer, so the write count is bounded by play
  * rather than by clock ticks.
  */
-@JsExport
 fun touchRoom(
     registryJson: String,
     code: String,
@@ -238,6 +230,5 @@ fun touchRoom(
 }
 
 /** How many rooms the registry believes are live. The cap in phase 5 is applied against this. */
-@JsExport
 fun registrySize(registryJson: String): Int =
     VintoJson.decodeFromString(RegistryState.serializer(), registryJson).size
