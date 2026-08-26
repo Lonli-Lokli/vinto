@@ -319,7 +319,9 @@ export class Room {
     await this.#save(JSON.stringify(result.state));
     await this.#fileRecording(stateJson, result.state);
 
-    if (result.started || result.tookOver.length > 0) {
+    // Anything the alarm produced messages for — a deal, a takeover's moves, a pacing
+    // expiry's — goes out; the room decided what, this layer only delivers.
+    if (Object.keys(result.messages).length > 0) {
       return this.#sendPrebuilt(result.messages);
     }
 

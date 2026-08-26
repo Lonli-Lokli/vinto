@@ -121,7 +121,10 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String {
             )
         }
 
-        result.tookOver.isNotEmpty() -> eventsPerSeat(state, tracked.steps, nowMs)
+        // The log grew ⇒ send events. Which alarm did the growing — a seat-grace takeover,
+        // a pacing expiry — is the room's business; what a client needs is the same either
+        // way: the actions, each with its view.
+        tracked.steps.isNotEmpty() -> eventsPerSeat(state, tracked.steps, nowMs)
 
         else -> emptyMap()
     }

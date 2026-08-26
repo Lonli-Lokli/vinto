@@ -15,6 +15,8 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.actorId
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.LeaderIdPayload
+import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Prng
 import game.vinto.protocol.LobbySeat
 import game.vinto.protocol.LobbyView
@@ -129,6 +131,26 @@ private const val SESSION_MS = 30 * 60 * 1000.0
 
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
+
+/**
+ * How long a toss-in window waits on humans before the room finishes it for them (9.4).
+ *
+ * The one place online play cannot simply wait: a toss-in holds *every* seat, so one person
+ * looking at their phone is four people not playing. Fifteen seconds is long enough to
+ * decide whether the card in your hand matches, and the deadline only exists while a human
+ * is actually being waited on — bots resolve their windows in the same request that opened
+ * them.
+ */
+private const val TOSS_IN_MS = 15_000.0
+
+/**
+ * How long the coalition may argue about its leader before the room appoints one (9.4).
+ *
+ * A little longer than the toss-in, because it is a real decision — but not open-ended,
+ * because the final round is the one part of the game the caller is entitled to see played
+ * out. The default is deterministic: the first coalition seat in table order.
+ */
+private const val LEADER_MS = 20_000.0
 
 // PlayerProfile, RoundResult, LoggedAction, RoomPhase, LobbySeat and LobbyView moved verbatim
 // to `shared/protocol` (game.vinto.protocol): they travel on the wire, so the client and the
@@ -304,6 +326,16 @@ data class RoomState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val buckets: Map<Int, Bucket> = emptyMap(),
     /** Rounds played, points carried, and what the clock says (design R2, R2b). */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val session: SessionState = SessionState(),
+
+    // --- pacing (migrate task 9.4) ---------------------------------------------------------
+    //
+    // Wall-clock deadlines on the two situations where the whole table waits on a human:
+    // an open toss-in window, and the coalition's leader choice. Recomputed by `withPacing`
+    // after every change to the game; the running deadline is kept rather than refreshed, so
+    // unrelated actions do not push it back. Both are the room's business, never the
+    // engine's — the reducer has no clock, so the expiry arrives as an ordinary action.
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tossInDeadlineEpochMs: Double? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val leaderDeadlineEpochMs: Double? = null,
 ) {
     val nextIndex: Int get() = log.size
 
@@ -337,6 +369,8 @@ data class RoomState(
             startsAtEpochMs,
             lonelyUntilEpochMs,
             emptyUntilEpochMs,
+            tossInDeadlineEpochMs,
+            leaderDeadlineEpochMs,
             finishedAtEpochMs?.plus(FINISHED_TTL_MS),
             if (phase == RoomPhase.LOBBY || phase == RoomPhase.STARTING) {
                 createdAtEpochMs + LOBBY_TTL_MS
@@ -607,7 +641,47 @@ fun startGame(stateJson: String, nowMs: Double): String {
         ),
     )
 
-    return VintoJson.encodeToString(JoinResult(playBots(started), 0))
+    return VintoJson.encodeToString(JoinResult(withPacing(playBots(started), nowMs), 0))
+}
+
+/** The humans an open toss-in window is still waiting on. Empty when nothing waits. */
+private fun laggingHumans(state: RoomState): List<String> {
+    val game = state.game ?: return emptyList()
+    val toss = game.activeTossIn ?: return emptyList()
+    return game.players
+        .filter { it.isHuman && it.id !in toss.playersReadyForNextTurn }
+        .map { it.id }
+}
+
+/** Whether the final round is stalled on the coalition choosing its leader. */
+private fun awaitingLeader(state: RoomState): Boolean {
+    val game = state.game ?: return false
+    return game.phase == GamePhase.FINAL &&
+        game.vintoCallerId != null &&
+        game.coalitionLeaderId == null
+}
+
+/**
+ * Recomputes the pacing deadlines from the game on the table.
+ *
+ * A deadline exists exactly while its situation does, and a *running* one is kept rather
+ * than refreshed — an unrelated action must not buy the lagging player more time. Applied
+ * after everything that changes the game: an action, a deal, a takeover, an expiry.
+ */
+private fun withPacing(state: RoomState, nowMs: Double): RoomState {
+    val playing = state.phase == RoomPhase.PLAYING
+    return state.copy(
+        tossInDeadlineEpochMs = if (playing && laggingHumans(state).isNotEmpty()) {
+            state.tossInDeadlineEpochMs ?: (nowMs + TOSS_IN_MS)
+        } else {
+            null
+        },
+        leaderDeadlineEpochMs = if (playing && awaitingLeader(state)) {
+            state.leaderDeadlineEpochMs ?: (nowMs + LEADER_MS)
+        } else {
+            null
+        },
+    )
 }
 
 /** What a bucket had to say: either a charge went through, or how long to wait. */
@@ -912,7 +986,7 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         }
         state = state.copy(seats = seats, seatGrace = state.seatGrace - expired)
         val played = playBotsTracked(state)
-        state = played.state
+        state = withPacing(played.state, nowMs)
         return TrackedAlarm(
             LifecycleResult(
                 state,
@@ -923,7 +997,69 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         )
     }
 
+    // 6. Pacing (9.4): the table has out-waited a human, and the room moves for them.
+    if (due(state.tossInDeadlineEpochMs) || due(state.leaderDeadlineEpochMs)) {
+        return expirePacing(
+            state,
+            nowMs,
+            tossInDue = due(state.tossInDeadlineEpochMs),
+            leaderDue = due(state.leaderDeadlineEpochMs),
+        )
+    }
+
     return TrackedAlarm(LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt))
+}
+
+/**
+ * A pacing deadline expired: the room moves for the humans it out-waited — through the same
+ * validate-and-reduce path a client's action takes, logged `byBot`, so an expiry is
+ * indistinguishable on the wire from a very slow "done".
+ */
+private fun expirePacing(
+    state: RoomState,
+    nowMs: Double,
+    tossInDue: Boolean,
+    leaderDue: Boolean,
+): TrackedAlarm {
+    val synthesized = mutableListOf<GameAction>()
+    if (tossInDue) {
+        laggingHumans(state).forEach {
+            synthesized += GameAction.PlayerTossInFinished(PlayerIdPayload(it))
+        }
+    }
+    if (leaderDue && awaitingLeader(state)) {
+        // Deterministic default: the first coalition seat in table order. Not a choice
+        // anybody made, but one everybody can predict — which is what a default is for.
+        state.game?.players?.firstOrNull { it.id != state.game?.vintoCallerId }?.let {
+            synthesized += GameAction.SetCoalitionLeader(LeaderIdPayload(it.id))
+        }
+    }
+
+    var working = state.copy(tossInDeadlineEpochMs = null, leaderDeadlineEpochMs = null)
+    val steps = mutableListOf<Step>()
+    for (action in synthesized) {
+        // An action the window's closing has already made moot is skipped, not an error:
+        // finishing for the first laggard can finish the window for the second.
+        val game = working.game ?: break
+        if (ActionValidator.validate(game, action) is Validation.Invalid) continue
+        val success = GameEngine.reduce(game, action) as? ReduceResult.Success ?: continue
+        val entry = LoggedAction(
+            index = working.nextIndex,
+            seat = working.seats.firstOrNull { it.playerId == action.actorId }?.index ?: -1,
+            playerId = action.actorId ?: "",
+            action = action,
+            byBot = true,
+        )
+        working = working.copy(game = success.state, log = working.log + entry)
+        steps += Step(entry, success.state, success.revealed)
+    }
+
+    val played = playBotsTracked(working)
+    working = withPacing(settleRound(played.state, nowMs), nowMs)
+    return TrackedAlarm(
+        LifecycleResult(working, nextAlarmAtEpochMs = working.nextAlarmAt),
+        steps = steps + played.steps,
+    )
 }
 
 /**
@@ -1024,7 +1160,7 @@ internal fun applyActionApplied(
     val settled = settleRound(played.state, nowMs)
 
     return Applied(
-        settled,
+        withPacing(settled, nowMs),
         steps = listOf(Step(accepted, reduced, result.revealed)) + played.steps,
     )
 }
