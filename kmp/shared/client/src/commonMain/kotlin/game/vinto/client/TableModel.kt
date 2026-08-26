@@ -743,8 +743,79 @@ private fun scoringTable(view: PlayerView): Table {
             mine == best -> "Round over — you finished lowest on $mine"
             else -> "Round over — you finished on $mine, best was $best"
         },
+        detail = when (roundEndReason(view)) {
+            RoundEndReason.VINTO_CALLED -> {
+                val caller =
+                    view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname ?: "Someone"
+                "$caller called Vinto, so the round was scored against their hand."
+            }
+
+            RoundEndReason.DECK_EXHAUSTED ->
+                "The deck ran out, so the round ended and every hand was counted."
+
+            null -> null
+        },
         waiting = true,
     )
+}
+
+/**
+ * How many turns of the final round are still to be played, counting the one in progress.
+ *
+ * The rules give every non-caller exactly one more turn, and the round ends when play comes
+ * back to the caller — so the answer is the number of seats between the current player
+ * (inclusive: their turn is being played, not spent) and the caller, walking in turn order.
+ * `null` when there is nothing to say: outside the final round, and in the closing frames
+ * where play has already returned to the caller — the reveal itself is the message there.
+ *
+ * This exists because three of those turns can pass in under a second when the coalition is
+ * all bots, and a player who looked away for one of them has no way to know how close the
+ * reveal is. A count is the whole answer.
+ */
+fun finalRoundTurnsLeft(view: PlayerView): Int? {
+    if (view.phase != GamePhase.FINAL) return null
+    val caller = view.players.indexOfFirst { it.id == view.vintoCallerId }
+    if (caller < 0) return null
+
+    val seats = view.players.size
+
+    // Where to count from. During a toss-in window the turn that opened it is already
+    // spent, so the count starts after the window's owner — which also disambiguates the
+    // two moments the current player alone cannot: at the call the open window is still
+    // the *caller's* (a full lap remains), and at the end the engine has already advanced
+    // past the caller to a seat that will never play (nothing remains).
+    val from = view.activeTossIn?.originalPlayerIndex?.let { (it + 1) % seats }
+        ?: view.currentPlayerIndex
+
+    var index = from
+    var left = 0
+    while (index != caller && left < seats) {
+        left++
+        index = (index + 1) % seats
+    }
+
+    // Zero means play has come back round to the caller: the hands are about to go over,
+    // and a count of nothing is not worth saying — the reveal itself is the message.
+    return left.takeIf { it > 0 }
+}
+
+/**
+ * Why the hands went face-up.
+ *
+ * Two things end a round and they mean opposite advice: a Vinto call is somebody's judgement
+ * being tested, and an exhausted deck is the clock running out on everybody at once. The
+ * scoring screen used to show the totals without saying which had happened — and a player
+ * who never called and never saw a call has every right to ask why the round is over.
+ *
+ * Derivable rather than recorded: a round that reaches scoring with no caller can only have
+ * ended on the deck, because a call is the one other way out of `PLAYING`.
+ */
+enum class RoundEndReason { VINTO_CALLED, DECK_EXHAUSTED }
+
+fun roundEndReason(view: PlayerView): RoundEndReason? = when {
+    view.phase != GamePhase.SCORING -> null
+    view.vintoCallerId != null -> RoundEndReason.VINTO_CALLED
+    else -> RoundEndReason.DECK_EXHAUSTED
 }
 
 /** A card taken from the discard pile must be played; only a drawn one may be kept. */
