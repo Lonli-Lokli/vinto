@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -100,7 +102,14 @@ fun HomeScreen(
             .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
     ) {
         Column(
-            modifier = Modifier.align(Alignment.Center).padding(Pad).widthIn(max = ColumnMax),
+            modifier = Modifier
+                .align(Alignment.Center)
+                // Scrollable for the screen this menu was not drawn for: a phone on its
+                // side, where the fan, the panel and the buttons stand taller than the
+                // screen. On every other screen the content fits and the scroll is inert.
+                .verticalScroll(rememberScrollState())
+                .padding(Pad)
+                .widthIn(max = ColumnMax),
             verticalArrangement = Arrangement.spacedBy(Gap),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

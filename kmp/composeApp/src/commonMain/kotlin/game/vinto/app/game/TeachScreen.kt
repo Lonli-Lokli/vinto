@@ -148,7 +148,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val layout = TableLayout.forScreen(maxHeight)
+        val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
         CardStage(
             frames = session.frames,
@@ -209,6 +209,10 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(horizontal = Pad)
+                        // Over the felt only. In landscape the rail stands at the side, and a
+                        // coach lying across it would cover the very buttons the lessons
+                        // point at.
+                        .padding(end = if (layout.landscape) layout.railWidth else 0.dp)
                         .padding(top = HeaderHeight + Pad),
                 )
             }
