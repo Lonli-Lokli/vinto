@@ -9,6 +9,7 @@ import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.actorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -339,8 +340,11 @@ class RemoteGameSession internal constructor(
             }
             if (entry.byBot) bots++
 
-            // The echo: this seat's own accepted action coming back is the dispatch landing.
-            if (entry.playerId == playerId && entry.action == pendingAction) {
+            // The echo: this seat's own accepted action coming back is the dispatch
+            // landing. Actorless actions (choosing a coalition leader names nobody) echo
+            // with no player, so for those the action alone is the match.
+            val mine = entry.playerId == playerId || entry.action.actorId == null
+            if (mine && entry.action == pendingAction) {
                 pending?.complete(null)
             }
         }
