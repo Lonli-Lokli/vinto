@@ -162,6 +162,10 @@ class LocalGameSession(
             is ReduceResult.Failure -> return refuse(result.reason)
         }
 
+        // The bots watch the player play, exactly as they watch each other: every accepted
+        // action feeds the runner's public-information model of the table.
+        runner.observe(action, before, state)
+
         publish()
         val seen = mutableListOf(
             Frame(
@@ -228,6 +232,7 @@ class LocalGameSession(
                 val result = GameEngine.reduce(working, action) as? ReduceResult.Success
                     ?: break
 
+                runner.observe(action, working, result.state)
                 told += BotMove(action, working, result.state, result.revealed)
                 working = result.state
                 moves++

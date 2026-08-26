@@ -60,8 +60,11 @@ object StateTransition {
     /**
      * The game is over, or far enough gone that searching on is wasted effort.
      *
-     * The last two are not rules — an empty deck reshuffles and a long game is still a game —
-     * they are the guards that stop a rollout running forever.
+     * The last two are not rules — a long game is still a game — they are the guards that
+     * stop a rollout running forever. An empty deck reshuffles in `advanceTurn` exactly as
+     * the real game does, so `deckSize <= 0` is only reachable once the discard pile has
+     * nothing left to fold back in — the whole table is holding every card, and no one can
+     * draw.
      */
     fun isTerminal(state: MctsGameState): Boolean =
         state.isTerminal ||
@@ -115,15 +118,23 @@ object StateTransition {
     /**
      * Drawing costs a card from the deck and the turn, and nothing else.
      *
-     * No card is dealt: see the class comment. The deck count still matters because
-     * [isTerminal] ends a rollout when it runs out.
+     * No card is dealt: see the class comment. The drawn card is credited to the discard
+     * pile — whatever the player does with it, exactly one card lands there by the end of
+     * the turn (the card itself, or the one it displaced) — which is what keeps the
+     * reshuffle bookkeeping conserved.
      */
     private fun applyDraw(state: MutableMctsState) {
-        if (state.deckSize > 0) state.deckSize--
+        if (state.deckSize > 0) {
+            state.deckSize--
+            state.discardCount++
+        }
         state.advanceTurn()
     }
 
-    /** The taken card is played immediately by rule, so the pile top is simply gone. */
+    /**
+     * The taken card is played immediately by rule, so the pile top is simply gone — and
+     * lands back on the pile once played, so the count does not move.
+     */
     private fun applyTakeDiscard(state: MutableMctsState) {
         state.discardPileTop = null
         state.advanceTurn()
@@ -136,6 +147,7 @@ object StateTransition {
         applyActionEffect(state, move, actionCard)
 
         state.discardPileTop = actionCard.copy(played = true)
+        state.discardCount++
         state.pendingCard = null
 
         finishTurnWithTossIn(state, actionCard.rank)
@@ -158,6 +170,7 @@ object StateTransition {
         player.knownCards[position] = certainMemory(drawnCard)
 
         state.discardPileTop = displaced.copy(played = false)
+        state.discardCount++
         state.pendingCard = null
 
         finishTurnWithTossIn(state, displaced.rank)
@@ -168,6 +181,7 @@ object StateTransition {
         if (state.currentPlayer() == null) return
 
         state.discardPileTop = discarded.copy(played = false)
+        state.discardCount++
         state.pendingCard = null
 
         finishTurnWithTossIn(state, discarded.rank)
@@ -184,6 +198,7 @@ object StateTransition {
         val player = state.findPlayer(move.playerId) ?: return
 
         removeCardsAt(state, player, move.tossInPositions)
+        state.discardCount += move.tossInPositions.size
     }
 
     private fun applyPass(state: MutableMctsState) {
@@ -236,6 +251,7 @@ object StateTransition {
 
             matching.forEach { tossed += player.knownCards.getValue(it).card }
             removeCardsAt(state, player, matching)
+            state.discardCount += matching.size
         }
 
         return tossed
@@ -368,11 +384,15 @@ object StateTransition {
         }
     }
 
-    /** Ace: the victim gains a card the bot cannot see, so it gains an estimate. */
+    /**
+     * Ace: the victim gains a card the bot cannot see, so it gains an estimate — and the
+     * deck loses the card, which the model used to forget entirely.
+     */
     private fun applyForcedDraw(state: MutableMctsState, target: MctsActionTarget) {
         val victim = state.findPlayer(target.playerId) ?: return
         victim.cardCount++
         victim.score += ACE_PENALTY_ESTIMATE
+        if (state.deckSize > 0) state.deckSize--
     }
 
     private fun certainMemory(card: Card) =
@@ -412,6 +432,7 @@ private class MutableMctsState(private val source: MctsGameState) {
     var discardPileTop: Card? = source.discardPileTop
     var pendingCard: Card? = source.pendingCard
     var deckSize: Int = source.deckSize
+    var discardCount: Int = source.discardCount
     var currentPlayerIndex: Int = source.currentPlayerIndex
     var turnCount: Int = source.turnCount
     var isTossInPhase: Boolean = source.isTossInPhase
@@ -429,6 +450,15 @@ private class MutableMctsState(private val source: MctsGameState) {
     fun advanceTurn() {
         if (players.isNotEmpty()) currentPlayerIndex = (currentPlayerIndex + 1) % players.size
         turnCount++
+
+        // The reshuffle, as the real game plays it: a deck about to run dry folds the pile
+        // back in, keeping only the top card. Without this the rollout hit a wall the real
+        // game does not have, and every plan near the end of the deck was priced against a
+        // game ending that was never going to happen.
+        if (deckSize <= 1 && discardCount > 1) {
+            deckSize += discardCount - 1
+            discardCount = 1
+        }
     }
 
     fun freeze(): MctsGameState = source.copy(
@@ -437,6 +467,7 @@ private class MutableMctsState(private val source: MctsGameState) {
         discardPileTop = discardPileTop,
         pendingCard = pendingCard,
         deckSize = deckSize,
+        discardCount = discardCount,
         currentPlayerIndex = currentPlayerIndex,
         turnCount = turnCount,
         isTossInPhase = isTossInPhase,
