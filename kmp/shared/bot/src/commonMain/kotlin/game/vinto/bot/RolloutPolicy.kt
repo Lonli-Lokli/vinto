@@ -15,7 +15,6 @@ import kotlin.random.Random
  * Ported from `packages/bot/src/lib/mcts-rollout-policy.ts`.
  */
 
-private const val TRUSTED_CONFIDENCE = 0.5
 
 /** How far ahead the bot must be before ending the game is clearly right. */
 private const val WINNING_MARGIN = 5

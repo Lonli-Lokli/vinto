@@ -80,7 +80,7 @@ private const val JOKER_COUNT = 2
 private const val NEUTRAL_AVERAGE_CARD_VALUE = 6.0
 
 /** A memory below this confidence is a hunch, not a fact, and is estimated rather than trusted. */
-private const val TRUSTED_CONFIDENCE = 0.5
+
 
 class BotMemory(
     private val botId: String,
@@ -91,8 +91,14 @@ class BotMemory(
 
     private val ownCards = mutableMapOf<Int, CardMemory>()
     private val opponentCards = mutableMapOf<String, MutableMap<Int, CardMemory>>()
-    private val seenCards = mutableMapOf<String, Card>()
-    private var cardDistribution = initialDistribution()
+
+    /**
+     * Ranks lying in plain sight — the discard pile and the card in play — as last synced
+     * from the table by [syncVisibleCards]. Public facts, not memories: they are never
+     * misremembered, never decay, and shrink on their own when a reshuffle folds the pile
+     * back into the deck.
+     */
+    private var visibleRanks: List<Rank> = emptyList()
 
     /**
      * The bot's own sense of elapsed time, advanced by [processTurnBoundary] rather than read
@@ -112,13 +118,6 @@ class BotMemory(
     fun observeCard(card: Card, playerId: String, position: Int) {
         if (random.nextDouble() >= config.memoryAccuracy) return
 
-        seenCards[card.id] = card
-
-        // One fewer of that rank is unaccounted for.
-        cardDistribution[card.rank]?.let { count ->
-            if (count > 0) cardDistribution[card.rank] = count - 1
-        }
-
         val target = memoryFor(playerId)
         val existing = target[position]
         target[position] = CardMemory(
@@ -132,10 +131,14 @@ class BotMemory(
         enforceMemoryLimit()
     }
 
-    /** A card that moved or left; the memory is wrong now, so it goes back to the pool. */
+    /** A card that moved or left; the memory is wrong now. The pool recovers on its own. */
     fun forgetCard(playerId: String, position: Int) {
-        val target = memoryFor(playerId)
-        target.remove(position)?.let { returnToDistribution(it) }
+        memoryFor(playerId).remove(position)
+    }
+
+    /** The table's public cards, re-synced before each decision. See [visibleRanks]. */
+    fun syncVisibleCards(ranks: List<Rank>) {
+        visibleRanks = ranks.toList()
     }
 
     fun getCardMemory(playerId: String, position: Int): CardMemory? = memoryFor(playerId)[position]
@@ -154,7 +157,30 @@ class BotMemory(
     fun getConfidence(playerId: String, position: Int): Double =
         getCardMemory(playerId, position)?.confidence ?: 0.0
 
-    fun getCardDistribution(): Map<Rank, Int> = cardDistribution.toMap()
+    /**
+     * What is still unaccounted for: a full deck minus everything this bot can point to — the
+     * public cards on the table and every memory it trusts, its own hand's and its
+     * opponents'.
+     *
+     * *Derived*, never mutated. The old bookkeeping decremented on observation and credited
+     * back on forgetting, and leaked on every path those two did not cover: an overwritten
+     * memory, the same card re-seen at a new position, a discard nobody observed, a
+     * reshuffle, a new deal. Recomputing from what is currently known makes each of those a
+     * non-event.
+     */
+    fun getCardDistribution(): Map<Rank, Int> {
+        val remaining = initialDistribution()
+        fun consume(rank: Rank) {
+            remaining[rank]?.let { count -> if (count > 0) remaining[rank] = count - 1 }
+        }
+
+        visibleRanks.forEach(::consume)
+        ownCards.values.forEach { if (it.confidence > TRUSTED_CONFIDENCE) consume(it.card.rank) }
+        opponentCards.values.forEach { map ->
+            map.values.forEach { if (it.confidence > TRUSTED_CONFIDENCE) consume(it.card.rank) }
+        }
+        return remaining
+    }
 
     fun getMemorySize(): Int = ownCards.size + opponentCards.values.sumOf { it.size }
 
@@ -173,7 +199,7 @@ class BotMemory(
 
     /** Draws a plausible rank for an unseen card, weighted by what is still unaccounted for. */
     fun sampleCardFromDistribution(): Rank? {
-        val available = cardDistribution.entries.flatMap { (rank, count) -> List(count) { rank } }
+        val available = getCardDistribution().entries.flatMap { (rank, count) -> List(count) { rank } }
         if (available.isEmpty()) return null
         return available[random.nextInt(available.size)]
     }
@@ -181,17 +207,12 @@ class BotMemory(
     fun clear() {
         ownCards.clear()
         opponentCards.clear()
-        seenCards.clear()
-        cardDistribution = initialDistribution()
+        visibleRanks = emptyList()
         ticks = 0
     }
 
     private fun memoryFor(playerId: String): MutableMap<Int, CardMemory> =
         if (playerId == botId) ownCards else opponentCards.getOrPut(playerId) { mutableMapOf() }
-
-    private fun returnToDistribution(memory: CardMemory) {
-        cardDistribution[memory.card.rank] = (cardDistribution[memory.card.rank] ?: 0) + 1
-    }
 
     private fun decayMemoryMap(memoryMap: MutableMap<Int, CardMemory>) {
         if (config.memoryDecayRate == 0.0) return
@@ -206,14 +227,14 @@ class BotMemory(
                 memoryMap[position] = memory.copy(confidence = decayed)
             }
         }
-        forgotten.forEach { position -> memoryMap.remove(position)?.let { returnToDistribution(it) } }
+        forgotten.forEach { memoryMap.remove(it) }
     }
 
     private fun randomForget(memoryMap: MutableMap<Int, CardMemory>) {
         if (config.forgetChance == 0.0) return
 
-        val forgotten = memoryMap.keys.filter { random.nextDouble() < config.forgetChance }
-        forgotten.forEach { position -> memoryMap.remove(position)?.let { returnToDistribution(it) } }
+        memoryMap.keys.filter { random.nextDouble() < config.forgetChance }
+            .forEach { memoryMap.remove(it) }
     }
 
     /** Over the limit, the least-certain memories go first — which is how a person forgets. */
@@ -228,9 +249,7 @@ class BotMemory(
 
         all.sortedBy { it.third.confidence }
             .take(over)
-            .forEach { (map, position, _) ->
-                map.remove(position)?.let { returnToDistribution(it) }
-            }
+            .forEach { (map, position, _) -> map.remove(position) }
     }
 }
 

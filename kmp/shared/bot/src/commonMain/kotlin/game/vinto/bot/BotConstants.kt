@@ -40,3 +40,11 @@ object CardProtection {
     /** Applied whenever a better card would be swapped out for a worse one. */
     const val GENERAL_SWAP_PENALTY_MULTIPLIER = 10.0
 }
+
+/**
+ * A memory below this confidence is a hunch, not a fact, and is estimated rather than
+ * trusted. One threshold for the whole bot: the same 0.5 decides what the score estimator
+ * counts, what determinization deals, what the solver believes, and what a declaration
+ * claims — a memory the bot acts on anywhere is a memory it acts on everywhere.
+ */
+internal const val TRUSTED_CONFIDENCE = 0.5

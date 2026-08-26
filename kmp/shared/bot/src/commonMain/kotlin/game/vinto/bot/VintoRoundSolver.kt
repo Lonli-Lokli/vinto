@@ -29,7 +29,6 @@ class VintoRoundSolver(private val botMemory: BotMemory) {
 
     /** A memory below this is a hunch; the solver counts the card as unseen instead. */
     private companion object {
-        const val TRUSTED_CONFIDENCE = 0.5
 
         /** What one swap action is assumed to save its owner — a 10 traded for a 2, say. */
         const val SWAP_BENEFIT = 5.0
