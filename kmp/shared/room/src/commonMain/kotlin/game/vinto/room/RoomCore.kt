@@ -3,6 +3,7 @@ package game.vinto.room
 import game.vinto.bot.BotRunner
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
+import game.vinto.engine.PublicReveal
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.engine.calculateFinalScores
@@ -813,8 +814,17 @@ fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double):
  * that is ending has no use for a bot playing one more turn, and doing it the other way round
  * would burn a search on a game nobody is left to see.
  */
+fun onAlarm(stateJson: String, nowMs: Double): String =
+    VintoJson.encodeToString(onAlarmTracked(stateJson, nowMs).result)
+
+/** [onAlarm]'s outcome with the takeover branch's steps kept for the envelope builders. */
+internal data class TrackedAlarm(
+    val result: LifecycleResult,
+    val steps: List<Step> = emptyList(),
+)
+
 @Suppress("ReturnCount")
-fun onAlarm(stateJson: String, nowMs: Double): String {
+internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
     var state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
     val due = { at: Double? -> at != null && nowMs >= at }
@@ -825,7 +835,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
     val finishedExpired = state.finishedAtEpochMs?.let { nowMs >= it + FINISHED_TTL_MS } == true
 
     if (due(state.emptyUntilEpochMs) || lobbyExpired || finishedExpired) {
-        return VintoJson.encodeToString(LifecycleResult(state, deleted = true))
+        return TrackedAlarm(LifecycleResult(state, deleted = true))
     }
 
     // 2. A session with nobody left to play it ends, and is then deleted on the finished TTL
@@ -837,9 +847,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
             startsAtEpochMs = null,
             finishedAtEpochMs = nowMs,
         )
-        return VintoJson.encodeToString(
-            LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt),
-        )
+        return TrackedAlarm(LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt))
     }
 
     // 3. The buzzer. A round with Vinto declared is left to finish — `closeSession` returns
@@ -847,9 +855,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
     if (due(state.session.endsAtEpochMs) && state.inSession) {
         val closed = closeSession(state, nowMs)
         if (closed !== state) {
-            return VintoJson.encodeToString(
-                LifecycleResult(closed, nextAlarmAtEpochMs = closed.nextAlarmAt),
-            )
+            return TrackedAlarm(LifecycleResult(closed, nextAlarmAtEpochMs = closed.nextAlarmAt))
         }
     }
 
@@ -861,7 +867,7 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
         )
         if (started.error == null) {
             val next = started.state
-            return VintoJson.encodeToString(
+            return TrackedAlarm(
                 LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt, started = true),
             )
         }
@@ -875,19 +881,19 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
             if (it.index in expired) it.copy(isBot = true, botPlayedWhileAway = true) else it
         }
         state = state.copy(seats = seats, seatGrace = state.seatGrace - expired)
-        state = playBots(state)
-        return VintoJson.encodeToString(
+        val played = playBotsTracked(state)
+        state = played.state
+        return TrackedAlarm(
             LifecycleResult(
                 state,
                 nextAlarmAtEpochMs = state.nextAlarmAt,
                 tookOver = expired.toList(),
             ),
+            steps = played.steps,
         )
     }
 
-    return VintoJson.encodeToString(
-        LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt),
-    )
+    return TrackedAlarm(LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt))
 }
 
 /**
@@ -897,15 +903,40 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
  * and receives everything that happened because of it, so there is no round of polling to
  * discover that three bots have moved.
  */
-@Suppress("ReturnCount")
 fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Double): String {
+    val applied = applyActionApplied(stateJson, token, actionJson, nowMs)
+    return VintoJson.encodeToString(
+        ActionResult(
+            applied.state,
+            events = applied.steps.map { it.logged },
+            error = applied.error,
+            retryAfterMs = applied.retryAfterMs,
+        ),
+    )
+}
+
+/** What one client action came to, with every applied step's state kept for the envelopes. */
+internal data class Applied(
+    val state: RoomState,
+    val steps: List<Step> = emptyList(),
+    val error: String? = null,
+    val retryAfterMs: Double? = null,
+)
+
+@Suppress("ReturnCount")
+internal fun applyActionApplied(
+    stateJson: String,
+    token: String,
+    actionJson: String,
+    nowMs: Double,
+): Applied {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
     // The seat is *derived* from the credential rather than asserted next to it. There is no
     // seat parameter to disagree with the token, so there is no way to send one seat's token
     // and another seat's number and see which check notices first.
     val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
-        ?: return VintoJson.encodeToString(ActionResult(state, error = "no seat holds that token"))
+        ?: return Applied(state, error = "no seat holds that token")
     val seat = seatEntry.index
 
     // The budget is charged before anything else costs anything. Order matters: validating
@@ -913,47 +944,40 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
     // flood is only bounded if the refusal happens before the expensive part.
     val spend = spendBudget(state, seat, nowMs)
     spend.retryAfterMs?.let {
-        return VintoJson.encodeToString(
-            ActionResult(spend.state, error = "too many actions", retryAfterMs = it),
-        )
+        return Applied(spend.state, error = "too many actions", retryAfterMs = it)
     }
     val charged = spend.state
 
     // No game, nothing to act on. A lobby refuses game actions rather than dealing one on
     // demand, or the countdown would be advisory.
     val game = charged.game
-        ?: return VintoJson.encodeToString(ActionResult(charged, error = "the game has not started"))
+        ?: return Applied(charged, error = "the game has not started")
 
     val action = try {
         VintoJson.decodeFromString(GameAction.serializer(), actionJson)
     } catch (failure: IllegalArgumentException) {
-        return VintoJson.encodeToString(
-            ActionResult(charged, error = "unreadable action: ${failure.message}"),
-        )
+        return Applied(charged, error = "unreadable action: ${failure.message}")
     }
 
     // The seat boundary, checked before the engine sees anything. An action whose payload
     // names another player is refused here whether or not it would have been legal for them.
     action.actorId?.let { claimed ->
         if (claimed != seatEntry.playerId) {
-            return VintoJson.encodeToString(
-                ActionResult(charged, error = "seat $seat may only act as ${seatEntry.playerId}"),
-            )
+            return Applied(charged, error = "seat $seat may only act as ${seatEntry.playerId}")
         }
     }
 
     when (val validation = ActionValidator.validate(game, action)) {
-        is Validation.Invalid ->
-            return VintoJson.encodeToString(ActionResult(charged, error = validation.reason))
+        is Validation.Invalid -> return Applied(charged, error = validation.reason)
 
         Validation.Valid -> Unit
     }
 
-    val reduced = when (val result = GameEngine.reduce(game, action)) {
-        is ReduceResult.Success -> result.state
-        is ReduceResult.Failure ->
-            return VintoJson.encodeToString(ActionResult(charged, error = result.reason))
+    val result = when (val reduce = GameEngine.reduce(game, action)) {
+        is ReduceResult.Success -> reduce
+        is ReduceResult.Failure -> return Applied(charged, error = reduce.reason)
     }
+    val reduced = result.state
 
     val accepted = LoggedAction(
         index = charged.nextIndex,
@@ -962,15 +986,16 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
         action = action,
     )
 
-    val afterBots = playBots(
+    val played = playBotsTracked(
         charged.copy(game = reduced, log = charged.log + accepted),
         // The bots watched this player's move too; it seeds the runner's table model.
         playerMove = ObservedMove(action, before = game, after = reduced),
     )
-    val settled = settleRound(afterBots, nowMs)
+    val settled = settleRound(played.state, nowMs)
 
-    return VintoJson.encodeToString(
-        ActionResult(settled, events = settled.log.drop(charged.log.size)),
+    return Applied(
+        settled,
+        steps = listOf(Step(accepted, reduced, result.revealed)) + played.steps,
     )
 }
 
@@ -988,8 +1013,25 @@ private data class ObservedMove(
     val after: GameState,
 )
 
-private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomState {
-    if (start.game == null) return start
+/**
+ * One applied action with the state it left behind and what it turned face up — the raw
+ * material of the envelope builders in `Envelopes.kt`. Never stored: states per step exist
+ * only for the request that produced them, which is why per-event views are built at send
+ * time and a resync's catch-up carries none.
+ */
+internal data class Step(
+    val logged: LoggedAction,
+    val after: GameState,
+    val revealed: List<PublicReveal>,
+)
+
+internal data class PlayedOut(val state: RoomState, val steps: List<Step>)
+
+private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomState =
+    playBotsTracked(start, playerMove).state
+
+private fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null): PlayedOut {
+    if (start.game == null) return PlayedOut(start, emptyList())
 
     val runner = BotRunner(start.difficulty, Random(start.seed))
     // The runner here is rebuilt per request, so its table model only spans the moves of
@@ -997,6 +1039,7 @@ private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomSt
     playerMove?.let { runner.observe(it.action, it.before, it.after) }
     var state = start
     var steps = 0
+    val trail = mutableListOf<Step>()
 
     while (steps++ < MAX_BOT_STEPS && state.game?.phase != GamePhase.SCORING) {
         val game = state.game ?: break
@@ -1012,27 +1055,27 @@ private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomSt
         //  - the validator refuses it, which would mean the room and its own driver
         //    disagreed about the rules;
         //  - the engine refuses it after validation, which should be impossible.
-        val reduced = when {
+        val success = when {
             seat != null && seat.tokenHash != null -> null
             ActionValidator.validate(game, action) is Validation.Invalid -> null
-            else -> (GameEngine.reduce(game, action) as? ReduceResult.Success)?.state
+            else -> GameEngine.reduce(game, action) as? ReduceResult.Success
         } ?: break
+        val reduced = success.state
 
         runner.observe(action, before = game, after = reduced)
 
-        state = state.copy(
-            game = reduced,
-            log = state.log + LoggedAction(
-                index = state.nextIndex,
-                seat = seat?.index ?: -1,
-                playerId = actor ?: "",
-                action = action,
-                byBot = true,
-            ),
+        val entry = LoggedAction(
+            index = state.nextIndex,
+            seat = seat?.index ?: -1,
+            playerId = actor ?: "",
+            action = action,
+            byBot = true,
         )
+        state = state.copy(game = reduced, log = state.log + entry)
+        trail += Step(entry, reduced, success.revealed)
     }
 
-    return state
+    return PlayedOut(state, trail)
 }
 
 /**

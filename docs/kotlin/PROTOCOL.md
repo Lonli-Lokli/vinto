@@ -73,8 +73,26 @@ Server → client:
 | `error` | `message`, `retryAfterMs?` | `retryAfterMs` present exactly when rate-limited |
 
 A **view is per-seat and never broadcast**: two seats are entitled to different cards, so any
-message carrying a `PlayerView` is built once per socket. The events beside it are public
-and identical for everyone.
+message carrying a `PlayerView` is built once per socket. The actions inside the events are
+public and identical for everyone; the views beside them are not.
+
+## Per-event views
+
+Each entry in an `events` message is an `EventEntry`: the logged action plus, per entry, the
+receiving seat's redacted `view` *after that action* and any `revealed` cards (a King's
+declaration, a failed toss-in — public for that moment only, never in any state). This is
+what lets a remote client animate a batch of bot moves one step at a time: choreography is
+computed from a view per step, and the log alone carries only actions.
+
+These are built at send time in `shared/room/Envelopes.kt` — the room keeps no past states
+(hibernation safety), so per-event views exist only for the request that produced them. A
+`sync`'s catch-up entries therefore carry no views; `sync` instead carries the seat's
+*current* `view`, and a client jumps the cursor and renders it (one catch-up frame is the
+design). Cost: one projection and one serialization per step per seat, bounded by the bot
+step cap and the rate limiter in front of it.
+
+Both additions are optional keys with absent defaults, honouring the additive rule in both
+directions.
 
 ## Compatibility rule
 

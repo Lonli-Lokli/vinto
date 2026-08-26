@@ -13,8 +13,9 @@
 //      survives hibernation; a Map keyed by socket would not.
 
 import {
-  newRoom, joinRoom, applyAction, eventsSince, viewForSeat, seatForToken, replayRecordingJson,
-  addBot, removeBot, startGame, lobbyView, updatePresence, onAlarm, nextAlarmAt, readyForNextRound,
+  newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
+  addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
+  applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope,
   newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -276,9 +277,11 @@ export class Room {
     const stateJson = await this.ctx.storage.get(ROOM_KEY);
     if (!stateJson) return;
 
-    // The room decides what was due. It is deliberately not told which alarm fired, because
-    // after an eviction, or a late wake, more than one deadline may have passed.
-    const result = JSON.parse(onAlarm(stateJson, Date.now()));
+    // The room decides what was due — and builds the messages its outcome calls for, per
+    // seat, with per-event views (see shared/room/Envelopes.kt). It is deliberately not told
+    // which alarm fired, because after an eviction, or a late wake, more than one deadline
+    // may have passed.
+    const result = JSON.parse(alarmEnvelopes(stateJson, Date.now()));
 
     if (result.deleted) {
       const code = JSON.parse(stateJson).roomId.replace(/^room-/, '');
@@ -291,24 +294,10 @@ export class Room {
       return;
     }
 
-    const nextJson = JSON.stringify(result.state);
-    await this.#save(nextJson);
+    await this.#save(JSON.stringify(result.state));
 
-    if (result.started) {
-      return this.#sendPerSeat((seat) => ({
-        type: 'started',
-        view: this.#viewFor(nextJson, seat),
-        nextIndex: result.state.log.length,
-      }));
-    }
-
-    if (result.tookOver.length > 0) {
-      return this.#sendPerSeat((seat) => ({
-        type: 'events',
-        events: result.state.log.slice(JSON.parse(stateJson).log.length),
-        nextIndex: result.state.log.length,
-        view: this.#viewFor(nextJson, seat),
-      }));
+    if (result.started || result.tookOver.length > 0) {
+      return this.#sendPrebuilt(result.messages);
     }
 
     if (result.state.phase === 'FINISHED') {
@@ -428,7 +417,7 @@ export class Room {
         ws.serializeAttachment({ seat: result.seat, token });
 
         // The one and only message that carries the raw token. It goes to this socket alone;
-        // #sendPerSeat and #broadcast never see it, and no view contains it.
+        // #sendPrebuilt and #broadcast never see it, and no view contains it.
         // In a lobby there is no game and therefore no view — `#viewFor` returns null and
         // the client gets the lobby instead. Sending a made-up empty view would be worse
         // than sending none: the client could not tell "not dealt" from "dealt, nothing to
@@ -459,18 +448,12 @@ export class Room {
         if (!token) {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before agreeing' }));
         }
-        const result = JSON.parse(readyForNextRound(stateJson, token, Date.now()));
+        const result = JSON.parse(readyEnvelopes(stateJson, token, Date.now()));
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }
-        const nextJson = JSON.stringify(result.state);
-        await this.#save(nextJson);
-        return this.#sendPerSeat((seat) => ({
-          type: result.state.phase === 'PLAYING' ? 'started' : 'between-rounds',
-          view: this.#viewFor(nextJson, seat),
-          standings: result.state.session.rounds,
-          nextIndex: result.state.log.length,
-        }));
+        await this.#save(JSON.stringify(result.state));
+        return this.#sendPrebuilt(result.messages);
       }
 
       case 'add-bot':
@@ -504,7 +487,7 @@ export class Room {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before acting' }));
         }
         const result = JSON.parse(
-          applyAction(stateJson, token, JSON.stringify(msg.action ?? {}), Date.now()),
+          applyActionEnvelopes(stateJson, token, JSON.stringify(msg.action ?? {}), Date.now()),
         );
         if (result.error) {
           // A throttled action still costs a storage write, because the budget it spent has
@@ -517,26 +500,23 @@ export class Room {
             retryAfterMs: result.retryAfterMs ?? undefined,
           }));
         }
-        const nextJson = JSON.stringify(result.state);
-        await this.#save(nextJson);
+        await this.#save(JSON.stringify(result.state));
 
         // Every socket sees every accepted action, the caller included — the server is
         // authoritative, so clients never apply an action optimistically. The bots' moves
         // arrive in the same batch, so one send answers "what happened because of that".
         //
-        // The view is per-seat and so cannot be broadcast as one message: each socket gets
-        // the events, which are public, plus its own redacted view.
-        return this.#sendPerSeat((seatIndex) => ({
-          type: 'events',
-          events: result.events,
-          nextIndex: result.state.log.length,
-          view: this.#viewFor(nextJson, seatIndex),
-        }));
+        // The view is per-seat — per *event*, now — and so cannot be broadcast as one
+        // message. The messages arrive prebuilt from Kotlin, one per seat, already redacted;
+        // this layer looks up the socket's seat and sends the string as-is.
+        return this.#sendPrebuilt(result.messages);
       }
 
       case 'resync': {
-        const result = JSON.parse(eventsSince(stateJson, msg.sinceIndex ?? 0));
-        return ws.send(JSON.stringify({ type: 'sync', ...result }));
+        // The seat rides on the socket, set at join; a socket that never joined syncs the
+        // public log with no view (seat -1).
+        const { seat } = ws.deserializeAttachment() ?? {};
+        return ws.send(syncEnvelope(stateJson, seat ?? -1, msg.sinceIndex ?? 0, Date.now()));
       }
 
       default:
@@ -545,17 +525,21 @@ export class Room {
   }
 
   /**
-   * Sends each socket a message built for its own seat.
+   * Sends each socket the message Kotlin built for its seat, verbatim.
    *
    * A plain broadcast cannot carry a view: two seats are entitled to different cards, and
-   * one shared payload would have to be the union of both.
+   * one shared payload would have to be the union of both. The per-seat messages arrive
+   * prebuilt from `shared/room/Envelopes.kt` — one serializer on both ends of the wire —
+   * and this layer never parses what it relays.
    */
-  #sendPerSeat(build) {
+  #sendPrebuilt(messages) {
     for (const socket of this.ctx.getWebSockets()) {
       const { seat } = socket.deserializeAttachment() ?? {};
       if (seat === null || seat === undefined) continue;
+      const payload = messages[seat];
+      if (!payload) continue;
       try {
-        socket.send(JSON.stringify(build(seat)));
+        socket.send(payload);
       } catch {
         // A socket that has gone away is not an error worth failing the action over.
       }
