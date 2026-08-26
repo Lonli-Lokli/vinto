@@ -146,8 +146,16 @@ fun TableScreen(
     modifier: Modifier = Modifier,
 ) {
     if (layout.landscape) {
-        Row(modifier = modifier.fillMaxSize()) {
-            Column(modifier = Modifier.weight(1f)) {
+        // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
+        // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
+        // the rail hugs it, so on a big screen the pair sits together in the middle of the
+        // app's dark surround rather than the controls drifting to one horizon and the
+        // seats to the other.
+        Row(
+            modifier = modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Column(modifier = Modifier.width(layout.feltWidth)) {
                 TableHeader(state.view, state.round, onHelp, onReport, onDeck)
                 FeltTable(
                     state = state,

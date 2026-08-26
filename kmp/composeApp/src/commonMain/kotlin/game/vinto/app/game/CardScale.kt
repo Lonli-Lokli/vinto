@@ -37,10 +37,15 @@ data class CardState(
  * Four hands, two piles and four portraits have to fit whatever is left once the control
  * panel has taken what it needs — and what it needs varies a lot, from one button to fourteen
  * rank chips. Rather than let the bottom of the table slide off the screen, the whole table
- * steps down a size. Two steps, not a continuum: a smoothly scaling card table ends up with
+ * steps down a size. Steps, not a continuum: a smoothly scaling card table ends up with
  * cards that are a different size every turn, which is worse to read than a small one.
  *
- * The tap target stays 44dp regardless (see [CardFace]); what shrinks is the picture, not the
+ * Three steps, one per kind of screen: **Tight** for a short phone, **Roomy** for a tall one,
+ * **Grand** for the felt heights only a tablet or a desktop window has — where phone-sized
+ * cards read as a miniature floating in cloth. Which step applies is decided by the felt's
+ * height alone, so a portrait tablet and a landscape one land on the same cards.
+ *
+ * The tap target stays 44dp regardless (see [CardFace]); what changes is the picture, not the
  * area a thumb has to find.
  */
 data class TableSizes(
@@ -77,10 +82,26 @@ data class TableSizes(
             avatarMine = 34.dp,
         )
 
+        /** Roomy scaled up by roughly a third, keeping every card's aspect. */
+        private val Grand = TableSizes(
+            mine = CardScale(76.dp, 106.dp),
+            theirs = CardScale(56.dp, 78.dp),
+            side = CardScale(50.dp, 70.dp),
+            avatar = 50.dp,
+            avatarMine = 56.dp,
+        )
+
         /** Below this the roomy table cannot fit four hands and two piles without clipping. */
         private val ROOMY_FLOOR = 560.dp
 
-        fun forHeight(height: Dp): TableSizes = if (height >= ROOMY_FLOOR) Roomy else Tight
+        /** Above this the roomy table starts to read as a miniature; the cards step up. */
+        private val GRAND_FLOOR = 720.dp
+
+        fun forHeight(height: Dp): TableSizes = when {
+            height >= GRAND_FLOOR -> Grand
+            height >= ROOMY_FLOOR -> Roomy
+            else -> Tight
+        }
 
         /**
          * The size to draw at, decided from the **screen** rather than from the felt.
@@ -115,6 +136,17 @@ data class TableSizes(
  *    of a rotated phone's screen — so the rail stands at the side instead, taking a fixed
  *    share of the *width*, and the felt gets the full height beside it. Same controls, same
  *    felt, same four-sided table; only the join moves.
+ *
+ * Landscape spans three very different machines, and one arrangement serves them only
+ * because two numbers change with the screen rather than with the platform:
+ *
+ *  - the **cards step up** on the felt heights only a tablet or desktop has ([TableSizes]),
+ *    so a big screen gets a bigger table rather than a phone's table with more cloth;
+ *  - the **felt keeps a table's proportions** ([feltWidth]). A rotated phone gives the felt
+ *    everything beside the rail; a desktop window would let it stretch to three times its
+ *    height, spreading the side seats to opposite horizons with a void between them. So the
+ *    felt is capped — by shape, and absolutely — and the felt-and-rail group is centred in
+ *    what remains, sitting on the app's dark surround like a table in a room.
  */
 data class TableLayout(
     val sizes: TableSizes,
@@ -123,6 +155,8 @@ data class TableLayout(
     val landscape: Boolean = false,
     /** How wide the side rail is. Meaningful only when [landscape]. */
     val railWidth: Dp = 0.dp,
+    /** How wide the felt column is — capped, so a desktop table keeps a table's shape. */
+    val feltWidth: Dp = 0.dp,
 ) {
     companion object {
         /** The portrait arrangement, from the height alone — what every phone test uses. */
@@ -131,18 +165,34 @@ data class TableLayout(
 
         /** The arrangement for a screen of this shape: portrait tall, landscape wide. */
         fun forScreen(width: Dp, height: Dp): TableLayout = if (width > height) {
+            // The felt has the whole height minus the header; no rail stands on it.
+            val feltHeight = height - HeaderHeight
+            val rail = railWidth(width)
             TableLayout(
-                // The felt has the whole height minus the header; no rail stands on it.
-                sizes = TableSizes.forHeight(height - HeaderHeight),
+                sizes = TableSizes.forHeight(feltHeight),
                 railHeight = 0.dp,
                 landscape = true,
-                railWidth = railWidth(width),
+                railWidth = rail,
+                feltWidth = minOf(width - rail, feltHeight * TABLE_ASPECT, TABLE_MAX_WIDTH),
             )
         } else {
             forScreen(height)
         }
     }
 }
+
+/**
+ * The widest a felt may be for its height. A real card table is wider than deep but not by
+ * much; past this the middle row's SpaceBetween turns spare width into distance between the
+ * seats, which is the one thing a table must not do with room.
+ */
+private const val TABLE_ASPECT = 1.4f
+
+/**
+ * And the widest it may be at all: even the aspect cap, given a tall desktop window, allows
+ * a felt wider than an arm's reach. Grand cards fill this comfortably; more is just cloth.
+ */
+private val TABLE_MAX_WIDTH = 980.dp
 
 /** The strip above the felt: the wordmark, the round, the help, the bug, the deck count. */
 val HeaderHeight = 44.dp

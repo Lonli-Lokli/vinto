@@ -600,9 +600,19 @@ on a fixed share of the height; landscape stands the rail beside the felt on the
 share of the *width*, because the portrait rail's own minimum height is most of a rotated
 phone's screen. The felt is the same four-sided table in both — only the join moves, and the
 final-round banner rides at the head of the side rail where the felt has no height to spare.
+
+Landscape spans three very different machines, and two numbers change with the screen rather
+than the platform: the cards **step up** to a third size (`Grand`) on the felt heights only a
+tablet or desktop has — a portrait tablet lands on the same step — and the felt's width is
+**capped** (by aspect, and absolutely) with the felt-and-rail group centred in what remains,
+so a desktop table keeps a table's shape on the app's dark surround instead of stretching the
+seats to opposite horizons. A rotated phone has no width to spare, so there the felt still
+takes everything beside the rail.
+
 The Android manifest no longer locks orientation; iOS always allowed rotation (it squeezed the
 portrait design until this landed) and the browser was always free. `LandscapeTableTest` holds
-the rotated phone to the same bar `CrowdedTableTest` holds the upright one to.
+the rotated phone to the same bar `CrowdedTableTest` holds the upright one to, and holds the
+desktop window to the cap and the centring.
 
 **A window theme of its own** (`values/themes.xml`). It was inheriting
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a
