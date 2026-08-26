@@ -31,5 +31,12 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
         }
+        jvmTest.dependencies {
+            // The two-client harness plays real RemoteGameSessions against this room's own
+            // entry points — the whole online stack minus the platform, on one JVM.
+            implementation(project(":shared:client"))
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
