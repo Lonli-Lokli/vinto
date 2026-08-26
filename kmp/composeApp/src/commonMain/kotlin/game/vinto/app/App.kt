@@ -6,25 +6,20 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import game.vinto.app.art.Res
-import game.vinto.app.art.online_body
-import game.vinto.app.art.online_dismiss
-import game.vinto.app.art.online_title
 import game.vinto.app.game.GameScreen
+import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
-import game.vinto.app.theme.ButtonTone
-import game.vinto.app.theme.GameButton
+import game.vinto.app.net.platformRoomConnector
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
@@ -32,6 +27,7 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.app.theme.rememberFeedback
 import game.vinto.app.theme.rememberSounds
 import game.vinto.client.LocalGame
+import game.vinto.client.RemoteRoom
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
 import game.vinto.client.Vault
@@ -40,22 +36,26 @@ import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.saveSettings
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.compose.resources.stringResource
 
 /**
  * The one UI, shared by Android, iOS and the browser. Each platform contributes only an
  * entry point (`MainActivity`, `MainViewController`, `main`) that hosts this composable.
  *
- * Five destinations and a nullable game. A navigation library would buy a back stack and deep
- * links; a card game whose screens are "the menu", "a table" and three things reached from the
- * menu has no use for either, and every one of these has exactly one way back. When rooms
- * arrive and a link can point at one, that is the moment to take on a navigator.
+ * Seven destinations and a nullable game. A navigation library would buy a back stack and
+ * deep links; a card game whose screens are "the menu", "a table" and a handful of things
+ * reached from the menu has no use for either, and every one of these has exactly one way
+ * back. A link that points at a room (`?room=CODE` on the web) is the one thing that would
+ * justify a navigator; it can land in `Screen.Online` pre-filled when somebody asks for it.
  */
 @Composable
 fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault() }) {
     var settings by remember { mutableStateOf(Settings()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Opening) }
-    var explainOnline by remember { mutableStateOf(false) }
+
+    // One connector for the app's lifetime, and a scope for the rooms it opens: a room's
+    // socket loop belongs to the app, not to whichever screen happens to be showing it.
+    val connector = remember { platformRoomConnector(ROOM_SERVICE) }
+    val appScope = rememberCoroutineScope()
 
     // Reading what is on disk is the only thing between launching and playing, and on a cold
     // start it lands in the same frame. The opening screen exists for the case where it does
@@ -77,6 +77,9 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
     // what a phone's back button means everywhere else, and what its absence made look like a
     // crash the first time somebody pressed it in the settings.
     SystemBack(enabled = screen !is Screen.Home && screen !is Screen.Opening) {
+        // Backing out of a room is leaving it: the socket loop must not outlive the screen.
+        // The seat token stays vaulted, so the same back button is not a lost seat.
+        (screen as? Screen.InRoom)?.room?.leave()
         screen = Screen.Home(canContinue = vault.loadGame() != null)
     }
 
@@ -103,26 +106,7 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
                         is Screen.Home -> HomeScreen(
                             settings = settings,
                             canContinue = here.canContinue,
-                            go = HomeActions(
-                                continueGame = {
-                                    LocalGame.resume(vault, Dispatchers.Default)?.let {
-                                        screen = Screen.Playing(it)
-                                    }
-                                },
-                                newGame = {
-                                    screen = Screen.Playing(
-                                        LocalGame.start(
-                                            vault,
-                                            seeds(),
-                                            settings.difficulty,
-                                            Dispatchers.Default,
-                                        ),
-                                    )
-                                },
-                                teach = { screen = Screen.Teaching },
-                                online = { explainOnline = true },
-                                settings = { screen = Screen.Settings },
-                            ),
+                            go = homeActions(vault, seeds, settings) { screen = it },
                         )
 
                         Screen.Settings -> SettingsScreen(
@@ -147,41 +131,61 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
                             pace = settings.pace,
                             onQuit = { screen = Screen.Home(canContinue = true) },
                         )
+
+                        Screen.Online -> OnlineScreen(
+                            connector = connector,
+                            vault = vault,
+                            onEnterRoom = { code, nickname ->
+                                screen = Screen.InRoom(
+                                    RemoteRoom(
+                                        connector = connector,
+                                        code = code,
+                                        vault = vault,
+                                        nickname = nickname,
+                                        scope = appScope,
+                                    ),
+                                )
+                            },
+                            onBack = {
+                                screen = Screen.Home(canContinue = vault.loadGame() != null)
+                            },
+                        )
+
+                        is Screen.InRoom -> RoomScreen(
+                            room = here.room,
+                            pace = settings.pace,
+                            onLeft = {
+                                screen = Screen.Home(canContinue = vault.loadGame() != null)
+                            },
+                        )
                     }
                 }
             }
-
-            if (explainOnline) OnlineNotYet(onDismiss = { explainOnline = false })
         }
     }
 }
 
-/**
- * What "play online" does today, said plainly.
- *
- * A greyed-out button with "coming soon" under it answers nothing. Half of online exists — a
- * Worker with a Durable Object per room, running this same engine, which two clients have
- * already joined and played through — and the half that is missing is the one in this app.
- * Somebody asking is owed that rather than a shrug.
- */
-@Composable
-private fun OnlineNotYet(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Rail.fill,
-        titleContentColor = Rail.ink,
-        textContentColor = Rail.inkDim,
-        title = { Text(stringResource(Res.string.online_title)) },
-        text = { Text(stringResource(Res.string.online_body)) },
-        confirmButton = {
-            GameButton(
-                label = stringResource(Res.string.online_dismiss),
-                tone = ButtonTone.NEUTRAL,
-                onClick = onDismiss,
-            )
-        },
-    )
-}
+/** What each home button does — out of [App] only so the destination table stays readable. */
+private fun homeActions(
+    vault: Vault,
+    seeds: () -> Long,
+    settings: Settings,
+    go: (Screen) -> Unit,
+): HomeActions = HomeActions(
+    continueGame = {
+        LocalGame.resume(vault, Dispatchers.Default)?.let { go(Screen.Playing(it)) }
+    },
+    newGame = {
+        go(
+            Screen.Playing(
+                LocalGame.start(vault, seeds(), settings.difficulty, Dispatchers.Default),
+            ),
+        )
+    },
+    teach = { go(Screen.Teaching) },
+    online = { go(Screen.Online) },
+    settings = { go(Screen.Settings) },
+)
 
 /** Whether this choice means the dark palette, asking the system only when asked to. */
 @Composable
@@ -204,7 +208,20 @@ private sealed interface Screen {
     data object Teaching : Screen
 
     data class Playing(val game: LocalGame) : Screen
+
+    /** The way into a room: a name and a code. */
+    data object Online : Screen
+
+    /** Inside one: the lobby until the deal, the table after. */
+    data class InRoom(val room: RemoteRoom) : Screen
 }
+
+/**
+ * Where the room service answers. Its own hostname rather than a path on the app's, because
+ * that host is a Pages project and layering a Worker route over it is a precedence puzzle —
+ * see `worker/cloudflare/wrangler.jsonc`, which routes this name.
+ */
+private const val ROOM_SERVICE = "vinto-room.kupalinka.app"
 
 /**
  * A seed for a new game.
