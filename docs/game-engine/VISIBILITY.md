@@ -138,7 +138,7 @@ which is the fix for her first card lowering itself between taps, made executabl
 | Call Vinto | nothing | nothing | — | the caller's seat ringed gold, "Vinto!", then the turn ring moving on |
 | Coalition leader chosen | nothing | the hands the leader may now see turn over on that screen alone | leader | the leader's seat ringed blue, and a line above the felt naming who plays for whom until the round ends; both are the table's own, not beats |
 | Reshuffle | pile → deck, minus the top card | the returning cards are face down again | nobody | a sweep, with the count, and the turn ring moving on |
-| Round scored | nothing | every card turns over where it lies | every seat | nothing — the score screen takes over |
+| Round scored | nothing | every hand turns over where it lies, **seat by seat in table order** — the same script for every viewer, since two scripts may differ only by a withheld face | every seat | one reveal scene per seat; a card the viewer could already see does not turn again |
 
 ## Evidence
 

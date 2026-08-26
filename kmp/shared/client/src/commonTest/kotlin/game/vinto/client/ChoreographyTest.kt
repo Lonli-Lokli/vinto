@@ -399,10 +399,113 @@ class ChoreographyTest {
         assertEquals(Rank.NINE, borrowed.singleOrNull()?.rank, "it said which: $borrowed")
     }
 
+    // ------------------------------------------------------------------ the deal
+
+    @Test
+    fun theDealIsWavesOfFaceDownCardsCoveringEverySlotOnce() = runTest {
+        val view = LocalGameSession(seed = 8L, difficulty = Difficulty.EASY).view.value
+
+        val deal = dealScenes(view)
+        assertEquals(DEALT, deal.size, "one wave per card of the deal")
+
+        val moves = deal.flatten().map { beat ->
+            beat as? Beat.Move ?: error("the deal contained a $beat")
+        }
+        moves.forEach { move ->
+            assertEquals(Anchor.Deck, move.from, "every card comes off the deck")
+            assertNull(move.card, "a dealt card flies face-down")
+            assertTrue(move.quick, "a deal is dealt at a dealer's tempo")
+        }
+
+        // Twenty flights, one to every slot of every seat, no slot twice.
+        val slots = moves.map { it.to }
+        assertEquals(view.players.size * DEALT, slots.size)
+        assertEquals(slots.size, slots.toSet().size, "a slot was dealt to twice")
+        view.players.forEach { seat ->
+            repeat(DEALT) { position ->
+                assertTrue(
+                    Anchor.Seat(seat.id, position) in slots,
+                    "${seat.id} slot $position was never dealt",
+                )
+            }
+        }
+
+        // And within a wave, one card to each seat — the dealer goes round the table.
+        deal.forEach { wave ->
+            val seats = wave.filterIsInstance<Beat.Move>()
+                .map { (it.to as Anchor.Seat).playerId }
+            assertEquals(seats.toSet().size, seats.size, "a wave dealt one seat twice")
+        }
+    }
+
+    // ------------------------------------------------------------------ the reveal
+
+    @Test
+    fun scoringTurnsTheHandsOverSeatBySeatInTableOrder() = runTest {
+        val session = started()
+        val scenes = scenesOf(session)
+
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        tableFor(session.view.value).choices.firstOrNull { it.label == "Call Vinto" }?.let {
+            session.dispatch((it.move as Move.Send).action)
+        }
+        runCurrent()
+
+        assertEquals(
+            game.vinto.shapes.GamePhase.SCORING,
+            session.view.value.phase,
+            "seed 8 is pinned because it calls and completes; it stopped doing so",
+        )
+
+        // The reveal rides the round-ending frames: scenes that are nothing but cards
+        // turning over, one seat at a time.
+        val reveals = scenes.flatten()
+            .filter { scene -> scene.isNotEmpty() && scene.all { it is Beat.Reveal } }
+            .filter { scene ->
+                scene.filterIsInstance<Beat.Reveal>()
+                    .map { (it.at as Anchor.Seat).playerId }
+                    .toSet().size == 1
+            }
+
+        assertTrue(reveals.size >= 2, "the hands turned over together rather than seat by seat")
+
+        // In table order, for every viewer alike: an order that favoured the viewer would
+        // give two seats different scripts for one moment, which the visibility matrix
+        // forbids.
+        val order = reveals.map {
+            (it.first() as Beat.Reveal).at.let { at -> (at as Anchor.Seat).playerId }
+        }
+        val table = session.view.value.players.map { it.id }.filter { it in order }
+        assertEquals(table, order, "the hands turn in table order")
+    }
+
+    @Test
+    fun aTableAlreadyAtScoringRevealsNothingAgain() = runTest {
+        val session = started()
+        session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
+        tableFor(session.view.value).choices.firstOrNull { it.label == "Call Vinto" }?.let {
+            session.dispatch((it.move as Move.Send).action)
+        }
+        val over = session.view.value
+        assertEquals(game.vinto.shapes.GamePhase.SCORING, over.phase, "seed 8 stopped completing")
+
+        // A resumed game opens on the scored table; replaying the reveal on every glance is
+        // a reveal that stops meaning anything.
+        assertTrue(scoringScenes(over, over).isEmpty())
+    }
+
     private fun Table.send(startsWith: String): GameAction {
         val choice = choices.first { it.label.startsWith(startsWith) }
         return (choice.move as Move.Send).action
     }
 
     private fun LocalGameSession.table() = tableFor(view.value)
+
+    private companion object {
+        const val DEALT = 5
+    }
 }

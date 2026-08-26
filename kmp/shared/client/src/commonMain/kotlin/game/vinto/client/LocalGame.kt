@@ -39,6 +39,21 @@ class LocalGame private constructor(
     var session: LocalGameSession = deal(resuming)
         private set
 
+    /**
+     * Whether the round on the table was dealt just now, rather than picked back up.
+     *
+     * The opening deal animation keys on this: a fresh deal is dealt onto the felt card by
+     * card, and a resumed round is simply *there* — replaying the deal for a table that was
+     * mid-game when the app closed would animate an event that is not happening.
+     */
+    var freshlyDealt: Boolean = resuming == null
+        private set
+
+    /** The deal has been shown; a rebuilt screen (a rotation, say) must not replay it. */
+    fun dealShown() {
+        freshlyDealt = false
+    }
+
     val playerId: String get() = session.playerId
 
     /**
@@ -80,6 +95,7 @@ class LocalGame private constructor(
         // hand — the deterministic engine's one genuinely surprising behaviour.
         round++
         session = deal(resuming = null)
+        freshlyDealt = true
         save()
     }
 

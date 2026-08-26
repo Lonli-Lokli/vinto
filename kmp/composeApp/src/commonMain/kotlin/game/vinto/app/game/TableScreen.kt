@@ -760,8 +760,13 @@ private fun SeatCard(
             // Face-up only where the table says so. The view carries more than that —
             // everything this seat *knows* — and drawing all of it would hand the player a
             // perfect memory of their own hand, which is the one thing this game asks them
-            // to keep themselves.
-            card = if (ref in table.revealed) card else CardView.Hidden,
+            // to keep themselves. Concealed cards wear their backs a moment longer: the
+            // scoring reveal turns them seat by seat, and the stage says whose turn it is.
+            card = if (ref in table.revealed && !stage.isConcealing(anchor)) {
+                card
+            } else {
+                CardView.Hidden
+            },
             scale = scale,
             state = CardState(
                 tappable = move != null,
