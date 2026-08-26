@@ -121,13 +121,29 @@ class BotRunner(
         for (player in state.players) {
             if (!player.isBot || player.id == state.vintoCallerId) continue
             if (player.declaredCards != null) continue
+            // Whether a bot speaks at all is decided by *state* — it has read positions and
+            // has not declared — never by what its memory happens to hold. Two runners
+            // looking at the same table must agree on who still owes a declaration
+            // (`FinishesTest` drives the human seat with a second runner and relies on it);
+            // only the claims' content is memory's business.
+            if (player.knownCardPositions.isEmpty()) continue
 
             val believed = serviceFor(player.id)
                 .believedOwnCards(buildContext(state, player))
                 .filterKeys { it in player.cards.indices }
-            if (believed.isEmpty()) continue
 
-            return GameAction.DeclareCards(DeclareCardsPayload(player.id, believed))
+            // Memory came up entirely empty for a hand the table watched this bot read: it
+            // still owes the coalition an answer, and the seat's public record is the
+            // fallback. Partial memory stays partial — that is where a weak bot's
+            // declarations go honestly wrong.
+            val claims = believed.ifEmpty {
+                player.knownCardPositions
+                    .filter { it in player.cards.indices }
+                    .associateWith { player.cards[it].rank }
+            }
+            if (claims.isEmpty()) continue
+
+            return GameAction.DeclareCards(DeclareCardsPayload(player.id, claims))
         }
         return null
     }
@@ -435,11 +451,25 @@ class BotRunner(
         player: PlayerState,
         pending: PendingAction,
     ): GameAction {
-        val peeked = pending.targets.mapNotNull { target ->
-            state.players.firstOrNull { it.id == target.playerId }?.cards?.getOrNull(target.position)
+        val targets = pending.targets.map { target ->
+            PeekTarget(
+                target.playerId,
+                target.position,
+                state.players.firstOrNull { it.id == target.playerId }
+                    ?.cards?.getOrNull(target.position),
+            )
         }
+        val peeked = targets.mapNotNull { it.card }
 
-        return if (serviceFor(player.id).shouldSwapAfterPeek(peeked, buildContext(state, player))) {
+        // The peek rides on the context so the service can fold what was seen into memory —
+        // this is the one production construction of [CurrentActionContext].
+        val context = buildContext(
+            state,
+            player,
+            currentAction = CurrentActionContext("peek_and_swap", pending.card, targets),
+        )
+
+        return if (serviceFor(player.id).shouldSwapAfterPeek(peeked, context)) {
             GameAction.ExecuteQueenSwap(PlayerIdPayload(player.id))
         } else {
             GameAction.SkipQueenSwap(PlayerIdPayload(player.id))
@@ -499,14 +529,30 @@ class BotRunner(
     /**
      * What the bot is allowed to see.
      *
-     * `opponentKnowledge` carries only what this bot has been shown — its own read cards, and
-     * nothing of anyone else's. The full hands are in [GameState] because the server owns it;
-     * they are not put in the context, and that omission is the whole discipline.
+     * `opponentKnowledge` carries what this bot has been shown, and only that: its own read
+     * cards, plus the engine's record of everything *this seat* has legitimately seen of the
+     * other seats — its 9/10/Queen peeks, public reveals, watched swap-ins. That record is
+     * `PlayerState.opponentKnowledge`, maintained and renumbered by the engine; forwarding
+     * it is what lets the memory model actually remember opponents. The full hands are in
+     * [GameState] because the server owns it; they are not put in the context, and that
+     * omission is the whole discipline.
      */
-    private fun buildContext(state: GameState, player: PlayerState): BotDecisionContext {
+    private fun buildContext(
+        state: GameState,
+        player: PlayerState,
+        currentAction: CurrentActionContext? = null,
+    ): BotDecisionContext {
         val ownKnowledge: Map<Int, Card> = player.cards.withIndex()
             .filter { (position, _) -> position in player.knownCardPositions }
             .associate { (position, card) -> position to card }
+
+        // A hand shrinks and renumbers; a sighting of a position that no longer exists is
+        // dropped here as a belt — the memory layer prunes the same way.
+        val seenOfOthers: Map<String, Map<Int, Card>> = player.opponentKnowledge.orEmpty()
+            .mapValues { (ownerId, knowledge) ->
+                val owner = state.players.firstOrNull { it.id == ownerId }
+                knowledge.knownCards.filterKeys { it in (owner?.cards?.indices ?: IntRange.EMPTY) }
+            }
 
         return BotDecisionContext(
             botId = player.id,
@@ -517,7 +563,8 @@ class BotRunner(
             discardPile = state.discardPile,
             pendingCard = state.pendingAction?.card,
             activeActionCard = state.pendingAction?.card,
-            opponentKnowledge = mapOf(player.id to ownKnowledge),
+            currentAction = currentAction,
+            opponentKnowledge = seenOfOthers + (player.id to ownKnowledge),
             coalitionLeaderId = state.coalitionLeaderId,
             isCoalitionMember = state.vintoCallerId != null && state.vintoCallerId != player.id,
         )

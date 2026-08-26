@@ -48,6 +48,20 @@ class EveryMoveIsSeenTest {
             if (session.isOver) return@repeat
             frames.clear()
 
+            // A bot may call Vinto mid-game; the bots then hold for this seat's leader
+            // choice, and the one turn left is still an ordinary draw-and-discard. The
+            // script answers the prompt and plays on — the frames are what is under test,
+            // not the game's shape.
+            val view = session.view.value
+            if (view.vintoCallerId != null && view.coalitionLeaderId == null &&
+                view.vintoCallerId != me
+            ) {
+                val leader = view.players.first { it.id != view.vintoCallerId }
+                session.dispatch(
+                    GameAction.SetCoalitionLeader(game.vinto.shapes.LeaderIdPayload(leader.id)),
+                )
+            }
+
             session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
             session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
             session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
@@ -107,7 +121,7 @@ class EveryMoveIsSeenTest {
     }
 
     private companion object {
-        const val TURNS = 8
+        const val TURNS = 12
         const val MANY = 10
     }
 }
