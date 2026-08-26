@@ -35,6 +35,33 @@ enum class ThemeChoice(val serialName: String) {
 }
 
 /**
+ * Whether the table moves, as opposed to how fast ([Pace]).
+ *
+ * Reduced motion is not a faster pace — it is *no movement, same information*: cards appear
+ * where they land instead of flying, but every dwell, ring, verdict and line stays, because
+ * those are the game being narrated rather than decorated. Vestibular sensitivity is the
+ * usual reason to want this, and it is exactly the case a speed dial cannot serve: faster
+ * movement is worse, not better.
+ */
+@Serializable
+enum class MotionChoice(val serialName: String) {
+    /** Follow the platform's accessibility preference, where the platform exposes one. */
+    @SerialName("system") SYSTEM("system"),
+
+    @SerialName("full") FULL("full"),
+
+    @SerialName("reduced") REDUCED("reduced"),
+    ;
+
+    /** The one decision this setting exists to make, given what the platform says. */
+    fun reduced(systemSaysReduce: Boolean): Boolean = when (this) {
+        SYSTEM -> systemSaysReduce
+        FULL -> false
+        REDUCED -> true
+    }
+}
+
+/**
  * Everything the player has chosen, as opposed to everything they have played.
  *
  * Kept apart from [SavedGame] on purpose: a preference outlives the round it was set in, and
@@ -49,6 +76,8 @@ data class Settings(
     val theme: ThemeChoice = ThemeChoice.SYSTEM,
     /** A small kick under the thumb when a card lands or a rule bites. */
     val haptics: Boolean = true,
+    /** See [MotionChoice]. A default-added field: an older settings file still decodes. */
+    val motion: MotionChoice = MotionChoice.SYSTEM,
 ) {
     companion object {
         /** Bumped when the shape changes; an older file is replaced by the defaults. */
