@@ -27,7 +27,6 @@ import game.vinto.shapes.Rank
 object StateTransition {
 
     /** A memory below this is a hunch; the model only acts on what the bot is sure of. */
-    private const val TRUSTED_CONFIDENCE = 0.5
 
     /** Stands in for a card nobody has seen — roughly a mid-deck value. */
     private const val UNKNOWN_CARD_ESTIMATE = 6.0

@@ -12,7 +12,6 @@ import game.vinto.shapes.isActionable
  */
 
 /** Memories below this are hunches; the evaluator only counts what the bot is sure of. */
-private const val TRUSTED_CONFIDENCE = 0.5
 
 /**
  * Matching ranks in hand, which is where multi-step play comes from.

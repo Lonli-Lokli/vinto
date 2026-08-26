@@ -24,7 +24,6 @@ import kotlin.random.Random
  */
 
 /** Below this, a memory is a hunch and the card is sampled rather than assumed. */
-private const val TRUSTED_CONFIDENCE = 0.5
 
 private const val COPIES_PER_RANK = 4
 private const val JOKER_COUNT = 2
@@ -149,7 +148,7 @@ fun determinize(state: MctsGameState, random: Random): MctsGameState {
             val memory = player.knownCards[position]
             val key = state.hiddenCardKey(player.id, position)
 
-            if (memory != null && memory.confidence >= TRUSTED_CONFIDENCE) {
+            if (memory != null && memory.confidence > TRUSTED_CONFIDENCE) {
                 hiddenCards[key] = memory.card
                 continue
             }

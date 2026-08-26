@@ -399,6 +399,14 @@ class MctsBotDecisionService(
      * generator as a target the engine rejects outright.
      */
     private fun updateMemoryFromContext(context: BotDecisionContext) {
+        // The table's public cards first: everything on the discard pile plus the card in
+        // play is provably out of the deck, whoever remembers what. After a reshuffle the
+        // pile is one card again and the pool recovers by the same sync.
+        botMemory.syncVisibleCards(
+            context.discardPile.toList().map { it.rank } +
+                listOfNotNull(context.pendingCard?.rank),
+        )
+
         forgetVanishedPositions(context)
         context.botPlayer.cards.forEachIndexed { position, card ->
             if (position !in context.botPlayer.knownCardPositions) return@forEachIndexed
