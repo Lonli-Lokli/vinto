@@ -4,12 +4,16 @@ import game.vinto.app.art.Res
 import game.vinto.app.art.difficulty_easy
 import game.vinto.app.art.difficulty_hard
 import game.vinto.app.art.difficulty_moderate
+import game.vinto.app.art.motion_full
+import game.vinto.app.art.motion_reduced
+import game.vinto.app.art.motion_system
 import game.vinto.app.art.pace_brisk
 import game.vinto.app.art.pace_calm
 import game.vinto.app.art.pace_steady
 import game.vinto.app.art.theme_dark
 import game.vinto.app.art.theme_light
 import game.vinto.app.art.theme_system
+import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
 import game.vinto.client.ThemeChoice
 import game.vinto.shapes.Difficulty
@@ -39,4 +43,10 @@ fun ThemeChoice.label(): StringResource = when (this) {
     ThemeChoice.SYSTEM -> Res.string.theme_system
     ThemeChoice.LIGHT -> Res.string.theme_light
     ThemeChoice.DARK -> Res.string.theme_dark
+}
+
+fun MotionChoice.label(): StringResource = when (this) {
+    MotionChoice.SYSTEM -> Res.string.motion_system
+    MotionChoice.FULL -> Res.string.motion_full
+    MotionChoice.REDUCED -> Res.string.motion_reduced
 }

@@ -38,6 +38,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toSize
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.client.Anchor
@@ -211,6 +212,15 @@ class Stage {
     internal var pace: Float by mutableStateOf(1f)
 
     /**
+     * No movement, same information. When set, everything that *travels* — flights, lifts,
+     * the flourish's swell, the reshuffle's sweep — completes at once, while everything
+     * that *says* something — a verdict ring, a borrowed rank, a line, every dwell — keeps
+     * its time: those are the game being narrated, and reduced motion is not reduced
+     * information. See `MotionChoice` in the client.
+     */
+    internal var reducedMotion: Boolean by mutableStateOf(false)
+
+    /**
      * Whose phone this is, and what it can do about it.
      *
      * A penalty landing in a bot's hand is a thing to see; one landing in yours is a thing to
@@ -222,6 +232,9 @@ class Stage {
 
     /** A duration, at the pace the player asked for. */
     internal fun ms(base: Int): Int = (base * pace).toInt()
+
+    /** A *movement's* duration: zero under reduced motion, [ms] otherwise. */
+    internal fun travel(base: Int): Int = if (reducedMotion) 0 else ms(base)
 
     /** The same, for the pauses between things, which are counted in milliseconds of delay. */
     internal fun paced(base: Long): Long = (base * pace).toLong()
@@ -543,10 +556,12 @@ fun CardStage(
 ) {
     val stage = remember { Stage() }
     val feedback = LocalFeedback.current
+    val reducedMotion = LocalReducedMotion.current
     SideEffect {
         stage.pace = pace
         stage.viewerId = live.viewerId
         stage.feedback = feedback
+        stage.reducedMotion = reducedMotion
     }
     val queue = remember { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
 
@@ -570,20 +585,8 @@ fun CardStage(
         var next = 0L
         var lastActor: String? = null
 
-        // The deal, before anything else. Every slot a card will land in is marked as
-        // expecting first, so the whole table opens as gaps and fills wave by wave — the
-        // same machinery a mid-game arrival uses, played over the freshly dealt view.
-        if (opening.isNotEmpty()) {
-            opening.flatten().filterIsInstance<Beat.Move>().forEach { move ->
-                stage.expecting[move.to] = move.card.faceOrBack()
-            }
-            for (scene in opening) {
-                withFrameNanos { }
-                next = stage.play(scene, next)
-                delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
-            }
-            stage.expecting.clear()
-        }
+        // The deal, before anything else — see [playOpening].
+        next = stage.playOpening(opening, next)
 
         // A game opened mid-action — a resume, a reconnect — may already be holding cards
         // up, and no frame is coming to say so: the lift is a state, so it is read.
@@ -604,29 +607,9 @@ fun CardStage(
                 delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
                 if (frame.hasSomethingToSee) lastActor = frame.actorId
 
-                // Everything this move is about to move, before the table steps to it: the
-                // places expecting a card must know that from the same frame the new position
-                // appears, or they draw the arrival early and blink when the flight starts.
-                stage.expecting.clear()
-                frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
-                    // The card as well as the place: a pile deciding what to draw underneath
-                    // an arrival has to know *which* card is arriving, or it cannot tell the
-                    // card on its way from the card already lying there.
-                    stage.expecting[move.to] = move.card.faceOrBack()
-                }
-
-                // And everything this move is about to *reveal* that the stepped view will
-                // already be showing — the scoring reveal — stays concealed until its scene
-                // turns it. Only reveals the view itself makes visible: a King's named card
-                // is transient and never in `revealedTo`, so it lifts as it always has.
-                stage.concealing.clear()
-                val visible = revealedTo(frame.view)
-                frame.scenes.flatten().filterIsInstance<Beat.Reveal>().forEach { reveal ->
-                    val seat = reveal.at as? Anchor.Seat ?: return@forEach
-                    if (CardRef(seat.playerId, seat.position) in visible) {
-                        stage.concealing += reveal.at
-                    }
-                }
+                // What this move is about to move and to reveal, marked before the table
+                // steps to it — see [prepareFor].
+                stage.prepareFor(frame)
 
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
@@ -686,22 +669,75 @@ fun CardStage(
         }
 
         stage.flourish?.let { (card, at) ->
-            Flourish(card, sizes, stage.berthOf(at), stage.tableCentre(), stage.ms(FLOURISH_MS))
+            Flourish(card, sizes, stage.berthOf(at), stage.tableCentre(), stage.travel(FLOURISH_MS))
         }
 
         stage.flying.forEach { flight ->
             key(flight.id) {
                 // The same clock the scene is waiting on: a lit flight is given longer, and
                 // was flying in the shorter time and then sitting still for the difference.
-                val ms = stage.ms(flightMs(shown = flight.shown, quick = flight.quick))
+                val ms = stage.travel(flightMs(shown = flight.shown, quick = flight.quick))
                 InFlight(flight, sizes, ms) { stage.flying.remove(flight) }
             }
         }
 
-        stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.ms(STAGE_GROW_MS)) }
-        if (stage.refilling > 0) Reshuffling(stage.refilling, sizes, stage)
+        stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.travel(STAGE_GROW_MS)) }
+        // The sweep is pure movement; under reduced motion the count still shows for the
+        // scene's dwell, but nothing crosses the table.
+        if (stage.refilling > 0 && !stage.reducedMotion) Reshuffling(stage.refilling, sizes, stage)
 
         Pointer(stage = stage, target = coaching.pointer)
+    }
+}
+
+/**
+ * The opening deal, played before any frame.
+ *
+ * Every slot a card will land in is marked as expecting first, so the whole table opens as
+ * gaps and fills wave by wave — the same machinery a mid-game arrival uses, played over the
+ * freshly dealt view.
+ */
+private suspend fun Stage.playOpening(opening: List<Scene>, firstId: Long): Long {
+    if (opening.isEmpty()) return firstId
+
+    opening.flatten().filterIsInstance<Beat.Move>().forEach { move ->
+        expecting[move.to] = move.card.faceOrBack()
+    }
+    var next = firstId
+    for (scene in opening) {
+        withFrameNanos { }
+        next = play(scene, next)
+        delay(paced(Pacing.BETWEEN_SCENES_MS))
+    }
+    expecting.clear()
+    return next
+}
+
+/**
+ * Marks everything a frame is about to move or reveal, before the table steps to it.
+ *
+ * The places expecting a card must know from the same frame the new position appears, or
+ * they draw the arrival early and blink when the flight starts. And everything the move is
+ * about to *reveal* that the stepped view will already be showing — the scoring reveal —
+ * stays concealed until its scene turns it. Only reveals the view itself makes visible: a
+ * King's named card is transient and never in `revealedTo`, so it lifts as it always has.
+ */
+private fun Stage.prepareFor(frame: Frame) {
+    expecting.clear()
+    frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
+        // The card as well as the place: a pile deciding what to draw underneath an
+        // arrival has to know *which* card is arriving, or it cannot tell the card on its
+        // way from the card already lying there.
+        expecting[move.to] = move.card.faceOrBack()
+    }
+
+    concealing.clear()
+    val visible = revealedTo(frame.view)
+    frame.scenes.flatten().filterIsInstance<Beat.Reveal>().forEach { reveal ->
+        val seat = reveal.at as? Anchor.Seat ?: return@forEach
+        if (CardRef(seat.playerId, seat.position) in visible) {
+            concealing += reveal.at
+        }
     }
 }
 
@@ -751,7 +787,7 @@ private suspend fun Stage.holdUp(view: PlayerView) {
     val released = peeking.keys.filter { it !in held }
     if (released.isNotEmpty()) {
         settling.addAll(released)
-        delay(ms(PEEK_SETTLE_MS).toLong())
+        delay(travel(PEEK_SETTLE_MS).toLong())
         released.forEach { anchor ->
             peeking.remove(anchor)
             settling.remove(anchor)
@@ -858,7 +894,7 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
 
     LaunchedEffect(anchor, settling) {
         val to = if (settling) 0f else 1f
-        val over = stage.ms(if (settling) PEEK_SETTLE_MS else PEEK_LIFT_MS)
+        val over = stage.travel(if (settling) PEEK_SETTLE_MS else PEEK_LIFT_MS)
         lift.animateTo(to, tween(over, easing = FastOutSlowInEasing))
     }
 
@@ -924,7 +960,7 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
         shown = beat.shown,
         quick = beat.quick,
     )
-    return ms(flightMs(shown = beat.shown, quick = beat.quick))
+    return travel(flightMs(shown = beat.shown, quick = beat.quick))
 }
 
 /** How long a flight takes: a dealt card is brisk, a shown one lingers, the rest walk. */

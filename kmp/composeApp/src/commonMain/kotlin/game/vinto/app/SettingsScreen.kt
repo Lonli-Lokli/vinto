@@ -33,6 +33,8 @@ import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
 import game.vinto.app.art.settings_off
 import game.vinto.app.art.settings_on
+import game.vinto.app.art.settings_motion
+import game.vinto.app.art.settings_motion_detail
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_saved_game
@@ -48,6 +50,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.stamped
+import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
@@ -97,6 +100,7 @@ fun SettingsScreen(
 
             Bots(settings, onChange)
             Pacing(settings, onChange)
+            Motion(settings, onChange)
             Palette(settings, onChange)
             Buzz(settings, onChange)
 
@@ -158,6 +162,21 @@ private fun Pacing(settings: Settings, onChange: (Settings) -> Unit) {
             selected = settings.pace,
             label = { stringResource(it.label()) },
             onChoose = { onChange(settings.copy(pace = it)) },
+        )
+    }
+}
+
+@Composable
+private fun Motion(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = stringResource(Res.string.settings_motion),
+        detail = stringResource(Res.string.settings_motion_detail),
+    ) {
+        ChoiceRow(
+            options = MotionChoice.entries,
+            selected = settings.motion,
+            label = { stringResource(it.label()) },
+            onChoose = { onChange(settings.copy(motion = it)) },
         )
     }
 }

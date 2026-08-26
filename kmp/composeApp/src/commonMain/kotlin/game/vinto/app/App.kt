@@ -81,7 +81,10 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
     val dark = settings.theme.isDark()
     SystemBars(dark)
     VintoTheme(dark = dark) {
-        CompositionLocalProvider(LocalFeedback provides rememberFeedback(settings.haptics)) {
+        CompositionLocalProvider(
+            LocalFeedback provides rememberFeedback(settings.haptics),
+            LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
+        ) {
             // Every phone has something drawn over its edges — a status bar, a gesture handle, a
             // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
             // list, so anything under those is simply lost rather than reachable, and the content

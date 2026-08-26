@@ -62,6 +62,12 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
 
+    <string name="settings_motion">Motion</string>
+    <string name="settings_motion_detail">Whether cards fly, or simply appear where they land. Reduced keeps every ring, verdict and pause — the game is still narrated, it just doesn’t move. System follows your device’s accessibility setting.</string>
+    <string name="motion_system">System</string>
+    <string name="motion_full">Full</string>
+    <string name="motion_reduced">Reduced</string>
+
     <string name="settings_haptics">Haptics</string>
     <string name="settings_haptics_detail">A small kick under the thumb when a card is touched, a move lands, or a rule bites.</string>
     <string name="settings_on">On</string>
