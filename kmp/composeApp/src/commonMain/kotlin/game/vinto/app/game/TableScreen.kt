@@ -63,6 +63,8 @@ import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_final_ally
+import game.vinto.app.art.table_final_last_turn
+import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_final_caller
 import game.vinto.app.art.table_final_leader
 import game.vinto.app.art.table_final_round
@@ -85,6 +87,7 @@ import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
+import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.client.Move
 import game.vinto.client.Table
 import game.vinto.client.Target
@@ -401,7 +404,28 @@ private fun FinalRoundLine(view: PlayerView) {
             letterSpacing = 1.sp,
             color = Rail.gold,
         )
-        Text(said, style = MaterialTheme.typography.labelMedium, color = Rail.ink)
+        Text(
+            said,
+            style = MaterialTheme.typography.labelMedium,
+            color = Rail.ink,
+            modifier = Modifier.weight(1f, fill = true),
+        )
+
+        // How close the reveal is. Three coalition turns can pass in under a second when
+        // the bots hold them all, and a player who looked away for one has no other way to
+        // know how much of the final round is left.
+        finalRoundTurnsLeft(view)?.let { left ->
+            Text(
+                if (left == 1) {
+                    stringResource(Res.string.table_final_last_turn)
+                } else {
+                    stringResource(Res.string.table_final_turns_left, left)
+                },
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Rail.gold,
+            )
+        }
     }
 }
 

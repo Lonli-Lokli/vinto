@@ -89,6 +89,8 @@
     <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
     <string name="table_final_leader">You play the coalition’s hand against %1$s.</string>
     <string name="table_final_ally">%1$s plays the coalition’s hand against %2$s.</string>
+    <string name="table_final_turns_left">%1$d turns to the reveal</string>
+    <string name="table_final_last_turn">last turn</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -117,6 +119,7 @@
     <string name="score_column_game">game</string>
     <string name="score_you_called">You called Vinto, so your hand was set against the best of the others’.</string>
     <string name="score_they_called">%1$s called Vinto, so their hand was set against the best of yours.</string>
+    <string name="score_deck_ended">Nobody called Vinto — the deck ran out, so the round ended and every hand was counted.</string>
     <string name="score_next_round">Deal the next round</string>
     <string name="score_stop">Stop here</string>
 

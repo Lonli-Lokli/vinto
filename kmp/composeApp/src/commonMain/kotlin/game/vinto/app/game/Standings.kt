@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.score_column_game
+import game.vinto.app.art.score_deck_ended
 import game.vinto.app.art.score_column_hand
 import game.vinto.app.art.score_column_round
 import game.vinto.app.art.score_next_round
@@ -103,18 +104,20 @@ fun StandingsSheet(
                 )
             }
 
-            result.callerId?.let { callerId ->
-                // The caller might be the person reading this, and "You called Vinto, so
-                // their hand…" is the kind of sentence that makes a player wonder whose score
-                // they are looking at.
-                val line = if (callerId == you) {
-                    stringResource(Res.string.score_you_called)
-                } else {
+            // Why the round ended, whichever way it did. A call names its caller; a round
+            // with no caller can only have ended on the deck, and a player who never called
+            // and never heard one has every right to ask why the hands went face-up.
+            val callerId = result.callerId
+            val line = when {
+                callerId == you -> stringResource(Res.string.score_you_called)
+                callerId != null -> {
                     val who = result.seats.firstOrNull { it.first == callerId }?.second
                     stringResource(Res.string.score_they_called, who.orEmpty())
                 }
-                Text(line, fontSize = BodySize, color = Rail.inkDim)
+
+                else -> stringResource(Res.string.score_deck_ended)
             }
+            Text(line, fontSize = BodySize, color = Rail.inkDim)
 
             GameButton(
                 label = stringResource(Res.string.score_next_round),
