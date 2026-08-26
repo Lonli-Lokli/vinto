@@ -17,6 +17,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -141,7 +143,7 @@ private fun Header(label: String) {
         label,
         fontSize = SmallSize,
         color = Rail.inkDim,
-        modifier = Modifier.padding(horizontal = Gap),
+        modifier = Modifier.padding(horizontal = Gap).semantics { heading() },
     )
 }
 

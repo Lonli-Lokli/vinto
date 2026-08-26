@@ -26,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -218,6 +220,9 @@ private fun Heading(table: Table, teaching: Boolean) {
             fontSize = PromptSize,
             fontWeight = FontWeight.Bold,
             color = Rail.ink,
+            // The rail's de-facto heading: a reader jumping by headings lands on what the
+            // table is asking, which is the one line that matters.
+            modifier = Modifier.semantics { heading() },
         )
         table.detail?.takeIf { worthSaying(it, teaching) }?.let { detail ->
             Text(text = detail, fontSize = DetailSize, color = Rail.inkDim)

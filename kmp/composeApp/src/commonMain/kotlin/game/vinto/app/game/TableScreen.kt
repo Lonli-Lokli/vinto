@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,7 +59,6 @@ import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
-import game.vinto.app.art.card_the_deck
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.table_discard
@@ -73,6 +73,7 @@ import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.card_thrown_by
 import game.vinto.app.art.table_toss_in
+import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.theme.Rail
@@ -403,6 +404,7 @@ private fun FinalRoundLine(view: PlayerView) {
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
             color = Rail.gold,
+            modifier = Modifier.semantics { heading() },
         )
         Text(
             said,
@@ -819,7 +821,9 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
                         card = CardView.Hidden,
                         scale = sizes.theirs,
                         modifier = deck,
-                        label = stringResource(Res.string.card_the_deck),
+                        // The count as well as the name: it is the number that decides how
+                        // a round ends, and a reader hears it where a glance would see it.
+                        label = stringResource(Res.string.header_deck_left, view.drawPileSize),
                     )
                 } else {
                     EmptySlot(sizes.theirs, "—", deck)
@@ -906,7 +910,9 @@ private fun Thrown(view: PlayerView, toss: ActiveTossIn) {
     )
     Row(
         horizontalArrangement = Arrangement.spacedBy(Tight),
-        modifier = Modifier.height(ThrownRow),
+        // A minimum, not a fix: the row reserves its space so nothing moves while a card
+        // lands here, and still grows when a large system font makes the names taller.
+        modifier = Modifier.heightIn(min = ThrownRow),
     ) {
         thrown.forEach { throw_ ->
             val who = view.players.firstOrNull { it.id == throw_.playerId }?.nickname ?: "—"
@@ -940,9 +946,17 @@ private fun TossIn(view: PlayerView) {
     // The space is reserved whether or not a window is open. It used to appear with the first
     // card that went down, which pushed the whole middle of the table up a line at the exact
     // moment a card was landing there.
+    val summary = view.activeTossIn?.let { toss ->
+        stringResource(
+            Res.string.table_toss_in_summary,
+            toss.ranks.joinToString(" ") { it.serialName },
+        )
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.heightIn(min = TossHeight),
+        modifier = Modifier
+            .heightIn(min = TossHeight)
+            .semantics { summary?.let { contentDescription = it } },
     ) {
         val toss = view.activeTossIn ?: return@Column
 
