@@ -253,3 +253,18 @@ they can watch arrive.
 | A peeked card is put back, not taken away | `composeApp/.../PeekSettleTest.kt` |
 | Nothing on the table teleports | `client/.../EveryMoveIsSeenTest.kt` |
 | The pauses between moves | `client/.../PacingTest.kt` |
+
+## Online is the same choreography
+
+A `RemoteGameSession` builds its frames from the wire exactly the way the local session
+builds them from the reducer: each event arrives with the receiving seat's view *after* that
+action (see `PROTOCOL.md` — per-event views exist for precisely this), and the session runs
+the same `choreograph(action, before, after)` per entry. Catch-up paths — a resync, entries
+stored without views — collapse to one landing frame on purpose: nobody wants a replay of
+the minute their tunnel ate.
+
+| Claim | Test |
+| --- | --- |
+| Events become one frame per entry, in order | `client/.../RemoteSessionTest.kt` |
+| A whole round over the wire animates one frame per logged action, for both seats | `room/.../TwoClientGameTest.kt` |
+| A reconnect costs exactly one landing frame | `room/.../TwoClientGameTest.kt` |

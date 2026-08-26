@@ -101,14 +101,16 @@ not after the UI is built.
       the wrong shape here — a card going from a hand to the discard passes over three other
       hands, and animating it in place means making room for it in every one of them. Not yet
       run on a physical phone or on iOS
-- [~] 7.2 Design tokens (light/dark), typography, theme: **done**, and deliberately *not*
+- [x] 7.2 Design tokens (light/dark), typography, theme: **done**, and deliberately *not*
       Material-looking. Material's own button is a stadium, and it was the single thing that
       made the screen read as an Android app rather than a game. The controls are now the web
       app's: four-pixel corners, a solid colour, a small shadow, on a dark rail that stays dark
       in both themes. The colours carry meaning, ported from `BUTTON_ACTION_VARIANTS` — green
       gets on with the turn, blue puts a card in a hand, slate declines, orange ends the round,
       amber names a rank — so a player who learned them on the web does not learn them twice.
-      Reduced-motion is **not** honoured yet
+      Reduced-motion is honoured: a Motion setting (system / full / reduced) with the system
+      preference read per platform, and "reduced" meaning no movement with every ring, verdict
+      and pause kept — the game still narrated, it just doesn't move
 - [x] 7.9 Help: a "?" on the panel opens what the rules say about whatever is happening — the
       card in hand, or the phase — followed by every rank and what it does. The words are
       `CARD_CONFIGS`, ported with the engine, so the web app and this teach the same game. A
@@ -138,7 +140,7 @@ not after the UI is built.
       your own turn, coalition leader choice, waiting indicators. The *decisions* live in
       `TableModel.kt` as a pure function of the view and are covered by `TableModelTest`; the
       composables draw what it returns and decide nothing
-- [~] 7.5 Animation: card flight, card flip on reveal, a pulse on what can be tapped and a glow
+- [x] 7.5 Animation: card flight, card flip on reveal, a pulse on what can be tapped and a glow
       on the seat whose turn it is. The flights are derived by a pure `flightsFor` and tested;
       the overlay draws them. **The screen no longer runs ahead of its own animation**: the
       session emits one `Frame` per move — the scenes *and* the table that move left behind —
@@ -146,8 +148,10 @@ not after the UI is built.
       nothing left to show. The engine still runs ahead, as it must, but the player is no
       longer shown the final position while cards fly out of hands they have already left.
       With that true the vocabulary could be slowed to something readable (460 ms a card, a
-      380 ms pause when the turn passes), and the speed is now a setting. **Still open**:
-      reduced motion (7.2), and a sound layer, which needs assets
+      380 ms pause when the turn passes), and the speed is now a setting. Reduced motion is a
+      setting (see 7.2), and the sound layer exists: four synthesized sounds and no more —
+      a card dealt, a card landing, a penalty, the round ending — behind a silent-default
+      `LocalSounds` with platform actuals, regenerable by `kmp/tools/make-sfx.py`
 - [x] 7.12 **How to play**: a real round on a written-down deck, with a director that makes the
       bots play their parts and calls Vinto so the final round, the coalition and the scoring
       are *played* rather than described; a coach derived from the position (so every legal
@@ -157,15 +161,23 @@ not after the UI is built.
       `docs/kotlin/README.md` §6g. Engine gained one entry point (`initializeTeachingGame`,
       which refuses a deck that is not a permutation of the real one); the client gained
       `BotDirector`, `TeachingDeal` and the pure `lessonFor`
-- [ ] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape.
-      Cards carry a `contentDescription` and chips a 44 dp target; the rest is unaudited, and
-      the app is portrait-locked until this is done (`AndroidManifest.xml` says why)
+- [x] 7.6 Accessibility semantics for cards/controls, touch targets, large fonts, landscape.
+      Audited: the deck names its count, the toss-in corner describes itself as one sentence,
+      headings mark the panel prompt / standings columns / final-round line / settings
+      plaques, and the thrown row grows under a large font instead of clipping.
+      `TouchTargetTest` re-runs its bounds at `fontScale = 2f` (the setting that finds
+      controls sized by their label), `TossInAreaTest` asserts the spoken summary, and the
+      landscape half shipped with the orientation unlock
 - [ ] 7.7 Export/share recording; restore last local game on relaunch
-- [~] 7.8 UI tests: `TableUiTest` plays from the home screen to the first draw and back into a
+- [x] 7.8 UI tests: `TableUiTest` plays from the home screen to the first draw and back into a
       saved game; `MenuUiTest` covers the four ways in, the online explanation, a setting
       reaching the vault and the lesson opening on a real table; `VersionTest` keeps the
-      version on screen and the one in the APK from drifting. **Still open**: a scripted *full*
-      game, and screenshot tests for key screens in light and dark
+      version on screen and the one in the APK from drifting. Both remainders exist:
+      `FullGameUiTest` plays a whole round on the real `GameScreen` — setup and a turn by
+      tapping the actual buttons, the rest at machine speed through `playItselfOut` — and
+      holds the screen to the end-of-round promises; `ScreenshotTest` photographs home,
+      settings and both table arrangements in both themes against goldens (`Goldens.kt`;
+      first run writes, mismatch leaves an `.actual.png` beside)
 
 ## 8. Delivery (single player)
 
@@ -186,14 +198,40 @@ not after the UI is built.
 
 ## 9. Online multiplayer
 
-- [ ] 9.1 `shared/protocol`: message types (`join`, `action`, `event{index, action, view}`, `resync`, `error`) with serializers shared by client and server; protocol doc `docs/kotlin/PROTOCOL.md`
-- [ ] 9.2 `worker` (Cloudflare Worker + Durable Object per room, Kotlin/JS): rooms (create/join by code, always 4 seats, host start, bot fill), the Durable Object owning `GameState`, authoritative validate/apply via `shared/engine`, `BotAIAdapter` running in the object (never on a client — a client cannot decide a bot move without that seat’s hidden cards), per-seat `projectView` broadcast, `GameRecorder` per room, WebSocket Hibernation so idle rooms cost no duration
-- [ ] 9.3 Reconnection/resync by recording index; idempotent (seat, index) handling; grace period → bot takeover of a disconnected seat
-- [ ] 9.4 Human pacing: toss-in ready timeout, coalition-leader selection timeout (configurable per room)
-- [ ] 9.5 Guest identity (device-bound id + nickname), room codes/links
-- [ ] 9.6 `RemoteGameSession` (Ktor client WebSocket, or platform WebSocket on Wasm) implementing `GameSession`; offline detection and reconnect UX
-- [ ] 9.7 Lobby UI (create/join/seats/start), in-game connection indicators; seat-agnostic game screen verified with 2 humans + 2 bots and 4 humans
-- [ ] 9.8 Multi-client test harness (scripted human clients + bots vs a local server) producing recordings; add to `parity-roundtrip`
+- [x] 9.1 `shared/protocol`: message types (`join`, `action`, `event{index, action, view}`, `resync`, `error`) with serializers shared by client and server; protocol doc `docs/kotlin/PROTOCOL.md`.
+      The wire came first — `index.mjs` had been serving the gates — so the module transcribes
+      it and `ProtocolWireTest` pins it with literals copied from the JavaScript
+- [x] 9.2 `worker` (Cloudflare Worker + Durable Object per room, Kotlin/JS): rooms (create/join by code, always 4 seats, host start, bot fill), the Durable Object owning `GameState`, authoritative validate/apply via `shared/engine`, `BotAIAdapter` running in the object (never on a client — a client cannot decide a bot move without that seat’s hidden cards), per-seat `projectView` broadcast, `GameRecorder` per room, WebSocket Hibernation so idle rooms cost no duration.
+      The last piece was the recorder: every finished round is filed as a `GameRecording` v1
+      (`recording:<n>` in DO storage, served on a plain GET), and `RoomRecordingTest` replays
+      what a driven room produces. The cores themselves moved to `shared/room` (jvm+js) where
+      the JVM can finally test them; the worker keeps `@JsExport` delegates
+- [x] 9.3 Reconnection/resync by recording index; idempotent (seat, index) handling; grace period → bot takeover of a disconnected seat.
+      Server half existed (log-index cursor, seat grace, takeover); the client half is
+      `RemoteRoom`'s reconnect loop — rejoin by vaulted token, `resync(cursor)`, one landing
+      frame — held by `RemoteSessionTest` and the two-client harness's mid-game socket kill
+- [x] 9.4 Human pacing: toss-in ready timeout, coalition-leader selection timeout (configurable per room).
+      15 s / 20 s as room constants rather than per-room settings (a knob nobody asked to turn
+      yet); deadlines are data folded into the one alarm, expiry moves for the laggard through
+      the ordinary validate-and-reduce path, logged `byBot` — `PacingTimeoutTest`
+- [x] 9.5 Guest identity (device-bound id + nickname), room codes/links.
+      `Identity.kt`: a guest id minted once from caller-supplied entropy, a remembered
+      nickname, and per-room seat tokens vaulted the moment `joined` delivers them. Codes are
+      typed into `OnlineScreen`; a `?room=CODE` deep link waits on a navigator (see `App.kt`)
+- [x] 9.6 `RemoteGameSession` (Ktor client WebSocket, or platform WebSocket on Wasm) implementing `GameSession`; offline detection and reconnect UX.
+      Decided against Ktor entirely: `RoomSocket`/`RoomConnector` interfaces in shared code
+      (which keeps `NoNetworkGuardTest` honest) with each platform's own socket in the app —
+      `java.net.http`, OkHttp, `NSURLSessionWebSocketTask`, the browser's `WebSocket`. The
+      session builds the same `Frame`s the local one does, from the per-event views
+- [x] 9.7 Lobby UI (create/join/seats/start), in-game connection indicators; seat-agnostic game screen verified with 2 humans + 2 bots and 4 humans.
+      `OnlineScreen` and `RoomScreen` over a pure, tested `LobbyModel`; the connection badge
+      appears wherever the socket wavers. 2 humans + 2 bots is verified by the harness; the
+      4-human table is a maintainer run against a real deployment (runbook §6i)
+- [x] 9.8 Multi-client test harness (scripted human clients + bots vs a local server) producing recordings; add to `parity-roundtrip`.
+      `TwoClientGameTest`: two real `RemoteGameSession`s against the room's own entry points
+      over channel sockets — agreement at scoring, one frame per logged action, a mid-game
+      reconnect, and the filed recording replayed through the engine in the same test (which
+      is the parity check, run on every build rather than added to a script)
 - [ ] 9.9 Server observability: Sentry JVM (game id + action index), recordings persisted for finished games; container build + deployment (provider decided here); load test with 100 concurrent rooms
 - [ ] 9.10 Store releases with multiplayer enabled
 

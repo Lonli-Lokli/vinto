@@ -127,9 +127,11 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 | `shared:shapes` | jvm, js, (iosArm64, iosSimulatorArm64 on macOS)         | Types + `Prng`. The port starts here. Its tests run on every target above.                                 |
 | `shared:engine` | jvm, android, js, wasmJs, (iOS on macOS)                | `GameEngine.reduce`, toss-in and scoring utils, the replay harness. Partly ported — see §6b.               |
 | `shared:bot`    | jvm, android, js, wasmJs, (iOS on macOS)                | MCTS decision service, coalition planner and `BotRunner`. Reads only what a seat may see.                   |
-| `shared:client` | jvm, android, js, wasmJs, (iOS on macOS)                | `GameSession` and `LocalGameSession` — a solo game with no room and no socket. See §6d.                     |
-| `worker`        | js                                                      | Cloudflare Worker + `Room` Durable Object. Kotlin room logic under a thin JS shim in `worker/cloudflare/`. |
-| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients. Still the gate payload UI; real screens are phase 7.  |
+| `shared:client` | jvm, android, js, wasmJs, (iOS on macOS)                | `GameSession` with both lives: `LocalGameSession` (solo, no socket — see §6d) and `RemoteRoom`/`RemoteGameSession` over the wire. |
+| `shared:protocol` | jvm, android, js, wasmJs, (iOS on macOS)              | The wire, declared once: `ClientMessage`/`ServerMessage`, the room-facing types, `ProtocolJson`. See `PROTOCOL.md`.               |
+| `shared:room`   | jvm, js                                                 | The room and registry cores, moved out of the worker so the JVM can test them. Envelope builders, recordings, pacing.             |
+| `worker`        | js                                                      | Cloudflare Worker + `Room` Durable Object: `@JsExport` delegates over `shared:room`, under the thin JS shim in `worker/cloudflare/`. |
+| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients: the solo game, the lesson, and the online lobby + table. |
 | `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                 |
 
 The full intended layout is in design D1. Modules are added as they are ported rather than
@@ -888,6 +890,59 @@ where asserting an English sentence says what it currently reads.
 Until that lands the app is half-translated: menus, settings, the score sheet, the help sheet
 and the spoken descriptions follow the phone's language; the table's prompts, the move log and
 the lesson do not.
+
+## 6i. Taking the room live — the maintainer's runbook
+
+The online client is code-complete: protocol, room cores with JVM tests, per-event views,
+recordings, pacing, `RemoteGameSession`, lobby screens, and a two-client harness that plays a
+full round through all of it (`TwoClientGameTest`). What remains is the part only a person
+with credentials and hardware can do, in this order:
+
+**1. Verify locally, on the machine that can.** This container cannot compile `composeApp`
+(androidx lives behind dl.google.com), so the UI-adjacent work ships verified by
+`:composeApp:detekt` plus everything the shared modules prove. Run the rest:
+
+```sh
+cd kmp
+./gradlew :shared:shapes:jvmTest :shared:engine:jvmTest :shared:bot:jvmTest \
+          :shared:client:jvmTest :shared:protocol:jvmTest :shared:room:jvmTest
+./gradlew :composeApp:jvmTest       # the compose suites, FullGameUiTest included
+./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest          # writes goldens
+./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest --rerun  # proves them stable
+```
+
+Commit the eight goldens `ScreenshotTest` writes (`composeApp/src/jvmTest/goldens/`). Run the
+desktop app once and listen: four sounds — a deal, a landing, a thud on a penalty, a chime at
+the round's end — and none anywhere else.
+
+**2. Exercise the rewired worker against `wrangler dev`.** `index.mjs` now sends prebuilt
+per-seat envelopes and files recordings; the gate scripts import the *unchanged* exports and
+still pass, but `gate-real-room.mjs` and `gate-sessions.mjs` walk the rewired paths:
+
+```sh
+cd kmp && ./gradlew :worker:compileKotlinJs
+cd worker/cloudflare && npx wrangler dev &   # then, against it:
+node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
+  && node gate-lifecycle.mjs && node gate-limits.mjs && node gate-room-codes.mjs
+```
+
+**3. Deploy and open the room — one deploy, both halves.** `ROOM_OPEN` stays `"false"` until
+the client that speaks to it ships; flip it in the same deploy that publishes the client
+builds, never before (the flag's comment in `wrangler.jsonc` says the same):
+
+```sh
+npx wrangler deploy          # then poll:
+curl https://vinto-room.kupalinka.app/health   # expect roomOpen: true after the flip
+```
+
+**4. Prove it with people.** Two devices (or a device and the desktop app): create a room,
+join by code, add two bots, play a round through — kill one app mid-round and watch the seat
+go bot and come back on relaunch. Then the four-human table (9.7's second verification),
+which needs four hands and cannot be scripted.
+
+**Still open by design**: 9.9 (Sentry on the worker, a load test with 100 rooms) and 9.10
+(store releases with multiplayer enabled) — operational work that starts after this runbook
+has been walked once.
 
 ## 7. Traps and known issues
 
