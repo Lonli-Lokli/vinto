@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,6 +68,9 @@ private val Lift = 8.dp
 
 /** As much of the rail as the coach may take, mid-play, before it starts scrolling. */
 private val CoachMax = 120.dp
+
+/** The widest the coach's card may lie, however wide the felt under it is. */
+private val CoachWidth = 520.dp
 
 /**
  * And how much while it is talking.
@@ -213,7 +217,11 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                         // coach lying across it would cover the very buttons the lessons
                         // point at.
                         .padding(end = if (layout.landscape) layout.railWidth else 0.dp)
-                        .padding(top = HeaderHeight + Pad),
+                        .padding(top = HeaderHeight + Pad)
+                        // A speech bubble, not a banner: on a desktop the felt is most of a
+                        // metre wide, and a line of coaching stretched across all of it is
+                        // unreadable in the way a newspaper set as one column would be.
+                        .widthIn(max = CoachWidth),
                 )
             }
         }

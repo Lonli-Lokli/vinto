@@ -10,13 +10,13 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.HeaderHeight
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableSizes
 import game.vinto.app.game.TableState
-import game.vinto.app.game.railWidth
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
@@ -63,10 +63,79 @@ class LandscapeTableTest {
     }
 
     @Test
+    fun aBigScreenDealsABiggerTableNotAPhonesTableWithMoreCloth() {
+        val phone = TableLayout.forScreen(LAND_W, LAND_H)
+        val tablet = TableLayout.forScreen(1280.dp, 800.dp)
+        val desktop = TableLayout.forScreen(1920.dp, 1080.dp)
+
+        // The cards step up where only a tablet or desktop has the height for them.
+        assertTrue(
+            tablet.sizes.mine.width > phone.sizes.mine.width,
+            "a tablet's cards are phone-sized: ${tablet.sizes.mine} vs ${phone.sizes.mine}",
+        )
+        assertEquals(
+            tablet.sizes,
+            desktop.sizes,
+            "a tablet and a desktop with big felts land on the same step",
+        )
+        // And a portrait tablet lands on the same big cards as a landscape one.
+        assertTrue(
+            TableLayout.forScreen(800.dp, 1280.dp).sizes.mine.width > phone.sizes.mine.width,
+            "a portrait tablet was dealt phone cards",
+        )
+
+        // The felt keeps a table's proportions instead of pocketing the spare width: a
+        // rotated phone gives it everything beside the rail, a desktop caps it and centres
+        // what remains.
+        assertEquals(
+            LAND_W - phone.railWidth,
+            phone.feltWidth,
+            "a rotated phone has no width to spare and the felt should take all of it",
+        )
+        assertTrue(
+            desktop.feltWidth < 1920.dp - desktop.railWidth,
+            "a desktop felt stretched across the window: ${desktop.feltWidth}",
+        )
+        assertTrue(
+            desktop.feltWidth <= 980.dp,
+            "wider than any arm's reach: ${desktop.feltWidth}",
+        )
+    }
+
+    @Test
+    fun aDesktopTableIsCenteredNotStretched() {
+        // A desktop-shaped window that still fits the test surface: the felt is capped by
+        // its aspect, so the felt-and-rail group sits centred with the surround showing on
+        // both sides — and every card stays on the felt.
+        val layout = TableLayout.forScreen(DESK_W, DESK_H)
+        assertTrue(
+            layout.feltWidth < DESK_W - layout.railWidth,
+            "this window was meant to engage the cap: ${layout.feltWidth}",
+        )
+        show(dealt(), DESK_W, DESK_H)
+
+        val margin = ((DESK_W - layout.feltWidth - layout.railWidth) / 2).value
+        val cards = cardBounds()
+        assertTrue(cards.isNotEmpty(), "the table dealt no cards at all")
+
+        cards.forEach { (what, box) ->
+            assertTrue(
+                box.left >= margin - 1f,
+                "$what is lying in the left surround: $box, margin $margin",
+            )
+            assertTrue(
+                box.right <= margin + layout.feltWidth.value + 1f,
+                "$what is past the felt's right edge: $box",
+            )
+        }
+    }
+
+    @Test
     fun everyCardStaysOnTheFeltSideOfTheJoin() {
         show(dealt())
 
-        val join = (LAND_W - railWidth(LAND_W)).value
+        val layout = TableLayout.forScreen(LAND_W, LAND_H)
+        val join = ((LAND_W - layout.railWidth - layout.feltWidth) / 2 + layout.feltWidth).value
         val cards = cardBounds()
         assertTrue(cards.isNotEmpty(), "the table dealt no cards at all")
 
@@ -140,14 +209,18 @@ class LandscapeTableTest {
     private fun Rect.touches(other: Rect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
-    /** The table, on a phone lying on its side. */
-    private fun ComposeUiTest.show(view: PlayerView) {
+    /** The table, on a screen lying on its side — a rotated phone unless told otherwise. */
+    private fun ComposeUiTest.show(
+        view: PlayerView,
+        width: Dp = LAND_W,
+        height: Dp = LAND_H,
+    ) {
         setContent {
             VintoTheme {
-                Box(modifier = Modifier.size(LAND_W, LAND_H)) {
+                Box(modifier = Modifier.size(width, height)) {
                     TableScreen(
                         state = TableState(view, tableFor(view), null, emptyList(), 1),
-                        layout = TableLayout.forScreen(LAND_W, LAND_H),
+                        layout = TableLayout.forScreen(width, height),
                         onMove = {},
                         onHelp = {},
                         onReport = {},
@@ -200,5 +273,12 @@ class LandscapeTableTest {
          */
         val LAND_W = 740.dp
         val LAND_H = 411.dp
+
+        /**
+         * A desktop-shaped window that still fits the test surface (1024x768), chosen so
+         * the felt's aspect cap engages and the centring is real rather than degenerate.
+         */
+        val DESK_W = 1000.dp
+        val DESK_H = 500.dp
     }
 }
