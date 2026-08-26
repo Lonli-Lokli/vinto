@@ -565,6 +565,7 @@ class MctsBotDecisionService(
             // hides the endgame from the search entirely — a rollout can never run the deck
             // out, and the bot will happily plan a draw that the engine has no card for.
             deckSize = context.gameState.drawPile.size,
+            discardCount = context.discardPile.size,
             botMemory = botMemory,
             // Left empty on purpose: determinization deals them, once per simulation.
             hiddenCards = emptyMap(),

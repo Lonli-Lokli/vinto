@@ -429,4 +429,48 @@ class StateTransitionTest {
         )
         assertFalse(StateTransition.wouldMoveEndGame(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1")))
     }
+
+    // --- the reshuffle -------------------------------------------------------------------
+
+    @Test
+    fun aDeckRunningDryFoldsTheDiscardPileBackInLikeTheRealGame() {
+        // Two cards left, twelve on the pile. Drawing the next-to-last card triggers the
+        // fold at the turn boundary: the pile's cards return to the deck except the top one.
+        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 2)
+            .copy(discardCount = 12)
+
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1"))
+
+        // 2 - 1 drawn = 1 left, the drawn card joins the pile (13), then 12 of the 13 fold
+        // back: deck 13, pile 1.
+        assertEquals(13, after.deckSize)
+        assertEquals(1, after.discardCount)
+        assertFalse(StateTransition.isTerminal(after), "a reshuffled deck is not an ended game")
+    }
+
+    @Test
+    fun anEmptyDeckWithNothingToFoldBackIsStillTerminal() {
+        val starved = state(listOf(seat("bot-1"), seat("p2")), deckSize = 0)
+            .copy(discardCount = 1)
+
+        assertTrue(StateTransition.isTerminal(starved))
+    }
+
+    @Test
+    fun aForcedDrawCostsTheDeckACard() {
+        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 10)
+            .copy(pendingCard = testCard(Rank.ACE, "A_0"))
+
+        val after = StateTransition.applyMove(
+            before,
+            MctsMove(
+                MctsMoveType.USE_ACTION,
+                playerId = "bot-1",
+                targets = listOf(MctsActionTarget("p2", -1)),
+            ),
+        )
+
+        assertEquals(9, after.deckSize, "the Ace's victim drew from somewhere")
+        assertEquals(5, after.seatNamed("p2").cardCount)
+    }
 }

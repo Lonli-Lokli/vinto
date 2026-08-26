@@ -1017,7 +1017,11 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
         action = action,
     )
 
-    val afterBots = playBots(charged.copy(game = reduced, log = charged.log + accepted))
+    val afterBots = playBots(
+        charged.copy(game = reduced, log = charged.log + accepted),
+        // The bots watched this player's move too; it seeds the runner's table model.
+        playerMove = ObservedMove(action, before = game, after = reduced),
+    )
     val settled = settleRound(afterBots, nowMs)
 
     return VintoJson.encodeToString(
@@ -1032,10 +1036,20 @@ fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Dou
  * about the bot so much as about the seam: if the room ever accepted something from its own
  * driver that it would refuse from a player, the two would be playing different games.
  */
-private fun playBots(start: RoomState): RoomState {
+/** An accepted action with the states around it, for the bots' table model. */
+private data class ObservedMove(
+    val action: GameAction,
+    val before: GameState,
+    val after: GameState,
+)
+
+private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomState {
     if (start.game == null) return start
 
     val runner = BotRunner(start.difficulty, Random(start.seed))
+    // The runner here is rebuilt per request, so its table model only spans the moves of
+    // this request; the durable cross-request knowledge is the engine's `opponentKnowledge`.
+    playerMove?.let { runner.observe(it.action, it.before, it.after) }
     var state = start
     var steps = 0
 
@@ -1058,6 +1072,8 @@ private fun playBots(start: RoomState): RoomState {
             ActionValidator.validate(game, action) is Validation.Invalid -> null
             else -> (GameEngine.reduce(game, action) as? ReduceResult.Success)?.state
         } ?: break
+
+        runner.observe(action, before = game, after = reduced)
 
         state = state.copy(
             game = reduced,

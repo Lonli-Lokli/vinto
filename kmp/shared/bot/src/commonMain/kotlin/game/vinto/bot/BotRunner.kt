@@ -50,8 +50,46 @@ class BotRunner(
     private val difficultyInUse = difficulty
     private val services = mutableMapOf<String, BotDecisionService>()
 
+    /**
+     * Beliefs inferred from watching everybody play — shared across the seats this runner
+     * drives, because everything in it is public information: anyone at the table saw the
+     * same discard, the same swap, the same toss-in. Fed by [observe], reset when the deal
+     * changes, and handed to every decision through the context.
+     */
+    private val opponentModeler = OpponentModeler()
+    private var modelerGameId: String? = null
+
     private fun serviceFor(botId: String): BotDecisionService =
         services.getOrPut(botId) { serviceFactory(difficultyInUse, random) }
+
+    /** The table model, exposed so a test can check what [observe] taught it. */
+    internal fun tableModelForTesting(): OpponentModeler = opponentModeler
+
+    /**
+     * Tells the runner what just happened at the table, so [OpponentModeler] can learn from
+     * it. Call after every *accepted* action — anyone's, human or bot — with the states
+     * around it. Idle to skip: nothing else depends on it, the bots just read the table less
+     * well. See [observationsFor] for what is actually inferred.
+     */
+    fun observe(action: GameAction, before: GameState, after: GameState) {
+        if (modelerGameId != before.gameId) {
+            opponentModeler.reset()
+            modelerGameId = before.gameId
+        }
+
+        for (observation in observationsFor(action, before, after)) {
+            when (observation) {
+                is TableObservation.Acted ->
+                    opponentModeler.handleObservedAction(observation.observed)
+
+                is TableObservation.BeliefInvalidated ->
+                    opponentModeler.removeCardBelief(observation.playerId, observation.position)
+
+                is TableObservation.CardRemoved ->
+                    opponentModeler.shiftCardBeliefs(observation.playerId, observation.position)
+            }
+        }
+    }
 
     /**
      * The single next action the bots owe this state, or `null` when it is a human's move or
@@ -587,6 +625,7 @@ class BotRunner(
             opponentKnowledge = seenOfOthers + (player.id to ownKnowledge),
             coalitionLeaderId = state.coalitionLeaderId,
             isCoalitionMember = state.vintoCallerId != null && state.vintoCallerId != player.id,
+            opponentModeler = opponentModeler,
         )
     }
 

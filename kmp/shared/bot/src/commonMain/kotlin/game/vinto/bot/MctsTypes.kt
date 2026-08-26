@@ -47,6 +47,13 @@ data class MctsGameState(
     val discardPileTop: Card? = null,
     val discardPile: Pile = Pile(),
     val deckSize: Int = 0,
+    /**
+     * How many cards the model thinks are on the discard pile — the real pile at the root,
+     * bookkept by [StateTransition] after that. It exists so a rollout can model the
+     * reshuffle: the real game folds the pile back into the deck rather than ending, and a
+     * search that could not see past an empty deck treated the endgame as a wall.
+     */
+    val discardCount: Int = 0,
     val botMemory: BotMemory,
     /** Cards filled in by determinization, keyed `playerId-position`. */
     val hiddenCards: Map<String, Card> = emptyMap(),
