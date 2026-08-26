@@ -48,3 +48,40 @@ object CardProtection {
  * claims — a memory the bot acts on anywhere is a memory it acts on everywhere.
  */
 internal const val TRUSTED_CONFIDENCE = 0.5
+
+/**
+ * How [VintoRoundSolver] steers the live call around [shouldCallVintoByScore]'s plain
+ * `hand ≤ 0` rule. Both directions are gated on the solver's confidence — the fraction of
+ * the table the bot has actually seen — because worst-case analysis over cards nobody has
+ * looked at is not knowledge:
+ *
+ *  - a believed-zero hand calls *unless* the solver vetoes with real knowledge. A blind
+ *    solver cannot veto, or the endgame would become unreachable exactly when the bots
+ *    play worst.
+ *  - a believed hand up to [ENABLER_MAX_SCORE] calls only when the solver approves at even
+ *    higher confidence. This is the only path by which a positive hand ever calls, and it
+ *    is what ends the games where nobody ever assembles a zero.
+ */
+object VintoCallWiring {
+    /** The solver may only overrule a zero hand when it has really seen the table. */
+    const val VETO_CONFIDENCE = 0.55
+
+    /** A positive hand needs better evidence to call than a zero hand needs to be stopped. */
+    const val ENABLER_CONFIDENCE = 0.6
+
+    /** Above this believed score the solver is not consulted; the hand is simply not good. */
+    const val ENABLER_MAX_SCORE = 4
+
+    /**
+     * After this many table laps without a call, provable safety stops being the bar.
+     *
+     * A table of small hands can reach a stalemate: everyone believes their whole hand,
+     * everyone is at eight to fourteen points, nobody can improve, and the worst-case
+     * analysis refuses every call forever — the deck just reshuffles and the game never
+     * ends. Real players end such games by judging they are *relatively* ahead and
+     * calling. Past this point the bot does the same: it calls when its believed score is
+     * no worse than the best it *expects* of any opponent — a bar the player with the
+     * lowest believed hand always clears, which is what guarantees games end.
+     */
+    const val LATE_GAME_LAPS = 12
+}

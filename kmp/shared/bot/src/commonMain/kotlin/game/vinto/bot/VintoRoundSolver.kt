@@ -6,6 +6,7 @@ import game.vinto.shapes.getCardAction
 import game.vinto.shapes.getCardValue
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.round
 
 /**
@@ -134,7 +135,12 @@ class VintoRoundSolver(private val botMemory: BotMemory) {
         val kings = opponent.actionCardTypes.count { it == CardAction.DECLARE_ACTION }
         val actionBenefit = (swaps + kings) * SWAP_BENEFIT
 
-        return max(0.0, knownScore + unknownScore - actionBenefit)
+        // Action benefit is an assumption, so it may improve a hand only to zero, never
+        // *below* it — two Kings are not worth -10. But a hand *observed* to be negative
+        // (a Joker seen at the table) really is negative, and pretending otherwise would
+        // let a caller on zero walk into a hand it has already seen beating it.
+        val observedScore = knownScore + unknownScore
+        return max(min(0.0, observedScore), observedScore - actionBenefit)
     }
 
     /**

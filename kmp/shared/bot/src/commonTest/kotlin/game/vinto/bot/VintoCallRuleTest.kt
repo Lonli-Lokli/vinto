@@ -48,17 +48,29 @@ class VintoCallRuleTest {
     }
 
     @Test
-    fun theServiceMakesTheSameCallAtEveryDifficulty() {
-        // Difficulty tunes memory accuracy and search budget; it must not turn the Vinto
-        // rule into a different rule, or an "easy" bot would end games a "hard" one would not.
+    fun difficultyChangesTheMemoryFeedingTheRuleNotTheRuleItself() {
+        // The call is judged on what the bot *remembers* holding — the same beliefs it
+        // declares to a coalition. A hard bot recalls its winning hand on the first ask; an
+        // easy bot may honestly fail to for a while, but once its memory catches up it makes
+        // the same call — and no difficulty ever calls a hand it remembers as losing, since
+        // a memory can be missing here but never invented.
         val winning = contextWith(listOf(Rank.JOKER, Rank.KING))
         val losing = contextWith(listOf(Rank.TEN))
 
         for (difficulty in listOf(Difficulty.EASY, Difficulty.MODERATE, Difficulty.HARD)) {
-            val service = MctsBotDecisionService(difficulty, Random(5))
-            assertTrue(service.shouldCallVinto(winning), "${difficulty.serialName} refused a winning hand")
-            assertFalse(service.shouldCallVinto(losing), "${difficulty.serialName} called on a losing hand")
+            val caller = MctsBotDecisionService(difficulty, Random(5))
+            assertTrue(
+                (1..12).any { caller.shouldCallVinto(winning) },
+                "${difficulty.serialName} never recalled a winning two-card hand in twelve asks",
+            )
+            val holder = MctsBotDecisionService(difficulty, Random(5))
+            repeat(3) {
+                assertFalse(holder.shouldCallVinto(losing), "${difficulty.serialName} called on a losing hand")
+            }
         }
+
+        // Perfect memory answers at once, every time.
+        assertTrue(MctsBotDecisionService(Difficulty.HARD, Random(5)).shouldCallVinto(winning))
     }
 
     @Test

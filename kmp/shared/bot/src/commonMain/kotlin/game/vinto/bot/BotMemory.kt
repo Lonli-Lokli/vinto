@@ -237,15 +237,24 @@ class BotMemory(
             .forEach { memoryMap.remove(it) }
     }
 
-    /** Over the limit, the least-certain memories go first — which is how a person forgets. */
+    /**
+     * Over the limit, the least-certain memories go first — which is how a person forgets.
+     *
+     * The limit is a cap on *opponent* tracking only. The bot's own row is the thing it
+     * rehearses every turn and is never crowded out by watching the table — when it was,
+     * every sighting of an opponent's card evicted one of the bot's own, `believedOwnCards`
+     * went empty for any bot that had seen a few opponents, and no bot on a limited
+     * difficulty could ever believe its full hand — which meant it could never call Vinto,
+     * and games stopped ending. Own-hand fallibility comes from [DifficultyMemoryConfig]'s
+     * accuracy and forget chance instead, which is the honest kind: gaps, not amnesia.
+     */
     private fun enforceMemoryLimit() {
-        val over = getMemorySize() - config.maxMemorySize
+        val over = opponentCards.values.sumOf { it.size } - config.maxMemorySize
         if (over <= 0) return
 
-        val all = ownCards.map { (position, memory) -> Triple(ownCards, position, memory) } +
-            opponentCards.values.flatMap { map ->
-                map.map { (position, memory) -> Triple(map, position, memory) }
-            }
+        val all = opponentCards.values.flatMap { map ->
+            map.map { (position, memory) -> Triple(map, position, memory) }
+        }
 
         all.sortedBy { it.third.confidence }
             .take(over)

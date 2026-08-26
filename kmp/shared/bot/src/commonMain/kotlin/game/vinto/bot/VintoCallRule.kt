@@ -1,5 +1,6 @@
 package game.vinto.bot
 
+import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardValue
 
 /**
@@ -17,17 +18,35 @@ import game.vinto.shapes.getCardValue
  * Ported from `packages/bot/src/lib/vinto-call-rule.ts`.
  */
 
-/** Hands are only counted once the bot knows every card it holds. */
-fun knowsEntireHand(context: BotDecisionContext): Boolean {
-    val known = context.botPlayer.knownCardPositions.toSet()
-    return context.botPlayer.cards.indices.all { it in known }
-}
+/**
+ * What the caller-to-be would say its own cards are, when nothing better is supplied: the
+ * engine's record of the positions it has read — a perfect memory. The service passes its
+ * [BotMemory.believedOwnCards] instead, so a weak bot judges the call on what it actually
+ * remembers, exactly as it declares to a coalition.
+ */
+private fun rememberedHand(context: BotDecisionContext): Map<Int, Rank> =
+    context.opponentKnowledge[context.botId].orEmpty().mapValues { it.value.rank }
 
-/** Total value of the bot's own hand. Only meaningful when [knowsEntireHand] is true. */
-fun ownHandScore(context: BotDecisionContext): Int =
-    context.botPlayer.cards.sumOf { getCardValue(it.rank) }
+/** Hands are only counted once the bot believes it knows every card it holds. */
+fun knowsEntireHand(
+    context: BotDecisionContext,
+    believed: Map<Int, Rank> = rememberedHand(context),
+): Boolean = context.botPlayer.cards.indices.all { it in believed }
 
-fun shouldCallVintoByScore(context: BotDecisionContext, threshold: Int = 0): Boolean {
+/** Total value of the hand as the bot believes it. Only meaningful under [knowsEntireHand]. */
+fun ownHandScore(
+    context: BotDecisionContext,
+    believed: Map<Int, Rank> = rememberedHand(context),
+): Int = believed.values.sumOf { getCardValue(it) }
+
+/**
+ * The conditions under which a call is even considerable, whatever the hand is worth.
+ * Shared between the plain score rule and the solver-wired call in the service.
+ */
+fun vintoCallGatesOpen(
+    context: BotDecisionContext,
+    believed: Map<Int, Rank> = rememberedHand(context),
+): Boolean {
     // Calling in the opening is a coin flip whatever the hand, and it makes for a dull game.
     // Everyone gets a couple of turns first.
     if (context.gameState.turnNumber < context.allPlayers.size * 2) return false
@@ -37,8 +56,17 @@ fun shouldCallVintoByScore(context: BotDecisionContext, threshold: Int = 0): Boo
 
     // Any unknown card sinks the call: a bot holding a known Joker and three unseen cards has
     // a *known* score of -1 and a real expected score far above it. Requiring full
-    // self-knowledge is what keeps this rule honest without opponent modelling.
-    if (!knowsEntireHand(context)) return false
+    // self-belief is what keeps this rule honest without opponent modelling — and a belief
+    // that is wrong makes for a call that loses, which is a memory problem, not a rules one.
+    return knowsEntireHand(context, believed)
+}
 
-    return ownHandScore(context) <= threshold
+fun shouldCallVintoByScore(
+    context: BotDecisionContext,
+    threshold: Int = 0,
+    believed: Map<Int, Rank> = rememberedHand(context),
+): Boolean {
+    if (!vintoCallGatesOpen(context, believed)) return false
+
+    return ownHandScore(context, believed) <= threshold
 }

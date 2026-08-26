@@ -23,6 +23,14 @@ class OutcomeSimulatorTest {
     private fun bot(cards: List<Card>, known: List<Int> = cards.indices.toList()) =
         testPlayer("bot-1", "Bot", isHuman = false, cards = cards, knownCardPositions = known)
 
+    /** A perfect memory of the read positions — what a HARD bot believes. */
+    private fun believedOf(botPlayer: game.vinto.shapes.PlayerState) =
+        OutcomeSimulator.BelievedHand(
+            cards = botPlayer.knownCardPositions.associateWith { botPlayer.cards[it] },
+            handSize = botPlayer.cards.size,
+            expectedUnseenValue = 5.0,
+        )
+
     private fun context(
         botCards: List<Card>,
         known: List<Int> = botCards.indices.toList(),
@@ -50,13 +58,14 @@ class OutcomeSimulatorTest {
         val botPlayer = bot(hand(Rank.JOKER, Rank.SIX, Rank.SIX))
         val ctx = context(botPlayer.cards)
 
+        val believed = believedOf(botPlayer)
         val swapScore = OutcomeSimulator.calculateStrategicOutcomeScore(
-            OutcomeSimulator.simulateTurnOutcome(drawn, swapPosition = 0, botPlayer, ctx),
+            OutcomeSimulator.simulateTurnOutcome(drawn, swapPosition = 0, botPlayer, ctx, believed),
             drawn,
             joker,
         )
         val discardScore = OutcomeSimulator.calculateOutcomeScore(
-            OutcomeSimulator.simulateDiscardOutcome(drawn, botPlayer),
+            OutcomeSimulator.simulateDiscardOutcome(drawn, botPlayer, believed),
         )
 
         assertTrue(swapScore < discardScore, "swap $swapScore should lose to discard $discardScore")
@@ -120,8 +129,8 @@ class OutcomeSimulatorTest {
         val ctx = context(cards, known = listOf(0))
         val drawn = testCard(Rank.TWO, "2_drawn")
 
-        val intoKnown = OutcomeSimulator.simulateTurnOutcome(drawn, 0, botPlayer, ctx)
-        val intoUnknown = OutcomeSimulator.simulateTurnOutcome(drawn, 1, botPlayer, ctx)
+        val intoKnown = OutcomeSimulator.simulateTurnOutcome(drawn, 0, botPlayer, ctx, believedOf(botPlayer))
+        val intoUnknown = OutcomeSimulator.simulateTurnOutcome(drawn, 1, botPlayer, ctx, believedOf(botPlayer))
 
         assertEquals(1, intoKnown.finalKnownCards, "position 0 was already read")
         assertTrue(intoUnknown.finalKnownCards > intoKnown.finalKnownCards)
@@ -134,20 +143,20 @@ class OutcomeSimulatorTest {
         val readsBoth = OutcomeSimulator.simulateTossInCascade(
             Rank.SEVEN,
             currentHandSize = 3,
-            currentScore = 17,
-            botPlayer = bot(cards),
+            currentScore = 17.0,
+            believed = believedOf(bot(cards)),
         )
         val readsOne = OutcomeSimulator.simulateTossInCascade(
             Rank.SEVEN,
             currentHandSize = 3,
-            currentScore = 17,
-            botPlayer = bot(cards, known = listOf(0)),
+            currentScore = 17.0,
+            believed = believedOf(bot(cards, known = listOf(0))),
         )
 
         assertEquals(1, readsBoth.handSize)
-        assertEquals(3, readsBoth.score)
+        assertEquals(3.0, readsBoth.score)
         assertEquals(2, readsOne.handSize)
-        assertEquals(10, readsOne.score)
+        assertEquals(10.0, readsOne.score)
     }
 
     @Test
@@ -155,8 +164,12 @@ class OutcomeSimulatorTest {
         val cards = hand(Rank.SEVEN, Rank.THREE)
         val botPlayer = bot(cards)
 
-        val matching = OutcomeSimulator.simulateDiscardOutcome(testCard(Rank.SEVEN, "7_d"), botPlayer)
-        val notMatching = OutcomeSimulator.simulateDiscardOutcome(testCard(Rank.FOUR, "4_d"), botPlayer)
+        val matching = OutcomeSimulator.simulateDiscardOutcome(
+            testCard(Rank.SEVEN, "7_d"), botPlayer, believedOf(botPlayer),
+        )
+        val notMatching = OutcomeSimulator.simulateDiscardOutcome(
+            testCard(Rank.FOUR, "4_d"), botPlayer, believedOf(botPlayer),
+        )
 
         assertEquals(1, matching.finalHandSize)
         assertEquals(2, notMatching.finalHandSize)
@@ -172,11 +185,13 @@ class OutcomeSimulatorTest {
         val king = testCard(Rank.KING, "K_0")
         val ctx = context(hand(Rank.THREE))
 
-        val bare = OutcomeSimulator.simulateActionKnowledgeGain(king, bot(hand(Rank.THREE, Rank.FOUR)), ctx)
-        val withSecondKing =
-            OutcomeSimulator.simulateActionKnowledgeGain(king, bot(hand(Rank.KING, Rank.FOUR)), ctx)
-        val withDeclarableAction =
-            OutcomeSimulator.simulateActionKnowledgeGain(king, bot(hand(Rank.QUEEN, Rank.FOUR)), ctx)
+        fun gain(cards: List<Card>): Int {
+            val player = bot(cards)
+            return OutcomeSimulator.simulateActionKnowledgeGain(king, player, ctx, believedOf(player))
+        }
+        val bare = gain(hand(Rank.THREE, Rank.FOUR))
+        val withSecondKing = gain(hand(Rank.KING, Rank.FOUR))
+        val withDeclarableAction = gain(hand(Rank.QUEEN, Rank.FOUR))
 
         assertTrue(withSecondKing > bare)
         assertTrue(withDeclarableAction > bare)
@@ -189,9 +204,14 @@ class OutcomeSimulatorTest {
         val seven = testCard(Rank.SEVEN, "7_0")
         val cards = hand(Rank.THREE, Rank.FOUR)
 
-        assertEquals(0, OutcomeSimulator.simulateActionKnowledgeGain(seven, bot(cards), ctx))
+        val readAll = bot(cards)
+        val readOne = bot(cards, known = listOf(0))
+        assertEquals(
+            0,
+            OutcomeSimulator.simulateActionKnowledgeGain(seven, readAll, ctx, believedOf(readAll)),
+        )
         assertTrue(
-            OutcomeSimulator.simulateActionKnowledgeGain(seven, bot(cards, known = listOf(0)), ctx) > 0,
+            OutcomeSimulator.simulateActionKnowledgeGain(seven, readOne, ctx, believedOf(readOne)) > 0,
         )
     }
 
@@ -208,6 +228,7 @@ class OutcomeSimulatorTest {
                 jack,
                 bot(cards, blindSpot),
                 context(cards, blindSpot),
+                believedOf(bot(cards, blindSpot)),
             ),
             "nothing known about anyone else to swap for",
         )
@@ -217,6 +238,7 @@ class OutcomeSimulatorTest {
                 jack,
                 bot(cards),
                 context(cards, opponentKnowledge = knowsARivalCard),
+                believedOf(bot(cards)),
             ),
             "no blind spot of its own left to fill",
         )
@@ -225,6 +247,7 @@ class OutcomeSimulatorTest {
                 jack,
                 bot(cards, blindSpot),
                 context(cards, blindSpot, knowsARivalCard),
+                believedOf(bot(cards, blindSpot)),
             ) > 0,
         )
     }
@@ -236,11 +259,15 @@ class OutcomeSimulatorTest {
 
         assertEquals(
             0,
-            OutcomeSimulator.simulateActionKnowledgeGain(testCard(Rank.FIVE, "5_0"), bot(cards, listOf(0)), ctx),
+            OutcomeSimulator.simulateActionKnowledgeGain(
+                testCard(Rank.FIVE, "5_0"), bot(cards, listOf(0)), ctx, believedOf(bot(cards, listOf(0))),
+            ),
         )
         assertEquals(
             0,
-            OutcomeSimulator.simulateActionKnowledgeGain(testCard(Rank.JOKER, "Joker_0"), bot(cards, listOf(0)), ctx),
+            OutcomeSimulator.simulateActionKnowledgeGain(
+                testCard(Rank.JOKER, "Joker_0"), bot(cards, listOf(0)), ctx, believedOf(bot(cards, listOf(0))),
+            ),
         )
     }
 
