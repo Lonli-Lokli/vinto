@@ -188,6 +188,18 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
         // to the whole table, which is the point being made.
         tossInDemo(state)?.let { return it }
 
+        // Every other bot window closes at once. The real bots toss on what they *believe*
+        // they hold, and on the teaching difficulty a belief can be honestly wrong — a wrong
+        // toss draws a penalty card, and one extra draw shifts every scripted deck position
+        // after it. One demonstrated toss-in is the lesson; the rest is choreography.
+        if (state.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE) {
+            val ready = state.activeTossIn?.playersReadyForNextTurn.orEmpty()
+            for (bot in state.players.filter { it.isBot && it.id !in ready }) {
+                val done = GameAction.PlayerTossInFinished(PlayerIdPayload(bot.id))
+                if (ActionValidator.validate(state, done) is Validation.Valid) return done
+            }
+        }
+
         val actor = state.players.getOrNull(state.currentPlayerIndex) ?: return null
         if (actor.isHuman) return null
 

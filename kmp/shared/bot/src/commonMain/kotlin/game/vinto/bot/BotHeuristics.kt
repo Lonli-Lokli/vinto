@@ -85,15 +85,22 @@ fun shouldUseAceAction(
 }
 
 /**
- * Tossing in is free value whenever the bot holds a matching rank it knows about: the card
- * leaves the hand and the score drops. Only known cards count — guessing costs a penalty card
- * and ends the bot's participation for the round.
+ * Tossing in is free value whenever the bot *believes* it holds a matching rank: the card
+ * leaves the hand and the score drops. Only believed cards count — guessing costs a penalty
+ * card and ends the bot's participation for the round — and a belief that is wrong pays
+ * that same price, which is what makes a weak memory a real handicap.
  */
-fun shouldParticipateInTossIn(discardedRanks: List<Rank>, botPlayer: PlayerState): Boolean {
+fun shouldParticipateInTossIn(
+    discardedRanks: List<Rank>,
+    botPlayer: PlayerState,
+    believed: Map<Int, Rank> = botPlayer.knownCardPositions
+        .filter { it in botPlayer.cards.indices }
+        .associateWith { botPlayer.cards[it].rank },
+): Boolean {
     val ranksToCheck = discardedRanks.filter { getCardValue(it) >= 0 }
 
-    return botPlayer.cards.withIndex().any { (index, card) ->
-        index in botPlayer.knownCardPositions && card.rank in ranksToCheck
+    return believed.any { (position, rank) ->
+        position in botPlayer.cards.indices && rank in ranksToCheck
     }
 }
 

@@ -17,10 +17,11 @@ import kotlin.time.TimeSource
  * [MctsGameState] — the bot's *beliefs*, never the real hands — but a few are answered by a
  * rule instead, and those are deliberate rather than shortcuts:
  *
- * - **Vinto** is decided by [shouldCallVintoByScore], not by the search. The search cannot
- *   answer it: the engine only asks during the toss-in window, and in that window the move
- *   generator legitimately offers nothing but toss-in and pass, so `CALL_VINTO` is
- *   unreachable. The TypeScript carried that bug long enough for games to simply never end.
+ * - **Vinto** is decided by the score rule steered by [VintoRoundSolver] (see
+ *   [VintoCallWiring]), not by the search. The search cannot answer it: the engine only
+ *   asks during the toss-in window, and in that window the move generator legitimately
+ *   offers nothing but toss-in and pass, so `CALL_VINTO` is unreachable. The TypeScript
+ *   carried that bug long enough for games to simply never end.
  * - **Peeks and high-value discards** are taken by heuristic, because information is worth
  *   more than any single position the search would evaluate.
  * - **Which card to swap** is [OutcomeSimulator]'s one-ply question, not a tree search.
@@ -219,25 +220,43 @@ class MctsBotDecisionService(
         context: BotDecisionContext,
     ): Boolean {
         initializeIfNeeded(context)
-        return shouldParticipateInTossIn(discardedRanks, context.botPlayer)
+        return shouldParticipateInTossIn(
+            discardedRanks,
+            context.botPlayer,
+            believed = botMemory.believedOwnCards(),
+        )
     }
 
     /** Null means discard the drawn card rather than swapping it in. */
     override fun selectBestSwapPosition(drawnCard: Card, context: BotDecisionContext): Int? {
         initializeIfNeeded(context)
 
+        // The hand as this bot remembers it: real values only where a trusted memory says
+        // so, the expected unseen value everywhere else. A position the bot never read is
+        // priced as an average card, never as what actually sits there — so the Joker
+        // nobody saw earns no protection, and a weak memory misprices honestly.
+        val believed = OutcomeSimulator.BelievedHand(
+            cards = botMemory.getPlayerMemory(botId)
+                .filterKeys { it in context.botPlayer.cards.indices }
+                .filterValues { it.confidence > TRUSTED_CONFIDENCE }
+                .mapValues { (_, memory) -> memory.card },
+            handSize = context.botPlayer.cards.size,
+            expectedUnseenValue = averageRemainingCardValue(botMemory),
+        )
+
         var bestScore = OutcomeSimulator.calculateOutcomeScore(
-            OutcomeSimulator.simulateDiscardOutcome(drawnCard, context.botPlayer),
+            OutcomeSimulator.simulateDiscardOutcome(drawnCard, context.botPlayer, believed),
         )
         var bestPosition: Int? = null
 
         for (position in context.botPlayer.cards.indices) {
-            val outcome =
-                OutcomeSimulator.simulateTurnOutcome(drawnCard, position, context.botPlayer, context)
+            val outcome = OutcomeSimulator.simulateTurnOutcome(
+                drawnCard, position, context.botPlayer, context, believed,
+            )
             val score = OutcomeSimulator.calculateStrategicOutcomeScore(
                 outcome,
                 drawnCard,
-                context.botPlayer.cards[position],
+                believed.cards[position],
             )
 
             if (score > bestScore) {
@@ -251,7 +270,60 @@ class MctsBotDecisionService(
 
     override fun shouldCallVinto(context: BotDecisionContext): Boolean {
         initializeIfNeeded(context)
-        return shouldCallVintoByScore(context)
+        // Judged on what the bot remembers of its own hand, not the engine's record — the
+        // same beliefs it would declare to a coalition. A weak memory can misjudge a call,
+        // which is the difficulty model doing its job.
+        val believed = botMemory.believedOwnCards()
+        if (!vintoCallGatesOpen(context, believed)) return false
+
+        val believedScore = believed.values.sumOf { getCardValue(it) }
+        val lateGame =
+            context.gameState.turnNumber >= context.allPlayers.size * VintoCallWiring.LATE_GAME_LAPS
+        if (believedScore > VintoCallWiring.ENABLER_MAX_SCORE && !lateGame) return false
+
+        // The solver's worst case is what the best-placed opponent could still reach with
+        // everything going their way. Its own verdict uses a strict `<`, but a Vinto tie
+        // goes to the caller, so the comparisons here are tie-aware: the caller is beaten
+        // only when an opponent can get *strictly* below it.
+        val result = VintoRoundSolver(botMemory).validateVintoCall(
+            botCards = believed.entries.sortedBy { it.key }.map { (position, rank) ->
+                Card(
+                    id = "believed_$position",
+                    rank = rank,
+                    value = getCardValue(rank),
+                    played = false,
+                )
+            },
+            opponents = context.allPlayers
+                .filter { it.id != context.botId }
+                .map { VintoRoundSolver.OpponentHand(it.id, it.cards.size) },
+        )
+        val beatenInWorstCase = result.worstCaseOpponentScore < believedScore
+
+        return when {
+            // A zero hand calls by right; the solver may only veto it with real knowledge.
+            believedScore <= 0 ->
+                !(beatenInWorstCase && result.confidence >= VintoCallWiring.VETO_CONFIDENCE)
+
+            // A small positive hand calls when the solver approves at higher confidence —
+            // the path that ends games where nobody ever assembles a zero.
+            believedScore <= VintoCallWiring.ENABLER_MAX_SCORE &&
+                !beatenInWorstCase && result.confidence >= VintoCallWiring.ENABLER_CONFIDENCE -> true
+
+            // Deep into a stalemated game, provable safety gives way to relative judgement:
+            // call when no opponent is *expected* to do better (a tie goes to the caller).
+            // The bot holding the lowest believed hand always clears this bar, which is what
+            // guarantees the game ends. See [VintoCallWiring.LATE_GAME_LAPS].
+            lateGame -> {
+                val bestExpectedOpponent = context.allPlayers
+                    .filter { it.id != context.botId }
+                    .minOfOrNull { estimatePlayerScore(it.cards.size, botMemory, it.id) }
+                    ?: Double.MAX_VALUE
+                believedScore <= bestExpectedOpponent
+            }
+
+            else -> false
+        }
     }
 
     /**
@@ -399,13 +471,18 @@ class MctsBotDecisionService(
             botMemory = BotMemory(context.botId, difficulty, random)
         }
 
-        // Time passes at turn boundaries, never off a clock: each turn the state has
-        // advanced since this bot last thought is one tick of forgetting and decay. HARD
-        // draws nothing from Random here (forget chance and decay rate are both zero), so
-        // perfect-memory fixtures are bit-identical.
+        // Time passes at turn boundaries, never off a clock. One tick per *table lap*, not
+        // per seat: the forget-chance and decay constants were calibrated as per-own-turn
+        // rates, and four seats' turns are one of this bot's. Ticking per seat quadrupled
+        // the forgetting, full-hand belief became rare, and — since only a Vinto call ends
+        // a Vinto game — self-play stopped terminating. HARD draws nothing from Random
+        // here (forget chance and decay rate are both zero), so perfect-memory fixtures
+        // are bit-identical.
         val turn = context.gameState.turnNumber
         if (lastSeenTurnNumber in 0 until turn) {
-            repeat(turn - lastSeenTurnNumber) { botMemory.processTurnBoundary() }
+            val seats = maxOf(1, context.allPlayers.size)
+            val laps = (turn - 1) / seats - (lastSeenTurnNumber - 1) / seats
+            repeat(maxOf(0, laps)) { botMemory.processTurnBoundary() }
         }
         lastSeenTurnNumber = turn
 

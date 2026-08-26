@@ -167,21 +167,36 @@ class BotRunner(
 
             val context = buildContext(state, player)
 
+            // One wrong throw bars a player for the round, and the validator enforces the
+            // bar — a second attempt is not a bad move but an *illegal* one, which would
+            // stop the whole table. Belief-driven tossing makes the first wrong throw
+            // genuinely possible, so the bar is checked here the way the engine checks it.
+            val barred = state.roundFailedAttempts.any { it.playerId == player.id }
+
             // In the final round the coalition plans its toss-ins together: shed everything
             // the coalition can afford to lose, which is not the same as what this seat would
             // shed for itself.
             val coalition = buildCoalitionPlanInput(state, player.id)
-            val positions =
-                if (coalition != null) {
+            val positions = when {
+                barred -> emptyList()
+
+                coalition != null ->
                     // The planner already restricts itself to cards this seat has read
                     // (unread positions are `known = false` in the plan); the filter is the
                     // belt to that brace — a coalition bot never tosses a card it has not
                     // actually seen.
                     planCoalitionTossIn(coalition, tossIn.ranks)
                         .filter { it in player.knownCardPositions }
-                } else {
-                    tossInPositions(player, tossIn.ranks)
-                }
+
+                // Solo, the bot throws what it *believes* matches — its memory of its own
+                // hand, not the engine's record — and pays the ordinary penalty when a weak
+                // memory believed wrongly.
+                else -> tossInPositions(
+                    player,
+                    tossIn.ranks,
+                    serviceFor(player.id).believedOwnCards(context),
+                )
+            }
 
             if (positions.isNotEmpty() &&
                 (coalition != null || serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context))
@@ -204,11 +219,16 @@ class BotRunner(
         return null
     }
 
-    /** Only cards the bot has read, and only ranks that are worth shedding. */
-    private fun tossInPositions(player: PlayerState, ranks: List<Rank>): List<Int> =
-        player.cards.indices.filter { position ->
-            position in player.knownCardPositions && player.cards[position].rank in ranks
-        }
+    /** Only cards the bot believes it has read, and only ranks in the window. */
+    private fun tossInPositions(
+        player: PlayerState,
+        ranks: List<Rank>,
+        believed: Map<Int, Rank>,
+    ): List<Int> =
+        believed.entries
+            .filter { (position, rank) -> position in player.cards.indices && rank in ranks }
+            .map { it.key }
+            .sorted()
 
     // ---------------------------------------------------------------- a turn
 
