@@ -259,6 +259,24 @@ data class RoomState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val game: GameState? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val log: List<LoggedAction> = emptyList(),
 
+    // --- the round on record (migrate task 9.2) --------------------------------------------
+    //
+    // Enough to reconstruct the round in progress — or the one just filed — as a
+    // `GameRecording`: the state it was dealt into, where its actions start on the log, and
+    // the seed it was dealt from. All default-added, so a stored room from before this
+    // feature decodes; a room that predates them simply has no recording to serve.
+    /** The dealt state of the current round, after the seat mutation. Replaced per deal. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundInitial: GameState? = null,
+    /** Where the current round's actions begin on the (never-truncated) log. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundStartLogIndex: Int = 0,
+    /** The seed the current round was dealt from — `seedForRound` at deal time. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundSeed: Long = 0,
+    /**
+     * The state a just-filed round ended on, kept because `closeSession` discards [game]
+     * when a room finishes — and the recording of the last round outlives the round.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundFinal: GameState? = null,
+
     // --- deadlines (design R5) -------------------------------------------------------------
     //
     // Five of them, and a Durable Object has one alarm. They are therefore kept as data and
@@ -554,7 +572,8 @@ fun startGame(stateJson: String, nowMs: Double): String {
         }
     }
 
-    val dealt = initializeGame(seedForRound(state.seed, state.session.rounds.size), state.difficulty)
+    val roundSeed = seedForRound(state.seed, state.session.rounds.size)
+    val dealt = initializeGame(roundSeed, state.difficulty)
 
     // The engine's idea of who is human is made to match the room's. A seat with a token is a
     // person and starts having seen nothing; a seat without one is a bot and keeps its peek.
@@ -574,6 +593,12 @@ fun startGame(stateJson: String, nowMs: Double): String {
         startsAtEpochMs = null,
         seats = seats,
         game = dealt.copy(players = players),
+        // The round's recording begins here: the dealt state after the seat mutation is the
+        // `initialState` a replay starts from, and the log index marks where its actions do.
+        roundInitial = dealt.copy(players = players),
+        roundStartLogIndex = state.log.size,
+        roundSeed = roundSeed,
+        roundFinal = null,
         session = state.session.copy(
             // The clock starts at the FIRST deal, so a lobby that took a while to fill does
             // not eat into the game. Later rounds inherit the deadline they were dealt under.
@@ -756,7 +781,12 @@ private fun recordRoundEnd(state: RoomState): RoomState {
         points = calculateRoundPoints(game.players, game.vintoCallerId),
     )
 
-    return state.copy(session = state.session.copy(rounds = state.session.rounds + result))
+    return state.copy(
+        session = state.session.copy(rounds = state.session.rounds + result),
+        // Kept beside the session because `closeSession` discards `game` when the room
+        // finishes, and the round's recording (`roundRecording`) needs where it ended.
+        roundFinal = game,
+    )
 }
 
 /**
