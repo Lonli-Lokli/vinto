@@ -19,10 +19,13 @@ import kotlinx.coroutines.flow.StateFlow
  * - `RemoteGameSession` — the same surface over a WebSocket to the Durable Object, which is
  *   already server-authoritative and already sends exactly this `PlayerView`.
  *
- * The surface is deliberately narrow: a view to render, actions to send, and events for the
- * things that are not state — a bot having moved, a round having ended.
+ * The surface is deliberately narrow: a view to render, actions to send, frames to animate,
+ * and events for the things that are not state — a bot having moved, a round having ended.
  */
 interface GameSession {
+
+    /** The seat this session plays. Everything rendered is from this player's side. */
+    val playerId: String
 
     /**
      * What this player may see, and the only thing a screen should read.
@@ -54,6 +57,19 @@ interface GameSession {
      * UI can offer a move the rules disallow, and the answer is a message rather than a crash.
      */
     suspend fun dispatch(action: GameAction): String?
+
+    /**
+     * What there is to see, in the order it happened, each with the table it left behind.
+     *
+     * On the interface rather than on the local session alone, because this is the whole
+     * point of design C1: a screen animates *frames*, and whether they were computed from a
+     * local reducer or parsed off a socket is not its business. Lifting it is what let
+     * `GameHolder` be typed to the interface and the same table serve both games.
+     */
+    val frames: SharedFlow<List<Frame>>
+
+    /** What has happened lately, in words, newest last. May stay empty where nobody narrates. */
+    val log: StateFlow<List<String>>
 
     /** Whether the game has finished; a session is done when this is true. */
     val isOver: Boolean

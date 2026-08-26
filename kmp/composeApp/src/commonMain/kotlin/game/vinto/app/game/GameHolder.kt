@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import game.vinto.app.theme.LocalFeedback
-import game.vinto.client.LocalGameSession
+import game.vinto.client.GameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.Table
@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
  * that on the frame thread would freeze the table mid-animation.
  */
 class GameHolder(
-    private val session: LocalGameSession,
+    // The interface, not the local session: the holder is the seam design R1 promises, and
+    // typing it here is what makes an online game the same screens over a different session.
+    private val session: GameSession,
     private val view: State<PlayerView>,
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
@@ -83,7 +85,7 @@ class GameHolder(
 
 /** A holder for one round, rebuilt when the round is. */
 @Composable
-fun rememberHolder(session: LocalGameSession): GameHolder {
+fun rememberHolder(session: GameSession): GameHolder {
     val view = session.view.collectAsState()
     return remember(session) { GameHolder(session, view) }
 }
