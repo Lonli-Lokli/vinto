@@ -1,5 +1,7 @@
 package game.vinto.protocol
 
+import game.vinto.engine.PlayerView
+import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -98,6 +100,47 @@ data class LobbyView(
     val humans: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val msUntilStart: Double? = null,
+)
+
+/**
+ * A card the table was shown, in wire form.
+ *
+ * The engine's `PublicReveal`, transcribed: a King's declaration and a failed toss-in turn a
+ * card face up *in the hand it is in* — public for that moment and private again afterwards.
+ * That makes it an event rather than a fact about the game: it exists only on the reduce
+ * result, is never in any state, and a client that missed the message has missed the moment.
+ * Choreography needs it to flip the right card at the right time.
+ */
+@Serializable
+data class RevealedCard(
+    val playerId: String,
+    val position: Int,
+    val card: Card,
+)
+
+/**
+ * One accepted action **as sent**: the [LoggedAction] fields, plus what this action showed.
+ *
+ * [view] is the receiving seat's redacted view of the table *after this action* — which is
+ * what lets a remote client animate a batch of bot moves one at a time instead of jumping to
+ * the end: the same `choreograph(action, before, after)` a local game runs needs a view per
+ * step, and the log alone carries only actions. Per-seat by construction, so an [EventEntry]
+ * only ever exists inside a message built for one socket.
+ *
+ * Both additions default to absent, which is the compatibility story in both directions: a
+ * stored [LoggedAction] parses as an entry with no view (a client treats that like a sync —
+ * cursor jump, one catch-up frame), and an older reader skips the new keys entirely.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class EventEntry(
+    val index: Int,
+    val seat: Int,
+    val playerId: String,
+    val action: GameAction,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val byBot: Boolean = false,
+    val view: PlayerView? = null,
+    val revealed: List<RevealedCard> = emptyList(),
 )
 
 /**

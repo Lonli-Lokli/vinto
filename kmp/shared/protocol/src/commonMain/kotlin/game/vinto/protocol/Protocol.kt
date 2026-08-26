@@ -108,21 +108,31 @@ sealed interface ServerMessage {
      * and nobody applies optimistically — with this seat's view of where they left the table.
      * The bots' moves ride in the same batch, so one send answers "what happened because of
      * that".
+     *
+     * Each entry carries this seat's view *after that action* (see [EventEntry]), which is
+     * what a client animates from; the top-level [view] is where the batch ends, kept for
+     * readers that only want the destination.
      */
     @Serializable
     @SerialName("events")
     data class Events(
-        val events: List<LoggedAction>,
+        val events: List<EventEntry>,
         val nextIndex: Int,
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
     ) : ServerMessage
 
-    /** The answer to [ClientMessage.Resync]: the log from the cursor, and where it now ends. */
+    /**
+     * The answer to [ClientMessage.Resync]: the log from the cursor, where it now ends, and —
+     * so a reconnector can land on the present rather than on its stale last view — the
+     * current per-seat [view]. The catch-up entries carry no per-event views (the room does
+     * not keep every past state); a client jumps the cursor and renders [view].
+     */
     @Serializable
     @SerialName("sync")
     data class Sync(
-        val events: List<LoggedAction>,
+        val events: List<EventEntry>,
         val nextIndex: Int,
+        val view: PlayerView? = null,
     ) : ServerMessage
 
     /** The lobby changed: somebody joined, left, or a bot was added or removed. Broadcast. */

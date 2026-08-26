@@ -1,7 +1,9 @@
 package game.vinto.worker
 
 import game.vinto.room.addBot as coreAddBot
+import game.vinto.room.alarmEnvelopes as coreAlarmEnvelopes
 import game.vinto.room.applyAction as coreApplyAction
+import game.vinto.room.applyActionEnvelopes as coreApplyActionEnvelopes
 import game.vinto.room.countdownMs as coreCountdownMs
 import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
@@ -15,6 +17,7 @@ import game.vinto.room.newRegistry as coreNewRegistry
 import game.vinto.room.newRoom as coreNewRoom
 import game.vinto.room.nextAlarmAt as coreNextAlarmAt
 import game.vinto.room.onAlarm as coreOnAlarm
+import game.vinto.room.readyEnvelopes as coreReadyEnvelopes
 import game.vinto.room.readyForNextRound as coreReadyForNextRound
 import game.vinto.room.registrySize as coreRegistrySize
 import game.vinto.room.removeBot as coreRemoveBot
@@ -23,6 +26,7 @@ import game.vinto.room.seatCount as coreSeatCount
 import game.vinto.room.seatForToken as coreSeatForToken
 import game.vinto.room.sessionMs as coreSessionMs
 import game.vinto.room.startGame as coreStartGame
+import game.vinto.room.syncEnvelope as coreSyncEnvelope
 import game.vinto.room.touchRoom as coreTouchRoom
 import game.vinto.room.updatePresence as coreUpdatePresence
 import game.vinto.room.viewForSeat as coreViewForSeat
@@ -89,6 +93,26 @@ fun eventsSince(stateJson: String, sinceIndex: Int): String =
 
 @JsExport
 fun lobbyView(stateJson: String, nowMs: Double): String = coreLobbyView(stateJson, nowMs)
+
+// The envelope builders (choreography change 4.1): the same operations with the wire
+// messages prebuilt per seat, so the JavaScript sends strings it does not read. The plain
+// forms above stay exported for the gate harnesses.
+
+@JsExport
+fun applyActionEnvelopes(stateJson: String, token: String, actionJson: String, nowMs: Double): String =
+    coreApplyActionEnvelopes(stateJson, token, actionJson, nowMs)
+
+@JsExport
+fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String =
+    coreReadyEnvelopes(stateJson, token, nowMs)
+
+@JsExport
+fun alarmEnvelopes(stateJson: String, nowMs: Double): String =
+    coreAlarmEnvelopes(stateJson, nowMs)
+
+@JsExport
+fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): String =
+    coreSyncEnvelope(stateJson, seat, sinceIndex, nowMs)
 
 @JsExport
 fun seatCount(): Int = coreSeatCount()
