@@ -15,6 +15,12 @@ import game.vinto.shapes.actorId
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.Prng
+import game.vinto.protocol.LobbySeat
+import game.vinto.protocol.LobbyView
+import game.vinto.protocol.LoggedAction
+import game.vinto.protocol.PlayerProfile
+import game.vinto.protocol.RoomPhase
+import game.vinto.protocol.RoundResult
 import game.vinto.shapes.Sha256
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
@@ -123,23 +129,10 @@ private const val SESSION_MS = 30 * 60 * 1000.0
 /** How many bot actions to run before handing control back; a guard, not a rule. */
 private const val MAX_BOT_STEPS = 200
 
-/**
- * What is known about the person behind a token, beyond the fact that they hold a seat.
- *
- * A record rather than a bare nickname, because this is the thing that grows: an avatar, a
- * preferred language, a pronoun, a "prefers no timer" — none of which are worth a schema change
- * to the seat when they arrive. It also gives the account seam somewhere to land: an
- * `ownerId` (design R3) eventually resolves to one of these, and a seat carries it either way.
- *
- * Everything in it is **display-only**. Nothing here identifies, authorises or seats anybody —
- * that is the token's job, and keeping the two apart is why a nickname cannot be used to take
- * somebody's place.
- */
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-data class PlayerProfile(
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String = "",
-)
+// PlayerProfile, RoundResult, LoggedAction, RoomPhase, LobbySeat and LobbyView moved verbatim
+// to `shared/protocol` (game.vinto.protocol): they travel on the wire, so the client and the
+// room must read one declaration rather than two that resemble each other. The room still
+// owns how they are produced.
 
 /**
  * Trims a nickname to something displayable, or gives it a name.
@@ -158,18 +151,6 @@ internal fun sanitiseNickname(raw: String, seatIndex: Int): String {
 }
 
 private const val MAX_NICKNAME_LENGTH = 16
-
-/** One finished round: what the hands came to, and what that was worth. */
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-data class RoundResult(
-    val roundNumber: Int,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val vintoCallerId: String? = null,
-    /** Hand totals, coalition members scored on their best (see `calculateFinalScores`). */
-    val scores: Map<String, Int>,
-    /** What the round paid, per `VINTO_RULES.md`: +3/-1, a tie to the caller. */
-    val points: Map<String, Int>,
-)
 
 /**
  * A session: several rounds, one clock, cumulative points.
@@ -257,33 +238,6 @@ data class Seat(
     /** A seat a newcomer may take: filler, not somebody's place. */
     val isFiller: Boolean get() = isBot && tokenHash == null
 }
-
-/**
- * One accepted action, in order.
- *
- * The log is the sync cursor: a client that reconnects asks for everything after the last
- * index it saw. Actions rather than states, because an action is small and a state is not.
- */
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-data class LoggedAction(
-    val index: Int,
-    val seat: Int,
-    val playerId: String,
-    val action: GameAction,
-    /** True when the room's own bot driver produced this, rather than a client. */
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val byBot: Boolean = false,
-)
-
-/**
- * Where a room is in its life (design R2a, R5).
- *
- * `LOBBY` and `STARTING` differ only by whether a countdown is running, but they are separate
- * states rather than a nullable deadline because the transition between them is where the
- * alarm is set and cleared, and a transition is easier to get right than an invariant.
- */
-@Serializable
-enum class RoomPhase { LOBBY, STARTING, PLAYING, BETWEEN_ROUNDS, FINISHED }
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -1133,27 +1087,6 @@ fun eventsSince(stateJson: String, sinceIndex: Int): String {
     val from = sinceIndex.coerceIn(0, state.log.size)
     return VintoJson.encodeToString(SyncResult(state.log.drop(from), state.nextIndex))
 }
-
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-private data class LobbySeat(
-    val index: Int,
-    val occupied: Boolean,
-    val isBot: Boolean,
-    /** True only for a bot somebody added as filler — the ones a newcomer may displace. */
-    val removable: Boolean,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String? = null,
-)
-
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-private data class LobbyView(
-    val phase: RoomPhase,
-    val seats: List<LobbySeat>,
-    val humans: Int,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val msUntilStart: Double? = null,
-)
 
 /**
  * The lobby, as anybody in it may see it.
