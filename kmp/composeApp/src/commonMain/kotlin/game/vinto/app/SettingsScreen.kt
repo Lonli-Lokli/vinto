@@ -38,6 +38,8 @@ import game.vinto.app.art.settings_motion_detail
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_saved_game
+import game.vinto.app.art.settings_sound
+import game.vinto.app.art.settings_sound_detail
 import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_theme
 import game.vinto.app.art.settings_theme_detail
@@ -102,6 +104,7 @@ fun SettingsScreen(
             Pacing(settings, onChange)
             Motion(settings, onChange)
             Palette(settings, onChange)
+            Noise(settings, onChange)
             Buzz(settings, onChange)
 
             if (canForget) {
@@ -192,6 +195,21 @@ private fun Palette(settings: Settings, onChange: (Settings) -> Unit) {
             selected = settings.theme,
             label = { stringResource(it.label()) },
             onChoose = { onChange(settings.copy(theme = it)) },
+        )
+    }
+}
+
+@Composable
+private fun Noise(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = stringResource(Res.string.settings_sound),
+        detail = stringResource(Res.string.settings_sound_detail),
+    ) {
+        ChoiceRow(
+            options = listOf(true, false),
+            selected = settings.sound,
+            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
+            onChoose = { on -> onChange(settings.copy(sound = on)) },
         )
     }
 }
