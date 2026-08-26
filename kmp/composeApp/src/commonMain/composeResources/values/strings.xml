@@ -68,6 +68,8 @@
     <string name="motion_full">Full</string>
     <string name="motion_reduced">Reduced</string>
 
+    <string name="settings_sound">Sound</string>
+    <string name="settings_sound_detail">A card dealt, a card landing, a penalty, the round ending — and nothing else.</string>
     <string name="settings_haptics">Haptics</string>
     <string name="settings_haptics_detail">A small kick under the thumb when a card is touched, a move lands, or a rule bites.</string>
     <string name="settings_on">On</string>

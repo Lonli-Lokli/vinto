@@ -78,6 +78,8 @@ data class Settings(
     val haptics: Boolean = true,
     /** See [MotionChoice]. A default-added field: an older settings file still decodes. */
     val motion: MotionChoice = MotionChoice.SYSTEM,
+    /** The table's four sounds: a card dealt, a card landing, a penalty, the round ending. */
+    val sound: Boolean = true,
 ) {
     companion object {
         /** Bumped when the shape changes; an older file is replaced by the defaults. */

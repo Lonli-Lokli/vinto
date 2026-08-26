@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.toSize
 import game.vinto.app.LocalReducedMotion
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
+import game.vinto.app.theme.LocalSounds
+import game.vinto.app.theme.Sfx
+import game.vinto.app.theme.Sounds
 import game.vinto.client.Anchor
 import game.vinto.client.AnimationQueue
 import game.vinto.client.Attention
@@ -229,6 +232,9 @@ class Stage {
      */
     internal var viewerId: String = ""
     internal var feedback: Feedback = Feedback(haptics = null, enabled = false)
+
+    /** The table's sounds — silent unless the app root put real ones here. See [Sounds]. */
+    internal var sounds: Sounds = Sounds(player = null, enabled = false)
 
     /** A duration, at the pace the player asked for. */
     internal fun ms(base: Int): Int = (base * pace).toInt()
@@ -557,11 +563,13 @@ fun CardStage(
     val stage = remember { Stage() }
     val feedback = LocalFeedback.current
     val reducedMotion = LocalReducedMotion.current
+    val sounds = LocalSounds.current
     SideEffect {
         stage.pace = pace
         stage.viewerId = live.viewerId
         stage.feedback = feedback
         stage.reducedMotion = reducedMotion
+        stage.sounds = sounds
     }
     val queue = remember { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
 
@@ -677,7 +685,10 @@ fun CardStage(
                 // The same clock the scene is waiting on: a lit flight is given longer, and
                 // was flying in the shorter time and then sitting still for the difference.
                 val ms = stage.travel(flightMs(shown = flight.shown, quick = flight.quick))
-                InFlight(flight, sizes, ms) { stage.flying.remove(flight) }
+                InFlight(flight, sizes, ms) {
+                    stage.sounds.play(Sfx.LAND)
+                    stage.flying.remove(flight)
+                }
             }
         }
 
@@ -853,7 +864,9 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
         flinching += beat.at
         // Only for the hand it happened to. A buzz for somebody else's penalty is a buzz for
         // something that is not your problem, which is how a phone teaches you to ignore it.
+        // The thud is for everyone, though: a penalty is a public event at a real table.
         if ((beat.at as? Anchor.Seat)?.playerId == viewerId) feedback.refuse()
+        sounds.play(Sfx.THUD)
         ms(FLINCH_MS)
     }
 
@@ -946,6 +959,7 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
     val wasLifted = peeking.remove(beat.from) != null
     if (wasLifted) settling.remove(beat.from)
 
+    sounds.play(Sfx.DEAL)
     flying += Stage.Flight(
         id = nextId(),
         card = beat.card.faceOrBack(),

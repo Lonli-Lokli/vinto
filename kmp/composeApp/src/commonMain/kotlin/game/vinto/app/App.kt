@@ -26,9 +26,11 @@ import game.vinto.app.game.TeachScreen
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalFeedback
+import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
 import game.vinto.app.theme.rememberFeedback
+import game.vinto.app.theme.rememberSounds
 import game.vinto.client.LocalGame
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
@@ -84,6 +86,7 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
         CompositionLocalProvider(
             LocalFeedback provides rememberFeedback(settings.haptics),
             LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
+            LocalSounds provides rememberSounds(settings.sound),
         ) {
             // Every phone has something drawn over its edges — a status bar, a gesture handle, a
             // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling

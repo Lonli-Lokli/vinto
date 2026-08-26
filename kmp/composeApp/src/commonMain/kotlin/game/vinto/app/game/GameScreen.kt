@@ -37,7 +37,9 @@ import game.vinto.app.nowIso
 import game.vinto.app.shareReport
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.Sfx
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.dealScenes
@@ -259,6 +261,12 @@ private val DialogGap = 6.dp
  */
 @Composable
 private fun RoundOver(onSee: () -> Unit) {
+    // The round's one chime, fired when the player is *shown* the end — this strip appears
+    // on the shown table, a beat after the engine finished — and once, because this
+    // composable exists exactly once per round's ending.
+    val sounds = LocalSounds.current
+    LaunchedEffect(Unit) { sounds.play(Sfx.CHIME) }
+
     Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
         Column(
             modifier = Modifier.padding(Pad).fillMaxWidth(),
