@@ -38,24 +38,36 @@ Audited against the web app's `CardAnimationStore` and `AnimationService`:
 
 Found by walking the game rather than the code. None of these exist in either client:
 
-- [ ] 5.1 **The deal.** Twenty cards appear at once. It is the first thing anybody sees and
-      the moment the table is established
+- [x] 5.1 **The deal.** Twenty cards appear at once. It is the first thing anybody sees and
+      the moment the table is established. Done: `dealScenes` deals in waves per position —
+      quick face-down flights, ~2.5 s for the twenty — gated by `LocalGame.freshlyDealt` so a
+      resumed round is simply *there*
 - [x] 5.2 **The reshuffle.** When the discard pile goes back into the deck, everyone's memory
       of what has been played becomes stale — a real information event, currently silent
 - [x] 5.3 **The turn moving.** Three bots act in under a second between one tap and the next;
       a static ring on the active seat is easy to lose track of
-- [ ] 5.4 **The reveal at scoring.** Every hand turns over at once. Seat by seat is the payoff
-      of the whole round
-- [ ] 5.5 **How much of the final round is left.** Each player takes exactly one more turn and
-      there is no way to see how many remain
+- [x] 5.4 **The reveal at scoring.** Every hand turns over at once. Seat by seat is the payoff
+      of the whole round. Done: `scoringScenes` reveals in table order, one seat per scene —
+      the same script for every viewer, which is what kept `TransformationMatrixTest`'s
+      invariant (two seats' scripts differ only by withheld faces)
+- [x] 5.5 **How much of the final round is left.** Each player takes exactly one more turn and
+      there is no way to see how many remain. Done: `finalRoundTurnsLeft` counts seats to the
+      caller (from the toss-in's original seat when a window is open — the engine has already
+      moved on), shown on the final-round line
 - [x] 5.6 **What a King borrowed.** It declares another rank's action; nothing shows which
 - [x] 5.7 **Toss-in lockout.** A failed toss-in bars you for the rest of the round, and nothing
       says so
-- [ ] 5.8 **Why a round ended** when the deck ran out rather than because somebody called
+- [x] 5.8 **Why a round ended** when the deck ran out rather than because somebody called.
+      Done: `roundEndReason` (no caller at scoring ⇒ the deck ran out), said on the score
+      sheet in a sentence either way
 
 ## 6. Wiring it to a room (not in this change)
 
-- [ ] 4.1 `RemoteGameSession` submits the room's log to the same queue — the point of the design
+- [x] 4.1 `RemoteGameSession` submits the room's log to the same queue — the point of the design.
+      Done in the online client work: events arrive with per-event views
+      (`shared/room/Envelopes.kt` builds them; `PROTOCOL.md` documents them), the session runs
+      the same `choreograph(action, before, after)` per entry and emits the same `Frame`s, and
+      the two-client harness holds "one frame per logged action" over a whole round
 
 ## Found while building
 
