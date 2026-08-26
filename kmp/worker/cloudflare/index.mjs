@@ -15,7 +15,7 @@
 import {
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
-  applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope,
+  applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -243,6 +243,28 @@ export class Room {
       .filter((seat) => seat !== null && seat !== undefined);
   }
 
+  /**
+   * Files the just-finished round's recording, if this request finished one.
+   *
+   * Detected by the session growing a round between the state a request read and the state
+   * it produced, which makes the write once-per-round however the round ended — a player's
+   * last action or the buzzer's alarm. Stored under its round number, so a room's rounds
+   * are fetchable individually for as long as the room lives; `recordedAt` is stamped here
+   * because this is where the platform's clock lives, and it is informational only.
+   */
+  async #fileRecording(beforeJson, afterState) {
+    const before = JSON.parse(beforeJson).session.rounds.length;
+    const after = afterState.session.rounds.length;
+    if (after <= before) return;
+
+    const result = JSON.parse(
+      roundRecording(JSON.stringify(afterState), new Date().toISOString()),
+    );
+    if (result.recording) {
+      await this.ctx.storage.put(`recording:${after}`, JSON.stringify(result.recording));
+    }
+  }
+
   /** Recomputes the deadlines from who is actually here, and reschedules. */
   async #refreshPresence(stateJson) {
     const result = JSON.parse(
@@ -295,6 +317,7 @@ export class Room {
     }
 
     await this.#save(JSON.stringify(result.state));
+    await this.#fileRecording(stateJson, result.state);
 
     if (result.started || result.tookOver.length > 0) {
       return this.#sendPrebuilt(result.messages);
@@ -355,6 +378,16 @@ export class Room {
     }
 
     const roomId = url.searchParams.get('room') ?? 'default';
+
+    // A finished round's recording, by round number: the GameRecording document /replay
+    // verifies, written when the round was filed. Only ever a round that has ended — every
+    // hand in it was already turned face-up by scoring.
+    const wantedRecording = url.searchParams.get('recording');
+    if (wantedRecording && request.headers.get('Upgrade') !== 'websocket') {
+      const stored = await this.ctx.storage.get(`recording:${Number(wantedRecording)}`);
+      if (!stored) return new Response('no such recording', { status: 404 });
+      return new Response(stored, { headers: { 'content-type': 'application/json' } });
+    }
 
     // A plain GET reports room state — used by the harness to inspect the object without a
     // socket, and to prove state survived an eviction.
@@ -501,6 +534,7 @@ export class Room {
           }));
         }
         await this.#save(JSON.stringify(result.state));
+        await this.#fileRecording(stateJson, result.state);
 
         // Every socket sees every accepted action, the caller included — the server is
         // authoritative, so clients never apply an action optimistically. The bots' moves

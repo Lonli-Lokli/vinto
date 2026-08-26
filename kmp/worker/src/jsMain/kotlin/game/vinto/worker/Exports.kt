@@ -22,6 +22,7 @@ import game.vinto.room.readyForNextRound as coreReadyForNextRound
 import game.vinto.room.registrySize as coreRegistrySize
 import game.vinto.room.removeBot as coreRemoveBot
 import game.vinto.room.resolveRoomCode as coreResolveRoomCode
+import game.vinto.room.roundRecording as coreRoundRecording
 import game.vinto.room.seatCount as coreSeatCount
 import game.vinto.room.seatForToken as coreSeatForToken
 import game.vinto.room.sessionMs as coreSessionMs
@@ -113,6 +114,10 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String =
 @JsExport
 fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): String =
     coreSyncEnvelope(stateJson, seat, sinceIndex, nowMs)
+
+@JsExport
+fun roundRecording(stateJson: String, recordedAt: String): String =
+    coreRoundRecording(stateJson, recordedAt)
 
 @JsExport
 fun seatCount(): Int = coreSeatCount()
