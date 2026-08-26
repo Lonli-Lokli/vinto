@@ -54,6 +54,26 @@ class TossInAreaTest {
         )
     }
 
+    /**
+     * The corner as one spoken sentence.
+     *
+     * Visually the window is a heading, a rank chip and a count, each its own node; read one
+     * at a time they are "Toss-in", "8", "Tossed (1)" — three fragments a screen reader user
+     * has to assemble into a rule. The column carries a single description naming the thing
+     * that matters — which ranks the table will accept right now — so the corner announces
+     * itself the way a dealer would.
+     */
+    @Test
+    fun theWindowSaysWhatItIsWaitingFor() = runComposeUiTest {
+        show(tossing(teachingSession().view.value))
+
+        assertEquals(
+            1,
+            nodes("Toss-in window, matching 8"),
+            "the toss-in corner does not describe itself as one sentence",
+        )
+    }
+
     @Test
     fun theWindowIsTheSameHeightBeforeAndAfterACardGoesIn() = runComposeUiTest {
         val whole = teachingSession().view.value
@@ -116,10 +136,13 @@ class TossInAreaTest {
         var tall = 0
         runComposeUiTest {
             show(view)
+            // The deck's description carries its count — "40 cards left in the deck" — so
+            // this matches the sentence's tail rather than pinning a number the session's
+            // deal would have to keep producing.
             val deck = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
                 .fetchSemanticsNodes()
                 .first { n -> n.config.getOrNull(SemanticsProperties.ContentDescription)
-                    ?.firstOrNull() == "the deck" }
+                    ?.firstOrNull()?.endsWith("cards left in the deck") == true }
             tall = deck.boundsInRoot.top.toInt()
         }
         return tall

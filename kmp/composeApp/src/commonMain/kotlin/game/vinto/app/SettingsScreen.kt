@@ -20,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -251,6 +253,7 @@ private fun Plaque(title: String) {
             text = title.uppercase(),
             style = stamped(size = PlaqueSize, weight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.semantics { heading() },
         )
         HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
     }

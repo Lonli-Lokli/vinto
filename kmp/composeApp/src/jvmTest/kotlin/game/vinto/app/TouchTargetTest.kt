@@ -2,8 +2,10 @@ package game.vinto.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -11,6 +13,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
@@ -54,6 +57,23 @@ class TouchTargetTest {
     fun everyRankChipCanBeHit() = eachTapTarget(Question.CallRank(0)) { what, box ->
         assertTrue(box.width >= TAP && box.height >= TAP, tooSmall(what, box))
     }
+
+    /**
+     * And again with the system font at twice its size, which is a real accessibility
+     * setting and the one that finds targets sized by their text: a control that is 44dp
+     * because its label happens to be is a control that was never 44dp at all. Nothing here
+     * may *shrink* under a large font — growing is fine, and rows are allowed to wrap.
+     */
+    @Test
+    fun everythingSurvivesALargeFont() = eachTapTarget(Question.None, fontScale = 2f) { what, box ->
+        assertTrue(box.width >= TAP && box.height >= TAP, tooSmall(what, box))
+    }
+
+    @Test
+    fun everyRankChipSurvivesALargeFont() =
+        eachTapTarget(Question.CallRank(0), fontScale = 2f) { what, box ->
+            assertTrue(box.width >= TAP && box.height >= TAP, tooSmall(what, box))
+        }
 
     /**
      * And they are plaques rather than pills: wider than they are tall, and all one size.
@@ -119,20 +139,24 @@ class TouchTargetTest {
     private fun eachTapTarget(
         question: Question,
         header: Boolean = false,
+        fontScale: Float = 1f,
         check: (String, Rect) -> Unit,
     ) = runComposeUiTest {
         val view = drawn()
         setContent {
-            VintoTheme {
-                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    TableScreen(
-                        state = TableState(view, tableFor(view, question), null, emptyList(), 1),
-                        layout = TableLayout.forScreen(PHONE_H),
-                        onMove = {},
-                        onHelp = {},
-                        onReport = {},
-                        onDeck = {},
-                    )
+            val density = LocalDensity.current.density
+            CompositionLocalProvider(LocalDensity provides Density(density, fontScale)) {
+                VintoTheme {
+                    Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                        TableScreen(
+                            state = TableState(view, tableFor(view, question), null, emptyList(), 1),
+                            layout = TableLayout.forScreen(PHONE_H),
+                            onMove = {},
+                            onHelp = {},
+                            onReport = {},
+                            onDeck = {},
+                        )
+                    }
                 }
             }
         }
