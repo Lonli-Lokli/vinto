@@ -1,4 +1,4 @@
-package game.vinto.worker
+package game.vinto.room
 
 import game.vinto.bot.BotRunner
 import game.vinto.engine.ActionValidator
@@ -330,7 +330,7 @@ data class RoomState(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class JoinResult(
+internal data class JoinResult(
     val state: RoomState,
     val seat: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
@@ -340,7 +340,7 @@ private data class JoinResult(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class ActionResult(
+internal data class ActionResult(
     val state: RoomState,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val events: List<LoggedAction> = emptyList(),
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
@@ -349,11 +349,11 @@ private data class ActionResult(
 )
 
 @Serializable
-private data class SyncResult(val events: List<LoggedAction>, val nextIndex: Int)
+internal data class SyncResult(val events: List<LoggedAction>, val nextIndex: Int)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class ViewResult(
+internal data class ViewResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: game.vinto.engine.PlayerView? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
 )
@@ -366,7 +366,6 @@ private data class ViewResult(
  * `index.mjs` — and passed in. Kotlin never reaches for randomness itself; that is the same
  * rule the engine follows and for the same reason.
  */
-@JsExport
 fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): String {
     val chosen = Difficulty.entries.firstOrNull { it.serialName == difficulty } ?: Difficulty.MODERATE
 
@@ -414,7 +413,6 @@ private fun withCountdown(state: RoomState, nowMs: Double): RoomState = when {
  * played by a bot in the meantime without losing it.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val hash = Sha256.hex(token)
@@ -473,7 +471,6 @@ fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double):
  * seconds by taking the bot back out.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun addBot(stateJson: String, token: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -506,7 +503,6 @@ fun addBot(stateJson: String, token: String, nowMs: Double): String {
  * decision to start the game; with it, it is a proposal that stands for ten seconds.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun removeBot(stateJson: String, token: String, seatIndex: Int, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -540,7 +536,6 @@ fun removeBot(stateJson: String, token: String, seatIndex: Int, nowMs: Double): 
  * would give them two cards they never looked at.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun startGame(stateJson: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -623,7 +618,7 @@ private fun spendBudget(state: RoomState, seat: Int, nowMs: Double): Spend {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-private data class LifecycleResult(
+internal data class LifecycleResult(
     val state: RoomState,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nextAlarmAtEpochMs: Double? = null,
     /** The room asked to be deleted. The caller owns storage, so the caller does it. */
@@ -665,7 +660,6 @@ private fun settleRound(state: RoomState, nowMs: Double): RoomState {
  * remain, and the lonely grace takes it from there if not. One mechanism rather than two.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun readyForNextRound(stateJson: String, token: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -771,7 +765,6 @@ private fun recordRoundEnd(state: RoomState): RoomState {
  * survive hibernation and `ctx.getWebSockets()` is authoritative after a wake — so the caller
  * passes the seats it can see rather than the room trying to remember.
  */
-@JsExport
 fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val connected = connectedSeatsCsv.split(",").mapNotNull { it.trim().toIntOrNull() }
@@ -821,7 +814,6 @@ fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double):
  * would burn a search on a game nobody is left to see.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun onAlarm(stateJson: String, nowMs: Double): String {
     var state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -906,7 +898,6 @@ fun onAlarm(stateJson: String, nowMs: Double): String {
  * discover that three bots have moved.
  */
 @Suppress("ReturnCount")
-@JsExport
 fun applyAction(stateJson: String, token: String, actionJson: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -1051,7 +1042,6 @@ private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomSt
  * hand every client every hand, which is the failure the whole server-authoritative design
  * exists to prevent.
  */
-@JsExport
 fun viewForSeat(stateJson: String, seat: Int, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val seatEntry = state.seats.getOrNull(seat)
@@ -1073,7 +1063,6 @@ fun viewForSeat(stateJson: String, seat: Int, nowMs: Double): String {
  * Lets the socket layer resolve a client to a seat without ever holding a seat number it did
  * not derive from a credential.
  */
-@JsExport
 fun seatForToken(stateJson: String, token: String): Int {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val hash = Sha256.hex(token)
@@ -1081,7 +1070,6 @@ fun seatForToken(stateJson: String, token: String): Int {
 }
 
 /** Events a reconnecting client has not seen. The log index is the cursor (design D9). */
-@JsExport
 fun eventsSince(stateJson: String, sinceIndex: Int): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val from = sinceIndex.coerceIn(0, state.log.size)
@@ -1094,7 +1082,6 @@ fun eventsSince(stateJson: String, sinceIndex: Int): String {
  * Deliberately not [RoomState]: that holds token hashes and, once dealt, every hand. This is
  * seat occupancy and a countdown, which is all a lobby screen needs and all it should get.
  */
-@JsExport
 fun lobbyView(stateJson: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
@@ -1118,7 +1105,6 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
 }
 
 /** Exposed for the gate harness; `SEAT_COUNT` is a design constant, not a setting. */
-@JsExport
 fun seatCount(): Int = SEAT_COUNT
 
 /**
@@ -1129,14 +1115,11 @@ fun seatCount(): Int = SEAT_COUNT
  * symptom would be an alarm that fires at the wrong time — which looks like nothing at all
  * until a room fails to clean itself up.
  */
-@JsExport
 fun nextAlarmAt(stateJson: String): Double =
     VintoJson.decodeFromString(RoomState.serializer(), stateJson).nextAlarmAt ?: 0.0
 
 /** The session length, so a harness cannot drift from the implementation. */
-@JsExport
 fun sessionMs(): Double = SESSION_MS
 
 /** The countdown length, so a harness cannot drift from the implementation. */
-@JsExport
 fun countdownMs(): Double = COUNTDOWN_MS

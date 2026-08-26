@@ -18,6 +18,7 @@ kotlin {
             implementation(project(":shared:engine"))
             implementation(project(":shared:bot"))
             implementation(project(":shared:protocol"))
+            implementation(project(":shared:room"))
             implementation(libs.kotlinx.serialization.json)
         }
     }
