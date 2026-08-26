@@ -71,6 +71,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {
+            // The Android socket actual (net/Net.android.kt): the platform’s de-facto
+            // WebSocket — java.net.http never shipped in the Android SDK.
+            implementation(libs.okhttp)
             implementation(libs.androidx.activity.compose)
         }
         jvmMain.dependencies {

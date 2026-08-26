@@ -64,6 +64,7 @@ kotlin {
             api(project(":shared:shapes"))
             api(project(":shared:engine"))
             api(project(":shared:bot"))
+            api(project(":shared:protocol"))
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
         }

@@ -80,7 +80,7 @@ class LocalGameSession(
         private set
 
     /** The seat the person is playing. `initializeGame` deals seat zero as the human. */
-    val playerId: String = state.players.first { it.isHuman }.id
+    override val playerId: String = state.players.first { it.isHuman }.id
 
     private val runner = BotRunner(difficulty, random)
 
@@ -113,7 +113,7 @@ class LocalGameSession(
 
     /** What has happened lately, newest last. Fed to the screen's recent-actions strip. */
     private val _log = MutableStateFlow<List<String>>(emptyList())
-    val log: StateFlow<List<String>> = _log.asStateFlow()
+    override val log: StateFlow<List<String>> = _log.asStateFlow()
 
     /**
      * What there is to see, in the order it happened, each with the table it left behind.
@@ -129,7 +129,7 @@ class LocalGameSession(
         extraBufferCapacity = EVENT_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
+    override val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
 
     override suspend fun dispatch(action: GameAction): String? {
         // The seat boundary, the same one the Durable Object checks before the engine sees
