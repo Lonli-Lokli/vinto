@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -128,6 +129,11 @@ private val DeckBadge = Color(0xFF14351F)
  *
  * The alternative, a tidy column of hands, was tried first and is worse for the same reason a
  * list of players is worse than a table — you keep track of an opponent by where they are.
+ *
+ * The screen's shape decides where the rail stands ([TableLayout]): under the felt in
+ * portrait, beside it in landscape. The felt itself is the same four-sided table either way —
+ * a player who rotates the phone mid-round finds every seat in the chair it was in, only the
+ * controls having moved to their thumb's new resting place.
  */
 @Composable
 fun TableScreen(
@@ -139,47 +145,88 @@ fun TableScreen(
     onDeck: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val view = state.view
-    val table = state.table
-    val me = view.viewerId
-    val opponents = view.players.filter { it.id != me }
-    val mine = view.players.first { it.id == me }
-    val sizes = layout.sizes
-
-    Column(modifier = modifier.fillMaxSize()) {
-        TableHeader(view, state.round, onHelp, onReport, onDeck)
-
-        FinalRoundLine(view)
-
-        Felt(modifier = Modifier.weight(1f).padding(horizontal = Edge)) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(Gap),
-                verticalArrangement = Arrangement.spacedBy(Gap),
-            ) {
-                // Seats are dealt in a fixed order, so the same bot is always in the same
-                // chair. The order matches the web table's, which puts the second-dealt
-                // opponent across from you and the first down your left.
-                TopSeat(opponents.getOrNull(1), view, table, sizes, onMove)
-
-                MiddleRow(
-                    modifier = Modifier.weight(1f),
-                    left = opponents.getOrNull(0),
-                    right = opponents.getOrNull(2),
-                    view = view,
-                    table = table,
-                    sizes = sizes,
+    if (layout.landscape) {
+        Row(modifier = modifier.fillMaxSize()) {
+            Column(modifier = Modifier.weight(1f)) {
+                TableHeader(state.view, state.round, onHelp, onReport, onDeck)
+                FeltTable(
+                    state = state,
+                    sizes = layout.sizes,
                     onMove = onMove,
+                    modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
                 )
+            }
 
-                MySeat(mine, view, table, sizes, onMove)
+            // The rail, standing at the side. The final-round line sits at its head — in
+            // landscape the felt has no height to spare for a banner, and "who plays for
+            // whom" is read next to the controls that ask what to do about it anyway.
+            Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
+                FinalRoundLine(state.view)
+                ControlPanel(
+                    state = state,
+                    onMove = onMove,
+                    side = true,
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                )
             }
         }
+    } else {
+        Column(modifier = modifier.fillMaxSize()) {
+            TableHeader(state.view, state.round, onHelp, onReport, onDeck)
 
-        ControlPanel(
-            state = state,
-            height = layout.railHeight,
-            onMove = onMove,
-        )
+            FinalRoundLine(state.view)
+
+            FeltTable(
+                state = state,
+                sizes = layout.sizes,
+                onMove = onMove,
+                modifier = Modifier.weight(1f).padding(horizontal = Edge),
+            )
+
+            ControlPanel(
+                state = state,
+                onMove = onMove,
+                modifier = Modifier.fillMaxWidth().height(layout.railHeight),
+            )
+        }
+    }
+}
+
+/** The felt and its four seats — the part of the table that is the same in both shapes. */
+@Composable
+private fun FeltTable(
+    state: TableState,
+    sizes: TableSizes,
+    onMove: (Move) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val view = state.view
+    val table = state.table
+    val opponents = view.players.filter { it.id != view.viewerId }
+    val mine = view.players.first { it.id == view.viewerId }
+
+    Felt(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(Gap),
+            verticalArrangement = Arrangement.spacedBy(Gap),
+        ) {
+            // Seats are dealt in a fixed order, so the same bot is always in the same
+            // chair. The order matches the web table's, which puts the second-dealt
+            // opponent across from you and the first down your left.
+            TopSeat(opponents.getOrNull(1), view, table, sizes, onMove)
+
+            MiddleRow(
+                modifier = Modifier.weight(1f),
+                left = opponents.getOrNull(0),
+                right = opponents.getOrNull(2),
+                view = view,
+                table = table,
+                sizes = sizes,
+                onMove = onMove,
+            )
+
+            MySeat(mine, view, table, sizes, onMove)
+        }
     }
 }
 

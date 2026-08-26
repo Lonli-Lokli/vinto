@@ -102,14 +102,45 @@ data class TableSizes(
 /**
  * How much room each part of the screen gets.
  *
- * Both numbers are decided together, from the screen, once: how large a card is drawn and how
- * tall the rail is. Passing them separately is passing two halves of one decision, and the
- * halves can disagree.
+ * Everything is decided together, from the screen, once: which way the screen is lying, how
+ * large a card is drawn, and how much of the screen the rail takes. Passing them separately
+ * is passing halves of one decision, and the halves can disagree.
+ *
+ * Two arrangements, chosen by which side of the screen is longer:
+ *
+ *  - **Portrait** — the phone held the way a hand of cards is held. The rail runs under the
+ *    felt and takes a fixed share of the *height*; the felt is what remains above it.
+ *  - **Landscape** — a rotated phone, a tablet on a stand, a desktop window, a browser. The
+ *    height that the portrait rail lived on does not exist — the rail's own *minimum* is most
+ *    of a rotated phone's screen — so the rail stands at the side instead, taking a fixed
+ *    share of the *width*, and the felt gets the full height beside it. Same controls, same
+ *    felt, same four-sided table; only the join moves.
  */
-data class TableLayout(val sizes: TableSizes, val railHeight: Dp) {
+data class TableLayout(
+    val sizes: TableSizes,
+    val railHeight: Dp,
+    /** True when the rail stands beside the felt rather than under it. */
+    val landscape: Boolean = false,
+    /** How wide the side rail is. Meaningful only when [landscape]. */
+    val railWidth: Dp = 0.dp,
+) {
     companion object {
+        /** The portrait arrangement, from the height alone — what every phone test uses. */
         fun forScreen(screen: Dp): TableLayout =
             TableLayout(TableSizes.forScreen(screen), railHeight(screen))
+
+        /** The arrangement for a screen of this shape: portrait tall, landscape wide. */
+        fun forScreen(width: Dp, height: Dp): TableLayout = if (width > height) {
+            TableLayout(
+                // The felt has the whole height minus the header; no rail stands on it.
+                sizes = TableSizes.forHeight(height - HeaderHeight),
+                railHeight = 0.dp,
+                landscape = true,
+                railWidth = railWidth(width),
+            )
+        } else {
+            forScreen(height)
+        }
     }
 }
 
@@ -131,6 +162,13 @@ val HeaderHeight = 44.dp
  * contents adapt to the rail rather than the other way round.
  */
 fun railHeight(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAIL_MAX)
+
+/**
+ * How wide the side rail is in landscape: the same fixed-share rule as [railHeight], applied
+ * to the width, with the same clamps — the rail's contents were drawn for a portrait phone's
+ * width, so the clamp range that fits them under the felt fits them beside it unchanged.
+ */
+fun railWidth(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAIL_MAX)
 
 private const val RAIL_FRACTION = 0.31f
 private val RAIL_MIN = 240.dp

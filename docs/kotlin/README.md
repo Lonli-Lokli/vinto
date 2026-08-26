@@ -594,10 +594,15 @@ PNGs are committed; nothing at build time runs the script. It is the same mark a
 deliberately: a different icon for the phone would make it a different game to anybody who has
 played both.
 
-**Portrait only.** The table sizes itself from the height it is given and has two sizes to step
-down through, not a continuum (`CardScale.kt`); a phone in landscape has less height than the
-smaller of them needs. Android 16 ignores the lock on large screens, which is the right place
-to ignore it. Landscape as a supported layout is task 7.6.
+**Both orientations** (task 7.6, done). The screen's shape picks the arrangement in
+`TableLayout.forScreen(width, height)` (`CardScale.kt`): portrait keeps the rail under the felt
+on a fixed share of the height; landscape stands the rail beside the felt on the same fixed
+share of the *width*, because the portrait rail's own minimum height is most of a rotated
+phone's screen. The felt is the same four-sided table in both — only the join moves, and the
+final-round banner rides at the head of the side rail where the felt has no height to spare.
+The Android manifest no longer locks orientation; iOS always allowed rotation (it squeezed the
+portrait design until this landed) and the browser was always free. `LandscapeTableTest` holds
+the rotated phone to the same bar `CrowdedTableTest` holds the upright one to.
 
 **A window theme of its own** (`values/themes.xml`). It was inheriting
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a

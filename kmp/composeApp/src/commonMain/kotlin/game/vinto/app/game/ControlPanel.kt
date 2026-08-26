@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -35,7 +33,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.theme.ButtonTone
@@ -74,36 +71,53 @@ private const val RECENT_SHOWN = 2
 @Composable
 fun ControlPanel(
     state: TableState,
-    height: Dp,
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * True when the rail stands beside the felt (landscape) rather than under it. The size
+     * comes from the caller's modifier either way; what this decides is which edge of the
+     * rail touches the felt, and so which edge wears the moulding.
+     */
+    side: Boolean = false,
 ) {
     val table = state.table
     val stage = LocalStage.current
     val edge = MaterialTheme.colorScheme.feltEdge()
     Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .height(height)
             // The moulding between the cloth and the rail.
             //
             // Two fills meeting is a *layout*; a table has a beading where the felt is
-            // tucked under the edge, and drawing it is what stops the bottom third of the
-            // screen reading as a panel stuck below a picture of a game. Four strokes: the
-            // dark seam the cloth disappears into, the lit top face of the moulding, and
-            // the shadow it throws down onto the rail.
+            // tucked under the edge, and drawing it is what stops the rail's share of the
+            // screen reading as a panel stuck beside a picture of a game. Four strokes: the
+            // dark seam the cloth disappears into, the lit face of the moulding, and the
+            // shadow it throws onto the rail. Along the top when the rail is under the felt;
+            // down the left edge when it stands beside it.
             .drawBehind {
                 val seam = Seam.toPx()
-                drawRect(SeamDark, size = Size(size.width, seam))
-                drawRect(edge, topLeft = Offset(0f, seam), size = Size(size.width, seam))
-                drawRect(
-                    Brush.verticalGradient(
-                        0f to SeamShadow,
-                        1f to Color.Transparent,
-                        startY = seam * 2,
-                        endY = seam * SHADOW_DEPTH,
-                    ),
-                )
+                if (side) {
+                    drawRect(SeamDark, size = Size(seam, size.height))
+                    drawRect(edge, topLeft = Offset(seam, 0f), size = Size(seam, size.height))
+                    drawRect(
+                        Brush.horizontalGradient(
+                            0f to SeamShadow,
+                            1f to Color.Transparent,
+                            startX = seam * 2,
+                            endX = seam * SHADOW_DEPTH,
+                        ),
+                    )
+                } else {
+                    drawRect(SeamDark, size = Size(size.width, seam))
+                    drawRect(edge, topLeft = Offset(0f, seam), size = Size(size.width, seam))
+                    drawRect(
+                        Brush.verticalGradient(
+                            0f to SeamShadow,
+                            1f to Color.Transparent,
+                            startY = seam * 2,
+                            endY = seam * SHADOW_DEPTH,
+                        ),
+                    )
+                }
             },
         color = Rail.fill,
     ) {

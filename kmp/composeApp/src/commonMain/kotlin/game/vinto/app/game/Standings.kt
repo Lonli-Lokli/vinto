@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -68,7 +70,14 @@ fun StandingsSheet(
         contentColor = Rail.ink,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = Pad).fillMaxWidth().padding(bottom = Pad),
+            modifier = Modifier
+                .padding(horizontal = Pad)
+                .fillMaxWidth()
+                // A sheet on a phone lying on its side has less height than four seats and
+                // two buttons; the scroll is what keeps "Next round" reachable there, and it
+                // is inert anywhere the content fits.
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             Text(

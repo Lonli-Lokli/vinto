@@ -8,18 +8,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vinto">
         <!--
-            Portrait only. The table is a fixed four-sided arrangement sized to the height it
-            is given (`CardScale.kt`), and it has two sizes to step down through, not a
-            continuum; a phone in landscape has less height than the smaller of them needs.
-            Android 16 ignores this on large screens, which is the
-            right place for it to be ignored — a tablet has the height to spare, and the
-            layout already adapts through `BoxWithConstraints`. Landscape on a phone is task
-            7.6, not something to fake by leaving the app free to rotate into it.
+            Free to rotate. The table has a landscape arrangement of its own — the control
+            rail stands beside the felt instead of under it (`TableLayout` in `CardScale.kt`)
+            — so the portrait lock that used to sit here is gone. `configChanges` keeps the
+            activity alive across the rotation: the layout re-decides itself inside
+            `BoxWithConstraints`, and recreating the activity would cost the game's
+            in-memory state for a change Compose absorbs in one recomposition.
         -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

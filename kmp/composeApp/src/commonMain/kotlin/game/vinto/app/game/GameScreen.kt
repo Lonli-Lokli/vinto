@@ -71,8 +71,9 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         // Decided once, from the screen. Everything about how large a card is drawn — on the
         // table and in flight — comes from here, so the two cannot disagree and neither can
-        // change while a round is being played.
-        val layout = TableLayout.forScreen(maxHeight)
+        // change while a round is being played. The shape of the screen picks the
+        // arrangement too: a rotation is the one thing that re-decides it mid-round.
+        val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
         CardStage(
             frames = session.frames,
