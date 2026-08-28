@@ -78,6 +78,9 @@ env:
   # Pinned: `npx wrangler@latest` in CI means the day Cloudflare ships a change is the day
   # this repository's build breaks, on a commit that has nothing to do with it.
   WRANGLER_VERSION: '4.127.1'
+  # wrangler phones home on every invocation. A build machine has no opinions worth
+  # collecting, and the call is one more thing that can hang behind a firewall.
+  WRANGLER_SEND_METRICS: 'false'
 
 jobs:
   detekt:

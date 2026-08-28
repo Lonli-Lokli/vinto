@@ -151,16 +151,30 @@ tree *before* the move:
   pins it: the setup peek is visible during setup and the room stops sending it once the
   round is on, because remembering your own hand is the game. The gate was the stale party;
   it now checks both sides of `FINISH_SETUP`.
+- `gate-two-clients` compared the two sockets' event envelopes byte for byte. Since events
+  started travelling with the view they left behind, those envelopes legitimately differ —
+  each carries the view redacted for the socket it went to, which the very next assertion in
+  the same gate checks. It now compares what happened (index, seat, actor, action, byBot)
+  and asserts separately that each socket was sent the view for its own seat.
 - `gate-sessions` never finished a round. Two harness gaps: it treated any `activeTossIn` as
   blocking rather than only one with `waitingForInput`, and it never fired the room's alarm —
   so a window waiting on the room stayed open, and the harness then jumped its clock to the
   next alarm, which is the thirty-minute session buzzer, discarding the round it was trying
   to measure. It now fires `onAlarm` at the moment `nextAlarmAt` names.
 
-Still red and **not diagnosed here**: `kmp-android`'s Compose UI suites and `kmp-ios`'s
-framework link. Neither can be reproduced in the container this work was done in — androidx
-is behind dl.google.com, and there is no Mac. Both steps are now split in two (compile, then
-run/link) so the step name says which half broke without anyone opening a log.
+All nine gates pass locally now — the six in plain Node and the three through a real
+`wrangler dev`, with the deployment bundle measured at 295 KB gzipped against a 3 MB limit.
+
+Still red, and **not diagnosed here**: `composeApp` does not compile for two of its targets.
+`assembleDebug` passes, so `commonMain` and `androidMain` are sound; what fails is
+`:composeApp:jvmTestClasses` (the Compose test sources) and
+`:composeApp:compileKotlinIosSimulatorArm64`. Those are precisely the two source sets that
+have never been compiled anywhere — §6i says as much, that composeApp ships "verified by
+`:composeApp:detekt` plus everything the shared modules prove" — so CI has found what no
+machine had yet asked. Neither reproduces in the container this work was done in: androidx
+resolves from dl.google.com, which answers 403 here, and there is no Mac. The steps are
+split into compile and run/link so the step name says which half broke; the compiler's own
+message is in the job log, which is the first thing to read on a machine that can open it.
 
 **The detekt baseline.** The first CI run found seven findings that predate it — two
 cyclomatic-complexity, a loop with too many jumps, a return count, a file name that does not

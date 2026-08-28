@@ -191,6 +191,7 @@ check('alice is dealt a hand she has not seen',
 
 // --- real actions, both sockets see every one ----------------------------------
 const alicePlayer = aliceJoined.seats[0].playerId ?? started.view.players[0].id;
+const bobPlayer = bobJoined.seats[1].playerId ?? started.view.players[1].id;
 const sent = [
   { type: 'PEEK_SETUP_CARD', payload: { playerId: alicePlayer, position: 0 } },
 ];
@@ -209,7 +210,22 @@ const bobEvents = flatten(bobBatches);
 
 console.log('\naction exchange');
 check('alice saw every action', aliceEvents.length >= sent.length, true);
-check('both sockets saw the same events', aliceEvents, bobEvents);
+// Both sockets see the same *events*. They do not see the same bytes, and that is the
+// design rather than a wrinkle: every event now travels with the view it left behind, and
+// that view is redacted for the socket it was sent to. Comparing whole envelopes therefore
+// compares two seats' entitlements and calls the difference a bug — this assertion predates
+// per-event views and had been failing ever since. What both sockets must agree on is what
+// *happened*: the index, the seat, who acted, the action itself, and whether a bot did it.
+const identity = (events) => events.map(({ view, ...rest }) => rest);
+check('both sockets saw the same events', identity(aliceEvents), identity(bobEvents));
+check(
+  'and each was sent the view addressed to its own seat',
+  [
+    aliceEvents.every((e) => e.view.viewerId === alicePlayer),
+    bobEvents.every((e) => e.view.viewerId === bobPlayer),
+  ],
+  [true, true],
+);
 check('indices are contiguous from 0', aliceEvents.map((e) => e.index), aliceEvents.map((_, i) => i));
 
 console.log('\nper-seat views');
