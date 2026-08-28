@@ -23,6 +23,22 @@ allprojects {
         buildUponDefaultConfig = true
         allRules = false
         config.setFrom(rootProject.files("config/detekt/detekt.yml"))
+        /**
+         * The debt that existed when detekt first ran in CI, listed so that everything
+         * *after* it fails the build.
+         *
+         * `maxIssues` is 0 and the tree does not meet it: seven findings predate this file
+         * (two cyclomatic-complexity, a loop with too many jumps, a return count, a file
+         * name that does not match its declaration, a file one function over the limit, and
+         * one dead private function). They were confirmed present on the branch before the
+         * Gradle build moved to the repository root, so none is fallout from the move.
+         *
+         * A baseline is a debt list, not a mute button, and it only earns its place if it
+         * shrinks. Fix an entry and delete its line — the gate then holds that ground. Do
+         * not regenerate the file wholesale to make a new violation go away; that is the one
+         * use that turns this into a lie.
+         */
+        baseline = rootProject.file("config/detekt/baseline.xml")
         // Multiplatform projects have no single `src/main/kotlin`, so the source set is
         // declared explicitly.
         source.setFrom(files("src"))

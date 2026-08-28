@@ -139,6 +139,15 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
 
+**The detekt baseline.** The first CI run found seven findings that predate it — two
+cyclomatic-complexity, a loop with too many jumps, a return count, a file name that does not
+match its declaration, a file one function over the limit, and one dead private function.
+They were confirmed present on the branch *before* the Gradle build moved, so none is
+fallout from the move; the honest reading is that `./gradlew detekt` had not been run in a
+while. They are listed in `config/detekt/baseline.xml` so the gate holds the line at today's
+debt and fails on anything new. Fix one and delete its line. Do not regenerate the file to
+silence a fresh violation — that is the one use that makes the baseline a lie.
+
 Notes worth knowing before editing it:
 
 - **JDK 17, not newer.** Every module pins `jvmTarget = 17` and none declares a toolchain,
@@ -157,6 +166,10 @@ Notes worth knowing before editing it:
   both, because a regenerated corpus is exactly the change that can break either engine.
 - **wrangler is pinned** to an exact version in the workflow's `env`. `wrangler@latest` in CI
   means the day Cloudflare ships a change is the day this build breaks on an unrelated commit.
+- **Each room gate is its own step**, named for what it asks. A loop over the nine would be
+  shorter and would tell a reviewer only that "room gates failed"; the summary page should
+  name the gate without anyone opening a log. `wrangler dev` is started once and left running
+  across the three steps that need it — a background process outlives its step.
 
 ---
 
