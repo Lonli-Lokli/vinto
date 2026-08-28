@@ -224,20 +224,35 @@ played = act(JSON.stringify(played.state), 1, {
 played = act(JSON.stringify(played.state), 1, {
   type: 'PEEK_SETUP_CARD', payload: { playerId: seat1Player, position: 1 },
 });
+// Still in setup here, which is the only phase in which a seat's own peeked cards come
+// down the wire. `projectView` is explicit about it: during setup the two you looked at are
+// yours to see, and after it the room stops sending them — remembering your own hand is the
+// game, and a client that cannot forget has already won it. So the peek is checked twice,
+// once on each side of FINISH_SETUP, and the pair is the rule.
+const duringSetup = visibleIn(parse(viewForSeat(JSON.stringify(played.state), 0, clock)).view);
+check(
+  'during setup, a peeked card is visible to the seat that peeked it',
+  duringSetup.size === 2,
+  `${duringSetup.size} visible`,
+);
+check(
+  'and still nothing belonging to anybody else',
+  [...duringSetup].every((id) => ownCards.has(id)),
+);
+
 played = act(JSON.stringify(played.state), 0, { type: 'FINISH_SETUP', payload: { playerId: seat0Player } });
 
 check('setup moves the game into play', played.state.game.phase === 'playing', played.state.game.phase);
 
-const peeked = parse(viewForSeat(JSON.stringify(played.state), 0, clock)).view;
-const seatSees = visibleIn(peeked);
+// And once the round is on, the room sends the seat nothing of its own — the engine
+// remembers what each seat learned, for the bots and for scoring, but it does not hand that
+// memory back to a client we did not write. `PeekPrivacyTest` pins the same rule for the
+// actions; this pins it for the setup peek, over the wire.
+const afterSetup = visibleIn(parse(viewForSeat(JSON.stringify(played.state), 0, clock)).view);
 check(
-  'a peeked card becomes visible to the seat that peeked it',
-  seatSees.size === 2,
-  `${seatSees.size} visible`,
-);
-check(
-  'and still nothing belonging to anybody else',
-  [...seatSees].every((id) => ownCards.has(id)),
+  'once the round starts the seat is sent none of its own cards, peeked or not',
+  afterSetup.size === 0,
+  `${afterSetup.size} still visible`,
 );
 
 // Play out real turns. Both seats 0 and 1 are people here, so the harness plays whichever

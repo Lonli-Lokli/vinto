@@ -139,6 +139,29 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
 
+**What the first runs found, and what is still red.** `kmp-jvm` is green — the corpus
+replays and the validator holds after the move, which is the check the migration rested on —
+and so is `kmp-detekt` once its debt was baselined. Two jobs were red for reasons that
+predate this work, both reproduced locally against the real compiled engine (build the
+Kotlin/JS bundle, run the gate in Node) and both confirmed identical on a worktree of the
+tree *before* the move:
+
+- `gate-real-room` asserted that a peeked card stays visible to its seat *after*
+  `FINISH_SETUP`. `projectView` says the opposite in as many words, and `PeekPrivacyTest`
+  pins it: the setup peek is visible during setup and the room stops sending it once the
+  round is on, because remembering your own hand is the game. The gate was the stale party;
+  it now checks both sides of `FINISH_SETUP`.
+- `gate-sessions` never finished a round. Two harness gaps: it treated any `activeTossIn` as
+  blocking rather than only one with `waitingForInput`, and it never fired the room's alarm —
+  so a window waiting on the room stayed open, and the harness then jumped its clock to the
+  next alarm, which is the thirty-minute session buzzer, discarding the round it was trying
+  to measure. It now fires `onAlarm` at the moment `nextAlarmAt` names.
+
+Still red and **not diagnosed here**: `kmp-android`'s Compose UI suites and `kmp-ios`'s
+framework link. Neither can be reproduced in the container this work was done in — androidx
+is behind dl.google.com, and there is no Mac. Both steps are now split in two (compile, then
+run/link) so the step name says which half broke without anyone opening a log.
+
 **The detekt baseline.** The first CI run found seven findings that predate it — two
 cyclomatic-complexity, a loop with too many jumps, a return count, a file name that does not
 match its declaration, a file one function over the limit, and one dead private function.

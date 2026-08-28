@@ -8,7 +8,7 @@
  * below is therefore about the *room*, and can be asked without one second passing.
  */
 import {
-  newRoom, joinRoom, addBot, startGame, applyAction, onAlarm, readyForNextRound,
+  newRoom, joinRoom, addBot, startGame, applyAction, onAlarm, nextAlarmAt, readyForNextRound,
   viewForSeat, countdownMs, sessionMs, updatePresence,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -82,8 +82,13 @@ function playToScoring(json, startClock) {
     const room = parse(json);
     if (!room.game || room.game.phase === 'scoring' || room.phase !== 'PLAYING') break;
 
+    // `waitingForInput` is the whole condition, not `activeTossIn`. A window that has stopped
+    // waiting is bookkeeping the room has not cleared yet, and treating it as blocking left
+    // the harness with nothing to do and no turn to take — it then jumped the clock to the
+    // next alarm, which is the thirty-minute session buzzer, and the round it was trying to
+    // finish was discarded by the very deadline the gate was measuring.
     const toss = room.game.activeTossIn;
-    if (toss) {
+    if (toss && toss.waitingForInput) {
       const owed = room.seats.find(
         (s) => s.tokenHash && s.index < 2 && !toss.playersReadyForNextTurn.includes(s.playerId),
       );
@@ -93,6 +98,17 @@ function playToScoring(json, startClock) {
         });
         if (out.error) break;
         json = JSON.stringify(out.state);
+        continue;
+      }
+      // Both people have answered and the window is still open, which means it is waiting on
+      // the room rather than on a client. That wait ends on an alarm — the Durable Object
+      // schedules one and `nextAlarmAt` says when — so the harness fires it at exactly the
+      // moment the room asked for. Skipping this is what used to strand the round in
+      // `toss_queue_active` and then blame the engine for refusing the next draw.
+      const due = nextAlarmAt(json);
+      if (due > 0) {
+        clock = Math.max(clock, due) + 1;
+        json = JSON.stringify(parse(onAlarm(json, clock)).state);
         continue;
       }
     }
