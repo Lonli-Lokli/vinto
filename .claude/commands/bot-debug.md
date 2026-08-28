@@ -8,7 +8,7 @@
 
   Analyze the MCTS bot decision-making logic for the scenario: $ARGUMENTS
 
-  Look at packages/bot/ for:
+  Look at shared/bot/ (Kotlin) or legacy-web/packages/bot/ (TypeScript) for:
   1. MCTS implementation
   2. Decision tree evaluation
   3. Current coalition-mode handling

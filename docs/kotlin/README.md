@@ -27,7 +27,8 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 **Done — Kotlin side (`migrate-to-kotlin-multiplatform` phases 1, 2a)**
 
-- `kmp/` Gradle workspace with `shared:shapes`, `worker`, `composeApp`
+- Gradle workspace with `shared:shapes`, `worker`, `composeApp` (then under `kmp/`; it is
+  the repository root now — see §1a)
 - `Prng` ported and **verified against the same `fixtures/prng/vectors.json` the TypeScript
   tests read** — the first real cross-language parity check
 - Platform gate measured: Worker bundle 123 KB gzipped (4% of the 3 MB budget);
@@ -40,12 +41,12 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - `PrngVectorsTest` moved to `commonTest` and now runs on **JVM, JS/Node and the iOS
   simulator** — 6 tests on each — against the one shared vector file (§5 step 2 records how
   and why)
-- `kmp/gradle.properties` added: the Compose/Wasm production compile ran out of memory on
+- `gradle.properties` added: the Compose/Wasm production compile ran out of memory on
   the Kotlin daemon's default heap (§7)
 - **`composeApp` now targets Android, iOS and web from one `commonMain`**, with the `iosApp`
   Xcode project embedding the Compose framework. Verified by _running_, not just building:
   the same UI renders on the iOS simulator and on an Android emulator (§5 steps 3–4)
-- **Platform gate 2a.3 passes**: `kmp/worker` is a real Cloudflare Worker with a `Room`
+- **Platform gate 2a.3 passes**: `worker` is a real Cloudflare Worker with a `Room`
   Durable Object. Two WebSocket clients join one room, exchange actions and resync, and the
   room rebuilds from storage after every instance is destroyed. The harness asserts the
   Durable Object's values against `fixtures/prng/vectors.json`, so it doubles as a
@@ -73,7 +74,7 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - **The engine runs correctly in the Cloudflare runtime**, not just on the JVM: the Worker
   exposes `POST /replay` and all 50 recordings replay through it in workerd (§6c)
 
-- **The bot is ported and follows the rules** (phase 5): all of `packages/bot` — memory,
+- **The bot is ported and follows the rules** (phase 5): all of `legacy-web/packages/bot` — memory,
   opponent modeller, heuristics, evaluators, determinization, rollout policy, move generator,
   state transition, outcome simulator, Vinto round solver, coalition planner, MCTS decision
   service — plus `BotRunner`, which turns decisions into actions for a server that has no UI.
@@ -92,11 +93,70 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 **Next**
 
-1. Open the room in a deployment: set `ROOM_OPEN` to `"true"` (§6d). The engine reason for
-   keeping it shut is gone; what remains is the operator's call about who may create rooms
-2. Phase 6: `GameSession` / `LocalGameSession`, the recorder, and the Koin wiring — the
-   client-side half that the Compose UI will sit on
-3. Phase 7: the Compose Multiplatform UI
+1. Walk the runbook in §6i — the local suites, the worker gates, the deploy that opens the
+   room, and the proof with people. It is the part only a person with credentials and
+   hardware can do
+2. 9.9 (observability, a load test) and 9.10 (store releases), which start after that
+3. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
+   ticking, and work it genuinely has not done, currently indistinguishable
+
+---
+
+## 1a. The Gradle build is the repository root
+
+It was built under `kmp/`. It is not there any more: once the Kotlin build became the one
+that ships, the tree was hoisted and the Next.js client was retired to `legacy-web/`. So
+`./gradlew` runs from the root, `fixtures/` is a sibling of `shared/` rather than one
+directory up, and `npm` commands run from inside `legacy-web/`.
+
+What moved, and what to watch for if an old command fails:
+
+| Was                            | Is                        |
+| ------------------------------ | ------------------------- |
+| `kmp/shared/*`, `kmp/worker`, `kmp/composeApp`, `kmp/iosApp` | the same names at the root |
+| `kmp/gradlew`, `kmp/gradle.properties`, `kmp/config/detekt`  | the same names at the root |
+| `kmp/keystore.properties`, `kmp/local.properties`            | the same names at the root |
+| `apps/`, `packages/`, `package.json`, `nx.json`, `tools/*.ts` | under `legacy-web/`       |
+| `fixtures/`, `docs/`, `openspec/`, `codecov.yml`              | unchanged, at the root    |
+
+The JVM suites that read the corpus no longer count `..` from their module directory: the
+root build injects the absolute path as the `vinto.fixtures` system property, and each test
+falls back to a relative path only so an IDE can still launch it without Gradle. A future
+move of the tree will not silently empty the parity gate.
+
+`legacy-web/` is frozen, not dead. Its engine and bot are the other half of the parity gate,
+and `fixtures/recordings` is generated from them — a rules change still has to land in both.
+
+## 1b. Continuous integration
+
+`.github/workflows/kmp.yml`, five checks, split by what each needs:
+
+| Check         | Runner | What it proves                                                                   |
+| ------------- | ------ | -------------------------------------------------------------------------------- |
+| `kmp-detekt`  | Linux  | Static analysis over every module and every source set, `maxIssues: 0`            |
+| `kmp-jvm`     | Linux  | The six shared modules' JVM suites — the corpus replay, the validator, the bot     |
+| `kmp-android` | Linux  | `assembleDebug`, plus the Compose suites headless (goldens excluded — see §6i)     |
+| `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
+| `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
+
+Notes worth knowing before editing it:
+
+- **JDK 17, not newer.** Every module pins `jvmTarget = 17` and none declares a toolchain,
+  so a newer JDK fails with a Java/Kotlin target mismatch before it compiles anything.
+- **`kmp-ios` is rationed.** macOS minutes bill at ten times the Linux rate, so it runs on
+  pushes to long-lived branches, nightly, on demand, and on a pull request only when it
+  carries the `ios` label.
+- **The jobs do not `needs:` each other.** A detekt violation says nothing about whether the
+  engine still replays the corpus; chaining them would turn four parallel jobs into one long
+  one and hide the second failure behind the first.
+- **Caches**: `gradle/actions/setup-gradle` restores the Gradle build cache and dependency
+  jars, and writes it only from branch pushes — pull requests read. The macOS job also
+  caches `~/.konan`, which is most of its wall clock on a cold machine.
+- **Path-filtered.** A change under `legacy-web/` does not start the Kotlin jobs, and a
+  Kotlin change does not start `legacy-web.yml` or the Playwright run. `fixtures/**` starts
+  both, because a regenerated corpus is exactly the change that can break either engine.
+- **wrangler is pinned** to an exact version in the workflow's `env`. `wrangler@latest` in CI
+  means the day Cloudflare ships a change is the day this build breaks on an unrelated commit.
 
 ---
 
@@ -104,23 +164,23 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 | Tool        | Version used  | Notes                                                                                                      |
 | ----------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
-| JDK         | 17 (Temurin)  | Gradle toolchain; 17+ is fine                                                                              |
+| JDK         | 17 (Temurin)  | Every module sets `jvmTarget = 17` and none declares a toolchain, so Gradle must **run on 17** — a newer JDK fails with a Java/Kotlin target mismatch |
 | Gradle      | 8.14          | Via the committed wrapper — do not install system Gradle                                                   |
 | Node        | 24            | For the TypeScript side and `vite-node` tools                                                              |
 | Xcode       | latest stable | **macOS only**; needed for the iOS targets                                                                 |
 | wrangler    | 4.x           | `npx wrangler` — no global install needed                                                                  |
-| Android SDK | platform 36   | For `composeApp`'s Android target. Point Gradle at it via `sdk.dir` in `kmp/local.properties` (gitignored) |
+| Android SDK | platform 36   | For `composeApp`'s Android target. Point Gradle at it via `sdk.dir` in `local.properties` (gitignored) |
 
 ```bash
 git clone <repo> && cd vinto
-npm ci                 # TypeScript side
-cd kmp && ./gradlew --version   # bootstraps Gradle 8.14 on first run
+./gradlew --version              # bootstraps Gradle 8.14 on first run
+(cd legacy-web && npm ci)        # the retired TypeScript workspace
 
 # Android only: tell Gradle where the SDK is (local.properties is gitignored).
 echo "sdk.dir=$ANDROID_HOME" > local.properties
 ```
 
-## 3. Module map (`kmp/`)
+## 3. Module map
 
 | Module          | Targets                                                 | Purpose                                                                                                    |
 | --------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -140,7 +200,7 @@ scaffolded empty.
 ## 4. Commands
 
 ```bash
-# --- Kotlin (run from kmp/) ---
+# --- Kotlin (run from the repository root) ---
 ./gradlew :shared:shapes:allTests             # PRNG parity on every target (JVM, JS, iOS sim)
 ./gradlew :shared:shapes:jvmTest              # just the JVM leg, when iterating
 ./gradlew :worker:jsNodeProductionRun         # PRNG self-check (prints the gate number)
@@ -151,19 +211,19 @@ scaffolded empty.
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64   # just the iOS framework
 ./gradlew build                               # everything available on this host
 
-# --- iOS app (run from kmp/iosApp/) ---
+# --- iOS app (run from iosApp/) ---
 # The Xcode build invokes Gradle itself, via its "Build Kotlin framework" phase.
 xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
-# --- Cloudflare Worker (run from kmp/worker/cloudflare/) ---
+# --- Cloudflare Worker (run from worker/cloudflare/) ---
 # Build the Kotlin bundle first: the shim imports it out of build/compileSync/.
-(cd ../.. && ./gradlew :worker:jsProductionExecutableCompileSync)
+(cd .. && ./gradlew :worker:jsProductionExecutableCompileSync)
 npx wrangler dev --port 8787 --local          # local workerd; deploys nothing
 node gate-two-clients.mjs                     # platform gate 2a.3
 npx wrangler deploy --dry-run --outdir /tmp/w # measure the real Worker bundle
 
-# --- TypeScript (run from repo root) ---
+# --- TypeScript (run from legacy-web/) ---
 npm test                                      # all 5 projects
 npx nx run-many --target=typecheck --all --skip-nx-cache
 npm run recordings:replay -- fixtures/recordings    # parity gate via CLI
@@ -172,7 +232,7 @@ npm run recordings:generate -- --games 5 --seed 1   # ~75 s per game
 
 ## 5. iOS bring-up
 
-iOS targets are declared behind a host check in `kmp/shared/shapes/build.gradle.kts`, so
+iOS targets are declared behind a host check in `shared/shapes/build.gradle.kts`, so
 they activate automatically on macOS.
 
 **Why this was deferred until a Mac existed**: Kotlin/Native cannot build Apple targets on
@@ -219,7 +279,7 @@ UI in `commonMain` and one small entry point per platform:
 | iOS      | `iosMain/.../MainViewController.kt`          |
 | Web      | `wasmJsMain/.../Main.kt`                     |
 
-`kmp/iosApp` is a plain Xcode project whose "Build Kotlin framework" phase shells out to
+`iosApp` is a plain Xcode project whose "Build Kotlin framework" phase shells out to
 `./gradlew :composeApp:embedAndSignAppleFrameworkForXcode`, so building in Xcode builds the
 Kotlin side too. `ContentView.swift` wraps `MainViewController()` from the exported
 `ComposeApp` framework — renaming either side breaks the other, and nothing checks that for
@@ -331,7 +391,7 @@ Two hostnames, two deploy targets:
 | host                       | what                                            | how                                            |
 | -------------------------- | ----------------------------------------------- | ---------------------------------------------- |
 | `vinto.kupalinka.app`      | the Compose/Wasm client                         | Cloudflare **Pages** project `vinto`           |
-| `vinto-room.kupalinka.app` | the room Worker + Durable Object, and `/replay` | `wrangler deploy` from `kmp/worker/cloudflare` |
+| `vinto-room.kupalinka.app` | the room Worker + Durable Object, and `/replay` | `wrangler deploy` from `worker/cloudflare` |
 
 The Worker gets its own hostname rather than a path under `vinto.kupalinka.app`, because that
 host is a Pages project and layering a Worker route over a Pages custom domain is a precedence
@@ -369,7 +429,7 @@ because copying them by hand went wrong: the brief records Niva shipping a deplo
 grew that check. Nothing was wrong with either file — "copy this verbatim" is an instruction to
 a person, and people copy things once.
 
-`sync.mjs` mirrors a `web/` module layout. Vinto's web build is `kmp/composeApp` with a Gradle
+`sync.mjs` mirrors a `web/` module layout. Vinto's web build is `composeApp` with a Gradle
 root one directory down, so it cannot participate as-is, and hand-copying `content-hash.js` and
 `web-deploy.sh` into this repo would make Vinto the **third** copy — exactly the outcome the
 brief warns about, and it names that as the moment to stop copying and move the verification
@@ -392,7 +452,7 @@ back `ok` or the exact action that diverged. That is enough to verify the engine
 deployment before any UI exists.
 
 ```bash
-cd kmp/worker/cloudflare
+cd worker/cloudflare
 (cd ../.. && ./gradlew :worker:jsProductionExecutableCompileSync)
 npx wrangler dev --port 8787 --local
 node gate-engine-replay.mjs            # 50/50, 13,900 actions
@@ -503,7 +563,7 @@ It earned its keep immediately, finding five defects that no unit test would hav
   sits while resolving a tossed-in action — for `CONFIRM_PEEK`, `DECLARE_KING_ACTION` and
   `SELECT_ACTION_TARGET`, and forbade it for exactly these two swaps. A bot could choose both
   targets and then had no legal move at all. The same hole is in
-  `packages/engine/src/lib/action-validator.ts`.
+  `legacy-web/packages/engine/src/lib/action-validator.ts`.
 - **Cached action plans could go stale**, since they are read a ply deep in the search tree.
 - **Target selection answered the wrong question** once the engine had already committed a
   card: "would I rather swap?" is no longer on the table at that point.
@@ -552,7 +612,7 @@ the TypeScript replayer, which has no such action.
 | One bot engine (v1/MCTS); v2 deleted for reading hidden hands               | `docs/bot/BOT-ENGINE-DECISION.md`         |
 | Canonical hash excludes history + `botMemory`, includes `opponentKnowledge` | `RECORDING.md` §4                         |
 | Every game is exactly 4 players                                             | deterministic-engine spec                 |
-| Bots call Vinto when hand is fully known and worth ≤ 0                      | `packages/bot/src/lib/vinto-call-rule.ts` |
+| Bots call Vinto when hand is fully known and worth ≤ 0                      | `legacy-web/packages/bot/src/lib/vinto-call-rule.ts` |
 | Bot verification is rule-following, not decision parity                     | §6e, tasks 5.5/5.6                        |
 | One decision service **per bot**, not one shared across seats               | `BotRunner`; TypeScript wipes memory each turn |
 
@@ -588,9 +648,9 @@ the device. What was missing was everything around the game rather than in it, a
 those are now done. None of them is the Play release (task 8.1 proper): there is still no CI,
 no upload key, no track.
 
-**A launcher icon.** The web app's own orange V (`apps/vinto/public/favicon.png`), regenerated
+**A launcher icon.** The web app's own orange V (`legacy-web/apps/vinto/public/favicon.png`), regenerated
 into the three shapes Android has asked for over the years by
-`kmp/tools/make-launcher-icons.py` — adaptive for API 26+, the legacy square/round pair for the
+`tools/make-launcher-icons.py` — adaptive for API 26+, the legacy square/round pair for the
 24–25 the app still supports, and a monochrome layer for themed icons on API 33+. The generated
 PNGs are committed; nothing at build time runs the script. It is the same mark as the browser
 deliberately: a different icon for the phone would make it a different game to anybody who has
@@ -623,13 +683,13 @@ window background, so the bars carry the light icon set by inheritance rather th
 overriding a per-API flag, and the cold-start frames are the colour of the app.
 
 **A release variant that assembles anywhere.** `assembleRelease` signs with the upload key
-named by `kmp/keystore.properties` when that file exists, and with the debug key when it does
+named by `keystore.properties` when that file exists, and with the debug key when it does
 not. The fallback is the point: a release build that fails on a missing secret is one that goes
 untested until the day it has to work. A debug-signed release APK installs and plays; it cannot
 be published, and cannot be upgraded in place by a properly signed build later, because Android
 treats a change of signing key as a different app.
 
-To sign it properly, create the key once and write `kmp/keystore.properties` (gitignored, and
+To sign it properly, create the key once and write `keystore.properties` (gitignored, and
 it names the keystore rather than containing it):
 
 ```bash
@@ -852,7 +912,7 @@ card — the felt's bottom edge stayed at the same pixel in every one.
 ## 6h. Words, and where they live
 
 Every string the **UI module** says is now in
-`kmp/composeApp/src/commonMain/composeResources/values/strings.xml`. A translation is a file
+`composeApp/src/commonMain/composeResources/values/strings.xml`. A translation is a file
 beside it — `values-be/strings.xml`, `values-uk/strings.xml` — and nothing else changes, which
 is what the `translate-game` skill expects to find.
 
@@ -903,7 +963,6 @@ with credentials and hardware can do, in this order:
 `:composeApp:detekt` plus everything the shared modules prove. Run the rest:
 
 ```sh
-cd kmp
 ./gradlew :shared:shapes:jvmTest :shared:engine:jvmTest :shared:bot:jvmTest \
           :shared:client:jvmTest :shared:protocol:jvmTest :shared:room:jvmTest
 ./gradlew :composeApp:jvmTest       # the compose suites, FullGameUiTest included
@@ -911,8 +970,11 @@ cd kmp
 ./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest --rerun  # proves them stable
 ```
 
-Commit the eight goldens `ScreenshotTest` writes (`composeApp/src/jvmTest/goldens/`). Run the
-desktop app once and listen: four sounds — a deal, a landing, a thud on a penalty, a chime at
+Commit the eight goldens `ScreenshotTest` writes (`composeApp/src/jvmTest/goldens/`). CI does
+**not** run that suite — on a fresh runner it would write its own goldens and pass, asserting
+nothing, and a maintainer's images would not survive a different JVM's glyph rasterization
+anyway (the exclusion, and its reasoning, is on the test task in `composeApp/build.gradle.kts`;
+`-Pscreenshots` forces it back on). Run the desktop app once and listen: four sounds — a deal, a landing, a thud on a penalty, a chime at
 the round's end — and none anywhere else.
 
 **2. Exercise the rewired worker against `wrangler dev`.** `index.mjs` now sends prebuilt
@@ -920,7 +982,7 @@ per-seat envelopes and files recordings; the gate scripts import the *unchanged*
 still pass, but `gate-real-room.mjs` and `gate-sessions.mjs` walk the rewired paths:
 
 ```sh
-cd kmp && ./gradlew :worker:compileKotlinJs
+./gradlew :worker:compileKotlinJs
 cd worker/cloudflare && npx wrangler dev &   # then, against it:
 node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
   && node gate-lifecycle.mjs && node gate-limits.mjs && node gate-room-codes.mjs
@@ -957,8 +1019,15 @@ has been walked once.
 of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx`, the
   Sentry wrapper, root-page prerender, stale `.next`, version mismatch, `global-error.tsx`.
   Needs a bisect of `src/app`. It blocks CI's `build` job.
-- **CI never runs on this branch**: `.github/workflows/ci.yml` triggers only on `master` and
-  `test`. Merging will be the first real run.
+- **The Kotlin CI has never run.** `.github/workflows/kmp.yml` is new and was written in a
+  container that cannot compile the build (androidx is behind dl.google.com), so its five
+  jobs are unverified: the first run on a branch or pull request is the first real one.
+  Expect to fix something. The likely candidates, in order: an action major version that has
+  moved on, the Compose JVM suites wanting a display beyond `java.awt.headless`, and the
+  three worker gates that need `wrangler dev` to come up inside the health-poll window.
+- **`nx build @vinto/game` no longer has a CI job.** It has been broken since before this
+  branch (below), the workspace is frozen, and a check that has never been green teaches
+  people to ignore red. Restoring it is part of picking the web client back up.
 - **At least two tests are flaky**, both driven by MCTS, which uses `Math.random`:
   `bot/…/mcts-coalition-cooperation.test.ts` ("should use coalition evaluation when in final
   round") and `local-client/…/bot-tossin.test.ts` ("should require all 3 bots to mark
@@ -968,8 +1037,9 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   single failure in these two as suspect before assuming a regression; rerun first.
 - **Coverage thresholds are inert**: all five `vite.config.ts` files put `lines: 70` outside
   `coverage.thresholds`, which Vitest 4 ignores. Coverage gates nothing today.
-- `tools/*.ts` need `vite-node` (`npm run recordings:*`); `ts-node` cannot load the
-  workspace `.ts` sources through `node_modules` symlinks.
+- `legacy-web/tools/*.ts` need `vite-node` (`npm run recordings:*`); `ts-node` cannot load
+  the workspace `.ts` sources through `node_modules` symlinks. They write to the repository
+  root's `fixtures/`, resolved from the script rather than from the working directory.
 - lefthook pre-commit runs lint `--fix` and `nx format:write`, so files change under you
   during commits.
 
@@ -978,14 +1048,14 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
 - **The Compose/Wasm production compile needs more heap than the Kotlin daemon's default.**
   On an 8 GB Mac `:composeApp:compileProductionExecutableKotlinWasmJs` failed with "Not
   enough memory to run compilation" — while the same task had succeeded on a larger machine
-  with no `gradle.properties` at all. `kmp/gradle.properties` now pins
+  with no `gradle.properties` at all. `gradle.properties` now pins
   `kotlin.daemon.jvmargs=-Xmx3g` and `org.gradle.jvmargs=-Xmx2g` so the build does not
   silently depend on how much RAM the developer happens to have. If it still OOMs, raise the
   Kotlin daemon figure first, and run `./gradlew --stop` after changing either value —
   a running daemon keeps its old heap.
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
-  It lives in `kmp/gradle.properties`.
+  It lives in `gradle.properties`.
 - **A headless emulator (`-no-window`) screenshots all black** under the default GPU mode —
   the app is running fine, the framebuffer just is not. Boot with `-gpu swiftshader_indirect`
   when you need `adb exec-out screencap` to show anything.
@@ -1005,18 +1075,23 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
 **This Windows machine specifically** (may not apply on the Mac)
 
 - Antivirus **deletes `gradlew.bat`** shortly after it is written. It is committed, so
-  `git checkout kmp/gradlew.bat` restores it; add a repo exclusion if it recurs.
+  `git checkout gradlew.bat` restores it; add a repo exclusion if it recurs.
 - No `python` on PATH; heredocs invoking `python` hang.
 
 ## 8. Verification checklist for a new machine
 
 ```bash
+# The Kotlin build, from the repository root.
+./gradlew :shared:shapes:allTests              # expect 6 PRNG tests per target
+./gradlew :worker:jsNodeProductionRun          # expect "gate ok: rngState=2583707619"
+./gradlew detekt                               # expect no issues; maxIssues is 0
+
+# The retired TypeScript workspace, which is still the parity reference.
+cd legacy-web
 npm ci
 npm test                                       # expect ~608 passing across 5 projects
 npx nx run-many --target=typecheck --all --skip-nx-cache   # expect 5 green
-npm run recordings:replay -- fixtures/recordings           # expect 50/50 clean
-cd kmp && ./gradlew :shared:shapes:allTests                # expect 6 PRNG tests per target
-./gradlew :worker:jsNodeProductionRun                      # expect "gate ok: rngState=2583707619"
+npm run recordings:replay -- ../fixtures/recordings        # expect 50/50 clean
 ```
 
 That last number is the useful one: `rngState=2583707619` after shuffling 54 cards with

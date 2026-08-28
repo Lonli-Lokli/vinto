@@ -25,7 +25,7 @@ from settings and `GameState`; recording readers SHALL ignore it if present.
 ### Requirement: Deterministic bot components are ported exactly
 
 The heuristics (`mcts-bot-heuristics`), evaluation helpers, opponent modeler, Vinto round
-solver and the coalition planner SHALL be ported to `kmp/shared/bot` with identical
+solver and the coalition planner SHALL be ported to `shared/bot` with identical
 behaviour, and their TypeScript unit tests SHALL be ported 1:1 and pass.
 
 #### Scenario: Coalition planner decisions match

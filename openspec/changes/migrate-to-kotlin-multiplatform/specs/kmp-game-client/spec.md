@@ -4,7 +4,7 @@
 
 ### Requirement: GameSession abstraction with local and remote implementations
 
-`kmp/shared/client` SHALL define `GameSession` (`localPlayerId`, `send(action)`,
+`shared/client` SHALL define `GameSession` (`localPlayerId`, `send(action)`,
 `events: Flow<SessionEvent>`, `view: StateFlow<PlayerView>`, `visualView:
 StateFlow<PlayerView>`, `syncVisualState()`) and SHALL provide `LocalGameSession`
 (in-process engine + recorder + bots, full `GameState` held privately) and

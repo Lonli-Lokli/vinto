@@ -9,6 +9,6 @@ fixtures/** -text
 
 # Gradle wrapper: gradlew is a shell script and MUST stay LF, or Linux/CI fails with
 # "bad interpreter". The .bat must stay CRLF for Windows cmd. The jar is binary.
-kmp/gradlew text eol=lf
-kmp/gradlew.bat text eol=crlf
-kmp/gradle/wrapper/gradle-wrapper.jar binary
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+gradle/wrapper/gradle-wrapper.jar binary

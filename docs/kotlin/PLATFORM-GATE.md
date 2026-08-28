@@ -10,7 +10,7 @@ Kotlin 2.1.21, Node 24).
 
 ## 2a.1 — Worker bundle size: PASS, with large margin
 
-The gate payload (`kmp/worker`) is a Kotlin/JS production executable exercising the seeded
+The gate payload (`worker`) is a Kotlin/JS production executable exercising the seeded
 PRNG, a 54-card Fisher-Yates shuffle and a kotlinx.serialization round trip — the same
 shape of work a Durable Object performs per action.
 
@@ -70,7 +70,7 @@ would be roughly 2.5x this one: still inside the budget, but it is the setting t
 
 ## 2a.2 — Compose/Wasm bundle: MEASURED, and it is the problem
 
-`kmp/composeApp` is a hello-world: `MaterialTheme`, one `Column`, two `Text`s and one
+`composeApp` is a hello-world: `MaterialTheme`, one `Column`, two `Text`s and one
 `Button` with a tap counter. Production `wasmJsBrowserDistribution`:
 
 | Artefact                |                      Raw |                Gzipped |
@@ -103,7 +103,7 @@ which runs the real workerd runtime. **Nothing was deployed to Cloudflare** — 
 below is from the local runtime, and the one thing that needs a deployed Worker is called
 out at the end.
 
-`kmp/worker` is now a real Worker rather than a Node self-check: a thin routing Worker plus
+`worker` is now a real Worker rather than a Node self-check: a thin routing Worker plus
 a `Room` Durable Object (`worker/cloudflare/index.mjs`) over Kotlin room logic
 (`worker/src/jsMain/.../Room.kt`). The split is deliberate — the JavaScript moves bytes and
 sockets, and every decision about room state is Kotlin, which is where `GameEngine.reduce`
@@ -228,10 +228,10 @@ It produced the first genuine cross-language check, and it passes:
 
 |                                 | `rngState` after shuffling 54 cards with seed 42 | first 5          |
 | ------------------------------- | ------------------------------------------------ | ---------------- |
-| TypeScript (`packages/shapes`)  | 2583707619                                       | 29, 3, 44, 51, 5 |
-| Kotlin/JS (`kmp/shared/shapes`) | 2583707619                                       | 29, 3, 44, 51, 5 |
+| TypeScript (`legacy-web/packages/shapes`) | 2583707619                                       | 29, 3, 44, 51, 5 |
+| Kotlin/JS (`shared/shapes`) | 2583707619                                       | 29, 3, 44, 51, 5 |
 
-`kmp/shared/shapes/src/jvmTest/.../PrngVectorsTest.kt` reads **the same committed
+`shared/shapes/src/jvmTest/.../PrngVectorsTest.kt` reads **the same committed
 `fixtures/prng/vectors.json`** the TypeScript test reads, rather than a Kotlin copy of the
 numbers, so the two implementations cannot drift without failing.
 
@@ -248,6 +248,6 @@ including the one written for it.
   runtime. Porting can proceed.
 - The Compose/Wasm measurement (2a.2) should happen before committing to the web rewrite,
   since it is the remaining decision-changing unknown.
-- iOS targets are absent from `kmp/` deliberately: Kotlin/Native cannot build them on
+- iOS targets are absent from the Gradle build deliberately: Kotlin/Native cannot build them on
   Windows. They are added behind a host check when a macOS machine or CI runner is
   available.

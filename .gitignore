@@ -50,7 +50,7 @@ Thumbs.db
 out
 
 test-output
-apps/vinto/.env.local
+legacy-web/apps/vinto/.env.local
 
 # Sentry Config File
 .env.sentry-build-plugin
@@ -71,16 +71,16 @@ accessibility-report*.md
 accessibility-reports/
 .claude/settings.local.json
 
-# Kotlin / Gradle
-kmp/**/build/
-kmp/.gradle/
-kmp/.kotlin/
-kmp/kotlin-js-store/
-kmp/local.properties
+# Kotlin / Gradle (the Gradle build is the repository root)
+**/build/
+.gradle/
+.kotlin/
+kotlin-js-store/
+local.properties
 
 # Android signing. Without these the release build falls back to the debug key
-# (kmp/composeApp/build.gradle.kts), which installs on a phone but cannot be published.
-kmp/keystore.properties
+# (composeApp/build.gradle.kts), which installs on a phone but cannot be published.
+keystore.properties
 *.jks
 *.keystore
 
@@ -90,4 +90,4 @@ xcuserdata/
 DerivedData/
 
 # Wrangler local dev state (the local Durable Object SQLite lives here).
-kmp/worker/cloudflare/.wrangler/
+worker/cloudflare/.wrangler/

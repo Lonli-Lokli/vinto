@@ -1,63 +1,80 @@
 # Vinto Project - Claude Code Guide
 
+  ## The repository is a Kotlin Multiplatform build
+
+  **Read this before running anything.** The Gradle build is the repository root: `./gradlew`
+  at the top level, `shared/*`, `composeApp/`, `worker/`, `iosApp/`. It is the build that
+  ships the game — Android, iOS, Compose web, and the Cloudflare Worker that hosts a room.
+
+  The original Next.js client is **retired** and lives under `legacy-web/`, untouched but
+  frozen. Its npm scripts still work; they are just run from inside that directory now. It is
+  kept because its engine and bot are the other half of the cross-implementation parity gate
+  and because `fixtures/recordings` is generated from them — not because anything ships from
+  it.
+
+  Shared by both, at the root: `fixtures/` (the parity corpus and PRNG vectors), `docs/`,
+  `openspec/`.
+
   ## Quick Reference
   See @README.md for project overview and architecture
-  See @package.json for available npm scripts
+  See @docs/kotlin/README.md for the Kotlin workspace: setup, module map, commands, traps
+  See @legacy-web/package.json for the retired web client's npm scripts
   See @docs/game-engine/README.md for game engine documentation
   See @docs/game-engine/VINTO_RULES.md for complete game rules
   See @docs/game-engine/SCENARIOS.md for worked examples and edge cases
 
   ## Project Overview
-  This is an NX monorepo containing a strategic multiplayer card game built with Next.js, TypeScript, and a pure reducer-based architecture.
+  A strategic multiplayer card game. The rules live twice — once in Kotlin, once in
+  TypeScript — and the two are held identical by a replay corpus. Both are pure reducers.
 
-  **Technology Stack:**
-  - Framework: Next.js 15 (App Router)
-  - Language: TypeScript (strict mode)
-  - Game Engine: Pure reducer pattern (Redux-inspired)
-  - State Management: MobX (UI stores only)
+  **Technology Stack (Kotlin, the shipping one):**
+  - Language: Kotlin 2.1, Kotlin Multiplatform
+  - UI: Compose Multiplatform (Android, iOS, wasmJs)
+  - Game Engine: Pure reducer (`GameEngine.reduce`), deterministic, seeded PRNG
+  - Server: Cloudflare Worker + Durable Object per room (Kotlin/JS)
   - AI: Monte Carlo Tree Search (MCTS)
-  - Build Tool: Nx monorepo (v22.0.3)
-  - Node Version: 22
+  - Build: Gradle 8.14, JDK 17 (every module sets `jvmTarget = 17`; a newer JDK breaks it)
+  - Static analysis: detekt, `maxIssues: 0`
 
-  ## Monorepo Structure
+  **Technology Stack (legacy-web, frozen):**
+  - Next.js 15 (App Router), TypeScript strict, MobX, Nx, Node 22
 
-  apps/
-    vinto/           # Main Next.js app (UI, integration, entrypoint)
+  ## Repository Structure
 
-  packages/
-    engine/          # Core game logic (pure, deterministic, cloud-ready)
-    bot/             # AI bot logic with MCTS decision-making
-    local-client/    # Client-side state management
-    shapes/          # Shared types and interfaces
+  shared/
+    shapes/          # Card, Rank, GameState, GameAction, canonical JSON, SHA-256, Prng
+    engine/          # GameEngine.reduce, ActionValidator, case handlers, replay
+    bot/             # MCTS decision service, coalition planner, BotRunner
+    client/          # GameSession: LocalGameSession and RemoteGameSession
+    protocol/        # The wire, declared once (see docs/kotlin/PROTOCOL.md)
+    room/            # Room and registry cores, testable off the Worker
+  composeApp/        # Compose Multiplatform UI — one commonMain for all three clients
+  worker/            # Cloudflare Worker + Durable Object; JS shim in worker/cloudflare/
+  iosApp/            # Xcode project embedding composeApp's framework (macOS only)
+  tools/             # Icon and sound generators (Python)
+  fixtures/          # The cross-implementation corpus: 50 recordings + PRNG vectors
+  legacy-web/        # The retired Next.js client and its Nx workspace (frozen)
 
   ## Development Commands
 
-  **Start dev server:**
+  **Kotlin — from the repository root:**
   ```bash
-  npx nx dev vinto
-  # or
-  npm start
+  ./gradlew :shared:engine:jvmTest        # the parity gate for one module
+  ./gradlew detekt                        # static analysis, every module
+  ./gradlew :composeApp:assembleDebug     # Android APK
+  ./gradlew :composeApp:jvmTest           # Compose UI suites, headless
+  ./gradlew :worker:jsProductionExecutableCompileSync   # the Worker bundle
+  ```
 
-  Build:
-  npx nx build vinto
-  # or
-  npm run build
+  Full command list, including iOS and the Worker gates: `docs/kotlin/README.md` §4.
 
-  Testing:
-  npx nx test <project-name>
-  # or run all tests
-  npm test
-
-  Linting:
-  npx nx lint <project-name> --fix
-  # or lint all
+  **Legacy web — from `legacy-web/`:**
+  ```bash
+  npm test          # all 5 projects
   npm run lint
-
-  Format code:
   npm run format
-
-  View project graph:
   npx nx graph
+  ```
 
   Coding Conventions
 
@@ -130,8 +147,7 @@
   Git Workflow
 
   Main Branch: master
-  Development Branch: test
-  Current Branch: test (as of this session)
+  Kotlin work: `kotlin` (the Kotlin Multiplatform migration; not yet merged to master)
 
   **Branch Naming for Issues:**
   - Pattern: `issue-{ISSUE_NUMBER}`
@@ -155,18 +171,21 @@
 
   Common Tasks
 
-  Adding a New Game Action:
-  1. Define action type in packages/engine/src/lib/types/GameAction.ts
-  2. Create handler in packages/engine/src/lib/cases/
-  3. Add to engine in packages/engine/src/lib/GameEngine.ts
-  4. Dispatch from UI
+  Adding a New Game Action — **both engines, one change**:
+  1. Kotlin: add the type to `shared/shapes/.../GameAction.kt` and a handler under
+     `shared/engine/src/commonMain/.../cases/`, wired into `GameEngine.reduce`
+  2. TypeScript: the same, in `legacy-web/packages/engine/src/lib/`
+  3. Regenerate the corpus (`cd legacy-web && npm run recordings:generate`) and re-run the
+     Kotlin parity gate — a rules change that lands in one engine only is what the corpus
+     exists to catch
+  4. Dispatch from the UI
 
   Testing Game Logic:
   GameEngine is pure, so tests are straightforward unit tests
 
-  Working with NX:
+  Working with NX (legacy-web only):
   Use nx-mcp MCP server for NX-specific operations
-  View available targets: npx nx show project <project-name>
+  View available targets: `cd legacy-web && npx nx show project <project-name>`
 
   Coalition Analysis Files (Untracked)
 
@@ -190,7 +209,13 @@
 
   Dependencies of Note
 
-  Game Logic:
+  Kotlin (see gradle/libs.versions.toml for the pinned versions):
+  - kotlinx-serialization: the wire format and the recording format
+  - kotlinx-coroutines: GameSession, the bot queue, the room's pacing
+  - Compose Multiplatform: the UI, one commonMain for Android, iOS and web
+  - detekt: static analysis, maxIssues 0
+
+  Legacy web — Game Logic:
   - fast-copy: Immutable state updates
   - fast-equals: Deep equality checks
   - immer: Alternative immutability helper
@@ -203,15 +228,16 @@
   - next-themes: Dark mode support
 
   AI:
-  - Custom MCTS implementation in packages/bot/
+  - Custom MCTS, ported both ways: `shared/bot/` (Kotlin) and
+    `legacy-web/packages/bot/` (TypeScript)
 
   Testing
 
-  Framework: Vitest
-  React Testing: @testing-library/react
-  Coverage: @vitest/coverage-v8
+  Kotlin: kotlin.test + coroutines-test, run through Gradle. The parity gate is
+  `:shared:engine:jvmTest`, which replays every recording in `fixtures/recordings/`.
 
-  Run tests silently with no cache: npm test
+  Legacy web: Vitest, @testing-library/react, @vitest/coverage-v8.
+  Run tests silently with no cache: `cd legacy-web && npm test`
 
   Error Handling
 
@@ -221,8 +247,12 @@
 
   Deployment
 
-  Target: Vercel (implied by @vercel/analytics)
-  Build Command: npm run deploy (runs tests then build)
+  Kotlin: Android and iOS through the stores (phase 8, not yet set up); the room Worker
+  through `wrangler deploy` from `worker/cloudflare/`. The maintainer's runbook for taking
+  the room live is `docs/kotlin/README.md` §6i.
+
+  Legacy web: Vercel. Frozen; `nx build @vinto/game` is known-broken (see
+  `docs/kotlin/README.md` §7).
 
   Notes for Claude Code
 

@@ -29,10 +29,10 @@ The headless seeded self-play runner built here is the same harness
 
 ## 2. Workspace, tooling, CI skeleton
 
-- [ ] 2.1 Create `kmp/` Gradle workspace (Kotlin 2.x, KMP plugin, Compose Multiplatform, version catalog); modules `shared:shapes`, `shared:engine`, `shared:recording`, `shared:bot`, `shared:client`, `shared:protocol`, `worker`, `parity-tests`, `composeApp`, `iosApp`
-- [ ] 2.2 Targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `js(IR)` (Cloudflare Worker), `wasmJs` (Compose web) and `jvm` (tests/tooling only — there is no JVM server); kotlinx.serialization/coroutines/datetime, Koin, Ktor **client** only, kotlin.test, Turbine
-- [ ] 2.3 GitHub Actions: `kmp-jvm` (unit + parity), `kmp-android` (assemble), `kmp-ios` (macos: build framework + simulator tests), `kmp-worker` (Kotlin/JS bundle + `wrangler deploy --dry-run`, asserting the bundle stays under the Worker script-size limit), Gradle/Konan caching
-- [ ] 2.4 Developer docs: `docs/kotlin/README.md` (setup, module map, how to run parity, how to run the Worker locally with `wrangler dev`)
+- [~] 2.1 Gradle workspace (Kotlin 2.1, KMP plugin, Compose Multiplatform, version catalog): **done, and it is the repository root** rather than `kmp/`. Built under `kmp/` while the web client was still the product; hoisted when it stopped being — `./gradlew` runs from the root, `fixtures/` is a sibling of `shared/`, and the Next.js workspace is retired to `legacy-web/` (design D1, `docs/kotlin/README.md` §1a). Modules present: `shared:shapes`, `shared:engine`, `shared:bot`, `shared:client`, `shared:protocol`, `shared:room`, `worker`, `composeApp`, plus the `iosApp` Xcode project. **Two from the plan do not exist and were not forgotten**: `shared:recording` (the recording model lives in `shared:shapes`, beside the canonical JSON and hashing it depends on — deviation recorded under 3.4) and `parity-tests` (the corpus suites live in the module they gate, so a failure names the engine rather than a test project). `shared:room` was added, and is not in the plan: the room's rules moved out of the Worker so the JVM could test them
+- [~] 2.2 Targets: **done** — `androidTarget`, `iosArm64`, `iosSimulatorArm64` (both behind a host check, since Kotlin/Native cannot build Apple targets off macOS), `js(IR)` for the Worker, `wasmJs` for Compose web, and `jvm` for tests and tooling only. Libraries: kotlinx.serialization and kotlinx.coroutines throughout, kotlin.test everywhere, coroutines-test where a suspend API is gated. **Not used, and each for a reason rather than an omission**: Ktor client (`RemoteGameSession` speaks to the room over the platform WebSocket — one dependency fewer on every target, and wasmJs has no Ktor engine worth the weight), Koin (task 6.8, and nothing has yet needed a container), kotlinx-datetime (the engine has no clock at all, by design), Turbine (the `StateFlow` assertions read fine with `runTest` and `first()`)
+- [~] 2.3 GitHub Actions: **written, never run.** `.github/workflows/kmp.yml` carries all four checks the plan asks for plus a fifth: `kmp-detekt` (every module, every source set), `kmp-jvm` (the six shared modules' JVM suites — the corpus replay and the validator), `kmp-android` (`assembleDebug` plus the Compose suites headless), `kmp-worker` (the Kotlin/JS bundle, all nine room gates — six in plain Node, three through `wrangler dev` — and the gzipped bundle measured against the 3 MB script limit), `kmp-ios` (simulator tests for the five Apple-target modules and the framework Xcode embeds). Gradle caching through `gradle/actions/setup-gradle`, written from branch pushes and read on pull requests; `~/.konan` cached on the macOS job. Jobs are path-filtered and unchained, the macOS leg is rationed to pushes, nightly, dispatch and `ios`-labelled pull requests, JDK is pinned to 17 (every module sets `jvmTarget = 17` with no toolchain), and wrangler is pinned to an exact version. Two deliberate exclusions, both documented where they are made: the golden-screenshot suite (a fresh runner would write its own goldens and pass, asserting nothing) and `nx build @vinto/game` (broken since before this branch, on a frozen workspace). **Unverified**: this container cannot compile the build — androidx is behind dl.google.com — so the first run on a branch or pull request is the first real one
+- [x] 2.4 Developer docs: **done** — `docs/kotlin/README.md` is the handoff document: prerequisites and first-run setup (§2), the module map (§3), every command including parity and `wrangler dev` (§4), iOS bring-up (§5), how each port is verified (§6a–§6h), the maintainer's runbook for taking the room live (§6i), the traps (§7) and a verification checklist for a new machine (§8). The repository move and the CI it enables are §1a and §1b
 
 ## 2a. Platform prototype gate (before any porting)
 
@@ -41,7 +41,7 @@ not after the UI is built.
 
 - [~] 2a.1 Kotlin/JS bundle containing `shared/engine`: **done** — the Worker now carries the real engine and measures **186 KB gzipped**, ~6% of the 3 MB limit. All 50 recordings replay through it in workerd via `POST /replay`, closing the Kotlin/JS-versus-JVM risk. Engine cost is ~0.9 ms per action warm (local `wrangler dev`, wide spread — treat as an order of magnitude, not a benchmark), against a 30 s Durable Object budget **per request**; a whole 278-action game replays in ~250 ms. **MCTS is still unmeasured** — it needs the bot port (phase 6)
 - [ ] 2a.2 Hello-world Compose/Wasm page: measure bundle size and cold-load time on a mid-range phone browser; Compose for web is the least mature Compose target
-- [x] 2a.3 End-to-end smoke: **PASS** — `kmp/worker` is now a real Worker with a `Room` Durable Object over Kotlin room logic; two clients join, exchange actions, resync from the log cursor, and reconnect to the same seat. Sockets use the hibernation API (`ctx.acceptWebSocket`), proven by messages arriving at `webSocketMessage()`, which only fires for hibernatable sockets; no authoritative state is held in memory. Resume verified by destroying every instance (restarting `wrangler dev`) and re-reading the room. Eviction with live sockets attached cannot be forced locally and needs a deployed Worker — the one open sliver. Results in `docs/kotlin/PLATFORM-GATE.md`
+- [x] 2a.3 End-to-end smoke: **PASS** — `worker` is now a real Worker with a `Room` Durable Object over Kotlin room logic; two clients join, exchange actions, resync from the log cursor, and reconnect to the same seat. Sockets use the hibernation API (`ctx.acceptWebSocket`), proven by messages arriving at `webSocketMessage()`, which only fires for hibernatable sockets; no authoritative state is held in memory. Resume verified by destroying every instance (restarting `wrangler dev`) and re-reading the room. Eviction with live sockets attached cannot be forced locally and needs a deployed Worker — the one open sliver. Results in `docs/kotlin/PLATFORM-GATE.md`
 - [ ] 2a.4 Record the measurements in `docs/kotlin/PLATFORM-GATE.md`; if either bundle does not fit, decide and record the fallback (thinner server-side bot, or a non-Compose web client) before proceeding
 
 ## 3. Shared shapes, PRNG, recording
@@ -151,7 +151,7 @@ not after the UI is built.
       380 ms pause when the turn passes), and the speed is now a setting. Reduced motion is a
       setting (see 7.2), and the sound layer exists: four synthesized sounds and no more —
       a card dealt, a card landing, a penalty, the round ending — behind a silent-default
-      `LocalSounds` with platform actuals, regenerable by `kmp/tools/make-sfx.py`
+      `LocalSounds` with platform actuals, regenerable by `tools/make-sfx.py`
 - [x] 7.12 **How to play**: a real round on a written-down deck, with a director that makes the
       bots play their parts and calls Vinto so the final round, the coalition and the scoring
       are *played* rather than described; a coach derived from the position (so every legal
@@ -183,10 +183,10 @@ not after the UI is built.
 
 - [~] 8.1 Android: signing, Play internal track from CI on tags; iOS: bundle id, TestFlight from CI.
       **The sideload half is done**: `assembleRelease` signs with the upload key named by
-      `kmp/keystore.properties` and falls back to the debug key when that file is absent, so the
+      `keystore.properties` and falls back to the debug key when that file is absent, so the
       release variant assembles on a machine that has never been given a secret — a build that
       fails on a missing key is one nobody runs until the day it must work. With it, the app now
-      has a launcher icon (the web app's own V, regenerated by `kmp/tools/make-launcher-icons.py`
+      has a launcher icon (the web app's own V, regenerated by `tools/make-launcher-icons.py`
       into adaptive, legacy and monochrome layers), a portrait lock, and a window theme that is
       dark Material over the rail instead of `Theme.Material.Light` — which had been putting dark
       status-bar icons on a dark rail and a white flash before the first frame. See

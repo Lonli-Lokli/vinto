@@ -1,0 +1,386 @@
+# Kotlin Multiplatform CI — the build that ships the game.
+#
+# The Gradle build is the repository root (the old `kmp/` folder was hoisted when the web
+# client was retired to `legacy-web/`), so every path below is a top-level one.
+#
+# Four checks, split by what they need rather than by what they cover:
+#
+#   kmp-detekt   static analysis, every module, every source set (fails in ~2 min)
+#   kmp-jvm      the shared modules' JVM suites — the cross-language parity gate
+#   kmp-android  the debug APK, plus the Compose UI suites that run headless on the JVM
+#   kmp-worker   the Kotlin/JS bundle, the room gates, and the Worker size budget
+#   kmp-ios      simulator tests and the framework Xcode embeds — macOS, so rationed
+#
+# They are separate jobs and not steps of one because they fail for unrelated reasons and a
+# reviewer should be able to read which half is broken off the checks list. They are not
+# chained with `needs:` either: a detekt violation says nothing about whether the engine
+# still replays the corpus, and serialising them would turn four parallel five-minute jobs
+# into one twenty-minute one.
+name: Kotlin
+
+on:
+  push:
+    # `claude/**` is included so work landing on an agent branch gets the same checks before
+    # a pull request exists — this workflow has never run, and the first run should not be
+    # the one a reviewer is waiting on.
+    branches: [master, kotlin, 'claude/**']
+    # GitHub Actions has no YAML anchors, so this list is repeated for pull_request below.
+    # Keep the two in step.
+    paths:
+      - 'shared/**'
+      - 'composeApp/**'
+      - 'worker/**'
+      - 'iosApp/**'
+      - 'gradle/**'
+      - 'config/detekt/**'
+      - 'fixtures/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/kmp.yml'
+  pull_request:
+    paths:
+      - 'shared/**'
+      - 'composeApp/**'
+      - 'worker/**'
+      - 'iosApp/**'
+      - 'gradle/**'
+      - 'config/detekt/**'
+      - 'fixtures/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/kmp.yml'
+  # Nightly, so the macOS leg and the Worker gates run at least once a day even when nobody
+  # touched Kotlin, and drift in a toolchain surfaces on a schedule rather than in a hurry.
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+# Nothing here writes to the repository.
+permissions:
+  contents: read
+
+# One run per branch or PR. Superseded pushes are cancelled on pull requests, where only the
+# head commit matters; runs on master and the nightly are left alone so their caches and
+# their history stay complete.
+concurrency:
+  group: kotlin-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Every module compiles with `jvmTarget = 17` and none declares a toolchain, so Gradle must
+  # run on 17 as well — on a newer JDK the Java and Kotlin tasks disagree about their target
+  # and the build fails before it compiles anything.
+  JAVA_VERSION: '17'
+  # Pinned: `npx wrangler@latest` in CI means the day Cloudflare ships a change is the day
+  # this repository's build breaks, on a commit that has nothing to do with it.
+  WRANGLER_VERSION: '4.127.1'
+
+jobs:
+  detekt:
+    name: kmp-detekt
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          # Pull requests read the cache the default branch wrote; they do not write their
+          # own, or a hundred short-lived branches would evict each other's entries.
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          # The wrapper jar is executable code committed to the repository. Validating its
+          # checksum is the cheapest supply-chain check there is.
+          validate-wrappers: true
+
+      - name: detekt (maxIssues 0, every module and source set)
+        run: ./gradlew detekt --stacktrace
+
+      - name: Upload detekt reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: detekt-reports
+          path: '**/build/reports/detekt/**'
+          retention-days: 7
+          if-no-files-found: ignore
+
+  jvm:
+    name: kmp-jvm
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          validate-wrappers: true
+
+      # The parity gate: all 50 recordings and all 13,900 actions replayed against the
+      # hashes TypeScript wrote, plus the validator, deal, redaction and bot suites. The
+      # corpus is found through the `vinto.fixtures` system property the root build injects,
+      # not by counting `..` from the module directory.
+      - name: Shared-module JVM tests
+        run: |
+          ./gradlew --stacktrace \
+            :shared:shapes:jvmTest \
+            :shared:engine:jvmTest \
+            :shared:bot:jvmTest \
+            :shared:client:jvmTest \
+            :shared:protocol:jvmTest \
+            :shared:room:jvmTest
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: kmp-jvm-test-reports
+          path: |
+            shared/*/build/reports/tests/**
+            shared/*/build/test-results/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  android:
+    name: kmp-android
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          validate-wrappers: true
+
+      - name: Assemble the debug APK
+        run: ./gradlew --stacktrace :composeApp:assembleDebug
+
+      # `runComposeUiTest` renders the real composables off-screen, which is what catches a
+      # composition that throws or a screen that draws nothing. Skiko and AWT are happier
+      # with a display even when they do not strictly need one, so a virtual one is provided
+      # where the runner has it. The golden-screenshot suite is excluded on CI — see the
+      # comment on the test task in composeApp/build.gradle.kts for why a green golden run
+      # on a fresh runner would be worth nothing.
+      - name: Compose UI tests (JVM, headless)
+        run: |
+          if command -v xvfb-run >/dev/null 2>&1; then
+            xvfb-run -a ./gradlew --stacktrace :composeApp:jvmTest
+          else
+            ./gradlew --stacktrace :composeApp:jvmTest
+          fi
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: kmp-android-test-reports
+          path: |
+            composeApp/build/reports/tests/**
+            composeApp/build/test-results/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Only off a branch push or a manual run: a debug APK per pull-request commit is a lot
+      # of storage for something nobody installs.
+      - name: Upload the debug APK
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v6
+        with:
+          name: vinto-debug-apk
+          path: composeApp/build/outputs/apk/debug/*.apk
+          retention-days: 14
+          if-no-files-found: warn
+
+  worker:
+    name: kmp-worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          validate-wrappers: true
+
+      # The shim in worker/cloudflare/ imports the compiled module out of build/compileSync/,
+      # so the bundle has to exist before any gate below can be run.
+      - name: Compile the Kotlin/JS Worker bundle
+        run: ./gradlew --stacktrace :worker:jsProductionExecutableCompileSync
+
+      # Six of the nine gates drive the exported room functions directly in Node: the game
+      # questions (redaction, the seat boundary, whether the bots play, whether a session
+      # ends) need no socket and no wrangler, so they run first and fail fastest.
+      - name: Room gates (plain Node)
+        working-directory: worker/cloudflare
+        run: |
+          set -euo pipefail
+          for gate in gate-real-room gate-sessions gate-lobby gate-lifecycle gate-limits gate-registry; do
+            echo "::group::$gate"
+            node "$gate.mjs"
+            echo "::endgroup::"
+          done
+
+      # The remaining three need a running Worker: sockets and hibernation
+      # (gate-two-clients), the room-code HTTP surface (gate-room-codes) and the corpus
+      # replayed through workerd (gate-engine-replay). `wrangler dev` runs the real runtime
+      # locally, with no Cloudflare account and no deployment.
+      - name: Room gates (workerd, via wrangler dev)
+        working-directory: worker/cloudflare
+        run: |
+          set -euo pipefail
+          # No `--local`: wrangler 4 runs the local workerd by default and `--remote` is the
+          # opt-out. ROOM_OPEN is overridden for the run because the committed value is
+          # "false" — the room stays shut in a deployment until the client that speaks to it
+          # ships (see the flag's comment in wrangler.jsonc).
+          npx --yes "wrangler@${WRANGLER_VERSION}" dev --port 8787 --var ROOM_OPEN:true \
+            > "${RUNNER_TEMP}/wrangler-dev.log" 2>&1 &
+          echo $! > "${RUNNER_TEMP}/wrangler.pid"
+
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8787/health > /dev/null 2>&1; then
+              echo "workerd is up after ${attempt}s"
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "wrangler dev never answered /health"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          for gate in gate-two-clients gate-room-codes gate-engine-replay; do
+            echo "::group::$gate"
+            node "$gate.mjs"
+            echo "::endgroup::"
+          done
+
+          kill "$(cat "${RUNNER_TEMP}/wrangler.pid")" || true
+
+      - name: wrangler dev log
+        if: failure()
+        run: cat "${RUNNER_TEMP}/wrangler-dev.log" || true
+
+      # A Worker script has a hard size limit — 3 MB gzipped on the free plan — and the whole
+      # Kotlin engine is inside this one. Measuring it on every run is how a bundle that
+      # doubles gets caught here rather than at `wrangler deploy`. `--dry-run` builds the
+      # real deployment artifact and uploads nothing, so it needs no credentials.
+      - name: Build the deployment bundle and check its size
+        working-directory: worker/cloudflare
+        env:
+          # 3 MB, the free-plan script limit (docs/kotlin/PLATFORM-GATE.md). The measured
+          # bundle is around 190 KB; this is a tripwire, not a target.
+          MAX_GZIPPED_BYTES: '3145728'
+        run: |
+          set -euo pipefail
+          npx --yes "wrangler@${WRANGLER_VERSION}" deploy --dry-run --outdir "${RUNNER_TEMP}/worker-dist"
+
+          total=0
+          while IFS= read -r -d '' file; do
+            size=$(gzip -9 -c "$file" | wc -c)
+            printf '%10d  %s\n' "$size" "${file#${RUNNER_TEMP}/worker-dist/}"
+            total=$((total + size))
+          done < <(find "${RUNNER_TEMP}/worker-dist" -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.wasm' \) -print0)
+
+          echo "worker bundle: ${total} bytes gzipped (limit ${MAX_GZIPPED_BYTES})"
+          echo "### Worker bundle: $((total / 1024)) KB gzipped" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$total" -gt "$MAX_GZIPPED_BYTES" ]; then
+            echo "the Worker bundle no longer fits in a Cloudflare script"
+            exit 1
+          fi
+
+  ios:
+    name: kmp-ios
+    # macOS minutes bill at ten times the Linux rate, and the Apple targets break for
+    # toolchain reasons rather than for reasons a Kotlin change usually introduces. So: every
+    # push to a long-lived branch, every night, on demand — and on a pull request only when
+    # somebody labels it `ios`, which is the signal that the change is one of the ones that
+    # can break iOS.
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'ios')
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          validate-wrappers: true
+
+      # Kotlin/Native downloads a ~1 GB toolchain into ~/.konan on a cold machine, which is
+      # most of this job's wall clock if it is not cached. Keyed on the version catalogue
+      # and the wrapper, the two files that decide which toolchain is fetched.
+      - name: Cache the Kotlin/Native toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: konan-${{ runner.os }}-
+
+      # `shared:room` has no Apple targets by design (it is the worker's other half), so it
+      # is absent here rather than forgotten.
+      - name: Simulator tests for the shared modules
+        run: |
+          ./gradlew --stacktrace \
+            :shared:shapes:iosSimulatorArm64Test \
+            :shared:engine:iosSimulatorArm64Test \
+            :shared:bot:iosSimulatorArm64Test \
+            :shared:client:iosSimulatorArm64Test \
+            :shared:protocol:iosSimulatorArm64Test
+
+      # What the Xcode project embeds. Building it here means a Swift-side break is caught
+      # without a Mac in the room; `iosApp` itself is left to a person with Xcode.
+      - name: Link the ComposeApp framework
+        run: ./gradlew --stacktrace :composeApp:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: kmp-ios-test-reports
+          path: |
+            shared/*/build/reports/tests/**
+            shared/*/build/test-results/**
+          retention-days: 7
+          if-no-files-found: ignore

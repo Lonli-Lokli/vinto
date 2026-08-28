@@ -3,6 +3,7 @@
     "allow": [
       "mcp__ide__getDiagnostics",
       "mcp__nx-mcp__nx_workspace",
+      "Bash(./gradlew:*)",
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
@@ -20,11 +21,13 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
-      "Read(./apps/vinto/.env.*)",
+      "Read(./legacy-web/apps/vinto/.env.*)",
       "Bash(npx tsc)",
       "Bash(npx tsc:*)",
       "Bash(npm run typecheck)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "Read(./legacy-web/.env)",
+      "Read(./legacy-web/.env.*)"
     ],
     "ask": []
   },

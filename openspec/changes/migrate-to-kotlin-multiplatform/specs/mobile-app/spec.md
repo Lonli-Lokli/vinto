@@ -4,7 +4,7 @@
 
 ### Requirement: One Compose Multiplatform app for Android and iOS
 
-The game UI SHALL be implemented once in `kmp/composeApp` (Compose Multiplatform,
+The game UI SHALL be implemented once in `composeApp` (Compose Multiplatform,
 Material 3) and shipped as an Android app and an iOS app (via `iosApp` Xcode host), sharing
 `shared/*` modules unchanged.
 

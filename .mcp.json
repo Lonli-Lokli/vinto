@@ -1,12 +1,19 @@
 {
-    "mcpServers": {
-      "nx-mcp": {
-        "command": "npx",
-        "args": ["-y", "@nx/mcp"]
-      },
-      "ide": {
-        "command": "npx",
-        "args": ["-y", "@anthropic-ai/mcp-server-ide"]
-      }
+  "mcpServers": {
+    "nx-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@nx/mcp",
+        "legacy-web"
+      ]
+    },
+    "ide": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic-ai/mcp-server-ide"
+      ]
     }
   }
+}

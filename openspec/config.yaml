@@ -30,7 +30,7 @@ context: |
   - Kotlin 2.x, KMP targets androidTarget / iosArm64 / iosSimulatorArm64 / jvm
   - Compose Multiplatform for the app UI (single composeApp for Android + iOS)
   - kotlinx.serialization (JSON), kotlinx.coroutines, kotlinx.datetime, Koin, kotlin.test
-  - Gradle (Kotlin DSL) multi-module workspace under kmp/ in this monorepo
+  - Gradle (Kotlin DSL) multi-module workspace at the repository root (was kmp/)
 
   ## Architecture rules
   - Single source of truth: GameState is immutable and authoritative; UI stores hold UI state only.
