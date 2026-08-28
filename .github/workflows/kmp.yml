@@ -87,12 +87,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           # Pull requests read the cache the default branch wrote; they do not write their
           # own, or a hundred short-lived branches would evict each other's entries.
@@ -102,8 +102,11 @@ jobs:
           # checksum is the cheapest supply-chain check there is.
           validate-wrappers: true
 
+      # `--continue`: without it the first failing module ends the build and the other
+      # eight go unreported, so a contributor fixes one violation and discovers the next on
+      # the following run. One run, every module.
       - name: detekt (maxIssues 0, every module and source set)
-        run: ./gradlew detekt --stacktrace
+        run: ./gradlew --continue --stacktrace detekt
 
       - name: Upload detekt reports
         if: failure()
@@ -121,12 +124,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           cache-cleanup: on-success
@@ -164,12 +167,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           cache-cleanup: on-success
@@ -221,7 +224,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -230,7 +233,7 @@ jobs:
         with:
           node-version: '22'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           cache-cleanup: on-success
@@ -244,21 +247,41 @@ jobs:
       # Six of the nine gates drive the exported room functions directly in Node: the game
       # questions (redaction, the seat boundary, whether the bots play, whether a session
       # ends) need no socket and no wrangler, so they run first and fail fastest.
-      - name: Room gates (plain Node)
+      #
+      # One step each, rather than a loop. A loop is shorter to write and worse to read: the
+      # checks list then says only "Room gates failed", and finding out which of the six it
+      # was means opening the log. Named steps put the answer on the summary page.
+      - name: 'Gate: the real room'
         working-directory: worker/cloudflare
-        run: |
-          set -euo pipefail
-          for gate in gate-real-room gate-sessions gate-lobby gate-lifecycle gate-limits gate-registry; do
-            echo "::group::$gate"
-            node "$gate.mjs"
-            echo "::endgroup::"
-          done
+        run: node gate-real-room.mjs
+
+      - name: 'Gate: sessions and the buzzer'
+        working-directory: worker/cloudflare
+        run: node gate-sessions.mjs
+
+      - name: 'Gate: the lobby'
+        working-directory: worker/cloudflare
+        run: node gate-lobby.mjs
+
+      - name: 'Gate: room lifecycle'
+        working-directory: worker/cloudflare
+        run: node gate-lifecycle.mjs
+
+      - name: 'Gate: the limits'
+        working-directory: worker/cloudflare
+        run: node gate-limits.mjs
+
+      - name: 'Gate: the room-code registry'
+        working-directory: worker/cloudflare
+        run: node gate-registry.mjs
 
       # The remaining three need a running Worker: sockets and hibernation
       # (gate-two-clients), the room-code HTTP surface (gate-room-codes) and the corpus
       # replayed through workerd (gate-engine-replay). `wrangler dev` runs the real runtime
-      # locally, with no Cloudflare account and no deployment.
-      - name: Room gates (workerd, via wrangler dev)
+      # locally, with no Cloudflare account and no deployment. It is started once and left
+      # running across the three steps that need it — a background process outlives the step
+      # that spawned it.
+      - name: Start wrangler dev (workerd)
         working-directory: worker/cloudflare
         run: |
           set -euo pipefail
@@ -270,29 +293,39 @@ jobs:
             > "${RUNNER_TEMP}/wrangler-dev.log" 2>&1 &
           echo $! > "${RUNNER_TEMP}/wrangler.pid"
 
-          for attempt in $(seq 1 60); do
+          for attempt in $(seq 1 90); do
             if curl -fsS http://127.0.0.1:8787/health > /dev/null 2>&1; then
-              echo "workerd is up after ${attempt}s"
-              break
-            fi
-            if [ "$attempt" -eq 60 ]; then
-              echo "wrangler dev never answered /health"
-              exit 1
+              echo "workerd answered /health after ${attempt}s"
+              exit 0
             fi
             sleep 1
           done
+          echo "wrangler dev never answered /health"
+          exit 1
 
-          for gate in gate-two-clients gate-room-codes gate-engine-replay; do
-            echo "::group::$gate"
-            node "$gate.mjs"
+      - name: 'Gate: two clients through one Durable Object'
+        working-directory: worker/cloudflare
+        run: node gate-two-clients.mjs
+
+      - name: 'Gate: room codes over HTTP'
+        working-directory: worker/cloudflare
+        run: node gate-room-codes.mjs
+
+      - name: 'Gate: the corpus replayed through workerd'
+        working-directory: worker/cloudflare
+        run: node gate-engine-replay.mjs
+
+      - name: Stop wrangler dev, and show its log if anything failed
+        if: always()
+        run: |
+          if [ -f "${RUNNER_TEMP}/wrangler.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/wrangler.pid")" 2>/dev/null || true
+          fi
+          if [ "${{ job.status }}" != "success" ] && [ -f "${RUNNER_TEMP}/wrangler-dev.log" ]; then
+            echo "::group::wrangler dev log"
+            cat "${RUNNER_TEMP}/wrangler-dev.log"
             echo "::endgroup::"
-          done
-
-          kill "$(cat "${RUNNER_TEMP}/wrangler.pid")" || true
-
-      - name: wrangler dev log
-        if: failure()
-        run: cat "${RUNNER_TEMP}/wrangler-dev.log" || true
+          fi
 
       # A Worker script has a hard size limit — 3 MB gzipped on the free plan — and the whole
       # Kotlin engine is inside this one. Measuring it on every run is how a bundle that
@@ -337,12 +370,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           cache-cleanup: on-success
@@ -352,7 +385,7 @@ jobs:
       # most of this job's wall clock if it is not cached. Keyed on the version catalogue
       # and the wrapper, the two files that decide which toolchain is fetched.
       - name: Cache the Kotlin/Native toolchain
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.konan
           key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
