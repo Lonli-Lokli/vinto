@@ -181,13 +181,21 @@ jobs:
       - name: Assemble the debug APK
         run: ./gradlew --stacktrace :composeApp:assembleDebug
 
+      # Compiling the test sources is a separate step from running them on purpose. This
+      # container cannot build composeApp at all — androidx is behind dl.google.com — so when
+      # this job goes red the step name is the whole diagnosis available without a log:
+      # "compile" red means the code does not build, "run" red means it built and the tests
+      # or the headless renderer did not like it.
+      - name: Compile the Compose JVM test sources
+        run: ./gradlew --stacktrace :composeApp:jvmTestClasses
+
       # `runComposeUiTest` renders the real composables off-screen, which is what catches a
       # composition that throws or a screen that draws nothing. Skiko and AWT are happier
       # with a display even when they do not strictly need one, so a virtual one is provided
       # where the runner has it. The golden-screenshot suite is excluded on CI — see the
       # comment on the test task in composeApp/build.gradle.kts for why a green golden run
       # on a fresh runner would be worth nothing.
-      - name: Compose UI tests (JVM, headless)
+      - name: Run the Compose UI tests (JVM, headless)
         run: |
           if command -v xvfb-run >/dev/null 2>&1; then
             xvfb-run -a ./gradlew --stacktrace :composeApp:jvmTest
@@ -402,8 +410,12 @@ jobs:
             :shared:client:iosSimulatorArm64Test \
             :shared:protocol:iosSimulatorArm64Test
 
-      # What the Xcode project embeds. Building it here means a Swift-side break is caught
-      # without a Mac in the room; `iosApp` itself is left to a person with Xcode.
+      # What the Xcode project embeds, in two steps for the same reason as the Android job:
+      # compiling the Kotlin and linking the framework fail for different reasons, and the
+      # step name is the diagnosis when nobody can page through the log.
+      - name: Compile composeApp for the simulator
+        run: ./gradlew --stacktrace :composeApp:compileKotlinIosSimulatorArm64
+
       - name: Link the ComposeApp framework
         run: ./gradlew --stacktrace :composeApp:linkDebugFrameworkIosSimulatorArm64
 
