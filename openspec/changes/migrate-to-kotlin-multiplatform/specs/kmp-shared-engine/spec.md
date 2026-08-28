@@ -4,7 +4,7 @@
 
 ### Requirement: Kotlin engine is a pure reducer with the TypeScript state model
 
-The Kotlin engine (`kmp/shared/engine`) SHALL expose
+The Kotlin engine (`shared/engine`) SHALL expose
 `GameEngine.reduce(state: GameState, action: GameAction): ReduceResult` implemented as pure
 functions over immutable `data class` state whose JSON representation is field-for-field
 identical to the TypeScript `GameState` (`Pile` as array top-first, `Rank`/phase enums
@@ -63,7 +63,7 @@ test vectors.
 
 ### Requirement: Kotlin replay API
 
-`kmp/shared/engine` SHALL provide `replayRecording(recording)` with the same semantics as
+`shared/engine` SHALL provide `replayRecording(recording)` with the same semantics as
 the TypeScript function (per-action hash comparison, final-state comparison, precise
 divergence report, no bot logic).
 

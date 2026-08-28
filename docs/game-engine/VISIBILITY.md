@@ -10,10 +10,10 @@ engines.
 
 It is held executable by two tests, one per table:
 
-- **Table A** — `kmp/shared/engine/src/commonTest/.../VisibilityMatrixTest.kt` plays every
+- **Table A** — `shared/engine/src/commonTest/.../VisibilityMatrixTest.kt` plays every
   row through the real engine and byte-searches every seat's serialised view for the card's
   id, both halves: the seat that must see it, and every seat that must not.
-- **Table B** — `kmp/shared/client/src/commonTest/.../TransformationMatrixTest.kt`
+- **Table B** — `shared/client/src/commonTest/.../TransformationMatrixTest.kt`
   choreographs every row twice, from the actor's seat and from a bystander's, and asserts
   the whole beat script for both. `docs/kotlin/ANIMATIONS.md` is this table's generated
   evidence — `AnimationMapTest` prints it from a live session.

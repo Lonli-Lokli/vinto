@@ -163,63 +163,81 @@ graph LR
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript (strict mode)
-- **Game Engine**: Pure reducer pattern (Redux-inspired)
-- **State Management**: MobX (UI stores only)
-- **Dependency Injection**: tsyringe
+**Kotlin — the build that ships**
+
+- **Language**: Kotlin 2.1, Kotlin Multiplatform
+- **UI**: Compose Multiplatform (Android, iOS, wasmJs) from one `commonMain`
+- **Game Engine**: pure reducer, deterministic, seeded PRNG
+- **Server**: Cloudflare Worker + one Durable Object per room (Kotlin/JS)
 - **AI**: Monte Carlo Tree Search (MCTS)
-- **Styling**: Tailwind CSS
-- **Build Tool**: Nx monorepo
+- **Build**: Gradle 8.14 on JDK 17; detekt at `maxIssues: 0`
+
+**legacy-web — retired, kept as the parity reference**
+
+- Next.js 15 (App Router), TypeScript strict, MobX, tsyringe, Tailwind, Nx
 
 ## Project Structure
 
-```
-apps/
-  vinto/           # Main Next.js app (UI, integration, entrypoint)
+The Gradle build is the repository root. The Next.js client that came first is retired under
+`legacy-web/`; the rules now live twice, in Kotlin and in TypeScript, held identical by a
+replay corpus that both engines are checked against.
 
-packages/
-  engine/          # Core game logic and rules (pure, deterministic, cloud-ready)
-  bot/             # AI bot logic for automated players
-  local-client/    # Client-side state management for local games (React hooks, context, services)
-  shapes/          # Shared types, interfaces, and constants used by all packages
+```
+shared/
+  shapes/          # Card, Rank, GameState, GameAction, canonical JSON, SHA-256, Prng
+  engine/          # GameEngine.reduce, ActionValidator, case handlers, replay
+  bot/             # MCTS decision service, coalition planner, BotRunner
+  client/          # GameSession: LocalGameSession (solo) and RemoteGameSession (online)
+  protocol/        # The wire between a client and a room, declared once
+  room/            # Room and registry cores, testable off the Worker
+composeApp/        # Compose Multiplatform UI — Android, iOS and web from one commonMain
+worker/            # Cloudflare Worker + Durable Object per room (Kotlin/JS)
+iosApp/            # Xcode project embedding composeApp's framework
+fixtures/          # The cross-implementation corpus: 50 recordings + PRNG vectors
+docs/kotlin/       # Setup, module map, commands, protocol, traps
+legacy-web/        # The retired Next.js client and its Nx workspace (frozen)
 ```
 
-- **apps/vinto**: The main application, integrating all packages and providing the user interface.
-- **engine**: Implements all game rules, state transitions, and reducers. No UI or side effects.
-- **bot**: Provides AI player logic, decision-making, and strategy for bots.
-- **local-client**: Manages client-side state, user actions, and UI integration for local games.
-- **shapes**: Exports TypeScript types, interfaces, and constants used by all packages.
+- **shared/engine**: all game rules, state transitions and reducers. No UI, no side effects,
+  no clock — the same reducer runs on a phone and inside a Durable Object.
+- **shared/bot**: MCTS decision-making, reading only what a seat is allowed to see.
+- **shared/client**: one `GameSession` interface with two lives, so the UI cannot tell a solo
+  game from an online one.
+- **worker**: the authoritative room. It deals from a seed, validates every action, and sends
+  each socket its own redacted view.
+- **fixtures**: the contract. 50 recordings and 13,900 actions, each carrying the state hash
+  TypeScript computed; the Kotlin engine has to reproduce every one.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- JDK 17 (every module compiles with `jvmTarget = 17`; a newer JDK fails the build)
+- Android SDK platform 36 for the Android target; Xcode for the iOS one
+- Node 22 for the Worker tooling and for `legacy-web/`
 
-### Installation
-
-```sh
-npm install
-```
+Full setup, including the Android SDK pointer and the iOS bring-up:
+[`docs/kotlin/README.md`](docs/kotlin/README.md).
 
 ### Development
 
-Run the dev server:
-
 ```sh
-npx nx dev vinto
+./gradlew :composeApp:assembleDebug     # Android APK
+./gradlew :composeApp:installDebug      # ...onto a connected phone or emulator
+./gradlew :composeApp:wasmJsBrowserDistribution   # the Compose web bundle
 ```
 
-Open [http://localhost:4200](http://localhost:4200) in your browser.
-
-### Build
-
-Create a production bundle:
+### Tests
 
 ```sh
-npx nx build vinto
+./gradlew :shared:engine:jvmTest        # the parity gate: every recording, every action
+./gradlew detekt                        # static analysis, maxIssues 0
+```
+
+### The retired web client
+
+```sh
+cd legacy-web && npm install && npm test
 ```
 
 ## Key Architecture Principles
@@ -405,19 +423,24 @@ const history: GameAction[] = [];
 // Replay entire game by applying actions in order
 ```
 
-## Nx Workspace
+## Continuous integration
 
-This project uses Nx for build optimization and task running.
+`.github/workflows/kmp.yml` runs five checks, split by what each needs rather than by what
+it covers: `kmp-detekt`, `kmp-jvm` (the parity gate), `kmp-android` (APK + headless Compose
+suites), `kmp-worker` (the Kotlin/JS bundle, the room gates through workerd, and the Worker
+size budget) and `kmp-ios`. The macOS leg is rationed — pushes, nightly, on demand, and on a
+pull request labelled `ios` — because it bills at ten times the Linux rate.
 
-View project graph:
+`legacy-web.yml` runs the retired workspace's tests, and only when something under
+`legacy-web/` or `fixtures/` changes.
+
+## Nx Workspace (legacy-web)
+
+The retired web client still uses Nx:
 
 ```sh
+cd legacy-web
 npx nx graph
-```
-
-Show available tasks:
-
-```sh
 npx nx show project vinto
 ```
 

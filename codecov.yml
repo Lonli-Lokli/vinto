@@ -1,5 +1,10 @@
 # Codecov configuration
 # See: https://docs.codecov.com/docs/codecov-yaml
+#
+# Stays at the repository root — Codecov only looks for this file at the root, in .github/
+# or in dev/ — even though everything it measures now lives under legacy-web/, the retired
+# npm workspace. The Kotlin build reports no coverage yet; when it does, add its paths here
+# rather than starting a second config.
 
 coverage:
   status:
@@ -23,27 +28,27 @@ comment:
 flags:
   unittests:
     paths:
-      - packages/
-      - apps/
+      - legacy-web/packages/
+      - legacy-web/apps/
 
 component_management:
   individual_components:
     - component_id: engine
       name: Game Engine
       paths:
-        - packages/engine/**
+        - legacy-web/packages/engine/**
     - component_id: bot
       name: Bot AI
       paths:
-        - packages/bot/**
+        - legacy-web/packages/bot/**
     - component_id: local-client
       name: Local Client
       paths:
-        - packages/local-client/**
+        - legacy-web/packages/local-client/**
     - component_id: shapes
       name: Shared Types
       paths:
-        - packages/shapes/**
+        - legacy-web/packages/shapes/**
 
 ignore:
   - "**/*.spec.ts"

@@ -18,7 +18,8 @@ by replaying recorded TypeScript games and comparing state hashes after every ac
 
 ## What Changes
 
-- New Gradle multi-module Kotlin Multiplatform workspace under `kmp/` in this monorepo:
+- New Gradle multi-module Kotlin Multiplatform workspace in this monorepo (built under
+  `kmp/`, hoisted to the repository root once it became the primary build):
   `shared:shapes`, `shared:engine`, `shared:bot`, `shared:client`, `shared:recording`,
   `parity-tests`, `composeApp` (Android + iOS), `iosApp` (Xcode host).
 - **Shared engine** ported 1:1 from `packages/engine` (+`shapes`): same state model,
@@ -69,7 +70,7 @@ by replaying recorded TypeScript games and comparing state hashes after every ac
   land **before** its fixture corpus is committed (§3.5), because removing `botVersion`
   from `GameState` changes every canonical hash. This is the single point where the two
   changes interleave; see the prerequisite note in `tasks.md`.
-- Affected code: new `kmp/` tree (incl. `server`); `fixtures/recordings/` consumed by
+- Affected code: the new Gradle tree (incl. `server`); `fixtures/recordings/` consumed by
   both stacks; `.github/workflows` gains Kotlin jobs; `docs/` gains Kotlin developer docs;
   `tools/tournament.ts` added and the losing TypeScript bot deleted. Otherwise no removal
   of TypeScript packages in this change (the web follow-up does that).

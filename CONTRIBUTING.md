@@ -2,6 +2,15 @@
 
 Thank you for your interest in contributing to Vinto! This document provides guidelines and information for contributors.
 
+> **Layout note.** Vinto is now a Kotlin Multiplatform project and the Gradle build is the
+> repository root (`./gradlew`, `shared/`, `composeApp/`, `worker/`). Everything below
+> describes the **retired** Next.js client, which lives under `legacy-web/` — run its `npm`
+> and `nx` commands from inside that directory. For the Kotlin side, read
+> [`docs/kotlin/README.md`](docs/kotlin/README.md): setup, module map, commands and traps.
+>
+> A change to the game's rules touches **both** engines and the shared corpus in
+> `fixtures/` — see the "Adding a New Game Action" note in `CLAUDE.md`.
+
 ## Table of Contents
 
 - [Getting Started](#getting-started)
@@ -50,16 +59,17 @@ Thank you for your interest in contributing to Vinto! This document provides gui
 
 ### Project Structure
 
-This is an Nx monorepo with the following structure:
+The retired web client is an Nx monorepo under `legacy-web/`:
 
 ```
-apps/
-  vinto/           # Main Next.js application
-packages/
-  engine/          # Game engine (pure functions)
-  bot/             # AI bot logic (MCTS)
-  local-client/    # Client-side state management
-  shapes/          # Shared types and interfaces
+legacy-web/
+  apps/
+    vinto/         # Main Next.js application
+  packages/
+    engine/        # Game engine (pure functions)
+    bot/           # AI bot logic (MCTS)
+    local-client/  # Client-side state management
+    shapes/        # Shared types and interfaces
 ```
 
 ### Available Commands
@@ -78,7 +88,8 @@ packages/
 - `npx nx show project game` - Show main app project details
 - `npx nx <target> <project-name>` - Run specific target for a project
 
-**Note**: The main app directory is `apps/vinto/` but the Nx project name is `game`.
+**Note**: The main app directory is `legacy-web/apps/vinto/` but the Nx project name is
+`game`, and every command in this section runs from `legacy-web/`.
 
 ## Dependency Management
 
@@ -251,7 +262,7 @@ npm run format
 ### E2E Tests
 
 - Framework: Playwright
-- Location: `apps/vinto/e2e/`
+- Location: `legacy-web/apps/vinto/e2e/`
 - Run tests: `npm run test:e2e`
 
 ### Writing Tests

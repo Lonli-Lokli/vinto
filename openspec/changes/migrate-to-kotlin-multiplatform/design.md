@@ -25,8 +25,13 @@ gate is green in CI in both directions.
 
 ### D1. Repository layout — Gradle workspace inside the monorepo
 
+The tree below was built under `kmp/`. It now **is** the repository root: once the Kotlin
+build became the one that ships, the web client was retired to `legacy-web/` and the Gradle
+workspace was hoisted, so `./gradlew` is run from the root and `fixtures/` is a sibling of
+`shared/` rather than one directory up.
+
 ```
-kmp/
+<repository root>
   settings.gradle.kts, build.gradle.kts, gradle/libs.versions.toml
   shared/shapes      # Card, Rank, GameState, PlayerState, Pile, GameAction, card configs
   shared/engine      # GameEngine.reduce, ActionValidator, cases/*, utils/*, replay
@@ -35,7 +40,7 @@ kmp/
   shared/client      # GameSession (Local/Remote), BotAIAdapter, GameRecorder, initializeGame
   shared/protocol    # WebSocket message types (join/action/event/resync/error)
   worker             # Cloudflare Worker + Durable Object room (Kotlin/JS bundle)
-  parity-tests       # JVM tests replaying ../fixtures/recordings + TS↔KT round trips
+  parity-tests       # JVM tests replaying fixtures/recordings + TS↔KT round trips
   composeApp         # Compose Multiplatform UI (androidMain, iosMain, wasmJsMain, commonMain)
   iosApp             # Xcode project embedding composeApp framework
 ```

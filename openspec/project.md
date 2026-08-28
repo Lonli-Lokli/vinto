@@ -27,7 +27,7 @@ rule, edge case and reproducible game recorded from it must behave identically i
 - Kotlin 2.x, Kotlin Multiplatform (androidTarget, iosArm64/iosSimulatorArm64, jvm for tests/server)
 - Compose Multiplatform for the app UI (Android + iOS from one `composeApp`)
 - kotlinx.serialization (JSON), kotlinx.coroutines, kotlinx.datetime, Koin (DI), kotlin.test
-- Gradle (Kotlin DSL) multi-module under `kmp/`
+- Gradle (Kotlin DSL) multi-module at the repository root (was `kmp/`)
 
 ## Project Conventions
 

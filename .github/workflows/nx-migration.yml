@@ -1,10 +1,19 @@
+# Weekly Nx upgrade PRs for the retired web client.
+#
+# The schedule is off. Two reasons, and either alone would be enough:
+#
+#   * The workspace moved to legacy-web/ and this action has no working-directory input —
+#     it looks for nx.json beside the checkout, so a scheduled run would fail every Monday.
+#   * The workspace is frozen. A dozen of these PRs are open and unmerged already; another
+#     one a week upgrades a build nobody runs.
+#
+# Left as a manual trigger rather than deleted: if the web client is picked back up, the
+# fix is to teach the step below about the subdirectory (or run `nx migrate` by hand) and
+# put the cron back.
 name: Nx Migration
 
 on:
-  schedule:
-    # Run every Monday at 9:00 UTC (same as Dependabot)
-    - cron: '0 9 * * 1'
-  workflow_dispatch: # Allow manual triggers
+  workflow_dispatch: # Manual only — see above.
 
 permissions:
   contents: write
@@ -23,8 +32,10 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
+        cache-dependency-path: legacy-web/package-lock.json
 
     - run: npm ci
+      working-directory: legacy-web
     
     - uses: timonmasberg/nx-migration-gh-action@v1.1.13
       with:

@@ -14,7 +14,9 @@
   - @docs/game-engine/SCENARIOS.md for edge cases
 
   Look for implementation in:
-  - packages/engine/src/lib/cases/ (action handlers)
-  - packages/engine/src/lib/validators/ (validation logic)
+  - shared/engine/src/commonMain/kotlin/game/vinto/engine/cases/ (Kotlin action handlers)
+  - legacy-web/packages/engine/src/lib/cases/ (TypeScript action handlers)
+  - shared/engine/src/commonMain/kotlin/game/vinto/engine/ (ActionValidator)
+  - legacy-web/packages/engine/src/lib/validators/ (TypeScript validation logic)
 
   ---

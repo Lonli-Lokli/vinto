@@ -1,6 +1,6 @@
 # The room protocol
 
-What travels between a client and a room, declared once in `kmp/shared/protocol`
+What travels between a client and a room, declared once in `shared/protocol`
 (`game.vinto.protocol`) and used by both ends: the worker serializes with it, the app's
 `RemoteGameSession` parses with it, and `ProtocolWireTest` pins the shapes with literals
 copied from `index.mjs` — which is the contract, because the JavaScript was serving the gate
