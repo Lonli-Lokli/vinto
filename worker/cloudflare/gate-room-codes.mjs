@@ -136,5 +136,25 @@ check(
   shoutyRow.hostNickname,
 );
 
+// A code that could never have been issued is refused by the Worker, before the one Durable
+// Object that knows every live room is asked anything. Every one of these is a different way
+// of being the wrong shape — too short, too long, a glyph the alphabet drops because it is
+// misread aloud, and a path traversal that has no business reaching a storage key.
+for (const nonsense of ['ABC', 'ABC2345', 'ABC01I', 'abc-23', '../../etc', '%20%20%20%20%20%20']) {
+  const answer = await fetch(`${BASE}/?room=${nonsense}`);
+  check(
+    `a malformed code is refused at the edge: ${nonsense}`,
+    answer.status === 404,
+    `status ${answer.status}`,
+  );
+}
+
+// Lower case is a typist, not an attacker: the registry has always resolved case-insensitively
+// and the shape check must not become the thing that breaks it.
+check(
+  'a real code still resolves when it is typed in lower case',
+  (await fetch(`${BASE}/?room=${minted.code.toLowerCase()}`)).status === 200,
+);
+
 console.log(`\n${failures === 0 ? 'ROOM CODE GATE PASS' : `ROOM CODE GATE FAIL (${failures})`}\n`);
 process.exit(failures === 0 ? 0 : 1);
