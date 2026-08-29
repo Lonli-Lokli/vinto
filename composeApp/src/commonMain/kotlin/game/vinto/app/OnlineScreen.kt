@@ -26,16 +26,23 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
+import game.vinto.app.art.online_browse
 import game.vinto.app.art.online_code
 import game.vinto.app.art.online_code_detail
 import game.vinto.app.art.online_create
+import game.vinto.app.art.online_creating
 import game.vinto.app.art.online_failed
 import game.vinto.app.art.online_join
 import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
 import game.vinto.app.art.online_screen_title
+import game.vinto.app.art.online_visibility
+import game.vinto.app.art.online_visibility_detail
+import game.vinto.app.art.online_visibility_private
+import game.vinto.app.art.online_visibility_public
 import game.vinto.app.art.settings_back
 import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
@@ -59,12 +66,14 @@ fun OnlineScreen(
     connector: RoomConnector,
     vault: Vault,
     onEnterRoom: (code: String, nickname: String) -> Unit,
+    onBrowse: (nickname: String) -> Unit,
     onBack: () -> Unit,
 ) {
     var nickname by remember { mutableStateOf(vault.identity { freshSeed() }.nickname) }
     var code by remember { mutableStateOf("") }
     var failure by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var listed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     fun enter(room: String) {
@@ -91,24 +100,14 @@ fun OnlineScreen(
                 color = MaterialTheme.colorScheme.onFelt(),
             )
 
-            OutlinedTextField(
-                value = nickname,
-                onValueChange = { nickname = it.take(NICKNAME_MAX) },
-                label = { Text(stringResource(Res.string.online_nickname)) },
-                supportingText = { Text(stringResource(Res.string.online_nickname_detail)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+            NameAndCode(
+                nickname = nickname,
+                onNickname = { nickname = it },
+                code = code,
+                onCode = { code = it },
             )
 
-            OutlinedTextField(
-                value = code,
-                onValueChange = { code = it.uppercase().take(CODE_LENGTH) },
-                label = { Text(stringResource(Res.string.online_code)) },
-                supportingText = { Text(stringResource(Res.string.online_code_detail)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            VisibilityChoice(listed) { listed = it }
 
             failure?.let {
                 Text(
@@ -125,7 +124,13 @@ fun OnlineScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             GameButton(
-                label = stringResource(Res.string.online_create),
+                // Busy while the room is being opened. `POST /rooms` is a round trip on a
+                // phone's network, and the second tap that comes out of the silence is a
+                // second room — one of which nobody ever joins.
+                label = stringResource(
+                    if (busy) Res.string.online_creating else Res.string.online_create,
+                ),
+                busy = busy,
                 tone = ButtonTone.NEUTRAL,
                 onClick = {
                     if (busy) return@GameButton
@@ -133,7 +138,7 @@ fun OnlineScreen(
                     failure = null
                     scope.launch {
                         try {
-                            enter(connector.createRoom(isPublic = false, hostNickname = nickname).code)
+                            enter(connector.createRoom(isPublic = listed, hostNickname = nickname).code)
                         } catch (@Suppress("TooGenericExceptionCaught") refused: Exception) {
                             // Every platform's connector fails its own way — IOException,
                             // a wrapped NSError, a fetch rejection. To this screen they are
@@ -147,6 +152,15 @@ fun OnlineScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             GameButton(
+                label = stringResource(Res.string.online_browse),
+                tone = ButtonTone.NEUTRAL,
+                onClick = {
+                    vault.rememberNickname(nickname)
+                    onBrowse(nickname)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            GameButton(
                 label = stringResource(Res.string.settings_back),
                 tone = ButtonTone.NEUTRAL,
                 onClick = onBack,
@@ -154,6 +168,75 @@ fun OnlineScreen(
             )
         }
     }
+}
+
+/**
+ * The two fields, and the limits they hold to.
+ *
+ * Both are capped as they are typed rather than checked afterwards: the service caps them
+ * too — it must, since nothing stops a client posting whatever it likes — but a field that
+ * silently accepts a hundred characters and then has them cut off elsewhere is a field that
+ * lied to the person filling it in.
+ */
+@Composable
+private fun NameAndCode(
+    nickname: String,
+    onNickname: (String) -> Unit,
+    code: String,
+    onCode: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = nickname,
+        onValueChange = { onNickname(it.take(NICKNAME_MAX)) },
+        label = { Text(stringResource(Res.string.online_nickname)) },
+        supportingText = { Text(stringResource(Res.string.online_nickname_detail)) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    OutlinedTextField(
+        value = code,
+        onValueChange = { onCode(it.uppercase().take(CODE_LENGTH)) },
+        label = { Text(stringResource(Res.string.online_code)) },
+        supportingText = { Text(stringResource(Res.string.online_code_detail)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/**
+ * Listed publicly, or reachable only by its code.
+ *
+ * Asked before the room exists rather than after, and defaulting to private. A room that is
+ * listed by default publishes a game somebody meant to play with two friends — and a listing
+ * cannot be taken back once a stranger has read it, so the safe answer is the one that is
+ * already chosen.
+ */
+@Composable
+private fun VisibilityChoice(listed: Boolean, onChoose: (Boolean) -> Unit) {
+    Text(
+        text = stringResource(Res.string.online_visibility),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onFelt(),
+    )
+    ChoiceRow(
+        options = listOf(false, true),
+        selected = listed,
+        label = {
+            if (it) {
+                stringResource(Res.string.online_visibility_public)
+            } else {
+                stringResource(Res.string.online_visibility_private)
+            }
+        },
+        onChoose = onChoose,
+    )
+    Text(
+        text = stringResource(Res.string.online_visibility_detail),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onFelt(),
+    )
 }
 
 private val Pad = 24.dp

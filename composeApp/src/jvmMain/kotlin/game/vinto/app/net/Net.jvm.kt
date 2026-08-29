@@ -5,6 +5,8 @@ import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
+import game.vinto.client.parsePublicRooms
+import game.vinto.protocol.PublicRoom
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -72,6 +74,15 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
                 HttpResponse.BodyHandlers.ofString(),
             )
             parseCreatedRoom(response.body())
+        }
+
+    override suspend fun listPublicRooms(): List<PublicRoom> =
+        withContext(Dispatchers.IO) {
+            val response = client.send(
+                HttpRequest.newBuilder(URI.create("${httpBase(baseUrl)}/rooms")).GET().build(),
+                HttpResponse.BodyHandlers.ofString(),
+            )
+            parsePublicRooms(response.body())
         }
 }
 

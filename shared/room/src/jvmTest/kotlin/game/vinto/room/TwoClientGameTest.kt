@@ -11,6 +11,7 @@ import game.vinto.client.ConnectionState
 import game.vinto.engine.replayRecording
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
+import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.PublicSeat
 import game.vinto.protocol.RoomPhase
@@ -178,6 +179,9 @@ class TwoClientGameTest {
 
             override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
                 CreatedRoom(CODE, "room-$CODE")
+
+            /** The two clients here are handed a code; neither of them browses for one. */
+            override suspend fun listPublicRooms(): List<PublicRoom> = emptyList()
         }
 
         inner class FakeSocket : RoomSocket {

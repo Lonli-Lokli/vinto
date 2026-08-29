@@ -49,6 +49,7 @@ fun GameButton(
     modifier: Modifier = Modifier,
     leading: String? = null,
     compact: Boolean = false,
+    busy: Boolean = false,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -57,7 +58,12 @@ fun GameButton(
     val feedback = LocalFeedback.current
 
     Surface(
+        // A busy button swallows its own taps. Ignoring the second press is not politeness:
+        // "create room" pressed twice is two rooms, and "add bot" pressed twice is a table
+        // with a bot nobody asked for — and the person pressing is right to press, because
+        // the first press did nothing they could see.
         onClick = {
+            if (busy) return@Surface
             feedback.commit()
             onClick()
         },
@@ -87,26 +93,36 @@ fun GameButton(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Gap),
             ) {
-                leading?.let { Text(it, fontSize = LabelSize) }
-                // Stamped rather than written: caps and letterspaced, the way the word on a
-                // chip or a plaque is cut into it. A button that reads like a sentence is a
-                // form control; one that reads like a stamp is part of a table.
-                Text(
-                    text = label.uppercase(),
-                    // Stamped for the eye, spoken as it was written: a screen reader handed
-                    // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a
-                    // property of the plaque rather than of the words.
-                    modifier = Modifier.semantics { contentDescription = label },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = if (compact) CompactLabel else LabelSize,
-                    letterSpacing = Tracking,
-                    textAlign = TextAlign.Center,
-                    // One line on a compact button: they sit in a grid, and a label that
-                    // wraps makes its own chip taller than the thirteen beside it. The size
-                    // and padding below are what make "JOKER" fit on one, which is the only
-                    // rank that does not fit trivially.
-                    maxLines = if (compact) 1 else 2,
-                )
+                // In the label's place rather than beside it, so the button does not change
+                // width mid-press and shift whatever sits under it.
+                if (busy) {
+                    VintoSpinner(
+                        size = if (compact) CompactSpinner else Spinner,
+                        colour = tone.ink,
+                        description = label,
+                    )
+                } else {
+                    leading?.let { Text(it, fontSize = LabelSize) }
+                    // Stamped rather than written: caps and letterspaced, the way the word on a
+                    // chip or a plaque is cut into it. A button that reads like a sentence is a
+                    // form control; one that reads like a stamp is part of a table.
+                    Text(
+                        text = label.uppercase(),
+                        // Stamped for the eye, spoken as it was written: a screen reader handed
+                        // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a
+                        // property of the plaque rather than of the words.
+                        modifier = Modifier.semantics { contentDescription = label },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = if (compact) CompactLabel else LabelSize,
+                        letterSpacing = Tracking,
+                        textAlign = TextAlign.Center,
+                        // One line on a compact button: they sit in a grid, and a label that
+                        // wraps makes its own chip taller than the thirteen beside it. The size
+                        // and padding below are what make "JOKER" fit on one, which is the only
+                        // rank that does not fit trivially.
+                        maxLines = if (compact) 1 else 2,
+                    )
+                }
             }
         }
     }
@@ -154,6 +170,8 @@ enum class ButtonTone(val high: Color, val low: Color, val rim: Color, val ink: 
     DANGER(Color(0xFFB3382F), Color(0xFF7E231C), Color(0xFFD9635A), Color.White),
 }
 
+private val Spinner = 20.dp
+private val CompactSpinner = 16.dp
 private val Corner = 10.dp
 private val Hairline = 1.dp
 private val Lift = 3.dp

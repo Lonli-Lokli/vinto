@@ -772,10 +772,31 @@ lobbies (Zynga, PokerStars) are built so the table everybody came for is one tap
 nothing is between you and it — hence the difficulty chips sitting *in* the play panel
 rather than behind a settings screen.
 
-**Online is a button that works.** It opens a dialog saying what actually exists — a Worker
-with a Durable Object per room, running this same engine, which two clients have already
-joined and played through — and what does not, which is this app's half. A greyed-out
-"coming soon" answers nothing; the question is a fair one and it has a real answer.
+**Online is a button that plays.** It was a dialog explaining what existed and what did not,
+back when this app's half was the missing one; phase 9 built that half, and the button now
+opens the real thing: a name, a room code, a public/private choice, and a browser for the
+rooms that chose to be listed.
+
+Three things were added once it was possible to sit at a real table over a real network, all
+three of them about the gap between touching something and it having happened:
+
+- **A spinner of the app's own** (`theme/Progress.kt`), because Material's ring on felt reads
+  as a form submitting. It is drawn like everything else here — a track and a brighter sweep,
+  round-capped, in the ink of whatever it sits on — and it honours reduced motion by *not
+  moving*: the still version is a complete ring at the sweep's weight, which is visibly a busy
+  indicator and never a frozen animation. `GameButton` takes `busy`, which swaps its label for
+  one and swallows its own taps; "create room" pressed twice is two rooms.
+- **Local before global.** A pending seat spins on *that seat* (`RemoteRoom.pendingSeats`,
+  cleared by the next lobby broadcast or a five-second timeout), the connection badge spins
+  instead of showing a settled dot while it is still trying, a move on the wire says so under
+  the heading, and only a first load of the public list takes the middle of the screen — a
+  refresh keeps the list and puts a small one beside the title, because taking a list away
+  from somebody reading it is the rudest thing a lobby can do.
+- **An invite, not a code to transcribe.** The lobby shows the code monospaced and spaced out,
+  with Share and Copy over the `shareText`/`copyToClipboard` seam — which now has real
+  implementations on the desktop clipboard, the browser's Web Share and clipboard, and iOS's
+  pasteboard, where three of the four used to answer `false`. Where a platform can do neither,
+  the code is still on the screen and a line says to read it out.
 
 **Settings** are four choices, each written as what it *does*:
 

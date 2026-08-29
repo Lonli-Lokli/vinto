@@ -96,28 +96,44 @@ const publicRoom = await (await fetch(`${BASE}/rooms`, {
   body: JSON.stringify({ isPublic: true, hostNickname: 'Bo' }),
 })).json();
 
-const listing = await (await fetch(`${BASE}/rooms`)).json();
+const listingResponse = await fetch(`${BASE}/rooms`);
+const listing = await listingResponse.json();
 check('a public room is listed', listing.rooms.some((r) => r.code === publicRoom.code));
+check(
+  'and the listing is not cached anywhere on the way',
+  (listingResponse.headers.get('cache-control') ?? '').includes('no-store'),
+  listingResponse.headers.get('cache-control') ?? 'absent',
+);
 check('a private room is not', !listing.rooms.some((r) => r.code === minted.code));
 check(
   'but the private room is still reachable by its code',
   (await fetch(`${BASE}/?room=${minted.code}`)).status === 200,
 );
 // What a lobby browser needs and nothing else: how full, how soon, and how to get in. No
-// tokens, no hashes, no game.
-const LISTABLE = ['code', 'roomId', 'isPublic', 'hostNickname', 'humans', 'seatsFilled',
-  'startsAtEpochMs', 'sourceId'];
+// tokens, no hashes, no game — and no Durable Object name, which the listing used to carry
+// because it answered with the registry's own record minus one field.
+const LISTABLE = ['code', 'hostNickname', 'humans', 'seatsFilled', 'msUntilStart'];
 check(
-  'the listing carries no field beyond the room itself',
+  'the listing carries nothing but what a browser is meant to see',
   listing.rooms.every((r) => Object.keys(r).every((k) => LISTABLE.includes(k))),
   listing.rooms.length ? Object.keys(listing.rooms[0]).join(',') : 'empty',
 );
-// The key is present because the room type always encodes its defaults; the *value* is
-// stripped. It exists to enforce a per-source cap, not to tell one visitor which rooms
-// another opened, so asserting the value is the stronger check.
 check(
-  'and no listed room says who opened it',
-  listing.rooms.every((r) => r.sourceId === null),
+  'and no listed room says who opened it, or names the object behind it',
+  listing.rooms.every((r) => r.sourceId === undefined && r.roomId === undefined),
+);
+
+// The endpoint takes whatever a client sends; what it stores and shows is its own decision.
+const shouty = await (await fetch(`${BASE}/rooms`, {
+  method: 'POST',
+  body: JSON.stringify({ isPublic: true, hostNickname: `${'B'.repeat(300)}\u0000<script>` }),
+})).json();
+const shoutyRow = (await (await fetch(`${BASE}/rooms`)).json())
+  .rooms.find((r) => r.code === shouty.code);
+check(
+  'a host nickname posted straight to the endpoint is cleaned before strangers read it',
+  shoutyRow.hostNickname === 'B'.repeat(16),
+  shoutyRow.hostNickname,
 );
 
 console.log(`\n${failures === 0 ? 'ROOM CODE GATE PASS' : `ROOM CODE GATE FAIL (${failures})`}\n`);

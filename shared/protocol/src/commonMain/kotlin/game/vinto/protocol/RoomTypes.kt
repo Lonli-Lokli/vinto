@@ -164,3 +164,41 @@ data class PublicSeat(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val ownerId: String? = null,
     val occupied: Boolean,
 )
+
+/**
+ * One room on the public list, as somebody browsing sees it before joining.
+ *
+ * An **allow-list**, and deliberately not the registry's own record with a field removed. The
+ * registry entry also carries the Durable Object's name and a hash of whoever asked for the
+ * room, neither of which is a stranger's business; a projection that strips named fields
+ * publishes the next field somebody adds, and does it silently. This type says what is
+ * public, so adding to the registry cannot widen it.
+ *
+ * Nothing here identifies a person. [hostNickname] is display text the room sanitises on the
+ * way in — never a name anybody chose to be found by, and never a way to be seated.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class PublicRoom(
+    val code: String,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val hostNickname: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val humans: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val seatsFilled: Int = 0,
+    /**
+     * How long until the deal, if a countdown is running. Absent means nobody is waiting on a
+     * clock.
+     *
+     * A duration and not a deadline, for the reason [LobbyView] carries both and the client
+     * reads this one: a phone whose clock is a minute out would render an absolute deadline as
+     * a minute of nonsense, and there is no reason to make a browser trust its own clock to
+     * read a number the service already knows.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val msUntilStart: Double? = null,
+)
+
+/** The answer to `GET /rooms`: the public rooms, and nothing about the private ones. */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class PublicRooms(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val rooms: List<PublicRoom> = emptyList(),
+)

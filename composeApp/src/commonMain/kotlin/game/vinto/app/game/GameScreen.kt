@@ -34,7 +34,7 @@ import game.vinto.app.art.report_subject
 import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
 import game.vinto.app.nowIso
-import game.vinto.app.shareReport
+import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalSounds
@@ -133,7 +133,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
             onSend = {
                 val report = session.report(at = nowIso(), label = "reported from the table")
                 val subject = reportSubject
-                if (!shareReport(subject, report.toJson())) {
+                if (!shareText(subject, report.toJson())) {
                     clipboard.setText(AnnotatedString(report.toJson()))
                 }
                 reported = false

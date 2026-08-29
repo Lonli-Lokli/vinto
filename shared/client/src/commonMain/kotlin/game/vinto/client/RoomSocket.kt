@@ -1,6 +1,8 @@
 package game.vinto.client
 
 import game.vinto.protocol.ProtocolJson
+import game.vinto.protocol.PublicRoom
+import game.vinto.protocol.PublicRooms
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -44,6 +46,15 @@ interface RoomConnector {
 
     /** `POST /rooms`: brings a room into existence and returns its code. */
     suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom
+
+    /**
+     * `GET /rooms`: the public rooms, for somebody browsing rather than holding a code.
+     *
+     * An empty list is an ordinary answer — a quiet evening is not a failure — so this throws
+     * only when the service could not be reached at all, which is the case a screen must tell
+     * a person about.
+     */
+    suspend fun listPublicRooms(): List<PublicRoom>
 }
 
 /** What `POST /rooms` answers with. */
@@ -62,6 +73,16 @@ fun parseCreatedRoom(json: String): CreatedRoom {
         roomId = body.getValue("roomId").jsonPrimitive.content,
     )
 }
+
+/**
+ * Parses `GET /rooms`' answer, in the one place all four connectors can share it.
+ *
+ * Unknown fields are ignored rather than fatal: a client in somebody's pocket is older than
+ * the service it is talking to, and a room list is not the wire contract worth refusing over
+ * — unlike the recording format, where an unmodelled field means the parity gate is lying.
+ */
+fun parsePublicRooms(json: String): List<PublicRoom> =
+    ProtocolJson.decodeFromString(PublicRooms.serializer(), json).rooms
 
 /** The request body the same endpoint takes. */
 fun createRoomBody(isPublic: Boolean, hostNickname: String): String =

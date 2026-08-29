@@ -131,7 +131,7 @@ export class Registry {
     }
 
     if (url.pathname === '/public') {
-      return new Response(listPublicRooms(registryJson), {
+      return new Response(listPublicRooms(registryJson, Date.now()), {
         headers: { 'content-type': 'application/json' },
       });
     }
@@ -670,6 +670,25 @@ export default {
     }
 
     // --- the registry: everything that creates or finds a room ---------------------------
+    //
+    // Shut when the room is shut. ROOM_OPEN used to guard only the socket, one layer down in
+    // `Room.fetch`, which left a closed deployment still minting codes and still naming its
+    // public rooms to anybody who asked: a stranger could write rows into the Registry object
+    // and read back who was playing, on a service that answers "roomOpen: false". The caps in
+    // `RegistryCore` bound how much of that is possible, and bounded is not the same as
+    // refused. The flag means the room service is closed, so it closes the door as well as
+    // the table.
+    //
+    // /health and /replay stay open above this line on purpose: one says whether the thing is
+    // alive, the other is a pure function of its own argument that holds and discloses no
+    // state.
+    if (env.ROOM_OPEN !== 'true') {
+      return new Response('the room service is closed', {
+        status: 503,
+        headers: { 'content-type': 'text/plain' },
+      });
+    }
+
     const registry = () => env.REGISTRY.get(env.REGISTRY.idFromName('registry'));
 
     // Creating a room is a POST, and it is the *only* way to bring one into existence.
@@ -697,10 +716,14 @@ export default {
     }
 
     // The public list. Private rooms are simply absent from it; they are reachable by code.
+    //
+    // `no-store` because this is a room's occupancy a second ago: a cached copy sends people
+    // to a table that filled while the answer sat in a proxy, and there is nothing here worth
+    // saving anybody a round trip for.
     if (url.pathname === '/rooms' && request.method === 'GET') {
       const listed = await registry().fetch(new Request('https://registry/public'));
       return new Response(await listed.text(), {
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
       });
     }
 

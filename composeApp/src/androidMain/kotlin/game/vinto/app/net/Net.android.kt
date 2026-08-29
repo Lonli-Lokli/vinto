@@ -5,6 +5,8 @@ import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
+import game.vinto.client.parsePublicRooms
+import game.vinto.protocol.PublicRoom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -65,28 +67,39 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
 
     override suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom =
         withContext(Dispatchers.IO) {
-            val request = Request.Builder()
-                .url("${httpBase(baseUrl)}/rooms")
-                .post(createRoomBody(isPublic, hostNickname).toRequestBody(JSON))
-                .build()
-            val body = suspendCancellableCoroutine { continuation ->
-                val call = client.newCall(request)
-                continuation.invokeOnCancellation { call.cancel() }
-                call.enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        if (continuation.isActive) continuation.resumeWithException(e)
-                    }
+            parseCreatedRoom(
+                body(
+                    Request.Builder()
+                        .url("${httpBase(baseUrl)}/rooms")
+                        .post(createRoomBody(isPublic, hostNickname).toRequestBody(JSON))
+                        .build(),
+                ),
+            )
+        }
 
-                    override fun onResponse(call: Call, response: Response) {
-                        response.use {
-                            if (continuation.isActive) {
-                                continuation.resume(it.body?.string().orEmpty())
-                            }
+    override suspend fun listPublicRooms(): List<PublicRoom> =
+        withContext(Dispatchers.IO) {
+            parsePublicRooms(body(Request.Builder().url("${httpBase(baseUrl)}/rooms").get().build()))
+        }
+
+    /** One request, one string, cancellation included — the only shape either call needs. */
+    private suspend fun body(request: Request): String =
+        suspendCancellableCoroutine { continuation ->
+            val call = client.newCall(request)
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    if (continuation.isActive) continuation.resumeWithException(e)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        if (continuation.isActive) {
+                            continuation.resume(it.body?.string().orEmpty())
                         }
                     }
-                })
-            }
-            parseCreatedRoom(body)
+                }
+            })
         }
 
     private companion object {

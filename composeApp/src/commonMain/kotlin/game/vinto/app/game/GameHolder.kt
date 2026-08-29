@@ -45,6 +45,16 @@ class GameHolder(
 
     /** The last thing the engine refused, until the next move clears it. */
     var refusal: String? by mutableStateOf(null)
+
+    /**
+     * Whether a move is on the wire and unanswered.
+     *
+     * Always false for a heartbeat in a local game, and worth drawing in a remote one: a tap
+     * that reaches a room over a phone's network takes long enough that a table which does
+     * nothing looks like a table that missed it.
+     */
+    var sending: Boolean by mutableStateOf(false)
+        private set
         private set
 
     val playerId: String get() = session.playerId
@@ -75,9 +85,20 @@ class GameHolder(
                 refusal = null
             }
 
+            // One at a time, and the second tap is dropped rather than queued. Locally this
+            // never mattered — the reducer answers in the same frame — but a remote session
+            // holds a *single* waiter for the answer it is expecting, so a second move sent
+            // while the first is in flight replaces that waiter and the first hangs until it
+            // times out. The player sees their own first move stall because they hurried it.
             is Move.Send -> {
-                refusal = session.dispatch(move.action)
-                if (refusal == null) question = Question.None
+                if (sending) return
+                sending = true
+                try {
+                    refusal = session.dispatch(move.action)
+                    if (refusal == null) question = Question.None
+                } finally {
+                    sending = false
+                }
             }
         }
     }
