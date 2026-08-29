@@ -9,6 +9,7 @@ import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
 import game.vinto.room.listPublicRooms as coreListPublicRooms
+import game.vinto.room.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.lobbyView as coreLobbyView
 import game.vinto.room.maxLiveRooms as coreMaxLiveRooms
 import game.vinto.room.maxRoomsPerSource as coreMaxRoomsPerSource
@@ -144,6 +145,9 @@ fun mintRoomCode(
     hostNickname: String,
     sourceId: String,
 ): String = coreMintRoomCode(registryJson, randomBytes, isPublic, hostNickname, sourceId)
+
+@JsExport
+fun looksLikeRoomCode(code: String): Boolean = coreLooksLikeRoomCode(code)
 
 @JsExport
 fun resolveRoomCode(registryJson: String, code: String): String =

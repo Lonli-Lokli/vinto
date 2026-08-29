@@ -169,6 +169,23 @@ fun mintRoomCode(
 }
 
 /**
+ * Whether a string could be a code this registry has ever issued.
+ *
+ * A shape check, not a lookup, and it holds no state — which is the whole point of it being
+ * separate. The socket layer asks this in the *Worker*, before the registry is asked
+ * anything, so a scan of made-up `?room=` values is refused by the stateless half of the
+ * service instead of waking the one single-threaded object that knows every live room.
+ *
+ * It is not the security boundary; [resolveRoomCode] is, and an attacker who sends
+ * well-formed guesses still reaches it. What this removes is the cheapest possible attack —
+ * arbitrary strings, which cost the sender nothing and cost the registry a round trip each.
+ */
+fun looksLikeRoomCode(code: String): Boolean {
+    val upper = code.uppercase()
+    return upper.length == CODE_LENGTH && upper.all { it in CODE_ALPHABET }
+}
+
+/**
  * Whether a code names a room, and which.
  *
  * This is the gate that replaces create-by-URL: the socket layer asks first and only reaches

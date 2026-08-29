@@ -16,7 +16,8 @@ import {
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
   applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
-  newRegistry, mintRoomCode, resolveRoomCode, listPublicRooms, forgetRoom, registrySize, touchRoom,
+  newRegistry, mintRoomCode, resolveRoomCode, looksLikeRoomCode, listPublicRooms, forgetRoom,
+  registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 const ROOM_KEY = 'room';
@@ -736,6 +737,17 @@ export default {
     const code = url.searchParams.get('room');
     if (!code) {
       return new Response('missing room code', { status: 400 });
+    }
+
+    // The shape first, here, where there is no state to wake. Every live code is in one
+    // Durable Object, so `resolve` is a round trip to the only single-threaded thing in the
+    // path — and a scan does not have to send plausible codes to cost the registry one each.
+    // A string that could never have been issued is answered by the stateless half.
+    //
+    // The answer is the same 404 an unknown code gets, so this does not become an oracle
+    // that sorts guesses into "wrong shape" and "right shape, wrong room".
+    if (!looksLikeRoomCode(code)) {
+      return new Response('no such room', { status: 404 });
     }
 
     const resolved = await (
