@@ -28,8 +28,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.invite_body
+import game.vinto.app.art.invite_copied
+import game.vinto.app.art.invite_copy
+import game.vinto.app.art.invite_read_it_out
+import game.vinto.app.art.invite_share
+import game.vinto.app.art.invite_subject
+import game.vinto.app.art.invite_title
 import game.vinto.app.art.lobby_add_bot
 import game.vinto.app.art.lobby_connecting
 import game.vinto.app.art.lobby_counting_down
@@ -39,6 +48,7 @@ import game.vinto.app.art.lobby_needs_human
 import game.vinto.app.art.lobby_over
 import game.vinto.app.art.lobby_remove_bot
 import game.vinto.app.art.lobby_seat_open
+import game.vinto.app.art.lobby_seat_working
 import game.vinto.app.art.lobby_seat_you
 import game.vinto.app.art.lobby_title
 import game.vinto.app.art.net_closed
@@ -47,9 +57,13 @@ import game.vinto.app.art.net_connecting
 import game.vinto.app.art.net_reconnecting
 import game.vinto.app.art.online_session_over
 import game.vinto.app.art.table_see_score
+import game.vinto.app.copyToClipboard
+import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.SeatSize
+import game.vinto.app.theme.VintoSpinner
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.ConnectionState
@@ -91,6 +105,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
     val lobby by room.lobby.collectAsState()
     val connection by room.connection.collectAsState()
     val mySeat by room.seat.collectAsState()
+    val pending by room.pendingSeats.collectAsState()
     val ui = lobbyUi(lobby, connection, mySeat)
 
     Box(
@@ -136,8 +151,17 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                             },
                             color = if (seat.occupied) Rail.ink else Rail.inkDim,
                         )
-                        if (seat.removable) {
-                            GameButton(
+                        // The spinner sits on the seat that is changing, not across the
+                        // screen: the wait belongs to this row, and a person who tapped
+                        // "remove" wants to see *that* seat thinking about it.
+                        when {
+                            seat.index in pending -> VintoSpinner(
+                                size = SeatSize,
+                                colour = Rail.inkDim,
+                                description = stringResource(Res.string.lobby_seat_working),
+                            )
+
+                            seat.removable -> GameButton(
                                 label = stringResource(Res.string.lobby_remove_bot, seat.index + 1),
                                 tone = ButtonTone.NEUTRAL,
                                 onClick = { room.removeBot(seat.index) },
@@ -155,9 +179,15 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                     label = stringResource(Res.string.lobby_add_bot),
                     tone = ButtonTone.PLAY,
                     onClick = room::addBot,
+                    // Busy while any seat is mid-change: the room fills the first free seat,
+                    // so two quick taps are two bots, and the second was asked for by
+                    // somebody who had no way of knowing the first had landed.
+                    busy = pending.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+
+            InviteRow(room.code)
             GameButton(
                 label = stringResource(Res.string.lobby_leave),
                 tone = ButtonTone.NEUTRAL,
@@ -167,6 +197,85 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+/**
+ * The code, and the two ways to get it to somebody else.
+ *
+ * A room code is useless in the room — it is only ever wanted by the person *not* in it — so
+ * this is a share sheet first and a clipboard second, in that order, because the difference
+ * between them is whether the player has to go and find somewhere to paste.
+ *
+ * Where a platform can do neither (a desktop with no clipboard, a browser without a secure
+ * context) the code is still on the screen in a typeface built for reading a character at a
+ * time, and the line underneath says to read it out. A feature that fails by disappearing
+ * teaches people the app is broken; one that fails by telling them what to do instead does
+ * not.
+ */
+@Composable
+private fun InviteRow(code: String) {
+    var copied by remember { mutableStateOf(false) }
+    val subject = stringResource(Res.string.invite_subject)
+    val body = stringResource(Res.string.invite_body, code, WEB_CLIENT)
+    var handled by remember { mutableStateOf(true) }
+
+    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(Gap),
+            verticalArrangement = Arrangement.spacedBy(Gap),
+        ) {
+            Text(
+                text = stringResource(Res.string.invite_title),
+                style = MaterialTheme.typography.labelMedium,
+                color = Rail.inkDim,
+            )
+            Text(
+                // Monospaced and spaced out: this is the one string in the app somebody
+                // reads aloud down a telephone.
+                text = code,
+                style = MaterialTheme.typography.headlineSmall,
+                fontFamily = FontFamily.Monospace,
+                letterSpacing = CodeTracking,
+                color = Rail.ink,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                GameButton(
+                    label = stringResource(Res.string.invite_share),
+                    tone = ButtonTone.KEEP,
+                    onClick = {
+                        handled = shareText(subject, body)
+                        if (!handled) {
+                            handled = copyToClipboard(body)
+                            copied = handled
+                        }
+                    },
+                    compact = true,
+                    modifier = Modifier.weight(1f),
+                )
+                GameButton(
+                    label = if (copied) {
+                        stringResource(Res.string.invite_copied)
+                    } else {
+                        stringResource(Res.string.invite_copy)
+                    },
+                    tone = ButtonTone.NEUTRAL,
+                    onClick = {
+                        handled = copyToClipboard(body)
+                        copied = handled
+                    },
+                    compact = true,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            if (!handled) {
+                Text(
+                    text = stringResource(Res.string.invite_read_it_out),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Rail.inkDim,
+                )
+            }
         }
     }
 }
@@ -205,11 +314,20 @@ fun ConnectionBadge(connection: ConnectionState) {
         is ConnectionState.Reconnecting -> stringResource(Res.string.net_reconnecting) to WaitAmber
         is ConnectionState.Closed -> stringResource(Res.string.net_closed) to DeadRed
     }
+    val waiting = connection is ConnectionState.Connecting || connection is ConnectionState.Reconnecting
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DotGap),
     ) {
-        Surface(shape = CircleShape, color = colour, modifier = Modifier.size(Dot)) {}
+        // A dot for a settled connection, a spinner for one that is still trying. The amber
+        // dot alone said "something is wrong here"; a turning one says "wait", which is the
+        // true thing and the one worth waiting through.
+        if (waiting) {
+            VintoSpinner(size = BadgeSpinner, colour = colour, description = label)
+        } else {
+            Surface(shape = CircleShape, color = colour, modifier = Modifier.size(Dot)) {}
+        }
         Text(label, style = MaterialTheme.typography.labelMedium, color = Rail.inkDim)
     }
 }
@@ -252,6 +370,7 @@ private fun RemoteGameScreen(
                         view = shown,
                         table = holder.tableFor(shown),
                         refusal = holder.refusal,
+                        sending = holder.sending,
                         recent = log,
                         round = standings.size + 1,
                     ),
@@ -354,6 +473,23 @@ private val LobbyMax = 420.dp
 private val StripMax = 420.dp
 private val Dot = 10.dp
 private val DotGap = 6.dp
+
+/** Matched to the dot it replaces, so the badge does not jump when the connection settles. */
+private val BadgeSpinner = 12.dp
+
+/** A room code is read a character at a time; the tracking is what makes that possible. */
+private val CodeTracking = 4.sp
+
+/**
+ * Where a shared invitation points.
+ *
+ * The Compose web client, which is the one place a link can seat somebody without an install.
+ * Android and iOS deep links want an app-links manifest and an associated-domains file, and
+ * until those exist a phone that follows this opens the web client — which is a working
+ * outcome rather than a broken one. The code in the message is what makes the invitation
+ * work regardless: it can be read out, and typed into any of the four clients.
+ */
+private const val WEB_CLIENT = "vinto.kupalinka.app"
 private val LiveGreen = Color(0xFF43A047)
 private val WaitAmber = Color(0xFFF9A825)
 private val DeadRed = Color(0xFFE53935)

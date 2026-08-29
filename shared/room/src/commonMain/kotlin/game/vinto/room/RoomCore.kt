@@ -165,12 +165,22 @@ private const val LEADER_MS = 20_000.0
  * distinguishes them by seat. Rejecting duplicates would be a worse experience than the
  * ambiguity, and would leak who is already in a room.
  */
-internal fun sanitiseNickname(raw: String, seatIndex: Int): String {
+internal fun sanitiseNickname(raw: String, seatIndex: Int): String =
+    cleanNickname(raw).ifEmpty { "Player ${seatIndex + 1}" }
+
+/**
+ * The same rule without the fallback, for the places where "no name" is a legitimate answer.
+ *
+ * A seat must be called something, so [sanitiseNickname] names an unnamed one after its
+ * index. A room's host need not be: the public list simply shows no host. Splitting the two
+ * is what lets the registry apply one rule rather than inventing a second — and it must apply
+ * one, because a nickname posted to `/rooms` is displayed to strangers who never agreed to
+ * read whatever length of whatever characters somebody sent.
+ */
+internal fun cleanNickname(raw: String): String {
     val collapsed = raw.trim().replace(Regex("\\s+"), " ")
     val allowed = collapsed.filter { it.isLetterOrDigit() || it == ' ' || it in "-_.'" }
-    val trimmed = allowed.take(MAX_NICKNAME_LENGTH).trim()
-
-    return trimmed.ifEmpty { "Player ${seatIndex + 1}" }
+    return allowed.take(MAX_NICKNAME_LENGTH).trim()
 }
 
 private const val MAX_NICKNAME_LENGTH = 16

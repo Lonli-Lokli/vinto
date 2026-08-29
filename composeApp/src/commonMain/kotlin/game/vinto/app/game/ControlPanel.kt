@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.art.Res
+import game.vinto.app.art.table_sending
+import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -48,6 +52,7 @@ import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
 private val Gap = 8.dp
@@ -143,18 +148,7 @@ fun ControlPanel(
         ) {
             Heading(table = table, teaching = state.teaching)
 
-            // The engine's own words, not a translation of them. A refusal is nearly always a
-            // rule the player has not met yet, and paraphrasing it here would put a second,
-            // drifting copy of the rules in the UI.
-            state.refusal?.let { reason ->
-                Text(
-                    text = reason,
-                    fontSize = DetailSize,
-                    color = WarnInk,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Answer(state)
 
             // The one thing that gives way when the rail is crowded, and the rail is a fixed
             // height, so something has to. Naming a rank asks for fourteen chips and two
@@ -212,6 +206,38 @@ fun ControlPanel(
 }
 
 /** The prompt, and — when it is still worth saying — the rule under it. */
+/**
+ * The line under the heading that answers the player's last touch.
+ *
+ * Two things share the slot because they are the same question — "did that work?" — and only
+ * one of them can be true at a time: a move is either still on the wire or it has come back
+ * with a reason. A spinner anywhere else on the table would compete with the cards for the
+ * eye it is trying to reassure.
+ */
+@Composable
+private fun ColumnScope.Answer(state: TableState) {
+    // The engine's own words, not a translation of them. A refusal is nearly always a rule
+    // the player has not met yet, and paraphrasing it here would put a second, drifting copy
+    // of the rules in the UI.
+    state.refusal?.let { reason ->
+        Text(
+            text = reason,
+            fontSize = DetailSize,
+            color = WarnInk,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
+
+    if (state.sending) {
+        BusyLine(
+            label = stringResource(Res.string.table_sending),
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            colour = Rail.inkDim,
+        )
+    }
+}
+
 @Composable
 private fun Heading(table: Table, teaching: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {

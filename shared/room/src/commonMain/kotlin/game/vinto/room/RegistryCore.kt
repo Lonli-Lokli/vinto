@@ -1,5 +1,7 @@
 package game.vinto.room
 
+import game.vinto.protocol.PublicRoom
+import game.vinto.protocol.PublicRooms
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -40,6 +42,19 @@ private const val MAX_LIVE_ROOMS = 200
 
 /** One person should not be able to hold the whole namespace open, however patient they are. */
 private const val MAX_ROOMS_PER_SOURCE = 5
+
+/**
+ * How many public rooms one listing may carry.
+ *
+ * Below [MAX_LIVE_ROOMS] on purpose. The cap is not there to protect the registry — it holds
+ * two hundred at most — but the person reading: a browser is for finding a table, and a list
+ * longer than a screen or two is a search problem nobody asked for. It also keeps the
+ * response a bounded size whatever the registry grows into.
+ */
+private const val MAX_PUBLIC_LISTED = 50
+
+/** Four seats to a table, so a room with fewer filled has somewhere to sit. */
+private const val SEAT_COUNT = 4
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -141,7 +156,11 @@ fun mintRoomCode(
         code = code,
         roomId = "room-$code",
         isPublic = isPublic,
-        hostNickname = hostNickname.takeIf { it.isNotBlank() },
+        // Cleaned with the room's own rule, not stored as posted. This string is shown to
+        // strangers on the public list, and the endpoint that sets it takes anything a
+        // client cares to send — a kilobyte of control characters included. The UI caps the
+        // field at sixteen, which stops the honest caller and nobody else.
+        hostNickname = cleanNickname(hostNickname).takeIf { it.isNotEmpty() },
         sourceId = sourceId.takeIf { it.isNotBlank() },
     )
     return VintoJson.encodeToString(
@@ -164,14 +183,43 @@ fun resolveRoomCode(registryJson: String, code: String): String {
 /**
  * The public rooms, as a stranger browsing may see them.
  *
- * Private ones are absent, and `sourceId` is stripped from all of them: it exists to enforce a
- * cap, not to tell one visitor which rooms another visitor opened.
+ * Private ones are absent — a private room is reachable by its code and by nothing else, and
+ * is never named here, so browsing cannot enumerate what it cannot be told.
+ *
+ * What the public ones disclose is decided by [PublicRoom], an allow-list. This used to
+ * answer with the registry's own records minus `sourceId`, which was correct on the day it
+ * was written and would have published the next internal field somebody added — it already
+ * carried `roomId`, the Durable Object's name, which nothing outside this file has any use
+ * for. Naming what is public inverts that: a new field on [RegisteredRoom] stays private
+ * until somebody adds it here on purpose.
  */
-fun listPublicRooms(registryJson: String): String {
+fun listPublicRooms(registryJson: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
-    return VintoJson.encodeToString(
-        RegistryState(rooms = state.rooms.filter { it.isPublic }.map { it.copy(sourceId = null) }),
-    )
+
+    val listed = state.rooms
+        .filter { it.isPublic }
+        // A table somebody can actually sit at comes first, then the busiest of those, and
+        // the code breaks ties so the same registry always answers in the same order — a
+        // list that reshuffles under a thumb is a list nobody can tap.
+        .sortedWith(
+            compareByDescending<RegisteredRoom> { it.seatsFilled < SEAT_COUNT }
+                .thenByDescending { it.humans }
+                .thenBy { it.code },
+        )
+        .take(MAX_PUBLIC_LISTED)
+        .map {
+            PublicRoom(
+                code = it.code,
+                hostNickname = it.hostNickname,
+                humans = it.humans,
+                seatsFilled = it.seatsFilled,
+                // Resolved against the clock here, where the clock is, so a browser never
+                // has to trust its own to read it.
+                msUntilStart = it.startsAtEpochMs?.let { at -> (at - nowMs).coerceAtLeast(0.0) },
+            )
+        }
+
+    return VintoJson.encodeToString(PublicRooms(rooms = listed))
 }
 
 /** The caps, exported so a harness cannot drift from what is enforced. */

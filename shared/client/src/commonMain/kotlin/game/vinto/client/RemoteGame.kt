@@ -94,11 +94,49 @@ class RemoteRoom(
     private val sender: CoroutineScope = scope
     private val running = scope.launch { run() }
 
+    /**
+     * Seats with a change in flight, so the lobby can spin the seat rather than the screen.
+     *
+     * Adding a bot is a message, not a call: it goes out and the answer arrives later as a
+     * whole new lobby. Between those two moments the button has visibly done nothing, and a
+     * person taps it again — which is how a table ends up with two bots nobody asked for. The
+     * seat holds a spinner instead, which says *where* the wait is; a bar across the top would
+     * say only that something, somewhere, is happening.
+     */
+    private val _pendingSeats = MutableStateFlow<Set<Int>>(emptySet())
+    val pendingSeats: StateFlow<Set<Int>> = _pendingSeats.asStateFlow()
+
     // ------------------------------------------------------------------ the lobby's verbs
 
-    fun addBot() = fire(ClientMessage.AddBot(token()))
-    fun removeBot(seat: Int) = fire(ClientMessage.RemoveBot(token(), seat))
+    /** Adds a bot to the first free seat — which is the one the room will fill, so it spins. */
+    fun addBot() {
+        _lobby.value?.seats?.firstOrNull { !it.occupied }?.let { markPending(it.index) }
+        fire(ClientMessage.AddBot(token()))
+    }
+
+    fun removeBot(seat: Int) {
+        markPending(seat)
+        fire(ClientMessage.RemoveBot(token(), seat))
+    }
+
     fun nextRound() = fire(ClientMessage.NextRound(token()))
+
+    /**
+     * Holds a seat pending until the next lobby broadcast, or until the room has plainly not
+     * answered.
+     *
+     * The timeout is the point rather than a belt: a refused op comes back as a notice and no
+     * new lobby, and a socket that drops mid-request comes back as nothing at all. Without it
+     * the seat spins for as long as the room is open, which is the failure mode people
+     * remember about lobbies.
+     */
+    private fun markPending(seat: Int) {
+        _pendingSeats.value = _pendingSeats.value + seat
+        sender.launch {
+            delay(PENDING_TIMEOUT_MS)
+            _pendingSeats.value = _pendingSeats.value - seat
+        }
+    }
 
     /** Leaves for good. The seat token stays vaulted — the seat is reclaimable until the room dies. */
     fun leave() {
@@ -148,7 +186,12 @@ class RemoteRoom(
 
         when (message) {
             is ServerMessage.Joined -> joined(message)
-            is ServerMessage.Lobby -> _lobby.value = message.lobby
+            is ServerMessage.Lobby -> {
+                _lobby.value = message.lobby
+                // The lobby is the authority on who is sitting where, so its arrival is what
+                // ends every wait — whichever seat the room actually changed.
+                _pendingSeats.value = emptySet()
+            }
             is ServerMessage.Started -> started(message)
             is ServerMessage.BetweenRounds -> {
                 _standings.value = message.standings
@@ -224,6 +267,15 @@ class RemoteRoom(
 
     private companion object {
         const val NOTICE_BUFFER = 16
+
+        /**
+         * How long a seat may sit pending before the spinner gives up.
+         *
+         * Long enough that a slow round trip is not mistaken for a lost one, short enough
+         * that nobody watches it: a lobby op is one message each way, so five seconds is
+         * already far past normal.
+         */
+        const val PENDING_TIMEOUT_MS = 5_000L
 
         const val BACKOFF_BASE_MS = 1_000.0
         const val BACKOFF_CAP_MS = 15_000.0

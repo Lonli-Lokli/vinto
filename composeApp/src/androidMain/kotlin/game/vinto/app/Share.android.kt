@@ -5,7 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 
-actual fun shareReport(subject: String, body: String): Boolean {
+actual fun shareText(subject: String, body: String): Boolean {
     val context = AndroidStorage.context ?: return false
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

@@ -261,6 +261,14 @@ data class TableState(
      * is always spelled out. In a real game it fades — see `ControlPanel`.
      */
     val teaching: Boolean = false,
+    /**
+     * A move on the wire, unanswered — only ever true over a socket.
+     *
+     * Last in the list, after the other default, so the suites that build this positionally
+     * keep compiling: a new parameter in the middle of a five-argument call binds silently to
+     * the wrong thing, and this one is a Boolean sitting where a list used to be.
+     */
+    val sending: Boolean = false,
 )
 
 /** Where the round is up to, and how much deck is left. */

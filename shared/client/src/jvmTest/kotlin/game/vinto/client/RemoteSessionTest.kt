@@ -8,6 +8,7 @@ import game.vinto.protocol.EventEntry
 import game.vinto.protocol.LobbySeat
 import game.vinto.protocol.LobbyView
 import game.vinto.protocol.ProtocolJson
+import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.PublicSeat
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
@@ -230,6 +231,9 @@ class RemoteSessionTest {
             override suspend fun connect(code: String): RoomSocket = sockets.removeFirst()
             override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
                 CreatedRoom(CODE, "room-$CODE")
+
+            /** Nothing in this suite browses; the room it drives is one it was handed. */
+            override suspend fun listPublicRooms(): List<PublicRoom> = emptyList()
         }
 
         private val testScope = scope

@@ -5,6 +5,8 @@ import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
+import game.vinto.client.parsePublicRooms
+import game.vinto.protocol.PublicRoom
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.channels.Channel
@@ -69,8 +71,18 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
                     .dataUsingEncoding(NSUTF8StringEncoding),
             )
         }
+        return parseCreatedRoom(body(request))
+    }
 
-        val body = suspendCancellableCoroutine { continuation ->
+    override suspend fun listPublicRooms(): List<PublicRoom> {
+        val url = NSURL.URLWithString("${httpBase(baseUrl)}/rooms") ?: error("bad url")
+        val request = NSMutableURLRequest(uRL = url).apply { setHTTPMethod("GET") }
+        return parsePublicRooms(body(request))
+    }
+
+    /** One request, one string, cancellation included — the only shape either call needs. */
+    private suspend fun body(request: NSMutableURLRequest): String =
+        suspendCancellableCoroutine { continuation ->
             val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, _, failure ->
                 when {
                     failure != null && continuation.isActive ->
@@ -85,8 +97,6 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
             continuation.invokeOnCancellation { task.cancel() }
             task.resume()
         }
-        return parseCreatedRoom(body)
-    }
 
     @OptIn(BetaInteropApi::class)
     private fun utf8(data: NSData): String =

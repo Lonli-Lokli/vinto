@@ -66,6 +66,19 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
         screen = Screen.Home(canContinue = vault.loadGame() != null)
     }
 
+    // One way in, whether the code was typed or tapped off the public list. Both paths open
+    // the same socket to the same room, so both build the room the same way rather than each
+    // remembering to pass the scope.
+    fun enterRoom(code: String, nickname: String): Screen = Screen.InRoom(
+        RemoteRoom(
+            connector = connector,
+            code = code,
+            vault = vault,
+            nickname = nickname,
+            scope = appScope,
+        ),
+    )
+
     // Every change is written down as it is made. There is no "save" button in a settings
     // screen worth having, and four values are not worth batching.
     fun change(updated: Settings) {
@@ -135,20 +148,17 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
                         Screen.Online -> OnlineScreen(
                             connector = connector,
                             vault = vault,
-                            onEnterRoom = { code, nickname ->
-                                screen = Screen.InRoom(
-                                    RemoteRoom(
-                                        connector = connector,
-                                        code = code,
-                                        vault = vault,
-                                        nickname = nickname,
-                                        scope = appScope,
-                                    ),
-                                )
-                            },
+                            onEnterRoom = { code, nickname -> screen = enterRoom(code, nickname) },
+                            onBrowse = { screen = Screen.Discover(it) },
                             onBack = {
                                 screen = Screen.Home(canContinue = vault.loadGame() != null)
                             },
+                        )
+
+                        is Screen.Discover -> DiscoverScreen(
+                            connector = connector,
+                            onJoin = { screen = enterRoom(it, here.nickname) },
+                            onBack = { screen = Screen.Online },
                         )
 
                         is Screen.InRoom -> RoomScreen(
@@ -211,6 +221,15 @@ private sealed interface Screen {
 
     /** The way into a room: a name and a code. */
     data object Online : Screen
+
+    /**
+     * The public rooms, for somebody with no code.
+     *
+     * Carries the nickname rather than reading it back out of the vault, so that a name typed
+     * on the way in is the name used on the way through — the vault holds what was *saved*,
+     * and a person who edited the field and pressed Browse has not saved anything yet.
+     */
+    data class Discover(val nickname: String) : Screen
 
     /** Inside one: the lobby until the deal, the table after. */
     data class InRoom(val room: RemoteRoom) : Screen

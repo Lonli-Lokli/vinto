@@ -5,6 +5,8 @@ import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
+import game.vinto.client.parsePublicRooms
+import game.vinto.protocol.PublicRoom
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.channels.Channel
@@ -52,6 +54,14 @@ private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
         ).await<org.w3c.fetch.Response>()
         val body = response.text().await<JsString>().toString()
         return parseCreatedRoom(body)
+    }
+
+    override suspend fun listPublicRooms(): List<PublicRoom> {
+        val response = window.fetch(
+            "${httpBase(baseUrl)}/rooms",
+            RequestInit(method = "GET"),
+        ).await<org.w3c.fetch.Response>()
+        return parsePublicRooms(response.text().await<JsString>().toString())
     }
 }
 

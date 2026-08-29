@@ -150,7 +150,8 @@ fun resolveRoomCode(registryJson: String, code: String): String =
     coreResolveRoomCode(registryJson, code)
 
 @JsExport
-fun listPublicRooms(registryJson: String): String = coreListPublicRooms(registryJson)
+fun listPublicRooms(registryJson: String, nowMs: Double): String =
+    coreListPublicRooms(registryJson, nowMs)
 
 @JsExport
 fun maxLiveRooms(): Int = coreMaxLiveRooms()
