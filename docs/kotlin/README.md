@@ -1137,6 +1137,20 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   silently depend on how much RAM the developer happens to have. If it still OOMs, raise the
   Kotlin daemon figure first, and run `./gradlew --stop` after changing either value —
   a running daemon keeps its old heap.
+- **A local detekt CLI run is weaker than the gate unless you say so.** The Gradle task sets
+  `buildUponDefaultConfig = true`, so `config/detekt/detekt.yml` is an *overlay* on detekt's
+  defaults; a bare `java -jar detekt-cli.jar --config config/detekt/detekt.yml` runs only the
+  rules that file names and reports clean on code CI then rejects. It also has to be pointed
+  at source directories rather than module roots, because the Gradle task sets
+  `source.setFrom(files("src"))` and never sees a `build.gradle.kts`. The invocation that
+  matches the gate, for a host that cannot run Gradle against androidx:
+
+  ```bash
+  java -jar detekt-cli.jar --build-upon-default-config \
+    --config config/detekt/detekt.yml --baseline config/detekt/baseline.xml \
+    --input "$(ls -d composeApp/src worker/src shared/*/src | paste -sd,)"
+  ```
+
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
   It lives in `gradle.properties`.

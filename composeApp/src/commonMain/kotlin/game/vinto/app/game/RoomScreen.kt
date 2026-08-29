@@ -70,6 +70,7 @@ import game.vinto.app.theme.VintoSpinner
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.ConnectionState
+import game.vinto.client.LobbySeatUi
 import game.vinto.client.LobbyWord
 import game.vinto.client.Pace
 import game.vinto.client.RemoteGameSession
@@ -151,41 +152,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             }
 
             ui.seats.forEach { seat ->
-                Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(Gap),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = when {
-                                !seat.occupied -> stringResource(Res.string.lobby_seat_open)
-                                seat.isMine ->
-                                    stringResource(Res.string.lobby_seat_you, seat.nickname.orEmpty())
-
-                                else -> seat.nickname.orEmpty()
-                            },
-                            color = if (seat.occupied) Rail.ink else Rail.inkDim,
-                        )
-                        // The spinner sits on the seat that is changing, not across the
-                        // screen: the wait belongs to this row, and a person who tapped
-                        // "remove" wants to see *that* seat thinking about it.
-                        when {
-                            seat.index in pending -> VintoSpinner(
-                                size = SeatSize,
-                                colour = Rail.inkDim,
-                                description = stringResource(Res.string.lobby_seat_working),
-                            )
-
-                            seat.removable -> GameButton(
-                                label = stringResource(Res.string.lobby_remove_bot, seat.index + 1),
-                                tone = ButtonTone.NEUTRAL,
-                                onClick = { room.removeBot(seat.index) },
-                                compact = true,
-                            )
-                        }
-                    }
-                }
+                SeatRow(seat, changing = seat.index in pending) { room.removeBot(seat.index) }
             }
 
             LobbyLine(ui.word, ui.msUntilStart)
@@ -213,6 +180,49 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+/**
+ * One seat: who is in it, and whichever of the two things it currently has to say.
+ *
+ * The spinner sits on the seat that is changing rather than across the screen, because the
+ * wait belongs to this row — somebody who tapped "remove" wants to see *that* seat thinking
+ * about it, not the whole lobby greying out.
+ */
+@Composable
+private fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) {
+    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Gap),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = when {
+                    !seat.occupied -> stringResource(Res.string.lobby_seat_open)
+                    seat.isMine ->
+                        stringResource(Res.string.lobby_seat_you, seat.nickname.orEmpty())
+
+                    else -> seat.nickname.orEmpty()
+                },
+                color = if (seat.occupied) Rail.ink else Rail.inkDim,
+            )
+            when {
+                changing -> VintoSpinner(
+                    size = SeatSize,
+                    colour = Rail.inkDim,
+                    description = stringResource(Res.string.lobby_seat_working),
+                )
+
+                seat.removable -> GameButton(
+                    label = stringResource(Res.string.lobby_remove_bot, seat.index + 1),
+                    tone = ButtonTone.NEUTRAL,
+                    onClick = onRemove,
+                    compact = true,
+                )
+            }
         }
     }
 }
