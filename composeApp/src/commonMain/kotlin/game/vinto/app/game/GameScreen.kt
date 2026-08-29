@@ -155,21 +155,35 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
         HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
     }
 
-    game.result?.takeIf { scoreOpen }?.let { result ->
-        StandingsSheet(
-            round = round,
-            you = game.playerId,
-            result = result,
-            standings = game.standings,
-            onNextRound = {
-                scoreOpen = false
-                game.nextRound()
-            },
-            onQuit = {
-                scoreOpen = false
-                onQuit()
-            },
-        )
+    // `scoreOpen` first, and deliberately not `game.result?.takeIf { scoreOpen }`.
+    //
+    // `LocalGame.result` is a plain getter over the session, not snapshot state, so reading it
+    // subscribes to nothing. With the null-check first the `takeIf` short-circuits for as long
+    // as the round is unfinished — which is nearly all of it — and `scoreOpen` is never read
+    // at all, so this scope never subscribes to it either. Pressing "See the score" then set a
+    // flag nobody was watching and drew nothing.
+    //
+    // What hid it is that the table is usually still animating when the round ends: the next
+    // frame recomposes this for its own reasons, finds both conditions true, and the sheet
+    // appears a beat late looking like pacing. On a table that has stopped — every card
+    // landed, nothing queued — there is no next frame, and the button is simply dead.
+    if (scoreOpen) {
+        game.result?.let { result ->
+            StandingsSheet(
+                round = round,
+                you = game.playerId,
+                result = result,
+                standings = game.standings,
+                onNextRound = {
+                    scoreOpen = false
+                    game.nextRound()
+                },
+                onQuit = {
+                    scoreOpen = false
+                    onQuit()
+                },
+            )
+        }
     }
 }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toSize
+import game.vinto.app.LocalPacing
 import game.vinto.app.LocalReducedMotion
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
@@ -564,8 +565,11 @@ fun CardStage(
     val feedback = LocalFeedback.current
     val reducedMotion = LocalReducedMotion.current
     val sounds = LocalSounds.current
+    // The player's pace, and then whatever is watching it. `LocalPacing` is 1 for anybody
+    // with eyes on the table and 0 for a caller that only needs the round to reach its end.
+    val pacing = LocalPacing.current
     SideEffect {
-        stage.pace = pace
+        stage.pace = pace * pacing
         stage.viewerId = live.viewerId
         stage.feedback = feedback
         stage.reducedMotion = reducedMotion

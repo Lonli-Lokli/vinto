@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import game.vinto.app.LocalPacing
 import game.vinto.app.game.GameScreen
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.LocalGame
@@ -45,7 +47,13 @@ class FullGameUiTest {
     @Test
     fun aWholeRoundIsPlayedOutOnTheScreen() = runComposeUiTest {
         val game = LocalGame.start(MemoryVault(), FIXED_SEED, Difficulty.EASY)
-        setContent { VintoTheme { GameScreen(game, pace = Pace.BRISK, onQuit = {}) } }
+        setContent {
+            // Nobody is watching this one, so the table does not wait for anybody — see
+            // `LocalPacing`. Without it this case spends its whole life rendering pauses.
+            CompositionLocalProvider(LocalPacing provides 0f) {
+                VintoTheme { GameScreen(game, pace = Pace.BRISK, onQuit = {}) }
+            }
+        }
         waitForIdle()
 
         // The opening, by hand: the two setup peeks and the first draw, tapped rather than
@@ -71,8 +79,16 @@ class FullGameUiTest {
             "the round never reached its scoring",
         )
 
-        // The stage still has the whole game queued; the strip appears once it has shown the
-        // table ending. Generous, because this is every animation of every move in a round.
+        // The stage still has the whole game queued, and it is queued as *time* — a beat
+        // before each move, a dwell after a drawn card, a gap between the scenes of one move.
+        // Watching that out is the one thing this test is not here to do: at `Pace.BRISK` a
+        // forty-turn round is minutes of real clock, and every one of those milliseconds is a
+        // frame this machine has to render. The original two-minute wait was not a budget, it
+        // was a bet on the runner — it got as far as turn 44 in 380 seconds and lost.
+        //
+        // `LocalPacing` at zero is the seam: the same frames, the same queue, the same scenes,
+        // with the waiting taken out. What is being tested is that the round *reaches* its
+        // ending on screen, and nothing about that is carried by the pauses.
         waitUntil(timeoutMillis = END_TIMEOUT) {
             onAllNodesWithContentDescription("See the score").fetchSemanticsNodes().isNotEmpty()
         }
@@ -102,6 +118,13 @@ class FullGameUiTest {
         /** The seed `TableUiTest` already walks to its first draw-and-discard. */
         const val FIXED_SEED = 20260819L
 
-        const val END_TIMEOUT = 120_000L
+        /**
+         * Long enough for a whole round with the pauses taken out, and no longer.
+         *
+         * With `LocalPacing` at zero what is left is one frame per scene, so this is a wedge
+         * detector rather than a pace: a queue that stops draining never reaches the score,
+         * and says so in a minute instead of in whatever the runner felt like.
+         */
+        const val END_TIMEOUT = 60_000L
     }
 }
