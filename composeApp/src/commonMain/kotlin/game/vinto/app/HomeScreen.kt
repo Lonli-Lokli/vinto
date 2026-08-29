@@ -49,8 +49,8 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Wordmark
-import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.feltGold
+import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Settings
 import game.vinto.shapes.Difficulty
@@ -301,6 +301,7 @@ private val TitleSize = 46.sp
 private val TitleTracking = 6.sp
 private val BodySize = 15.sp
 private val LabelSize = 12.sp
+
 /** Second-rank text on the felt: present, and not competing with the wordmark. */
 private const val Quiet = 0.75f
 

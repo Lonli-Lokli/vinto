@@ -117,7 +117,7 @@ class BotRunner(
      * a seat that was dealt none — and finishing setup moves the whole table into play.
      */
     private fun setupAction(state: GameState): GameAction? {
-        val player = state.players.firstOrNull { it.knownCardPositions.size < SETUP_PEEKS } 
+        val player = state.players.firstOrNull { it.knownCardPositions.size < SETUP_PEEKS }
             ?: return GameAction.FinishSetup(PlayerIdPayload(state.players.first().id))
 
         val position = player.cards.indices.firstOrNull { it !in player.knownCardPositions }

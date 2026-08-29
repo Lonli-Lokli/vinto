@@ -6,9 +6,9 @@ import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.MutablePlayerState
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.clearTossInReadyList
-import game.vinto.engine.shiftDeclarationsAfterRemoval
 import game.vinto.engine.getAutomaticallyReadyPlayers
 import game.vinto.engine.getTargetTypeFromRank
+import game.vinto.engine.shiftDeclarationsAfterRemoval
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameSubPhase
@@ -43,8 +43,11 @@ fun handleDeclareKingAction(state: MutableGameState, action: GameAction.DeclareK
     val isTossInPhase = state.activeTossIn?.queuedActions?.isNotEmpty() == true
 
     val discardedKing = pending.card.copy().also { it.played = true }
-    if (isTossInPhase) state.discardPile.addBeforeTop(discardedKing)
-    else state.discardPile.addToTop(discardedKing)
+    if (isTossInPhase) {
+        state.discardPile.addBeforeTop(discardedKing)
+    } else {
+        state.discardPile.addToTop(discardedKing)
+    }
 
     if (isCorrect) {
         applyCorrectDeclaration(state, targetPlayer, position, playerId, declaredRank, isTossInPhase)
@@ -84,8 +87,11 @@ private fun applyCorrectDeclaration(
         )
         setupKingTossIn(state, playerId, declaredRank, hasAction = true)
     } else {
-        if (isTossInPhase) state.discardPile.addBeforeTop(removedCard)
-        else state.discardPile.addToTop(removedCard)
+        if (isTossInPhase) {
+            state.discardPile.addBeforeTop(removedCard)
+        } else {
+            state.discardPile.addToTop(removedCard)
+        }
         state.pendingAction = null
         setupKingTossIn(state, playerId, declaredRank, hasAction = false)
     }

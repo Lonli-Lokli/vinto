@@ -19,14 +19,20 @@ import kotlin.test.assertTrue
 class MemoryDecayTest {
 
     private fun handOfFive() = listOf(
-        testCard(Rank.FIVE, "c0"), testCard(Rank.NINE, "c1"), testCard(Rank.QUEEN, "c2"),
-        testCard(Rank.TWO, "c3"), testCard(Rank.KING, "c4"),
+        testCard(Rank.FIVE, "c0"),
+        testCard(Rank.NINE, "c1"),
+        testCard(Rank.QUEEN, "c2"),
+        testCard(Rank.TWO, "c3"),
+        testCard(Rank.KING, "c4"),
     )
 
     private fun contextAtTurn(turn: Int, gameId: String = "test-game"): BotDecisionContext {
         val bot = testPlayer(
-            "bot", "Bot", isHuman = false,
-            cards = handOfFive(), knownCardPositions = (0..4).toList(),
+            "bot",
+            "Bot",
+            isHuman = false,
+            cards = handOfFive(),
+            knownCardPositions = (0..4).toList(),
         )
         val state = testState(
             players = listOf(bot, testPlayer("p2", "P2", isHuman = true)),
@@ -79,8 +85,11 @@ class MemoryDecayTest {
         val freshDeal = testState(
             players = listOf(
                 testPlayer(
-                    "bot", "Bot", isHuman = false,
-                    cards = handOfFive(), knownCardPositions = emptyList(),
+                    "bot",
+                    "Bot",
+                    isHuman = false,
+                    cards = handOfFive(),
+                    knownCardPositions = emptyList(),
                 ),
                 testPlayer("p2", "P2", isHuman = true),
             ),

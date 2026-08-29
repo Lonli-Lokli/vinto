@@ -141,8 +141,10 @@ class TossInAreaTest {
             // deal would have to keep producing.
             val deck = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
                 .fetchSemanticsNodes()
-                .first { n -> n.config.getOrNull(SemanticsProperties.ContentDescription)
-                    ?.firstOrNull()?.endsWith("cards left in the deck") == true }
+                .first { n ->
+                    n.config.getOrNull(SemanticsProperties.ContentDescription)
+                        ?.firstOrNull()?.endsWith("cards left in the deck") == true
+                }
             tall = deck.boundsInRoot.top.toInt()
         }
         return tall

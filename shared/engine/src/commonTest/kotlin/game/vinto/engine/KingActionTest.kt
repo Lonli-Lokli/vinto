@@ -28,7 +28,8 @@ class KingActionTest {
         position: Int,
         card: game.vinto.shapes.Card? = null,
     ) = pending(
-        testCard(Rank.KING, "king1"), "p1",
+        testCard(Rank.KING, "king1"),
+        "p1",
         targets = listOf(ActionTarget(targetPlayerId, position, card)),
     )
 
@@ -39,7 +40,9 @@ class KingActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true, cards = listOf(testCard(Rank.FIVE, "p1c1"))),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
@@ -68,7 +71,9 @@ class KingActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true, cards = listOf(testCard(Rank.JOKER, "p1c1"))),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
@@ -91,7 +96,9 @@ class KingActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(
                         testCard(Rank.SEVEN, "p1c1"),
                         testCard(Rank.TWO, "p1c2"),
@@ -120,7 +127,9 @@ class KingActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.TWO, "p1c1"), testCard(Rank.THREE, "p1c2")),
                 ),
             ),
@@ -144,7 +153,9 @@ class KingActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true, cards = listOf(testCard(Rank.KING, "p1c1"))),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
@@ -175,7 +186,9 @@ class KingActionTest {
         turnNumber = 1,
         players = listOf(
             testPlayer(
-                "p1", "Player 1", isHuman = true,
+                "p1",
+                "Player 1",
+                isHuman = true,
                 cards = listOf(
                     testCard(Rank.SEVEN, "p1c1"),
                     testCard(Rank.TWO, "p1c2"),
@@ -183,7 +196,9 @@ class KingActionTest {
                 ),
             ),
             testPlayer(
-                "p2", "Player 2", isHuman = true,
+                "p2",
+                "Player 2",
+                isHuman = true,
                 cards = listOf(
                     testCard(secondPlayerFirstCard, "p2c1"),
                     testCard(Rank.TWO, "p2c2"),
@@ -248,12 +263,15 @@ class KingActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.ACE, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.KING, "king1"), "p1",
+                testCard(Rank.KING, "king1"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -273,7 +291,9 @@ class KingActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.KING, "p2k1"), testCard(Rank.SEVEN, "p2c2")),
                 ),
             ),
@@ -297,7 +317,9 @@ class KingActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.KING, "p2k1"), testCard(Rank.FOUR, "p2c2")),
                 ),
             ),

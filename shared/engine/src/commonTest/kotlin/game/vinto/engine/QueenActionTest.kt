@@ -30,17 +30,22 @@ class QueenActionTest {
     private fun threeSeats() = listOf(
         testPlayer("p1", "Player 1", isHuman = true),
         testPlayer(
-            "p2", "Player 2", isHuman = false,
+            "p2",
+            "Player 2",
+            isHuman = false,
             cards = listOf(testCard(Rank.KING, "p2c1"), testCard(Rank.ACE, "p2c2")),
         ),
         testPlayer(
-            "p3", "Player 3", isHuman = false,
+            "p3",
+            "Player 3",
+            isHuman = false,
             cards = listOf(testCard(Rank.SEVEN, "p3c1"), testCard(Rank.EIGHT, "p3c2")),
         ),
     )
 
     private fun aimedAtTwoSeats() = pending(
-        testCard(Rank.QUEEN, "queen1"), "p1",
+        testCard(Rank.QUEEN, "queen1"),
+        "p1",
         targets = listOf(ActionTarget("p2", 0), ActionTarget("p3", 1)),
     )
 
@@ -88,15 +93,20 @@ class QueenActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(
-                        testCard(Rank.KING, "p2c1"), testCard(Rank.ACE, "p2c2"),
-                        testCard(Rank.SEVEN, "p2c3"), testCard(Rank.EIGHT, "p2c4"),
+                        testCard(Rank.KING, "p2c1"),
+                        testCard(Rank.ACE, "p2c2"),
+                        testCard(Rank.SEVEN, "p2c3"),
+                        testCard(Rank.EIGHT, "p2c4"),
                     ),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.QUEEN, "queen1"), "p1",
+                testCard(Rank.QUEEN, "queen1"),
+                "p1",
                 targets = listOf(ActionTarget("p2", 0), ActionTarget("p2", 3)),
             ),
         )
@@ -111,12 +121,15 @@ class QueenActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.ACE, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.QUEEN, "queen1"), "p1",
+                testCard(Rank.QUEEN, "queen1"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -136,7 +149,9 @@ class QueenActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.QUEEN, "p2q1"), testCard(Rank.SEVEN, "p2c2")),
                 ),
             ),
@@ -211,14 +226,16 @@ class QueenActionTest {
         val one = testState(
             subPhase = GameSubPhase.AWAITING_ACTION,
             pendingAction = pending(
-                testCard(Rank.QUEEN, "queen1"), "p1",
+                testCard(Rank.QUEEN, "queen1"),
+                "p1",
                 targets = listOf(ActionTarget("p2", 0)),
             ),
         )
         val three = testState(
             subPhase = GameSubPhase.AWAITING_ACTION,
             pendingAction = pending(
-                testCard(Rank.QUEEN, "queen1"), "p1",
+                testCard(Rank.QUEEN, "queen1"),
+                "p1",
                 targets = listOf(ActionTarget("p2", 0), ActionTarget("p2", 1), ActionTarget("p2", 2)),
             ),
         )

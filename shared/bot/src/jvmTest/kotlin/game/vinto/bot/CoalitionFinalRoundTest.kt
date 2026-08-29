@@ -6,8 +6,8 @@ import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.shapes.Card
 import game.vinto.shapes.Difficulty
-import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Pile

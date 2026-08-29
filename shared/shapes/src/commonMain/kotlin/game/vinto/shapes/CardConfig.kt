@@ -84,7 +84,7 @@ val CARD_CONFIGS: Map<Rank, CardConfig> = mapOf(
         value = 10,
         shortDescription = "Peek 2 cards from 2 players, swap optional",
         longDescription =
-            "Peek at any two cards from two different players, then optionally swap them",
+        "Peek at any two cards from two different players, then optionally swap them",
         helpText = "1. Peek at two cards from different players (can be your own or " +
             "opponents, but must be from different players)\n2. After peeking both cards, " +
             "decide whether to swap them",

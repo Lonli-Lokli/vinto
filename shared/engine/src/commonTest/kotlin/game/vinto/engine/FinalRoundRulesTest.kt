@@ -5,7 +5,6 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlayerIdPayload
-import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -43,8 +42,10 @@ class FinalRoundRulesTest {
             testPlayer("p4", "Player 4", isHuman = false, cards = listOf(testCard(Rank.NINE, "p4c1"))),
         )
         val deck = pileOf(
-            testCard(Rank.THREE, "d1"), testCard(Rank.FOUR, "d2"),
-            testCard(Rank.THREE, "d3"), testCard(Rank.FOUR, "d4"),
+            testCard(Rank.THREE, "d1"),
+            testCard(Rank.FOUR, "d2"),
+            testCard(Rank.THREE, "d3"),
+            testCard(Rank.FOUR, "d4"),
         )
         var state = testState(players = players, drawPile = deck)
 
@@ -87,7 +88,9 @@ class FinalRoundRulesTest {
             coalitionLeaderId = null,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer("p2", "Player 2", isHuman = false, cards = listOf(testCard(Rank.TWO, "p2c1"))),
@@ -110,12 +113,16 @@ class FinalRoundRulesTest {
             vintoCallerId = "p1",
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.FIVE, "p1c1")),
                 ),
                 testPlayer("p2", "Player 2", isHuman = false, cards = listOf(testCard(Rank.TWO, "p2c1"))),
                 testPlayer(
-                    "p3", "Player 3", isHuman = false,
+                    "p3",
+                    "Player 3",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.FIVE, "p3c1"), testCard(Rank.NINE, "p3c2")),
                 ),
             ),
@@ -199,7 +206,9 @@ class FinalRoundRulesTest {
         // exactly one turn, and the scoring comes out per the rules.
         val players = listOf(
             testPlayer(
-                "p1", "Player 1", isHuman = true,
+                "p1",
+                "Player 1",
+                isHuman = true,
                 cards = listOf(testCard(Rank.SIX, "p1c1"), testCard(Rank.SEVEN, "p1c2")),
             ),
             testPlayer("p2", "Player 2", isHuman = true, cards = listOf(testCard(Rank.FIVE, "p2c1"))),
@@ -207,10 +216,10 @@ class FinalRoundRulesTest {
             testPlayer("p4", "Player 4", isHuman = true, cards = listOf(testCard(Rank.NINE, "p4c1"))),
         )
         val deck = pileOf(
-            testCard(Rank.THREE, "d1"),   // p1's draw, discarded before the call
+            testCard(Rank.THREE, "d1"), // p1's draw, discarded before the call
             testCard(Rank.JACK, "dJack"), // p2 draws the Jack and plays it
-            testCard(Rank.FOUR, "d3"),    // p3's draw
-            testCard(Rank.FOUR, "d4"),    // p4's draw
+            testCard(Rank.FOUR, "d3"), // p3's draw
+            testCard(Rank.FOUR, "d4"), // p4's draw
         )
         var state = testState(players = players, drawPile = deck)
         val callerCardIds = state.players[0].cards.map { it.id }

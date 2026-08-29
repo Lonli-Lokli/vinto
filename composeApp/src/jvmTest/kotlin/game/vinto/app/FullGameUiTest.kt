@@ -1,18 +1,17 @@
 package game.vinto.app
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.SemanticsMatcher
-import game.vinto.app.LocalPacing
 import game.vinto.app.game.GameScreen
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.LocalGame
@@ -20,9 +19,9 @@ import game.vinto.client.MemoryVault
 import game.vinto.client.Pace
 import game.vinto.client.playItselfOut
 import game.vinto.shapes.Difficulty
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
 
 /**
  * One whole round, on the real screen, start to standings.

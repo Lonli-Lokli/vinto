@@ -149,7 +149,7 @@ class CrowdedTableTest {
         const val ME = "You,"
         const val SEATS = 4
 
-            /** The narrowest strip of a card a thumb can be asked to find on its own. */
+        /** The narrowest strip of a card a thumb can be asked to find on its own. */
         const val STRIP = 24f
 
         /**

@@ -79,13 +79,19 @@ fun evaluateRelativePosition(state: MctsGameState, botPlayer: MctsPlayerState): 
     val bestOpponentScore = opponents.minOf { it.score }
     val averageOpponentCards = opponents.sumOf { it.cardCount }.toDouble() / opponents.size
 
-    val scoreComponent = ((averageOpponentScore - botPlayer.score + SCORE_ADVANTAGE_OFFSET) /
-        SCORE_ADVANTAGE_SPAN).coerceIn(0.0, 1.0)
-    val cardComponent = ((averageOpponentCards - botPlayer.cardCount + CARD_ADVANTAGE_OFFSET) /
-        CARD_ADVANTAGE_SPAN).coerceIn(0.0, 1.0)
+    val scoreComponent = (
+        (averageOpponentScore - botPlayer.score + SCORE_ADVANTAGE_OFFSET) /
+            SCORE_ADVANTAGE_SPAN
+        ).coerceIn(0.0, 1.0)
+    val cardComponent = (
+        (averageOpponentCards - botPlayer.cardCount + CARD_ADVANTAGE_OFFSET) /
+            CARD_ADVANTAGE_SPAN
+        ).coerceIn(0.0, 1.0)
     // Being ahead of the *field* is worth less than being ahead of whoever is actually winning.
-    val competitive = ((bestOpponentScore - botPlayer.score + BEST_RIVAL_OFFSET) /
-        BEST_RIVAL_SPAN).coerceIn(0.0, 1.0)
+    val competitive = (
+        (bestOpponentScore - botPlayer.score + BEST_RIVAL_OFFSET) /
+            BEST_RIVAL_SPAN
+        ).coerceIn(0.0, 1.0)
 
     return scoreComponent * POSITION_SCORE_WEIGHT +
         cardComponent * POSITION_CARD_WEIGHT +
@@ -144,8 +150,11 @@ private const val MAX_ACTION_VALUE = 50.0
 @Suppress("MagicNumber")
 fun evaluateInformationAdvantage(state: MctsGameState, botPlayer: MctsPlayerState): Double {
     val ownKnowledge =
-        if (botPlayer.cardCount > 0) botPlayer.knownCards.size.toDouble() / botPlayer.cardCount
-        else 0.0
+        if (botPlayer.cardCount > 0) {
+            botPlayer.knownCards.size.toDouble() / botPlayer.cardCount
+        } else {
+            0.0
+        }
 
     val opponents = state.players.filter { it.id != botPlayer.id }
     val totalOpponentCards = opponents.sumOf { it.cardCount }

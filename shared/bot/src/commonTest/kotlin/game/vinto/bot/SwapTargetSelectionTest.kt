@@ -38,10 +38,18 @@ class SwapTargetSelectionTest {
         knownOfHuman: Map<Int, Card> = emptyMap(),
     ): BotDecisionContext {
         val botPlayer = testPlayer(
-            botId, "Bot Player", isHuman = false, cards = botCards, knownCardPositions = botKnown,
+            botId,
+            "Bot Player",
+            isHuman = false,
+            cards = botCards,
+            knownCardPositions = botKnown,
         )
         val human = testPlayer(
-            humanId, "Human Player", isHuman = true, cards = humanCards, knownCardPositions = emptyList(),
+            humanId,
+            "Human Player",
+            isHuman = true,
+            cards = humanCards,
+            knownCardPositions = emptyList(),
         )
         val state = testState(
             players = listOf(botPlayer, human),
@@ -231,7 +239,9 @@ class SwapTargetSelectionTest {
                 contextFor(
                     actionCard = testCard(rank, "action-card"),
                     botCards = listOf(
-                        testCard(Rank.EIGHT, "b0"), testCard(Rank.NINE, "b1"), testCard(Rank.TEN, "b2"),
+                        testCard(Rank.EIGHT, "b0"),
+                        testCard(Rank.NINE, "b1"),
+                        testCard(Rank.TEN, "b2"),
                     ),
                     botKnown = known,
                     humanCards = List(humanHandSize) { testCard(Rank.FIVE, "h$it") },

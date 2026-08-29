@@ -24,9 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.score_column_game
-import game.vinto.app.art.score_deck_ended
 import game.vinto.app.art.score_column_hand
 import game.vinto.app.art.score_column_round
+import game.vinto.app.art.score_deck_ended
 import game.vinto.app.art.score_next_round
 import game.vinto.app.art.score_round
 import game.vinto.app.art.score_stop

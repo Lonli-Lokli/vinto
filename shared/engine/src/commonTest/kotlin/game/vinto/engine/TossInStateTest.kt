@@ -47,7 +47,9 @@ class TossInStateTest {
                 listOf(testCard(Rank.FIVE, "b3"), testCard(Rank.SIX, "b4")),
             ),
             drawPile = pileOf(
-                testCard(Rank.TWO, "d1"), testCard(Rank.EIGHT, "d2"), testCard(Rank.NINE, "d3"),
+                testCard(Rank.TWO, "d1"),
+                testCard(Rank.EIGHT, "d2"),
+                testCard(Rank.NINE, "d3"),
             ),
         )
 
@@ -118,20 +120,28 @@ class TossInStateTest {
             subPhase = GameSubPhase.AI_THINKING,
             players = listOf(
                 testPlayer(
-                    "bot-1", "Bot 1", isHuman = false,
+                    "bot-1",
+                    "Bot 1",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.QUEEN, "b1q"), testCard(Rank.THREE, "b1c2")),
                 ),
                 testPlayer(
-                    "bot-2", "Bot 2", isHuman = false,
+                    "bot-2",
+                    "Bot 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.TWO, "b2c1"), testCard(Rank.FOUR, "b2c2")),
                 ),
                 testPlayer(
-                    "bot-3", "Bot 3", isHuman = false,
+                    "bot-3",
+                    "Bot 3",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.FIVE, "b3c1"), testCard(Rank.SIX, "b3c2")),
                 ),
             ),
             drawPile = pileOf(
-                testCard(Rank.TWO, "d1"), testCard(Rank.EIGHT, "d2"), testCard(Rank.NINE, "d3"),
+                testCard(Rank.TWO, "d1"),
+                testCard(Rank.EIGHT, "d2"),
+                testCard(Rank.NINE, "d3"),
             ),
         )
 

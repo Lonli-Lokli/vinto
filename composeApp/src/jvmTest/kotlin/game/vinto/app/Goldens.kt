@@ -2,12 +2,12 @@ package game.vinto.app
 
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.test.fail
-import org.jetbrains.skia.EncodedImageFormat
-import org.jetbrains.skia.Image
 
 /**
  * The golden images: what the screens looked like when somebody last said they were right.
@@ -46,8 +46,10 @@ object Goldens {
         val beside = File(dir, "$name.actual.png")
         if (quarrel != null) {
             beside.writeBytes(bytes)
-            fail("$name: $quarrel. The rendering is beside the golden as ${beside.name}; " +
-                "if the change is intended, delete the golden and run twice.")
+            fail(
+                "$name: $quarrel. The rendering is beside the golden as ${beside.name}; " +
+                    "if the change is intended, delete the golden and run twice."
+            )
         }
         // A stale .actual from a failure since fixed would sit there implying one.
         beside.delete()

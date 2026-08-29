@@ -1,9 +1,9 @@
 package game.vinto.client
 
-import game.vinto.engine.createDeck
-import game.vinto.engine.projectView
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
+import game.vinto.engine.createDeck
+import game.vinto.engine.projectView
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
@@ -208,7 +208,6 @@ class TeachingRoundTest {
             "and it ends where it said it ended",
         )
     }
-
 }
 
 /**

@@ -26,16 +26,21 @@ class AceActionTest {
             drawPile = pileOf(testCard(Rank.KING, "penalty1"), testCard(Rank.QUEEN, "card2")),
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.ACE, "ace1"), "p1",
+                testCard(Rank.ACE, "ace1"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -61,12 +66,15 @@ class AceActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.ACE, "ace1"), "p1",
+                testCard(Rank.ACE, "ace1"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
                 from = PendingCardOrigin.HAND,
             ),
@@ -113,11 +121,15 @@ class AceActionTest {
             drawPile = pileOf(testCard(Rank.KING, "penalty1")),
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(
                         testCard(Rank.ACE, "p2c1"),
                         testCard(Rank.SEVEN, "p2c2"),
@@ -183,7 +195,9 @@ class AceActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),

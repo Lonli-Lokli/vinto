@@ -21,7 +21,6 @@ import kotlinx.serialization.encoding.Encoder
  * Getting this wrong does not fail quietly: the canonical string changes and the state
  * hash stops matching TypeScript's.
  */
-@OptIn(ExperimentalSerializationApi::class)
 /**
  * Whether this card's action is still there for the taking.
  *
@@ -31,6 +30,7 @@ import kotlinx.serialization.encoding.Encoder
  * spent. Nothing about the two cards looks different once they have landed, which is why the
  * table draws a ring round this one.
  */
+@OptIn(ExperimentalSerializationApi::class)
 fun Card.actionIsLive(): Boolean = actionText != null && !played
 
 @Serializable
@@ -75,13 +75,19 @@ class Pile(cards: List<Card> = emptyList()) {
 
     /** Inserts directly beneath the top card — used when a penalty card must not be drawn next. */
     fun addBeforeTop(card: Card): Pile =
-        if (cards.isEmpty()) Pile(listOf(card))
-        else Pile(listOf(cards[0]) + card + cards.drop(1))
+        if (cards.isEmpty()) {
+            Pile(listOf(card))
+        } else {
+            Pile(listOf(cards[0]) + card + cards.drop(1))
+        }
 
     /** The card at [index] and the pile without it; `null` when out of range. */
     fun takeAt(index: Int): Pair<Card?, Pile> =
-        if (index !in cards.indices) null to this
-        else cards[index] to Pile(cards.filterIndexed { i, _ -> i != index })
+        if (index !in cards.indices) {
+            null to this
+        } else {
+            cards[index] to Pile(cards.filterIndexed { i, _ -> i != index })
+        }
 
     fun toList(): List<Card> = cards
 

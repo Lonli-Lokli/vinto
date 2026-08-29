@@ -1,6 +1,5 @@
 package game.vinto.client
 
-import game.vinto.engine.projectView
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
@@ -12,7 +11,6 @@ import game.vinto.shapes.RankPayload
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -245,8 +243,12 @@ class AnimationMapTest {
 
         return Row(
             what = what,
-            flights = if (moves.isEmpty()) "nothing moves" else moves.joinToString { move ->
-                "${place(move.from, me)} → ${place(move.to, me)}" + if (move.shown) " (lit)" else ""
+            flights = if (moves.isEmpty()) {
+                "nothing moves"
+            } else {
+                moves.joinToString { move ->
+                    "${place(move.from, me)} → ${place(move.to, me)}" + if (move.shown) " (lit)" else ""
+                }
             },
             seen = (beats.map { describe(it, me) } + listOfNotNull(stays))
                 .joinToString(", ")
@@ -292,7 +294,9 @@ class AnimationMapTest {
         val flies = maxOf(rows.maxOf { it.flights.length }, HEADING)
         return buildString {
             appendLine()
-            appendLine("| ${"What you do".padEnd(what)} | ${"What flies, and where".padEnd(flies)} | What it looks like |")
+            appendLine(
+                "| ${"What you do".padEnd(what)} | ${"What flies, and where".padEnd(flies)} | What it looks like |"
+            )
             appendLine("| ${"-".repeat(what)} | ${"-".repeat(flies)} | ------------------ |")
             rows.forEach {
                 appendLine("| ${it.what.padEnd(what)} | ${it.flights.padEnd(flies)} | ${it.seen} |")

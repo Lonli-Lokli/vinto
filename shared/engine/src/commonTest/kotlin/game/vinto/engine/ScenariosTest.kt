@@ -51,8 +51,13 @@ class ScenariosTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 seat(
-                    "human-1", "Human", true,
-                    ace1, ace2, testCard(Rank.TWO, "2_1"), testCard(Rank.THREE, "3_1"),
+                    "human-1",
+                    "Human",
+                    true,
+                    ace1,
+                    ace2,
+                    testCard(Rank.TWO, "2_1"),
+                    testCard(Rank.THREE, "3_1"),
                 ),
                 seat("bot-1", "Bot 1", false, testCard(Rank.TWO, "2_2"), testCard(Rank.THREE, "3_2")),
                 seat("bot-2", "Bot 2", false, testCard(Rank.TWO, "2_3"), testCard(Rank.THREE, "3_3")),
@@ -125,21 +130,30 @@ class ScenariosTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 seat(
-                    "bot-1", "Bot 1", false,
-                    testCard(Rank.KING, "bot1_K"), testCard(Rank.SEVEN, "bot1_7"),
-                    testCard(Rank.EIGHT, "bot1_8"), testCard(Rank.NINE, "bot1_9"),
+                    "bot-1",
+                    "Bot 1",
+                    false,
+                    testCard(Rank.KING, "bot1_K"),
+                    testCard(Rank.SEVEN, "bot1_7"),
+                    testCard(Rank.EIGHT, "bot1_8"),
+                    testCard(Rank.NINE, "bot1_9"),
                 ),
                 seat(
-                    "bot-2", "Bot 2", false,
-                    testCard(Rank.KING, "bot2_K"), testCard(Rank.SIX, "bot2_6"),
-                    testCard(Rank.SEVEN, "bot2_7"), testCard(Rank.EIGHT, "bot2_8"),
+                    "bot-2",
+                    "Bot 2",
+                    false,
+                    testCard(Rank.KING, "bot2_K"),
+                    testCard(Rank.SIX, "bot2_6"),
+                    testCard(Rank.SEVEN, "bot2_7"),
+                    testCard(Rank.EIGHT, "bot2_8"),
                 ),
                 seat("bot-3", "Bot 3", false, testCard(Rank.TWO, "bot3_2"), testCard(Rank.THREE, "bot3_3")),
                 seat("bot-4", "Bot 4", false, testCard(Rank.TWO, "bot4_2"), testCard(Rank.THREE, "bot4_3")),
             ),
             drawPile = pileOf(testCard(Rank.JACK, "draw_J"), testCard(Rank.QUEEN, "draw_Q")),
             pendingAction = pending(
-                testCard(Rank.NINE, "bot2_draw"), "bot-2",
+                testCard(Rank.NINE, "bot2_draw"),
+                "bot-2",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -238,8 +252,10 @@ class ScenariosTest {
             turnNumber = 1,
             players = fourSeatsWithActionCards(),
             drawPile = pileOf(
-                testCard(Rank.TWO, "2"), testCard(Rank.THREE, "3"),
-                testCard(Rank.FOUR, "4"), testCard(Rank.FIVE, "5"),
+                testCard(Rank.TWO, "2"),
+                testCard(Rank.THREE, "3"),
+                testCard(Rank.FOUR, "4"),
+                testCard(Rank.FIVE, "5"),
             ),
         )
 
@@ -274,8 +290,10 @@ class ScenariosTest {
             turnNumber = 1,
             players = fourSeatsWithActionCards(),
             drawPile = pileOf(
-                testCard(Rank.QUEEN, "draw1"), testCard(Rank.QUEEN, "draw2"),
-                testCard(Rank.QUEEN, "draw3"), testCard(Rank.QUEEN, "draw4"),
+                testCard(Rank.QUEEN, "draw1"),
+                testCard(Rank.QUEEN, "draw2"),
+                testCard(Rank.QUEEN, "draw3"),
+                testCard(Rank.QUEEN, "draw4"),
             ),
         )
 
@@ -308,8 +326,10 @@ class ScenariosTest {
             turnNumber = 1,
             players = fourSeatsWithActionCards(),
             drawPile = pileOf(
-                testCard(Rank.TWO, "draw1"), testCard(Rank.THREE, "draw2"),
-                testCard(Rank.FOUR, "draw3"), testCard(Rank.FIVE, "draw4"),
+                testCard(Rank.TWO, "draw1"),
+                testCard(Rank.THREE, "draw2"),
+                testCard(Rank.FOUR, "draw3"),
+                testCard(Rank.FIVE, "draw4"),
             ),
             discardPile = pileOf(
                 testCard(Rank.SIX, "discard1"),

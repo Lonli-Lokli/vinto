@@ -11,7 +11,6 @@ import game.vinto.shapes.SerializedOpponentKnowledge
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -215,7 +214,8 @@ class CoalitionHumanMemberTest {
             players = listOf(
                 seat("human-caller", isHuman = true, ranks = listOf(Rank.KING)),
                 seat(
-                    "bot-1", isHuman = false,
+                    "bot-1",
+                    isHuman = false,
                     ranks = listOf(Rank.FIVE, Rank.JOKER, Rank.NINE, Rank.QUEEN, Rank.TWO),
                 ),
                 seat("bot-2", isHuman = false, ranks = listOf(Rank.TWO)),
@@ -223,7 +223,11 @@ class CoalitionHumanMemberTest {
             callerId = "human-caller",
         )
         val truth = mapOf(
-            0 to Rank.FIVE, 1 to Rank.JOKER, 2 to Rank.NINE, 3 to Rank.QUEEN, 4 to Rank.TWO,
+            0 to Rank.FIVE,
+            1 to Rank.JOKER,
+            2 to Rank.NINE,
+            3 to Rank.QUEEN,
+            4 to Rank.TWO,
         )
 
         fun declaredWithSeed(seed: Int): Map<Int, Rank>? {
@@ -256,7 +260,9 @@ class CoalitionHumanMemberTest {
             players = listOf(
                 seat("human-caller", isHuman = false, ranks = listOf(Rank.KING)),
                 seat(
-                    "bot-1", isHuman = false, ranks = listOf(Rank.TWO, Rank.FIVE),
+                    "bot-1",
+                    isHuman = false,
+                    ranks = listOf(Rank.TWO, Rank.FIVE),
                     declared = mapOf(0 to Rank.TWO),
                     knownPositions = listOf(0),
                 ),

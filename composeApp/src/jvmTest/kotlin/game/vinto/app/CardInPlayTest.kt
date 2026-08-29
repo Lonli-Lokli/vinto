@@ -1,6 +1,7 @@
 package game.vinto.app
 
 import game.vinto.app.game.pileFace
+import game.vinto.client.LocalGameSession
 import game.vinto.engine.cardInPlay
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
@@ -9,7 +10,6 @@ import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.RankPayload
-import game.vinto.client.LocalGameSession
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

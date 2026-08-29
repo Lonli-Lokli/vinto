@@ -303,10 +303,12 @@ class LocalGameSession(
         // On the transition alone: `publish` runs twice for a dispatch that the bots answer,
         // and a round does not end twice.
         if (!wasOver && state.phase == GamePhase.SCORING) {
-            _events.tryEmit(SessionEvent.RoundEnded(
-                scores = calculateFinalScores(state.players, state.vintoCallerId),
-                points = calculateRoundPoints(state.players, state.vintoCallerId),
-            ))
+            _events.tryEmit(
+                SessionEvent.RoundEnded(
+                    scores = calculateFinalScores(state.players, state.vintoCallerId),
+                    points = calculateRoundPoints(state.players, state.vintoCallerId),
+                )
+            )
         }
     }
 

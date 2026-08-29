@@ -81,7 +81,6 @@ private const val NEUTRAL_AVERAGE_CARD_VALUE = 6.0
 
 /** A memory below this confidence is a hunch, not a fact, and is estimated rather than trusted. */
 
-
 class BotMemory(
     private val botId: String,
     difficulty: Difficulty,
@@ -275,8 +274,11 @@ fun estimatePlayerScore(handSize: Int, botMemory: BotMemory, playerId: String): 
     var unknownCount = 0
     for (position in 0 until handSize) {
         val memory = known[position]
-        if (memory != null && memory.confidence > TRUSTED_CONFIDENCE) knownScore += memory.card.value
-        else unknownCount++
+        if (memory != null && memory.confidence > TRUSTED_CONFIDENCE) {
+            knownScore += memory.card.value
+        } else {
+            unknownCount++
+        }
     }
 
     return knownScore + unknownCount * averageRemainingCardValue(botMemory)

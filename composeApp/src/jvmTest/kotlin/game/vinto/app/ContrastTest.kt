@@ -183,12 +183,15 @@ class ContrastTest {
     }
 
     private fun Color.compositeOver(bg: Color): Color =
-        if (alpha == 1f) this
-        else Color(
-            red = red * alpha + bg.red * (1 - alpha),
-            green = green * alpha + bg.green * (1 - alpha),
-            blue = blue * alpha + bg.blue * (1 - alpha),
-        )
+        if (alpha == 1f) {
+            this
+        } else {
+            Color(
+                red = red * alpha + bg.red * (1 - alpha),
+                green = green * alpha + bg.green * (1 - alpha),
+                blue = blue * alpha + bg.blue * (1 - alpha),
+            )
+        }
 
     private fun contrast(a: Color, b: Color): Double {
         val (hi, lo) = listOf(luminance(a), luminance(b)).sorted().reversed()

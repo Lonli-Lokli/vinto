@@ -155,7 +155,9 @@ class StateHashTest {
                         "p2" to SerializedOpponentKnowledge(knownCards = mapOf(0 to card("k", Rank.FIVE))),
                     ),
                 ),
-                player("p2"), player("p3"), player("p4"),
+                player("p2"),
+                player("p3"),
+                player("p4"),
             ),
         )
 
@@ -174,7 +176,9 @@ class StateHashTest {
         val declared = state(
             players = listOf(
                 player("p1").copy(declaredCards = mapOf(0 to Rank.QUEEN)),
-                player("p2"), player("p3"), player("p4"),
+                player("p2"),
+                player("p3"),
+                player("p4"),
             ),
         )
 

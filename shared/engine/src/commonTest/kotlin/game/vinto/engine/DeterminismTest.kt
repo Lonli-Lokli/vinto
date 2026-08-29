@@ -70,8 +70,10 @@ class DeterminismTest {
                 testPlayer("p4", "Player 4", isHuman = false, cards = listOf(testCard(Rank.FIVE, "p4c1"))),
             ),
             drawPile = pileOf(
-                testCard(Rank.TWO, "draw1"), testCard(Rank.THREE, "draw2"),
-                testCard(Rank.FOUR, "draw3"), testCard(Rank.FIVE, "draw4"),
+                testCard(Rank.TWO, "draw1"),
+                testCard(Rank.THREE, "draw2"),
+                testCard(Rank.FOUR, "draw3"),
+                testCard(Rank.FIVE, "draw4"),
             ),
             discardPile = pileOf(
                 testCard(Rank.SIX, "discard1"),

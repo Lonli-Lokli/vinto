@@ -108,8 +108,11 @@ fun advanceTurnAfterTossIn(state: MutableGameState) {
     tossIn.originalPlayerIndex = state.currentPlayerIndex
 
     state.subPhase =
-        if (state.players[state.currentPlayerIndex].isBot) GameSubPhase.AI_THINKING
-        else GameSubPhase.IDLE
+        if (state.players[state.currentPlayerIndex].isBot) {
+            GameSubPhase.AI_THINKING
+        } else {
+            GameSubPhase.IDLE
+        }
 }
 
 /**
@@ -118,8 +121,11 @@ fun advanceTurnAfterTossIn(state: MutableGameState) {
  */
 fun addTossInCard(currentRanks: MutableList<Rank>, rank: Rank?): MutableList<Rank> {
     if (rank == null || currentRanks.contains(rank)) return currentRanks
-    return if (currentRanks.contains(Rank.KING)) (currentRanks + rank).toMutableList()
-    else mutableListOf(rank)
+    return if (currentRanks.contains(Rank.KING)) {
+        (currentRanks + rank).toMutableList()
+    } else {
+        mutableListOf(rank)
+    }
 }
 
 /**
@@ -163,8 +169,11 @@ fun clearTossInAfterActionableCard(
     if (tossIn.queuedActions.isEmpty()) {
         val pending = state.pendingAction
         tossIn.ranks =
-            if (pending?.from == PendingCardOrigin.DRAWING) mutableListOf(pending.card.rank)
-            else addTossInCard(tossIn.ranks, pending?.card?.rank)
+            if (pending?.from == PendingCardOrigin.DRAWING) {
+                mutableListOf(pending.card.rank)
+            } else {
+                addTossInCard(tossIn.ranks, pending?.card?.rank)
+            }
 
         state.pendingAction = null
         clearTossInReadyList(state)

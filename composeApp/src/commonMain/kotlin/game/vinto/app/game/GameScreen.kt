@@ -300,4 +300,3 @@ private fun RoundOver(onSee: () -> Unit) {
 
 /** The widest "See the score" needs to be, on any screen. */
 private val RoundOverWidth = 420.dp
-

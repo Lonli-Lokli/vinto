@@ -149,22 +149,32 @@ private val FeltInk = Color(0xFFF2F5F0)
  */
 object Rail {
     /** The panel itself. */
-    val fill: Color @Composable @ReadOnlyComposable get() = pick(SlateFill, PaperFill)
+    val fill: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateFill, PaperFill)
 
     /** Anything a player reads. */
-    val ink: Color @Composable @ReadOnlyComposable get() = pick(SlateInk, PaperInk)
+    val ink: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateInk, PaperInk)
 
     /** The second line: detail, footnotes, the log. Still 4.5:1 on [fill]. */
-    val inkDim: Color @Composable @ReadOnlyComposable get() = pick(SlateInkDim, PaperInkDim)
+    val inkDim: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateInkDim, PaperInkDim)
 
     /** A hairline between two things. Decorative: nothing is lost if it is not seen. */
-    val line: Color @Composable @ReadOnlyComposable get() = pick(SlateLine, PaperLine)
+    val line: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateLine, PaperLine)
 
     /**
      * The outline of a control — a chip, a switch's track. Not decorative: it is what says
      * where the thing you may press begins, so it clears 3:1 against [fill] in both schemes.
      */
-    val edge: Color @Composable @ReadOnlyComposable get() = pick(SlateEdge, PaperEdge)
+    val edge: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateEdge, PaperEdge)
 
     /**
      * Gold, dark enough to read as text on whichever [fill] it lands on.
@@ -173,7 +183,9 @@ object Rail {
      * gold: 6.7:1 on slate and 1.9:1 on paper, which is the active player's own name turning
      * invisible on a light phone.
      */
-    val gold: Color @Composable @ReadOnlyComposable get() = pick(Gold, DeepGold)
+    val gold: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(Gold, DeepGold)
 
     /**
      * The name of the game, and the app's one accent.
@@ -186,13 +198,19 @@ object Rail {
      * Two values because it is a *material*: the same brass is dark on paper and bright on
      * slate, which is what metal does, and either way it is read.
      */
-    val brand: Color @Composable @ReadOnlyComposable get() = gold
+    val brand: Color
+        @Composable @ReadOnlyComposable
+        get() = gold
 
     /** The coach's own voice, and the chapter marks beside it. */
-    val coach: Color @Composable @ReadOnlyComposable get() = pick(Mint, DeepCoach)
+    val coach: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(Mint, DeepCoach)
 
     /** What a card just turned over is, and other asides. Gold's quieter cousin. */
-    val note: Color @Composable @ReadOnlyComposable get() = pick(Amber, DeepGold)
+    val note: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(Amber, DeepGold)
 }
 
 @Composable

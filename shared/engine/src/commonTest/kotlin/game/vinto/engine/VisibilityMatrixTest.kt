@@ -523,8 +523,11 @@ class VisibilityMatrixTest {
             testPlayer("p3", "P3", isHuman = false, cards = listOf(testCard(Rank.TWO, "end_p3_0"))),
             testPlayer("p4", "P4", isHuman = false, cards = listOf(testCard(Rank.ACE, "end_p4_0"))),
         ).map {
-            if (it.id == "p1") it.copy(isVintoCaller = true)
-            else it.copy(coalitionWith = listOf("p2", "p3", "p4") - it.id)
+            if (it.id == "p1") {
+                it.copy(isVintoCaller = true)
+            } else {
+                it.copy(coalitionWith = listOf("p2", "p3", "p4") - it.id)
+            }
         }
         return testState(
             players = players,

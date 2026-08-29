@@ -1,18 +1,18 @@
 package game.vinto.room
 
 import game.vinto.bot.BotRunner
+import game.vinto.client.ConnectionState
 import game.vinto.client.CreatedRoom
 import game.vinto.client.Frame
 import game.vinto.client.MemoryVault
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
-import game.vinto.client.ConnectionState
 import game.vinto.engine.replayRecording
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
-import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.ProtocolJson
+import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.PublicSeat
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.ServerMessage
@@ -22,16 +22,16 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.VintoJson
 import game.vinto.shapes.actorId
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runTest
 
 /**
  * The whole online stack minus the platform, on one JVM.

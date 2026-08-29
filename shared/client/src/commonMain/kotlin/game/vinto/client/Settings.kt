@@ -18,20 +18,28 @@ import kotlinx.serialization.SerializationException
 @Serializable
 enum class Pace(val serialName: String, val scale: Float) {
     /** For learning it, and for watching what the bots are up to. */
-    @SerialName("calm") CALM("calm", 1.5f),
+    @SerialName("calm")
+    CALM("calm", 1.5f),
 
-    @SerialName("steady") STEADY("steady", 1f),
+    @SerialName("steady")
+    STEADY("steady", 1f),
 
     /** For somebody who knows the game and wants their turn back. */
-    @SerialName("brisk") BRISK("brisk", 0.6f),
+    @SerialName("brisk")
+    BRISK("brisk", 0.6f),
 }
 
 /** Which palette, regardless of what the phone is set to. */
 @Serializable
 enum class ThemeChoice(val serialName: String) {
-    @SerialName("system") SYSTEM("system"),
-    @SerialName("light") LIGHT("light"),
-    @SerialName("dark") DARK("dark"),
+    @SerialName("system")
+    SYSTEM("system"),
+
+    @SerialName("light")
+    LIGHT("light"),
+
+    @SerialName("dark")
+    DARK("dark"),
 }
 
 /**
@@ -46,11 +54,14 @@ enum class ThemeChoice(val serialName: String) {
 @Serializable
 enum class MotionChoice(val serialName: String) {
     /** Follow the platform's accessibility preference, where the platform exposes one. */
-    @SerialName("system") SYSTEM("system"),
+    @SerialName("system")
+    SYSTEM("system"),
 
-    @SerialName("full") FULL("full"),
+    @SerialName("full")
+    FULL("full"),
 
-    @SerialName("reduced") REDUCED("reduced"),
+    @SerialName("reduced")
+    REDUCED("reduced"),
     ;
 
     /** The one decision this setting exists to make, given what the platform says. */

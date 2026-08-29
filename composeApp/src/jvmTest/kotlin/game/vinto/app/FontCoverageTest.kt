@@ -90,8 +90,11 @@ class FontCoverageTest {
             .orEmpty()
             .flatMap { dir ->
                 val xml = File(dir, "strings.xml")
-                if (!xml.isFile) emptyList()
-                else strings(xml).values.map { dir.name to it }
+                if (!xml.isFile) {
+                    emptyList()
+                } else {
+                    strings(xml).values.map { dir.name to it }
+                }
             }
             .also { assertTrue(it.isNotEmpty(), "no strings found to check") }
 

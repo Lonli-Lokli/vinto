@@ -66,8 +66,11 @@ fun handleUseCardAction(state: MutableGameState, action: GameAction.UseCardActio
     ).also { state.activeTossIn = it }
 
     tossIn.ranks =
-        if (pending.from == PendingCardOrigin.DRAWING) mutableListOf(pending.card.rank)
-        else addTossInCard(tossIn.ranks, pending.card.rank)
+        if (pending.from == PendingCardOrigin.DRAWING) {
+            mutableListOf(pending.card.rank)
+        } else {
+            addTossInCard(tossIn.ranks, pending.card.rank)
+        }
 
     state.subPhase = GameSubPhase.AWAITING_ACTION
     return true

@@ -2,8 +2,8 @@ package game.vinto.worker
 
 import game.vinto.shapes.Prng
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * Platform-gate payload for `openspec/.../migrate-to-kotlin-multiplatform` task 2a.1.

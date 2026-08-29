@@ -32,16 +32,21 @@ class JackActionTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p2c1"), testCard(Rank.TWO, "p2c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 1)),
             ),
         )
@@ -65,15 +70,20 @@ class JackActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(
-                        testCard(Rank.TEN, "p2c1"), testCard(Rank.NINE, "p2c2"),
-                        testCard(Rank.EIGHT, "p2c3"), testCard(Rank.SEVEN, "p2c4"),
+                        testCard(Rank.TEN, "p2c1"),
+                        testCard(Rank.NINE, "p2c2"),
+                        testCard(Rank.EIGHT, "p2c3"),
+                        testCard(Rank.SEVEN, "p2c4"),
                     ),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p2", 0), ActionTarget("p2", 3)),
             ),
         )
@@ -87,7 +97,9 @@ class JackActionTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(
                         testCard(Rank.KING, "p1c1"),
                         testCard(Rank.ACE, "p1c2"),
@@ -96,7 +108,8 @@ class JackActionTest {
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p1", 2)),
             ),
         )
@@ -110,12 +123,15 @@ class JackActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.ACE, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -136,7 +152,9 @@ class JackActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.JACK, "p2j1"), testCard(Rank.SEVEN, "p2c2")),
                 ),
             ),
@@ -191,7 +209,8 @@ class JackActionTest {
         val state = testState(
             subPhase = GameSubPhase.IDLE,
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 0)),
             ),
         )
@@ -205,7 +224,8 @@ class JackActionTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             currentPlayerIndex = 0,
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 0)),
             ),
         )
@@ -218,7 +238,8 @@ class JackActionTest {
         val state = testState(
             subPhase = GameSubPhase.AWAITING_ACTION,
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0)),
             ),
         )

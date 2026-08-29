@@ -513,6 +513,7 @@ private val Pad = 24.dp
 private val Gap = 10.dp
 private val LobbyMax = 420.dp
 private val StripMax = 420.dp
+
 /** The space the seats will fill, held open while the room is still being reached. */
 private val Waiting = 40.dp
 

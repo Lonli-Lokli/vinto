@@ -59,8 +59,11 @@ class LandingTest {
         val landing = victim.cards.size
         val during = whole.copy(
             players = whole.players.map { seat ->
-                if (seat.id == victim.id) seat.copy(cards = seat.cards + CardView.Hidden)
-                else seat
+                if (seat.id == victim.id) {
+                    seat.copy(cards = seat.cards + CardView.Hidden)
+                } else {
+                    seat
+                }
             },
         )
         val layout = TableLayout.forScreen(PHONE_H)
@@ -121,7 +124,7 @@ class LandingTest {
             kotlin.math.abs(final.width - expectedW) <= SLACK_PX * scale &&
                 kotlin.math.abs(final.height - expectedH) <= SLACK_PX * scale,
             "the card changed size as it landed: flew ${final.width}×${final.height}, " +
-                "drawn ${expectedW}×$expectedH",
+                "drawn $expectedW×$expectedH",
         )
     }
 

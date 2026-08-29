@@ -59,8 +59,14 @@ fun createDeck(): List<Card> {
     }
 
     val actionRanks = listOf(
-        Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN,
-        Rank.JACK, Rank.QUEEN, Rank.KING, Rank.ACE,
+        Rank.SEVEN,
+        Rank.EIGHT,
+        Rank.NINE,
+        Rank.TEN,
+        Rank.JACK,
+        Rank.QUEEN,
+        Rank.KING,
+        Rank.ACE,
     )
     for (rank in actionRanks) {
         val config = getCardConfig(rank)

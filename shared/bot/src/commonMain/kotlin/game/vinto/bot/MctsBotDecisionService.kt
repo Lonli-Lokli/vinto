@@ -251,7 +251,11 @@ class MctsBotDecisionService(
 
         for (position in context.botPlayer.cards.indices) {
             val outcome = OutcomeSimulator.simulateTurnOutcome(
-                drawnCard, position, context.botPlayer, context, believed,
+                drawnCard,
+                position,
+                context.botPlayer,
+                context,
+                believed,
             )
             val score = OutcomeSimulator.calculateStrategicOutcomeScore(
                 outcome,

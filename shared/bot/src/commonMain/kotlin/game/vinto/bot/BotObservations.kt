@@ -57,21 +57,24 @@ fun observationsFor(
         TableObservation.Acted(ObservedAction.SwapOwn(action.payload.playerId)),
     )
 
-    is GameAction.UseCardAction -> before.pendingAction
-        ?.takeIf { it.playerId == action.payload.playerId }
-        ?.let { listOf(TableObservation.Acted(ObservedAction.UseAction(it.playerId, it.card))) }
-        .orEmpty()
+    is GameAction.UseCardAction ->
+        before.pendingAction
+            ?.takeIf { it.playerId == action.payload.playerId }
+            ?.let { listOf(TableObservation.Acted(ObservedAction.UseAction(it.playerId, it.card))) }
+            .orEmpty()
 
-    is GameAction.DeclareKingAction -> before.pendingAction
-        ?.takeIf { it.playerId == action.payload.playerId }
-        ?.let { listOf(TableObservation.Acted(ObservedAction.UseAction(it.playerId, it.card))) }
-        .orEmpty()
+    is GameAction.DeclareKingAction ->
+        before.pendingAction
+            ?.takeIf { it.playerId == action.payload.playerId }
+            ?.let { listOf(TableObservation.Acted(ObservedAction.UseAction(it.playerId, it.card))) }
+            .orEmpty()
 
     // A Jack or Queen swap moves two cards the beliefs may have been about. The modeler has
     // no way to carry a belief across a swap, so both positions honestly reset to unknown.
-    is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap -> before.pendingAction
-        ?.targets.orEmpty()
-        .map { TableObservation.BeliefInvalidated(it.playerId, it.position) }
+    is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap ->
+        before.pendingAction
+            ?.targets.orEmpty()
+            .map { TableObservation.BeliefInvalidated(it.playerId, it.position) }
 
     is GameAction.ParticipateInTossIn -> {
         val handBefore = before.players.firstOrNull { it.id == action.payload.playerId }?.cards?.size

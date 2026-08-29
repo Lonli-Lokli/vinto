@@ -143,7 +143,9 @@ class CoalitionCooperationTest {
         // The real sharing mechanism, as opposed to the TypeScript's fixture check: what one
         // member has seen of the caller's hand is available to all of them.
         val caller = testPlayer(
-            "human1", "Human", isHuman = true,
+            "human1",
+            "Human",
+            isHuman = true,
             cards = listOf(testCard(Rank.TWO, "h1"), testCard(Rank.THREE, "h2")),
         )
         val seenByBotOne = mapOf(
@@ -152,11 +154,15 @@ class CoalitionCooperationTest {
             ),
         )
         val botOne = testPlayer(
-            "bot1", "Bot1", isHuman = false,
+            "bot1",
+            "Bot1",
+            isHuman = false,
             cards = listOf(testCard(Rank.FOUR, "b1-1"), testCard(Rank.FIVE, "b1-2")),
         ).copy(isVintoCaller = false, opponentKnowledge = seenByBotOne)
         val botTwo = testPlayer(
-            "bot2", "Bot2", isHuman = false,
+            "bot2",
+            "Bot2",
+            isHuman = false,
             cards = listOf(testCard(Rank.SIX, "b2-1"), testCard(Rank.SEVEN, "b2-2")),
         )
 

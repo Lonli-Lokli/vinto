@@ -52,24 +52,24 @@ import game.vinto.client.Beat
 import game.vinto.client.CardRef
 import game.vinto.client.Frame
 import game.vinto.client.Pacing
-import game.vinto.client.heldUp
-import game.vinto.client.revealedTo
 import game.vinto.client.Scene
 import game.vinto.client.Target
+import game.vinto.client.heldUp
+import game.vinto.client.revealedTo
 import game.vinto.client.tossedTogether
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 /**
  * How long each movement takes.
@@ -116,6 +116,7 @@ private const val SHOWN_MS = 1_600
  * dealer's speed and the waves keep the rhythm.
  */
 private const val DEAL_MS = 420
+
 /** How long the table dwells on an aim — the rise and a beat to read it, not the lift's life. */
 private const val PEEK_MS = 1100
 
@@ -192,7 +193,6 @@ class Stage {
      * may be coming down at the moment another's are going up.
      */
     internal val settling = mutableStateListOf<Anchor>()
-
 
     /** A rank a King is borrowing, shown in the middle while it does that card's job. */
     internal var borrowed: Rank? by mutableStateOf(null)
@@ -405,11 +405,12 @@ class Stage {
      * infinitely closer than not animating it.
      */
     internal fun berthOrNearby(anchor: Anchor): Berth? = berths[anchor] ?: when (anchor) {
-        is Anchor.Seat -> berths.keys
-            .filterIsInstance<Anchor.Seat>()
-            .filter { it.playerId == anchor.playerId }
-            .minByOrNull { abs(it.position - anchor.position) }
-            ?.let(berths::get)
+        is Anchor.Seat ->
+            berths.keys
+                .filterIsInstance<Anchor.Seat>()
+                .filter { it.playerId == anchor.playerId }
+                .minByOrNull { abs(it.position - anchor.position) }
+                ?.let(berths::get)
 
         else -> null
     }
@@ -942,7 +943,6 @@ private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: T
         )
     }
 }
-
 
 /**
  * Sends a card across the table, and says how long the scene should wait for it.

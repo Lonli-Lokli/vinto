@@ -20,10 +20,10 @@ class RoundScoringTest {
     fun aCallerWhoIsLowerTakesThreeAndTheCoalitionLosesOne() {
         // "If Vinto < Coalition lowest → Vinto +3; each Coalition −1."
         val players = listOf(
-            hand("p1", Rank.TWO, Rank.THREE),          // 5, the caller
-            hand("p2", Rank.SIX, Rank.SIX),            // 12
-            hand("p3", Rank.SEVEN, Rank.SEVEN),        // 14
-            hand("p4", Rank.EIGHT, Rank.EIGHT),        // 16
+            hand("p1", Rank.TWO, Rank.THREE), // 5, the caller
+            hand("p2", Rank.SIX, Rank.SIX), // 12
+            hand("p3", Rank.SEVEN, Rank.SEVEN), // 14
+            hand("p4", Rank.EIGHT, Rank.EIGHT), // 16
         )
 
         assertEquals(
@@ -36,10 +36,10 @@ class RoundScoringTest {
     fun aCoalitionThatBeatsTheCallerTakesThreeEach() {
         // "If Coalition lowest < Vinto → Vinto −1; each Coalition +3."
         val players = listOf(
-            hand("p1", Rank.TEN, Rank.TEN),            // 20, the caller
-            hand("p2", Rank.TWO, Rank.THREE),          // 5 — the champion
-            hand("p3", Rank.SEVEN, Rank.SEVEN),        // 14
-            hand("p4", Rank.EIGHT, Rank.EIGHT),        // 16
+            hand("p1", Rank.TEN, Rank.TEN), // 20, the caller
+            hand("p2", Rank.TWO, Rank.THREE), // 5 — the champion
+            hand("p3", Rank.SEVEN, Rank.SEVEN), // 14
+            hand("p4", Rank.EIGHT, Rank.EIGHT), // 16
         )
 
         // Every member scores, not only the one who beat them: the coalition wins together.
@@ -54,8 +54,8 @@ class RoundScoringTest {
         // "If tie → Vinto +3; Coalition 0." This is what makes "beat them" mean beat them, and
         // it is why the coalition planner searches for a strictly lower total.
         val players = listOf(
-            hand("p1", Rank.FIVE, Rank.FIVE),          // 10, the caller
-            hand("p2", Rank.FOUR, Rank.SIX),           // 10 — level, not lower
+            hand("p1", Rank.FIVE, Rank.FIVE), // 10, the caller
+            hand("p2", Rank.FOUR, Rank.SIX), // 10 — level, not lower
             hand("p3", Rank.SEVEN, Rank.SEVEN),
             hand("p4", Rank.EIGHT, Rank.EIGHT),
         )

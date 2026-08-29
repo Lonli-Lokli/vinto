@@ -52,8 +52,11 @@ class HandGapTest {
         // The same hand a card short, as the table would show it the instant a toss-in lands.
         val short = whole.copy(
             players = whole.players.map { seat ->
-                if (seat.id == me) seat.copy(cards = seat.cards.filterIndexed { i, _ -> i != GONE })
-                else seat
+                if (seat.id == me) {
+                    seat.copy(cards = seat.cards.filterIndexed { i, _ -> i != GONE })
+                } else {
+                    seat
+                }
             },
         )
 

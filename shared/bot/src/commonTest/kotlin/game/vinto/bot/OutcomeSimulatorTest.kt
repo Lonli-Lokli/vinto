@@ -165,10 +165,14 @@ class OutcomeSimulatorTest {
         val botPlayer = bot(cards)
 
         val matching = OutcomeSimulator.simulateDiscardOutcome(
-            testCard(Rank.SEVEN, "7_d"), botPlayer, believedOf(botPlayer),
+            testCard(Rank.SEVEN, "7_d"),
+            botPlayer,
+            believedOf(botPlayer),
         )
         val notMatching = OutcomeSimulator.simulateDiscardOutcome(
-            testCard(Rank.FOUR, "4_d"), botPlayer, believedOf(botPlayer),
+            testCard(Rank.FOUR, "4_d"),
+            botPlayer,
+            believedOf(botPlayer),
         )
 
         assertEquals(1, matching.finalHandSize)
@@ -260,13 +264,19 @@ class OutcomeSimulatorTest {
         assertEquals(
             0,
             OutcomeSimulator.simulateActionKnowledgeGain(
-                testCard(Rank.FIVE, "5_0"), bot(cards, listOf(0)), ctx, believedOf(bot(cards, listOf(0))),
+                testCard(Rank.FIVE, "5_0"),
+                bot(cards, listOf(0)),
+                ctx,
+                believedOf(bot(cards, listOf(0))),
             ),
         )
         assertEquals(
             0,
             OutcomeSimulator.simulateActionKnowledgeGain(
-                testCard(Rank.JOKER, "Joker_0"), bot(cards, listOf(0)), ctx, believedOf(bot(cards, listOf(0))),
+                testCard(Rank.JOKER, "Joker_0"),
+                bot(cards, listOf(0)),
+                ctx,
+                believedOf(bot(cards, listOf(0))),
             ),
         )
     }

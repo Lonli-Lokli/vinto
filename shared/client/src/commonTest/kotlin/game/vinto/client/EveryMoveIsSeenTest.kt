@@ -104,7 +104,7 @@ class EveryMoveIsSeenTest {
 
         val hands = after.players.mapNotNull { seat ->
             val was = before.players.firstOrNull { it.id == seat.id }?.cards?.size
-            if (was != null && was != seat.cards.size) "${seat.id} ${was}→${seat.cards.size}" else null
+            if (was != null && was != seat.cards.size) "${seat.id} $was→${seat.cards.size}" else null
         }
 
         val pile = after.discardCount - before.discardCount

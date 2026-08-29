@@ -148,7 +148,6 @@ sealed interface Question {
 
     /** Final round: which rank do I *claim* my card at this position is? */
     data class DeclareRank(val position: Int) : Question
-
 }
 
 private const val SETUP_PEEKS = 2
@@ -460,37 +459,39 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
         "The King declared a ${rank.serialName}: ${getCardShortDescription(rank)}"
     }
 
-    return withBorrowed(borrowed) { when (pending.targetType) {
-        TargetType.OWN_CARD -> peekTable(view, pending, "Look at one of your own cards", ownTaps(view))
-        TargetType.OPPONENT_CARD ->
-            peekTable(view, pending, "Look at one card of another player", opponentTaps(view))
+    return withBorrowed(borrowed) {
+        when (pending.targetType) {
+            TargetType.OWN_CARD -> peekTable(view, pending, "Look at one of your own cards", ownTaps(view))
+            TargetType.OPPONENT_CARD ->
+                peekTable(view, pending, "Look at one card of another player", opponentTaps(view))
 
-        // A Jack swaps blind; a Queen looks first. Same two-target shape, different question
-        // at the end, and neither may be skipped until both cards have been named.
-        TargetType.SWAP_CARDS -> twoCardTable(
-            view = view,
-            pending = pending,
-            prompt = "Choose two cards, from two different players",
-            swap = GameAction.ExecuteJackSwap(PlayerIdPayload(view.viewerId)),
-            leave = GameAction.SkipJackSwap(PlayerIdPayload(view.viewerId)),
-        )
+            // A Jack swaps blind; a Queen looks first. Same two-target shape, different question
+            // at the end, and neither may be skipped until both cards have been named.
+            TargetType.SWAP_CARDS -> twoCardTable(
+                view = view,
+                pending = pending,
+                prompt = "Choose two cards, from two different players",
+                swap = GameAction.ExecuteJackSwap(PlayerIdPayload(view.viewerId)),
+                leave = GameAction.SkipJackSwap(PlayerIdPayload(view.viewerId)),
+            )
 
-        TargetType.PEEK_THEN_SWAP -> twoCardTable(
-            view = view,
-            pending = pending,
-            prompt = "Look at two cards, from two different players",
-            swap = GameAction.ExecuteQueenSwap(PlayerIdPayload(view.viewerId)),
-            leave = GameAction.SkipQueenSwap(PlayerIdPayload(view.viewerId)),
-        )
+            TargetType.PEEK_THEN_SWAP -> twoCardTable(
+                view = view,
+                pending = pending,
+                prompt = "Look at two cards, from two different players",
+                swap = GameAction.ExecuteQueenSwap(PlayerIdPayload(view.viewerId)),
+                leave = GameAction.SkipQueenSwap(PlayerIdPayload(view.viewerId)),
+            )
 
-        TargetType.DECLARE_ACTION -> declareTable(view, pending)
-        TargetType.FORCE_DRAW -> forceDrawTable(view)
+            TargetType.DECLARE_ACTION -> declareTable(view, pending)
+            TargetType.FORCE_DRAW -> forceDrawTable(view)
 
-        null -> Table(
-            prompt = card?.let { "The ${it.rank.serialName} is waiting" } ?: "Waiting",
-            choices = listOf(giveUp(view.viewerId)),
-        )
-    } }
+            null -> Table(
+                prompt = card?.let { "The ${it.rank.serialName} is waiting" } ?: "Waiting",
+                choices = listOf(giveUp(view.viewerId)),
+            )
+        }
+    }
 }
 
 /**

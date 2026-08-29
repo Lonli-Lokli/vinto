@@ -79,6 +79,7 @@ class HeaderControlsTest {
 
     private companion object {
         const val SEED = 20260819L
+
         /** The felt's draw pile, which is the thing being counted. */
         const val DECK = "cards left in the deck"
 

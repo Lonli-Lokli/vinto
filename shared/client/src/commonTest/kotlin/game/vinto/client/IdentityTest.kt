@@ -15,7 +15,10 @@ class IdentityTest {
     fun aGuestIdIsMintedOnceAndKept() {
         val vault = MemoryVault()
         var draws = 0
-        val entropy = { draws++; (draws * 7919L) }
+        val entropy = {
+            draws++
+            (draws * 7919L)
+        }
 
         val first = vault.identity(entropy)
         val second = vault.identity(entropy)

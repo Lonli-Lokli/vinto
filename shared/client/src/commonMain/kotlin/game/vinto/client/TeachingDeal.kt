@@ -4,8 +4,8 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.Validation
 import game.vinto.engine.createDeck
 import game.vinto.engine.initializeTeachingGame
-import game.vinto.shapes.Difficulty
 import game.vinto.shapes.Card
+import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState

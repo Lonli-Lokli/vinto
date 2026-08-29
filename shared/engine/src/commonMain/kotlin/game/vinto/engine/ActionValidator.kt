@@ -71,7 +71,6 @@ object ActionValidator {
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun validateInPhase(state: GameState, action: GameAction): Validation = when (action) {
-
         is GameAction.DrawCard -> state.requireTurn(action.payload.playerId, "DRAW_CARD")
             ?: state.requireSubPhase(GameSubPhase.IDLE, GameSubPhase.AI_THINKING) {
                 "Cannot draw in phase ${state.subPhase.serialName}"
@@ -351,8 +350,11 @@ object ActionValidator {
         // caller's protection must not wait for it.
         if (state.phase == GamePhase.FINAL && state.vintoCallerId != null) {
             val actor =
-                if (state.isProcessingTossInAction()) state.playerById(pending.playerId)
-                else state.players.getOrNull(state.currentPlayerIndex)
+                if (state.isProcessingTossInAction()) {
+                    state.playerById(pending.playerId)
+                } else {
+                    state.players.getOrNull(state.currentPlayerIndex)
+                }
 
             if (actor != null && actor.id != state.vintoCallerId &&
                 payload.targetPlayerId == state.vintoCallerId
@@ -502,8 +504,11 @@ object ActionValidator {
 
     /** Null when the condition holds, so callers can chain with `?:`. */
     private fun GameState.requireTurn(playerId: String, actionType: String): Validation? =
-        if (currentPlayer().id == playerId) null
-        else Validation.Invalid("Not player turn for $actionType")
+        if (currentPlayer().id == playerId) {
+            null
+        } else {
+            Validation.Invalid("Not player turn for $actionType")
+        }
 
     /**
      * Who is allowed to act right now.
@@ -514,8 +519,11 @@ object ActionValidator {
      */
     private fun GameState.requireActor(playerId: String, actionType: String): Validation? =
         if (isProcessingTossInAction()) {
-            if (pendingAction?.playerId == playerId) null
-            else Validation.Invalid("Not your toss-in action")
+            if (pendingAction?.playerId == playerId) {
+                null
+            } else {
+                Validation.Invalid("Not your toss-in action")
+            }
         } else {
             requireTurn(playerId, actionType)
         }

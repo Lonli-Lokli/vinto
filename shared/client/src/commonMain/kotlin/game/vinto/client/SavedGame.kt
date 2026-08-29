@@ -4,8 +4,8 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameState
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.SerialName
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 
 /**
  * A game in progress, written down.

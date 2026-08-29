@@ -4,10 +4,10 @@ import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.areAllPlayersReady
-import game.vinto.engine.swapDeclarationsBetween
 import game.vinto.engine.clearTossInAfterActionableCard
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.engine.queuedTossInCardId
+import game.vinto.engine.swapDeclarationsBetween
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameSubPhase

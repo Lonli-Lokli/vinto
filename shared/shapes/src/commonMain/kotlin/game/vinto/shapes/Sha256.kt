@@ -32,8 +32,14 @@ object Sha256 {
     )
 
     private val INITIAL = intArrayOf(
-        0x6a09e667, 0xbb67ae85u.toInt(), 0x3c6ef372, 0xa54ff53au.toInt(),
-        0x510e527f, 0x9b05688cu.toInt(), 0x1f83d9ab, 0x5be0cd19,
+        0x6a09e667,
+        0xbb67ae85u.toInt(),
+        0x3c6ef372,
+        0xa54ff53au.toInt(),
+        0x510e527f,
+        0x9b05688cu.toInt(),
+        0x1f83d9ab,
+        0x5be0cd19,
     )
 
     /** Lowercase hex digest of [message]'s UTF-8 bytes. */
@@ -65,8 +71,14 @@ object Sha256 {
                 block[i] = block[i - 16] + s0 + block[i - 7] + s1
             }
 
-            var a = hash[0]; var b = hash[1]; var c = hash[2]; var d = hash[3]
-            var e = hash[4]; var f = hash[5]; var g = hash[6]; var h = hash[7]
+            var a = hash[0]
+            var b = hash[1]
+            var c = hash[2]
+            var d = hash[3]
+            var e = hash[4]
+            var f = hash[5]
+            var g = hash[6]
+            var h = hash[7]
 
             for (i in 0 until 64) {
                 val s1 = rotr(e, 6) xor rotr(e, 11) xor rotr(e, 25)
@@ -76,12 +88,24 @@ object Sha256 {
                 val maj = (a and b) xor (a and c) xor (b and c)
                 val temp2 = s0 + maj
 
-                h = g; g = f; f = e; e = d + temp1
-                d = c; c = b; b = a; a = temp1 + temp2
+                h = g
+                g = f
+                f = e
+                e = d + temp1
+                d = c
+                c = b
+                b = a
+                a = temp1 + temp2
             }
 
-            hash[0] += a; hash[1] += b; hash[2] += c; hash[3] += d
-            hash[4] += e; hash[5] += f; hash[6] += g; hash[7] += h
+            hash[0] += a
+            hash[1] += b
+            hash[2] += c
+            hash[3] += d
+            hash[4] += e
+            hash[5] += f
+            hash[6] += g
+            hash[7] += h
 
             offset += 64
         }

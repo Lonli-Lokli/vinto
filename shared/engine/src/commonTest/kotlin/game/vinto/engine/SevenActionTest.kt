@@ -23,7 +23,9 @@ class SevenActionTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
@@ -45,7 +47,9 @@ class SevenActionTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
@@ -66,7 +70,9 @@ class SevenActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2s1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
@@ -88,7 +94,9 @@ class SevenActionTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p2c1"), testCard(Rank.KING, "p2c2")),
                 ),
             ),

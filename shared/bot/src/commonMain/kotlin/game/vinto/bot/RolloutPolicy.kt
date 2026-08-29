@@ -15,7 +15,6 @@ import kotlin.random.Random
  * Ported from `legacy-web/packages/bot/src/lib/mcts-rollout-policy.ts`.
  */
 
-
 /** How far ahead the bot must be before ending the game is clearly right. */
 private const val WINNING_MARGIN = 5
 

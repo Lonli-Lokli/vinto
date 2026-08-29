@@ -33,7 +33,12 @@ class BotObservationsTest {
 
     private fun table(handRanks: Map<String, List<Rank>>): GameState = testState(
         players = handRanks.map { (id, ranks) ->
-            testPlayer(id, id, isHuman = false, cards = ranks.mapIndexed { i, r -> testCard(r, "${r.serialName}_$id$i") })
+            testPlayer(
+                id,
+                id,
+                isHuman = false,
+                cards = ranks.mapIndexed { i, r -> testCard(r, "${r.serialName}_$id$i") }
+            )
         },
     )
 

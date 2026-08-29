@@ -37,12 +37,16 @@ class DeclareCardsTest {
     )
 
     private fun caller() = testPlayer(
-        "p1", "Player 1", isHuman = true,
+        "p1",
+        "Player 1",
+        isHuman = true,
         cards = listOf(testCard(Rank.KING, "p1c1")),
     ).copy(isVintoCaller = true)
 
     private fun member(id: String, vararg ranks: Rank) = testPlayer(
-        id, "Player $id", isHuman = false,
+        id,
+        "Player $id",
+        isHuman = false,
         cards = ranks.mapIndexed { i, rank -> testCard(rank, "${id}c$i") },
     )
 
@@ -112,7 +116,8 @@ class DeclareCardsTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
         ).copy(
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p2",
+                testCard(Rank.JACK, "jack1"),
+                "p2",
                 targets = listOf(ActionTarget("p2", 0), ActionTarget("p3", 0)),
             ),
         )
@@ -132,7 +137,8 @@ class DeclareCardsTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
         ).copy(
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p2",
+                testCard(Rank.JACK, "jack1"),
+                "p2",
                 targets = listOf(ActionTarget("p2", 0), ActionTarget("p3", 0)),
             ),
         )
@@ -167,7 +173,8 @@ class DeclareCardsTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
         ).copy(
             pendingAction = pending(
-                testCard(Rank.KING, "king1"), "p2",
+                testCard(Rank.KING, "king1"),
+                "p2",
                 targets = listOf(ActionTarget("p2", 0, testCard(Rank.FIVE, "p2c0"))),
             ),
         )

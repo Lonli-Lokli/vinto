@@ -70,10 +70,13 @@ class CoalitionSolverScenarioTest {
         )
 
         val p1 = seat(
-            "p1", isHuman = false,
+            "p1",
+            isHuman = false,
             cards = listOf(
-                card(Rank.QUEEN, "p1-queen"), card(Rank.EIGHT, "p1-eight"),
-                card(Rank.JOKER, "p1-joker"), card(Rank.TWO, "p1-mystery"),
+                card(Rank.QUEEN, "p1-queen"),
+                card(Rank.EIGHT, "p1-eight"),
+                card(Rank.JOKER, "p1-joker"),
+                card(Rank.TWO, "p1-mystery"),
             ),
             known = listOf(0, 1, 2),
             declared = mapOf(0 to Rank.QUEEN, 1 to Rank.EIGHT, 2 to Rank.JOKER),
@@ -96,16 +99,20 @@ class CoalitionSolverScenarioTest {
                 seat(callerId, isHuman = true, listOf(callerKing), known = emptyList(), declared = null),
                 p1,
                 seat(
-                    "p2", isHuman = false,
+                    "p2",
+                    isHuman = false,
                     cards = listOf(card(Rank.TEN, "p2-ten"), card(Rank.SIX, "p2-six")),
                     known = listOf(0, 1),
                     declared = mapOf(0 to Rank.TEN, 1 to Rank.SIX),
                 ),
                 seat(
-                    "p3", isHuman = false,
+                    "p3",
+                    isHuman = false,
                     cards = listOf(
-                        card(Rank.SIX, "p3-six"), card(Rank.SEVEN, "p3-seven"),
-                        card(Rank.FIVE, "p3-mystery1"), card(Rank.FOUR, "p3-mystery2"),
+                        card(Rank.SIX, "p3-six"),
+                        card(Rank.SEVEN, "p3-seven"),
+                        card(Rank.FIVE, "p3-mystery1"),
+                        card(Rank.FOUR, "p3-mystery2"),
                     ),
                     known = listOf(0, 1),
                     declared = mapOf(0 to Rank.SIX, 1 to Rank.SEVEN),
@@ -116,8 +123,12 @@ class CoalitionSolverScenarioTest {
             coalitionLeaderId = "p1",
             drawPile = Pile(
                 listOf(
-                    card(Rank.FOUR, "draw-0"), card(Rank.SIX, "draw-1"), card(Rank.FIVE, "draw-2"),
-                    card(Rank.EIGHT, "draw-3"), card(Rank.EIGHT, "draw-4"), card(Rank.EIGHT, "draw-5"),
+                    card(Rank.FOUR, "draw-0"),
+                    card(Rank.SIX, "draw-1"),
+                    card(Rank.FIVE, "draw-2"),
+                    card(Rank.EIGHT, "draw-3"),
+                    card(Rank.EIGHT, "draw-4"),
+                    card(Rank.EIGHT, "draw-5"),
                 ),
             ),
             discardPile = Pile(listOf(card(Rank.FOUR, "discard-seed"))),

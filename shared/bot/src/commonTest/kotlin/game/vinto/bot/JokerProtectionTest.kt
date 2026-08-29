@@ -31,12 +31,16 @@ class JokerProtectionTest {
 
     private fun contextWith(botCards: List<Card>, knownPositions: List<Int>, drawn: Card): BotDecisionContext {
         val botPlayer = testPlayer(
-            botId, "Bot 1", isHuman = false,
+            botId,
+            "Bot 1",
+            isHuman = false,
             cards = botCards,
             knownCardPositions = knownPositions,
         )
         val human = testPlayer(
-            "human1", "Human 1", isHuman = true,
+            "human1",
+            "Human 1",
+            isHuman = true,
             cards = List(5) { testCard(Rank.SIX, "h$it") },
         )
         val state = testState(

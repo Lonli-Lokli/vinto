@@ -31,7 +31,6 @@ import game.vinto.shapes.getCardValue
 import game.vinto.shapes.hasAction
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Table B of `docs/game-engine/VISIBILITY.md`, executable.

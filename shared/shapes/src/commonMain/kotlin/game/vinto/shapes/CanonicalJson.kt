@@ -53,8 +53,11 @@ object CanonicalJson {
             if (key == "players" && value is JsonArray) {
                 shaped[key] = JsonArray(
                     value.map { player ->
-                        if (player !is JsonObject) player
-                        else JsonObject(player.filterKeys { it !in EXCLUDED_PLAYER_FIELDS })
+                        if (player !is JsonObject) {
+                            player
+                        } else {
+                            JsonObject(player.filterKeys { it !in EXCLUDED_PLAYER_FIELDS })
+                        }
                     },
                 )
                 continue
@@ -69,15 +72,17 @@ object CanonicalJson {
     private fun canonicalize(value: JsonElement, path: String): String = when (value) {
         is JsonNull -> "null"
         is JsonPrimitive -> canonicalizePrimitive(value, path)
-        is JsonArray -> value
-            .mapIndexed { index, item -> canonicalize(item, "$path[$index]") }
-            .joinToString(",", "[", "]")
+        is JsonArray ->
+            value
+                .mapIndexed { index, item -> canonicalize(item, "$path[$index]") }
+                .joinToString(",", "[", "]")
 
-        is JsonObject -> value.keys
-            .sorted()
-            .joinToString(",", "{", "}") { key ->
-                quote(key) + ":" + canonicalize(value.getValue(key), "$path.$key")
-            }
+        is JsonObject ->
+            value.keys
+                .sorted()
+                .joinToString(",", "{", "}") { key ->
+                    quote(key) + ":" + canonicalize(value.getValue(key), "$path.$key")
+                }
     }
 
     private fun canonicalizePrimitive(value: JsonPrimitive, path: String): String {

@@ -188,9 +188,14 @@ class ValidatorRulesTest {
         for (state in states().take(200)) {
             val ghost = "not-a-player"
             assertTrue(invalid(state, GameAction.DrawCard(PlayerIdPayload(ghost))))
-            assertTrue(invalid(state, GameAction.ParticipateInTossIn(
-                ParticipateInTossInPayload(ghost, listOf(0)),
-            )) || state.activeTossIn == null)
+            assertTrue(
+                invalid(
+                    state,
+                    GameAction.ParticipateInTossIn(
+                        ParticipateInTossInPayload(ghost, listOf(0)),
+                    )
+                ) || state.activeTossIn == null
+            )
         }
     }
 }

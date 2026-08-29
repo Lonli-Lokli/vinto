@@ -7,8 +7,8 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PendingAction
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
 import kotlinx.serialization.SerialName
@@ -328,7 +328,6 @@ internal fun hiddenFrom(state: GameState, playerId: String): List<Card> {
         }
     }
 }
-
 
 /**
  * The card whose action is being played, which is lying face up on the discard pile.

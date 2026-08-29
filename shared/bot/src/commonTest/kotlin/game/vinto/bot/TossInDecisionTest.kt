@@ -27,11 +27,15 @@ class TossInDecisionTest {
 
     private fun contextWith(botHand: List<Rank>, openRanks: List<Rank>): BotDecisionContext {
         val botPlayer = testPlayer(
-            botId, "Bot 1", isHuman = false,
+            botId,
+            "Bot 1",
+            isHuman = false,
             cards = botHand.mapIndexed { index, rank -> testCard(rank, "bot-card-$index") },
         )
         val human = testPlayer(
-            "p2", "Player 2", isHuman = true,
+            "p2",
+            "Player 2",
+            isHuman = true,
             cards = listOf(testCard(Rank.TWO, "p2-card-1"), testCard(Rank.FIVE, "p2-card-2")),
         )
 

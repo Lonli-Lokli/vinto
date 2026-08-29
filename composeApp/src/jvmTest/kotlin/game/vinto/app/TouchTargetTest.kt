@@ -31,9 +31,9 @@ import game.vinto.engine.PlayerView
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
 
 /**
  * Everything a thumb has to hit, measured.
@@ -285,6 +285,7 @@ class TouchTargetTest {
         val RANKS = listOf(
             "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "Joker",
         )
+
         /** The two buttons under a rank grid: the last things the rail has room for. */
         val ANSWERS = listOf("Just Swap", "Back")
         const val HEADER = 44f

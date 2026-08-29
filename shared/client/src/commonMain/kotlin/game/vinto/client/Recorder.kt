@@ -1,10 +1,10 @@
 package game.vinto.client
 
-import game.vinto.shapes.hashGameState
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameState
 import game.vinto.shapes.VintoJson
+import game.vinto.shapes.hashGameState
 import kotlinx.serialization.Serializable
 
 /**

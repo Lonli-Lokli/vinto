@@ -30,7 +30,9 @@ class BotHeuristicsTest {
     private fun bot(cards: List<Rank>, known: List<Int>? = null): PlayerState {
         val hand = cards.mapIndexed { index, rank -> testCard(rank, "c$index") }
         return testPlayer(
-            botId, "Bot", isHuman = false,
+            botId,
+            "Bot",
+            isHuman = false,
             cards = hand,
             knownCardPositions = known ?: hand.indices.toList(),
         )
@@ -38,7 +40,9 @@ class BotHeuristicsTest {
 
     private fun opponent(id: String, cards: List<Rank>): PlayerState =
         testPlayer(
-            id, id, isHuman = false,
+            id,
+            id,
+            isHuman = false,
             cards = cards.mapIndexed { index, rank -> testCard(rank, "$id-c$index") },
         )
 

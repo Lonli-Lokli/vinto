@@ -5,11 +5,11 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
-import game.vinto.shapes.getCardValue
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.actorId
+import game.vinto.shapes.getCardValue
 
 /**
  * A place on the table a card can be.

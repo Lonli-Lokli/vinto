@@ -123,7 +123,8 @@ fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Un
     val scope = rememberCoroutineScope()
     val feedback = LocalFeedback.current
     return remember(holder, scope, feedback) {
-        { move ->
+        {
+                move ->
             scope.launch {
                 holder.act(move)
                 // A refusal is a rule the player has not met yet, and it arrives as a line of

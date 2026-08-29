@@ -54,8 +54,11 @@ fun handleCallVinto(state: MutableGameState, action: GameAction.CallVinto): Bool
     if (state.currentPlayerIndex == 0) state.turnNumber++
 
     state.subPhase =
-        if (state.players[state.currentPlayerIndex].isBot) GameSubPhase.AI_THINKING
-        else GameSubPhase.IDLE
+        if (state.players[state.currentPlayerIndex].isBot) {
+            GameSubPhase.AI_THINKING
+        } else {
+            GameSubPhase.IDLE
+        }
 
     return true
 }

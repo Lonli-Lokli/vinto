@@ -3,7 +3,6 @@ package game.vinto.client
 import game.vinto.engine.CardView
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
-import game.vinto.shapes.GameState
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload

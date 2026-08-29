@@ -46,16 +46,21 @@ class RulesTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p2c1"), testCard(Rank.TWO, "p2c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 1)),
             ),
         )
@@ -75,19 +80,26 @@ class RulesTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.ACE, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(
-                        testCard(Rank.TEN, "p2c1"), testCard(Rank.NINE, "p2c2"),
-                        testCard(Rank.EIGHT, "p2c3"), testCard(Rank.SEVEN, "p2c4"),
+                        testCard(Rank.TEN, "p2c1"),
+                        testCard(Rank.NINE, "p2c2"),
+                        testCard(Rank.EIGHT, "p2c3"),
+                        testCard(Rank.SEVEN, "p2c4"),
                     ),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.JACK, "jack1"), "p1",
+                testCard(Rank.JACK, "jack1"),
+                "p1",
                 targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 3)),
             ),
         )
@@ -105,12 +117,15 @@ class RulesTest {
         players = listOf(
             testPlayer("p1", "Player 1", isHuman = true, cards = listOf(testCard(Rank.JACK, "p1c1"))),
             testPlayer(
-                "p2", "Player 2", isHuman = false,
+                "p2",
+                "Player 2",
+                isHuman = false,
                 cards = listOf(testCard(Rank.KING, "p2c1"), testCard(Rank.ACE, "p2c2")),
             ),
         ),
         pendingAction = pending(
-            testCard(Rank.QUEEN, "queen1"), "p1",
+            testCard(Rank.QUEEN, "queen1"),
+            "p1",
             targets = listOf(ActionTarget("p1", 0), ActionTarget("p2", 1)),
         ),
     )
@@ -145,12 +160,15 @@ class RulesTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p2c1"), testCard(Rank.ACE, "p2c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.KING, "king1"), "p1",
+                testCard(Rank.KING, "king1"),
+                "p1",
                 targets = listOf(ActionTarget("p2", 0)),
             ),
         )
@@ -175,7 +193,9 @@ class RulesTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.SEVEN, "p2c1"), testCard(Rank.EIGHT, "p2c2")),
                 ),
             ),
@@ -194,7 +214,9 @@ class RulesTest {
             subPhase = GameSubPhase.AWAITING_ACTION,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer("p2", "Player 2", isHuman = false),
@@ -218,7 +240,9 @@ class RulesTest {
             players = listOf(
                 testPlayer("p1", "Player 1", isHuman = true),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.KING, "p2c1"), testCard(Rank.ACE, "p2c2")),
                 ),
             ),
@@ -241,15 +265,21 @@ class RulesTest {
             turnNumber = 1,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p2c1"), testCard(Rank.SEVEN, "p2c2")),
                 ),
                 testPlayer(
-                    "p3", "Player 3", isHuman = false,
+                    "p3",
+                    "Player 3",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.ACE, "p3c1"), testCard(Rank.EIGHT, "p3c2")),
                 ),
             ),
@@ -274,15 +304,21 @@ class RulesTest {
             turnNumber = 1,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer(
-                    "p2", "Player 2", isHuman = false,
+                    "p2",
+                    "Player 2",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.TWO, "p2c1"), testCard(Rank.SEVEN, "p2c2")),
                 ),
                 testPlayer(
-                    "p3", "Player 3", isHuman = false,
+                    "p3",
+                    "Player 3",
+                    isHuman = false,
                     cards = listOf(testCard(Rank.TWO, "p3c1"), testCard(Rank.EIGHT, "p3c2")),
                 ),
             ),
@@ -341,12 +377,15 @@ class RulesTest {
             subPhase = GameSubPhase.CHOOSING,
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.ACE, "drawn-card"), "p1",
+                testCard(Rank.ACE, "drawn-card"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -366,12 +405,15 @@ class RulesTest {
             drawPile = pileOf(testCard(Rank.JACK, "penalty1")),
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.ACE, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
             ),
             pendingAction = pending(
-                testCard(Rank.SEVEN, "drawn-card"), "p1",
+                testCard(Rank.SEVEN, "drawn-card"),
+                "p1",
                 actionPhase = ActionPhase.CHOOSING_ACTION,
             ),
         )
@@ -439,7 +481,9 @@ class RulesTest {
             coalitionLeaderId = "p2",
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer("p2", "Player 2", isHuman = false, cards = listOf(testCard(Rank.TWO, "p2c1"))),
@@ -529,7 +573,9 @@ class RulesTest {
             drawPile = pileOf(testCard(Rank.ACE, "drawn1")),
             players = listOf(
                 testPlayer(
-                    "p1", "Player 1", isHuman = true,
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
                     cards = listOf(testCard(Rank.KING, "p1c1"), testCard(Rank.QUEEN, "p1c2")),
                 ),
                 testPlayer("p2", "Player 2", isHuman = false),

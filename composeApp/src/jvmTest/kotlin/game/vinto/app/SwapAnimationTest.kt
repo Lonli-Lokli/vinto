@@ -4,7 +4,6 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
@@ -33,14 +32,21 @@ class SwapAnimationTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         settle()
 
-        onNodeWithContentDescription("Play").performClick(); settle()
-        onNodeWithContentDescription("You, card 1").performClick(); settle()
-        onNodeWithContentDescription("You, card 2").performClick(); settle()
-        onNodeWithContentDescription("Start the round").performClick(); settle()
+        onNodeWithContentDescription("Play").performClick()
+        settle()
+        onNodeWithContentDescription("You, card 1").performClick()
+        settle()
+        onNodeWithContentDescription("You, card 2").performClick()
+        settle()
+        onNodeWithContentDescription("Start the round").performClick()
+        settle()
 
-        onNodeWithContentDescription("Draw Card").performClick(); settle()
-        onNodeWithContentDescription("Swap Cards").performClick(); settle()
-        onNodeWithContentDescription(SLOT).performClick(); settle()
+        onNodeWithContentDescription("Draw Card").performClick()
+        settle()
+        onNodeWithContentDescription("Swap Cards").performClick()
+        settle()
+        onNodeWithContentDescription(SLOT).performClick()
+        settle()
         onNodeWithContentDescription("Just Swap").performClick()
 
         // Step through the animation looking for the moment the seat is empty.

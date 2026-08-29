@@ -213,8 +213,11 @@ class ViewRedactionTest {
         val member = base.players.first { !it.isVintoCaller && it.cards.isNotEmpty() }
         val declared = base.copy(
             players = base.players.map { seat ->
-                if (seat.id == member.id) seat.copy(declaredCards = mapOf(0 to Rank.QUEEN))
-                else seat
+                if (seat.id == member.id) {
+                    seat.copy(declaredCards = mapOf(0 to Rank.QUEEN))
+                } else {
+                    seat
+                }
             },
         )
 

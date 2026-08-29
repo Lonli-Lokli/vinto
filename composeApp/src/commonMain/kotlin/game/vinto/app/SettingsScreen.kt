@@ -20,9 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,16 +33,16 @@ import game.vinto.app.art.settings_bots_detail
 import game.vinto.app.art.settings_forget
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
-import game.vinto.app.art.settings_off
-import game.vinto.app.art.settings_on
 import game.vinto.app.art.settings_motion
 import game.vinto.app.art.settings_motion_detail
+import game.vinto.app.art.settings_off
+import game.vinto.app.art.settings_on
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_saved_game
+import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_sound
 import game.vinto.app.art.settings_sound_detail
-import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_theme
 import game.vinto.app.art.settings_theme_detail
 import game.vinto.app.art.settings_title
@@ -288,6 +288,7 @@ private const val PlaqueSize = 17
 
 private val TitleRowSize = 17.sp
 private val DetailSize = 13.sp
+
 /** Second-rank text on the felt. */
 private const val Quiet = 0.75f
 

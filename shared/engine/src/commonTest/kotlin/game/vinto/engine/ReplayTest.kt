@@ -6,7 +6,6 @@ import game.vinto.shapes.GameActionHistory
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameRecordingMeta
 import game.vinto.shapes.GameRecordingSettings
-import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.RecordedAction
@@ -40,7 +39,9 @@ class ReplayTest {
                 testPlayer("p4", "P4", isHuman = false, cards = listOf(testCard(Rank.FIVE, "p4c1"))),
             ),
             drawPile = pileOf(
-                testCard(Rank.SEVEN, "d1"), testCard(Rank.EIGHT, "d2"), testCard(Rank.NINE, "d3"),
+                testCard(Rank.SEVEN, "d1"),
+                testCard(Rank.EIGHT, "d2"),
+                testCard(Rank.NINE, "d3"),
             ),
             rngState = 123,
         )

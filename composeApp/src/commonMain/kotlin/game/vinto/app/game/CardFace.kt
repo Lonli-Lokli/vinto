@@ -12,7 +12,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +67,7 @@ private const val PULSE_MS = 1100
 private const val HALF_TURN = 180f
 private const val QUARTER_TURN = 90f
 private const val CAMERA = 14f
+
 // The trough of the breath, not its floor. A ring that fades to 45% is 1.8:1 against the
 // card for half of every cycle, which is a signal that flickers in and out of existence for
 // anybody who needs contrast; from 70% it stays at 3.2:1 at its dimmest and doubles at its
@@ -164,11 +164,17 @@ fun CardFace(
             // click on the card itself meant an opponent's 36dp card offered a 36dp target
             // inside a 44dp box, which is a miss waiting to happen with three bots watching.
             .then(
-                if (onClick == null) Modifier
-                else Modifier.clickable(
-                    role = Role.Button,
-                    onClick = { feedback.touch(); onClick() },
-                ),
+                if (onClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(
+                        role = Role.Button,
+                        onClick = {
+                            feedback.touch()
+                            onClick()
+                        },
+                    )
+                },
             )
             .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,

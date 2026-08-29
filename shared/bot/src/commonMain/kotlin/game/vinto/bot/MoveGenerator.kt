@@ -24,7 +24,6 @@ import game.vinto.shapes.isActionable
  */
 object MoveGenerator {
 
-
     /** Worth removing from a hand, or worth forcing an opponent to keep. */
     private const val HIGH_VALUE_CARD = 9
 

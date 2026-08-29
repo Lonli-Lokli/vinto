@@ -33,15 +33,21 @@ class OpponentKnowledgeFlowTest {
 
     private fun jackState(botKnowsTheJoker: Boolean): GameState {
         val human = testPlayer(
-            humanId, "Human", isHuman = true,
+            humanId,
+            "Human",
+            isHuman = true,
             cards = listOf(
-                testCard(Rank.NINE, "h-0"), testCard(Rank.NINE, "h-1"),
-                testCard(Rank.JOKER, "h-joker"), testCard(Rank.NINE, "h-3"),
+                testCard(Rank.NINE, "h-0"),
+                testCard(Rank.NINE, "h-1"),
+                testCard(Rank.JOKER, "h-joker"),
+                testCard(Rank.NINE, "h-3"),
             ),
             knownCardPositions = emptyList(),
         )
         val bot = testPlayer(
-            botId, "Bot", isHuman = false,
+            botId,
+            "Bot",
+            isHuman = false,
             cards = listOf(testCard(Rank.TEN, "b-0"), testCard(Rank.TEN, "b-1")),
         ).copy(
             opponentKnowledge = if (botKnowsTheJoker) {
@@ -95,12 +101,16 @@ class OpponentKnowledgeFlowTest {
 
     private fun queenState(ownPeeked: Rank, theirsPeeked: Rank): GameState {
         val human = testPlayer(
-            humanId, "Human", isHuman = true,
+            humanId,
+            "Human",
+            isHuman = true,
             cards = listOf(testCard(Rank.NINE, "h-0"), testCard(theirsPeeked, "h-peeked")),
             knownCardPositions = emptyList(),
         )
         val bot = testPlayer(
-            botId, "Bot", isHuman = false,
+            botId,
+            "Bot",
+            isHuman = false,
             cards = listOf(testCard(ownPeeked, "b-peeked"), testCard(Rank.EIGHT, "b-1")),
         )
 
