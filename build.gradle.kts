@@ -101,6 +101,22 @@ allprojects {
 
 allprojects {
     tasks.withType<Test>().configureEach {
+        /**
+         * Run the forks side by side.
+         *
+         * `composeApp` sets `forkEvery = 1` — every Compose test class gets its own JVM,
+         * because they deadlock when they share the AWT thread (see the note there). That is
+         * a correctness decision and stays. What it left behind is a suite of twenty-four
+         * JVMs starting and stopping *one after another*: measured, 345 seconds of test time
+         * on a four-core machine that was running one core's worth of it.
+         *
+         * Forks do not share the thread that races — that is the whole reason they exist here
+         * — so running several at once is not the arrangement the fork was protecting against.
+         * Half the cores rather than all of them: each fork renders Skia in software and wants
+         * a core to itself, and the Gradle daemon and the Kotlin compile daemon want the rest.
+         */
+        maxParallelForks = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+
         systemProperty("vinto.fixtures", rootProject.layout.projectDirectory.dir("fixtures").asFile.absolutePath)
         systemProperty("java.awt.headless", "true")
         testLogging {
