@@ -72,6 +72,14 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
     var deckOpen by remember { mutableStateOf(false) }
+    // `LocalClipboardManager` is deprecated in favour of `LocalClipboard`, and the
+    // replacement is not usable from common code in Compose Multiplatform 1.8: `Clipboard`
+    // takes a `ClipEntry`, and `ClipEntry`'s only constructor takes a *platform-native*
+    // object — an AWT `Transferable`, an Android `ClipData`, a `UIPasteboard` item. Building
+    // one from a string therefore needs an `expect`/`actual` per platform, which is the four
+    // hand-written implementations the note in `RoomScreen` deliberately does not have,
+    // "for a job the framework has already done". Staying on the deprecated call until the
+    // framework offers a common way to make a text clip.
     val clipboard = LocalClipboardManager.current
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {

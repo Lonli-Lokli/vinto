@@ -206,3 +206,31 @@ tasks.withType<Test>().configureEach {
         }
     }
 }
+
+/**
+ * What the Compose compiler thought of each composable, when asked.
+ *
+ * Off by default and switched on with `-PcomposeMetrics`, because it writes a file per
+ * module per compilation and there is no reason to pay for that on every build.
+ *
+ * It is here because this client's web bundle is 3.7 MB gzipped — a number the product owner
+ * accepted rather than liked (`PLATFORM-GATE.md`, design D1a) — and because a table that
+ * animates a whole round recomposes a great deal. Both of those are guesses until something
+ * measures them. The reports say which composables are skippable and which are not, and
+ * which parameters are unstable; the usual answer for a codebase like this one is a handful
+ * of types that Compose cannot prove stable across a module boundary.
+ *
+ *     ./gradlew :composeApp:assembleDebug -PcomposeMetrics
+ *     # then read build/compose/reports/*-composables.txt
+ *
+ * Deliberately measurement only: no stability configuration file yet. Declaring a type stable
+ * is a promise the compiler then trusts without checking, and making that promise about the
+ * engine's state classes before reading a report would be guessing with the recomposition
+ * correctness of the whole table as the stake.
+ */
+composeCompiler {
+    if (providers.gradleProperty("composeMetrics").isPresent) {
+        reportsDestination.set(layout.buildDirectory.dir("compose/reports"))
+        metricsDestination.set(layout.buildDirectory.dir("compose/metrics"))
+    }
+}

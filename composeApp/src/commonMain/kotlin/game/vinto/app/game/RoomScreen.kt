@@ -245,6 +245,14 @@ private fun InviteRow(code: String) {
     var copied by remember { mutableStateOf(false) }
     val subject = stringResource(Res.string.invite_subject)
     val body = stringResource(Res.string.invite_body, code, WEB_CLIENT)
+    // `LocalClipboardManager` is deprecated in favour of `LocalClipboard`, and the
+    // replacement is not usable from common code in Compose Multiplatform 1.8: `Clipboard`
+    // takes a `ClipEntry`, and `ClipEntry`'s only constructor takes a *platform-native*
+    // object — an AWT `Transferable`, an Android `ClipData`, a `UIPasteboard` item. Building
+    // one from a string therefore needs an `expect`/`actual` per platform, which is the four
+    // hand-written implementations the note in `RoomScreen` deliberately does not have,
+    // "for a job the framework has already done". Staying on the deprecated call until the
+    // framework offers a common way to make a text clip.
     val clipboard = LocalClipboardManager.current
 
     fun copy() {
