@@ -164,6 +164,15 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_report">Report a problem</string>
     <string name="header_deck_left">%1$d cards left in the deck</string>
+    <!--
+      The header badge is a *button*, and its name says so. The felt's draw pile already
+      says "N cards left in the deck"; when the badge said it too, a screen reader met the
+      same sentence twice on one screen and neither instance said that one of them opens an
+      explanation. The pile is the thing being counted, so it keeps the count; the badge is
+      the thing that answers "what does that number mean", so it says that instead — while
+      still carrying the number it visibly shows, which is what a spoken name must do.
+    -->
+    <string name="header_deck_badge">%1$d in the deck — what that means</string>
 
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">The deck</string>

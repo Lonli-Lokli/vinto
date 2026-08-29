@@ -1,6 +1,9 @@
 package game.vinto.app
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -9,6 +12,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * The three controls in the header, each of which answers something.
@@ -22,9 +26,31 @@ class HeaderControlsTest {
 
     @Test
     fun theDeckCountExplainsItself() = onATable {
-        onNodeWithContentDescription(DECK, substring = true).performClick()
+        onNodeWithContentDescription(BADGE, substring = true).performClick()
         waitForIdle()
         onNodeWithText("The deck").assertIsDisplayed()
+    }
+
+    /**
+     * And only the pile says how many cards are left.
+     *
+     * The badge and the draw pile both used to carry "N cards left in the deck", so a screen
+     * reader met the same sentence twice on one screen — and the first case above could not
+     * even click the badge, because two nodes answered to the name. The two are different
+     * things: the pile is what is being counted, the badge is what explains the count.
+     */
+    @Test
+    fun theCountIsSpokenInOnePlace() = onATable {
+        val said = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
+            .fetchSemanticsNodes()
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
+            .filter { it.contains(DECK) }
+
+        assertEquals(
+            1,
+            said.size,
+            "the deck's count is read out more than once on one screen: $said",
+        )
     }
 
     @Test
@@ -53,7 +79,11 @@ class HeaderControlsTest {
 
     private companion object {
         const val SEED = 20260819L
+        /** The felt's draw pile, which is the thing being counted. */
         const val DECK = "cards left in the deck"
+
+        /** The header control, which is the thing that explains the count. */
+        const val BADGE = "in the deck — what that means"
         const val REPORT = "Report a problem"
     }
 }

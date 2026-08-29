@@ -59,6 +59,7 @@ import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
+import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.table_discard
@@ -281,7 +282,7 @@ private fun TableHeader(
     onDeck: () -> Unit,
 ) {
     val report = stringResource(Res.string.header_report)
-    val deck = stringResource(Res.string.header_deck_left, view.drawPileSize)
+    val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
         horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -346,6 +347,11 @@ private fun TableHeader(
         // that decides how a round ends — when it runs out the pile is shuffled back in and
         // everything anybody remembered about that pile is worthless — and a number nobody
         // explains is a number nobody reads.
+        //
+        // Named as the control it is rather than as the count it shows: the draw pile on the
+        // felt below already reads out "N cards left in the deck", and when this said the same
+        // words a screen reader heard one screen say it twice without either saying that one
+        // of the two opens an explanation.
         Surface(
             onClick = onDeck,
             modifier = Modifier
