@@ -13,12 +13,62 @@
 //      survives hibernation; a Map keyed by socket would not.
 
 import {
+  clientEventPoint,
+  roomCreatedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
   applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, looksLikeRoomCode, listPublicRooms, forgetRoom,
   registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
+
+/**
+ * The known event names, and nothing else gets written.
+ *
+ * `POST /e` is public, so this is the allow-list that stops the store being filled with
+ * whatever a stranger posts. It mirrors the sealed type in `shared/protocol`; a name not on
+ * this list is dropped silently rather than answered with an error, because telling a scanner
+ * which names are real is telling it something.
+ */
+const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
+
+/** A client batch is small by construction; anything larger is not one of ours. */
+const MAX_EVENT_BYTES = 8 * 1024;
+const MAX_EVENTS_PER_BATCH = 40;
+
+/**
+ * Writes one data point, if there is anywhere to write it.
+ *
+ * **Absent-safe by design, not by accident.** With no `ANALYTICS` binding this is a no-op, so
+ * `wrangler dev` and every gate script run identically without a Cloudflare account — which
+ * is what keeps analytics from becoming a thing you need credentials to develop against.
+ *
+ * `writeDataPoint` does not count against the invocation's CPU time and does not return a
+ * promise worth awaiting. That matters more here than anywhere: the thing being measured is a
+ * Durable Object whose 30-second budget is already going on MCTS, and analytics that slowed
+ * the room down would be measuring a room nobody wants.
+ */
+function emit(env, point) {
+  if (!env.ANALYTICS || !point) return;
+  try {
+    env.ANALYTICS.writeDataPoint(point);
+  } catch {
+    // A sink that refuses a point must never fail the request that produced it. There is
+    // nothing to retry and nothing to report: the count is simply lost.
+  }
+}
+
+/**
+ * What this invocation cost, carried on every server event.
+ *
+ * A Durable Object gets 30 seconds of CPU per request and spends most of it on MCTS.
+ * `PLATFORM-GATE.md` measured exactly one worst case at 1.6 s; the distribution is unknown,
+ * and "what does a room cost" is the number that decides whether online play stays free.
+ * Collecting it here is free, and it is the one thing no client could report.
+ */
+function costSince(startedAt, requests = 1) {
+  return { wallMs: Date.now() - startedAt, requests };
+}
 
 const ROOM_KEY = 'room';
 
@@ -683,6 +733,39 @@ export default {
     // /health and /replay stay open above this line on purpose: one says whether the thing is
     // alive, the other is a pure function of its own argument that holds and discloses no
     // state.
+    // Client events: the small, bounded stream of what the room cannot see — solo play, the
+    // lesson, the menu funnel before a room exists, and client-side failures.
+    //
+    // Above the ROOM_OPEN gate deliberately. A closed deployment still has clients that
+    // opened the app and clients that broke, and those are exactly the counts worth having on
+    // a day the room is shut. It writes nothing anybody could be identified by, and with no
+    // binding it writes nothing at all.
+    if (url.pathname === '/e' && request.method === 'POST') {
+      const raw = await request.text();
+      // Answer 204 whatever happens. A body that is too large, malformed or full of unknown
+      // names is dropped in silence: this endpoint is a drain, and an error code would tell a
+      // prober which shapes are interesting.
+      if (raw.length <= MAX_EVENT_BYTES) {
+        const batch = (() => {
+          try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.slice(0, MAX_EVENTS_PER_BATCH) : [];
+          } catch {
+            return [];
+          }
+        })();
+
+        for (const event of batch) {
+          if (!event || !CLIENT_EVENTS.has(event.type)) continue;
+          // Built on this side from a name we recognise, never forwarded as the client sent
+          // it — so a field nobody declared cannot reach the store, and a client-supplied
+          // timestamp cannot be believed.
+          emit(env, clientEventPoint(JSON.stringify(event)));
+        }
+      }
+      return new Response(null, { status: 204 });
+    }
+
     if (env.ROOM_OPEN !== 'true') {
       return new Response('the room service is closed', {
         status: 503,
@@ -694,6 +777,7 @@ export default {
 
     // Creating a room is a POST, and it is the *only* way to bring one into existence.
     if (url.pathname === '/rooms' && request.method === 'POST') {
+      const startedAt = Date.now();
       const body = await request.json().catch(() => ({}));
 
       // Who asked, as an opaque id. The registry enforces a per-source cap and never sees an
@@ -710,7 +794,25 @@ export default {
           body: JSON.stringify({ ...body, sourceId }),
         }),
       );
-      return new Response(await minted.text(), {
+      const answer = await minted.text();
+
+      // Only a room that was actually minted counts. A refusal here is a rate limit or a cap
+      // biting, which is a different event and not this one — counting attempts as creations
+      // would make the funnel's first step wrong in the flattering direction.
+      if (minted.status === 200) {
+        const cost = costSince(startedAt);
+        emit(
+          env,
+          roomCreatedPoint(
+            body.isPublic === true,
+            typeof body.difficulty === 'string' ? body.difficulty : 'moderate',
+            cost.wallMs,
+            cost.requests,
+          ),
+        );
+      }
+
+      return new Response(answer, {
         status: minted.status,
         headers: { 'content-type': 'application/json' },
       });

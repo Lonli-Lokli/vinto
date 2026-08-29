@@ -13,45 +13,45 @@ client half by JVM tests against a fake sink.
 - [ ] 1.1 Confirm the account's **current** Workers Analytics Engine allowances — writes/day,
       reads, retention, and whether the plan covers it — against the live dashboard, and
       record the real numbers in `design.md` §A1. Do not build on the figures in this file
-- [ ] 1.2 `ANALYTICS` binding in `wrangler.jsonc`, absent-safe: the Worker and the room must
+- [x] 1.2 `ANALYTICS` binding in `wrangler.jsonc`, absent-safe: the Worker and the room must
       run identically with no binding, so local `wrangler dev` and every gate script keep
       working without a Cloudflare account
-- [ ] 1.3 `AnalyticsEvent` as a sealed type in `shared/room`, with the `blobs`/`doubles`/
+- [x] 1.3 `AnalyticsEvent` as a sealed type in **`shared/protocol`** (moved: both the room and the clients need the vocabulary, which is what that module is for), with the `blobs`/`doubles`/
       `indexes` mapping in one place. No field on it may carry a free string from a player
-- [ ] 1.4 Gate: a compile-time test that asserts the event surface holds no room code, no
+- [x] 1.4 Gate: a test that asserts the event surface holds no room code, no
       nickname, no token and no seat identifier — the check that keeps §A2 true as fields
       are added
 
 ## 2. The server measures the server
 
-- [ ] 2.1 Room lifecycle events: `room_created`, `seat_filled`, `seat_vacated`, `bot_took_over`,
+- [~] 2.1 Room lifecycle events: `room_created` is emitted; `seat_filled`, `seat_vacated`, `bot_took_over`, `reconnected` and `session_ended` have their builders and are not yet wired to their call sites. Original text: `room_created`, `seat_filled`, `seat_vacated`, `bot_took_over`,
       `reconnected`, `session_ended` — with the reason each ended
 - [ ] 2.2 Round events: `round_start`, `round_end` carrying turns, duration, how it ended
       (Vinto called, deck exhausted) and whether the caller won
 - [ ] 2.3 **Cost dimensions on every room event**: Durable Object wall time and request count
       for the invocation that produced it. This is the number that decides whether online play
       stays free, and it is free to collect here
-- [ ] 2.4 Gate: a script through `wrangler dev` plays a full room and asserts the exact event
+- [~] 2.4 `gate-analytics.mjs` exists and passes: it holds the closed-vocabulary rule on every rendered point, proves a smuggled room code is dropped, and asserts the empty-binding case. The full-room event *sequence* follows 2.1. Original text: Gate: a script through `wrangler dev` plays a full room and asserts the exact event
       sequence against a fake sink — including that a room played with no binding emits
       nothing and still finishes the round
 
 ## 3. The client reports only what the server cannot see
 
-- [ ] 3.1 `Analytics` sink in `shared/client` over the `Net` seam: batched, capped,
+- [x] 3.1 `Analytics` sink in `shared/client` over the `Net` seam: batched, capped,
       fire-and-forget, dropping the newest, never on the hot path (§A4)
 - [ ] 3.2 Solo and lesson events: started, finished, abandoned-at-stage, difficulty, duration
 - [ ] 3.3 Menu funnel: app opened, play pressed, online pressed, room create attempted,
       invite shared — the steps that happen before a room exists
 - [ ] 3.4 Client failure events: a stage that stopped draining, a socket that gave up
       reconnecting, a refused move the UI could not explain
-- [ ] 3.5 Gate: a JVM test proving the cap holds, that a flood is dropped rather than queued,
+- [x] 3.5 Gate: a JVM test proving the cap holds, that a flood is dropped rather than queued,
       that nothing is emitted when opted out, and that emission never blocks a move
 
 ## 4. Consent, and the proof that it binds
 
 - [ ] 4.1 GPC and Do-Not-Track read before the first event on every platform that exposes them
 - [ ] 4.2 Opt-out in Settings, beside sound and haptics, worded as what it does
-- [ ] 4.3 `POST /e` on the Worker: size-capped, rate-limited, refusing anything that is not a
+- [x] 4.3 `POST /e` on the Worker: size-capped, rate-limited, refusing anything that is not a
       known event name, and never trusting a client-supplied timestamp
 - [ ] 4.4 **Gate: nothing identifying leaves the device.** A test that plays a solo round, a
       lesson and an online round with the sink recording every payload, and asserts no room

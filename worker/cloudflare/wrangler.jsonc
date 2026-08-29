@@ -41,6 +41,22 @@
   // that lands the validator, never before.
   "vars": { "ROOM_OPEN": "false" },
 
+  // --- Analytics (openspec/changes/add-live-analytics) --------------------------------------
+  //
+  // Workers Analytics Engine. Chosen over D1, KV and Durable Object storage for one reason
+  // that matters more here than the others: `writeDataPoint` does not count against the
+  // invocation's CPU time, and the thing being measured is a Durable Object already spending
+  // its 30-second budget on MCTS.
+  //
+  // **Everything is absent-safe.** With this binding removed the Worker and the room run
+  // identically and emit nothing, which is what lets `wrangler dev` and all ten gate scripts
+  // run with no Cloudflare account at all. `gate-analytics.mjs` asserts that case explicitly
+  // rather than trusting it.
+  //
+  // The dataset is where queries read from; it is created on first write, so there is nothing
+  // to set up in the dashboard beforehand.
+  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "vinto_events" }],
+
   "observability": { "enabled": true }
 
   // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
