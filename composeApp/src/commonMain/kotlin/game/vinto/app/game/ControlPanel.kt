@@ -205,7 +205,6 @@ fun ControlPanel(
     }
 }
 
-/** The prompt, and — when it is still worth saying — the rule under it. */
 /**
  * The line under the heading that answers the player's last touch.
  *
@@ -238,6 +237,7 @@ private fun ColumnScope.Answer(state: TableState) {
     }
 }
 
+/** The prompt, and — when it is still worth saying — the rule under it. */
 @Composable
 private fun Heading(table: Table, teaching: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {

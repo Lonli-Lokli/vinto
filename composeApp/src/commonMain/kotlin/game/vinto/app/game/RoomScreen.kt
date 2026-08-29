@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,7 +59,6 @@ import game.vinto.app.art.net_connecting
 import game.vinto.app.art.net_reconnecting
 import game.vinto.app.art.online_session_over
 import game.vinto.app.art.table_see_score
-import game.vinto.app.copyToClipboard
 import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -206,20 +207,25 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
  *
  * A room code is useless in the room — it is only ever wanted by the person *not* in it — so
  * this is a share sheet first and a clipboard second, in that order, because the difference
- * between them is whether the player has to go and find somewhere to paste.
+ * between them is whether the player has to go and find somewhere to paste. On a platform
+ * with no share sheet the first button quietly becomes the second, rather than doing nothing
+ * a player can see.
  *
- * Where a platform can do neither (a desktop with no clipboard, a browser without a secure
- * context) the code is still on the screen in a typeface built for reading a character at a
- * time, and the line underneath says to read it out. A feature that fails by disappearing
- * teaches people the app is broken; one that fails by telling them what to do instead does
- * not.
+ * And under both, the code itself, in a typeface built for reading a character at a time —
+ * because the oldest way of passing six characters to somebody in the same room is to say
+ * them out loud, and it needs no platform at all.
  */
 @Composable
 private fun InviteRow(code: String) {
     var copied by remember { mutableStateOf(false) }
     val subject = stringResource(Res.string.invite_subject)
     val body = stringResource(Res.string.invite_body, code, WEB_CLIENT)
-    var handled by remember { mutableStateOf(true) }
+    val clipboard = LocalClipboardManager.current
+
+    fun copy() {
+        clipboard.setText(AnnotatedString(body))
+        copied = true
+    }
 
     Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
         Column(
@@ -244,13 +250,7 @@ private fun InviteRow(code: String) {
                 GameButton(
                     label = stringResource(Res.string.invite_share),
                     tone = ButtonTone.KEEP,
-                    onClick = {
-                        handled = shareText(subject, body)
-                        if (!handled) {
-                            handled = copyToClipboard(body)
-                            copied = handled
-                        }
-                    },
+                    onClick = { if (!shareText(subject, body)) copy() },
                     compact = true,
                     modifier = Modifier.weight(1f),
                 )
@@ -261,21 +261,16 @@ private fun InviteRow(code: String) {
                         stringResource(Res.string.invite_copy)
                     },
                     tone = ButtonTone.NEUTRAL,
-                    onClick = {
-                        handled = copyToClipboard(body)
-                        copied = handled
-                    },
+                    onClick = { copy() },
                     compact = true,
                     modifier = Modifier.weight(1f),
                 )
             }
-            if (!handled) {
-                Text(
-                    text = stringResource(Res.string.invite_read_it_out),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Rail.inkDim,
-                )
-            }
+            Text(
+                text = stringResource(Res.string.invite_read_it_out),
+                style = MaterialTheme.typography.bodySmall,
+                color = Rail.inkDim,
+            )
         }
     }
 }
