@@ -58,8 +58,10 @@ import game.vinto.app.art.net_connected
 import game.vinto.app.art.net_connecting
 import game.vinto.app.art.net_reconnecting
 import game.vinto.app.art.online_session_over
+import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
 import game.vinto.app.shareText
+import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -133,6 +135,19 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                     color = MaterialTheme.colorScheme.onFelt(),
                 )
                 ConnectionBadge(connection)
+            }
+
+            // Before the first lobby broadcast there are no seats to draw, and an empty gap
+            // between a title and a button reads as a screen that has finished loading and
+            // has nothing in it. The badge above says "Connecting…" in four small words; this
+            // says it where the eye already is, which is the space the table will occupy.
+            if (ui.seats.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Waiting),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    VintoSpinner(description = stringResource(Res.string.lobby_connecting))
+                }
             }
 
             ui.seats.forEach { seat ->
@@ -350,6 +365,11 @@ private fun RemoteGameScreen(
     var helpOpen by remember { mutableStateOf(false) }
     var scoreOpen by remember(session) { mutableStateOf(false) }
 
+    // Agreeing to the next round is an ask, not an act: the room deals when *every* seat has
+    // agreed. Keyed on the session, so the new round's arrival is what clears it — which is
+    // exactly the event being waited for, and needs no second message to say so.
+    var agreed by remember(session) { mutableStateOf(false) }
+
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
@@ -380,6 +400,7 @@ private fun RemoteGameScreen(
                 BelowTheFelt(
                     connection = connection,
                     over = shown.phase == GamePhase.SCORING,
+                    agreed = agreed,
                     onSee = { scoreOpen = true },
                 )
             }
@@ -423,6 +444,7 @@ private fun RemoteGameScreen(
                 .mapValues { (_, values) -> values.sum() },
             onNextRound = {
                 scoreOpen = false
+                agreed = true
                 room.nextRound()
             },
             onQuit = {
@@ -436,7 +458,12 @@ private fun RemoteGameScreen(
 
 /** The strips under a remote table: the connection when it wavers, the score when it ends. */
 @Composable
-private fun BelowTheFelt(connection: ConnectionState, over: Boolean, onSee: () -> Unit) {
+private fun BelowTheFelt(
+    connection: ConnectionState,
+    over: Boolean,
+    agreed: Boolean,
+    onSee: () -> Unit,
+) {
     if (connection !is ConnectionState.Connected) {
         Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
             Box(modifier = Modifier.padding(Gap), contentAlignment = Alignment.Center) {
@@ -451,12 +478,22 @@ private fun BelowTheFelt(connection: ConnectionState, over: Boolean, onSee: () -
                 modifier = Modifier.padding(Gap).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                GameButton(
-                    label = stringResource(Res.string.table_see_score),
-                    tone = ButtonTone.PLAY,
-                    onClick = onSee,
-                    modifier = Modifier.widthIn(max = StripMax).fillMaxWidth(),
-                )
+                // Once this seat has agreed there is nothing left for it to do, and the
+                // button would only invite it to agree again. What it is waiting for is the
+                // other three, so that is what it says.
+                if (agreed) {
+                    BusyLine(
+                        label = stringResource(Res.string.table_next_round_waiting),
+                        colour = Rail.inkDim,
+                    )
+                } else {
+                    GameButton(
+                        label = stringResource(Res.string.table_see_score),
+                        tone = ButtonTone.PLAY,
+                        onClick = onSee,
+                        modifier = Modifier.widthIn(max = StripMax).fillMaxWidth(),
+                    )
+                }
             }
         }
     }
@@ -466,6 +503,9 @@ private val Pad = 24.dp
 private val Gap = 10.dp
 private val LobbyMax = 420.dp
 private val StripMax = 420.dp
+/** The space the seats will fill, held open while the room is still being reached. */
+private val Waiting = 40.dp
+
 private val Dot = 10.dp
 private val DotGap = 6.dp
 

@@ -103,7 +103,7 @@ class LandscapeTableTest {
     }
 
     @Test
-    fun aDesktopTableIsCenteredNotStretched() {
+    fun aDesktopTableIsCenteredNotStretched() = runComposeUiTest {
         // A desktop-shaped window that still fits the test surface: the felt is capped by
         // its aspect, so the felt-and-rail group sits centred with the surround showing on
         // both sides — and every card stays on the felt.
@@ -131,7 +131,7 @@ class LandscapeTableTest {
     }
 
     @Test
-    fun everyCardStaysOnTheFeltSideOfTheJoin() {
+    fun everyCardStaysOnTheFeltSideOfTheJoin() = runComposeUiTest {
         show(dealt())
 
         val layout = TableLayout.forScreen(LAND_W, LAND_H)
@@ -157,7 +157,7 @@ class LandscapeTableTest {
     }
 
     @Test
-    fun yourOwnDealtHandIsStillFiveSeparateCards() {
+    fun yourOwnDealtHandIsStillFiveSeparateCards() = runComposeUiTest {
         // The hand the player reads and taps keeps the portrait bar exactly: five cards with
         // daylight between them. The opponents' hands may close up — they are face down and
         // counted rather than read — but yours must never need a second look.
@@ -172,7 +172,7 @@ class LandscapeTableTest {
     }
 
     @Test
-    fun everySeatOfACrowdedTableSurvivesTheRotation() {
+    fun everySeatOfACrowdedTableSurvivesTheRotation() = runComposeUiTest {
         // Nine cards a hand is an ordinary way to lose, not a stress test — see
         // CrowdedTableTest. On a rotated phone the side seats have the least height they
         // will ever have, and what must survive is presence: four seats, nine cards each,
