@@ -98,15 +98,18 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 **Next**
 
-1. **The four failing Compose UI tests** — §1c has each one with the compiler's or the
-   assertion's own words and the cheapest experiment for it. They need a machine that can
-   build `composeApp`, which the container this was written in could not; §1c opens with the
-   four hosts that has to be able to reach
-2. Walk the runbook in §6i — the goldens, the sounds, the deploy that opens the room, and the
+1. **Analytics, before the room opens** — `openspec/changes/add-live-analytics`, phases 1–4.
+   A blocking release gate rather than a nice-to-have: nothing in this game is measured today,
+   so the online funnel phase 9 built is unknowable, the cost of a room is unknown, and every
+   client failure is something a player experiences and nobody hears about. §6i step 3
+2. ~~The four failing Compose UI tests~~ — **done**. All four are fixed and
+   `:composeApp:jvmTest` is 79 tests green; §1c keeps the diagnosis because three of the four
+   were not what reading the log suggested
+3. Walk the runbook in §6i — the goldens, the sounds, the deploy that opens the room, and the
    proof with people. It is the part only a person with credentials and hardware can do, and
    no network policy unblocks it
-3. 9.9 (observability, a load test) and 9.10 (store releases), which start after that
-4. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
+4. 9.9 (Sentry, a load test) and 9.10 (store releases), which start after that
+5. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
    ticking, and work it genuinely has not done, currently indistinguishable
 
 ---
@@ -150,8 +153,9 @@ workflow that builds anything — the web client's three were removed with its C
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
 
-**Where it stands, as of the last run on `claude/kotlin-migration-status-8s5rny`.** Four of
-the five are green. `kmp-android` compiles — the APK, and the Compose JVM test sources — and
+**Where it stands.** All six are expected green: the four Compose failures below are fixed
+(and the section is kept for the diagnosis, because three of them were not what the CI log
+suggested). What follows was written when four of five were green. `kmp-android` compiles — the APK, and the Compose JVM test sources — and
 fails on four of the 73 tests it then runs, which is the first time that suite has executed
 anywhere. Those four are set out with their evidence in §1c; the rest of this section is how
 the other four got green, which is worth keeping because most of it was CI finding things
@@ -243,9 +247,30 @@ Notes worth knowing before editing it:
 
 ## 1c. Picking this up on a machine that can build composeApp
 
-Written at the end of the session that got four of the five CI checks green. Everything below
-is what the *next* run should do first, and it is short on purpose: the hard part is done, and
-what remains is four tests that no machine had executed until CI did.
+**All four of these are now fixed** — `:composeApp:jvmTest` is 79 tests, 0 failed. The
+section is kept rather than deleted because three of the four were *not* what reading the CI
+log suggested, and the difference between the guess and the finding is the useful part.
+
+What each turned out to be:
+
+| | §1c's reading | What running it showed |
+| --- | --- | --- |
+| 1 | Duplicated deck description | Correct. The pile keeps the count; the badge names its action |
+| 2 | Chip is 51x28dp, add `heightIn(44)` | **Wrong.** Chips are 51x**64**; the `heightIn` was there and working. `boundsInRoot` is *clipped*, so it was reporting the visible sliver of a scrolled control |
+| 3 | `canContinue`, or `Pace.CALM` unsettling the tree | **Neither.** "Back" sat 370px below the fold with bounds of zero, so `performClick` hit the window corner and reported success |
+| 4 | The runner, or a wedged stage | The runner — but the fix was in the app: `LocalPacing` lets a caller with nobody watching drop the dwells. It also uncovered a real bug, below |
+
+Two and three were the same trap twice: Compose clips `boundsInRoot` to what is on screen, so
+a scrolled-out control measures as nothing and a click aimed at it lands on the origin —
+silently, because a press on the corner of the window is a perfectly good press.
+
+Four uncovered a genuine defect: `game.result?.takeIf { scoreOpen }` short-circuited on a
+plain getter, so `scoreOpen` was never *read* and the scope never subscribed to it. Pressing
+"See the score" set a flag nobody was watching. Normally the table is still animating and the
+next frame draws it a beat late, which looks like pacing; on a table that has stopped, the
+button is dead.
+
+The original text follows, unchanged.
 
 ### What the container this was written in could not do
 
@@ -1365,7 +1390,29 @@ node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
   && node gate-lifecycle.mjs && node gate-limits.mjs && node gate-room-codes.mjs
 ```
 
-**3. Deploy and open the room — one deploy, both halves.** `ROOM_OPEN` stays `"false"` until
+**3. Land the analytics gate — before the deploy, not after it.**
+`openspec/changes/add-live-analytics`, phases 1–4. This is a blocking step and the reason is
+arithmetic rather than principle: an event not collected on launch day is a question that can
+never be asked about launch day. There is no backfill for "how many people who opened it ever
+pressed Play online", and that number is the one that says whether phase 9 was worth building.
+
+Two of the four phases are cheap because the server already knows the answers — the room is
+authoritative, so its lifecycle and round events cost nothing over the wire — and one of them
+(2.3) is what finally answers what a room *costs*, which is the number that decides whether
+online play can stay free. The fourth is the privacy gate: `§6c` already binds this zone to
+no cookies, no identifiers and GPC honoured, and task 4.4 turns that paragraph into a test
+that plays three rounds and asserts nothing identifying left the device.
+
+```sh
+cd worker/cloudflare && npx wrangler dev &
+node gate-analytics.mjs      # the event sequence, and the empty-binding case
+./gradlew :shared:client:jvmTest --tests '*Analytics*'
+```
+
+Phase 5 (the dashboard, the Web Analytics beacon, revisiting sampling against real volume) is
+deliberately **not** blocking — it reads data that does not exist until this has shipped.
+
+**4. Deploy and open the room — one deploy, both halves.** `ROOM_OPEN` stays `"false"` until
 the client that speaks to it ships; flip it in the same deploy that publishes the client
 builds, never before (the flag's comment in `wrangler.jsonc` says the same):
 
@@ -1374,14 +1421,15 @@ npx wrangler deploy          # then poll:
 curl https://vinto-room.kupalinka.app/health   # expect roomOpen: true after the flip
 ```
 
-**4. Prove it with people.** Two devices (or a device and the desktop app): create a room,
+**5. Prove it with people.** Two devices (or a device and the desktop app): create a room,
 join by code, add two bots, play a round through — kill one app mid-round and watch the seat
 go bot and come back on relaunch. Then the four-human table (9.7's second verification),
 which needs four hands and cannot be scripted.
 
 **Still open by design**: 9.9 (Sentry on the worker, a load test with 100 rooms) and 9.10
 (store releases with multiplayer enabled) — operational work that starts after this runbook
-has been walked once.
+has been walked once. Sentry stays separate from step 3 on purpose: crash reporting and
+analytics answer different questions and should not share a pipe.
 
 ## 7. Traps and known issues
 
