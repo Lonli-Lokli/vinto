@@ -45,6 +45,7 @@ class GameHolder(
 
     /** The last thing the engine refused, until the next move clears it. */
     var refusal: String? by mutableStateOf(null)
+        private set
 
     /**
      * Whether a move is on the wire and unanswered.
@@ -54,7 +55,6 @@ class GameHolder(
      * nothing looks like a table that missed it.
      */
     var sending: Boolean by mutableStateOf(false)
-        private set
         private set
 
     val playerId: String get() = session.playerId

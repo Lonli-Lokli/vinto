@@ -15,31 +15,15 @@ package game.vinto.app
  */
 actual fun shareText(subject: String, body: String): Boolean = webShare(subject, body)
 
-/** `navigator.clipboard.writeText`, which needs a secure context and can be refused. */
-actual fun copyToClipboard(text: String): Boolean = webCopy(text)
-
 // detekt reads Kotlin, not the JavaScript body below, so it cannot see that both parameters
 // are referenced there by name. The suppression is the price of `js()` interop and belongs on
-// the two functions that use it, not in the config.
+// the function that uses it, not in the config.
 @Suppress("UnusedParameter")
 private fun webShare(title: String, text: String): Boolean = js(
     """{
       try {
         if (!navigator.share) return false;
         navigator.share({ title: title, text: text }).catch(function () {});
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }""",
-)
-
-@Suppress("UnusedParameter")
-private fun webCopy(text: String): Boolean = js(
-    """{
-      try {
-        if (!navigator.clipboard) return false;
-        navigator.clipboard.writeText(text).catch(function () {});
         return true;
       } catch (e) {
         return false;

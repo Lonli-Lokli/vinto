@@ -22,7 +22,9 @@ import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.Foundation.dataTaskWithRequest
 import platform.Foundation.dataUsingEncoding
-import platform.Foundation.sharedSession
+import platform.Foundation.setHTTPBody
+import platform.Foundation.setHTTPMethod
+import platform.Foundation.setValue
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -81,6 +83,7 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
     }
 
     /** One request, one string, cancellation included — the only shape either call needs. */
+    @OptIn(ExperimentalForeignApi::class)
     private suspend fun body(request: NSMutableURLRequest): String =
         suspendCancellableCoroutine { continuation ->
             val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, _, failure ->

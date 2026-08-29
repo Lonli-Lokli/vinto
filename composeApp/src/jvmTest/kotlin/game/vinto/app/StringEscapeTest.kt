@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.art.Res
-import game.vinto.app.art.online_body
+import game.vinto.app.art.report_body
 import org.jetbrains.compose.resources.stringResource
 import java.io.File
 import kotlin.test.Test
@@ -46,7 +46,7 @@ class StringEscapeTest {
     @Test
     fun aLineBreakStillMeansALineBreak() = runComposeUiTest {
         val read = mutableStateOf("")
-        setContent { read.value = stringResource(Res.string.online_body) }
+        setContent { read.value = stringResource(Res.string.report_body) }
         waitForIdle()
 
         val body by read

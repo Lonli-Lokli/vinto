@@ -73,7 +73,7 @@
     <string name="invite_share">Share the code</string>
     <string name="invite_copy">Copy the code</string>
     <string name="invite_copied">Copied</string>
-    <string name="invite_read_it_out">Read this code out — this device has nowhere to send it.</string>
+    <string name="invite_read_it_out">Or read it out: six characters, no O or I in them.</string>
 
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Room %1$s</string>

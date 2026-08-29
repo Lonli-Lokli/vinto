@@ -165,16 +165,29 @@ tree *before* the move:
 All nine gates pass locally now — the six in plain Node and the three through a real
 `wrangler dev`, with the deployment bundle measured at 295 KB gzipped against a 3 MB limit.
 
-Still red, and **not diagnosed here**: `composeApp` does not compile for two of its targets.
-`assembleDebug` passes, so `commonMain` and `androidMain` are sound; what fails is
-`:composeApp:jvmTestClasses` (the Compose test sources) and
-`:composeApp:compileKotlinIosSimulatorArm64`. Those are precisely the two source sets that
-have never been compiled anywhere — §6i says as much, that composeApp ships "verified by
-`:composeApp:detekt` plus everything the shared modules prove" — so CI has found what no
-machine had yet asked. Neither reproduces in the container this work was done in: androidx
-resolves from dl.google.com, which answers 403 here, and there is no Mac. The steps are
-split into compile and run/link so the step name says which half broke; the compiler's own
-message is in the job log, which is the first thing to read on a machine that can open it.
+**What composeApp's own targets turned out to be hiding.** `composeApp` was red for the two
+source sets that had never been compiled anywhere — §6i says as much, that composeApp ships
+"verified by `:composeApp:detekt` plus everything the shared modules prove" — so CI asked
+what no machine had asked before, and got two answers:
+
+- `:composeApp:jvmTestClasses`: `StringEscapeTest` read `Res.string.online_body`, a string
+  that is not in `strings.xml` and never was. The test's other half — the one that greps the
+  XML for `\'` — has been doing its job all along; the half that renders a string to prove
+  `\n` still works had never been run. It reads `report_body` now, which is a real entry with
+  a real `\n` in it.
+- `:composeApp:compileKotlinIosSimulatorArm64`: five errors in `Net.ios.kt`, all import-shaped.
+  `NSMutableURLRequest`'s mutating setters come from an Objective-C category, so Kotlin/Native
+  exposes them as extensions that have to be imported by name; `sharedSession` is the
+  opposite — a class property on the metaclass, so `import platform.Foundation.sharedSession`
+  names nothing. Both are the kind of mistake only a compiler catches, which is the argument
+  for the macOS leg existing at all.
+
+Neither reproduces in the container this work was done in: androidx resolves from
+dl.google.com, which answers 403 here, and there is no Mac. What made them fixable from here
+was reading the runner's log rather than guessing — the steps are split into compile and
+run/link so the step *name* says which half broke, and a `What the compiler said` step
+repeats the `e:` lines at the end of a failed job so they survive being read from a phone or
+a tool that shows only the tail.
 
 **The detekt baseline.** The first CI run found seven findings that predate it — two
 cyclomatic-complexity, a loop with too many jumps, a return count, a file name that does not

@@ -13,9 +13,8 @@ package game.vinto.app
  * it in a notes app, send it to themselves.
  *
  * @return false when there is nothing on this platform to hand it to, so the caller can fall
- *   back to [copyToClipboard] — and, when that fails too, to simply showing the text.
+ *   back to the clipboard. That fallback is deliberately *not* a second `expect`: Compose
+ *   already carries a clipboard on all four targets, and four hand-written ones would be four
+ *   platform APIs to get right for a job the framework has already done.
  */
 expect fun shareText(subject: String, body: String): Boolean
-
-/** The fallback, and the second button in the dialog. */
-expect fun copyToClipboard(text: String): Boolean
