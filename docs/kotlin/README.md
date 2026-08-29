@@ -114,6 +114,68 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 ---
 
+## 1e. What is left, and the order to do it in
+
+A review of the whole plan against the tree, rather than against the docs. Four things were
+true that no document said.
+
+**OpenSpec had never archived anything.** `openspec/specs/` was empty for the life of the
+project, because deltas are merged there when a change archives and nothing ever had — so two
+complete changes (`design-online-room-lifecycle` 42/42, `design-client-choreography` 26/26)
+still read as proposals, and there was no consolidated statement of what the game *is*. Three
+changes are archived now and `openspec/specs/` holds 32 requirements across four capabilities.
+
+**`project.md` and `config.yaml` described a different project.** They called TypeScript, Nx
+and MobX "current", named **Koin** for DI (never adopted — zero occurrences) and a **Ktor**
+server (replaced by a Durable Object per room). Anything reading them for context, human or
+model, got the wrong architecture. Corrected, and Koin is now recorded as a decision against
+rather than a task deferred.
+
+**Several tasks were done but unticked, and three could no longer be done at all.** 3.3, 3.5,
+6.4, 2a.2 and 2a.4 were verified complete in the tree. 5.6 and 6.7 depended on
+`npm run recordings:generate` and `tools/replay-recording.ts` — both going with `legacy-web/`
+(§1d) — so they are rewritten around what still exists: bot strength measured against a
+committed self-play baseline, and the recording round trip run across *targets* (JVM, JS,
+wasmJs) rather than across languages. That is the property that still matters once one engine
+ships, because a `Long` is two `Int`s on Kotlin/JS.
+
+**There was no desktop app**, though §6i step 1 told the maintainer to run one and listen for
+the four sounds. `compose.desktop.currentOs` was a test dependency only: no `main()`, no
+`application` block, no `run` task. There is now — `./gradlew :composeApp:run` — and it is the
+fastest way to look at a UI change, with no emulator to boot.
+
+### The order
+
+**Tier 0 — done in this pass.** The desktop run target, the OpenSpec corrections, the
+archiving, and the retired tasks above.
+
+**Tier 1 — the release gate.** Nothing ships before these.
+
+1. Analytics phases 1–4 (§6i step 3, `openspec/changes/add-live-analytics`)
+2. Sentry (8.2 client, 9.9 server) — a separate pipe from analytics on purpose
+3. The goldens, the sounds, and walking §6i end to end
+
+**Tier 2 — the funnel and the players.** In this order, because each makes the next
+measurable.
+
+4. **Deep links for invites.** The Android manifest is `MAIN`/`LAUNCHER` only, so an invite
+   that carries a code still asks somebody to *type* it. A link that opens the app (App Links,
+   Universal Links) is the highest-leverage change to a funnel you have just built, and
+   analytics 3.3 is already specified to measure that exact step
+5. **Finish the translation.** §6h: roughly two hundred strings in `shared/client` are English
+   whatever the phone is set to, because `Narration`, `TableModel` and `TeachScript` *assemble*
+   sentences rather than store them. Menus, settings and help follow the language; the table's
+   prompts, the move log and the entire lesson do not. The fix is designed — return a typed
+   message and render it in the UI — and it makes the tests better, because asserting
+   `Say.YouDrew(SEVEN)` says what is meant where an English sentence says what it reads
+6. **Local statistics.** Games played, win rate, best round, streak. On the device, no server,
+   no privacy cost, and it is what makes a game with sessions worth opening twice
+
+**Tier 3 — after the room is open.** Store releases (9.10), `docs/kotlin/ARCHITECTURE.md`
+(8.4), a `CONTRIBUTING.md` that is about this repository rather than the retired one, and a
+change of its own for retiring `legacy-web/` (10.1 gestures at it; the CI half is already
+done).
+
 ## 1a. The Gradle build is the repository root
 
 It was built under `kmp/`. It is not there any more: once the Kotlin build became the one

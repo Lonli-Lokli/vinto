@@ -208,6 +208,22 @@ tasks.withType<Test>().configureEach {
 }
 
 /**
+ * The desktop app, which is a development tool rather than a product.
+ *
+ * There is no desktop release and none is planned — this exists so a UI change can be looked
+ * at in seconds instead of after an emulator boot, and because the sounds cannot be checked
+ * from a headless test suite (§6i step 1 asks for exactly that and, until now, named
+ * something that did not exist).
+ *
+ *     ./gradlew :composeApp:run
+ */
+compose.desktop {
+    application {
+        mainClass = "game.vinto.app.MainKt"
+    }
+}
+
+/**
  * What the Compose compiler thought of each composable, when asked.
  *
  * Off by default and switched on with `-PcomposeMetrics`, because it writes a file per

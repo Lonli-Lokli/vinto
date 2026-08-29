@@ -14,23 +14,26 @@ context: |
   recorded game must behave identically in Kotlin (see change
   migrate-to-kotlin-multiplatform, which depends on add-game-recording-replay).
 
-  ## Tech stack (current, TypeScript)
-  - Nx 22 monorepo, Node 22, TypeScript 5.9 strict, Vitest, ESLint, Prettier (CRLF, single quotes)
-  - packages/shapes: GameState/PlayerState/Card/Rank/Pile, card configs, GameAction union
-  - packages/engine: pure reducer GameEngine.reduce(state, action); action-validator.ts;
-    one handler per action in cases/; utils/ (toss-in flow, scoring)
-  - packages/bot: MCTS bot (mcts-*.ts), heuristics, opponent modeler,
-    coalition-planner.ts (final-round joint planner for the coalition)
-  - packages/local-client: MobX GameClient (logical + visual state, animation sync),
-    BotAIAdapter (drives bots from MobX reactions), initializeGame.ts
-  - apps/vinto: Next.js 15 / React 19 / Tailwind, framer-motion, Sentry, Vercel
-  - Docs: docs/game-engine/VINTO_RULES.md, SCENARIOS.md
+  ## Tech stack (current — Kotlin, and it is what ships)
+  - Kotlin 2.1 Multiplatform: jvm, android, js(IR), wasmJs, iOS (arm64/simulator/x64 on macOS)
+  - Compose Multiplatform: one commonMain for Android, iOS and web
+  - Gradle (Kotlin DSL) at the repository root, JDK 17 toolchain, conventions in build-logic
+    (vinto.kmp.library); detekt + detekt-formatting at maxIssues 0; Kover for coverage
+  - shared/shapes: Card, Rank, GameState, GameAction, canonical JSON, SHA-256, Prng
+  - shared/engine: GameEngine.reduce, ActionValidator, one handler per action, replay
+  - shared/bot: MCTS decision service, coalition planner, BotRunner
+  - shared/client: GameSession — LocalGameSession (solo, no socket) and RemoteGameSession
+  - shared/protocol: the wire, declared once. shared/room: room + registry cores
+  - composeApp: the UI. worker: Cloudflare Worker + one Durable Object per room (Kotlin/JS)
+  - Libraries in use are only: kotlinx.serialization, kotlinx.coroutines, Compose, kotlin.test.
+    NO DI container — Koin was in the original plan and was never adopted; construction is
+    explicit. NO Ktor/JVM server — the authority is a Durable Object (design D1, D9).
 
-  ## Tech stack (target, Kotlin)
-  - Kotlin 2.x, KMP targets androidTarget / iosArm64 / iosSimulatorArm64 / jvm
-  - Compose Multiplatform for the app UI (single composeApp for Android + iOS)
-  - kotlinx.serialization (JSON), kotlinx.coroutines, kotlinx.datetime, Koin, kotlin.test
-  - Gradle (Kotlin DSL) multi-module workspace at the repository root (was kmp/)
+  ## Retired (legacy-web/, being deleted)
+  - The Next.js/MobX/Nx client is frozen and on its way out; its CI is already removed.
+    fixtures/ stays at the root and Kotlin keeps replaying it, but once legacy-web goes the
+    corpus can no longer be regenerated — a frozen gate against drift rather than live
+    evidence that two engines agree.
 
   ## Architecture rules
   - Single source of truth: GameState is immutable and authoritative; UI stores hold UI state only.
@@ -50,15 +53,20 @@ context: |
     type, copy() for state updates, feature-oriented folders.
   - Kotlin: data class / sealed interface for state and actions, pure functions in the
     engine, no platform APIs in shared modules, JSON field names identical to TypeScript.
-  - Git: master is main; issue branches issue-{N}; lefthook pre-commit runs lint --fix and
-    nx format:write. Never bypass hooks; commit only when asked.
+  - Git: master is main; the Kotlin migration lives on `kotlin` (not yet merged); issue
+    branches issue-{N}. lefthook pre-commit runs ./gradlew detekt on Kotlin changes.
+    Never bypass hooks; commit only when asked.
 
   ## Testing
   - Engine: unit tests per handler + rules/scenario tests (SCENARIOS.md is the spec).
   - Bot: deterministic parts (heuristics, coalition planner) tested exactly; MCTS statistically.
   - Client: adapter integration tests with fake timers / virtual time.
-  - Parity: replay every committed recording through every engine implementation;
-    hashes after every action must match; both directions (TS↔KT) run in CI.
+  - Parity: replay every committed recording through the engine; hashes after every action
+    must match. Kotlin runs it on the JVM and inside workerd. The TypeScript direction goes
+    when legacy-web/ does.
+  - commonTest runs on JVM, JS, wasmJs and the iOS simulator — kmp-jvm, kmp-web and kmp-ios.
+    A green JVM run does not imply a green Worker: Kotlin/JS carries Long as two Ints and
+    uses a different serialization backend.
 
   ## Domain
   - Deck 52 + 2 Jokers. Values: 2–6 face, 7=7, 8=8, 9=9, 10=10, J/Q=10, K=0, A=1, Joker=−1.
@@ -75,10 +83,14 @@ context: |
     tournament before the Kotlin port; the loser is deleted; botVersion goes away.
   - Every game is exactly 4 players, no exceptions (no player-count setting anywhere).
   - Play with humans: 1 human vs 3 bots offline; 2–4 humans online in a 4-seat room with
-    bots filling empty seats; all-human tables of 4. Server-authoritative Ktor service running the
-    same shared engine + bots on the JVM; clients receive per-seat redacted PlayerViews.
-    Guest identity only; hot-seat on one device is out of scope.
-  - Crash reporting: Sentry (mobile via Sentry KMP, server via Sentry JVM, web as today).
+    bots filling empty seats; all-human tables of 4. Server-authoritative **Cloudflare Worker
+    + one Durable Object per room** running the same shared engine and bots; clients receive
+    per-seat redacted PlayerViews. Guest identity only; hot-seat on one device is out of scope.
+  - Single player never touches the network: no room, no token, no socket (§6d).
+  - Crash reporting: Sentry, planned and not yet built (tasks 8.2, 9.9). Kept a separate pipe
+    from analytics on purpose.
+  - Analytics: a release gate, not a nice-to-have — openspec/changes/add-live-analytics
+    phases 1-4 must land before the room opens. No cookies, no identifiers, GPC/DNT honoured.
   - End state is a single (Kotlin) game engine; the web follow-up change retires the
     TypeScript engine after the parity gate.
 
