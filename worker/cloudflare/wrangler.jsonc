@@ -59,6 +59,22 @@
 
   "observability": { "enabled": true }
 
+  // --- The stats page (design A6, task 5.1) -------------------------------------------------
+  //
+  // Three secrets, none of them here: ANALYTICS_TOKEN (Account Analytics, read-only),
+  // ANALYTICS_ACCOUNT_ID and DASHBOARD_KEY. Set with `wrangler secret put`; DEPLOYMENT.md §7
+  // walks it through for somebody who does not do this for a living.
+  //
+  // With any of the three missing, GET /counts answers 404 — the same answer a path that does
+  // not exist gets, so a stranger cannot tell a service missing its secret from one that never
+  // had the route. That is also what lets `wrangler dev` and every gate script run without a
+  // Cloudflare account.
+  //
+  // The queries themselves cannot be exercised locally: the Analytics Engine SQL API is the
+  // one part of WAE that `wrangler dev` does not emulate, so `writeDataPoint` calls made in
+  // development go nowhere queryable. `gate-dashboard.mjs` covers the queries' shape and the
+  // route's refusals; the numbers need a deployment with traffic.
+
   // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
   //
   // NOT configured here, and deliberately not half-configured. Cloudflare's rate limiting for

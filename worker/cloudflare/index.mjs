@@ -38,6 +38,7 @@ import {
  * which names are real is telling it something.
  */
 import { reportError } from './sentry.mjs';
+import { serveDashboard } from './dashboard.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
 
@@ -907,6 +908,13 @@ async function handle(request, env) {
       }
       return new Response(null, { status: 204 });
     }
+
+    // The dashboard (§A6). Above the ROOM_OPEN gate for the same reason `/e` is: the counts
+    // worth reading on a day the room is shut are exactly the ones about it being shut. It
+    // answers 404 unless this deployment holds all three of its secrets and the key in the
+    // URL matches, so on a Worker with none of them it is indistinguishable from absent.
+    const counts = await serveDashboard(request, env, url);
+    if (counts) return counts;
 
     if (env.ROOM_OPEN !== 'true') {
       return new Response('the room service is closed', {

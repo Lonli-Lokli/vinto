@@ -9,7 +9,7 @@
 #   kmp-jvm      the shared modules' JVM suites — the cross-language parity gate
 #   kmp-web      the same commonTest suites on Kotlin/JS and Kotlin/Wasm, and the web client
 #   kmp-android  the debug APK, plus the Compose UI suites that run headless on the JVM
-#   kmp-worker   the Kotlin/JS bundle, the room gates, and the Worker size budget
+#   kmp-worker   the Kotlin/JS bundle, the twelve room gates, and the Worker size budget
 #   kmp-ios      simulator tests and the framework Xcode embeds — macOS, so rationed
 #
 # They are separate jobs and not steps of one because they fail for unrelated reasons and a
@@ -347,13 +347,13 @@ jobs:
       - name: Compile the Kotlin/JS Worker bundle
         run: ./gradlew --stacktrace :worker:jsProductionExecutableCompileSync
 
-      # Six of the nine gates drive the exported room functions directly in Node: the game
+      # Nine of the twelve gates drive the exported room functions directly in Node: the game
       # questions (redaction, the seat boundary, whether the bots play, whether a session
       # ends) need no socket and no wrangler, so they run first and fail fastest.
       #
       # One step each, rather than a loop. A loop is shorter to write and worse to read: the
-      # checks list then says only "Room gates failed", and finding out which of the six it
-      # was means opening the log. Named steps put the answer on the summary page.
+      # checks list then says only "Room gates failed", and finding out which of them it was
+      # means opening the log. Named steps put the answer on the summary page.
       - name: 'Gate: the real room'
         working-directory: worker/cloudflare
         run: node gate-real-room.mjs
@@ -377,6 +377,21 @@ jobs:
       - name: 'Gate: the room-code registry'
         working-directory: worker/cloudflare
         run: node gate-registry.mjs
+
+      - name: 'Gate: what the room counts'
+        working-directory: worker/cloudflare
+        run: node gate-analytics.mjs
+
+      - name: 'Gate: crash reports, and what never leaves in one'
+        working-directory: worker/cloudflare
+        run: node gate-sentry.mjs
+
+      # The dashboard's queries and refusals. Not its numbers: the Analytics Engine SQL API is
+      # the one part of WAE `wrangler dev` does not emulate, so the six queries can only be run
+      # against rows on a deployment with traffic. Task 5.1 stays unticked for that reason.
+      - name: 'Gate: the dashboard'
+        working-directory: worker/cloudflare
+        run: node gate-dashboard.mjs
 
       # The remaining three need a running Worker: sockets and hibernation
       # (gate-two-clients), the room-code HTTP surface (gate-room-codes) and the corpus

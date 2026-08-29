@@ -56,6 +56,8 @@ You do not normally change these. They are here so that if you see one, you know
 | --- | --- | --- |
 | **Cloudflare login** | Permission to publish the room service. | You log in once with a browser — §5 |
 | `ANALYTICS_TOKEN` | Lets the private stats page read the counts. | Cloudflare dashboard — §7 |
+| `ANALYTICS_ACCOUNT_ID` | Which Cloudflare account's counts to read. Not really a secret, but it is set the same way as one. | Cloudflare dashboard — §7 |
+| `DASHBOARD_KEY` | The password on the end of the stats page's web address. Anyone who has it can read the counts. | You invent it — §7 |
 | `SENTRY_DSN` | Where the game reports crashes, so a fault somebody hit at 3am is something we hear about. | Sentry → Settings → Client Keys — §7a |
 | **Android signing key** | Proves an Android app update really came from us. | You create it once — §8 |
 
@@ -204,7 +206,22 @@ Anonymous counts only: how many games were played, how many people got as far as
 codes, no way to identify anybody** — the code is built so those cannot be recorded even by
 accident, and there is an automatic check that fails the build if anyone tries.
 
-To let the stats page read the counts, you need a token:
+### Where the page is
+
+`https://vinto-room.kupalinka.app/counts?key=THE-KEY-YOU-CHOSE`
+
+Six tables: people opening the app, rounds finished against rounds walked out of, the online
+funnel, how online sessions end, what broke and where, and what a round of online play costs
+us. It is built into the room service itself, so there is nothing extra to publish and the
+reading token never leaves Cloudflare.
+
+**Until the three things below are set, that address answers "not found"** — exactly as if the
+page did not exist. That is on purpose: a service that says "you need a password" is telling a
+stranger there is something there.
+
+### Setting it up — three things, once
+
+**1. A token that can read the counts.**
 
 1. Go to the Cloudflare dashboard → **My Profile** → **API Tokens** → **Create Token**.
 2. Choose **Create Custom Token**.
@@ -220,6 +237,44 @@ npx wrangler secret put ANALYTICS_TOKEN
 
 Paste the token when it asks, and press Enter. It is stored by Cloudflare and never appears
 in the code.
+
+**2. Which account to read.** On the Cloudflare dashboard, open **Workers & Pages**; the
+**Account ID** is on the right-hand side of that page. It is a long string of letters and
+numbers. Copy it and run:
+
+```sh
+npx wrangler secret put ANALYTICS_ACCOUNT_ID
+```
+
+**3. A password for the page.** Make up a long random one — 30-odd characters, letters and
+numbers, no words. A password manager will generate one; so will this, if you have a terminal
+open anyway:
+
+```sh
+openssl rand -hex 20
+```
+
+Then:
+
+```sh
+npx wrangler secret put DASHBOARD_KEY
+```
+
+Keep it wherever you keep passwords. The page is a read-only view of anonymous totals, so this
+is a lock on a filing cabinet rather than on a safe — but the address with the key in it will
+end up in your browser history, so do not paste it into anything public, and treat a link to
+it as the key itself.
+
+### If you want to change the password later
+
+Run `npx wrangler secret put DASHBOARD_KEY` again with the new one. The old address stops
+working immediately.
+
+### A note on what "no counts yet" means
+
+The page reads a store that is filled by people playing. On a service nobody has used, or in
+the first hour after opening, the tables will say **"Nothing yet."** That is the page working.
+Give it a day before concluding anything is wrong.
 
 ---
 

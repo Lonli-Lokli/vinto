@@ -61,10 +61,8 @@ client half by JVM tests against a fake sink.
 
 ## 5. Reading it (not blocking the release)
 
-- [ ] 5.1 Dashboard route on the Worker, rendered server-side from the WAE SQL API, token as a
-      secret (§A6)
-- [ ] 5.2 The six queries worth having: acquisition, activation (first round finished),
-      the online funnel, rounds per session, failure rate, cost per room
+- [ ] 5.1 **BUILT, NOT TICKED** (§1f): `GET /counts?key=…` on the Worker, rendered server-side from the WAE SQL API, with `ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID` and `DASHBOARD_KEY` as secrets. Absent-safe: missing any of the three answers 404, the same answer a path that does not exist gets, so a prober cannot tell the two apart. `gate-dashboard.mjs` (51 checks) covers the refusals, the escaping and the queries' shape; it cannot cover a single number, because the Analytics Engine SQL API is the one part of WAE `wrangler dev` does not emulate. Ticking it needs a deployment with traffic
+- [x] 5.2 The six queries, in `dashboard.mjs` as data rather than spread through the renderer so they can be read and gated without a network: acquisition, activation (finished against abandoned, by difficulty), the online funnel by step, sessions by how they ended, failures by kind and surface, and cost per round. Every aggregate weights by **both** samplings — WAE's own `_sample_interval` and this app's declared rate in `double1` (§A8) — because dropping either under-reports silently; `gate-dashboard.mjs` asserts that on every `sum()`, and fails when one is removed
 - [ ] 5.3 Cloudflare Web Analytics on the Pages project (§A7)
 - [ ] 5.4 **BLOCKED** (§1f): needs a week of real traffic against a deployed room. Once a week of real traffic exists: revisit the sampling rates in §A8 against actual
       volume, and the cost model in 2.3 against the actual bill

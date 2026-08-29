@@ -212,7 +212,7 @@ workflow that builds anything — the web client's three were removed with its C
 | `kmp-jvm`     | Linux  | The six shared modules' JVM suites — the corpus replay, the validator, the bot     |
 | `kmp-web`     | Linux  | The same `commonTest` suites on Kotlin/JS and Kotlin/Wasm — 538 tests on each — and the Compose web client's own compile, which nothing else covers |
 | `kmp-android` | Linux  | `assembleDebug`, plus the Compose suites headless (goldens excluded — see §6i)     |
-| `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
+| `kmp-worker`  | Linux  | The Kotlin/JS bundle, all twelve room gates, and the Worker's gzipped size budget  |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
 
 **Where it stands.** All six are expected green: the four Compose failures below are fixed
@@ -246,7 +246,7 @@ tree *before* the move:
   next alarm, which is the thirty-minute session buzzer, discarding the round it was trying
   to measure. It now fires `onAlarm` at the moment `nextAlarmAt` names.
 
-All nine gates pass locally now — the six in plain Node and the three through a real
+All twelve gates pass locally now — the nine in plain Node and the three through a real
 `wrangler dev`, with the deployment bundle measured at 295 KB gzipped against a 3 MB limit.
 
 **What composeApp's own targets turned out to be hiding.** `composeApp` was red for the two
@@ -522,7 +522,7 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | Task | What it needs | How far it got |
 | --- | --- | --- |
 | analytics 1.1 — confirm Workers Analytics Engine allowances | The Cloudflare dashboard, signed in to the account that owns the Worker | The binding, the writer and the absent-binding path are all built and gated; what is unconfirmed is the *plan's* real writes/day, read allowance and retention. `design.md` §A1 carries published figures and says in as many words that they are not measured |
-| analytics 5.1 — dashboard route | `ANALYTICS_TOKEN` as a Worker secret (`wrangler secret put ANALYTICS_TOKEN`), which is an account credential | The route can be written from here; it cannot be exercised, because the WAE SQL API is the one thing `wrangler dev` does not emulate. Built and marked, never ticked |
+| analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`), and a deployment with traffic | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
 | analytics 5.4 — revisit sampling and the cost model | A week of real traffic against a deployed room | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
