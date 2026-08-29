@@ -182,7 +182,9 @@ jobs:
           validate-wrappers: true
 
       - name: Assemble the debug APK
-        run: ./gradlew --stacktrace :composeApp:assembleDebug
+        run: |
+          set -o pipefail
+          ./gradlew --stacktrace :composeApp:assembleDebug 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
 
       # Compiling the test sources is a separate step from running them on purpose. This
       # container cannot build composeApp at all — androidx is behind dl.google.com — so when
@@ -190,7 +192,9 @@ jobs:
       # "compile" red means the code does not build, "run" red means it built and the tests
       # or the headless renderer did not like it.
       - name: Compile the Compose JVM test sources
-        run: ./gradlew --stacktrace :composeApp:jvmTestClasses
+        run: |
+          set -o pipefail
+          ./gradlew --stacktrace :composeApp:jvmTestClasses 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
 
       # `runComposeUiTest` renders the real composables off-screen, which is what catches a
       # composition that throws or a screen that draws nothing. Skiko and AWT are happier
@@ -204,6 +208,23 @@ jobs:
             xvfb-run -a ./gradlew --stacktrace :composeApp:jvmTest
           else
             ./gradlew --stacktrace :composeApp:jvmTest
+          fi
+
+
+      # The compiler's own words, repeated as the last thing the job says.
+      #
+      # A Gradle failure prints its `e:` lines in the middle of the run, and everything after
+      # them — the cache report, the daemon shutdown, the checkout cleanup — is far longer
+      # than the error itself. Anyone reading this job from a tool that shows the tail of a
+      # log (or from a phone) gets the diagnosis instead of the tidying-up.
+      - name: What the compiler said
+        if: failure()
+        run: |
+          if [ -f "${RUNNER_TEMP}/gradle.log" ]; then
+            echo "::group::compiler errors"
+            grep -E "^e: |^w: .*error|FAILURE:|What went wrong" -A 4 "${RUNNER_TEMP}/gradle.log" \
+              | tail -60 || echo "no compiler diagnostics in the log"
+            echo "::endgroup::"
           fi
 
       - name: Upload test reports
@@ -417,10 +438,30 @@ jobs:
       # compiling the Kotlin and linking the framework fail for different reasons, and the
       # step name is the diagnosis when nobody can page through the log.
       - name: Compile composeApp for the simulator
-        run: ./gradlew --stacktrace :composeApp:compileKotlinIosSimulatorArm64
+        run: |
+          set -o pipefail
+          ./gradlew --stacktrace :composeApp:compileKotlinIosSimulatorArm64 2>&1 \
+            | tee -a "${RUNNER_TEMP}/gradle.log"
 
       - name: Link the ComposeApp framework
         run: ./gradlew --stacktrace :composeApp:linkDebugFrameworkIosSimulatorArm64
+
+
+      # The compiler's own words, repeated as the last thing the job says.
+      #
+      # A Gradle failure prints its `e:` lines in the middle of the run, and everything after
+      # them — the cache report, the daemon shutdown, the checkout cleanup — is far longer
+      # than the error itself. Anyone reading this job from a tool that shows the tail of a
+      # log (or from a phone) gets the diagnosis instead of the tidying-up.
+      - name: What the compiler said
+        if: failure()
+        run: |
+          if [ -f "${RUNNER_TEMP}/gradle.log" ]; then
+            echo "::group::compiler errors"
+            grep -E "^e: |^w: .*error|FAILURE:|What went wrong" -A 4 "${RUNNER_TEMP}/gradle.log" \
+              | tail -60 || echo "no compiler diagnostics in the log"
+            echo "::endgroup::"
+          fi
 
       - name: Upload test reports
         if: failure()
