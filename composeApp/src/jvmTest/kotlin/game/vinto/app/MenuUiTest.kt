@@ -3,9 +3,11 @@ package game.vinto.app
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
@@ -45,12 +47,12 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        button("Play online").performClick()
+        press("Play online")
         waitForIdle()
 
         button("Join the room").assertIsDisplayed()
         button("Open a new room").assertIsDisplayed()
-        button("Back").performClick()
+        press("Back")
         waitForIdle()
 
         button("Play").assertIsDisplayed()
@@ -63,14 +65,14 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = vault) } }
         waitForIdle()
 
-        button("Settings").performClick()
+        press("Settings")
         waitForIdle()
-        button("Calm").performClick()
+        press("Calm")
         waitForIdle()
 
         assertEquals(Pace.CALM, vault.loadSettings().pace, "the choice reached the vault")
 
-        button("Back").performClick()
+        press("Back")
         waitForIdle()
         button("Play").assertIsDisplayed()
     }
@@ -84,7 +86,7 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        button("How to play").performClick()
+        press("How to play")
         waitForIdle()
 
         onNodeWithText("Four players, five cards each").assertIsDisplayed()
@@ -100,7 +102,7 @@ class MenuUiTest {
         setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
-        button("How to play").performClick()
+        press("How to play")
         waitForIdle()
 
         onNodeWithText("Look at two of your cards").assertIsDisplayed()
@@ -117,4 +119,22 @@ class MenuUiTest {
      * it answers to stays as written, for screen readers and for these cases.
      */
     private fun ComposeUiTest.button(label: String) = onNodeWithContentDescription(label)
+
+    /**
+     * Presses one, bringing it on screen first if the screen it is on scrolls.
+     *
+     * `performClick` aims at the node's bounds *in the root*, and Compose clips those to what
+     * is actually on screen — so a control below the fold has bounds of zero, the click lands
+     * at the window's top-left corner, hits whatever happens to be there, and reports success.
+     * Settings is six panels tall and "Back" is the last thing on it, 370 points past the
+     * bottom edge of the test window: the press meant to leave the screen was a press on the
+     * corner of it, and the assertion that followed then looked for a home screen nobody had
+     * asked for. Nothing about that read as a missed click, which is the reason to press
+     * through here rather than to click nodes directly.
+     */
+    private fun ComposeUiTest.press(label: String) {
+        val button = button(label)
+        if (!button.isDisplayed()) button.performScrollTo()
+        button.performClick()
+    }
 }
