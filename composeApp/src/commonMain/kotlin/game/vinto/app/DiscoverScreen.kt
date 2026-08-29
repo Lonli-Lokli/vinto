@@ -214,6 +214,7 @@ private fun RoomRow(row: DiscoveryRow, onJoin: (String) -> Unit) {
     // One description for the whole row: a screen reader that reads a code, then a count,
     // then a button, makes the listener assemble the table themselves.
     val spoken = stringResource(Res.string.discover_room_summary, row.code, row.seatsFilled)
+    val countdown = row.startsInSeconds
 
     Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
         Row(
@@ -241,13 +242,15 @@ private fun RoomRow(row: DiscoveryRow, onJoin: (String) -> Unit) {
                     color = Rail.ink,
                 )
                 Text(
-                    text = when {
-                        row.startsInSeconds != null ->
-                            stringResource(Res.string.discover_dealing, row.startsInSeconds)
-
-                        row.humans > 0 -> stringResource(Res.string.discover_people, row.humans)
-                        else -> stringResource(Res.string.discover_seats, row.seatsFilled)
-                    },
+                    // Bound to a local before it is used: `DiscoveryRow` is declared in
+                    // another module, and Kotlin will not smart-cast a property across that
+                    // boundary — so the null check alone leaves an `Int?` where the format
+                    // call wants a value.
+                    text = countdown?.let { stringResource(Res.string.discover_dealing, it) }
+                        ?: when {
+                            row.humans > 0 -> stringResource(Res.string.discover_people, row.humans)
+                            else -> stringResource(Res.string.discover_seats, row.seatsFilled)
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = Rail.inkDim,
                 )
