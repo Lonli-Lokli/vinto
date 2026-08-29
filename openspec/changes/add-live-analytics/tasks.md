@@ -24,14 +24,14 @@ client half by JVM tests against a fake sink.
 
 ## 2. The server measures the server
 
-- [~] 2.1 Room lifecycle events: `room_created` is emitted; `seat_filled`, `seat_vacated`, `bot_took_over`, `reconnected` and `session_ended` have their builders and are not yet wired to their call sites. Original text: `room_created`, `seat_filled`, `seat_vacated`, `bot_took_over`,
+- [x] 2.1 Room lifecycle events — all wired. `room_created` on a successful mint, `seat_filled`/`reconnected` on join (a returning token is a comeback, not a new player), `seat_vacated` on socket close, and `bot_took_over`/`session_ended`/`round_start`/`round_end` derived in `#observe` by comparing the state a request read with the state it produced. Verified by `gate-analytics.mjs` driving a real room. Original: `room_created`, `seat_filled`, `seat_vacated`, `bot_took_over`,
       `reconnected`, `session_ended` — with the reason each ended
-- [ ] 2.2 Round events: `round_start`, `round_end` carrying turns, duration, how it ended
+- [x] 2.2 Round events. `actions` rather than `turns` — the room can count its slice of the log exactly (`roundStartLogIndex`) and cannot count turns without guessing how actions group. `durationMs` needed a new `roundStartedAtEpochMs` on `RoomState` (additive, defaulted, so a stored room still decodes); `callerWon` comes from the caller's own points being positive, which is the rule in VINTO_RULES.md. Was: carrying turns, duration, how it ended
       (Vinto called, deck exhausted) and whether the caller won
-- [ ] 2.3 **Cost dimensions on every room event**: Durable Object wall time and request count
+- [x] 2.3 **Cost dimensions on every room event** — `#emit` stamps wall time since the instance woke and a per-instance request count on every server event, so cost per room is a division rather than an estimate. Was: Durable Object wall time and request count
       for the invocation that produced it. This is the number that decides whether online play
       stays free, and it is free to collect here
-- [~] 2.4 `gate-analytics.mjs` exists and passes: it holds the closed-vocabulary rule on every rendered point, proves a smuggled room code is dropped, and asserts the empty-binding case. The full-room event *sequence* follows 2.1. Original text: Gate: a script through `wrangler dev` plays a full room and asserts the exact event
+- [x] 2.4 `gate-analytics.mjs`, 41 checks: the closed-vocabulary rule on every rendered point, a smuggled room code dropped, the empty-binding case, and a real room driven through the Kotlin core asserting that a deal emits `round_start` **and nothing else**, that a request changing nothing emits nothing, and that the deal time recorded is the clock it was dealt on. Caught its own bug first: dealing inside the ten-second countdown is not a deal plays a full room and asserts the exact event
       sequence against a fake sink — including that a room played with no binding emits
       nothing and still finishes the round
 

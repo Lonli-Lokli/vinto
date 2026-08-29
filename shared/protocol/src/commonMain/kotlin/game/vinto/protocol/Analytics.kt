@@ -78,7 +78,15 @@ public sealed interface AnalyticsEvent {
     @Serializable
     @SerialName("round_end")
     public data class RoundEnd(
-        val turns: Int,
+        /**
+         * Accepted actions in the round, not turns.
+         *
+         * Named for what the room can actually count: `roundStartLogIndex` marks where a
+         * round's slice of the log begins, so this is exact. A "turn" would be a guess at how
+         * those actions group, and a number that is nearly right is worse in a store than one
+         * that is exactly something else.
+         */
+        val actions: Int,
         val durationMs: Double,
         val endedBy: RoundEnding,
         val callerWon: Boolean,
@@ -215,7 +223,7 @@ public fun AnalyticsEvent.toDataPoint(cost: Cost? = null, sampleRate: Double = 1
             doubles += listOf(humans.toDouble(), bots.toDouble(), roundNumber.toDouble())
         is AnalyticsEvent.RoundEnd -> {
             blobs += endedBy.name
-            doubles += listOf(turns.toDouble(), durationMs, flag(callerWon))
+            doubles += listOf(actions.toDouble(), durationMs, flag(callerWon))
         }
         is AnalyticsEvent.SessionEnded -> {
             blobs += reason.name

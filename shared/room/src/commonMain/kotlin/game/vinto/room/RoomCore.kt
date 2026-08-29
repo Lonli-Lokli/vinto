@@ -301,6 +301,14 @@ data class RoomState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundInitial: GameState? = null,
     /** Where the current round's actions begin on the (never-truncated) log. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundStartLogIndex: Int = 0,
+    /**
+     * When the current round was dealt, in epoch milliseconds.
+     *
+     * Only analytics reads it: how long a round takes is a fact nobody was recording, and it
+     * is the difference between "people play" and "people start and leave". Defaulted and
+     * nullable so a room stored before this field existed still decodes.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundStartedAtEpochMs: Double? = null,
     /** The seed the current round was dealt from — `seedForRound` at deal time. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val roundSeed: Long = 0,
     /**
@@ -641,6 +649,7 @@ fun startGame(stateJson: String, nowMs: Double): String {
         // `initialState` a replay starts from, and the log index marks where its actions do.
         roundInitial = dealt.copy(players = players),
         roundStartLogIndex = state.log.size,
+        roundStartedAtEpochMs = nowMs,
         roundSeed = roundSeed,
         roundFinal = null,
         session = state.session.copy(

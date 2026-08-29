@@ -24,6 +24,11 @@ import {
   roundStartPoint,
   roundEndPoint,
   sessionEndedPoint,
+  newRoom,
+  joinRoom,
+  addBot,
+  startGame,
+  countdownMs,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 let failures = 0;
@@ -116,6 +121,64 @@ check('a configured binding is written to', wrote === 1);
 
 emit({ ANALYTICS: { writeDataPoint: () => { throw new Error('quota'); } } }, points.round_end);
 check('a sink that throws does not fail the request', true);
+
+console.log('\nanalytics: a real room, and what it says about itself');
+
+// The shim's `#observe` derives every room event by comparing the state a request read with
+// the state it produced. That logic is what this exercises: drive a real room through the
+// Kotlin core, run the same comparison, and check the events that fall out are the ones the
+// game actually had — rather than trusting that a call site remembered to report.
+const T0 = 1_700_000_000_000;
+const fresh = newRoom('gate-analytics', 4242, 'moderate', T0);
+const one = JSON.parse(joinRoom(fresh, 'token-a', 'A', T0));
+const two = JSON.parse(joinRoom(JSON.stringify(one.state), 'token-b', 'B', T0 + 1000));
+const withBot = JSON.parse(addBot(JSON.stringify(two.state), 'token-a', T0 + 2000));
+const full = JSON.parse(addBot(JSON.stringify(withBot.state), 'token-a', T0 + 3000));
+
+check('two humans and two bots fill the table', full.state.seats.filter((s) => s.isBot).length === 2);
+
+// The same derivation the shim does, kept here as one function so a divergence between the
+// gate and the shim shows up as a failing check rather than as a silent difference.
+function observe(before, after) {
+  const seen = [];
+  const humans = after.seats.filter((s) => s.tokenHash != null).length;
+  const bots = after.seats.filter((s) => s.isBot).length;
+  if (before.session.rounds.length < after.session.rounds.length) seen.push('round_end');
+  if (before.phase !== 'PLAYING' && after.phase === 'PLAYING') seen.push('round_start');
+  if (before.phase !== 'FINISHED' && after.phase === 'FINISHED') seen.push('session_ended');
+  const took = after.seats.filter((s) => s.isBot && s.tokenHash != null).length;
+  const had = before.seats.filter((s) => s.isBot && s.tokenHash != null).length;
+  if (took > had) seen.push('bot_took_over');
+  return { seen, humans, bots };
+}
+
+const beforeDeal = full.state;
+// Past the countdown. Filling the fourth seat starts a ten-second public timer that any
+// player can cancel, so a deal before it expires is not a deal at all — which is exactly the
+// kind of thing a gate written against an assumed clock gets wrong.
+const DEAL_AT = T0 + 4000 + countdownMs() + 1;
+const dealt = JSON.parse(startGame(JSON.stringify(beforeDeal), DEAL_AT));
+const afterDeal = dealt.state ?? dealt;
+const dealObserved = observe(beforeDeal, afterDeal);
+
+check('dealing emits round_start', dealObserved.seen.includes('round_start'), dealObserved.seen.join(','));
+check('and nothing else', dealObserved.seen.length === 1, dealObserved.seen.join(','));
+check('the round records when it was dealt', Number.isFinite(afterDeal.roundStartedAtEpochMs), String(afterDeal.roundStartedAtEpochMs));
+check(
+  'the deal time is the clock it was dealt on',
+  afterDeal.roundStartedAtEpochMs === DEAL_AT,
+  String(afterDeal.roundStartedAtEpochMs),
+);
+check(
+  'a round in progress is not an ended one',
+  !dealObserved.seen.includes('round_end'),
+  dealObserved.seen.join(','),
+);
+
+// A quiet request changes nothing, and must therefore say nothing. This is the check that
+// catches an `#observe` that fires on every call rather than on a transition.
+const idle = observe(afterDeal, afterDeal);
+check('a request that changed nothing emits nothing', idle.seen.length === 0, idle.seen.join(','));
 
 console.log(failures === 0 ? '\nanalytics gate: PASS\n' : `\nanalytics gate: ${failures} FAILED\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -70,7 +70,7 @@ public fun roundStartPoint(
 
 @JsExport
 public fun roundEndPoint(
-    turns: Int,
+    actions: Int,
     durationMs: Double,
     endedBy: String,
     callerWon: Boolean,
@@ -79,7 +79,7 @@ public fun roundEndPoint(
 ): String {
     val ending = RoundEnding.entries.firstOrNull { it.name.equals(endedBy, ignoreCase = true) }
         ?: RoundEnding.ABANDONED
-    return point(AnalyticsEvent.RoundEnd(turns, durationMs, ending, callerWon), wallMs, requests)
+    return point(AnalyticsEvent.RoundEnd(actions, durationMs, ending, callerWon), wallMs, requests)
 }
 
 @JsExport

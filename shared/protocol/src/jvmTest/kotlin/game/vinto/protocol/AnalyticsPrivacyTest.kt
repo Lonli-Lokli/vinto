@@ -73,7 +73,7 @@ class AnalyticsPrivacyTest {
             AnalyticsEvent.Reconnected(awayMs = 4_000.0),
             AnalyticsEvent.RoundStart(humans = 2, bots = 2, roundNumber = 3),
             AnalyticsEvent.RoundEnd(
-                turns = 44,
+                actions = 44,
                 durationMs = 91_000.0,
                 endedBy = RoundEnding.VINTO_CALLED,
                 callerWon = true

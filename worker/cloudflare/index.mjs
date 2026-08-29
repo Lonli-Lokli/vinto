@@ -13,8 +13,15 @@
 //      survives hibernation; a Map keyed by socket would not.
 
 import {
+  botTookOverPoint,
   clientEventPoint,
+  reconnectedPoint,
   roomCreatedPoint,
+  roundEndPoint,
+  roundStartPoint,
+  seatFilledPoint,
+  seatVacatedPoint,
+  sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
   applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
@@ -36,6 +43,9 @@ const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
 
 /** A client batch is small by construction; anything larger is not one of ours. */
 const MAX_EVENT_BYTES = 8 * 1024;
+
+/** The session buzzer, mirrored from `RoomCore.SESSION_MS` so a duration can be derived. */
+const SESSION_SPAN_MS = 30 * 60 * 1000;
 const MAX_EVENTS_PER_BATCH = 40;
 
 /**
@@ -219,6 +229,90 @@ export class Room {
     this.env = env;
   }
 
+  /**
+   * Emits one room event, carrying what this invocation cost.
+   *
+   * The cost is the whole reason the room reports rather than an estimate being made later: a
+   * Durable Object gets 30 s of CPU per request and spends most of it on MCTS, and
+   * `PLATFORM-GATE.md` measured exactly one worst case. `#requests` counts what this instance
+   * has served since it woke, so a query can divide one by the other and get the cost of a
+   * room rather than of a request.
+   *
+   * Absent-safe through `emit`, so a room with no binding plays identically and says nothing.
+   */
+  #emit(build) {
+    this.#requests += 1;
+    const wallMs = Date.now() - (this.#awokeAt ??= Date.now());
+    emit(this.env, build(wallMs, this.#requests));
+  }
+
+  #requests = 0;
+
+  #awokeAt = undefined;
+
+  /**
+   * Watches one request's before and after, and says what changed.
+   *
+   * Rounds and phases are derived by comparing the two states rather than by each call site
+   * remembering to report — which is what keeps a new entry point from silently stopping the
+   * counts. `#fileRecording` already works this way and for the same reason.
+   */
+  #observe(beforeJson, afterState) {
+    const before = JSON.parse(beforeJson);
+    const humans = afterState.seats.filter((seat) => seat.tokenHash != null).length;
+    const bots = afterState.seats.filter((seat) => seat.isBot).length;
+
+    if (before.session.rounds.length < afterState.session.rounds.length) {
+      const round = afterState.session.rounds[afterState.session.rounds.length - 1];
+      // All three derived from what the room already knows, rather than reported by anybody:
+      // the round's slice of the log, the deal time, and who the points went to. A caller
+      // whose points are positive took the +3, which is the definition in VINTO_RULES.md.
+      const actions = Math.max(0, before.log.length - before.roundStartLogIndex);
+      const dealtAt = before.roundStartedAtEpochMs;
+      const callerWon = round?.vintoCallerId != null && (round.points?.[round.vintoCallerId] ?? 0) > 0;
+      this.#emit((wallMs, requests) => roundEndPoint(
+        actions,
+        Number.isFinite(dealtAt) ? Date.now() - dealtAt : 0,
+        round?.vintoCallerId ? 'VINTO_CALLED' : 'DECK_EXHAUSTED',
+        callerWon,
+        wallMs,
+        requests,
+      ));
+    }
+
+    if (before.phase !== 'PLAYING' && afterState.phase === 'PLAYING') {
+      this.#emit((wallMs, requests) => roundStartPoint(
+        humans,
+        bots,
+        afterState.session.rounds.length + 1,
+        wallMs,
+        requests,
+      ));
+    }
+
+    if (before.phase !== 'FINISHED' && afterState.phase === 'FINISHED') {
+      this.#emit((wallMs, requests) => sessionEndedPoint(
+        humans >= 2 ? 'PLAYED_OUT' : 'TOO_FEW_HUMANS',
+        afterState.session.rounds.length,
+        // The session clock runs from the first deal for SESSION_MS, so its start is the
+        // deadline minus that span — there is no separate start field to read.
+        Number.isFinite(afterState.session.endsAtEpochMs)
+          ? Math.max(0, SESSION_SPAN_MS - (afterState.session.endsAtEpochMs - Date.now()))
+          : 0,
+        wallMs,
+        requests,
+      ));
+    }
+
+    // A bot sitting where a human's token still is means the grace period expired and the
+    // seat was played rather than held. That is the one takeover worth counting.
+    const tookOver = afterState.seats.filter((seat) => seat.isBot && seat.tokenHash != null).length;
+    const wasTakenOver = before.seats.filter((seat) => seat.isBot && seat.tokenHash != null).length;
+    if (tookOver > wasTakenOver) {
+      this.#emit((wallMs, requests) => botTookOverPoint(humans, wallMs, requests));
+    }
+  }
+
   async #load(roomId, difficulty = 'moderate') {
     const stored = await this.ctx.storage.get(ROOM_KEY);
     if (stored) return stored;
@@ -371,6 +465,7 @@ export class Room {
 
     await this.#save(JSON.stringify(result.state));
     await this.#fileRecording(stateJson, result.state);
+    this.#observe(stateJson, result.state);
 
     // Anything the alarm produced messages for — a deal, a takeover's moves, a pacing
     // expiry's — goes out; the room decided what, this layer only delivers.
@@ -504,6 +599,19 @@ export class Room {
         const savedJson = JSON.stringify(result.state);
         ws.serializeAttachment({ seat: result.seat, token });
 
+        // A token that was already seated is somebody coming back, not a new player — the
+        // difference matters, because one is the funnel working and the other is it failing.
+        const returning = msg.token != null;
+        const seatedHumans = result.state.seats.filter((s2) => s2.tokenHash != null).length;
+        const seatedBots = result.state.seats.filter((s2) => s2.isBot).length;
+        if (returning) {
+          this.#emit((wallMs, requests) => reconnectedPoint(0, wallMs, requests));
+        } else {
+          this.#emit((wallMs, requests) => seatFilledPoint(
+            seatedHumans, seatedBots, false, wallMs, requests,
+          ));
+        }
+
         // The one and only message that carries the raw token. It goes to this socket alone;
         // #sendPrebuilt and #broadcast never see it, and no view contains it.
         // In a lobby there is no game and therefore no view — `#viewFor` returns null and
@@ -590,6 +698,7 @@ export class Room {
         }
         await this.#save(JSON.stringify(result.state));
         await this.#fileRecording(stateJson, result.state);
+        this.#observe(stateJson, result.state);
 
         // Every socket sees every accepted action, the caller included — the server is
         // authoritative, so clients never apply an action optimistically. The bots' moves
@@ -663,6 +772,17 @@ export class Room {
     const stateJson = await this.ctx.storage.get(ROOM_KEY);
     if (stateJson) {
       const refreshed = await this.#refreshPresence(stateJson);
+      const state = JSON.parse(refreshed);
+      // `grace: true` because the seat is kept — design D9 hands it to a bot only after the
+      // grace period, and the person can still come back to it. A vacancy and a departure
+      // are different things and the count should be able to tell them apart.
+      this.#emit((wallMs, requests) => seatVacatedPoint(
+        state.seats.filter((seat) => seat.tokenHash != null).length,
+        state.seats.filter((seat) => seat.isBot).length,
+        true,
+        wallMs,
+        requests,
+      ));
       this.#broadcastLobby(refreshed);
     }
   }
