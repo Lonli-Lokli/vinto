@@ -30,6 +30,8 @@ import {
  * this list is dropped silently rather than answered with an error, because telling a scanner
  * which names are real is telling it something.
  */
+import { reportError } from './sentry.mjs';
+
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
 
 /** A client batch is small by construction; anything larger is not one of ours. */
@@ -667,6 +669,9 @@ export class Room {
 
   async webSocketError(ws, error) {
     console.error('room socket error', error);
+    // Reported as well as logged: a `console.error` in a Durable Object is visible only to
+    // somebody already tailing it, which is nobody at three in the morning.
+    reportError(this.env, error, { surface: 'room-socket' });
   }
 
   #broadcast(message, except) {
@@ -679,13 +684,30 @@ export class Room {
         socket.send(payload);
       } catch (err) {
         console.error('broadcast failed', err);
+        reportError(this.env, err, { surface: 'room-broadcast' });
       }
     }
   }
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    // One place where an unhandled failure becomes a reported one. Without this a bug in any
+    // branch below is a 500 with an opaque Cloudflare page, and the only person who knows is
+    // the player who hit it.
+    try {
+      return await handle(request, env);
+    } catch (error) {
+      const sent = reportError(env, error, { surface: 'worker' });
+      // Handed to the runtime rather than awaited: the response should not wait on telemetry.
+      if (sent && ctx?.waitUntil) ctx.waitUntil(sent);
+      console.error('worker failed', error);
+      return new Response('something went wrong', { status: 500 });
+    }
+  },
+};
+
+async function handle(request, env) {
     const url = new URL(request.url);
 
     // Reports what is deployed and what is switched on, so a deployment can be identified
@@ -865,5 +887,4 @@ export default {
     // happens inside the object, which is where the real CPU budget is.
     const id = env.ROOM.idFromName(resolved.room.roomId);
     return env.ROOM.get(id).fetch(request);
-  },
-};
+}

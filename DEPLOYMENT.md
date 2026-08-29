@@ -56,6 +56,7 @@ You do not normally change these. They are here so that if you see one, you know
 | --- | --- | --- |
 | **Cloudflare login** | Permission to publish the room service. | You log in once with a browser — §5 |
 | `ANALYTICS_TOKEN` | Lets the private stats page read the counts. | Cloudflare dashboard — §7 |
+| `SENTRY_DSN` | Where the game reports crashes, so a fault somebody hit at 3am is something we hear about. | Sentry → Settings → Client Keys — §7a |
 | **Android signing key** | Proves an Android app update really came from us. | You create it once — §8 |
 
 > **If a secret leaks**, the fix is to replace it, not to hope. Cloudflare tokens can be
@@ -221,6 +222,38 @@ Paste the token when it asks, and press Enter. It is stored by Cloudflare and ne
 in the code.
 
 ---
+
+## 7a. Crash reporting
+
+When something goes wrong for a player, we want to know. Sentry is where those reports go.
+
+Give the room service its key:
+
+```sh
+cd worker/cloudflare
+npx wrangler secret put SENTRY_DSN
+```
+
+Paste the DSN when it asks. It looks like
+`https://<a long string>@<something>.ingest.us.sentry.io/<a number>`, and you get it from
+Sentry → **Settings** → **Client Keys (DSN)**.
+
+**With no key set, crash reporting is simply off** and everything else works normally. That is
+deliberate: nobody should need a Sentry account to work on the game.
+
+> **Is the DSN a secret?** Not in the usual sense — it can only *send* reports, never read
+> them, and it has to be inside the phone apps for them to report at all. What somebody could
+> do with a stolen one is send us junk reports and use up our monthly allowance. So: not a
+> disaster, but not something to post publicly either. If it does get out, make a new one in
+> Sentry and set it again with the command above; the old one can be deleted in the same
+> screen.
+>
+> **Crash reports never contain a room code, a nickname or an address.** Those are stripped
+> before anything is sent, and there is an automatic check that fails the build if the
+> stripping stops working.
+
+To check it works, look in Sentry for an event called `VintoSetupCheck` — one was sent while
+this was being set up.
 
 ## 8. The Android signing key
 
