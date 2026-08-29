@@ -95,6 +95,7 @@
     <string name="net_reconnecting">Reconnecting…</string>
     <string name="net_closed">Disconnected</string>
     <string name="table_sending">Sending your move…</string>
+    <string name="table_next_round_waiting">Waiting for the others to agree…</string>
     <string name="online_session_over">The session is over: %1$s</string>
 
     <!-- ================================================================ settings -->
