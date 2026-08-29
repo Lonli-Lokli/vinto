@@ -1,60 +1,20 @@
-# Codecov configuration
-# See: https://docs.codecov.com/docs/codecov-yaml
+# Codecov configuration.
 #
-# Stays at the repository root — Codecov only looks for this file at the root, in .github/
-# or in dev/ — even though everything it measures now lives under legacy-web/, the retired
-# npm workspace. The Kotlin build reports no coverage yet; when it does, add its paths here
-# rather than starting a second config.
-
+# Nothing uploads coverage any more. Everything Codecov measured lived in the web client
+# under legacy-web/, and the workflow that ran its tests and pushed the lcov report is gone
+# (docs/kotlin/README.md §1d). The Kotlin build reports no coverage yet.
+#
+# So the statuses are off rather than the file deleted. A project/patch status with nothing
+# to compare against does not quietly skip — it blocks, or it sits pending forever, and
+# either way it is a red mark on a pull request that has nothing to do with the change in
+# it. Turning them off says the same thing honestly.
+#
+# When the Kotlin build does report coverage, turn these back on and give them its paths —
+# `flags` and `component_management` were pointed at legacy-web/packages and have been
+# dropped rather than re-aimed, because the module layout on this side is not the same one.
 coverage:
   status:
-    project:
-      default:
-        target: 70%           # Target coverage percentage
-        if_ci_failed: error
-    patch:
-      default:
-        target: auto
-        if_ci_failed: error
+    project: false
+    patch: false
 
-comment:
-  layout: "header, diff, flags, components, footer"  # Add footer for trends
-  behavior: default
-  require_changes: false
-  require_base: yes        # Only comment if there's a base to compare
-  require_head: yes        # Only comment if head has coverage
-  show_carryforward_flags: false
-
-flags:
-  unittests:
-    paths:
-      - legacy-web/packages/
-      - legacy-web/apps/
-
-component_management:
-  individual_components:
-    - component_id: engine
-      name: Game Engine
-      paths:
-        - legacy-web/packages/engine/**
-    - component_id: bot
-      name: Bot AI
-      paths:
-        - legacy-web/packages/bot/**
-    - component_id: local-client
-      name: Local Client
-      paths:
-        - legacy-web/packages/local-client/**
-    - component_id: shapes
-      name: Shared Types
-      paths:
-        - legacy-web/packages/shapes/**
-
-ignore:
-  - "**/*.spec.ts"
-  - "**/*.test.ts"
-  - "**/__tests__/**"
-  - "**/node_modules/**"
-  - "**/test-output/**"
-  - "**/*.config.ts"
-  - "**/dist/**"
+comment: false

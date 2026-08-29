@@ -138,7 +138,8 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 
 ## 1b. Continuous integration
 
-`.github/workflows/kmp.yml`, five checks, split by what each needs:
+`.github/workflows/kmp.yml`, five checks, split by what each needs. It is now the only
+workflow that builds anything — the web client's three were removed with its CI (§1d):
 
 | Check         | Runner | What it proves                                                                   |
 | ------------- | ------ | -------------------------------------------------------------------------------- |
@@ -370,6 +371,56 @@ first — if it passes in twenty seconds on a real machine, it is the second.
   is unblocked by a network.
 - 9.9 (Sentry on the Worker, a load test) and 9.10 (store releases).
 - The stale checkboxes in phases 2, 3 and 6 of `tasks.md`.
+
+## 1d. Retiring the web client's CI
+
+The web client under `legacy-web/` is being deleted. The CI that served it has gone ahead of
+the tree, because it was failing on every pull request for a reason nothing on the Kotlin
+side can fix:
+
+```
+npm error code EBADENGINE
+npm error notsup Required: {"node":"^24"}
+npm error notsup Actual:   {"npm":"10.9.8","node":"v22.23.2"}
+```
+
+`legacy-web/package.json` asks for Node 24 and all three workflows installed Node 22, so
+`npm ci` died before a single test ran. Both **Test & Coverage** and **E2E Tests** were red on
+PR #184 for that and nothing else. Bumping the runner to 24 would have made a frozen app's
+suite green for as long as it takes to delete the app.
+
+Removed, all three of them solely the web client's:
+
+| File | What it did |
+| --- | --- |
+| `.github/workflows/legacy-web.yml` | lint, unit tests and the Codecov upload |
+| `.github/workflows/playwright-e2e.yml` | the browser matrix and the accessibility scan, against the deployed Vercel URL |
+| `.github/workflows/nx-migration.yml` | weekly Nx upgrade PRs; already reduced to a manual trigger |
+
+And with them: the two npm hooks in `lefthook.yml`, the flags and components in `codecov.yml`
+(whose statuses are now off — nothing uploads coverage, and a status with nothing to compare
+against blocks or hangs rather than skipping), and the two README badges that pointed at a
+deleted workflow and an upload that no longer happens.
+
+Nothing in the Gradle build reads `legacy-web/`. The one mention is a comment in
+`composeApp/build.gradle.kts` saying where the card art came from; `composeApp` carries its
+own copies under `composeResources/drawable`.
+
+### What deleting it actually costs
+
+One thing, and it is worth being precise rather than reassuring about it. `fixtures/` is
+committed at the repository root — 51 files, the 50 recordings and the PRNG vectors — and it
+is read by `RecordingParityTest`, `PrngVectorsTest` and the generated constant in
+`shared/shapes/build.gradle.kts`. So the Kotlin side keeps replaying the corpus after the
+deletion, and `kmp-jvm` is unaffected.
+
+What goes is the ability to *regenerate* it. `legacy-web/tools/generate-recordings.ts` is what
+produced those recordings from the TypeScript engine, and `replay-fixtures.test.ts` is what
+proved that engine still replays them. After the deletion the corpus is a frozen artefact:
+still a real gate against the Kotlin engine drifting, no longer evidence that two
+implementations agree today, and impossible to extend. That is the correct trade once the
+TypeScript engine stops being shipped — but it is a trade, and the parity language elsewhere
+in this document should be read with it in mind.
 
 ## 2. Prerequisites
 

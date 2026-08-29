@@ -1,7 +1,9 @@
-# Pre-commit hooks. The Kotlin build is the repository root; the retired web client is a
-# frozen npm workspace under legacy-web/ and is only linted when something there changes.
+# Pre-commit hooks.
+#
+# The Kotlin build is the repository root. The npm hooks that used to run here belonged to
+# the web client under legacy-web/, which is on its way out (docs/kotlin/README.md §1d):
+# nothing in CI builds it any more, so nothing at commit time should either.
 pre-commit:
-  # Deliberately sequential: the two npm commands both rewrite the staged files.
   commands:
     # Static analysis for the Kotlin side. maxIssues is 0, so this either passes or names
     # the file. Scoped by glob so it costs nothing on a commit that touches no Kotlin, and
@@ -11,13 +13,3 @@ pre-commit:
     detekt:
       glob: '*.{kt,kts}'
       run: ./gradlew detekt
-    format:
-      root: 'legacy-web/'
-      glob: '*.{ts,tsx,js,jsx}'
-      run: npx nx format:write --files={staged_files}
-      staged_fixed: true
-    lint:
-      root: 'legacy-web/'
-      glob: '*.{ts,tsx,js,jsx}'
-      run: npx nx affected --target=lint --fix=true --files={staged_files} --no-error-on-unmatched-pattern
-      staged_fixed: true
