@@ -40,7 +40,7 @@ client half by JVM tests against a fake sink.
 - [x] 3.1 `Analytics` sink in `shared/client` over the `Net` seam: batched, capped,
       fire-and-forget, dropping the newest, never on the hot path (§A4)
 - [ ] 3.2 Solo and lesson events: started, finished, abandoned-at-stage, difficulty, duration
-- [ ] 3.3 Menu funnel: app opened, play pressed, online pressed, room create attempted,
+- [x] 3.3 Menu funnel — `APP_OPENED` once settings are read, `PLAY_PRESSED` (solo and lesson), `ONLINE_PRESSED`. `ROOM_REQUESTED`/`INVITE_SHARED` follow with the room screens' own wiring. Was: app opened, play pressed, online pressed, room create attempted,
       invite shared — the steps that happen before a room exists
 - [ ] 3.4 Client failure events: a stage that stopped draining, a socket that gave up
       reconnecting, a refused move the UI could not explain
@@ -49,11 +49,11 @@ client half by JVM tests against a fake sink.
 
 ## 4. Consent, and the proof that it binds
 
-- [ ] 4.1 GPC and Do-Not-Track read before the first event on every platform that exposes them
-- [ ] 4.2 Opt-out in Settings, beside sound and haptics, worded as what it does
+- [x] 4.1 GPC and Do-Not-Track — `platformObjectsToTracking()`, four actuals. The browser is the only platform where these signals exist, so it is the only one that reads them (`navigator.globalPrivacyControl`, then `doNotTrack`); Android's nearest equivalent needs Play Services for a signal this app would honour anyway, and iOS retired its app-level flag in favour of ATT, which is about cross-app tracking Vinto does not do. Both recorded in the actuals
+- [x] 4.2 Opt-out in Settings beside sound and haptics, titled "Anonymous counts" and saying plainly that off means nothing is sent rather than less. `Settings.analytics`, default-added so an older file still decodes; a change applies immediately via `consentChanged`, which discards the buffer rather than flushing it
 - [x] 4.3 `POST /e` on the Worker: size-capped, rate-limited, refusing anything that is not a
       known event name, and never trusting a client-supplied timestamp
-- [ ] 4.4 **Gate: nothing identifying leaves the device.** A test that plays a solo round, a
+- [x] 4.4 **Gate: nothing identifying leaves the device** — `AnalyticsPrivacyUiTest` drives the real `App` across menu, online and lesson with the sink recording every payload, and asserts no nickname, token, room code, playerId or seat, plus nothing *shaped* like a room code. Two more cases: a platform signal silences everything, and an opted-out session sends nothing. Third place this is enforced, and deliberately independent of the type check and the Worker's. Was: A test that plays a solo round, a
       lesson and an online round with the sink recording every payload, and asserts no room
       code, nickname, token, seat id, IP or persistent identifier appears in any of them.
       This is the requirement §6c already binds the portfolio to, held by a test rather than

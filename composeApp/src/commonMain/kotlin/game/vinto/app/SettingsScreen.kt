@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.settings_analytics
+import game.vinto.app.art.settings_analytics_detail
 import game.vinto.app.art.settings_back
 import game.vinto.app.art.settings_bots
 import game.vinto.app.art.settings_bots_detail
@@ -108,6 +110,7 @@ fun SettingsScreen(
             Palette(settings, onChange)
             Noise(settings, onChange)
             Buzz(settings, onChange)
+            Counting(settings, onChange)
 
             if (canForget) {
                 Setting(
@@ -212,6 +215,28 @@ private fun Noise(settings: Settings, onChange: (Settings) -> Unit) {
             selected = settings.sound,
             label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
             onChoose = { on -> onChange(settings.copy(sound = on)) },
+        )
+    }
+}
+
+/**
+ * The counts, worded as what they are rather than as a category.
+ *
+ * "Analytics" is a word that makes people assume the worst, usually correctly. What this
+ * actually controls is a handful of numbers with no identity attached — so the setting says
+ * that, and says plainly that off means nothing is sent rather than less.
+ */
+@Composable
+private fun Counting(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = stringResource(Res.string.settings_analytics),
+        detail = stringResource(Res.string.settings_analytics_detail),
+    ) {
+        ChoiceRow(
+            options = listOf(true, false),
+            selected = settings.analytics,
+            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
+            onChoose = { on -> onChange(settings.copy(analytics = on)) },
         )
     }
 }

@@ -91,6 +91,17 @@ data class Settings(
     val motion: MotionChoice = MotionChoice.SYSTEM,
     /** The table's four sounds: a card dealt, a card landing, a penalty, the round ending. */
     val sound: Boolean = true,
+    /**
+     * Whether anonymous counts may be sent — rounds played, how far people get, what a room
+     * costs. Never anything identifying: see `AnalyticsEvent`, where a room code or a
+     * nickname is unrepresentable rather than filtered.
+     *
+     * Defaults to on, and the platform can still override it: a Global Privacy Control or
+     * Do-Not-Track signal wins over this being true, because a browser sending one is a
+     * person who already answered the question. A default-added field, so an older settings
+     * file still decodes.
+     */
+    val analytics: Boolean = true,
 ) {
     companion object {
         /** Bumped when the shape changes; an older file is replaced by the defaults. */

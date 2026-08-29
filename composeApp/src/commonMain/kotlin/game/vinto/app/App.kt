@@ -26,6 +26,8 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
 import game.vinto.app.theme.rememberFeedback
 import game.vinto.app.theme.rememberSounds
+import game.vinto.client.Analytics
+import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
 import game.vinto.client.RemoteRoom
 import game.vinto.client.Settings
@@ -35,6 +37,9 @@ import game.vinto.client.forgetGame
 import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.saveSettings
+import game.vinto.protocol.AnalyticsEvent
+import game.vinto.protocol.FunnelStep
+import game.vinto.protocol.Surface
 import kotlinx.coroutines.Dispatchers
 
 /**
@@ -48,7 +53,16 @@ import kotlinx.coroutines.Dispatchers
  * justify a navigator; it can land in `Screen.Online` pre-filled when somebody asks for it.
  */
 @Composable
-fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault() }) {
+fun App(
+    seeds: () -> Long = ::freshSeed,
+    vault: Vault = remember { platformVault() },
+    /**
+     * Where anonymous counts go. Injected like [seeds] and [vault] and for the same reason:
+     * a test needs to see what the app would have sent, and the only honest way to check that
+     * is to let it send to something that records.
+     */
+    counting: Counting? = null,
+) {
     var settings by remember { mutableStateOf(Settings()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Opening) }
 
@@ -57,12 +71,26 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
     val connector = remember { platformRoomConnector(ROOM_SERVICE) }
     val appScope = rememberCoroutineScope()
 
+    // One sink for the app's lifetime. Built opted-*out* and told the truth once the vault
+    // has been read, so the window between launching and loading settings cannot emit
+    // anything the player did not agree to.
+    val sink = remember {
+        Analytics(
+            transport = analyticsTransport(ROOM_SERVICE),
+            consent = AnalyticsConsent(optedIn = false, platformObjects = true),
+            scope = appScope,
+        )
+    }
+    val count = counting ?: remember(sink) { counting(sink) }
+
     // Reading what is on disk is the only thing between launching and playing, and on a cold
     // start it lands in the same frame. The opening screen exists for the case where it does
     // not — and, later, for a room that has to be reached over a network before anything can
     // be drawn.
     LaunchedEffect(Unit) {
         settings = vault.loadSettings()
+        sink.consentChanged(consentFrom(settings))
+        count.record(AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU))
         screen = Screen.Home(canContinue = vault.loadGame() != null)
     }
 
@@ -84,6 +112,9 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
     fun change(updated: Settings) {
         settings = updated
         vault.saveSettings(updated)
+        // Immediately, not on next launch: somebody who just turned it off means now, and
+        // `consentChanged` discards whatever was buffered rather than flushing it.
+        sink.consentChanged(consentFrom(updated))
     }
 
     // Back goes home from anywhere that is not home, and closes the app from there — which is
@@ -119,7 +150,7 @@ fun App(seeds: () -> Long = ::freshSeed, vault: Vault = remember { platformVault
                         is Screen.Home -> HomeScreen(
                             settings = settings,
                             canContinue = here.canContinue,
-                            go = homeActions(vault, seeds, settings) { screen = it },
+                            go = homeActions(vault, seeds, settings, count) { screen = it },
                         )
 
                         Screen.Settings -> SettingsScreen(
@@ -180,20 +211,29 @@ private fun homeActions(
     vault: Vault,
     seeds: () -> Long,
     settings: Settings,
+    counting: Counting,
     go: (Screen) -> Unit,
 ): HomeActions = HomeActions(
     continueGame = {
+        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.SOLO))
         LocalGame.resume(vault, Dispatchers.Default)?.let { go(Screen.Playing(it)) }
     },
     newGame = {
+        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.SOLO))
         go(
             Screen.Playing(
                 LocalGame.start(vault, seeds(), settings.difficulty, Dispatchers.Default),
             ),
         )
     },
-    teach = { go(Screen.Teaching) },
-    online = { go(Screen.Online) },
+    teach = {
+        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.LESSON))
+        go(Screen.Teaching)
+    },
+    online = {
+        counting.record(AnalyticsEvent.Funnel(FunnelStep.ONLINE_PRESSED, Surface.ONLINE))
+        go(Screen.Online)
+    },
     settings = { go(Screen.Settings) },
 )
 

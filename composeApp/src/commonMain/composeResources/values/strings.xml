@@ -131,6 +131,8 @@
     <string name="settings_sound_detail">A card dealt, a card landing, a penalty, the round ending — and nothing else.</string>
     <string name="settings_haptics">Haptics</string>
     <string name="settings_haptics_detail">A small kick under the thumb when a card is touched, a move lands, or a rule bites.</string>
+    <string name="settings_analytics">Anonymous counts</string>
+    <string name="settings_analytics_detail">How many rounds get played, and how long they take. Never your name, your room codes or anything that could point back at you — there is nowhere in what we send to put them. Turning this off sends nothing at all.</string>
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>
 
