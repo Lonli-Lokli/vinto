@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.help_card_worth
 import game.vinto.app.art.help_closing
+import game.vinto.app.art.help_counts_body
+import game.vinto.app.art.help_counts_title
 import game.vinto.app.art.help_group_lookers
 import game.vinto.app.art.help_group_movers
 import game.vinto.app.art.help_group_numbers
@@ -150,6 +152,28 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
             item {
                 Text(
                     stringResource(Res.string.help_closing),
+                    fontSize = BodySize,
+                    color = Rail.inkDim,
+                    modifier = Modifier.padding(vertical = Pad),
+                )
+            }
+
+            // Task 4.5. Last, because nobody opens this sheet to read it — and present,
+            // because the one place a player will look for the answer is the sheet they
+            // already open to ask what a card does. Said in the app's own words rather than
+            // linked to a policy: the whole claim is small enough to fit in a paragraph.
+            item {
+                Text(
+                    stringResource(Res.string.help_counts_title),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TitleSize,
+                    modifier = Modifier.padding(top = Gap),
+                )
+            }
+
+            item {
+                Text(
+                    stringResource(Res.string.help_counts_body),
                     fontSize = BodySize,
                     color = Rail.inkDim,
                     modifier = Modifier.padding(vertical = Pad),

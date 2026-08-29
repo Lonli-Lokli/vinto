@@ -14,6 +14,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toSize
+import game.vinto.app.CountStalls
 import game.vinto.app.LocalPacing
 import game.vinto.app.LocalReducedMotion
 import game.vinto.app.theme.Feedback
@@ -587,6 +589,14 @@ fun CardStage(
     // what *was* aimed at rather than what is.
     val current by rememberUpdatedState(live)
 
+    // What the watchdog below reads: whether a batch is being played, and a counter bumped
+    // every time one move of it finishes. Progress rather than elapsed time, because a long
+    // batch at a calm pace is slow and perfectly healthy — a stall is a batch that has stopped
+    // moving, not one that is taking a while.
+    var draining by remember { mutableStateOf(false) }
+    var progress by remember { mutableIntStateOf(0) }
+    CountStalls(draining, progress)
+
     // Drains only while there is something to play, and then stops.
     //
     // The obvious shape — a `while (true)` asking for a frame each time round — spins for the
@@ -607,6 +617,7 @@ fun CardStage(
 
         frames.collect { batch ->
             queue.submit(batch.tossedTogether())
+            draining = true
 
             while (true) {
                 val frame = queue.next() ?: break
@@ -661,7 +672,10 @@ fun CardStage(
                 // card flies to them in the next, and a ring cleared between the two blinks
                 // off at the exact moment the player looks up to see who was named.
                 stage.attention.clear()
+                progress++
             }
+
+            draining = false
 
             // Caught up — and the only path when a batch was dropped for being too far
             // behind, which is what makes the drop land on the present rather than nowhere.

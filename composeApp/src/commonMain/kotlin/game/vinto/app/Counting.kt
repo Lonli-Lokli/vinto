@@ -8,6 +8,8 @@ import game.vinto.client.AnalyticsConsent
 import game.vinto.client.AnalyticsTransport
 import game.vinto.client.Settings
 import game.vinto.protocol.AnalyticsEvent
+import game.vinto.protocol.Difficulty
+import game.vinto.shapes.Difficulty as EngineDifficulty
 
 /**
  * The app's own counter, reachable from any screen.
@@ -58,3 +60,27 @@ fun consentFrom(settings: Settings): AnalyticsConsent = AnalyticsConsent(
  */
 fun analyticsTransport(service: String): AnalyticsTransport =
     AnalyticsTransport { payload -> postBeacon(httpBase(service) + "/e", payload) }
+
+/**
+ * A monotonic-enough clock for measuring how long something took.
+ *
+ * `nowIso()` is the app's clock and it returns a string, which is right for a recording's
+ * header and wrong for arithmetic. This is the same instant as a number of milliseconds.
+ * Only durations are ever derived from it — the difference between two readings — so a
+ * device whose wall clock jumps produces one wrong duration rather than a wrong timeline.
+ */
+expect fun elapsedMs(): Long
+
+/**
+ * The engine's difficulty, as the analytics vocabulary spells it.
+ *
+ * Two enums rather than one shared: `shapes.Difficulty` carries `serialName`, which is a wire
+ * value written into every saved game and every recording, and analytics must not be able to
+ * change it by renaming a case. Mapped explicitly so adding a difficulty is a compile error
+ * here rather than a silently missing count.
+ */
+fun EngineDifficulty.counted(): Difficulty = when (this) {
+    EngineDifficulty.EASY -> Difficulty.EASY
+    EngineDifficulty.MODERATE -> Difficulty.MODERATE
+    EngineDifficulty.HARD -> Difficulty.HARD
+}

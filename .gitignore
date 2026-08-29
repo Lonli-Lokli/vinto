@@ -91,3 +91,8 @@ DerivedData/
 
 # Wrangler local dev state (the local Durable Object SQLite lives here).
 worker/cloudflare/.wrangler/
+
+# Screenshot goldens are accepted by a maintainer looking at the images, never written
+# by a build. `ScreenshotTest` produces them here; CI does not run it, because a fresh
+# runner would write its own and assert nothing (see docs/kotlin/README.md §6i step 1).
+composeApp/src/jvmTest/goldens/*.png

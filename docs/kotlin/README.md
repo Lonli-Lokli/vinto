@@ -210,7 +210,7 @@ workflow that builds anything — the web client's three were removed with its C
 | ------------- | ------ | -------------------------------------------------------------------------------- |
 | `kmp-detekt`  | Linux  | Static analysis and formatting over every module and source set, `maxIssues: 0`   |
 | `kmp-jvm`     | Linux  | The six shared modules' JVM suites — the corpus replay, the validator, the bot     |
-| `kmp-web`     | Linux  | The same `commonTest` suites on Kotlin/JS and Kotlin/Wasm — 538 tests on each      |
+| `kmp-web`     | Linux  | The same `commonTest` suites on Kotlin/JS and Kotlin/Wasm — 538 tests on each — and the Compose web client's own compile, which nothing else covers |
 | `kmp-android` | Linux  | `assembleDebug`, plus the Compose suites headless (goldens excluded — see §6i)     |
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
@@ -509,6 +509,27 @@ still a real gate against the Kotlin engine drifting, no longer evidence that tw
 implementations agree today, and impossible to extend. That is the correct trade once the
 TypeScript engine stops being shipped — but it is a trade, and the parity language elsewhere
 in this document should be read with it in mind.
+
+## 1f. BLOCKED — what cannot be finished from a container
+
+Everything here has been attempted and stopped for a reason that is not a missing decision:
+no credentials, no hardware, or no data yet. Each line names what would unblock it, so the
+person who has that thing can pick exactly their share up rather than re-deriving the list.
+
+Nothing in this section is waiting on design. Where a choice had to be made to get as far as
+being blocked, it was made and recorded in the relevant `design.md`.
+
+| Task | What it needs | How far it got |
+| --- | --- | --- |
+| analytics 1.1 — confirm Workers Analytics Engine allowances | The Cloudflare dashboard, signed in to the account that owns the Worker | The binding, the writer and the absent-binding path are all built and gated; what is unconfirmed is the *plan's* real writes/day, read allowance and retention. `design.md` §A1 carries published figures and says in as many words that they are not measured |
+| analytics 5.1 — dashboard route | `ANALYTICS_TOKEN` as a Worker secret (`wrangler secret put ANALYTICS_TOKEN`), which is an account credential | The route can be written from here; it cannot be exercised, because the WAE SQL API is the one thing `wrangler dev` does not emulate. Built and marked, never ticked |
+| analytics 5.4 — revisit sampling and the cost model | A week of real traffic against a deployed room | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
+| §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
+| §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
+| §6i step 4 — the deploy, and flipping `ROOM_OPEN` | `wrangler login`, and the deliberate decision to open the room | Everything the flip guards is built and gated locally through `wrangler dev` |
+| §6i step 5 — two devices, then four humans | Hardware and four people | Cannot be scripted; that is what 9.7's second verification is for |
+| 9.10 — store releases | An upload key, store accounts, and a signed build | `assembleRelease` signs with the upload key when `keystore.properties` exists and with the debug key when it does not, so the path is exercised without the secret |
+| `kmp-ios` beyond CI, and any `commonMain` change trusted on Apple | macOS with Xcode | The macOS leg of CI covers compilation; §5's warning stands — a `commonMain` change that breaks iOS cannot fail on a non-Mac host |
 
 ## 2. Prerequisites
 
@@ -1562,6 +1583,12 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
     --input "$(ls -d composeApp/src worker/src shared/*/src | paste -sd,)"
   ```
 
+- **Kotlin/JS's standard library is not Kotlin/Wasm's**, and `kotlin.js.Date` is the one that
+  catches people: it is in the JS stdlib and absent from Wasm's, so `Storage.wasmJs.kt` had
+  been unable to compile since it was written. Nothing said so, because nothing built it —
+  `kmp-android` builds `composeApp` for Android and `kmp-ios` for Apple, and the browser
+  target had no gate anywhere. `kmp-web` now runs `:composeApp:compileKotlinWasmJs`. Reach a
+  browser global from Wasm with a one-expression `js("...")` function.
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
   It lives in `gradle.properties`.

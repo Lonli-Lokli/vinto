@@ -7,7 +7,7 @@
 #
 #   kmp-detekt   static analysis, every module, every source set (fails in ~2 min)
 #   kmp-jvm      the shared modules' JVM suites — the cross-language parity gate
-#   kmp-web      the same commonTest suites on Kotlin/JS and Kotlin/Wasm
+#   kmp-web      the same commonTest suites on Kotlin/JS and Kotlin/Wasm, and the web client
 #   kmp-android  the debug APK, plus the Compose UI suites that run headless on the JVM
 #   kmp-worker   the Kotlin/JS bundle, the room gates, and the Worker size budget
 #   kmp-ios      simulator tests and the framework Xcode embeds — macOS, so rationed
@@ -214,6 +214,14 @@ jobs:
             :shared:bot:wasmJsNodeTest \
             :shared:client:wasmJsNodeTest \
             :shared:protocol:wasmJsNodeTest
+
+      # The browser client itself, which is the one target nothing else compiles: `kmp-android`
+      # builds composeApp for Android and `kmp-ios` for Apple, and until this step existed the
+      # Compose web build had no gate at all. It did not compile — `Storage.wasmJs.kt` reached
+      # for `kotlin.js.Date`, which is in Kotlin/JS's standard library and not in Wasm's — and
+      # nothing said so, because a source set nobody builds cannot fail.
+      - name: The Compose web client compiles
+        run: ./gradlew --stacktrace :composeApp:compileKotlinWasmJs
 
       - name: Upload test reports
         if: failure()

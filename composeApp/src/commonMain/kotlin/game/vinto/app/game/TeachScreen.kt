@@ -19,8 +19,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.LocalCounting
 import game.vinto.app.art.Res
 import game.vinto.app.art.teach_done
 import game.vinto.app.art.teach_finished_body
@@ -36,6 +39,7 @@ import game.vinto.app.art.teach_finished_title
 import game.vinto.app.art.teach_go_on
 import game.vinto.app.art.teach_heading
 import game.vinto.app.art.teach_watching
+import game.vinto.app.elapsedMs
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -51,6 +55,7 @@ import game.vinto.client.Tone
 import game.vinto.client.chapterOf
 import game.vinto.client.lessonFor
 import game.vinto.client.teachingSession
+import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import kotlinx.coroutines.CoroutineDispatcher
@@ -114,6 +119,27 @@ private val TourCard = 46.dp
  */
 @Composable
 fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> Unit) {
+    // Where somebody stops is the useful number: a lesson abandoned at beat three and one
+    // abandoned at beat twelve are different problems, and only the second is about length.
+    val counting = LocalCounting.current
+    val startedAt = remember { elapsedMs() }
+    var reached by remember { mutableIntStateOf(0) }
+    var counted by remember { mutableStateOf(false) }
+
+    fun countLesson(finished: Boolean) {
+        if (counted) return
+        counted = true
+        counting.record(
+            AnalyticsEvent.Lesson(
+                finished = finished,
+                reachedStage = reached,
+                durationMs = (elapsedMs() - startedAt).toDouble(),
+            ),
+        )
+    }
+
+    DisposableEffect(Unit) { onDispose { countLesson(finished = false) } }
+
     val session = remember { teachingSession(botDispatcher) }
     val holder = rememberHolder(session)
     val log by session.log.collectAsState()
@@ -167,6 +193,9 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
             val table = holder.tableFor(shown).beforeTheEnd(shown.vintoCallerId != null)
             labels = table.choices.associate { it.move to it.label }
             showing = lessonFor(shown, table, taught)
+            // Chapters reached, counted as the coach covers them. `Taught.chapters` only
+            // grows, so its size is how far somebody got before they stopped.
+            reached = maxOf(reached, taught.chapters.size)
 
             Box(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
@@ -205,7 +234,10 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                     finished = shown.phase == GamePhase.SCORING,
                     strayed = strayed,
                     onRead = { taught = taught.heard(showing) },
-                    onDone = onDone,
+                    onDone = {
+                        countLesson(finished = true)
+                        onDone()
+                    },
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(horizontal = Pad)

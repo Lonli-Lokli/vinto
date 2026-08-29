@@ -33,6 +33,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.CountConnectionTrouble
+import game.vinto.app.CountRefusals
 import game.vinto.app.art.Res
 import game.vinto.app.art.invite_body
 import game.vinto.app.art.invite_copied
@@ -108,6 +110,7 @@ fun RoomScreen(room: RemoteRoom, pace: Pace, onLeft: () -> Unit) {
 private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
     val lobby by room.lobby.collectAsState()
     val connection by room.connection.collectAsState()
+    CountConnectionTrouble(connection)
     val mySeat by room.seat.collectAsState()
     val pending by room.pendingSeats.collectAsState()
     val ui = lobbyUi(lobby, connection, mySeat)
@@ -379,6 +382,8 @@ private fun RemoteGameScreen(
     val log by session.log.collectAsState()
     val standings by room.standings.collectAsState()
     val connection by room.connection.collectAsState()
+    CountConnectionTrouble(connection)
+    CountRefusals(holder.refusal)
 
     var helpOpen by remember { mutableStateOf(false) }
     var scoreOpen by remember(session) { mutableStateOf(false) }

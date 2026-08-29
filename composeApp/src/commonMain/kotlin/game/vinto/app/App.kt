@@ -144,61 +144,67 @@ fun App(
             // in them the right way round to be seen against it.
             Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
                 Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                    when (val here = screen) {
-                        Screen.Opening -> OpeningScreen()
+                    // Where the app is, for the events that are about that rather than about
+                    // what happened. Provided once here rather than by each screen: the thing
+                    // that reads it is `CardStage`, which is the same code under all three
+                    // tables and cannot tell them apart on its own.
+                    CompositionLocalProvider(LocalSurface provides surfaceOf(screen)) {
+                        when (val here = screen) {
+                            Screen.Opening -> OpeningScreen()
 
-                        is Screen.Home -> HomeScreen(
-                            settings = settings,
-                            canContinue = here.canContinue,
-                            go = homeActions(vault, seeds, settings, count) { screen = it },
-                        )
+                            is Screen.Home -> HomeScreen(
+                                settings = settings,
+                                canContinue = here.canContinue,
+                                go = homeActions(vault, seeds, settings, count) { screen = it },
+                            )
 
-                        Screen.Settings -> SettingsScreen(
-                            settings = settings,
-                            canForget = vault.loadGame() != null,
-                            onChange = ::change,
-                            onForget = {
-                                vault.forgetGame()
-                                screen = Screen.Home(canContinue = false)
-                            },
-                            onBack = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
-                        )
+                            Screen.Settings -> SettingsScreen(
+                                settings = settings,
+                                canForget = vault.loadGame() != null,
+                                onChange = ::change,
+                                onForget = {
+                                    vault.forgetGame()
+                                    screen = Screen.Home(canContinue = false)
+                                },
+                                onBack = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
+                            )
 
-                        Screen.Teaching -> TeachScreen(
-                            botDispatcher = Dispatchers.Default,
-                            pace = settings.pace,
-                            onDone = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
-                        )
+                            Screen.Teaching -> TeachScreen(
+                                botDispatcher = Dispatchers.Default,
+                                pace = settings.pace,
+                                onDone = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
+                            )
 
-                        is Screen.Playing -> GameScreen(
-                            game = here.game,
-                            pace = settings.pace,
-                            onQuit = { screen = Screen.Home(canContinue = true) },
-                        )
+                            is Screen.Playing -> GameScreen(
+                                game = here.game,
+                                pace = settings.pace,
+                                onQuit = { screen = Screen.Home(canContinue = true) },
+                            )
 
-                        Screen.Online -> OnlineScreen(
-                            connector = connector,
-                            vault = vault,
-                            onEnterRoom = { code, nickname -> screen = enterRoom(code, nickname) },
-                            onBrowse = { screen = Screen.Discover(it) },
-                            onBack = {
-                                screen = Screen.Home(canContinue = vault.loadGame() != null)
-                            },
-                        )
+                            Screen.Online -> OnlineScreen(
+                                connector = connector,
+                                vault = vault,
+                                onEnterRoom = { code, nickname -> screen = enterRoom(code, nickname) },
+                                onBrowse = { screen = Screen.Discover(it) },
+                                onBack = {
+                                    screen = Screen.Home(canContinue = vault.loadGame() != null)
+                                },
+                            )
 
-                        is Screen.Discover -> DiscoverScreen(
-                            connector = connector,
-                            onJoin = { screen = enterRoom(it, here.nickname) },
-                            onBack = { screen = Screen.Online },
-                        )
+                            is Screen.Discover -> DiscoverScreen(
+                                connector = connector,
+                                onJoin = { screen = enterRoom(it, here.nickname) },
+                                onBack = { screen = Screen.Online },
+                            )
 
-                        is Screen.InRoom -> RoomScreen(
-                            room = here.room,
-                            pace = settings.pace,
-                            onLeft = {
-                                screen = Screen.Home(canContinue = vault.loadGame() != null)
-                            },
-                        )
+                            is Screen.InRoom -> RoomScreen(
+                                room = here.room,
+                                pace = settings.pace,
+                                onLeft = {
+                                    screen = Screen.Home(canContinue = vault.loadGame() != null)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -243,6 +249,14 @@ private fun ThemeChoice.isDark(): Boolean = when (this) {
     ThemeChoice.SYSTEM -> isSystemInDarkTheme()
     ThemeChoice.LIGHT -> false
     ThemeChoice.DARK -> true
+}
+
+/** Which surface a destination counts as. See [LocalSurface]. */
+private fun surfaceOf(screen: Screen): Surface = when (screen) {
+    is Screen.Playing -> Surface.SOLO
+    Screen.Teaching -> Surface.LESSON
+    Screen.Online, is Screen.Discover, is Screen.InRoom -> Surface.ONLINE
+    Screen.Opening, is Screen.Home, Screen.Settings -> Surface.MENU
 }
 
 /** Where the app is. */

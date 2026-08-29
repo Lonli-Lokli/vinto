@@ -10,7 +10,7 @@ client half by JVM tests against a fake sink.
 
 ## 1. The sink, and what it is allowed to hold
 
-- [ ] 1.1 Confirm the account's **current** Workers Analytics Engine allowances — writes/day,
+- [ ] 1.1 **BLOCKED** (§1f): needs the Cloudflare dashboard for this account. Confirm the account's **current** Workers Analytics Engine allowances — writes/day,
       reads, retention, and whether the plan covers it — against the live dashboard, and
       record the real numbers in `design.md` §A1. Do not build on the figures in this file
 - [x] 1.2 `ANALYTICS` binding in `wrangler.jsonc`, absent-safe: the Worker and the room must
@@ -39,11 +39,10 @@ client half by JVM tests against a fake sink.
 
 - [x] 3.1 `Analytics` sink in `shared/client` over the `Net` seam: batched, capped,
       fire-and-forget, dropping the newest, never on the hot path (§A4)
-- [ ] 3.2 Solo and lesson events: started, finished, abandoned-at-stage, difficulty, duration
+- [x] 3.2 Solo and lesson events. Counted from the *screen* rather than the model, because a round the engine finished and the player walked out of is a different fact from one they watched end — `DisposableEffect` fires however the screen goes away, so abandonment is the default and finishing overwrites it. The lesson carries how many chapters it reached. Verified by `AnalyticsPrivacyUiTest` walking both surfaces with the sink recording, and by `:composeApp:jvmTest` staying green. Was: started, finished, abandoned-at-stage, difficulty, duration
 - [x] 3.3 Menu funnel — `APP_OPENED` once settings are read, `PLAY_PRESSED` (solo and lesson), `ONLINE_PRESSED`. `ROOM_REQUESTED`/`INVITE_SHARED` follow with the room screens' own wiring. Was: app opened, play pressed, online pressed, room create attempted,
       invite shared — the steps that happen before a room exists
-- [ ] 3.4 Client failure events: a stage that stopped draining, a socket that gave up
-      reconnecting, a refused move the UI could not explain
+- [x] 3.4 Client failure events, all three. **Stalled stage**: `reportStalls` watches progress rather than elapsed time — a batch of eleven bot moves at the calm pace is slow and healthy, one that has finished no move in thirty seconds has stopped — and `collectLatest` restarts the window on every sign of life. **Lost socket**: `RemoteRoom` never gives up, so there is no moment the code declares defeat; `looksLost()` names the moment the *player* has, at the backoff's fifth attempt. **Refused move**: every refusal is a defect by construction, since the controls are drawn from the same `Table` the validator judges. Each reported once per screen. Verified by `FailureCountingTest` — 5 tests on virtual time, proven non-vacuous by dropping the idle guard, which fails `anIdleStageIsNeverCounted`
 - [x] 3.5 Gate: a JVM test proving the cap holds, that a flood is dropped rather than queued,
       that nothing is emitted when opted out, and that emission never blocks a move
 
@@ -58,8 +57,7 @@ client half by JVM tests against a fake sink.
       code, nickname, token, seat id, IP or persistent identifier appears in any of them.
       This is the requirement §6c already binds the portfolio to, held by a test rather than
       by a paragraph
-- [ ] 4.5 Privacy note in the help sheet saying what is counted and what is not, in the app's
-      own words
+- [x] 4.5 Privacy note in the help sheet — `help_counts_title`/`help_counts_body`, last on the sheet, saying what is counted, that there is *nowhere* in what is sent to put anything identifying, and that Settings and a browser's own signal both switch it off. In the app's own words rather than a link to a policy, because the whole claim fits in a paragraph, and on the sheet a player already opens to ask what something means
 
 ## 5. Reading it (not blocking the release)
 
@@ -68,7 +66,7 @@ client half by JVM tests against a fake sink.
 - [ ] 5.2 The six queries worth having: acquisition, activation (first round finished),
       the online funnel, rounds per session, failure rate, cost per room
 - [ ] 5.3 Cloudflare Web Analytics on the Pages project (§A7)
-- [ ] 5.4 Once a week of real traffic exists: revisit the sampling rates in §A8 against actual
+- [ ] 5.4 **BLOCKED** (§1f): needs a week of real traffic against a deployed room. Once a week of real traffic exists: revisit the sampling rates in §A8 against actual
       volume, and the cost model in 2.3 against the actual bill
 
 ## What "done" means for the gate

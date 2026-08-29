@@ -11,6 +11,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import game.vinto.app.CountRefusals
+import game.vinto.app.LocalCounting
 import game.vinto.app.art.Res
 import game.vinto.app.art.deck_body
 import game.vinto.app.art.deck_dismiss
@@ -33,6 +36,8 @@ import game.vinto.app.art.report_send
 import game.vinto.app.art.report_subject
 import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
+import game.vinto.app.counted
+import game.vinto.app.elapsedMs
 import game.vinto.app.nowIso
 import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
@@ -44,6 +49,7 @@ import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.dealScenes
 import game.vinto.client.toJson
+import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
 import org.jetbrains.compose.resources.stringResource
 
@@ -59,6 +65,8 @@ private val Pad = 12.dp
  */
 @Composable
 fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
+    val countRound = rememberRoundCount(game)
+
     // Keyed on the round, so dealing the next one rebuilds the table rather than trying to
     // reconcile the old one against a fresh deal.
     val round = game.round
@@ -66,6 +74,9 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
     val holder = rememberHolder(session)
     val act = rememberActor(holder, onEachMove = game::save)
     val log by session.log.collectAsState()
+
+    // A refused move is a defect wherever it happens; the surface says which table it was.
+    CountRefusals(holder.refusal)
 
     var helpOpen by remember { mutableStateOf(false) }
     var scoreOpen by remember(round) { mutableStateOf(false) }
@@ -163,35 +174,57 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
         HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
     }
 
-    // `scoreOpen` first, and deliberately not `game.result?.takeIf { scoreOpen }`.
-    //
-    // `LocalGame.result` is a plain getter over the session, not snapshot state, so reading it
-    // subscribes to nothing. With the null-check first the `takeIf` short-circuits for as long
-    // as the round is unfinished — which is nearly all of it — and `scoreOpen` is never read
-    // at all, so this scope never subscribes to it either. Pressing "See the score" then set a
-    // flag nobody was watching and drew nothing.
-    //
-    // What hid it is that the table is usually still animating when the round ends: the next
-    // frame recomposes this for its own reasons, finds both conditions true, and the sheet
-    // appears a beat late looking like pacing. On a table that has stopped — every card
-    // landed, nothing queued — there is no next frame, and the button is simply dead.
     if (scoreOpen) {
-        game.result?.let { result ->
-            StandingsSheet(
-                round = round,
-                you = game.playerId,
-                result = result,
-                standings = game.standings,
-                onNextRound = {
-                    scoreOpen = false
-                    game.nextRound()
-                },
-                onQuit = {
-                    scoreOpen = false
-                    onQuit()
-                },
-            )
-        }
+        SoloScore(
+            game = game,
+            round = round,
+            countRound = countRound,
+            onNextRound = {
+                scoreOpen = false
+                game.nextRound()
+            },
+            onQuit = {
+                scoreOpen = false
+                onQuit()
+            },
+        )
+    }
+}
+
+/**
+ * The score sheet, once the round has one and the player has asked to see it.
+ *
+ * The caller tests `scoreOpen` first, and deliberately not `game.result?.takeIf { scoreOpen }`.
+ *
+ * `LocalGame.result` is a plain getter over the session, not snapshot state, so reading it
+ * subscribes to nothing. With the null-check first the `takeIf` short-circuits for as long
+ * as the round is unfinished — which is nearly all of it — and `scoreOpen` is never read
+ * at all, so this scope never subscribes to it either. Pressing "See the score" then set a
+ * flag nobody was watching and drew nothing.
+ *
+ * What hid it is that the table is usually still animating when the round ends: the next
+ * frame recomposes this for its own reasons, finds both conditions true, and the sheet
+ * appears a beat late looking like pacing. On a table that has stopped — every card
+ * landed, nothing queued — there is no next frame, and the button is simply dead.
+ */
+@Composable
+private fun SoloScore(
+    game: LocalGame,
+    round: Int,
+    countRound: (Boolean) -> Unit,
+    onNextRound: () -> Unit,
+    onQuit: () -> Unit,
+) {
+    game.result?.let { result ->
+        countRound(true)
+        StandingsSheet(
+            round = round,
+            you = game.playerId,
+            result = result,
+            standings = game.standings,
+            onNextRound = onNextRound,
+            onQuit = onQuit,
+        )
     }
 }
 
@@ -308,3 +341,38 @@ private fun RoundOver(onSee: () -> Unit) {
 
 /** The widest "See the score" needs to be, on any screen. */
 private val RoundOverWidth = 420.dp
+
+/**
+ * Counts one solo round, and hands back the way to say it finished.
+ *
+ * Counted from the screen rather than from the engine, because a round the model finished and
+ * the player walked out of is a different fact from one they watched end, and only the screen
+ * can tell them apart. Abandonment is therefore the *default*: `DisposableEffect` fires
+ * however the screen goes away — a quit, a back gesture, the app being killed mid-recompose —
+ * and seeing the score overwrites it first. Once per round, whichever happens.
+ */
+@Composable
+private fun rememberRoundCount(game: LocalGame): (Boolean) -> Unit {
+    val counting = LocalCounting.current
+    val startedAt = remember(game.round) { elapsedMs() }
+    val counted = remember(game.round) { mutableStateOf(false) }
+
+    val count = remember(game.round, counting) {
+        fun(finished: Boolean) {
+            if (!counted.value) {
+                counted.value = true
+                counting.record(
+                    AnalyticsEvent.SoloRound(
+                        finished = finished,
+                        difficulty = game.difficulty.counted(),
+                        turns = game.session.view.value.turnNumber,
+                        durationMs = (elapsedMs() - startedAt).toDouble(),
+                    ),
+                )
+            }
+        }
+    }
+
+    DisposableEffect(count) { onDispose { count(false) } }
+    return count
+}
