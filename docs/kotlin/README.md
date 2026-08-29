@@ -138,13 +138,14 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 
 ## 1b. Continuous integration
 
-`.github/workflows/kmp.yml`, five checks, split by what each needs. It is now the only
+`.github/workflows/kmp.yml`, six checks, split by what each needs. It is now the only
 workflow that builds anything — the web client's three were removed with its CI (§1d):
 
 | Check         | Runner | What it proves                                                                   |
 | ------------- | ------ | -------------------------------------------------------------------------------- |
-| `kmp-detekt`  | Linux  | Static analysis over every module and every source set, `maxIssues: 0`            |
+| `kmp-detekt`  | Linux  | Static analysis and formatting over every module and source set, `maxIssues: 0`   |
 | `kmp-jvm`     | Linux  | The six shared modules' JVM suites — the corpus replay, the validator, the bot     |
+| `kmp-web`     | Linux  | The same `commonTest` suites on Kotlin/JS and Kotlin/Wasm — 538 tests on each      |
 | `kmp-android` | Linux  | `assembleDebug`, plus the Compose suites headless (goldens excluded — see §6i)     |
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |

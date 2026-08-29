@@ -3,10 +3,11 @@
 # The Gradle build is the repository root (the old `kmp/` folder was hoisted when the web
 # client was retired to `legacy-web/`), so every path below is a top-level one.
 #
-# Four checks, split by what they need rather than by what they cover:
+# Six checks, split by what they need rather than by what they cover:
 #
 #   kmp-detekt   static analysis, every module, every source set (fails in ~2 min)
 #   kmp-jvm      the shared modules' JVM suites — the cross-language parity gate
+#   kmp-web      the same commonTest suites on Kotlin/JS and Kotlin/Wasm
 #   kmp-android  the debug APK, plus the Compose UI suites that run headless on the JVM
 #   kmp-worker   the Kotlin/JS bundle, the room gates, and the Worker size budget
 #   kmp-ios      simulator tests and the framework Xcode embeds — macOS, so rationed
@@ -157,6 +158,68 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: kmp-jvm-test-reports
+          path: |
+            shared/*/build/reports/tests/**
+            shared/*/build/test-results/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The same `commonTest` suites, on the two targets that actually reach a browser.
+  #
+  # Its own job rather than steps in `kmp-jvm`, for the reason the others are split: it fails
+  # for reasons the JVM cannot have. Kotlin/JS carries a `Long` as a pair of `Int`s and uses a
+  # different serialization backend, so a green JVM run says nothing about the Worker; wasmJs
+  # has its own toolchain again, and is what the Compose web client is compiled to.
+  #
+  # This leg did not exist until now, and the first time it ran it found something: the bot's
+  # `OpponentKnowledgeFlowTest` timed out on JS while passing on the JVM, because Mocha's
+  # default is two seconds and an MCTS search is not. `shared:client` had already raised that
+  # timeout for its own suites; nothing carried the decision to the other modules, and nothing
+  # was running them to notice. Both are fixed — the timeout is in the shared convention now —
+  # but the reason to keep this job is that neither would have surfaced without it.
+  web:
+    name: kmp-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-cleanup: on-success
+          validate-wrappers: true
+
+      # `room` has no `commonTest` and `worker` has no tests of its own — the room's rules are
+      # covered by `kmp-jvm` and by the nine gate scripts in `kmp-worker`.
+      - name: Shared-module tests on Kotlin/JS
+        run: |
+          ./gradlew --stacktrace \
+            :shared:shapes:jsNodeTest \
+            :shared:engine:jsNodeTest \
+            :shared:bot:jsNodeTest \
+            :shared:client:jsNodeTest \
+            :shared:protocol:jsNodeTest
+
+      - name: Shared-module tests on Kotlin/Wasm
+        run: |
+          ./gradlew --stacktrace \
+            :shared:shapes:wasmJsNodeTest \
+            :shared:engine:wasmJsNodeTest \
+            :shared:bot:wasmJsNodeTest \
+            :shared:client:wasmJsNodeTest \
+            :shared:protocol:wasmJsNodeTest
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: kmp-web-test-reports
           path: |
             shared/*/build/reports/tests/**
             shared/*/build/test-results/**
