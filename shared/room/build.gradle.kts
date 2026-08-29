@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
@@ -10,7 +12,14 @@ plugins {
  * Android, iOS or Wasm: a phone never hosts a room.
  */
 kotlin {
-    jvm()
+    // Pinned like the six modules that have an `androidTarget` to pin it on. This one is
+    // server-side and has none, which is the only reason it was the odd module out — not a
+    // decision that its bytecode could float with whatever JDK happened to run the build.
+    jvm {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     js(IR) {
         binaries.library()

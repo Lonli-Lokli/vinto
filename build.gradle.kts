@@ -77,6 +77,28 @@ allprojects {
  * has no display. Set for every module rather than composeApp alone: it costs nothing where
  * there is no UI, and it is the kind of flag that is only ever missing.
  */
+/**
+ * The JDK the Kotlin compilers run on, decided by the build rather than by the machine.
+ *
+ * Every module targets 17 bytecode, and until now nothing said which JDK should produce it —
+ * so the answer was "whichever one Gradle was started with", and a contributor on 21 was
+ * compiling against 21's `java.base` while claiming 17. It happens to work; it is not
+ * something the build was checking.
+ *
+ * A toolchain says it outright: Gradle finds a JDK 17 (or provisions one — see the resolver
+ * in `settings.gradle.kts`) and compiles with it, whatever JDK started the build. So the
+ * Gradle JDK no longer has to be exactly 17, which is the point — CI pins 17 and resolves it
+ * locally with nothing to download, and a developer on 21 or 25 gets the same bytecode
+ * instead of a different one that happens to pass.
+ */
+allprojects {
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> {
+            jvmToolchain(17)
+        }
+    }
+}
+
 allprojects {
     tasks.withType<Test>().configureEach {
         systemProperty("vinto.fixtures", rootProject.layout.projectDirectory.dir("fixtures").asFile.absolutePath)
