@@ -16,6 +16,18 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
         }
+        jvmTest.dependencies {
+            // Test-only, for `AnalyticsPrivacyTest`: walking the sealed event hierarchy needs
+            // `sealedSubclasses`, and listing the cases by hand would miss the next one added
+            // — which is the whole failure that test exists to catch.
+            implementation(kotlin("reflect"))
+        }
+        jvmTest.dependencies {
+            // Test-only, for `AnalyticsPrivacyTest`: walking the sealed event hierarchy needs
+            // `sealedSubclasses`, and listing the cases by hand would miss the next one added
+            // — which is the whole failure that test exists to catch.
+            implementation(kotlin("reflect"))
+        }
     }
 }
 
