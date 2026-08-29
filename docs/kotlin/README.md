@@ -91,13 +91,22 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 - **The platform gate is closed.** 2a.1b was the last open item and it passes: the worst
   request observed costs 1.6 s of a Durable Object's 30 s budget (`PLATFORM-GATE.md`)
 
+- **CI runs, and four of its five checks are green.** `kmp-detekt`, `kmp-jvm`, `kmp-worker`
+  and `kmp-ios` all pass; everything compiles on every target, including the two source sets
+  that had never been compiled anywhere. What is red is `kmp-android`, and only its *tests*:
+  four of the Compose suite's 73 (§1b, §1c)
+
 **Next**
 
-1. Walk the runbook in §6i — the local suites, the worker gates, the deploy that opens the
-   room, and the proof with people. It is the part only a person with credentials and
-   hardware can do
-2. 9.9 (observability, a load test) and 9.10 (store releases), which start after that
-3. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
+1. **The four failing Compose UI tests** — §1c has each one with the compiler's or the
+   assertion's own words and the cheapest experiment for it. They need a machine that can
+   build `composeApp`, which the container this was written in could not; §1c opens with the
+   four hosts that has to be able to reach
+2. Walk the runbook in §6i — the goldens, the sounds, the deploy that opens the room, and the
+   proof with people. It is the part only a person with credentials and hardware can do, and
+   no network policy unblocks it
+3. 9.9 (observability, a load test) and 9.10 (store releases), which start after that
+4. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
    ticking, and work it genuinely has not done, currently indistinguishable
 
 ---
@@ -139,7 +148,14 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 | `kmp-worker`  | Linux  | The Kotlin/JS bundle, all nine room gates, and the Worker's gzipped size budget    |
 | `kmp-ios`     | macOS  | Simulator tests for the five Apple-target modules, and the framework Xcode embeds  |
 
-**What the first runs found, and what is still red.** `kmp-jvm` is green — the corpus
+**Where it stands, as of the last run on `claude/kotlin-migration-status-8s5rny`.** Four of
+the five are green. `kmp-android` compiles — the APK, and the Compose JVM test sources — and
+fails on four of the 73 tests it then runs, which is the first time that suite has executed
+anywhere. Those four are set out with their evidence in §1c; the rest of this section is how
+the other four got green, which is worth keeping because most of it was CI finding things
+that had been wrong for a while.
+
+**What the first runs found.** `kmp-jvm` is green — the corpus
 replays and the validator holds after the move, which is the check the migration rested on —
 and so is `kmp-detekt` once its debt was baselined. Two jobs were red for reasons that
 predate this work, both reproduced locally against the real compiled engine (build the
@@ -222,6 +238,138 @@ Notes worth knowing before editing it:
   across the three steps that need it — a background process outlives its step.
 
 ---
+
+## 1c. Picking this up on a machine that can build composeApp
+
+Written at the end of the session that got four of the five CI checks green. Everything below
+is what the *next* run should do first, and it is short on purpose: the hard part is done, and
+what remains is four tests that no machine had executed until CI did.
+
+### What the container this was written in could not do
+
+It could not compile `composeApp` at all, which is why the loop was push-and-read-a-log. The
+denials, from the egress proxy's own report rather than from guessing:
+
+| host | needed for | consequence when blocked |
+| --- | --- | --- |
+| `dl.google.com` (and `maven.google.com`, which redirects there) | AGP, androidx, Compose Multiplatform's Android artifacts | **no `composeApp` at all** — not the APK, not the JVM test suites |
+| `cache-redirector.jetbrains.com` | Kotlin/JS and wasm toolchain fetches | no `wasmJsBrowserDistribution` |
+| `download.jetbrains.com` | the Kotlin/Native prebuilt toolchain | nothing on Linux; Apple targets need macOS regardless |
+| `github.com` beyond this repository | release assets, e.g. binaryen for wasm | the wasm target's own toolchain download |
+
+Maven Central, the Gradle plugin portal, `services.gradle.org`, `nodejs.org`, npm and
+`api.github.com` were all reachable, which is why the shared modules, the Worker bundle and
+every Node room gate *could* be verified locally. androidx is not mirrored on Maven Central —
+checked, 404 — so there was no way around it.
+
+Two more things about that host, in case the next one is like it:
+
+- **The JDK was 21, and the build wants 17.** Every module pins `jvmTarget = 17` and none
+  declares a toolchain. The shared modules happen to compile on 21; the AGP-driven ones are
+  where the mismatch bites, so this and the androidx allowance only pay off together.
+- **The AGP-stripped copy is obsolete.** With `dl.google.com` reachable there is no reason to
+  keep a second tree with `androidTarget()` deleted; run Gradle against the real one.
+
+### The first hour, in order
+
+```sh
+./gradlew detekt                                    # the gate, all modules
+./gradlew :shared:shapes:jvmTest :shared:engine:jvmTest :shared:bot:jvmTest \
+          :shared:client:jvmTest :shared:protocol:jvmTest :shared:room:jvmTest
+./gradlew :composeApp:assembleDebug                 # green as of CI run 10
+./gradlew :composeApp:jvmTest                       # 73 tests, 4 red — the work below
+```
+
+Then the Worker, which needs the bundle built first:
+
+```sh
+./gradlew :worker:jsProductionExecutableCompileSync
+cd worker/cloudflare && npx wrangler dev --port 8787 --var ROOM_OPEN:true &
+node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
+  && node gate-lifecycle.mjs && node gate-limits.mjs && node gate-registry.mjs \
+  && node gate-room-codes.mjs && node gate-two-clients.mjs && node gate-engine-replay.mjs
+```
+
+All nine passed on the last run of this branch; they are here so a broken environment is
+told apart from a broken change before anything else is believed.
+
+### The four tests, with what CI actually said
+
+`:composeApp:jvmTest` — **73 tests, 4 failed**. This suite had never run anywhere before CI
+ran it, so none of these is a regression; they are the first reading of a gauge nobody had
+looked at. Each is given here with the evidence and the cheapest next experiment, because a
+machine that can run them will resolve in minutes what could only be reasoned about here.
+
+**1. `HeaderControlsTest.theDeckCountExplainsItself` (`:25`)** — deterministic, and arguably
+a real finding.
+
+```
+Expected exactly '1' node but found '2' that satisfy:
+  ContentDescription contains 'cards left in the deck'
+  1) Node #553 at (663,8)-(709,52)   ContentDescription = '[34 cards left in the deck]'  Text = '[34]'
+  2) Node #595 at (306,299)-(362,377) ContentDescription = '[34 cards left in the deck]'
+```
+
+Both come from `header_deck_left`: `TableScreen.kt:284` (the header badge, which is the one
+the test means to click) and `TableScreen.kt:834` (the draw pile on the felt). A screen
+reader currently says the same sentence twice on one screen. Decide which of the two should
+say it — the pile is the thing being counted, the badge is the thing that opens an
+explanation — rather than making the test's matcher cleverer, which would hide the
+duplication instead of settling it.
+
+**2. `TouchTargetTest.everyRankChipSurvivesALargeFont` (`:74`)** — deterministic, and a real
+accessibility finding.
+
+```
+AssertionError: 2 is 51x28dp, under a 44dp thumb
+```
+
+At `fontScale = 2f` a rank chip grows sideways and not down: `GameButton(compact = true)` has
+its height from padding and a fixed `CompactLabel`, so the label can double while the box
+cannot. `everythingSurvivesALargeFont` (the same sweep without the rank grid) passes, so it
+is the chips specifically. The obvious fix is a `heightIn(min = 44.dp)` on the compact
+button — and the obvious risk is the rail: fourteen chips at 44dp is a taller grid, and
+`railHeight(screen)` is a *fixed* share of the screen with `CrowdedTableTest` and
+`LandscapeTableTest` holding the felt to what remains. Run those two after touching it.
+
+**3. `MenuUiTest.aSettingSurvivesLeavingTheScreen` (`:75`)**
+
+```
+Expected exactly '1' node but could not find any that satisfies:
+  ContentDescription = 'Play'
+```
+
+The setting *did* reach the vault — the `assertEquals` four lines above it passed. What fails
+is the home screen afterwards: no "Play" button. Two sibling tests in the same file walk
+Home → Online → Back → `button("Play")` and pass, so the way back is not broken in general.
+What is different about this one is that it is the only test that goes through **Settings**
+and the only one that **changes a setting** before coming back. Cheapest experiments, in
+order: assert on `onRoot().printToLog()` right after the Back click to see what the home
+screen actually rendered; then check whether `canContinue` came back true (Home draws
+"Continue"/"New game" instead of "Play" when it does — `HomeScreen.kt:258`), and whether
+`Pace.CALM` reaching `LocalReducedMotion` / the card-fan `animateTo` at `HomeScreen.kt:174`
+leaves the tree unsettled.
+
+**4. `FullGameUiTest.aWholeRoundIsPlayedOutOnTheScreen` (`:46`, the wait at `:76`)** — the one
+that may be the runner rather than the code.
+
+```
+ComposeTimeoutException: Condition still not satisfied after 120000 ms
+```
+
+It waits for "See the score" to appear after a whole round has been animated through
+`CardStage` at `Pace.BRISK`. Two possibilities and they are easy to separate on a machine
+that can run it: the stage genuinely never drains (a bug), or two cores and software
+rendering simply cannot animate a round in two minutes (raise `END_TIMEOUT`, and say in the
+comment that the number is a CI budget rather than a claim about the app). Run it locally
+first — if it passes in twenty seconds on a real machine, it is the second.
+
+### What is left after those four
+
+- The goldens, the sounds, the deploy and the four-human table: §6i, unchanged. None of them
+  is unblocked by a network.
+- 9.9 (Sentry on the Worker, a load test) and 9.10 (store releases).
+- The stale checkboxes in phases 2, 3 and 6 of `tasks.md`.
 
 ## 2. Prerequisites
 
@@ -1196,12 +1344,20 @@ has been walked once.
 of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx`, the
   Sentry wrapper, root-page prerender, stale `.next`, version mismatch, `global-error.tsx`.
   Needs a bisect of `src/app`. It blocks CI's `build` job.
-- **The Kotlin CI has never run.** `.github/workflows/kmp.yml` is new and was written in a
-  container that cannot compile the build (androidx is behind dl.google.com), so its five
-  jobs are unverified: the first run on a branch or pull request is the first real one.
-  Expect to fix something. The likely candidates, in order: an action major version that has
-  moved on, the Compose JVM suites wanting a display beyond `java.awt.headless`, and the
-  three worker gates that need `wrangler dev` to come up inside the health-poll window.
+- **The Kotlin CI has run now, and four of its five checks are green.** It was written in a
+  container that cannot compile `composeApp` at all, so every one of its jobs was unverified
+  guesswork until the first push; ten runs later `kmp-detekt`, `kmp-jvm`, `kmp-worker` and
+  `kmp-ios` pass and `kmp-android` compiles and fails four tests (§1b, §1c). Of the three
+  failures predicted here, none happened: the action versions were fine, `java.awt.headless`
+  was enough for the Compose suites, and `wrangler dev` came up inside the poll window every
+  time. What actually broke was in the code the container could not compile — which is the
+  argument for the workflow existing, not against the prediction.
+- **A CI log is readable, but only if you ask for enough of it.** `get_job_logs` defaults to
+  a tail short enough to land inside `setup-gradle`'s post-action cache report, which is
+  longer than most failures; the compiler's `e:` lines sit above it and never appear. Pass a
+  large `tail_lines` (2000 is comfortable) and grep the result. Two round trips were spent
+  re-deriving this, and the `What the compiler said` step in `kmp.yml` exists because of it —
+  worth keeping either way, since it is what makes a failure legible from a phone.
 - **`nx build @vinto/game` no longer has a CI job.** It has been broken since before this
   branch (below), the workspace is frozen, and a check that has never been green teaches
   people to ignore red. Restoring it is part of picking the web client back up.
