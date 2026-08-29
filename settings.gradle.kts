@@ -1,4 +1,8 @@
 pluginManagement {
+    // The conventions in `build-logic` are plugins like any other, so the build has to be
+    // told where to find them before it can apply them.
+    includeBuild("build-logic")
+
     repositories {
         gradlePluginPortal()
         mavenCentral()

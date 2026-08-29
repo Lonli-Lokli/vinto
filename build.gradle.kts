@@ -1,3 +1,4 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
 plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kotlinSerialization) apply false
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 /**
@@ -18,6 +20,27 @@ plugins {
  */
 allprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    /**
+     * Formatting, which detekt does not do on its own.
+     *
+     * detekt is static analysis — complexity, dead code, naming — and it has nothing to say
+     * about where the line breaks go. `detekt-formatting` wraps ktlint's rules and runs them
+     * in the same pass under the same config, which is a formatter that reports through a
+     * gate the build already has rather than a second tool with a second config and a second
+     * opinion.
+     *
+     * It matters more than it did: `lefthook` used to run `nx format:write` over the staged
+     * files, and that hook went with the web client's tooling (§1d). Nothing has enforced
+     * formatting since.
+     */
+    dependencies {
+        add(
+            "detektPlugins",
+            rootProject.extensions.getByType<VersionCatalogsExtension>()
+                .named("libs").findLibrary("detekt-formatting").get(),
+        )
+    }
 
     detekt {
         buildUponDefaultConfig = true
@@ -123,6 +146,61 @@ allprojects {
             events("failed")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
             showStackTraces = true
+        }
+    }
+}
+
+/**
+ * `expect`/`actual` classes, without the warning on every compile.
+ *
+ * `Sound`, `SoundPlayer` and the other `expect class` declarations are exactly what the
+ * feature is for, and Kotlin still calls it Beta — so every compilation of every module
+ * printed the same paragraph about it. A warning nobody can act on is a warning everybody
+ * learns to scroll past, and the next real one scrolls past with it.
+ *
+ * This acknowledges the Beta rather than hiding a problem: the design is deliberate and
+ * recorded (`docs/kotlin/README.md` §5), and if the feature changes shape the compiler will
+ * say so as an error, which this does not suppress.
+ */
+allprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
+}
+
+/**
+ * Coverage, which this repository had none of.
+ *
+ * What Codecov used to measure was the TypeScript workspace, and its upload went with that
+ * workspace's CI (§1d) — so the number went to zero without anything saying so. Kover is the
+ * Kotlin-native answer and, unlike the old setup, it can see a multiplatform module: it
+ * measures the JVM compilation, which is where every shared module's tests actually run.
+ *
+ * Aggregated here rather than reported per module, because the interesting question is what
+ * fraction of the *rules* are exercised, and the rules are spread across six modules that
+ * only mean anything together. `composeApp` is deliberately absent — its suites are Compose
+ * UI tests whose value is in what they assert about a rendered screen, and line coverage of
+ * a `@Composable` measures how much of the layout happened to be drawn.
+ *
+ * No threshold is set. A gate that nobody chose a number for is a number chosen by whoever
+ * ran it first; pick one when there is a reason to.
+ */
+dependencies {
+    kover(project(":shared:shapes"))
+    kover(project(":shared:engine"))
+    kover(project(":shared:bot"))
+    kover(project(":shared:client"))
+    kover(project(":shared:protocol"))
+    kover(project(":shared:room"))
+}
+
+kover {
+    reports {
+        total {
+            xml { onCheck.set(false) }
+            html { onCheck.set(false) }
         }
     }
 }

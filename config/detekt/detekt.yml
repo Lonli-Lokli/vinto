@@ -76,3 +76,18 @@ exceptions:
 performance:
   SpreadOperator:
     active: false
+
+formatting:
+  # ktlint's ruleset arrives with `detekt-formatting`, and two of its rules duplicate
+  # decisions this file has already made — with their own defaults, and with no knowledge of
+  # the reasoning behind them. Deferring to the rules that carry the reasoning.
+  MaximumLineLength:
+    # `style > MaxLineLength` above sets 110 rather than ktlint's 120, and excludes tests
+    # because they assert against whole canonical JSON strings. Wrapping one of those makes
+    # a failing diff harder to read, which is the single moment the line length matters.
+    active: false
+  Filename:
+    # detekt's own `MatchingDeclarationName` says the same thing, and the one file that
+    # violates it is already listed in the baseline. Two rules for one problem means
+    # baselining the same debt twice and fixing it twice to be rid of it.
+    active: false

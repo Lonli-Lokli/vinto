@@ -1,30 +1,6 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
+    id("vinto.kmp.library")
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.androidLibrary)
-}
-
-/**
- * Kotlin/Native cannot build Apple targets anywhere except macOS, so they are declared
- * behind a host check. On Windows or Linux the build simply has fewer targets; on macOS
- * the iOS targets appear with no further configuration.
- *
- * macOS is now the primary development machine, so the reduced target set is the exception
- * rather than the norm — and a `commonMain` change that breaks iOS would be invisible on a
- * host that never compiles it. The build therefore says so out loud instead of silently
- * building less than you think. Do not make these targets unconditional: on a non-Mac host
- * that is a hard toolchain failure, not a warning.
- */
-val isMacOs = System.getProperty("os.name").startsWith("Mac", ignoreCase = true)
-
-if (!isMacOs) {
-    logger.warn(
-        "shared:shapes — building WITHOUT the iOS targets on ${System.getProperty("os.name")}. " +
-            "Apple targets require macOS; shared-code breakage on iOS will not surface here.",
-    )
 }
 
 /**
@@ -93,35 +69,6 @@ val generatePrngVectorsSource =
     }
 
 kotlin {
-    // jvm     — tests and tooling only; there is no JVM server (see design D1).
-    // js      — the Cloudflare Worker bundle.
-    // wasmJs  — the Compose web client.
-    // android — the Android app.
-    jvm()
-
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
-    }
-
-    js(IR) {
-        binaries.library()
-        nodejs()
-        useEsModules()
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        binaries.library()
-        nodejs()
-    }
-
-    if (isMacOs) {
-        iosArm64()
-        iosSimulatorArm64()
-    }
-
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
@@ -138,14 +85,4 @@ kotlin {
 
 android {
     namespace = "game.vinto.shapes"
-    compileSdk = libs.versions.androidCompileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.androidMinSdk.get().toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 }
