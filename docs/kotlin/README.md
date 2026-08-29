@@ -1035,6 +1035,99 @@ Until that lands the app is half-translated: menus, settings, the score sheet, t
 and the spoken descriptions follow the phone's language; the table's prompts, the move log and
 the lesson do not.
 
+## 6j. Finding a table, getting somebody to it, and saying so while you wait
+
+Three things that the online client had no answer for, and one bug found while giving it one.
+
+### Every wait now says where it is
+
+The app had no progress indicator of any kind — a `grep` for one found nothing — so a tap
+that crossed a network looked exactly like a tap that missed. `theme/Progress.kt` draws one
+the way the rest of the table is drawn: a track at low opacity with a brighter round-capped
+sweep riding it, in the ink of whatever it sits on. Material's own ring on felt reads as a
+form submitting.
+
+**Reduced motion is honoured properly**, which means "no movement, same information": the
+still version is a *complete* ring at the sweep's weight, visibly a busy indicator rather
+than a frozen animation, and the animated branch is a separate composable so the frame clock
+is never started for somebody who asked for stillness.
+
+Local before global, wherever the wait belongs to one thing. Every call that crosses the wire,
+and what it draws:
+
+| what is waiting | what it draws |
+| --- | --- |
+| `POST /rooms` — opening a room | the button, busy: label swapped for a spinner, taps swallowed |
+| `GET /rooms` — the public list, first load | the middle of the screen |
+| `GET /rooms` — a refresh | a small one beside the title; **the list stays** |
+| the socket opening or re-opening | the connection badge spins instead of showing a settled dot |
+| the lobby before its first broadcast | the space the seats will fill, held open, with a spinner in it |
+| adding or removing a bot | on *that seat*, and the add button goes busy |
+| a move over the socket | one line under the prompt |
+| agreeing to the next round | the strip under the felt, saying what it is waiting for |
+
+`GameButton` grew `busy`, which swaps the label and swallows its own taps. That is not
+politeness: "open a room" pressed twice is two rooms, "add a bot" pressed twice is a table
+with a bot nobody asked for — and the second press is the fault of the first having looked
+like nothing happened.
+
+### The bug that turned up while drawing the waits
+
+`GameHolder.act` had no in-flight state. Locally that never mattered, because the reducer
+answers in the same frame. Over a socket it was wrong: `RemoteGameSession` holds a **single**
+waiter for the answer it expects, so a second move sent while the first was in flight replaced
+that waiter and the first hung until it timed out. A player who hurried made their own move
+stall. One move at a time now, with the second dropped rather than queued.
+
+### A browser for public rooms
+
+`GET /rooms` already existed and nothing used it. `DiscoverScreen` is the four states it
+needs — asking, unable to ask, asked-and-empty, and a list — and `OnlineScreen` asks
+public-or-private *before* the room exists, defaulting to private: a listing cannot be taken
+back once a stranger has read it, so the safe answer is the one already chosen.
+
+The rows are a pure function of the service's answer (`shared/client/Discovery.kt`, eight
+tests) and they **keep the service's order**. A client that re-sorts makes two people looking
+at one lobby see two different lists, and one of them taps the row the other was reading.
+
+Four security decisions on that path, three of them fixes:
+
+- **The listing is an allow-list, not the record minus a field.** It used to answer with the
+  registry's own row minus `sourceId`, which already published `roomId` — the Durable
+  Object's name — and would have published whatever anybody added next. `PublicRoom` names
+  what is public; a new field on `RegisteredRoom` stays private until somebody adds it there
+  on purpose.
+- **`hostNickname` is cleaned by the registry**, not by the field that types it. The UI caps
+  it at sixteen characters, which stops the honest caller and nobody else; a direct POST put
+  whatever it liked in front of every stranger browsing.
+- **`ROOM_OPEN` closes the door as well as the table.** It used to guard only the socket, one
+  layer down, so a closed deployment still minted codes and still named its public rooms.
+  `/health` and `/replay` stay open above the gate — one is a liveness answer, the other a
+  pure function of its own argument.
+- **A code that could never have been issued is refused in the Worker**, by
+  `looksLikeRoomCode`, before the one Durable Object that knows every live room is asked
+  anything. Not the security boundary — `resolveRoomCode` is — but a scan should have to send
+  plausible codes to cost the registry a round trip. The refusal is the same 404 an unknown
+  code gets, so it is not an oracle either.
+
+Also: the listing sends `no-store` (occupancy a second ago, cached, sends people to a table
+that filled while the answer sat in a proxy), a countdown travels as a *duration* resolved
+against the service's clock rather than a deadline rendered through a phone's, and the
+response is capped at 50 rooms.
+
+### An invitation worth sending
+
+The lobby shows the code monospaced and letterspaced — it is the one string in this app
+somebody reads aloud down a telephone — with Share and Copy under it, and the line that says
+it can simply be read out.
+
+`shareText` is platform code, because a share *sheet* genuinely is a platform thing: Android's
+chooser, the browser's Web Share. Where a platform has none it returns false and the button
+falls through to the clipboard, rather than doing nothing the player can see. The clipboard
+itself is **not** a second `expect`: Compose carries one on all four targets, and four
+hand-written platform implementations would be four APIs to get right for a job the framework
+has already done.
+
 ## 6i. Taking the room live — the maintainer's runbook
 
 The online client is code-complete: protocol, room cores with JVM tests, per-event views,
