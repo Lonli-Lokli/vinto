@@ -1,0 +1,10 @@
+# Everything here is public and there is nothing behind a login, so the only rule is about
+# room codes. `/r/<code>` is an invitation: it resolves to a live room for as long as that
+# room exists and to nothing afterwards, so an indexed one is a dead link that outlives the
+# game it pointed at by months. It is also somebody's invitation, and a search result is not
+# where they meant it to be read.
+User-agent: *
+Disallow: /r/
+Allow: /
+
+Sitemap: https://vinto.kupalinka.app/sitemap.xml

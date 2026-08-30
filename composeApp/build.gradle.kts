@@ -185,6 +185,22 @@ tasks.withType<Test>().configureEach {
 }
 
 /**
+ * The web client's shell is an input to the JVM test suite.
+ *
+ * `WebShellTest` reads `src/wasmJsMain/resources` off the disk — the page, its icons, the
+ * manifest and the two Pages config files — because nothing else in this build ever looks at
+ * them: `kmp-web` compiles the client and no job serves it. Without this, editing the page
+ * leaves `jvmTest` UP-TO-DATE and the check silently does not run, which is a worse failure
+ * than not having the check: a green tick over an unread file. Found by breaking the page on
+ * purpose and watching the suite pass in 766 ms.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/wasmJsMain/resources"))
+        .withPropertyName("webShell")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+/**
  * The desktop app, which is a development tool rather than a product.
  *
  * There is no desktop release and none is planned — this exists so a UI change can be looked

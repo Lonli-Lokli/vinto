@@ -5,12 +5,105 @@
     <!-- `viewport-fit=cover` so the felt reaches the edges of a phone with a notch, which is
          what the app's own safe-area insets then hold the table clear of. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <meta name="description" content="Vinto — a card game about holding the lowest hand.">
-    <!-- The colour of the rail, so a phone's browser chrome is the edge of the table rather
-         than a white band above it. Matches Theme.Vinto on Android, for the same reason. -->
-    <meta name="theme-color" content="#14181d">
-    <title>Vinto</title>
-    <link rel="icon" href="favicon.png">
+
+    <!--
+      ============================================================================
+      What a link to this page says about itself.
+
+      All of it is hand-written and none of it is generated, because there is no server here:
+      Pages serves this one file for every route, so a per-page title is not a thing this
+      site can have. That is a real limit and it is the reason the copy below describes the
+      *game* rather than a screen — a link to `/r/7KQ2MP` and a link to `/` unfurl
+      identically, and the honest thing for both to say is what Vinto is.
+
+      Two rules for editing it:
+
+        * `og:image` and `twitter:image` MUST be absolute URLs. Relative ones are the single
+          most common way an unfurl silently shows nothing: the crawler has no page context
+          to resolve them against, so it drops the tag rather than guessing.
+        * The description is written once and repeated into `description`, `og:description`
+          and `twitter:description` rather than being three different sentences. Three
+          descriptions is three things to keep true; `IndexHtmlTest` asserts they match.
+      ============================================================================
+    -->
+    <title>Vinto — a card game about holding the lowest hand</title>
+    <meta name="description" content="Vinto is a four-player card game about holding the lowest hand. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest. Free, in the browser, no sign-up.">
+    <link rel="canonical" href="https://vinto.kupalinka.app/">
+    <meta name="application-name" content="Vinto">
+    <meta name="author" content="kupalinka.app">
+    <!-- Deliberately short. A keywords list has not been a ranking signal for many years and a
+         long one reads as spam to the humans who do still look at it; these are here because
+         they are what the game is actually called. -->
+    <meta name="keywords" content="Vinto, card game, lowest hand, toss-in, action cards, browser game">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+
+    <!-- Open Graph — Facebook, LinkedIn, Slack, Discord, WhatsApp, iMessage. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Vinto">
+    <meta property="og:url" content="https://vinto.kupalinka.app/">
+    <meta property="og:title" content="Vinto — a card game about holding the lowest hand">
+    <meta property="og:description" content="Vinto is a four-player card game about holding the lowest hand. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest. Free, in the browser, no sign-up.">
+    <meta property="og:image" content="https://vinto.kupalinka.app/share-card.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="The name Vinto in gold on green baize, above a fan of five cards: the Joker, King, Queen, seven and Ace.">
+    <meta property="og:locale" content="en">
+
+    <!-- Twitter/X. `summary_large_image` rather than `summary`, which the retired web client
+         used: a 1200x630 card cropped into a small square thumbnail wastes the picture. -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Vinto — a card game about holding the lowest hand">
+    <meta name="twitter:description" content="Vinto is a four-player card game about holding the lowest hand. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest. Free, in the browser, no sign-up.">
+    <meta name="twitter:image" content="https://vinto.kupalinka.app/share-card.png">
+    <meta name="twitter:image:alt" content="The name Vinto in gold on green baize, above a fan of five cards: the Joker, King, Queen, seven and Ace.">
+
+    <!-- The rail, so a phone's browser chrome is the edge of the table rather than a band
+         above it. Two of them, because the rail is the half of the app that follows the
+         phone (`theme/VintoTheme.kt`): paper by day, slate by night. The values are
+         `androidApp/.../values/colors.xml` and its `values-night/` twin, so the browser
+         chrome and the Android window are the same colour by construction. -->
+    <meta name="theme-color" content="#F4F1E8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1B2430" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="dark light">
+
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-title" content="Vinto">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!--
+      Structured data. `VideoGame` rather than `WebApplication`, because that is what this is
+      and it is the type that carries `numberOfPlayers` and `gamePlatform` — the two facts
+      somebody searching for a card game to play with friends is actually filtering on.
+
+      No `aggregateRating` and no `review`. Both are eligible for rich results and both would
+      have to be invented, and a rating nobody gave is the kind of structured data that gets a
+      site penalised rather than promoted.
+    -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Vinto",
+      "url": "https://vinto.kupalinka.app/",
+      "image": "https://vinto.kupalinka.app/share-card.png",
+      "description": "A four-player card game about holding the lowest hand. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest.",
+      "genre": ["Card game", "Strategy"],
+      "playMode": ["SinglePlayer", "MultiPlayer"],
+      "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 2, "maxValue": 4 },
+      "gamePlatform": ["Web browser", "Android", "iOS"],
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
+
     <style>
         /* The dark rail behind everything, painted before a single byte of wasm has loaded:
            4 MB is long enough that a white page is a visible flash, and on a slow connection
@@ -21,7 +114,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #14181d;
+            background: #1B2430;
             color: #e8e6e3;
             font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
             overscroll-behavior: none;
@@ -34,16 +127,57 @@
             position: absolute;
             inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            box-sizing: border-box;
+            text-align: center;
             color: #9aa3ad;
         }
+
+        #loading h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            color: #F2DFA6;
+            margin: 0;
+        }
+
+        #loading p { margin: 0; max-width: 34rem; }
     </style>
 </head>
 <body>
-    <div id="loading">Dealing…</div>
     <!--
-      There was no index.html in this repository until now, which meant
+      This is content, not a placeholder, and the difference matters twice.
+
+      `ComposeViewport(document.body!!)` empties the body on the first composition, so nobody
+      who can run the game ever reads it. Two visitors do: a crawler that will not execute
+      four megabytes of WebAssembly to find out what this page is about, and a person whose
+      browser has no WasmGC — for whom the alternative is a dark rectangle saying "Dealing…"
+      for ever, with no way to tell a slow connection from an unsupported browser.
+
+      So it says what the game is, and it links to the stores. Keep it a paragraph: it is
+      replaced a moment later for everybody else, and prose stuffed in here to rank is prose
+      no human will ever be shown.
+    -->
+    <div id="loading">
+        <h1>VINTO</h1>
+        <p>
+            A card game about holding the lowest hand. Draw, swap, and play action cards to
+            peek, trade and steal — then call Vinto when you think you are lowest.
+        </p>
+        <p><small>Dealing…</small></p>
+        <noscript>
+            <p><small>
+                Vinto needs JavaScript and WebAssembly. If this message stays, try a current
+                version of Chrome, Edge, Firefox or Safari.
+            </small></p>
+        </noscript>
+    </div>
+    <!--
+      There was no index.html in this repository until recently, which meant
       `wasmJsBrowserDistribution` produced two .wasm files, a .js and no page to load them —
       the web client compiled and could not be served. Nothing caught it because nothing
       served it: `kmp-web` compiles the client and `kmp-android`/`kmp-ios` build the other
@@ -51,6 +185,13 @@
 
       `defer` rather than a bare script tag so the parser is not blocked, and no `type=module`
       because the webpack bundle is a classic script.
+
+      **The `src` is rewritten at deploy time.** `deploy-web.yml` renames this file to
+      `composeApp.<content hash>.js` and edits the line below to match, because the zone's
+      Browser Cache TTL overrides a weaker origin `Cache-Control` — so under a fixed name a
+      stale script keeps naming a `.wasm` the next deploy has already replaced, which is a
+      404 and a dead page rather than a stale one. Keep this a single plain `src="..."` on
+      one line: the deploy step matches it literally.
     -->
     <script defer src="composeApp.js"></script>
 </body>

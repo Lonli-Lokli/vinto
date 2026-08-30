@@ -343,6 +343,58 @@ Give it a day before concluding anything is wrong.
 
 ---
 
+## 6c. Publish the website
+
+`vinto.kupalinka.app` does not load. If you type it into a browser you get
+*DNS_PROBE_FINISHED_NXDOMAIN*, or "can't reach this page" — and that is not a fault to
+diagnose. There is no such address, because the website has never been published. The room
+service at `vinto-room.kupalinka.app` is up and open; the *website* has never existed.
+
+There are two steps, and only the second one needs you to sit at a computer with a browser.
+
+### Step one — publish it, from your phone if you like
+
+*Actions → **Deploy web** → Run workflow.* That is the whole thing. It builds the browser
+version of the game, checks the page, and publishes it to Cloudflare.
+
+It uses the same `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` you set up in §6a for the
+room, so if the room deploys, this will too. There is a **dry run** tick-box that builds and
+measures everything and publishes nothing, which is a safe way to see it work.
+
+When it finishes, the summary at the bottom of the run gives you a link. It will be
+**`https://vinto.pages.dev`** — a real, working, shareable website with the game on it. It is
+simply not yet the address the invitation links point at.
+
+### Step two — give it the right address
+
+This is the part with no button, because Cloudflare has no command for it. Once, in a browser:
+
+1. Go to **dash.cloudflare.com** and sign in.
+2. **Workers & Pages** in the sidebar, then the **vinto** project.
+3. The **Custom domains** tab, then **Set up a custom domain**.
+4. Type `vinto.kupalinka.app` and confirm.
+
+Cloudflare creates the DNS record and the certificate itself, because it already runs the
+`kupalinka.app` zone. It takes a few minutes. After that, `vinto.kupalinka.app` is the site,
+and every invitation link starts working.
+
+> **Wait before you judge it.** Cloudflare does not switch every location over at the same
+> moment. Give it several minutes, and reload with a hard refresh — this has already caught
+> the maintainer out twice on the room service, sending them off to fix a bug that did not
+> exist. The workflow itself waits and checks; you should too.
+
+### What is in the repository already
+
+You do not need to prepare anything. The published site includes the icons, the sharing
+picture, `robots.txt`, `sitemap.xml`, and the rules that make invitation links work — all of
+them in `composeApp/src/wasmJsMain/resources/`, and all published by the workflow.
+
+The two files §6b asks you to create belong in that same folder, in a `.well-known`
+sub-folder. Put them there and commit them, and every future deploy carries them
+automatically; put them anywhere else and the next deploy removes them.
+
+---
+
 ## 6b. Making invitation links open the app
 
 When somebody shares a game, the invitation now carries a link like
@@ -351,7 +403,12 @@ For that to work on a phone, the website has to vouch for the app — otherwise 
 claim to handle your links. That means publishing **two small files** on the website, once.
 
 They go in a folder called `.well-known` at the top of the Pages project, so they end up at
-`https://vinto.kupalinka.app/.well-known/…`.
+`https://vinto.kupalinka.app/.well-known/…`. In this repository that folder is
+`composeApp/src/wasmJsMain/resources/.well-known/` — commit them there and each deploy
+publishes them.
+
+> **Do §6c first.** There is no website yet, so there is nowhere to put these. Neither
+> file does anything until `vinto.kupalinka.app` actually resolves.
 
 ### For Android — `assetlinks.json`
 
@@ -532,7 +589,7 @@ The file appears at `composeApp/build/outputs/apk/release/`.
 
 1. §4 — everything passes on your own computer
 2. §6 steps 1–3 — publish the room service, still shut, and check the rules survived
-3. Publish the web version and submit the phone apps
+3. §6c — publish the website, and give it its address. Then submit the phone apps
 4. §6 step 4 — open online play, the **same day** the apps are available
 5. Test it for real: two devices, make a room, join with the code, add two bots, play a round.
    Close one app in the middle and watch a robot take over that seat, then reopen it and watch

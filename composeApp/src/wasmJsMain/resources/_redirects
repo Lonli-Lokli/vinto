@@ -1,0 +1,13 @@
+# The SPA fallback, scoped to the one route that needs it.
+#
+# `/r/<code>` is an invitation link: `Main.kt` reads `window.location.pathname` before the
+# first composition and seats the visitor at that room. Pages has to answer those paths with
+# the shell, or an invitation 404s.
+#
+# **Scoped on purpose, and this is the important line in the file.** The obvious rule is
+# `/* /index.html 200`, and it is a trap this project has already been bitten by: with it, a
+# missing asset is answered with `index.html` — 200, `text/html` — so a browser that asked
+# for a script gets a web page and a cache rule then keeps it for a year (see
+# docs/kotlin/README.md §6c). Restricted to `/r/`, a missing `composeApp.js` is a plain 404,
+# which is a bug that announces itself instead of one that has to be diagnosed.
+/r/* /index.html 200

@@ -221,8 +221,15 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 
 `.github/workflows/kmp.yml`, six checks, split by what each needs. It is the only workflow
 that *checks* anything — the web client's three were removed with its CI (§1d). Beside it sits
-`deploy-room.yml`, which checks nothing and publishes: `workflow_dispatch` only, so it never
-runs on a push, and it is how the room is deployed without a desktop (§6i step 4).
+two workflows that check nothing and publish: `deploy-room.yml` for the room Worker (§6i
+step 4) and `deploy-web.yml` for the website (§6c). Both are `workflow_dispatch` only, so
+neither runs on a push — deploying is a decision, not a consequence of merging — and both are
+how a thing gets published without a desktop.
+
+**Both have to exist on `master` as well as on the branch**, because GitHub only offers "Run
+workflow" for a `workflow_dispatch` workflow that is on the *default* branch. `deploy-room.yml`
+was written, pushed to a feature branch, and simply did not appear in the dropdown; that is how
+the rule was found, and `deploy-web.yml` needs the same one-file trip.
 
 | Check         | Runner | What it proves                                                                   |
 | ------------- | ------ | -------------------------------------------------------------------------------- |
@@ -543,7 +550,8 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`) — addable from a phone through the Cloudflare dashboard — and traffic. ~~A deployment~~: the room is live and open (§6q) | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
 | analytics 5.3 — Web Analytics on the Pages project | The Cloudflare dashboard for the `vinto` Pages project | A per-site switch that makes Cloudflare inject its own beacon; there is nothing in this repository to change and nothing here can verify it. DEPLOYMENT.md §7b is written for somebody who does not do this for a living. The page it injects into **did not exist** until this pass — see the `index.html` note in §7 |
 | analytics 5.4 — revisit sampling and the cost model | A week of real traffic — which can now start, since the room is open (§6q) | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
-| Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there |
+| The website's custom domain | A browser, signed in to the Cloudflare dashboard, once | `vinto.kupalinka.app` has **no DNS record**: the Pages project was never created, so there was nothing to point it at. Everything else is done and gated — the client builds, the shell has its icons and share card, `WebShellTest` holds the page, and `deploy-web.yml` publishes it from the Actions tab. `wrangler pages` has no command for attaching a custom domain, so that one step is a person in a dashboard (DEPLOYMENT.md §6c). Until then the site is at `vinto.pages.dev`, which works and is not the host `INVITE_HOST` names |
+| Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there. **Also blocked on the row above**: there has been no website to serve them from. They belong in `composeApp/src/wasmJsMain/resources/.well-known/`, which every deploy publishes |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
 | ~~§6i step 4 — the deploy, and flipping `ROOM_OPEN`~~ | **Done** (§6q) | Deployed and opened from a phone through `deploy-room.yml`; verified against the live edge by `gate-engine-replay` and `gate-two-clients` |
@@ -834,14 +842,78 @@ brief warns about, and it names that as the moment to stop copying and move the 
 into versioned tooling instead.
 
 Unresolved on purpose: it means editing shared tooling that two shipped games depend on, which
-is not a change to make casually or as a side effect of hosting Vinto. Until it is resolved,
-`vinto.kupalinka.app` has no deploy script — which is survivable only because the client is not
-ready to publish anyway.
+is not a change to make casually or as a side effect of hosting Vinto.
 
-### The web client is not ready to deploy
+**Resolved differently, and the resolution is worth reading before touching the shared
+template.** `.github/workflows/deploy-web.yml` is a `workflow_dispatch` deploy that does the
+two things the shared scripts do — content-address the entry script, then poll until the edge
+is serving *this* build rather than merely answering — without being a third copy of them. It
+is a workflow rather than a script for the same reason `deploy-room.yml` is: "copy this
+verbatim" is an instruction to a person, and a check that lives in CI is one nobody has to
+remember to run. The shared template is untouched; if it is ever reworked to reach a Gradle
+repository, this is the caller to point at it.
 
-`composeApp` is still the platform-gate tap counter. Publishing `vinto.kupalinka.app` today
-would publish that. Phase 7 builds the real UI.
+### The site does not exist yet, and that is one dashboard step
+
+Reported: `vinto.kupalinka.app` answers `DNS_PROBE_FINISHED_NXDOMAIN`. Confirmed — the host
+has no record at all, while `vinto-room.kupalinka.app` and `kupalinka.app` both resolve. It is
+not a broken deploy; the **Cloudflare Pages project has never been created**, so there has
+never been anything for the name to point at.
+
+Everything on this side of it is now done: the client builds, the shell has its icons and its
+share card, `deploy-web.yml` publishes it, and `WebShellTest` gates the page. What remains is
+attaching the custom domain, which `wrangler pages` has no command for and which is therefore
+a person in a browser, once (DEPLOYMENT.md §6c). Until then the workflow publishes to
+`vinto.pages.dev`, which is a real site — just not the hostname `INVITE_HOST` names, which is
+why invitation links still open nothing.
+
+Note what this blocks besides the website: §6b of DEPLOYMENT.md asks for `assetlinks.json` and
+`apple-app-site-association` to be served from `/.well-known/`, and §1f lists them as blocked
+on credentials. They are also blocked on this — there has been no site to serve them from.
+They belong in `composeApp/src/wasmJsMain/resources/.well-known/`, where every deploy carries
+them.
+
+### What a link to the game says about itself
+
+The page was a title, a description and a `theme-color`. That is enough for a browser tab and
+nothing else: a link posted to a group chat unfurled into a bare URL, because there was no
+`og:image`, no `og:title`, and a body that Compose empties on the first composition — so a
+crawler that will not execute four megabytes of WebAssembly found an empty document.
+
+It now carries the full Open Graph and Twitter sets, a canonical link, a `VideoGame` JSON-LD
+block, a web app manifest, `robots.txt` and a sitemap. Three things in there are decisions
+rather than boilerplate:
+
+- **The body is content, not a placeholder.** It says what the game is and it is replaced a
+  moment later for anybody whose browser can run it. The two visitors who read it are a
+  crawler and somebody without WasmGC — for whom the alternative was a dark rectangle reading
+  "Dealing…" for ever, with no way to tell a slow connection from an unsupported browser.
+- **`robots.txt` disallows `/r/`.** A room code is an invitation: it resolves for as long as
+  that room exists and to nothing afterwards, so an indexed one is a dead link outliving its
+  game by months — and it is somebody's invitation, which a search result is not where they
+  meant it to be read.
+- **`_redirects` scopes the SPA fallback to `/r/` instead of `/*`.** The blanket rule is the
+  obvious one and it is the trap this section already warns about: with it, a missing asset is
+  answered with `index.html`, 200, `text/html`, and cached. Scoped, a missing script is a
+  plain 404 — a bug that announces itself instead of one that has to be diagnosed.
+
+`WebShellTest` (7 cases, `composeApp:jvmTest`) holds all of it: every tag present, the image
+URLs absolute, the three descriptions identical, every file the shell names really on disk,
+the share card really 1200x630, and the redirect and robots rules agreeing with `INVITE_PATH`.
+It asserts no wording, because copy changes and the failures worth catching are the silent
+ones.
+
+Two things about it are worth keeping. It is **non-vacuous**, checked by breaking the page
+four ways — a relative `og:image`, a drifted description, a deleted favicon, a blanket
+fallback — and watching each one fail. And `wasmJsMain/resources` is declared an **input to
+the test task**, because without that the first three probes passed in 766 ms: nothing else in
+this build reads that directory, so editing the page left `jvmTest` UP-TO-DATE and the gate
+silently did not run. A green tick over an unread file is worse than no check at all.
+
+The icons and the share card are generated by `tools/make-web-icons.py` and committed, the
+same arrangement as the launcher icons. The card is the app's own material — the felt under
+its lamp, five real cards from the deck, and the name in Cinzel, the face `theme/Type.kt`
+reserves for it.
 
 ## 6d. Deploying the engine, with no UI
 

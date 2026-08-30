@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One page, because there is one page: Pages serves this SPA's shell for every route and the
+  screens behind it (the lesson, the settings, a table) are compositions rather than URLs.
+  A sitemap listing routes that all return the same document would be padding.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://vinto.kupalinka.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
