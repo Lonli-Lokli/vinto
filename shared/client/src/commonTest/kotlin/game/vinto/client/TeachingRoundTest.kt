@@ -226,7 +226,7 @@ class TeachingRoundTest {
 private class SimplePlayer(private val session: LocalGameSession) {
 
     /** Every label the table offered along the way — what the lesson has to teach from. */
-    val offered = mutableSetOf<String>()
+    val offered = mutableSetOf<Label>()
 
     /**
      * And everything it said. The buttons carry the web app's own short words now — "Use

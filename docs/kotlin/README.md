@@ -1394,6 +1394,39 @@ Three things the slice settled, recorded here so the next two do not re-decide t
   in every language this will ever ship in, and a card's *name* is a different string that the
   help sheet already owns.
 
+### Slice 2 — `Choice.label`, done, and it was carrying a bug
+
+The buttons. `Choice.label` is a `Label` — a closed type — rather than a String, and
+`Target.Button` names one the same way.
+
+**This slice was not really about translation.** Two things read that label: the UI, to draw a
+button, and `TeachScript`, to decide which button the lesson should point at. Identifying a
+control by the English it happens to display is a coupling no test sees and no compiler checks,
+and it had already failed twice:
+
+- `label.startsWith("Take the")` — the model produces `"Use Queen"`. So the beat that teaches
+  the *second way to start a turn* never fired, on a lesson whose director goes to deliberate
+  trouble to leave an unused action card on the pile for it (§6g). Silent since the code was
+  written.
+- `label.contains("Pass")` — no button has said "Pass" for some time. Dead clause in
+  `tossWindow`, harmless only because two other disjuncts did the work.
+
+Both are now type checks. A translation cannot break them and neither can a rewording, which
+is the property that matters more than the 13 strings this moved.
+
+Two halves of one lookup to keep in step: `ChoiceButton` marks a button with `keyOf(label)` and
+`Pointer` looks it up with the same function. When those disagree the arrow points at nothing
+and says nothing — which is exactly how the missing beat stayed missing.
+
+The tests converted with it, and got better: `it.label == Label.CallVinto` instead of
+`it.label == "Call Vinto"`, and `send(Label.DrawCard)` instead of `send("Draw")`.
+
+### Still to do
+
+`TableModel`'s **prompts and details** (~55 literals) and all of `TeachScript` (144). The
+prompt half is the larger remaining piece of `TableModel` and was split out deliberately: the
+labels carried a defect and the prompts do not, so they are separate commits.
+
 One thing to undo later: `RecentActions` now renders the log and *then* drops any line equal to
 the panel's prompt. That comparison used to happen in the model, where both sides were built
 from the same narration; it moves back there once `TableModel` returns `Say` too.

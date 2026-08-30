@@ -343,7 +343,7 @@ class ChoreographyTest {
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
 
         val scenes = scenesOf(session)
-        session.dispatch(session.table().send("Call Vinto"))
+        session.dispatch(session.table().send(Label.CallVinto))
         runCurrent()
 
         val beats = scenes.flatten().flatten()
@@ -447,7 +447,7 @@ class ChoreographyTest {
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
-        tableFor(session.view.value).choices.firstOrNull { it.label == "Call Vinto" }?.let {
+        tableFor(session.view.value).choices.firstOrNull { it.label == Label.CallVinto }?.let {
             session.dispatch((it.move as Move.Send).action)
         }
         runCurrent()
@@ -486,7 +486,7 @@ class ChoreographyTest {
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
-        tableFor(session.view.value).choices.firstOrNull { it.label == "Call Vinto" }?.let {
+        tableFor(session.view.value).choices.firstOrNull { it.label == Label.CallVinto }?.let {
             session.dispatch((it.move as Move.Send).action)
         }
         val over = session.view.value
@@ -497,8 +497,8 @@ class ChoreographyTest {
         assertTrue(scoringScenes(over, over).isEmpty())
     }
 
-    private fun Table.send(startsWith: String): GameAction {
-        val choice = choices.first { it.label.startsWith(startsWith) }
+    private fun Table.send(label: Label): GameAction {
+        val choice = choices.first { it.label == label }
         return (choice.move as Move.Send).action
     }
 

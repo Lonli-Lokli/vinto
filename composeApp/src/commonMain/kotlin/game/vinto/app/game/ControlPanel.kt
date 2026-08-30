@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.table_sending
+import game.vinto.app.keyOf
+import game.vinto.app.labelled
 import game.vinto.app.said
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
@@ -327,14 +329,16 @@ private fun RecentActions(recent: List<Say>, prompt: String) {
 @Composable
 private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modifier = Modifier) {
     GameButton(
-        label = choice.label,
+        label = labelled(choice.label),
         tone = choice.tone.paint(),
         onClick = { onMove(choice.move) },
         // By its label, which is what the lesson knows it by — the model chose the words and
         // the coach quotes them, so a button the coach points at is the button on screen.
         modifier = modifier
             .fillMaxWidth()
-            .markedAs(LocalStage.current, "choice:${choice.label}"),
+            // Keyed by identity rather than by the rendered words, so the lesson still
+            // finds a button after a translation. See `keyOf`.
+            .markedAs(LocalStage.current, "choice:${keyOf(choice.label)}"),
         leading = if (choice.tone == Tone.STAKES) "🏆" else null,
     )
 }

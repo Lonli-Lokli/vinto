@@ -20,7 +20,6 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
-import game.vinto.shapes.getCardName
 import game.vinto.shapes.getCardShortDescription
 
 /**
@@ -82,7 +81,7 @@ data class Table(
 data class CardRef(val playerId: String, val position: Int)
 
 /** A button. */
-data class Choice(val label: String, val move: Move, val tone: Tone = Tone.NEUTRAL)
+data class Choice(val label: Label, val move: Move, val tone: Tone = Tone.NEUTRAL)
 
 /** A rank the player may name. */
 data class RankChoice(val rank: Rank, val move: Move)
@@ -258,7 +257,7 @@ private fun mayDeclare(view: PlayerView): Boolean =
 private fun declareOwnCardTable(view: PlayerView, position: Int): Table = Table(
     prompt = "What do you say this card is?",
     detail = "Table talk — the coalition takes your word for it, right or wrong.",
-    choices = listOf(Choice("Back", Move.Ask(Question.None))),
+    choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
     ranks = ALL_RANKS.map { rank ->
         RankChoice(
             rank,
@@ -350,7 +349,7 @@ private fun setupTable(view: PlayerView, myId: String, peeked: List<Int>): Table
         prompt = "Ready when you are",
         choices = listOf(
             Choice(
-                "Start the round",
+                Label.StartRound,
                 Move.Send(GameAction.FinishSetup(PlayerIdPayload(myId))),
                 Tone.KEEP,
             ),
@@ -366,14 +365,14 @@ private fun turnStartTable(view: PlayerView): Table {
     val choices = mutableListOf<Choice>()
 
     if (view.drawPileSize > 0) {
-        choices += Choice("Draw Card", Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PLAY)
+        choices += Choice(Label.DrawCard, Move.Send(GameAction.DrawCard(PlayerIdPayload(me))), Tone.PLAY)
     }
 
     // Only an action card nobody has played yet can be taken, and taking it commits you to
     // playing it — it cannot go into your hand.
     if (top != null && top.actionText != null && !top.played) {
         choices += Choice(
-            "Use ${getCardName(top.rank)}",
+            Label.UseFromPile(top.rank),
             Move.Send(GameAction.PlayDiscard(PlayerIdPayload(me))),
             Tone.PLAY,
         )
@@ -401,7 +400,7 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
     // already, which is what makes a discard-pile action card takeable exactly once.
     if (card != null && card.actionText != null && !card.played) {
         choices += Choice(
-            "Use Action",
+            Label.UseAction,
             Move.Send(GameAction.UseCardAction(PlayerIdPayload(me))),
             Tone.PLAY,
         )
@@ -409,8 +408,8 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
 
     // A card taken off the discard pile must be played; it cannot be kept.
     if (pending.canGoToHand) {
-        choices += Choice("Swap Cards", Move.Ask(Question.WhichSlot), Tone.KEEP)
-        choices += Choice("Discard", Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
+        choices += Choice(Label.SwapCards, Move.Ask(Question.WhichSlot), Tone.KEEP)
+        choices += Choice(Label.Discard, Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
     }
 
     val what = card?.let { "You drew the ${it.rank.serialName}" } ?: "You drew a card"
@@ -424,7 +423,7 @@ private fun whichSlotTable(view: PlayerView): Table {
 
     return Table(
         prompt = "Which card does it replace?",
-        choices = listOf(Choice("Back", Move.Ask(Question.None))),
+        choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
         taps = hand.associate { position ->
             CardRef(me, position) to Move.Ask(Question.CallRank(position))
         },
@@ -439,11 +438,11 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
         detail = "Right plays its action; wrong costs you a card.",
         choices = listOf(
             Choice(
-                "Just Swap",
+                Label.JustSwap,
                 Move.Send(GameAction.SwapCard(SwapCardPayload(me, position))),
                 Tone.KEEP,
             ),
-            Choice("Back", Move.Ask(Question.WhichSlot)),
+            Choice(Label.Back, Move.Ask(Question.WhichSlot)),
         ),
         ranks = ALL_RANKS.map { rank ->
             RankChoice(rank, Move.Send(GameAction.SwapCard(SwapCardPayload(me, position, rank))))
@@ -514,7 +513,8 @@ private inline fun withBorrowed(borrowed: String?, build: () -> Table): Table {
  * some actions are legal to start and impossible to aim — a peek-own by a player who has
  * already read their whole hand has nowhere to look, and without an exit the game stops.
  */
-private fun giveUp(me: String) = Choice("Put it down", Move.Send(GameAction.ConfirmPeek(PlayerIdPayload(me))))
+private fun giveUp(me: String) =
+    Choice(Label.PutItDown, Move.Send(GameAction.ConfirmPeek(PlayerIdPayload(me))))
 
 private fun peekTable(
     view: PlayerView,
@@ -528,7 +528,7 @@ private fun peekTable(
         prompt = "Remember it",
         choices = listOf(
             Choice(
-                "Done",
+                Label.Done,
                 Move.Send(GameAction.ConfirmPeek(PlayerIdPayload(view.viewerId))),
                 Tone.PLAY,
             ),
@@ -548,8 +548,8 @@ private fun twoCardTable(
     Table(
         prompt = "Swap them?",
         choices = listOf(
-            Choice("Swap Cards", Move.Send(swap), Tone.PLAY),
-            Choice("Leave them", Move.Send(leave)),
+            Choice(Label.SwapCards, Move.Send(swap), Tone.PLAY),
+            Choice(Label.LeaveThem, Move.Send(leave)),
         ),
     )
 }
@@ -657,7 +657,7 @@ private fun tossInTable(view: PlayerView): Table? {
             // land on the player who has just been punished once already.
             choices = listOf(
                 Choice(
-                    "Continue",
+                    Label.Continue,
                     Move.Send(GameAction.PlayerTossInFinished(PlayerIdPayload(me))),
                     Tone.PLAY,
                 ),
@@ -680,7 +680,7 @@ private fun tossInTable(view: PlayerView): Table? {
         },
         choices = buildList {
             val done = GameAction.PlayerTossInFinished(PlayerIdPayload(me))
-            add(Choice("Continue", Move.Send(done), Tone.PLAY))
+            add(Choice(Label.Continue, Move.Send(done), Tone.PLAY))
 
             // Vinto is declared at the *end* of your own turn, which is this window and not
             // the one before you drew. The engine tolerates an early call, but taking it up
@@ -689,7 +689,7 @@ private fun tossInTable(view: PlayerView): Table? {
             val mine = view.players.getOrNull(toss.originalPlayerIndex)?.id == me
             if (mine && view.vintoCallerId == null) {
                 val call = GameAction.CallVinto(PlayerIdPayload(me))
-                add(Choice("Call Vinto", Move.Send(call), Tone.STAKES))
+                add(Choice(Label.CallVinto, Move.Send(call), Tone.STAKES))
             }
         },
     )
@@ -708,7 +708,7 @@ private fun vintoChoice(view: PlayerView, toss: ActiveTossIn, me: String): List<
     if (!mine || view.vintoCallerId != null) return emptyList()
 
     val call = GameAction.CallVinto(PlayerIdPayload(me))
-    return listOf(Choice("Call Vinto", Move.Send(call), Tone.STAKES))
+    return listOf(Choice(Label.CallVinto, Move.Send(call), Tone.STAKES))
 }
 
 // ---------------------------------------------------------------------------- endings

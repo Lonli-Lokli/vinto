@@ -36,7 +36,7 @@ class FinalRoundTest {
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
 
         val window = tableFor(session.view.value)
-        window.choices.firstOrNull { it.label == "Call Vinto" }?.let {
+        window.choices.firstOrNull { it.label == Label.CallVinto }?.let {
             session.dispatch((it.move as Move.Send).action)
         }
         return session

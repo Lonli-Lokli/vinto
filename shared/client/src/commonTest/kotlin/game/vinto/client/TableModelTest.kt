@@ -47,9 +47,9 @@ class TableModelTest {
 
     private fun Table.labels() = choices.map { it.label }
 
-    private fun Table.send(startsWith: String): GameAction {
-        val choice = choices.firstOrNull { it.label.startsWith(startsWith) }
-            ?: error("no choice starting '$startsWith' in ${labels()}")
+    private fun Table.send(label: Label): GameAction {
+        val choice = choices.firstOrNull { it.label == label }
+            ?: error("no $label among ${labels()}")
         return (choice.move as Move.Send).action
     }
 
@@ -72,7 +72,7 @@ class TableModelTest {
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 3)))
         val ready = session.table()
         assertTrue(ready.taps.isEmpty(), "no more peeking")
-        assertTrue(ready.send("Start") is GameAction.FinishSetup)
+        assertTrue(ready.send(Label.StartRound) is GameAction.FinishSetup)
     }
 
     // ------------------------------------------------------------------ a turn
@@ -82,14 +82,14 @@ class TableModelTest {
         val table = started().table()
 
         assertEquals("Your turn", table.prompt)
-        assertTrue(table.send("Draw") is GameAction.DrawCard)
+        assertTrue(table.send(Label.DrawCard) is GameAction.DrawCard)
         assertTrue(table.taps.isEmpty(), "nothing to touch until a card is drawn")
 
         // Vinto is declared at the end of a turn. The engine would accept it here and then
         // still expect the turn to be played, which is a state no button should be able to
         // produce — so the offer lives in the toss-in window instead.
         assertFalse(
-            table.labels().any { it.contains("Vinto") },
+            table.labels().any { it == Label.CallVinto },
             "a turn cannot be ended before it has been taken: ${table.labels()}",
         )
     }
@@ -102,8 +102,8 @@ class TableModelTest {
 
         val table = session.table()
         assertEquals("You drew the 5", table.prompt)
-        assertFalse(table.labels().any { it == "Use Action" }, "a 5 has no action: ${table.labels()}")
-        assertTrue(table.send("Discard") is GameAction.DiscardCard)
+        assertFalse(table.labels().any { it == Label.UseAction }, "a 5 has no action: ${table.labels()}")
+        assertTrue(table.send(Label.Discard) is GameAction.DiscardCard)
     }
 
     @Test
@@ -112,7 +112,7 @@ class TableModelTest {
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
 
-        val keep = session.table().choices.first { it.label == "Swap Cards" }.move
+        val keep = session.table().choices.first { it.label == Label.SwapCards }.move
         assertEquals(Move.Ask(Question.WhichSlot), keep, "keeping a card is a question, not a move")
 
         val slots = session.table(Question.WhichSlot)
@@ -122,7 +122,7 @@ class TableModelTest {
         val calling = session.table(Question.CallRank(2))
         assertEquals(ALL_RANK_COUNT, calling.ranks.size, "any rank can be named")
 
-        val silent = calling.send("Just Swap") as GameAction.SwapCard
+        val silent = calling.send(Label.JustSwap) as GameAction.SwapCard
         assertEquals(2, silent.payload.position)
         assertNull(silent.payload.declaredRank, "saying nothing declares nothing")
 
@@ -162,7 +162,7 @@ class TableModelTest {
         val seen = session.table()
         assertEquals("Remember it", seen.prompt)
         assertTrue(seen.taps.isEmpty(), "the peek is spent")
-        assertTrue(seen.send("Done") is GameAction.ConfirmPeek)
+        assertTrue(seen.send(Label.Done) is GameAction.ConfirmPeek)
     }
 
     @Test
@@ -187,8 +187,8 @@ class TableModelTest {
 
         val decide = session.table()
         assertEquals("Swap them?", decide.prompt)
-        assertTrue(decide.send("Swap") is GameAction.ExecuteJackSwap)
-        assertTrue(decide.send("Leave") is GameAction.SkipJackSwap)
+        assertTrue(decide.send(Label.SwapCards) is GameAction.ExecuteJackSwap)
+        assertTrue(decide.send(Label.LeaveThem) is GameAction.SkipJackSwap)
     }
 
     @Test
@@ -204,7 +204,7 @@ class TableModelTest {
 
         val decide = session.table()
         assertEquals("Swap them?", decide.prompt)
-        assertTrue(decide.send("Swap") is GameAction.ExecuteQueenSwap, "a Queen's swap, not a Jack's")
+        assertTrue(decide.send(Label.SwapCards) is GameAction.ExecuteQueenSwap, "a Queen's swap, not a Jack's")
     }
 
     @Test
@@ -245,8 +245,8 @@ class TableModelTest {
 
         val table = session.table()
         assertTrue(table.prompt.startsWith("The 5 went down"), table.prompt)
-        assertTrue(table.send("Continue") is GameAction.PlayerTossInFinished)
-        assertTrue(table.send("Call Vinto") is GameAction.CallVinto, "your own turn is ending")
+        assertTrue(table.send(Label.Continue) is GameAction.PlayerTossInFinished)
+        assertTrue(table.send(Label.CallVinto) is GameAction.CallVinto, "your own turn is ending")
 
         // Throwing a card in is one touch, with no confirmation step. The risk is what makes
         // it a decision; a confirmation would only make a bad idea slower.
@@ -339,7 +339,7 @@ class TableModelTest {
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.FIVE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
-        session.dispatch(session.table().send("Call Vinto"))
+        session.dispatch(session.table().send(Label.CallVinto))
 
         assertTrue(session.isOver)
         // Every card on the table, however many that has become — a round adds penalty cards
@@ -376,9 +376,9 @@ class TableModelTest {
             after.detail!!.contains("cannot toss in again"),
             "and it says why: ${after.detail}",
         )
-        assertTrue(after.send("Continue") is GameAction.PlayerTossInFinished)
+        assertTrue(after.send(Label.Continue) is GameAction.PlayerTossInFinished)
         assertTrue(
-            after.send("Call Vinto") is GameAction.CallVinto,
+            after.send(Label.CallVinto) is GameAction.CallVinto,
             "and you can still end your own turn — being barred is not a second penalty",
         )
     }
@@ -406,7 +406,7 @@ class TableModelTest {
 
         // The window after your own discard is where Vinto belongs, and the only place the
         // table offers it.
-        session.dispatch(session.table().send("Call Vinto"))
+        session.dispatch(session.table().send(Label.CallVinto))
 
         // Calling Vinto hands the round to the coalition: the bots nominate a leader and play
         // their last turn between them, so by the time control returns the round is scored.

@@ -39,7 +39,17 @@ enum class Chapter(val label: String) {
 sealed interface Target {
     data class Place(val anchor: Anchor) : Target
     data class Seat(val playerId: String) : Target
-    data class Button(val label: String) : Target
+
+    /**
+     * A button, named by what it *is* rather than by what it says.
+     *
+     * It was a `String` — the button's English — which meant the lesson identified a control
+     * by text that a translation would change and a rewording would break. It already had:
+     * the "two ways to start a turn" beat looked for a label beginning "Take the" while the
+     * model produced "Use Queen", so a beat the director deliberately sets up (§6g) never
+     * fired and nothing said so.
+     */
+    data class Button(val label: Label) : Target
     data class Chip(val rank: Rank) : Target
 
     /** Screen furniture: the deck badge, the recent-actions box, the "?" button. */
@@ -248,12 +258,13 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
         )
 
-        table.choices.any { it.label.startsWith("Take the") } -> Lesson(
+        // `is`, not `startsWith`. This is the beat the string comparison silently lost.
+        table.choices.any { it.label is Label.UseFromPile } -> Lesson(
             chapter = Chapter.DRAW,
             title = "Two ways to start a turn",
             body = "From the deck, sight unseen — or off the pile, but only an action card " +
                 "nobody has used, and then you must play it at once rather than keep it.",
-            point = table.choices.firstOrNull { it.label.startsWith("Take the") }
+            point = table.choices.firstOrNull { it.label is Label.UseFromPile }
                 ?.let { Target.Button(it.label) },
         )
 
@@ -614,10 +625,18 @@ private fun alsoThrewIn(view: PlayerView): String {
     return if (names.isEmpty()) "" else "${names.joinToString(" and ")} just threw one in. "
 }
 
+/**
+ * Whether the table is in a toss-in window.
+ *
+ * Three ways to be in one, and the third used to be `label.contains("Pass")` — a second dead
+ * English match, since no button has said "Pass" for some time. What it meant is the button
+ * that declares you finished with the window, so it asks for that action instead. Same
+ * intent, and a rewording cannot silently remove it.
+ */
 private fun tossWindow(table: Table): Boolean =
     table.choices.any { (it.move as? Move.Send)?.action is GameAction.ParticipateInTossIn } ||
         table.taps.values.any { (it as? Move.Send)?.action is GameAction.ParticipateInTossIn } ||
-        table.choices.any { it.label.contains("Pass", ignoreCase = true) }
+        table.choices.any { (it.move as? Move.Send)?.action is GameAction.PlayerTossInFinished }
 
 /** Which chapter a move is proof of, for the row of dots. */
 fun chapterOf(action: GameAction): Chapter? = when (action) {

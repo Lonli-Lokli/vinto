@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import game.vinto.app.keyOf
 import game.vinto.client.Target
 import kotlin.math.roundToInt
 
@@ -145,7 +146,10 @@ private fun DrawScope.arrow() {
 fun Target.key(): String = when (this) {
     is Target.Place -> anchor.key()
     is Target.Seat -> "seat:$playerId"
-    is Target.Button -> "choice:$label"
+    // Through `keyOf`, exactly as `ChoiceButton` marks it. These two are the two halves of
+    // one lookup, and when they disagree the arrow points at nothing and says nothing —
+    // which is how the "two ways to start a turn" beat went missing for months.
+    is Target.Button -> "choice:${keyOf(label)}"
     is Target.Chip -> "rank:${rank.serialName}"
     is Target.Furniture -> id
 }

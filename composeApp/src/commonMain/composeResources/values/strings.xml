@@ -234,6 +234,24 @@
     <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
     <!-- The privacy note, in the app's own words rather than a policy's. Said here because
          this is the sheet a player already opens to find out what something means. -->
+    <!-- The buttons on the table. Identified in code by `Label`, not by these words: the
+         lesson points at a control by its type, so rewording one of these cannot silently
+         stop the lesson pointing at it. That coupling used to be a string comparison and it
+         had already broken twice. -->
+    <string name="choice_back">Back</string>
+    <string name="choice_start_round">Start the round</string>
+    <string name="choice_draw_card">Draw Card</string>
+    <string name="choice_use_from_pile">Use %1$s</string>
+    <string name="choice_use_action">Use Action</string>
+    <string name="choice_swap_cards">Swap Cards</string>
+    <string name="choice_discard">Discard</string>
+    <string name="choice_just_swap">Just Swap</string>
+    <string name="choice_put_it_down">Put it down</string>
+    <string name="choice_leave_them">Leave them</string>
+    <string name="choice_continue">Continue</string>
+    <string name="choice_call_vinto">Call Vinto</string>
+    <string name="choice_done">Done</string>
+
     <!-- The move log.
          %1$s is who did it — a nickname, or the translated word for "you" below. A rank
          (%2$s where present) is a mark on a card rather than a word, so it is never

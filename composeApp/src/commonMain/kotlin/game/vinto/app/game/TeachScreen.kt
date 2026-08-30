@@ -44,6 +44,7 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.client.Chapter
+import game.vinto.client.Label
 import game.vinto.client.Lesson
 import game.vinto.client.Move
 import game.vinto.client.Pace
@@ -149,7 +150,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
 
     // What each button on the table is called, so the screen can tell "they pressed the one I
     // pointed at" from "they pressed the other one" — the only deviation worth remarking on.
-    var labels by remember { mutableStateOf(emptyMap<Move, String>()) }
+    var labels by remember { mutableStateOf(emptyMap<Move, Label>()) }
     // Said once, on the move after the player first ignores the pointer, and then dropped.
     var strayed by remember { mutableStateOf(false) }
     var alreadySaid by remember { mutableStateOf(false) }
@@ -267,7 +268,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
  * own instruction answered slightly differently — a different card of your own to peek at is
  * not a deviation, it is a choice the rules give you.
  */
-private fun ignoredThePointer(lesson: Lesson?, chosen: String?): Boolean {
+private fun ignoredThePointer(lesson: Lesson?, chosen: Label?): Boolean {
     val pointedAt = (lesson?.point as? Target.Button)?.label ?: return false
     return chosen != null && chosen != pointedAt
 }

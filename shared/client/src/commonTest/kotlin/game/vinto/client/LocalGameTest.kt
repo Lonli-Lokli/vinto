@@ -74,7 +74,7 @@ class LocalGameTest {
 
         assertEquals("Your turn", table.prompt)
         val drawn = resumed.session.dispatch(
-            (table.choices.first { it.label.startsWith("Draw") }.move as Move.Send).action,
+            (table.choices.first { it.label == Label.DrawCard }.move as Move.Send).action,
         )
         assertNull(drawn, "and the engine takes the move: $drawn")
     }
@@ -103,7 +103,7 @@ class LocalGameTest {
         game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(game.playerId)))
         game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(game.playerId)))
         val table = tableFor(game.session.view.value)
-        game.session.dispatch((table.choices.first { it.label == "Call Vinto" }.move as Move.Send).action)
+        game.session.dispatch((table.choices.first { it.label == Label.CallVinto }.move as Move.Send).action)
 
         assertTrue(game.session.isOver, "the round finished")
         assertEquals(1, game.round)
