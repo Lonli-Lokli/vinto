@@ -1584,6 +1584,11 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
     --input "$(ls -d composeApp/src worker/src shared/*/src | paste -sd,)"
   ```
 
+- **"Plain Kotlin stdlib" is safer than an Objective-C binding, and is not the same as safe.**
+  `CrashHandler.ios.kt` was written to use `setUnhandledExceptionHook` precisely to dodge the
+  binding traps below — and still failed `kmp-ios`, because the hook is `@ExperimentalNativeApi`
+  and a missing opt-in is a compile *error*. Three `iosMain` files, three CI round trips. The
+  only reliable rule is that nothing here can check an Apple source set at all.
 - **An Objective-C class factory method is renamed `create`.** Kotlin/Native renames a class
   method whose selector begins with its own class's name, so `+[NSData dataWithBytes:length:]`
   is `NSData.create(bytes:length:)` here — an extension on the companion, so it also has to be
