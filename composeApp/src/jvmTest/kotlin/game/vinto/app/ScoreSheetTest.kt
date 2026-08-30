@@ -42,6 +42,7 @@ class ScoreSheetTest {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
                     StandingsSheet(
+                        open = true,
                         round = 3,
                         you = "p1",
                         result = RoundResult(

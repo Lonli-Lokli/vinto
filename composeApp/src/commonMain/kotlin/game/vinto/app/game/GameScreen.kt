@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +44,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
+import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.RoundResult
@@ -160,32 +159,33 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
         }
     }
 
-    if (reported) {
-        ReportProblem(
-            onSend = {
-                val report = session.report(at = nowIso(), label = "reported from the table")
-                val subject = reportSubject
-                if (!shareText(subject, report.toJson())) {
-                    clipboard.setText(AnnotatedString(report.toJson()))
-                }
-                reported = false
-            },
-            onCopy = {
-                val report = session.report(at = nowIso(), label = "reported from the table")
+    // Composed whether or not it is showing: `VintoDialog` animates on `open`, and a dialog
+    // that is only composed while visible has nothing to animate *from*.
+    ReportProblem(
+        open = reported,
+        onSend = {
+            val report = session.report(at = nowIso(), label = "reported from the table")
+            val subject = reportSubject
+            if (!shareText(subject, report.toJson())) {
                 clipboard.setText(AnnotatedString(report.toJson()))
-                reported = false
-            },
-            onDismiss = { reported = false },
-        )
-    }
+            }
+            reported = false
+        },
+        onCopy = {
+            val report = session.report(at = nowIso(), label = "reported from the table")
+            clipboard.setText(AnnotatedString(report.toJson()))
+            reported = false
+        },
+        onDismiss = { reported = false },
+    )
 
-    if (deckOpen) {
-        DeckExplained(left = holder.current.drawPileSize, onDismiss = { deckOpen = false })
-    }
+    DeckExplained(
+        open = deckOpen,
+        left = holder.current.drawPileSize,
+        onDismiss = { deckOpen = false },
+    )
 
-    if (helpOpen) {
-        HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
-    }
+    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
 
     if (scoreOpen) {
         SoloScore(
@@ -232,6 +232,9 @@ private fun SoloScore(
         countRound(true)
         RecordRound(result, game.playerId)
         StandingsSheet(
+            // Composed only once there is a result to show, so it is showing whenever it
+            // exists. `VintoSheet` animates from first composition, so this still rises.
+            open = true,
             round = round,
             you = game.playerId,
             result = result,
@@ -253,43 +256,45 @@ private fun SoloScore(
  * that have nothing to share with.
  */
 @Composable
-private fun ReportProblem(onSend: () -> Unit, onCopy: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Rail.fill,
-        titleContentColor = Rail.ink,
-        textContentColor = Rail.inkDim,
-        title = { Text(stringResource(Res.string.report_title)) },
-        text = { Text(stringResource(Res.string.report_body)) },
-        // All three stacked in the confirm slot rather than split across the dialog's two:
-        // a row of two and a wrapped third is what that produces, and these are three answers
-        // to one question, not two and an afterthought.
-        confirmButton = {
-            Column(
+private fun ReportProblem(
+    open: Boolean,
+    onSend: () -> Unit,
+    onCopy: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    VintoDialog(
+        open = open,
+        onDismiss = onDismiss,
+        title = stringResource(Res.string.report_title),
+        body = stringResource(Res.string.report_body),
+    ) {
+        // All three stacked rather than split across a confirm and a dismiss slot: a row of
+        // two with a wrapped third is what that produces, and these are three answers to one
+        // question rather than two and an afterthought.
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DialogGap),
+        ) {
+            GameButton(
+                label = stringResource(Res.string.report_send),
+                tone = ButtonTone.PLAY,
+                onClick = onSend,
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(DialogGap),
-            ) {
-                GameButton(
-                    label = stringResource(Res.string.report_send),
-                    tone = ButtonTone.PLAY,
-                    onClick = onSend,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                GameButton(
-                    label = stringResource(Res.string.report_copy),
-                    tone = ButtonTone.NEUTRAL,
-                    onClick = onCopy,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                GameButton(
-                    label = stringResource(Res.string.report_dismiss),
-                    tone = ButtonTone.NEUTRAL,
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-    )
+            )
+            GameButton(
+                label = stringResource(Res.string.report_copy),
+                tone = ButtonTone.NEUTRAL,
+                onClick = onCopy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            GameButton(
+                label = stringResource(Res.string.report_dismiss),
+                tone = ButtonTone.NEUTRAL,
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
 }
 
 /**
@@ -301,22 +306,20 @@ private fun ReportProblem(onSend: () -> Unit, onCopy: () -> Unit, onDismiss: () 
  * which is a reason to call Vinto rather than a curiosity.
  */
 @Composable
-private fun DeckExplained(left: Int, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Rail.fill,
-        titleContentColor = Rail.ink,
-        textContentColor = Rail.inkDim,
-        title = { Text(stringResource(Res.string.deck_title)) },
-        text = { Text(stringResource(Res.string.deck_body, left)) },
-        confirmButton = {
-            GameButton(
-                label = stringResource(Res.string.deck_dismiss),
-                tone = ButtonTone.NEUTRAL,
-                onClick = onDismiss,
-            )
-        },
-    )
+private fun DeckExplained(open: Boolean, left: Int, onDismiss: () -> Unit) {
+    VintoDialog(
+        open = open,
+        onDismiss = onDismiss,
+        title = stringResource(Res.string.deck_title),
+        body = stringResource(Res.string.deck_body, left),
+    ) {
+        GameButton(
+            label = stringResource(Res.string.deck_dismiss),
+            tone = ButtonTone.NEUTRAL,
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 private val DialogGap = 6.dp

@@ -50,10 +50,27 @@ fun GameButton(
     leading: String? = null,
     compact: Boolean = false,
     busy: Boolean = false,
+    /**
+     * Whether the move is available at all.
+     *
+     * Distinct from [busy], which means "you already asked and it is happening". This means
+     * "there is nothing here to ask for yet" — a Join with no code typed, a Start with an empty
+     * seat. It existed as neither before, so the only way to express it was a live-looking
+     * button whose `onClick` quietly returned: the biggest, brightest control on the online
+     * screen did nothing and said nothing for every player who had not been sent a code, which
+     * is every player opening the app for the first time.
+     *
+     * Drawn as a flatter, dimmer version of its own tone rather than a grey slab, so it stays
+     * recognisably the same button and lights up when its condition is met.
+     */
+    enabled: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val lift by animateDpAsState(if (pressed) 0.dp else Lift, label = "lift")
+    val live = enabled && !busy
+    // A button that cannot be pressed does not stand off the surface. The shadow is the whole
+    // affordance, so removing it says "not now" before any colour does.
+    val lift by animateDpAsState(if (pressed || !live) 0.dp else Lift, label = "lift")
     val shape = RoundedCornerShape(Corner)
     val feedback = LocalFeedback.current
 
@@ -63,15 +80,16 @@ fun GameButton(
         // with a bot nobody asked for — and the person pressing is right to press, because
         // the first press did nothing they could see.
         onClick = {
-            if (busy) return@Surface
+            if (!live) return@Surface
             feedback.commit()
             onClick()
         },
+        enabled = live,
         modifier = modifier.heightIn(min = if (compact) CompactTap else MinTap),
         shape = shape,
         color = Color.Transparent,
-        contentColor = tone.ink,
-        border = BorderStroke(Hairline, tone.rim),
+        contentColor = if (live) tone.ink else tone.ink.copy(alpha = Muted),
+        border = BorderStroke(Hairline, if (live) tone.rim else tone.rim.copy(alpha = Muted)),
         shadowElevation = lift,
         interactionSource = interaction,
     ) {
@@ -80,7 +98,13 @@ fun GameButton(
                 .clip(shape)
                 .background(
                     Brush.verticalGradient(
-                        if (pressed) listOf(tone.low, tone.high) else listOf(tone.high, tone.low),
+                        when {
+                            // Flat rather than lit: the gradient is what makes it look raised,
+                            // so a disabled button is the same colour top and bottom.
+                            !live -> listOf(tone.low.copy(alpha = Flat), tone.low.copy(alpha = Flat))
+                            pressed -> listOf(tone.low, tone.high)
+                            else -> listOf(tone.high, tone.low)
+                        },
                     ),
                 ),
             contentAlignment = Alignment.Center,
@@ -175,6 +199,12 @@ private val CompactSpinner = 16.dp
 private val Corner = 10.dp
 private val Hairline = 1.dp
 private val Lift = 3.dp
+
+/** How much of its own colour a button keeps when there is nothing to press it for. */
+private const val Muted = 0.45f
+
+/** A disabled button's single flat tone, dimmer than the shaded bottom it is taken from. */
+private const val Flat = 0.55f
 private val MinTap = 50.dp
 private val CompactTap = 44.dp
 private val PadH = 16.dp

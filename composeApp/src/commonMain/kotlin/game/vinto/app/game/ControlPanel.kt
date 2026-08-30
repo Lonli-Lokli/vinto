@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +45,7 @@ import game.vinto.app.said
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.Hairline
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
@@ -201,9 +201,9 @@ fun ControlPanel(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Rail.line)
+                    Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
                     Text("or", fontSize = DetailSize, color = Rail.inkDim)
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Rail.line)
+                    Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
                 }
                 stakes.forEach { choice -> ChoiceButton(choice, onMove) }
             }

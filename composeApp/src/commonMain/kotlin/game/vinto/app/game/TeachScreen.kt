@@ -271,9 +271,7 @@ fun TeachScreen(
         }
     }
 
-    if (helpOpen) {
-        HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
-    }
+    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
 }
 
 /**

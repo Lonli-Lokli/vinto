@@ -4,19 +4,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +50,7 @@ import game.vinto.app.art.signal_vinto
 import game.vinto.app.art.signal_vinto_meaning
 import game.vinto.app.explained
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.VintoSheet
 import game.vinto.client.Explains
 import game.vinto.shapes.CardConfig
 import game.vinto.shapes.Rank
@@ -79,18 +75,9 @@ private val Chip = 46.dp
  * The words are `CARD_CONFIGS`, which was ported with the engine and is the same copy the web
  * app shows. One set of rules, written once.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HelpSheet(now: Explains?, onDismiss: () -> Unit) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Rail.fill,
-        contentColor = Rail.ink,
-        // Expanded, the sheet reaches the top of the screen, and without this the first line
-        // sits under the clock.
-        contentWindowInsets = { WindowInsets.systemBars },
-    ) {
+fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit) {
+    VintoSheet(open = open, onDismiss = onDismiss) {
         LazyColumn(
             modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(RowGap),

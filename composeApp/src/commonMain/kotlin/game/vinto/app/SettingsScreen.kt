@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,6 +58,7 @@ import game.vinto.app.art.settings_version
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.Hairline
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
@@ -287,14 +287,14 @@ private fun Plaque(title: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Gap),
     ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
         Text(
             text = title.uppercase(),
             style = stamped(size = PlaqueSize, weight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.semantics { heading() },
         )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
     }
 }
 

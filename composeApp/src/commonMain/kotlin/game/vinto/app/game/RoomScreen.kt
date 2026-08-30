@@ -530,9 +530,7 @@ private fun RemoteGameScreen(
         }
     }
 
-    if (helpOpen) {
-        HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
-    }
+    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
 
     SessionOver(endedReason)
 
@@ -545,6 +543,9 @@ private fun RemoteGameScreen(
         val filed = standings.lastOrNull()?.scores == scores
         val earlier = if (filed) standings.dropLast(1) else standings
         StandingsSheet(
+            // Composed only once there is a result to show, so it is showing whenever it
+            // exists. `VintoSheet` animates from first composition, so this still rises.
+            open = true,
             round = earlier.size + 1,
             you = session.playerId,
             result = RoundResult(

@@ -12,11 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +46,7 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
+import game.vinto.app.theme.VintoSheet
 import game.vinto.client.RoundOutcome
 import game.vinto.client.RoundResult
 import game.vinto.client.bestCoalitionHands
@@ -70,9 +68,9 @@ private val Corner = 8.dp
  * against a coalition's 9 loses the round by one point while holding the higher total, and a
  * screen that showed only totals would make that look like a bug.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StandingsSheet(
+    open: Boolean,
     round: Int,
     you: String,
     result: RoundResult,
@@ -84,12 +82,7 @@ fun StandingsSheet(
         (standings[id] ?: 0) + (result.points[id] ?: 0)
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onNextRound,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Rail.fill,
-        contentColor = Rail.ink,
-    ) {
+    VintoSheet(open = open, onDismiss = onNextRound) {
         Column(
             modifier = Modifier
                 .padding(horizontal = Pad)
