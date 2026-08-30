@@ -1,11 +1,21 @@
 # Game Recording, Determinism and Replay
 
-This document is the **contract between engine implementations**. The TypeScript engine
-is the reference; any second implementation (starting with the Kotlin Multiplatform port)
-must reproduce everything specified here byte for byte.
+This document is the **specification of the recording format**: what a `GameRecording` is,
+how a state is canonicalised, and how it is hashed. Every target — JVM, Android, Kotlin/JS,
+Kotlin/Wasm and iOS — has to reproduce all of it byte for byte, and
+`RecordingRoundTripTest` checks that on each of them.
 
-If you change anything in this document, you are changing a cross-language contract:
-update both implementations and regenerate the fixture corpus in the same change.
+**It used to be a contract between two engines, and that is now history rather than policy.**
+It was written against a TypeScript implementation that acted as the reference; that engine was
+deleted with `legacy-web/`. What survives it is `fixtures/recordings` — 50 games and 13,900
+actions carrying the hashes TypeScript computed, replayed by `CorpusReplayTest` on every run.
+
+So the old instruction here ("update both implementations and regenerate the corpus") no longer
+describes anything that can be done. The corpus is **frozen** and cannot be regenerated:
+`fixtures/recordings/README.md` explains why the generator was deliberately not ported, and
+`CorpusIsFrozenTest` fails if a recording changes. If a change to this document would move a
+recorded hash, that is a change to a gate fifty committed files depend on — argue for it in the
+change rather than rewriting the fixtures to match.
 
 ---
 
@@ -112,9 +122,12 @@ produces the string that gets hashed. The rules:
 - **integers only.** A non-integer or non-finite number is an error, not a rounding
   problem: the canonicaliser throws and names the offending path
 
-The integer-only rule is not fussiness. TypeScript prints `1` where Kotlin prints `1.0`
-for the same value, so a single fractional number in `GameState` would make the two
-implementations disagree forever, in a way that looks like a logic bug.
+The integer-only rule is not fussiness, and it outlived the reason it was written for.
+TypeScript printed `1` where Kotlin prints `1.0` for the same value, so one fractional number
+in `GameState` would have made the two implementations disagree forever in a way that looks
+like a logic bug. The same trap is still live *within* Kotlin: a `Long` is a pair of `Int`s on
+Kotlin/JS, and Wasm's number formatting is its own. The rule now guards agreement between
+targets rather than between languages.
 
 ### Excluded fields
 
