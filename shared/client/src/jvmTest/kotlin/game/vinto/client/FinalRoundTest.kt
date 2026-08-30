@@ -9,6 +9,7 @@ import game.vinto.shapes.RankPayload
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -119,12 +120,13 @@ class FinalRoundTest {
         assertEquals(RoundEndReason.DECK_EXHAUSTED, roundEndReason(ended.copy(vintoCallerId = null)))
 
         val panel = tableFor(ended)
-        assertTrue(
-            panel.detail.orEmpty().contains("called Vinto"),
+        assertIs<Detail.ScoredAgainstTheCaller>(
+            panel.detail,
             "the panel does not say who ended the round: ${panel.detail}",
         )
-        assertTrue(
-            tableFor(ended.copy(vintoCallerId = null)).detail.orEmpty().contains("deck ran out"),
+        assertEquals(
+            Detail.TheDeckRanOut,
+            tableFor(ended.copy(vintoCallerId = null)).detail,
             "the deck ending goes unexplained",
         )
 

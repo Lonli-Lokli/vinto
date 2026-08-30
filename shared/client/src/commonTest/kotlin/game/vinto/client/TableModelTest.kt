@@ -282,7 +282,7 @@ class TableModelTest {
 
         val table = session.table()
         assertEquals(Ask.YouDrew(Rank.KING), table.prompt)
-        assertTrue(table.detail!!.contains("eclare"), table.detail!!)
+        assertEquals(Detail.WhatTheCardDoes(Rank.KING), table.detail)
     }
 
     // ------------------------------------------------------------------ what is shown
@@ -373,10 +373,7 @@ class TableModelTest {
 
         val after = session.table()
         assertTrue(after.taps.isEmpty(), "no card can be thrown in any more")
-        assertTrue(
-            after.detail!!.contains("cannot toss in again"),
-            "and it says why: ${after.detail}",
-        )
+        assertEquals(Detail.BarredForTheRestOfTheRound, after.detail, "and it says why")
         assertTrue(after.send(Label.Continue) is GameAction.PlayerTossInFinished)
         assertTrue(
             after.send(Label.CallVinto) is GameAction.CallVinto,

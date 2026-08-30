@@ -20,7 +20,6 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
-import game.vinto.shapes.getCardShortDescription
 
 /**
  * What the table is offering the player, right now.
@@ -46,7 +45,7 @@ data class Table(
      * being asked, and this is what you need to know to answer it. Running them together is
      * how a heading turns into a paragraph nobody reads.
      */
-    val detail: String? = null,
+    val detail: Detail? = null,
     /** Buttons, in the order they should be shown. */
     val choices: List<Choice> = emptyList(),
     /** Cards that can be touched, and what touching one does. */
@@ -234,7 +233,7 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
         // their own cards opens the claim picker.
         return if (mayDeclare(view)) {
             watching.copy(
-                detail = "Tap one of your cards to say what you think it is.",
+                detail = Detail.TapACardToSayWhatItIs,
                 taps = me.cards.indices.associate { position ->
                     CardRef(me.id, position) to Move.Ask(Question.DeclareRank(position))
                 },
@@ -256,7 +255,7 @@ private fun mayDeclare(view: PlayerView): Boolean =
 
 private fun declareOwnCardTable(view: PlayerView, position: Int): Table = Table(
     prompt = Ask.WhatDoYouSayThisCardIs,
-    detail = "Table talk — the coalition takes your word for it, right or wrong.",
+    detail = Detail.TableTalkIsTakenOnTrust,
     choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
     ranks = ALL_RANKS.map { rank ->
         RankChoice(
@@ -409,7 +408,7 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
     }
 
     val what = Ask.YouDrew(card?.rank)
-    val does = card?.let { getCardConfig(it.rank) }?.takeIf { it.action != null }?.longDescription
+    val does = card?.rank?.takeIf { getCardConfig(it).action != null }?.let(Detail::WhatTheCardDoes)
     return Table(prompt = what, detail = does, choices = choices)
 }
 
@@ -431,7 +430,7 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
 
     return Table(
         prompt = Ask.NameWhatYouArePuttingDown,
-        detail = "Right plays its action; wrong costs you a card.",
+        detail = Detail.RightPlaysItWrongCostsACard,
         choices = listOf(
             Choice(
                 Label.JustSwap,
@@ -450,9 +449,10 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
 
 private fun targetingTable(view: PlayerView, pending: PendingActionView): Table {
     val card = (pending.card as? CardView.Visible)?.card
-    val borrowed = pending.declaredRank?.let { rank ->
-        "The King declared a ${rank.serialName}: ${getCardShortDescription(rank)}"
-    }
+    // `KingDeclared`, not a sentence built from `getCardShortDescription` — that field is
+    // `Card.actionText`, which is inside the canonical hash and cannot be translated
+    // (`CardCopyIsDataTest`). The renderer reaches for `longDescription` instead.
+    val borrowed = pending.declaredRank?.let(Detail::KingDeclared)
 
     return withBorrowed(borrowed) {
         when (pending.targetType) {
@@ -496,7 +496,7 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
  * played. Without naming it, "choose two cards from two different players" arrives with no
  * explanation — the Queen it is imitating was never on the table.
  */
-private inline fun withBorrowed(borrowed: String?, build: () -> Table): Table {
+private inline fun withBorrowed(borrowed: Detail?, build: () -> Table): Table {
     val table = build()
     return if (borrowed == null) table else table.copy(detail = borrowed)
 }
@@ -645,7 +645,7 @@ private fun tossInTable(view: PlayerView): Table? {
     if (me in view.barredFromTossIn) {
         return Table(
             prompt = Ask.TossIn(toss.ranks, barred = true),
-            detail = "You threw in a wrong card this round, so you cannot toss in again.",
+            detail = Detail.BarredForTheRestOfTheRound,
             // Barred from *tossing in*, not from ending your turn. Losing the Vinto call
             // along with it would be a second penalty the rules never mention, and it would
             // land on the player who has just been punished once already.
@@ -667,7 +667,7 @@ private fun tossInTable(view: PlayerView): Table? {
     // the risk that makes it worth confirming is exactly the risk that makes it a bad idea.
     return Table(
         prompt = Ask.TossIn(toss.ranks, barred = false),
-        detail = "A wrong one costs you a penalty card.",
+        detail = Detail.AWrongOneCostsAPenaltyCard,
         taps = hand.associate { position ->
             val throwIn = GameAction.ParticipateInTossIn(ParticipateInTossInPayload(me, listOf(position)))
             CardRef(me, position) to Move.Send(throwIn)
@@ -736,14 +736,11 @@ private fun scoringTable(view: PlayerView): Table {
         prompt = Ask.RoundOver(yours = mine, best = best),
         detail = when (roundEndReason(view)) {
             RoundEndReason.VINTO_CALLED -> {
-                val caller =
-                    view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname ?: "Someone"
-                "$caller called Vinto, so the round was scored against their hand."
+                val caller = view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname
+                Detail.ScoredAgainstTheCaller(Speaker.Named(caller ?: "Someone"))
             }
 
-            RoundEndReason.DECK_EXHAUSTED ->
-                "The deck ran out, so the round ended and every hand was counted."
-
+            RoundEndReason.DECK_EXHAUSTED -> Detail.TheDeckRanOut
             null -> null
         },
         waiting = true,

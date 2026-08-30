@@ -1463,10 +1463,24 @@ from the rank at the point of display. That is a rules-shaped change needing the
 regenerated, which §1d says is on its way to being impossible — so it is recorded here as a
 deviation rather than queued as a task.
 
+### Slice 5 — `Table.detail`, done
+
+Nine cases, and the King's borrowed-action line was built from
+`getCardShortDescription` — the hashed field. It now takes `longDescription`, which is the
+same information said at greater length and is presentation rather than data.
+
+One improvement came free. `worthSaying` counts how often a player has seen a hint, to fade it
+after the second or third time, and it keyed that count on the hint's **words**. It keys on the
+message now: the count survives a translation, and two hints that merely read alike in English
+no longer share a tally.
+
 ### Still to do
 
-- **`Table.detail`** (~8 literals). Now unblocked, with the boundary above understood: the
-  parts fed by `longDescription` are translatable, and nothing in `detail` touches the hash.
+- **`Table.help`** (the "?" text) — one function, `helpFor`, which assembles a card's name,
+  value, `longDescription` and `helpText` into a paragraph. Same shape as the five above.
+- **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
+  assembled sentences, so more mechanical — but it is where both dead English matches lived, so
+  read it for more while converting. Split by chapter.
 - **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
   assembled sentences, so it is more mechanical than these three were — but it is also where
   the two dead English matches lived, so read it for more of them while converting.

@@ -45,6 +45,15 @@ import game.vinto.app.art.choice_start_round
 import game.vinto.app.art.choice_swap_cards
 import game.vinto.app.art.choice_use_action
 import game.vinto.app.art.choice_use_from_pile
+import game.vinto.app.art.detail_barred
+import game.vinto.app.art.detail_card_does
+import game.vinto.app.art.detail_deck_ran_out
+import game.vinto.app.art.detail_king_declared
+import game.vinto.app.art.detail_right_plays
+import game.vinto.app.art.detail_scored_against
+import game.vinto.app.art.detail_table_talk
+import game.vinto.app.art.detail_tap_to_say
+import game.vinto.app.art.detail_wrong_costs
 import game.vinto.app.art.log_called_vinto
 import game.vinto.app.art.log_declared
 import game.vinto.app.art.log_draw_they
@@ -71,9 +80,11 @@ import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
 import game.vinto.client.Ask
+import game.vinto.client.Detail
 import game.vinto.client.Label
 import game.vinto.client.Say
 import game.vinto.client.Speaker
+import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.getCardName
 import org.jetbrains.compose.resources.stringResource
 
@@ -256,4 +267,34 @@ fun asked(ask: Ask): String = when (ask) {
         ask.yours == ask.best -> stringResource(Res.string.ask_round_over_lowest, ask.yours!!)
         else -> stringResource(Res.string.ask_round_over_not_lowest, ask.yours!!, ask.best!!)
     }
+}
+
+/**
+ * The line under the prompt, in the phone's language.
+ *
+ * `longDescription` throughout, never `shortDescription`. That distinction is not stylistic:
+ * `shortDescription` becomes `Card.actionText`, which is inside the canonical hash that all 50
+ * fixtures pin against TypeScript, so it is data rather than copy and cannot be translated —
+ * `CardCopyIsDataTest` in `shared/shapes` fails loudly if anybody forgets. The King's borrowed
+ * line was built from exactly that field until this slice.
+ */
+@Composable
+fun detailed(detail: Detail): String = when (detail) {
+    is Detail.WhatTheCardDoes ->
+        stringResource(Res.string.detail_card_does, getCardConfig(detail.rank).longDescription)
+
+    is Detail.KingDeclared -> stringResource(
+        Res.string.detail_king_declared,
+        detail.rank.serialName,
+        getCardConfig(detail.rank).longDescription,
+    )
+
+    Detail.TapACardToSayWhatItIs -> stringResource(Res.string.detail_tap_to_say)
+    Detail.TableTalkIsTakenOnTrust -> stringResource(Res.string.detail_table_talk)
+    Detail.RightPlaysItWrongCostsACard -> stringResource(Res.string.detail_right_plays)
+    Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
+    Detail.BarredForTheRestOfTheRound -> stringResource(Res.string.detail_barred)
+    is Detail.ScoredAgainstTheCaller ->
+        stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
+    Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
 }

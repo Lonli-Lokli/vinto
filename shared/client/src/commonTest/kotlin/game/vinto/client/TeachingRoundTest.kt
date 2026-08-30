@@ -236,8 +236,8 @@ private class SimplePlayer(private val session: LocalGameSession) {
     /** Every prompt the table put to the player. Typed, so an assertion says what it means. */
     val asked = mutableSetOf<Ask>()
 
-    /** The smaller line under it, still a sentence — see §6h, `detail` is a later slice. */
-    val said = mutableSetOf<String>()
+    /** The smaller line under it, also typed now. */
+    val said = mutableSetOf<Detail>()
 
     suspend fun play(steps: Int = STEPS) {
         repeat(steps) {

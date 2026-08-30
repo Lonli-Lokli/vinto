@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.table_sending
 import game.vinto.app.asked
+import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
 import game.vinto.app.said
@@ -48,6 +49,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
+import game.vinto.client.Detail
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
@@ -255,7 +257,7 @@ private fun Heading(table: Table, teaching: Boolean) {
             modifier = Modifier.semantics { heading() },
         )
         table.detail?.takeIf { worthSaying(it, teaching) }?.let { detail ->
-            Text(text = detail, fontSize = DetailSize, color = Rail.inkDim)
+            Text(text = detailed(detail), fontSize = DetailSize, color = Rail.inkDim)
         }
     }
 }
@@ -277,10 +279,12 @@ private fun Heading(table: Table, teaching: Boolean) {
  * words.
  */
 @Composable
-private fun worthSaying(detail: String, teaching: Boolean): Boolean {
+private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
     if (teaching) return true
 
-    val met = remember { mutableMapOf<String, Int>() }
+    // Keyed by the message rather than by its words. The count now survives a translation,
+    // and two hints that merely read alike in English no longer share a tally.
+    val met = remember { mutableMapOf<Detail, Int>() }
     val before = met[detail] ?: 0
     var hesitated by remember(detail) { mutableStateOf(false) }
 
