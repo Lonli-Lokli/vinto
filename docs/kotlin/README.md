@@ -1508,11 +1508,41 @@ language — two dead English matches, a hashed field about to be translated, an
 text that was never displayed. Assembling sentences in a module that cannot render them turns
 out to be a reliable marker for code nobody has looked at.
 
-### Still to do
+### Still to do: `TeachScript.kt`'s lesson prose — designed, deliberately not done yet
 
-- **`TeachScript.kt`'s lesson prose** (~135 literals): `Lesson.title`, `body`, `note` and
-  `gloss` across roughly forty beats. Mechanical — mostly whole sentences rather than assembled
-  ones — but large. Split by chapter. Mostly prose rather than
+**~135 literals across 28 lesson beats.** It is the only piece of §6h left, and the only one
+with no discovery value: the other seven each turned up a defect, and this one is 28 near
+identical text moves. It was deferred in favour of the ten unstarted tasks in
+`migrate-to-kotlin-multiplatform` (5.6, 6.5, 6.6, 6.7, 7.7 among them) — a scope call, recorded
+here rather than made silently, and reversible the moment those are done.
+
+**One structural finding worth having before anybody starts.** It *cannot* be split by chapter,
+which was the obvious plan. `Lesson.title`/`body` are fields, so changing their type forces all
+28 call sites in one commit; only the resource entries can be added incrementally. Plan for one
+mechanical commit, not four.
+
+**The design, ready to execute.** 18 of the 28 already carry a stable `talkId` — `welcome`,
+`cards_numbers`, `cards_king_whose` — used for "has this been talked through" tracking. Those
+are the keys. So:
+
+1. A `Beat` enum, 28 entries: the 18 existing `talkId`s plus ten for the in-play beats
+   (`the only look you get`, `keep it or throw it`, `two ways to start a turn`, …).
+2. `Lesson.title: String?` and `body: String` become `beat: Beat`; the words go to `strings.xml`
+   as `beat_<id>_title` and `beat_<id>_body`.
+3. A renderer beside `said`/`asked`/`detailed`/`explained` in `composeApp/.../Said.kt`.
+4. `Taught.talked: Set<String>` becomes `Set<Beat>` while you are there — it is the same set of
+   ids, currently stringly-typed and able to drift from the lessons it tracks.
+
+Three irregular sites to handle individually rather than by script:
+
+| | |
+| --- | --- |
+| Two beats have `title = null` | The type must keep that: not every beat has a heading |
+| The toss-in beat's body is `alsoThrewIn(view) + "…"` | A computed prefix naming who threw in. Carry the names as an argument |
+| The Vinto beat's title is `"$caller called Vinto"` | Carries a `Speaker`, like `Ask.WhoPlaysForYou` |
+
+`Lesson.note` and `gloss` come along with it: `noteFor(rank)` is `CardConfig` prose (fine —
+`longDescription`, never `shortDescription`) and `glossOnce` is a handful of one-liners. Mostly prose rather than
   assembled sentences, so more mechanical — but it is where both dead English matches lived, so
   read it for more while converting. Split by chapter.
 - **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
