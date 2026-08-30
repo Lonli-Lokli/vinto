@@ -19,3 +19,6 @@ project: two changes were complete and their requirements were still filed as pr
 - `migrate-to-kotlin-multiplatform` — carries six more spec files, including eight further
   `online-multiplayer` requirements that join the canonical file when it archives
 - `add-live-analytics` — the release gate, not started
+- `retire-legacy-web` — opened by task 10.1, and deliberately not executed in the same pass:
+  its one irreversible step is a deletion, and the decision it records (freeze the corpus
+  rather than port its generator) is worth being read by somebody before it is taken
