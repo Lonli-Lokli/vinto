@@ -299,6 +299,40 @@ run/link so the step *name* says which half broke, and a `What the compiler said
 repeats the `e:` lines at the end of a failed job so they survive being read from a phone or
 a tool that shows only the tail.
 
+**detekt 2, and what `allRules` is actually worth.** The gate runs `dev.detekt` 2.0.0-alpha.6
+with **every rule detekt ships**, including the ones it leaves off by default. Four things are
+worth knowing before touching it.
+
+- **It is an alpha, deliberately and reversibly.** There is no detekt 2 stable and no RC —
+  `2.0.0-alpha.6` is the only 2.x that exists. The catalog previously recorded a decision
+  *against* gating a release on an alpha; that was overridden on request, and the revert is a
+  version number plus three identifiers (`dev.detekt` → `io.gitlab.arturbosch.detekt`,
+  `dev.detekt.gradle.Detekt`, and `detekt-rules-ktlint-wrapper` → `detekt-formatting`).
+- **The config format moved in three ways**, all of them silent if you get them wrong. The
+  `build:` block is gone — `maxIssues: 0` is now `failOnSeverity = Info` on the Gradle
+  extension. `threshold: N` became `allowed…: N` and **the meaning inverted**, so every number
+  in `detekt.yml` is one lower than it was; copying them across would have loosened every
+  limit by one. And the `formatting:` ruleset is now `ktlint:`.
+- **`allRules = true` found 6,726 findings across 51 rules, and 5,900 of them were three
+  families that contradict decisions this project has already made** — two of which
+  contradict *each other*. `UndocumentedPublic*` wants KDoc on every public member;
+  `DocumentationOverPrivate*` wants comments on private members deleted and the members
+  renamed instead. `FunctionNameMaxLength` flags 632 test names that are sentences because
+  §7 says they have to be. And ktlint's *experimental* formatting rules are a whole-codebase
+  reformat rather than analysis. All are declined in `detekt.yml` with the reason written
+  beside each, rather than baselined: a baseline is a list of things to fix, and none of
+  these will ever be fixed.
+- **The baselines are per module now, and that is a correctness fix.** A single shared file
+  cannot be generated at all: every module's `detektBaseline` task writes the whole file, so
+  with 25 modules the last to finish overwrites the other 24. Under 1.x nobody noticed because
+  the file had been assembled by hand from a CI log. The first real regeneration produced
+  **19 entries for 265 findings**, which is how it was found. There are eight files now, one
+  per module with debt, and the debt is attributable to the module that owns it.
+
+What is left after all that is **219 baselined findings** — real debt, newly visible, in
+`config/detekt/baseline-*.xml`. The old rule still applies and matters more at this size: fix
+an entry and delete its line; never regenerate a file to make a *new* violation go away.
+
 **The detekt baseline.** The first CI run found seven findings that predate it — two
 cyclomatic-complexity, a loop with too many jumps, a return count, a file name that does not
 match its declaration, a file one function over the limit, and one dead private function.

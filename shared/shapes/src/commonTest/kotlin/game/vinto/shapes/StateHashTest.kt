@@ -125,13 +125,17 @@ class StateHashTest {
             "a card id" to state(
                 players = listOf(
                     player("p1", cards = listOf(card("other", Rank.FIVE))),
-                    player("p2"), player("p3"), player("p4"),
+                    player("p2"),
+                    player("p3"),
+                    player("p4"),
                 ),
             ),
             "knownCardPositions" to state(
                 players = listOf(
                     player("p1", knownCardPositions = listOf(0)),
-                    player("p2"), player("p3"), player("p4"),
+                    player("p2"),
+                    player("p3"),
+                    player("p4"),
                 ),
             ),
             "currentPlayerIndex" to state(currentPlayerIndex = 2),

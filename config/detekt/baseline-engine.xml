@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BracesOnWhenStatements:ActionValidator.kt:ActionValidator$when</ID>
+    <ID>BracesOnWhenStatements:SelectActionTarget.kt:when</ID>
+    <ID>BracesOnWhenStatements:TossInHandlers.kt:when</ID>
+    <ID>BracesOnWhenStatements:VisibilityMatrixTest.kt:VisibilityMatrixTest.Play$when</ID>
+    <ID>CascadingCallWrapping:PeekPrivacyTest.kt:PeekPrivacyTest$get(game.opponent)</ID>
+    <ID>ClassOrdering:ActionValidator.kt:ActionValidator$/** Players peek at exactly two of their own cards before play begins. */ private const val SETUP_PEEKS_REQUIRED = 2</ID>
+    <ID>ClassOrdering:MutableGameState.kt:MutablePile$val length: Int get() = cards.size</ID>
+    <ID>CognitiveComplexMethod:ActionValidator.kt:ActionValidator$@Suppress("CyclomaticComplexMethod", "LongMethod") private fun validateInPhase: Validation</ID>
+    <ID>CognitiveComplexMethod:TossInUtils.kt:fun clearTossInAfterActionableCard</ID>
+    <ID>CognitiveComplexMethod:VisibilityMatrixTest.kt:VisibilityMatrixTest$@Test fun everyRowOfTableAHolds</ID>
+    <ID>FunctionNameMinLength:MutableGameState.kt:MutablePile$fun at: MutableCard?</ID>
+    <ID>StringLiteralDuplication:ActionValidator.kt:ActionValidator$"No active toss-in"</ID>
+    <ID>StringLiteralDuplication:ActionValidator.kt:ActionValidator$"Not in setup phase"</ID>
+    <ID>StringLiteralDuplication:ActionValidator.kt:ActionValidator$"Player not found"</ID>
+    <ID>StringLiteralDuplication:ActionValidator.kt:ActionValidator$"Target player not found"</ID>
+    <ID>UnderscoresInNumericLiterals:DeterminismTest.kt:DeterminismTest$12345</ID>
+    <ID>UnnecessaryParentheses:FinalRoundRulesTest.kt:FinalRoundRulesTest$(s.activeTossIn?.playersReadyForNextTurn ?: emptyList())</ID>
+    <ID>UnnecessaryParentheses:ParticipateInTossIn.kt:(card.actionText?.length ?: 0)</ID>
+    <ID>UseIfInsteadOfWhen:ActionValidator.kt:ActionValidator$when { state.drawPile.size == 0 -&gt; Validation.Invalid("Draw pile is empty") else -&gt; Validation.Valid }</ID>
+  </CurrentIssues>
+</SmellBaseline>

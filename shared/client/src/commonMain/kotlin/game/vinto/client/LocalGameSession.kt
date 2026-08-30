@@ -307,7 +307,7 @@ class LocalGameSession(
                 SessionEvent.RoundEnded(
                     scores = calculateFinalScores(state.players, state.vintoCallerId),
                     points = calculateRoundPoints(state.players, state.vintoCallerId),
-                )
+                ),
             )
         }
     }

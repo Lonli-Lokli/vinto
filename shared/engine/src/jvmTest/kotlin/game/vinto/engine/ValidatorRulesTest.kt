@@ -193,8 +193,8 @@ class ValidatorRulesTest {
                     state,
                     GameAction.ParticipateInTossIn(
                         ParticipateInTossInPayload(ghost, listOf(0)),
-                    )
-                ) || state.activeTossIn == null
+                    ),
+                ) || state.activeTossIn == null,
             )
         }
     }

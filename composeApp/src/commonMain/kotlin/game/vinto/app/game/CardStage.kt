@@ -358,6 +358,7 @@ class Stage {
      * the other end: the hand keeps the gap until the flight lands, so nothing shifts under a
      * card that is still moving, and the card leaves from where it actually was.
      */
+
     /** The card on its way to [anchor], if one is. The pile asks so it never draws it twice. */
     fun landingOn(anchor: Anchor): CardView? =
         flying.firstOrNull { it.landingAt == anchor }?.card ?: expecting[anchor]
@@ -384,6 +385,7 @@ class Stage {
     }
 
     /** A card being shown off where it lies, with how far through that it is. */
+
     /**
      * A card being shown off where it lies, or null. Read by the pile as well as drawn: while
      * a card is being flourished it has not landed anywhere, so nothing else may draw it.

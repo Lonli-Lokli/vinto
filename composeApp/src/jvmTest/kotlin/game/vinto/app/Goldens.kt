@@ -48,7 +48,7 @@ object Goldens {
             beside.writeBytes(bytes)
             fail(
                 "$name: $quarrel. The rendering is beside the golden as ${beside.name}; " +
-                    "if the change is intended, delete the golden and run twice."
+                    "if the change is intended, delete the golden and run twice.",
             )
         }
         // A stale .actual from a failure since fixed would sit there implying one.

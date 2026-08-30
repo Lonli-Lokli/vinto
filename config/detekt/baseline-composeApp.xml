@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BracesOnWhenStatements:CardStage.kt:when</ID>
+    <ID>BracesOnWhenStatements:Crash.kt:when</ID>
+    <ID>BracesOnWhenStatements:Net.ios.kt:IosRoomConnector$when</ID>
+    <ID>BracesOnWhenStatements:Said.kt:when</ID>
+    <ID>BracesOnWhenStatements:Standings.kt:when</ID>
+    <ID>CascadingCallWrapping:FontCoverageTest.kt:FontCoverageTest$replace("&amp;apos;", "'")</ID>
+    <ID>CascadingCallWrapping:FontCoverageTest.kt:FontCoverageTest$replace("&amp;lt;", "&lt;")</ID>
+    <ID>CascadingCallWrapping:LandingTest.kt:LandingTest$single()</ID>
+    <ID>CascadingCallWrapping:QueenAimTest.kt:QueenAimTest$boundsInRoot</ID>
+    <ID>CascadingCallWrapping:TossInAreaTest.kt:TossInAreaTest$endsWith("cards left in the deck")</ID>
+    <ID>CascadingCallWrapping:WebShellTest.kt:WebShellTest$value</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** * A card being shown off where it lies, or null. Read by the pile as well as drawn: while * a card is being flourished it has not landed anywhere, so nothing else may draw it. */ var flourish: Pair&lt;CardView, Anchor&gt;? by mutableStateOf(null)</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** * Cards the stepped view already shows face-up whose reveal has not been *played* yet. * * The table steps to the position a move produced before its scenes play, and at * scoring that position has every hand face-up — so without this the whole table * flashed over in one frame and the seat-by-seat reveal turned cards that were already * showing. A concealed card draws its back until its reveal scene starts, and the flip * is then `CardFace`'s own animation, in place, one seat at a time. */ internal val concealing = mutableStateListOf&lt;Anchor&gt;()</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** * Places a card is about to arrive at, from the moment the table steps to the move. * * The table shows the position a move produced *before* the cards fly, so that a card has * a laid-out place to land in. For the frame or two in between, the engine's answer is * already on screen while the card is still where it started — which drew the discard's * new top card on the pile, then took it away again when the flight began, then put it * back when the flight landed. One card, three appearances, and the middle one a blink. * * Filled from the frame's own beats before the view steps, and emptied as each flight * takes over, so every place that asks "is something arriving here?" is told the truth * from the first frame rather than the third. */ internal val expecting = mutableStateMapOf&lt;Anchor, CardView&gt;()</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** * Places whose card is currently in the air. * * The table draws a gap at these, because the card is being drawn by the overlay instead. * Without it a card is in two places at once for the third of a second it is moving, and * the eye notices the copy rather than the movement. */ val inFlight: Set&lt;Anchor&gt; get() = flying.mapTo(mutableSetOf()) { it.landingAt } + expecting.keys</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** * Where things are, in the stage's own coordinates, and how big they are. * * The berths are what the flights need — a place to fly from and one to land in. [bounds] is * what the coach's pointer needs, because a hand pointing at the *centre* of a full-width * button covers its label, and one pointing at a card has to know where the card's edge * is. Both are filled as the table lays out, by whatever drew the thing. */ private val bounds = mutableStateMapOf&lt;String, Rect&gt;()</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$/** The stage's own size, so a pointer near the bottom edge knows to point down instead. */ internal var size: Size = Size.Zero private set</ID>
+    <ID>ClassOrdering:CardStage.kt:Stage$val leaving: Map&lt;String, Set&lt;Int&gt;&gt; get() = flying .mapNotNull { it.leftFrom as? Anchor.Seat } .groupBy({ it.playerId }, { it.position }) .mapValues { (_, positions) -&gt; positions.toSet() }</ID>
+    <ID>ClassOrdering:CrashReporterTest.kt:CrashReporterTest$/** Mirrors `CrashReporter.BUDGET`, which is private and should stay so. */ private val budgetCeiling = 5</ID>
+    <ID>ClassOrdering:Crashes.kt:Crashes$/** * Where a crash waits between the process dying and the next launch. * * One slot, deliberately: a phone in a crash loop would otherwise fill the vault with * copies of one bug, and the most recent is the one worth having. It holds a Sentry * envelope, which carries nothing identifying — `Crash.kt` makes that structural. */ private const val PENDING = "vinto.crash.pending"</ID>
+    <ID>ClassOrdering:Goldens.kt:Goldens$/** Channel values are floats; the tolerance is stated in eight-bit steps. */ private const val CHANNEL_SCALE = 255f</ID>
+    <ID>ClassOrdering:Goldens.kt:Goldens$/** One pixel in a thousand may sit on a glyph edge that antialiases differently. */ private const val ALLOWED_FRACTION = 0.001</ID>
+    <ID>ClassOrdering:Goldens.kt:Goldens$/** Two eight-bit steps: past any rounding, far under any visible change. */ private const val CHANNEL_TOLERANCE = 2f</ID>
+    <ID>ClassOrdering:MenuUiTest.kt:MenuUiTest$Companion</ID>
+    <ID>ClassOrdering:TableUiTest.kt:TableUiTest$private fun ComposeUiTest.button</ID>
+    <ID>CognitiveComplexMethod:Buttons.kt:@Composable fun GameButton</ID>
+    <ID>CognitiveComplexMethod:CardFace.kt:@Composable fun CardFace</ID>
+    <ID>CognitiveComplexMethod:CardStage.kt:@Composable private fun BeingLookedAt</ID>
+    <ID>CognitiveComplexMethod:ControlPanel.kt:@OptIn(ExperimentalLayoutApi::class) @Composable fun ControlPanel</ID>
+    <ID>CognitiveComplexMethod:OnlineScreen.kt:@Composable fun OnlineScreen</ID>
+    <ID>CognitiveComplexMethod:Said.kt:@Composable @Suppress("CyclomaticComplexMethod") fun said: String</ID>
+    <ID>CognitiveComplexMethod:Standings.kt:@Composable private fun Line</ID>
+    <ID>CognitiveComplexMethod:TableScreen.kt:@Composable private fun HandLine</ID>
+    <ID>CognitiveComplexMethod:TeachScreen.kt:@Composable private fun Coach</ID>
+    <ID>FunctionNameMinLength:CardStage.kt:Stage$internal fun ms: Int</ID>
+    <ID>FunctionNameMinLength:ContrastTest.kt:ContrastTest$private fun ui</ID>
+    <ID>LambdaParameterNaming:TableScreen.kt:throw_</ID>
+    <ID>StringLiteralDuplication:Net.ios.kt:IosRoomConnector$"bad url"</ID>
+    <ID>StringShouldBeRawString:CrashReportTest.kt:CrashReportTest$"\"event_id\":\"deadbeef\""</ID>
+    <ID>StringShouldBeRawString:CrashReportTest.kt:CrashReportTest$"\"level\":\"error\""</ID>
+    <ID>StringShouldBeRawString:CrashReportTest.kt:CrashReportTest$"he said \"no\"\nand left\t"</ID>
+    <ID>StringShouldBeRawString:CrashReportTest.kt:CrashReportTest$"{\"token\":\"aGVsbG8td29ybGQtc2VjcmV0\"}"</ID>
+    <ID>StringShouldBeRawString:CrashReporterTest.kt:CrashReporterTest$"\"surface\":\"ONLINE\""</ID>
+    <ID>StringShouldBeRawString:StringEscapeTest.kt:StringEscapeTest$"compose-resources does not process \\' or \\\" — the backslash is drawn:\n" + offenders.joinToString("\n")</ID>
+    <ID>StringShouldBeRawString:WebShellTest.kt:WebShellTest$"\"not_found_handling\": \"404-page\""</ID>
+    <ID>StringShouldBeRawString:WebShellTest.kt:WebShellTest$"\"pattern\": \"$INVITE_HOST\""</ID>
+    <ID>StringShouldBeRawString:WebShellTest.kt:WebShellTest$"\"purpose\": \"maskable\""</ID>
+    <ID>TrimMultilineRawString:Beacon.wasmJs.kt:"""{ var headers = { 'content-type': contentType }; if (auth) { headers['x-sentry-auth'] = auth; } return { method: 'POST', body: body, keepalive: true, headers: headers, }; }"""</ID>
+    <ID>TrimMultilineRawString:Share.wasmJs.kt:"""{ try { if (!navigator.share) return false; navigator.share({ title: title, text: text }).catch(function () {}); return true; } catch (e) { return false; } }"""</ID>
+    <ID>TrimMultilineRawString:Tracking.wasmJs.kt:"""{ try { if (navigator.globalPrivacyControl === true) return true; var dnt = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack; return String(dnt) === '1' || String(dnt) === 'yes'; } catch (e) { // A browser that will not answer is not a browser that objected. return false; } }"""</ID>
+    <ID>UnderscoresInNumericLiterals:AnalyticsPrivacyUiTest.kt:AnalyticsPrivacyUiTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:Felt.kt:20260821</ID>
+    <ID>UnderscoresInNumericLiterals:FullGameUiTest.kt:FullGameUiTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:HeaderControlsTest.kt:HeaderControlsTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:MenuUiTest.kt:MenuUiTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:SwapAnimationTest.kt:SwapAnimationTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:TableUiTest.kt:TableUiTest.Companion$20260819L</ID>
+    <ID>UnnecessaryParentheses:CardStage.kt:(if (flight.shown) SHOWN_SWELL else SWELL)</ID>
+    <ID>UnnecessaryParentheses:CrashReporter.kt:(high.takeLast(HEX_DIGITS / 2) + low.takeLast(HEX_DIGITS / 2))</ID>
+    <ID>UnnecessaryParentheses:RoomScreen.kt:(seconds ?: 0)</ID>
+    <ID>UnnecessaryParentheses:TableScreen.kt:(i % perLine)</ID>
+    <ID>UnnecessaryParentheses:TableScreen.kt:(i / perLine)</ID>
+    <ID>UnnecessaryParentheses:VintoTheme.kt:(red + green + blue)</ID>
+    <ID>UnnecessaryParentheses:WebShellTest.kt:WebShellTest$(acc shl 8)</ID>
+    <ID>UseIfInsteadOfWhen:CardStage.kt:Stage$when (anchor) { is Anchor.Seat -&gt; berths.keys .filterIsInstance&lt;Anchor.Seat&gt;() .filter { it.playerId == anchor.playerId } .minByOrNull { abs(it.position - anchor.position) } ?.let(berths::get) else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:DiscoverScreen.kt:when { row.humans &gt; 0 -&gt; stringResource(Res.string.discover_people, row.humans) else -&gt; stringResource(Res.string.discover_seats, row.seatsFilled) }</ID>
+    <ID>UseIfInsteadOfWhen:RoomScreen.kt:when (val playing = session) { null -&gt; LobbyScreen(room, onLeft) else -&gt; RemoteGameScreen( room, playing, pace, endedReason = ended, onSettings = onSettings, onLeft = onLeft, ) }</ID>
+    <ID>UseIfInsteadOfWhen:Said.kt:when (label) { is Label.UseFromPile -&gt; "use-from-pile" else -&gt; label.toString() }</ID>
+    <ID>UseIfInsteadOfWhen:TeachScreen.kt:when { finished -&gt; stringResource(Res.string.teach_finished_title) else -&gt; lesson?.teaches?.let { taughtTitle(it) } ?: stringResource(Res.string.teach_heading) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

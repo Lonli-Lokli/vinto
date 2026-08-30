@@ -20,6 +20,12 @@ actual fun installCrashHandler(report: (Throwable) -> Unit) {
             report(error)
         } catch (reportingFailed: Throwable) {
             // Never let the reporter's own failure replace the crash being reported.
+            //
+            // A stack trace to stderr rather than a logger, deliberately: this runs inside an
+            // uncaught-exception handler in a process that is already ending, after the thing
+            // whose job was to report failures has itself failed. Anything with more machinery
+            // is another thing that can throw here, and what it would throw away is the crash.
+            @Suppress("PrintStackTrace")
             reportingFailed.printStackTrace()
         }
         previous?.uncaughtException(thread, error)

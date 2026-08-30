@@ -272,6 +272,7 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
  * Each waits for a tap, and nothing on the table moves while one is up — which is the only
  * way to explain a card game to somebody who does not yet know what any of it means.
  */
+
 /**
  * The things to be read rather than done, in order.
  *

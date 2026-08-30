@@ -76,7 +76,7 @@ class AnalyticsPrivacyTest {
                 actions = 44,
                 durationMs = 91_000.0,
                 endedBy = RoundEnding.VINTO_CALLED,
-                callerWon = true
+                callerWon = true,
             ),
             AnalyticsEvent.SessionEnded(reason = SessionEnding.PLAYED_OUT, rounds = 3, durationMs = 600_000.0),
             AnalyticsEvent.Funnel(step = FunnelStep.INVITE_SHARED, surface = Surface.ONLINE),

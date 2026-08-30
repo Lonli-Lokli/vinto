@@ -1192,6 +1192,7 @@ internal fun applyActionApplied(
  * about the bot so much as about the seam: if the room ever accepted something from its own
  * driver that it would refuse from a player, the two would be playing different games.
  */
+
 /** An accepted action with the states around it, for the bots' table model. */
 private data class ObservedMove(
     val action: GameAction,

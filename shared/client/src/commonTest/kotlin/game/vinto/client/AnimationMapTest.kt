@@ -295,7 +295,7 @@ class AnimationMapTest {
         return buildString {
             appendLine()
             appendLine(
-                "| ${"What you do".padEnd(what)} | ${"What flies, and where".padEnd(flies)} | What it looks like |"
+                "| ${"What you do".padEnd(what)} | ${"What flies, and where".padEnd(flies)} | What it looks like |",
             )
             appendLine("| ${"-".repeat(what)} | ${"-".repeat(flies)} | ------------------ |")
             rows.forEach {

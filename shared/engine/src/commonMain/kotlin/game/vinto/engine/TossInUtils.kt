@@ -54,6 +54,7 @@ fun areAllPlayersReady(state: MutableGameState): Boolean {
  * discarded. If a King declared an Ace correctly the ranks are `[K, A]`, and both must
  * survive into the next turn.
  */
+
 /**
  * A failed toss-in bars that player for the rest of the **round**, and the round is the deal —
  * not one lap of the table.

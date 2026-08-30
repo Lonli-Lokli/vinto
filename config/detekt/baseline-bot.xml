@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BracesOnWhenStatements:BotObservations.kt:when</ID>
+    <ID>BracesOnWhenStatements:Determinization.kt:when</ID>
+    <ID>BracesOnWhenStatements:MctsBotDecisionService.kt:MctsBotDecisionService$when</ID>
+    <ID>BracesOnWhenStatements:OutcomeSimulator.kt:OutcomeSimulator$when</ID>
+    <ID>CascadingCallWrapping:BotHeuristics.kt:botPlayer.knownCardPositions .mapNotNull { botPlayer.cards.getOrNull(it)?.value } .maxOrNull() ?: 0</ID>
+    <ID>CascadingCallWrapping:BotObservations.kt:orEmpty()</ID>
+    <ID>CascadingCallWrapping:BotRunner.kt:BotRunner$getOrNull(target.position)</ID>
+    <ID>CascadingCallWrapping:CoalitionFinalRoundTest.kt:CoalitionFinalRoundTest$firstOrNull()</ID>
+    <ID>CascadingCallWrapping:OutcomeSimulator.kt:OutcomeSimulator$displaced ?.let { simulateActionKnowledgeGain(it, botPlayer, context, believed) } ?: 0</ID>
+    <ID>ClassOrdering:CoalitionPlannerTest.kt:CoalitionPlannerTest$Companion</ID>
+    <ID>ClassOrdering:MoveGenerator.kt:MoveGenerator$private const val SHORTLIST = 2</ID>
+    <ID>ClassOrdering:VintoCallWiringTest.kt:VintoCallWiringTest$/** Four seats × [VintoCallWiring.LATE_GAME_LAPS] laps: the stalemate valve is open. */ private val lateGameTurn = 4 * VintoCallWiring.LATE_GAME_LAPS + 1</ID>
+    <ID>ClassOrdering:VintoRoundSolver.kt:VintoRoundSolver$Companion</ID>
+    <ID>CognitiveComplexMethod:BotRunner.kt:BotRunner$private fun actionTargetAction: GameAction?</ID>
+    <ID>CognitiveComplexMethod:CoalitionFinalRoundTest.kt:CoalitionFinalRoundTest$@Test fun aHumanCoalitionMemberPlaysTheirTurnAndTheRoundScores</ID>
+    <ID>CognitiveComplexMethod:CoalitionPlanner.kt:fun buildCoalitionPlanInput: CoalitionPlanInput?</ID>
+    <ID>CognitiveComplexMethod:CoalitionSearch.kt:CoalitionSearch$private fun resolveTossIn: TossInOutcome</ID>
+    <ID>CognitiveComplexMethod:MoveGenerator.kt:MoveGenerator$@Suppress("MagicNumber") private fun assessVintoThreat: Boolean</ID>
+    <ID>CognitiveComplexMethod:MoveGenerator.kt:MoveGenerator$private fun generateTwoPlayerMoves: List&lt;MctsMove&gt;</ID>
+    <ID>CyclomaticComplexMethod:CoalitionFinalRoundTest.kt:CoalitionFinalRoundTest$@Test fun aHumanCoalitionMemberPlaysTheirTurnAndTheRoundScores</ID>
+    <ID>CyclomaticComplexMethod:CoalitionPlanner.kt:fun buildCoalitionPlanInput: CoalitionPlanInput?</ID>
+    <ID>LoopWithTooManyJumpStatements:BotRunner.kt:BotRunner$for</ID>
+    <ID>MatchingDeclarationName:BotObservations.kt:TableObservation</ID>
+    <ID>StringShouldBeRawString:TournamentTest.kt:TournamentTest$"\nself-play tournament, seeds 1..${measured.seeds}\n$header\n$rows\n" + "(ms/decision is this machine's, and is deliberately not in the baseline)\n"</ID>
+    <ID>UnnecessaryParentheses:BotRunner.kt:BotRunner$(owner?.cards?.indices ?: IntRange.EMPTY)</ID>
+    <ID>UnnecessaryParentheses:CoalitionHumanMemberTest.kt:CoalitionHumanMemberTest$(GameEngineFacade.reduce(state, action))</ID>
+    <ID>UnnecessaryParentheses:OpponentKnowledgeFlowTest.kt:OpponentKnowledgeFlowTest$(humanId to 2)</ID>
+    <ID>UnnecessaryParentheses:OpponentModelerTest.kt:OpponentModelerTest$(modeler.getPlayerBeliefs("p2")?.estimatedScore ?: -1)</ID>
+    <ID>UnnecessaryParentheses:VintoRoundSolver.kt:VintoRoundSolver$(knownCards.toDouble() / totalCards)</ID>
+    <ID>UseIfInsteadOfWhen:Determinization.kt:when { availableRanks.isNotEmpty() -&gt; { val belief = state.opponentModeler?.getBelief(player.id, position) sampleCardFromPool( availableRanks = availableRanks, playerId = player.id, position = position, random = random, minValue = belief?.minValue, maxValue = belief?.maxValue, ) } // Pool exhausted: fall back to what memory says is still unaccounted for. else -&gt; sampledCard( state.botMemory.sampleCardFromDistribution() ?: FALLBACK_RANK, player.id, position, ) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -20,7 +20,7 @@ plugins {
  * pass — including the iOS sources, which are the ones a non-Mac host cannot compile.
  */
 allprojects {
-    apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "dev.detekt")
 
     /**
      * Formatting, which detekt does not do on its own.
@@ -45,7 +45,25 @@ allprojects {
 
     detekt {
         buildUponDefaultConfig = true
-        allRules = false
+
+        /**
+         * Every rule detekt ships, including the ones it leaves off by default.
+         *
+         * The default set is the uncontroversial one. `allRules` adds the rest — the ones
+         * whose authors thought a project should have to opt in — and this project would
+         * rather opt in and then argue with individual rules in `detekt.yml`, where the
+         * argument is written down, than run a smaller ruleset and never see what it was
+         * not saying.
+         */
+        allRules = true
+
+        /**
+         * detekt 2 replaced `maxIssues` with a severity floor, and `Info` is the strictest
+         * setting that exists: fail on a finding of any severity at all. That is the same
+         * gate `maxIssues: 0` was — a finding either gets fixed or gets an explicit,
+         * justified suppression — expressed in the vocabulary the tool now has.
+         */
+        failOnSeverity = dev.detekt.gradle.extensions.FailOnSeverity.Info
         config.setFrom(rootProject.files("config/detekt/detekt.yml"))
         /**
          * The debt that existed when detekt first ran in CI, listed so that everything
@@ -62,25 +80,38 @@ allprojects {
          * not regenerate the file wholesale to make a new violation go away; that is the one
          * use that turns this into a lie.
          */
-        baseline = rootProject.file("config/detekt/baseline.xml")
+        /**
+         * One baseline **per module**, and that is a correctness fix rather than tidiness.
+         *
+         * A single shared file cannot be generated: every module's `detektBaseline` task
+         * writes the whole file, so with 25 modules the last one to finish overwrites the
+         * other 24. Under detekt 1.x that went unnoticed because the file was assembled by
+         * hand from a CI log; the first real regeneration under detekt 2 produced 19 entries
+         * for 265 findings, which is how it was found.
+         *
+         * A missing file is an empty baseline, so a module with no debt simply has none.
+         */
+        baseline = rootProject.file("config/detekt/baseline-${project.name}.xml")
         // Multiplatform projects have no single `src/main/kotlin`, so the source set is
         // declared explicitly.
         source.setFrom(files("src"))
         parallel = true
     }
 
-    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         jvmTarget = "17"
+        // detekt 2 dropped the `xml`, `txt` and `md` report types; what is left is html,
+        // checkstyle and sarif. Only the HTML one is wanted — it is the artefact a person
+        // opens after a failure — and the other two are off so a failing run does not also
+        // write two files nobody reads.
         reports {
             html.required.set(true)
-            xml.required.set(false)
-            txt.required.set(false)
+            checkstyle.required.set(false)
             sarif.required.set(false)
-            md.required.set(false)
         }
     }
 
-    tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+    tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
         jvmTarget = "17"
     }
 }

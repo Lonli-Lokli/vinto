@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassOrdering:PrngVectorsTest.kt:PrngVectorsTest$Companion</ID>
+    <ID>FunctionNameMinLength:CanonicalJson.kt:CanonicalJson$fun of: String</ID>
+    <ID>FunctionNameMinLength:Card.kt:Pile$fun at: Card?</ID>
+    <ID>FunctionNameMinLength:Card.kt:Pile.Companion$fun of: Pile</ID>
+    <ID>FunctionNameMinLength:Enums.kt:Rank.Companion$fun of: Rank</ID>
+    <ID>StringLiteralDuplication:GameAction.kt:GameActionSerializer$"payload"</ID>
+    <ID>ThrowsCount:GameAction.kt:GameActionSerializer$@Suppress("CyclomaticComplexMethod") override fun deserialize: GameAction</ID>
+    <ID>UnderscoresInNumericLiterals:PrngVectorsTest.kt:PrngVectorsTest$31337</ID>
+    <ID>UnnecessaryParentheses:Prng.kt:Prng$(state + INCREMENT)</ID>
+    <ID>UnnecessaryParentheses:Prng.kt:Prng$(t + (t xor (t ushr 7)) * (t or 61))</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$((padded[base].toInt() and 0xFF) shl 24)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(32 - bits)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(8 * i)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(a and b)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(e and f)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(padded[base + 1].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(padded[base + 2].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(padded[base].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:Sha256.kt:Sha256$(value ushr bits)</ID>
+  </CurrentIssues>
+</SmellBaseline>

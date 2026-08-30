@@ -233,6 +233,7 @@ private class SimplePlayer(private val session: LocalGameSession) {
      * Action" rather than the card's whole effect — so what proves a particular card reached
      * the player is the prompt above them, not the label on them.
      */
+
     /** Every prompt the table put to the player. Typed, so an assertion says what it means. */
     val asked = mutableSetOf<Ask>()
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BracesOnWhenStatements:PacingTimeoutTest.kt:PacingTimeoutTest$when</ID>
+    <ID>BracesOnWhenStatements:TwoClientGameTest.kt:TwoClientGameTest$when</ID>
+    <ID>CascadingCallWrapping:EnvelopeTest.kt:EnvelopeTest$last()</ID>
+    <ID>CognitiveComplexMethod:RoomCore.kt:@Suppress("ReturnCount") internal fun onAlarmTracked: TrackedAlarm</ID>
+    <ID>CognitiveComplexMethod:TwoClientGameTest.kt:TwoClientGameTest$@Test fun twoClientsPlayARoundToTheSameEnd</ID>
+    <ID>StringLiteralDuplication:RoomCore.kt:"the game has already started"</ID>
+    <ID>UnnecessaryParentheses:RegistryCore.kt:(bytes.getOrElse(it) { 0 }.mod(CODE_ALPHABET.length))</ID>
+    <ID>UnnecessaryParentheses:RoomCore.kt:(nowMs + LEADER_MS)</ID>
+    <ID>UnnecessaryParentheses:RoomCore.kt:(nowMs + SESSION_MS)</ID>
+    <ID>UnnecessaryParentheses:RoomCore.kt:(nowMs + TOSS_IN_MS)</ID>
+    <ID>UseIfInsteadOfWhen:PacingTimeoutTest.kt:PacingTimeoutTest$when (val actor = action.actorId) { null -&gt; TOKENS[0]!! else -&gt; { val seat = room.seats.firstOrNull { it.playerId == actor } ?: return null if (seat.tokenHash == null) return null TOKENS[seat.index]!! } }</ID>
+    <ID>UseIfInsteadOfWhen:TwoClientGameTest.kt:TwoClientGameTest$when (val actor = action.actorId) { null -&gt; annSession else -&gt; { val seat = room.seats.first { it.playerId == actor } assertNotNull(seat.tokenHash, "between requests the wanted move is a human's") if (seat.index == 0) annSession else bobSession } }</ID>
+    <ID>UseLet:Envelopes.kt:if (playerId != null) { state.game?.let { projectView(it, playerId, remainingMs(state, nowMs)) } } else { null }</ID>
+  </CurrentIssues>
+</SmellBaseline>

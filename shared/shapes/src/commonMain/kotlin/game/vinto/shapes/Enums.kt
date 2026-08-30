@@ -51,7 +51,8 @@ enum class Rank(val serialName: String) {
     ACE("A"),
 
     @SerialName("Joker")
-    JOKER("Joker");
+    JOKER("Joker"),
+    ;
 
     companion object {
         private val byName = entries.associateBy { it.serialName }

@@ -225,6 +225,7 @@ private fun pick(dark: Color, light: Color): Color =
  * theme, it is a sticker; and keeping the plates dark is also what keeps the four attention
  * rings legible, since every one of them then has a dark neighbour on its inner edge.
  */
+
 /**
  * The colours that mean something rather than decorate something.
  *

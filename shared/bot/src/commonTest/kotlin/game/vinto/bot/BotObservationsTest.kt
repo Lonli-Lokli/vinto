@@ -37,7 +37,7 @@ class BotObservationsTest {
                 id,
                 id,
                 isHuman = false,
-                cards = ranks.mapIndexed { i, r -> testCard(r, "${r.serialName}_$id$i") }
+                cards = ranks.mapIndexed { i, r -> testCard(r, "${r.serialName}_$id$i") },
             )
         },
     )
