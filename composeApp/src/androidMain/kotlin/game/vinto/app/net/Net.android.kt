@@ -1,15 +1,15 @@
 package game.vinto.app.net
 
-import game.vinto.client.CreatedRoom
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomServiceException
 import game.vinto.client.RoomSocket
+import game.vinto.client.answering
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
 import game.vinto.client.requireOk
 import game.vinto.client.troubleFor
-import game.vinto.protocol.PublicRoom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -38,7 +38,7 @@ actual fun platformRoomConnector(baseUrl: String): RoomConnector = AndroidRoomCo
 private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector {
     private val client = OkHttpClient()
 
-    override suspend fun connect(code: String): RoomSocket {
+    override suspend fun connect(code: String): RoomAnswer<RoomSocket> = answering {
         val incoming = Channel<String>(Channel.UNLIMITED)
 
         val request = Request.Builder().url(socketUrl(baseUrl, code)).build()
@@ -70,10 +70,10 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
             continuation.invokeOnCancellation { incoming.close() }
         }
 
-        return AndroidRoomSocket(socket, incoming)
+        AndroidRoomSocket(socket, incoming)
     }
 
-    override suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom =
+    override suspend fun createRoom(isPublic: Boolean, hostNickname: String) = answering {
         withContext(Dispatchers.IO) {
             parseCreatedRoom(
                 body(
@@ -84,11 +84,13 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
                 ),
             )
         }
+    }
 
-    override suspend fun listPublicRooms(): List<PublicRoom> =
+    override suspend fun listPublicRooms() = answering {
         withContext(Dispatchers.IO) {
             parsePublicRooms(body(Request.Builder().url("${httpBase(baseUrl)}/rooms").get().build()))
         }
+    }
 
     /**
      * One request, one string, cancellation included — the only shape either call needs.

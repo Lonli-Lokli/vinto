@@ -101,6 +101,7 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
+import game.vinto.engine.mySeat
 import game.vinto.engine.turnHolderId
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
@@ -225,8 +226,21 @@ private fun FeltTable(
 ) {
     val view = state.view
     val table = state.table
-    val opponents = view.players.filter { it.id != view.viewerId }
-    val mine = view.players.first { it.id == view.viewerId }
+
+    // Nullable, and the felt is drawn either way.
+    //
+    // This was `players.first { it.id == view.viewerId }`, which throws — and `tableFor`, one
+    // function away, opens with the same lookup as a `firstOrNull` and answers `Ask.Watching`
+    // when it comes back empty. So the model handled a view whose viewer has no seat and the
+    // felt crashed on it, with nothing between the exception and the launcher. A solo game
+    // always seats you, so it could only ever have happened online, which is where nothing
+    // catches it.
+    //
+    // A watcher sees the whole table and no hand of their own: every seat is an opponent, and
+    // the bottom of the felt is simply empty. That is a real state — the room decides who is
+    // seated — rather than an error to report.
+    val mine = view.mySeat
+    val opponents = view.players.filter { it.id != mine?.id }
 
     Felt(modifier = modifier) {
         Column(
@@ -248,7 +262,11 @@ private fun FeltTable(
                 onMove = onMove,
             )
 
-            MySeat(mine, view, table, sizes, onMove)
+            // Four chairs and four players. Seated, the bottom one is yours; watching, it is
+            // whoever would otherwise have nowhere to sit — the felt has exactly four places
+            // and a fourth opponent must be in one of them or they vanish from the game.
+            val near = mine ?: opponents.getOrNull(NEAR_CHAIR)
+            near?.let { NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id) }
         }
     }
 }
@@ -480,7 +498,7 @@ private fun FinalRoundLine(view: PlayerView) {
             }
         }
 
-        Sides(view, caller.id, leader?.id)
+        Sides(view, caller, leader?.id)
     }
 }
 
@@ -498,9 +516,12 @@ private fun FinalRoundLine(view: PlayerView) {
  * because "who plays the hand" is the one thing about the coalition that is not obvious.
  */
 @Composable
-private fun Sides(view: PlayerView, callerId: String, leaderId: String?) {
-    val coalition = view.players.filter { it.id != callerId }
-    val caller = view.players.first { it.id == callerId }
+private fun Sides(view: PlayerView, caller: PlayerSeatView, leaderId: String?) {
+    // The caller arrives as a *seat* rather than an id, so there is nothing to look up and
+    // nothing to be missing. Looking it up here worked — the only call site found it with a
+    // `firstOrNull` first — and "it happens to be safe two frames up" is exactly the reasoning
+    // that put a `first {}` on the felt in the first place. `PartialFunctionTest` refuses it.
+    val coalition = view.players.filter { it.id != caller.id }
     val leads = leaderId?.let { id -> view.players.firstOrNull { it.id == id }?.nickname }
     val spoken = leads?.let { stringResource(Res.string.table_final_leads, it) }
         ?: stringResource(Res.string.table_final_choosing, caller.nickname)
@@ -566,6 +587,14 @@ private fun Face(name: String, ringed: Boolean, ring: Color = Rail.brand) {
             ),
     )
 }
+
+/**
+ * The chair nearest the player, counted among the opponents.
+ *
+ * Only reached when the viewer has no seat of their own: three opponents fill the top and the
+ * two sides, and the fourth takes the chair the viewer's hand would have used.
+ */
+private const val NEAR_CHAIR = 3
 
 /** Small enough for a line above the felt, large enough to tell four faces apart. */
 private val FaceSize = 22.dp
@@ -677,12 +706,21 @@ private fun SideSeat(
 }
 
 @Composable
-private fun MySeat(
+private fun NearSeat(
     seat: PlayerSeatView,
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
+    /**
+     * Whether this is the viewer's own hand.
+     *
+     * Your own is drawn a third larger, because it is the one that is *read* rather than
+     * counted and the one every tap lands on. A watcher has no such hand, and the fourth
+     * player sits in the chair it would have used — at everybody else's size, since to a
+     * watcher every seat is somebody else's.
+     */
+    mine: Boolean,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -694,7 +732,14 @@ private fun MySeat(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Plate(seat, view, table, sizes, onMove)
-            Hand(seat, view, table, sizes.mine, onMove, Modifier.weight(1f, fill = false))
+            Hand(
+                seat,
+                view,
+                table,
+                if (mine) sizes.mine else sizes.theirs,
+                onMove,
+                Modifier.weight(1f, fill = false),
+            )
         }
     }
 }

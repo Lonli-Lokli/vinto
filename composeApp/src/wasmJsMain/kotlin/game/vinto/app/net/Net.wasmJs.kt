@@ -1,13 +1,13 @@
 package game.vinto.app.net
 
-import game.vinto.client.CreatedRoom
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
+import game.vinto.client.answering
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
 import game.vinto.client.requireOk
-import game.vinto.protocol.PublicRoom
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +25,7 @@ actual fun platformRoomConnector(baseUrl: String): RoomConnector = WasmRoomConne
 
 private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
 
-    override suspend fun connect(code: String): RoomSocket {
+    override suspend fun connect(code: String): RoomAnswer<RoomSocket> = answering {
         val incoming = Channel<String>(Channel.UNLIMITED)
 
         val socket = suspendCancellableCoroutine { continuation ->
@@ -51,25 +51,25 @@ private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
             continuation.invokeOnCancellation { ws.close() }
         }
 
-        return WasmRoomSocket(socket, incoming)
+        WasmRoomSocket(socket, incoming)
     }
 
-    override suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom {
+    override suspend fun createRoom(isPublic: Boolean, hostNickname: String) = answering {
         val response = window.fetch(
             "${httpBase(baseUrl)}/rooms",
             RequestInit(method = "POST", body = createRoomBody(isPublic, hostNickname).toJsString()),
         ).await<org.w3c.fetch.Response>()
         val body = response.text().await<JsString>().toString()
-        return parseCreatedRoom(requireOk(response.status.toInt(), body))
+        parseCreatedRoom(requireOk(response.status.toInt(), body))
     }
 
-    override suspend fun listPublicRooms(): List<PublicRoom> {
+    override suspend fun listPublicRooms() = answering {
         val response = window.fetch(
             "${httpBase(baseUrl)}/rooms",
             RequestInit(method = "GET"),
         ).await<org.w3c.fetch.Response>()
         val body = response.text().await<JsString>().toString()
-        return parsePublicRooms(requireOk(response.status.toInt(), body))
+        parsePublicRooms(requireOk(response.status.toInt(), body))
     }
 }
 

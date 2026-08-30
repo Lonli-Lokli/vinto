@@ -1,15 +1,15 @@
 package game.vinto.app.net
 
-import game.vinto.client.CreatedRoom
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomServiceException
 import game.vinto.client.RoomSocket
+import game.vinto.client.answering
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
 import game.vinto.client.requireOk
 import game.vinto.client.troubleFor
-import game.vinto.protocol.PublicRoom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
@@ -32,53 +32,59 @@ actual fun platformRoomConnector(baseUrl: String): RoomConnector = JvmRoomConnec
 private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
     private val client: HttpClient = HttpClient.newHttpClient()
 
-    override suspend fun connect(code: String): RoomSocket = withContext(Dispatchers.IO) {
-        val incoming = Channel<String>(Channel.UNLIMITED)
+    override suspend fun connect(code: String): RoomAnswer<RoomSocket> = answering {
+        withContext(Dispatchers.IO) {
+            val incoming = Channel<String>(Channel.UNLIMITED)
 
-        val listener = object : WebSocket.Listener {
-            private val partial = StringBuilder()
+            val listener = object : WebSocket.Listener {
+                private val partial = StringBuilder()
 
-            override fun onText(
-                socket: WebSocket,
-                data: CharSequence,
-                last: Boolean,
-            ): CompletionStage<*>? {
-                partial.append(data)
-                if (last) {
-                    incoming.trySend(partial.toString())
-                    partial.setLength(0)
+                override fun onText(
+                    socket: WebSocket,
+                    data: CharSequence,
+                    last: Boolean,
+                ): CompletionStage<*>? {
+                    partial.append(data)
+                    if (last) {
+                        incoming.trySend(partial.toString())
+                        partial.setLength(0)
+                    }
+                    socket.request(1)
+                    return null
                 }
-                socket.request(1)
-                return null
+
+                override fun onClose(
+                    socket: WebSocket,
+                    statusCode: Int,
+                    reason: String,
+                ): CompletionStage<*>? {
+                    incoming.close()
+                    return null
+                }
+
+                override fun onError(socket: WebSocket, error: Throwable) {
+                    incoming.close(error)
+                }
             }
 
-            override fun onClose(socket: WebSocket, statusCode: Int, reason: String): CompletionStage<*>? {
+            // The handshake's own status, when there is one. `java.net.http` reports a refused
+            // upgrade as a `WebSocketHandshakeException` carrying the HTTP response — which is how
+            // a 404 for a code nobody has, or a 503 from a closed service, becomes a sentence
+            // rather than "connection failed" and a spinner that never stops.
+            val socket = try {
+                client.newWebSocketBuilder()
+                    .buildAsync(URI.create(socketUrl(baseUrl, code)), listener)
+                    .join()
+            } catch (failed: CompletionException) {
                 incoming.close()
-                return null
+                throw upgradeTrouble(failed)
             }
 
-            override fun onError(socket: WebSocket, error: Throwable) {
-                incoming.close(error)
-            }
+            JvmRoomSocket(socket, incoming)
         }
-
-        // The handshake's own status, when there is one. `java.net.http` reports a refused
-        // upgrade as a `WebSocketHandshakeException` carrying the HTTP response — which is how
-        // a 404 for a code nobody has, or a 503 from a closed service, becomes a sentence
-        // rather than "connection failed" and a spinner that never stops.
-        val socket = try {
-            client.newWebSocketBuilder()
-                .buildAsync(URI.create(socketUrl(baseUrl, code)), listener)
-                .join()
-        } catch (failed: CompletionException) {
-            incoming.close()
-            throw upgradeTrouble(failed)
-        }
-
-        JvmRoomSocket(socket, incoming)
     }
 
-    override suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom =
+    override suspend fun createRoom(isPublic: Boolean, hostNickname: String) = answering {
         withContext(Dispatchers.IO) {
             val response = client.send(
                 HttpRequest.newBuilder(URI.create("${httpBase(baseUrl)}/rooms"))
@@ -89,8 +95,9 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
             )
             parseCreatedRoom(requireOk(response.statusCode(), response.body()))
         }
+    }
 
-    override suspend fun listPublicRooms(): List<PublicRoom> =
+    override suspend fun listPublicRooms() = answering {
         withContext(Dispatchers.IO) {
             val response = client.send(
                 HttpRequest.newBuilder(URI.create("${httpBase(baseUrl)}/rooms")).GET().build(),
@@ -98,6 +105,7 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
             )
             parsePublicRooms(requireOk(response.statusCode(), response.body()))
         }
+    }
 }
 
 /**

@@ -1,13 +1,13 @@
 package game.vinto.app.net
 
-import game.vinto.client.CreatedRoom
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
+import game.vinto.client.answering
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
 import game.vinto.client.requireOk
-import game.vinto.protocol.PublicRoom
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.channels.Channel
@@ -40,13 +40,13 @@ actual fun platformRoomConnector(baseUrl: String): RoomConnector = IosRoomConnec
 
 private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
 
-    override suspend fun connect(code: String): RoomSocket {
+    override suspend fun connect(code: String): RoomAnswer<RoomSocket> = answering {
         val url = NSURL.URLWithString(socketUrl(baseUrl, code)) ?: error("bad url")
         val task = NSURLSession.sharedSession.webSocketTaskWithURL(url)
         val incoming = Channel<String>(Channel.UNLIMITED)
         task.resume()
         pump(task, incoming)
-        return IosRoomSocket(task, incoming)
+        IosRoomSocket(task, incoming)
     }
 
     /**
@@ -73,7 +73,7 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
     }
 
     @OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
-    override suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom {
+    override suspend fun createRoom(isPublic: Boolean, hostNickname: String) = answering {
         val url = NSURL.URLWithString("${httpBase(baseUrl)}/rooms") ?: error("bad url")
         val request = NSMutableURLRequest(uRL = url).apply {
             setHTTPMethod("POST")
@@ -83,13 +83,13 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
                     .dataUsingEncoding(NSUTF8StringEncoding),
             )
         }
-        return parseCreatedRoom(body(request))
+        parseCreatedRoom(body(request))
     }
 
-    override suspend fun listPublicRooms(): List<PublicRoom> {
+    override suspend fun listPublicRooms() = answering {
         val url = NSURL.URLWithString("${httpBase(baseUrl)}/rooms") ?: error("bad url")
         val request = NSMutableURLRequest(uRL = url).apply { setHTTPMethod("GET") }
-        return parsePublicRooms(body(request))
+        parsePublicRooms(body(request))
     }
 
     /**

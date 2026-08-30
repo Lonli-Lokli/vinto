@@ -54,6 +54,7 @@ import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.DiscoveryRow
 import game.vinto.client.DiscoveryState
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.discoveryRows
 import kotlinx.coroutines.launch
@@ -82,12 +83,12 @@ fun DiscoverScreen(
     fun load(first: Boolean) {
         state = state.copy(loading = first, refreshing = !first, failure = null)
         scope.launch {
-            state = try {
-                val rooms = connector.listPublicRooms()
-                DiscoveryState(rows = discoveryRows(rooms))
-            } catch (@Suppress("TooGenericExceptionCaught") refused: Exception) {
-                // Four platforms, four exception types, one thing to say about all of them.
-                DiscoveryState(rows = state.rows, failure = refused.message ?: "no answer")
+            // The list, or why there isn't one — as two branches rather than a `try` whose
+            // absence nothing would have noticed. An empty list is neither: a quiet evening
+            // is an ordinary answer, and it draws the "nobody is listed" state below.
+            state = when (val answer = connector.listPublicRooms()) {
+                is RoomAnswer.Ok -> DiscoveryState(rows = discoveryRows(answer.value))
+                is RoomAnswer.Failed -> DiscoveryState(rows = state.rows, failure = answer.reason)
             }
         }
     }

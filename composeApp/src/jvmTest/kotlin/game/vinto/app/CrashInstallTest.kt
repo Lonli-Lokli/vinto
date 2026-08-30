@@ -83,5 +83,23 @@ class CrashInstallTest {
         )
     }
 
+    /**
+     * And `App()` itself installs nothing.
+     *
+     * It used to, as a fallback for "a host that embeds `App()` directly" — and the only such
+     * host is this test suite. Now that the DSN is a real one by default, a fallback there
+     * would arm a live reporter inside every Compose test and post a CI runner's failures into
+     * the project's Sentry. The four entry points are the contract; the case above is what
+     * keeps them honest.
+     */
+    @Test
+    fun composingTheAppDoesNotArmAReporter() {
+        val app = source("src/commonMain/kotlin/game/vinto/app/App.kt")
+        assertTrue(
+            !app.contains("Crashes.install"),
+            "App() installs the crash reporter, so the Compose suites report to Sentry",
+        )
+    }
+
     private data class Entry(val path: String, val composes: String)
 }

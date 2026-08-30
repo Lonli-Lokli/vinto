@@ -26,20 +26,27 @@ import kotlin.test.assertTrue
  */
 class UnreachableRoomTest {
 
-    /** A connector that refuses, counting how often it was asked. */
-    private class Refusing(private val refusal: () -> Throwable) : RoomConnector {
+    /**
+     * A connector that refuses, counting how often it was asked.
+     *
+     * It answers rather than throwing, because that is what the interface promises now — the
+     * platform actuals wrap their own exceptions in `answering { }` and everything above the
+     * seam sees values. A fake that threw would be testing a shape no real connector has.
+     */
+    private class Refusing(private val refusal: () -> RoomAnswer.Failed) : RoomConnector {
         var asked = 0
             private set
 
-        override suspend fun connect(code: String): RoomSocket {
+        override suspend fun connect(code: String): RoomAnswer<RoomSocket> {
             asked++
-            throw refusal()
+            return refusal()
         }
 
         override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
-            CreatedRoom("AAAAAA", "room-AAAAAA")
+            RoomAnswer.Ok(CreatedRoom("AAAAAA", "room-AAAAAA"))
 
-        override suspend fun listPublicRooms(): List<PublicRoom> = emptyList()
+        override suspend fun listPublicRooms(): RoomAnswer<List<PublicRoom>> =
+            RoomAnswer.Ok(emptyList())
     }
 
     private fun roomOn(connector: RoomConnector, scope: kotlinx.coroutines.CoroutineScope) =
@@ -53,7 +60,7 @@ class UnreachableRoomTest {
 
     @Test
     fun aCodeNobodyHasIsRefusedOnceAndNotRetried() = runTest {
-        val connector = Refusing { RoomServiceException(RoomTrouble.NO_SUCH_ROOM, "no such room") }
+        val connector = Refusing { RoomAnswer.Failed(RoomTrouble.NO_SUCH_ROOM, "no such room") }
         val room = roomOn(connector, this)
 
         testScheduler.advanceUntilIdle()
@@ -79,7 +86,7 @@ class UnreachableRoomTest {
      */
     @Test
     fun aRoomThatNeverAnswersGivesUpAfterAFewTries() = runTest {
-        val connector = Refusing { IllegalStateException("could not connect") }
+        val connector = Refusing { RoomAnswer.Failed(RoomTrouble.OFFLINE, "could not connect") }
         val room = roomOn(connector, this)
 
         testScheduler.advanceUntilIdle()
@@ -98,7 +105,7 @@ class UnreachableRoomTest {
      */
     @Test
     fun tryingAgainReallyAsksAgain() = runTest {
-        val connector = Refusing { IllegalStateException("could not connect") }
+        val connector = Refusing { RoomAnswer.Failed(RoomTrouble.OFFLINE, "could not connect") }
         val room = roomOn(connector, this)
 
         testScheduler.advanceUntilIdle()
@@ -114,7 +121,7 @@ class UnreachableRoomTest {
     /** And a room somebody has left stays left: retry is for a failure, not for a decision. */
     @Test
     fun leavingIsNotAFailureToRetry() = runTest {
-        val connector = Refusing { IllegalStateException("could not connect") }
+        val connector = Refusing { RoomAnswer.Failed(RoomTrouble.OFFLINE, "could not connect") }
         val room = roomOn(connector, this)
         testScheduler.advanceUntilIdle()
 

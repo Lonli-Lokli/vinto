@@ -138,6 +138,24 @@ data class PlayerView(
 )
 
 /**
+ * The viewer's own seat, or null when this view is not of a table they are sitting at.
+ *
+ * **Nullable on purpose, and the nullability is the point.** A view is wire data: it arrives
+ * from a room that decides who is seated, and a client cannot assume the answer. `tableFor`
+ * has always known that — it opens with a `firstOrNull` and answers `Ask.Watching` — and the
+ * screen beside it used `players.first { it.id == viewerId }`, which throws. So the model
+ * politely handled the case and the felt crashed on it, one function later, with nothing
+ * between the exception and the launcher.
+ *
+ * A solo game always seats you, which is why this was invisible for the life of the branch and
+ * why it is an *online* crash. Reaching the seat through here makes the compiler ask the
+ * question at every call site, which is the only mechanism Kotlin offers against a partial
+ * function: `first {}` is total in the type system and a crash in the world.
+ */
+val PlayerView.mySeat: PlayerSeatView?
+    get() = players.firstOrNull { it.id == viewerId }
+
+/**
  * Redacts [state] down to what [playerId] may see. Pure, and the only thing the server sends
  * to a client.
  *

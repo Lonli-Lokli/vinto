@@ -209,16 +209,28 @@ compose.desktop {
  * one back, and it has to be inside the app for the app to report at all), but it is still not
  * something to commit: what somebody could do with a stolen one is spend the project's quota.
  *
- * So it arrives from outside and defaults to empty, and empty means reporting is off — which
- * is what a development build and every test should get without anybody remembering to switch
- * it off. Set it for a release build with either:
+ * **The project's own DSN is the default**, at the product owner's direction. Defaulting to
+ * empty meant every build any of us made reported nowhere, which is how a crash on opening an
+ * online game came and went with nothing to look at. The trade is real and small: a DSN's key
+ * is write-only — it can submit an event and cannot read one back — so what somebody could do
+ * with this one is spend the project's Sentry quota, and Sentry's own guidance is that a
+ * client DSN is not a secret. It is still overridable, so a fork or a separate environment can
+ * point somewhere else without touching source:
  *
  *     ./gradlew :androidApp:assembleRelease -Pvinto.sentryDsn=https://key@host/1
  *     VINTO_SENTRY_DSN=https://key@host/1 ./gradlew :androidApp:assembleRelease
  *
+ * Setting it to an empty string switches reporting off entirely, which is what a test that
+ * must not talk to the network passes.
+ *
  * DEPLOYMENT.md §7a is the maintainer's copy of this. The Worker's half is a wrangler secret
  * and is deliberately a different pipe with a different lifetime.
  */
+// The project's Sentry project, for every client. See the note above for why this is in
+// source and what it would cost somebody to misuse it.
+val DEFAULT_SENTRY_DSN =
+    "https://b72aaadb269f6ba420258c6e930b6f8f@o473632.ingest.us.sentry.io/4510118789251072"
+
 abstract class GenerateBuildInfo : DefaultTask() {
 
     @get:Input
@@ -255,7 +267,7 @@ val generateBuildInfo =
         sentryDsn.set(
             providers.gradleProperty("vinto.sentryDsn")
                 .orElse(providers.environmentVariable("VINTO_SENTRY_DSN"))
-                .orElse(""),
+                .orElse(DEFAULT_SENTRY_DSN),
         )
         outputDir.set(layout.buildDirectory.dir("generated/build-info/kotlin"))
     }

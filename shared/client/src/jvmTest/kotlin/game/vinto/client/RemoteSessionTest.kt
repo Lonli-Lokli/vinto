@@ -227,12 +227,15 @@ class RemoteSessionTest {
 
         private val sockets = ArrayDeque(listOf(socket) + spareSockets)
         private val connector = object : RoomConnector {
-            override suspend fun connect(code: String): RoomSocket = sockets.removeFirst()
+            override suspend fun connect(code: String): RoomAnswer<RoomSocket> =
+                RoomAnswer.Ok(sockets.removeFirst())
+
             override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
-                CreatedRoom(CODE, "room-$CODE")
+                RoomAnswer.Ok(CreatedRoom(CODE, "room-$CODE"))
 
             /** Nothing in this suite browses; the room it drives is one it was handed. */
-            override suspend fun listPublicRooms(): List<PublicRoom> = emptyList()
+            override suspend fun listPublicRooms(): RoomAnswer<List<PublicRoom>> =
+                RoomAnswer.Ok(emptyList())
         }
 
         private val testScope = scope

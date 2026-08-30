@@ -84,7 +84,7 @@ fun App(
 
     val sink = rememberSink(appScope)
     val count = counting ?: remember(sink) { counting(sink) }
-    ReportCrashes(appScope)
+    ReportCrashes()
 
     fun enterRoom(code: String, nickname: String): Screen =
         roomScreen(connector, vault, appScope, code, nickname)
@@ -352,14 +352,15 @@ expect fun platformName(): String
  * instead of merely convenient.
  */
 @Composable
-private fun ReportCrashes(scope: kotlinx.coroutines.CoroutineScope) {
-    // A last resort rather than the normal path. Every entry point installs the reporter
+private fun ReportCrashes() {
+    // **This does not install the reporter**, and that is deliberate. Every entry point does,
     // before it composes anything, because the crash worth having most is the one on the
-    // launcher — but a host that embeds `App()` directly (a test, a future container) would
-    // otherwise report nothing at all, and `install` is idempotent.
-    LaunchedEffect(scope) { Crashes.install(scope) }
-
-    // Where the app is, read live: a crash on the table must not be filed as one in the menu.
+    // launcher — and the only host that reaches `App()` without going through one of them is a
+    // test harness. Installing here as a fallback would mean the Compose suites arm a live
+    // reporter against the project's real DSN and post a runner's failures into it.
+    //
+    // What is left is the half that only a composition knows: *where* the app is, read live at
+    // the moment of a crash, so one on the table is not filed as one in the menu.
     val surface = rememberUpdatedState(LocalSurface.current)
     LaunchedEffect(Unit) { Crashes.watching { surface.value.asCrashSurface() } }
 }

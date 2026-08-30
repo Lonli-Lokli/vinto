@@ -39,22 +39,31 @@ interface RoomSocket {
     fun close()
 }
 
-/** How a client reaches the room service: one WebSocket per room, and the REST that precedes it. */
+/**
+ * How a client reaches the room service: one WebSocket per room, and the REST that precedes it.
+ *
+ * **Nothing here throws.** Every method answers with a [RoomAnswer], which is a sealed pair, so
+ * a caller cannot compile without a branch for the failure — and the failure is a
+ * [RoomTrouble] the connector already named rather than whichever exception that platform's
+ * HTTP client happens to use. Four transports threw four families of exception at screens that
+ * wrote `catch (e: Exception)` and hoped; the compiler had nothing to say about a call site
+ * that forgot, and a forgotten one is a crash rather than a message.
+ */
 interface RoomConnector {
-    /** Opens a socket to the room behind [code]. Throws when the room is unreachable. */
-    suspend fun connect(code: String): RoomSocket
+    /** Opens a socket to the room behind [code]. */
+    suspend fun connect(code: String): RoomAnswer<RoomSocket>
 
     /** `POST /rooms`: brings a room into existence and returns its code. */
-    suspend fun createRoom(isPublic: Boolean, hostNickname: String): CreatedRoom
+    suspend fun createRoom(isPublic: Boolean, hostNickname: String): RoomAnswer<CreatedRoom>
 
     /**
      * `GET /rooms`: the public rooms, for somebody browsing rather than holding a code.
      *
-     * An empty list is an ordinary answer — a quiet evening is not a failure — so this throws
-     * only when the service could not be reached at all, which is the case a screen must tell
-     * a person about.
+     * An empty list is an ordinary answer — a quiet evening is not a failure — so
+     * [RoomAnswer.Failed] means the service could not be reached or refused, which is the case
+     * a screen must tell a person about.
      */
-    suspend fun listPublicRooms(): List<PublicRoom>
+    suspend fun listPublicRooms(): RoomAnswer<List<PublicRoom>>
 }
 
 /** What `POST /rooms` answers with. */

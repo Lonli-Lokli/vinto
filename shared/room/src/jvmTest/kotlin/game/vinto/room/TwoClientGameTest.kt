@@ -6,6 +6,7 @@ import game.vinto.client.CreatedRoom
 import game.vinto.client.Frame
 import game.vinto.client.MemoryVault
 import game.vinto.client.RemoteRoom
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.RoomSocket
 import game.vinto.engine.replayRecording
@@ -174,14 +175,15 @@ class TwoClientGameTest {
         private var minted = 0
 
         val connector = object : RoomConnector {
-            override suspend fun connect(code: String): RoomSocket =
-                FakeSocket().also { sockets.add(it) }
+            override suspend fun connect(code: String): RoomAnswer<RoomSocket> =
+                RoomAnswer.Ok(FakeSocket().also { sockets.add(it) })
 
             override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
-                CreatedRoom(CODE, "room-$CODE")
+                RoomAnswer.Ok(CreatedRoom(CODE, "room-$CODE"))
 
             /** The two clients here are handed a code; neither of them browses for one. */
-            override suspend fun listPublicRooms(): List<PublicRoom> = emptyList()
+            override suspend fun listPublicRooms(): RoomAnswer<List<PublicRoom>> =
+                RoomAnswer.Ok(emptyList())
         }
 
         inner class FakeSocket : RoomSocket {

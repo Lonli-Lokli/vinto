@@ -49,11 +49,20 @@ class RoomServiceException(
 ) : Exception(message, cause) {
 
     /** True when trying again cannot change the answer, so a screen must stop and say so. */
-    val permanent: Boolean
-        get() = when (trouble) {
-            RoomTrouble.NO_SUCH_ROOM, RoomTrouble.CLOSED, RoomTrouble.REFUSED -> true
-            RoomTrouble.OFFLINE, RoomTrouble.BUSY, RoomTrouble.BROKEN -> false
-        }
+    val permanent: Boolean get() = permanent(trouble)
+}
+
+/**
+ * Whether trying again can change the answer.
+ *
+ * The property nothing had before: `RemoteRoom`'s reconnect loop caught every exception and
+ * backed off, so a mistyped room code and a tunnel were the same thing — a spinner, for ever,
+ * with no way to tell whether waiting would help. A `when` with no `else`, so a seventh
+ * trouble cannot be added without somebody deciding which of the two it is.
+ */
+fun permanent(trouble: RoomTrouble): Boolean = when (trouble) {
+    RoomTrouble.NO_SUCH_ROOM, RoomTrouble.CLOSED, RoomTrouble.REFUSED -> true
+    RoomTrouble.OFFLINE, RoomTrouble.BUSY, RoomTrouble.BROKEN -> false
 }
 
 /**
@@ -118,3 +127,46 @@ private const val UNAVAILABLE = 503
 
 /** Long enough for the service's own sentences, short enough that markup is excluded. */
 private const val MAX_SAID = 120
+
+/**
+ * An answer from the room service: what was asked for, or why not.
+ *
+ * The reason this is a type and not an exception is the whole of the lesson the online path
+ * taught. Every connector threw, every screen wrote `catch (e: Exception)`, and the compiler
+ * had nothing to say about either — so a call site that forgot to catch looked exactly like
+ * one that could not fail, and the four platforms each threw something different. A screen
+ * that `when`s over this cannot compile without a branch for the failure, and the failure
+ * cannot be a type nobody anticipated: the connector had to name it before it left.
+ *
+ * Deliberately not a general `Either`, and not `kotlin.Result`. `Result` carries a `Throwable`,
+ * which is the thing being got rid of, and its `getOrNull` makes ignoring the failure a
+ * character shorter than handling it. This carries a [RoomTrouble] — a closed vocabulary a
+ * screen can act on — and has no accessor that quietly discards it.
+ */
+sealed interface RoomAnswer<out T> {
+    data class Ok<out T>(val value: T) : RoomAnswer<T>
+    data class Failed(val trouble: RoomTrouble, val reason: String) : RoomAnswer<Nothing>
+}
+
+/**
+ * Runs [call], turning whatever the platform throws into a [RoomAnswer].
+ *
+ * The one place in the client that is allowed to catch broadly, and it exists so that nowhere
+ * else has to: each connector wraps its own transport here, and everything above sees values.
+ * A [RoomServiceException] carries a trouble the service itself named and keeps it;
+ * anything else is the network not being there.
+ */
+suspend fun <T> answering(call: suspend () -> T): RoomAnswer<T> =
+    try {
+        RoomAnswer.Ok(call())
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        // Never swallowed: a cancelled call is the caller going away, not a failure to report.
+        throw cancelled
+    } catch (refused: RoomServiceException) {
+        RoomAnswer.Failed(refused.trouble, refused.message)
+    } catch (@Suppress("TooGenericExceptionCaught") failed: Exception) {
+        RoomAnswer.Failed(
+            RoomTrouble.OFFLINE,
+            failed.message ?: "could not reach the room service",
+        )
+    }

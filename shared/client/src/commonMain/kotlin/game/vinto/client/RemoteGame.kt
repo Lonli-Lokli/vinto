@@ -51,6 +51,18 @@ sealed interface ConnectionState {
 }
 
 /**
+ * What happened to a message handed to the wire.
+ *
+ * A value rather than an exception, because the four platforms fail four different ways and
+ * "catch the ones we thought of" is how a dropped socket became a crash rather than a refused
+ * move. A `when` over these two is exhaustive, so a caller cannot forget the second.
+ */
+sealed interface SendOutcome {
+    data object Sent : SendOutcome
+    data class Failed(val reason: String) : SendOutcome
+}
+
+/**
  * One room, from this client's side: the socket, the lobby, and — once dealt — the game.
  *
  * The split between this class and [RemoteGameSession] mirrors the room's own life. A room
@@ -199,24 +211,35 @@ class RemoteRoom(
                 } else {
                     ConnectionState.Reconnecting(attempt)
                 }
-                val opened = connector.connect(code)
-                socket = opened
-                everConnected = true
-                opened.send(encode(ClientMessage.Join(token(), nickname)))
+                // Exhaustive: the connector answers rather than throwing, so "the room said
+                // no" and "the socket opened" are two branches the compiler counts. A
+                // permanent refusal — a code nobody has, a service that is closed — ends the
+                // loop here rather than being retried into a spinner that never stops.
+                when (val answer = connector.connect(code)) {
+                    is RoomAnswer.Failed -> {
+                        if (permanent(answer.trouble)) {
+                            _connection.value = ConnectionState.Closed(answer.reason, answer.trouble)
+                            return
+                        }
+                    }
 
-                for (text in opened.incoming) {
-                    attempt = 0
-                    handle(text)
+                    is RoomAnswer.Ok -> {
+                        val opened = answer.value
+                        socket = opened
+                        everConnected = true
+                        opened.send(encode(ClientMessage.Join(token(), nickname)))
+
+                        for (text in opened.incoming) {
+                            attempt = 0
+                            handle(text)
+                        }
+                    }
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (refused: RoomServiceException) {
-                if (refused.permanent) {
-                    _connection.value = ConnectionState.Closed(refused.message, refused.trouble)
-                    return
-                }
-            } catch (_: Exception) {
-                // The socket died or never opened; the rules below are the whole handling.
+            } catch (@Suppress("TooGenericExceptionCaught") _: Exception) {
+                // The socket died while it was open — reading and writing still throw, since a
+                // stream that ends is not an answer. The rules below are the whole handling.
             }
 
             if (_connection.value is ConnectionState.Closed) return
@@ -298,10 +321,37 @@ class RemoteRoom(
             initialView = view,
             initialNextIndex = nextIndex,
             token = ::token,
-            sendText = { text ->
-                socket?.send(text) ?: error("not connected")
-            },
+            sendText = ::sendOrSay,
         )
+
+    /**
+     * Puts one message on the wire and **answers** rather than throwing.
+     *
+     * It used to be `socket?.send(text) ?: error("not connected")`, and the caller caught
+     * `TimeoutCancellationException` and `IllegalStateException`. That works for exactly the
+     * two failures somebody thought of: a socket that is gone, and a room that does not
+     * answer. It does not cover the one that actually happens — the socket is *there* and the
+     * write fails — which is an `IOException` on Android, a `CompletionException` on the JVM,
+     * a wrapped `NSError` on iOS and a `DOMException` in a browser, none of them caught, all
+     * of them reaching the top of a coroutine and ending the app.
+     *
+     * So the failure is a value. [Sent] and [SendFailed] are a sealed pair, the caller has to
+     * `when` on them, and a platform inventing a fifth exception type cannot get past here.
+     */
+    private suspend fun sendOrSay(text: String): SendOutcome {
+        val open = socket ?: return SendOutcome.Failed("not connected")
+        return try {
+            open.send(text)
+            SendOutcome.Sent
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (@Suppress("TooGenericExceptionCaught") failed: Exception) {
+            // Every platform fails its own way and there is no useful common supertype. What
+            // matters is that this is the *only* place that has to know, and that what leaves
+            // it is a value the compiler makes the caller read.
+            SendOutcome.Failed(failed.message ?: "the move did not reach the room")
+        }
+    }
 
     private fun token(): String? = vault.seatToken(code)
 
@@ -374,7 +424,7 @@ class RemoteGameSession internal constructor(
     initialView: PlayerView,
     initialNextIndex: Int,
     private val token: () -> String?,
-    private val sendText: suspend (String) -> Unit,
+    private val sendText: suspend (String) -> SendOutcome,
 ) : GameSession {
 
     private val _view = MutableStateFlow(initialView)
@@ -416,17 +466,21 @@ class RemoteGameSession internal constructor(
         pendingAction = action
 
         return try {
-            sendText(
+            val outcome = sendText(
                 ProtocolJson.encodeToString(
                     ClientMessage.serializer(),
                     ClientMessage.Action(token(), action),
                 ),
             )
-            withTimeout(DISPATCH_TIMEOUT_MS) { waiter.await() }
+            // Exhaustive, so a move that never left the phone is a refusal the player is
+            // shown rather than an exception nobody catches. `dispatch` already had a channel
+            // for saying no — its `String?` return — and the send path was throwing past it.
+            when (outcome) {
+                is SendOutcome.Failed -> outcome.reason
+                SendOutcome.Sent -> withTimeout(DISPATCH_TIMEOUT_MS) { waiter.await() }
+            }
         } catch (_: TimeoutCancellationException) {
             "the room did not answer"
-        } catch (_: IllegalStateException) {
-            "not connected"
         } finally {
             pending = null
             pendingAction = null

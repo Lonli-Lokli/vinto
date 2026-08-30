@@ -46,6 +46,7 @@ import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
+import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.Vault
 import game.vinto.client.identity
@@ -137,16 +138,16 @@ fun OnlineScreen(
                     busy = true
                     failure = null
                     scope.launch {
-                        try {
-                            enter(connector.createRoom(isPublic = listed, hostNickname = nickname).code)
-                        } catch (@Suppress("TooGenericExceptionCaught") refused: Exception) {
-                            // Every platform's connector fails its own way — IOException,
-                            // a wrapped NSError, a fetch rejection. To this screen they are
-                            // all one thing: no room, and a sentence saying why.
-                            failure = refused.message ?: "no answer"
-                        } finally {
-                            busy = false
+                        // Two branches, and the compiler counts them. This was a `try` around
+                        // a call that could fail four different ways on four platforms, with
+                        // nothing checking that the `catch` was there at all — which is how a
+                        // forgotten one elsewhere on this path became a crash rather than a
+                        // sentence.
+                        when (val answer = connector.createRoom(listed, nickname)) {
+                            is RoomAnswer.Ok -> enter(answer.value.code)
+                            is RoomAnswer.Failed -> failure = answer.reason
                         }
+                        busy = false
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

@@ -1876,9 +1876,16 @@ Both are fixed and the shape is worth knowing:
   calls `install` as a last resort, for a host that embeds it directly, and its real remaining
   job is `Crashes.watching { … }`: *where* the app is, read at the moment of a crash.
 - The DSN is a **build input**, generated into `BuildInfo.kt` by `:composeApp:generateBuildInfo`
-  from `-Pvinto.sentryDsn=` or `VINTO_SENTRY_DSN`, defaulting to empty. Nothing is committed;
-  empty still means reporting is off, which is what a development build and every test gets
-  without anybody remembering to switch it off.
+  from `-Pvinto.sentryDsn=` or `VINTO_SENTRY_DSN`. It defaulted to empty for one commit and now
+  defaults to **the project's own DSN**, at the product owner's direction: defaulting to empty
+  meant every build any of us made still reported nowhere, which is how a crash on opening an
+  online game came and went with nothing to look at. The trade is small and real — a DSN's key
+  is write-only, so what a stolen one buys is the ability to spend the project's quota — and it
+  stays overridable, with an empty string switching reporting off entirely.
+- **`App()` does not install the reporter**, and that is now load-bearing. It used to, as a
+  fallback for "a host that embeds `App()` directly", and the only such host is the test suite:
+  with a real DSN that fallback would arm a live reporter inside every Compose test and post a
+  CI runner's failures into the project's Sentry.
 - The app scope carries `Crashes.handler()`, so a coroutine that fails on it is **reported**
   rather than printed to a console nobody is reading. That is the failure players describe as
   "it just sat there": the app is alive, the room never loads, and no fatal handler will ever
@@ -1983,6 +1990,70 @@ has to carry a loss, and a player who has just lost a round does not need it cel
 tested by `RoundOutcomeTest`; the words are tested by `ScoreSheetTest` in composeApp. Same split
 as `CardHelpTest` and `LessonCopyTest` — the model says *which* verdict, the resources say it in
 a language.
+
+## 6o. Errors as values, after a crash nobody could look at
+
+An online game was opened and the app died. There was no report, because reporting had never
+been switched on in any build — which is the first thing §6m is about and the reason the DSN is
+now the project's own by default rather than an empty string. So the honest answer to *why*
+that crash happened is: **nobody knows, and that was the bug behind the bug.**
+
+What could be done was to go and find every way that path can end the app. Two were real, and
+both are the same mistake in different clothes.
+
+### The model handled it and the screen crashed on it
+
+`tableFor` opens with `players.firstOrNull { it.id == viewerId } ?: return Table(Ask.Watching)`.
+One function later, `FeltTable` reached the same seat with `players.first { it.id == viewerId }`
+— which throws. So a view whose viewer has no seat produced a considered "you are watching" from
+the model and a `NoSuchElementException` from the felt, with nothing between it and the launcher.
+
+A solo game always seats you. It could only ever have fired online, where a room decides who is
+seated, and online is the one place nothing catches it.
+
+The fix is the type: `PlayerView.mySeat` is nullable, so the compiler asks the question at every
+call site. The felt now draws four seats either way — a watcher's fourth player takes the chair
+the viewer's own hand would have used, because the felt has exactly four places and a player
+with nowhere to sit disappears from the game.
+
+### The catch listed the exceptions somebody had thought of
+
+`RemoteGameSession.dispatch` caught `TimeoutCancellationException` and `IllegalStateException`.
+That covers a socket that is gone and a room that does not answer. It does not cover the write
+*failing on a socket that is there* — an `IOException` on Android, a `CompletionException` on
+the JVM, a wrapped `NSError` on iOS, a `DOMException` in a browser. Three of those four reach
+the top of a coroutine and end the app.
+
+### So the boundary answers instead of throwing
+
+| | |
+| --- | --- |
+| `RoomConnector` | Returns `RoomAnswer<T>` — `Ok` or `Failed(trouble, reason)`. Nothing in the interface throws |
+| `answering { }` | The one place allowed to catch broadly. Each connector wraps its own transport in it, so nothing above the seam sees an exception |
+| `SendOutcome` | `Sent` or `Failed(reason)`, for a message handed to the wire |
+| `permanent(trouble)` | A `when` with no `else`, so a seventh trouble cannot be added without somebody deciding whether it is worth retrying |
+
+The point is not tidiness. A `when` over a sealed type is **exhaustive or it does not compile**,
+so a call site that forgets the failure is a build error rather than a crash a player finds.
+That was proved on the way in: changing `RoomConnector`'s return types broke `OnlineScreen` and
+`DiscoverScreen` immediately, at exactly the two places that had been `catch (e: Exception)` and
+would have gone on compiling for ever if either had been deleted.
+
+Deliberately **not** `kotlin.Result`: it carries a `Throwable`, which is the thing being got rid
+of, and `getOrNull` makes ignoring the failure a character shorter than handling it.
+
+### And where the type system cannot help, the build does
+
+`List.first {}` returns `T`, not `T?`, and throws. Kotlin has nothing to say about it, so
+`PartialFunctionTest` does: it reads the files that read wire data — the online screens, the
+session, the lobby model — and fails the build on `first {}`, `first()`, `last()`, `single()`,
+`getValue(` and `!!`. It caught a fresh one on its own first run, in code committed an hour
+earlier, whose defence was that the caller had already done a `firstOrNull` two frames up. That
+is precisely the reasoning that put a `first {}` on the felt.
+
+Scope is the client's view of the wire and stops there. The engine is not covered and should not
+be: it owns its own state, `first {}` on a list it has just built is total in fact, and a rule
+that cried wolf there would be switched off within a week.
 
 ## 6i. Taking the room live — the maintainer's runbook
 
