@@ -1965,6 +1965,24 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   bug report, and `GameRecording.formatVersion` is required, so nothing could parse one. The
   general shape — a round trip that never leaves memory proves less than it looks like it does —
   is in §6l.
+- **The toolchain's gate is Compose Multiplatform, not detekt.** Believing otherwise cost an
+  afternoon's worth of wrong advice, so: `androidx.compose.animation:*:1.12.0` fails
+  `checkDebugAarMetadata` with *"requires compileSdk 37"* and *"requires Android Gradle plugin
+  9.1.0 or higher"* — and AGP 9 requires Gradle 9. The chain is **Compose MP -> AGP 9.1 ->
+  Gradle 9 -> compileSdk 37**, and it is one change rather than four. 1.12.0 also moves the
+  rendering (9,374 pixels on the home screen against a 304-pixel tolerance) and fails
+  `SwapAnimationTest`, both of which are consequences worth budgeting for rather than
+  surprises.
+  **detekt is fine**: 1.23.8 analysed 129 files under Kotlin 2.4.10 with zero findings,
+  because this build runs it without type resolution (`source.setFrom(files("src"))`, no
+  classpath) — it parses rather than resolves, so it does not care which compiler wrote the
+  source. Kotlin therefore moves *independently* of all of the above, and has.
+- **This container cannot build the Kotlin/JS or Wasm targets from cold.** `kotlinWasmToolingSetup`
+  fetches karma from `codeload.github.com`, which the egress proxy answers 403 (§1c lists
+  `github.com` beyond this repository). It only bites when the Kotlin version changes and the
+  toolchain has to be re-resolved; a warm `kotlin-js-store/` hides it. That store is
+  gitignored, so CI resolves it fresh every run and is unaffected — but it does mean a Kotlin
+  bump cannot be proven here on the three targets it most affects, and CI has to answer.
 - **`runTest` has a sixty-second wall-clock timeout, and the iOS simulator is where you find
   out.** It is generous on the JVM and not generous on Kotlin/Native: `RecordingRoundTripTest`
   runs in 9 s on the JVM and 24.5 s on Wasm, and `kmp-ios` still failed it with

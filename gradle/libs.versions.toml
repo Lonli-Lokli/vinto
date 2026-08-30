@@ -1,7 +1,24 @@
 [versions]
-kotlin = "2.1.21"
+# Verified on JVM and Android here — 653 shared tests, 124 Compose tests, detekt clean over
+# every module — and on Kotlin/JS, Wasm and Native by CI, which are the three targets a
+# Kotlin bump most affects and the three this container cannot build (codeload.github.com
+# answers 403, and there is no Mac).
+#
+# Kotlin 2.4 warns that Gradle 8.14 is deprecated and that 2.5 will require 8.14.4. That is
+# the next thing to move, and it is small.
+kotlin = "2.4.10"
 kotlinxSerialization = "1.8.1"
 kotlinxCoroutines = "1.10.2"
+# **Held back deliberately; 1.12.0 is out.** Measured rather than assumed: 1.12.0's Android
+# artifacts fail `checkDebugAarMetadata` because `androidx.compose.animation:*:1.12.0`
+# requires **compileSdk 37** and **AGP 9.1.0 or higher** — and AGP 9 requires Gradle 9. It
+# also moves the rendering (9,374 pixels on the home screen, against a 304-pixel
+# antialiasing tolerance) and fails `SwapAnimationTest`.
+#
+# So the upgrade chain is Compose MP -> AGP 9.1 -> Gradle 9 -> compileSdk 37, and it is one
+# change rather than four. It is **not** gated on detekt: 1.23.8 analysed 129 files under
+# Kotlin 2.4.10 with zero findings, because this build runs detekt without type resolution
+# (`source.setFrom(files("src"))`, no classpath) so it parses rather than resolves.
 composeMultiplatform = "1.8.0"
 # 8.13.2 is the head of the 8.x line. **Not 9.x**, and that is a decision rather than a lag:
 # AGP 9 wants Gradle 9, and the thing most likely to break on Gradle 9 is detekt, which is
@@ -11,7 +28,11 @@ composeMultiplatform = "1.8.0"
 # and "the toolchain moved". See docs/kotlin/README.md §7.
 agp = "8.13.2"
 androidxActivityCompose = "1.10.1"
-# 1.23.8 is the last 1.x line; it runs on Kotlin 2.1 for the rules used here.
+# 1.23.8 is the last 1.x line, and it is **not** the thing holding the toolchain back —
+# measured under Kotlin 2.4.10, 129 files analysed, zero findings. This build runs detekt
+# without type resolution, so it parses rather than resolves and does not care which compiler
+# produced the source. Its successor is `dev.detekt:...:2.0.0-alpha.6`, and there is no reason
+# to put a `maxIssues: 0` gate on an alpha yet.
 detekt = "1.23.8"
 kover = "0.9.1"
 
