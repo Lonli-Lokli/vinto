@@ -227,8 +227,33 @@ Pages project for one deploy and is not any more, for the reason in §6c. Both a
 neither runs on a push — deploying is a decision, not a consequence of merging — and both are
 how a thing gets published without a desktop.
 
-**Both have to exist on `master` as well as on the branch**, because GitHub only offers "Run
-workflow" for a `workflow_dispatch` workflow that is on the *default* branch. `deploy-room.yml`
+**Both now also deploy on a push to `master`**, filtered by path: `worker/**` and `shared/**`
+publish the room, `composeApp/**` and `shared/**` publish the site, and a docs-only commit
+publishes nothing. `shared/**` is in both lists deliberately — the engine is one module, and a
+change to it changes the client and the server together. Verified by replaying the path filters
+over this branch's own history with GitHub's glob semantics (`*` does not cross `/`, `**`
+does): the two web fixes matched the web only, the four build changes matched both, and the
+five docs commits matched neither.
+
+**That reverses the rule these files were written with** — "deploying is a decision, not a
+consequence of merging" — on request. What it buys is that `master` and the running services
+cannot drift, and one instance of that drift had already happened and was dangerous:
+`wrangler.jsonc` said `ROOM_OPEN: "false"` for months while the live room was open, because
+the flag had only ever been passed as `--var` from a manual run. **A push trigger on top of
+that would have closed a room people were playing in**, on the next unrelated commit to touch
+`shared/`, with nothing in the workflow that looked wrong.
+
+So the flag was fixed first. The committed config now says `"true"`, a push deploys it as
+written with no `--var` at all, and a `workflow_dispatch` run may still override it — the
+override is an explicit choice on a run, and closing the room permanently is a reviewable
+change to one line. The workflow decides that once, in a `door` step, so the deploy and the
+`/health` check that follows cannot disagree about what they expected.
+
+**The triggers are inert until the Kotlin branch merges**, because none of those paths exists
+on `master` yet.
+
+**Both files have to exist on `master` as well as on the branch**, because GitHub only offers
+"Run workflow" for a `workflow_dispatch` workflow that is on the *default* branch. `deploy-room.yml`
 was written, pushed to a feature branch, and simply did not appear in the dropdown; that is how
 the rule was found, and `deploy-web.yml` needs the same one-file trip.
 

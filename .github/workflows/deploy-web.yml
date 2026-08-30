@@ -15,6 +15,11 @@
 # exactly as `vinto-room.kupalinka.app` already does. The Pages deployment worked and is
 # simply superseded; `deploy-room.yml` is its sibling and they now work the same way.
 #
+# **A push to `master` that touches the client publishes it**, alongside the manual trigger.
+# That reverses the original rule ("deploying is a decision, not a consequence of merging"), on
+# request, and what it buys is that `master` and the running site cannot drift apart. The
+# manual trigger stays for redeploying without a code change and for the dry run.
+#
 # **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for
 # a `workflow_dispatch` workflow that exists on the *default* branch. `deploy-room.yml` was
 # written, pushed to a feature branch, and did not appear in the dropdown at all; keep the two
@@ -29,6 +34,20 @@
 name: Deploy web
 
 on:
+  # Only the paths that can change what the site serves. `shared/**` is here and in
+  # `deploy-room.yml` both, deliberately: the engine is one module and a change to it changes
+  # the client and the server together, so both should publish.
+  push:
+    branches: [master]
+    paths:
+      - 'composeApp/**'
+      - 'shared/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/deploy-web.yml'
+
   workflow_dispatch:
     inputs:
       dryRun:

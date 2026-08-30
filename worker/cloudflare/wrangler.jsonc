@@ -39,11 +39,23 @@
   // separate Worker for the same reason.
   "routes": [{ "pattern": "vinto-room.kupalinka.app", "custom_domain": true }],
 
-  // The WebSocket room stays shut until ActionValidator is ported (task 4.4). Until then a
-  // deployment is a self-test of the engine, not a service: /health and /replay answer, and
-  // an upgrade request is refused with the reason. Flip this to "true" in the same commit
-  // that lands the validator, never before.
-  "vars": { "ROOM_OPEN": "false" },
+  // **The room is open, and this line is what says so.**
+  //
+  // It said "false" long after the room was opened, because it was opened by passing
+  // `--var ROOM_OPEN:true` from the deploy workflow — so the committed config and the running
+  // service disagreed, and nothing noticed. That was survivable only while every deploy was a
+  // person choosing a value. It stops being survivable the moment a push can deploy: the next
+  // unrelated commit to touch `shared/` would have published this file and **closed a room
+  // people were playing in**, silently, with no step in the workflow that looked wrong.
+  //
+  // So the config is the truth now and a push deploys it as-is. Closing the room is a
+  // committed change to this line, which is reviewable, or a `workflow_dispatch` run with the
+  // choice set — which is deliberate. Neither is a side effect.
+  //
+  // (The original note here said to flip this in the same commit that landed
+  // `ActionValidator`. That landed in phase 4; the flag stayed false for months afterwards,
+  // which is the drift described above.)
+  "vars": { "ROOM_OPEN": "true" },
 
   // --- Analytics (openspec/changes/add-live-analytics) --------------------------------------
   //
