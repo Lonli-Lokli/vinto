@@ -15,6 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * A whole game, written down, and played back — on whichever target is running this.
@@ -62,7 +63,7 @@ class RecordingRoundTripTest {
         VintoJson.decodeFromString(GameRecording.serializer(), text)
 
     @Test
-    fun aFreshlyRecordedGameReplaysThroughItsOwnJson() = runTest {
+    fun aFreshlyRecordedGameReplaysThroughItsOwnJson() = runTest(timeout = SLOWEST_TARGET) {
         val session = wholeGame(SEED)
         val report = session.report(at = "2026-08-30T00:00:00Z", label = "round trip")
 
@@ -97,7 +98,7 @@ class RecordingRoundTripTest {
      * granularity is the whole reason the format carries hashes at all.
      */
     @Test
-    fun aCorruptedHashIsCaughtAtTheActionThatCarriesIt() = runTest {
+    fun aCorruptedHashIsCaughtAtTheActionThatCarriesIt() = runTest(timeout = SLOWEST_TARGET) {
         val report = wholeGame(SEED).report(at = "2026-08-30T00:00:00Z", label = "round trip")
         val at = report.actions.size / 2
 
@@ -126,7 +127,7 @@ class RecordingRoundTripTest {
      * rather than read from a clock — see `Recorder.export`.
      */
     @Test
-    fun oneSeedProducesOneDocument() = runTest {
+    fun oneSeedProducesOneDocument() = runTest(timeout = SLOWEST_TARGET) {
         val first = wholeGame(SEED).report(at = FIXED_TIME, label = "round trip").toJson()
         val second = wholeGame(SEED).report(at = FIXED_TIME, label = "round trip").toJson()
 
@@ -140,6 +141,17 @@ class RecordingRoundTripTest {
         } ?: "none"
 
     private companion object {
+        /**
+         * A CI budget on the slowest target, not a claim about the code.
+         *
+         * `runTest` defaults to sixty seconds of wall clock, which is generous on the JVM
+         * (9 s for the whole suite) and not generous on an iOS simulator, where MCTS runs a
+         * few times slower and `oneSeedProducesOneDocument` plays **two** whole games to
+         * compare their documents. That is what it costs to prove a seed is a seed, and the
+         * simulator is where it first cost more than a minute.
+         */
+        val SLOWEST_TARGET = 5.minutes
+
         const val SEED = 4242L
 
         /** A whole game is hundreds of actions; this only has to rule out a stub. */

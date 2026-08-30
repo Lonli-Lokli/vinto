@@ -1965,6 +1965,14 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   bug report, and `GameRecording.formatVersion` is required, so nothing could parse one. The
   general shape — a round trip that never leaves memory proves less than it looks like it does —
   is in §6l.
+- **`runTest` has a sixty-second wall-clock timeout, and the iOS simulator is where you find
+  out.** It is generous on the JVM and not generous on Kotlin/Native: `RecordingRoundTripTest`
+  runs in 9 s on the JVM and 24.5 s on Wasm, and `kmp-ios` still failed it with
+  `UncompletedCoroutinesError` — the one case that plays *two* whole MCTS games to prove a seed
+  is a seed. Pass an explicit `timeout` for anything that plays a game out, and say in the
+  comment that the number is a CI budget on the slowest target rather than a claim about the
+  code. `SelfPlayTest`, `FinishesTest` and `OnlineScoreTest` already did; a `commonTest` that
+  reaches Apple needs it more, not less.
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
   It lives in `gradle.properties`.
