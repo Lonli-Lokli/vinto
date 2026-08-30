@@ -6,12 +6,14 @@ import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
+import game.vinto.client.requireOk
 import game.vinto.protocol.PublicRoom
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
+import platform.Foundation.NSHTTPURLResponse
 import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
@@ -47,7 +49,15 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
         return IosRoomSocket(task, incoming)
     }
 
-    /** Re-arms the receive after every message; Foundation delivers exactly one per ask. */
+    /**
+     * Re-arms the receive after every message; Foundation delivers exactly one per ask.
+     *
+     * The refused-upgrade status is not available here: `NSURLSessionWebSocketTask` reports it
+     * through the session delegate rather than through this handler, and this connector has no
+     * delegate on purpose. So iOS, like the browser, cannot tell a code nobody has from a
+     * network that is not there — `RemoteRoom` giving up after a few tries is what turns both
+     * into a sentence rather than a spinner that never stops.
+     */
     private fun pump(task: NSURLSessionWebSocketTask, incoming: Channel<String>) {
         task.receiveMessageWithCompletionHandler { message, failure ->
             when {
@@ -82,19 +92,39 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
         return parsePublicRooms(body(request))
     }
 
-    /** One request, one string, cancellation included — the only shape either call needs. */
+    /**
+     * One request, one string, cancellation included — the only shape either call needs.
+     *
+     * The **status** is read rather than discarded, which is what the `_` in the middle of
+     * this signature used to do. Without it a 404 or a 503 arrives as a successful call whose
+     * body is `no such room`, and that goes straight into a JSON parser: the player is shown a
+     * serialization error about a character offset instead of being told the room is not there.
+     *
+     * `NSHTTPURLResponse.statusCode` is a plain readonly property, so it is not one of the
+     * binding traps README §7 collects — no category setter, no class factory renamed to
+     * `create`. It still cannot be compiled on a machine without Xcode, which is why it is one
+     * line and shaped exactly like the other three platforms'.
+     */
     @OptIn(ExperimentalForeignApi::class)
     private suspend fun body(request: NSMutableURLRequest): String =
         suspendCancellableCoroutine { continuation ->
-            val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, _, failure ->
+            val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { data, response, failure ->
+                val status = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: OK
                 when {
                     failure != null && continuation.isActive ->
                         continuation.resumeWithException(
                             RuntimeException(failure.localizedDescription),
                         )
 
-                    continuation.isActive ->
-                        continuation.resume(data?.let { utf8(it) }.orEmpty())
+                    continuation.isActive -> {
+                        val body = data?.let { utf8(it) }.orEmpty()
+                        @Suppress("TooGenericExceptionCaught")
+                        try {
+                            continuation.resume(requireOk(status, body))
+                        } catch (refused: Exception) {
+                            continuation.resumeWithException(refused)
+                        }
+                    }
                 }
             }
             continuation.invokeOnCancellation { task.cancel() }
@@ -105,6 +135,9 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
     private fun utf8(data: NSData): String =
         NSString.create(data = data, encoding = NSUTF8StringEncoding)?.toString().orEmpty()
 }
+
+/** What a response with no status is taken to be: fine, since the failure path has its own. */
+private const val OK = 200
 
 private class IosRoomSocket(
     private val task: NSURLSessionWebSocketTask,

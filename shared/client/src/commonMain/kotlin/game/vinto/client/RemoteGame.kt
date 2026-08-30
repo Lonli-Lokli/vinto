@@ -13,6 +13,7 @@ import game.vinto.shapes.actorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -37,8 +38,16 @@ sealed interface ConnectionState {
     data object Connected : ConnectionState
     data class Reconnecting(val attempt: Int) : ConnectionState
 
-    /** Over for good: the room closed, the session ended, or the player left. */
-    data class Closed(val reason: String) : ConnectionState
+    /**
+     * Over for good: the room closed, the session ended, or the player left.
+     *
+     * [trouble] is set only when the connection ended because it could not be made — a code
+     * nobody has, a closed service, a room that never answered. It is what lets a lobby tell
+     * "this room finished" apart from "we never got there", which are the same sentence to the
+     * old code and completely different things to the person reading it: one is over and the
+     * other is worth another go.
+     */
+    data class Closed(val reason: String, val trouble: RoomTrouble? = null) : ConnectionState
 }
 
 /**
@@ -92,7 +101,7 @@ class RemoteRoom(
 
     private var socket: RoomSocket? = null
     private val sender: CoroutineScope = scope
-    private val running = scope.launch { run() }
+    private var running: Job? = scope.launch { run() }
 
     /**
      * Seats with a change in flight, so the lobby can spin the seat rather than the screen.
@@ -142,13 +151,47 @@ class RemoteRoom(
     fun leave() {
         _connection.value = ConnectionState.Closed("left the room")
         socket?.close()
-        running.cancel()
+        running?.cancel()
+        running = null
+    }
+
+    /**
+     * Tries again, after the loop gave up on a room it could not reach.
+     *
+     * Only from a [ConnectionState.Closed] that carries a [RoomTrouble] — a room that actually
+     * ended has nothing to go back to, and a live connection does not need this. Without it,
+     * giving up would be a worse answer than the old spinner: at least the spinner was still
+     * trying.
+     */
+    fun retry() {
+        val closed = _connection.value as? ConnectionState.Closed ?: return
+        if (closed.trouble == null || running?.isActive == true) return
+        _connection.value = ConnectionState.Connecting
+        running = sender.launch { run() }
     }
 
     // ------------------------------------------------------------------ the loop
 
+    /**
+     * Opens the socket, and keeps opening it — but not for ever, and not for every reason.
+     *
+     * This used to catch every exception and back off, which made a mistyped room code
+     * indistinguishable from a tunnel: both were a spinner, for ever, with nothing on the
+     * screen that could tell a person which one they were looking at or that waiting would
+     * never help. Two rules fix that, and they are different rules:
+     *
+     *  - **A permanent trouble stops it at once.** A code the registry never issued, a service
+     *    that is closed, a request the room refused: trying again cannot change the answer, so
+     *    the room closes with the reason and the lobby says it.
+     *  - **Never having connected is itself a limit.** A dropped socket mid-game is worth
+     *    retrying for a long time — the seat is held by its token and the resync lands the
+     *    table on the present — but a room that has never once answered is, after a handful of
+     *    tries, a room this player is not going to reach today. Giving up is what lets the
+     *    lobby offer another go, which is the honest version of retrying for ever.
+     */
     private suspend fun run() {
         var attempt = 0
+        var everConnected = false
         while (sender.isActive) {
             try {
                 _connection.value = if (attempt == 0) {
@@ -158,6 +201,7 @@ class RemoteRoom(
                 }
                 val opened = connector.connect(code)
                 socket = opened
+                everConnected = true
                 opened.send(encode(ClientMessage.Join(token(), nickname)))
 
                 for (text in opened.incoming) {
@@ -166,12 +210,21 @@ class RemoteRoom(
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (refused: RoomServiceException) {
+                if (refused.permanent) {
+                    _connection.value = ConnectionState.Closed(refused.message, refused.trouble)
+                    return
+                }
             } catch (_: Exception) {
-                // The socket died or never opened; the backoff below is the whole handling.
+                // The socket died or never opened; the rules below are the whole handling.
             }
 
             if (_connection.value is ConnectionState.Closed) return
             attempt++
+            if (!everConnected && attempt >= FIRST_TRIES) {
+                _connection.value = ConnectionState.Closed(UNREACHABLE, RoomTrouble.OFFLINE)
+                return
+            }
             delay(backoffMs(attempt))
         }
     }
@@ -276,6 +329,19 @@ class RemoteRoom(
          * already far past normal.
          */
         const val PENDING_TIMEOUT_MS = 5_000L
+
+        /**
+         * How many times a room that has never answered is tried before the loop gives up.
+         *
+         * Three, which with the backoff below is about seven seconds — long enough to ride out
+         * a phone changing networks, short enough that nobody is left watching a spinner that
+         * has already decided. Once a socket has opened this stops applying entirely: a seat
+         * mid-game is worth reconnecting to for as long as the player leaves the app open.
+         */
+        const val FIRST_TRIES = 3
+
+        /** The reason a lobby shows when the room never answered. Rendered, not printed raw. */
+        const val UNREACHABLE = "unreachable"
 
         const val BACKOFF_BASE_MS = 1_000.0
         const val BACKOFF_CAP_MS = 15_000.0

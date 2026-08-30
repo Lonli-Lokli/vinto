@@ -89,6 +89,8 @@
     <string name="lobby_fill_seats">Every seat plays. Fill the empty ones with people or bots, and the deal counts itself down.</string>
     <string name="lobby_counting_down">All set — dealing in %1$d…</string>
     <string name="lobby_over">The room has ended.</string>
+    <string name="lobby_unreachable">Could not reach that room. Check the code, or your connection.</string>
+    <string name="lobby_retry">Try again</string>
     <string name="lobby_seat_working">Changing this seat…</string>
 
     <!-- The connection, said in one word wherever the table is remote. -->
@@ -166,6 +168,11 @@
     <string name="table_final_ally">%1$s plays the coalition’s hand against %2$s.</string>
     <string name="table_final_turns_left">%1$d turns to the reveal</string>
     <string name="table_final_last_turn">last turn</string>
+    <string name="table_final_choosing">One hand between the three of them, against %1$s.</string>
+    <string name="table_final_side_coalition">Together</string>
+    <string name="table_final_side_caller">Called it</string>
+    <string name="table_final_versus">vs</string>
+    <string name="table_final_leads">%1$s leads the others</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -199,6 +206,14 @@
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Round %1$d</string>
+    <string name="score_caller_won">The Vinto call held</string>
+    <string name="score_level">Level — the call held</string>
+    <string name="score_coalition_won">The others beat the call</string>
+    <string name="score_deck_out">Nobody called</string>
+    <string name="score_versus">Vinto %1$d against their best %2$d</string>
+    <string name="score_versus_none">Every hand counted, nothing paid</string>
+    <string name="score_role_caller">called Vinto</string>
+    <string name="score_role_best">best of the others</string>
     <string name="score_column_hand">hand</string>
     <string name="score_column_round">round</string>
     <string name="score_column_game">game</string>

@@ -14,6 +14,10 @@ package game.vinto.client
  * Past [budget] the queue drops everything and the table lands on the current state, which is
  * the normal path after a reconnect rather than an error path.
  *
+ * **The budget is about how far behind the client is, not how much happened.** Those were the
+ * same number until a Vinto call proved they are not: the endgame arrives in one batch and is
+ * the one long batch a player is actually watching. See [DEFAULT_BUDGET].
+ *
  * Speeding the backlog up instead was considered and rejected: it produces a screen that is
  * fastest exactly when it is least comprehensible.
  *
@@ -72,12 +76,24 @@ class AnimationQueue<T>(
 
     private companion object {
         /**
-         * About two turns' worth.
+         * A whole final round's worth, which is the largest thing that legitimately arrives at
+         * once.
          *
-         * Enough that a bot's whole turn — draw, decide, discard, and the toss-in window that
-         * follows — plays through; not so much that a player who looked away comes back to a
-         * replay.
+         * It was 8 — "about two turns" — and that number was chosen against the case this
+         * class was written for, a client catching up after a reconnect. It was wrong for the
+         * one case where a lot happens *while the player watches*: calling Vinto plays the
+         * call and then all three bots' entire last turns, and `LocalGameSession` hands them
+         * over as one batch. Measured at **14** moves in an ordinary deal
+         * (`FinalRoundIsWatchedTest`), so the batch went over 8, the queue cleared it, and the
+         * player went from tapping "Call Vinto" straight to "Round over" — never seeing the
+         * endgame their whole hand had been played for. Reported from a phone, and the worst
+         * kind of bug this queue can have: it is doing precisely what it was told.
+         *
+         * 24 covers a final round with room for three bots who each draw, act, declare and
+         * answer a toss-in. It does not weaken the guard it was there for: a remote client's
+         * catch-up never reaches here as a long batch, because `RemoteGameSession` collapses a
+         * sync to a single frame before this sees it (design C4).
          */
-        const val DEFAULT_BUDGET = 8
+        const val DEFAULT_BUDGET = 24
     }
 }

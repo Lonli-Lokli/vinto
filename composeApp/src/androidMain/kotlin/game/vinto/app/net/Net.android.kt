@@ -2,10 +2,13 @@ package game.vinto.app.net
 
 import game.vinto.client.CreatedRoom
 import game.vinto.client.RoomConnector
+import game.vinto.client.RoomServiceException
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
+import game.vinto.client.requireOk
+import game.vinto.client.troubleFor
 import game.vinto.protocol.PublicRoom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -55,7 +58,12 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     incoming.close(t)
-                    if (continuation.isActive) continuation.resumeWithException(t)
+                    // OkHttp hands over the response that refused the upgrade, and it is the
+                    // only thing that can tell a code nobody has (404) from a service that is
+                    // closed (503) from a network that is not there at all. Discarding it —
+                    // which is what this did — leaves the room reconnecting for ever against
+                    // an answer that will never change.
+                    if (continuation.isActive) continuation.resumeWithException(upgradeTrouble(t, response))
                 }
             }
             client.newWebSocket(request, listener)
@@ -82,29 +90,50 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
             parsePublicRooms(body(Request.Builder().url("${httpBase(baseUrl)}/rooms").get().build()))
         }
 
-    /** One request, one string, cancellation included — the only shape either call needs. */
+    /**
+     * One request, one string, cancellation included — the only shape either call needs.
+     *
+     * The **status** goes through [requireOk] rather than being discarded, which it was. A 404
+     * or a 503 used to be handed to a JSON parser along with whatever the service had said in
+     * plain text, so the player was shown a serialization error about an offset instead of
+     * "no such room".
+     */
     private suspend fun body(request: Request): String =
-        suspendCancellableCoroutine { continuation ->
-            val call = client.newCall(request)
-            continuation.invokeOnCancellation { call.cancel() }
-            call.enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    if (continuation.isActive) continuation.resumeWithException(e)
-                }
+        requireOk(
+            suspendCancellableCoroutine { continuation ->
+                val call = client.newCall(request)
+                continuation.invokeOnCancellation { call.cancel() }
+                call.enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        if (continuation.isActive) continuation.resumeWithException(e)
+                    }
 
-                override fun onResponse(call: Call, response: Response) {
-                    response.use {
-                        if (continuation.isActive) {
-                            continuation.resume(it.body?.string().orEmpty())
+                    override fun onResponse(call: Call, response: Response) {
+                        response.use {
+                            if (continuation.isActive) {
+                                continuation.resume(it.code to it.body?.string().orEmpty())
+                            }
                         }
                     }
-                }
-            })
-        }
+                })
+            },
+        )
+
+    /** [requireOk] over the pair OkHttp actually gives back. */
+    private fun requireOk(answer: Pair<Int, String>): String = requireOk(answer.first, answer.second)
 
     private companion object {
         val JSON = "application/json".toMediaType()
     }
+}
+
+/** What a refused upgrade means, when OkHttp knew — the transport failure otherwise. */
+private fun upgradeTrouble(failed: Throwable, response: Response?): Throwable {
+    val trouble = response?.let { troubleFor(it.code) } ?: return failed
+    // The body is already consumed by the time this runs; `message` is the reason phrase,
+    // which is worth as much and is always there.
+    val said = response.message.ifBlank { "the room refused the connection" }
+    return RoomServiceException(trouble, said, failed)
 }
 
 private class AndroidRoomSocket(

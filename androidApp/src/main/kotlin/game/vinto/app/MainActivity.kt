@@ -4,11 +4,27 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import game.vinto.app.crash.Crashes
+import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
 
 class MainActivity : ComponentActivity() {
+
+    /**
+     * A scope that outlives the activity, because a crash report is fired while the process is
+     * ending. Held by the activity only because there is nowhere smaller to hold it; `install`
+     * is idempotent, so a configuration change does not chain a second handler.
+     */
+    private val reporting = appReportingScope()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // First of all, and before `setContent` rather than inside it. A crash during
+        // `AndroidStorage.attach`, while the deep link is read, or in the first composition
+        // used to happen with nothing listening — the handler was installed by a
+        // `LaunchedEffect` inside `App()`, which is after all of that. A crash on the launcher
+        // is the one report worth having most, and it was the one that could never arrive.
+        Crashes.install(reporting)
         // Before anything composes, so the home screen can already know whether there is a
         // game to come back to.
         AndroidStorage.attach(this)

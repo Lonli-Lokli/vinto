@@ -17,17 +17,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import game.vinto.app.crash.CrashReporter
 import game.vinto.app.crash.CrashSurface
-import game.vinto.app.crash.Where
-import game.vinto.app.crash.installCrashHandler
+import game.vinto.app.crash.Crashes
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
 import game.vinto.app.link.roomCodeFrom
 import game.vinto.app.link.takeOpenedLink
 import game.vinto.app.net.platformRoomConnector
-import game.vinto.app.net.postBeacon
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
@@ -79,7 +76,11 @@ fun App(
     // One connector for the app's lifetime, and a scope for the rooms it opens: a room's
     // socket loop belongs to the app, not to whichever screen happens to be showing it.
     val connector = remember { platformRoomConnector(ROOM_SERVICE) }
-    val appScope = rememberCoroutineScope()
+    // With a handler, so a coroutine that fails out here is *reported* rather than printed to
+    // a console nobody is reading. Everything long-lived rides on this scope — the socket
+    // loop, the analytics sink, a room's reconnects — and those are exactly the failures that
+    // leave the app looking fine and doing nothing, which no fatal handler will ever see.
+    val appScope = rememberCoroutineScope { Crashes.handler() }
 
     val sink = rememberSink(appScope)
     val count = counting ?: remember(sink) { counting(sink) }
@@ -313,20 +314,6 @@ private sealed interface Screen {
  */
 private const val ROOM_SERVICE = "vinto-room.kupalinka.app"
 
-/**
- * Where a crash is reported, or empty for a build that reports nowhere.
- *
- * Not a secret and not treated as one: a DSN's key is **write-only**, it can submit an event
- * and cannot read one back, and it has to be inside the app for the app to report at all.
- * What somebody could do with a stolen one is send junk and spend the project's quota, which
- * is why it is still not posted publicly — DEPLOYMENT.md §7a says the same to the maintainer.
- *
- * Empty here on purpose. The real value is set at build time for a release; an empty string
- * switches reporting off entirely, which is what a development build and every test should
- * get without anybody remembering to switch it off.
- */
-private const val SENTRY_DSN = ""
-
 /** The app's surface vocabulary, as a crash report spells it. Coarse by construction. */
 private fun Surface.asCrashSurface(): CrashSurface = when (this) {
     Surface.SOLO -> CrashSurface.SOLO
@@ -366,28 +353,15 @@ expect fun platformName(): String
  */
 @Composable
 private fun ReportCrashes(scope: kotlinx.coroutines.CoroutineScope) {
-    // Read live, so a crash on the table is not reported as one in the menu.
-    val surface = rememberUpdatedState(LocalSurface.current)
-    val crashes = remember(scope) {
-        CrashReporter(
-            dsn = SENTRY_DSN,
-            platform = platformName(),
-            release = "vinto@$VERSION",
-            environment = "production",
-            scope = scope,
-            now = ::elapsedMs,
-            nowIso = ::nowIso,
-            surface = { surface.value.asCrashSurface() },
-            place = { Where.now() },
-            post = { url, auth, body ->
-                postBeacon(url, body, contentType = "application/x-sentry-envelope", auth = auth)
-            },
-        )
-    }
+    // A last resort rather than the normal path. Every entry point installs the reporter
+    // before it composes anything, because the crash worth having most is the one on the
+    // launcher — but a host that embeds `App()` directly (a test, a future container) would
+    // otherwise report nothing at all, and `install` is idempotent.
+    LaunchedEffect(scope) { Crashes.install(scope) }
 
-    LaunchedEffect(crashes) {
-        if (crashes.enabled) installCrashHandler(crashes::report)
-    }
+    // Where the app is, read live: a crash on the table must not be filed as one in the menu.
+    val surface = rememberUpdatedState(LocalSurface.current)
+    LaunchedEffect(Unit) { Crashes.watching { surface.value.asCrashSurface() } }
 }
 
 /**

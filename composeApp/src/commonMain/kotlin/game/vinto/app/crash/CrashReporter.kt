@@ -21,9 +21,13 @@ expect fun installCrashHandler(report: (Throwable) -> Unit)
  * Nothing is retried and nothing is queued to disk — a crash that never reached Sentry is a
  * lost report, not a reason to write a spool file that outlives the bug.
  *
- * **Once per process.** A handler that fires on every thread's death would send the same
- * stack a hundred times from a device in a loop, which costs the project's Sentry quota and
- * tells nobody anything the first one did not.
+ * **A handful per process, and no more.** A handler that fires on every thread's death would
+ * send the same stack a hundred times from a device in a loop, which costs the project's
+ * Sentry quota and tells nobody anything the first one did not. It was *one*, which was right
+ * while the only caller was the fatal handler and wrong the moment non-fatal failures started
+ * arriving too — a background coroutine failing early would then have spent the budget the
+ * crash that actually ended the app needed. [BUDGET] is small enough that a loop cannot run
+ * up a bill and large enough that the first thing to go wrong does not silence the last.
  */
 class CrashReporter(
     dsn: String?,
@@ -42,15 +46,20 @@ class CrashReporter(
     private val post: suspend (url: String, auth: String, body: String) -> Unit,
 ) {
     private val target = parseDsn(dsn)
-    private var sent = false
+    private var sent = 0
+    private val seen = mutableSetOf<String>()
 
     /** True when this build has somewhere to report to. Absent DSN, absent reporting. */
     val enabled: Boolean get() = target != null
 
     fun report(error: Throwable) {
         val to = target ?: return
-        if (sent) return
-        sent = true
+        if (sent >= BUDGET) return
+        // The same failure twice is one bug reported twice. A retry loop that throws the same
+        // exception every second is the ordinary way a client burns a quota, and it is exactly
+        // the shape of the socket loop this reporter now watches.
+        if (!seen.add("${error::class.simpleName}:${error.message}")) return
+        sent++
 
         val envelope = crashEnvelope(
             CrashReport(
@@ -81,6 +90,9 @@ class CrashReporter(
     }
 
     private companion object {
+        /** How many distinct failures one process may report. */
+        const val BUDGET = 5
+
         const val MILLIS_PER_SECOND = 1000.0
 
         /** Sentry truncates long traces anyway, and the top of the stack is the useful part. */

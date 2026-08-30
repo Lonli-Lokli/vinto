@@ -10,6 +10,8 @@ import game.vinto.protocol.RoomPhase
  */
 data class LobbyUi(
     val seats: List<LobbySeatUi>,
+    /** Whether there is anything left to try: set only when the room was never reached. */
+    val canRetry: Boolean,
     /** Whether the add-a-bot button does anything: a free seat, and a live connection. */
     val canAddBot: Boolean,
     /** Milliseconds to the deal, while a countdown is running. Null otherwise. */
@@ -44,6 +46,17 @@ enum class LobbyWord {
 
     /** The room is gone — closed, ended, or left. */
     OVER,
+
+    /**
+     * It was never reached: a code nobody has, a service that is closed, a network that never
+     * answered.
+     *
+     * Distinct from [OVER] because the two want opposite things from the player. A room that
+     * ended is finished and the only move is to leave; a room that was never reached may
+     * simply be on the other side of a lift, and the screen should offer another go. They read
+     * identically in the state — both are `Closed` — until the trouble is carried with it.
+     */
+    UNREACHABLE,
 }
 
 /** Digests what the room reports into what the lobby screen draws. */
@@ -61,6 +74,7 @@ fun lobbyUi(lobby: LobbyView?, connection: ConnectionState, mySeat: Int?): Lobby
 
     val connected = connection is ConnectionState.Connected
     val word = when {
+        connection is ConnectionState.Closed && connection.trouble != null -> LobbyWord.UNREACHABLE
         connection is ConnectionState.Closed -> LobbyWord.OVER
         !connected || lobby == null -> LobbyWord.CONNECTING
         lobby.phase == RoomPhase.STARTING -> LobbyWord.COUNTING_DOWN
@@ -70,6 +84,7 @@ fun lobbyUi(lobby: LobbyView?, connection: ConnectionState, mySeat: Int?): Lobby
 
     return LobbyUi(
         seats = seats,
+        canRetry = word == LobbyWord.UNREACHABLE,
         canAddBot = connected && seats.any { !it.occupied },
         msUntilStart = lobby?.msUntilStart.takeIf { word == LobbyWord.COUNTING_DOWN },
         word = word,

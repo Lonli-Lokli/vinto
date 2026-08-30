@@ -546,6 +546,8 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
 | §6i step 4 — the deploy, and flipping `ROOM_OPEN` | `wrangler login`, and the deliberate decision to open the room | Everything the flip guards is built and gated locally through `wrangler dev` |
 | §6i step 5 — two devices, then four humans | Hardware and four people | Cannot be scripted; that is what 9.7's second verification is for |
+| 8.2 — a native crash on iOS | Xcode, and a decision on the Sentry KMP SDK | The reporter is installed at process start on all four targets now (§6m) and catches a Kotlin exception reaching the top. A signal or a Swift trap is what an SDK would add, against weight in a 3.7 MB wasm bundle; `design.md` §A9 has it flagged rather than settled |
+| Crash reporting, end to end | A DSN, and a build that carries it | The pipe is built and gated (`CrashReporterTest`, `CrashInstallTest`, `CrashReportTest`). What has never happened is a report arriving in a real Sentry project: the DSN is a build input now (`-Pvinto.sentryDsn=`), and nothing here has one |
 | 9.10 — store releases | An upload key, store accounts, and a signed build | `assembleRelease` signs with the upload key when `keystore.properties` exists and with the debug key when it does not, so the path is exercised without the secret |
 | `kmp-ios` beyond CI, and any `commonMain` change trusted on Apple | macOS with Xcode | The macOS leg of CI covers compilation; §5's warning stands — a `commonMain` change that breaks iOS cannot fail on a non-Mac host |
 | 7.1 — the animation layer on real hardware | A physical phone, and a Mac to look at the simulator | The decision is made and the layer is built and running on an Android emulator. It has never been *watched* on a real device, and on Apple it is compiled and simulator-tested by `kmp-ios` but not looked at by a person |
@@ -1850,6 +1852,138 @@ replays the recorder's output too, and passes, because it replays *the object it
 memory*. A bug report arrives as bytes. Reaching the harness through text is the difference,
 and it is the reason this test does the JSON hop rather than calling `replayRecording(report)`.
 
+## 6m. Crashes, and what a failed network call is allowed to look like
+
+Two things the app claimed to have and did not, both reported from a phone.
+
+### The crash reporter existed and was never installed in time
+
+`installCrashHandler` was called from a `LaunchedEffect` inside a composable inside `App()`.
+So the handler came into existence **after the first composition** — and the crash worth having
+most is the one that stops the app on the launcher, which happens while the vault is being
+opened, the deep link is being read and the resources are being resolved. All of that is before
+`App()` draws anything. Nothing failed; there was simply nobody listening.
+
+Worse, `SENTRY_DSN` was `private const val SENTRY_DSN = ""` in source, so **every build there
+has ever been** reported nowhere, the ones that shipped included.
+
+Both are fixed and the shape is worth knowing:
+
+- `Crashes` (`composeApp/.../crash/Crashes.kt`) is a process-level object with an idempotent
+  `install`, called by each of the four entry points **before** the call that composes —
+  `MainActivity.onCreate` before `setContent`, `main()` before `application {}` and
+  `ComposeViewport`, `MainViewController()` before `ComposeUIViewController {}`. `App()` still
+  calls `install` as a last resort, for a host that embeds it directly, and its real remaining
+  job is `Crashes.watching { … }`: *where* the app is, read at the moment of a crash.
+- The DSN is a **build input**, generated into `BuildInfo.kt` by `:composeApp:generateBuildInfo`
+  from `-Pvinto.sentryDsn=` or `VINTO_SENTRY_DSN`, defaulting to empty. Nothing is committed;
+  empty still means reporting is off, which is what a development build and every test gets
+  without anybody remembering to switch it off.
+- The app scope carries `Crashes.handler()`, so a coroutine that fails on it is **reported**
+  rather than printed to a console nobody is reading. That is the failure players describe as
+  "it just sat there": the app is alive, the room never loads, and no fatal handler will ever
+  see it.
+- The per-process report budget went from **one** to five distinct failures. One was right while
+  the fatal handler was the only caller and wrong the moment background failures started
+  arriving too — the first thing to go wrong would have silenced the crash that ended the app.
+  Repeats are still deduplicated by type and message, so a retry loop cannot run up a bill.
+
+`CrashInstallTest` reads the four entry points and asserts the *ordering*, which is the only way
+to check it: a runtime test composes `App()` and so installs the handler either way, and the
+window that matters is the one before a harness has control. It failed on its own first run —
+`import androidx.activity.compose.setContent` is a mention of `setContent` above every line of
+the body, so a naive search finds it at character zero and every ordering check passes.
+
+**Still not covered**, and recorded rather than done: a genuine native crash on iOS (a signal, a
+Swift trap) is what the Sentry SDK would add; `setUnhandledExceptionHook` catches a Kotlin
+exception reaching the top and nothing below it. Task 8.2 and `design.md` §A9 carry it.
+
+### A network call that failed said so in a serialization error
+
+All four connectors **discarded the HTTP status**. The room service answers 404 for a code it
+never issued, 503 when it is closed, 429 for a room that is full — and every one of those bodies
+went straight into a JSON parser, so a player who mistyped a room code was shown *"Unexpected
+JSON token at offset 0"*. That is not a cosmetic fault: it is the difference between retyping
+the code and deciding the app is broken.
+
+And `RemoteRoom`'s socket loop caught every exception and backed off, for ever. A mistyped code,
+a closed service and a phone in a tunnel produced the same screen — "Reaching the room…",
+indefinitely — with nothing that could say which, or whether waiting would help.
+
+What replaces it:
+
+| | |
+| --- | --- |
+| `RoomTrouble` | Six things that can go wrong, in one vocabulary for four transports |
+| `RoomServiceException.permanent` | Whether trying again can change the answer |
+| `requireOk(status, body)` | Every connector's REST calls go through it, so a status means the same thing everywhere. The service's own words are carried through; an HTML error page is not |
+| `RemoteRoom` | A permanent trouble closes the room at once; a room that has **never** answered gives up after three tries. A socket that drops *mid-game* still reconnects for as long as the app is open — the seat is held by its token |
+| `LobbyWord.UNREACHABLE`, `LobbyUi.canRetry` | The lobby tells "this room ended" from "we never got there", and offers another go at the second |
+| `RemoteRoom.notices` | Now actually read. It carried every lobby refusal the room sent and **nothing consumed it**, so a refused "add a bot" spun a seat for five seconds and then said nothing at all |
+
+Two platforms can name the refusal and two cannot. Android's OkHttp hands the refusing response
+to `onFailure` and the JDK wraps it in a `WebSocketHandshakeException`, so a 404 becomes "no such
+room"; a **browser deliberately hides** the HTTP response of a failed WebSocket upgrade from the
+page, and `NSURLSessionWebSocketTask` reports it through a session delegate this connector does
+not have. Giving up after three tries is what turns those two into a sentence rather than a
+spinner — a vaguer sentence, and a sentence.
+
+Held by `RoomTroubleTest` (in `commonTest`, so the mapping is identical on all four targets) and
+`UnreachableRoomTest`, which drives the real `RemoteRoom` against a refusing connector on virtual
+time.
+
+## 6n. The endgame, which was being skipped
+
+Calling Vinto took the player straight from the button to "Round over". The bots' final turns
+happened — they are in the log — and none of them was drawn.
+
+`AnimationQueue` drops a whole batch that costs more than its budget, which is the right rule for
+a client catching up after a reconnect and was the wrong number for this. A Vinto call submits
+the call **and all three bots' entire last turns** as one batch: measured at **14** moves in an
+ordinary deal, against a budget of 8. So the queue cleared it and the table landed on the final
+state, exactly as designed, having skipped the endgame the whole hand was played for.
+
+The budget is 24 now, and the doc says what it is measuring: *how far behind the client is*, not
+how much happened. Those were the same number until the final round proved they are not. It does
+not weaken the reconnect guard — `RemoteGameSession` already collapses a sync to a single frame
+before the queue sees it (design C4).
+
+`FinalRoundIsWatchedTest` plays a real local game to a Vinto call and asserts the batch reaches
+the queue whole. It fails on the old budget, which is what makes it worth having.
+
+### And the final round now says who is playing whom
+
+Two things taken from the web client, which does this better, in this app's idiom rather than
+its own:
+
+- **The strip above the felt draws from the call onwards.** It used to `return` when
+  `coalitionLeaderId` was null, so the window between the call and the coalition choosing showed
+  no banner, no turn counter and nothing else — silence at the single most surprising moment in
+  the game.
+- **A roster of faces**, coalition on the left, caller on the right, the leader ringed. The web
+  draws two named columns, which is a panel's worth of height; this is one line of portraits,
+  which is the same information in a tenth of the room and reads faster besides — three of the
+  four players are bots the person knows by face long before they know by name. It carries one
+  spoken description for the whole row, because four portraits read out one at a time are four
+  names with no relationship between them.
+
+### And the score sheet answers the question first
+
+It opened with "Round 3" and a table, leaving the player to derive the winner from a column of
++3 and −1 at the exact moment they wanted an answer. It now opens with the verdict — the call
+held, level, the others beat it, or nobody called — and the two totals it turned on. The row that
+**decided** the round is ringed and named, which is the number both the +3 and the −1 were worked
+out from and which nothing used to identify. Portraits went into the rows for the same reason
+they went into the roster.
+
+No confetti and no exclamation mark, unlike the web's "🎉 Coalition Victory!": the same screen
+has to carry a loss, and a player who has just lost a round does not need it celebrated at them.
+
+`RoundOutcome` and `bestCoalitionHands` are pure and live in `shared/client` beside `roundPoints`,
+tested by `RoundOutcomeTest`; the words are tested by `ScoreSheetTest` in composeApp. Same split
+as `CardHelpTest` and `LessonCopyTest` — the model says *which* verdict, the resources say it in
+a language.
+
 ## 6i. Taking the room live — the maintainer's runbook
 
 The online client is code-complete: protocol, room cores with JVM tests, per-event views,
@@ -2028,6 +2162,13 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   bug report, and `GameRecording.formatVersion` is required, so nothing could parse one. The
   general shape — a round trip that never leaves memory proves less than it looks like it does —
   is in §6l.
+- **Nothing may follow `composeCompiler { }` in `composeApp/build.gradle.kts`.** Statements
+  after that block are never executed, and silently: the build succeeds, a `logger.lifecycle`
+  after it prints nothing, and a `tasks.register` after it leaves a task Gradle then reports as
+  *"not found in project ':composeApp'"* — which reads exactly like a typo in the task name.
+  Bisected with probes on a run with the configuration cache off: every block before it runs and
+  every statement after it does not. Half an hour went into finding that out; the comment above
+  the block in the script says the same thing, and new configuration goes **above** it.
 - **A missing serialization runtime is invisible until Kotlin 2.4, and it surfaces on wasm
   first.** `composeApp` reads `@Serializable` enums declared in `shared:*` — `Surface`,
   `FunnelStep`, `Difficulty`, `Pace`, `ThemeChoice` — and never declared

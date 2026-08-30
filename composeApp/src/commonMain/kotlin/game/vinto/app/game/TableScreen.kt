@@ -65,10 +65,15 @@ import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_final_ally
 import game.vinto.app.art.table_final_caller
+import game.vinto.app.art.table_final_choosing
 import game.vinto.app.art.table_final_last_turn
 import game.vinto.app.art.table_final_leader
+import game.vinto.app.art.table_final_leads
 import game.vinto.app.art.table_final_round
+import game.vinto.app.art.table_final_side_caller
+import game.vinto.app.art.table_final_side_coalition
 import game.vinto.app.art.table_final_turns_left
+import game.vinto.app.art.table_final_versus
 import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
@@ -424,54 +429,147 @@ private fun FinalRoundLine(view: PlayerView) {
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
     val leader = view.players.firstOrNull { it.id == view.coalitionLeaderId }
 
+    // Drawn from the call onwards, including the window before a leader is chosen — which is
+    // where this used to `return` and show nothing at all. The rules change the moment Vinto
+    // is called, not the moment the coalition picks somebody, so a table that says nothing
+    // for the first part of the final round is silent exactly when it is most surprising.
     val said = when {
         caller.id == view.viewerId -> stringResource(Res.string.table_final_caller)
-        leader == null -> return
+        leader == null -> stringResource(Res.string.table_final_choosing, caller.nickname)
         leader.id == view.viewerId ->
             stringResource(Res.string.table_final_leader, caller.nickname)
+
         else -> stringResource(Res.string.table_final_ally, leader.nickname, caller.nickname)
     }
+
+    Column(modifier = Modifier.fillMaxWidth().background(Rail.fill)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(Res.string.table_final_round).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                color = Rail.gold,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                said,
+                style = MaterialTheme.typography.labelMedium,
+                color = Rail.ink,
+                modifier = Modifier.weight(1f, fill = true),
+            )
+
+            // How close the reveal is. Three coalition turns can pass in under a second when
+            // the bots hold them all, and a player who looked away for one has no other way to
+            // know how much of the final round is left.
+            finalRoundTurnsLeft(view)?.let { left ->
+                Text(
+                    if (left == 1) {
+                        stringResource(Res.string.table_final_last_turn)
+                    } else {
+                        stringResource(Res.string.table_final_turns_left, left)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.gold,
+                )
+            }
+        }
+
+        Sides(view, caller.id, leader?.id)
+    }
+}
+
+/**
+ * Who is on which side, as faces.
+ *
+ * Taken from the web client, which draws the final round as two named columns — COALITION
+ * against VINTO CALLER — and is plainly better than a sentence at the one moment the game's
+ * shape changes. What is *not* taken is its layout: two stacked lists of names is a panel's
+ * worth of height, and here this sits above a felt that has four hands to fit on a phone.
+ *
+ * So it is one line of portraits, which is the same information in a tenth of the room and
+ * reads faster besides: three of the four players are bots the person has been watching for
+ * ten minutes and knows by face before they know by name. The leader wears a gold ring,
+ * because "who plays the hand" is the one thing about the coalition that is not obvious.
+ */
+@Composable
+private fun Sides(view: PlayerView, callerId: String, leaderId: String?) {
+    val coalition = view.players.filter { it.id != callerId }
+    val caller = view.players.first { it.id == callerId }
+    val leads = leaderId?.let { id -> view.players.firstOrNull { it.id == id }?.nickname }
+    val spoken = leads?.let { stringResource(Res.string.table_final_leads, it) }
+        ?: stringResource(Res.string.table_final_choosing, caller.nickname)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Rail.fill)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
+            .padding(start = 14.dp, end = 14.dp, bottom = 6.dp)
+            // One sentence for the whole row, because four portraits read out one at a time
+            // are four names with no relationship between them — and the relationship is the
+            // only thing this row is for.
+            .semantics {
+                contentDescription = spoken
+            },
+        horizontalArrangement = Arrangement.spacedBy(Tight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        SideLabel(stringResource(Res.string.table_final_side_coalition), Rail.brand)
+        coalition.forEach { seat ->
+            Face(seat.nickname, ringed = seat.id == leaderId)
+        }
+
         Text(
-            stringResource(Res.string.table_final_round).uppercase(),
+            stringResource(Res.string.table_final_versus),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            color = Rail.gold,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(
-            said,
-            style = MaterialTheme.typography.labelMedium,
-            color = Rail.ink,
-            modifier = Modifier.weight(1f, fill = true),
+            color = Rail.inkDim,
+            modifier = Modifier.weight(1f, fill = true).padding(horizontal = Tight),
+            textAlign = TextAlign.Center,
         )
 
-        // How close the reveal is. Three coalition turns can pass in under a second when
-        // the bots hold them all, and a player who looked away for one has no other way to
-        // know how much of the final round is left.
-        finalRoundTurnsLeft(view)?.let { left ->
-            Text(
-                if (left == 1) {
-                    stringResource(Res.string.table_final_last_turn)
-                } else {
-                    stringResource(Res.string.table_final_turns_left, left)
-                },
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = Rail.gold,
-            )
-        }
+        Face(caller.nickname, ringed = true, ring = Slate.gold)
+        SideLabel(stringResource(Res.string.table_final_side_caller), Slate.gold)
     }
 }
+
+@Composable
+private fun SideLabel(text: String, colour: Color) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.sp,
+        color = colour,
+    )
+}
+
+/** One player's portrait, at roster size. Named for a screen reader, since it is the label. */
+@Composable
+private fun Face(name: String, ringed: Boolean, ring: Color = Rail.brand) {
+    Image(
+        painter = painterResource(portraitFor(name)),
+        contentDescription = name,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .size(FaceSize)
+            .clip(CircleShape)
+            .then(
+                if (ringed) {
+                    Modifier.border(FaceRing, ring, CircleShape)
+                } else {
+                    Modifier
+                },
+            ),
+    )
+}
+
+/** Small enough for a line above the felt, large enough to tell four faces apart. */
+private val FaceSize = 22.dp
+private val FaceRing = 2.dp
 
 /** The felt: a gradient, a rim, and everything that happens on it. */
 @Composable

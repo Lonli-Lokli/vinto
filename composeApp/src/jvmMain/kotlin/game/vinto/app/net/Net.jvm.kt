@@ -2,10 +2,13 @@ package game.vinto.app.net
 
 import game.vinto.client.CreatedRoom
 import game.vinto.client.RoomConnector
+import game.vinto.client.RoomServiceException
 import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
+import game.vinto.client.requireOk
+import game.vinto.client.troubleFor
 import game.vinto.protocol.PublicRoom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -15,6 +18,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.WebSocket
+import java.net.http.WebSocketHandshakeException
+import java.util.concurrent.CompletionException
 import java.util.concurrent.CompletionStage
 
 /**
@@ -57,9 +62,18 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
             }
         }
 
-        val socket = client.newWebSocketBuilder()
-            .buildAsync(URI.create(socketUrl(baseUrl, code)), listener)
-            .join()
+        // The handshake's own status, when there is one. `java.net.http` reports a refused
+        // upgrade as a `WebSocketHandshakeException` carrying the HTTP response — which is how
+        // a 404 for a code nobody has, or a 503 from a closed service, becomes a sentence
+        // rather than "connection failed" and a spinner that never stops.
+        val socket = try {
+            client.newWebSocketBuilder()
+                .buildAsync(URI.create(socketUrl(baseUrl, code)), listener)
+                .join()
+        } catch (failed: CompletionException) {
+            incoming.close()
+            throw upgradeTrouble(failed)
+        }
 
         JvmRoomSocket(socket, incoming)
     }
@@ -73,7 +87,7 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
                     .build(),
                 HttpResponse.BodyHandlers.ofString(),
             )
-            parseCreatedRoom(response.body())
+            parseCreatedRoom(requireOk(response.statusCode(), response.body()))
         }
 
     override suspend fun listPublicRooms(): List<PublicRoom> =
@@ -82,8 +96,26 @@ private class JvmRoomConnector(private val baseUrl: String) : RoomConnector {
                 HttpRequest.newBuilder(URI.create("${httpBase(baseUrl)}/rooms")).GET().build(),
                 HttpResponse.BodyHandlers.ofString(),
             )
-            parsePublicRooms(response.body())
+            parsePublicRooms(requireOk(response.statusCode(), response.body()))
         }
+}
+
+/**
+ * What a refused upgrade means, out of the exception the JDK wraps it in.
+ *
+ * `join()` wraps everything in a `CompletionException`, and the interesting case is one whose
+ * cause is a `WebSocketHandshakeException`: that one carries the whole HTTP response, so the
+ * status the service chose survives. Anything else really is a transport failure and is left
+ * as it was — the loop above retries those, which is right.
+ */
+private fun upgradeTrouble(failed: CompletionException): Throwable {
+    val handshake = failed.cause as? WebSocketHandshakeException ?: return failed
+    val response = handshake.response
+    val trouble = troubleFor(response.statusCode()) ?: return failed
+    // `HttpResponse<?>` from the handshake is untyped, so the body is whatever it is; a
+    // string when the service answered in text, and worth nothing otherwise.
+    val said = (response.body() as? String)?.trim().orEmpty()
+    return RoomServiceException(trouble, said.ifEmpty { "the room refused the connection" }, failed)
 }
 
 private class JvmRoomSocket(

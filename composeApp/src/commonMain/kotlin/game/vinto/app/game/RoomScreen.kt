@@ -51,10 +51,12 @@ import game.vinto.app.art.lobby_leave
 import game.vinto.app.art.lobby_needs_human
 import game.vinto.app.art.lobby_over
 import game.vinto.app.art.lobby_remove_bot
+import game.vinto.app.art.lobby_retry
 import game.vinto.app.art.lobby_seat_open
 import game.vinto.app.art.lobby_seat_working
 import game.vinto.app.art.lobby_seat_you
 import game.vinto.app.art.lobby_title
+import game.vinto.app.art.lobby_unreachable
 import game.vinto.app.art.net_closed
 import game.vinto.app.art.net_connected
 import game.vinto.app.art.net_connecting
@@ -121,6 +123,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
     CountConnectionTrouble(connection)
     val mySeat by room.seat.collectAsState()
     val pending by room.pendingSeats.collectAsState()
+    val notice = rememberLatestNotice(room)
     val ui = lobbyUi(lobby, connection, mySeat)
 
     Box(
@@ -153,7 +156,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             // between a title and a button reads as a screen that has finished loading and
             // has nothing in it. The badge above says "Connecting…" in four small words; this
             // says it where the eye already is, which is the space the table will occupy.
-            if (ui.seats.isEmpty()) {
+            if (ui.seats.isEmpty() && !ui.canRetry) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(vertical = Waiting),
                     contentAlignment = Alignment.Center,
@@ -167,6 +170,19 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             }
 
             LobbyLine(ui.word, ui.msUntilStart)
+            Notice(notice)
+
+            // A room that was never reached is the one failure worth offering an answer to.
+            // Giving up with no way back would be a worse screen than the spinner that used to
+            // sit here for ever: at least that one was still trying.
+            if (ui.canRetry) {
+                GameButton(
+                    label = stringResource(Res.string.lobby_retry),
+                    tone = ButtonTone.PLAY,
+                    onClick = room::retry,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             if (ui.canAddBot) {
                 GameButton(
@@ -340,8 +356,67 @@ private fun LobbyLine(word: LobbyWord, msUntilStart: Double?) {
         LobbyWord.FILL_THE_SEATS -> stringResource(Res.string.lobby_fill_seats)
         LobbyWord.COUNTING_DOWN -> stringResource(Res.string.lobby_counting_down, seconds ?: 0)
         LobbyWord.OVER -> stringResource(Res.string.lobby_over)
+        LobbyWord.UNREACHABLE -> stringResource(Res.string.lobby_unreachable)
     }
     Text(line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onFelt())
+}
+
+/** The room's closing line, when the session has finished but the screen is still here. */
+@Composable
+private fun SessionOver(reason: String?) {
+    if (reason == null) return
+    Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
+        Text(
+            text = stringResource(Res.string.online_session_over, reason),
+            modifier = Modifier.padding(Gap),
+            color = Rail.inkDim,
+        )
+    }
+}
+
+/**
+ * The last thing the room said no to, for a few seconds.
+ *
+ * `RemoteRoom.notices` carries every refusal that belongs to no dispatch — a bot the room
+ * would not add, a next round it would not start — and **nothing read it**. So a refused
+ * lobby op showed a spinner on the seat, which timed out after five seconds, and then nothing
+ * at all: the tap looked like it had worked and then quietly had not. That is the worst answer
+ * of the three available, because the player's next move is to try it again.
+ *
+ * It fades rather than accumulating, because a refusal is about the moment it happened and a
+ * list of them is a log nobody asked for.
+ */
+@Composable
+private fun rememberLatestNotice(room: RemoteRoom): String? {
+    var notice by remember(room) { mutableStateOf<String?>(null) }
+    LaunchedEffect(room) {
+        room.notices.collect { said ->
+            notice = said
+            delay(NOTICE_MS)
+            // Only if nothing newer arrived meanwhile: the next collection overwrites this,
+            // and clearing unconditionally would blank a message that is a moment old.
+            if (notice == said) notice = null
+        }
+    }
+    return notice
+}
+
+/** One refusal, said where the thing that was refused is. */
+@Composable
+private fun Notice(said: String?) {
+    if (said == null) return
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = Rail.fill,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = said,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(Gap),
+        )
+    }
 }
 
 /** The connection, as a dot and a word — beside the lobby title, and over a remote table. */
@@ -391,6 +466,7 @@ private fun RemoteGameScreen(
     val log by session.log.collectAsState()
     val standings by room.standings.collectAsState()
     val connection by room.connection.collectAsState()
+    val notice = rememberLatestNotice(room)
     CountConnectionTrouble(connection)
     CountRefusals(holder.refusal)
 
@@ -430,6 +506,11 @@ private fun RemoteGameScreen(
                     modifier = Modifier.weight(1f),
                 )
 
+                // A refused lobby op — a next round the room would not start — belongs where
+                // the tap was, not in a log. `agreed` above would otherwise sit true for ever
+                // waiting for a deal that was declined.
+                Notice(notice)
+
                 BelowTheFelt(
                     connection = connection,
                     over = shown.phase == GamePhase.SCORING,
@@ -444,15 +525,7 @@ private fun RemoteGameScreen(
         HelpSheet(now = holder.table.help, onDismiss = { helpOpen = false })
     }
 
-    endedReason?.let {
-        Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
-            Text(
-                text = stringResource(Res.string.online_session_over, it),
-                modifier = Modifier.padding(Gap),
-                color = Rail.inkDim,
-            )
-        }
-    }
+    SessionOver(endedReason)
 
     // The just-finished round, from public facts: the wire delivered the scoring view; what
     // it paid is derived by the tested rule in `roundPoints`. The room's own standings feed
@@ -561,5 +634,9 @@ private val CodeTracking = 4.sp
 private val LiveGreen = Color(0xFF43A047)
 private val WaitAmber = Color(0xFFF9A825)
 private val DeadRed = Color(0xFFE53935)
+
+/** Long enough to read one line, short enough that it is plainly about what just happened. */
+private const val NOTICE_MS = 4_000L
+
 private const val MS_PER_SECOND = 1_000.0
 private const val TICK_MS = 1_000L

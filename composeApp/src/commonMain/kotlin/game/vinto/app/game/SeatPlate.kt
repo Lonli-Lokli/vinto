@@ -211,7 +211,7 @@ fun SeatPlate(
  * Raphael, Michelangelo and Donatello in that order. Online the seats are people with their
  * own nicknames, and this will need a real mapping — one more reason it is a single function.
  */
-private fun portraitFor(name: String): DrawableResource = when {
+internal fun portraitFor(name: String): DrawableResource = when {
     name.startsWith("Raph") -> Res.drawable.avatar_raphael
     name.startsWith("Mikey") || name.startsWith("Michel") -> Res.drawable.avatar_michelangelo
     name.startsWith("Don") -> Res.drawable.avatar_donatello

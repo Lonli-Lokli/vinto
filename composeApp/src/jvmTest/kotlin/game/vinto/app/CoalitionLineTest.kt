@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,15 @@ import kotlin.test.assertTrue
  * works only for a player who remembers the legend, at the point in the game where they have
  * least attention to spare for remembering it.
  *
- * Three seats, three different sentences, and no sentence at all before there is one to say.
+ * Three seats, three different sentences — and, since the roster landed, a fourth case: the
+ * window between the call and the coalition choosing whose hand plays. The strip used to draw
+ * **nothing at all** there, which is silence at the single most surprising moment in the game;
+ * it now says what has happened and leaves the leader's name until there is one.
+ *
+ * The strip also carries a line of portraits saying who is on which side. Those are checked by
+ * their spoken description rather than by their text, because they have none — which is the
+ * property that matters: a row of four faces with no label is a legend a screen reader cannot
+ * read at all.
  */
 @OptIn(ExperimentalTestApi::class)
 class CoalitionLineTest {
@@ -86,20 +95,69 @@ class CoalitionLineTest {
     }
 
     @Test
-    fun nothingIsSaidBeforeThereIsSomethingToSay() = runComposeUiTest {
+    fun anOrdinaryTurnIsNotAFinalRound() = runComposeUiTest {
+        assertTrue(linesOn(teachingSession().view.value).isEmpty(), "no call, no strip")
+    }
+
+    /**
+     * And the gap between the call and the coalition choosing is not silence.
+     *
+     * It used to be: the strip returned early when `coalitionLeaderId` was null, so the part
+     * of the final round before a leader exists drew nothing — no banner, no turn counter, no
+     * sides. The rules change when Vinto is called, not when the coalition organises itself,
+     * and a table that says nothing for the first part of the final round is quiet exactly
+     * when a player most needs telling.
+     */
+    @Test
+    fun theCallItselfIsAnnouncedBeforeALeaderIsChosen() = runComposeUiTest {
         val whole = teachingSession().view.value
         val caller = whole.players.first { it.id != whole.viewerId }
 
-        assertTrue(linesOn(whole).isEmpty(), "an ordinary turn is not a final round")
+        val said = linesOn(whole.copy(vintoCallerId = caller.id))
+
+        assertEquals(
+            listOf(
+                "FINAL ROUND",
+                "One hand between the three of them, against ${caller.nickname}.",
+            ),
+            said,
+            "the final round began and the table did not mention it",
+        )
+    }
+
+    /**
+     * Who is on which side, said once for the whole row.
+     *
+     * Four portraits read out one at a time are four names with no relationship between them,
+     * and the relationship is the only thing the row is for.
+     */
+    @Test
+    fun theSidesAreSpokenAsWellAsDrawn() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val me = whole.viewerId
+        val others = whole.players.filter { it.id != me }
+        val caller = others[0]
+        val leader = others[1]
+
+        val spoken = describedOn(whole.copy(vintoCallerId = caller.id, coalitionLeaderId = leader.id))
+
         assertTrue(
-            linesOn(whole.copy(vintoCallerId = caller.id)).isEmpty(),
-            "a coalition with nobody chosen to play its hand has no sentence to say yet",
+            spoken.any { it == "${leader.nickname} leads the others" },
+            "the roster is a legend a screen reader cannot read: $spoken",
+        )
+        assertTrue(
+            spoken.containsAll(whole.players.map { it.nickname }),
+            "not every seat is on the roster: $spoken",
         )
     }
 
     /** Every line of the strip above the felt, in the order it reads. */
     private fun ComposeUiTest.linesOn(view: PlayerView): List<String> {
-        var lines = emptyList<String>()
+        show(view)
+        return SENTENCES.flatMap { onAllNodesWithText(it, substring = true).texts() }
+    }
+
+    private fun ComposeUiTest.show(view: PlayerView) {
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
@@ -116,8 +174,14 @@ class CoalitionLineTest {
             }
         }
         waitForIdle()
-        lines = SENTENCES.flatMap { onAllNodesWithText(it, substring = true).texts() }
-        return lines
+    }
+
+    /** Every description the strip contributes: the roster's own, and each face's name. */
+    private fun ComposeUiTest.describedOn(view: PlayerView): List<String> {
+        show(view)
+        return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
+            .fetchSemanticsNodes()
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
     }
 
     private fun androidx.compose.ui.test.SemanticsNodeInteractionCollection.texts(): List<String> =
@@ -127,7 +191,12 @@ class CoalitionLineTest {
 
     private companion object {
         /** What the strip can ever say, so nothing else on the table is mistaken for it. */
-        val SENTENCES = listOf("FINAL ROUND", "coalition’s hand", "against yours")
+        val SENTENCES = listOf(
+            "FINAL ROUND",
+            "coalition’s hand",
+            "against yours",
+            "between the three of them",
+        )
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
     }

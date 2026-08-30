@@ -1,6 +1,8 @@
 package game.vinto.app
 
 import androidx.compose.ui.window.ComposeUIViewController
+import game.vinto.app.crash.Crashes
+import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
 
 /**
@@ -10,7 +12,12 @@ import game.vinto.app.link.offerOpenedLink
 // PascalCase deliberately: Swift calls this as `MainViewControllerKt.MainViewController()`,
 // so the name is part of the contract with `iosApp/iosApp/ContentView.swift`.
 @Suppress("FunctionNaming")
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController(): platform.UIKit.UIViewController {
+    // Before the controller is built, so a failure in the first composition is reported.
+    // `install` is idempotent, and Swift may well ask for a second controller.
+    Crashes.install(appReportingScope())
+    return ComposeUIViewController { App() }
+}
 
 /**
  * An invitation, handed over from Swift.

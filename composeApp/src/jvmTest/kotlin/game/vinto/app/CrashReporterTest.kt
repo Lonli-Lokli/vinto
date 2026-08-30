@@ -49,6 +49,9 @@ class CrashReporterTest {
         post = post,
     )
 
+    /** Mirrors `CrashReporter.BUDGET`, which is private and should stay so. */
+    private val budgetCeiling = 5
+
     @Test
     fun aBuildWithNoDsnReportsNothingAndSaysSo() = runTest {
         val sent = Sent()
@@ -93,6 +96,52 @@ class CrashReporterTest {
             1,
             sent.bodies.size,
             "${sent.bodies.size} reports from one process — a loop would spend the project's quota",
+        )
+    }
+
+    /**
+     * And a different failure afterwards still gets through.
+     *
+     * The budget used to be one report per process, which was right while the fatal handler
+     * was the only caller and wrong the moment background failures started arriving too: a
+     * socket loop failing at launch would then have spent the budget the crash that actually
+     * ended the app needed. What must stay true is that a *loop* cannot spend it, which is
+     * the case above.
+     */
+    @Test
+    fun aSecondDifferentFailureIsStillReported() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        repeat(20) { reporter.report(IllegalStateException("the room never answered")) }
+        reporter.report(IllegalArgumentException("and then the table fell over"))
+
+        assertEquals(2, sent.bodies.size, "one per distinct failure, not one per process")
+        assertTrue(
+            sent.bodies.last().contains("and then the table fell over"),
+            "the second failure was swallowed by the first: ${sent.bodies.last()}",
+        )
+    }
+
+    /** And the budget is a ceiling, however many different things go wrong. */
+    @Test
+    fun aProcessThatKeepsFailingStopsReporting() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        repeat(50) { reporter.report(IllegalStateException("failure number $it")) }
+
+        assertTrue(
+            sent.bodies.size in 1..budgetCeiling,
+            "${sent.bodies.size} reports from one process — that is a bill, not a diagnosis",
         )
     }
 

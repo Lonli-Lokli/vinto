@@ -6,6 +6,7 @@ import game.vinto.client.RoomSocket
 import game.vinto.client.createRoomBody
 import game.vinto.client.parseCreatedRoom
 import game.vinto.client.parsePublicRooms
+import game.vinto.client.requireOk
 import game.vinto.protocol.PublicRoom
 import kotlinx.browser.window
 import kotlinx.coroutines.await
@@ -38,6 +39,12 @@ private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
             ws.onerror = {
                 incoming.close(RuntimeException("socket error"))
                 if (continuation.isActive) {
+                    // No status, and there will not be one. A browser deliberately hides the
+                    // HTTP response of a failed WebSocket upgrade from the page — it is the
+                    // one platform of the four that cannot tell "no such room" from "no
+                    // network". `RemoteRoom` gives up after a few tries for exactly this
+                    // reason, so a wrong code here still ends in a sentence rather than a
+                    // spinner; it is just a vaguer sentence.
                     continuation.resumeWithException(RuntimeException("could not connect"))
                 }
             }
@@ -53,7 +60,7 @@ private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
             RequestInit(method = "POST", body = createRoomBody(isPublic, hostNickname).toJsString()),
         ).await<org.w3c.fetch.Response>()
         val body = response.text().await<JsString>().toString()
-        return parseCreatedRoom(body)
+        return parseCreatedRoom(requireOk(response.status.toInt(), body))
     }
 
     override suspend fun listPublicRooms(): List<PublicRoom> {
@@ -61,7 +68,8 @@ private class WasmRoomConnector(private val baseUrl: String) : RoomConnector {
             "${httpBase(baseUrl)}/rooms",
             RequestInit(method = "GET"),
         ).await<org.w3c.fetch.Response>()
-        return parsePublicRooms(response.text().await<JsString>().toString())
+        val body = response.text().await<JsString>().toString()
+        return parsePublicRooms(requireOk(response.status.toInt(), body))
     }
 }
 

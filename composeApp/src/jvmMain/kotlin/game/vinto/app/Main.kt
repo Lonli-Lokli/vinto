@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import game.vinto.app.crash.Crashes
+import game.vinto.app.crash.appReportingScope
 
 /**
  * The desktop app.
@@ -21,7 +23,12 @@ import androidx.compose.ui.window.rememberWindowState
  * The same `App()` as every other target — a desktop entry point that assembled its own
  * screen would be testing a fourth app rather than this one.
  */
-fun main() = application {
+fun main() {
+    Crashes.install(appReportingScope())
+    desktop()
+}
+
+private fun desktop() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "Vinto",
