@@ -38,7 +38,7 @@ import game.vinto.shapes.getCardShortDescription
  */
 data class Table(
     /** One line telling the player what is being asked of them. */
-    val prompt: String,
+    val prompt: Ask,
     /**
      * The smaller line under it: the rule that applies, or what the card in play does.
      *
@@ -201,7 +201,7 @@ fun revealedTo(view: PlayerView): Set<CardRef> {
 @Suppress("ReturnCount")
 fun tableFor(view: PlayerView, question: Question = Question.None): Table {
     val me = view.players.firstOrNull { it.id == view.viewerId }
-        ?: return Table(prompt = "Watching", waiting = true)
+        ?: return Table(prompt = Ask.Watching, waiting = true)
 
     if (view.phase == GamePhase.SCORING) return scoringTable(view).showing(view)
     if (view.phase == GamePhase.SETUP) {
@@ -229,7 +229,7 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
     val current = view.players.getOrNull(view.currentPlayerIndex)
     if (current?.id != view.viewerId || pending != null) {
         val who = current?.nickname ?: "Someone"
-        val watching = Table(prompt = "$who is playing", waiting = true)
+        val watching = Table(prompt = Ask.SomebodyIsPlaying(Speaker.Named(who)), waiting = true)
         // A coalition member waiting through the final round can still talk: tapping one of
         // their own cards opens the claim picker.
         return if (mayDeclare(view)) {
@@ -255,7 +255,7 @@ private fun mayDeclare(view: PlayerView): Boolean =
         view.coalitionLeaderId != null
 
 private fun declareOwnCardTable(view: PlayerView, position: Int): Table = Table(
-    prompt = "What do you say this card is?",
+    prompt = Ask.WhatDoYouSayThisCardIs,
     detail = "Table talk — the coalition takes your word for it, right or wrong.",
     choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
     ranks = ALL_RANKS.map { rank ->
@@ -331,11 +331,7 @@ private fun setupTable(view: PlayerView, myId: String, peeked: List<Int>): Table
     if (peeked.size < SETUP_PEEKS) {
         val left = SETUP_PEEKS - peeked.size
         return Table(
-            prompt = if (left == SETUP_PEEKS) {
-                "Look at two of your cards"
-            } else {
-                "One more card to look at"
-            },
+            prompt = if (left == SETUP_PEEKS) Ask.LookAtTwoOfYours else Ask.OneMoreToLookAt,
             taps = hand.filterNot { it in peeked }.associate { position ->
                 val peek = GameAction.PeekSetupCard(PositionPayload(myId, position))
                 CardRef(myId, position) to Move.Send(peek)
@@ -346,7 +342,7 @@ private fun setupTable(view: PlayerView, myId: String, peeked: List<Int>): Table
     // Everyone peeks before anyone plays, so this waits on the rest of the table — which for
     // a solo game is nobody, since the bots are dealt theirs.
     return Table(
-        prompt = "Ready when you are",
+        prompt = Ask.ReadyWhenYouAre,
         choices = listOf(
             Choice(
                 Label.StartRound,
@@ -378,7 +374,7 @@ private fun turnStartTable(view: PlayerView): Table {
         )
     }
 
-    return Table(prompt = "Your turn", choices = choices)
+    return Table(prompt = Ask.YourTurn, choices = choices)
 }
 
 // ---------------------------------------------------------------------------- the drawn card
@@ -412,7 +408,7 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
         choices += Choice(Label.Discard, Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
     }
 
-    val what = card?.let { "You drew the ${it.rank.serialName}" } ?: "You drew a card"
+    val what = Ask.YouDrew(card?.rank)
     val does = card?.let { getCardConfig(it.rank) }?.takeIf { it.action != null }?.longDescription
     return Table(prompt = what, detail = does, choices = choices)
 }
@@ -422,7 +418,7 @@ private fun whichSlotTable(view: PlayerView): Table {
     val hand = view.players.first { it.id == me }.cards.indices
 
     return Table(
-        prompt = "Which card does it replace?",
+        prompt = Ask.WhichCardDoesItReplace,
         choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
         taps = hand.associate { position ->
             CardRef(me, position) to Move.Ask(Question.CallRank(position))
@@ -434,7 +430,7 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
     val me = view.viewerId
 
     return Table(
-        prompt = "Name the card you are putting down?",
+        prompt = Ask.NameWhatYouArePuttingDown,
         detail = "Right plays its action; wrong costs you a card.",
         choices = listOf(
             Choice(
@@ -460,16 +456,16 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
 
     return withBorrowed(borrowed) {
         when (pending.targetType) {
-            TargetType.OWN_CARD -> peekTable(view, pending, "Look at one of your own cards", ownTaps(view))
+            TargetType.OWN_CARD -> peekTable(view, pending, Ask.LookAtOneOfYourOwn, ownTaps(view))
             TargetType.OPPONENT_CARD ->
-                peekTable(view, pending, "Look at one card of another player", opponentTaps(view))
+                peekTable(view, pending, Ask.LookAtOneOfAnotherPlayers, opponentTaps(view))
 
             // A Jack swaps blind; a Queen looks first. Same two-target shape, different question
             // at the end, and neither may be skipped until both cards have been named.
             TargetType.SWAP_CARDS -> twoCardTable(
                 view = view,
                 pending = pending,
-                prompt = "Choose two cards, from two different players",
+                prompt = Ask.ChooseTwoFromDifferentPlayers,
                 swap = GameAction.ExecuteJackSwap(PlayerIdPayload(view.viewerId)),
                 leave = GameAction.SkipJackSwap(PlayerIdPayload(view.viewerId)),
             )
@@ -477,7 +473,7 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
             TargetType.PEEK_THEN_SWAP -> twoCardTable(
                 view = view,
                 pending = pending,
-                prompt = "Look at two cards, from two different players",
+                prompt = Ask.LookAtTwoFromDifferentPlayers,
                 swap = GameAction.ExecuteQueenSwap(PlayerIdPayload(view.viewerId)),
                 leave = GameAction.SkipQueenSwap(PlayerIdPayload(view.viewerId)),
             )
@@ -486,7 +482,7 @@ private fun targetingTable(view: PlayerView, pending: PendingActionView): Table 
             TargetType.FORCE_DRAW -> forceDrawTable(view)
 
             null -> Table(
-                prompt = card?.let { "The ${it.rank.serialName} is waiting" } ?: "Waiting",
+                prompt = Ask.TheCardIsWaiting(card?.rank),
                 choices = listOf(giveUp(view.viewerId)),
             )
         }
@@ -519,13 +515,13 @@ private fun giveUp(me: String) =
 private fun peekTable(
     view: PlayerView,
     pending: PendingActionView,
-    prompt: String,
+    prompt: Ask,
     taps: Map<CardRef, Move>,
 ): Table = if (pending.targets.isEmpty()) {
     Table(prompt = prompt, choices = listOf(giveUp(view.viewerId)), taps = taps)
 } else {
     Table(
-        prompt = "Remember it",
+        prompt = Ask.RememberIt,
         choices = listOf(
             Choice(
                 Label.Done,
@@ -539,14 +535,14 @@ private fun peekTable(
 private fun twoCardTable(
     view: PlayerView,
     pending: PendingActionView,
-    prompt: String,
+    prompt: Ask,
     swap: GameAction,
     leave: GameAction,
 ): Table = if (pending.targets.size < TWO_TARGETS) {
     Table(prompt = prompt, choices = listOf(giveUp(view.viewerId)), taps = anyTaps(view, pending))
 } else {
     Table(
-        prompt = "Swap them?",
+        prompt = Ask.SwapThem,
         choices = listOf(
             Choice(Label.SwapCards, Move.Send(swap), Tone.PLAY),
             Choice(Label.LeaveThem, Move.Send(leave)),
@@ -557,13 +553,13 @@ private fun twoCardTable(
 private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
     if (pending.targets.isEmpty()) {
         Table(
-            prompt = "Choose any card",
+            prompt = Ask.ChooseAnyCard,
             choices = listOf(giveUp(view.viewerId)),
             taps = anyTaps(view, pending),
         )
     } else {
         Table(
-            prompt = "Say what it is, and play that card's action",
+            prompt = Ask.SayWhatItIsAndPlayIt,
             choices = listOf(giveUp(view.viewerId)),
             ranks = ALL_RANKS.map { rank ->
                 RankChoice(
@@ -578,7 +574,7 @@ private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
 
 /** The only action that names a player rather than a card. */
 private fun forceDrawTable(view: PlayerView): Table = Table(
-    prompt = "Who draws a card?",
+    prompt = Ask.WhoDrawsACard,
     choices = listOf(giveUp(view.viewerId)),
     seatTaps = view.players.filter { it.id != view.viewerId }.associate { seat ->
         seat.id to Move.Send(
@@ -640,17 +636,15 @@ private fun tossInTable(view: PlayerView): Table? {
 
     val me = view.viewerId
     if (me in toss.playersReadyForNextTurn) {
-        return Table(prompt = "Waiting for the others", waiting = true)
+        return Table(prompt = Ask.WaitingForTheOthers, waiting = true)
     }
-
-    val matching = toss.ranks.joinToString(" or ") { it.serialName }
 
     // One wrong throw bars you for the rest of the round. Said out loud, because it is a rule
     // a player breaks once and then cannot see they have broken: the window would simply stop
     // accepting cards, with nothing to distinguish "you are barred" from "you were too slow".
     if (me in view.barredFromTossIn) {
         return Table(
-            prompt = "The $matching went down",
+            prompt = Ask.TossIn(toss.ranks, barred = true),
             detail = "You threw in a wrong card this round, so you cannot toss in again.",
             // Barred from *tossing in*, not from ending your turn. Losing the Vinto call
             // along with it would be a second penalty the rules never mention, and it would
@@ -672,7 +666,7 @@ private fun tossInTable(view: PlayerView): Table? {
     // deliberate on both sides: a toss-in is a race, and a wrong one costs a penalty card, so
     // the risk that makes it worth confirming is exactly the risk that makes it a bad idea.
     return Table(
-        prompt = "The $matching went down — toss in a match?",
+        prompt = Ask.TossIn(toss.ranks, barred = false),
         detail = "A wrong one costs you a penalty card.",
         taps = hand.associate { position ->
             val throwIn = GameAction.ParticipateInTossIn(ParticipateInTossInPayload(me, listOf(position)))
@@ -723,7 +717,7 @@ private fun coalitionTable(view: PlayerView): Table {
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname ?: "Someone"
 
     return Table(
-        prompt = "$caller called Vinto. Who plays for the rest of you?",
+        prompt = Ask.WhoPlaysForYou(Speaker.Named(caller)),
         seatTaps = view.players
             .filter { it.id != view.vintoCallerId }
             .associate { seat ->
@@ -739,11 +733,7 @@ private fun scoringTable(view: PlayerView): Table {
     val best = view.scores?.values?.minOrNull()
 
     return Table(
-        prompt = when {
-            mine == null || best == null -> "Round over"
-            mine == best -> "Round over — you finished lowest on $mine"
-            else -> "Round over — you finished on $mine, best was $best"
-        },
+        prompt = Ask.RoundOver(yours = mine, best = best),
         detail = when (roundEndReason(view)) {
             RoundEndReason.VINTO_CALLED -> {
                 val caller =
@@ -822,3 +812,20 @@ fun roundEndReason(view: PlayerView): RoundEndReason? = when {
 /** A card taken from the discard pile must be played; only a drawn one may be kept. */
 private val PendingActionView.canGoToHand: Boolean
     get() = from == PendingCardOrigin.DRAWING
+
+/**
+ * Whether a line of the move log is only repeating what the panel is already asking.
+ *
+ * The panel's prompt and the log are built from the same events, so the newest line was
+ * routinely the sentence directly above it — "You drew the 5", twice, six pixels apart.
+ *
+ * This used to be a comparison of two rendered strings, which worked by coincidence: an [Ask]
+ * and a [Say] are different types that happened to produce the same words. Saying it as a
+ * rule instead makes the relationship explicit and survives translation — two sentences that
+ * merely *look* alike in English are no longer silently deduplicated in a language where they
+ * do not.
+ */
+fun Ask.echoedBy(line: Say): Boolean = when {
+    this is Ask.YouDrew && line is Say.DrewKnown -> line.who is Speaker.You && line.rank == rank
+    else -> false
+}

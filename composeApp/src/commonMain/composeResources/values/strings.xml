@@ -234,6 +234,41 @@
     <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
     <!-- The privacy note, in the app's own words rather than a policy's. Said here because
          this is the sheet a player already opens to find out what something means. -->
+    <!-- The line above the buttons: what the table is asking for.
+         Ranks arrive as symbols (%1$s and friends) and are never translated. `ask_or` is the
+         word between two ranks in a toss-in prompt — it is a word, so joining the ranks in
+         Kotlin would have been this module translating badly on the UI's behalf. -->
+    <string name="ask_or"> or </string>
+    <string name="ask_look_at_two_of_yours">Look at two of your cards</string>
+    <string name="ask_one_more_to_look_at">One more card to look at</string>
+    <string name="ask_ready">Ready when you are</string>
+    <string name="ask_your_turn">Your turn</string>
+    <string name="ask_you_drew">You drew the %1$s</string>
+    <string name="ask_you_drew_unknown">You drew a card</string>
+    <string name="ask_which_card_replaced">Which card does it replace?</string>
+    <string name="ask_name_what_you_put_down">Name the card you are putting down?</string>
+    <string name="ask_what_do_you_say">What do you say this card is?</string>
+    <string name="ask_say_and_play">Say what it is, and play that card's action</string>
+    <string name="ask_look_at_one_of_yours">Look at one of your own cards</string>
+    <string name="ask_look_at_one_of_theirs">Look at one card of another player</string>
+    <string name="ask_choose_any_card">Choose any card</string>
+    <string name="ask_choose_two">Choose two cards, from two different players</string>
+    <string name="ask_look_at_two">Look at two cards, from two different players</string>
+    <string name="ask_swap_them">Swap them?</string>
+    <string name="ask_remember_it">Remember it</string>
+    <string name="ask_who_draws">Who draws a card?</string>
+    <string name="ask_card_waiting">The %1$s is waiting</string>
+    <string name="ask_card_waiting_unknown">Waiting</string>
+    <string name="ask_toss_in">The %1$s went down — toss in a match?</string>
+    <string name="ask_toss_in_barred">The %1$s went down</string>
+    <string name="ask_waiting_for_others">Waiting for the others</string>
+    <string name="ask_watching">Watching</string>
+    <string name="ask_somebody_playing">%1$s is playing</string>
+    <string name="ask_who_plays_for_you">%1$s called Vinto. Who plays for the rest of you?</string>
+    <string name="ask_round_over">Round over</string>
+    <string name="ask_round_over_lowest">Round over — you finished lowest on %1$d</string>
+    <string name="ask_round_over_not_lowest">Round over — you finished on %1$d, best was %2$d</string>
+
     <!-- The buttons on the table. Identified in code by `Label`, not by these words: the
          lesson points at a control by its type, so rewording one of these cannot silently
          stop the lesson pointing at it. That coupling used to be a string comparison and it

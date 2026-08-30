@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -129,7 +130,7 @@ class HumanCoalitionLeaderTest {
 
         // The prompt is live: every non-caller seat on offer, the caller not among them.
         val table = tableFor(session.view.value)
-        assertTrue("Who plays" in table.prompt, "expected the leader prompt, got '${table.prompt}'")
+        assertIs<Ask.WhoPlaysForYou>(table.prompt, "expected the leader prompt, got '${table.prompt}'")
         assertEquals(setOf("human-1", "bot-3", "bot-4"), table.seatTaps.keys)
 
         // The human picks a seat; the bots resume and play through to their own turn.

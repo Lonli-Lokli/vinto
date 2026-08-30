@@ -2,6 +2,36 @@ package game.vinto.app
 
 import androidx.compose.runtime.Composable
 import game.vinto.app.art.Res
+import game.vinto.app.art.ask_card_waiting
+import game.vinto.app.art.ask_card_waiting_unknown
+import game.vinto.app.art.ask_choose_any_card
+import game.vinto.app.art.ask_choose_two
+import game.vinto.app.art.ask_look_at_one_of_theirs
+import game.vinto.app.art.ask_look_at_one_of_yours
+import game.vinto.app.art.ask_look_at_two
+import game.vinto.app.art.ask_look_at_two_of_yours
+import game.vinto.app.art.ask_name_what_you_put_down
+import game.vinto.app.art.ask_one_more_to_look_at
+import game.vinto.app.art.ask_or
+import game.vinto.app.art.ask_ready
+import game.vinto.app.art.ask_remember_it
+import game.vinto.app.art.ask_round_over
+import game.vinto.app.art.ask_round_over_lowest
+import game.vinto.app.art.ask_round_over_not_lowest
+import game.vinto.app.art.ask_say_and_play
+import game.vinto.app.art.ask_somebody_playing
+import game.vinto.app.art.ask_swap_them
+import game.vinto.app.art.ask_toss_in
+import game.vinto.app.art.ask_toss_in_barred
+import game.vinto.app.art.ask_waiting_for_others
+import game.vinto.app.art.ask_watching
+import game.vinto.app.art.ask_what_do_you_say
+import game.vinto.app.art.ask_which_card_replaced
+import game.vinto.app.art.ask_who_draws
+import game.vinto.app.art.ask_who_plays_for_you
+import game.vinto.app.art.ask_you_drew
+import game.vinto.app.art.ask_you_drew_unknown
+import game.vinto.app.art.ask_your_turn
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
 import game.vinto.app.art.choice_continue
@@ -40,6 +70,7 @@ import game.vinto.app.art.log_took_unknown
 import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
+import game.vinto.client.Ask
 import game.vinto.client.Label
 import game.vinto.client.Say
 import game.vinto.client.Speaker
@@ -124,7 +155,7 @@ fun said(say: Say): String {
  * it would be both impossible and rude.
  */
 @Composable
-private fun speakerName(who: Speaker): String = when (who) {
+internal fun speakerName(who: Speaker): String = when (who) {
     Speaker.You -> stringResource(Res.string.log_you)
     is Speaker.Named -> who.nickname
     Speaker.Nobody -> ""
@@ -164,4 +195,65 @@ fun labelled(label: Label): String = when (label) {
 fun keyOf(label: Label): String = when (label) {
     is Label.UseFromPile -> "use-from-pile"
     else -> label.toString()
+}
+
+/**
+ * What the table is asking, in the phone's language.
+ *
+ * The third of these renderers, and the one that joins a list. `ask_or` is a *word*, so the
+ * separator between two toss-in ranks belongs here rather than in the model — where it was,
+ * hard-coded, in a module with no way to translate it.
+ */
+@Composable
+@Suppress("CyclomaticComplexMethod")
+fun asked(ask: Ask): String = when (ask) {
+    Ask.LookAtTwoOfYours -> stringResource(Res.string.ask_look_at_two_of_yours)
+    Ask.OneMoreToLookAt -> stringResource(Res.string.ask_one_more_to_look_at)
+    Ask.ReadyWhenYouAre -> stringResource(Res.string.ask_ready)
+    Ask.YourTurn -> stringResource(Res.string.ask_your_turn)
+
+    is Ask.YouDrew -> if (ask.rank != null) {
+        stringResource(Res.string.ask_you_drew, ask.rank!!.serialName)
+    } else {
+        stringResource(Res.string.ask_you_drew_unknown)
+    }
+
+    Ask.WhichCardDoesItReplace -> stringResource(Res.string.ask_which_card_replaced)
+    Ask.NameWhatYouArePuttingDown -> stringResource(Res.string.ask_name_what_you_put_down)
+    Ask.WhatDoYouSayThisCardIs -> stringResource(Res.string.ask_what_do_you_say)
+    Ask.SayWhatItIsAndPlayIt -> stringResource(Res.string.ask_say_and_play)
+    Ask.LookAtOneOfYourOwn -> stringResource(Res.string.ask_look_at_one_of_yours)
+    Ask.LookAtOneOfAnotherPlayers -> stringResource(Res.string.ask_look_at_one_of_theirs)
+    Ask.ChooseAnyCard -> stringResource(Res.string.ask_choose_any_card)
+    Ask.ChooseTwoFromDifferentPlayers -> stringResource(Res.string.ask_choose_two)
+    Ask.LookAtTwoFromDifferentPlayers -> stringResource(Res.string.ask_look_at_two)
+    Ask.SwapThem -> stringResource(Res.string.ask_swap_them)
+    Ask.RememberIt -> stringResource(Res.string.ask_remember_it)
+    Ask.WhoDrawsACard -> stringResource(Res.string.ask_who_draws)
+
+    is Ask.TheCardIsWaiting -> if (ask.rank != null) {
+        stringResource(Res.string.ask_card_waiting, ask.rank!!.serialName)
+    } else {
+        stringResource(Res.string.ask_card_waiting_unknown)
+    }
+
+    is Ask.TossIn -> {
+        val ranks = ask.ranks.joinToString(stringResource(Res.string.ask_or)) { it.serialName }
+        if (ask.barred) {
+            stringResource(Res.string.ask_toss_in_barred, ranks)
+        } else {
+            stringResource(Res.string.ask_toss_in, ranks)
+        }
+    }
+
+    Ask.WaitingForTheOthers -> stringResource(Res.string.ask_waiting_for_others)
+    Ask.Watching -> stringResource(Res.string.ask_watching)
+    is Ask.SomebodyIsPlaying -> stringResource(Res.string.ask_somebody_playing, speakerName(ask.who))
+    is Ask.WhoPlaysForYou -> stringResource(Res.string.ask_who_plays_for_you, speakerName(ask.caller))
+
+    is Ask.RoundOver -> when {
+        ask.yours == null || ask.best == null -> stringResource(Res.string.ask_round_over)
+        ask.yours == ask.best -> stringResource(Res.string.ask_round_over_lowest, ask.yours!!)
+        else -> stringResource(Res.string.ask_round_over_not_lowest, ask.yours!!, ask.best!!)
+    }
 }

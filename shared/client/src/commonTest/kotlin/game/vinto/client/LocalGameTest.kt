@@ -72,7 +72,7 @@ class LocalGameTest {
         val resumed = LocalGame.resume(vault)!!
         val table = tableFor(resumed.session.view.value)
 
-        assertEquals("Your turn", table.prompt)
+        assertEquals(Ask.YourTurn, table.prompt)
         val drawn = resumed.session.dispatch(
             (table.choices.first { it.label == Label.DrawCard }.move as Move.Send).action,
         )

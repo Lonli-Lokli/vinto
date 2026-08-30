@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -60,13 +61,13 @@ class TableModelTest {
         val session = LocalGameSession(seed = 3L, difficulty = Difficulty.EASY)
 
         val first = session.table()
-        assertEquals("Look at two of your cards", first.prompt)
+        assertEquals(Ask.LookAtTwoOfYours, first.prompt)
         assertEquals(FIVE_CARDS, first.taps.size, "every card of mine is offered")
         assertTrue(first.taps.keys.all { it.playerId == session.playerId }, "and only mine")
 
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 2)))
         val second = session.table()
-        assertEquals("One more card to look at", second.prompt)
+        assertEquals(Ask.OneMoreToLookAt, second.prompt)
         assertEquals(FIVE_CARDS - 1, second.taps.size, "the card already seen is not offered again")
 
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 3)))
@@ -81,7 +82,7 @@ class TableModelTest {
     fun aTurnStartsWithADrawAndNoWayToEndItEarly() = runTest {
         val table = started().table()
 
-        assertEquals("Your turn", table.prompt)
+        assertEquals(Ask.YourTurn, table.prompt)
         assertTrue(table.send(Label.DrawCard) is GameAction.DrawCard)
         assertTrue(table.taps.isEmpty(), "nothing to touch until a card is drawn")
 
@@ -101,7 +102,7 @@ class TableModelTest {
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
 
         val table = session.table()
-        assertEquals("You drew the 5", table.prompt)
+        assertEquals(Ask.YouDrew(Rank.FIVE), table.prompt)
         assertFalse(table.labels().any { it == Label.UseAction }, "a 5 has no action: ${table.labels()}")
         assertTrue(table.send(Label.Discard) is GameAction.DiscardCard)
     }
@@ -137,7 +138,7 @@ class TableModelTest {
         val session = aiming(Rank.SEVEN)
         val table = session.table()
 
-        assertEquals("Look at one of your own cards", table.prompt)
+        assertEquals(Ask.LookAtOneOfYourOwn, table.prompt)
         assertTrue(table.taps.keys.all { it.playerId == session.playerId }, "only my hand")
         assertEquals(FIVE_CARDS, table.taps.size)
     }
@@ -147,7 +148,7 @@ class TableModelTest {
         val session = aiming(Rank.NINE)
         val table = session.table()
 
-        assertEquals("Look at one card of another player", table.prompt)
+        assertEquals(Ask.LookAtOneOfAnotherPlayers, table.prompt)
         assertTrue(table.taps.keys.none { it.playerId == session.playerId }, "not my own hand")
         assertEquals(THREE_OPPONENTS * FIVE_CARDS, table.taps.size)
     }
@@ -160,7 +161,7 @@ class TableModelTest {
         session.dispatch((session.table().taps.getValue(target) as Move.Send).action)
 
         val seen = session.table()
-        assertEquals("Remember it", seen.prompt)
+        assertEquals(Ask.RememberIt, seen.prompt)
         assertTrue(seen.taps.isEmpty(), "the peek is spent")
         assertTrue(seen.send(Label.Done) is GameAction.ConfirmPeek)
     }
@@ -170,7 +171,7 @@ class TableModelTest {
         val session = aiming(Rank.JACK)
 
         val first = session.table()
-        assertEquals("Choose two cards, from two different players", first.prompt)
+        assertEquals(Ask.ChooseTwoFromDifferentPlayers, first.prompt)
         assertEquals(FOUR_SEATS * FIVE_CARDS, first.taps.size, "any card, to begin with")
 
         val mine = CardRef(session.playerId, 0)
@@ -186,7 +187,7 @@ class TableModelTest {
         session.dispatch((second.taps.getValue(theirs) as Move.Send).action)
 
         val decide = session.table()
-        assertEquals("Swap them?", decide.prompt)
+        assertEquals(Ask.SwapThem, decide.prompt)
         assertTrue(decide.send(Label.SwapCards) is GameAction.ExecuteJackSwap)
         assertTrue(decide.send(Label.LeaveThem) is GameAction.SkipJackSwap)
     }
@@ -195,7 +196,7 @@ class TableModelTest {
     fun aQueenLooksFirstAndThenOffersItsOwnSwap() = runTest {
         val session = aiming(Rank.QUEEN)
 
-        assertEquals("Look at two cards, from two different players", session.table().prompt)
+        assertEquals(Ask.LookAtTwoFromDifferentPlayers, session.table().prompt)
 
         val mine = CardRef(session.playerId, 0)
         session.dispatch((session.table().taps.getValue(mine) as Move.Send).action)
@@ -203,7 +204,7 @@ class TableModelTest {
         session.dispatch((session.table().taps.getValue(theirs) as Move.Send).action)
 
         val decide = session.table()
-        assertEquals("Swap them?", decide.prompt)
+        assertEquals(Ask.SwapThem, decide.prompt)
         assertTrue(decide.send(Label.SwapCards) is GameAction.ExecuteQueenSwap, "a Queen's swap, not a Jack's")
     }
 
@@ -212,7 +213,7 @@ class TableModelTest {
         val session = aiming(Rank.KING)
 
         val choosing = session.table()
-        assertEquals("Choose any card", choosing.prompt)
+        assertEquals(Ask.ChooseAnyCard, choosing.prompt)
         assertTrue(choosing.ranks.isEmpty(), "nothing to declare until a card is chosen")
 
         session.dispatch((choosing.taps.values.first() as Move.Send).action)
@@ -228,7 +229,7 @@ class TableModelTest {
         val session = aiming(Rank.ACE)
         val table = session.table()
 
-        assertEquals("Who draws a card?", table.prompt)
+        assertEquals(Ask.WhoDrawsACard, table.prompt)
         assertTrue(table.taps.isEmpty(), "an Ace has no card to aim at")
         assertEquals(THREE_OPPONENTS, table.seatTaps.size, "and cannot be aimed at myself")
         assertFalse(session.playerId in table.seatTaps)
@@ -244,7 +245,7 @@ class TableModelTest {
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
 
         val table = session.table()
-        assertTrue(table.prompt.startsWith("The 5 went down"), table.prompt)
+        assertEquals(Ask.TossIn(listOf(Rank.FIVE), barred = false), table.prompt)
         assertTrue(table.send(Label.Continue) is GameAction.PlayerTossInFinished)
         assertTrue(table.send(Label.CallVinto) is GameAction.CallVinto, "your own turn is ending")
 
@@ -280,7 +281,7 @@ class TableModelTest {
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
 
         val table = session.table()
-        assertEquals("You drew the K", table.prompt)
+        assertEquals(Ask.YouDrew(Rank.KING), table.prompt)
         assertTrue(table.detail!!.contains("eclare"), table.detail!!)
     }
 
@@ -393,7 +394,7 @@ class TableModelTest {
         val theirs = tableFor(projectView(session.state, someBot))
 
         assertTrue(theirs.waiting, "a bot's view of my turn is a waiting one")
-        assertTrue(theirs.prompt.endsWith("is playing"), theirs.prompt)
+        assertIs<Ask.SomebodyIsPlaying>(theirs.prompt, "${theirs.prompt}")
         assertTrue(theirs.choices.isEmpty() && theirs.taps.isEmpty(), "and offers nothing")
     }
 
@@ -414,7 +415,7 @@ class TableModelTest {
 
         val table = session.table()
         assertTrue(table.waiting)
-        assertTrue(table.prompt.startsWith("Round over"), table.prompt)
+        assertIs<Ask.RoundOver>(table.prompt, "${table.prompt}")
     }
 
     private companion object {

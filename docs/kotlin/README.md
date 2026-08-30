@@ -1421,15 +1421,33 @@ and says nothing — which is exactly how the missing beat stayed missing.
 The tests converted with it, and got better: `it.label == Label.CallVinto` instead of
 `it.label == "Call Vinto"`, and `send(Label.DrawCard)` instead of `send("Draw")`.
 
+### Slice 3 — `Table.prompt`, done
+
+The line above the buttons. `Ask`, 30 cases, rendered by `asked()` from 30 resource entries.
+
+A third piece of English assembly went with it: the toss-in prompt joined its ranks with
+`" or "`, hard-coded in a module with no way to translate it. `Ask.TossIn` carries the ranks
+and the renderer joins them with `ask_or`.
+
+And the thing slice 1 had to leave in the UI came back to the model, better than it left.
+Dropping a log line that only repeats the prompt used to compare two *rendered strings* — which
+worked by coincidence, `Ask.YouDrew` and `Say.DrewKnown` being different types that happen to
+produce the same English. `Ask.echoedBy(Say)` says the relationship instead, and survives a
+language where those two sentences differ.
+
 ### Still to do
 
-`TableModel`'s **prompts and details** (~55 literals) and all of `TeachScript` (144). The
-prompt half is the larger remaining piece of `TableModel` and was split out deliberately: the
-labels carried a defect and the prompts do not, so they are separate commits.
+- **`Table.detail`** (~8 literals) is still a `String?`, and it is not simply more of the same:
+  most of what fills it is `CardConfig.longDescription` from `shared/shapes` — a *fourth* file,
+  and one shared with the help sheet's card gallery. Converting `detail` without deciding about
+  `CardConfig` would produce a typed field carrying an English string, which is worse than
+  either end. Decide `CardConfig` first.
+- **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
+  assembled sentences, so it is more mechanical than these three were — but it is also where
+  the two dead English matches lived, so read it for more of them while converting.
 
-One thing to undo later: `RecentActions` now renders the log and *then* drops any line equal to
-the panel's prompt. That comparison used to happen in the model, where both sides were built
-from the same narration; it moves back there once `TableModel` returns `Say` too.
+`TeachingRoundTest` now collects prompts and details separately (`asked` and `said`), which is
+the shape the remaining slices want anyway.
 
 `Say` lives in `shared/client` rather than `shared/protocol` because it is not wire — nothing
 sends one anywhere, and putting it in the protocol module would imply a compatibility promise

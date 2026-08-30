@@ -128,12 +128,12 @@ class TeachingRoundTest {
         player.play()
 
         assertTrue(
-            player.said.any { it.contains("You drew the Q") },
-            "the Queen has to reach the player: ${player.said}",
+            player.asked.any { it == Ask.YouDrew(Rank.QUEEN) },
+            "the Queen has to reach the player: ${player.asked}",
         )
         assertTrue(
-            player.said.any { it.contains("You drew the K") },
-            "and so does the King: ${player.said}",
+            player.asked.any { it == Ask.YouDrew(Rank.KING) },
+            "and so does the King: ${player.asked}",
         )
     }
 
@@ -233,6 +233,10 @@ private class SimplePlayer(private val session: LocalGameSession) {
      * Action" rather than the card's whole effect — so what proves a particular card reached
      * the player is the prompt above them, not the label on them.
      */
+    /** Every prompt the table put to the player. Typed, so an assertion says what it means. */
+    val asked = mutableSetOf<Ask>()
+
+    /** The smaller line under it, still a sentence — see §6h, `detail` is a later slice. */
     val said = mutableSetOf<String>()
 
     suspend fun play(steps: Int = STEPS) {
@@ -241,7 +245,8 @@ private class SimplePlayer(private val session: LocalGameSession) {
 
             val table = tableFor(projectView(session.state, session.playerId))
             offered += table.choices.map { it.label }
-            said += listOfNotNull(table.prompt, table.detail)
+            asked += table.prompt
+            said += listOfNotNull(table.detail)
 
             // Sends only: an Ask is a question the screen asks itself, and answering one needs
             // a tap on a card rather than a move.

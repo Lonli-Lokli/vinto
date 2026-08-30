@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.table_sending
+import game.vinto.app.asked
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
 import game.vinto.app.said
@@ -53,6 +54,7 @@ import game.vinto.client.Say
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
+import game.vinto.client.echoedBy
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
@@ -165,7 +167,7 @@ fun ControlPanel(
             // Vinto" off the bottom of the rail while the button count still said two.
             val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
             val crowded = table.ranks.isNotEmpty() || rows >= Crowded
-            if (!crowded) RecentActions(state.recent, table.prompt)
+            if (!crowded) RecentActions(state.recent.filterNot { table.prompt.echoedBy(it) })
 
             RankGrid(table.ranks, stage, onMove)
 
@@ -244,7 +246,7 @@ private fun ColumnScope.Answer(state: TableState) {
 private fun Heading(table: Table, teaching: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = table.prompt,
+            text = asked(table.prompt),
             fontSize = PromptSize,
             fontWeight = FontWeight.Bold,
             color = Rail.ink,
@@ -295,16 +297,15 @@ private fun worthSaying(detail: String, teaching: Boolean): Boolean {
  * The last few moves, in the phone's language.
  *
  * Rendering happens here rather than in the model, which is the whole of §6h's change: the
- * log arrives as [Say] — what happened — and becomes words at the point where resources
- * exist. Two consequences worth knowing.
+ * log arrives as [Say] — what happened — and becomes words where the resources are.
  *
- * [prompt] is passed in so the top line can be dropped when it repeats what the panel is
- * already asking. That check used to compare two strings built from the same narration; now
- * one side is a message and the other is still a sentence, so the comparison has to happen
- * *after* rendering. It moves back into the model when `TableModel` is converted too.
+ * The caller drops any line that only repeats the prompt, by the model's own `echoedBy` rule.
+ * That was briefly a comparison of two *rendered* strings — which worked by coincidence, an
+ * [Ask] and a [Say] being different types that happen to produce the same words in English.
+ * As a rule it survives a language where they do not.
  */
 @Composable
-private fun RecentActions(recent: List<Say>, prompt: String) {
+private fun RecentActions(recent: List<Say>) {
     if (recent.isEmpty()) return
 
     Surface(
@@ -319,7 +320,7 @@ private fun RecentActions(recent: List<Say>, prompt: String) {
             val rendered = ArrayList<String>(recent.size)
             for (entry in recent) rendered += said(entry)
 
-            rendered.filterNot { it == prompt }.takeLast(RECENT_SHOWN).forEach { line ->
+            rendered.takeLast(RECENT_SHOWN).forEach { line ->
                 Text(text = line, fontSize = DetailSize, color = Rail.inkDim)
             }
         }
