@@ -192,7 +192,7 @@ composeApp/        # Compose Multiplatform UI — Android, iOS and web from one 
 worker/            # Cloudflare Worker + Durable Object per room (Kotlin/JS)
 iosApp/            # Xcode project embedding composeApp's framework
 fixtures/          # The cross-implementation corpus: 50 recordings + PRNG vectors
-docs/kotlin/       # Setup, module map, commands, protocol, traps
+docs/kotlin/       # ARCHITECTURE.md (the shape), README.md (the state), protocol, traps
 legacy-web/        # The retired Next.js client and its Nx workspace (frozen)
 ```
 

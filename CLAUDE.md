@@ -17,6 +17,7 @@
 
   ## Quick Reference
   See @README.md for project overview and architecture
+  See @docs/kotlin/ARCHITECTURE.md for the shape of the system: the invariants and why
   See @docs/kotlin/README.md for the Kotlin workspace: setup, module map, commands, traps
   See @legacy-web/package.json for the retired web client's npm scripts
   See @docs/game-engine/README.md for game engine documentation
@@ -177,7 +178,11 @@
   2. TypeScript: the same, in `legacy-web/packages/engine/src/lib/`
   3. Regenerate the corpus (`cd legacy-web && npm run recordings:generate`) and re-run the
      Kotlin parity gate — a rules change that lands in one engine only is what the corpus
-     exists to catch
+     exists to catch. **This step has an expiry date**: `legacy-web/` is being deleted, and
+     with it the ability to *regenerate* the corpus. The 51 committed fixtures stay and
+     `CorpusReplayTest` still replays them, so the gate against the Kotlin engine drifting
+     survives — but it stops being evidence that two implementations agree today. See
+     `docs/kotlin/README.md` §1d and ARCHITECTURE.md §7 before relying on the wording above
   4. Dispatch from the UI
 
   Testing Game Logic:
