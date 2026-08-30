@@ -2,7 +2,7 @@
   description: "Test game engine with scenario"
   allowed-tools:
     - Read
-    - Bash(npx nx test:*)
+    - Bash(./gradlew :shared:engine:*)
     - Write
   argument-hint: "scenario description"
   ---
@@ -11,9 +11,11 @@
 
   Steps:
   1. Review relevant scenarios in docs/game-engine/SCENARIOS.md
-  2. Check existing tests in shared/engine/src/commonTest/ (Kotlin) or
-     legacy-web/packages/engine/src/lib/ (TypeScript)
+  2. Check existing tests in shared/engine/src/commonTest/
   3. Create a new test case following the pattern
   4. Run the test: ./gradlew :shared:engine:jvmTest
-     (TypeScript: cd legacy-web && npx nx test engine)
+
+     This also replays the frozen parity corpus. If CorpusReplayTest goes red, the
+     corpus is almost certainly the thing that was right — see
+     fixtures/recordings/README.md, and never regenerate it to go green.
   5. Verify game state immutability and determinism

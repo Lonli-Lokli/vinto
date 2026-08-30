@@ -7,10 +7,11 @@ Vinto is a strategic multiplayer card game: one human against three MCTS-driven 
 believes they are lowest calls **Vinto**, the others form a **coalition** for one final
 round, and the round is scored caller-vs-lowest-coalition-hand.
 
-The long-term goal is a **native mobile game (Android + iOS)** built on **Kotlin
-Multiplatform + Compose Multiplatform**, sharing one game engine between clients and a
-future multiplayer server. The current TypeScript implementation is the reference: every
-rule, edge case and reproducible game recorded from it must behave identically in Kotlin.
+It is a **Kotlin Multiplatform** game — Android, iOS and the browser from one `commonMain`,
+with one game engine shared between every client and the server. A TypeScript implementation
+came first and was the reference during the port; it has been deleted. What survives it is
+`fixtures/recordings`: 50 games whose state hashes that implementation computed, frozen, and
+replayed on every run.
 
 ## Tech Stack (current — Kotlin, and it is what ships)
 
@@ -31,48 +32,26 @@ rule, edge case and reproducible game recorded from it must behave identically i
   construction is explicit. Do not reintroduce it without a reason that is not habit
 - **No JVM/Ktor server.** The authority is a Durable Object per room (design D1, D9)
 
-## Tech Stack (retired, TypeScript — `legacy-web/`, being deleted)
+## What the corpus is, now that there is one engine
 
-The Next.js client is frozen and on its way out (`docs/kotlin/README.md` §1d). Its CI is
-already removed. `fixtures/` stays at the repository root and the Kotlin engine keeps
-replaying it, but once `legacy-web/` goes the corpus can no longer be *regenerated* — it
-becomes a frozen gate against Kotlin drift rather than live evidence that two engines agree.
-Anything below describing TypeScript as current is history, kept for the port's context.
+`fixtures/recordings` is **frozen and cannot be regenerated**. It is 50 games and 13,900
+actions carrying hashes computed by a second implementation written from the rules rather than
+from this code — which is the entire source of its value, and that implementation is gone.
 
-
-- Nx 22 monorepo, Node 22, TypeScript 5.9 (strict), Vitest, ESLint, Prettier (CRLF, single quotes)
-- `packages/shapes` — shared types (`GameState`, `PlayerState`, `Card`, `Rank`, `Pile`), card configs, `GameAction` union
-- `packages/engine` — pure reducer engine: `GameEngine.reduce(state, action)`, `action-validator.ts`, one handler per action in `cases/`, `utils/` (toss-in flow, scoring)
-- `packages/bot` — MCTS bot (`mcts-*.ts`), heuristics, opponent modeler, `coalition-planner.ts` (final-round joint planner)
-- `packages/local-client` — MobX `GameClient` (logical + visual state, animation sync), `BotAIAdapter` (drives bots from MobX reactions), `initializeGame.ts`
-- `apps/vinto` — Next.js 15 / React 19 / Tailwind UI, framer-motion animations, Sentry, Vercel
-- Docs: `docs/game-engine/VINTO_RULES.md`, `SCENARIOS.md`, `README.md`
-
-### Libraries actually in use
-
-kotlinx.serialization (JSON — the wire and the recording format), kotlinx.coroutines
-(`GameSession`, the bot queue, the room's pacing), Compose Multiplatform, kotlin.test.
-That is the whole list: no DI container, no date-time library, no networking library beyond
-the platform seam in `Net`.
-
-## How planning works here
-
-- `openspec/changes/<name>/` — a proposal in flight: `proposal.md`, `design.md`, `tasks.md`
-  and delta specs under `specs/`.
-- `openspec/specs/<capability>/spec.md` — **what the game is held to.** Deltas are merged here
-  when a change archives, and not before.
-- `openspec/changes/archive/` — finished changes, with a table of what each one synced.
-
-A requirement inside a change folder is a proposal; a requirement in `openspec/specs/` is a
-commitment. For most of this project's life nothing had been archived, so `specs/` was empty
-and two complete changes still read as proposals — worth knowing if a spec seems to be missing.
+Porting the generator to Kotlin was considered and rejected: a recording produced by the engine
+under test proves the engine agrees with itself, which this repository already checks three
+other ways. It cannot catch a handler ported wrong from the start in a self-consistent way.
+`fixtures/recordings/README.md` carries the argument; `CorpusIsFrozenTest` enforces it. New
+recordings go in `fixtures/kotlin-recordings/`, which is regression coverage rather than
+evidence.
 
 ## Project Conventions
 
 ### Code Style
 
-- TypeScript: kebab-case files, named exports, one component per file, `interface` over `type`, `copy()` for state updates, feature-oriented folders.
-- Kotlin: standard Kotlin style, `data class`/`sealed interface` for state and actions, pure functions in the engine, no platform APIs in shared modules.
+- Kotlin: standard style, `data class`/`sealed interface` for state and actions, pure functions in the engine, no platform APIs in shared modules.
+- detekt runs with every rule the tool ships; where this project disagrees with one, the disagreement is written beside it in `config/detekt/detekt.yml` rather than suppressed at the call site.
+- Comments explain decisions, not signatures. Test names are sentences, because backticked names are JVM-only and much of the suite is `commonTest`.
 
 ### Architecture Patterns
 
@@ -87,11 +66,11 @@ and two complete changes still read as proposals — worth knowing if a spec see
 - Engine: unit tests per handler + rules/scenario tests (`SCENARIOS.md` is the spec).
 - Bot: deterministic parts (heuristics, coalition planner) unit-tested exactly; MCTS statistically.
 - Client: adapter integration tests with fake timers.
-- Parity: replay committed recording fixtures through every engine implementation; state hashes after every action must match.
+- Parity: `CorpusReplayTest` replays the 50 frozen recordings and compares the canonical state hash after **every** action. `RecordingRoundTripTest` does the same trip across *targets* — JVM, JS and Wasm — which is the property that still matters with one engine, because a `Long` is two `Int`s on Kotlin/JS.
 
 ### Git Workflow
 
-- `master` is main; the Kotlin migration lives on `kotlin` (not yet merged); issue branches `issue-{N}`.
+- `master` is main; work lives on `kotlin` (not yet merged); issue branches `issue-{N}`.
 - lefthook pre-commit runs `./gradlew detekt` on Kotlin changes. The two npm hooks went with
   the web client's tooling.
 - Never bypass hooks; commit only when asked.

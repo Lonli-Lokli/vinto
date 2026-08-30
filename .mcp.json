@@ -1,13 +1,5 @@
 {
   "mcpServers": {
-    "nx-mcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@nx/mcp",
-        "legacy-web"
-      ]
-    },
     "ide": {
       "command": "npx",
       "args": [

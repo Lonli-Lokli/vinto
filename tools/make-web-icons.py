@@ -41,8 +41,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 # tools/ sits at the repository root, which is also the Gradle root.
 ROOT = Path(__file__).resolve().parents[1]
 
-# The mark comes from the retired web client — the same V the site used and the launcher uses.
-MARK = ROOT / "legacy-web" / "apps" / "vinto" / "public" / "favicon.png"
+# The same V the launcher uses, so the phone and the browser answer to one mark.
+MARK = ROOT / "tools" / "brand" / "vinto-mark.png"
 # The card art the app itself draws with, so the share card is the real deck.
 ART = ROOT / "composeApp" / "src" / "commonMain" / "composeResources" / "drawable"
 # Cinzel, the wordmark face. `theme/Type.kt` uses it for the name of the game and nothing else.

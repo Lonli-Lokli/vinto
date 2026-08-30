@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the Android launcher icons from the web app's mark.
 
-The source is `legacy-web/apps/vinto/public/favicon.png` — the orange V the web app already ships,
+The source is `tools/brand/vinto-mark.png` — the orange V the web client shipped,
 so the phone and the browser answer to the same mark. It is 144 px of flat #FF6000 on
 transparency and the only artwork there is; everything below is layout, not drawing.
 
@@ -33,8 +33,13 @@ from PIL import Image, ImageDraw
 # tools/ sits at the repository root, which is also the Gradle root.
 ROOT = Path(__file__).resolve().parents[1]
 # The mark comes from the retired web client — the same V the site used.
-SOURCE = ROOT / "legacy-web" / "apps" / "vinto" / "public" / "favicon.png"
-RES = ROOT / "composeApp" / "src" / "androidMain" / "res"
+SOURCE = ROOT / "tools" / "brand" / "vinto-mark.png"
+# `androidApp`, not `composeApp`. AGP 9 refuses to let an Android *application* be a KMP
+# module, so the application was split out and the launcher icons went with it — and this
+# path was left behind pointing at a directory that no longer holds them. Running the
+# script then silently created a second, unused set beside the real ones, which is how it
+# was found. The manifest that reads them is `androidApp/src/main/AndroidManifest.xml`.
+RES = ROOT / "androidApp" / "src" / "main" / "res"
 
 # The rail — the dark band the app's own controls sit on (`theme/VintoTheme.kt`). The icon
 # is the first frame of the app, and it is the colour the window opens on.
