@@ -44,7 +44,11 @@ import game.vinto.app.art.teach_go_on
 import game.vinto.app.art.teach_heading
 import game.vinto.app.art.teach_watching
 import game.vinto.app.elapsedMs
+import game.vinto.app.glossed
 import game.vinto.app.label
+import game.vinto.app.noteOn
+import game.vinto.app.taughtBody
+import game.vinto.app.taughtTitle
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -311,7 +315,7 @@ private fun Coach(
     // to look at. **Shut while the game is being played**, down to one line, because
     // everything under it is something the player has to be able to see and touch — their own
     // hand, the deck, the pile. One tap opens it for as long as they want it.
-    var open by remember(lesson?.talkId, lesson?.title) { mutableStateOf(false) }
+    var open by remember(lesson?.talkId, lesson?.teaches) { mutableStateOf(false) }
     val showing = talking || open
 
     Surface(
@@ -334,7 +338,8 @@ private fun Coach(
                 Text(
                     text = when {
                         finished -> stringResource(Res.string.teach_finished_title)
-                        else -> lesson?.title ?: stringResource(Res.string.teach_heading)
+                        else -> lesson?.teaches?.let { taughtTitle(it) }
+                            ?: stringResource(Res.string.teach_heading)
                     },
                     fontSize = TitleSize,
                     fontWeight = FontWeight.Bold,
@@ -384,23 +389,23 @@ private fun CoachBody(lesson: Lesson?, finished: Boolean, strayed: Boolean) {
         HeldUpCards(lesson?.cards.orEmpty())
 
         if (strayed) {
-            Text(text = STRAYED, fontSize = DetailSize, color = Rail.note)
+            Text(text = taughtBody(STRAYED), fontSize = DetailSize, color = Rail.note)
         }
 
         Text(
             text = when {
                 finished -> stringResource(Res.string.teach_finished_body)
-                lesson != null -> lesson.body
+                lesson != null -> taughtBody(lesson.teaches)
                 else -> stringResource(Res.string.teach_watching)
             },
             fontSize = DetailSize,
             color = Rail.inkDim,
         )
 
-        lesson?.note?.let { note -> Note(note, lesson.noteRank) }
+        lesson?.noteRank?.let { rank -> Note(noteOn(rank), rank) }
 
         lesson?.gloss?.let { gloss ->
-            Text(text = gloss, fontSize = DetailSize, color = Rail.inkDim)
+            Text(text = glossed(gloss), fontSize = DetailSize, color = Rail.inkDim)
         }
     }
 }

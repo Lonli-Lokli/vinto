@@ -172,12 +172,12 @@ measurable.
    handlers, the browser reads its own path, and an invitation now shares a link with the code
    underneath it for reading aloud. An invited player lands on the table with `ROOM_JOINED`
    recorded, which is the funnel step analytics 3.3 specified
-5. **Finish the translation.** §6h: roughly two hundred strings in `shared/client` are English
-   whatever the phone is set to, because `Narration`, `TableModel` and `TeachScript` *assemble*
-   sentences rather than store them. Menus, settings and help follow the language; the table's
-   prompts, the move log and the entire lesson do not. The fix is designed — return a typed
-   message and render it in the UI — and it makes the tests better, because asserting
-   `Say.YouDrew(SEVEN)` says what is meant where an English sentence says what it reads
+5. ~~**Finish the translation.**~~ **Done** (§6h, eight slices). Every string a player sees now
+   comes from `strings.xml`: `Narration`, `TableModel` and `TeachScript` return typed messages —
+   `Say`, `Label`, `Ask`, `Detail`, `Explains`, `Teaches` — and the UI renders them. Five string
+   literals are left in `shared/client` and none of them is a word a player sees. Adding
+   `values-be/` or `values-uk/` is now a file and no code, which is what the exercise was for.
+   Seven of the eight slices turned up a defect that had nothing to do with language
 6. ~~**Local statistics.**~~ **Done.** `Stats` beside `Settings` in the same vault: rounds
    played, win rate, best hand, streak and best streak. On the device, no server, no privacy
    cost. A line under the wordmark once there is a round to show, and a way to clear it in
@@ -1342,11 +1342,13 @@ The choice labels moved off the enums. `Difficulty.serialName` is a **wire value
 every saved game and every recording — and capitalising it to put on a button worked exactly as
 long as the app was English. `Labels.kt` maps each enum to a resource instead.
 
-### What is still English, and why it is harder
+### What was still English, and why it was harder — now done
 
-Roughly two hundred strings remain in `shared/client`, and they cannot simply move: that module
-has no Compose, and its copy is not written as sentences to translate but *assembled* from
-grammar.
+Roughly two hundred strings remained in `shared/client` when this was written, and they could
+not simply move: that module has no Compose, and its copy was not written as sentences to
+translate but *assembled* from grammar. All of it is converted now (slice 8 above); the
+original reasoning is kept because it is why the answer was a typed message rather than a
+string table.
 
 - `Narration.kt` conjugates verbs — `youForm`/`theyForm`, "You draw" against "Raph draws". In
   Belarusian or Ukrainian that is not a suffix swap; it is a different sentence.
@@ -1362,9 +1364,11 @@ it from resources. `Table.prompt: String` becomes something like `Table.prompt: 
 tests get better rather than worse, because asserting `Say.YouDrew(SEVEN)` says what is meant
 where asserting an English sentence says what it currently reads.
 
-Until that lands the app is half-translated: menus, settings, the score sheet, the help sheet
-and the spoken descriptions follow the phone's language; the table's prompts, the move log and
-the lesson do not.
+That is what landed. The app is no longer half-translated: menus, settings, the score sheet,
+the help sheet, the spoken descriptions, the table's prompts, the move log **and the lesson**
+all follow the phone's language. What is not yet translated is a different thing and an easier
+one — there is still only a `values/strings.xml`, so adding `values-be/` and `values-uk/` is
+now a file each and no code at all, which is what this whole exercise was for.
 
 ### How big it actually is, measured
 
@@ -1525,46 +1529,47 @@ language — two dead English matches, a hashed field about to be translated, an
 text that was never displayed. Assembling sentences in a module that cannot render them turns
 out to be a reliable marker for code nobody has looked at.
 
-### Still to do: `TeachScript.kt`'s lesson prose — designed, deliberately not done yet
+### Slice 8 — the lesson itself, and §6h is finished
 
-**~135 literals across 28 lesson beats.** It is the only piece of §6h left, and the only one
-with no discovery value: the other seven each turned up a defect, and this one is 28 near
-identical text moves. It was deferred in favour of the ten unstarted tasks in
-`migrate-to-kotlin-multiplatform` (5.6, 6.5, 6.6, 6.7, 7.7 among them) — a scope call, recorded
-here rather than made silently, and reversible the moment those are done.
+**Done.** 28 beats, ~135 literals, one commit, exactly as the design said it had to be — `Lesson`
+holds `title: String?` and `body: String` as *fields*, so changing their type moves every call
+site at once and only the resource entries can be added incrementally.
 
-**One structural finding worth having before anybody starts.** It *cannot* be split by chapter,
-which was the obvious plan. `Lesson.title`/`body` are fields, so changing their type forces all
-28 call sites in one commit; only the resource entries can be added incrementally. Plan for one
-mechanical commit, not four.
+What is left in `shared/client` after it: **five string literals, none of them words a player
+sees** — two storage keys, an internal animation id, and two `require`/`error` messages for
+whoever is debugging. The module says what happened and the UI says it in words, everywhere.
 
-**The design, ready to execute.** 18 of the 28 already carry a stable `talkId` — `welcome`,
-`cards_numbers`, `cards_king_whose` — used for "has this been talked through" tracking. Those
-are the keys. So:
+Four things worth keeping from doing it.
 
-1. A `Beat` enum, 28 entries: the 18 existing `talkId`s plus ten for the in-play beats
-   (`the only look you get`, `keep it or throw it`, `two ways to start a turn`, …).
-2. `Lesson.title: String?` and `body: String` become `beat: Beat`; the words go to `strings.xml`
-   as `beat_<id>_title` and `beat_<id>_body`.
-3. A renderer beside `said`/`asked`/`detailed`/`explained` in `composeApp/.../Said.kt`.
-4. `Taught.talked: Set<String>` becomes `Set<Beat>` while you are there — it is the same set of
-   ids, currently stringly-typed and able to drift from the lessons it tracks.
+**The name `Beat` was taken, and that is not a triviality.** `Choreography.kt` has had a `Beat`
+since the animation layer was built and it means something completely different — a step in a
+card's movement. The design in this section named the new type `Beat` and it would have
+collided on the first compile. It is `Teaches`, which reads correctly beside the five types it
+joins (`Say`, `Label`, `Ask`, `Detail`, `Explains`), all named for what the module is *doing*.
 
-Three irregular sites to handle individually rather than by script:
+**The design's fourth step was wrong, and the section it was written in says why.** It proposed
+turning `Taught.talked: Set<String>` into a `Set<Teaches>` "while you are there". That breaks
+for exactly the two beats this section had already identified as irregular: `TossIn` and
+`VintoCalled` carry arguments, so two instances of the same beat are *unequal* — a toss-in
+window with one thrower and the same window with two would be two entries in the set, and the
+lesson would say itself twice. The id is the beat's identity; the arguments are what varies
+within it. `Teaches.id` stays, and the eighteen existing `talkId` strings stay with it, so a
+lesson somebody is halfway through still means what it meant.
 
-| | |
-| --- | --- |
-| Two beats have `title = null` | The type must keep that: not every beat has a heading |
-| The toss-in beat's body is `alsoThrewIn(view) + "…"` | A computed prefix naming who threw in. Carry the names as an argument |
-| The Vinto beat's title is `"$caller called Vinto"` | Carries a `Speaker`, like `Ask.WhoPlaysForYou` |
+**Two resource conventions caught it, and one of them has its own test already.**
+compose-resources does **not** process `\'` — the backslash is drawn on the screen — which
+`StringEscapeTest` exists to catch and did. And its format arguments are positional (`%1$s`),
+not bare `%s`; a bare one renders literally. Both were caught by tests rather than by review,
+which is the argument for the split below.
 
-`Lesson.note` and `gloss` come along with it: `noteFor(rank)` is `CardConfig` prose (fine —
-`longDescription`, never `shortDescription`) and `glossOnce` is a handful of one-liners. Mostly prose rather than
-  assembled sentences, so more mechanical — but it is where both dead English matches lived, so
-  read it for more while converting. Split by chapter.
-- **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
-  assembled sentences, so it is more mechanical than these three were — but it is also where
-  the two dead English matches lived, so read it for more of them while converting.
+**The tests split, and the split is the careful part.** `TeachScriptTest` asserted things like
+"the body contains +3" — the right claim in the wrong module once the script stops assembling
+words. The easy, wrong move is to let those claims go and call the suite green. So the script's
+half now asserts *which* beat and in *what order* (a fact about the script), and every content
+claim moved intact to `LessonCopyTest` in composeApp, which renders the resource and asserts on
+it — the same split `CardHelpTest` got in slice 6. That includes the one that exists because
+the copy got a rule **wrong** once: a caller who finishes lower takes +3 *and the others each
+lose one*, where nothing is what a tie costs them.
 
 `TeachingRoundTest` now collects prompts and details separately (`asked` and `said`), which is
 the shape the remaining slices want anyway.

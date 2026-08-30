@@ -5,11 +5,11 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * What the coach says, checked against the positions it says it in.
@@ -56,9 +56,10 @@ class TeachScriptTest {
 
         assertEquals(Chapter.TABLE, opening.chapter)
         assertEquals("welcome", opening.talkId, "the first thing is something to read")
-        assertTrue(
-            opening.body.contains("lowest hand wins", ignoreCase = true),
-            "and the first thing it says is the object of the game: ${opening.body}",
+        assertEquals(
+            Teaches.Welcome,
+            opening.teaches,
+            "and the first thing it teaches is the object of the game",
         )
     }
 
@@ -84,10 +85,10 @@ class TeachScriptTest {
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
 
         val lesson = assertNotNull(teach(session, taught))
-        val note = assertNotNull(lesson.note, "a card just turned over and nobody said what it is")
-        assertTrue(
-            note.contains("Seven") && note.contains("Peek at one of your own cards"),
-            "the note is the card's own copy, not a second set of rules: $note",
+        assertEquals(
+            Rank.SEVEN,
+            lesson.noteRank,
+            "a card just turned over and the lesson did not offer to say what it is",
         )
     }
 
@@ -105,7 +106,11 @@ class TeachScriptTest {
         assertEquals(Chapter.VINTO, lesson.chapter)
         assertEquals("vinto", lesson.talkId, "it stops the table to say it")
         assertEquals(Target.Seat(caller), lesson.point, "and points at whoever called")
-        assertTrue(lesson.body.contains("one more turn"), "saying what a call does: ${lesson.body}")
+
+        // The caller travels as a Speaker, not as an interpolated name — the renderer decides
+        // how a person is addressed, and the beat only says which person.
+        val named = session.state.players.first { it.id == caller }.nickname
+        assertEquals(Teaches.VintoCalled(Speaker.Named(named)), lesson.teaches)
     }
 
     /** And then the coalition — the rule that is hardest to work out by watching. */
@@ -114,10 +119,7 @@ class TeachScriptTest {
         val session = playToTheCall()
         val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "coalition")))
         assertEquals("coalition", lesson.talkId)
-        assertTrue(
-            lesson.body.contains("single best hand") && lesson.body.contains("caller's cards"),
-            "both halves of the rule: only the best hand counts, and the caller is untouchable",
-        )
+        assertEquals(Teaches.Coalition, lesson.teaches)
     }
 
     /** Scoring is explained over the reveal, with both outcomes named rather than only ours. */
@@ -129,36 +131,26 @@ class TeachScriptTest {
         val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "scoring")))
 
         assertEquals(Chapter.SCORE, lesson.chapter)
-        assertTrue(lesson.body.contains("+3"), "the numbers, as the rules give them")
-        assertTrue(
-            lesson.body.contains("Level", ignoreCase = true),
-            "including the tie, which favours the caller: ${lesson.body}",
-        )
+        assertEquals(Teaches.Scoring, lesson.teaches)
     }
 
     /**
-     * The three outcomes of a round, all of them, with the right numbers.
+     * Scoring is explained *before* the session beat that depends on it.
      *
-     * This is here because the copy got one wrong: it said a caller who finishes lower takes
-     * +3 "while the rest take nothing", when the rules and `calculateRoundPoints` both charge
-     * the others a point each — nothing is what a *tie* costs them. A tutorial that teaches a
-     * scoring rule incorrectly is worse than one that skips it, because the player believes it.
+     * What the numbers say moved to `LessonCopyTest` in composeApp when the words did (§6h) —
+     * this is what is left here, and it is the half that belongs here: the running order is a
+     * fact about the script, and explaining what a round is worth after explaining that a game
+     * is many of them is explaining it backwards.
      */
     @Test
-    fun theScoringLessonGivesAllThreeOutcomes() = runTest {
+    fun theRoundIsScoredBeforeTheSessionIsExplained() = runTest {
         val session = playToTheEnd()
-        val lesson = assertNotNull(teach(session, talkedThrough(session, stopAt = "scoring")))
 
-        assertTrue(lesson.body.contains("+3"), "the winning number")
-        assertTrue(lesson.body.contains("loses 1"), "and the losing one")
-        assertTrue(
-            lesson.body.contains("everybody else loses 1"),
-            "a caller who finishes lower costs the others a point each: ${lesson.body}",
-        )
-        assertTrue(
-            lesson.body.contains("Level"),
-            "and only a tie leaves them on nothing: ${lesson.body}",
-        )
+        val scoring = assertNotNull(teach(session, talkedThrough(session, stopAt = "scoring")))
+        assertEquals(Teaches.Scoring, scoring.teaches)
+
+        val next = assertNotNull(teach(session, talkedThrough(session, stopAt = "session")))
+        assertEquals(Teaches.Session, next.teaches)
     }
 
     /**
@@ -173,10 +165,7 @@ class TeachScriptTest {
         )
 
         assertEquals("your_turn_to_call", lesson.talkId)
-        assertTrue(
-            lesson.body.contains("end of any turn of yours"),
-            "saying when it may be pressed: ${lesson.body}",
-        )
+        assertEquals(Teaches.YourTurnToCall, lesson.teaches)
     }
 
     private suspend fun playToTheCall(): LocalGameSession {

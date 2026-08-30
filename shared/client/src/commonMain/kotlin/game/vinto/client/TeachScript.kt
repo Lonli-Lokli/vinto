@@ -6,7 +6,6 @@ import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
-import game.vinto.shapes.getCardConfig
 
 /**
  * The nine things there are to learn, in the order `VINTO_RULES.md` puts them.
@@ -76,20 +75,31 @@ sealed interface Target {
 data class Lesson(
     val chapter: Chapter,
     /**
-     * What this beat is *about* — never what to do about it.
+     * Which beat this is — the message, not the words.
      *
-     * The control panel underneath already gives the instruction ("Look at two of your
-     * cards"), and a coach that says the same thing in its own words has spent the top line of
-     * the rail on a sentence the player has already read. So the title is the reason, the
-     * consequence, or the thing nobody would guess: "The only look you get".
+     * It used to be a `title: String?` and a `body: String` assembled here, which meant the
+     * lesson was English whatever the phone was set to (§6h). One field now: a [Teaches] carries
+     * its own identity and whatever varies within it, and the UI renders both halves from
+     * resources. Two beats have no heading at all, and that stays true — it is the *renderer*
+     * that answers null for a title, because "does this beat have a heading" is a fact about
+     * the words rather than about the lesson.
+     *
+     * The old comment on `title` is worth keeping, because it is a rule for whoever writes the
+     * next one: the title is never what to do. The control panel underneath already gives the
+     * instruction ("Look at two of your cards"), and a coach that repeats it in its own words
+     * has spent the top line of the rail on a sentence the player has already read. The title
+     * is the reason, the consequence, or the thing nobody would guess — "The only look you
+     * get".
      */
-    val title: String?,
-    val body: String,
+    val teaches: Teaches,
     val point: Target? = null,
     /**
      * Set when the lesson is something to *read* rather than something to do: the screen shows
      * a Continue button and nothing moves until it is pressed. A card game explained at the
      * speed of a card game is not explained.
+     *
+     * The beat's own id, for the beats that are talk beats, and null for the ones derived from
+     * the position — which is why it is still a separate field rather than read off [beat].
      */
     val talkId: String? = null,
     /**
@@ -99,12 +109,16 @@ data class Lesson(
      * the felt. The lesson shows the cards it is talking about.
      */
     val cards: List<Rank> = emptyList(),
-    /** A card the player is meeting for the first time, said in the game's own words. */
-    val note: String? = null,
+    /**
+     * A card the player is meeting for the first time, said in the game's own words.
+     *
+     * The rank rather than the sentence: the words are `CARD_CONFIGS` — the same copy the help
+     * sheet and the web app show — and the frame around them ("Queen — worth 10. …") is a
+     * resource like everything else here.
+     */
     val noteRank: Rank? = null,
     /** What a glow or a ring on the table means, said once, the first time it appears. */
-    val gloss: String? = null,
-    val glossId: String? = null,
+    val gloss: Gloss? = null,
 )
 
 /**
@@ -114,8 +128,7 @@ data class Lesson(
  * derived from the position, so a player who does something else has not gone wrong — but they
  * *have* just quietly tested whether this is a real game or a rail, and they deserve an answer.
  */
-const val STRAYED = "Your table, not mine — nothing here is a wrong move. " +
-    "The lesson picks up wherever you take it."
+val STRAYED: Teaches = Teaches.Strayed
 
 /** What the lesson has already said, so it does not say it twice. */
 data class Taught(
@@ -138,7 +151,7 @@ data class Taught(
         return copy(
             talked = lesson.talkId?.let { talked + it } ?: talked,
             notedRanks = lesson.noteRank?.let { notedRanks + it } ?: notedRanks,
-            glossed = lesson.glossId?.takeIf { lesson.gloss != null }?.let { glossed + it } ?: glossed,
+            glossed = lesson.gloss?.let { glossed + it.id } ?: glossed,
         )
     }
 }
@@ -167,66 +180,42 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
 
         view.phase == GamePhase.SETUP && table.taps.isNotEmpty() -> Lesson(
             chapter = Chapter.PEEK,
-            title = "The only look you get",
-            body = "Everybody may look at two of their own cards before the round starts, once. " +
-                "From here on the game is memory: yours against three other people's.",
+            teaches = Teaches.OnlyLook,
             point = Target.Place(Anchor.Seat(you.id, unknownOwn(view) ?: 0)),
-            glossId = "pulse",
-            gloss = glossOnce(taught, "pulse", "A card that breathes can be touched right now."),
+            gloss = glossOnce(taught, Gloss.PULSE),
         )
 
         view.phase == GamePhase.SETUP -> Lesson(
             chapter = Chapter.PEEK,
-            title = null,
-            body = "They turn face down again — remember where they were. Everybody else has " +
-                "peeked at two of theirs as well.",
+            teaches = Teaches.PeeksEnd,
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
         )
 
         table.ranks.isNotEmpty() -> Lesson(
             chapter = Chapter.DECLARE,
-            title = "Only name one you have seen",
-            body = "You looked at this card, so you know what it is. Name it right and you play " +
-                "its action for free. Name it wrong and you take a penalty card — so only " +
-                "name one you are sure of.",
+            teaches = Teaches.NameOnlySeen,
             point = declarableRank(view, table)?.let { Target.Chip(it) },
         )
 
         tossWindow(table) -> Lesson(
             chapter = Chapter.TOSS,
-            title = "Anybody holding that rank may throw it in",
-            body = alsoThrewIn(view) + "The moment a card lands face up, everyone gets a " +
-                "chance to be rid of a match — and to use its action. Wrong rank costs you a " +
-                "penalty card and bars you from throwing in for the rest of the round.",
+            teaches = Teaches.TossIn(alsoThrewIn(view)),
             point = matchingOwnCard(view)?.let { Target.Place(it) }
                 ?: table.choices.firstOrNull()?.let { Target.Button(it.label) },
-            glossId = "toss",
-            gloss = glossOnce(
-                taught,
-                "toss",
-                "The chip under the piles names the rank the window is open for.",
-            ),
+            gloss = glossOnce(taught, Gloss.TOSS),
         )
 
         table.waiting -> Lesson(
             chapter = Chapter.DRAW,
-            title = null,
-            body = "Watch what they take and what they put down. That, and the line-by-line " +
-                "under here, is everything you get to know about their hands.",
+            teaches = Teaches.Watching,
             point = Target.Furniture(Target.LOG).takeIf { "log" !in taught.glossed },
-            glossId = "log",
-            gloss = glossOnce(
-                taught,
-                "log",
-                "Every move is written down in this box — glance at it when cards moved " +
-                    "faster than you could read.",
-            ),
+            gloss = glossOnce(taught, Gloss.LOG),
         )
 
         else -> playing(view, table, taught)
     }?.let { lesson ->
         val rank = visibleRanks(view).firstOrNull { it !in taught.notedRanks }
-        lesson.copy(note = rank?.let(::noteFor), noteRank = rank)
+        lesson.copy(noteRank = rank)
     }
 }
 
@@ -241,50 +230,36 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
         // Aiming a card's action at somebody: the engine is waiting for a target.
         pending != null && mine && aiming && table.taps.isNotEmpty() -> Lesson(
             chapter = Chapter.ACTIONS,
-            title = "Aim it",
-            body = "This is the card's own action, and it is free — it costs you nothing to " +
-                "use, and the card goes on the pile afterwards either way.",
+            teaches = Teaches.AimIt,
             point = worthLookingAt(view, table),
         )
 
         // Choosing which of your own cards the drawn one replaces.
         pending != null && mine && table.taps.isNotEmpty() -> Lesson(
             chapter = Chapter.KEEP,
-            title = "Give up your worst card",
-            body = "The new card goes in face down, and the one it replaces goes face up on " +
-                "the pile for everybody to read. Give up the card you least want to be " +
-                "holding — the highest one you know about.",
+            teaches = Teaches.GiveUpWorst,
             point = worstKnown(view, table)?.let { Target.Place(it) },
         )
 
         pending != null && view.pendingAction?.playerId == view.viewerId -> Lesson(
             chapter = Chapter.KEEP,
-            title = "Keep it or throw it",
-            body = "Put it in your hand — face down, in place of a card you own, which goes " +
-                "face up on the pile — or throw it away. Every card in your hand counts " +
-                "against you, so a low one is worth keeping. If it has an action, playing it " +
-                "now instead is the third choice, and it costs you nothing to take.",
+            teaches = Teaches.KeepOrThrow,
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
         )
 
         // `is`, not `startsWith`. This is the beat the string comparison silently lost.
         table.choices.any { it.label is Label.UseFromPile } -> Lesson(
             chapter = Chapter.DRAW,
-            title = "Two ways to start a turn",
-            body = "From the deck, sight unseen — or off the pile, but only an action card " +
-                "nobody has used, and then you must play it at once rather than keep it.",
+            teaches = Teaches.TwoWaysToStart,
             point = table.choices.firstOrNull { it.label is Label.UseFromPile }
                 ?.let { Target.Button(it.label) },
         )
 
         table.choices.isNotEmpty() -> Lesson(
             chapter = Chapter.DRAW,
-            title = "Every turn starts the same way",
-            body = "A turn begins by taking a card. The deck is face down, so what you get is " +
-                "a surprise — that is the risk you are being paid for.",
+            teaches = Teaches.EveryTurnStarts,
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
-            glossId = "badge",
-            gloss = glossOnce(taught, "badge", "The green number counts what is left in the deck."),
+            gloss = glossOnce(taught, Gloss.BADGE),
         )
 
         else -> null
@@ -311,9 +286,7 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
 private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
     "welcome" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
-        title = "Four players, five cards each",
-        body = "Every card counts against you and the lowest hand wins. This is a real round " +
-            "against three real opponents — the coach only walks beside you.",
+        teaches = Teaches.Welcome,
         talkId = "welcome",
     )
 
@@ -330,92 +303,63 @@ private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
 private fun cardTour(taught: Taught): Lesson? = when {
     "cards_numbers" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "2 to 6 — plain cards",
-        body = "Worth exactly what they say and nothing else. Small ones are what a winning " +
-            "hand is made of.",
+        teaches = Teaches.CardsNumbers,
         cards = listOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX),
         talkId = "cards_numbers",
     )
 
     "cards_own" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "7 and 8 — look at one of yours",
-        body = "Worth 7 and 8, which is a lot to be holding. What you get for it is a look at " +
-            "one of your own cards — and this game is memory, so a card you have seen is " +
-            "worth more to you than a card you have not.",
+        teaches = Teaches.CardsOwn,
         cards = listOf(Rank.SEVEN, Rank.EIGHT),
         talkId = "cards_own",
     )
 
     "cards_theirs" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "9 and 10 — look at one of theirs",
-        body = "The same look, pointed the other way: one card in somebody else's hand. " +
-            "Remember where it was. Two turns later it is what tells you whether to call.",
+        teaches = Teaches.CardsTheirs,
         cards = listOf(Rank.NINE, Rank.TEN),
         talkId = "cards_theirs",
     )
 
     "cards_jack" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "Jack — swap two cards, blind",
-        body = "Worth 10. It swaps two cards belonging to two different players — never two " +
-            "of anybody's own — and nobody looks at either of them first. Good for pushing a " +
-            "card you know is bad into somebody else's hand; a gamble with anything you know " +
-            "is good.",
+        teaches = Teaches.CardsJack,
         cards = listOf(Rank.JACK),
         talkId = "cards_jack",
     )
 
     "cards_queen" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "Queen — look at two, then decide",
-        body = "Also worth 10, and the strongest card in the game: look at any two cards from " +
-            "two different players, and only then choose whether to swap them. The Jack " +
-            "gambles. The Queen knows.",
+        teaches = Teaches.CardsQueen,
         cards = listOf(Rank.QUEEN),
         talkId = "cards_queen",
     )
 
     "cards_king" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "King — worth nothing, and does anything",
-        body = "Worth nothing at all, which alone makes it worth keeping. Its action points at " +
-            "any card on the table — yours or anybody's — and names it. Right: that card " +
-            "leaves the hand it was in, and its action becomes yours to play. Wrong: everybody " +
-            "sees what it really was, and you take a penalty card.",
+        teaches = Teaches.CardsKing,
         cards = listOf(Rank.KING),
         talkId = "cards_king",
     )
 
     "cards_king_name" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "What you name is what you get to play",
-        body = "So you are really choosing an action, out of the cards you have seen. Name a 7 " +
-            "or an 8 and you get a look at one of your own. Name a Jack and you get its blind " +
-            "swap — and you pick both cards, which is how a Joker you have spotted comes to " +
-            "you and your worst card goes the other way. Name a Queen and you look at two " +
-            "before deciding whether to trade.",
+        teaches = Teaches.CardsKingName,
         cards = listOf(Rank.SEVEN, Rank.JACK, Rank.QUEEN),
         talkId = "cards_king_name",
     )
 
     "cards_king_whose" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "And whose card you name",
-        body = "Whoever was holding it, the card you name leaves their hand. Naming your own " +
-            "10 takes ten points off your total; naming Don's Joker takes his minus one away " +
-            "and leaves him a card worse off. One King, two jobs — which of them matters more " +
-            "is the read.",
+        teaches = Teaches.CardsKingWhose,
         cards = listOf(Rank.KING, Rank.JOKER),
         talkId = "cards_king_whose",
     )
 
     "cards_odd" !in taught.talked -> Lesson(
         chapter = Chapter.ACTIONS,
-        title = "Ace and Joker",
-        body = "An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is " +
-            "worth minus one — the best card in the deck, and the one never to give away.",
+        teaches = Teaches.CardsOdd,
         cards = listOf(Rank.ACE, Rank.JOKER),
         talkId = "cards_odd",
     )
@@ -427,28 +371,21 @@ private fun cardTour(taught: Taught): Lesson? = when {
 private fun tableTour(view: PlayerView, taught: Taught): Lesson? = when {
     "tour" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
-        title = "The deck and the pile",
-        body = "Cards come off the deck. What anybody throws away lands face up beside it, " +
-            "where the whole table can read it — including you.",
+        teaches = Teaches.Tour,
         point = Target.Place(Anchor.Discard),
         talkId = "tour",
     )
 
     "seats" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
-        title = "Raph, Mikey and Don",
-        body = "Three bots, each with five cards they can see no better than you can. The " +
-            "plate that lights up green is whoever's turn it is.",
+        teaches = Teaches.Seats,
         point = Target.Seat(view.players.first { it.id != view.viewerId }.id),
         talkId = "seats",
     )
 
     "help" !in taught.talked -> Lesson(
         chapter = Chapter.TABLE,
-        title = "The ? is always there",
-        body = "It explains the moment you are in and what every card does. The boxed game " +
-            "comes with reminder cards for exactly this, one per player — nobody is expected " +
-            "to hold fourteen ranks in their head, here or at a table.",
+        teaches = Teaches.Help,
         point = Target.Furniture(Target.HELP),
         talkId = "help",
     )
@@ -462,44 +399,27 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
 
     view.vintoCallerId != null && "coalition" !in taught.talked -> Lesson(
         chapter = Chapter.VINTO,
-        title = "Everybody else plays as one",
-        body = "You, and the two who did not call, are the coalition: one turn each, and only " +
-            "your single best hand is compared with the caller's — so it is a team against " +
-            "one hand. At a real table you would talk it over and pool what you know. Nobody " +
-            "may touch the caller's cards, and the game will not let you try.",
+        teaches = Teaches.Coalition,
         point = Target.Seat(view.vintoCallerId!!),
         talkId = "coalition",
     )
 
     view.vintoCallerId != null && "your_turn_to_call" !in taught.talked -> Lesson(
         chapter = Chapter.VINTO,
-        title = "You can call it too",
-        body = "At the end of any turn of yours, the gold button is there: press it when you " +
-            "believe your hand is the lowest at the table. It was hidden while you were " +
-            "learning because it ends the round for everybody — from here on it is yours to " +
-            "press, and pressing it early is how most people lose their first game.",
+        teaches = Teaches.YourTurnToCall,
         talkId = "your_turn_to_call",
     )
 
     view.phase == GamePhase.SCORING && "scoring" in taught.talked &&
         "session" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
-        title = "And that is one round",
-        body = "A game is rounds, one after another, with those points carried between them, " +
-            "played to a clock somebody agrees beforehand — half an hour is usual. When the " +
-            "time is up the round in progress is finished, and whoever has the most points " +
-            "comes first for 5 game points, second for 3, third for 2. A round won by three " +
-            "counts the same whether you won it by one point or by twenty.",
+        teaches = Teaches.Session,
         talkId = "session",
     )
 
     view.phase == GamePhase.SCORING && "scoring" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
-        title = "Every hand goes face up",
-        body = "The caller's hand is set against the best hand among everybody else. Lower, " +
-            "and the caller takes +3 while everybody else loses 1 each. Level counts as the " +
-            "caller's: +3 to them, nothing lost by anyone. Beaten, and the caller loses 1 " +
-            "while every one of the others takes +3.",
+        teaches = Teaches.Scoring,
         talkId = "scoring",
     )
 
@@ -507,32 +427,17 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
 }
 
 private fun vintoTalk(view: PlayerView): Lesson {
-    val caller = view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname ?: "Somebody"
+    // A `Speaker` rather than a name, so the renderer decides how a person is addressed — and
+    // so the fallback for a caller the view cannot name is a translated word rather than the
+    // literal English "Somebody" this used to interpolate.
+    val caller = view.players.firstOrNull { it.id == view.vintoCallerId }
+        ?.let { Speaker.Named(it.nickname) } ?: Speaker.Nobody
     return Lesson(
         chapter = Chapter.VINTO,
-        title = "$caller called Vinto",
-        body = "That is the bet that their hand is the lowest at the table. It ends the round: " +
-            "everybody else gets exactly one more turn, and then every hand is turned over.",
+        teaches = Teaches.VintoCalled(caller),
         point = Target.Seat(view.vintoCallerId!!),
         talkId = "vinto",
     )
-}
-
-/**
- * A card the player is seeing for the first time, in the game's own words.
- *
- * The words are `CARD_CONFIGS` — the same copy the help sheet and the web app show — so the
- * lesson cannot teach a rule the rest of the game does not have.
- */
-private fun noteFor(rank: Rank): String {
-    val config = getCardConfig(rank)
-    val worth = "${config.name} — worth ${config.value}"
-
-    return if (config.longDescription.isEmpty()) {
-        "$worth, and it does nothing at all. A hand full of small ones of these is a good hand."
-    } else {
-        "$worth. ${config.longDescription}."
-    }
 }
 
 /** Every rank the player can currently see: their own known cards, the pile, the card in play. */
@@ -544,8 +449,9 @@ internal fun visibleRanks(view: PlayerView): List<Rank> {
     return mine + pending + pile
 }
 
-private fun glossOnce(taught: Taught, id: String, line: String): String? =
-    line.takeIf { id !in taught.glossed }
+/** A gloss is said the first time its thing appears on the table, and never again. */
+private fun glossOnce(taught: Taught, gloss: Gloss): Gloss? =
+    gloss.takeIf { it.id !in taught.glossed }
 
 /**
  * Where to aim an action, when the coach can tell.
@@ -626,12 +532,13 @@ private fun matchingOwnCard(view: PlayerView): Anchor? {
  *
  * Watching an opponent do it is the difference between "a prompt I dismiss" and "a thing the
  * whole table does at once" — so when it happens, the lesson says whose card that was.
+ *
+ * Names rather than a sentence: joining them with " and " is a grammar decision, and it is not
+ * the same decision in every language.
  */
-private fun alsoThrewIn(view: PlayerView): String {
+private fun alsoThrewIn(view: PlayerView): List<String> {
     val others = view.activeTossIn?.participants.orEmpty().filter { it != view.viewerId }
-    val names = others.mapNotNull { id -> view.players.firstOrNull { it.id == id }?.nickname }
-
-    return if (names.isEmpty()) "" else "${names.joinToString(" and ")} just threw one in. "
+    return others.mapNotNull { id -> view.players.firstOrNull { it.id == id }?.nickname }
 }
 
 /**

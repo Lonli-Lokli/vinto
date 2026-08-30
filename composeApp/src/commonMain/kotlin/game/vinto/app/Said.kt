@@ -32,6 +32,63 @@ import game.vinto.app.art.ask_who_plays_for_you
 import game.vinto.app.art.ask_you_drew
 import game.vinto.app.art.ask_you_drew_unknown
 import game.vinto.app.art.ask_your_turn
+import game.vinto.app.art.beat_aim_it_body
+import game.vinto.app.art.beat_aim_it_title
+import game.vinto.app.art.beat_cards_jack_body
+import game.vinto.app.art.beat_cards_jack_title
+import game.vinto.app.art.beat_cards_king_body
+import game.vinto.app.art.beat_cards_king_name_body
+import game.vinto.app.art.beat_cards_king_name_title
+import game.vinto.app.art.beat_cards_king_title
+import game.vinto.app.art.beat_cards_king_whose_body
+import game.vinto.app.art.beat_cards_king_whose_title
+import game.vinto.app.art.beat_cards_numbers_body
+import game.vinto.app.art.beat_cards_numbers_title
+import game.vinto.app.art.beat_cards_odd_body
+import game.vinto.app.art.beat_cards_odd_title
+import game.vinto.app.art.beat_cards_own_body
+import game.vinto.app.art.beat_cards_own_title
+import game.vinto.app.art.beat_cards_queen_body
+import game.vinto.app.art.beat_cards_queen_title
+import game.vinto.app.art.beat_cards_theirs_body
+import game.vinto.app.art.beat_cards_theirs_title
+import game.vinto.app.art.beat_coalition_body
+import game.vinto.app.art.beat_coalition_title
+import game.vinto.app.art.beat_every_turn_starts_body
+import game.vinto.app.art.beat_every_turn_starts_title
+import game.vinto.app.art.beat_give_up_worst_body
+import game.vinto.app.art.beat_give_up_worst_title
+import game.vinto.app.art.beat_help_body
+import game.vinto.app.art.beat_help_title
+import game.vinto.app.art.beat_keep_or_throw_body
+import game.vinto.app.art.beat_keep_or_throw_title
+import game.vinto.app.art.beat_name_only_seen_body
+import game.vinto.app.art.beat_name_only_seen_title
+import game.vinto.app.art.beat_only_look_body
+import game.vinto.app.art.beat_only_look_title
+import game.vinto.app.art.beat_peeks_end_body
+import game.vinto.app.art.beat_scoring_body
+import game.vinto.app.art.beat_scoring_title
+import game.vinto.app.art.beat_seats_body
+import game.vinto.app.art.beat_seats_title
+import game.vinto.app.art.beat_session_body
+import game.vinto.app.art.beat_session_title
+import game.vinto.app.art.beat_strayed_body
+import game.vinto.app.art.beat_toss_in_also
+import game.vinto.app.art.beat_toss_in_body
+import game.vinto.app.art.beat_toss_in_title
+import game.vinto.app.art.beat_tour_body
+import game.vinto.app.art.beat_tour_title
+import game.vinto.app.art.beat_two_ways_to_start_body
+import game.vinto.app.art.beat_two_ways_to_start_title
+import game.vinto.app.art.beat_vinto_body
+import game.vinto.app.art.beat_vinto_somebody
+import game.vinto.app.art.beat_vinto_title
+import game.vinto.app.art.beat_watching_body
+import game.vinto.app.art.beat_welcome_body
+import game.vinto.app.art.beat_welcome_title
+import game.vinto.app.art.beat_your_turn_to_call_body
+import game.vinto.app.art.beat_your_turn_to_call_title
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
 import game.vinto.app.art.choice_continue
@@ -61,6 +118,11 @@ import game.vinto.app.art.explains_scoring
 import game.vinto.app.art.explains_setup
 import game.vinto.app.art.explains_toss_in
 import game.vinto.app.art.explains_turn
+import game.vinto.app.art.gloss_badge
+import game.vinto.app.art.gloss_log
+import game.vinto.app.art.gloss_pulse
+import game.vinto.app.art.gloss_toss
+import game.vinto.app.art.list_join_and
 import game.vinto.app.art.log_called_vinto
 import game.vinto.app.art.log_declared
 import game.vinto.app.art.log_draw_they
@@ -86,12 +148,17 @@ import game.vinto.app.art.log_took_unknown
 import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
+import game.vinto.app.art.teach_note
+import game.vinto.app.art.teach_note_plain
 import game.vinto.client.Ask
 import game.vinto.client.Detail
 import game.vinto.client.Explains
+import game.vinto.client.Gloss
 import game.vinto.client.Label
 import game.vinto.client.Say
 import game.vinto.client.Speaker
+import game.vinto.client.Teaches
+import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.getCardName
 import org.jetbrains.compose.resources.stringResource
@@ -340,4 +407,132 @@ fun explained(explains: Explains): String = when (explains) {
     Explains.HowTossingInWorks -> stringResource(Res.string.explains_toss_in)
     Explains.HowTheFinalRoundWorks -> stringResource(Res.string.explains_final_round)
     Explains.HowATurnWorks -> stringResource(Res.string.explains_turn)
+}
+
+/**
+ * A lesson beat's heading, in the phone's language — or null for a beat that has none.
+ *
+ * The null is the point rather than an oversight: two beats deliberately carry no heading, and
+ * "does this beat have a heading" is a fact about the words, so it is answered here and not by
+ * the model. See `Teaches` and README §6h.
+ */
+@Composable
+@Suppress("CyclomaticComplexMethod")
+fun taughtTitle(teaches: Teaches): String? = when (teaches) {
+    Teaches.OnlyLook -> stringResource(Res.string.beat_only_look_title)
+    Teaches.NameOnlySeen -> stringResource(Res.string.beat_name_only_seen_title)
+    is Teaches.TossIn -> stringResource(Res.string.beat_toss_in_title)
+    Teaches.AimIt -> stringResource(Res.string.beat_aim_it_title)
+    Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_title)
+    Teaches.KeepOrThrow -> stringResource(Res.string.beat_keep_or_throw_title)
+    Teaches.TwoWaysToStart -> stringResource(Res.string.beat_two_ways_to_start_title)
+    Teaches.EveryTurnStarts -> stringResource(Res.string.beat_every_turn_starts_title)
+    Teaches.Welcome -> stringResource(Res.string.beat_welcome_title)
+    Teaches.CardsNumbers -> stringResource(Res.string.beat_cards_numbers_title)
+    Teaches.CardsOwn -> stringResource(Res.string.beat_cards_own_title)
+    Teaches.CardsTheirs -> stringResource(Res.string.beat_cards_theirs_title)
+    Teaches.CardsJack -> stringResource(Res.string.beat_cards_jack_title)
+    Teaches.CardsQueen -> stringResource(Res.string.beat_cards_queen_title)
+    Teaches.CardsKing -> stringResource(Res.string.beat_cards_king_title)
+    Teaches.CardsKingName -> stringResource(Res.string.beat_cards_king_name_title)
+    Teaches.CardsKingWhose -> stringResource(Res.string.beat_cards_king_whose_title)
+    Teaches.CardsOdd -> stringResource(Res.string.beat_cards_odd_title)
+    Teaches.Tour -> stringResource(Res.string.beat_tour_title)
+    Teaches.Seats -> stringResource(Res.string.beat_seats_title)
+    Teaches.Help -> stringResource(Res.string.beat_help_title)
+    Teaches.Coalition -> stringResource(Res.string.beat_coalition_title)
+    Teaches.YourTurnToCall -> stringResource(Res.string.beat_your_turn_to_call_title)
+    Teaches.Session -> stringResource(Res.string.beat_session_title)
+    Teaches.Scoring -> stringResource(Res.string.beat_scoring_title)
+
+    is Teaches.VintoCalled -> stringResource(
+        Res.string.beat_vinto_title,
+        // A caller the view could not name. Was the literal English "Somebody".
+        (teaches.caller as? Speaker.Named)?.nickname
+            ?: stringResource(Res.string.beat_vinto_somebody),
+    )
+
+    // The two with no heading, and the one that is an aside rather than a beat.
+    Teaches.PeeksEnd, Teaches.Watching, Teaches.Strayed -> null
+}
+
+/** A lesson beat's words. */
+@Composable
+@Suppress("CyclomaticComplexMethod")
+fun taughtBody(teaches: Teaches): String = when (teaches) {
+    Teaches.OnlyLook -> stringResource(Res.string.beat_only_look_body)
+    Teaches.PeeksEnd -> stringResource(Res.string.beat_peeks_end_body)
+    Teaches.NameOnlySeen -> stringResource(Res.string.beat_name_only_seen_body)
+    Teaches.Watching -> stringResource(Res.string.beat_watching_body)
+    Teaches.AimIt -> stringResource(Res.string.beat_aim_it_body)
+    Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_body)
+    Teaches.KeepOrThrow -> stringResource(Res.string.beat_keep_or_throw_body)
+    Teaches.TwoWaysToStart -> stringResource(Res.string.beat_two_ways_to_start_body)
+    Teaches.EveryTurnStarts -> stringResource(Res.string.beat_every_turn_starts_body)
+    Teaches.Welcome -> stringResource(Res.string.beat_welcome_body)
+    Teaches.CardsNumbers -> stringResource(Res.string.beat_cards_numbers_body)
+    Teaches.CardsOwn -> stringResource(Res.string.beat_cards_own_body)
+    Teaches.CardsTheirs -> stringResource(Res.string.beat_cards_theirs_body)
+    Teaches.CardsJack -> stringResource(Res.string.beat_cards_jack_body)
+    Teaches.CardsQueen -> stringResource(Res.string.beat_cards_queen_body)
+    Teaches.CardsKing -> stringResource(Res.string.beat_cards_king_body)
+    Teaches.CardsKingName -> stringResource(Res.string.beat_cards_king_name_body)
+    Teaches.CardsKingWhose -> stringResource(Res.string.beat_cards_king_whose_body)
+    Teaches.CardsOdd -> stringResource(Res.string.beat_cards_odd_body)
+    Teaches.Tour -> stringResource(Res.string.beat_tour_body)
+    Teaches.Seats -> stringResource(Res.string.beat_seats_body)
+    Teaches.Help -> stringResource(Res.string.beat_help_body)
+    Teaches.Coalition -> stringResource(Res.string.beat_coalition_body)
+    Teaches.YourTurnToCall -> stringResource(Res.string.beat_your_turn_to_call_body)
+    Teaches.Session -> stringResource(Res.string.beat_session_body)
+    Teaches.Scoring -> stringResource(Res.string.beat_scoring_body)
+    Teaches.Strayed -> stringResource(Res.string.beat_strayed_body)
+    is Teaches.VintoCalled -> stringResource(Res.string.beat_vinto_body)
+
+    is Teaches.TossIn -> alsoThrewIn(teaches.alsoThrewIn) +
+        stringResource(Res.string.beat_toss_in_body)
+}
+
+/**
+ * "Raph and Mikey just threw one in. ", or nothing at all.
+ *
+ * The joiner is a resource because " and " is a grammar decision, and the model hands over
+ * names rather than a sentence for exactly that reason.
+ */
+@Composable
+private fun alsoThrewIn(names: List<String>): String {
+    if (names.isEmpty()) return ""
+    val joined = names.joinToString(stringResource(Res.string.list_join_and))
+    return stringResource(Res.string.beat_toss_in_also, joined)
+}
+
+/** What a glow or a ring on the table means. */
+@Composable
+fun glossed(gloss: Gloss): String = when (gloss) {
+    Gloss.PULSE -> stringResource(Res.string.gloss_pulse)
+    Gloss.TOSS -> stringResource(Res.string.gloss_toss)
+    Gloss.LOG -> stringResource(Res.string.gloss_log)
+    Gloss.BADGE -> stringResource(Res.string.gloss_badge)
+}
+
+/**
+ * A card met for the first time, said in the game's own words.
+ *
+ * The words are `CARD_CONFIGS` — the same copy the help sheet and the web app show, so the
+ * lesson cannot teach a rule the rest of the game does not have. What moved here is the
+ * *frame* around them, which is a sentence and was being built in a module with no resources.
+ */
+@Composable
+fun noteOn(rank: Rank): String {
+    val config = getCardConfig(rank)
+    return if (config.longDescription.isEmpty()) {
+        stringResource(Res.string.teach_note_plain, config.name, config.value.toString())
+    } else {
+        stringResource(
+            Res.string.teach_note,
+            config.name,
+            config.value.toString(),
+            config.longDescription,
+        )
+    }
 }

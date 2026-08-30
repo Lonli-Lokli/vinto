@@ -217,6 +217,87 @@
     <string name="report_subject">Vinto — problem report</string>
 
     <!-- ================================================================ the lesson -->
+    <!-- The lesson's own words. `beat_<id>_title` and `beat_<id>_body` mirror the `Teaches`
+         hierarchy in shared/client one for one; two beats deliberately have no title. See
+         docs/kotlin/README.md §6h. -->
+    <string name="beat_only_look_title">The only look you get</string>
+    <string name="beat_only_look_body">Everybody may look at two of their own cards before the round starts, once. From here on the game is memory: yours against three other people's.</string>
+    <string name="beat_peeks_end_body">They turn face down again — remember where they were. Everybody else has peeked at two of theirs as well.</string>
+    <string name="beat_name_only_seen_title">Only name one you have seen</string>
+    <string name="beat_name_only_seen_body">You looked at this card, so you know what it is. Name it right and you play its action for free. Name it wrong and you take a penalty card — so only name one you are sure of.</string>
+    <string name="beat_toss_in_title">Anybody holding that rank may throw it in</string>
+    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and bars you from throwing in for the rest of the round.</string>
+    <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
+    <string name="beat_aim_it_title">Aim it</string>
+    <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
+    <string name="beat_give_up_worst_title">Give up your worst card</string>
+    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about.</string>
+    <string name="beat_keep_or_throw_title">Keep it or throw it</string>
+    <string name="beat_keep_or_throw_body">Put it in your hand — face down, in place of a card you own, which goes face up on the pile — or throw it away. Every card in your hand counts against you, so a low one is worth keeping. If it has an action, playing it now instead is the third choice, and it costs you nothing to take.</string>
+    <string name="beat_two_ways_to_start_title">Two ways to start a turn</string>
+    <string name="beat_two_ways_to_start_body">From the deck, sight unseen — or off the pile, but only an action card nobody has used, and then you must play it at once rather than keep it.</string>
+    <string name="beat_every_turn_starts_title">Every turn starts the same way</string>
+    <string name="beat_every_turn_starts_body">A turn begins by taking a card. The deck is face down, so what you get is a surprise — that is the risk you are being paid for.</string>
+    <string name="beat_welcome_title">Four players, five cards each</string>
+    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. This is a real round against three real opponents — the coach only walks beside you.</string>
+    <string name="beat_cards_numbers_title">2 to 6 — plain cards</string>
+    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Small ones are what a winning hand is made of.</string>
+    <string name="beat_cards_own_title">7 and 8 — look at one of yours</string>
+    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not.</string>
+    <string name="beat_cards_theirs_title">9 and 10 — look at one of theirs</string>
+    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was. Two turns later it is what tells you whether to call.</string>
+    <string name="beat_cards_jack_title">Jack — swap two cards, blind</string>
+    <string name="beat_cards_jack_body">Worth 10. It swaps two cards belonging to two different players — never two of anybody's own — and nobody looks at either of them first. Good for pushing a card you know is bad into somebody else's hand; a gamble with anything you know is good.</string>
+    <string name="beat_cards_queen_title">Queen — look at two, then decide</string>
+    <string name="beat_cards_queen_body">Also worth 10, and the strongest card in the game: look at any two cards from two different players, and only then choose whether to swap them. The Jack gambles. The Queen knows.</string>
+    <string name="beat_cards_king_title">King — worth nothing, and does anything</string>
+    <string name="beat_cards_king_body">Worth nothing at all, which alone makes it worth keeping. Its action points at any card on the table — yours or anybody's — and names it. Right: that card leaves the hand it was in, and its action becomes yours to play. Wrong: everybody sees what it really was, and you take a penalty card.</string>
+    <string name="beat_cards_king_name_title">What you name is what you get to play</string>
+    <string name="beat_cards_king_name_body">So you are really choosing an action, out of the cards you have seen. Name a 7 or an 8 and you get a look at one of your own. Name a Jack and you get its blind swap — and you pick both cards, which is how a Joker you have spotted comes to you and your worst card goes the other way. Name a Queen and you look at two before deciding whether to trade.</string>
+    <string name="beat_cards_king_whose_title">And whose card you name</string>
+    <string name="beat_cards_king_whose_body">Whoever was holding it, the card you name leaves their hand. Naming your own 10 takes ten points off your total; naming Don's Joker takes his minus one away and leaves him a card worse off. One King, two jobs — which of them matters more is the read.</string>
+    <string name="beat_cards_odd_title">Ace and Joker</string>
+    <string name="beat_cards_odd_body">An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is worth minus one — the best card in the deck, and the one never to give away.</string>
+    <string name="beat_tour_title">The deck and the pile</string>
+    <string name="beat_tour_body">Cards come off the deck. What anybody throws away lands face up beside it, where the whole table can read it — including you.</string>
+    <string name="beat_seats_title">Raph, Mikey and Don</string>
+    <string name="beat_seats_body">Three bots, each with five cards they can see no better than you can. The plate that lights up green is whoever's turn it is.</string>
+    <string name="beat_help_title">The ? is always there</string>
+    <string name="beat_help_body">It explains the moment you are in and what every card does. The boxed game comes with reminder cards for exactly this, one per player — nobody is expected to hold fourteen ranks in their head, here or at a table.</string>
+    <string name="beat_coalition_title">Everybody else plays as one</string>
+    <string name="beat_coalition_body">You, and the two who did not call, are the coalition: one turn each, and only your single best hand is compared with the caller's — so it is a team against one hand. At a real table you would talk it over and pool what you know. Nobody may touch the caller's cards, and the game will not let you try.</string>
+    <string name="beat_your_turn_to_call_title">You can call it too</string>
+    <string name="beat_your_turn_to_call_body">At the end of any turn of yours, the gold button is there: press it when you believe your hand is the lowest at the table. It was hidden while you were learning because it ends the round for everybody — from here on it is yours to press, and pressing it early is how most people lose their first game.</string>
+    <string name="beat_session_title">And that is one round</string>
+    <string name="beat_session_body">A game is rounds, one after another, with those points carried between them, played to a clock somebody agrees beforehand — half an hour is usual. When the time is up the round in progress is finished, and whoever has the most points comes first for 5 game points, second for 3, third for 2. A round won by three counts the same whether you won it by one point or by twenty.</string>
+    <string name="beat_scoring_title">Every hand goes face up</string>
+    <string name="beat_scoring_body">The caller's hand is set against the best hand among everybody else. Lower, and the caller takes +3 while everybody else loses 1 each. Level counts as the caller's: +3 to them, nothing lost by anyone. Beaten, and the caller loses 1 while every one of the others takes +3.</string>
+    <string name="beat_vinto_body">That is the bet that their hand is the lowest at the table. It ends the round: everybody else gets exactly one more turn, and then every hand is turned over.</string>
+    <string name="beat_vinto_title">%1$s called Vinto</string>
+
+    <!-- The prefix on a toss-in window somebody else has already thrown into. The names are
+         joined by list_join_and, which is a grammar decision and not the same in every
+         language. -->
+    <string name="beat_toss_in_also">%1$s just threw one in. </string>
+    <string name="list_join_and"> and </string>
+    <!-- The caller the view could not name. Was the literal English "Somebody". -->
+    <string name="beat_vinto_somebody">Somebody</string>
+    <!-- Said once, the first time somebody presses a button other than the one pointed at. -->
+    <string name="beat_strayed_body">Your table, not mine — nothing here is a wrong move. The lesson picks up wherever you take it.</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">A card that breathes can be touched right now.</string>
+    <string name="gloss_toss">The chip under the piles names the rank the window is open for.</string>
+    <string name="gloss_log">Every move is written down in this box — glance at it when cards moved faster than you could read.</string>
+    <string name="gloss_badge">The green number counts what is left in the deck.</string>
+
+    <!-- A card met for the first time. %1$s is its name and %2$s its value, both from
+         CARD_CONFIGS; %3$s is the card's own description. The frame is here so the sentence
+         can be built the way a language builds one. -->
+    <string name="teach_note">%1$s — worth %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. A hand full of small ones of these is a good hand.</string>
+
+
     <string name="teach_heading">Learning the game</string>
     <string name="teach_finished_title">That is the whole game</string>
     <string name="teach_finished_body">Every hand is face up and the round is scored. Every rule you met in here is one a real game plays by — there is no practice version of it.</string>
