@@ -110,8 +110,13 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
    proof with people. It is the part only a person with credentials and hardware can do, and
    no network policy unblocks it
 4. 9.9 (Sentry, a load test) and 9.10 (store releases), which start after that
-5. The stale checkboxes in phases 2, 3 and 6 of `tasks.md`: work this branch did without
-   ticking, and work it genuinely has not done, currently indistinguishable
+5. ~~The stale checkboxes in phases 2, 3 and 6 of `tasks.md`~~ — **done**. Every `[~]` was
+   read against the tree rather than against its own text: 2.1, 2.2, 2.3, 2a.1, 3.4, 6.1, 6.2
+   and 7.3 were finished work that had never been ticked, and are now ticked with what
+   verified them. What is left is **60 done and 6 partial**, and every one of the six is
+   partial for a reason no amount of work in a container can change — 4.8 (an emulator), 7.1
+   (a physical phone), 8.1 (an upload key and a Play track), 8.2 (Xcode), 9.9 (a deployment),
+   9.10 (all of the above). They are in §1f with what would unblock each
 
 ---
 
@@ -543,6 +548,9 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | §6i step 5 — two devices, then four humans | Hardware and four people | Cannot be scripted; that is what 9.7's second verification is for |
 | 9.10 — store releases | An upload key, store accounts, and a signed build | `assembleRelease` signs with the upload key when `keystore.properties` exists and with the debug key when it does not, so the path is exercised without the secret |
 | `kmp-ios` beyond CI, and any `commonMain` change trusted on Apple | macOS with Xcode | The macOS leg of CI covers compilation; §5's warning stands — a `commonMain` change that breaks iOS cannot fail on a non-Mac host |
+| 7.1 — the animation layer on real hardware | A physical phone, and a Mac to look at the simulator | The decision is made and the layer is built and running on an Android emulator. It has never been *watched* on a real device, and on Apple it is compiled and simulator-tested by `kmp-ios` but not looked at by a person |
+| 8.1 — a release job on tags | An upload key, a Play track, an Apple developer account | No longer blocked on CI existing — six checks are green (2.3). `assembleRelease` already signs with the upload key when `keystore.properties` exists and the debug key when it does not, so the path is exercised without the secret. R8 and everything iOS sit behind the same accounts |
+| 8.2 — the iOS privacy manifest and permissions review | Xcode | The reporter itself is done, breadcrumbs included: a crash report now carries the deal's `gameId`, the round and the turn, which is the same address the room's Sentry reports carry |
 | 9.9 — a load test with 100 concurrent rooms | A deployment, and `wrangler login` | The rest of 9.9 landed: Sentry reports carry the deal's `gameId`, the round and the action index into it, and recordings are filed per round. A load test cannot go against `wrangler dev` — it enforces no CPU limit whatsoever (§6d), so it would measure the laptop rather than the platform |
 | 4.8 — the corpus on an Android emulator | A machine that can resolve androidx, and an emulator in CI | **The iOS half is done**: `kmp-ios` runs `:shared:client:iosSimulatorArm64Test`, so since 6.7 a whole game is generated and replayed through the real harness on Kotlin/Native every run. The Android half wants an instrumented `connectedAndroidTest` reading the corpus from an asset, which needs `androidx.test` — dl.google.com answers 403 here (§1c) and androidx is not on Maven Central, so it cannot be compiled in this container at all, only pushed and hoped for. An hour's work on a machine that can build `composeApp` |
 
