@@ -2055,6 +2055,54 @@ Scope is the client's view of the wire and stops there. The engine is not covere
 be: it owns its own state, `first {}` on a list it has just built is total in fact, and a rule
 that cried wolf there would be switched off within a week.
 
+## 6p. Why a crash on the online screen reached nobody
+
+Reported twice: open the online screen, the app exits, and Sentry has nothing. The second half
+of that turned out to have two causes, both certain, and both invisible to every gate this
+repository has.
+
+### The app had no `INTERNET` permission
+
+`androidApp/src/main/AndroidManifest.xml` declared no permissions at all. Android then refuses
+every socket the process opens — so **online play could not work** and **no crash report could
+ever leave the device**: the handler fired, the envelope was built, and the platform denied the
+POST. Two failures wearing one face, from a line nobody had written.
+
+Nothing in the build could have caught it. `assembleDebug` produces a well-formed APK, every
+JVM suite passes, and the Compose tests run in a process with no permission model at all. It
+took a phone, and then it took reading the merged manifest. `ManifestTest` reads the manifest
+now — and also asserts the list stays *short*, because a permission is a question asked of a
+player and this game has no business asking most of them.
+
+### And the report was fire-and-forget on a process being killed
+
+`CrashReporter.report` did `scope.launch { post(...) }` and returned. The handler then chained
+to the platform's, which on Android ends the process at once. A DNS lookup, a TLS handshake and
+a POST do not fit in the microseconds between those two lines, so a correct reporter with a
+correct envelope delivered nothing.
+
+Two changes, and the second is the one that actually guarantees it:
+
+- **The crashing thread waits.** `awaitCrashReport` is `runBlocking` with a four-second ceiling
+  on the JVM, Android and Apple; in a browser it is a no-op, because an unhandled rejection
+  does not tear the page down and there is nothing to block for. Short on purpose: an app that
+  has already crashed must not sit there because a network is not answering.
+- **The envelope is written down before the network is touched.** `Crashes` stores it in the
+  vault under one key and clears it only when a send actually succeeds, so a POST cut off
+  halfway is retried by the next launch. One slot, because a phone in a crash loop would
+  otherwise fill the vault with copies of one bug and the newest is the one worth having.
+
+`CrashReporter` is split into `envelopeFor` and `send(onSent)` to make that ordering possible,
+and `CrashReporterTest` pins it: a failed send leaves the stored copy alone, a successful one
+clears it.
+
+### What is still unknown
+
+**Why the app exits.** That is not diagnosed, and saying otherwise would be a guess dressed up.
+What is now true is that the next one reports itself: the permission is there, the report
+blocks until it is away, and an envelope survives the process dying. A crash during composition
+reaches the default handler like any other, so this covers it.
+
 ## 6i. Taking the room live — the maintainer's runbook
 
 The online client is code-complete: protocol, room cores with JVM tests, per-event views,

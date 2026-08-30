@@ -19,15 +19,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // First of all, and before `setContent` rather than inside it. A crash during
-        // `AndroidStorage.attach`, while the deep link is read, or in the first composition
-        // used to happen with nothing listening — the handler was installed by a
-        // `LaunchedEffect` inside `App()`, which is after all of that. A crash on the launcher
-        // is the one report worth having most, and it was the one that could never arrive.
-        Crashes.install(reporting)
-        // Before anything composes, so the home screen can already know whether there is a
-        // game to come back to.
+        // Storage first, and only because the reporter needs it: a crash is written to the
+        // vault on the way down and sent by the next launch, since a POST started as Android
+        // tears the process down does not finish. `attach` is one assignment and cannot
+        // realistically fail; everything after it is covered.
         AndroidStorage.attach(this)
+
+        // Then the reporter, and before `setContent` rather than inside it. A crash while the
+        // deep link is read, or in the first composition, used to happen with nothing
+        // listening — the handler was installed by a `LaunchedEffect` inside `App()`, which is
+        // after all of that. A crash on the launcher is the one report worth having most, and
+        // it was the one that could never arrive.
+        Crashes.install(reporting)
         // And before that too, so an invite is already waiting when `App()` first reads it
         // rather than arriving a frame later and pushing a screen the player did not ask for
         // on top of the one they were looking at.

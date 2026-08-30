@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -143,6 +144,48 @@ class CrashReporterTest {
             sent.bodies.size in 1..budgetCeiling,
             "${sent.bodies.size} reports from one process — that is a bill, not a diagnosis",
         )
+    }
+
+    /**
+     * The envelope exists before the network is touched, and the stored copy is cleared only
+     * when the send actually worked.
+     *
+     * This is the contract that makes a fatal crash reportable at all. A POST started as
+     * Android tears the process down does not finish — so the envelope is written to the vault
+     * first and sent second, and the next launch retries whatever is still there. Clearing on
+     * anything less than success would throw away the one copy that survived.
+     */
+    @Test
+    fun anEnvelopeSurvivesAFailedSendAndIsClearedByASuccessfulOne() = runTest {
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            post = { _, _, _ -> error("the network is down") },
+        )
+
+        val envelope = assertNotNull(
+            reporter.envelopeFor(IllegalStateException("the room never answered")),
+            "no envelope to store, so nothing could have been kept",
+        )
+        assertTrue(envelope.contains("the room never answered"))
+
+        var cleared = false
+        reporter.send(envelope) { cleared = true }
+        assertFalse(cleared, "a send that failed cleared the only copy of the crash")
+
+        val working = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+        )
+        working.send(envelope) { cleared = true }
+        assertTrue(cleared, "a send that worked left the crash stored to be sent again")
+    }
+
+    /** And a build with nowhere to report builds no envelope, so nothing is stored either. */
+    @Test
+    fun aBuildWithNoDsnHasNothingToStore() = runTest {
+        val reporter = reporterFor(dsn = null, scope = CoroutineScope(Dispatchers.Unconfined))
+        assertEquals(null, reporter.envelopeFor(IllegalStateException("nowhere to go")))
     }
 
     @Test

@@ -6,6 +6,8 @@ import game.vinto.app.elapsedMs
 import game.vinto.app.net.postBeacon
 import game.vinto.app.nowIso
 import game.vinto.app.platformName
+import game.vinto.app.platformVault
+import game.vinto.client.Vault
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +34,7 @@ object Crashes {
 
     private var reporter: CrashReporter? = null
     private var surface: () -> CrashSurface = { CrashSurface.MENU }
+    private var vault: Vault? = null
 
     /**
      * Starts reporting, once per process.
@@ -41,8 +44,22 @@ object Crashes {
      * crash twice. [scope] outlives the composition — a report is fired as the process is
      * ending, and a scope tied to a frame would be cancelled before the POST left.
      */
-    fun install(scope: CoroutineScope, dsn: String = SENTRY_DSN) {
+    fun install(
+        scope: CoroutineScope,
+        /**
+         * Where a crash waits between the process dying and the next launch.
+         *
+         * Defaulted here rather than passed by each entry point, so `androidApp` — which is an
+         * Activity and nothing else — never has to name a type from `shared:client` it does not
+         * otherwise depend on. On Android this must be called after `AndroidStorage.attach`,
+         * which `MainActivity` does one line earlier; before that it is a `MemoryVault`, which
+         * would simply lose a stored crash rather than fail.
+         */
+        vault: Vault? = platformVault(),
+        dsn: String = SENTRY_DSN,
+    ) {
         if (reporter != null) return
+        this.vault = vault
 
         val crashes = CrashReporter(
             dsn = dsn,
@@ -59,7 +76,23 @@ object Crashes {
             },
         )
         reporter = crashes
-        if (crashes.enabled) installCrashHandler(crashes::report)
+        if (!crashes.enabled) return
+
+        // A crash the last run could not finish sending. First, because the whole point is
+        // that it survived a process being killed and nothing else will send it.
+        vault?.read(PENDING)?.let { stored ->
+            crashes.send(stored) { vault.erase(PENDING) }
+        }
+
+        installCrashHandler { error ->
+            // Written down before the network is touched. The next line hands the throwable
+            // to the platform's handler, which on Android ends the process — so the envelope
+            // has to exist somewhere that outlives it, or a POST cut off halfway is a crash
+            // nobody ever hears about. Cleared only when the send actually succeeds.
+            val envelope = crashes.envelopeFor(error) ?: return@installCrashHandler
+            this.vault?.write(PENDING, envelope)
+            awaitCrashReport(crashes.send(envelope) { this.vault?.erase(PENDING) })
+        }
     }
 
     /**
@@ -84,6 +117,15 @@ object Crashes {
     fun report(error: Throwable) {
         reporter?.report(error)
     }
+
+    /**
+     * Where a crash waits between the process dying and the next launch.
+     *
+     * One slot, deliberately: a phone in a crash loop would otherwise fill the vault with
+     * copies of one bug, and the most recent is the one worth having. It holds a Sentry
+     * envelope, which carries nothing identifying — `Crash.kt` makes that structural.
+     */
+    private const val PENDING = "vinto.crash.pending"
 
     /**
      * A handler for a scope whose failures would otherwise be silent.

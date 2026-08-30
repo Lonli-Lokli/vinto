@@ -1,6 +1,7 @@
 package game.vinto.app.crash
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -12,6 +13,22 @@ import kotlinx.coroutines.launch
  * A crash reporter that stops a crash is a crash reporter that hides a bug.
  */
 expect fun installCrashHandler(report: (Throwable) -> Unit)
+
+/**
+ * Waits, briefly, for a crash report to actually leave the device.
+ *
+ * **The one thing standing between a crash and a report.** `report` launches a POST and
+ * returns; the handler above then chains to the platform's, which on Android ends the process
+ * at once. A DNS lookup, a TLS handshake and a POST do not fit in the microseconds between
+ * those two lines, so every fatal crash was reported *nowhere* — the reporter worked, the
+ * envelope was correct, and the process was gone before the packet was.
+ *
+ * So the crashing thread blocks on it, with a short ceiling: a phone that is already dying
+ * must not be held there by a network that is not answering. On the JVM, Android and Apple
+ * that is `runBlocking` with a timeout; in a browser there is nothing to block *for* — the
+ * page is not torn down by an unhandled rejection — and this is a no-op.
+ */
+expect fun awaitCrashReport(job: Job?)
 
 /**
  * Sends one crash, once, and then gets out of the way.
@@ -52,16 +69,24 @@ class CrashReporter(
     /** True when this build has somewhere to report to. Absent DSN, absent reporting. */
     val enabled: Boolean get() = target != null
 
-    fun report(error: Throwable) {
-        val to = target ?: return
-        if (sent >= BUDGET) return
+    /**
+     * The envelope for [error], or null when there is nothing to send or nothing new to say.
+     *
+     * Split from [send] so the caller can **write it down before trying the network**. A
+     * process that is about to be killed cannot be relied on to finish a POST, and an envelope
+     * on disk can be sent by the next launch; one that only ever existed inside a dying
+     * process is a crash nobody will ever hear about.
+     */
+    fun envelopeFor(error: Throwable): String? {
+        if (target == null) return null
+        if (sent >= BUDGET) return null
         // The same failure twice is one bug reported twice. A retry loop that throws the same
         // exception every second is the ordinary way a client burns a quota, and it is exactly
         // the shape of the socket loop this reporter now watches.
-        if (!seen.add("${error::class.simpleName}:${error.message}")) return
+        if (!seen.add("${error::class.simpleName}:${error.message}")) return null
         sent++
 
-        val envelope = crashEnvelope(
+        return crashEnvelope(
             CrashReport(
                 eventId = eventId(now()),
                 sentAtIso = nowIso(),
@@ -76,18 +101,32 @@ class CrashReporter(
                 place = place(),
             ),
         )
+    }
 
-        scope.launch {
+    /**
+     * Posts one envelope, and says whether it arrived.
+     *
+     * The `Job` is returned so a fatal path can wait on it ([awaitCrashReport]); the `onSent`
+     * callback runs only on success, which is what lets a stored copy be cleared without
+     * guessing.
+     */
+    fun send(envelope: String, onSent: () -> Unit = {}): Job? {
+        val to = target ?: return null
+        return scope.launch {
             @Suppress("SwallowedException", "TooGenericExceptionCaught")
             try {
                 post(to.url, sentryAuth(to.key), envelope)
+                onSent()
             } catch (reportingFailed: Exception) {
                 // Deliberately nothing. The request that mattered has already failed; this
                 // one was only going to say so, and a reporter that throws turns one failure
-                // into two.
+                // into two. The stored copy stays put and the next launch tries again.
             }
         }
     }
+
+    /** Builds and sends in one go, for a failure nobody is waiting on. */
+    fun report(error: Throwable): Job? = envelopeFor(error)?.let { send(it) }
 
     private companion object {
         /** How many distinct failures one process may report. */

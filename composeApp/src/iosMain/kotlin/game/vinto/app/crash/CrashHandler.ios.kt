@@ -1,5 +1,8 @@
 package game.vinto.app.crash
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.setUnhandledExceptionHook
 
@@ -27,3 +30,18 @@ actual fun installCrashHandler(report: (Throwable) -> Unit) {
         // it would have. Rethrowing would re-enter a hook that is no longer installed.
     }
 }
+
+/**
+ * Holds the dying thread until the report is away, or until the ceiling.
+ *
+ * The same reason as the JVM's: the hook returns and the runtime terminates, so a POST that
+ * was merely *launched* never leaves. `runBlocking` exists on Kotlin/Native and this is what
+ * it is for. If the timeout wins the envelope is still stored, and the next launch sends it.
+ */
+actual fun awaitCrashReport(job: Job?) {
+    if (job == null) return
+    runBlocking { withTimeoutOrNull(REPORT_CEILING_MS) { job.join() } }
+}
+
+/** Long enough for a POST on a phone network, short enough that nobody watches a dead app. */
+private const val REPORT_CEILING_MS = 4_000L

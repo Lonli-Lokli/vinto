@@ -1,6 +1,7 @@
 package game.vinto.app.crash
 
 import kotlinx.browser.window
+import kotlinx.coroutines.Job
 import org.w3c.dom.events.Event
 
 /**
@@ -56,3 +57,14 @@ private fun readMessage(event: JsAny): String =
 private fun readMessageJs(event: JsAny): JsString? = js(
     "(event.message || (event.reason && (event.reason.message || event.reason)) || '') + ''",
 )
+
+/**
+ * Nothing to wait for, and nothing to wait *with*.
+ *
+ * A browser has no blocking primitive on the main thread, and it does not need one: an
+ * unhandled rejection does not tear the page down, so the POST launched a moment ago runs to
+ * completion like any other. The other three targets block because their runtime is about to
+ * end the process.
+ */
+@Suppress("UnusedParameter")
+actual fun awaitCrashReport(job: Job?) = Unit
