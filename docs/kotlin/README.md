@@ -991,6 +991,48 @@ the test task**, because without that the first three probes passed in 766 ms: n
 this build reads that directory, so editing the page left `jvmTest` UP-TO-DATE and the gate
 silently did not run. A green tick over an unread file is worse than no check at all.
 
+### The browser could not read the room service, and nothing had ever asked it to
+
+The site went live, online play failed on it, and the second failure was the more interesting
+one. With the `RequestInit` bug fixed the error changed from a specific complaint to
+`TypeError: Failed to fetch` — which in a browser almost always means CORS, and did.
+
+`vinto.kupalinka.app` and `vinto-room.kupalinka.app` are different **origins**. Every `fetch`
+the browser client makes is cross-origin, so the browser performed each request, received a
+perfectly good `200`, and then refused to hand it to the page because no
+`access-control-allow-origin` came back. What a player saw was "No connection to the room
+service" about a call that reached the service and returned data.
+
+**Same-site is not same-origin**, and this is where the earlier reasoning misled. The room has
+its own hostname deliberately, and `wrangler.jsonc` records why: it keeps the socket's origin
+first-party so the page's CSP needs one `connect-src` entry on its own site. All true, and
+CORS does not care — it compares scheme, host and port exactly. Being same-site bought
+nothing here.
+
+It had never come up because nothing browser-shaped had ever called this service. Android, the
+JVM and iOS do not enforce CORS, and the web client had no deployment to be called from until
+the site existed. Twelve room gates, all in Node, all sending no `Origin`.
+
+`gate-cors.mjs` is that gate now, and two things about it are worth keeping:
+
+- **A `*` here would not have been a vulnerability**, and the gate says so where it checks
+  against one. This API carries no cookies and no ambient credentials — a seat is proved by a
+  token in the message — so a hostile page reading a room listing learns what it could have
+  learned from its own server. The boundary is `ActionValidator` and the seat token. The
+  origins are named because "who is this for" is worth writing down, not because a wildcard
+  would let anybody in.
+- **The first version of it broke the gate next to it.** It checked the header on
+  `POST /rooms`, which mints a room every time and has no malformed body that gets refused
+  first — so it consumed the registry's per-source allowance and `gate-room-codes`, running
+  after it, failed on "creating a room returns a code". Diagnosed by re-running that gate
+  first on clean state, where it passed. The cross-origin POST now goes to `/replay`, which is
+  a pure function of its argument and holds no state.
+
+The WebSocket path is returned untouched, which is not a nicety: a 101 carries a live
+`webSocket` on the response object, and copying it through `new Response(...)` both loses that
+and throws, because 101 is not a status a `Response` may be constructed with. Sockets need no
+CORS anyway — a browser does not apply it to a WebSocket handshake.
+
 ### What the first publish taught, that no local run could
 
 It worked, and reported failure. The upload was clean — 43 files, `_headers` and `_redirects`

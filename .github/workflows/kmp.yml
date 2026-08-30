@@ -423,6 +423,14 @@ jobs:
           echo "wrangler dev never answered /health"
           exit 1
 
+      # Before the gates that mint rooms, because it is a *reader* and they consume the
+      # registry's per-source allowance. It also creates nothing itself — an earlier version
+      # POSTed to /rooms and broke `gate-room-codes` running after it, which is why the
+      # cross-origin POST it checks goes to the stateless /replay instead.
+      - name: 'Gate: the browser may read the room service'
+        working-directory: worker/cloudflare
+        run: node gate-cors.mjs
+
       - name: 'Gate: two clients through one Durable Object'
         working-directory: worker/cloudflare
         run: node gate-two-clients.mjs

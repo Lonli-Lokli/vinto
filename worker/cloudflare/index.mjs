@@ -858,22 +858,108 @@ export class Room {
   }
 }
 
+// The website is a different **origin** from this service — `vinto.kupalinka.app` against
+// `vinto-room.kupalinka.app` — so every `fetch` the browser client makes is cross-origin and
+// needs this service's permission to be *read*. Without it the browser performs the request,
+// receives the answer, and refuses to hand it to the page: `TypeError: Failed to fetch`, with
+// no detail, which reaches a player as "No connection to the room service".
+//
+// It had never come up. Android, the JVM and iOS are not browsers and do not enforce CORS,
+// and the browser client had no deployment to be called from until the site went live. The
+// first person to open the lobby on the web found it.
+//
+// **Same-site is not same-origin.** The room deliberately has its own hostname (see
+// `wrangler.jsonc`), which keeps it first-party for cookies and CSP — and makes no difference
+// whatever to CORS, which compares scheme, host and port exactly.
+const SITE_ORIGIN = 'https://vinto.kupalinka.app';
+
+/**
+ * Who may read this service's answers.
+ *
+ * The site itself, and a local dev server. Deliberately not `*`, though it is worth being
+ * clear that `*` would not be a vulnerability here: this API carries no cookies and no
+ * ambient credentials — a seat is proved by a token in the message, so a hostile page reading
+ * a room listing learns exactly what it could have learned by asking from its own server.
+ * CORS is not the boundary; `ActionValidator` and the seat token are. Naming the origins
+ * anyway costs nothing and keeps the answer to "who is this for" written down.
+ */
+function allowedOrigin(request) {
+  const origin = request.headers.get('origin');
+  if (!origin) return null; // not a browser, or a same-origin request: nothing to allow
+  if (origin === SITE_ORIGIN) return origin;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  return null;
+}
+
+function corsHeaders(request) {
+  const origin = allowedOrigin(request);
+  if (!origin) return {};
+  return {
+    'access-control-allow-origin': origin,
+    // The answer depends on the request's Origin, so it must not be cached against one and
+    // served to another. Cloudflare caches; omitting this is how one visitor's permission
+    // becomes every visitor's, or nobody's.
+    vary: 'Origin',
+  };
+}
+
 export default {
   async fetch(request, env, ctx) {
+    // Preflight. The calls this client makes today are "simple" ones that do not trigger it —
+    // a GET with no custom headers, and a POST whose string body makes the content type
+    // `text/plain` — so this is not what was broken. It is here so that the first request to
+    // gain a `content-type: application/json` or an auth header does not resurrect the same
+    // outage in a form that looks entirely different.
+    if (request.method === 'OPTIONS' && request.headers.get('origin')) {
+      const allow = corsHeaders(request);
+      if (!allow['access-control-allow-origin']) return new Response(null, { status: 403 });
+      return new Response(null, {
+        status: 204,
+        headers: {
+          ...allow,
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': 'content-type',
+          'access-control-max-age': '86400',
+        },
+      });
+    }
+
     // One place where an unhandled failure becomes a reported one. Without this a bug in any
     // branch below is a 500 with an opaque Cloudflare page, and the only person who knows is
     // the player who hit it.
     try {
-      return await handle(request, env);
+      return withCors(await handle(request, env), request);
     } catch (error) {
       const sent = reportError(env, error, { surface: 'worker' });
       // Handed to the runtime rather than awaited: the response should not wait on telemetry.
       if (sent && ctx?.waitUntil) ctx.waitUntil(sent);
       console.error('worker failed', error);
-      return new Response('something went wrong', { status: 500 });
+      return withCors(new Response('something went wrong', { status: 500 }), request);
     }
   },
 };
+
+/**
+ * The same response, with permission to read it attached.
+ *
+ * A WebSocket upgrade is returned untouched and this is not a detail: a 101 carries a live
+ * `webSocket` on the response object, and copying it through `new Response(...)` both loses
+ * that and throws, because 101 is not a status a Response may be constructed with. Sockets do
+ * not need it anyway — the browser does not apply CORS to a WebSocket handshake.
+ */
+function withCors(response, request) {
+  if (response.webSocket || response.status === 101) return response;
+  const allow = corsHeaders(request);
+  if (!allow['access-control-allow-origin']) return response;
+
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(allow)) headers.set(name, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 async function handle(request, env) {
     const url = new URL(request.url);
