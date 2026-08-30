@@ -49,6 +49,7 @@ import game.vinto.app.art.lobby_counting_down
 import game.vinto.app.art.lobby_fill_seats
 import game.vinto.app.art.lobby_leave
 import game.vinto.app.art.lobby_needs_human
+import game.vinto.app.art.lobby_offered_bots
 import game.vinto.app.art.lobby_over
 import game.vinto.app.art.lobby_remove_bot
 import game.vinto.app.art.lobby_retry
@@ -362,6 +363,7 @@ private fun LobbyLine(word: LobbyWord, msUntilStart: Double?) {
         LobbyWord.NEEDS_ANOTHER_HUMAN -> stringResource(Res.string.lobby_needs_human)
         LobbyWord.FILL_THE_SEATS -> stringResource(Res.string.lobby_fill_seats)
         LobbyWord.COUNTING_DOWN -> stringResource(Res.string.lobby_counting_down, seconds ?: 0)
+        LobbyWord.OFFERED_BOTS -> stringResource(Res.string.lobby_offered_bots, seconds ?: 0)
         LobbyWord.OVER -> stringResource(Res.string.lobby_over)
         LobbyWord.UNREACHABLE -> stringResource(Res.string.lobby_unreachable)
     }

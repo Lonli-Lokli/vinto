@@ -93,6 +93,35 @@ to its token (R3).
 alarm; a `setTimeout` would be lost the moment the object hibernates, which is precisely when
 a lobby with nobody typing is most likely to be evicted.
 
+**Added later: after five minutes, the room fills the seats itself.** This design says two,
+three or four humans are all valid tables, and then leaves reaching one of them entirely to
+somebody noticing that "add a bot" exists. Nobody notices. What happened in practice is that
+two people sat in a lobby waiting for a fourth who was never coming, and at ten minutes the
+`LOBBY_TTL` sweep deleted the room out from under them — a real game was available the whole
+time and was never offered, while a Durable Object held storage for the wait.
+
+So at `LOBBY_NUDGE_MS` (five minutes, half the lobby's life) a room with at least `MIN_HUMANS`
+**connected** humans and an empty seat fills the empty seats with bots and starts a countdown.
+Three things about it follow from the rules already above rather than adding to them:
+
+- **It is an offer, not a decision**, because it is made through the same mechanism a person
+  adding a bot uses. Removing a bot cancels it exactly as it cancels any other countdown, and
+  nothing new had to be written for the decline.
+- **It stands for 30 s rather than 10.** Ten seconds is calibrated for somebody who just
+  tapped a button and is looking at the screen. This one arrives unprompted at somebody five
+  minutes into a wait who may well have put the phone down.
+- **It is made once.** Without recording it, the next alarm re-fills the seats over the
+  refusal — an offer that cannot be declined is a countdown with extra steps.
+
+Declining leaves the room alone and the ten-minute sweep closes it as it always did. Both
+branches end the wait and stop paying for it; only one of them ends it with a game.
+
+**R1 is untouched**, and deliberately so: a *lone* human is still never dealt a hosted game,
+because three bots against one person is exactly what the device does offline for free. The
+condition asks for connected humans rather than seat-holders for the same reason — dealing to
+somebody whose phone is in their pocket hands their hand to a bot on the seat grace half a
+minute later, which is the same waste in a costlier costume.
+
 ### R2b. A session lasts thirty minutes, and the clock belongs to the room
 
 `VINTO_RULES.md` sets a session at a fixed wall-clock length — thirty minutes. The clock

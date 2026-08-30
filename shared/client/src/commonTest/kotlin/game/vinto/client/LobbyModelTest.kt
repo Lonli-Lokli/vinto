@@ -45,6 +45,46 @@ class LobbyModelTest {
         )
     }
 
+    /**
+     * A countdown the room started says so; one a person started does not.
+     *
+     * They are the same state — `STARTING`, with a deadline — and a different event, which is
+     * the whole reason the flag has to come off the wire rather than be inferred here. Somebody
+     * who tapped "add a bot" a second ago needs no explanation. Somebody five minutes into a
+     * wait, who put their phone down and picked it back up to a countdown they did not start,
+     * needs to be told it is an offer and that removing a bot declines it.
+     */
+    @Test
+    fun anOfferFromTheRoomIsNotTheSameSentenceAsACountdownSomebodyStarted() {
+        assertEquals(
+            LobbyWord.OFFERED_BOTS,
+            lobbyUi(
+                lobby(
+                    humans = 2,
+                    phase = RoomPhase.STARTING,
+                    msUntilStart = 30_000.0,
+                    botsOffered = true,
+                ),
+                ConnectionState.Connected,
+                0,
+            ).word,
+        )
+        assertEquals(
+            30_000.0,
+            lobbyUi(
+                lobby(
+                    humans = 2,
+                    phase = RoomPhase.STARTING,
+                    msUntilStart = 30_000.0,
+                    botsOffered = true,
+                ),
+                ConnectionState.Connected,
+                0,
+            ).msUntilStart,
+            "an offered deal counts down silently",
+        )
+    }
+
     @Test
     fun theCountdownShowsOnlyWhileItRuns() {
         val counting = lobbyUi(
@@ -83,6 +123,7 @@ class LobbyModelTest {
         humans: Int,
         phase: RoomPhase = RoomPhase.LOBBY,
         msUntilStart: Double? = null,
+        botsOffered: Boolean = false,
     ) = LobbyView(
         phase = phase,
         seats = List(SEATS) { index ->
@@ -95,6 +136,7 @@ class LobbyModelTest {
             )
         },
         humans = humans,
+        botsOffered = botsOffered,
         msUntilStart = msUntilStart,
     )
 

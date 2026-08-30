@@ -101,6 +101,31 @@ private const val ROOM_TTL_MS = 120_000.0
 /** Created and never started. A lobby nobody came to is still a storage row. */
 private const val LOBBY_TTL_MS = 600_000.0
 
+/**
+ * How long two people wait for a third before the room offers to deal anyway.
+ *
+ * The gap this closes: [MIN_HUMANS] is two, so two humans are *already* enough to play — but
+ * [canStart] also wants every seat filled, and filling the last two means somebody realising
+ * they may add a bot and doing it. Nobody does. What actually happened is that two people sat
+ * in a lobby waiting for a fourth who was never coming, and ten minutes later [LOBBY_TTL_MS]
+ * deleted the room out from under them. Two humans and two bots is a real game and they never
+ * got offered it.
+ *
+ * Half the lobby's life, so a declined offer still leaves as long again to fill the seats for
+ * real.
+ */
+private const val LOBBY_NUDGE_MS = 300_000.0
+
+/**
+ * How long an offered deal stands before it happens.
+ *
+ * Longer than [COUNTDOWN_MS] on purpose. Ten seconds is right for a countdown somebody started
+ * by tapping "add a bot" — they are looking at the screen and they know what they just did.
+ * This one arrives unprompted at somebody who has been waiting five minutes and may well be
+ * looking at something else, so it has to survive picking the phone back up.
+ */
+private const val NUDGE_COUNTDOWN_MS = 30_000.0
+
 /** Long enough for everyone to read the scoreboard, and no longer. */
 private const val FINISHED_TTL_MS = 600_000.0
 
@@ -287,6 +312,28 @@ data class RoomState(
      * every call that could move it, the same way the seed and the tokens do.
      */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
+    /**
+     * When the room offered to fill the empty seats with bots, or null if it has not.
+     *
+     * Recorded rather than recomputed because the offer is made **once**. Taking a bot back
+     * out cancels the countdown, and without this the very next alarm would put it straight
+     * back — an offer that cannot be declined is not an offer, it is a countdown with extra
+     * steps.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botsOfferedAtEpochMs: Double? = null,
+    /**
+     * Whether the countdown running *right now* is the room's offer rather than somebody's tap.
+     *
+     * Two flags for what looks like one fact, because they answer different questions and go
+     * out of step. [botsOfferedAtEpochMs] is "has the offer been made", is set once and never
+     * cleared, and exists to stop the room asking twice. This is "is the thing on screen the
+     * room's doing", and it has to be cleared the moment the countdown is.
+     *
+     * Collapsing them was the first version and it was wrong: decline the offer, then add a
+     * bot by hand five minutes later, and the screen told the player nobody came and the room
+     * had filled the seats — crediting the room for what they had just done themselves.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val countdownFromRoom: Boolean = false,
     /** Null until the game is dealt, which happens when the countdown expires — not before. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val game: GameState? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val log: List<LoggedAction> = emptyList(),
@@ -369,6 +416,17 @@ data class RoomState(
      */
     val canStart: Boolean get() = allSeatsFilled && humanCount >= MIN_HUMANS
 
+    /**
+     * Enough people to play, waiting on seats that nobody is coming to fill.
+     *
+     * The state [LOBBY_NUDGE_MS] exists for. Note that it asks for humans who are *connected*
+     * rather than humans who hold a seat: dealing a game to somebody whose phone is in their
+     * pocket would hand their hand to a bot on the seat grace half a minute later, which is
+     * the same waste in a costlier costume.
+     */
+    val waitingOnNobody: Boolean
+        get() = !allSeatsFilled && connectedHumans >= MIN_HUMANS
+
     /** Humans with a socket open right now, as opposed to humans who hold a seat. */
     val connectedHumans: Int
         get() = seats.count { it.tokenHash != null && it.index in connectedSeats }
@@ -392,6 +450,14 @@ data class RoomState(
             finishedAtEpochMs?.plus(FINISHED_TTL_MS),
             if (phase == RoomPhase.LOBBY || phase == RoomPhase.STARTING) {
                 createdAtEpochMs + LOBBY_TTL_MS
+            } else {
+                null
+            },
+            // The offer to deal with bots, if it is still to be made. Without this the alarm
+            // sleeps through it: the next thing due would be the lobby sweep at ten minutes,
+            // so the offer would arrive at the moment the room was being deleted.
+            if (phase == RoomPhase.LOBBY && botsOfferedAtEpochMs == null) {
+                createdAtEpochMs + LOBBY_NUDGE_MS
             } else {
                 null
             },
@@ -465,13 +531,20 @@ fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): St
 private fun withCountdown(state: RoomState, nowMs: Double): RoomState = when {
     state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING -> state
 
+    // Both branches that move the countdown clear `countdownFromRoom`, and neither is reached
+    // by the room's own offer — `offerBotsIfDue` builds its state directly. So a countdown a
+    // person started always says it was theirs, and one they cancelled stops claiming anything.
     state.canStart && state.phase == RoomPhase.LOBBY ->
-        state.copy(phase = RoomPhase.STARTING, startsAtEpochMs = nowMs + COUNTDOWN_MS)
+        state.copy(
+            phase = RoomPhase.STARTING,
+            startsAtEpochMs = nowMs + COUNTDOWN_MS,
+            countdownFromRoom = false,
+        )
 
     state.canStart -> state
 
     state.phase == RoomPhase.STARTING ->
-        state.copy(phase = RoomPhase.LOBBY, startsAtEpochMs = null)
+        state.copy(phase = RoomPhase.LOBBY, startsAtEpochMs = null, countdownFromRoom = false)
 
     else -> state
 }
@@ -931,6 +1004,41 @@ fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double):
 }
 
 /**
+ * Fills the empty seats with bots and starts the countdown, or records that it was not worth
+ * offering.
+ *
+ * Either way `botsOfferedAtEpochMs` is set, and that is the whole reason this returns a state
+ * rather than a boolean: the offer is made **once**. Taking a bot back out cancels the
+ * countdown, and without the record the next alarm would put it straight back — an offer that
+ * cannot be declined is not an offer, it is a countdown with extra steps. Marking it even when
+ * there was nobody to offer it to is deliberate too: a third player arriving at minute nine
+ * should not walk into an offer aimed at a wait that is nearly over.
+ */
+private fun offerBotsIfDue(state: RoomState, nowMs: Double): RoomState {
+    val due = state.phase == RoomPhase.LOBBY &&
+        state.botsOfferedAtEpochMs == null &&
+        nowMs >= state.createdAtEpochMs + LOBBY_NUDGE_MS
+    if (!due) return state
+
+    val marked = state.copy(botsOfferedAtEpochMs = nowMs)
+    if (!state.waitingOnNobody) return marked
+
+    val filled = marked.seats.map {
+        if (it.occupied) {
+            it
+        } else {
+            it.copy(isBot = true, profile = PlayerProfile(nickname = "Bot ${it.index + 1}"))
+        }
+    }
+    return marked.copy(
+        seats = filled,
+        phase = RoomPhase.STARTING,
+        startsAtEpochMs = nowMs + NUDGE_COUNTDOWN_MS,
+        countdownFromRoom = true,
+    )
+}
+
+/**
  * Whatever was due. Called from the alarm, and never assumes which deadline woke it.
  *
  * Order matters and is not arbitrary: deletion is checked before takeover, because a room
@@ -982,7 +1090,22 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         }
     }
 
-    // 4. The countdown.
+    // 4. Two people waiting on seats nobody is coming to fill: offer to deal anyway.
+    //
+    //    Made once, and made as a *proposal* rather than a decision — the seats fill with bots
+    //    and the ordinary countdown runs, so taking one back out cancels it exactly as it
+    //    cancels a countdown somebody started by hand. `botsOfferedAtEpochMs` is what stops
+    //    the next alarm making the same offer again over their refusal.
+    //
+    //    Declining leaves the room alone, and `LOBBY_TTL_MS` closes it at ten minutes as it
+    //    always did. Both branches end the wait; this one ends it with a game.
+    //    No early return: the offer sets a countdown 30 s out, so step 5 below is not due, and
+    //    steps 6 and 7 are no-ops in a lobby. The function's own last line carries the state
+    //    out with `nextAlarmAt` recomputed, which is exactly what an early return would have
+    //    done by hand.
+    state = offerBotsIfDue(state, nowMs)
+
+    // 5. The countdown.
     if (due(state.startsAtEpochMs) && state.canStart) {
         val started = VintoJson.decodeFromString(
             JoinResult.serializer(),
@@ -996,7 +1119,7 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         }
     }
 
-    // 5. Seats whose grace has run out are played by bots. The seat keeps its token — it is
+    // 6. Seats whose grace has run out are played by bots. The seat keeps its token — it is
     //    held for its owner, not handed to anybody else (design R2a).
     val expired = state.seatGrace.filterValues { nowMs >= it }.keys
     if (expired.isNotEmpty()) {
@@ -1016,7 +1139,7 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         )
     }
 
-    // 6. Pacing (9.4): the table has out-waited a human, and the room moves for them.
+    // 7. Pacing (9.4): the table has out-waited a human, and the room moves for them.
     if (due(state.tossInDeadlineEpochMs) || due(state.leaderDeadlineEpochMs)) {
         return expirePacing(
             state,
@@ -1330,6 +1453,10 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
             humans = state.humanCount,
             startsAtEpochMs = state.startsAtEpochMs,
             msUntilStart = state.startsAtEpochMs?.let { maxOf(0.0, it - nowMs) },
+            // Only while the offer is the thing counting down. Once the game is dealt the flag
+            // has nothing to say, and a lobby somebody re-enters later should not still be
+            // explaining a countdown that has been over for ten minutes.
+            botsOffered = state.countdownFromRoom && state.phase == RoomPhase.STARTING,
         ),
     )
 }

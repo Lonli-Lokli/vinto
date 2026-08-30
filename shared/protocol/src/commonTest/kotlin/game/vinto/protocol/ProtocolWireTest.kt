@@ -122,6 +122,9 @@ class ProtocolWireTest {
                 """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
                 """{"index":3,"occupied":true,"isBot":false,"removable":false,"nickname":"Bob"}],""" +
                 """"humans":2,"startsAtEpochMs":1700000010000,"msUntilStart":9000}}"""
+        // Deliberately without `botsOffered`, which is newer than this literal: a client or a
+        // stored room from before the field must still decode, and the default is the answer
+        // that was true for all of them — nobody's seats were filled by the room back then.
 
         val decoded = decodeServer(literal)
         assertIs<ServerMessage.Lobby>(decoded)
@@ -164,7 +167,8 @@ class ProtocolWireTest {
                 """{"index":1,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
                 """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
                 """{"index":3,"occupied":false,"isBot":false,"removable":false,"nickname":null}],""" +
-                """"humans":1,"startsAtEpochMs":null,"msUntilStart":null},"view":null}"""
+                """"humans":1,"startsAtEpochMs":null,"msUntilStart":null,""" +
+                """"botsOffered":false},"view":null}"""
 
         val decoded = decodeServer(literal)
         assertIs<ServerMessage.Joined>(decoded)

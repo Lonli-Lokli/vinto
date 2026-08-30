@@ -44,6 +44,18 @@ enum class LobbyWord {
     /** Everything is set and the countdown is running. */
     COUNTING_DOWN,
 
+    /**
+     * Nobody else came, so the room filled the seats itself and is about to deal.
+     *
+     * Distinct from [COUNTING_DOWN] because the two are the same state and a different event.
+     * A countdown somebody started by tapping "add a bot" needs no explanation — they did it,
+     * a second ago, and they are looking at the screen. This one arrives unprompted after five
+     * minutes of waiting, at somebody who may have put the phone down, and a countdown that
+     * does not say where it came from reads as the room deciding on their behalf rather than
+     * offering. It is an offer: taking a bot back out cancels it.
+     */
+    OFFERED_BOTS,
+
     /** The room is gone — closed, ended, or left. */
     OVER,
 
@@ -77,6 +89,7 @@ fun lobbyUi(lobby: LobbyView?, connection: ConnectionState, mySeat: Int?): Lobby
         connection is ConnectionState.Closed && connection.trouble != null -> LobbyWord.UNREACHABLE
         connection is ConnectionState.Closed -> LobbyWord.OVER
         !connected || lobby == null -> LobbyWord.CONNECTING
+        lobby.phase == RoomPhase.STARTING && lobby.botsOffered -> LobbyWord.OFFERED_BOTS
         lobby.phase == RoomPhase.STARTING -> LobbyWord.COUNTING_DOWN
         lobby.humans < MIN_HUMANS -> LobbyWord.NEEDS_ANOTHER_HUMAN
         else -> LobbyWord.FILL_THE_SEATS
@@ -86,7 +99,8 @@ fun lobbyUi(lobby: LobbyView?, connection: ConnectionState, mySeat: Int?): Lobby
         seats = seats,
         canRetry = word == LobbyWord.UNREACHABLE,
         canAddBot = connected && seats.any { !it.occupied },
-        msUntilStart = lobby?.msUntilStart.takeIf { word == LobbyWord.COUNTING_DOWN },
+        msUntilStart = lobby?.msUntilStart
+            .takeIf { word == LobbyWord.COUNTING_DOWN || word == LobbyWord.OFFERED_BOTS },
         word = word,
     )
 }

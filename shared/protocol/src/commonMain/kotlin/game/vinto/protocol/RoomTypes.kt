@@ -100,6 +100,15 @@ data class LobbyView(
     val humans: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val startsAtEpochMs: Double? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val msUntilStart: Double? = null,
+    /**
+     * True when the room filled the empty seats itself, rather than somebody adding a bot.
+     *
+     * The screen needs it because the two say different things to the person reading them. A
+     * countdown somebody started by tapping "add a bot" needs no explanation — they did it. A
+     * countdown that appears after five minutes of waiting is the room making an offer, and an
+     * offer that does not say it is one reads as the room deciding for you.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botsOffered: Boolean = false,
 )
 
 /**
