@@ -39,7 +39,10 @@ sealed interface Detail {
     /** A toss-in window, for somebody who may still throw. */
     data object AWrongOneCostsAPenaltyCard : Detail
 
-    /** A toss-in window, for somebody barred by an earlier wrong throw. */
+    /** A toss-in window, for somebody who got this card wrong and may try the next one. */
+    data object BarredFromThisCard : Detail
+
+    /** The same, in the final round, where the bar runs to the end of it. */
     data object BarredForTheRestOfTheRound : Detail
 
     /** The round was scored against the caller's hand. */

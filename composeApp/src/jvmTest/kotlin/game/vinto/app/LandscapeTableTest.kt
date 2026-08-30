@@ -223,6 +223,7 @@ class LandscapeTableTest {
                         layout = TableLayout.forScreen(width, height),
                         onMove = {},
                         onHelp = {},
+                        onSettings = {},
                         onReport = {},
                         onDeck = {},
                     )

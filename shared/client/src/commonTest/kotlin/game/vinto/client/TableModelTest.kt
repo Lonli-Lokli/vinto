@@ -369,15 +369,31 @@ class TableModelTest {
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
         session.dispatch(GameAction.DiscardCard(PlayerIdPayload(session.playerId)))
 
-        // Throw in a card that is almost certainly not a 5 — position 4 was never peeked.
-        val window = session.table()
-        session.dispatch((window.taps.getValue(CardRef(session.playerId, 4)) as Move.Send).action)
-
-        if (session.playerId !in session.view.value.barredFromTossIn) return@runTest // it matched
+        // Throw cards in until one of them is a wrong guess, which is what bars a player.
+        // The old version threw position 4 — never peeked, so almost certainly not a 5 — and
+        // *returned* when it happened to match, which made the whole case vacuous whenever the
+        // deal was unkind. A five has no action, so a right guess simply shortens the hand and
+        // leaves the window open for the next attempt.
+        repeat(session.view.value.players.first { it.id == session.playerId }.cards.size) {
+            if (session.playerId in session.view.value.barredFromTossIn) return@repeat
+            val tap = session.table().taps.entries
+                .firstOrNull { it.key.playerId == session.playerId }
+                ?: return@repeat
+            session.dispatch((tap.value as Move.Send).action)
+        }
+        assertTrue(
+            session.playerId in session.view.value.barredFromTossIn,
+            "the whole hand matched the discard, which this seed does not do",
+        )
 
         val after = session.table()
         assertTrue(after.taps.isEmpty(), "no card can be thrown in any more")
-        assertEquals(Detail.BarredForTheRestOfTheRound, after.detail, "and it says why")
+        assertEquals(
+            Detail.BarredFromThisCard,
+            after.detail,
+            "and it says why — and that the next card to land is a fresh chance, because " +
+                "outside the final round the bar is the window rather than the round",
+        )
         assertTrue(after.send(Label.Continue) is GameAction.PlayerTossInFinished)
         assertTrue(
             after.send(Label.CallVinto) is GameAction.CallVinto,

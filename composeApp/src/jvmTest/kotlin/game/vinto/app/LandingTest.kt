@@ -198,6 +198,7 @@ class LandingTest {
                         layout = layout,
                         onMove = {},
                         onHelp = {},
+                        onSettings = {},
                         onReport = {},
                         onDeck = {},
                     )

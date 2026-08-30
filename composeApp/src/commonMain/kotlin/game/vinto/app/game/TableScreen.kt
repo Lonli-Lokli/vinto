@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
@@ -59,6 +60,7 @@ import game.vinto.app.art.card_thrown_by
 import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
+import game.vinto.app.art.header_settings
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_final_ally
@@ -137,12 +139,18 @@ private val DeckBadge = Color(0xFF14351F)
  * a player who rotates the phone mid-round finds every seat in the chair it was in, only the
  * controls having moved to their thumb's new resting place.
  */
+// Seven of them, and they are seven different questions the screen cannot answer for itself:
+// what a move does, and where each of the four header controls leads. Bundling them into one
+// `TableActions` bag would satisfy the rule and cost the compiler its ability to say which one
+// a caller forgot — which is exactly what it said, usefully, when the gear was added.
+@Suppress("LongParameterList")
 @Composable
 fun TableScreen(
     state: TableState,
     layout: TableLayout,
     onMove: (Move) -> Unit,
     onHelp: () -> Unit,
+    onSettings: () -> Unit,
     onReport: () -> Unit,
     onDeck: () -> Unit,
     modifier: Modifier = Modifier,
@@ -158,7 +166,7 @@ fun TableScreen(
             horizontalArrangement = Arrangement.Center,
         ) {
             Column(modifier = Modifier.width(layout.feltWidth)) {
-                TableHeader(state.view, state.round, onHelp, onReport, onDeck)
+                TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
@@ -182,7 +190,7 @@ fun TableScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(state.view, state.round, onHelp, onReport, onDeck)
+            TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
 
             FinalRoundLine(state.view)
 
@@ -275,10 +283,12 @@ private fun TableHeader(
     view: PlayerView,
     round: Int,
     onHelp: () -> Unit,
+    onSettings: () -> Unit,
     onReport: () -> Unit,
     onDeck: () -> Unit,
 ) {
     val report = stringResource(Res.string.header_report)
+    val settings = stringResource(Res.string.header_settings)
     val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
@@ -326,6 +336,27 @@ private fun TableHeader(
                     color = Rail.inkDim,
                 )
             }
+        }
+
+        // The settings, from the table rather than only from the front door.
+        //
+        // Pace is the setting a player wants to change *while* something is too slow or too
+        // fast to sit through, and it was reachable only from the home screen — so changing it
+        // meant abandoning the round it was annoying you in, which is a price nobody pays; they
+        // put the phone down instead. Theme and haptics are the same shape of want. Going there
+        // and coming back returns to this exact table, mid-round, with nothing lost.
+        Box(
+            modifier = Modifier
+                .size(HeaderTap)
+                .clickable(onClick = onSettings)
+                .semantics { contentDescription = settings },
+            contentAlignment = Alignment.Center,
+        ) {
+            // The emoji presentation (U+2699 U+FE0F), the same route the bug beside it takes:
+            // Fira carries neither glyph, so both are drawn by the platform's emoji font. A
+            // monochrome U+2699 on its own would land in whatever fallback the host happened
+            // to have, which on a phone is not a decision anybody made.
+            Text(text = "\u2699\uFE0F", style = MaterialTheme.typography.labelLarge)
         }
 
         // Always reachable, because the moment worth reporting is the moment it goes wrong
@@ -571,7 +602,24 @@ private fun MySeat(
 }
 
 /**
- * A hand: one line of cards, however many there are.
+ * A hand laid along the bottom or top edge: one line of cards while they fit, two when they
+ * do not.
+ *
+ * Five is the deal and not the limit — a wrong guess, a wrong toss-in and an Ace each add one,
+ * and only the end of the round takes any away — so eight cards in front of a player is an
+ * ordinary way to be losing. Eight would not fit, and what the line did about it was slide
+ * them over each other until they did. Past about seven that stops reading as a hand of cards
+ * and starts reading as one wide strip of pattern: the backs are a repeat, so the seam between
+ * two overlapping cards is invisible and the player cannot count their own hand, let alone aim
+ * at a card in it.
+ *
+ * So a hand that does not fit steps down one size and wraps, which is what the web client did
+ * (`legacy-web/.../horizontal-player-cards.tsx` — `flex-wrap`, with the card size chosen from
+ * the count). Both halves are needed: wrapping alone doubles the seat's height and squeezes
+ * the felt until the side seats have no room, which is why it was taken out before.
+ *
+ * The three seats opposite keep the old behaviour, because their cards are counted rather than
+ * read and the felt's width is the scarcest thing on a phone — see [SideSeat].
  */
 @Composable
 private fun Hand(
@@ -582,9 +630,23 @@ private fun Hand(
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    HandLine(vertical = false, modifier = modifier) {
-        Cards(seat, view, table, scale, onMove, turned = false)
+    BoxWithConstraints(modifier = modifier) {
+        // The footprint, not the picture: `CardFace` reserves [TapTarget] whatever it draws,
+        // so a hand of nine 44dp boxes needs 44dp nine times over however small the art is.
+        val fits = fits(seat.cards.size, scale, maxWidth)
+        val drawn = if (fits) scale else scale.crowded()
+
+        HandLine(vertical = false, wrap = true) {
+            Cards(seat, view, table, drawn, onMove, turned = false)
+        }
     }
+}
+
+/** Whether [count] cards at [scale] stand side by side in [room] without touching. */
+private fun fits(count: Int, scale: CardScale, room: Dp): Boolean {
+    if (count <= 1) return true
+    val step = maxOf(scale.width, TapTarget)
+    return step * count + Tight * (count - 1) <= room
 }
 
 /**
@@ -638,25 +700,33 @@ private fun Cards(
 }
 
 /**
- * Cards laid along one axis, in a line whose length never exceeds the room it was given.
+ * Cards laid along one axis, in a block whose length never exceeds the room it was given.
  *
  * Five cards is the deal and not the limit: a wrong guess, a wrong toss-in and an Ace each
  * add one, and nothing but the end of the round takes any away, so a hand of eight or nine
- * is an ordinary way to lose rather than a stress test. What was here before wrapped onto a
- * second row — and a second row of five is a hand that is twice as tall, which pushed the
- * middle of the table down until the side seats had a single card's height to lay nine cards
- * in. They wrapped sideways, off the felt, and the fourth player disappeared from the game
- * altogether. `CrowdedTableTest` measures exactly that and would fail again.
+ * is an ordinary way to lose rather than a stress test. There are two ways to fit one, and
+ * this draws both, because they are right in different places.
  *
- * So the line keeps its footprint instead: cards sit shoulder to shoulder while they fit,
- * and slide over each other when they do not, the way a hand of cards actually behaves in a
- * hand. Never past halfway, so every card keeps a strip of itself to be tapped by — and the
- * strip belongs to the card on top, because that is the one whose face you can see.
+ * **Overlapping** ([wrap] false) keeps the block exactly one card thick: the cards slide over
+ * each other the way a hand of cards behaves in a hand, never past halfway, so each keeps a
+ * strip of itself to be tapped by — and the strip belongs to the card on top, because that is
+ * the one whose face can be seen. It is what the seats at the sides get, where a second column
+ * would take width the felt does not have.
+ *
+ * **Wrapping** ([wrap] true) runs onto a second line instead, in even lines rather than one
+ * full line and a remainder — a row of six above a row of one reads as a mistake. It is what
+ * the hand a player *reads* gets, because past about seven the overlapping version stops
+ * reading as cards at all: the backs are a repeating pattern, so the seam between two of them
+ * is invisible and a player cannot count their own hand. The caller shrinks the cards a step
+ * first ([CardScale.crowded]), which is what keeps two lines from doubling the seat's height —
+ * wrapping without that is what pushed the middle of the table down until the side seats had
+ * a single card's height to lay nine cards in, and is why this was taken out once before.
  */
 @Composable
 private fun HandLine(
     vertical: Boolean,
     modifier: Modifier = Modifier,
+    wrap: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->
@@ -666,17 +736,29 @@ private fun HandLine(
         val along = { p: Placeable -> if (vertical) p.height else p.width }
         val across = { p: Placeable -> if (vertical) p.width else p.height }
         val card = cards.maxOf(along)
+        val thick = cards.maxOf(across)
         val room = if (vertical) constraints.maxHeight else constraints.maxWidth
         val gap = Tight.roundToPx()
+        val loose = card * cards.size + gap * (cards.size - 1) <= room
+
+        // How many go on a line, and how many lines that makes. Evened out afterwards so the
+        // last line is never left holding one card.
+        val lines = if (loose || !wrap) {
+            1
+        } else {
+            val perLine = ((room + gap) / (card + gap)).coerceAtLeast(1)
+            (cards.size + perLine - 1) / perLine
+        }
+        val perLine = (cards.size + lines - 1) / lines
 
         val pitch = when {
             cards.size == 1 -> 0
-            card * cards.size + gap * (cards.size - 1) <= room -> card + gap
-            else -> ((room - card) / (cards.size - 1))
-                .coerceAtLeast((card * MIN_SHOWING).toInt())
+            loose || lines > 1 -> card + gap
+            // One line and not enough room: slide them over each other, never past halfway.
+            else -> ((room - card) / (cards.size - 1)).coerceAtLeast((card * MIN_SHOWING).toInt())
         }
-        val length = card + pitch * (cards.size - 1)
-        val breadth = cards.maxOf(across)
+        val length = card + pitch * (minOf(cards.size, perLine) - 1)
+        val breadth = thick * lines + gap * (lines - 1)
 
         layout(
             width = if (vertical) breadth else length,
@@ -686,7 +768,9 @@ private fun HandLine(
                 // In order, so a card that overlaps its neighbour is the later one — and in
                 // Compose the last placed is both the one drawn on top and the one a finger
                 // lands on, which is what makes the exposed strip belong to the right card.
-                if (vertical) card.place(0, i * pitch) else card.place(i * pitch, 0)
+                val onLine = (i % perLine) * pitch
+                val downLines = (i / perLine) * (thick + gap)
+                if (vertical) card.place(downLines, onLine) else card.place(onLine, downLines)
             }
         }
     }

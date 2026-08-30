@@ -251,8 +251,8 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
      * the first time a bot is holding a card it *knows* matches, it throws it in where the
      * player can watch it happen.
      *
-     * "Knows" is the bot's own rule, not a convenience: guessing costs a penalty card and bars
-     * you from the rest of the round, so a bot that tossed a card it had not seen would be
+     * "Knows" is the bot's own rule, not a convenience: guessing costs a penalty card and shuts
+     * you out of the card you guessed at, so a bot that tossed a card it had not seen would be
      * demonstrating bad play rather than the rule.
      *
      * The move is validated here rather than hoped about, because the flag must only be spent

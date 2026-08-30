@@ -483,9 +483,9 @@ object ActionValidator {
             return Validation.Invalid("Invalid card position $it")
         }
 
-        // One wrong toss-in ends a player's participation for the round — the penalty is the
-        // rule, not just the drawn card.
-        if (state.roundFailedAttempts.any { it.playerId == action.payload.playerId }) {
+        // One wrong toss-in ends a player's participation in **that window** — and, in the
+        // final round only, in the rest of the round. See `isBarredFromTossIn`.
+        if (isBarredFromTossIn(state, action.payload.playerId)) {
             return Validation.Invalid("Cannot participate in toss-in after failed attempt")
         }
 

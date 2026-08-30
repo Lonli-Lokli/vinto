@@ -69,7 +69,7 @@ private val Pad = 12.dp
  * keep waiting, so it belongs to the player.
  */
 @Composable
-fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
+fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -> Unit) {
     val countRound = rememberRoundCount(game)
 
     // Keyed on the round, so dealing the next one rebuilds the table rather than trying to
@@ -135,6 +135,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onQuit: () -> Unit) {
                     layout = layout,
                     onMove = act,
                     onHelp = { helpOpen = true },
+                    onSettings = onSettings,
                     // The whole game, in the format the replay harness already reads. A bug
                     // report for a card game is worth what it is reproducible for, and "the bots
                     // got stuck" is worth nothing — this is the seed, every action in order, and

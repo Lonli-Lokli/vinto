@@ -108,6 +108,7 @@ class TouchTargetTest {
                         layout = TableLayout.forScreen(PHONE_H),
                         onMove = {},
                         onHelp = {},
+                        onSettings = {},
                         onReport = {},
                         onDeck = {},
                     )
@@ -169,6 +170,7 @@ class TouchTargetTest {
                             layout = TableLayout.forScreen(PHONE_H),
                             onMove = {},
                             onHelp = {},
+                            onSettings = {},
                             onReport = {},
                             onDeck = {},
                         )
@@ -220,6 +222,7 @@ class TouchTargetTest {
                             layout = TableLayout.forScreen(PHONE_H),
                             onMove = {},
                             onHelp = {},
+                            onSettings = {},
                             onReport = {},
                             onDeck = {},
                         )

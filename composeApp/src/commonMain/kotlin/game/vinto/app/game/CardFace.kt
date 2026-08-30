@@ -60,7 +60,6 @@ import org.jetbrains.compose.resources.stringResource
 
 private val Hairline = 1.dp
 private val Ring = 3.dp
-private val TapTarget = 44.dp
 
 private const val FLIP_MS = 420
 private const val PULSE_MS = 1100

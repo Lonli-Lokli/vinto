@@ -65,6 +65,7 @@ class ScreenshotTest {
                     layout = TableLayout.forScreen(PHONE_H.dp),
                     onMove = {},
                     onHelp = {},
+                    onSettings = {},
                     onReport = {},
                     onDeck = {},
                 )
@@ -82,6 +83,7 @@ class ScreenshotTest {
                     layout = TableLayout.forScreen(PHONE_H.dp, PHONE_W.dp),
                     onMove = {},
                     onHelp = {},
+                    onSettings = {},
                     onReport = {},
                     onDeck = {},
                 )

@@ -535,10 +535,20 @@ export function actionValidator(
         }
       }
 
-      // Check if player has already made a failed attempt
-      const hasFailedAttempt = state.roundFailedAttempts.some(
-        (attempt) => attempt.playerId === playerId
-      );
+      // One wrong toss-in shuts a player out of the card they guessed at — and, in the final
+      // round only, out of the rest of the round. See the Kotlin `isBarredFromTossIn` and the
+      // decision table in `docs/game-engine/VINTO_RULES.md`; the bar used to run for the whole
+      // deal in every phase, which cost a player every later window for one wrong read.
+      //
+      // `roundFailedAttempts` still records every failure for the whole round: it is history,
+      // it is inside the canonical hash, and narrowing what the *validator* consults cannot
+      // reject an action any recording contains.
+      const hasFailedAttempt =
+        state.phase === 'final'
+          ? state.roundFailedAttempts.some((attempt) => attempt.playerId === playerId)
+          : (state.activeTossIn.failedAttempts ?? []).some(
+              (attempt) => attempt.playerId === playerId
+            );
       if (hasFailedAttempt) {
         return {
           valid: false,

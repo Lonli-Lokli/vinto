@@ -616,13 +616,19 @@ private fun tossInTable(view: PlayerView): Table? {
         return Table(prompt = Ask.WaitingForTheOthers, waiting = true)
     }
 
-    // One wrong throw bars you for the rest of the round. Said out loud, because it is a rule
-    // a player breaks once and then cannot see they have broken: the window would simply stop
-    // accepting cards, with nothing to distinguish "you are barred" from "you were too slow".
+    // One wrong throw bars you from this card — and, in the final round, from the rest of it.
+    // Said out loud, because it is a rule a player breaks once and then cannot see they have
+    // broken: the window would simply stop accepting cards, with nothing to distinguish "you
+    // are barred" from "you were too slow". Which of the two it is matters to the player as
+    // much as the bar does: one is worth waiting out and the other is the round over for them.
     if (me in view.barredFromTossIn) {
         return Table(
             prompt = Ask.TossIn(toss.ranks, barred = true),
-            detail = Detail.BarredForTheRestOfTheRound,
+            detail = if (view.phase == GamePhase.FINAL) {
+                Detail.BarredForTheRestOfTheRound
+            } else {
+                Detail.BarredFromThisCard
+            },
             // Barred from *tossing in*, not from ending your turn. Losing the Vinto call
             // along with it would be a second penalty the rules never mention, and it would
             // land on the player who has just been punished once already.

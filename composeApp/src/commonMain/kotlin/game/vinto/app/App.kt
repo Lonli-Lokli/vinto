@@ -107,10 +107,7 @@ fun App(
     // what a phone's back button means everywhere else, and what its absence made look like a
     // crash the first time somebody pressed it in the settings.
     SystemBack(enabled = screen !is Screen.Home && screen !is Screen.Opening) {
-        // Backing out of a room is leaving it: the socket loop must not outlive the screen.
-        // The seat token stays vaulted, so the same back button is not a lost seat.
-        (screen as? Screen.InRoom)?.room?.leave()
-        screen = Screen.Home(canContinue = vault.loadGame() != null)
+        screen = screen.backedOutOf(vault)
     }
 
     val dark = settings.theme.isDark()
@@ -147,7 +144,7 @@ fun App(
                                 go = homeActions(vault, seeds, settings, count) { screen = it },
                             )
 
-                            Screen.Settings -> SettingsScreen(
+                            is Screen.Settings -> SettingsScreen(
                                 settings = settings,
                                 canForget = vault.loadGame() != null,
                                 onChange = ::change,
@@ -155,18 +152,20 @@ fun App(
                                     vault.forgetGame()
                                     screen = Screen.Home(canContinue = false)
                                 },
-                                onBack = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
+                                onBack = { screen = here.back },
                             )
 
                             Screen.Teaching -> TeachScreen(
                                 botDispatcher = Dispatchers.Default,
                                 pace = settings.pace,
+                                onSettings = { screen = Screen.Settings(back = here) },
                                 onDone = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
                             )
 
                             is Screen.Playing -> GameScreen(
                                 game = here.game,
                                 pace = settings.pace,
+                                onSettings = { screen = Screen.Settings(back = here) },
                                 onQuit = { screen = Screen.Home(canContinue = true) },
                             )
 
@@ -189,6 +188,7 @@ fun App(
                             is Screen.InRoom -> RoomScreen(
                                 room = here.room,
                                 pace = settings.pace,
+                                onSettings = { screen = Screen.Settings(back = here) },
                                 onLeft = {
                                     screen = Screen.Home(canContinue = vault.loadGame() != null)
                                 },
@@ -229,7 +229,7 @@ private fun homeActions(
         counting.record(AnalyticsEvent.Funnel(FunnelStep.ONLINE_PRESSED, Surface.ONLINE))
         go(Screen.Online)
     },
-    settings = { go(Screen.Settings) },
+    settings = { go(Screen.Settings(back = Screen.Home(canContinue = vault.loadGame() != null))) },
 )
 
 /** Whether this choice means the dark palette, asking the system only when asked to. */
@@ -245,7 +245,26 @@ private fun surfaceOf(screen: Screen): Surface = when (screen) {
     is Screen.Playing -> Surface.SOLO
     Screen.Teaching -> Surface.LESSON
     Screen.Online, is Screen.Discover, is Screen.InRoom -> Surface.ONLINE
-    Screen.Opening, is Screen.Home, Screen.Settings -> Surface.MENU
+    Screen.Opening, is Screen.Home, is Screen.Settings -> Surface.MENU
+}
+
+/**
+ * Where the phone's back button goes from here.
+ *
+ * Home from almost anywhere, which is what back means everywhere else on a phone and what its
+ * absence made look like a crash the first time somebody pressed it in the settings. Two
+ * exceptions, both of which would otherwise throw something away:
+ *
+ *  - **the settings know their own way back.** Since the gear reached the table's header they
+ *    are reachable mid-round, and a back that went home would abandon the round somebody
+ *    stepped out of to change the pace of.
+ *  - **backing out of a room is leaving it**, so the socket loop does not outlive the screen.
+ *    The seat token stays vaulted, so this is not a lost seat.
+ */
+private fun Screen.backedOutOf(vault: Vault): Screen {
+    if (this is Screen.Settings) return back
+    (this as? Screen.InRoom)?.room?.leave()
+    return Screen.Home(canContinue = vault.loadGame() != null)
 }
 
 /** Where the app is. */
@@ -255,7 +274,16 @@ private sealed interface Screen {
 
     data class Home(val canContinue: Boolean) : Screen
 
-    data object Settings : Screen
+    /**
+     * The settings, and where to go when they are closed.
+     *
+     * It carries its own way back rather than always returning Home, because the settings are
+     * now reachable from the table's header (§6g): pace is the setting somebody wants to change
+     * *during* the round that is too slow, and a Back that abandoned the round would make it a
+     * setting nobody ever changes. [back] is the screen the gear was pressed on — the same
+     * `Playing` holding the same `LocalGame`, so nothing is re-dealt or re-connected.
+     */
+    data class Settings(val back: Screen) : Screen
 
     /** A real round with a coach over it. */
     data object Teaching : Screen

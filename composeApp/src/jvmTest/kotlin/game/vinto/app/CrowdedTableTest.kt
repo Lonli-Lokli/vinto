@@ -99,6 +99,36 @@ class CrowdedTableTest {
         }
     }
 
+    /**
+     * And a hand too wide for one row goes onto two rather than sliding into itself.
+     *
+     * Overlapping is right for a hand that is counted and wrong for the one that is read: the
+     * card backs are a repeating pattern, so two overlapping backs have no visible seam and a
+     * player with nine cards cannot count their own hand, let alone aim at a card in it. What
+     * this asks is the thing a screenshot shows and a bounds check can prove — no card in your
+     * own hand covers any part of another.
+     */
+    @Test
+    fun yourOwnCrowdedHandWrapsInsteadOfOverlapping() = runComposeUiTest {
+        show(crowded(dealt(), HELD))
+
+        val mine = cardBounds().filter { (label, _) -> label.startsWith(ME) }
+        assertEquals(HELD, mine.size, "all $HELD are still drawn")
+
+        mine.forEachIndexed { i, (whatA, a) ->
+            mine.drop(i + 1).forEach { (whatB, b) ->
+                assertTrue(!a.touches(b), "$whatA is lying over $whatB: $a vs $b")
+            }
+        }
+
+        val rows = mine.map { (_, box) -> box.top }.distinct()
+        assertTrue(rows.size > 1, "nine cards were laid in one row, so they cannot all fit")
+
+        // Two, not four: the cards step down a size first, and without that a wrapped hand
+        // takes the felt's height away from the three seats that also have to be on it.
+        assertTrue(rows.size <= 2, "the hand is ${rows.size} rows deep, which is a wall of cards")
+    }
+
     private fun Rect.touches(other: Rect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
@@ -112,6 +142,7 @@ class CrowdedTableTest {
                         layout = TableLayout.forScreen(PHONE_H),
                         onMove = {},
                         onHelp = {},
+                        onSettings = {},
                         onReport = {},
                         onDeck = {},
                     )

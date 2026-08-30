@@ -128,7 +128,12 @@ private val TourCard = 46.dp
  * yet know what the gold button does. Everything else is theirs from the first frame.
  */
 @Composable
-fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> Unit) {
+fun TeachScreen(
+    botDispatcher: CoroutineDispatcher?,
+    pace: Pace,
+    onSettings: () -> Unit,
+    onDone: () -> Unit,
+) {
     // Where somebody stops is the useful number: a lesson abandoned at beat three and one
     // abandoned at beat twelve are different problems, and only the second is about length.
     val counting = LocalCounting.current
@@ -220,6 +225,7 @@ fun TeachScreen(botDispatcher: CoroutineDispatcher?, pace: Pace, onDone: () -> U
                     layout = layout,
                     onMove = act,
                     onHelp = { helpOpen = true },
+                    onSettings = onSettings,
                     onReport = {},
                     // Nothing to explain in here that the coach is not already explaining.
                     onDeck = {},

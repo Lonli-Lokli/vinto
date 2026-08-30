@@ -93,13 +93,20 @@ import org.jetbrains.compose.resources.stringResource
  * tell this game from a local one, which is design R1 landing where it was aimed.
  */
 @Composable
-fun RoomScreen(room: RemoteRoom, pace: Pace, onLeft: () -> Unit) {
+fun RoomScreen(room: RemoteRoom, pace: Pace, onSettings: () -> Unit, onLeft: () -> Unit) {
     val session by room.session.collectAsState()
     val ended by room.ended.collectAsState()
 
     when (val playing = session) {
         null -> LobbyScreen(room, onLeft)
-        else -> RemoteGameScreen(room, playing, pace, endedReason = ended, onLeft = onLeft)
+        else -> RemoteGameScreen(
+            room,
+            playing,
+            pace,
+            endedReason = ended,
+            onSettings = onSettings,
+            onLeft = onLeft,
+        )
     }
 }
 
@@ -376,6 +383,7 @@ private fun RemoteGameScreen(
     session: RemoteGameSession,
     pace: Pace,
     endedReason: String?,
+    onSettings: () -> Unit,
     onLeft: () -> Unit,
 ) {
     val holder = rememberHolder(session)
@@ -416,6 +424,7 @@ private fun RemoteGameScreen(
                     layout = layout,
                     onMove = act,
                     onHelp = { helpOpen = true },
+                    onSettings = onSettings,
                     onReport = {},
                     onDeck = {},
                     modifier = Modifier.weight(1f),

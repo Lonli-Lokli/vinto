@@ -3,8 +3,33 @@ package game.vinto.app.game
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/**
+ * The smallest a card may be laid out at, whatever size its picture is drawn.
+ *
+ * WCAG 2.2 AAA (SC 2.5.5), Apple's 44pt and Material's 48dp all land here or below it, and a
+ * card game is played by tapping small things quickly. `CardFace` reserves this much footprint
+ * even for a card drawn smaller, and `TouchTargetTest` measures it — so it is also the floor
+ * the hand layout has to plan around: shrinking the picture past it buys no room at all, which
+ * is why a crowded hand wraps rather than shrinking further.
+ */
+val TapTarget: Dp = 44.dp
+
 /** How large one card is drawn. */
-data class CardScale(val width: Dp, val height: Dp)
+data class CardScale(val width: Dp, val height: Dp) {
+
+    /**
+     * One step down, for a hand with more cards than room.
+     *
+     * Not a continuum: a hand that resized by a few percent every time a penalty card landed
+     * would be a table that never looks the same twice. There is one smaller size and it is
+     * the tap floor — below that the footprint stops shrinking, so the picture would shrink
+     * inside a box that does not, which reads as a small card in a large gap rather than as a
+     * tighter hand. The aspect is kept, because a card that changes shape stops looking like
+     * a card.
+     */
+    fun crowded(): CardScale =
+        if (width <= TapTarget) this else CardScale(TapTarget, height * (TapTarget / width))
+}
 
 /**
  * How one card is being drawn: what can be done to it, and what is happening to it.

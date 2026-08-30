@@ -170,6 +170,7 @@
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_report">Report a problem</string>
+    <string name="header_settings">Settings</string>
     <string name="header_deck_left">%1$d cards left in the deck</string>
     <!--
       The header badge is a *button*, and its name says so. The felt's draw pile already
@@ -226,7 +227,7 @@
     <string name="beat_name_only_seen_title">Only name one you have seen</string>
     <string name="beat_name_only_seen_body">You looked at this card, so you know what it is. Name it right and you play its action for free. Name it wrong and you take a penalty card — so only name one you are sure of.</string>
     <string name="beat_toss_in_title">Anybody holding that rank may throw it in</string>
-    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and bars you from throwing in for the rest of the round.</string>
+    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance.</string>
     <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
     <string name="beat_aim_it_title">Aim it</string>
     <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
@@ -364,7 +365,8 @@
     <string name="detail_table_talk">Table talk — the coalition takes your word for it, right or wrong.</string>
     <string name="detail_right_plays">Right plays its action; wrong costs you a card.</string>
     <string name="detail_wrong_costs">A wrong one costs you a penalty card.</string>
-    <string name="detail_barred">You threw in a wrong card this round, so you cannot toss in again.</string>
+    <string name="detail_barred_card">You guessed wrong on this card, so you are out of this one. The next card to land is a fresh chance.</string>
+    <string name="detail_barred">You guessed wrong, and in the final round that is the rest of the round.</string>
     <string name="detail_scored_against">%1$s called Vinto, so the round was scored against their hand.</string>
     <string name="detail_deck_ran_out">The deck ran out, so the round ended and every hand was counted.</string>
 

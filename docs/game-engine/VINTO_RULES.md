@@ -143,15 +143,26 @@ flowchart TD
   no exception and you may throw in every match you hold. Confirmed by the product owner; both
   engines already work this way.
 - If wrong → they take the card back and draw **1 penalty card face-down**, **and they may not
-  toss in again for the rest of the round** — including the final round after Vinto is called,
-  and including other players' turns. The PDF gives only the penalty card; the bar is the
-  decided rule.
+  toss in again at that card** — the window they guessed in is closed to them, and the next
+  card to land face-up opens a fresh one they may try. The PDF gives only the penalty card; the
+  bar is the decided rule.
+- **In the final round the bar lasts the rest of the round.** Once Vinto is called the
+  coalition is playing one hand against the caller, so a second guess is a second go at a
+  shared prize rather than at your own — and there is no later window to earn it back in.
 
-> **Fixed.** The engines used to clear the bar every time the turn came back round to the first
-> seat, so it lasted one lap of the table rather than the round — and a barred player was free
-> again for the whole final round. Both engines now leave it alone; it is emptied only where a
-> deal starts. Held by `TossInBarTest`, and hash-neutral over the corpus, which contains one
-> failed toss-in in a game that ends before the turn wraps again.
+> **Changed, and this reverses an earlier decision.** The bar used to run for the whole deal in
+> every phase: one wrong read on the second seat's discard and a player sat out every window
+> until scoring, including windows opened by cards they could not have known about when they
+> guessed. That is a very long punishment for one wrong read, and the toss-in is the one moment
+> that belongs to the whole table at once — a player who is shut out of it for ten minutes
+> stops touching it. It is now the window, except in the final round.
+>
+> Held by `TossInBarTest`, which pins both halves, and **hash-neutral over the corpus**: this is
+> a rule in `ActionValidator` and `projectView` rather than in state. `roundFailedAttempts`
+> still records every failure for the whole round — it is history, and it is inside the
+> canonical hash — and what changed is only which of the two lists is consulted. A validator
+> that refuses *less* can never reject a recorded action, which is why `CorpusReplayTest` stayed
+> green without a fixture being regenerated.
 
 ---
 
@@ -207,7 +218,7 @@ the engines has been either fixed or decided:
 | --- | --- |
 | Jack and Queen: "any 2 cards", or two different players? | **Two different players.** The PDF is loose; both engines were already right |
 | May you toss in on your own turn, and more than one card? | **Yes to both.** The PDF says "during any other player's turn"; the engines were already right, and 171 such actions sit in the corpus |
-| Does a wrong toss-in bar you, and for how long? | **It bars you for the rest of the round**, through the final round and other players' turns. The rule is not in the PDF, and the engines got its *lifetime* wrong — now fixed |
+| Does a wrong toss-in bar you, and for how long? | **For that window — except in the final round, where it is the rest of the round.** The rule is not in the PDF at all. This reverses the previous decision recorded here, which was the whole round in every phase; see the note under "Reaction: Toss In" for why |
 | May an Ace be taken from the discard under Option B? | **Yes** — it is an action card like any other. The PDF's "7–K" is loose |
 | Does the discard start with a face-up card? | **No.** The PDF and the engines agree; this file was the thing that was wrong |
 | §8.2 ranks "from lowest total score to highest" | Read as most points first, the only reading consistent with §8.1's +3 / −1 |

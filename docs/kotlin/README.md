@@ -1254,10 +1254,40 @@ lesson was being taught on a table that was not the one being learned. It is bou
 scrolls inside its own box, so a King's fourteen rank chips plus a three-line prompt plus a
 lesson cannot squeeze the felt out of existence.
 
+**A wrong toss-in shuts you out of that card, not the round.** It used to be the whole deal in
+every phase, which is what the rules note in `VINTO_RULES.md` recorded — and it meant one wrong
+read on the second seat's discard cost a player every window until scoring, including windows
+opened by cards they could not have known about when they guessed. Reported by the product owner
+from a real round: the toss-in is the one moment that belongs to the whole table at once, and a
+player shut out of it for ten minutes stops touching it. The **final round** keeps the long
+version, because there the coalition plays one hand against the caller and there is no later
+window to earn it back in.
+
+It is a rule in `ActionValidator` and `projectView`, not in state: `isBarredFromTossIn` chooses
+between `activeTossIn.failedAttempts` and `roundFailedAttempts` by phase. `roundFailedAttempts`
+still records every failure for the whole round — it is history, and it is inside the canonical
+hash — so the frozen parity corpus is untouched, and `CorpusReplayTest` stayed green without a
+fixture being regenerated. A validator that refuses *less* can never reject a recorded action.
+`TossInBarTest` pins both halves, including the case that prompted it: failing on one bot's
+discard does not bar you from the next bot's.
+
 **Haptics.** Three kicks and no more: something touched, a move committed, a rule bitten —
 that last only for the hand it happened to, since a buzz for a bot's penalty is a buzz for
 something that is not your problem. Off is one setting away, which is what keeps the three
 that remain meaningful.
+
+**Settings are reachable from the table, not only from the front door.** The header's gear sits
+beside the "?" and the bug, and it carries the way back with it: `Screen.Settings` holds the
+screen it was opened from, so closing it returns to that exact table — the same `LocalGame`,
+mid-round, nothing re-dealt and no socket re-opened. It is the same for the lesson and for an
+online room, and the system back button follows the same route.
+
+The reason is one setting: **pace** is the thing somebody wants to change *while* a round is too
+slow to sit through, and it lived where changing it meant abandoning that round. Nobody pays
+that price; they put the phone down instead. Theme and haptics are the same shape of want.
+`HeaderControlsTest` pins both halves — the gear opens the settings, and coming out of them
+lands back on the table rather than at the front door, which is the half that is easy to get
+wrong and impossible to see in a diff.
 
 **Back works.** `SystemBack` is an `expect`/`actual` around Android's `BackHandler`; the other
 targets no-op and use the on-screen button. Without it, back from the settings screen closed
@@ -1296,7 +1326,12 @@ Every difference between the engines and the official text has now been decided,
 recording those decisions is at the foot of `docs/game-engine/VINTO_RULES.md`. Three closed as
 "the PDF is loose and the engines are right" (Jack/Queen targeting, tossing in on your own turn,
 an Ace off the discard); one was a real bug and is fixed in **both** engines — a wrong toss-in
-now bars a player for the rest of the round rather than for one lap of the table.
+no longer clears itself after one lap of the table.
+
+That bar's *lifetime* has since been decided again, against play rather than against the text:
+it is the window you guessed wrong in, and the whole round only in the final round. The reasoning
+is under **Haptics** above and in `VINTO_RULES.md`, whose decision table records the reversal
+rather than quietly replacing the old line.
 
 Two things worth knowing about that table:
 
@@ -1309,6 +1344,34 @@ Two things worth knowing about that table:
   places a card face up to start the discard pile, and the engine does not. The **official PDF
   agrees with the engine** — "The Discard Pile is formed by the first card played or discarded"
   — so the markdown was the bug, and it has been corrected.
+
+**A hand too wide for one row wraps, and steps down a size first.** Five cards is the deal and
+not the limit — a wrong guess, a wrong toss-in and an Ace each add one, and only the end of the
+round takes any away — so eight in front of a player is an ordinary way to be losing. Eight did
+not fit, and what the line did about it was slide them over each other until they did. Past about
+seven that stops reading as a hand of cards: the backs are a repeating pattern, so the seam
+between two overlapping cards is invisible, and a player with eight of them cannot count their own
+hand, let alone aim at a card in it. It was reported from a phone, with a screenshot, which is the
+only way this kind of thing is ever found.
+
+It now does what the web client did (`legacy-web/.../horizontal-player-cards.tsx`: `flex-wrap`,
+with the card size chosen from the count) — and both halves are needed. Wrapping alone was tried
+before and taken out, because a second row of full-size cards doubles the seat's height and
+squeezes the felt until the side seats have a single card's height to lay nine cards in. So the
+cards step down one size first, to `CardScale.crowded()`, and one size only: a hand that resized
+by a few percent every time a penalty card landed would be a table that never looks the same
+twice.
+
+The step is **the tap floor**, 44dp, and that is not an arbitrary choice of a smaller number.
+`CardFace` reserves 44dp of footprint whatever size it draws the picture — `TouchTargetTest`
+measures it — so shrinking the art below that buys no room at all; it just draws a small card in
+a box that did not shrink. That is also the whole reason wrapping is the answer rather than more
+shrinking.
+
+The three seats opposite keep overlapping. Their cards are counted rather than read, and the
+felt's *width* is the scarcest thing on a phone, so a second column costs more than it buys.
+`CrowdedTableTest` holds both: nine cards a seat, every card on screen and tappable, and your own
+hand with no card lying over another.
 
 **The rail is a fixed share of the screen** — `railHeight(screen)`, a third of it, clamped
 between 240 and 300 dp — and the felt is exactly what remains. Not a floor the contents can

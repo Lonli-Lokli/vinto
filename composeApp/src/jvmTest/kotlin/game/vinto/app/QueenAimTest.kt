@@ -73,6 +73,7 @@ class QueenAimTest {
                             layout = layout,
                             onMove = {},
                             onHelp = {},
+                            onSettings = {},
                             onReport = {},
                             onDeck = {},
                         )
@@ -127,6 +128,7 @@ class QueenAimTest {
                             layout = layout,
                             onMove = {},
                             onHelp = {},
+                            onSettings = {},
                             onReport = {},
                             onDeck = {},
                         )
@@ -182,6 +184,7 @@ class QueenAimTest {
                             layout = layout,
                             onMove = {},
                             onHelp = {},
+                            onSettings = {},
                             onReport = {},
                             onDeck = {},
                         )

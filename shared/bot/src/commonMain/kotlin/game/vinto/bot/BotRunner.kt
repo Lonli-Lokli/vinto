@@ -1,5 +1,6 @@
 package game.vinto.bot
 
+import game.vinto.engine.isBarredFromTossIn
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
@@ -209,7 +210,9 @@ class BotRunner(
             // bar — a second attempt is not a bad move but an *illegal* one, which would
             // stop the whole table. Belief-driven tossing makes the first wrong throw
             // genuinely possible, so the bar is checked here the way the engine checks it.
-            val barred = state.roundFailedAttempts.any { it.playerId == player.id }
+            // The same rule the validator applies, so a bot never proposes a throw the
+            // engine would refuse: this window outside the final round, the whole round in it.
+            val barred = isBarredFromTossIn(state, player.id)
 
             // In the final round the coalition plans its toss-ins together: shed everything
             // the coalition can afford to lose, which is not the same as what this seat would

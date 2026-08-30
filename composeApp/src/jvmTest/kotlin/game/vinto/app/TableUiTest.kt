@@ -64,7 +64,7 @@ class TableUiTest {
     @Test
     fun aFreshlyDealtTableComposes() = runComposeUiTest {
         val game = LocalGame.start(MemoryVault(), FIXED_SEED, Difficulty.EASY)
-        setContent { VintoTheme { GameScreen(game, pace = Pace.STEADY, onQuit = {}) } }
+        setContent { VintoTheme { GameScreen(game, pace = Pace.STEADY, onSettings = {}, onQuit = {}) } }
         waitForIdle()
 
         // Nothing is asserted about the words; the point is that a freshly dealt table

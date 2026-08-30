@@ -149,6 +149,7 @@ class HandGapTest {
                                 layout = TableLayout.forScreen(PHONE_H),
                                 onMove = {},
                                 onHelp = {},
+                                onSettings = {},
                                 onReport = {},
                                 onDeck = {},
                             )

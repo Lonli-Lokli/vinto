@@ -52,7 +52,7 @@ class FullGameUiTest {
             // Nobody is watching this one, so the table does not wait for anybody — see
             // `LocalPacing`. Without it this case spends its whole life rendering pauses.
             CompositionLocalProvider(LocalPacing provides 0f) {
-                VintoTheme { GameScreen(game, pace = Pace.BRISK, onQuit = {}) }
+                VintoTheme { GameScreen(game, pace = Pace.BRISK, onSettings = {}, onQuit = {}) }
             }
         }
         waitForIdle()

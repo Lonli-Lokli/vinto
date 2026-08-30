@@ -125,10 +125,10 @@ export function advanceTurnAfterTossIn(
 
   // Increment turn count when wrapping back to first player.
   //
-  // The failed-toss-in list is deliberately NOT cleared here. A wrong toss-in bars that player
-  // for the rest of the round, and the round is the deal rather than one lap of the table:
-  // clearing it alongside `roundNumber` freed a barred player after three turns, and freed
-  // everybody for the whole final round. It is emptied where the deal starts, and nowhere else.
+  // `roundFailedAttempts` is deliberately NOT cleared here: it is the round's history, it is
+  // inside the canonical hash, and it is what the final round's bar is read from. How long a
+  // wrong toss-in actually shuts a player out is decided in `action-validator.ts` rather than
+  // here — the window they guessed at, and the whole round only after Vinto is called.
   if (state.currentPlayerIndex === 0) {
     state.roundNumber++;
   }

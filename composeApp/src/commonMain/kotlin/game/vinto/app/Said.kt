@@ -103,6 +103,7 @@ import game.vinto.app.art.choice_swap_cards
 import game.vinto.app.art.choice_use_action
 import game.vinto.app.art.choice_use_from_pile
 import game.vinto.app.art.detail_barred
+import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
 import game.vinto.app.art.detail_deck_ran_out
 import game.vinto.app.art.detail_king_declared
@@ -368,6 +369,7 @@ fun detailed(detail: Detail): String = when (detail) {
     Detail.TableTalkIsTakenOnTrust -> stringResource(Res.string.detail_table_talk)
     Detail.RightPlaysItWrongCostsACard -> stringResource(Res.string.detail_right_plays)
     Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
+    Detail.BarredFromThisCard -> stringResource(Res.string.detail_barred_card)
     Detail.BarredForTheRestOfTheRound -> stringResource(Res.string.detail_barred)
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))

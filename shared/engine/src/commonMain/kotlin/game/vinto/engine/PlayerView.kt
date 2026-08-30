@@ -263,7 +263,11 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
         discardCount = state.discardPile.size,
         pendingAction = pending,
         activeTossIn = state.activeTossIn,
-        barredFromTossIn = state.roundFailedAttempts.map { it.playerId }.distinct(),
+        // Who is actually barred *now*, which outside the final round is only whoever got
+        // this window wrong — not everybody who has missed once this round.
+        barredFromTossIn = state.players
+            .map { it.id }
+            .filter { isBarredFromTossIn(state, it) },
         difficulty = state.difficulty,
         scores = if (state.phase == GamePhase.SCORING) {
             calculateFinalScores(state.players, state.vintoCallerId)

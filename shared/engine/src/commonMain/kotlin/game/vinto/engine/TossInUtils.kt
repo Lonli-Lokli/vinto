@@ -1,6 +1,7 @@
 package game.vinto.engine
 
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Rank
@@ -217,3 +218,32 @@ fun clearTossInAfterActionableCard(
         state.subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE
     }
 }
+
+/**
+ * Whether a wrong toss-in still bars this player.
+ *
+ * A failed throw costs a penalty card and shuts the player out — but out of *what*, and for
+ * how long, is the part the rules text never says and the part players feel. It used to be
+ * the whole round: miss once on Raph's discard and you sat out every window until the deal
+ * ended, including windows opened by cards you could not have known about when you guessed.
+ * That is a very long punishment for one wrong read, and it makes the toss-in — the one
+ * moment that belongs to the whole table at once — something most players stop touching.
+ *
+ * So the bar is now **the window you got wrong**, and the round-long version is kept for the
+ * **final round** alone, where the coalition is playing one hand against the caller and a
+ * second guess is a second chance at a shared prize rather than at your own.
+ *
+ * Decided by the product owner, and it reverses the previous decision recorded in
+ * `VINTO_RULES.md`; that table says so.
+ *
+ * **This is a validator rule, not state.** `roundFailedAttempts` still records every failure
+ * for the whole round — it is history, and it is inside the canonical hash — so the frozen
+ * parity corpus is untouched by this. What changed is only which of the two lists is
+ * *consulted*, and a validator that refuses less can never reject a recorded action.
+ */
+fun isBarredFromTossIn(state: GameState, playerId: String): Boolean =
+    if (state.phase == GamePhase.FINAL) {
+        state.roundFailedAttempts.any { it.playerId == playerId }
+    } else {
+        state.activeTossIn?.failedAttempts.orEmpty().any { it.playerId == playerId }
+    }
