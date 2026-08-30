@@ -22,6 +22,21 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+
+    /**
+     * The Compose Multiplatform plugin, on a module that composes almost nothing.
+     *
+     * It is here for **resources**, not for the compiler. `composeApp` declares every string,
+     * every card and every portrait under `composeResources/`, and it is the Compose plugin
+     * applied to the *packaging* module that collects a dependency's resources into the APK.
+     * Without it the build succeeds, the APK is well-formed, and it contains not one of them
+     * — the first `Res.string` lookup throws and the app dies on the launcher.
+     *
+     * That is exactly what happened on the first build after the module split, and nothing
+     * caught it: the JVM tests read resources off the classpath, so they passed, and the only
+     * thing that can see the gap is an APK on a device.
+     */
+    alias(libs.plugins.composeMultiplatform)
 }
 
 // No `org.jetbrains.kotlin.android`: AGP 9 has built-in Kotlin support and refuses the plugin
@@ -100,4 +115,49 @@ android {
                 ?: signingConfigs.getByName("debug")
         }
     }
+}
+
+/**
+ * Packaging the Compose resources by hand, because 1.12 does not.
+ *
+ * Compose Multiplatform 1.12 registers `copyAndroidMainComposeResourcesToAndroidAssets` in a
+ * module using `com.android.kotlin.multiplatform.library` and never configures its
+ * `outputDirectory`, so the task cannot run: *"property 'outputDirectory' doesn't have a
+ * configured value"*. Nothing depends on it, so **the build succeeds and the APK contains not
+ * one string, card or portrait** — and the first `Res.string` lookup throws, which is to say
+ * the app dies on the launcher.
+ *
+ * Nothing in this repository could have caught it. The JVM suites read resources off the
+ * classpath and pass; `assembleDebug` produces a well-formed APK; `:composeApp:jvmTest` is
+ * 124 green. Only installing the thing finds the hole, which is why it took a person opening
+ * it on a phone.
+ *
+ * So the layout the runtime expects — `assets/composeResources/<packageOfResClass>/…` — is
+ * assembled here from the resources `composeApp` has already prepared. Delete all of this the
+ * day the plugin configures its own task; the check that it is still needed is that the APK
+ * contains `assets/composeResources/`.
+ */
+private val resPackage = "game.vinto.app.art"
+
+private val composeResourceAssets = tasks.register<Copy>("assembleComposeResourceAssets") {
+    dependsOn(":composeApp:prepareComposeResourcesTaskForCommonMain")
+    from(
+        project(":composeApp").layout.buildDirectory
+            .dir("generated/compose/resourceGenerator/preparedResources/commonMain/composeResources"),
+    )
+    into(layout.buildDirectory.dir("generated/composeAssets/composeResources/$resPackage"))
+}
+
+android {
+    // A plain path, not a `Provider`: the Android source-set API refuses providers ("it is not
+    // possible for Android Studio to determine if the Provider points to a directory that
+    // contains generated files"). The ordering is carried by the task dependency below.
+    sourceSets.getByName("main").assets.srcDir(
+        layout.buildDirectory.dir("generated/composeAssets").get().asFile,
+    )
+}
+
+// So the assets exist before anything merges them.
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
+    dependsOn(composeResourceAssets)
 }
