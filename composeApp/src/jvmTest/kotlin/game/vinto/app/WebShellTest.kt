@@ -220,6 +220,39 @@ class WebShellTest {
         )
     }
 
+    /**
+     * A path that is not there answers 404, which takes a file to arrange.
+     *
+     * Cloudflare Pages falls back to `index.html` — **200**, `text/html` — for any unmatched
+     * path unless a `404.html` is present. Scoping `_redirects` to `/r/` was not enough,
+     * because that fallback is Pages' own default rather than something the redirect rules
+     * were causing: measured against the live deployment, `/no-such-file.js` came back
+     * `200 text/html; charset=utf-8`. So a browser asking for a script it cannot have is
+     * handed a web page and told it succeeded, and §6c's cache rules keep that answer.
+     *
+     * The file is the whole fix, which is exactly why it is worth a test — nothing about
+     * deleting it would look wrong.
+     */
+    @Test
+    fun aMissingPathHasSomethingToAnswerWith() {
+        val notFound = read("404.html")
+
+        assertTrue(
+            notFound.contains("noindex"),
+            "the 404 page is indexable, so it can turn up in search results as if it were content",
+        )
+        // No script and no wasm: a 404 page that depends on the bundle breaks in exactly the
+        // situation it exists for.
+        assertTrue(
+            !notFound.contains("<script"),
+            "the 404 page loads a script — it has to stand up when the bundle is what is missing",
+        )
+        assertTrue(
+            read("_redirects").lineSequence().any { it.trim().startsWith(INVITE_PATH) },
+            "with a 404.html present, only _redirects keeps invitation links reaching the app",
+        )
+    }
+
     /** And the installable manifest points at icons that are really there. */
     @Test
     fun theManifestNamesIconsThatExist() {

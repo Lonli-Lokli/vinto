@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Not here — Vinto</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#1B2430">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <!--
+      This file exists to make Cloudflare Pages answer 404 with a 404.
+
+      Without it, Pages answers any unmatched path with `index.html`, **200**, `text/html` —
+      so a browser asking for a script that is not there is handed a web page and told the
+      request succeeded, and a cache rule then keeps that answer. `docs/kotlin/README.md` §6c
+      warns about it and `_redirects` was scoped to `/r/` specifically to avoid it; that was
+      not enough, because the fallback is Pages' own default rather than something the
+      redirect rules were causing. Measured against the live deployment:
+      `/no-such-file.js` returned `200 text/html; charset=utf-8`.
+
+      With a `404.html` present, Pages serves this — status **404** — for anything unmatched,
+      while `_redirects` still answers `/r/<code>` with the app. So an invitation works and a
+      missing asset is a bug that announces itself.
+
+      Deliberately plain and self-contained: no script, no wasm, nothing that could itself be
+      the missing file. A 404 page that depends on the bundle is a 404 page that breaks
+      exactly when it is needed.
+    -->
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #1B2430;
+            color: #e8e6e3;
+            font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+        }
+        main {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.9rem;
+            padding: 2rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            color: #F2DFA6;
+        }
+        p { margin: 0; max-width: 30rem; color: #9aa3ad; }
+        a { color: #6FD3A6; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>VINTO</h1>
+        <p>There is nothing at this address.</p>
+        <p>
+            If you were sent an invitation, the link may have expired — a room code only works
+            while that room is open.
+        </p>
+        <p><a href="/">Go to the game</a></p>
+    </main>
+</body>
+</html>

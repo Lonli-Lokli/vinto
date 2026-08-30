@@ -21,8 +21,15 @@
 # `wrangler pages` has no command for it, so `vinto.kupalinka.app` is added in the Cloudflare
 # dashboard — Workers & Pages -> vinto -> Custom domains -> Set up a custom domain — which
 # creates the DNS record and issues the certificate. Until that is done this workflow
-# publishes to `vinto.pages.dev`, which is a real, working, shareable site; it just is not the
-# hostname the invitation links name. DEPLOYMENT.md §6c walks it.
+# publishes to a `*.pages.dev` address, which is a real, working, shareable site; it just is
+# not the hostname the invitation links name. DEPLOYMENT.md §6c walks it.
+#
+# **Never construct that address.** The first run of this workflow published perfectly and
+# then reported failure, because it polled `https://vinto.pages.dev` — a name it had built
+# from the project name, and which belongs to somebody else's project entirely. A pages.dev
+# subdomain is globally unique, so Cloudflare suffixed ours: the real one is
+# `vinto-6dr.pages.dev`. wrangler prints the address it deployed to; that is the only one
+# worth believing, and the polling step reads it rather than guessing.
 name: Deploy web
 
 on:
@@ -141,6 +148,7 @@ jobs:
       # `--if-not-exists`, and the first run of this workflow is the one that has to create
       # the project. A second run finds it already there and carries on.
       - name: Deploy to Cloudflare Pages
+        id: publish
         if: ${{ !inputs.dryRun }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -162,7 +170,20 @@ jobs:
           fi
 
           npx --yes wrangler@${WRANGLER_VERSION} pages deploy "$DIST" \
-            --project-name "$PROJECT" --branch master --commit-dirty=true
+            --project-name "$PROJECT" --branch master --commit-dirty=true 2>&1 | tee /tmp/deploy.log
+          # `tee` is in a pipeline, so wrangler's own exit code has to be read explicitly or
+          # a failed deploy would look like a successful one.
+          [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "::error::wrangler pages deploy failed"; exit 1; }
+
+          # The address wrangler says it deployed to — "Take a peek over at
+          # https://<hash>.<subdomain>.pages.dev". The production alias is the same name with
+          # the per-deployment hash label removed.
+          deployment=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev' /tmp/deploy.log | tail -1)
+          [ -n "$deployment" ] || { echo "::error::wrangler printed no pages.dev address; cannot verify the deploy"; exit 1; }
+          site="https://$(printf '%s' "$deployment" | sed -E 's|https://[^.]+\.||')"
+          echo "deployment=$deployment" >> "$GITHUB_OUTPUT"
+          echo "site=$site" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $deployment; the project's address is $site" 
 
       # Propagation is not atomic. §6d records that catching the maintainer out twice on the
       # room Worker, and README §6c records the Pages version of the same hazard — a newly-deployed
@@ -176,8 +197,10 @@ jobs:
         if: ${{ !inputs.dryRun }}
         env:
           SCRIPT: ${{ steps.hash.outputs.script }}
+          SITE: ${{ steps.publish.outputs.site }}
+          DEPLOYMENT: ${{ steps.publish.outputs.deployment }}
         run: |
-          site="https://${PROJECT}.pages.dev"
+          site="$SITE"
           for attempt in $(seq 1 30); do
             body=$(curl -sS --max-time 15 "$site/?cb=$RANDOM$attempt" || true)
             if printf '%s' "$body" | grep -q "$SCRIPT"; then
@@ -186,11 +209,29 @@ jobs:
               # the stale-name failure this whole workflow is built to prevent.
               code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$site/$SCRIPT?cb=$RANDOM")
               [ "$code" = "200" ] || { echo "::error::the page names $SCRIPT and the edge answers $code for it"; exit 1; }
+              # A missing path must be a 404 rather than the shell with a 200 on it. Pages
+              # falls back to `index.html` unless a `404.html` is present, which is why one
+              # is committed; this is the check that it is still doing its job.
+              missing=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$site/no-such-file-$RANDOM.js")
+              [ "$missing" = "404" ] \
+                && echo "a missing asset answers 404" \
+                || echo "::warning::a missing asset answers $missing, not 404 — is 404.html still published?"
+              # And an invitation link must still reach the app.
+              invite=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$site/r/ABC123")
+              [ "$invite" = "200" ] \
+                || echo "::warning::an invitation path answers $invite — check _redirects"
+
               {
                 echo "### Published"
                 echo ""
-                echo "* $site"
+                echo "**The site is at $site** — not \`vinto.pages.dev\`, which belongs to"
+                echo "somebody else's project. A pages.dev subdomain is globally unique, so"
+                echo "Cloudflare suffixed ours."
+                echo ""
+                echo "* this deployment: $DEPLOYMENT"
                 echo "* script: \`$SCRIPT\`"
+                echo "* a missing asset answers: $missing (should be 404)"
+                echo "* an invitation path answers: $invite (should be 200)"
                 echo ""
                 echo "If \`vinto.kupalinka.app\` still does not resolve, the custom domain has"
                 echo "not been attached yet — that is a one-time step in the Cloudflare"
@@ -201,5 +242,5 @@ jobs:
             echo "attempt $attempt: not yet"
             sleep 10
           done
-          echo "::error::$site never served $SCRIPT. It may still be propagating; check the site before running this again."
+          echo "::error::$site never served $SCRIPT. The upload itself succeeded — see the deploy step for the address — so this is propagation or a wrong address, not a failed publish."
           exit 1

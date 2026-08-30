@@ -8,6 +8,12 @@
 # `/* /index.html 200`, and it is a trap this project has already been bitten by: with it, a
 # missing asset is answered with `index.html` — 200, `text/html` — so a browser that asked
 # for a script gets a web page and a cache rule then keeps it for a year (see
-# docs/kotlin/README.md §6c). Restricted to `/r/`, a missing `composeApp.js` is a plain 404,
-# which is a bug that announces itself instead of one that has to be diagnosed.
+# docs/kotlin/README.md §6c). Restricted to `/r/`, a missing `composeApp.js` can be a plain
+# 404 — a bug that announces itself instead of one that has to be diagnosed.
+#
+# **This scoping is necessary and was not sufficient**, measured against the live deployment:
+# `/no-such-file.js` still came back `200 text/html`, because falling back to `index.html` is
+# Pages' own default for an unmatched path rather than something a redirect rule was doing.
+# What fixes the status is the committed `404.html`. Both are needed — that file so a missing
+# asset 404s, this rule so an invitation still reaches the app rather than the 404 page.
 /r/* /index.html 200
