@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
  * The shape every shared module has: five targets, one JDK, one set of Android levels.
  *
  * `shapes`, `engine`, `bot`, `protocol` and `client` are the same module five times over —
- * the same `jvm()`, the same `androidTarget`, the same `js(IR)`, the same `wasmJs`, the same
+ * the same `jvm()`, the same `androidTarget`, the same `js`, the same `wasmJs`, the same
  * host-guarded Apple targets, the same `compileSdk`. Repeating that is not just noise: it is
  * the arrangement in which one of six modules quietly ends up different, which is exactly
  * what happened — `shared:room` was the only module that never pinned its `jvmTarget`, and
@@ -86,7 +86,7 @@ kotlin {
         }
     }
 
-    js(IR) {
+    js {
         binaries.library()
         nodejs {
             testTask {

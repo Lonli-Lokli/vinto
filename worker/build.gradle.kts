@@ -17,7 +17,7 @@ kotlin {
         optIn.add("kotlin.js.ExperimentalJsExport")
     }
 
-    js(IR) {
+    js {
         // executable() + production webpack is what a Cloudflare Worker script would
         // actually contain, so this is the artefact the platform gate measures.
         binaries.executable()

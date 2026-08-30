@@ -845,7 +845,7 @@ private fun closeSession(state: RoomState, nowMs: Double): RoomState {
 
     // A declared Vinto is allowed to finish. The room stays in play and the buzzer is left
     // behind — the round ending is what closes the session, in [recordRoundEnd].
-    if (vintoDeclared && game?.phase != GamePhase.SCORING) return state
+    if (vintoDeclared && game.phase != GamePhase.SCORING) return state
 
     val scored = if (game != null && game.phase == GamePhase.SCORING) {
         recordRoundEnd(state)
@@ -1049,7 +1049,8 @@ private fun expirePacing(
     if (leaderDue && awaitingLeader(state)) {
         // Deterministic default: the first coalition seat in table order. Not a choice
         // anybody made, but one everybody can predict — which is what a default is for.
-        state.game?.players?.firstOrNull { it.id != state.game?.vintoCallerId }?.let {
+        val game = state.game
+        game?.players?.firstOrNull { it.id != game.vintoCallerId }?.let {
             synthesized += GameAction.SetCoalitionLeader(LeaderIdPayload(it.id))
         }
     }

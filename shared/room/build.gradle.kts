@@ -22,7 +22,7 @@ kotlin {
         }
     }
 
-    js(IR) {
+    js {
         binaries.library()
         nodejs()
         useEsModules()

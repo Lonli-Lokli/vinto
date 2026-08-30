@@ -88,14 +88,21 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
     val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
     var deckOpen by remember { mutableStateOf(false) }
+
     // `LocalClipboardManager` is deprecated in favour of `LocalClipboard`, and the
-    // replacement is not usable from common code in Compose Multiplatform 1.8: `Clipboard`
-    // takes a `ClipEntry`, and `ClipEntry`'s only constructor takes a *platform-native*
-    // object — an AWT `Transferable`, an Android `ClipData`, a `UIPasteboard` item. Building
-    // one from a string therefore needs an `expect`/`actual` per platform, which is the four
-    // hand-written implementations the note in `RoomScreen` deliberately does not have,
-    // "for a job the framework has already done". Staying on the deprecated call until the
-    // framework offers a common way to make a text clip.
+    // replacement is still not usable from common code in Compose Multiplatform 1.12:
+    // `Clipboard.setClipEntry` takes a `ClipEntry`, and the only way to build one from a
+    // string is `ClipEntry.withPlainText`, which is declared **per platform** rather than in
+    // commonMain. Checked rather than assumed — a one-line probe calling it from commonMain
+    // compiles for wasmJs and fails for the JVM with "Unresolved reference". So migrating
+    // still means an `expect`/`actual` per platform, which is the four hand-written
+    // implementations `Share.kt` deliberately does not have, "for a job the framework has
+    // already done".
+    //
+    // Suppressed rather than left warning, because a warning nobody can act on is noise that
+    // hides the ones somebody can. Delete the suppression the day `withPlainText` reaches
+    // commonMain; the probe above is how to check.
+    @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {

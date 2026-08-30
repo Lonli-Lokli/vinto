@@ -575,7 +575,8 @@ class MctsBotDecisionService(
             hiddenCards = emptyMap(),
             pendingCard = context.activeActionCard ?: context.pendingCard,
             isTossInPhase = isTossInPhase,
-            tossInRanks = if (isTossInPhase) activeTossIn?.ranks.orEmpty() else emptyList(),
+            // No safe call: `isTossInPhase` carries `activeTossIn != null`, and K2 reads that.
+            tossInRanks = if (isTossInPhase) activeTossIn.ranks else emptyList(),
             turnCount = context.gameState.turnNumber,
             finalTurnTriggered = context.gameState.finalTurnTriggered,
             vintoCallerId = context.gameState.vintoCallerId,

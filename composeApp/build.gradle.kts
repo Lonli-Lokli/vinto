@@ -61,6 +61,20 @@ kotlin {
     wasmJs {
         browser()
         binaries.executable()
+
+        // Every call into JavaScript from Kotlin/Wasm now needs this opt-in, and there are
+        // 33 of them across the seven `*.wasmJs.kt` actuals — sockets, storage, the share
+        // sheet, the crash hook, the beacon, the sounds. Annotating each one would be 33
+        // copies of a decision that was made once, by choosing to have a browser target at
+        // all: there is no non-experimental way to reach `fetch` or `localStorage` from
+        // Wasm, so a per-use opt-in carries no information a reader could act on.
+        //
+        // Scoped to this target rather than set globally, because that is exactly the scope
+        // of the claim — the JVM, Android and iOS actuals do not touch this API and should
+        // not be quietly opted in to anything.
+        compilerOptions {
+            optIn.add("kotlin.js.ExperimentalWasmJsInterop")
+        }
     }
 
     if (isMacOs) {
@@ -76,11 +90,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
 
             // The game itself. `shared:client` brings the engine and the bots with it, so a
             // single-player game needs nothing else — no network dependency appears here,
@@ -120,8 +134,10 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(kotlin("test"))
-            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-            implementation(compose.uiTest)
+            // Named directly rather than through `compose.uiTest`, which is deprecated and
+            // whose accessor additionally required an `ExperimentalComposeLibrary` opt-in
+            // that was itself deprecated. Two warnings, one line.
+            implementation(libs.compose.ui.test)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.test)
         }

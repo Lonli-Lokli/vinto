@@ -2562,6 +2562,39 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   because this build runs it without type resolution (`source.setFrom(files("src"))`, no
   classpath) — it parses rather than resolves, so it does not care which compiler wrote the
   source. Kotlin therefore moves *independently* of all of the above, and has.
+- **The wasm build is noisy by default, and three of the four causes are one line each.** A
+  deploy log carried 44 warnings, which is enough that nobody reads any of them. What they
+  were, and why each is worth knowing:
+  - **33 `ExperimentalWasmJsInterop` opt-ins.** Every call into JavaScript from Kotlin/Wasm
+    needs it, across all seven `*.wasmJs.kt` actuals. Annotating each would be 33 copies of a
+    decision made once, by having a browser target at all — there is no non-experimental way
+    to reach `fetch` or `localStorage`. It is an `optIn` on the **wasmJs target**, not on the
+    project: the JVM, Android and iOS actuals do not touch that API and should not be quietly
+    opted in to anything.
+  - **9 build-script deprecations.** Compose Multiplatform 1.12 deprecates its own
+    `compose.runtime` / `compose.ui` accessors in favour of the version catalog. Moving them
+    turned up the reason the accessors exist: **`material3` is on a different version line**,
+    and `org.jetbrains.compose.material3:material3:1.12.0` does not exist — the 1.12 plugin
+    resolves **1.9.0**. So the catalog needs a second version ref, and it has to be re-checked
+    on every Compose bump. `compose.desktop.currentOs` stays an accessor: it is not deprecated
+    and it resolves a different artifact per host, which a fixed coordinate cannot do.
+  - **2 `LocalClipboardManager` deprecations**, which are `@Suppress`ed rather than fixed, and
+    the note above them now says why with evidence instead of by assertion. The replacement
+    still is not reachable from common code in 1.12: `ClipEntry.withPlainText` is declared per
+    platform. Checked with a one-line probe in `commonMain` — it compiles for wasmJs and fails
+    for the JVM with *Unresolved reference*. The comment used to cite 1.8 and had never been
+    re-tested.
+  - **3 dead safe calls and 6 `js(IR)` deprecations.** The safe calls are K2 reading a
+    smart cast through a boolean `val` (`isTossInPhase` carries `activeTossIn != null`), which
+    the older compiler did not do — so these appeared without anybody writing anything.
+
+  Two things this is worth remembering for: `./gradlew :composeApp:compileKotlinWasmJs` **does
+  work in this container** — only `wasmJsBrowserDistribution` is blocked, and only because its
+  toolchain setup fetches from `codeload.github.com`. And detekt's
+  `SpacingBetweenDeclarationsWithAnnotations` fires the moment you add a `@Suppress` above a
+  declaration that has a comment block on it, which is a formatting failure arriving from a
+  change that had nothing to do with formatting.
+
 - **This container cannot build the Kotlin/JS or Wasm targets from cold.** `kotlinWasmToolingSetup`
   fetches karma from `codeload.github.com`, which the egress proxy answers 403 (§1c lists
   `github.com` beyond this repository). It only bites when the Kotlin version changes and the

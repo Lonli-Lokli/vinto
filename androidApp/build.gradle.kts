@@ -152,8 +152,11 @@ android {
     // A plain path, not a `Provider`: the Android source-set API refuses providers ("it is not
     // possible for Android Studio to determine if the Provider points to a directory that
     // contains generated files"). The ordering is carried by the task dependency below.
-    sourceSets.getByName("main").assets.srcDir(
-        layout.buildDirectory.dir("generated/composeAssets").get().asFile,
+    //
+    // `directories.add` rather than `srcDir`, which AGP 9 deprecates in favour of the mutable
+    // set. Same effect, and one fewer warning on every configuration of this build.
+    sourceSets.getByName("main").assets.directories.add(
+        layout.buildDirectory.dir("generated/composeAssets").get().asFile.path,
     )
 }
 
