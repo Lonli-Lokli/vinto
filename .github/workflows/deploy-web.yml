@@ -1,0 +1,217 @@
+# Publishing the web client, from a phone.
+#
+# `vinto.kupalinka.app` does not exist. Not "is broken" — there is no DNS record for it at
+# all, because the Cloudflare Pages project it is meant to be a custom domain of has never
+# been created. `docs/kotlin/README.md` §6c records the reason honestly: the portfolio's
+# shared deploy tooling (`~/sources/gulnya/web-template/`) mirrors a `web/` module layout that
+# this repository does not have, and hand-copying its two scripts here would make Vinto the
+# third copy of a file the portfolio brief specifically warns about copying. So the client
+# compiled, and there was nowhere to put it.
+#
+# This is the third copy's replacement: the verification lives in a workflow rather than in a
+# script somebody pastes, and it is run from the Actions tab, which works in the GitHub mobile
+# app.
+#
+# **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for a
+# `workflow_dispatch` workflow that exists on the *default* branch. `deploy-room.yml` was
+# written, pushed to a feature branch, and did not appear in the dropdown at all; keep the two
+# copies of this one in step or the button runs a version nobody edited.
+#
+# **What this cannot do**, and what a person has to do once: attach the custom domain.
+# `wrangler pages` has no command for it, so `vinto.kupalinka.app` is added in the Cloudflare
+# dashboard — Workers & Pages -> vinto -> Custom domains -> Set up a custom domain — which
+# creates the DNS record and issues the certificate. Until that is done this workflow
+# publishes to `vinto.pages.dev`, which is a real, working, shareable site; it just is not the
+# hostname the invitation links name. DEPLOYMENT.md §6c walks it.
+name: Deploy web
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Build, hash and measure the bundle without publishing anything.'
+        type: boolean
+        default: false
+
+# One deploy at a time. Two overlapping publishes to one Pages project is a race whose loser
+# is whichever upload happens to finish second.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  # Pinned for the same reason `kmp.yml` and `deploy-room.yml` pin it: `wrangler@latest` in CI
+  # means the day Cloudflare ships a change is the day a deploy fails on a commit that has
+  # nothing to do with it. Keep the three files in step.
+  WRANGLER_VERSION: '4.127.1'
+  WRANGLER_SEND_METRICS: 'false'
+  PROJECT: 'vinto'
+  DIST: 'composeApp/build/dist/wasmJs/productionExecutable'
+
+jobs:
+  deploy:
+    name: deploy-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    # A GitHub environment, so the account owner can require an approval before this runs and
+    # can see every deploy in one list afterwards. It shares the `room` environment's secrets
+    # because it is the same Cloudflare account and the same API token.
+    environment: room
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Which branch you ran this from matters, and getting it wrong fails deep in a Gradle
+      # build with an error about a missing project rather than about the ref. The workflow
+      # has to live on `master` to appear in the dropdown at all (see the header), but the
+      # Kotlin tree it builds is on `kotlin` until that merges — so the branch dropdown on
+      # the "Run workflow" panel is a choice, not a formality.
+      - name: Check this ref has the app in it
+        run: |
+          if [ ! -d composeApp ]; then
+            echo "::error::No composeApp/ on ref '${{ github.ref_name }}'. Run this workflow from the branch that carries the Kotlin build (currently 'kotlin'), using the branch dropdown on the Run workflow panel."
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+          validate-wrappers: true
+
+      # The shell's own gate, before anything is built. It reads `wasmJsMain/resources` off
+      # the disk and costs seconds; a broken `og:image` or a missing icon is much cheaper to
+      # learn about here than from a link that unfurls into nothing.
+      - name: 'Gate: the web shell'
+        run: ./gradlew --stacktrace :composeApp:jvmTest --tests '*WebShellTest*'
+
+      - name: Build the Compose/Wasm client
+        run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution
+
+      # Content-addressing, and this is the step the whole workflow exists around.
+      #
+      # The `kupalinka.app` zone's Browser Cache TTL *overrides* a weaker origin
+      # `Cache-Control` (README §6c), so a fixed-name script is cached past the deploy that replaces
+      # it — and because the Kotlin/Wasm toolchain already content-hashes the `.wasm` files,
+      # a stale `composeApp.js` keeps naming a binary that is no longer there. That is a 404
+      # and a dead page, not a stale one, and it has taken portfolio sites down before. The
+      # `.wasm` half is handled by the toolchain; this is the half that is not.
+      - name: Content-address the script
+        id: hash
+        run: |
+          cd "$DIST"
+          hash=$(sha256sum composeApp.js | cut -c1-16)
+          mv composeApp.js "composeApp.$hash.js"
+          # The source map travels with it, so a stale map cannot be served against a fresh
+          # script either. The `sourceMappingURL` comment inside the bundle is rewritten to
+          # match, or DevTools quietly fetches a map that is no longer there.
+          mv composeApp.js.map "composeApp.$hash.js.map"
+          sed -i "s|sourceMappingURL=composeApp.js.map|sourceMappingURL=composeApp.$hash.js.map|" "composeApp.$hash.js"
+          # And the page. `WebShellTest` holds the `src` to a single plain attribute on one
+          # line precisely so this substitution is exact rather than a guess at HTML.
+          sed -i "s|src=\"composeApp.js\"|src=\"composeApp.$hash.js\"|" index.html
+          grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
+          echo "script=composeApp.$hash.js" >> "$GITHUB_OUTPUT"
+          echo "Script is now composeApp.$hash.js"
+
+      - name: Measure what is about to be published
+        run: |
+          cd "$DIST"
+          total=$(du -sb . | cut -f1)
+          # awk rather than bc, which is not guaranteed to be on the runner image.
+          gz=$(for f in *.js *.wasm; do gzip -c "$f" | wc -c; done | awk '{n += $1} END {print n}')
+          {
+            echo "### Bundle"
+            echo ""
+            echo "| | bytes |"
+            echo "| --- | ---: |"
+            printf '| on disk | %s |\n' "$(numfmt --to=iec "$total")"
+            printf '| over the wire (gzipped js + wasm) | %s |\n' "$(numfmt --to=iec "$gz")"
+            echo ""
+            echo "Files:"
+            echo '```'
+            ls -1
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: What would have been deployed
+        if: ${{ inputs.dryRun }}
+        run: |
+          echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
+
+      # `pages project create` is idempotent here by being allowed to fail: there is no
+      # `--if-not-exists`, and the first run of this workflow is the one that has to create
+      # the project. A second run finds it already there and carries on.
+      - name: Deploy to Cloudflare Pages
+        if: ${{ !inputs.dryRun }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
+            exit 1
+          fi
+          # Not a pipeline: `cmd | tee ... || fallback` tests tee's exit code, so a wrangler
+          # failure would sail straight past the fallback and the deploy would fail later
+          # with a stranger message.
+          if ! npx --yes wrangler@${WRANGLER_VERSION} pages project create "$PROJECT" \
+                 --production-branch master >/tmp/create.log 2>&1; then
+            cat /tmp/create.log
+            grep -qi "already exists" /tmp/create.log \
+              || { echo "::error::could not create the Pages project"; exit 1; }
+            echo "The project already exists; deploying into it."
+          fi
+
+          npx --yes wrangler@${WRANGLER_VERSION} pages deploy "$DIST" \
+            --project-name "$PROJECT" --branch master --commit-dirty=true
+
+      # Propagation is not atomic. §6d records that catching the maintainer out twice on the
+      # room Worker, and README §6c records the Pages version of the same hazard — a newly-deployed
+      # asset fetched before the edge has it is answered with the SPA shell, 200, `text/html`.
+      #
+      # So this does not ask "is it up". It asks whether the page being served names *this*
+      # build's script, which is a question only the new deploy can answer correctly, and it
+      # probes with a cache-buster because README §6c says in as many words never to point anything
+      # at a fresh deploy without one.
+      - name: Wait for the edge to serve this build
+        if: ${{ !inputs.dryRun }}
+        env:
+          SCRIPT: ${{ steps.hash.outputs.script }}
+        run: |
+          site="https://${PROJECT}.pages.dev"
+          for attempt in $(seq 1 30); do
+            body=$(curl -sS --max-time 15 "$site/?cb=$RANDOM$attempt" || true)
+            if printf '%s' "$body" | grep -q "$SCRIPT"; then
+              echo "attempt $attempt: serving $SCRIPT"
+              # And the script it names is really there — the check that would have caught
+              # the stale-name failure this whole workflow is built to prevent.
+              code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$site/$SCRIPT?cb=$RANDOM")
+              [ "$code" = "200" ] || { echo "::error::the page names $SCRIPT and the edge answers $code for it"; exit 1; }
+              {
+                echo "### Published"
+                echo ""
+                echo "* $site"
+                echo "* script: \`$SCRIPT\`"
+                echo ""
+                echo "If \`vinto.kupalinka.app\` still does not resolve, the custom domain has"
+                echo "not been attached yet — that is a one-time step in the Cloudflare"
+                echo "dashboard, and DEPLOYMENT.md section 6c walks it."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "attempt $attempt: not yet"
+            sleep 10
+          done
+          echo "::error::$site never served $SCRIPT. It may still be propagating; check the site before running this again."
+          exit 1
