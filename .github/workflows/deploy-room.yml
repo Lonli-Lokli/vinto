@@ -6,6 +6,12 @@
 # back at a desk. This workflow is the same deploy, run by GitHub with a scoped API token, and
 # started from the Actions tab — which works from the GitHub mobile app.
 #
+# **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for a
+# `workflow_dispatch` workflow that exists on the *default* branch — a workflow living only on
+# a feature branch never appears in the Actions dropdown at all, which is how this was found.
+# It went to `master` on its own in a one-file pull request; keep the two copies in step, or
+# the button runs a version nobody edited.
+#
 # **Never on a push.** Deploying is a decision, not a consequence of merging: `wrangler deploy`
 # publishes to a real hostname that real people can reach, and §6d records what a deployment
 # taught that no local run could. So `workflow_dispatch` only, and the flag that opens the room
@@ -118,7 +124,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See docs/kotlin/DEPLOYMENT.md."
+            echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
             exit 1
           fi
           npx --yes wrangler@${WRANGLER_VERSION} deploy --var ROOM_OPEN:'${{ inputs.roomOpen }}'

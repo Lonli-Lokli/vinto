@@ -204,6 +204,12 @@ operation this project cannot do without: online play can break on a Sunday and 
 until somebody is back at a desk. So the same deploy can be run by GitHub instead, from the
 **Actions** tab, which works in the GitHub mobile app.
 
+> **Why the workflow lives on `master`.** GitHub only offers *Run workflow* for a workflow
+> that exists on the repository's **default branch**. A copy on a feature branch does not
+> appear in the Actions list at all. `deploy-room.yml` therefore went to `master` on its own,
+> in a one-file pull request, while the rest of the Kotlin work is still on `kotlin` — and
+> the two copies have to be kept in step, or the button runs a version nobody edited.
+
 **Set it up once.** Both halves are web pages, so a phone is enough for these too.
 
 1. **Make a Cloudflare API token.** In the Cloudflare dashboard: *My Profile → API Tokens →
