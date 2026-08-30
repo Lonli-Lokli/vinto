@@ -18,6 +18,17 @@ updates:
   # files, which is where every version in this repository is declared.
   - package-ecosystem: "gradle"
     directory: "/"
+    # Dependabot opens pull requests against the **default** branch unless told otherwise,
+    # and the default branch is `master`, which does not contain `gradle/libs.versions.toml`
+    # — or any part of the Kotlin build. So this block was resolving nothing, in exactly the
+    # way the `npm` block it replaced was resolving nothing, and for the same reason: the
+    # build it watches lives somewhere it was not looking. That is why the versions here had
+    # drifted three Kotlin lines and four Compose Multiplatform lines behind without a single
+    # pull request being opened about it.
+    #
+    # Remove this line when `kotlin` merges to `master`; leaving it pointed at a branch that
+    # no longer exists is the same failure again, in the other direction.
+    target-branch: "kotlin"
     schedule:
       interval: "weekly"
       day: "monday"
