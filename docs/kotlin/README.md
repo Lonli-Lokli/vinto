@@ -1994,6 +1994,28 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   Two things worth keeping. The parameter is **`testTimeout`**, not `timeout` — the name is in
   `ComposeUiTest.skiko.kt` and nowhere convenient. And `advanceTimeBy` is *virtual* time, so
   this is deterministic: a slower runner takes longer per frame but renders the same frames.
+- **A green build can ship an APK with no resources in it, and only a phone finds out.**
+  Compose Multiplatform 1.12 registers `copyAndroidMainComposeResourcesToAndroidAssets` for a
+  module using `com.android.kotlin.multiplatform.library` and never configures its
+  `outputDirectory` — so the task cannot run, nothing depends on it, **the build succeeds**,
+  and the APK contains not one string, card, sound or font. The app then dies on the launcher
+  at the first `Res.string` lookup. Every gate this repository has stayed green through it:
+  the JVM suites read resources off the classpath, `assembleDebug` produces a well-formed APK,
+  `:composeApp:jvmTest` was 124/124. It took installing the thing.
+  `androidApp/build.gradle.kts` assembles `assets/composeResources/<packageOfResClass>/…` by
+  hand from the prepared resources. **The check that it is still needed is one line** —
+  `unzip -l …/androidApp-debug.apk | grep -c assets/composeResources` should be 28, not 0 —
+  and the workaround should be deleted the day the plugin sets its own output. Two smaller
+  traps inside it: the Android source-set API refuses a `Provider` (`.get().asFile`), and
+  `tasks.withType<CopyResourcesToAndroidAssetsTask>().configureEach { outputDirectory.set(…) }`
+  does *not* take, which is why the task is bypassed rather than repaired.
+- **The client cannot report a crash that happens before the first composition.**
+  `installCrashHandler` is called from a `LaunchedEffect` inside `ReportCrashes`, which is
+  inside `App()` — so a startup crash, which is the one you most want, happens before the
+  handler exists. `SENTRY_DSN` is empty in source besides, so `CrashReporter.enabled` is false
+  and nothing is installed at all in a debug build. Fixable in two small pieces (install it in
+  `MainActivity.onCreate` before `setContent`; set the DSN for release builds, DEPLOYMENT.md
+  §7a) and recorded on task 8.2 rather than done.
 - **AGP 9 will not let an Android application be a KMP module, and there is no property that
   changes its mind.** `com.android.application` beside `org.jetbrains.kotlin.multiplatform`
   is refused outright with *"move the usage of 'com.android.application' into a separate
