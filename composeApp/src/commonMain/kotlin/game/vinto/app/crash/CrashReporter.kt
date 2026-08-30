@@ -34,6 +34,11 @@ class CrashReporter(
     private val now: () -> Long,
     private val nowIso: () -> String,
     private val surface: () -> CrashSurface,
+    /**
+     * Where in a game the app was, read at the moment of the crash. Defaults to nowhere, so
+     * a caller that has no game — the tests, a menu-only harness — needs to say nothing.
+     */
+    private val place: () -> CrashPlace = { CrashPlace() },
     private val post: suspend (url: String, auth: String, body: String) -> Unit,
 ) {
     private val target = parseDsn(dsn)
@@ -59,6 +64,7 @@ class CrashReporter(
                 type = error::class.simpleName ?: "Throwable",
                 message = error.message ?: "no message",
                 frames = error.stackTraceToString().lines().drop(1).take(MAX_FRAMES).map { it.trim() },
+                place = place(),
             ),
         )
 

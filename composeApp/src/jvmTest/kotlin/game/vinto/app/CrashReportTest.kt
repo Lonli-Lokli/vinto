@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import game.vinto.app.crash.CrashPlace
 import game.vinto.app.crash.CrashReport
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.crashEnvelope
@@ -136,4 +137,86 @@ class CrashReportTest {
             frames = listOf("CardStage.kt:610", "GameScreen.kt:130"),
         ),
     )
+
+    /**
+     * Task 8.2's other half, and the mirror of the room's `roomContext`.
+     *
+     * Without an address a report says only that *a* client on *a* surface failed, which is a
+     * sentence rather than something to act on. `gameId` is the same id the bug-report control
+     * writes into an exported recording, so a crash and a replayable document can be put side
+     * by side.
+     */
+    @Test
+    fun aReportSaysWhereInTheGameItHappened() {
+        val envelope = crashEnvelope(
+            CrashReport(
+                eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
+                platform = "java", release = "1.0", environment = "production",
+                surface = CrashSurface.ONLINE, type = "Error", message = "boom",
+                place = CrashPlace(gameId = "game-1699", round = 3, turn = 14),
+            ),
+        )
+        val item = envelope.split("\n").last()
+
+        assertTrue(item.contains(""""gameId":"game-1699""""), item)
+        assertTrue(item.contains(""""round":3"""), item)
+        assertTrue(item.contains(""""turn":14"""), item)
+    }
+
+    /**
+     * An `extra` block that is always there teaches a reader to skim past it, and three nulls
+     * say less than nothing — they suggest the app looked and found no game, when it never
+     * had one.
+     */
+    @Test
+    fun withNoGameThereIsNoExtraAtAll() {
+        val envelope = crashEnvelope(
+            CrashReport(
+                eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
+                platform = "java", release = "1.0", environment = "production",
+                surface = CrashSurface.MENU, type = "Error", message = "boom",
+            ),
+        )
+        assertFalse(envelope.contains("extra"), envelope)
+        assertEquals(3, envelope.split("\n").size, envelope)
+    }
+
+    /**
+     * A partial address is still an address. This is the case that actually happens — a crash
+     * during the deal, before a turn has a number.
+     */
+    @Test
+    fun aPartialAddressCarriesOnlyWhatIsKnown() {
+        val envelope = crashEnvelope(
+            CrashReport(
+                eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
+                platform = "java", release = "1.0", environment = "production",
+                surface = CrashSurface.SOLO, type = "Error", message = "boom",
+                place = CrashPlace(gameId = "game-7"),
+            ),
+        )
+        val item = envelope.split("\n").last()
+
+        assertTrue(item.contains(""""extra":{"gameId":"game-7"}"""), item)
+        assertFalse(item.contains("round"), item)
+        assertFalse(item.contains("\"turn\""), item)
+    }
+
+    /**
+     * The rule the whole file exists for, applied to the new field. A `gameId` is not a
+     * credential; a room code is, and putting one here would route around the scrubber by
+     * building the leak on purpose instead of catching it in a stack trace.
+     */
+    @Test
+    fun anAddressThatSomehowCarriesACodeIsStillScrubbed() {
+        val envelope = crashEnvelope(
+            CrashReport(
+                eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
+                platform = "java", release = "1.0", environment = "production",
+                surface = CrashSurface.ONLINE, type = "Error", message = "boom",
+                place = CrashPlace(gameId = "room: \"7KQ2MP\""),
+            ),
+        )
+        assertFalse(envelope.contains("7KQ2MP"), envelope)
+    }
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import game.vinto.app.crash.CrashReporter
 import game.vinto.app.crash.CrashSurface
+import game.vinto.app.crash.Where
 import game.vinto.app.crash.installCrashHandler
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
@@ -349,6 +350,7 @@ private fun ReportCrashes(scope: kotlinx.coroutines.CoroutineScope) {
             now = ::elapsedMs,
             nowIso = ::nowIso,
             surface = { surface.value.asCrashSurface() },
+            place = { Where.now() },
             post = { url, auth, body ->
                 postBeacon(url, body, contentType = "application/x-sentry-envelope", auth = auth)
             },

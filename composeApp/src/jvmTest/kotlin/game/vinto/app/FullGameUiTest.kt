@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import game.vinto.app.crash.Where
 import game.vinto.app.game.GameScreen
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.LocalGame
@@ -21,6 +22,7 @@ import game.vinto.client.playItselfOut
 import game.vinto.shapes.Difficulty
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -64,6 +66,17 @@ class FullGameUiTest {
         waitForIdle()
         button("Start the round").performClick()
         waitForIdle()
+
+        // The crash reporter's address is written from `rememberHolder`, which is the one
+        // point a local game and an online one both pass through — so a table on screen is
+        // exactly the condition under which it has to be filled. Asserted here rather than in
+        // a test of its own because the thing that can regress is the *wiring*, and this is
+        // the only suite with a real table in it.
+        assertEquals(
+            game.session.view.value.gameId,
+            Where.now().gameId,
+            "the crash reporter does not know which game is on screen",
+        )
 
         button("Draw Card").performClick()
         waitForIdle()

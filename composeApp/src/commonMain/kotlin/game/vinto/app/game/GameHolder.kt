@@ -1,6 +1,7 @@
 package game.vinto.app.game
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -8,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import game.vinto.app.crash.Where
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.client.GameSession
 import game.vinto.client.Move
@@ -108,6 +110,15 @@ class GameHolder(
 @Composable
 fun rememberHolder(session: GameSession): GameHolder {
     val view = session.view.collectAsState()
+
+    // The one place a local game and an online one both pass through, which is why the crash
+    // reporter's address is written here rather than in each table screen. Cleared on the way
+    // out, so a crash in the menu is not filed against the game before it.
+    DisposableEffect(session) {
+        onDispose { Where.atTable(null) }
+    }
+    Where.atTable(view.value)
+
     return remember(session) { GameHolder(session, view) }
 }
 

@@ -75,6 +75,32 @@ fun scrubReport(text: String): String = text
 enum class CrashSurface { SOLO, ONLINE, LESSON, MENU }
 
 /**
+ * Where in a game the app was, for a crash report.
+ *
+ * The mirror of the room's `roomContext` in `sentry.mjs`, and for the same reason: without it
+ * a report says only that *a* client on *a* surface failed, which is a sentence rather than
+ * an address. With it a report names the deal — the same `gameId` the bug-report control puts
+ * in an exported recording — and roughly where in the game it was.
+ *
+ * Three fields and no fourth. **No room code**: a code is a join credential, [scrubReport]
+ * would strip one that arrived through a stack trace, and this is the same rule applied on
+ * purpose before anything is built. **No nickname, no seat, no device**: a seat is not a
+ * person and this is the pipe that quietly grows a user record if nobody says otherwise.
+ *
+ * `turn` rather than an action index because it is what the *view* carries, and the view is
+ * the one thing a local game and an online one hold identically — a crash address that only
+ * worked in solo play would be missing from exactly the sessions that are hardest to
+ * reproduce.
+ */
+data class CrashPlace(
+    val gameId: String? = null,
+    val round: Int? = null,
+    val turn: Int? = null,
+) {
+    val isEmpty: Boolean get() = gameId == null && round == null && turn == null
+}
+
+/**
  * The one envelope Sentry's ingest endpoint takes: three lines of JSON.
  *
  * Built by hand for the reason `sentry.mjs` gives and one more: the wasm client is the target
@@ -95,6 +121,7 @@ data class CrashReport(
     val type: String,
     val message: String,
     val frames: List<String> = emptyList(),
+    val place: CrashPlace = CrashPlace(),
 )
 
 fun crashEnvelope(report: CrashReport): String = with(report) {
@@ -105,6 +132,18 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
         append(""","release":"""").append(release).append('"')
         append(""","environment":"""").append(environment).append('"')
         append(""","tags":{"surface":"""").append(surface.name).append(""""}""")
+        // Omitted entirely when there is nothing to say, rather than sent as three nulls: an
+        // `extra` block that is always present teaches a reader to skim past it.
+        if (!place.isEmpty) {
+            append(""","extra":{""")
+            val parts = buildList {
+                place.gameId?.let { add(""""gameId":""" + json(it)) }
+                place.round?.let { add(""""round":$it""") }
+                place.turn?.let { add(""""turn":$it""") }
+            }
+            append(parts.joinToString(","))
+            append('}')
+        }
         append(""","exception":{"values":[{"type":""").append(json(type))
         append(""","value":""").append(json(message))
         if (frames.isNotEmpty()) {
