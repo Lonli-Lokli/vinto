@@ -15,15 +15,16 @@ private val client: HttpClient by lazy {
     HttpClient.newBuilder().connectTimeout(TIMEOUT).build()
 }
 
-actual suspend fun postBeacon(url: String, body: String) {
+actual suspend fun postBeacon(url: String, body: String, contentType: String, auth: String?) {
     withContext(Dispatchers.IO) {
         runCatching {
+            val request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("content-type", contentType)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+            if (auth != null) request.header("x-sentry-auth", auth)
             client.send(
-                HttpRequest.newBuilder(URI.create(url))
-                    .timeout(TIMEOUT)
-                    .header("content-type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build(),
+                request.build(),
                 HttpResponse.BodyHandlers.discarding(),
             )
         }

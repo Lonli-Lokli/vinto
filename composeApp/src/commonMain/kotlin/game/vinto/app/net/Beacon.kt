@@ -14,5 +14,16 @@ package game.vinto.app.net
  *
  * Implementations must not throw. The caller runs inside the sink's drain loop, which is
  * expected to survive anything the network does.
+ *
+ * @param contentType what the body is. Analytics posts JSON; a crash report posts a Sentry
+ *   envelope, which is a different media type and is rejected under the wrong one.
+ * @param auth the value for `x-sentry-auth`, when there is one. Widening this seam rather
+ *   than adding a second `expect` is deliberate: a second one would be four more platform
+ *   files to get right, and two of the four cannot be compiled on a host without a Mac.
  */
-expect suspend fun postBeacon(url: String, body: String)
+expect suspend fun postBeacon(
+    url: String,
+    body: String,
+    contentType: String = "application/json",
+    auth: String? = null,
+)

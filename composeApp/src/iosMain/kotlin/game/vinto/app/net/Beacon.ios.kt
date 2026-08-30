@@ -20,11 +20,15 @@ import platform.Foundation.setValue
  * response, and a failure is a lost count.
  */
 @OptIn(ExperimentalForeignApi::class)
-actual suspend fun postBeacon(url: String, body: String) {
+actual suspend fun postBeacon(url: String, body: String, contentType: String, auth: String?) {
     val target = NSURL.URLWithString(url) ?: return
     val request = NSMutableURLRequest.requestWithURL(target)
     request.setHTTPMethod("POST")
-    request.setValue("application/json", forHTTPHeaderField = "content-type")
+    request.setValue(contentType, forHTTPHeaderField = "content-type")
+    // `setValue:forHTTPHeaderField:` again, which is already proven to resolve here — no new
+    // Objective-C name is introduced by this change, deliberately, because nothing on this
+    // host can check one.
+    if (auth != null) request.setValue(auth, forHTTPHeaderField = "x-sentry-auth")
     request.setHTTPBody(body.toNSData())
     NSURLSession.sharedSession.dataTaskWithRequest(request) { _, _, _ -> }.resume()
 }

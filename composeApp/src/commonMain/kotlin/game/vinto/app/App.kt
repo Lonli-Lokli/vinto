@@ -14,12 +14,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import game.vinto.app.crash.CrashReporter
+import game.vinto.app.crash.CrashSurface
+import game.vinto.app.crash.installCrashHandler
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
 import game.vinto.app.net.platformRoomConnector
+import game.vinto.app.net.postBeacon
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
@@ -71,17 +76,9 @@ fun App(
     val connector = remember { platformRoomConnector(ROOM_SERVICE) }
     val appScope = rememberCoroutineScope()
 
-    // One sink for the app's lifetime. Built opted-*out* and told the truth once the vault
-    // has been read, so the window between launching and loading settings cannot emit
-    // anything the player did not agree to.
-    val sink = remember {
-        Analytics(
-            transport = analyticsTransport(ROOM_SERVICE),
-            consent = AnalyticsConsent(optedIn = false, platformObjects = true),
-            scope = appScope,
-        )
-    }
+    val sink = rememberSink(appScope)
     val count = counting ?: remember(sink) { counting(sink) }
+    ReportCrashes(appScope)
 
     // Reading what is on disk is the only thing between launching and playing, and on a cold
     // start it lands in the same frame. The opening screen exists for the case where it does
@@ -297,6 +294,28 @@ private sealed interface Screen {
 private const val ROOM_SERVICE = "vinto-room.kupalinka.app"
 
 /**
+ * Where a crash is reported, or empty for a build that reports nowhere.
+ *
+ * Not a secret and not treated as one: a DSN's key is **write-only**, it can submit an event
+ * and cannot read one back, and it has to be inside the app for the app to report at all.
+ * What somebody could do with a stolen one is send junk and spend the project's quota, which
+ * is why it is still not posted publicly — DEPLOYMENT.md §7a says the same to the maintainer.
+ *
+ * Empty here on purpose. The real value is set at build time for a release; an empty string
+ * switches reporting off entirely, which is what a development build and every test should
+ * get without anybody remembering to switch it off.
+ */
+private const val SENTRY_DSN = ""
+
+/** The app's surface vocabulary, as a crash report spells it. Coarse by construction. */
+private fun Surface.asCrashSurface(): CrashSurface = when (this) {
+    Surface.SOLO -> CrashSurface.SOLO
+    Surface.ONLINE -> CrashSurface.ONLINE
+    Surface.LESSON -> CrashSurface.LESSON
+    Surface.MENU -> CrashSurface.MENU
+}
+
+/**
  * A seed for a new game.
  *
  * Picking one is ambient randomness, which is why the engine refuses to do it and this is
@@ -310,3 +329,59 @@ expect fun freshSeed(): Long
  * anything real depends on it (storage and clocks will, per design D1).
  */
 expect fun platformName(): String
+
+/**
+ * Installs the crash reporter, once, for the life of the app.
+ *
+ * Same discipline as the counter and deliberately a different pipe. The DSN is a build
+ * constant rather than a secret — its key can submit an event and cannot read one — absent
+ * means reporting is off, and nothing identifying travels with a report (`crash/Crash.kt`
+ * makes that structural rather than careful).
+ *
+ * **Not gated on the analytics opt-out**, and that is a decision rather than an oversight.
+ * The two answer different questions: a count is about what people chose to do, a crash is
+ * the app failing at something it promised to do. §6i keeps them on separate pipes for the
+ * same reason. Neither carries an identifier, which is what makes the distinction honest
+ * instead of merely convenient.
+ */
+@Composable
+private fun ReportCrashes(scope: kotlinx.coroutines.CoroutineScope) {
+    // Read live, so a crash on the table is not reported as one in the menu.
+    val surface = rememberUpdatedState(LocalSurface.current)
+    val crashes = remember(scope) {
+        CrashReporter(
+            dsn = SENTRY_DSN,
+            platform = platformName(),
+            release = "vinto@$VERSION",
+            environment = "production",
+            scope = scope,
+            now = ::elapsedMs,
+            nowIso = ::nowIso,
+            surface = { surface.value.asCrashSurface() },
+            post = { url, auth, body ->
+                postBeacon(url, body, contentType = "application/x-sentry-envelope", auth = auth)
+            },
+        )
+    }
+
+    LaunchedEffect(crashes) {
+        if (crashes.enabled) installCrashHandler(crashes::report)
+    }
+}
+
+/**
+ * One analytics sink for the app's lifetime.
+ *
+ * Built opted-**out** and told the truth once the vault has been read, so the window between
+ * launching and loading settings cannot emit anything the player did not agree to. Getting
+ * that order wrong would send one event per cold start from somebody who had switched
+ * counting off, which is the one bug in this area nobody would ever see from the inside.
+ */
+@Composable
+private fun rememberSink(scope: kotlinx.coroutines.CoroutineScope): Analytics = remember(scope) {
+    Analytics(
+        transport = analyticsTransport(ROOM_SERVICE),
+        consent = AnalyticsConsent(optedIn = false, platformObjects = true),
+        scope = scope,
+    )
+}

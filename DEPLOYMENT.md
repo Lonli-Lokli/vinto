@@ -319,6 +319,26 @@ Sentry → **Settings** → **Client Keys (DSN)**.
 **With no key set, crash reporting is simply off** and everything else works normally. That is
 deliberate: nobody should need a Sentry account to work on the game.
 
+### The apps report too, and they need the same key put somewhere else
+
+The room service reads its key from the command above. The phone, tablet and browser apps
+cannot — they run on other people's devices, where a Cloudflare secret does not exist — so
+their copy is compiled **into** the app.
+
+It lives in `composeApp/src/commonMain/kotlin/game/vinto/app/App.kt`, in the line that reads:
+
+```kotlin
+private const val SENTRY_DSN = ""
+```
+
+Put the same DSN between those quotes before building a release, and leave it empty otherwise.
+Empty means the apps report nothing at all, which is what a development build should do.
+
+> **Is it safe to have the key inside an app anybody can unzip?** Yes, with one caveat, and
+> it is the same one as §7a: the key can only *send* reports, never read them. The worst
+> somebody can do with a stolen one is send junk and use up the monthly allowance. Do not
+> post it publicly; if it gets out, make a new one in Sentry and change the line above.
+
 > **Is the DSN a secret?** Not in the usual sense — it can only *send* reports, never read
 > them, and it has to be inside the phone apps for them to report at all. What somebody could
 > do with a stolen one is send us junk reports and use up our monthly allowance. So: not a

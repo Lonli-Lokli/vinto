@@ -12,7 +12,7 @@ import java.net.URL
 /** Long enough for a slow phone network, short enough that nothing waits on a count. */
 private const val TIMEOUT_MS = 5_000
 
-actual suspend fun postBeacon(url: String, body: String) {
+actual suspend fun postBeacon(url: String, body: String, contentType: String, auth: String?) {
     withContext(Dispatchers.IO) {
         runCatching {
             val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -20,7 +20,8 @@ actual suspend fun postBeacon(url: String, body: String) {
                 connectTimeout = TIMEOUT_MS
                 readTimeout = TIMEOUT_MS
                 doOutput = true
-                setRequestProperty("content-type", "application/json")
+                setRequestProperty("content-type", contentType)
+                if (auth != null) setRequestProperty("x-sentry-auth", auth)
             }
             connection.outputStream.use { it.write(body.encodeToByteArray()) }
             connection.responseCode
