@@ -1344,6 +1344,31 @@ Until that lands the app is half-translated: menus, settings, the score sheet, t
 and the spoken descriptions follow the phone's language; the table's prompts, the move log and
 the lesson do not.
 
+### How big it actually is, measured
+
+Counted rather than estimated, because "roughly two hundred strings" is the kind of figure
+that turns out to be either 40 or 900 and the difference decides whether this is one sitting
+or several:
+
+| | |
+| --- | --- |
+| Human-facing string literals | **238** — `Narration.kt` 26, `TableModel.kt` 68, `TeachScript.kt` 144 |
+| Functions returning a `String` a person reads | 36 |
+| Call sites in `composeApp` that render one | 17 |
+| Test assertions written against English text | ~24 |
+| Entries already in `strings.xml`, for comparison | 183 |
+
+So the description was accurate — this is about as big as it says, not secretly ten times
+bigger. The work is real all the same: a `Say` hierarchy with something over a hundred cases,
+238 new resource entries, and 36 functions plus their call sites and tests rewritten.
+
+**Do it as vertical slices, not as one commit.** `Narration.kt` is the natural first one — 26
+literals and three functions, and it is the file where the argument for the whole refactor is
+clearest, because conjugating "You draw" against "Raph draws" is exactly what a string table
+cannot do. Each slice leaves the app compiling and the tests green, and the tests get *better*
+as it goes: `assertEquals(Say.YouDrew(SEVEN), …)` says what is meant where an English sentence
+only says what it currently reads.
+
 ## 6j. Finding a table, getting somebody to it, and saying so while you wait
 
 Three things that the online client had no answer for, and one bug found while giving it one.

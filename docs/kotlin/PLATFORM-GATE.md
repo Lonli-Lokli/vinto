@@ -91,6 +91,36 @@ but the floor is the floor.
 This does **not** affect Compose on Android or iOS, which are native and carry no such
 payload. The finding is specific to the web target.
 
+### Re-measured, 2026-08-30, on the real app
+
+The table above is a **hello-world**: `MaterialTheme`, a `Column`, two `Text`s and a tap
+counter. Phases 7 and 9 have since built the actual game — the table, the lesson, the lobby,
+the settings, the score sheet — so the figure that was accepted is no longer the figure that
+ships. Measured again on `wasmJsBrowserDistribution`, gzip -9, the served files only:
+
+| Artefact | Raw | Gzipped |
+| --- | ---: | ---: |
+| skiko runtime (`.wasm`) | 8,401,120 | 3,223,832 |
+| app code (`.wasm`) | 4,481,036 | 1,218,020 |
+| `composeApp.js` | 562,633 | 102,164 |
+| **Total** | **13,444,789 (12.8 MB)** | **4,544,016 (4.33 MiB)** |
+
+`composeApp.js.map` is excluded: browsers fetch it only with devtools open.
+
+**skiko is unchanged, and that is the whole story.** The fixed cost predicted in 2a.2 held
+exactly — the renderer is the same 3.2 MB it always was — and the entire real game, all of it,
+cost **760 KB gzipped** on top of the hello-world's app chunk. The sublinear growth this
+section predicted is what happened.
+
+So the increase over the accepted 3.7 MB is **+0.63 MiB, and it is all game**. It is recorded
+here rather than quietly substituted because 3.7 MB is the number the product owner accepted
+in 2a.2, and 4.33 MiB is a different number that deserves the same explicit decision.
+
+One thing this pass also found: the distribution had **no `index.html`** — two `.wasm` files, a
+`.js`, and no page to load them. The web client compiled and could not be served, for the life
+of the branch, because a compile gate is not a serve gate and no CI job opens a browser. Fixed;
+the shell is `composeApp/src/wasmJsMain/resources/index.html`.
+
 Judgement: acceptable for an installed app or a returning player with a warm cache;
 questionable for a casual card game that people open from a shared link on a phone. This
 is a product call, not a technical blocker — recorded here so it is made with the number

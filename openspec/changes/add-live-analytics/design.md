@@ -139,8 +139,26 @@ support our targets" is not the reason and was checked first.
 
 | | gzipped |
 | --- | --- |
-| Baseline: two `.wasm` + `composeApp.js` | **4,537,929 B — 4.33 MiB** |
-| With `sentry-kotlin-multiplatform` on `wasmJsMain` | see the table in `docs/kotlin/PLATFORM-GATE.md` |
+| Baseline: two `.wasm` + `composeApp.js` | 4,544,016 B — **4.33 MiB** |
+| With `sentry-kotlin-multiplatform:0.27.0` declared on `wasmJsMain` | 4,544,014 B — **the same** |
+
+**And that second row is not the answer it looks like.** Two bytes smaller is noise; the two
+bundles are identical, because the dependency was *declared* and never *called*, and
+Kotlin/Wasm tree-shakes to the reachable surface. `README.md` §7 already records the same
+effect from the other direction — a Kotlin/JS library build with nothing exported came out at
+781 bytes.
+
+So the measurement as specified cannot answer the question. Getting a real figure means
+calling `Sentry.init` and `Sentry.captureException` for real, which is most of the integration
+the measurement was supposed to inform, and it was not spent — because **the decision does not
+turn on the number**. The argument below is categorical rather than quantitative: the web
+client has no native crash for the SDK to catch, so its unique capability is worth zero there
+at any weight. A measurement can only have changed the answer if the SDK were free *and*
+useful; it is demonstrably not useful on this target.
+
+The one figure that did come out of the exercise is the hand-rolled reporter's own cost. The
+app's `.wasm` went from 1,211,679 B gzipped before it to 1,218,020 B after: **+6,341 B, about
+0.14% of the bundle**, for crash reporting on all four clients.
 
 Two things that measurement turned up on its own and are worth recording here because they
 change what the number means:
