@@ -74,28 +74,36 @@ fun VintoField(
             style = stamped(size = LabelSize),
             color = Rail.inkDim,
         )
-        Slot(rim = rim, modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier.padding(horizontal = PadH, vertical = PadV),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                // Drawn under the text rather than as a decoration on the field, so it
-                // disappears the moment there is anything real to read.
-                if (value.isEmpty() && placeholder != null) {
-                    Text(placeholder, style = bodyStyle(Rail.inkDim), maxLines = 1)
+        // The groove is drawn *inside* the field's own decoration rather than around it, and
+        // that is a tap-target decision rather than a layout one. Wrapped the other way the
+        // slot is 48dp tall and the thing that actually takes a tap is the text strip inside
+        // it — measured at 25dp, so two thirds of what looks like a field does nothing when
+        // a thumb lands on it. `LobbyReachTest` found this on its first run.
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = bodyStyle(Rail.ink),
+            cursorBrush = SolidColor(Rail.gold),
+            interactionSource = interaction,
+            keyboardOptions = KeyboardOptions(capitalization = capitalise),
+            modifier = Modifier.fillMaxWidth().heightIn(min = MinTap),
+            decorationBox = { field ->
+                Slot(rim = rim, modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier.padding(horizontal = PadH, vertical = PadV),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        // Under the text rather than a decoration on the field, so it goes the
+                        // moment there is anything real to read.
+                        if (value.isEmpty() && placeholder != null) {
+                            Text(placeholder, style = bodyStyle(Rail.inkDim), maxLines = 1)
+                        }
+                        field()
+                    }
                 }
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    singleLine = true,
-                    textStyle = bodyStyle(Rail.ink),
-                    cursorBrush = SolidColor(Rail.gold),
-                    interactionSource = interaction,
-                    keyboardOptions = KeyboardOptions(capitalization = capitalise),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+            },
+        )
         detail?.let {
             Text(it, style = bodyStyle(Rail.inkDim, size = DetailSize))
         }
