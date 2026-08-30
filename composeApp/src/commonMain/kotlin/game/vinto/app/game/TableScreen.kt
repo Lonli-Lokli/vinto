@@ -86,6 +86,7 @@ import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
 import game.vinto.client.Move
+import game.vinto.client.Say
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.finalRoundTurnsLeft
@@ -251,7 +252,7 @@ data class TableState(
     val view: PlayerView,
     val table: Table,
     val refusal: String?,
-    val recent: List<String>,
+    val recent: List<Say>,
     val round: Int,
     /**
      * Whether a coach is watching over this table, in which case the rule under the prompt

@@ -332,8 +332,8 @@ class RemoteGameSession internal constructor(
 
     // Nobody narrates an online game yet: narration reads full states, and a client has
     // only views. The strip stays empty rather than wrong.
-    private val _log = MutableStateFlow<List<String>>(emptyList())
-    override val log: StateFlow<List<String>> = _log.asStateFlow()
+    private val _log = MutableStateFlow<List<Say>>(emptyList())
+    override val log: StateFlow<List<Say>> = _log.asStateFlow()
 
     override val isOver: Boolean get() = _view.value.phase == GamePhase.SCORING
 

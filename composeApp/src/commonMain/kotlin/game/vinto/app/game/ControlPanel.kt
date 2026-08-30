@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.table_sending
+import game.vinto.app.said
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -46,6 +47,7 @@ import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
+import game.vinto.client.Say
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -161,7 +163,7 @@ fun ControlPanel(
             // Vinto" off the bottom of the rail while the button count still said two.
             val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
             val crowded = table.ranks.isNotEmpty() || rows >= Crowded
-            if (!crowded) RecentActions(state.recent.filterNot { it == table.prompt })
+            if (!crowded) RecentActions(state.recent, table.prompt)
 
             RankGrid(table.ranks, stage, onMove)
 
@@ -287,8 +289,20 @@ private fun worthSaying(detail: String, teaching: Boolean): Boolean {
     return before < FreelyOffered || hesitated
 }
 
+/**
+ * The last few moves, in the phone's language.
+ *
+ * Rendering happens here rather than in the model, which is the whole of §6h's change: the
+ * log arrives as [Say] — what happened — and becomes words at the point where resources
+ * exist. Two consequences worth knowing.
+ *
+ * [prompt] is passed in so the top line can be dropped when it repeats what the panel is
+ * already asking. That check used to compare two strings built from the same narration; now
+ * one side is a message and the other is still a sentence, so the comparison has to happen
+ * *after* rendering. It moves back into the model when `TableModel` is converted too.
+ */
 @Composable
-private fun RecentActions(recent: List<String>) {
+private fun RecentActions(recent: List<Say>, prompt: String) {
     if (recent.isEmpty()) return
 
     Surface(
@@ -298,7 +312,12 @@ private fun RecentActions(recent: List<String>) {
         modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
     ) {
         Column(modifier = Modifier.padding(Gap)) {
-            recent.takeLast(RECENT_SHOWN).forEach { line ->
+            // A plain loop rather than `map`: `said` is a composable, and a composable call
+            // inside a non-inline lambda is not one the compiler will accept.
+            val rendered = ArrayList<String>(recent.size)
+            for (entry in recent) rendered += said(entry)
+
+            rendered.filterNot { it == prompt }.takeLast(RECENT_SHOWN).forEach { line ->
                 Text(text = line, fontSize = DetailSize, color = Rail.inkDim)
             }
         }

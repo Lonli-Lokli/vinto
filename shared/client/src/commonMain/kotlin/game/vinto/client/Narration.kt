@@ -15,61 +15,47 @@ import game.vinto.shapes.actorId
  * Returns null for the moves that are pure bookkeeping — agreeing that a toss-in window is
  * over, nominating a coalition leader. Narrating those would bury the ones that matter.
  *
+ * Answers a [Say] rather than a sentence. This module has no resources and no Compose, so a
+ * sentence built here is an English one whatever the phone is set to — see [Say] and §6h.
+ *
  * @param before the state the action was applied to, which is where the cards still are.
  */
 @Suppress("ReturnCount", "CyclomaticComplexMethod")
-fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: String): String? {
+fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: String): Say? {
     val actor = action.actorId ?: return null
-    val who = if (actor == viewerId) "You" else before.players.firstOrNull { it.id == actor }?.nickname
-    if (who == null) return null
-
-    val verb = if (actor == viewerId) ::youForm else ::theyForm
+    val who = if (actor == viewerId) {
+        Speaker.You
+    } else {
+        before.players.firstOrNull { it.id == actor }?.nickname?.let(Speaker::Named)
+    } ?: return null
 
     return when (action) {
         is GameAction.DrawCard -> {
             // Only the drawer sees what it was; to everyone else it is a card off the deck.
             val card = after.pendingAction?.card
-            if (actor == viewerId && card != null) {
-                "$who drew the ${card.rank.serialName}"
-            } else {
-                "$who ${verb("draw")} a card"
-            }
+            if (actor == viewerId && card != null) Say.DrewKnown(who, card.rank) else Say.Drew(who)
         }
 
-        is GameAction.PlayDiscard ->
-            "$who took the ${before.discardPile.peekTop()?.rank?.serialName ?: "top card"}"
+        is GameAction.PlayDiscard -> Say.Took(who, before.discardPile.peekTop()?.rank)
 
-        is GameAction.SwapCard -> {
-            val out = after.discardPile.peekTop()?.rank?.serialName
-            val slot = action.payload.position + 1
-            if (out == null) {
-                "$who ${verb("swap")} card $slot"
-            } else {
-                "$who ${verb("swap")} card $slot, dropping the $out"
-            }
-        }
+        is GameAction.SwapCard -> Say.Swapped(
+            who = who,
+            slot = action.payload.position + 1,
+            dropped = after.discardPile.peekTop()?.rank,
+        )
 
-        is GameAction.DiscardCard ->
-            "$who ${verb("throw")} away the ${after.discardPile.peekTop()?.rank?.serialName ?: "card"}"
+        is GameAction.DiscardCard -> Say.ThrewAway(who, after.discardPile.peekTop()?.rank)
 
-        is GameAction.UseCardAction ->
-            "$who ${verb("play")} the ${before.pendingAction?.card?.rank?.serialName ?: "card"}"
+        is GameAction.UseCardAction -> Say.Played(who, before.pendingAction?.card?.rank)
 
-        // The rank, not a count. "Mikey tossed in 1 card" tells you somebody acted and nothing
-        // about the game; "Mikey tossed in a 6" is a card leaving a hand you are trying to
-        // remember. The web app says the rank too.
-        is GameAction.ParticipateInTossIn -> {
-            val rank = after.discardPile.peekTop()?.rank?.serialName
-            if (rank != null) "$who tossed in the $rank" else "$who tossed in a card"
-        }
+        is GameAction.ParticipateInTossIn -> Say.TossedIn(who, after.discardPile.peekTop()?.rank)
 
-        is GameAction.CallVinto -> "$who called Vinto"
+        is GameAction.CallVinto -> Say.CalledVinto(who)
 
-        is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap -> "$who swapped two cards"
-        is GameAction.SkipJackSwap, is GameAction.SkipQueenSwap -> "$who left them alone"
+        is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap -> Say.SwappedTwo(who)
+        is GameAction.SkipJackSwap, is GameAction.SkipQueenSwap -> Say.LeftThemAlone(who)
 
-        is GameAction.DeclareKingAction ->
-            "$who declared a ${action.payload.declaredRank.serialName}"
+        is GameAction.DeclareKingAction -> Say.DeclaredRank(who, action.payload.declaredRank)
 
         // Nothing. Confirming a peek says only that a player stopped looking at a card the
         // reader was never shown — it is the end of a private moment, and putting it in the
@@ -79,16 +65,8 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
         is GameAction.ConfirmPeek, is GameAction.SkipPeek -> null
 
         is GameAction.PeekSetupCard -> null
-        is GameAction.FinishSetup -> "the round begins"
+        is GameAction.FinishSetup -> Say.RoundBegins
 
         else -> null
     }
-}
-
-/** "You draw" and "Raph draws" — the same verb, and English wants them spelled differently. */
-private fun youForm(verb: String) = verb
-
-private fun theyForm(verb: String) = when (verb) {
-    "throw" -> "throws"
-    else -> verb + "s"
 }

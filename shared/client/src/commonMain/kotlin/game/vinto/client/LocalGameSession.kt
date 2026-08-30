@@ -112,8 +112,8 @@ class LocalGameSession(
     override val isOver: Boolean get() = state.phase == GamePhase.SCORING
 
     /** What has happened lately, newest last. Fed to the screen's recent-actions strip. */
-    private val _log = MutableStateFlow<List<String>>(emptyList())
-    override val log: StateFlow<List<String>> = _log.asStateFlow()
+    private val _log = MutableStateFlow<List<Say>>(emptyList())
+    override val log: StateFlow<List<Say>> = _log.asStateFlow()
 
     /**
      * What there is to see, in the order it happened, each with the table it left behind.

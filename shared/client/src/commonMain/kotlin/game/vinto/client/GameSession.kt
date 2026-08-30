@@ -69,7 +69,7 @@ interface GameSession {
     val frames: SharedFlow<List<Frame>>
 
     /** What has happened lately, in words, newest last. May stay empty where nobody narrates. */
-    val log: StateFlow<List<String>>
+    val log: StateFlow<List<Say>>
 
     /** Whether the game has finished; a session is done when this is true. */
     val isOver: Boolean

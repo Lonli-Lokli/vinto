@@ -1367,12 +1367,40 @@ So the description was accurate — this is about as big as it says, not secretl
 bigger. The work is real all the same: a `Say` hierarchy with something over a hundred cases,
 238 new resource entries, and 36 functions plus their call sites and tests rewritten.
 
-**Do it as vertical slices, not as one commit.** `Narration.kt` is the natural first one — 26
-literals and three functions, and it is the file where the argument for the whole refactor is
-clearest, because conjugating "You draw" against "Raph draws" is exactly what a string table
-cannot do. Each slice leaves the app compiling and the tests green, and the tests get *better*
-as it goes: `assertEquals(Say.YouDrew(SEVEN), …)` says what is meant where an English sentence
-only says what it currently reads.
+**Do it as vertical slices, not as one commit.** Each leaves the app compiling and the tests
+green, and the tests get *better* as it goes: `assertEquals(Say.DrewKnown(You, SEVEN), …)` says
+what is meant where an English sentence only says what it currently reads.
+
+### Slice 1 — `Narration.kt`, done
+
+The move log. `narrate` returns a `Say` instead of a sentence, `GameSession.log` is
+`StateFlow<List<Say>>`, and `composeApp`'s `said()` renders one from `strings.xml`. 26
+resource entries, and the pattern works.
+
+Three things the slice settled, recorded here so the next two do not re-decide them:
+
+- **A person's name is a `Speaker`, not a `String`.** `Speaker.You`, `Speaker.Named(nickname)`
+  and `Speaker.Nobody`. It has to be a type because the difference is *grammatical* rather than
+  cosmetic — it picks the verb — and a renderer that had to compare a string against the word
+  "You" would be broken by the first translation. `Nobody` exists for the things that happen
+  to the table rather than to a player, like the deal ending.
+- **Conjugated lines are written out twice, in full.** `log_draw_you` and `log_draw_they`, not
+  a stem plus a suffix. English makes the suffix trick look reasonable; Belarusian and
+  Ukrainian want two different sentences, and a translator handed the fragment `"draws"` cannot
+  fix a half they were never given. Only the four verbs that actually conjugate need the pair
+  — the past-tense lines ("took", "tossed in", "called Vinto") take one string with a name in
+  it.
+- **A rank is not translated.** It travels as `Rank` and renders as its symbol. A `7` is a `7`
+  in every language this will ever ship in, and a card's *name* is a different string that the
+  help sheet already owns.
+
+One thing to undo later: `RecentActions` now renders the log and *then* drops any line equal to
+the panel's prompt. That comparison used to happen in the model, where both sides were built
+from the same narration; it moves back there once `TableModel` returns `Say` too.
+
+`Say` lives in `shared/client` rather than `shared/protocol` because it is not wire — nothing
+sends one anywhere, and putting it in the protocol module would imply a compatibility promise
+that does not exist.
 
 ## 6j. Finding a table, getting somebody to it, and saying so while you wait
 
