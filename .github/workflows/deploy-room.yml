@@ -1,0 +1,157 @@
+# Deploying the room, from a phone.
+#
+# The room Worker has only ever been deployable from a machine with `wrangler login` and the
+# maintainer's browser session. That is a poor place for the one operation this project cannot
+# do without: it means online play can be broken on a Sunday and stay broken until somebody is
+# back at a desk. This workflow is the same deploy, run by GitHub with a scoped API token, and
+# started from the Actions tab — which works from the GitHub mobile app.
+#
+# **Never on a push.** Deploying is a decision, not a consequence of merging: `wrangler deploy`
+# publishes to a real hostname that real people can reach, and §6d records what a deployment
+# taught that no local run could. So `workflow_dispatch` only, and the flag that opens the room
+# to strangers defaults to *closed* every single time it is run.
+name: Deploy room
+
+on:
+  workflow_dispatch:
+    inputs:
+      roomOpen:
+        description: 'Open the room to players? Leave false to deploy the engine with the door shut.'
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
+        required: true
+      dryRun:
+        description: 'Build and measure the bundle without publishing anything.'
+        type: boolean
+        default: false
+
+# One deploy at a time, and later runs win. Two overlapping `wrangler deploy` calls against one
+# Worker is a race whose loser is whichever version happens to land second.
+concurrency:
+  group: deploy-room
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  # Pinned for the same reason `kmp.yml` pins it: `wrangler@latest` in CI means the day
+  # Cloudflare ships a change is the day a deploy fails, on a commit that has nothing to do
+  # with it. Keep the two files in step.
+  WRANGLER_VERSION: '4.127.1'
+  WRANGLER_SEND_METRICS: 'false'
+  SERVICE: 'https://vinto-room.kupalinka.app'
+
+jobs:
+  deploy:
+    name: deploy-room
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # A GitHub environment, so the account owner can require an approval before this runs and
+    # can see every deploy in one list afterwards. Nothing breaks if the environment has no
+    # protection rules — it is then just a label — which is why the secrets live on it rather
+    # than on the repository.
+    environment: room
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+          validate-wrappers: true
+
+      # Nothing is deployed that has not passed the room's own gates first. They run in plain
+      # Node against the compiled exports and take under a minute, which is a cheap price for
+      # never publishing a room that cannot deal a hand. The three that need `wrangler dev`
+      # stay in `kmp.yml`: they want a running runtime, and this job is about the one that is
+      # about to be running for real.
+      - name: Compile the Kotlin/JS Worker bundle
+        run: ./gradlew --stacktrace :worker:jsProductionExecutableCompileSync
+
+      - name: 'Gate: the real room'
+        working-directory: worker/cloudflare
+        run: node gate-real-room.mjs
+
+      - name: 'Gate: room lifecycle'
+        working-directory: worker/cloudflare
+        run: node gate-lifecycle.mjs
+
+      - name: 'Gate: the room-code registry'
+        working-directory: worker/cloudflare
+        run: node gate-registry.mjs
+
+      # The size budget, before the upload rather than after it. A Worker that is over its
+      # limit fails at the very end of a deploy, having already spent the minutes above.
+      - name: Measure the deployment bundle
+        working-directory: worker/cloudflare
+        run: |
+          npx --yes wrangler@${WRANGLER_VERSION} deploy --dry-run --outdir /tmp/worker-bundle
+          gzip -c /tmp/worker-bundle/index.js | wc -c | awk '{
+            printf "gzipped: %d bytes (%.1f%% of the 3 MB budget)\n", $1, $1 / 3145728 * 100
+            if ($1 > 3145728) { print "over budget"; exit 1 }
+          }'
+
+      - name: What would have been deployed
+        if: ${{ inputs.dryRun }}
+        run: |
+          echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
+          echo "ROOM_OPEN would have been set to \`${{ inputs.roomOpen }}\`." >> "$GITHUB_STEP_SUMMARY"
+
+      # `--var` rather than editing `wrangler.jsonc`, so the door's state is chosen by whoever
+      # runs this and is recorded on the run, instead of living in a file where it can be
+      # committed by accident and deployed by somebody who did not read it.
+      - name: Deploy
+        if: ${{ !inputs.dryRun }}
+        working-directory: worker/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See docs/kotlin/DEPLOYMENT.md."
+            exit 1
+          fi
+          npx --yes wrangler@${WRANGLER_VERSION} deploy --var ROOM_OPEN:'${{ inputs.roomOpen }}'
+
+      # Propagation is not atomic, and §6d records it catching the maintainer out twice: a
+      # probe seconds after `wrangler deploy` returned the *old* behaviour and sent them
+      # chasing a bug that did not exist. So this polls until the edge agrees, and fails if it
+      # never does — a deploy that reports success while the old code is still answering is
+      # worse than one that reports failure.
+      - name: Wait for the edge to agree
+        if: ${{ !inputs.dryRun }}
+        run: |
+          want='${{ inputs.roomOpen }}'
+          for attempt in $(seq 1 30); do
+            health=$(curl -sS --max-time 10 "$SERVICE/health" || echo '{}')
+            echo "attempt $attempt: $health"
+            if echo "$health" | grep -q "\"roomOpen\":$want"; then
+              {
+                echo "### Room deployed"
+                echo ""
+                echo '```json'
+                echo "$health"
+                echo '```'
+                echo ""
+                if [ "$want" = 'true' ]; then
+                  echo "**The room is open.** Anybody with a code can join, and public rooms are listed."
+                else
+                  echo "The room is deployed and **closed**: \`/health\` and \`/replay\` answer, a socket is refused."
+                fi
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::/health never reported roomOpen=$want. The deploy may still be propagating; check $SERVICE/health before running this again."
+          exit 1

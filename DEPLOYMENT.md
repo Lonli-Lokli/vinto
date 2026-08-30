@@ -197,6 +197,59 @@ Then check `https://vinto-room.kupalinka.app/health` again and wait until it say
 **To close online play again** — if something is going wrong and you need to stop it — change
 it back to `"false"` and deploy. That is the emergency brake, and it is safe to use.
 
+### 6a. Doing all of that from a phone
+
+Everything above needs a computer with `wrangler` on it. That is a bad place for the one
+operation this project cannot do without: online play can break on a Sunday and stay broken
+until somebody is back at a desk. So the same deploy can be run by GitHub instead, from the
+**Actions** tab, which works in the GitHub mobile app.
+
+**Set it up once.** Both halves are web pages, so a phone is enough for these too.
+
+1. **Make a Cloudflare API token.** In the Cloudflare dashboard: *My Profile → API Tokens →
+   Create Token*, and pick the **"Edit Cloudflare Workers"** template. Under *Account
+   Resources* choose the account that owns the Worker; under *Zone Resources* choose
+   `kupalinka.app`. Copy the token — Cloudflare shows it once and never again.
+
+   > The very first deploy also creates the DNS record for `vinto-room.kupalinka.app`, because
+   > the Worker claims that hostname itself. If a deploy fails saying it cannot touch DNS, edit
+   > the token and add **Zone → DNS → Edit** for `kupalinka.app`. Every deploy after the first
+   > only needs the template.
+
+2. **Find your account id.** It is in the Cloudflare dashboard under *Workers & Pages →
+   Overview*, in the right-hand column, and it is also in the address bar of any account page:
+   `dash.cloudflare.com/<account id>/...`.
+
+3. **Give them to GitHub.** In the repository: *Settings → Environments → New environment*,
+   named exactly **`room`**. Add two *environment secrets*:
+
+   | Name | Value |
+   | --- | --- |
+   | `CLOUDFLARE_API_TOKEN` | the token from step 1 |
+   | `CLOUDFLARE_ACCOUNT_ID` | the id from step 2 |
+
+   An *environment* rather than plain repository secrets, for two reasons worth the extra
+   click: you can add **required reviewers** so a deploy waits for somebody to approve it, and
+   every deploy that has ever run is listed in one place afterwards.
+
+**Then, whenever you want to deploy.** Open *Actions → Deploy room → Run workflow*. Two
+questions:
+
+- **Open the room to players?** Defaults to **false**, every time, deliberately. `false`
+  publishes the current service with online play shut — which is the right thing to do first,
+  and the right thing to do if you are only fixing a bug in the engine. Choose `true` when the
+  room should actually accept players.
+- **Dry run?** Builds the Worker, runs the room's gates and measures the bundle, and publishes
+  nothing. Use it if you want to know a deploy *would* work.
+
+The run does the gates first, so a room that cannot deal a hand is never published; then it
+deploys; then it polls `/health` until the edge agrees, and fails if it never does. Cloudflare
+takes a few minutes to update everywhere, and a deploy that reported success while the old
+version was still answering is exactly the trap this waits out for you.
+
+**The emergency brake works from a phone too**: run it again with *Open the room to players?*
+set to `false`.
+
 ---
 
 ## 7. The stats page

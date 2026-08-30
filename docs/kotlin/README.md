@@ -219,8 +219,10 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 
 ## 1b. Continuous integration
 
-`.github/workflows/kmp.yml`, six checks, split by what each needs. It is now the only
-workflow that builds anything — the web client's three were removed with its CI (§1d):
+`.github/workflows/kmp.yml`, six checks, split by what each needs. It is the only workflow
+that *checks* anything — the web client's three were removed with its CI (§1d). Beside it sits
+`deploy-room.yml`, which checks nothing and publishes: `workflow_dispatch` only, so it never
+runs on a push, and it is how the room is deployed without a desktop (§6i step 4).
 
 | Check         | Runner | What it proves                                                                   |
 | ------------- | ------ | -------------------------------------------------------------------------------- |
@@ -2202,6 +2204,15 @@ builds, never before (the flag's comment in `wrangler.jsonc` says the same):
 npx wrangler deploy          # then poll:
 curl https://vinto-room.kupalinka.app/health   # expect roomOpen: true after the flip
 ```
+
+**Or from a phone.** `.github/workflows/deploy-room.yml` is the same deploy run by GitHub —
+*Actions → Deploy room → Run workflow* — which works in the GitHub mobile app. It runs the
+room's gates first, deploys with `--var ROOM_OPEN:<your answer>` rather than editing
+`wrangler.jsonc`, and then **polls `/health` until the edge agrees**, failing if it never does:
+propagation is not atomic and §6d records that catching the maintainer out twice. It is
+`workflow_dispatch` only and the flag defaults to `false` on every run, because deploying is a
+decision and opening a room to strangers is a bigger one. Setting it up is two web pages and no
+computer — DEPLOYMENT.md §6a.
 
 **5. Prove it with people.** Two devices (or a device and the desktop app): create a room,
 join by code, add two bots, play a round through — kill one app mid-round and watch the seat
