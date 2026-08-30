@@ -1978,6 +1978,22 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   to carry the runtime by another route, so `assembleDebug` and every JVM suite stayed green
   and CI's `kmp-web` was the one job that noticed. The fix is one `implementation` line; the
   lesson is that "it compiles on the JVM" says nothing about a classpath on another target.
+- **An `UncompletedCoroutinesError` from a Compose test is usually arithmetic, not a deadlock.**
+  `SwapAnimationTest` failed on the Compose Multiplatform 1.12 upgrade with no assertion
+  message at all, which reads exactly like a hang — and two plausible deadlock fixes (handing
+  the clock back before `waitForIdle`, pausing it only around the animation) did nothing,
+  because there was no deadlock. Instrumenting the body settled it in one run: it reached the
+  assertion **89 seconds** in, past `runTest`'s sixty-second wall clock, so the deadline fired
+  mid-body and the failure named the symptom rather than the cause.
+  The cost was `SETTLE_MS = 4_000`, a number nobody had measured, multiplied by the seven
+  `settle()` calls the test makes — with the clock paused, `settle()` renders **every frame**
+  in that span, and Compose 1.12 renders more per frame than 1.8 did. Measured: 4,000 ms → 99 s,
+  2,000 ms → 55 s, 1,000 ms → 34 s, linear as you would expect. It is 2,000 now, which keeps
+  twice the margin of the smallest value that works and halves the test, plus an explicit
+  `runComposeUiTest(testTimeout = …)` so the budget is stated rather than inherited.
+  Two things worth keeping. The parameter is **`testTimeout`**, not `timeout` — the name is in
+  `ComposeUiTest.skiko.kt` and nowhere convenient. And `advanceTimeBy` is *virtual* time, so
+  this is deterministic: a slower runner takes longer per frame but renders the same frames.
 - **AGP 9 will not let an Android application be a KMP module, and there is no property that
   changes its mind.** `com.android.application` beside `org.jetbrains.kotlin.multiplatform`
   is refused outright with *"move the usage of 'com.android.application' into a separate
