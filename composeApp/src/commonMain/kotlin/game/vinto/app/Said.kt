@@ -54,6 +54,13 @@ import game.vinto.app.art.detail_scored_against
 import game.vinto.app.art.detail_table_talk
 import game.vinto.app.art.detail_tap_to_say
 import game.vinto.app.art.detail_wrong_costs
+import game.vinto.app.art.explains_card_action
+import game.vinto.app.art.explains_card_plain
+import game.vinto.app.art.explains_final_round
+import game.vinto.app.art.explains_scoring
+import game.vinto.app.art.explains_setup
+import game.vinto.app.art.explains_toss_in
+import game.vinto.app.art.explains_turn
 import game.vinto.app.art.log_called_vinto
 import game.vinto.app.art.log_declared
 import game.vinto.app.art.log_draw_they
@@ -81,6 +88,7 @@ import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
 import game.vinto.client.Ask
 import game.vinto.client.Detail
+import game.vinto.client.Explains
 import game.vinto.client.Label
 import game.vinto.client.Say
 import game.vinto.client.Speaker
@@ -297,4 +305,39 @@ fun detailed(detail: Detail): String = when (detail) {
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
+}
+
+/**
+ * What the "?" explains, in the phone's language.
+ *
+ * The card paragraph is assembled from four pieces of `CARD_CONFIGS` — name, value,
+ * `longDescription`, `helpText` — and the *order* of those pieces is now the resource's
+ * business rather than the model's, which is the point of the whole exercise: a language that
+ * wants the value first can have it.
+ *
+ * `shortDescription` is conspicuously absent and must stay so: it is `Card.actionText`, inside
+ * the canonical hash (`CardCopyIsDataTest`).
+ */
+@Composable
+fun explained(explains: Explains): String = when (explains) {
+    is Explains.TheCardInPlay -> {
+        val config = getCardConfig(explains.rank)
+        if (config.action == null) {
+            stringResource(Res.string.explains_card_plain, config.name, config.value)
+        } else {
+            stringResource(
+                Res.string.explains_card_action,
+                config.name,
+                config.value,
+                config.longDescription,
+                config.helpText,
+            )
+        }
+    }
+
+    Explains.HowSetupWorks -> stringResource(Res.string.explains_setup)
+    Explains.HowScoringWorks -> stringResource(Res.string.explains_scoring)
+    Explains.HowTossingInWorks -> stringResource(Res.string.explains_toss_in)
+    Explains.HowTheFinalRoundWorks -> stringResource(Res.string.explains_final_round)
+    Explains.HowATurnWorks -> stringResource(Res.string.explains_turn)
 }

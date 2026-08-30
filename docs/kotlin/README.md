@@ -1474,10 +1474,23 @@ after the second or third time, and it keyed that count on the hint's **words**.
 message now: the count survives a translation, and two hints that merely read alike in English
 no longer share a tally.
 
+### Slice 6 — `Table.help`, done. `TableModel` is finished
+
+The "?" text. `Explains`, six cases, and the card paragraph's *order* — name, value, what it
+does, how to do it — is now the resource's business rather than the model's. A language that
+wants the value first can have it.
+
+Worth noting how the test moved rather than went away. `everyStateExplainsItself` asserted on
+the assembled paragraph ("starts with Queen", "contains swap", "contains 10"), which was the
+right claim in the wrong module once the model stopped assembling anything. It split: the
+model's half asserts *which* explanation and about which card, and `CardHelpTest` in composeApp
+asserts the words. Converting an assertion into something weaker and calling the tests green is
+the easy mistake when a refactor moves a responsibility, and it is worth being deliberate about.
+
+**`TableModel.kt` is now fully converted** — labels, prompts, details and help.
+
 ### Still to do
 
-- **`Table.help`** (the "?" text) — one function, `helpFor`, which assembles a card's name,
-  value, `longDescription` and `helpText` into a paragraph. Same shape as the five above.
 - **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
   assembled sentences, so more mechanical — but it is where both dead English matches lived, so
   read it for more while converting. Split by chapter.

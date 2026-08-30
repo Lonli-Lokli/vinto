@@ -63,7 +63,7 @@ data class Table(
      * is a player who stops. The words come from `CARD_CONFIGS`, which is the same copy the
      * web app shows, so the two teach the same game.
      */
-    val help: String? = null,
+    val help: Explains? = null,
     /** True when the player has nothing to do but watch. */
     val waiting: Boolean = false,
     /** The cards the screen may show face-up. See [revealedTo]. */
@@ -284,41 +284,18 @@ private fun Table.showing(view: PlayerView) =
  * The card in play if there is one, since that is nearly always what the player is unsure
  * about, and otherwise the rule that governs the phase.
  */
-private fun helpFor(view: PlayerView): String {
+private fun helpFor(view: PlayerView): Explains {
     val pending = (view.pendingAction?.card as? CardView.Visible)?.card
     if (pending != null && view.pendingAction?.playerId == view.viewerId) {
-        val config = getCardConfig(pending.rank)
-        val worth = "It is worth ${config.value}."
-        return if (config.action == null) {
-            "${config.name}. $worth It has no action, so it can only go into your hand or " +
-                "onto the pile."
-        } else {
-            "${config.name}. $worth ${config.longDescription}. ${config.helpText}"
-        }
+        return Explains.TheCardInPlay(pending.rank)
     }
 
     return when {
-        view.phase == GamePhase.SETUP ->
-            "Look at two of your own cards and remember them — they go face-down again when " +
-                "the round starts. Everything after that is memory."
-
-        view.phase == GamePhase.SCORING ->
-            "Every hand is face-up. The lowest total wins the round; the player who called " +
-                "Vinto is scored against the best hand among everybody else."
-
-        view.activeTossIn != null ->
-            "Anybody holding a card of the same rank may throw it in, which gets it out of " +
-                "their hand for nothing. Get the rank wrong and you take a penalty card, and " +
-                "you cannot toss in again this round."
-
-        view.vintoCallerId != null ->
-            "Vinto has been called. Everybody else plays one last turn as a coalition, and " +
-                "only their best hand counts against the caller's."
-
-        else ->
-            "Draw from the deck, or take the top of the discard pile if it is an action card " +
-                "nobody has played. Keep what lowers your total; call Vinto when you think " +
-                "yours is the lowest."
+        view.phase == GamePhase.SETUP -> Explains.HowSetupWorks
+        view.phase == GamePhase.SCORING -> Explains.HowScoringWorks
+        view.activeTossIn != null -> Explains.HowTossingInWorks
+        view.vintoCallerId != null -> Explains.HowTheFinalRoundWorks
+        else -> Explains.HowATurnWorks
     }
 }
 

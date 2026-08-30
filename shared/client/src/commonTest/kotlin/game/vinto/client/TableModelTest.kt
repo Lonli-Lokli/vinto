@@ -260,17 +260,21 @@ class TableModelTest {
         )
     }
 
-    /** The rules of whatever is happening, so a player never has to leave the table. */
+    /**
+     * The rules of whatever is happening, so a player never has to leave the table.
+     *
+     * The model's half of the claim: *which* explanation, and about which card. That the
+     * rendered paragraph actually names the Queen, says what it does and says what it costs
+     * is `CardHelpTest` in composeApp, where the words live — the two halves together are what
+     * the single string assertion used to cover.
+     */
     @Test
     fun everyStateExplainsItself() = runTest {
         val fresh = LocalGameSession(seed = 5L, difficulty = Difficulty.EASY)
-        assertTrue(fresh.table().help!!.contains("two of your own"), fresh.table().help!!)
+        assertEquals(Explains.HowSetupWorks, fresh.table().help)
 
         val session = aiming(Rank.QUEEN)
-        val help = session.table().help!!
-        assertTrue(help.startsWith("Queen"), help)
-        assertTrue(help.contains("swap"), "it says what a Queen does: $help")
-        assertTrue(help.contains("10"), "and what it costs you to hold: $help")
+        assertEquals(Explains.TheCardInPlay(Rank.QUEEN), session.table().help)
     }
 
     /** A drawn action card says what it does without being asked. */

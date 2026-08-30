@@ -53,7 +53,9 @@ import game.vinto.app.art.signal_turn
 import game.vinto.app.art.signal_turn_meaning
 import game.vinto.app.art.signal_vinto
 import game.vinto.app.art.signal_vinto_meaning
+import game.vinto.app.explained
 import game.vinto.app.theme.Rail
+import game.vinto.client.Explains
 import game.vinto.shapes.CardConfig
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
@@ -79,7 +81,7 @@ private val Chip = 46.dp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HelpSheet(now: String?, onDismiss: () -> Unit) {
+fun HelpSheet(now: Explains?, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -107,7 +109,7 @@ fun HelpSheet(now: String?, onDismiss: () -> Unit) {
                                 fontWeight = FontWeight.Bold,
                                 fontSize = TitleSize,
                             )
-                            Text(it, fontSize = BodySize, color = Rail.inkDim)
+                            Text(explained(it), fontSize = BodySize, color = Rail.inkDim)
                         }
                     }
                 }
