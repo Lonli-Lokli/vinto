@@ -69,7 +69,9 @@
     <!-- Inviting somebody to the room you are in. -->
     <string name="invite_title">Invite somebody</string>
     <string name="invite_subject">Join my Vinto game</string>
-    <string name="invite_body">Join my Vinto game — room code %1$s. Open it at %2$s</string>
+    <!-- The link first, because tapping it is the whole point; the code after it, because
+         the link is useless read down a telephone and the code is what gets read out. -->
+    <string name="invite_body">Join my Vinto game: %1$s\n\nOr open the app and enter room code %2$s</string>
     <string name="invite_share">Share the code</string>
     <string name="invite_copy">Copy the code</string>
     <string name="invite_copied">Copied</string>

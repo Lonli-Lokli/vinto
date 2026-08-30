@@ -158,10 +158,14 @@ archiving, and the retired tasks above.
 **Tier 2 — the funnel and the players.** In this order, because each makes the next
 measurable.
 
-4. **Deep links for invites.** The Android manifest is `MAIN`/`LAUNCHER` only, so an invite
-   that carries a code still asks somebody to *type* it. A link that opens the app (App Links,
-   Universal Links) is the highest-leverage change to a funnel you have just built, and
-   analytics 3.3 is already specified to measure that exact step
+4. ~~**Deep links for invites.**~~ **Done in the app; the two association files are §1f.**
+   `roomCodeFrom` parses an https link, a `vinto://` link, a bare path and a bare code, in any
+   case and with whitespace, and refuses anything the registry could not have issued — the
+   same `looksLikeRoomCode` the Worker applies, which moved to `shared/protocol` so the client
+   and the room cannot disagree about it. Android has both intent filters, iOS has both
+   handlers, the browser reads its own path, and an invitation now shares a link with the code
+   underneath it for reading aloud. An invited player lands on the table with `ROOM_JOINED`
+   recorded, which is the funnel step analytics 3.3 specified
 5. **Finish the translation.** §6h: roughly two hundred strings in `shared/client` are English
    whatever the phone is set to, because `Narration`, `TableModel` and `TeachScript` *assemble*
    sentences rather than store them. Menus, settings and help follow the language; the table's
@@ -525,6 +529,7 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`), and a deployment with traffic | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
 | analytics 5.3 — Web Analytics on the Pages project | The Cloudflare dashboard for the `vinto` Pages project | A per-site switch that makes Cloudflare inject its own beacon; there is nothing in this repository to change and nothing here can verify it. DEPLOYMENT.md §7b is written for somebody who does not do this for a living. The page it injects into **did not exist** until this pass — see the `index.html` note in §7 |
 | analytics 5.4 — revisit sampling and the cost model | A week of real traffic against a deployed room | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
+| Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
 | §6i step 4 — the deploy, and flipping `ROOM_OPEN` | `wrangler login`, and the deliberate decision to open the room | Everything the flip guards is built and gated locally through `wrangler dev` |

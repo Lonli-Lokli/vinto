@@ -62,6 +62,7 @@ import game.vinto.app.art.net_reconnecting
 import game.vinto.app.art.online_session_over
 import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
+import game.vinto.app.link.inviteLink
 import game.vinto.app.shareText
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
@@ -247,7 +248,7 @@ private fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) 
 private fun InviteRow(code: String) {
     var copied by remember { mutableStateOf(false) }
     val subject = stringResource(Res.string.invite_subject)
-    val body = stringResource(Res.string.invite_body, code, WEB_CLIENT)
+    val body = stringResource(Res.string.invite_body, inviteLink(code), code)
     // `LocalClipboardManager` is deprecated in favour of `LocalClipboard`, and the
     // replacement is not usable from common code in Compose Multiplatform 1.8: `Clipboard`
     // takes a `ClipEntry`, and `ClipEntry`'s only constructor takes a *platform-native*
@@ -548,7 +549,6 @@ private val CodeTracking = 4.sp
  * outcome rather than a broken one. The code in the message is what makes the invitation
  * work regardless: it can be read out, and typed into any of the four clients.
  */
-private const val WEB_CLIENT = "vinto.kupalinka.app"
 private val LiveGreen = Color(0xFF43A047)
 private val WaitAmber = Color(0xFFF9A825)
 private val DeadRed = Color(0xFFE53935)

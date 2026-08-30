@@ -23,6 +23,8 @@ import game.vinto.app.crash.installCrashHandler
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
+import game.vinto.app.link.roomCodeFrom
+import game.vinto.app.link.takeOpenedLink
 import game.vinto.app.net.platformRoomConnector
 import game.vinto.app.net.postBeacon
 import game.vinto.app.theme.LocalFeedback
@@ -35,10 +37,12 @@ import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
 import game.vinto.client.RemoteRoom
+import game.vinto.client.RoomConnector
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
 import game.vinto.client.Vault
 import game.vinto.client.forgetGame
+import game.vinto.client.identity
 import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.saveSettings
@@ -80,29 +84,13 @@ fun App(
     val count = counting ?: remember(sink) { counting(sink) }
     ReportCrashes(appScope)
 
-    // Reading what is on disk is the only thing between launching and playing, and on a cold
-    // start it lands in the same frame. The opening screen exists for the case where it does
-    // not — and, later, for a room that has to be reached over a network before anything can
-    // be drawn.
-    LaunchedEffect(Unit) {
-        settings = vault.loadSettings()
-        sink.consentChanged(consentFrom(settings))
-        count.record(AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU))
-        screen = Screen.Home(canContinue = vault.loadGame() != null)
-    }
+    fun enterRoom(code: String, nickname: String): Screen =
+        roomScreen(connector, vault, appScope, code, nickname)
 
-    // One way in, whether the code was typed or tapped off the public list. Both paths open
-    // the same socket to the same room, so both build the room the same way rather than each
-    // remembering to pass the scope.
-    fun enterRoom(code: String, nickname: String): Screen = Screen.InRoom(
-        RemoteRoom(
-            connector = connector,
-            code = code,
-            vault = vault,
-            nickname = nickname,
-            scope = appScope,
-        ),
-    )
+    Startup(vault, sink, count, seeds, ::enterRoom) { loaded, where ->
+        settings = loaded
+        screen = where
+    }
 
     // Every change is written down as it is made. There is no "save" button in a settings
     // screen worth having, and four values are not worth batching.
@@ -384,4 +372,64 @@ private fun rememberSink(scope: kotlinx.coroutines.CoroutineScope): Analytics = 
         consent = AnalyticsConsent(optedIn = false, platformObjects = true),
         scope = scope,
     )
+}
+
+/**
+ * One way into a room, whether the code was typed, tapped off the public list, or arrived in
+ * an invitation.
+ *
+ * All three open the same socket to the same room, so all three build it the same way rather
+ * than each remembering to pass the scope.
+ *
+ * An invite is read once and cleared (`takeOpenedLink`), so pressing Back afterwards lands on
+ * the home screen rather than being pulled straight back into the room — an invitation is an
+ * instruction, not a destination the app keeps. It uses the stored nickname rather than
+ * asking for one: the whole point of the link is that six characters do not have to be typed,
+ * and stopping to ask a name would put a form back exactly where one was removed.
+ */
+private fun roomScreen(
+    connector: RoomConnector,
+    vault: Vault,
+    scope: kotlinx.coroutines.CoroutineScope,
+    code: String,
+    nickname: String,
+): Screen = Screen.InRoom(
+    RemoteRoom(connector = connector, code = code, vault = vault, nickname = nickname, scope = scope),
+)
+
+/**
+ * Everything between launching and playing, which is one disk read and one decision.
+ *
+ * On a cold start it lands in the same frame; the opening screen exists for the case where it
+ * does not, and for a room that has to be reached over a network before anything can be drawn.
+ *
+ * The order inside matters and is the reason this is one effect rather than three. Consent is
+ * told the truth *before* the first event is recorded, so the window between launching and
+ * loading settings cannot emit anything the player opted out of — and the invite is read
+ * after both, so an invited player is counted as having joined rather than merely opened the
+ * app.
+ */
+@Composable
+private fun Startup(
+    vault: Vault,
+    sink: Analytics,
+    count: Counting,
+    seeds: () -> Long,
+    enterRoom: (String, String) -> Screen,
+    onReady: (Settings, Screen) -> Unit,
+) {
+    LaunchedEffect(Unit) {
+        val settings = vault.loadSettings()
+        sink.consentChanged(consentFrom(settings))
+        count.record(AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU))
+
+        val invited = roomCodeFrom(takeOpenedLink())
+        val where = if (invited != null) {
+            count.record(AnalyticsEvent.Funnel(FunnelStep.ROOM_JOINED, Surface.ONLINE))
+            enterRoom(invited, vault.identity { seeds() }.nickname)
+        } else {
+            Screen.Home(canContinue = vault.loadGame() != null)
+        }
+        onReady(settings, where)
+    }
 }

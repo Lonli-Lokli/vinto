@@ -23,6 +23,40 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                Invitations open the app.
+
+                Until this existed, an invite carrying a room code still asked somebody to
+                *type* it: install the game, find the online screen, copy six characters
+                across from a message. Every step of that is somewhere to lose them, and it
+                is the step `FunnelStep.INVITE_SHARED` → `ROOM_JOINED` was built to measure.
+
+                Two filters, because they fail in opposite ways. The https one is an **App
+                Link**: `autoVerify` makes Android check
+                https://vinto.kupalinka.app/.well-known/assetlinks.json for this app's signing
+                fingerprint, and only then does it open the app without a chooser — and if the
+                app is not installed, the same link is a real web page. That verification
+                cannot succeed until the file is published against the release key, which
+                needs the upload keystore (README §1f), so the custom scheme is the belt: no
+                hosted file, no verification, no web fallback, and it works today between two
+                people who both have the app.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="vinto.kupalinka.app"
+                      android:pathPrefix="/r/" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vinto" />
+            </intent-filter>
         </activity>
     </application>
 

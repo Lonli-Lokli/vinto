@@ -1,5 +1,7 @@
 package game.vinto.room
 
+import game.vinto.protocol.CODE_ALPHABET
+import game.vinto.protocol.CODE_LENGTH
 import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.PublicRooms
 import game.vinto.shapes.VintoJson
@@ -27,9 +29,10 @@ import kotlinx.serialization.encodeToString
  * no `L`. Six of them is about 900 million codes — short enough to say down a phone, and
  * short enough that scanning is worth rate-limiting rather than worth ignoring (design R6).
  */
-private const val CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
-
-private const val CODE_LENGTH = 6
+// The alphabet, the length and the shape check now live in `shared/protocol`, because a
+// client parsing an invite link has to agree with the Worker that refuses a malformed one —
+// and `shared/room` targets only jvm and js, so a phone could not have shared them from here.
+// Re-exported by name below so this file reads as it did.
 
 /**
  * Caps, which are what actually protect a budget over an hour (design R6).
@@ -166,23 +169,6 @@ fun mintRoomCode(
     return VintoJson.encodeToString(
         MintResult(state.copy(rooms = state.rooms + room), room = room),
     )
-}
-
-/**
- * Whether a string could be a code this registry has ever issued.
- *
- * A shape check, not a lookup, and it holds no state — which is the whole point of it being
- * separate. The socket layer asks this in the *Worker*, before the registry is asked
- * anything, so a scan of made-up `?room=` values is refused by the stateless half of the
- * service instead of waking the one single-threaded object that knows every live room.
- *
- * It is not the security boundary; [resolveRoomCode] is, and an attacker who sends
- * well-formed guesses still reaches it. What this removes is the cheapest possible attack —
- * arbitrary strings, which cost the sender nothing and cost the registry a round trip each.
- */
-fun looksLikeRoomCode(code: String): Boolean {
-    val upper = code.uppercase()
-    return upper.length == CODE_LENGTH && upper.all { it in CODE_ALPHABET }
 }
 
 /**

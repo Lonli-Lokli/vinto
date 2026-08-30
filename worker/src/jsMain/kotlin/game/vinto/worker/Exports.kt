@@ -1,5 +1,6 @@
 package game.vinto.worker
 
+import game.vinto.protocol.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.addBot as coreAddBot
 import game.vinto.room.alarmEnvelopes as coreAlarmEnvelopes
 import game.vinto.room.applyAction as coreApplyAction
@@ -10,7 +11,6 @@ import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
 import game.vinto.room.listPublicRooms as coreListPublicRooms
 import game.vinto.room.lobbyView as coreLobbyView
-import game.vinto.room.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.maxLiveRooms as coreMaxLiveRooms
 import game.vinto.room.maxRoomsPerSource as coreMaxRoomsPerSource
 import game.vinto.room.mintRoomCode as coreMintRoomCode

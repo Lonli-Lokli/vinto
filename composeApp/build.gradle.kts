@@ -68,6 +68,11 @@ kotlin {
             // single-player game needs nothing else — no network dependency appears here,
             // and `NoNetworkGuardTest` is what keeps that true.
             implementation(project(":shared:client"))
+            // The room code's shape, so a mistyped invite link fails on the device rather
+            // than costing the registry a round trip — and so the client and the Worker
+            // cannot disagree about what a code looks like. `shared:room` cannot be used
+            // here: it targets only jvm and js.
+            implementation(project(":shared:protocol"))
             implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {

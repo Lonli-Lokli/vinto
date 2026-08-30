@@ -278,6 +278,72 @@ Give it a day before concluding anything is wrong.
 
 ---
 
+## 6b. Making invitation links open the app
+
+When somebody shares a game, the invitation now carries a link like
+`https://vinto.kupalinka.app/r/7KQ2MP`. Tapping it should open the app straight at that table.
+For that to work on a phone, the website has to vouch for the app — otherwise anyone could
+claim to handle your links. That means publishing **two small files** on the website, once.
+
+They go in a folder called `.well-known` at the top of the Pages project, so they end up at
+`https://vinto.kupalinka.app/.well-known/…`.
+
+### For Android — `assetlinks.json`
+
+You need one number from the signing key you made in §8. In a terminal:
+
+```sh
+keytool -list -v -keystore ~/keys/vinto-upload.jks -alias vinto
+```
+
+Look for the line starting **`SHA256:`** and copy the long string of hex pairs. Then create
+`.well-known/assetlinks.json` containing:
+
+```json
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "game.vinto.app",
+    "sha256_cert_fingerprints": ["PASTE THE SHA256 LINE HERE"]
+  }
+}]
+```
+
+> If you publish through Google Play, Play re-signs the app, so the fingerprint you need is
+> the one **Play** shows under *Release → Setup → App signing*, not the one from your own
+> keystore. Using the wrong one is the single most common reason these links do not work.
+
+### For iPhone and iPad — `apple-app-site-association`
+
+Create `.well-known/apple-app-site-association` — **no file extension** — containing:
+
+```json
+{
+  "applinks": {
+    "details": [{
+      "appIDs": ["TEAMID.game.vinto.app"],
+      "components": [{ "/": "/r/*" }]
+    }]
+  }
+}
+```
+
+`TEAMID` is your Apple Developer Team ID: developer.apple.com → Membership. The file must be
+served as `application/json`; Cloudflare Pages does that for `.well-known` files already.
+
+### Checking it worked
+
+Both take a few minutes to be picked up, and Android caches its answer, so reinstall the app
+after publishing. Then send yourself a link and tap it: the app should open at the table
+rather than the browser opening the website.
+
+**Until these files exist, nothing breaks** — the links simply open the website instead of the
+app, and the room code is still printed in the invitation for typing in. There is also a
+`vinto://` link that works without any of this, which is what the app falls back on.
+
+---
+
 ## 7b. Page-load statistics for the website
 
 Separate from §7, and it answers a different question. The stats page counts what happens
