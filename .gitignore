@@ -50,7 +50,6 @@ Thumbs.db
 out
 
 test-output
-legacy-web/apps/vinto/.env.local
 
 # Sentry Config File
 .env.sentry-build-plugin

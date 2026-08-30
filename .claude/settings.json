@@ -8,26 +8,11 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(npm test:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npx nx build:*)",
-      "Bash(npx nx test:*)",
-      "Bash(npx nx lint:*)",
-      "Bash(npx nx affected:*)",
-      "Bash(npx nx run-many:*)",
-      "Bash(npx nx format:*)",
-      "Bash(npx nx graph)",
-      "Bash(npx nx show project:*)"
+      "Bash(npx eslint:*)"
     ],
     "deny": [
       "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./legacy-web/apps/vinto/.env.*)",
-      "Bash(npx tsc)",
-      "Bash(npx tsc:*)",
-      "Bash(npm run typecheck)",
-      "Bash(npm run typecheck:*)",
-      "Read(./legacy-web/.env)",
-      "Read(./legacy-web/.env.*)"
+      "Read(./.env.*)"
     ],
     "ask": []
   },

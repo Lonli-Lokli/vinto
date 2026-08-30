@@ -40,19 +40,6 @@
 			"command": "./gradlew :worker:jsProductionExecutableCompileSync",
 			"group": "build",
 			"problemMatcher": []
-		},
-		{
-			"label": "Legacy web: test",
-			"type": "shell",
-			"command": "npm test",
-			"options": {
-				"cwd": "${workspaceFolder}/legacy-web"
-			},
-			"group": "test",
-			"problemMatcher": [
-				"$tsc",
-				"$eslint-stylish"
-			]
 		}
 	]
 }
