@@ -8,7 +8,7 @@
  * §6c binds this zone to no identifiers; this is that rule applied to the pipe nobody thinks
  * of as telemetry.
  */
-import { parseDsn, scrub, reportError } from './sentry.mjs';
+import { parseDsn, scrub, reportError, roomContext } from './sentry.mjs';
 
 let failures = 0;
 const check = (label, ok, detail = '') => {
@@ -104,6 +104,77 @@ try {
 } finally {
   globalThis.fetch = realFetch;
 }
+
+console.log('\nsentry: where in the game it went wrong');
+
+// Task 9.9 wants a report to be an *address*: which deal, which stored recording, and how
+// far into it. These are the numbers a maintainer replays from.
+const dealt = {
+  roomId: 'room-7KQ2MP',
+  game: { gameId: 'game-1699' },
+  session: { rounds: [{}, {}] },
+  log: new Array(30),
+  roundStartLogIndex: 12,
+  seats: [{}, {}, {}, {}],
+};
+const context = roomContext(dealt, 'room-socket');
+
+check('it names the deal', context.gameId === 'game-1699', JSON.stringify(context));
+check('the round is the one being played, not the ones filed', context.round === 3, String(context.round));
+check(
+  'the action index is an offset into that round, not into the room',
+  context.actionIndex === 18,
+  String(context.actionIndex),
+);
+check('it carries the seat count', context.seatCount === 4, String(context.seatCount));
+check('it carries the surface', context.surface === 'room-socket', context.surface);
+
+// The one that matters. The room code is a join credential; `scrub` would strip one that
+// arrived by accident, and this is the same rule applied on purpose, before it is sent.
+check(
+  'it never carries the room code',
+  !JSON.stringify(context).includes('7KQ2MP'),
+  JSON.stringify(context),
+);
+check(
+  'it never carries the room id',
+  !JSON.stringify(context).includes(dealt.roomId),
+  JSON.stringify(context),
+);
+
+// A context builder that throws on an error path loses the error it came for.
+for (const [label, state] of [
+  ['null state', null],
+  ['a string', 'not an object'],
+  ['an empty room', {}],
+  ['a lobby with no game', { seats: [{}, {}], log: [] }],
+]) {
+  let built = null;
+  try {
+    built = roomContext(state, 'worker');
+  } catch (e) {
+    built = null;
+  }
+  check(`${label} yields a context rather than a throw`, built?.surface === 'worker');
+}
+
+check('an undealt room names no game', roomContext({ seats: [] }, 'worker').gameId === undefined);
+
+// And it reaches the envelope.
+let addressed = '';
+const keepFetch = globalThis.fetch;
+globalThis.fetch = async (url, init) => { addressed = init.body; return new Response(null, { status: 200 }); };
+try {
+  await reportError(
+    { SENTRY_DSN: 'https://abc123@o1.ingest.us.sentry.io/456' },
+    new Error('boom'),
+    roomContext(dealt, 'room-socket'),
+  );
+} finally {
+  globalThis.fetch = keepFetch;
+}
+check('the sent envelope carries the game id', addressed.includes('game-1699'), addressed.slice(0, 300));
+check('the sent envelope still carries no room code', !addressed.includes('7KQ2MP'));
 
 console.log(failures === 0 ? '\nsentry gate: PASS\n' : `\nsentry gate: ${failures} FAILED\n`);
 process.exit(failures === 0 ? 0 : 1);

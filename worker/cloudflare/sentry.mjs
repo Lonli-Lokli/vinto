@@ -95,8 +95,13 @@ export function reportError(env, error, context = {}) {
       // Deliberately coarse: which entry point failed, not which room.
       surface: typeof context.surface === 'string' ? context.surface : 'worker',
     },
-    // The breadcrumbs task 9.9 asks for: where in a game it went wrong, as numbers.
+    // The breadcrumbs task 9.9 asks for: where in a game it went wrong, as numbers and one
+    // id. Together they are an address — `gameId` names the deal, `round` names the stored
+    // recording (`recording:<round>`), and `actionIndex` is the offset *into that round*, so
+    // a report points at one action of one replayable document rather than at a room.
     extra: {
+      gameId: typeof context.gameId === 'string' ? context.gameId : undefined,
+      round: Number.isFinite(context.round) ? context.round : undefined,
       actionIndex: Number.isFinite(context.actionIndex) ? context.actionIndex : undefined,
       seatCount: Number.isFinite(context.seatCount) ? context.seatCount : undefined,
     },
@@ -135,4 +140,44 @@ function framesOf(stack) {
     .slice(1, 30)
     .map((line) => ({ filename: scrub(line.trim()) }))
     .reverse();
+}
+
+/**
+ * What a room knows about where it was when it broke.
+ *
+ * Takes the room's parsed state and answers the context [reportError] wants. Kept here, and
+ * pure, so `gate-sentry.mjs` can check what it says without standing a room up — the point of
+ * this function is as much what it *omits* as what it includes.
+ *
+ * **It never carries the room code.** A code is a join credential that travels in a URL, and
+ * §6c binds this zone to no identifiers; `scrub` would strip one that arrived by accident, and
+ * this is the same rule applied on purpose. `gameId` is the deal's own id: it is not a
+ * credential, it cannot be used to join anything, and it is what the stored recording carries,
+ * which is the only reason to send an id at all.
+ *
+ * Tolerant of a room that has not been dealt yet, or of state that will not parse — a context
+ * builder that throws on an error path turns one failure into two, and the failure it was
+ * describing is the one that gets lost.
+ */
+export function roomContext(state, surface) {
+  const context = { surface };
+  if (!state || typeof state !== 'object') return context;
+
+  const game = state.game;
+  if (game && typeof game.gameId === 'string') context.gameId = game.gameId;
+
+  const rounds = state.session?.rounds;
+  // The round being played is one past the ones already filed.
+  if (Array.isArray(rounds)) context.round = rounds.length + 1;
+
+  const log = state.log;
+  if (Array.isArray(log)) {
+    const start = Number.isFinite(state.roundStartLogIndex) ? state.roundStartLogIndex : 0;
+    context.actionIndex = Math.max(0, log.length - start);
+  }
+
+  const seats = state.seats;
+  if (Array.isArray(seats)) context.seatCount = seats.length;
+
+  return context;
 }

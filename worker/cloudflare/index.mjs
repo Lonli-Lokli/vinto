@@ -37,7 +37,7 @@ import {
  * this list is dropped silently rather than answered with an error, because telling a scanner
  * which names are real is telling it something.
  */
-import { reportError } from './sentry.mjs';
+import { reportError, roomContext } from './sentry.mjs';
 import { serveDashboard } from './dashboard.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
@@ -447,6 +447,39 @@ export class Room {
     const stateJson = await this.ctx.storage.get(ROOM_KEY);
     if (!stateJson) return;
 
+    try {
+      return await this.#onAlarm(stateJson);
+    } catch (error) {
+      // An alarm has no socket to answer and no request to fail, so a throw here is the one
+      // failure mode that is completely silent: the buzzer simply never rings again. Reported
+      // with where the room was, then rethrown, so nothing about the runtime's own handling
+      // changes — this only makes the failure visible.
+      this.#report(error, stateJson, 'room-alarm');
+      throw error;
+    }
+  }
+
+  /**
+   * Reports a failure with the room's position in the game, and never lets the reporting
+   * become the failure. `roomContext` is tolerant of unparsed state; this is tolerant of
+   * everything else, because a thrown reporter on an error path loses the error it came for.
+   */
+  #report(error, stateJson, surface) {
+    try {
+      let state = null;
+      try {
+        state = JSON.parse(stateJson);
+      } catch {
+        // Unparsable state is itself worth knowing; report it without the context.
+      }
+      const sent = reportError(this.env, error, roomContext(state, surface));
+      if (sent && this.ctx?.waitUntil) this.ctx.waitUntil(sent);
+    } catch {
+      // Nothing left to do but not make it worse.
+    }
+  }
+
+  async #onAlarm(stateJson) {
     // The room decides what was due — and builds the messages its outcome calls for, per
     // seat, with per-event views (see shared/room/Envelopes.kt). It is deliberately not told
     // which alarm fired, because after an eviction, or a late wake, more than one deadline
@@ -587,6 +620,20 @@ export class Room {
       return ws.send(JSON.stringify({ type: 'error', message: 'room not initialised' }));
     }
 
+    try {
+      return await this.#onMessage(ws, msg, stateJson);
+    } catch (error) {
+      // A throw here reaches the runtime and closes the socket, and the player sees the game
+      // stop. Without this the report says only that a room socket failed; with it, it says
+      // which deal, which round, and how many actions in — which is the address of a stored
+      // recording (`recording:<round>`) and an offset into it. Rethrown, so the runtime does
+      // exactly what it did before.
+      this.#report(error, stateJson, 'room-socket');
+      throw error;
+    }
+  }
+
+  async #onMessage(ws, msg, stateJson) {
     switch (msg.type) {
       case 'join': {
         // A token in the message means "I already have a seat here"; no token means "give
