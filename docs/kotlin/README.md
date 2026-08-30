@@ -1978,6 +1978,20 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   to carry the runtime by another route, so `assembleDebug` and every JVM suite stayed green
   and CI's `kmp-web` was the one job that noticed. The fix is one `implementation` line; the
   lesson is that "it compiles on the JVM" says nothing about a classpath on another target.
+- **AGP 9 will not let an Android application be a KMP module, and there is no property that
+  changes its mind.** `com.android.application` beside `org.jetbrains.kotlin.multiplatform`
+  is refused outright with *"move the usage of 'com.android.application' into a separate
+  subproject"*. The `android.builtInKotlin=false` / `android.newDsl=false` bypass AGP offers
+  covers `com.android.library` **only** — and does not reach an included build's precompiled
+  script plugins either, so `build-logic` needs the real migration regardless. What the real
+  migration is: libraries use `com.android.kotlin.multiplatform.library` with a
+  `kotlin { android { } }` block replacing `androidTarget()` and the top-level `android { }`;
+  the application becomes its own module. Hence `androidApp/`, which is `iosApp`'s counterpart
+  and holds only what an application is — manifest, `MainActivity`, launcher icons, theme,
+  applicationId, version, signing. Every Android `actual` stayed in `composeApp`.
+  Three things bite on the way through, in order: the two modules may not share a namespace
+  (`composeApp` is `game.vinto.app.ui` now); `org.jetbrains.kotlin.android` is *refused* by AGP
+  9, which has built-in Kotlin; and Kover before 0.9.9 does not recognise the new extension.
 - **The toolchain's gate is Compose Multiplatform, not detekt.** Believing otherwise cost an
   afternoon's worth of wrong advice, so: `androidx.compose.animation:*:1.12.0` fails
   `checkDebugAarMetadata` with *"requires compileSdk 37"* and *"requires Android Gradle plugin

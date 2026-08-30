@@ -4,7 +4,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
@@ -33,7 +33,25 @@ kotlin {
      */
     jvm()
 
-    androidTarget {
+    /**
+     * The Android half of a library, not of an application.
+     *
+     * AGP 9 refuses `com.android.library` beside the Kotlin Multiplatform plugin and names
+     * `com.android.kotlin.multiplatform.library` as the replacement; it folds the whole
+     * Android configuration into `kotlin { }`, which is why the `android { }` block that used
+     * to be at the foot of this file is gone. What was in it that is genuinely an
+     * *application's* — the applicationId, the version, the signing config, the launcher icons
+     * and the manifest — moved to `:androidApp`, along with `MainActivity`.
+     */
+    android {
+        // Not `game.vinto.app`: that belongs to `:androidApp`, which is the *application*,
+        // and a namespace has to be unique across every module in the merge. The Kotlin
+        // package is untouched — a namespace only names the generated R class and the
+        // library's own manifest, and nothing here has either.
+        namespace = "game.vinto.app.ui"
+        compileSdk = libs.versions.androidCompileSdk.get().toInt()
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -137,68 +155,6 @@ compose.resources {
     publicResClass = true
     packageOfResClass = "game.vinto.app.art"
     generateResClass = always
-}
-
-android {
-    namespace = "game.vinto.app"
-    compileSdk = libs.versions.androidCompileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "game.vinto.app"
-        minSdk = libs.versions.androidMinSdk.get().toInt()
-        targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    /**
-     * Signing a release build.
-     *
-     * Android will not install an unsigned APK, so `assembleRelease` needs a key even when
-     * the destination is one developer's own phone. Two paths, and which one is taken
-     * depends only on whether `keystore.properties` at the repository root exists:
-     *
-     *   * It does — a real upload key, named by that file (gitignored, and the file names
-     *     the keystore rather than containing it). This is what a Play build uses.
-     *   * It does not — the debug key, so a release build still assembles and installs on a
-     *     machine that has never been given one. Such an APK is a real release build in
-     *     every respect except *who* signed it: no debugger, no `debuggable` flag. It just
-     *     cannot be published, and cannot be upgraded in place by a properly signed one
-     *     later — Android treats a change of signing key as a different app.
-     *
-     * The fallback is the point. A build that fails on a missing secret makes "put it on my
-     * phone" a task with a setup step in front of it, and the release variant then goes
-     * untested until the day it has to work.
-     */
-    val keystore = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { file ->
-        Properties().apply { file.inputStream().use(::load) }
-    }
-
-    signingConfigs {
-        if (keystore != null) {
-            create("release") {
-                storeFile = rootProject.file(keystore.getProperty("storeFile"))
-                storePassword = keystore.getProperty("storePassword")
-                keyAlias = keystore.getProperty("keyAlias")
-                keyPassword = keystore.getProperty("keyPassword")
-            }
-        }
-    }
-
-    buildTypes {
-        // No shrinking yet: there is no release pipeline until phase 8, and enabling R8
-        // now would mean maintaining keep rules for code that is still being ported.
-        getByName("release") {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.findByName("release")
-                ?: signingConfigs.getByName("debug")
-        }
-    }
 }
 
 /**

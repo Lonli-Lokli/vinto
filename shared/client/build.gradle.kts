@@ -21,9 +21,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "game.vinto.client"
-}
 
 /**
  * `NoNetworkGuardTest` installs a `SecurityManager` to intercept every route to the network,

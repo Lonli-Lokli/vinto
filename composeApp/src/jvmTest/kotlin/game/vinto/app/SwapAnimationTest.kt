@@ -28,7 +28,14 @@ class SwapAnimationTest {
 
     @Test
     fun swappingLiftsTheCardOutOfTheSeatAndPutsAnotherBack() = runComposeUiTest {
-        mainClock.autoAdvance = false
+        // The clock runs normally while the round is being set up, and is taken over only for
+        // the animation this test is about.
+        //
+        // It used to be paused for the whole test. From Compose Multiplatform 1.12 that
+        // deadlocks: `waitForIdle()` under a paused clock waits for a frame that will not
+        // come until something advances the clock, and `settle()` is the thing that would
+        // have. The test hung for its full minute and reported an `UncompletedCoroutinesError`
+        // rather than an assertion, which is what a deadlock looks like from outside.
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         settle()
 
@@ -49,6 +56,10 @@ class SwapAnimationTest {
         settle()
         onNodeWithContentDescription("Just Swap").performClick()
 
+        // From here the clock is this test's: the point is to catch a single frame in which
+        // the seat is empty, and an auto-advancing clock would step past it.
+        mainClock.autoAdvance = false
+
         // Step through the animation looking for the moment the seat is empty.
         var sawTheGap = false
         repeat(STEPS) {
@@ -59,6 +70,12 @@ class SwapAnimationTest {
         }
 
         assertTrue(sawTheGap, "the card never left the seat: the swap did not animate")
+
+        // Hand the clock back before waiting on it again. `settle()` ends in `waitForIdle()`,
+        // and from Compose Multiplatform 1.12 that waits for a frame which a paused clock will
+        // never produce — the test then hangs for its full minute and reports an
+        // `UncompletedCoroutinesError` instead of an assertion.
+        mainClock.autoAdvance = true
         settle()
         onNodeWithContentDescription(SLOT).assertIsDisplayed()
     }

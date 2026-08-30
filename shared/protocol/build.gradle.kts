@@ -31,6 +31,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "game.vinto.protocol"
-}

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.androidKmpLibrary) apply false
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
 }
@@ -253,6 +254,11 @@ tasks.register("releaseGate") {
     // The screens, headless. Goldens are excluded on CI and stay excluded here — see the
     // note on the test task in composeApp/build.gradle.kts.
     dependsOn(":composeApp:jvmTest")
+
+    // And that the application module still assembles. It is a manifest and an activity, but
+    // it is the only thing that proves the Compose library is consumable *as* a library —
+    // which is the whole shape AGP 9 forced (see androidApp/build.gradle.kts).
+    dependsOn(":androidApp:assembleDebug")
 
     // The Worker's bundle. The room gates themselves need Node and workerd, so they are in
     // the document rather than here.

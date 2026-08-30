@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
  */
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
     id("org.jetbrains.kotlinx.kover")
 }
 
@@ -63,7 +63,24 @@ kotlin {
     // ios     — the iOS app, on macOS only.
     jvm()
 
-    androidTarget {
+    /**
+     * `kotlin { android { } }`, not `androidTarget()` plus a top-level `android { }`.
+     *
+     * Since AGP 9.0 the `com.android.library` plugin refuses to sit beside the Kotlin
+     * Multiplatform plugin at all, and this is the replacement it names. It folds the whole
+     * Android configuration into the `kotlin { }` block, which is why the `android { }` block
+     * that used to follow this one is gone.
+     *
+     * The namespace is derived rather than declared five times. Every shared module already
+     * spelled it `game.vinto.<name>`, and a convention that has to be repeated per module is
+     * the arrangement in which one of them ends up different — the same argument this whole
+     * file exists for.
+     */
+    android {
+        namespace = "game.vinto.${project.name}"
+        compileSdk = version("androidCompileSdk").toInt()
+        minSdk = version("androidMinSdk").toInt()
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -95,18 +112,5 @@ kotlin {
         // Intel Macs, and the simulators that run on them. One line, and the alternative is
         // a contributor on that hardware being unable to run the iOS half at all.
         iosX64()
-    }
-}
-
-android {
-    compileSdk = version("androidCompileSdk").toInt()
-
-    defaultConfig {
-        minSdk = version("androidMinSdk").toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }

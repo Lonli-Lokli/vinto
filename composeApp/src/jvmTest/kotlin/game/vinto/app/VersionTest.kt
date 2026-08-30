@@ -18,8 +18,11 @@ class VersionTest {
     @Test
     fun theVersionShownMatchesTheOneAndroidShips() {
         // Gradle runs a module's tests from the module's own directory.
-        val script = File("build.gradle.kts")
-        assertTrue(script.exists(), "expected composeApp/build.gradle.kts beside the test's cwd")
+        // `../androidApp`, not this module: since AGP 9 the application half lives in its own
+        // module (`androidApp`), because `com.android.application` may no longer share a
+        // module with the Kotlin Multiplatform plugin. `versionName` went with it.
+        val script = File("../androidApp/build.gradle.kts")
+        assertTrue(script.exists(), "expected androidApp/build.gradle.kts beside composeApp")
 
         val shipped = Regex("""versionName\s*=\s*"([^"]+)"""")
             .find(script.readText())

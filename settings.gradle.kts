@@ -43,3 +43,7 @@ include(":shared:protocol")
 include(":shared:room")
 include(":worker")
 include(":composeApp")
+// The Android application, which since AGP 9 cannot be the same module as the Compose UI:
+// `com.android.application` and the Kotlin Multiplatform plugin refuse to sit together.
+// It is the counterpart of `iosApp`, and it is as thin as that one.
+include(":androidApp")

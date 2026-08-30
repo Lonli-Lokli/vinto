@@ -17,9 +17,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "game.vinto.bot"
-}
 
 /**
  * The self-play tournament is a manually-run gate.

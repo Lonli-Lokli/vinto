@@ -83,6 +83,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "game.vinto.shapes"
-}

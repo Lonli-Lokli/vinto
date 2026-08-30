@@ -30,6 +30,7 @@ on:
     paths:
       - 'shared/**'
       - 'composeApp/**'
+      - 'androidApp/**'
       - 'worker/**'
       - 'iosApp/**'
       - 'gradle/**'
@@ -44,6 +45,7 @@ on:
     paths:
       - 'shared/**'
       - 'composeApp/**'
+      - 'androidApp/**'
       - 'worker/**'
       - 'iosApp/**'
       - 'gradle/**'
@@ -255,7 +257,7 @@ jobs:
       - name: Assemble the debug APK
         run: |
           set -o pipefail
-          ./gradlew --stacktrace :composeApp:assembleDebug 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
+          ./gradlew --stacktrace :androidApp:assembleDebug 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
 
       # Compiling the test sources is a separate step from running them on purpose. This
       # container cannot build composeApp at all — androidx is behind dl.google.com — so when
@@ -316,7 +318,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: vinto-debug-apk
-          path: composeApp/build/outputs/apk/debug/*.apk
+          path: androidApp/build/outputs/apk/debug/*.apk
           retention-days: 14
           if-no-files-found: warn
 
