@@ -280,6 +280,12 @@ stranger there is something there.
 
 ### Setting it up — three things, once
 
+> **You can do all three from a phone.** The `wrangler secret put` commands below need a
+> computer, but they are not the only way: in the Cloudflare dashboard, open **Workers & Pages
+> → vinto-room → Settings → Variables and Secrets**, and add each one there with *Encrypt*
+> turned on. Same secrets, same service, no terminal. Use the names exactly as written below.
+
+
 **1. A token that can read the counts.**
 
 1. Go to the Cloudflare dashboard → **My Profile** → **API Tokens** → **Create Token**.

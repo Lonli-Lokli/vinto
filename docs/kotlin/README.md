@@ -540,14 +540,14 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | Task | What it needs | How far it got |
 | --- | --- | --- |
 | analytics 1.1 — confirm Workers Analytics Engine allowances | The Cloudflare dashboard, signed in to the account that owns the Worker | The binding, the writer and the absent-binding path are all built and gated; what is unconfirmed is the *plan's* real writes/day, read allowance and retention. `design.md` §A1 carries published figures and says in as many words that they are not measured |
-| analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`), and a deployment with traffic | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
+| analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`) — addable from a phone through the Cloudflare dashboard — and traffic. ~~A deployment~~: the room is live and open (§6q) | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
 | analytics 5.3 — Web Analytics on the Pages project | The Cloudflare dashboard for the `vinto` Pages project | A per-site switch that makes Cloudflare inject its own beacon; there is nothing in this repository to change and nothing here can verify it. DEPLOYMENT.md §7b is written for somebody who does not do this for a living. The page it injects into **did not exist** until this pass — see the `index.html` note in §7 |
-| analytics 5.4 — revisit sampling and the cost model | A week of real traffic against a deployed room | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
+| analytics 5.4 — revisit sampling and the cost model | A week of real traffic — which can now start, since the room is open (§6q) | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
 | Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
-| §6i step 4 — the deploy, and flipping `ROOM_OPEN` | `wrangler login`, and the deliberate decision to open the room | Everything the flip guards is built and gated locally through `wrangler dev` |
-| §6i step 5 — two devices, then four humans | Hardware and four people | Cannot be scripted; that is what 9.7's second verification is for |
+| ~~§6i step 4 — the deploy, and flipping `ROOM_OPEN`~~ | **Done** (§6q) | Deployed and opened from a phone through `deploy-room.yml`; verified against the live edge by `gate-engine-replay` and `gate-two-clients` |
+| §6i step 5 — two devices, then four humans | Hardware and four people | The **scripted** half is now done against the live deployment (§6q): two clients, one Durable Object, sockets, hibernation and reconnect. What is left is what cannot be scripted |
 | 8.2 — a native crash on iOS | Xcode, and a decision on the Sentry KMP SDK | The reporter is installed at process start on all four targets now (§6m) and catches a Kotlin exception reaching the top. A signal or a Swift trap is what an SDK would add, against weight in a 3.7 MB wasm bundle; `design.md` §A9 has it flagged rather than settled |
 | Crash reporting, end to end | A DSN, and a build that carries it | The pipe is built and gated (`CrashReporterTest`, `CrashInstallTest`, `CrashReportTest`). What has never happened is a report arriving in a real Sentry project: the DSN is a build input now (`-Pvinto.sentryDsn=`), and nothing here has one |
 | 9.10 — store releases | An upload key, store accounts, and a signed build | `assembleRelease` signs with the upload key when `keystore.properties` exists and with the debug key when it does not, so the path is exercised without the secret |
@@ -555,7 +555,7 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | 7.1 — the animation layer on real hardware | A physical phone, and a Mac to look at the simulator | The decision is made and the layer is built and running on an Android emulator. It has never been *watched* on a real device, and on Apple it is compiled and simulator-tested by `kmp-ios` but not looked at by a person |
 | 8.1 — a release job on tags | An upload key, a Play track, an Apple developer account | No longer blocked on CI existing — six checks are green (2.3). `assembleRelease` already signs with the upload key when `keystore.properties` exists and the debug key when it does not, so the path is exercised without the secret. R8 and everything iOS sit behind the same accounts |
 | 8.2 — the iOS privacy manifest and permissions review | Xcode | The reporter itself is done, breadcrumbs included: a crash report now carries the deal's `gameId`, the round and the turn, which is the same address the room's Sentry reports carry |
-| 9.9 — a load test with 100 concurrent rooms | A deployment, and `wrangler login` | The rest of 9.9 landed: Sentry reports carry the deal's `gameId`, the round and the action index into it, and recordings are filed per round. A load test cannot go against `wrangler dev` — it enforces no CPU limit whatsoever (§6d), so it would measure the laptop rather than the platform |
+| 9.9 — a load test with 100 concurrent rooms | ~~A deployment~~ — now only the decision to run one against a live room | The rest of 9.9 landed: Sentry reports carry the deal's `gameId`, the round and the action index into it, and recordings are filed per round. A load test cannot go against `wrangler dev` — it enforces no CPU limit whatsoever (§6d), so it would measure the laptop rather than the platform |
 | 4.8 — the corpus on an Android emulator | A machine that can resolve androidx, and an emulator in CI | **The iOS half is done**: `kmp-ios` runs `:shared:client:iosSimulatorArm64Test`, so since 6.7 a whole game is generated and replayed through the real harness on Kotlin/Native every run. The Android half wants an instrumented `connectedAndroidTest` reading the corpus from an asset, which needs `androidx.test` — dl.google.com answers 403 here (§1c) and androidx is not on Maven Central, so it cannot be compiled in this container at all, only pushed and hoped for. An hour's work on a machine that can build `composeApp` |
 
 ## 2. Prerequisites
@@ -2136,6 +2136,37 @@ works on this, and tells a player nothing. `troubled()` is a `when` with no `els
 What is now true is that the next one reports itself: the permission is there, the report
 blocks until it is away, and an envelope survives the process dying. A crash during composition
 reaches the default handler like any other, so this covers it.
+
+## 6q. The room is open
+
+Deployed and opened on 2026-08-30, from a phone, through `deploy-room.yml`. §6i step 4 is done.
+
+```
+$ curl https://vinto-room.kupalinka.app/health
+{"ok":true,"service":"vinto-room","engine":"kotlin","roomOpen":true}
+$ curl https://vinto-room.kupalinka.app/rooms
+{"rooms":[]}
+$ curl -X POST .../rooms -d '{"isPublic":false,"hostNickname":"probe"}'
+{"code":"TBPHAY","roomId":"room-TBPHAY"}
+```
+
+Two gates then ran **against the live deployment** rather than against `wrangler dev`, which is
+the difference §6d exists to record — production applies a CPU limit and a local runtime applies
+none:
+
+| | |
+| --- | --- |
+| `GATE_URL=… node gate-engine-replay.mjs` | 50/50 recordings, 13,900 actions, 46.3 s. **PASS** |
+| `GATE_URL=… node gate-two-clients.mjs` | Two sockets joined one room, exchanged actions, each was sent only its own seat's view, a token reclaimed its seat after a disconnect, a nickname did not, resync returned only what was missed, and the room rebuilt from storage after every socket closed. **PASS** |
+
+The second is the scripted half of §6i step 5, now true of the real thing: two clients played
+through a Durable Object on the edge, including hibernation and reconnect. What is left of that
+step is the part that cannot be scripted — two devices in two hands, and then four humans.
+
+**The probes left rooms behind**, deliberately noted rather than tidied away: `TBPHAY` and
+whatever `gate-two-clients` minted are real private rooms on the live registry. They cost
+nothing, nobody has their codes, and `gate-lifecycle` is the gate for the sweep that removes
+them; a room that outlived its own expiry would be a bug worth seeing.
 
 ## 6i. Taking the room live — the maintainer's runbook
 
