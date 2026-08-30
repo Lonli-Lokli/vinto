@@ -3,7 +3,13 @@ kotlin = "2.1.21"
 kotlinxSerialization = "1.8.1"
 kotlinxCoroutines = "1.10.2"
 composeMultiplatform = "1.8.0"
-agp = "8.10.1"
+# 8.13.2 is the head of the 8.x line. **Not 9.x**, and that is a decision rather than a lag:
+# AGP 9 wants Gradle 9, and the thing most likely to break on Gradle 9 is detekt, which is
+# this build's `maxIssues: 0` release gate and whose 1.x line ends at 1.23.8 — its successor
+# is `dev.detekt:...:2.0.0-alpha.6`. Putting a release gate on an alpha, on an unmerged
+# migration branch, would make every future red check ambiguous between "the migration broke"
+# and "the toolchain moved". See docs/kotlin/README.md §7.
+agp = "8.13.2"
 androidxActivityCompose = "1.10.1"
 # 1.23.8 is the last 1.x line; it runs on Kotlin 2.1 for the rules used here.
 detekt = "1.23.8"
