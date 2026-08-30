@@ -1715,6 +1715,46 @@ defect to fix blind:
 The loop itself lives in `Tournament.kt`, shared with `SelfPlayGateTest`: legality and strength
 are two questions about one table and should not be asked of two subtly different games.
 
+## 6l. The round trip, now across targets
+
+The corpus round trip used to be across *languages*: TypeScript generated `fixtures/recordings`
+and Kotlin replayed them. Once one engine ships, that check has nothing on the other side of it
+— the corpus becomes a frozen artefact rather than evidence that two implementations agree
+today (§1d). What replaces it is a round trip across **targets**, and it is not the weaker
+property. It is the one that can still fail:
+
+- a `Long` is a pair of `Int`s on Kotlin/JS, and `seed` and `rngState` are `Long`s
+- the serializer backend differs between JVM, JS and Wasm
+- canonical JSON and SHA-256 are hand-rolled and have to agree byte for byte everywhere, or a
+  recording made on a phone cannot be replayed on a server
+
+`RecordingRoundTripTest` lives in `shared/client`'s **`commonTest`**, so it plays a whole game
+to `scoring`, exports the report, and replays it through the real `replayRecording` harness
+**reached through text** — on whichever target is running. `kmp-jvm` runs it on the JVM and
+`kmp-web` on Kotlin/JS and Wasm, so task 6.7's "CI job" needed no new CI job: the three legs
+already existed and the test was the missing half. Measured: 9.2 s on the JVM, 24.5 s on Wasm.
+
+Nothing is committed and nothing goes stale, because the recording is **generated on the target
+that replays it**. Three assertions, and the second and third are what make the first worth
+having: a corrupted hash has to be caught *at the action that carries it* (or the harness is
+accepting anything), and one seed has to produce one document byte for byte (or two targets
+cannot be compared at all).
+
+### What it found on its first run
+
+**A player's exported bug report could not be replayed by anything.** `Recording.formatVersion`
+carries a default, `VintoJson` has `encodeDefaults` off — which is right, and is what keeps an
+unset optional absent rather than `null` where TypeScript writes nothing — so the field was
+silently missing from every report the table's bug-report control produced. And
+`GameRecording.formatVersion` is **required**: `CorpusReplayTest` refused to parse one, and so
+did the Worker's `POST /replay`. `Recorder.kt`'s own comment promised a report "can be dropped
+straight into" that harness, and it could not.
+
+It is one `@EncodeDefault(ALWAYS)`. What is worth keeping is why nothing caught it: `RecorderTest`
+replays the recorder's output too, and passes, because it replays *the object it just built in
+memory*. A bug report arrives as bytes. Reaching the harness through text is the difference,
+and it is the reason this test does the JSON hop rather than calling `replayRecording(report)`.
+
 ## 6i. Taking the room live — the maintainer's runbook
 
 The online client is code-complete: protocol, room cores with JVM tests, per-event views,
@@ -1886,6 +1926,13 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   `kmp-android` builds `composeApp` for Android and `kmp-ios` for Apple, and the browser
   target had no gate anywhere. `kmp-web` now runs `:composeApp:compileKotlinWasmJs`. Reach a
   browser global from Wasm with a one-expression `js("...")` function.
+- **A default is not written down, and a required field is not optional.** `VintoJson` sets
+  `encodeDefaults = false` deliberately, so any `@Serializable` field with a default vanishes
+  from the output unless it carries `@EncodeDefault(ALWAYS)`. That is correct for optionals and
+  silently wrong for a format version: `Recording.formatVersion` was omitted from every exported
+  bug report, and `GameRecording.formatVersion` is required, so nothing could parse one. The
+  general shape — a round trip that never leaves memory proves less than it looks like it does —
+  is in §6l.
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
   It lives in `gradle.properties`.

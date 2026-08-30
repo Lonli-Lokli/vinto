@@ -5,6 +5,8 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameState
 import game.vinto.shapes.VintoJson
 import game.vinto.shapes.hashGameState
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -19,9 +21,20 @@ import kotlinx.serialization.Serializable
  * The per-action hash is what turns "it went wrong" into "it went wrong **here**": the replay
  * stops at the first action whose result differs, which is the bug's own address.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Recording(
-    val formatVersion: Int = FORMAT,
+    /**
+     * Written out even though it is a default.
+     *
+     * `VintoJson` has `encodeDefaults` off — which is right, and is what keeps an unset
+     * optional absent rather than `null` where TypeScript writes nothing. It also meant this
+     * field was silently missing from every exported report, and `GameRecording.formatVersion`
+     * is **required**: the harness this file's own comment promises a report drops into
+     * refused to parse one. So did `POST /replay`. Caught by `RecordingRoundTripTest`, which
+     * exists because reaching the harness through *text* is the only way to find this.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val formatVersion: Int = FORMAT,
     val meta: Meta,
     val settings: Settings,
     val initialState: GameState,
