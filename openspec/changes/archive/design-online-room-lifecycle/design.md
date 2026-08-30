@@ -227,6 +227,30 @@ costs money.
 taxes every honest host on every game. The limits above are reversible; if evidence says they
 are not enough, Turnstile goes in then.
 
+**What was actually built, and where this design was wrong.** The two "at the edge" limits were
+never created. Nothing had to be forgotten for that to happen — a dashboard rule is a thing
+somebody remembers, and this document plus a paragraph in `wrangler.jsonc` described the
+protection in enough detail that reading either one told you it existed. The service ran
+unmetered for months.
+
+The same shape one layer down: R6 assigns the room-code scan to those edge rules, so
+`resolveRoomCode` counted nothing and a private room's six characters were the only thing in
+the way of a scan.
+
+Both are now in the repository, where a test can hold them:
+
+- **A rate limit at the door** — the `ratelimits` binding in `wrangler.jsonc`, 120 requests a
+  minute per address, in front of everything except `/health`. First-class in wrangler 4.x and
+  emulated by `wrangler dev`, which is what makes `gate-ratelimit.mjs` possible; this design
+  predates that and assumed a zone rule was the only option.
+- **A guess limit in the registry** — `resolveRoomCodeFor`, 20 misses in ten minutes per
+  address, refusing a correct code too so the refusal is not an oracle (`GuessLimitTest`,
+  `gate-bruteforce.mjs`).
+
+The three-layer split R6 argues for is unchanged and correct; only the *location* of the first
+layer moved. What genuinely cannot come here is anything acting before a request reaches the
+Worker — Cloudflare's L3/L4 protection, which is zone-wide and already on.
+
 ### R7. Public and private rooms
 
 - **Private** (default): the code is the invitation. Not listed anywhere.

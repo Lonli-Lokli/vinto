@@ -73,7 +73,34 @@
   // to set up in the dashboard beforehand.
   "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "vinto_events" }],
 
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+
+  // --- Volume, at the door (design R6) ------------------------------------------------------
+  //
+  // Everything else in this service bounds a *total*: the registry's global and per-source
+  // room caps, the per-seat action budget, the socket cap, the message size cap, the guess
+  // limiter in front of a private room's code. None of them bounds a *rate*, and the cheapest
+  // request here is the most amplifying one — `GET /rooms` wakes the single registry Durable
+  // Object, which is single-threaded, so a flood of the one request that costs a stranger
+  // nothing serialises through the one object every real player also needs.
+  //
+  // 120 a minute per address. Two orders of magnitude above anybody browsing a lobby (a
+  // player refreshing hard does five), and far enough below a flood to make one host useless.
+  // Deliberately generous rather than tight, because the key is an address and a school, an
+  // office or a mobile carrier is one address to us — throttling real players in a group is a
+  // worse failure than serving a slow scan.
+  //
+  // **This is now expressible here, and it was not when the note below was written.** That
+  // note said edge rate limiting was a zone-level dashboard rule that could not go in this
+  // file and could not be exercised by `wrangler dev`, so a config block would be a claim
+  // nothing verifies. `ratelimits` is a first-class binding in wrangler 4.x, workerd emulates
+  // it locally, and `gate-ratelimit.mjs` exercises it — so it is a claim something verifies.
+  //
+  // Absent-safe like every other binding: with this block removed the Worker runs identically
+  // and limits nothing, which is what keeps the other gates runnable with no account.
+  "ratelimits": [
+    { "name": "DOOR", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } }
+  ]
 
   // --- The stats page (design A6, task 5.1) -------------------------------------------------
   //
@@ -93,19 +120,29 @@
 
   // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
   //
-  // NOT configured here, and deliberately not half-configured. Cloudflare's rate limiting for
-  // these two paths is a zone-level rule rather than a Worker binding, so it cannot be
-  // expressed in this file, and it cannot be exercised by `wrangler dev` either — which means
-  // a config block here would be a claim nothing verifies.
+  // **Superseded by the `ratelimits` binding above, and the reasoning is worth keeping.**
   //
-  // What belongs in the dashboard, on the vinto-room.kupalinka.app zone:
+  // This note used to say that rate limiting was a zone-level dashboard rule which could not
+  // be expressed in this file and could not be exercised by `wrangler dev`, so a config block
+  // here would be "a claim nothing verifies". That was a good rule and it had a bad
+  // consequence: what it produced was a paragraph describing two dashboard rules that were
+  // never created. The service ran unmetered for months while its own config said, in
+  // reassuring detail, how it was protected.
   //
-  //   1. POST /rooms          — 5 requests per minute per IP, action: block
-  //   2. WebSocket upgrades   — 30 per minute per IP, action: block
+  // The same thing happened one layer down: R6 also put the room-code guess limit in a
+  // dashboard rule, `resolveRoomCode` counted nothing, and a private room's six characters
+  // were the only thing in the way. That is now a limiter in the registry with a test and a
+  // gate. This is the same correction for the same reason — a defence in the repository can
+  // be verified and reviewed, and one in a dashboard is a thing somebody remembers.
   //
-  // These bound the *slope* of abuse. The things that bound the total are in the code and are
-  // tested: the registry's global and per-source room caps (Registry.kt), the per-seat action
-  // budget (Room.kt), the socket cap and the message size cap (index.mjs). That split is the
-  // point — an edge rule cannot see inside a WebSocket, and an in-room limit cannot stop
-  // somebody opening ten thousand of them.
+  // What still belongs in the dashboard, and genuinely cannot live here: Cloudflare's L3/L4
+  // protection (already on, zone-wide, nothing to configure) and any rule that has to act
+  // before a request reaches the Worker at all. Everything the Worker can see, the Worker
+  // now limits.
+  //
+  // The split that remains is the real one: a rate bounds the *slope* of abuse, and the caps
+  // in the code bound its *total* — the registry's global and per-source room caps
+  // (RegistryCore.kt), the guess limiter (RegistryCore.kt), the per-seat action budget
+  // (RoomCore.kt), the socket cap and the message size cap (index.mjs). An edge rule cannot
+  // see inside a WebSocket, and an in-room limit cannot stop somebody opening ten thousand.
 }

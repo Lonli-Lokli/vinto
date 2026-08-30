@@ -438,6 +438,12 @@ jobs:
         working-directory: worker/cloudflare
         run: node gate-bruteforce.mjs
 
+      # Floods from an address of its own, for the same reason the one above does: 200 requests
+      # against a 120-a-minute limit would otherwise spend the bucket every other gate shares.
+      - name: 'Gate: volume is bounded at the door'
+        working-directory: worker/cloudflare
+        run: node gate-ratelimit.mjs
+
       - name: 'Gate: two clients through one Durable Object'
         working-directory: worker/cloudflare
         run: node gate-two-clients.mjs

@@ -1003,6 +1003,33 @@ async function handle(request, env) {
       });
     }
 
+    // Volume, before anything expensive happens.
+    //
+    // Two things sit below this line and both are cheap to ask for and expensive to answer.
+    // `POST /replay` runs a whole game through the engine — roughly 250 ms of Durable Object
+    // CPU, which is the dimension Cloudflare bills. `GET /rooms` wakes the single registry
+    // object, which is single-threaded and shared by every player, so a flood of the request
+    // that costs a stranger nothing serialises through the one object everybody needs.
+    //
+    // The caps elsewhere bound how much abuse can *accumulate* — rooms per source, actions
+    // per seat, sockets per room, guesses per address. None of them bounds how fast it can
+    // arrive. This does. See `ratelimits` in wrangler.jsonc for the number and why it is a
+    // generous one.
+    //
+    // `/health` is deliberately above it: a liveness answer costs nothing and is the one
+    // thing a monitor must always be able to ask, including while something is going wrong.
+    //
+    // Absent-safe: no binding, no limiting, and every gate script still runs with no account.
+    if (env.DOOR) {
+      const { success } = await env.DOOR.limit({ key: await sourceIdOf(request) });
+      if (!success) {
+        return new Response('too many requests', {
+          status: 429,
+          headers: { 'content-type': 'text/plain', 'retry-after': '60' },
+        });
+      }
+    }
+
     // Replays a recording through the real Kotlin engine, in the runtime that actually
     // serves it. This is how the engine is verified on a deployment with no UI: POST a
     // GameRecording and get back either ok, or the exact action where it diverged.
@@ -1084,6 +1111,7 @@ async function handle(request, env) {
     }
 
     const registry = () => env.REGISTRY.get(env.REGISTRY.idFromName('registry'));
+
 
     // Creating a room is a POST, and it is the *only* way to bring one into existence.
     if (url.pathname === '/rooms' && request.method === 'POST') {
