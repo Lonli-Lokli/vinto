@@ -264,9 +264,8 @@ installing a `SecurityManager` that throws on any connect.
 
 ### 5. The room is authoritative
 
-One Cloudflare Durable Object per room. It deals from a seed, validates every action, runs the
-bots **server-side** — a client-side bot would need the other seats' hidden cards — and sends
-each socket its own redacted view.
+One Cloudflare Durable Object per room — see [Online](#online) above for what it does and why
+the bots run there.
 
 ## State management
 

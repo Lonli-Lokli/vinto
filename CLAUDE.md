@@ -3,8 +3,9 @@
   ## The repository is a Kotlin Multiplatform build
 
   **Read this before running anything.** The Gradle build is the repository root: `./gradlew`
-  at the top level, `shared/*`, `composeApp/`, `worker/`, `iosApp/`. It is the build that
-  ships the game — Android, iOS, Compose web, and the Cloudflare Worker that hosts a room.
+  at the top level, `shared/*`, `composeApp/`, `androidApp/`, `worker/`, `iosApp/`. It is the
+  build that ships the game — Android, iOS, Compose web, and the Cloudflare Worker that hosts
+  a room.
 
   A Next.js client came first. It is **deleted**: it stopped shipping long ago, its CI went
   before it, and the last thing it was for — regenerating the parity corpus — is now a
@@ -26,14 +27,14 @@
   They used to live twice; what survives that is a frozen replay corpus carrying the state
   hashes the other implementation computed.
 
-  **Technology Stack (Kotlin, the shipping one):**
-  - Language: Kotlin 2.1, Kotlin Multiplatform
-  - UI: Compose Multiplatform (Android, iOS, wasmJs)
+  **Technology Stack:**
+  - Language: Kotlin 2.4, Kotlin Multiplatform
+  - UI: Compose Multiplatform 1.12 (Android, iOS, wasmJs)
   - Game Engine: Pure reducer (`GameEngine.reduce`), deterministic, seeded PRNG
   - Server: Cloudflare Worker + Durable Object per room (Kotlin/JS)
   - AI: Monte Carlo Tree Search (MCTS)
-  - Build: Gradle 8.14, JDK 17 (every module sets `jvmTarget = 17`; a newer JDK breaks it)
-  - Static analysis: detekt, `maxIssues: 0`
+  - Build: Gradle 9.7, JDK 17 (every module sets `jvmTarget = 17`; a newer JDK breaks it)
+  - Static analysis: detekt 2, all rules, `failOnSeverity = Info`
 
   ## Repository Structure
 
@@ -45,10 +46,13 @@
     protocol/        # The wire, declared once (see docs/kotlin/PROTOCOL.md)
     room/            # Room and registry cores, testable off the Worker
   composeApp/        # Compose Multiplatform UI — one commonMain for all three clients
+  androidApp/        # The Android application: manifest, MainActivity, icons, signing
   worker/            # Cloudflare Worker + Durable Object; JS shim in worker/cloudflare/
   iosApp/            # Xcode project embedding composeApp's framework (macOS only)
-  tools/             # Icon and sound generators (Python)
-  fixtures/          # The cross-implementation corpus: 50 recordings + PRNG vectors
+  build-logic/       # Convention plugins
+  config/detekt/     # Ruleset and the per-module baselines
+  tools/             # Icon and sound generators (Python); the mark in tools/brand/
+  fixtures/          # The frozen corpus: 50 recordings + PRNG vectors
 
   ## Development Commands
 
@@ -58,15 +62,12 @@
   ./gradlew detekt                        # static analysis, every module
   ./gradlew :composeApp:assembleDebug     # Android APK
   ./gradlew :composeApp:jvmTest           # Compose UI suites, headless
+  ./gradlew :composeApp:run               # the desktop window — fastest look at a UI change
   ./gradlew :worker:jsProductionExecutableCompileSync   # the Worker bundle
+  ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament   # bot strength
   ```
 
   Full command list, including iOS and the Worker gates: `docs/kotlin/README.md` §4.
-
-  ```bash
-  ./gradlew :composeApp:run               # the desktop window — fastest look at a UI change
-  ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament   # bot strength
-  ```
 
   Coding Conventions
 
@@ -79,42 +80,23 @@
     spaces are JVM-only and much of the suite is `commonTest`
 
   State Management:
-  - `GameState` is immutable and authoritative
+  - `GameState` is immutable and authoritative — the single source of truth
   - A screen only ever sees a redacted `PlayerView`; never duplicate game state in UI state
   - Compose state holds presentation only: modals, highlights, the animation queue
 
   Game Engine:
-  - All game logic is pure — no side effects, no clock, no ambient randomness
-  - Actions are serialisable; every one goes through `ActionValidator` before `reduce`
+  - All game logic is pure — no side effects, no async, no clock, no ambient randomness
+  - Actions are serialisable; every one goes through `ActionValidator` before `reduce`, and
+    bots take that same path rather than applying moves directly
   - Randomness comes from `GameState.rngState` alone
+  - Purity is what lets the same code be the authority in a Durable Object and the simulator
+    inside MCTS. Performance matters here: MCTS runs the reducer thousands of times a turn
 
   Static analysis:
   - detekt runs with every rule the tool ships. Where this project disagrees with a rule, the
     disagreement is written beside it in `config/detekt/detekt.yml` — argue there rather than
     adding a `@Suppress`
   - One baseline per module; fix an entry and delete its line, never regenerate to go green
-
-  Architecture Principles
-
-  1. Single Source of Truth
-
-  All game state lives in GameState (immutable). No parallel state in stores.
-
-  2. Pure Game Engine
-
-  GameEngine contains only pure functions (reducers):
-  - No side effects
-  - No async operations
-  - Deterministic
-  - Cloud-ready
-
-  3. Actions as Data
-
-  All interactions are serializable actions dispatched to GameEngine
-
-  4. Bot AI Integration
-
-  Bots use the same action dispatch path as humans via MCTS algorithm
 
   Git Workflow
 
@@ -127,16 +109,8 @@
   - Do NOT append timestamps or prefixes
   - Reuse existing issue branch if it exists
 
-  **Invoking Claude Code (GitHub App):**
-  When commenting on an issue to invoke Claude Code:
-  ```
-  @claude-code please work on this issue using branch issue-{ISSUE_NUMBER}
-  ```
-
-  Example for issue #15:
-  ```
-  @claude-code please fix this bug using branch issue-15
-  ```
+  **Invoking Claude Code (GitHub App):** comment on the issue with
+  `@claude-code please work on this issue using branch issue-{ISSUE_NUMBER}`
 
   Pre-commit Hooks:
   Uses lefthook for git hooks
@@ -156,33 +130,21 @@
   it is **frozen** — `CorpusIsFrozenTest` fails if a recording changes, and
   `fixtures/recordings/README.md` says what to do instead of rewriting it.
 
-  Testing Game Logic:
-  GameEngine is pure, so tests are straightforward unit tests
-
-  Coalition Analysis Files (Untracked)
-
-  Currently in the repo but not committed:
-  - COALITION_EVIDENCE.md
-  - COALITION_MODE_ANALYSIS.md
-  - COALITION_TEST_RESULTS.md
-
-  These appear to be analysis/test documentation for coalition game mode features.
-
   Dependencies of Note
 
   Kotlin (see gradle/libs.versions.toml for the pinned versions):
   - kotlinx-serialization: the wire format and the recording format
   - kotlinx-coroutines: GameSession, the bot queue, the room's pacing
   - Compose Multiplatform: the UI, one commonMain for Android, iOS and web
-  - detekt 2: static analysis, all rules, failOnSeverity = Info
 
   AI:
   - Custom MCTS in `shared/bot/`, verified by rule-following rather than decision parity
 
   Testing
 
-  Kotlin: kotlin.test + coroutines-test, run through Gradle. The parity gate is
-  `:shared:engine:jvmTest`, which replays every recording in `fixtures/recordings/`.
+  kotlin.test + coroutines-test, run through Gradle. The engine is pure, so its tests are
+  ordinary unit tests. The parity gate is `:shared:engine:jvmTest`, which replays every
+  recording in `fixtures/recordings/`.
 
   Error Handling
 
@@ -206,11 +168,3 @@
   dashboard step. Android and iOS go through the stores (phase 8, not yet set up). The
   maintainer's runbook is `docs/kotlin/README.md` §6i, and DEPLOYMENT.md is the plain-language
   version.
-
-  Notes for Claude Code
-
-  - This is a game project, so focus on game logic correctness and state immutability
-  - Always maintain determinism in GameEngine
-  - Bot AI uses MCTS, so performance matters for decision-making
-  - The architecture is designed for future cloud/multiplayer support
-  - When modifying game logic, consider edge cases documented in SCENARIOS.md
