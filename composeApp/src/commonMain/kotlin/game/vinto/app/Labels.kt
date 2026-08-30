@@ -1,6 +1,15 @@
 package game.vinto.app
 
 import game.vinto.app.art.Res
+import game.vinto.app.art.chapter_actions
+import game.vinto.app.art.chapter_declare
+import game.vinto.app.art.chapter_draw
+import game.vinto.app.art.chapter_keep
+import game.vinto.app.art.chapter_peek
+import game.vinto.app.art.chapter_score
+import game.vinto.app.art.chapter_table
+import game.vinto.app.art.chapter_toss
+import game.vinto.app.art.chapter_vinto
 import game.vinto.app.art.difficulty_easy
 import game.vinto.app.art.difficulty_hard
 import game.vinto.app.art.difficulty_moderate
@@ -13,6 +22,7 @@ import game.vinto.app.art.pace_steady
 import game.vinto.app.art.theme_dark
 import game.vinto.app.art.theme_light
 import game.vinto.app.art.theme_system
+import game.vinto.client.Chapter
 import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
 import game.vinto.client.ThemeChoice
@@ -49,4 +59,24 @@ fun MotionChoice.label(): StringResource = when (this) {
     MotionChoice.SYSTEM -> Res.string.motion_system
     MotionChoice.FULL -> Res.string.motion_full
     MotionChoice.REDUCED -> Res.string.motion_reduced
+}
+
+/**
+ * The lesson's chapters, in words.
+ *
+ * Here for the same reason [Difficulty.label] is here rather than on the enum: a `Chapter` is
+ * a part of the game, and the sentence naming it is display. It used to be an English `label`
+ * on the enum itself in `shared/client` — a module with no resources — and, worse, nothing
+ * ever drew it. See [Chapter].
+ */
+fun Chapter.label(): StringResource = when (this) {
+    Chapter.TABLE -> Res.string.chapter_table
+    Chapter.PEEK -> Res.string.chapter_peek
+    Chapter.DRAW -> Res.string.chapter_draw
+    Chapter.KEEP -> Res.string.chapter_keep
+    Chapter.DECLARE -> Res.string.chapter_declare
+    Chapter.ACTIONS -> Res.string.chapter_actions
+    Chapter.TOSS -> Res.string.chapter_toss
+    Chapter.VINTO -> Res.string.chapter_vinto
+    Chapter.SCORE -> Res.string.chapter_score
 }

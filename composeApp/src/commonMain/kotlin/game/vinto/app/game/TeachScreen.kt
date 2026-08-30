@@ -28,11 +28,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.LocalCounting
 import game.vinto.app.art.Res
+import game.vinto.app.art.chapter_covered
+import game.vinto.app.art.chapter_to_come
 import game.vinto.app.art.teach_done
 import game.vinto.app.art.teach_finished_body
 import game.vinto.app.art.teach_finished_title
@@ -40,6 +44,7 @@ import game.vinto.app.art.teach_go_on
 import game.vinto.app.art.teach_heading
 import game.vinto.app.art.teach_watching
 import game.vinto.app.elapsedMs
+import game.vinto.app.label
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -437,12 +442,25 @@ private fun HeldUpCards(cards: List<Rank>) {
     }
 }
 
-/** A dot per chapter of the rules, filled once the player has met it. */
+/**
+ * A dot per chapter of the rules, filled once the player has met it.
+ *
+ * Each dot says what it is. They had no accessible name at all until now — nine unlabelled
+ * circles conveying progress by colour alone, which is exactly the information a screen reader
+ * cannot get. The words existed the whole time, in an unused `Chapter.label`.
+ */
 @Composable
 private fun Progress(met: Set<Chapter>) {
     Row(horizontalArrangement = Arrangement.spacedBy(Tight)) {
         Chapter.entries.forEach { chapter ->
-            Box(modifier = Modifier.size(DotSize)) {
+            val name = stringResource(chapter.label())
+            val said = if (chapter in met) {
+                stringResource(Res.string.chapter_covered, name)
+            } else {
+                stringResource(Res.string.chapter_to_come, name)
+            }
+
+            Box(modifier = Modifier.size(DotSize).semantics { contentDescription = said }) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = CircleShape,

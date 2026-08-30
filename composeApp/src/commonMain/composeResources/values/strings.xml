@@ -234,6 +234,21 @@
     <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
     <!-- The privacy note, in the app's own words rather than a policy's. Said here because
          this is the sheet a player already opens to find out what something means. -->
+    <!-- The lesson's chapters, one progress dot each. These are the dots' accessible names:
+         before this they had none, and the words sat unused in a `Chapter.label` field that
+         nothing rendered. -->
+    <string name="chapter_table">The table</string>
+    <string name="chapter_peek">Your two peeks</string>
+    <string name="chapter_draw">Taking a card</string>
+    <string name="chapter_keep">Keep or throw</string>
+    <string name="chapter_declare">Naming a rank</string>
+    <string name="chapter_actions">What the cards do</string>
+    <string name="chapter_toss">Throwing in</string>
+    <string name="chapter_vinto">Calling Vinto</string>
+    <string name="chapter_score">Scoring</string>
+    <string name="chapter_covered">%1$s — covered</string>
+    <string name="chapter_to_come">%1$s — still to come</string>
+
     <!-- What the "?" explains. `explains_card_*` take the card's name, value,
          `longDescription` and `helpText` — all presentation. Never `shortDescription`, which
          is `Card.actionText` and lives inside the canonical hash (CardCopyIsDataTest). -->

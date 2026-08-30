@@ -1489,9 +1489,30 @@ the easy mistake when a refactor moves a responsibility, and it is worth being d
 
 **`TableModel.kt` is now fully converted** — labels, prompts, details and help.
 
+### Slice 7 — `Chapter`, and nine strings that were never drawn
+
+The first cut into `TeachScript`, and it turned up a third thing that was not a translation
+problem.
+
+`Chapter` carried a `label: String` — "The table", "Your two peeks", nine of them — and
+**nothing rendered it**. Meanwhile the progress dots those words were written for had no
+accessible name at all: nine unlabelled circles conveying how far somebody had got by *colour
+alone*, which is precisely the information a screen reader cannot get.
+
+So the words moved to `Labels.kt` (where `Difficulty`, `Pace` and `Theme` already keep theirs)
+and the dots now use them: "Your two peeks — covered", "Calling Vinto — still to come".
+`ChapterDotsTest` keeps them connected, so a tenth chapter cannot be added as a silent dot.
+
+Three for three: every slice into this area has found something that had nothing to do with
+language — two dead English matches, a hashed field about to be translated, and now display
+text that was never displayed. Assembling sentences in a module that cannot render them turns
+out to be a reliable marker for code nobody has looked at.
+
 ### Still to do
 
-- **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
+- **`TeachScript.kt`'s lesson prose** (~135 literals): `Lesson.title`, `body`, `note` and
+  `gloss` across roughly forty beats. Mechanical — mostly whole sentences rather than assembled
+  ones — but large. Split by chapter. Mostly prose rather than
   assembled sentences, so more mechanical — but it is where both dead English matches lived, so
   read it for more while converting. Split by chapter.
 - **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than

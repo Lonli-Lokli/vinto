@@ -16,16 +16,25 @@ import game.vinto.shapes.getCardConfig
  * card, keeping or throwing it, naming a rank, what the cards do, throwing in, calling Vinto,
  * and how the round is scored.
  */
-enum class Chapter(val label: String) {
-    TABLE("The table"),
-    PEEK("Your two peeks"),
-    DRAW("Taking a card"),
-    KEEP("Keep or throw"),
-    DECLARE("Naming a rank"),
-    ACTIONS("What the cards do"),
-    TOSS("Throwing in"),
-    VINTO("Calling Vinto"),
-    SCORE("Scoring"),
+/**
+ * The parts of the game the lesson covers, one dot each.
+ *
+ * It used to carry an English `label` — which nothing rendered. Nine strings in a module with
+ * no resources, kept for a display that never happened, while the dots they were written for
+ * had no accessible name at all: a screen reader was given nine unlabelled circles. The words
+ * are in `composeApp`'s `Labels.kt` now (the same place `Difficulty` and `Pace` keep theirs)
+ * and the dots use them.
+ */
+enum class Chapter {
+    TABLE,
+    PEEK,
+    DRAW,
+    KEEP,
+    DECLARE,
+    ACTIONS,
+    TOSS,
+    VINTO,
+    SCORE,
 }
 
 /**
