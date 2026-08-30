@@ -25,7 +25,8 @@ import {
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
   applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
-  newRegistry, mintRoomCode, resolveRoomCode, looksLikeRoomCode, listPublicRooms, forgetRoom,
+  newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
+  listPublicRooms, forgetRoom,
   registrySize, touchRoom,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
@@ -189,9 +190,16 @@ export class Registry {
 
     if (url.pathname === '/resolve') {
       const code = url.searchParams.get('code') ?? '';
-      return new Response(resolveRoomCode(registryJson, code), {
-        headers: { 'content-type': 'application/json' },
-      });
+      const source = url.searchParams.get('source') ?? '';
+      const answer = resolveRoomCodeFor(registryJson, code, source, Date.now());
+
+      // Counting a miss is a write. Forgetting to persist it is how a rate limiter comes to
+      // look present and do nothing, so the state comes back with the answer and is stored
+      // before the answer is returned.
+      const parsed = JSON.parse(answer);
+      if (parsed.state) await this.ctx.storage.put('registry', JSON.stringify(parsed.state));
+
+      return new Response(answer, { headers: { 'content-type': 'application/json' } });
     }
 
     if (url.pathname === '/public') {
@@ -961,6 +969,25 @@ function withCors(response, request) {
   });
 }
 
+/**
+ * Who asked, as an opaque id.
+ *
+ * The registry enforces a per-source room cap and a per-source guess limit, and never sees an
+ * address: hashing here keeps both enforceable without storing anything anybody would mind
+ * being stored. Truncated to eight bytes because it is a bucket key, not a credential —
+ * collisions cost an unlucky pair of visitors a shared allowance and cost the registry nothing.
+ *
+ * One function so the two callers cannot drift. They were separate, and only one of them
+ * existed: creating a room was attributed and *resolving a code was not*, which is precisely
+ * the gap a brute-force scan walks through.
+ */
+async function sourceIdOf(request) {
+  const address = request.headers.get('cf-connecting-ip') ?? 'local';
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(address));
+  return [...new Uint8Array(digest)].slice(0, 8)
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function handle(request, env) {
     const url = new URL(request.url);
 
@@ -1063,13 +1090,7 @@ async function handle(request, env) {
       const startedAt = Date.now();
       const body = await request.json().catch(() => ({}));
 
-      // Who asked, as an opaque id. The registry enforces a per-source cap and never sees an
-      // address: hashing here keeps the cap enforceable without storing anything anybody would
-      // mind being stored.
-      const address = request.headers.get('cf-connecting-ip') ?? 'local';
-      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(address));
-      const sourceId = [...new Uint8Array(digest)].slice(0, 8)
-        .map((b) => b.toString(16).padStart(2, '0')).join('');
+      const sourceId = await sourceIdOf(request);
 
       const minted = await registry().fetch(
         new Request('https://registry/mint', {
@@ -1135,9 +1156,24 @@ async function handle(request, env) {
       return new Response('no such room', { status: 404 });
     }
 
+    // Attributed, so the registry can count this source's wrong guesses. A private room is
+    // reachable by its code and by nothing else, and 31^6 is worth scanning if nothing counts
+    // the misses — which, until now, nothing did.
     const resolved = await (
-      await registry().fetch(new Request(`https://registry/resolve?code=${encodeURIComponent(code)}`))
+      await registry().fetch(
+        new Request(
+          `https://registry/resolve?code=${encodeURIComponent(code)}` +
+            `&source=${encodeURIComponent(await sourceIdOf(request))}`,
+        ),
+      )
     ).json();
+
+    if (resolved.throttled) {
+      // Deliberately a different status from the 404 a miss gets. It says "you have guessed
+      // too often", which the guesser already knows, and never says whether the code they
+      // just tried exists — so it is not an oracle.
+      return new Response('too many attempts', { status: 429 });
+    }
 
     if (!resolved.known) {
       return new Response('no such room', { status: 404 });

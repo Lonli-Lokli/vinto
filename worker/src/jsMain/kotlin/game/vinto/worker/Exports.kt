@@ -23,6 +23,7 @@ import game.vinto.room.readyForNextRound as coreReadyForNextRound
 import game.vinto.room.registrySize as coreRegistrySize
 import game.vinto.room.removeBot as coreRemoveBot
 import game.vinto.room.resolveRoomCode as coreResolveRoomCode
+import game.vinto.room.resolveRoomCodeFor as coreResolveRoomCodeFor
 import game.vinto.room.roundRecording as coreRoundRecording
 import game.vinto.room.seatCount as coreSeatCount
 import game.vinto.room.seatForToken as coreSeatForToken
@@ -152,6 +153,21 @@ fun looksLikeRoomCode(code: String): Boolean = coreLooksLikeRoomCode(code)
 @JsExport
 fun resolveRoomCode(registryJson: String, code: String): String =
     coreResolveRoomCode(registryJson, code)
+
+/**
+ * Resolve a code and count this source's wrong guesses (design R6).
+ *
+ * The answer carries the registry back with it, because counting a miss is a write — the shim
+ * must persist `state` or the limiter forgets between requests and looks present while doing
+ * nothing.
+ */
+@JsExport
+fun resolveRoomCodeFor(
+    registryJson: String,
+    code: String,
+    sourceId: String,
+    nowMs: Double,
+): String = coreResolveRoomCodeFor(registryJson, code, sourceId, nowMs)
 
 @JsExport
 fun listPublicRooms(registryJson: String, nowMs: Double): String =

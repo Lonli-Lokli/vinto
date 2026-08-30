@@ -59,6 +59,43 @@ private const val MAX_PUBLIC_LISTED = 50
 /** Four seats to a table, so a room with fewer filled has somewhere to sit. */
 private const val SEAT_COUNT = 4
 
+/**
+ * How many wrong codes one source may try before the registry stops answering it.
+ *
+ * A private room is reachable by its code and by nothing else, so the code is the only thing
+ * standing between a stranger and somebody's table. The keyspace is 31^6 — 887,503,681 — and
+ * with [MAX_LIVE_ROOMS] alive at once a single guess hits with probability about 2.3 in ten
+ * million. Even odds needs roughly three million guesses, which is hours at a rate one host
+ * can sustain and under an hour spread across a few. Worth rate-limiting, exactly as the
+ * comment on [CODE_ALPHABET] has always said.
+ *
+ * **The rate limit those comments refer to did not exist.** Design R6 put it in the Cloudflare
+ * dashboard as a zone rule, `wrangler.jsonc` records that it was deliberately not
+ * half-configured there, and nobody ever configured it — so the documented mitigation was a
+ * plan, and `resolveRoomCode` was a bare lookup that counted nothing. It lives here now for
+ * two reasons beyond that: a zone rule cannot see inside a WebSocket, which is how a room is
+ * actually joined, and it cannot tell a wrong code from a right one, so it would have to
+ * throttle real players at the same rate as guessers.
+ *
+ * Twenty is far above a person mistyping a code read down a telephone and far below anything
+ * that makes scanning worthwhile.
+ */
+private const val MAX_MISSES_PER_SOURCE = 20
+
+/** The window a source's misses are counted over, after which it starts fresh. */
+private const val MISS_WINDOW_MS = 10 * 60 * 1000.0
+
+/**
+ * How many sources are tracked at once.
+ *
+ * The limiter is itself state an attacker can grow, so it is bounded like everything else
+ * here: a guesser rotating addresses could otherwise fill the registry's storage with
+ * counters, turning the defence into the attack. Expired records go first; if a flood is live
+ * enough that they are all current, the ones with the fewest misses are dropped, because the
+ * record worth keeping is the one closest to acting.
+ */
+private const val MAX_TRACKED_SOURCES = 2_000
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RegisteredRoom(
@@ -85,9 +122,24 @@ data class RegisteredRoom(
 @Serializable
 data class RegistryState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val rooms: List<RegisteredRoom> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val guesses: List<GuessRecord> = emptyList(),
 ) {
     val size: Int get() = rooms.size
 }
+
+/**
+ * Wrong code guesses from one source, and when the count started.
+ *
+ * Keyed by the same hashed address the room cap uses, so the registry still never sees an
+ * address. Only *failures* are counted: somebody typing a code that works is not guessing.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class GuessRecord(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val sourceId: String,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val misses: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val since: Double = 0.0,
+)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -102,6 +154,10 @@ internal data class MintResult(
 internal data class ResolveResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val known: Boolean,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val room: RegisteredRoom? = null,
+    /** Set when the source has spent its guesses; the Worker turns this into a 429. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val throttled: Boolean = false,
+    /** The registry after counting this attempt. The caller must persist it. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val state: RegistryState? = null,
 )
 
 fun newRegistry(): String = VintoJson.encodeToString(RegistryState())
@@ -177,11 +233,77 @@ fun mintRoomCode(
  * This is the gate that replaces create-by-URL: the socket layer asks first and only reaches
  * a Durable Object for a code that comes back known.
  */
-fun resolveRoomCode(registryJson: String, code: String): String {
+fun resolveRoomCode(registryJson: String, code: String): String =
+    resolveRoomCodeFor(registryJson, code, sourceId = "", nowMs = 0.0)
+
+/**
+ * Resolve a code, counting this source's wrong guesses.
+ *
+ * Returns the answer **and the new registry state**, because counting a miss is a write — the
+ * caller has to persist it or the limiter forgets everything between requests, which is the
+ * shape of bug that makes a rate limiter look present and do nothing.
+ *
+ * A source over [MAX_MISSES_PER_SOURCE] is refused without a lookup, and the refusal is
+ * marked `throttled` so the Worker can answer 429 rather than 404. That distinction leaks
+ * nothing: it says "you have guessed too much", which the guesser already knows, and never
+ * says whether the code they just tried exists. A correct guess by a throttled source is
+ * refused too — the alternative is a limiter that can be probed past by luck.
+ *
+ * `sourceId` empty means "not attributable" — a caller with no address, which in practice is
+ * the JVM test harness and the gates. Those are not counted and not refused; the boundary is
+ * the Worker, which always has one.
+ */
+fun resolveRoomCodeFor(registryJson: String, code: String, sourceId: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+
+    if (sourceId.isEmpty()) {
+        val room = state.rooms.firstOrNull { it.code == code.uppercase() }
+        return VintoJson.encodeToString(
+            ResolveResult(known = room != null, room = room, state = state),
+        )
+    }
+
+    val fresh = state.guesses.filter { nowMs - it.since < MISS_WINDOW_MS }
+    val record = fresh.firstOrNull { it.sourceId == sourceId }
+
+    if (record != null && record.misses >= MAX_MISSES_PER_SOURCE) {
+        return VintoJson.encodeToString(
+            ResolveResult(known = false, throttled = true, state = state.copy(guesses = fresh)),
+        )
+    }
+
     val room = state.rooms.firstOrNull { it.code == code.uppercase() }
-    return VintoJson.encodeToString(ResolveResult(known = room != null, room = room))
+    if (room != null) {
+        // A hit clears the record. Somebody who mistyped twice and then got it right was not
+        // guessing, and should not carry those two into their next invitation.
+        return VintoJson.encodeToString(
+            ResolveResult(
+                known = true,
+                room = room,
+                state = state.copy(guesses = fresh.filterNot { it.sourceId == sourceId }),
+            ),
+        )
+    }
+
+    val counted =
+        if (record == null) {
+            fresh + GuessRecord(sourceId = sourceId, misses = 1, since = nowMs)
+        } else {
+            fresh.map { if (it.sourceId == sourceId) it.copy(misses = it.misses + 1) else it }
+        }
+
+    return VintoJson.encodeToString(
+        ResolveResult(known = false, state = state.copy(guesses = pruned(counted))),
+    )
 }
+
+/** Keeps the counter table bounded — see [MAX_TRACKED_SOURCES]. */
+private fun pruned(guesses: List<GuessRecord>): List<GuessRecord> =
+    if (guesses.size <= MAX_TRACKED_SOURCES) {
+        guesses
+    } else {
+        guesses.sortedByDescending { it.misses }.take(MAX_TRACKED_SOURCES)
+    }
 
 /**
  * The public rooms, as a stranger browsing may see them.

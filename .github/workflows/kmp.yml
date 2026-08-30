@@ -431,6 +431,13 @@ jobs:
         working-directory: worker/cloudflare
         run: node gate-cors.mjs
 
+      # Guesses from an address of its own (`cf-connecting-ip`), because the limiter is per
+      # source and the other gates share one — an earlier version spent the shared allowance
+      # and made `gate-room-codes` fail with 429s it had no way to explain.
+      - name: 'Gate: a private room cannot be found by guessing'
+        working-directory: worker/cloudflare
+        run: node gate-bruteforce.mjs
+
       - name: 'Gate: two clients through one Durable Object'
         working-directory: worker/cloudflare
         run: node gate-two-clients.mjs
