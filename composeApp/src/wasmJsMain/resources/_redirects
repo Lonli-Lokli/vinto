@@ -16,4 +16,17 @@
 # Pages' own default for an unmatched path rather than something a redirect rule was doing.
 # What fixes the status is the committed `404.html`. Both are needed — that file so a missing
 # asset 404s, this rule so an invitation still reaches the app rather than the 404 page.
-/r/* /index.html 200
+#
+# **The target is `/`, not `/index.html`, and it has to be.** Workers static assets validates
+# this file where Pages did not, and rejects `/index.html` outright:
+#
+#     Line 19: Infinite loop detected in this rule. This would cause a redirect to strip
+#     `.html` or `/index` and end up triggering this rule again. [code: 100324]
+#
+# Workers' default `html_handling` strips `/index` and `.html`, so the rewrite target would
+# re-enter this rule. `/` serves the same document and does not. `WebShellTest` pins it.
+#
+# `200` is a rewrite rather than a redirect: the browser's URL stays `/r/ABC123`, which is
+# what `Main.kt` reads out of `window.location.pathname` to find the room code. A 301/302
+# here would change the address bar and lose the code.
+/r/* / 200

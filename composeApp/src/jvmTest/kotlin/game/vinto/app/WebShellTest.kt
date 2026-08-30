@@ -200,9 +200,27 @@ class WebShellTest {
         val redirects = uncommented(read("_redirects"))
         val robots = uncommented(read("robots.txt"))
 
+        // The target is `/`, not `/index.html`. Workers static assets **validates** this file
+        // where Pages did not, and rejects `/index.html` with "Infinite loop detected in this
+        // rule" — its default `html_handling` strips `/index` and `.html`, so the rewrite
+        // target re-enters the rule. That cost a whole deploy to find out, after the build,
+        // the hashing and the upload had all succeeded.
         assertTrue(
-            redirects.contains("$INVITE_PATH* /index.html 200"),
-            "no SPA fallback for $INVITE_PATH — an invitation link 404s",
+            redirects.lineSequence().any { it.trim() == "$INVITE_PATH* / 200" },
+            "no rewrite for $INVITE_PATH — an invitation link 404s",
+        )
+        assertTrue(
+            redirects.lineSequence().none { it.contains("/index.html") },
+            "a rewrite target of /index.html is refused by Workers as an infinite loop; use /",
+        )
+        // 200 is a rewrite, so the address bar keeps `/r/<code>` and `Main.kt` can still read
+        // the code out of `window.location.pathname`. A 301 or 302 would lose it.
+        val redirected = Regex(" 30[128]\\s*$")
+        assertTrue(
+            redirects.lineSequence()
+                .filter { it.trim().startsWith(INVITE_PATH) }
+                .none { redirected.containsMatchIn(it) },
+            "an invitation must be rewritten, not redirected — a redirect changes the URL and drops the code",
         )
         // Line by line, not by substring: the scoped rule *ends with* the blanket one, so
         // `contains` reports the very thing this is here to allow.
