@@ -1,28 +1,31 @@
-# Publishing the web client, from a phone.
+# Publishing the website, from a phone.
 #
-# `vinto.kupalinka.app` does not exist. Not "is broken" — there is no DNS record for it at
-# all, because the Cloudflare Pages project it is meant to be a custom domain of has never
-# been created. `docs/kotlin/README.md` §6c records the reason honestly: the portfolio's
-# shared deploy tooling (`~/sources/gulnya/web-template/`) mirrors a `web/` module layout that
-# this repository does not have, and hand-copying its two scripts here would make Vinto the
-# third copy of a file the portfolio brief specifically warns about copying. So the client
-# compiled, and there was nowhere to put it.
+# `vinto.kupalinka.app` did not exist for the life of this branch. Not "was broken" — there
+# was no DNS record, because the web client had no deploy path at all: the portfolio's shared
+# tooling mirrors a `web/` module layout this repository does not have, and hand-copying its
+# two scripts here would have made Vinto the third copy of files the brief warns about
+# copying (`docs/kotlin/README.md` §6c). So the client compiled and there was nowhere to put
+# it. This is that verification living in CI instead of in a script somebody pastes.
 #
-# This is the third copy's replacement: the verification lives in a workflow rather than in a
-# script somebody pastes, and it is run from the Actions tab, which works in the GitHub mobile
-# app.
+# **It publishes a Worker, not a Pages project**, and the reason is this workflow's own
+# purpose. A Pages custom domain can only be attached in the Cloudflare dashboard —
+# `wrangler pages` has no command for it — so the hostname would have stayed behind "somebody
+# has to open a browser" on a project whose entire point is a button in the GitHub mobile
+# app. A Worker claims its hostname from `routes` in `composeApp/cloudflare/wrangler.jsonc`,
+# exactly as `vinto-room.kupalinka.app` already does. The Pages deployment worked and is
+# simply superseded; `deploy-room.yml` is its sibling and they now work the same way.
 #
-# **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for a
-# `workflow_dispatch` workflow that exists on the *default* branch. `deploy-room.yml` was
+# **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for
+# a `workflow_dispatch` workflow that exists on the *default* branch. `deploy-room.yml` was
 # written, pushed to a feature branch, and did not appear in the dropdown at all; keep the two
-# copies of this one in step or the button runs a version nobody edited.
+# copies of this one in step, or the button runs a version nobody edited. The tree it builds
+# lives on `kotlin`, so set the branch dropdown accordingly — a preflight step says so rather
+# than letting Gradle fail about a missing project.
 #
-# **What this cannot do**, and what a person has to do once: attach the custom domain.
-# `wrangler pages` has no command for it, so `vinto.kupalinka.app` is added in the Cloudflare
-# dashboard — Workers & Pages -> vinto -> Custom domains -> Set up a custom domain — which
-# creates the DNS record and issues the certificate. Until that is done this workflow
-# publishes to `vinto.pages.dev`, which is a real, working, shareable site; it just is not the
-# hostname the invitation links name. DEPLOYMENT.md §6c walks it.
+# **Never construct the address you verify.** The first run of the Pages version of this
+# workflow published perfectly and then reported failure, because it polled a hostname it had
+# built out of the project name — a name that belonged to somebody else's project. The
+# address is read from configuration and from what wrangler says, never assembled.
 name: Deploy web
 
 on:
@@ -33,8 +36,8 @@ on:
         type: boolean
         default: false
 
-# One deploy at a time. Two overlapping publishes to one Pages project is a race whose loser
-# is whichever upload happens to finish second.
+# One deploy at a time, and later runs win. Two overlapping `wrangler deploy` calls against
+# one Worker is a race whose loser is whichever version happens to land second.
 concurrency:
   group: deploy-web
   cancel-in-progress: false
@@ -46,7 +49,7 @@ env:
   # nothing to do with it. Keep the three files in step.
   WRANGLER_VERSION: '4.127.1'
   WRANGLER_SEND_METRICS: 'false'
-  PROJECT: 'vinto'
+  CONFIG_DIR: 'composeApp/cloudflare'
   DIST: 'composeApp/build/dist/wasmJs/productionExecutable'
 
 jobs:
@@ -64,10 +67,7 @@ jobs:
       - uses: actions/checkout@v6
 
       # Which branch you ran this from matters, and getting it wrong fails deep in a Gradle
-      # build with an error about a missing project rather than about the ref. The workflow
-      # has to live on `master` to appear in the dropdown at all (see the header), but the
-      # Kotlin tree it builds is on `kotlin` until that merges — so the branch dropdown on
-      # the "Run workflow" panel is a choice, not a formality.
+      # build with an error about a missing project rather than about the ref.
       - name: Check this ref has the app in it
         run: |
           if [ ! -d composeApp ]; then
@@ -101,11 +101,11 @@ jobs:
       # Content-addressing, and this is the step the whole workflow exists around.
       #
       # The `kupalinka.app` zone's Browser Cache TTL *overrides* a weaker origin
-      # `Cache-Control` (README §6c), so a fixed-name script is cached past the deploy that replaces
-      # it — and because the Kotlin/Wasm toolchain already content-hashes the `.wasm` files,
-      # a stale `composeApp.js` keeps naming a binary that is no longer there. That is a 404
-      # and a dead page, not a stale one, and it has taken portfolio sites down before. The
-      # `.wasm` half is handled by the toolchain; this is the half that is not.
+      # `Cache-Control` (README §6c), so a fixed-name script is cached past the deploy that
+      # replaces it — and because the Kotlin/Wasm toolchain already content-hashes the `.wasm`
+      # files, a stale `composeApp.js` keeps naming a binary that is no longer there. That is
+      # a 404 and a dead page, not a stale one, and it has taken portfolio sites down before.
+      # The `.wasm` half is handled by the toolchain; this is the half that is not.
       - name: Content-address the script
         id: hash
         run: |
@@ -123,6 +123,17 @@ jobs:
           grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
           echo "script=composeApp.$hash.js" >> "$GITHUB_OUTPUT"
           echo "Script is now composeApp.$hash.js"
+
+      # The address comes out of the committed configuration, so the verification below checks
+      # the hostname this deploy is actually claiming rather than one assembled from a name.
+      - name: Read the site's address from the config
+        id: site
+        run: |
+          host=$(grep -oE '"pattern"[[:space:]]*:[[:space:]]*"[^"]+"' "$CONFIG_DIR/wrangler.jsonc" \
+                 | head -1 | sed -E 's/.*"([^"]+)"$/\1/')
+          [ -n "$host" ] || { echo "::error::no route pattern in $CONFIG_DIR/wrangler.jsonc"; exit 1; }
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "This deploy claims https://$host"
 
       - name: Measure what is about to be published
         run: |
@@ -147,13 +158,15 @@ jobs:
       - name: What would have been deployed
         if: ${{ inputs.dryRun }}
         run: |
-          echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "Dry run: nothing was published."
+            echo ""
+            echo "It would have gone to https://${{ steps.site.outputs.host }}."
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      # `pages project create` is idempotent here by being allowed to fail: there is no
-      # `--if-not-exists`, and the first run of this workflow is the one that has to create
-      # the project. A second run finds it already there and carries on.
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy the Worker
         if: ${{ !inputs.dryRun }}
+        working-directory: composeApp/cloudflare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -162,56 +175,67 @@ jobs:
             echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
             exit 1
           fi
-          # Not a pipeline: `cmd | tee ... || fallback` tests tee's exit code, so a wrangler
-          # failure would sail straight past the fallback and the deploy would fail later
-          # with a stranger message.
-          if ! npx --yes wrangler@${WRANGLER_VERSION} pages project create "$PROJECT" \
-                 --production-branch master >/tmp/create.log 2>&1; then
-            cat /tmp/create.log
-            grep -qi "already exists" /tmp/create.log \
-              || { echo "::error::could not create the Pages project"; exit 1; }
-            echo "The project already exists; deploying into it."
-          fi
-
-          npx --yes wrangler@${WRANGLER_VERSION} pages deploy "$DIST" \
-            --project-name "$PROJECT" --branch master --commit-dirty=true
+          # The first deploy creates the DNS record for the custom domain, which needs zone
+          # permissions on kupalinka.app and not only Workers ones — the same thing the room's
+          # first deploy needed (README §6d).
+          npx --yes wrangler@${WRANGLER_VERSION} deploy
 
       # Propagation is not atomic. §6d records that catching the maintainer out twice on the
-      # room Worker, and README §6c records the Pages version of the same hazard — a newly-deployed
-      # asset fetched before the edge has it is answered with the SPA shell, 200, `text/html`.
+      # room Worker, and §6c records the static-hosting version of the same hazard.
       #
       # So this does not ask "is it up". It asks whether the page being served names *this*
       # build's script, which is a question only the new deploy can answer correctly, and it
-      # probes with a cache-buster because README §6c says in as many words never to point anything
+      # probes with a cache-buster because §6c says in as many words never to point anything
       # at a fresh deploy without one.
+      #
+      # A first deploy also has to wait for DNS and for a certificate, which is slower than a
+      # redeploy — hence the generous budget rather than the room's.
       - name: Wait for the edge to serve this build
         if: ${{ !inputs.dryRun }}
         env:
           SCRIPT: ${{ steps.hash.outputs.script }}
+          HOST: ${{ steps.site.outputs.host }}
         run: |
-          site="https://${PROJECT}.pages.dev"
-          for attempt in $(seq 1 30); do
+          site="https://$HOST"
+          for attempt in $(seq 1 40); do
             body=$(curl -sS --max-time 15 "$site/?cb=$RANDOM$attempt" || true)
             if printf '%s' "$body" | grep -q "$SCRIPT"; then
               echo "attempt $attempt: serving $SCRIPT"
-              # And the script it names is really there — the check that would have caught
-              # the stale-name failure this whole workflow is built to prevent.
+
+              # The script it names is really there — the check that would have caught the
+              # stale-name failure this whole workflow is built to prevent.
               code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$site/$SCRIPT?cb=$RANDOM")
               [ "$code" = "200" ] || { echo "::error::the page names $SCRIPT and the edge answers $code for it"; exit 1; }
+
+              # A missing path must be a 404 rather than the shell with a 200 on it. That is
+              # `not_found_handling: "404-page"` plus the committed `404.html`; on Pages this
+              # came back 200 text/html, which is why it is checked rather than assumed.
+              missing=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$site/no-such-file-$RANDOM.js")
+              [ "$missing" = "404" ] \
+                && echo "a missing asset answers 404" \
+                || echo "::warning::a missing asset answers $missing, not 404 — check not_found_handling and 404.html"
+
+              # And an invitation link must still reach the app rather than that 404 page.
+              invite=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$site/r/ABC123")
+              [ "$invite" = "200" ] \
+                || echo "::warning::an invitation path answers $invite — check _redirects"
+
               {
                 echo "### Published"
                 echo ""
-                echo "* $site"
-                echo "* script: \`$SCRIPT\`"
+                echo "**$site**"
                 echo ""
-                echo "If \`vinto.kupalinka.app\` still does not resolve, the custom domain has"
-                echo "not been attached yet — that is a one-time step in the Cloudflare"
-                echo "dashboard, and DEPLOYMENT.md section 6c walks it."
+                echo "* script: \`$SCRIPT\`"
+                echo "* a missing asset answers: $missing (should be 404)"
+                echo "* an invitation path answers: $invite (should be 200)"
+                echo ""
+                echo "The custom domain is claimed by \`routes\` in"
+                echo "\`composeApp/cloudflare/wrangler.jsonc\`, so there is no dashboard step."
               } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             echo "attempt $attempt: not yet"
-            sleep 10
+            sleep 15
           done
-          echo "::error::$site never served $SCRIPT. It may still be propagating; check the site before running this again."
+          echo "::error::$site never served $SCRIPT. The upload itself may have succeeded — check the deploy step. On a first deploy this can also be DNS or the certificate still being issued for $HOST."
           exit 1
