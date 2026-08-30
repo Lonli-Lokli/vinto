@@ -61,6 +61,7 @@ named here so that the claim can be checked rather than believed.
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
 | A bot follows the rules, and games end | `SelfPlayGateTest` — every proposed action through `ActionValidator`, every game to `scoring` |
 | Nothing identifying is ever counted or reported | `AnalyticsPrivacyTest` (types), `AnalyticsPrivacyUiTest` (the app), `gate-analytics.mjs` (the wire), `CrashReportTest` (crashes) |
+| A card's `actionText` is *data*, not copy — it is in the hash, so it cannot be translated | `CardCopyIsDataTest` |
 
 **The engine's purity is not a style preference.** It is what lets the same code be the
 authority in a Durable Object and the simulator inside MCTS, and it is what makes a recording

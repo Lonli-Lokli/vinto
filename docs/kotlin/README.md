@@ -1435,13 +1435,38 @@ worked by coincidence, `Ask.YouDrew` and `Say.DrewKnown` being different types t
 produce the same English. `Ask.echoedBy(Say)` says the relationship instead, and survives a
 language where those two sentences differ.
 
+### The boundary: `shortDescription` is data, and cannot be translated
+
+Found while deciding what to do about `CardConfig`, and it is the non-obvious constraint on
+this whole piece of work.
+
+`CardConfig.shortDescription` is copied into **`Card.actionText`** when a toss-in resolves
+(`TossInHandlers`). `Card`s live in `GameState`. The canonical hash excludes exactly three
+fields — `turnActions`, `roundActions`, `botMemory` — so `actionText` is **inside the hash**
+that all 50 fixtures pin against the value TypeScript computed. Translate those four strings
+and every recording diverges.
+
+So the line is drawn there:
+
+| Field | | |
+| --- | --- | --- |
+| `shortDescription` | **data** | Reaches `Card.actionText`, hashed. Must stay exactly what TypeScript wrote |
+| `name`, `longDescription`, `helpText` | presentation | Translatable; they never enter a state |
+
+`CardCopyIsDataTest` in `shared/shapes` pins the four strings, the shape of the rule (an
+action card has text, a plain one does not), and the exclusion list itself — so if `actionText`
+ever *does* leave the hash, one test says the constraint is lifted rather than fifty saying
+something is wrong.
+
+The right fix is that `actionText` should never have been a string in the state: it is derivable
+from the rank at the point of display. That is a rules-shaped change needing the corpus
+regenerated, which §1d says is on its way to being impossible — so it is recorded here as a
+deviation rather than queued as a task.
+
 ### Still to do
 
-- **`Table.detail`** (~8 literals) is still a `String?`, and it is not simply more of the same:
-  most of what fills it is `CardConfig.longDescription` from `shared/shapes` — a *fourth* file,
-  and one shared with the help sheet's card gallery. Converting `detail` without deciding about
-  `CardConfig` would produce a typed field carrying an English string, which is worse than
-  either end. Decide `CardConfig` first.
+- **`Table.detail`** (~8 literals). Now unblocked, with the boundary above understood: the
+  parts fed by `longDescription` are translatable, and nothing in `detail` touches the hash.
 - **`TeachScript.kt`** (144 literals), the largest single piece left. Mostly prose rather than
   assembled sentences, so it is more mechanical than these three were — but it is also where
   the two dead English matches lived, so read it for more of them while converting.
