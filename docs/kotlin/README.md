@@ -1740,6 +1740,22 @@ having: a corrupted hash has to be caught *at the action that carries it* (or th
 accepting anything), and one seed has to produce one document byte for byte (or two targets
 cannot be compared at all).
 
+### The one thing 6.5 turned out to be
+
+The TypeScript `BotAIAdapter` is 1,500 lines because it drives a UI. Split in two here: the
+*deciding* is `BotRunner`, a pure function of the state shared with the Durable Object, and the
+*pacing* reaches the UI as frames rather than as `await delay(...)` inside the bot driver. What
+was left that is genuinely a coroutine question is one line — `LocalGameSession` runs the search
+on an injected `botDispatcher`, `Dispatchers.Default` in the app, null in tests — and nothing
+checked it was live. A new path reaching the runner without going through `onBotDispatcher`
+would move up to 1.6 s of search back onto the drawing thread *silently*, because the game would
+still be perfectly correct; it would just stutter on a device, in a build nobody tests.
+
+`BotDispatcherTest` asks the dispatcher, from inside the block that does the thinking, and also
+pins that the whole run of bot turns rides on **one** hop rather than one per bot. It compiles
+for JS and Wasm, which is where `java.lang.Runnable` was caught: `CoroutineDispatcher.dispatch`
+takes `kotlinx.coroutines.Runnable` in common code, and the import is the whole difference.
+
 ### What it found on its first run
 
 **A player's exported bug report could not be replayed by anything.** `Recording.formatVersion`
