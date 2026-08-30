@@ -77,7 +77,11 @@ class DiscoveryTest {
     fun quietMeansAnsweredAndEmptyRatherThanStillAsking() {
         assertTrue(DiscoveryState().quiet)
         assertFalse(DiscoveryState(loading = true).quiet)
-        assertFalse(DiscoveryState(failure = "no answer").quiet)
+        assertFalse(
+            DiscoveryState(
+                failure = RoomAnswer.Failed(RoomTrouble.OFFLINE, "no answer"),
+            ).quiet,
+        )
         assertFalse(DiscoveryState(rows = discoveryRows(listOf(room()))).quiet)
     }
 

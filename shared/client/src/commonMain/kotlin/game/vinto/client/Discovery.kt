@@ -39,7 +39,14 @@ data class DiscoveryState(
     val rows: List<DiscoveryRow> = emptyList(),
     val loading: Boolean = false,
     val refreshing: Boolean = false,
-    val failure: String? = null,
+    /**
+     * Why there is no list, when there is none.
+     *
+     * The whole answer rather than its words: a screen that only had the string could say
+     * what the service said and not what the player should do about it, and the two are not
+     * the same sentence.
+     */
+    val failure: RoomAnswer.Failed? = null,
 ) {
     /** True when the service answered, answered fine, and simply had nothing to list. */
     val quiet: Boolean get() = rows.isEmpty() && !loading && failure == null

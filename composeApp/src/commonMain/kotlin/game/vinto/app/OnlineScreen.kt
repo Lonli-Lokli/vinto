@@ -31,7 +31,6 @@ import game.vinto.app.art.online_code
 import game.vinto.app.art.online_code_detail
 import game.vinto.app.art.online_create
 import game.vinto.app.art.online_creating
-import game.vinto.app.art.online_failed
 import game.vinto.app.art.online_join
 import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
@@ -72,7 +71,7 @@ fun OnlineScreen(
 ) {
     var nickname by remember { mutableStateOf(vault.identity { freshSeed() }.nickname) }
     var code by remember { mutableStateOf("") }
-    var failure by remember { mutableStateOf<String?>(null) }
+    var failure by remember { mutableStateOf<RoomAnswer.Failed?>(null) }
     var busy by remember { mutableStateOf(false) }
     var listed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -110,11 +109,19 @@ fun OnlineScreen(
 
             VisibilityChoice(listed) { listed = it }
 
-            failure?.let {
+            failure?.let { refused ->
+                // The trouble says what to do; the service's own words go underneath, quieter,
+                // for whoever is debugging. Showing only the second is what put "server-side
+                // action validation is not implemented yet" in front of a player.
                 Text(
-                    text = stringResource(Res.string.online_failed, it),
+                    text = troubled(refused.trouble),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
+                )
+                Text(
+                    text = refused.reason,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
                 )
             }
 
@@ -145,7 +152,7 @@ fun OnlineScreen(
                         // sentence.
                         when (val answer = connector.createRoom(listed, nickname)) {
                             is RoomAnswer.Ok -> enter(answer.value.code)
-                            is RoomAnswer.Failed -> failure = answer.reason
+                            is RoomAnswer.Failed -> failure = answer
                         }
                         busy = false
                     }
@@ -245,3 +252,6 @@ private val Gap = 12.dp
 private val ColumnMax = 420.dp
 private const val CODE_LENGTH = 6
 private const val NICKNAME_MAX = 16
+
+/** The service's own words, under the sentence that says what to do about them. */
+private const val Quiet = 0.6f

@@ -2096,6 +2096,38 @@ Two changes, and the second is the one that actually guarantees it:
 and `CrashReporterTest` pins it: a failed send leaves the stored copy alone, a successful one
 clears it.
 
+### And the reason online play does not work at all is a flag
+
+Checked against the deployment rather than reasoned about:
+
+```
+$ curl https://vinto-room.kupalinka.app/health
+{"ok":true,"service":"vinto-room","engine":"kotlin","roomOpen":false}
+$ curl -o/dev/null -w '%{http_code}' https://vinto-room.kupalinka.app/rooms          # 503
+$ curl -X POST .../rooms -d '{"isPublic":false,"hostNickname":"probe"}'
+The room is closed: server-side action validation is not implemented yet (see
+ActionValidator, task 4.4). POST /replay to exercise the engine.                     # 503
+```
+
+So browsing and creating both fail at the service, exactly as designed — `ROOM_OPEN` is
+`"false"` in `wrangler.jsonc` and §6i step 4 has never been walked. Two things follow, and the
+second is the one nobody would notice:
+
+- **The flag's own comment is now out of date.** It says "flip this to `true` in the same commit
+  that lands the validator, never before"; the validator landed in phase 4 and the flag did not
+  move. Opening the room is a deliberate act with credentials, so it stays a maintainer's step —
+  but it is no longer *blocked* on anything in the code.
+- **The deployment is stale.** Its refusal names task 4.4 as unfinished, which dates it to
+  before most of this branch. Flipping the flag on what is deployed would open an old room; the
+  Worker has to be rebuilt and redeployed either way.
+
+What the client does about it: the **trouble** picks the sentence and the service's words go
+underneath in small type. A player who taps Browse now reads "Online play is not open yet.
+Single player and the lesson work as normal" rather than "server-side action validation is not
+implemented yet (see ActionValidator, task 4.4)" — which is true, is addressed to somebody who
+works on this, and tells a player nothing. `troubled()` is a `when` with no `else`, so a seventh
+`RoomTrouble` is a compile error rather than a screen that says nothing.
+
 ### What is still unknown
 
 **Why the app exits.** That is not diagnosed, and saying otherwise would be a guess dressed up.

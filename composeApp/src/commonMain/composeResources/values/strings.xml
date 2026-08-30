@@ -43,6 +43,12 @@
     <string name="online_join">Join the room</string>
     <string name="online_create">Open a new room</string>
     <string name="online_failed">The room could not be reached: %1$s</string>
+    <string name="trouble_offline">No connection to the room service. Check the network and try again.</string>
+    <string name="trouble_no_such_room">No room with that code. Check the six characters and try again.</string>
+    <string name="trouble_closed">Online play is not open yet. Single player and the lesson work as normal.</string>
+    <string name="trouble_busy">That table is full. Try another, or start one of your own.</string>
+    <string name="trouble_refused">The room service would not accept that.</string>
+    <string name="trouble_broken">The room service is having trouble. Try again in a moment.</string>
     <string name="online_creating">Opening a room…</string>
     <string name="online_visibility">Who can find the room</string>
     <string name="online_visibility_private">By code only</string>

@@ -88,7 +88,7 @@ fun DiscoverScreen(
             // is an ordinary answer, and it draws the "nobody is listed" state below.
             state = when (val answer = connector.listPublicRooms()) {
                 is RoomAnswer.Ok -> DiscoveryState(rows = discoveryRows(answer.value))
-                is RoomAnswer.Failed -> DiscoveryState(rows = state.rows, failure = answer.reason)
+                is RoomAnswer.Failed -> DiscoveryState(rows = state.rows, failure = answer)
             }
         }
     }
@@ -156,6 +156,12 @@ private fun ColumnScope.DiscoverBody(
     onJoin: (String) -> Unit,
     onRetry: () -> Unit,
 ) {
+    // Read once and smart-cast, rather than `state.failure!!` twice inside the branch that
+    // has already tested it. `PartialFunctionTest` refuses the `!!` — correctly: a property
+    // of a data class read twice is two reads, and the compiler cannot see that the second
+    // is safe. That is exactly the reasoning that put a `first {}` on the felt.
+    val refused = state.failure
+
     when {
         state.loading -> Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = Empty),
@@ -177,13 +183,20 @@ private fun ColumnScope.DiscoverBody(
             }
         }
 
-        state.failure != null -> Column(
+        refused != null -> Column(
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
+            // What to do about it, then what the service said. The other way round is how a
+            // player came to be shown "server-side action validation is not implemented yet".
             Text(
-                text = stringResource(Res.string.discover_failed, state.failure.orEmpty()),
+                text = troubled(refused.trouble),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = stringResource(Res.string.discover_failed, refused.reason),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
             )
             GameButton(
                 label = stringResource(Res.string.discover_retry),
@@ -280,3 +293,6 @@ private val Gap = 12.dp
 private val Tight = 2.dp
 private val Empty = 48.dp
 private val ColumnMax = 480.dp
+
+/** The service's own words, under the sentence that says what to do about them. */
+private const val Quiet = 0.6f
