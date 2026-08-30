@@ -18,6 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -33,6 +37,7 @@ import game.vinto.app.art.settings_back
 import game.vinto.app.art.settings_bots
 import game.vinto.app.art.settings_bots_detail
 import game.vinto.app.art.settings_forget
+import game.vinto.app.art.settings_forget_record
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
 import game.vinto.app.art.settings_motion
@@ -41,6 +46,8 @@ import game.vinto.app.art.settings_off
 import game.vinto.app.art.settings_on
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
+import game.vinto.app.art.settings_record
+import game.vinto.app.art.settings_record_detail
 import game.vinto.app.art.settings_saved_game
 import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_sound
@@ -60,6 +67,8 @@ import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
+import game.vinto.client.forgetStats
+import game.vinto.client.loadStats
 import game.vinto.shapes.Difficulty
 import org.jetbrains.compose.resources.stringResource
 
@@ -111,6 +120,11 @@ fun SettingsScreen(
             Noise(settings, onChange)
             Buzz(settings, onChange)
             Counting(settings, onChange)
+
+            // Personal, so forgettable. The anonymous counts have an opt-out because they
+            // leave the device; this has one because it does not — a record about somebody
+            // that they cannot clear is a record they did not agree to keep.
+            ClearRecord()
 
             if (canForget) {
                 Setting(
@@ -318,3 +332,37 @@ private val DetailSize = 13.sp
 private const val Quiet = 0.75f
 
 private val FootnoteSize = 12.sp
+
+/**
+ * Throwing the local record away.
+ *
+ * Shown only when there is something to throw away, for the same reason the home screen's line
+ * is: an empty statistics section on a fresh install advertises homework nobody has been set.
+ *
+ * It clears immediately and without a confirmation dialog. That is deliberate — the thing
+ * being deleted is four small numbers about a card game, and a modal asking somebody whether
+ * they are sure they want to forget their streak takes the decision more seriously than the
+ * person does.
+ */
+@Composable
+private fun ClearRecord() {
+    val vault = LocalVault.current ?: return
+    var cleared by remember { mutableStateOf(false) }
+    val stats = remember(vault, cleared) { vault.loadStats() }
+    if (stats.roundsPlayed == 0) return
+
+    Setting(
+        title = stringResource(Res.string.settings_record),
+        detail = stringResource(Res.string.settings_record_detail),
+    ) {
+        GameButton(
+            label = stringResource(Res.string.settings_forget_record),
+            tone = ButtonTone.DANGER,
+            onClick = {
+                vault.forgetStats()
+                cleared = true
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}

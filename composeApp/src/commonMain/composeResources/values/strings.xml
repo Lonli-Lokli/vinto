@@ -141,6 +141,9 @@
     <string name="settings_saved_game">Saved game</string>
     <string name="settings_saved_game_detail">There is a round in progress. Forgetting it cannot be undone, and the running score of the session goes with it.</string>
     <string name="settings_forget">Forget it</string>
+    <string name="settings_record">Your record</string>
+    <string name="settings_record_detail">Rounds played, how many you won, your best hand and your streak. Kept on this device only — never sent anywhere.</string>
+    <string name="settings_forget_record">Clear it</string>
 
     <!-- ================================================================ the table -->
     <string name="table_round_turn">R%1$d / T%2$d</string>
@@ -234,6 +237,16 @@
     <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
     <!-- The privacy note, in the app's own words rather than a policy's. Said here because
          this is the sheet a player already opens to find out what something means. -->
+    <!-- What this device remembers about its owner. Stays on the device: no account, no sync,
+         nothing sent anywhere — which is what lets it be personal at all, unlike the
+         anonymous counts. Shown only once there is a round to show. -->
+    <string name="stats_played">%1$d played</string>
+    <string name="stats_won">%1$d%% won</string>
+    <string name="stats_best">best %1$d</string>
+    <string name="stats_streak">%1$d in a row</string>
+    <string name="stats_row">Your record: %1$s</string>
+    <string name="stats_separator"> · </string>
+
     <!-- The lesson's chapters, one progress dot each. These are the dots' accessible names:
          before this they had none, and the words sat unused in a `Chapter.label` field that
          nothing rendered. -->

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
+import game.vinto.app.LocalVault
 import game.vinto.app.art.Res
 import game.vinto.app.art.deck_body
 import game.vinto.app.art.deck_dismiss
@@ -47,7 +48,11 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
+import game.vinto.client.RoundResult
 import game.vinto.client.dealScenes
+import game.vinto.client.loadStats
+import game.vinto.client.plus
+import game.vinto.client.saveStats
 import game.vinto.client.toJson
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
@@ -217,6 +222,7 @@ private fun SoloScore(
 ) {
     game.result?.let { result ->
         countRound(true)
+        RecordRound(result, game.playerId)
         StandingsSheet(
             round = round,
             you = game.playerId,
@@ -375,4 +381,23 @@ private fun rememberRoundCount(game: LocalGame): (Boolean) -> Unit {
 
     DisposableEffect(count) { onDispose { count(false) } }
     return count
+}
+
+/**
+ * Adds this round to what the device remembers about its owner.
+ *
+ * Written when the score sheet opens rather than when the round ends, so a round the player
+ * never looked at is not counted — the same rule `rememberRoundCount` uses for the anonymous
+ * count, and for the same reason: a round abandoned mid-way is a different fact from one
+ * played out.
+ *
+ * `remember(result)` makes it once per round. Without it, every recomposition while the sheet
+ * is open would add another win.
+ */
+@Composable
+private fun RecordRound(result: RoundResult, viewerId: String) {
+    val vault = LocalVault.current
+    remember(result) {
+        vault?.let { it.saveStats(it.loadStats().plus(result, viewerId) ?: return@let) }
+    }
 }

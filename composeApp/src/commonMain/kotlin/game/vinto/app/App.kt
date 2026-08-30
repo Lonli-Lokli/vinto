@@ -133,7 +133,10 @@ fun App(
                     // what happened. Provided once here rather than by each screen: the thing
                     // that reads it is `CardStage`, which is the same code under all three
                     // tables and cannot tell them apart on its own.
-                    CompositionLocalProvider(LocalSurface provides surfaceOf(screen)) {
+                    CompositionLocalProvider(
+                        LocalSurface provides surfaceOf(screen),
+                        LocalVault provides vault,
+                    ) {
                         when (val here = screen) {
                             Screen.Opening -> OpeningScreen()
 

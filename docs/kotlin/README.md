@@ -172,8 +172,14 @@ measurable.
    prompts, the move log and the entire lesson do not. The fix is designed — return a typed
    message and render it in the UI — and it makes the tests better, because asserting
    `Say.YouDrew(SEVEN)` says what is meant where an English sentence says what it reads
-6. **Local statistics.** Games played, win rate, best round, streak. On the device, no server,
-   no privacy cost, and it is what makes a game with sessions worth opening twice
+6. ~~**Local statistics.**~~ **Done.** `Stats` beside `Settings` in the same vault: rounds
+   played, win rate, best hand, streak and best streak. On the device, no server, no privacy
+   cost. A line under the wordmark once there is a round to show, and a way to clear it in
+   Settings — personal data that cannot be cleared is data nobody agreed to keep.
+   Two decisions worth knowing: **won means finished lowest**, not "took the round's points",
+   because the Vinto caller takes +3 on a tie and a player told they won a round they did not
+   finish lowest in would not believe the other three numbers either; and the win rate rounds
+   *down*, because a number shown to somebody about themselves should not flatter
 
 **Tier 3 — after the room is open.** Store releases (9.10), `docs/kotlin/ARCHITECTURE.md`
 (8.4), a `CONTRIBUTING.md` that is about this repository rather than the retired one, and a

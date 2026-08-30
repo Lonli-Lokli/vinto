@@ -45,6 +45,12 @@ import game.vinto.app.art.home_solo_title
 import game.vinto.app.art.home_tagline
 import game.vinto.app.art.home_teach
 import game.vinto.app.art.home_version
+import game.vinto.app.art.stats_best
+import game.vinto.app.art.stats_played
+import game.vinto.app.art.stats_row
+import game.vinto.app.art.stats_separator
+import game.vinto.app.art.stats_streak
+import game.vinto.app.art.stats_won
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
@@ -53,6 +59,7 @@ import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Settings
+import game.vinto.client.loadStats
 import game.vinto.shapes.Difficulty
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -114,6 +121,8 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Hero()
+
+            YourRecord()
 
             SoloPanel(
                 difficulty = settings.difficulty,
@@ -306,3 +315,35 @@ private val LabelSize = 12.sp
 private const val Quiet = 0.75f
 
 private val FootnoteSize = 12.sp
+
+/**
+ * The four numbers this device remembers, on one line.
+ *
+ * Under the wordmark and above the play panel, because it is the reason to open the app a
+ * second time and not the reason to open it the first. Absent entirely until there is a round
+ * to report — an empty statistics line on a fresh install is a promise of homework.
+ *
+ * Read once per composition of the home screen rather than held in state: it changes when a
+ * round ends, which is the same moment this screen is rebuilt.
+ */
+@Composable
+private fun YourRecord() {
+    val vault = LocalVault.current ?: return
+    val stats = remember(vault) { vault.loadStats() }
+    if (stats.roundsPlayed == 0) return
+
+    val parts = listOfNotNull(
+        stringResource(Res.string.stats_played, stats.roundsPlayed),
+        stats.winRate?.let { stringResource(Res.string.stats_won, it) },
+        stats.bestHand?.let { stringResource(Res.string.stats_best, it) },
+        stats.streak.takeIf { it > 1 }?.let { stringResource(Res.string.stats_streak, it) },
+    )
+
+    val line = parts.joinToString(stringResource(Res.string.stats_separator))
+
+    Text(
+        text = stringResource(Res.string.stats_row, line),
+        style = MaterialTheme.typography.labelMedium,
+        color = Rail.inkDim,
+    )
+}
