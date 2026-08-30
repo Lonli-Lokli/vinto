@@ -345,53 +345,57 @@ Give it a day before concluding anything is wrong.
 
 ## 6c. Publish the website
 
-`vinto.kupalinka.app` does not load. If you type it into a browser you get
-*DNS_PROBE_FINISHED_NXDOMAIN*, or "can't reach this page" — and that is not a fault to
-diagnose. There is no such address, because the website has never been published. The room
-service at `vinto-room.kupalinka.app` is up and open; the *website* has never existed.
+`vinto.kupalinka.app` does not load — *DNS_PROBE_FINISHED_NXDOMAIN*, or "can't reach this
+page". That is not a fault to diagnose. There is no such address, because the website has
+never been published. The room service at `vinto-room.kupalinka.app` is up and open; the
+*website* has never existed.
 
-There are two steps, and only the second one needs you to sit at a computer with a browser.
+**One step, and no browser needed.**
 
-### Step one — publish it, from your phone if you like
+*Actions → **Deploy web** → Run workflow*, with the branch dropdown set to `kotlin`.
 
-*Actions → **Deploy web** → Run workflow.* That is the whole thing. It builds the browser
-version of the game, checks the page, and publishes it to Cloudflare.
+That is the whole thing. It builds the browser version of the game, checks the page,
+publishes it, **creates the `vinto.kupalinka.app` address itself**, and then keeps checking
+until that address really serves the version it just built.
 
 It uses the same `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` you set up in §6a for the
 room, so if the room deploys, this will too. There is a **dry run** tick-box that builds and
-measures everything and publishes nothing, which is a safe way to see it work.
+measures everything and publishes nothing, which is a safe way to watch it work first.
 
-When it finishes, the summary at the bottom of the run gives you a link. It will be
-**`https://vinto.pages.dev`** — a real, working, shareable website with the game on it. It is
-simply not yet the address the invitation links point at.
+> **Give it a few minutes on the first run.** A brand-new address needs a DNS record and a
+> security certificate, and Cloudflare does not switch every location over at the same moment.
+> The workflow waits and re-checks for ten minutes before giving up. If it does give up, look
+> at whether the deploy step itself succeeded before assuming anything is broken — this has
+> already sent the maintainer chasing a bug that did not exist, twice.
 
-### Step two — give it the right address
+### Why there is no dashboard step any more
 
-This is the part with no button, because Cloudflare has no command for it. Once, in a browser:
+The website used to be a Cloudflare **Pages** project, and Pages custom domains can *only* be
+attached by a person clicking through the dashboard — there is no command for it. That put
+the one thing you actually wanted behind "find a computer".
 
-1. Go to **dash.cloudflare.com** and sign in.
-2. **Workers & Pages** in the sidebar, then the **vinto** project.
-3. The **Custom domains** tab, then **Set up a custom domain**.
-4. Type `vinto.kupalinka.app` and confirm.
-
-Cloudflare creates the DNS record and the certificate itself, because it already runs the
-`kupalinka.app` zone. It takes a few minutes. After that, `vinto.kupalinka.app` is the site,
-and every invitation link starts working.
-
-> **Wait before you judge it.** Cloudflare does not switch every location over at the same
-> moment. Give it several minutes, and reload with a hard refresh — this has already caught
-> the maintainer out twice on the room service, sending them off to fix a bug that did not
-> exist. The workflow itself waits and checks; you should too.
+It is now a **Worker** serving the same files, and a Worker claims its address from a line in
+`composeApp/cloudflare/wrangler.jsonc`, exactly the way `vinto-room.kupalinka.app` already
+does. Same files, same picture, same everything — it is only *how* it is published that
+changed, so that all of it fits in a button.
 
 ### What is in the repository already
 
 You do not need to prepare anything. The published site includes the icons, the sharing
-picture, `robots.txt`, `sitemap.xml`, and the rules that make invitation links work — all of
-them in `composeApp/src/wasmJsMain/resources/`, and all published by the workflow.
+picture, `robots.txt`, `sitemap.xml`, the "not found" page and the rules that make invitation
+links work — all of them in `composeApp/src/wasmJsMain/resources/`, and all published by the
+workflow.
 
 The two files §6b asks you to create belong in that same folder, in a `.well-known`
 sub-folder. Put them there and commit them, and every future deploy carries them
 automatically; put them anywhere else and the next deploy removes them.
+
+### The old Pages project
+
+There is a leftover Pages project called `vinto`, serving an earlier copy at
+`vinto-6dr.pages.dev`. Nothing links to it and it costs nothing. Once you are happy the real
+site works, you can delete it in the dashboard — Workers & Pages → vinto → Settings → Delete.
+There is no hurry, and nothing breaks if you never do.
 
 ---
 
@@ -408,7 +412,8 @@ They go in a folder called `.well-known` at the top of the Pages project, so the
 publishes them.
 
 > **Do §6c first.** There is no website yet, so there is nowhere to put these. Neither
-> file does anything until `vinto.kupalinka.app` actually resolves.
+> file does anything until `vinto.kupalinka.app` actually resolves — which is now one
+> workflow run away rather than a trip to a computer.
 
 ### For Android — `assetlinks.json`
 

@@ -222,7 +222,8 @@ and `fixtures/recordings` is generated from them — a rules change still has to
 `.github/workflows/kmp.yml`, six checks, split by what each needs. It is the only workflow
 that *checks* anything — the web client's three were removed with its CI (§1d). Beside it sits
 two workflows that check nothing and publish: `deploy-room.yml` for the room Worker (§6i
-step 4) and `deploy-web.yml` for the website (§6c). Both are `workflow_dispatch` only, so
+step 4) and `deploy-web.yml` for the website (§6c). Both deploy a Worker — the website was a
+Pages project for one deploy and is not any more, for the reason in §6c. Both are `workflow_dispatch` only, so
 neither runs on a push — deploying is a decision, not a consequence of merging — and both are
 how a thing gets published without a desktop.
 
@@ -550,8 +551,8 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`) — addable from a phone through the Cloudflare dashboard — and traffic. ~~A deployment~~: the room is live and open (§6q) | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
 | analytics 5.3 — Web Analytics on the Pages project | The Cloudflare dashboard for the `vinto` Pages project | A per-site switch that makes Cloudflare inject its own beacon; there is nothing in this repository to change and nothing here can verify it. DEPLOYMENT.md §7b is written for somebody who does not do this for a living. The page it injects into **did not exist** until this pass — see the `index.html` note in §7 |
 | analytics 5.4 — revisit sampling and the cost model | A week of real traffic — which can now start, since the room is open (§6q) | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
-| The website's custom domain | A browser, signed in to the Cloudflare dashboard, once | `vinto.kupalinka.app` has **no DNS record**: the Pages project was never created, so there was nothing to point it at. Everything else is done and gated — the client builds, the shell has its icons and share card, `WebShellTest` holds the page, and `deploy-web.yml` publishes it from the Actions tab. `wrangler pages` has no command for attaching a custom domain, so that one step is a person in a dashboard (DEPLOYMENT.md §6c). Until then the site is at `vinto.pages.dev`, which works and is not the host `INVITE_HOST` names |
-| Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there. **Also blocked on the row above**: there has been no website to serve them from. They belong in `composeApp/src/wasmJsMain/resources/.well-known/`, which every deploy publishes |
+| ~~The website's custom domain~~ | **No longer blocked** | `vinto.kupalinka.app` was blocked on a Cloudflare dashboard visit for as long as the site was a Pages project, because `wrangler pages` cannot attach a custom domain. The site is a Worker now, which claims its hostname from `routes` in `composeApp/cloudflare/wrangler.jsonc` — so `deploy-web.yml` creates the record itself and this is a workflow run rather than a browser. Held by `WebShellTest`, which fails if that route stops matching `INVITE_HOST` |
+| Deep links — verifying them | The two association files hosted on `vinto.kupalinka.app`, each naming a real credential | The app half is built and tested: intent filters, both iOS handlers, the browser path, and `roomCodeFrom` with 5 tests. What cannot be done here is publish **`/.well-known/assetlinks.json`** (needs the release keystore's SHA-256 fingerprint — `keytool -list -v -keystore …`) and **`/.well-known/apple-app-site-association`** (needs the Apple team id and bundle id, served as `application/json` with no extension). Until both exist the https links open the website instead of the app; the `vinto://` scheme works today and is why it is there. **Was also blocked on the row above** — there was no website to serve them from; there is now, and they belong in `composeApp/src/wasmJsMain/resources/.well-known/`, which every deploy publishes |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
 | ~~§6i step 4 — the deploy, and flipping `ROOM_OPEN`~~ | **Done** (§6q) | Deployed and opened from a phone through `deploy-room.yml`; verified against the live edge by `gate-engine-replay` and `gate-two-clients` |
@@ -853,19 +854,39 @@ verbatim" is an instruction to a person, and a check that lives in CI is one nob
 remember to run. The shared template is untouched; if it is ever reworked to reach a Gradle
 repository, this is the caller to point at it.
 
-### The site does not exist yet, and that is one dashboard step
+### The site is a Worker, and that is why it needs no dashboard step
 
 Reported: `vinto.kupalinka.app` answers `DNS_PROBE_FINISHED_NXDOMAIN`. Confirmed — the host
-has no record at all, while `vinto-room.kupalinka.app` and `kupalinka.app` both resolve. It is
-not a broken deploy; the **Cloudflare Pages project has never been created**, so there has
-never been anything for the name to point at.
+had no record at all, while `vinto-room.kupalinka.app` and `kupalinka.app` both resolved. Not
+a broken deploy: nothing had ever been published there.
 
-Everything on this side of it is now done: the client builds, the shell has its icons and its
-share card, `deploy-web.yml` publishes it, and `WebShellTest` gates the page. What remains is
-attaching the custom domain, which `wrangler pages` has no command for and which is therefore
-a person in a browser, once (DEPLOYMENT.md §6c). Until then the workflow publishes to
-`vinto.pages.dev`, which is a real site — just not the hostname `INVITE_HOST` names, which is
-why invitation links still open nothing.
+It was published as a **Pages** project first, and that worked. It is a **Worker serving
+static assets** now, and the reason is worth stating because it is the only one:
+
+> A Pages custom domain can only be attached in the dashboard. `wrangler pages` has no
+> command for it. So the hostname — the entire point of the exercise — stayed behind
+> "somebody has to open a browser", on a project whose deploy story is otherwise a button in
+> the GitHub mobile app. A Worker claims its hostname from `routes` in
+> `composeApp/cloudflare/wrangler.jsonc`, exactly as the room already did.
+
+Three things came with the move, none of which were the motive:
+
+- **`not_found_handling: "404-page"`** states the 404 behaviour in configuration instead of
+  depending on whether a `404.html` happens to be present. See below for why that matters.
+- **One deployment model** in the repository instead of two. `deploy-room.yml` and
+  `deploy-web.yml` are now the same shape, and `worker/cloudflare/wrangler.jsonc`'s comment
+  about not layering a route over a Pages domain no longer describes a real constraint.
+- **`workers_dev: false`**, so the site has exactly one address. A `*.workers.dev` fallback
+  would be a second reachable copy — indexable, shareable, and destined to be pasted into a
+  chat by whoever found it first. A canonical tag tells a crawler which one counts and does
+  nothing about the person who bookmarked the other.
+
+`_headers` and `_redirects` are read from the asset directory exactly as they were on Pages,
+so those files are unchanged; redirects are applied before the not-found handling, which is
+what keeps `/r/<code>` reaching the app rather than the 404 page.
+
+The Pages project still exists, serving an older copy at `vinto-6dr.pages.dev`. Nothing links
+to it; deleting it is a dashboard step with no deadline (DEPLOYMENT.md §6c).
 
 Note what this blocks besides the website: §6b of DEPLOYMENT.md asks for `assetlinks.json` and
 `apple-app-site-association` to be served from `/.well-known/`, and §1f lists them as blocked

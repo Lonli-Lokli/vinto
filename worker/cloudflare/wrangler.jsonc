@@ -29,10 +29,14 @@
   // the client at vinto.kupalinka.app. That keeps the WebSocket origin a first-party one and
   // means the page's CSP needs a single `connect-src` entry on its own site.
   //
-  // Its own hostname rather than a path on vinto.kupalinka.app: that host is a Pages project,
-  // and layering a Worker route over a Pages custom domain is a precedence puzzle nobody
-  // should have to re-derive during an incident. The portfolio already does it this way —
-  // px.kupalinka.app is a separate Worker for the same reason.
+  // Its own hostname rather than a path on vinto.kupalinka.app. That was originally because
+  // the website was a Pages project and layering a Worker route over a Pages custom domain is
+  // a precedence puzzle nobody should re-derive during an incident. The website is a Worker
+  // now (composeApp/cloudflare/wrangler.jsonc), so that particular puzzle is gone — and the
+  // split stays anyway, for better reasons: these are two deployments with two failure modes
+  // and two rollback stories, and a bad push to the site should not be able to take the
+  // running rooms down with it. The portfolio does it this way too; px.kupalinka.app is a
+  // separate Worker for the same reason.
   "routes": [{ "pattern": "vinto-room.kupalinka.app", "custom_domain": true }],
 
   // The WebSocket room stays shut until ActionValidator is ported (task 4.4). Until then a

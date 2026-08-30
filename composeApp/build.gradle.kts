@@ -198,6 +198,12 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/wasmJsMain/resources"))
         .withPropertyName("webShell")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // And the hosting config, for the same reason and caught the same way: `WebShellTest`
+    // asserts the deployed route matches `INVITE_HOST`, and without this the probe that
+    // breaks the route passes in under a second because nothing invalidated the task.
+    inputs.dir(layout.projectDirectory.dir("cloudflare"))
+        .withPropertyName("webHostingConfig")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 /**

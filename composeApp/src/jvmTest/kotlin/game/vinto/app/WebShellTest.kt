@@ -253,6 +253,42 @@ class WebShellTest {
         )
     }
 
+    /**
+     * The hosting config claims the host the app tells people to visit.
+     *
+     * The site is a Worker serving static assets rather than a Pages project, for one
+     * reason: a Pages custom domain can only be attached in the dashboard, so the hostname
+     * stayed behind "somebody has to open a browser" on a project whose deploy is otherwise
+     * a button in a phone app. A Worker claims its hostname from `routes`.
+     *
+     * Which makes that line load-bearing in a way nothing else checks. `INVITE_HOST` is what
+     * every invitation link says; the route is what actually answers. If they drift, every
+     * invitation points at a host nothing serves — and both files look completely fine on
+     * their own.
+     */
+    @Test
+    fun theSiteIsServedAtTheHostInvitationsName() {
+        val config = File("cloudflare/wrangler.jsonc")
+        assertTrue(config.exists(), "the web Worker's config moved; this test is stale")
+        val text = config.readText()
+
+        assertTrue(
+            text.contains("\"pattern\": \"$INVITE_HOST\""),
+            "the deploy claims a different host from the one invitations name ($INVITE_HOST)",
+        )
+        assertTrue(
+            text.contains("\"custom_domain\": true"),
+            "without custom_domain the route does not create the DNS record, which is the whole reason this is a Worker",
+        )
+        // The other option, "single-page-application", answers every unmatched path with the
+        // shell and a 200 — measured on the Pages deployment, and the trap README section 6c
+        // is about. `404.html` only does its job under this setting.
+        assertTrue(
+            text.contains("\"not_found_handling\": \"404-page\""),
+            "not_found_handling is not 404-page, so a missing asset is answered with the shell and a 200",
+        )
+    }
+
     /** And the installable manifest points at icons that are really there. */
     @Test
     fun theManifestNamesIconsThatExist() {
