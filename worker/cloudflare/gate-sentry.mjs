@@ -32,6 +32,32 @@ for (const bad of [undefined, '', 'not-a-url', 'https://no-key@host/1'.replace('
 
 console.log('\nsentry: what never leaves');
 
+// The case that actually happens: `reportError` scrubs `JSON.stringify(event)`, so by the
+// time these patterns run, every quote in a message or a stack frame is escaped. The first
+// version of `scrub` expected bare quotes, matched nothing, and reported clean — leaking both
+// a room code and a seat token, silently. Raw *and* stringified, from here on.
+const escapedLeak = JSON.stringify({
+  message: 'join failed room: "7KQ2MP"',
+  frame: 'index.mjs {"token":"aGVsbG8td29ybGQtc2VjcmV0"}',
+});
+const escapedClean = scrub(escapedLeak);
+check(
+  'a room code inside stringified JSON is scrubbed',
+  !escapedClean.includes('7KQ2MP'),
+  escapedClean,
+);
+check(
+  'a seat token inside stringified JSON is scrubbed',
+  !escapedClean.includes('aGVsbG8td29ybGQtc2VjcmV0'),
+  escapedClean,
+);
+check(
+  'and the message is still readable afterwards',
+  escapedClean.includes('join failed') && escapedClean.includes('index.mjs'),
+  escapedClean,
+);
+
+
 const leaky = [
   'GET wss://vinto-room.example/?room=7KQ2MP failed',
   'at handler (index.mjs) room: "7KQ2MP"',

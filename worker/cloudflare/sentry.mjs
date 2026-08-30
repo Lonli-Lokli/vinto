@@ -50,15 +50,23 @@ export function parseDsn(dsn) {
  *
  * Applied to the whole serialised event rather than to named fields, because the field that
  * leaks is always the one nobody thought to name.
+ *
+ * The `\\?` before every quote is what makes that work. Scrubbing runs on the *output* of
+ * `JSON.stringify`, so a room code that came from a message or a stack frame arrives already
+ * escaped — `room: "7KQ2MP"` is `room: \\"7KQ2MP\\"` by then — and a pattern expecting a
+ * bare quote matches nothing and reports clean, which is the worst way for a scrubber to
+ * fail. The first version had that hole and leaked both a room code and a seat token;
+ * `gate-sentry.mjs` now scrubs a stringified object as well as a raw string, which is the
+ * case that actually happens in production.
  */
 export function scrub(text) {
   return text
     // ?room=7KQ2MP and /?room=... in any URL that reached an error report
     .replace(/([?&]room=)[A-Za-z0-9]+/gi, '$1<redacted>')
     // A bare six-character room code sitting in a message
-    .replace(/\b(room|code)\s*[:=]\s*"?[A-Z0-9]{6}"?/gi, '$1=<redacted>')
+    .replace(/\b(room|code)\s*[:=]\s*\\?"?[A-Z0-9]{6}/gi, '$1=<redacted>')
     // Anything that looks like the seat token, which is a credential
-    .replace(/([?&"']token["']?\s*[:=]\s*"?)[A-Za-z0-9_-]{8,}/gi, '$1<redacted>')
+    .replace(/([?&]|\\?["'])?(token\\?["']?\s*[:=]\s*\\?"?)[A-Za-z0-9_-]{8,}/gi, '$1$2<redacted>')
     // IPv4, in case a runtime put one in a message
     .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '<redacted>');
 }
