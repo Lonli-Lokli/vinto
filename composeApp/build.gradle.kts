@@ -220,6 +220,13 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("cloudflare"))
         .withPropertyName("webHostingConfig")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // And the browser source set, which `WasmFetchOptionsTest` reads. Third time this trap
+    // has appeared: a suite that reads files off disk is UP-TO-DATE when those files change,
+    // so it silently does not run and its probe "passes" in under a second. Any test that
+    // reads a directory has to declare it.
+    inputs.dir(layout.projectDirectory.dir("src/wasmJsMain/kotlin"))
+        .withPropertyName("wasmSources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 /**
