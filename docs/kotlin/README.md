@@ -1583,6 +1583,12 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
     --input "$(ls -d composeApp/src worker/src shared/*/src | paste -sd,)"
   ```
 
+- **An Objective-C class factory method is renamed `create`.** Kotlin/Native renames a class
+  method whose selector begins with its own class's name, so `+[NSData dataWithBytes:length:]`
+  is `NSData.create(bytes:length:)` here — an extension on the companion, so it also has to be
+  imported by name. `Beacon.ios.kt` called it by its header name and broke `kmp-ios`; it is the
+  same shape as the `NSMutableURLRequest` setters above, and the third time this family of
+  mistake has been made in this tree. A non-Mac host cannot catch any of them.
 - **Kotlin/JS's standard library is not Kotlin/Wasm's**, and `kotlin.js.Date` is the one that
   catches people: it is in the JS stdlib and absent from Wasm's, so `Storage.wasmJs.kt` had
   been unable to compile since it was written. Nothing said so, because nothing built it —
