@@ -74,6 +74,22 @@ kotlin {
             // here: it targets only jvm and js.
             implementation(project(":shared:protocol"))
             implementation(libs.kotlinx.coroutines.core)
+
+            // The serialization *runtime*, for types this module does not itself serialize.
+            //
+            // `Surface`, `FunnelStep`, `Difficulty`, `Pace`, `ThemeChoice` and the rest are
+            // `@Serializable` enums declared in `shared:*`, which keep the runtime as an
+            // `implementation` dependency and so do not expose it. Reading one of their
+            // *companions* — which is what `Surface.SOLO` compiles to — needs the runtime on
+            // this module's classpath, because from Kotlin 2.4 the serialization plugin makes
+            // those companions implement `kotlinx.serialization.internal.SerializerFactory`.
+            //
+            // It compiled before because the older plugin generated no such supertype, so the
+            // missing dependency was invisible rather than absent. On Kotlin 2.4 it is a wall
+            // of "Cannot access 'SerializerFactory' ... check your module classpath", and it
+            // surfaces on **wasmJs first** — the JVM and Android classpaths happen to carry
+            // the runtime by another route.
+            implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
             // The Android socket actual (net/Net.android.kt): the platform’s de-facto

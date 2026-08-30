@@ -1965,6 +1965,19 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   bug report, and `GameRecording.formatVersion` is required, so nothing could parse one. The
   general shape — a round trip that never leaves memory proves less than it looks like it does —
   is in §6l.
+- **A missing serialization runtime is invisible until Kotlin 2.4, and it surfaces on wasm
+  first.** `composeApp` reads `@Serializable` enums declared in `shared:*` — `Surface`,
+  `FunnelStep`, `Difficulty`, `Pace`, `ThemeChoice` — and never declared
+  `kotlinx-serialization-json` itself, because those modules keep it as an `implementation`
+  dependency and do not expose it. That compiled for the life of the branch. From Kotlin 2.4
+  the serialization plugin makes a `@Serializable` type's *companion* implement
+  `kotlinx.serialization.internal.SerializerFactory`, and reading `Surface.SOLO` then needs
+  the runtime on the reader's classpath — so the missing dependency stopped being invisible
+  and became forty "Cannot access 'SerializerFactory' ... check your module classpath" errors.
+  It broke **`:composeApp:compileKotlinWasmJs` only**: the JVM and Android classpaths happen
+  to carry the runtime by another route, so `assembleDebug` and every JVM suite stayed green
+  and CI's `kmp-web` was the one job that noticed. The fix is one `implementation` line; the
+  lesson is that "it compiles on the JVM" says nothing about a classpath on another target.
 - **The toolchain's gate is Compose Multiplatform, not detekt.** Believing otherwise cost an
   afternoon's worth of wrong advice, so: `androidx.compose.animation:*:1.12.0` fails
   `checkDebugAarMetadata` with *"requires compileSdk 37"* and *"requires Android Gradle plugin

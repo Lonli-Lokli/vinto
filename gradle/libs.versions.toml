@@ -7,8 +7,8 @@
 # Kotlin 2.4 warns that Gradle 8.14 is deprecated and that 2.5 will require 8.14.4. That is
 # the next thing to move, and it is small.
 kotlin = "2.4.10"
-kotlinxSerialization = "1.8.1"
-kotlinxCoroutines = "1.10.2"
+kotlinxSerialization = "1.10.0"
+kotlinxCoroutines = "1.11.0"
 # **Held back deliberately; 1.12.0 is out.** Measured rather than assumed: 1.12.0's Android
 # artifacts fail `checkDebugAarMetadata` because `androidx.compose.animation:*:1.12.0`
 # requires **compileSdk 37** and **AGP 9.1.0 or higher** — and AGP 9 requires Gradle 9. It
