@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- `viewport-fit=cover` so the felt reaches the edges of a phone with a notch, which is
+         what the app's own safe-area insets then hold the table clear of. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="description" content="Vinto — a card game about holding the lowest hand.">
+    <!-- The colour of the rail, so a phone's browser chrome is the edge of the table rather
+         than a white band above it. Matches Theme.Vinto on Android, for the same reason. -->
+    <meta name="theme-color" content="#14181d">
+    <title>Vinto</title>
+    <link rel="icon" href="favicon.png">
+    <style>
+        /* The dark rail behind everything, painted before a single byte of wasm has loaded:
+           4 MB is long enough that a white page is a visible flash, and on a slow connection
+           it is a white page for several seconds. */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #14181d;
+            color: #e8e6e3;
+            font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+            overscroll-behavior: none;
+        }
+
+        /* Shown until Compose takes the body over. Deliberately plain text and no spinner:
+           an animation here would be a second loading indicator competing with the app's own
+           (theme/Progress.kt), and this one is replaced rather than dismissed. */
+        #loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9aa3ad;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Dealing…</div>
+    <!--
+      There was no index.html in this repository until now, which meant
+      `wasmJsBrowserDistribution` produced two .wasm files, a .js and no page to load them —
+      the web client compiled and could not be served. Nothing caught it because nothing
+      served it: `kmp-web` compiles the client and `kmp-android`/`kmp-ios` build the other
+      two, and none of them opens a browser.
+
+      `defer` rather than a bare script tag so the parser is not blocked, and no `type=module`
+      because the webpack bundle is a classic script.
+    -->
+    <script defer src="composeApp.js"></script>
+</body>
+</html>

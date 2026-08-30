@@ -523,6 +523,7 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | --- | --- | --- |
 | analytics 1.1 — confirm Workers Analytics Engine allowances | The Cloudflare dashboard, signed in to the account that owns the Worker | The binding, the writer and the absent-binding path are all built and gated; what is unconfirmed is the *plan's* real writes/day, read allowance and retention. `design.md` §A1 carries published figures and says in as many words that they are not measured |
 | analytics 5.1 — dashboard route | The three secrets in DEPLOYMENT.md §7 (`ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`, `DASHBOARD_KEY`), and a deployment with traffic | **Built**: `GET /counts?key=…` renders the six queries server-side, and `gate-dashboard.mjs` covers its refusals, its escaping and the queries' shape in 51 checks. What cannot be covered here is a single number — the WAE SQL API is the one part of Analytics Engine `wrangler dev` does not emulate. Not ticked |
+| analytics 5.3 — Web Analytics on the Pages project | The Cloudflare dashboard for the `vinto` Pages project | A per-site switch that makes Cloudflare inject its own beacon; there is nothing in this repository to change and nothing here can verify it. DEPLOYMENT.md §7b is written for somebody who does not do this for a living. The page it injects into **did not exist** until this pass — see the `index.html` note in §7 |
 | analytics 5.4 — revisit sampling and the cost model | A week of real traffic against a deployed room | Arithmetic on data that does not exist. It is the reason phase 5 is not a release gate |
 | §6i step 1 — the eight goldens | A maintainer's machine, and a human looking at the images | `ScreenshotTest` writes them and CI deliberately does not run it: a fresh runner would write its own and assert nothing. Generated PNGs are not committed from here on purpose |
 | §6i step 1 — the four sounds | Ears, and `./gradlew :composeApp:run` | The desktop target exists now, which is the part that was missing |
@@ -1589,6 +1590,13 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   imported by name. `Beacon.ios.kt` called it by its header name and broke `kmp-ios`; it is the
   same shape as the `NSMutableURLRequest` setters above, and the third time this family of
   mistake has been made in this tree. A non-Mac host cannot catch any of them.
+- **The web client had no `index.html`, and nothing noticed.** `wasmJsBrowserDistribution`
+  produced two `.wasm` files, a `.js` and no page to load them, so the Compose web client
+  compiled and could not be served — for the whole life of the branch. Nothing caught it
+  because nothing *serves* it: `kmp-web` compiles the client, `kmp-android` and `kmp-ios`
+  build the other two, and no job opens a browser. The shell is now
+  `composeApp/src/wasmJsMain/resources/index.html`. A compile gate is not a serve gate, and
+  the distinction is worth remembering for the next target.
 - **Kotlin/JS's standard library is not Kotlin/Wasm's**, and `kotlin.js.Date` is the one that
   catches people: it is in the JS stdlib and absent from Wasm's, so `Storage.wasmJs.kt` had
   been unable to compile since it was written. Nothing said so, because nothing built it —

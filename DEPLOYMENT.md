@@ -278,6 +278,29 @@ Give it a day before concluding anything is wrong.
 
 ---
 
+## 7b. Page-load statistics for the website
+
+Separate from §7, and it answers a different question. The stats page counts what happens
+*inside* the game — rounds played, how far people get. This counts what happens *before*:
+how many people loaded the page at all, where they came from, and how fast it loaded for
+them. Somebody whose browser is too old to run the game never reaches the game's own counter,
+and they are exactly the people worth knowing about.
+
+**It is a switch in the Cloudflare dashboard, not something in the code.**
+
+1. Cloudflare dashboard → **Workers & Pages** → the **vinto** Pages project.
+2. Open **Settings** → **Web Analytics**.
+3. Switch it on.
+
+That is all. Cloudflare adds the counting script to the pages it serves; nothing needs to be
+rebuilt or redeployed.
+
+It is free, it uses **no cookies**, and it does not follow anybody between sites — which is
+why there is no consent banner to add. Results appear under **Analytics & Logs** →
+**Web Analytics** in the same dashboard, usually within a few minutes of the first visitor.
+
+---
+
 ## 7a. Crash reporting
 
 When something goes wrong for a player, we want to know. Sentry is where those reports go.
