@@ -5,6 +5,7 @@ been built and tested on a Mac (§5); Android is the remaining untried platform.
 
 - **Plan of record**: `openspec/changes/migrate-to-kotlin-multiplatform/` (proposal, design, tasks)
 - **Cross-language contract**: `docs/game-engine/RECORDING.md`
+- **The release gate, in one command**: `docs/kotlin/RELEASE-GATE.md`
 - **Platform measurements**: `docs/kotlin/PLATFORM-GATE.md`
 - **Bot decision**: `docs/bot/BOT-ENGINE-DECISION.md`
 
@@ -542,6 +543,7 @@ being blocked, it was made and recorded in the relevant `design.md`.
 | §6i step 5 — two devices, then four humans | Hardware and four people | Cannot be scripted; that is what 9.7's second verification is for |
 | 9.10 — store releases | An upload key, store accounts, and a signed build | `assembleRelease` signs with the upload key when `keystore.properties` exists and with the debug key when it does not, so the path is exercised without the secret |
 | `kmp-ios` beyond CI, and any `commonMain` change trusted on Apple | macOS with Xcode | The macOS leg of CI covers compilation; §5's warning stands — a `commonMain` change that breaks iOS cannot fail on a non-Mac host |
+| 4.8 — the corpus on an Android emulator | A machine that can resolve androidx, and an emulator in CI | **The iOS half is done**: `kmp-ios` runs `:shared:client:iosSimulatorArm64Test`, so since 6.7 a whole game is generated and replayed through the real harness on Kotlin/Native every run. The Android half wants an instrumented `connectedAndroidTest` reading the corpus from an asset, which needs `androidx.test` — dl.google.com answers 403 here (§1c) and androidx is not on Maven Central, so it cannot be compiled in this container at all, only pushed and hoped for. An hour's work on a machine that can build `composeApp` |
 
 ## 2. Prerequisites
 

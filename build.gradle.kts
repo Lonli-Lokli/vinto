@@ -204,3 +204,57 @@ kover {
         }
     }
 }
+
+/**
+ * The release gate, as one command.
+ *
+ * Task 8.3 asked for a checklist. A checklist in a document is a list of things somebody
+ * forgets one of, so most of it is a task instead — everything that a Linux machine can
+ * actually run. What it cannot run is named in `docs/kotlin/RELEASE-GATE.md` beside the
+ * machine that can, rather than being quietly left out.
+ *
+ * Three of the five gates 8.3 named have changed shape since it was written, and the document
+ * records why. In particular the tournament is **not** here: it is 6m 39s of MCTS and a
+ * manually-run gate by design (§6k), and folding it in would make the one command something
+ * nobody runs.
+ */
+tasks.register("releaseGate") {
+    group = "verification"
+    description = "Everything a Linux machine can check before a release. See docs/kotlin/RELEASE-GATE.md."
+
+    // Static analysis over every module and source set, at maxIssues 0.
+    dependsOn(provider { allprojects.mapNotNull { it.tasks.findByName("detekt") } })
+
+    // The rules, on the JVM: the corpus replay, the validator sweep, the self-play gate.
+    dependsOn(
+        ":shared:shapes:jvmTest",
+        ":shared:engine:jvmTest",
+        ":shared:bot:jvmTest",
+        ":shared:client:jvmTest",
+        ":shared:protocol:jvmTest",
+        ":shared:room:jvmTest",
+    )
+
+    // And on the two targets where a `Long` is not a `Long`. This is the round trip from
+    // task 6.7: a whole game generated and replayed through text, per target.
+    dependsOn(
+        ":shared:shapes:jsNodeTest",
+        ":shared:engine:jsNodeTest",
+        ":shared:bot:jsNodeTest",
+        ":shared:client:jsNodeTest",
+        ":shared:protocol:jsNodeTest",
+        ":shared:shapes:wasmJsNodeTest",
+        ":shared:engine:wasmJsNodeTest",
+        ":shared:bot:wasmJsNodeTest",
+        ":shared:client:wasmJsNodeTest",
+        ":shared:protocol:wasmJsNodeTest",
+    )
+
+    // The screens, headless. Goldens are excluded on CI and stay excluded here — see the
+    // note on the test task in composeApp/build.gradle.kts.
+    dependsOn(":composeApp:jvmTest")
+
+    // The Worker's bundle. The room gates themselves need Node and workerd, so they are in
+    // the document rather than here.
+    dependsOn(":worker:jsProductionExecutableCompileSync")
+}
