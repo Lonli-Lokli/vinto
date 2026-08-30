@@ -170,20 +170,12 @@ fun App(
                                 onQuit = { screen = Screen.Home(canContinue = true) },
                             )
 
-                            Screen.Online -> OnlineScreen(
+                            is OnlineWay -> OnlineFlow(
+                                where = here,
                                 connector = connector,
                                 vault = vault,
-                                onEnterRoom = { code, nickname -> screen = enterRoom(code, nickname) },
-                                onBrowse = { screen = Screen.Discover(it) },
-                                onBack = {
-                                    screen = Screen.Home(canContinue = vault.loadGame() != null)
-                                },
-                            )
-
-                            is Screen.Discover -> DiscoverScreen(
-                                connector = connector,
-                                onJoin = { screen = enterRoom(it, here.nickname) },
-                                onBack = { screen = Screen.Online },
+                                enterRoom = ::enterRoom,
+                                go = { screen = it },
                             )
 
                             is Screen.InRoom -> RoomScreen(
@@ -245,7 +237,8 @@ private fun ThemeChoice.isDark(): Boolean = when (this) {
 private fun surfaceOf(screen: Screen): Surface = when (screen) {
     is Screen.Playing -> Surface.SOLO
     Screen.Teaching -> Surface.LESSON
-    Screen.Online, is Screen.Discover, is Screen.InRoom -> Surface.ONLINE
+    Screen.Online, is Screen.OpenRoom, is Screen.JoinByCode, is Screen.Discover, is Screen.InRoom ->
+        Surface.ONLINE
     Screen.Opening, is Screen.Home, is Screen.Settings -> Surface.MENU
 }
 
@@ -264,6 +257,14 @@ private fun surfaceOf(screen: Screen): Surface = when (screen) {
  */
 private fun Screen.backedOutOf(vault: Vault): Screen {
     if (this is Screen.Settings) return back
+    // The three ways in back out to the front door, which is where their own chevron goes.
+    // They did not: `Discover` sent the system back button all the way Home while the button
+    // drawn on the screen went to `Online`, so one gesture meant two things depending on
+    // whether you used the phone's or the app's. Splitting the lobby into three would have
+    // made that inconsistency three times as easy to hit.
+    if (this is Screen.OpenRoom || this is Screen.JoinByCode || this is Screen.Discover) {
+        return Screen.Online
+    }
     (this as? Screen.InRoom)?.room?.leave()
     return Screen.Home(canContinue = vault.loadGame() != null)
 }
@@ -291,8 +292,20 @@ private sealed interface Screen {
 
     data class Playing(val game: LocalGame) : Screen
 
-    /** The way into a room: a name and a code. */
-    data object Online : Screen
+    /** The front door: a name, and which of the three things you came to do. */
+    data object Online : Screen, OnlineWay
+
+    /**
+     * Opening a room of your own: the visibility choice, and the button that mints it.
+     *
+     * Carries the nickname for the same reason [Discover] does — the vault holds what was
+     * *saved*, and these screens are reached by a tap that saves on the way through, so
+     * passing it explicitly is what makes the two agree.
+     */
+    data class OpenRoom(val nickname: String) : Screen, OnlineWay
+
+    /** Joining somebody else's: six characters. */
+    data class JoinByCode(val nickname: String) : Screen, OnlineWay
 
     /**
      * The public rooms, for somebody with no code.
@@ -301,7 +314,7 @@ private sealed interface Screen {
      * on the way in is the name used on the way through — the vault holds what was *saved*,
      * and a person who edited the field and pressed Browse has not saved anything yet.
      */
-    data class Discover(val nickname: String) : Screen
+    data class Discover(val nickname: String) : Screen, OnlineWay
 
     /** Inside one: the lobby until the deal, the table after. */
     data class InRoom(val room: RemoteRoom) : Screen
@@ -439,5 +452,60 @@ private fun Startup(
             Screen.Home(canContinue = vault.loadGame() != null)
         }
         onReady(settings, where)
+    }
+}
+
+/**
+ * The four screens between the menu and a seat.
+ *
+ * A marker on the `Screen` cases rather than a nested type, so `App`'s `when` has one branch
+ * for the whole way in and stays readable — it grew past the length limit the moment the
+ * lobby became three screens instead of one, which is the honest signal that a group had
+ * formed and wanted naming.
+ */
+private sealed interface OnlineWay
+
+/**
+ * The way in, from the front door to a room's code.
+ *
+ * Every arrow between these four is here, in one place: the tiles lead outward, and each of
+ * the three destinations leads back to [Screen.Online] rather than to wherever it was reached
+ * from. That is what makes the chevron on each of them mean the same thing.
+ */
+@Composable
+private fun OnlineFlow(
+    where: OnlineWay,
+    connector: RoomConnector,
+    vault: Vault,
+    enterRoom: (String, String) -> Screen,
+    go: (Screen) -> Unit,
+) {
+    when (where) {
+        Screen.Online -> OnlineScreen(
+            vault = vault,
+            onOpenRoom = { go(Screen.OpenRoom(it)) },
+            onJoinByCode = { go(Screen.JoinByCode(it)) },
+            onBrowse = { go(Screen.Discover(it)) },
+            onBack = { go(Screen.Home(canContinue = vault.loadGame() != null)) },
+        )
+
+        is Screen.OpenRoom -> OpenRoomScreen(
+            connector = connector,
+            nickname = where.nickname,
+            onEnterRoom = { code, nickname -> go(enterRoom(code, nickname)) },
+            onBack = { go(Screen.Online) },
+        )
+
+        is Screen.JoinByCode -> JoinCodeScreen(
+            nickname = where.nickname,
+            onEnterRoom = { code, nickname -> go(enterRoom(code, nickname)) },
+            onBack = { go(Screen.Online) },
+        )
+
+        is Screen.Discover -> DiscoverScreen(
+            connector = connector,
+            onJoin = { go(enterRoom(it, where.nickname)) },
+            onBack = { go(Screen.Online) },
+        )
     }
 }

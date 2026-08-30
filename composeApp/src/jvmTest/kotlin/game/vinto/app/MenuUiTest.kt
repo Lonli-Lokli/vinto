@@ -50,8 +50,14 @@ class MenuUiTest {
         press("Play online")
         waitForIdle()
 
-        button("Join the room").assertIsDisplayed()
-        button("Open a new room").assertIsDisplayed()
+        // Three destinations and no form. What is asserted here is the *shape* of the front
+        // door — intent before input — because the failure it guards against is the one the
+        // restructure was for: a screen that asks for a room code from somebody who came to
+        // browse, and offers a green Join button to somebody who has no code to put in it.
+        button("Open a room").assertIsDisplayed()
+        button("Join with a code").assertIsDisplayed()
+        button("Browse public rooms").assertIsDisplayed()
+
         press("Back")
         waitForIdle()
 

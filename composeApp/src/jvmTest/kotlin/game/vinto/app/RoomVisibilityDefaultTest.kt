@@ -38,6 +38,11 @@ class RoomVisibilityDefaultTest {
 
         press("Play online")
         waitForIdle()
+        // The choice lives on the path that creates a room now, and nowhere else. It used to
+        // sit above a Join button it had nothing to do with, which is how the one control here
+        // whose wrong answer cannot be undone got tapped on the way past.
+        press("Open a room")
+        waitForIdle()
 
         onNodeWithContentDescription("By code only").assertIsSelected()
         onNodeWithContentDescription("Listed publicly").assertIsNotSelected()
