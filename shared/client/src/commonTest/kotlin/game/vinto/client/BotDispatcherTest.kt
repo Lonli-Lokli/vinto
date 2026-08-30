@@ -85,7 +85,7 @@ class BotDispatcherTest {
     }
 
     @Test
-    fun theBotsThinkOnTheDispatcherTheyWereGiven() = runTest {
+    fun theBotsThinkOnTheDispatcherTheyWereGiven() = runTest(timeout = WHOLE_GAME) {
         val dispatcher = Marking()
         val watcher = Watcher(dispatcher)
 
@@ -108,7 +108,7 @@ class BotDispatcherTest {
     }
 
     @Test
-    fun withoutOneTheBotsThinkWhereTheyAreCalled() = runTest {
+    fun withoutOneTheBotsThinkWhereTheyAreCalled() = runTest(timeout = WHOLE_GAME) {
         val unused = Marking()
         val watcher = Watcher(unused)
 

@@ -2004,6 +2004,11 @@ of pages/_document` while prerendering `/404`. Ruled out: missing `not-found.tsx
   comment that the number is a CI budget on the slowest target rather than a claim about the
   code. `SelfPlayTest`, `FinishesTest` and `OnlineScoreTest` already did; a `commonTest` that
   reaches Apple needs it more, not less.
+  **This rule was written here and then not applied to the next test written in the same
+  session** — `BotDispatcherTest` went over the line on the Kotlin 2.4 bump, in the same way,
+  on the same job. So the budget now has a home rather than a habit: `WHOLE_GAME` in
+  `shared/client/src/commonTest/.../TestBudget.kt`, used by every suite that plays a game out.
+  A rule with nowhere to live gets re-learned.
 - **`android.useAndroidX=true` is mandatory**, not a preference: Compose Multiplatform's
   Android artifacts are AndroidX, and without it the build fails at `checkDebugAarMetadata`.
   It lives in `gradle.properties`.
