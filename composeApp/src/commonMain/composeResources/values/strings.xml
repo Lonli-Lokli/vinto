@@ -119,6 +119,32 @@
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Settings</string>
+
+    <!-- The four groups the settings are read in. A heading is not decoration here: eight
+         controls in one column is a list of switches, and four short lists is four decisions. -->
+    <string name="settings_group_game">The game</string>
+    <string name="settings_group_feel">Look and feel</string>
+    <string name="settings_group_privacy">What leaves this device</string>
+    <string name="settings_group_about">About</string>
+
+    <!-- Pages that belong to the game but are not in it. They open in the phone's browser
+         rather than a view inside the app: these are documents somebody may want to keep,
+         send to themselves, or read properly. -->
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_detail">What is counted, what is not, and how to switch it off.</string>
+    <string name="settings_terms">Terms of use</string>
+    <string name="settings_terms_detail">The short version of what you can expect, and what is expected of you.</string>
+    <string name="settings_contact">Get in touch</string>
+    <string name="settings_contact_detail">A bug, an idea, or a game that went wrong.</string>
+    <string name="settings_open">Open</string>
+    <string name="settings_link_failed">Nothing on this device opened that. The address is %1$s</string>
+
+    <!-- Telling somebody about the game. Not a review prompt: there is no store listing to
+         send anybody to yet, and a button that opens nothing is worse than no button. -->
+    <string name="settings_share">Tell somebody</string>
+    <string name="settings_share_detail">Send the game to a friend. Four seats, and three of them can be bots.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — a card game about holding the lowest hand. Free, in the browser, no sign-up: %1$s</string>
     <string name="settings_back">Back</string>
     <string name="settings_version">Vinto v%1$s</string>
 

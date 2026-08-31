@@ -24,8 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,26 +37,43 @@ import game.vinto.app.art.settings_analytics_detail
 import game.vinto.app.art.settings_back
 import game.vinto.app.art.settings_bots
 import game.vinto.app.art.settings_bots_detail
+import game.vinto.app.art.settings_contact
+import game.vinto.app.art.settings_contact_detail
 import game.vinto.app.art.settings_forget
 import game.vinto.app.art.settings_forget_record
+import game.vinto.app.art.settings_group_about
+import game.vinto.app.art.settings_group_feel
+import game.vinto.app.art.settings_group_game
+import game.vinto.app.art.settings_group_privacy
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
+import game.vinto.app.art.settings_link_failed
 import game.vinto.app.art.settings_motion
 import game.vinto.app.art.settings_motion_detail
 import game.vinto.app.art.settings_off
 import game.vinto.app.art.settings_on
+import game.vinto.app.art.settings_open
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
+import game.vinto.app.art.settings_privacy
+import game.vinto.app.art.settings_privacy_detail
 import game.vinto.app.art.settings_record
 import game.vinto.app.art.settings_record_detail
 import game.vinto.app.art.settings_saved_game
 import game.vinto.app.art.settings_saved_game_detail
+import game.vinto.app.art.settings_share
+import game.vinto.app.art.settings_share_body
+import game.vinto.app.art.settings_share_detail
+import game.vinto.app.art.settings_share_subject
 import game.vinto.app.art.settings_sound
 import game.vinto.app.art.settings_sound_detail
+import game.vinto.app.art.settings_terms
+import game.vinto.app.art.settings_terms_detail
 import game.vinto.app.art.settings_theme
 import game.vinto.app.art.settings_theme_detail
 import game.vinto.app.art.settings_title
 import game.vinto.app.art.settings_version
+import game.vinto.app.theme.BackChevron
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
@@ -111,14 +130,39 @@ fun SettingsScreen(
                 .padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Plaque(stringResource(Res.string.settings_title))
+            // The way back, out of the thumb's way and consistent with every other screen.
+            // It was a full-width slab at the foot of the scroll, which spent the most
+            // reachable region on a phone on a control that duplicates the system gesture —
+            // and on the *longest* screen in the app, so reaching it meant scrolling past
+            // everything first.
+            BackChevron(
+                description = stringResource(Res.string.settings_back),
+                onClick = onBack,
+            )
+            Text(
+                text = stringResource(Res.string.settings_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onFelt(),
+                modifier = Modifier.semantics { heading() },
+            )
 
+            // Four groups rather than one column of eight.
+            //
+            // The controls have always fallen into these four and the screen never said so:
+            // uniform spacing between every panel makes a list of switches out of what is
+            // actually four decisions, and it left the two irreversible actions sitting at
+            // the same weight and rhythm as a haptics toggle.
+            Plaque(stringResource(Res.string.settings_group_game))
             Bots(settings, onChange)
             Pacing(settings, onChange)
+
+            Plaque(stringResource(Res.string.settings_group_feel))
             Motion(settings, onChange)
             Palette(settings, onChange)
             Noise(settings, onChange)
             Buzz(settings, onChange)
+
+            Plaque(stringResource(Res.string.settings_group_privacy))
             Counting(settings, onChange)
 
             // Personal, so forgettable. The anonymous counts have an opt-out because they
@@ -140,19 +184,15 @@ fun SettingsScreen(
                 }
             }
 
+            Plaque(stringResource(Res.string.settings_group_about))
+            About()
+
             Text(
                 text = stringResource(Res.string.settings_version, VERSION),
                 fontSize = FootnoteSize,
                 // Below the last panel, so on the felt rather than on paper.
                 color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
                 modifier = Modifier.padding(top = Tight),
-            )
-
-            GameButton(
-                label = stringResource(Res.string.settings_back),
-                tone = ButtonTone.NEUTRAL,
-                onClick = onBack,
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -295,6 +335,85 @@ private fun Plaque(title: String) {
             modifier = Modifier.semantics { heading() },
         )
         Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
+    }
+}
+
+/**
+ * The pages that belong to the game but are not in it, and a way to pass it on.
+ *
+ * **No "rate this app".** There is no store listing to send anybody to — 9.10 has not shipped
+ * — and a review button that opens nothing is worse than an absent one: it reads as the app
+ * being broken by the person most inclined to say so publicly. It belongs here the day there
+ * is a listing and not before.
+ *
+ * **No language selector either**, for the same shape of reason: the only translation that
+ * exists is `values/`. §6h made adding one a file and no code, and no file has been added, so
+ * a selector today is a control with a single option. The unblocking step is a translated
+ * `strings.xml`, not screen work.
+ */
+@Composable
+private fun About() {
+    val failed = remember { mutableStateOf<String?>(null) }
+
+    LinkRow(
+        title = stringResource(Res.string.settings_privacy),
+        detail = stringResource(Res.string.settings_privacy_detail),
+        url = Pages.PRIVACY,
+        onFailed = { failed.value = it },
+    )
+    LinkRow(
+        title = stringResource(Res.string.settings_terms),
+        detail = stringResource(Res.string.settings_terms_detail),
+        url = Pages.TERMS,
+        onFailed = { failed.value = it },
+    )
+    LinkRow(
+        title = stringResource(Res.string.settings_contact),
+        detail = stringResource(Res.string.settings_contact_detail),
+        url = Pages.CONTACT,
+        onFailed = { failed.value = it },
+    )
+
+    val subject = stringResource(Res.string.settings_share_subject)
+    val body = stringResource(Res.string.settings_share_body, Pages.GAME)
+    val clipboard = LocalClipboardManager.current
+    Setting(
+        title = stringResource(Res.string.settings_share),
+        detail = stringResource(Res.string.settings_share_detail),
+    ) {
+        GameButton(
+            label = stringResource(Res.string.settings_share),
+            tone = ButtonTone.NEUTRAL,
+            // Falls through to the clipboard where a platform has no share sheet, which is
+            // the JVM and iOS today. Doing nothing visible is the one answer a share button
+            // must not give.
+            onClick = { if (!shareText(subject, body)) clipboard.setText(AnnotatedString(body)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    // Said out loud rather than swallowed. A locked-down desktop has no browse action at all,
+    // and a button that silently does nothing is indistinguishable from a broken app — so the
+    // address goes on the screen where it can at least be read or copied.
+    failed.value?.let {
+        Text(
+            text = stringResource(Res.string.settings_link_failed, it),
+            fontSize = FootnoteSize,
+            color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
+        )
+    }
+}
+
+/** A page, opened in whatever this device uses to read one. */
+@Composable
+private fun LinkRow(title: String, detail: String, url: String, onFailed: (String) -> Unit) {
+    Setting(title = title, detail = detail) {
+        GameButton(
+            label = stringResource(Res.string.settings_open),
+            tone = ButtonTone.NEUTRAL,
+            onClick = { if (!openUrl(url)) onFailed(url) },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
