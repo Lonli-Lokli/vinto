@@ -4,7 +4,6 @@ import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
-import game.vinto.shapes.hasAction
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.DeclareKingActionPayload
@@ -21,6 +20,7 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
+import game.vinto.shapes.hasAction
 
 /**
  * What the table is offering the player, right now.

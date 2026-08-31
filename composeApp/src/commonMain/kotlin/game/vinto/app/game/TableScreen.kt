@@ -1,9 +1,9 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -37,15 +35,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -117,6 +111,9 @@ import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private val Gap = 6.dp
 private val Tight = 4.dp
@@ -331,34 +328,51 @@ private fun HeaderGlyph(
 private fun DrawScope.drawGear(ink: Color) {
     val c = center
     val r = size.minDimension / 2
-    drawCircle(ink, radius = r * 0.58f, center = c, style = Stroke(width = r * 0.28f))
-    repeat(8) { i ->
-        val a = i * (PI.toFloat() / 4)
-        val from = c + Offset(cos(a), sin(a)) * (r * 0.72f)
+    drawCircle(ink, radius = r * GEAR_RING, center = c, style = Stroke(width = r * GEAR_RING_STROKE))
+    repeat(GEAR_TEETH) { i ->
+        val a = i * (2 * PI.toFloat() / GEAR_TEETH)
+        val from = c + Offset(cos(a), sin(a)) * (r * GEAR_TOOTH_ROOT)
         val to = c + Offset(cos(a), sin(a)) * r
-        drawLine(ink, from, to, strokeWidth = r * 0.30f, cap = StrokeCap.Round)
+        drawLine(ink, from, to, strokeWidth = r * GEAR_TOOTH_STROKE, cap = StrokeCap.Round)
     }
-    drawCircle(ink, radius = r * 0.16f, center = c)
+    drawCircle(ink, radius = r * GEAR_HUB, center = c)
 }
+
+private const val GEAR_TEETH = 8
+private const val GEAR_RING = 0.58f
+private const val GEAR_RING_STROKE = 0.28f
+private const val GEAR_TOOTH_ROOT = 0.72f
+private const val GEAR_TOOTH_STROKE = 0.30f
+private const val GEAR_HUB = 0.16f
 
 /** A ladybug: the domed body, the wing split, the head, and four spots. */
 private fun DrawScope.drawBug(ink: Color) {
     val c = center
     val r = size.minDimension / 2
-    drawCircle(ink, radius = r * 0.78f, center = c, style = Stroke(width = r * 0.18f))
+    drawCircle(ink, radius = r * BUG_BODY, center = c, style = Stroke(width = r * BUG_SHELL))
     drawLine(
         ink,
-        c + Offset(0f, -r * 0.78f),
-        c + Offset(0f, r * 0.78f),
-        strokeWidth = r * 0.14f,
+        c + Offset(0f, -r * BUG_BODY),
+        c + Offset(0f, r * BUG_BODY),
+        strokeWidth = r * BUG_SPLIT,
         cap = StrokeCap.Round,
     )
-    drawCircle(ink, radius = r * 0.24f, center = c + Offset(0f, -r * 0.98f))
+    drawCircle(ink, radius = r * BUG_HEAD, center = c + Offset(0f, -r * BUG_NECK))
     for (dx in listOf(-1f, 1f)) {
-        drawCircle(ink, radius = r * 0.14f, center = c + Offset(dx * r * 0.36f, -r * 0.22f))
-        drawCircle(ink, radius = r * 0.14f, center = c + Offset(dx * r * 0.36f, r * 0.30f))
+        drawCircle(ink, radius = r * BUG_SPOT, center = c + Offset(dx * r * BUG_WING, -r * BUG_HIGH_SPOT))
+        drawCircle(ink, radius = r * BUG_SPOT, center = c + Offset(dx * r * BUG_WING, r * BUG_LOW_SPOT))
     }
 }
+
+private const val BUG_BODY = 0.78f
+private const val BUG_SHELL = 0.18f
+private const val BUG_SPLIT = 0.14f
+private const val BUG_HEAD = 0.24f
+private const val BUG_NECK = 0.98f
+private const val BUG_SPOT = 0.14f
+private const val BUG_WING = 0.36f
+private const val BUG_HIGH_SPOT = 0.22f
+private const val BUG_LOW_SPOT = 0.30f
 
 /** Where the round is up to, and how much deck is left. */
 @Composable

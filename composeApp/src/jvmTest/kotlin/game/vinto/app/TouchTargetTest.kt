@@ -285,6 +285,7 @@ class TouchTargetTest {
 
     private companion object {
         const val TAP = 44f
+
         // The swap declaration offers only the ranks with an action to win; the King's
         // fourteen use the same GameButton in the same grid, just seven to a row.
         val RANKS = listOf("7", "8", "9", "10", "J", "Q", "K", "A")
