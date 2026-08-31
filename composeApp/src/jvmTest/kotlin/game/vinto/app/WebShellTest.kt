@@ -5,6 +5,7 @@ import game.vinto.app.link.INVITE_PATH
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -345,6 +346,97 @@ class WebShellTest {
         assertTrue(
             manifest.contains("\"purpose\": \"maskable\""),
             "no maskable icon: an installed app gets the mark cropped by whatever shape the launcher likes",
+        )
+    }
+
+    /**
+     * `immutable` is a promise only a content-addressed URL can keep, and one rule broke it.
+     *
+     * This is the regression test for the bug that shipped: everything under `composeResources`
+     * was served
+     * `immutable, max-age=31536000` under fixed names. Compose reads strings by **byte offset**
+     * into the per-locale `strings.commonMain.cvr`, and those offsets live in the wasm — which is
+     * content-hashed, so it is always the current build's. A returning visitor therefore paired
+     * new offsets with a year-old table and read every string after the first changed entry from
+     * the wrong place: truncated mid-word, decoded as mojibake, or empty. The home screen was
+     * fine and everything behind "Play online" was not, because those keys sort later.
+     *
+     * So the rule is stated as a rule rather than as a fixed string: a path may be `immutable`
+     * only if it carries a content hash. The two wasm and script rules do; nothing else does.
+     */
+    @Test
+    fun onlyContentAddressedPathsAreImmutable() {
+        val contentAddressed = setOf("/*.wasm", "/composeApp.*.js")
+
+        var path = ""
+        uncommented(read("_headers")).lineSequence().forEach { line ->
+            if (line.startsWith("/")) {
+                path = line.trim()
+            } else if (line.contains("immutable")) {
+                assertTrue(
+                    contentAddressed.contains(path),
+                    "$path is served immutable and carries no content hash, so a stale copy is served for a year",
+                )
+            }
+        }
+    }
+
+    /**
+     * Every locale's string table is un-cacheable, and every one is repaired on the way in.
+     *
+     * Two halves of the same fix, checked together because either alone leaves the bug: the
+     * `_headers` rule stops it happening to anyone new, and the `index.html` refetch undoes it
+     * for the browsers that already hold a poisoned copy — which will not otherwise ask about
+     * that file again for a year, `immutable` being a promise not to.
+     *
+     * The reason this is a test rather than a comment is that both halves name their locales
+     * literally, and adding `values-be/` is meant to be a file and no code (README section 6h).
+     * A new locale with no line in either place is a silent return of the same corruption, in
+     * that language only.
+     */
+    @Test
+    fun everyStringTableIsRefetchedAndRepaired() {
+        val resources = File("src/commonMain/composeResources")
+        val locales = resources.listFiles().orEmpty()
+            .filter { it.isDirectory && it.name.startsWith("values") }
+            .map { it.name }
+            .sorted()
+        assertTrue(locales.isNotEmpty(), "no values* directories found under ${resources.path}")
+
+        // The package the resource paths are built from, read rather than repeated.
+        val gradle = File("build.gradle.kts").readText()
+        val pkg = assertNotNull(
+            Regex("""packageOfResClass\s*=\s*"([^"]+)"""").find(gradle)?.groupValues?.get(1),
+            "packageOfResClass is not set in composeApp/build.gradle.kts",
+        )
+
+        val headers = uncommented(read("_headers"))
+        val shell = read("index.html")
+        val repairList = assertNotNull(
+            Regex("""var LOCALES = \[([^\]]*)\]""").find(shell)?.groupValues?.get(1),
+            "index.html no longer carries the composeResources repair",
+        )
+
+        locales.forEach { locale ->
+            val table = "/composeResources/$pkg/$locale/strings.commonMain.cvr"
+            val rule = headers.lineSequence()
+                .dropWhile { it.trim() != table }
+                .drop(1)
+                .firstOrNull { it.isNotBlank() }
+            assertEquals(
+                "Cache-Control: no-store",
+                rule?.trim(),
+                "$table is not no-store, so a stale copy can be paired with this build's offsets",
+            )
+            assertTrue(
+                repairList.contains("\"$locale\""),
+                "index.html does not refetch $locale, so a browser already holding a stale copy keeps it",
+            )
+        }
+
+        assertTrue(
+            shell.contains("\"$pkg\""),
+            "the repair in index.html builds its paths from a different package than packageOfResClass ($pkg)",
         )
     }
 }

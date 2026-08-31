@@ -243,5 +243,58 @@
       one line: the deploy step matches it literally.
     -->
     <script defer src="composeApp.js"></script>
+
+    <!--
+      **Repairing caches this site poisoned itself.**
+
+      `/composeResources/*` used to be served `immutable, max-age=31536000` under fixed,
+      un-hashed names (see `_headers`, which now does not). Compose reads its strings by byte
+      offset into `values*/strings.commonMain.cvr`, and those offsets live in the wasm — which
+      is content-hashed and therefore always this build's. So a browser that visited before
+      today pairs today's offsets with a year-old table and reads every string after the first
+      changed entry from the wrong place: truncated, mojibake, or blank.
+
+      Fixing `_headers` does not reach those browsers. `immutable` means they will not even ask
+      whether the file changed, for up to a year, so the repair has to come from the one file
+      that is always fresh: this one, which is `no-store`. `cache: "reload"` bypasses the HTTP
+      cache and *replaces* the stored entry, so one fetch per locale undoes it permanently.
+
+      Placed after the script tag but running before it: the app script is `defer`, so it
+      executes only once parsing is done, while this inline script runs during parsing. The
+      fetch is started first and has ~13.7 MB of wasm to beat, which it does by several orders
+      of magnitude — but the ordering is what makes it correct, not the margin.
+
+      Keyed to the build so it costs 104 KB once per browser per deploy rather than on every
+      load, and silent on failure: a browser with storage disabled simply repairs every time,
+      which is the safe direction to be wrong in.
+
+      The locale list is not decoration. `WebShellTest.everyStringTableIsRefetchedAndRepaired`
+      fails if a `values-*` directory exists without a line here and a rule in `_headers`.
+    -->
+    <script>
+      (function () {
+        var LOCALES = ["values", "values-ru"];
+        var PACKAGE = "game.vinto.app.art";
+        try {
+          var tag = document.querySelector('script[defer][src^="composeApp"]');
+          var build = tag ? tag.getAttribute("src") : "dev";
+          var key = "vinto.composeResourcesRepair";
+          if (window.localStorage && localStorage.getItem(key) === build) return;
+          Promise.all(
+            LOCALES.map(function (locale) {
+              return fetch(
+                "composeResources/" + PACKAGE + "/" + locale + "/strings.commonMain.cvr",
+                { cache: "reload" }
+              );
+            })
+          ).then(
+            function () { try { localStorage.setItem(key, build); } catch (e) {} },
+            function () {}
+          );
+        } catch (e) {
+          /* No storage, no fetch, or no DOM yet: the app still works, it just repairs again. */
+        }
+      })();
+    </script>
 </body>
 </html>

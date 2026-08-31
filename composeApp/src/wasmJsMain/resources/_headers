@@ -22,5 +22,42 @@
 /composeApp.*.js
   Cache-Control: public, max-age=31536000, immutable
 
+# --- Compose resources -----------------------------------------------------------------
+#
+# **`immutable` was a lie here, and it corrupted the app on every returning visitor.**
+# Nothing under `/composeResources/` carries a content hash — the paths are fixed names the
+# wasm has baked into it — so promising a year of immutability promises something the URL
+# cannot keep. The rule above for `/*.wasm` and `/composeApp.*.js` is fine precisely because
+# those two *are* content-addressed.
+#
+# What made it more than a stale picture: Compose does not look strings up by key at runtime.
+# The generated accessors carry a **byte offset and length** into
+# `values*/strings.commonMain.cvr`, and those numbers live in the wasm. The wasm is
+# content-hashed, so it is always this build's; the `.cvr` was `immutable`, so it was whatever
+# build the visitor first loaded. Pair a new offset table with an old file and every string
+# after the first changed entry is read from the wrong place: truncated mid-word, decoded as
+# garbage, or empty. Strings *before* that entry are untouched, which is why the home screen
+# looked perfect and everything behind "Play online" did not.
+#
+# Reproduced by deleting one entry from the deployed `.cvr` and loading the deployed bundle:
+# blank buttons, "JOI" where "How to play" belongs, and mojibake in place of the version.
+#
+# So: the string tables are never stored, and everything else is bounded rather than forever.
 /composeResources/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# The string tables, listed one locale at a time on purpose.
+#
+# Exact paths rather than a `values*` wildcard because a rule that silently fails to match is
+# the whole failure mode above, wearing a different hat — and `no-store` rather than
+# `no-cache` for the same reason `/` uses it: the zone's Browser Cache TTL overrides a weaker
+# origin header (§6c), and "weaker" includes a revalidation hint. They are 104 KB together
+# against 13.7 MB of wasm that *is* cached, so this costs nothing worth counting.
+#
+# `WebShellTest.everyStringTableIsRefetchedAndRepaired` fails if a locale is added to
+# `commonMain/composeResources` without a line here and a matching one in `index.html`.
+/composeResources/game.vinto.app.art/values/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-ru/strings.commonMain.cvr
+  Cache-Control: no-store
