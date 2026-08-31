@@ -137,6 +137,31 @@ class WebShellTest {
     }
 
     /**
+     * Every relative URL on the page resolves against the site root.
+     *
+     * **The check that was missing when every invitation was broken.** The shell is served at
+     * `/r/ABC123` with a 200 so the address bar keeps the code, which means a
+     * relative script src asks for `/r/composeApp.js` — and the same SPA fallback answers
+     * that with the shell itself, 200, `text/html`. The browser loads an HTML document as a
+     * classic script, dies on `Unexpected token '<'`, and the page sits on its loading line
+     * for ever. Every link anybody shared did this; a link to `/` did not, which is why it
+     * survived a deploy, a probe of the live site, and seven cases in this file.
+     *
+     * The fix is `<base href="/">`, and it is asserted rather than the individual tags because
+     * it is the only thing that also reaches what the wasm bundle fetches for itself at
+     * runtime — which is not in this file at all and cannot be checked by reading it.
+     */
+    @Test
+    fun everyRelativeUrlResolvesAgainstTheRoot() {
+        val shell = read("index.html")
+        assertTrue(
+            Regex("""<base\s+href="/">""").containsMatchIn(shell),
+            "no <base href=\"/\"> — the shell works at / and breaks at $INVITE_PATH*, which is " +
+                "every link anybody shares",
+        )
+    }
+
+    /**
      * Every local file the shell names is a file that is there.
      *
      * On Pages a path that does not exist is not a 404: `_redirects` answers everything under

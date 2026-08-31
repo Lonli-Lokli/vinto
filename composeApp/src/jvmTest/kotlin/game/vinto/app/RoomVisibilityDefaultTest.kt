@@ -14,25 +14,27 @@ import game.vinto.client.MemoryVault
 import kotlin.test.Test
 
 /**
- * A new room is private until somebody says otherwise.
+ * A new room is listed, unless the host says otherwise.
  *
- * The one control on this screen whose wrong answer cannot be taken back. A listing is read by
- * strangers the moment it exists, so a room that is public *by default* publishes a game
- * somebody meant to play with two friends — and unlike every other mistake in this app, undoing
- * it does not undo the consequence.
+ * **This test asserted the opposite yesterday, and the reversal is the point of keeping it.**
+ * The default was private, on the reasoning that a listing cannot be taken back once a
+ * stranger has read it, so the safe answer is the one already chosen. That reasoning was
+ * sound as far as it went and left out the thing that decides it: a room has to be *found*.
+ * With nobody listed by default the public browser is an empty screen, and an online mode
+ * that depends on two strangers meeting gives them nowhere to meet. Reversed on the product
+ * owner's decision.
  *
- * `OnlineScreen`'s state has always defaulted to private and its KDoc has always said so. What
- * did not exist was anything checking that the *screen* agrees with the state: the choice is
- * drawn as a raised thumb sliding along a groove, so which side is chosen is carried entirely
- * by shading, and shading is exactly the kind of thing that inverts in a refactor without one
- * line of the logic changing. Reported as a possible bug from a photograph of a phone, which is
- * the only way anybody would ever have found it.
+ * What the test is *for* has not changed, which is why it is a rewrite rather than a deletion:
+ * this is the one control on the way into a room whose value nobody re-reads before tapping
+ * Open, and it is carried entirely by which end of a groove a thumb is sitting on. Shading is
+ * exactly the thing that inverts in a refactor without a line of the logic changing — so
+ * whichever way the default points, something has to say so out loud.
  */
 @OptIn(ExperimentalTestApi::class)
 class RoomVisibilityDefaultTest {
 
     @Test
-    fun aNewRoomIsPrivateUntilSomebodySaysOtherwise() = runComposeUiTest {
+    fun aNewRoomIsListedUntilSomebodySaysOtherwise() = runComposeUiTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
 
@@ -44,8 +46,8 @@ class RoomVisibilityDefaultTest {
         press("Open a room")
         waitForIdle()
 
-        onNodeWithContentDescription("By code only").assertIsSelected()
-        onNodeWithContentDescription("Listed publicly").assertIsNotSelected()
+        onNodeWithContentDescription("Listed publicly").assertIsSelected()
+        onNodeWithContentDescription("By code only").assertIsNotSelected()
     }
 
     /** Scrolls to it first: this control is below the fold on a test-sized window. */

@@ -139,7 +139,19 @@ fun OpenRoomScreen(
     onEnterRoom: (code: String, nickname: String) -> Unit,
     onBack: () -> Unit,
 ) {
-    var listed by remember { mutableStateOf(false) }
+    // **Listed, unless the host says otherwise** — reversed on the product owner's decision.
+    //
+    // The previous default was private, and the reasoning for it was sound as far as it went:
+    // a listing cannot be taken back once a stranger has read it, so the safe answer is the
+    // one already chosen. What that reasoning left out is that the room has to be *found*.
+    // With nobody listed, the public browser is an empty screen, and a game whose whole
+    // online mode depends on two strangers meeting has no way for them to meet.
+    //
+    // The cost is real and worth naming: somebody opening a room for two friends now
+    // publishes it unless they notice the control. What makes that acceptable rather than
+    // careless is that the choice is on this screen, one tap away, before the room exists —
+    // and that a listing exposes a nickname and a seat count and nothing else.
+    var listed by remember { mutableStateOf(true) }
     var failure by remember { mutableStateOf<RoomAnswer.Failed?>(null) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()

@@ -977,8 +977,33 @@ rather than boilerplate:
   Pages' own default for an unmatched path rather than anything the redirect rules were
   doing. A committed `404.html` is what makes Pages answer 404; the scoped rule is what keeps
   an invitation reaching the app rather than that page. Both, or neither works.
+- **`<base href="/">`, and every invitation was broken without it.** The third act of the same
+  trap, and the one that actually shipped. The shell is served at `/r/ABC123` with a 200 so
+  the address bar keeps the code for `Main.kt` to read — which means the page is *at* that
+  path, and a relative script src asks the browser for `/r/composeApp.<hash>.js`. The scoped
+  fallback answers that with the shell, 200, `text/html`. The browser loads an HTML document
+  as a classic script, dies on `Unexpected token '<'`, and the page sits on "Dealing…" for
+  ever.
 
-`WebShellTest` (7 cases, `composeApp:jvmTest`) holds all of it: every tag present, the image
+  Reported from a phone. Confirmed against the live site with one `curl`
+  (`/r/composeApp.<hash>.js` → `200 text/html`, 10,843 bytes — the shell), then reproduced in
+  Chromium against a server that mimics the fallback: at `/` the page boots, at `/r/CODE` it
+  does not, with exactly that SyntaxError. Fixed the same way and the fix verified in the same
+  harness.
+
+  A `<base>` rather than a leading slash on each tag, because the script is not the only
+  casualty: the icons and the manifest resolve the same way, and so does anything the wasm
+  bundle fetches for itself at runtime, which no amount of editing `index.html` reaches.
+  Held by `everyRelativeUrlResolvesAgainstTheRoot`.
+
+  Two things worth keeping. **A link to `/` always worked**, which is why this survived a
+  deploy, a probe of the live site and seven cases in this file — every check anybody had
+  written asked for the root. And the fix nearly broke the deploy: `deploy-web.yml` rewrites
+  `src="composeApp.js"` to the hashed name with a `sed` that has no `/g`, and the comment
+  explaining all of the above originally quoted that exact string, giving the file two
+  matches on two lines. The comment is worded around it now.
+
+`WebShellTest` (8 cases, `composeApp:jvmTest`) holds all of it: every tag present, the image
 URLs absolute, the three descriptions identical, every file the shell names really on disk,
 the share card really 1200x630, and the redirect and robots rules agreeing with `INVITE_PATH`.
 It asserts no wording, because copy changes and the failures worth catching are the silent
@@ -1914,8 +1939,19 @@ stall. One move at a time now, with the second dropped rather than queued.
 
 `GET /rooms` already existed and nothing used it. `DiscoverScreen` is the four states it
 needs — asking, unable to ask, asked-and-empty, and a list — and `OnlineScreen` asks
-public-or-private *before* the room exists, defaulting to private: a listing cannot be taken
-back once a stranger has read it, so the safe answer is the one already chosen.
+public-or-private *before* the room exists.
+
+**The default was private and is now listed** — reversed on the product owner's decision. The
+original reasoning was that a listing cannot be taken back once a stranger has read it, so the
+safe answer is the one already chosen. Sound as far as it went, and it left out the thing that
+decides it: a room has to be *found*. With nobody listed by default the public browser is an
+empty screen, and an online mode that exists so two strangers can meet gives them nowhere to
+do it. The cost is real and worth naming — somebody opening a room for two friends publishes
+it unless they notice the control — and what makes that acceptable is that the choice is on
+the screen that creates the room, one tap away, before the room exists, and that a listing
+carries a nickname and a seat count and nothing else. `RoomVisibilityDefaultTest` was rewritten
+rather than deleted: whichever way the default points, something has to say so out loud,
+because the control is carried entirely by which end of a groove a thumb is sitting on.
 
 The rows are a pure function of the service's answer (`shared/client/Discovery.kt`, eight
 tests) and they **keep the service's order**. A client that re-sorts makes two people looking

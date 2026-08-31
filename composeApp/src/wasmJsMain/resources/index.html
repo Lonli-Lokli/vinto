@@ -7,6 +7,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 
     <!--
+      Every relative URL on this page resolves against the site root, not against the path the
+      page happens to be served at.
+
+      **This is load-bearing, and every invitation was broken without it.** An invite link is
+      `/r/ABC123`, and `_redirects` serves the shell there with a 200 so the address bar keeps
+      the code for `Main.kt` to read. But the page is then *at* `/r/ABC123`, so a relative
+      relative script src asks the browser for `/r/composeApp.js` — which the same SPA
+      fallback answers with this document, 200, `text/html`. The browser loads an HTML file as
+      a classic script, dies on `Unexpected token '<'`, and the page sits on "Dealing…" for
+      ever. Reported from a phone; reproduced in Chromium against a server that mimics the
+      fallback, where the error is exactly that.
+
+      A `<base>` rather than absolute paths on each tag, because the script tag is not the only
+      casualty — the icons and the manifest resolve the same way, and so does anything the
+      wasm bundle fetches for itself at runtime, which no amount of editing this file reaches.
+      One line fixes all of them.
+
+      Safe here: `<base>` changes what *relative URLs* resolve against and nothing else.
+      `window.location.pathname` is untouched, so `roomCodeFrom` still reads the code out of
+      the address. The app draws into a canvas and has no relative anchors to redirect.
+    -->
+    <base href="/">
+
+    <!--
       ============================================================================
       What a link to this page says about itself.
 
