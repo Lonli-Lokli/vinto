@@ -102,7 +102,7 @@ jobs:
 
       # `preview_urls` in wrangler.jsonc only reaches the Worker on the next `wrangler
       # deploy`, and a pull request's preview cannot wait for a production deploy to carry
-      # a setting. This PATCH turns previews on directly — and keeps `enabled: false`, so
+      # a setting. This call turns previews on directly — and keeps `enabled: false`, so
       # production stays off workers.dev exactly as the config insists. Idempotent, and a
       # no-op once a post-merge deploy has applied the config.
       - name: Make sure the Worker serves preview versions
@@ -114,7 +114,8 @@ jobs:
             echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
             exit 1
           fi
-          curl -sSf -X PATCH \
+          # POST, not PATCH: the script-subdomain endpoint answers PATCH with a 405.
+          curl -sSf -X POST \
             "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/vinto-web/subdomain" \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
