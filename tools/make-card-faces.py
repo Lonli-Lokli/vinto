@@ -293,131 +293,53 @@ def face_number(n):
     return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
-# --- the table scene the four peeks share -----------------------------------
-
-
-def table_felt():
-    """The board: the four-player table, as the app itself draws it."""
-    return (
-        f'<rect x="140" y="290" width="545" height="600" rx="130" fill="{FELT_DARK}" '
-        f'stroke="{GOLD}" stroke-width="8"/>'
-        f'<rect x="162" y="312" width="501" height="556" rx="112" fill="none" '
-        f'stroke="{GOLD}" stroke-width="3" opacity="0.4"/>'
-    )
-
-
-def opponent_seat(cx, cy, rot=0.0, gap=None):
-    """A bust with three small blue cards in front of it, facing the center."""
-    seat_bust = (
-        f'<circle cx="0" cy="-66" r="27" fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-        f'<path d="M -58,-2 Q -52,-48 0,-52 Q 52,-48 58,-2 Z" '
-        f'fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-    )
-    cards = "".join(
-        f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
-        f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="4"/>'
-        for i in range(3)
-        if i != gap
-    )
-    return f'<g transform="translate({cx} {cy}) rotate({rot})">{seat_bust}{cards}</g>'
-
-
-def your_hand(gap=None):
-    """Your three green cards at the bottom edge, larger — the seat the app gives you."""
-    return "".join(
-        f'<rect x="{CX + (i - 1) * 116 - 50:.0f}" y="772" width="100" height="138" rx="12" '
-        f'fill="{FELT}" stroke="{GOLD}" stroke-width="7"/>'
-        for i in range(3)
-        if i != gap
-    )
-
-
-def board(top_gap=None, my_gap=None):
-    return (
-        table_felt()
-        + opponent_seat(CX, 384, gap=top_gap)
-        + opponent_seat(224, 590, rot=90)
-        + opponent_seat(601, 590, rot=-90)
-        + your_hand(gap=my_gap)
-    )
-
-
-def trail(x1, y1, x2, y2, hw=36, color=GOLD):
-    """A streak from a seat's gap to the card pulled out of it: whose card this is."""
-    return (
-        f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
-        f'fill="{color}" opacity="0.35"/>'
-    )
-
-
-def popped(cx, cy, w, h, fill, stroke, halo):
-    return (
-        f'<rect x="{cx - w / 2 - 11:.0f}" y="{cy - h / 2 - 11:.0f}" width="{w + 22}" '
-        f'height="{h + 22}" rx="20" fill="{halo}" opacity="0.4"/>'
-        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="13" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
-    )
-
-
-def lens(cx, cy, r, color, handle=False, sw=16):
+def lens(cx, cy, r, color, handle=False, sw=18):
     """The spying glyph for peeking at THEIR card — a tool, not an eye."""
     parts = (
         f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
         f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{color}" stroke-width="{sw}"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{r * 0.14:.0f}" fill="{color}"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r * 0.13:.0f}" fill="{color}"/>'
     )
     if handle:
         a = math.radians(52)
         parts += (
             f'<line x1="{cx + r * math.cos(a):.0f}" y1="{cy + r * math.sin(a):.0f}" '
-            f'x2="{cx + (r + 150) * math.cos(a):.0f}" y2="{cy + (r + 150) * math.sin(a):.0f}" '
-            f'stroke="{color}" stroke-width="{sw + 10}" stroke-linecap="round"/>'
+            f'x2="{cx + (r + 170) * math.cos(a):.0f}" y2="{cy + (r + 170) * math.sin(a):.0f}" '
+            f'stroke="{color}" stroke-width="{sw + 12}" stroke-linecap="round"/>'
         )
     return parts
 
 
 def face_seven():
-    """7: the table; a small card of YOURS rises, your eye above it."""
+    """7: your amber eye above a small card of yours — the J/Q style, no table."""
     amber = ACCENT["7"]
     return (
-        board(my_gap=1)
-        + trail(CX, 800, CX, 724, color=amber)
-        + popped(CX, 680, 122, 168, FELT, GOLD, amber)
-        + big_eye(CX, 524, s=0.55, gaze=8, iris=amber)
+        card_shape(CX, 660, 255, 350, fill=FELT, stroke=GOLD)
+        + big_eye(CX, 330, s=0.95, gaze=12, iris=amber)
+        + sight(CX, 448, CX, 482, color=amber)
     )
 
 
 def face_eight():
-    """8: the table; a BIG card of yours rises, the eye opened on the card
-    itself — same act as the 7, bigger card, different picture."""
-    burnt = ACCENT["8"]
-    return (
-        board(my_gap=1)
-        + trail(CX, 800, CX, 680, color=burnt)
-        + popped(CX, 590, 190, 262, FELT, GOLD, burnt)
-        + big_eye(CX, 590, s=0.62, iris=burnt)
+    """8: a much bigger card of yours with the eye opened on the card itself."""
+    return card_shape(CX, 562, 335, 460, fill=FELT, stroke=GOLD) + big_eye(
+        CX, 562, s=1.0, iris=ACCENT["8"]
     )
 
 
 def face_nine():
-    """9: the table; a small card of THEIRS drops, a slim lens ring on it."""
+    """9: a small card of theirs under a slim lens ring."""
     steel = ACCENT["9"]
-    return (
-        board(top_gap=1)
-        + trail(CX, 420, CX, 500, color=steel)
-        + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, steel)
-        + lens(CX, 560, 96, steel, sw=13)
+    return card_shape(CX, 562, 255, 350, fill=BLUE, stroke=BLUE_EDGE) + lens(
+        CX, 562, 150, steel, sw=16
     )
 
 
 def face_ten():
-    """10: the table; a BIG card of theirs drops under a full magnifier."""
+    """10: a big card of theirs under a full handled magnifier."""
     indigo = ACCENT["10"]
-    return (
-        board(top_gap=1)
-        + trail(CX, 420, CX, 480, color=indigo)
-        + popped(CX, 580, 190, 262, BLUE, BLUE_EDGE, indigo)
-        + lens(CX + 10, 566, 132, indigo, handle=True)
+    return card_shape(CX - 20, 545, 335, 460, fill=BLUE, stroke=BLUE_EDGE) + lens(
+        CX + 6, 528, 185, indigo, handle=True
     )
 
 
@@ -459,25 +381,36 @@ def face_queen():
 
 
 def face_king():
-    """The oracle, double-ended like a real court card and without an eye —
-    an oracle radiates, he does not peer. Crown above, its mirror below, the
-    naming-star between them, rays to a card in every corner; green and blue
-    placed so a 180° turn maps the face onto itself."""
-    crowns = crown(CX, 412, s=0.95) + group(180, CX, 712, crown(CX, 712, s=0.95))
-    named = star(CX, 562, 66, 28)
+    """The oracle's own instrument: a crystal ball on its stand, the naming-star
+    glowing inside, rays to a card in every corner — green and blue placed so a
+    180° turn keeps the reading true."""
+    ball = (
+        f'<circle cx="{CX}" cy="520" r="180" fill="{PAPER}" opacity="0.55"/>'
+        f'<circle cx="{CX}" cy="520" r="180" fill="none" stroke="{GOLD}" stroke-width="15"/>'
+        f'<path d="M {CX - 96},430 Q {CX - 44},380 {CX + 22},396" fill="none" '
+        f'stroke="{WHITE}" stroke-width="13" stroke-linecap="round" opacity="0.8"/>'
+        + star(CX, 530, 78, 32)
+        + star(CX - 86, 470, 24, 9, n=4)
+        + star(CX + 96, 590, 18, 7, n=4)
+    )
+    stand = (
+        f'<path d="M {CX - 92},688 L {CX + 92},688 L {CX + 122},762 L {CX - 122},762 Z" '
+        f'fill="{GOLD}" stroke="{GOLD_DARK}" stroke-width="7"/>'
+        f'<rect x="{CX - 148}" y="762" width="296" height="30" rx="14" fill="{GOLD_DARK}"/>'
+    )
     cards = (
-        card_shape(228, 292, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
-        + card_shape(597, 292, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(228, 832, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(597, 832, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        card_shape(210, 268, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        + card_shape(615, 268, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(210, 880, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(615, 880, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
     )
     rays = (
-        ray(322, 480, 278, 388, color=GOLD)
-        + ray(503, 480, 547, 388, color=GOLD)
-        + ray(322, 644, 278, 736, color=GOLD)
-        + ray(503, 644, 547, 736, color=GOLD)
+        ray(285, 400, 252, 356, color=GOLD)
+        + ray(540, 400, 573, 356, color=GOLD)
+        + ray(285, 640, 252, 792, color=GOLD)
+        + ray(540, 640, 573, 792, color=GOLD)
     )
-    return rays + crowns + named + cards
+    return rays + ball + stand + cards
 
 
 def face_ace():
@@ -504,12 +437,8 @@ def face_ace():
 
 
 def face_joker():
-    """The fool's cap, and the minus it is worth."""
-    badge = (
-        f'<circle cx="{CX}" cy="810" r="78" fill="none" stroke="{GOLD}" stroke-width="14"/>'
-        f'<rect x="{CX - 42}" y="800" width="84" height="20" rx="10" fill="{GOLD}"/>'
-    )
-    return jester_cap(CX, 500, s=2.7) + badge
+    """The fool's cap, and nothing else — the one card that needs no diagram."""
+    return jester_cap(CX, 562, s=2.9)
 
 
 def card_back():
