@@ -71,16 +71,44 @@ class FontCoverageTest {
 
     /**
      * The display face is Latin-only and that is allowed, on one condition: it is used for the
-     * name of the game and nothing else, and the name of the game is not translated.
+     * name of the game and nothing else, and every `app_name` there is fits inside it.
+     *
+     * **Decided, having looked at the alternatives.** Cinzel carries Latin and latin-ext and
+     * nothing else, so the game's name cannot be translated into Cyrillic — and a display
+     * face that could (Forum and Prata both carry it) was weighed and not taken. VINTO is a
+     * proper noun, it is the same word on every store listing, and the mark is the one place
+     * a change of typeface is the whole design rather than a detail.
+     *
+     * So this sweeps **every** locale rather than the base file. The hole it closes is a
+     * precise one: a translated `app_name` would be caught by nothing, because
+     * [everyLetterOfEveryTranslationCanBeDrawnInTheBundledFace] checks translations against
+     * Fira — which has the Cyrillic — while this one string is drawn in Cinzel, which does
+     * not. "ВИНТО" would pass every gate this file had and arrive on the home screen as
+     * five empty boxes.
+     *
+     * It is about the glyphs and not about the key, deliberately. A locale may carry its own
+     * `app_name` if the mark can draw it — a Turkish or Polish rendering is fine — and what
+     * is refused is a script Cinzel has never had.
      */
     @Test
     fun theDisplayFaceCoversTheOneStringItIsUsedFor() {
         val wordmark = load("cinzel_bold.ttf")
-        val name = strings(File(resources(), "values/strings.xml"))["app_name"]
+        val base = strings(File(resources(), "values/strings.xml"))["app_name"]
             ?: fail("there is no app_name to set in it")
 
-        name.filter { it.needsAFont() }.forEach {
-            assertTrue(wordmark.canDisplay(it), "the wordmark face cannot draw '$it' of \"$name\"")
+        val names = localeDirs()
+            .mapNotNull { dir -> strings(File(dir, "strings.xml"))["app_name"]?.let { dir.name to it } }
+            .plus("values" to base)
+
+        names.forEach { (locale, name) ->
+            name.filter { it.needsAFont() }.forEach {
+                assertTrue(
+                    wordmark.canDisplay(it),
+                    "$locale sets the game's name to \"$name\", and the wordmark face cannot " +
+                        "draw '$it'. The mark is Cinzel, which is Latin-only by decision — " +
+                        "leave app_name out of that file and it falls back to the English.",
+                )
+            }
         }
     }
 
@@ -124,6 +152,13 @@ class FontCoverageTest {
      */
     private fun Char.needsAFont(): Boolean =
         !isWhitespace() && !isISOControl() && !isSurrogate() && code !in VARIATION
+
+    /** Every `values*` directory that actually carries a strings file. */
+    private fun localeDirs(): List<File> =
+        resources().listFiles { file -> file.isDirectory && file.name.startsWith("values-") }
+            .orEmpty()
+            .filter { File(it, "strings.xml").isFile }
+            .sortedBy { it.name }
 
     private fun translations(): List<Pair<String, String>> =
         resources().listFiles { file -> file.isDirectory && file.name.startsWith("values") }
