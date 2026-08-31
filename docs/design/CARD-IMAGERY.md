@@ -214,3 +214,18 @@ near the repo:
 - **If this ships as a premium deck** rather than a replacement, files take a suffixed name
   (`card_7_meaning.xml`), the default deck stays, and the deck choice is a cosmetic id per
   `MONETIZATION.md`.
+
+## Postscript: the deck is code now
+
+Two generation rounds proved the prediction in the acceptance checklist right in the worst
+way: the model drew the 2–6 *progression* as one scene, turned "the viewer's own hand" into
+a human hand, and tattooed the seat-chevron onto it. A diffusion model cannot hold a
+fourteen-face design system; code holds it for free.
+
+`tools/make-card-faces.py` now generates the whole deck — the grammar above implemented as
+SVG primitives (rows, chevron, eyes, arrows, weight), the standard corner indices on every
+face exactly like a normal deck (rotated bottom-right, underlined 6 and 9), and a
+`preview.html` for judging the result at full size and at thumbnail. The generated SVGs are
+committed under `tools/card-faces/`, same convention as the launcher icons. The prompt sheet
+above stays as the *specification* the code implements — and as the record of why prompts
+alone were not enough.
