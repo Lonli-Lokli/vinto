@@ -12,7 +12,7 @@ carrying those items long enough that the changes read as unfinished work when t
 Leaving them there costs something specific: **`openspec/specs/` is not canonical while they
 are open.** A requirement in a change folder is a proposal; only archiving merges it. So the
 eight further `online-multiplayer` requirements, all of `mobile-app`, `kmp-shared-engine`,
-`kmp-bot`, `kmp-game-client`, `cross-implementation-parity` and `analytics` — 35 requirements
+`kmp-bot`, `kmp-game-client`, `cross-implementation-parity` and `analytics` — 40 requirements
 describing the game that actually ships — are still filed as things somebody proposed.
 
 The Kotlin rewrite merged to `master` on 2026-08-31 (52dcc20). Its CI is green, and the push
