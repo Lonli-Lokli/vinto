@@ -44,13 +44,27 @@ ACCENT = {
     "5": "#B03A57",   # raspberry
     "6": "#1B5E43",   # the brand green
     "7": "#A96A00",   # amber
-    "8": "#A96A00",
+    "8": "#B4571E",   # burnt orange — a sibling, not a twin
     "9": "#256D85",   # steel cyan
-    "10": "#256D85",
+    "10": "#3D4EA0",  # indigo — a sibling, not a twin
     "j": "#7C3AA0",   # violet
     "q": "#A23B72",   # plum
     "k": "#A8791B",   # deep gold
     "a": "#9E2B25",   # red
+}
+
+# Tinted grounds for the action cards — colour mass tells them apart across a table.
+# The numbers keep the plain cream: they already read perfectly.
+BG = {
+    "7": "#F6E9C9",
+    "8": "#F7DFC8",
+    "9": "#DCEBF2",
+    "10": "#DEE2F5",
+    "j": "#EBDFF4",
+    "q": "#F6DFEB",
+    "k": "#F4E9C7",
+    "a": "#F7DCD7",
+    "joker": "#FBE8D2",
 }
 
 OUT = pathlib.Path(__file__).parent / "card-faces"
@@ -236,7 +250,7 @@ def joker_index():
     return jester_cap(120, 148, s=0.5)
 
 
-def frame(label, emblem, underline=False, joker=False, accent=None):
+def frame(label, emblem, underline=False, joker=False, accent=None, bg=PAPER):
     corner = joker_index() if joker else index_glyph(label, underline, color=accent or INK)
     mirrored = f'<g transform="rotate(180 {W / 2} {H / 2})">{corner}</g>'
     inner = (
@@ -247,7 +261,7 @@ def frame(label, emblem, underline=False, joker=False, accent=None):
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
-        f'<rect width="{W}" height="{H}" rx="44" fill="{PAPER}"/>'
+        f'<rect width="{W}" height="{H}" rx="44" fill="{bg}"/>'
         f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
         f'fill="none" stroke="{INK}" stroke-width="6"/>'
         f"{inner}{corner}{mirrored}{emblem}</svg>"
@@ -270,35 +284,47 @@ def face_number(n):
     return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
-def face_peek_own():
-    """7 and 8: a giant amber eye over one big card of YOURS.
-    Silhouette at a distance: eye above a green card."""
+def face_seven():
+    """7: your green card between two mirrored amber eyes — double-ended like a
+    court card, so it reads the same from both seats."""
     amber = ACCENT["7"]
     return (
-        card_shape(CX, 700, 310, 425, fill=FELT, stroke=GOLD)
-        + big_eye(CX, 320, s=1.15, gaze=12, iris=amber)
-        + sight(CX, 442, CX, 496, color=amber)
+        card_shape(CX, 562, 265, 364, fill=FELT, stroke=GOLD)
+        + big_eye(CX, 255, s=0.85, gaze=10, iris=amber)
+        + group(180, CX, 870, big_eye(CX, 870, s=0.85, gaze=10, iris=amber))
+        + sight(CX, 352, CX, 384, color=amber)
+        + sight(CX, 740, CX, 772, color=amber)
     )
 
 
-def face_peek_them():
-    """9 and 10: a giant steel lens over one big card of THEIRS, its owner
-    peeking out from behind. Silhouette: ring with a handle over a blue card."""
+def face_eight():
+    """8: one big green card that has opened its eye — self-symmetric."""
+    return card_shape(CX, 562, 320, 438, fill=FELT, stroke=GOLD) + big_eye(
+        CX, 562, s=1.0, iris=ACCENT["8"]
+    )
+
+
+def face_nine():
+    """9: an opponent's blue card under a lens ring — no handle, so the
+    emblem is the same upside down."""
     steel = ACCENT["9"]
-    lens_x, lens_y, r = 460, 520, 190
-    handle_a = math.radians(55)
-    hx1 = lens_x + r * math.cos(handle_a)
-    hy1 = lens_y + r * math.sin(handle_a)
-    hx2 = lens_x + (r + 210) * math.cos(handle_a)
-    hy2 = lens_y + (r + 210) * math.sin(handle_a)
     return (
-        bust(560, 330, s=1.25)
-        + card_shape(380, 650, 290, 400, rot=-6, fill=BLUE, stroke=BLUE_EDGE)
-        + f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
-        f'stroke="{steel}" stroke-width="34" stroke-linecap="round"/>'
-        + f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="{PAPER}" opacity="0.2"/>'
-        + f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{steel}" stroke-width="22"/>'
-        + big_eye(lens_x, lens_y, s=0.8, iris=steel)
+        card_shape(CX, 562, 320, 438, fill=BLUE, stroke=BLUE_EDGE)
+        + f'<circle cx="{CX}" cy="562" r="172" fill="{PAPER}" opacity="0.25"/>'
+        f'<circle cx="{CX}" cy="562" r="172" fill="none" stroke="{steel}" stroke-width="24"/>'
+        + big_eye(CX, 562, s=0.72, iris=steel)
+    )
+
+
+def face_ten():
+    """10: an opponent's blue card between two mirrored indigo eyes."""
+    indigo = ACCENT["10"]
+    return (
+        card_shape(CX, 562, 265, 364, fill=BLUE, stroke=BLUE_EDGE)
+        + big_eye(CX, 255, s=0.85, gaze=10, iris=indigo)
+        + group(180, CX, 870, big_eye(CX, 870, s=0.85, gaze=10, iris=indigo))
+        + sight(CX, 352, CX, 384, color=indigo)
+        + sight(CX, 740, CX, 772, color=indigo)
     )
 
 
@@ -310,13 +336,20 @@ def swap_pair():
 
 
 def face_jack():
-    """The blind swap: a violet circle of arrows around the blindfolded pair.
-    Silhouette: a ring of motion around crossed cards, banded."""
+    """The blind swap: the pair trades inside a violet circle of arrows, and the
+    slashed eye — the same glyph every password field uses — says nobody looks.
+    A slashed eye upside down is still a slashed eye."""
     violet = ACCENT["j"]
     arrows = arc_arrow(CX, 600, 295, 208, 332, sw=17, color=violet) + arc_arrow(
         CX, 600, 295, 28, 152, sw=17, color=violet
     )
-    return swap_pair() + blindfold(CX, 590, 240, -6) + arrows
+    slash = (
+        f'<line x1="{CX - 108}" y1="702" x2="{CX + 108}" y2="486" stroke="{PAPER}" '
+        f'stroke-width="34" stroke-linecap="round"/>'
+        f'<line x1="{CX - 108}" y1="702" x2="{CX + 108}" y2="486" stroke="{INK}" '
+        f'stroke-width="16" stroke-linecap="round"/>'
+    )
+    return swap_pair() + big_eye(CX, 594, s=0.82, iris=violet) + slash + arrows
 
 
 def face_queen():
@@ -330,19 +363,24 @@ def face_queen():
 
 
 def face_king():
-    """The oracle: a great crown over an all-seeing eye, raying every hand —
-    yours and both opponents'. Silhouette: crown, eye, three cards."""
+    """The oracle, double-ended like a real court card: a crown above and its
+    mirror below, the all-seeing eye between them, rays to a card in every
+    corner — green and blue placed so a 180° turn maps the face onto itself."""
+    crowns = crown(CX, 400, s=0.95) + group(180, CX, 724, crown(CX, 724, s=0.95))
+    eye = big_eye(CX, 562, s=0.72)
     cards = (
-        card_shape(240, 855, 155, 212, rot=-8, fill=FELT, stroke=GOLD)
-        + card_shape(CX, 880, 155, 212, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(584, 855, 155, 212, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        card_shape(228, 292, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        + card_shape(597, 292, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(228, 832, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(597, 832, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
     )
     rays = (
-        ray(330, 620, 268, 728, color=GOLD)
-        + ray(CX, 648, CX, 752, color=GOLD)
-        + ray(494, 620, 556, 728, color=GOLD)
+        ray(322, 480, 278, 388, color=GOLD)
+        + ray(503, 480, 547, 388, color=GOLD)
+        + ray(322, 644, 278, 736, color=GOLD)
+        + ray(503, 644, 547, 736, color=GOLD)
     )
-    return crown(CX, 310, s=1.65) + big_eye(CX, 540, s=0.85) + rays + cards
+    return rays + crowns + eye + cards
 
 
 def face_ace():
@@ -421,15 +459,15 @@ FACES = {
     "card_4": frame("4", face_number(4), accent=ACCENT["4"]),
     "card_5": frame("5", face_number(5), accent=ACCENT["5"]),
     "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"]),
-    "card_7": frame("7", face_peek_own(), accent=ACCENT["7"]),
-    "card_8": frame("8", face_peek_own(), accent=ACCENT["8"]),
-    "card_9": frame("9", face_peek_them(), underline=True, accent=ACCENT["9"]),
-    "card_10": frame("10", face_peek_them(), accent=ACCENT["10"]),
-    "card_j": frame("J", face_jack(), accent=ACCENT["j"]),
-    "card_q": frame("Q", face_queen(), accent=ACCENT["q"]),
-    "card_k": frame("K", face_king(), accent=ACCENT["k"]),
-    "card_a": frame("A", face_ace(), accent=ACCENT["a"]),
-    "card_joker": frame("", face_joker(), joker=True, accent=ORANGE),
+    "card_7": frame("7", face_seven(), accent=ACCENT["7"], bg=BG["7"]),
+    "card_8": frame("8", face_eight(), accent=ACCENT["8"], bg=BG["8"]),
+    "card_9": frame("9", face_nine(), underline=True, accent=ACCENT["9"], bg=BG["9"]),
+    "card_10": frame("10", face_ten(), accent=ACCENT["10"], bg=BG["10"]),
+    "card_j": frame("J", face_jack(), accent=ACCENT["j"], bg=BG["j"]),
+    "card_q": frame("Q", face_queen(), accent=ACCENT["q"], bg=BG["q"]),
+    "card_k": frame("K", face_king(), accent=ACCENT["k"], bg=BG["k"]),
+    "card_a": frame("A", face_ace(), accent=ACCENT["a"], bg=BG["a"]),
+    "card_joker": frame("", face_joker(), joker=True, accent=ORANGE, bg=BG["joker"]),
     "card_back": card_back(),
 }
 
