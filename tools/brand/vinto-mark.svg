@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360">
+  <!-- The Vinto mark: an original chunky geometric V, authored in this repository
+       (the same letterform the card back's medallion carries). Flat orange on
+       transparency; everything downstream is layout, not drawing. -->
+  <path d="M 15,15 L 105,15 L 150,171 L 195,15 L 285,15 L 214,345 L 86,345 Z"
+        fill="#E8791E"/>
+</svg>

@@ -44,7 +44,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # The same V the launcher uses, so the phone and the browser answer to one mark.
 MARK = ROOT / "tools" / "brand" / "vinto-mark.png"
 # The card art the app itself draws with, so the share card is the real deck.
-ART = ROOT / "composeApp" / "src" / "commonMain" / "composeResources" / "drawable"
+# The faces are vector drawables in the app now; the share card reads committed
+# renders of the same SVGs (chromium screenshots of tools/card-faces/*.svg).
+ART = ROOT / "tools" / "brand" / "card-renders"
 # Cinzel, the wordmark face. `theme/Type.kt` uses it for the name of the game and nothing else.
 WORDMARK_FONT = ROOT / "composeApp" / "src" / "commonMain" / "composeResources" / "font" / "cinzel_bold.ttf"
 BODY_FONT = ROOT / "composeApp" / "src" / "commonMain" / "composeResources" / "font" / "fira_medium.ttf"
