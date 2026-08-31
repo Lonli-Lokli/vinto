@@ -54,6 +54,7 @@ import game.vinto.app.theme.CodeField
 import game.vinto.app.theme.CodeLength
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.VintoField
+import game.vinto.app.theme.errorOnFelt
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.RoomAnswer
@@ -261,7 +262,9 @@ private fun Trouble(failure: RoomAnswer.Failed?) {
     Text(
         text = troubled(failure.trouble),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error,
+        // On the felt, not on a scheme surface — the light scheme's own error red is 1:1
+        // against green cloth. See `errorOnFelt`.
+        color = MaterialTheme.colorScheme.errorOnFelt(),
     )
     Text(
         text = failure.reason,
@@ -313,5 +316,8 @@ private val TitleGap = 2.dp
 private val ColumnMax = 420.dp
 private const val NicknameMax = 16
 
-/** The service's own words, under the sentence that says what to do about them. */
-private const val Quiet = 0.6f
+/**
+ * The service's own words, under the sentence that says what to do about them. Quieter than
+ * that sentence and no quieter: 0.6 measured 3.35:1 on the lighter felt.
+ */
+private const val Quiet = 0.85f

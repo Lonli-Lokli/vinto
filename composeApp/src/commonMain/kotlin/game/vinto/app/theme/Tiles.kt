@@ -75,7 +75,10 @@ fun ActionTile(
         },
         shape = shape,
         color = Color.Transparent,
-        contentColor = Rail.ink,
+        // The tile's charcoal is fixed in both schemes, so its ink is too — `Rail.ink` here
+        // was the light scheme's near-black on that charcoal, at 1.4:1. Same inks the seat
+        // plates use, for the same reason.
+        contentColor = Slate.ink,
         border = BorderStroke(Edge, accent ?: Rail.edge),
         shadowElevation = lift,
         interactionSource = interaction,
@@ -101,15 +104,15 @@ fun ActionTile(
                     Text(
                         text = title.uppercase(),
                         style = stamped(size = TitleSize),
-                        color = accent ?: Rail.ink,
+                        color = accent ?: Slate.ink,
                     )
                     Text(
                         text = detail,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Rail.inkDim,
+                        color = Slate.inkDim,
                     )
                 }
-                Chevron(colour = accent ?: Rail.edge)
+                Chevron(colour = accent ?: Slate.inkDim)
             }
         }
     }
@@ -135,14 +138,16 @@ fun BackChevron(description: String, onClick: () -> Unit, modifier: Modifier = M
         modifier = modifier.size(MinTap).semantics { contentDescription = description },
         shape = RoundedCornerShape(Corner),
         color = Color.Transparent,
-        contentColor = Rail.ink,
+        // It sits straight on the felt, and the felt is green in both schemes — the light
+        // scheme's `Rail.ink` was a near-black chevron on green cloth.
+        contentColor = MaterialTheme.colorScheme.onFelt(),
         interactionSource = interaction,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = "‹",
                 fontSize = BackSize.sp,
-                color = Rail.ink,
+                color = MaterialTheme.colorScheme.onFelt(),
                 textAlign = TextAlign.Center,
             )
         }

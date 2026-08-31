@@ -45,7 +45,6 @@ import game.vinto.app.art.score_you_called
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
-import game.vinto.app.theme.Slate
 import game.vinto.app.theme.VintoSheet
 import game.vinto.client.RoundOutcome
 import game.vinto.client.RoundResult
@@ -238,7 +237,10 @@ private fun Line(
         border = BorderStroke(
             if (caller || decisive) MarkRing else 1.dp,
             when {
-                caller -> Slate.gold
+                // Rail.gold, not Slate's: the sheet is the rail's material, and the plates'
+                // bright gold is 1.9:1 on paper — the exact pair the theme grew a second
+                // gold for.
+                caller -> Rail.gold
                 decisive -> Rail.brand
                 else -> Rail.line
             },
@@ -271,7 +273,7 @@ private fun Line(
                     Text(
                         text = it,
                         fontSize = SmallSize,
-                        color = if (caller) Slate.gold else Rail.brand,
+                        color = if (caller) Rail.gold else Rail.brand,
                     )
                 }
             }

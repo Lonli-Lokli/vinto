@@ -113,11 +113,15 @@ fun <T> ChoiceRow(
                     val name = label(option)
                     Text(
                         text = name.uppercase(),
-                        // Stamped like every other control, and spoken as written.
+                        // Stamped like every other control, and spoken as written. The
+                        // unchosen answers get the full ink, not the dim one: the groove's
+                        // cut shadow put `Rail.inkDim` at 3.4:1 in the light scheme, and the
+                        // thumb already says which answer is chosen — the ink does not have
+                        // to say it again.
                         modifier = Modifier.semantics { contentDescription = name },
                         style = stamped(size = LabelSize),
                         fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
-                        color = if (chosen) Rail.fill else Rail.inkDim,
+                        color = if (chosen) Rail.fill else Rail.ink,
                         textAlign = TextAlign.Center,
                     )
                 }
