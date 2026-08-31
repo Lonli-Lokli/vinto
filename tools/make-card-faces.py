@@ -41,13 +41,13 @@ ACCENT = {
     "4": "#4F5AA8",   # indigo
     "5": "#B03A57",   # raspberry
     "6": "#1B5E43",   # the brand green
-    "7": "#A96A00",   # amber
-    "8": "#B4571E",   # burnt orange — a sibling, not a twin
+    "7": "#8A5600",   # amber, deepened for 4.5:1 on its ground
+    "8": "#94430D",   # burnt orange — a sibling, not a twin; 4.5:1-safe
     "9": "#256D85",   # steel cyan
     "10": "#3D4EA0",  # indigo — a sibling, not a twin
     "j": "#7C3AA0",   # violet
     "q": "#A23B72",   # plum
-    "k": "#A8791B",   # deep gold
+    "k": "#7E5C11",   # deep gold, darkened for 4.5:1 on its ground
     "a": "#9E2B25",   # red
 }
 
@@ -374,49 +374,27 @@ def lens(cx, cy, r, color, handle=False, sw=16):
     return parts
 
 
-def face_seven():
-    """7: the table; a small card of YOURS rises, your eye above it."""
-    amber = ACCENT["7"]
+def peek_own(accent):
+    """The 7's composition, shared verbatim by the 8: your card rises from
+    your hand, the eye above it. Only number, ground and accent differ."""
     return (
         board(my_gap=1)
-        + trail(CX, 800, CX, 724, color=amber)
-        + popped(CX, 680, 122, 168, FELT, GOLD, amber)
-        + big_eye(CX, 524, s=0.55, gaze=8, iris=amber)
+        + trail(CX, 800, CX, 724, color=accent)
+        + popped(CX, 680, 122, 168, FELT, GOLD, accent)
+        + big_eye(CX, 524, s=0.55, gaze=8, iris=accent)
     )
 
 
-def face_eight():
-    """8: the same act as the 7 — eye above the rising card — on a much
-    bigger card, in its own burnt orange."""
-    burnt = ACCENT["8"]
-    return (
-        board(my_gap=1)
-        + trail(CX, 800, CX, 736, color=burnt)
-        + popped(CX, 694, 182, 250, FELT, GOLD, burnt)
-        + big_eye(CX, 506, s=0.55, gaze=8, iris=burnt)
-    )
-
-
-def face_nine():
-    """9: the same magnifier as the 10, smaller, on a smaller card of theirs."""
-    steel = ACCENT["9"]
+def peek_them(accent):
+    """The 9's composition, shared verbatim by the 10: their card drops from
+    their hand, the magnifier on it. Only number, ground and accent differ."""
     return (
         board(top_gap=1)
-        + trail(CX, 420, CX, 500, color=steel)
-        + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, steel)
-        + lens(CX + 4, 550, 72, steel, handle=True, sw=11)
+        + trail(CX, 420, CX, 500, color=accent)
+        + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, accent)
+        + lens(CX + 4, 550, 92, accent, handle=True, sw=13)
     )
 
-
-def face_ten():
-    """10: the table; a BIG card of theirs drops under a full magnifier."""
-    indigo = ACCENT["10"]
-    return (
-        board(top_gap=1)
-        + trail(CX, 420, CX, 480, color=indigo)
-        + popped(CX, 580, 190, 262, BLUE, BLUE_EDGE, indigo)
-        + lens(CX + 10, 566, 152, indigo, handle=True, sw=18)
-    )
 
 
 def swap_pair():
@@ -583,10 +561,10 @@ FACES = {
     "card_4": frame("4", face_number(4), accent=ACCENT["4"], bg=WHITE),
     "card_5": frame("5", face_number(5), accent=ACCENT["5"], bg=WHITE),
     "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"], bg=WHITE),
-    "card_7": frame("7", face_seven(), accent=ACCENT["7"], bg=BG["7"]),
-    "card_8": frame("8", face_eight(), accent=ACCENT["8"], bg=BG["8"]),
-    "card_9": frame("9", face_nine(), underline=True, accent=ACCENT["9"], bg=BG["9"]),
-    "card_10": frame("10", face_ten(), accent=ACCENT["10"], bg=BG["10"]),
+    "card_7": frame("7", peek_own(ACCENT["7"]), accent=ACCENT["7"], bg=BG["7"]),
+    "card_8": frame("8", peek_own(ACCENT["8"]), accent=ACCENT["8"], bg=BG["8"]),
+    "card_9": frame("9", peek_them(ACCENT["9"]), underline=True, accent=ACCENT["9"], bg=BG["9"]),
+    "card_10": frame("10", peek_them(ACCENT["10"]), accent=ACCENT["10"], bg=BG["10"]),
     "card_j": frame("J", face_jack(), accent=ACCENT["j"], bg=BG["j"]),
     "card_q": frame("Q", face_queen(), accent=ACCENT["q"], bg=BG["q"]),
     "card_k": frame("K", face_king(), accent=ACCENT["k"], bg=BG["k"]),
@@ -620,7 +598,37 @@ def preview_html():
     )
 
 
+def relative_luminance(hex_color):
+    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    lin = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
+def contrast(a, b):
+    hi, lo = sorted((relative_luminance(a), relative_luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def check_contrast():
+    """WCAG gate: indices need 4.5:1 on their grounds (large text would allow 3,
+    but the indices are the one thing that must always read); card grounds need
+    3:1 against the felt they sit on in the app. The light theme's surface is
+    covered by every card's 6px ink border (1.4.11 boundary), not by the ground."""
+    problems = []
+    for rank, accent in ACCENT.items():
+        bg = BG.get(rank, WHITE)
+        if contrast(accent, bg) < 4.5:
+            problems.append(f"index {rank}: {contrast(accent, bg):.2f} on {bg}")
+    for rank, bg in {**BG, "numbers": WHITE}.items():
+        for felt in (FELT, FELT_DARK):
+            if contrast(bg, felt) < 3.0:
+                problems.append(f"ground {rank} vs {felt}: {contrast(bg, felt):.2f}")
+    if problems:
+        raise SystemExit("WCAG contrast gate failed:\n  " + "\n  ".join(problems))
+
+
 def main():
+    check_contrast()
     OUT.mkdir(exist_ok=True)
     for name, svg in FACES.items():
         (OUT / f"{name}.svg").write_text(svg)
