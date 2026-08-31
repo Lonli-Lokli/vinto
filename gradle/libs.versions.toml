@@ -7,7 +7,7 @@
 # Kotlin 2.4 warns that Gradle 8.14 is deprecated and that 2.5 will require 8.14.4. That is
 # the next thing to move, and it is small.
 kotlin = "2.4.10"
-kotlinxSerialization = "1.10.0"
+kotlinxSerialization = "1.11.0"
 kotlinxCoroutines = "1.11.0"
 # 1.12.0, and the version it forced everything else to. Its Android artifacts require
 # **compileSdk 37** and **AGP 9.1+**, AGP 9 requires **Gradle 9**, and AGP 9 refuses to let
