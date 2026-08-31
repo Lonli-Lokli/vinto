@@ -126,18 +126,38 @@ def arrowhead(x, y, ang, size=40, color=GOLD):
 
 
 def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18, color=GOLD):
-    """A circular swap arrow from angle a1 to a2 (degrees, screen coords, clockwise)."""
-    x1 = cx + r * math.cos(math.radians(a1))
-    y1 = cy + r * math.sin(math.radians(a1))
-    x2 = cx + r * math.cos(math.radians(a2))
-    y2 = cy + r * math.sin(math.radians(a2))
-    dash = ' stroke-dasharray="34 26"' if dashed else ""
+    """A circular swap arrow from angle a1 to a2 (degrees, screen coords,
+    clockwise). Dashed arcs are emitted as sub-arc segments — vector drawables
+    have no stroke-dasharray."""
+
+    def pt(a):
+        return cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a))
+
     tangent = math.atan2(math.cos(math.radians(a2)), -math.sin(math.radians(a2)))
-    return (
-        f'<path d="M {x1:.0f},{y1:.0f} A {r} {r} 0 0 1 {x2:.0f},{y2:.0f}" fill="none" '
-        f'stroke="{color}" stroke-width="{sw}" stroke-linecap="round"{dash}/>'
-        + arrowhead(x2, y2, tangent, color=color)
-    )
+    if not dashed:
+        x1, y1 = pt(a1)
+        x2, y2 = pt(a2)
+        body = (
+            f'<path d="M {x1:.0f},{y1:.0f} A {r} {r} 0 0 1 {x2:.0f},{y2:.0f}" fill="none" '
+            f'stroke="{color}" stroke-width="{sw}" stroke-linecap="round"/>'
+        )
+    else:
+        dash_deg = math.degrees(34 / r)
+        gap_deg = math.degrees(26 / r)
+        segs = []
+        a = a1
+        while a < a2:
+            b = min(a + dash_deg, a2)
+            xa, ya = pt(a)
+            xb, yb = pt(b)
+            segs.append(
+                f'<path d="M {xa:.0f},{ya:.0f} A {r} {r} 0 0 1 {xb:.0f},{yb:.0f}" fill="none" '
+                f'stroke="{color}" stroke-width="{sw}" stroke-linecap="round"/>'
+            )
+            a = b + gap_deg
+        body = "".join(segs)
+    x2, y2 = pt(a2)
+    return body + arrowhead(x2, y2, tangent, color=color)
 
 
 def star(cx, cy, outer, inner, n=8, color=GOLD):
@@ -149,21 +169,23 @@ def star(cx, cy, outer, inner, n=8, color=GOLD):
     return f'<polygon points="{" ".join(pts)}" fill="{color}"/>'
 
 
-def sight(x1, y1, x2, y2, color=GOLD):
-    """A dashed glance from an eye to a card."""
-    return (
-        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="10" '
-        f'stroke-linecap="round" stroke-dasharray="4 26"/>'
-    )
-
-
 def ray(x1, y1, x2, y2, color=GOLD):
-    """A dashed sight-ray with an arrowhead: the oracle pointing at a card."""
+    """A dashed sight-ray with an arrowhead — dashes drawn as real segments,
+    because vector drawables have no stroke-dasharray."""
     ang = math.atan2(y2 - y1, x2 - x1)
-    return (
-        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="9" '
-        f'stroke-linecap="round" stroke-dasharray="16 14"/>' + arrowhead(x2, y2, ang, size=24, color=color)
-    )
+    length = math.hypot(x2 - x1, y2 - y1)
+    ca, sa = math.cos(ang), math.sin(ang)
+    segs = []
+    t = 0.0
+    while t < length:
+        end = min(t + 16, length)
+        segs.append(
+            f'<line x1="{x1 + t * ca:.0f}" y1="{y1 + t * sa:.0f}" '
+            f'x2="{x1 + end * ca:.0f}" y2="{y1 + end * sa:.0f}" stroke="{color}" '
+            f'stroke-width="9" stroke-linecap="round"/>'
+        )
+        t += 30
+    return "".join(segs) + arrowhead(x2, y2, ang, size=24, color=color)
 
 
 def crown(cx, cy, s=1.0):
@@ -242,14 +264,46 @@ def blindfold(cx, cy, hw, rot):
 # ---------------------------------------------------------------- the frame
 
 
-def index_glyph(label, underline, color=INK):
-    size = 150 if len(label) == 1 else 118
-    t = (
-        f'<text x="66" y="188" font-family="Georgia, \'Times New Roman\', serif" '
-        f'font-size="{size}" font-weight="bold" fill="{color}">{label}</text>'
+# Monoline glyph skeletons on a 100-wide, 124-tall box, drawn as strokes.
+# Vector drawables cannot render text, so the indices are geometry like
+# everything else — which also frees them from platform fonts.
+GLYPHS = {
+    "2": ["M14 34 Q14 8 50 8 Q86 8 86 36 Q86 60 50 88 L14 116 L88 116"],
+    "3": ["M16 28 Q24 8 50 8 Q84 8 84 32 Q84 56 50 60 Q86 64 86 92 Q86 116 50 116 Q22 116 14 98"],
+    "4": ["M64 116 L64 8 L10 82 L92 82"],
+    "5": ["M82 8 L24 8 L18 54 Q34 46 52 46 Q86 50 86 82 Q86 116 50 116 Q22 116 14 98"],
+    "6": ["M76 18 Q64 6 48 8 Q14 14 14 66 Q14 116 50 116 Q84 116 84 84 Q84 56 50 56 Q22 56 15 76"],
+    "7": ["M12 8 L88 8 L44 116"],
+    "8": [
+        "M50 58 Q17 53 17 32 Q17 8 50 8 Q83 8 83 32 Q83 53 50 58 "
+        "Q13 64 13 90 Q13 116 50 116 Q87 116 87 90 Q87 64 50 58"
+    ],
+    "9": ["M24 106 Q36 118 52 116 Q86 110 86 58 Q86 8 50 8 Q16 8 16 40 Q16 68 50 68 Q78 68 85 48"],
+    "1": ["M28 24 L50 8 L50 116"],
+    "0": ["M50 8 Q15 8 15 62 Q15 116 50 116 Q85 116 85 62 Q85 8 50 8"],
+    "J": ["M68 8 L68 88 Q68 116 44 116 Q22 116 16 96"],
+    "Q": ["M50 8 Q15 8 15 62 Q15 116 50 116 Q85 116 85 62 Q85 8 50 8", "M60 94 L88 124"],
+    "K": ["M22 8 L22 116", "M82 8 L24 66", "M44 50 L86 116"],
+    "A": ["M12 116 L50 8 L88 116", "M27 82 L73 82"],
+}
+
+
+def glyph(ch, x, y, scale, color):
+    body = "".join(
+        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="17" '
+        f'stroke-linecap="round" stroke-linejoin="round"/>'
+        for d in GLYPHS[ch]
     )
+    return f'<g transform="translate({x} {y}) scale({scale})">{body}</g>'
+
+
+def index_glyph(label, underline, color=INK):
+    if label == "10":
+        t = glyph("1", 44, 64, 0.72, color) + glyph("0", 106, 64, 0.72, color)
+    else:
+        t = glyph(label, 64, 54, 0.95, color)
     if underline:
-        t += f'<rect x="70" y="206" width="76" height="12" rx="6" fill="{color}"/>'
+        t += f'<rect x="70" y="196" width="80" height="13" rx="6" fill="{color}"/>'
     return t
 
 
@@ -574,6 +628,130 @@ FACES = {
 }
 
 
+# ---------------------------------------------------------------- vector drawables
+
+APP_DRAWABLE = pathlib.Path(__file__).parent.parent / (
+    "composeApp/src/commonMain/composeResources/drawable"
+)
+
+
+def _rect_path(a):
+    x, y = float(a.get("x", 0)), float(a.get("y", 0))
+    w, h = float(a["width"]), float(a["height"])
+    r = min(float(a.get("rx", 0)), w / 2, h / 2)
+    if r <= 0:
+        return f"M{x},{y} L{x + w},{y} L{x + w},{y + h} L{x},{y + h} Z"
+    return (
+        f"M{x + r},{y} L{x + w - r},{y} A{r},{r} 0 0 1 {x + w},{y + r} "
+        f"L{x + w},{y + h - r} A{r},{r} 0 0 1 {x + w - r},{y + h} "
+        f"L{x + r},{y + h} A{r},{r} 0 0 1 {x},{y + h - r} "
+        f"L{x},{y + r} A{r},{r} 0 0 1 {x + r},{y} Z"
+    )
+
+
+def _shape_path(el, tag):
+    a = el.attrib
+    if tag == "rect":
+        return _rect_path(a)
+    if tag == "circle":
+        cx, cy, r = float(a["cx"]), float(a["cy"]), float(a["r"])
+        return (
+            f"M{cx - r},{cy} A{r},{r} 0 1 1 {cx + r},{cy} A{r},{r} 0 1 1 {cx - r},{cy} Z"
+        )
+    if tag == "line":
+        return f'M{a["x1"]},{a["y1"]} L{a["x2"]},{a["y2"]}'
+    if tag in ("polygon", "polyline"):
+        pts = a["points"].split()
+        d = "M" + " L".join(pts)
+        return d + " Z" if tag == "polygon" else d
+    if tag == "path":
+        return a["d"]
+    raise SystemExit(f"vector-drawable emitter: unsupported element <{tag}>")
+
+
+def _paint(el, tag):
+    a = el.attrib
+    out = []
+    fill = a.get("fill")
+    if fill is None and tag in ("line", "polyline"):
+        fill = "none"
+    if fill is None:
+        raise SystemExit(f"<{tag}> without explicit fill")
+    opacity = float(a.get("opacity", 1))
+    if fill != "none":
+        out.append(f'android:fillColor="{fill}"')
+        if opacity < 1:
+            out.append(f'android:fillAlpha="{opacity}"')
+    stroke = a.get("stroke")
+    if stroke and stroke != "none":
+        out.append(f'android:strokeColor="{stroke}"')
+        out.append(f'android:strokeWidth="{a.get("stroke-width", "1")}"')
+        if opacity < 1:
+            out.append(f'android:strokeAlpha="{opacity}"')
+        cap = a.get("stroke-linecap")
+        if cap:
+            out.append(f'android:strokeLineCap="{cap}"')
+        join = a.get("stroke-linejoin")
+        if join:
+            out.append(f'android:strokeLineJoin="{join}"')
+    return out
+
+
+def _group_attrs(transform):
+    import re as _re
+
+    m = _re.fullmatch(r"rotate\(([-\d.]+) ([\d.]+) ([\d.]+)\)", transform)
+    if m:
+        return (
+            f'android:rotation="{m.group(1)}" android:pivotX="{m.group(2)}" '
+            f'android:pivotY="{m.group(3)}"'
+        )
+    m = _re.fullmatch(r"translate\(([-\d.]+) ([-\d.]+)\) rotate\(([-\d.]+)\)", transform)
+    if m:
+        return (
+            f'android:translateX="{m.group(1)}" android:translateY="{m.group(2)}" '
+            f'android:rotation="{m.group(3)}"'
+        )
+    m = _re.fullmatch(r"translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)", transform)
+    if m:
+        return (
+            f'android:translateX="{m.group(1)}" android:translateY="{m.group(2)}" '
+            f'android:scaleX="{m.group(3)}" android:scaleY="{m.group(3)}"'
+        )
+    raise SystemExit(f"vector-drawable emitter: unsupported transform {transform!r}")
+
+
+def svg_to_vector_drawable(svg):
+    """Translate the generator's own SVG subset into an Android vector drawable.
+    Not a general converter: it refuses anything it does not know, so a new
+    SVG feature fails the build here rather than rendering wrong in the app."""
+    import xml.etree.ElementTree as ET
+
+    root = ET.fromstring(svg.replace('xmlns="http://www.w3.org/2000/svg"', ""))
+    lines = [
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android"',
+        f'    android:width="{W}dp" android:height="{H}dp"',
+        f'    android:viewportWidth="{W}" android:viewportHeight="{H}">',
+    ]
+
+    def walk(el, depth):
+        pad = "    " * depth
+        for child in el:
+            tag = child.tag
+            if tag == "g":
+                lines.append(f'{pad}<group {_group_attrs(child.attrib["transform"])}>')
+                walk(child, depth + 1)
+                lines.append(f"{pad}</group>")
+                continue
+            paint = _paint(child, tag)
+            d = _shape_path(child, tag)
+            lines.append(f'{pad}<path android:pathData="{d}" ' + " ".join(paint) + "/>")
+
+    walk(root, 1)
+    lines.append("</vector>")
+    return "\n".join(lines)
+
+
 def preview_html():
     def cell(name, height):
         return (
@@ -634,6 +812,10 @@ def main():
         (OUT / f"{name}.svg").write_text(svg)
     (OUT / "preview.html").write_text(preview_html())
     print(f"wrote {len(FACES)} faces + preview.html to {OUT}")
+    if APP_DRAWABLE.is_dir():
+        for name, svg in FACES.items():
+            (APP_DRAWABLE / f"{name}.xml").write_text(svg_to_vector_drawable(svg))
+        print(f"wrote {len(FACES)} vector drawables to {APP_DRAWABLE}")
 
 
 if __name__ == "__main__":
