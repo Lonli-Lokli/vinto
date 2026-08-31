@@ -56,14 +56,14 @@ def big_card(cx, cy, w=320, h=440, mine=True, rot=0.0):
     return group(rot, cx, cy, body) if rot else body
 
 
-def big_eye(cx, cy, s=1.0, gaze=0.0):
+def big_eye(cx, cy, s=1.0, gaze=0.0, iris=GOLD):
     """gaze shifts iris and pupil vertically: positive looks down, negative up."""
     w, h = 170 * s, 108 * s
     g = gaze * s
     return (
         f'<path d="M {cx - w},{cy} Q {cx},{cy - h} {cx + w},{cy} Q {cx},{cy + h} {cx - w},{cy} Z" '
         f'fill="{WHITE}" stroke="{INK}" stroke-width="{16 * s:.0f}" stroke-linejoin="round"/>'
-        f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{56 * s:.0f}" fill="{GOLD}"/>'
+        f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{56 * s:.0f}" fill="{iris}"/>'
         f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{27 * s:.0f}" fill="{INK}"/>'
         f'<circle cx="{cx + 16 * s:.0f}" cy="{cy + g - 18 * s:.0f}" r="{10 * s:.0f}" fill="{WHITE}"/>'
     )
@@ -75,7 +75,7 @@ def arrowhead(x, y, ang, size=40, color=GOLD):
     return f'<polygon points="{x:.0f},{y:.0f} {p1[0]:.0f},{p1[1]:.0f} {p2[0]:.0f},{p2[1]:.0f}" fill="{color}"/>'
 
 
-def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18):
+def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18, color=GOLD):
     """A circular swap arrow from angle a1 to a2 (degrees, screen coords, clockwise)."""
     x1 = cx + r * math.cos(math.radians(a1))
     y1 = cy + r * math.sin(math.radians(a1))
@@ -85,8 +85,8 @@ def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18):
     tangent = math.atan2(math.cos(math.radians(a2)), -math.sin(math.radians(a2)))
     return (
         f'<path d="M {x1:.0f},{y1:.0f} A {r} {r} 0 0 1 {x2:.0f},{y2:.0f}" fill="none" '
-        f'stroke="{GOLD}" stroke-width="{sw}" stroke-linecap="round"{dash}/>'
-        + arrowhead(x2, y2, tangent)
+        f'stroke="{color}" stroke-width="{sw}" stroke-linecap="round"{dash}/>'
+        + arrowhead(x2, y2, tangent, color=color)
     )
 
 
@@ -164,14 +164,14 @@ def teardrop(cx, cy, s=1.0):
 # ---------------------------------------------------------------- the frame
 
 
-def index_glyph(label, underline):
+def index_glyph(label, underline, color=INK):
     size = 150 if len(label) == 1 else 118
     t = (
         f'<text x="66" y="188" font-family="Georgia, \'Times New Roman\', serif" '
-        f'font-size="{size}" font-weight="bold" fill="{INK}">{label}</text>'
+        f'font-size="{size}" font-weight="bold" fill="{color}">{label}</text>'
     )
     if underline:
-        t += f'<rect x="70" y="206" width="76" height="12" rx="6" fill="{INK}"/>'
+        t += f'<rect x="70" y="206" width="76" height="12" rx="6" fill="{color}"/>'
     return t
 
 
@@ -179,15 +179,21 @@ def joker_index():
     return jester_cap(120, 148, s=0.5)
 
 
-def frame(label, emblem, underline=False, joker=False):
-    corner = joker_index() if joker else index_glyph(label, underline)
+def frame(label, emblem, underline=False, joker=False, accent=None):
+    corner = joker_index() if joker else index_glyph(label, underline, color=accent or INK)
     mirrored = f'<g transform="rotate(180 {W / 2} {H / 2})">{corner}</g>'
+    inner = (
+        f'<rect x="38" y="38" width="{W - 76}" height="{H - 76}" rx="26" '
+        f'fill="none" stroke="{accent}" stroke-width="5"/>'
+        if accent
+        else ""
+    )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
         f'<rect width="{W}" height="{H}" rx="44" fill="{PAPER}"/>'
         f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
         f'fill="none" stroke="{INK}" stroke-width="6"/>'
-        f"{corner}{mirrored}{emblem}</svg>"
+        f"{inner}{corner}{mirrored}{emblem}</svg>"
     )
 
 
@@ -203,13 +209,32 @@ PIP_LAYOUTS = {
 
 
 def face_number(n):
-    """2-6: pip cards whose pips are the game's own object. Count = rank."""
-    return "".join(pip_card(x, y) for x, y in PIP_LAYOUTS[n])
+    """2-6: pip cards whose pips are the game's own object, each rank in its own colour."""
+    return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
 PALE = "#A8C2B5"
 BLUE = "#5B9BD5"        # opponents' cards: 4.4:1 against the dark felt, distinct from your green
 BLUE_EDGE = "#DCE9F5"
+
+# One accent per rank family — the deck is colourful the way the chip rack is,
+# while the board's meaning-colours (green yours, blue theirs, cream deck) stay fixed.
+# Each is dark enough to hold its own as a corner index on cream.
+ACCENT = {
+    "2": "#17766B",   # teal
+    "3": "#2F5E8C",   # blue
+    "4": "#4F5AA8",   # indigo
+    "5": "#B03A57",   # raspberry
+    "6": "#1B5E43",   # the brand green
+    "7": "#A96A00",   # amber
+    "8": "#A96A00",
+    "9": "#256D85",   # steel cyan
+    "10": "#256D85",
+    "j": "#7C3AA0",   # violet
+    "q": "#A23B72",   # plum
+    "k": "#A8791B",   # deep gold
+    "a": "#9E2B25",   # red
+}
 
 
 def table_felt():
@@ -248,33 +273,33 @@ def your_hand(gap=None):
     )
 
 
-def trail(x1, y1, x2, y2, hw=36):
-    """A gold streak from a seat's gap to the card pulled out of it: whose card this is."""
+def trail(x1, y1, x2, y2, hw=36, color=GOLD):
+    """A streak from a seat's gap to the card pulled out of it: whose card this is."""
     return (
         f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
-        f'fill="{GOLD}" opacity="0.3"/>'
+        f'fill="{color}" opacity="0.3"/>'
     )
 
 
-def popped_card(cx, cy, w=140, h=192, rot=0.0, fill=WHITE, stroke=GOLD):
+def popped_card(cx, cy, w=140, h=192, rot=0.0, fill=WHITE, stroke=GOLD, halo=GOLD):
     """The card under examination, enlarged at the table's center.
     It keeps its owner's colour, so whose card it is travels with it."""
     body = (
         f'<rect x="{cx - w / 2 - 12}" y="{cy - h / 2 - 12}" width="{w + 24}" height="{h + 24}" '
-        f'rx="22" fill="{GOLD}" opacity="0.35"/>'
+        f'rx="22" fill="{halo}" opacity="0.35"/>'
         f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="14" '
         f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
     )
     return group(rot, cx, cy, body) if rot else body
 
 
-def trace_path(x1, y1, ctrl, x2, y2):
+def trace_path(x1, y1, ctrl, x2, y2, color=GOLD):
     """A dashed curved path with an arrowhead: where the card was taken from."""
     ang = math.atan2(y2 - ctrl[1], x2 - ctrl[0])
     return (
         f'<path d="M {x1},{y1} Q {ctrl[0]},{ctrl[1]} {x2},{y2}" fill="none" '
-        f'stroke="{GOLD}" stroke-width="9" stroke-linecap="round" stroke-dasharray="18 16"/>'
-        + arrowhead(x2, y2, ang, size=26)
+        f'stroke="{color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="18 16"/>'
+        + arrowhead(x2, y2, ang, size=26, color=color)
     )
 
 
@@ -291,23 +316,25 @@ def board(top_gap=None, my_gap=None):
 def face_peek_own():
     """7 and 8: the four-player board; one of YOUR cards rises to the light —
     still in your green — with the trace showing the gap it left."""
+    amber = ACCENT["7"]
     return (
         board(my_gap=1)
-        + trail(CX, 800, CX, 700)
-        + popped_card(CX, 620, fill=FELT, stroke=GOLD)
-        + trace_path(CX - 40, 794, (270, 730), 334, 652)
-        + big_eye(CX, 588, s=0.62, gaze=6)
+        + trail(CX, 800, CX, 700, color=amber)
+        + popped_card(CX, 620, fill=FELT, stroke=GOLD, halo=amber)
+        + trace_path(CX - 40, 794, (270, 730), 334, 652, color=amber)
+        + big_eye(CX, 588, s=0.62, gaze=6, iris=amber)
     )
 
 
 def face_peek_them():
     """9 and 10: the same board; the card comes from the TOP opponent's hand,
     keeps their blue, and the trace runs back to the gap it left."""
+    steel = ACCENT["9"]
     scene = (
         board(top_gap=1)
-        + trail(CX, 420, CX, 480)
-        + popped_card(CX, 552, fill=BLUE, stroke=BLUE_EDGE)
-        + trace_path(CX - 40, 436, (270, 476), 334, 542)
+        + trail(CX, 420, CX, 480, color=steel)
+        + popped_card(CX, 552, fill=BLUE, stroke=BLUE_EDGE, halo=steel)
+        + trace_path(CX - 40, 436, (270, 476), 334, 542, color=steel)
     )
     lens_x, lens_y, r = CX + 52, 592, 108
     handle_a = math.radians(52)
@@ -317,10 +344,10 @@ def face_peek_them():
     hy2 = lens_y + (r + 130) * math.sin(handle_a)
     lens = (
         f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
-        f'stroke="{GOLD}" stroke-width="26" stroke-linecap="round"/>'
-        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="15"/>'
+        f'stroke="{steel}" stroke-width="26" stroke-linecap="round"/>'
+        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{steel}" stroke-width="15"/>'
     )
-    return scene + lens + big_eye(lens_x, lens_y, s=0.5, gaze=-6)
+    return scene + lens + big_eye(lens_x, lens_y, s=0.5, gaze=-6, iris=steel)
 
 
 def blindfold(cx, cy, hw, rot):
@@ -342,15 +369,17 @@ def blindfold(cx, cy, hw, rot):
     return group(rot, cx, cy, body)
 
 
-def swap_board(revealed):
+def swap_board(revealed, accent):
     """The board with one card pulled from your hand and one from the top
     opponent's, meeting at the center. Trails say whose cards are trading."""
     scene = board(top_gap=1, my_gap=1)
-    trails = trail(CX - 20, 800, 340, 660, hw=30) + trail(CX + 20, 420, 484, 520, hw=30)
+    trails = trail(CX - 20, 800, 340, 660, hw=30, color=accent) + trail(
+        CX + 20, 420, 484, 520, hw=30, color=accent
+    )
     if revealed:
-        pair = popped_card(340, 590, w=112, h=154, rot=-9, fill=FELT, stroke=GOLD) + popped_card(
-            484, 590, w=112, h=154, rot=9, fill=BLUE, stroke=BLUE_EDGE
-        )
+        pair = popped_card(
+            340, 590, w=112, h=154, rot=-9, fill=FELT, stroke=GOLD, halo=accent
+        ) + popped_card(484, 590, w=112, h=154, rot=9, fill=BLUE, stroke=BLUE_EDGE, halo=accent)
     else:
         mine = (
             f'<rect x="284" y="513" width="112" height="154" rx="14" '
@@ -361,8 +390,8 @@ def swap_board(revealed):
             f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="8"/>'
         )
         pair = group(-9, 340, 590, mine) + group(9, 484, 590, theirs)
-    arrows = arc_arrow(CX, 592, 158, 210, 330, dashed=revealed, sw=13) + arc_arrow(
-        CX, 592, 158, 30, 150, dashed=revealed, sw=13
+    arrows = arc_arrow(CX, 592, 158, 210, 330, dashed=revealed, sw=13, color=accent) + arc_arrow(
+        CX, 592, 158, 30, 150, dashed=revealed, sw=13, color=accent
     )
     return scene + trails + pair + arrows
 
@@ -371,7 +400,7 @@ def face_jack():
     """The blind swap: yours for theirs, and the blindfold means nobody looks."""
     fold = blindfold(CX, 590, 128, -6)
     return (
-        swap_board(revealed=False)
+        swap_board(revealed=False, accent=ACCENT["j"])
         + f'<g transform="translate({CX} 590) scale(0.78) translate(-{CX} -590)">{fold}</g>'
     )
 
@@ -379,7 +408,9 @@ def face_jack():
 def face_queen():
     """Look first, then trade if you like: both faces up, one open eye,
     and the arrows still dashed — undecided."""
-    return swap_board(revealed=True) + big_eye(CX, 590, s=0.55)
+    return swap_board(revealed=True, accent=ACCENT["q"]) + big_eye(
+        CX, 590, s=0.55, iris=ACCENT["q"]
+    )
 
 
 def ray(x1, y1, x2, y2):
@@ -411,12 +442,13 @@ def face_ace():
         f'fill="{PAPER}" stroke="{GOLD}" stroke-width="6"/>'
         for dx, dy in ((10, 14), (5, 7), (0, 0))
     )
+    red = ACCENT["a"]
     throw = (
-        f'<line x1="{CX}" y1="640" x2="{CX}" y2="470" stroke="{GOLD}" stroke-width="13" '
-        f'stroke-linecap="round"/>' + arrowhead(CX, 452, -math.pi / 2, size=32)
+        f'<line x1="{CX}" y1="640" x2="{CX}" y2="470" stroke="{red}" stroke-width="13" '
+        f'stroke-linecap="round"/>' + arrowhead(CX, 452, -math.pi / 2, size=32, color=red)
     )
     streaks = "".join(
-        f'<line x1="{CX + dx}" y1="{y}" x2="{CX + dx}" y2="{y + 40}" stroke="{GOLD}" '
+        f'<line x1="{CX + dx}" y1="{y}" x2="{CX + dx}" y2="{y + 40}" stroke="{red}" '
         f'stroke-width="7" stroke-linecap="round" opacity="{op}"/>'
         for dx, y, op in ((-64, 560, 0.7), (64, 560, 0.7))
     )
@@ -479,20 +511,20 @@ def card_back():
 # ---------------------------------------------------------------- output
 
 FACES = {
-    "card_2": frame("2", face_number(2)),
-    "card_3": frame("3", face_number(3)),
-    "card_4": frame("4", face_number(4)),
-    "card_5": frame("5", face_number(5)),
-    "card_6": frame("6", face_number(6), underline=True),
-    "card_7": frame("7", face_peek_own()),
-    "card_8": frame("8", face_peek_own()),
-    "card_9": frame("9", face_peek_them(), underline=True),
-    "card_10": frame("10", face_peek_them()),
-    "card_j": frame("J", face_jack()),
-    "card_q": frame("Q", face_queen()),
-    "card_k": frame("K", face_king()),
-    "card_a": frame("A", face_ace()),
-    "card_joker": frame("", face_joker(), joker=True),
+    "card_2": frame("2", face_number(2), accent=ACCENT["2"]),
+    "card_3": frame("3", face_number(3), accent=ACCENT["3"]),
+    "card_4": frame("4", face_number(4), accent=ACCENT["4"]),
+    "card_5": frame("5", face_number(5), accent=ACCENT["5"]),
+    "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"]),
+    "card_7": frame("7", face_peek_own(), accent=ACCENT["7"]),
+    "card_8": frame("8", face_peek_own(), accent=ACCENT["8"]),
+    "card_9": frame("9", face_peek_them(), underline=True, accent=ACCENT["9"]),
+    "card_10": frame("10", face_peek_them(), accent=ACCENT["10"]),
+    "card_j": frame("J", face_jack(), accent=ACCENT["j"]),
+    "card_q": frame("Q", face_queen(), accent=ACCENT["q"]),
+    "card_k": frame("K", face_king(), accent=ACCENT["k"]),
+    "card_a": frame("A", face_ace(), accent=ACCENT["a"]),
+    "card_joker": frame("", face_joker(), joker=True, accent=ORANGE),
     "card_back": card_back(),
 }
 
