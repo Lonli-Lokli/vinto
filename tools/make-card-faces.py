@@ -56,14 +56,16 @@ def big_card(cx, cy, w=320, h=440, mine=True, rot=0.0):
     return group(rot, cx, cy, body) if rot else body
 
 
-def big_eye(cx, cy, s=1.0):
+def big_eye(cx, cy, s=1.0, gaze=0.0):
+    """gaze shifts iris and pupil vertically: positive looks down, negative up."""
     w, h = 170 * s, 108 * s
+    g = gaze * s
     return (
         f'<path d="M {cx - w},{cy} Q {cx},{cy - h} {cx + w},{cy} Q {cx},{cy + h} {cx - w},{cy} Z" '
         f'fill="{WHITE}" stroke="{INK}" stroke-width="{16 * s:.0f}" stroke-linejoin="round"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{56 * s:.0f}" fill="{GOLD}"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{27 * s:.0f}" fill="{INK}"/>'
-        f'<circle cx="{cx + 16 * s:.0f}" cy="{cy - 18 * s:.0f}" r="{10 * s:.0f}" fill="{WHITE}"/>'
+        f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{56 * s:.0f}" fill="{GOLD}"/>'
+        f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{27 * s:.0f}" fill="{INK}"/>'
+        f'<circle cx="{cx + 16 * s:.0f}" cy="{cy + g - 18 * s:.0f}" r="{10 * s:.0f}" fill="{WHITE}"/>'
     )
 
 
@@ -206,26 +208,61 @@ def face_number(n):
 
 
 def face_peek_own():
-    """7 and 8: your own card, and the eye that finally knows it."""
-    return big_card(CX, 590, mine=True) + big_eye(CX, 590)
+    """7 and 8: the poker hole-card peek — your card's corner lifted, your eye
+    glancing down under the flap. Nobody peeks at someone else's card like this."""
+    cw, ch = 320, 440
+    left, top = CX - cw / 2, 520
+    right = left + cw
+    cut = 130
+    card = (
+        f'<rect x="{left}" y="{top}" width="{cw}" height="{ch}" rx="26" '
+        f'fill="{FELT}" stroke="{GOLD}" stroke-width="10"/>'
+        f'<rect x="{left + 22}" y="{top + 22}" width="{cw - 44}" height="{ch - 44}" rx="16" '
+        f'fill="none" stroke="{PAPER}" stroke-width="4" opacity="0.35"/>'
+    )
+    # the lifted corner: the top-right of the card folds down-inward, showing its pale face
+    notch = (
+        f'<path d="M {right - cut},{top - 5} L {right + 5},{top - 5} L {right + 5},{top + cut} '
+        f'L {right - cut},{top - 5} Z" fill="{PAPER}"/>'
+    )
+    flap = (
+        f'<path d="M {right - cut},{top} L {right},{top + cut} L {right - cut + 4},{top + cut - 6} '
+        f'Z" fill="{WHITE}" stroke="{GOLD}" stroke-width="9" stroke-linejoin="round"/>'
+    )
+    peek = sight_dots(CX + 74, 412, right - cut / 2 - 16, top + 30)
+    return card + notch + flap + peek + big_eye(CX + 40, 344, gaze=16)
+
+
+def sight_dots(x1, y1, x2, y2):
+    return (
+        f'<line x1="{x1:.0f}" y1="{y1:.0f}" x2="{x2:.0f}" y2="{y2:.0f}" stroke="{INK}" '
+        f'stroke-width="7" stroke-linecap="round" stroke-dasharray="1 26" opacity="0.85"/>'
+    )
 
 
 def face_peek_them():
-    """9 and 10: an opponent's card under your lens."""
-    card = big_card(CX - 30, 620, mine=False)
-    lens_x, lens_y, r = 500, 500, 165
-    handle_a = math.radians(48)
+    """9 and 10: an opponent sits across the table, their card in front of them,
+    your lens reaching onto it. The person is what says 'theirs'."""
+    bust = (
+        f'<circle cx="{CX}" cy="252" r="82" fill="{FELT_DARK}" stroke="{INK}" stroke-width="8"/>'
+        f'<path d="M {CX - 175},480 Q {CX - 160},330 {CX - 62},322 Q {CX},302 {CX + 62},322 '
+        f'Q {CX + 160},330 {CX + 175},480 Z" '
+        f'fill="{FELT_DARK}" stroke="{INK}" stroke-width="8"/>'
+    )
+    card = big_card(CX, 560, w=270, h=370, mine=False)
+    lens_x, lens_y, r = CX + 66, 720, 145
+    handle_a = math.radians(52)
     hx1 = lens_x + r * math.cos(handle_a)
     hy1 = lens_y + r * math.sin(handle_a)
-    hx2 = lens_x + (r + 170) * math.cos(handle_a)
-    hy2 = lens_y + (r + 170) * math.sin(handle_a)
+    hx2 = lens_x + (r + 160) * math.cos(handle_a)
+    hy2 = lens_y + (r + 160) * math.sin(handle_a)
     lens = (
         f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
         f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
-        f'stroke="{GOLD}" stroke-width="34" stroke-linecap="round"/>'
-        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="20"/>'
+        f'stroke="{GOLD}" stroke-width="32" stroke-linecap="round"/>'
+        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="18"/>'
     )
-    return card + lens + big_eye(lens_x, lens_y, s=0.78)
+    return bust + card + lens + big_eye(lens_x, lens_y, s=0.66, gaze=-10)
 
 
 def blindfold(cx, cy, hw, rot):
