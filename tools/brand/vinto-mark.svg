@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 340">
-  <!-- The Vinto mark: a V formed from two leaning cards — the game's own object,
-       fanned the way a hand is held. An original design authored in this repository.
-       Two tones of the brand orange; everything downstream is layout, not drawing. -->
-  <g transform="translate(252 168) rotate(30)">
-    <rect x="-52" y="-100" width="104" height="200" rx="15" fill="#C25F0C"/>
-  </g>
-  <g transform="translate(128 168) rotate(-30)">
-    <rect x="-52" y="-100" width="104" height="200" rx="15" fill="#E8791E"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 824 760">
+  <!-- The Vinto mark: the capital V of Cinzel Bold — the same face the wordmark
+       uses (composeResources/font/cinzel_bold.ttf, SIL Open Font License, which
+       permits using its outlines this way). The path below is the glyph outline
+       extracted from that font file with fontTools, in the brand orange. -->
+  <g transform="translate(48 720) scale(1 -1)">
+    <path d="M368 -20 37 694H216L429 173ZM368 -20 365 102 619 697H691L426 111Q424 105 416.5 88.5Q409 72 400.0 51.0Q391 30 384.5 10.5Q378 -9 377 -20ZM589 627Q602 657 586.0 673.5Q570 690 551 690H542V700H756V690Q756 690 751.5 690.0Q747 690 747 690Q725 690 700.5 675.5Q676 661 660 627ZM244 627H68Q52 661 27.5 675.5Q3 690 -20 690Q-20 690 -24.0 690.0Q-28 690 -28 690V700H290V690H281Q262 690 247.5 673.5Q233 657 244 627Z" fill="#E8791E"/>
   </g>
 </svg>
