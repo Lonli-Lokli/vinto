@@ -382,36 +382,53 @@ def face_queen():
     return swap_board(revealed=True) + big_eye(CX, 590, s=0.55)
 
 
+def ray(x1, y1, x2, y2):
+    """A dashed sight-ray with an arrowhead: the oracle pointing at a card."""
+    ang = math.atan2(y2 - y1, x2 - x1)
+    return (
+        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{GOLD}" stroke-width="9" '
+        f'stroke-linecap="round" stroke-dasharray="16 14"/>' + arrowhead(x2, y2, ang, size=24)
+    )
+
+
 def face_king():
-    """The crown commands any card's power by naming it."""
-    beam = (
-        f'<polygon points="{CX - 34},420 {CX + 34},420 {CX + 96},650 {CX - 96},650" '
-        f'fill="{GOLD}" opacity="0.16"/>'
+    """The oracle: the crowned eye at the table's center, and its sight-rays
+    reaching every hand — the opponents' and your own alike."""
+    oracle = crown(CX, 528, s=0.62) + big_eye(CX, 606, s=0.5)
+    rays = (
+        ray(CX, 552, CX, 476)            # the top opponent's hand
+        + ray(CX - 96, 606, 314, 600)    # the left opponent's
+        + ray(CX + 96, 606, 510, 600)    # the right opponent's
+        + ray(CX, 662, CX, 750)          # your own
     )
-    card = (
-        f'<rect x="{CX - 160}" y="510" width="320" height="440" rx="26" fill="{WHITE}" '
-        f'stroke="{GOLD}" stroke-width="10"/>'
-        f'<rect x="{CX - 138}" y="532" width="276" height="396" rx="16" fill="none" '
-        f'stroke="{GOLD}" stroke-width="4" opacity="0.5"/>'
-    )
-    return crown(CX, 330, s=1.6) + beam + card + star(CX, 730, 120, 52)
+    return board() + rays + oracle
 
 
 def face_ace():
-    """Your idea of a poison: the flask empties onto an opponent's card."""
-    card = big_card(520, 770, w=290, h=400, mine=False, rot=8)
-    flask_body = (
-        f'<path d="M -34,-150 L 34,-150 L 34,-58 L 96,86 Q 112,126 74,126 L -74,126 '
-        f'Q -112,126 -96,86 L -34,-58 Z" fill="{WHITE}" stroke="{INK}" stroke-width="10" '
-        f'stroke-linejoin="round"/>'
-        f'<path d="M -70,56 L 70,56 L 96,86 Q 112,126 74,126 L -74,126 Q -112,126 -96,86 Z" '
-        f'fill="{ORANGE}" stroke="{INK}" stroke-width="6"/>'
-        f'<rect x="-44" y="-186" width="88" height="40" rx="12" fill="{GOLD}" '
-        f'stroke="{INK}" stroke-width="7"/>'
+    """A card hurled from the deck at the table's center into an opponent's hand."""
+    stack = "".join(
+        f'<rect x="{CX - 55 + dx}" y="{620 + dy}" width="110" height="150" rx="12" '
+        f'fill="{PAPER}" stroke="{GOLD}" stroke-width="6"/>'
+        for dx, dy in ((10, 14), (5, 7), (0, 0))
     )
-    flask = f'<g transform="translate(300 400) rotate(38)">{flask_body}</g>'
-    drops = teardrop(432, 468, 1.15) + teardrop(478, 552, 0.9) + teardrop(510, 628, 0.7)
-    return card + flask + drops
+    throw = (
+        f'<line x1="{CX}" y1="640" x2="{CX}" y2="470" stroke="{GOLD}" stroke-width="13" '
+        f'stroke-linecap="round"/>' + arrowhead(CX, 452, -math.pi / 2, size=32)
+    )
+    streaks = "".join(
+        f'<line x1="{CX + dx}" y1="{y}" x2="{CX + dx}" y2="{y + 40}" stroke="{GOLD}" '
+        f'stroke-width="7" stroke-linecap="round" opacity="{op}"/>'
+        for dx, y, op in ((-64, 560, 0.7), (64, 560, 0.7))
+    )
+    fx = CX + 74
+    flying = group(
+        -18,
+        fx,
+        512,
+        f'<rect x="{fx - 45}" y="{512 - 62}" width="90" height="124" rx="10" '
+        f'fill="{PAPER}" stroke="{GOLD}" stroke-width="6"/>',
+    )
+    return board() + throw + streaks + stack + flying
 
 
 def face_joker():
