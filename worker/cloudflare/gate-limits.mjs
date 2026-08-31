@@ -20,6 +20,9 @@ const check = (label, ok, detail = '') => {
 const parse = JSON.parse;
 
 const T0 = 1_000_000;
+
+/** The registry's clock, for minting under the lease. */
+const NOW = 1_700_000_000_000;
 const A = 'token-ada', B = 'token-bo';
 
 function playingRoom() {
@@ -99,11 +102,11 @@ let registry = newRegistry();
 const bytesFor = (n) => [n, n >> 3, n >> 5, n + 7, n + 11, n + 13].join(',');
 
 for (let i = 0; i < maxRoomsPerSource(); i++) {
-  const minted = parse(mintRoomCode(registry, bytesFor(i), false, '', 'source-a'));
+  const minted = parse(mintRoomCode(registry, bytesFor(i), false, '', 'source-a', NOW));
   check(`room ${i + 1} for one source is allowed`, !minted.error, minted.error);
   registry = JSON.stringify(minted.state);
 }
-const overSource = parse(mintRoomCode(registry, bytesFor(99), false, '', 'source-a'));
+const overSource = parse(mintRoomCode(registry, bytesFor(99), false, '', 'source-a', NOW));
 check(
   'but one more from the same source is refused',
   Boolean(overSource.error),
@@ -111,20 +114,20 @@ check(
 );
 check(
   'while a different source is unaffected',
-  !parse(mintRoomCode(registry, bytesFor(50), false, '', 'source-b')).error,
+  !parse(mintRoomCode(registry, bytesFor(50), false, '', 'source-b', NOW)).error,
 );
 
 // The global cap: rate limits bound the slope, this bounds the total.
 let big = newRegistry();
 for (let i = 0; i < maxLiveRooms(); i++) {
-  const minted = parse(mintRoomCode(big, bytesFor(i * 7 + 3), false, '', `source-${i}`));
+  const minted = parse(mintRoomCode(big, bytesFor(i * 7 + 3), false, '', `source-${i}`, NOW));
   if (minted.error) break;
   big = JSON.stringify(minted.state);
 }
 check('the registry fills to its cap', registrySize(big) === maxLiveRooms(), `${registrySize(big)}`);
 check(
   'and refuses beyond it, whoever is asking',
-  Boolean(parse(mintRoomCode(big, bytesFor(999), false, '', 'somebody-new')).error),
+  Boolean(parse(mintRoomCode(big, bytesFor(999), false, '', 'somebody-new', NOW)).error),
 );
 
 console.log(`\n${failures === 0 ? 'LIMITS GATE PASS' : `LIMITS GATE FAIL (${failures})`}\n`);

@@ -86,6 +86,30 @@ private const val MAX_MISSES_PER_SOURCE = 20
 private const val MISS_WINDOW_MS = 10 * 60 * 1000.0
 
 /**
+ * How long a public row stays on the browse list after its room last spoke.
+ *
+ * A room that is alive and joinable speaks far more often than this: every join, leave,
+ * countdown and alarm touches it, and a listed lobby's own alarms are never more than five
+ * minutes apart. Twice that, so one delayed touch cannot blink a live room off the list —
+ * and a room whose object has stopped talking stops being advertised to strangers long
+ * before the sweep below removes its row.
+ */
+private const val LISTED_FOR_MS = 10 * 60 * 1000.0
+
+/**
+ * When a row's silence means its room no longer exists.
+ *
+ * The longest a live room can go without touching the registry is the thirty-minute session
+ * buzzer — every other deadline is shorter, and every deadline touches when it fires. So an
+ * hour of silence is a room whose Durable Object deleted itself without the registry hearing:
+ * `/forget` is best-effort by design (a registry briefly unreachable must not take a room
+ * down with it), and this lease is what makes that best-effort safe. Past it the row stops
+ * resolving — admitting a join would mint a fresh empty room under a dead code — and the next
+ * mint sweeps it, so leaked rows cannot hold seats at [MAX_LIVE_ROOMS] or a source's own cap.
+ */
+private const val ROW_DEAD_AFTER_MS = 60 * 60 * 1000.0
+
+/**
  * How many sources are tracked at once.
  *
  * The limiter is itself state an attacker can grow, so it is bounded like everything else
@@ -116,7 +140,20 @@ data class RegisteredRoom(
      * anybody would mind it storing.
      */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val sourceId: String? = null,
-)
+    /**
+     * When the room last spoke: minted, or touched by its own transitions and alarms.
+     *
+     * The lease [LISTED_FOR_MS] and [ROW_DEAD_AFTER_MS] read. Zero is what a row stored
+     * before this field existed decodes as, and zero is treated as long-dead **on purpose**:
+     * those are exactly the rows that leaked while `/forget` was mis-read, and defaulting
+     * them dead is what cleans an already-poisoned registry with no migration step.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val lastTouchedAtEpochMs: Double = 0.0,
+) {
+    fun staleAt(nowMs: Double): Boolean = nowMs - lastTouchedAtEpochMs > LISTED_FOR_MS
+
+    fun deadAt(nowMs: Double): Boolean = nowMs - lastTouchedAtEpochMs > ROW_DEAD_AFTER_MS
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -190,8 +227,16 @@ fun mintRoomCode(
     isPublic: Boolean,
     hostNickname: String,
     sourceId: String,
+    nowMs: Double,
 ): String {
-    val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+    val loaded = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+
+    // The sweep, before the caps. A room deletes itself and tells the registry; when that
+    // best-effort message is lost, the row leaks — and a leaked row that still counted here
+    // would spend [MAX_LIVE_ROOMS] and its source's own cap until "too many rooms are open"
+    // became permanent. Swept at mint because mint already writes, and because mint is where
+    // a full registry refuses: the moment the count matters is the moment it is made honest.
+    val state = loaded.copy(rooms = loaded.rooms.filterNot { it.deadAt(nowMs) })
 
     // Caps before entropy: refusing is cheaper than minting and then discarding, and the
     // reason returned is the one the caller can act on.
@@ -221,6 +266,7 @@ fun mintRoomCode(
         // field at sixteen, which stops the honest caller and nobody else.
         hostNickname = cleanNickname(hostNickname).takeIf { it.isNotEmpty() },
         sourceId = sourceId.takeIf { it.isNotBlank() },
+        lastTouchedAtEpochMs = nowMs,
     )
     return VintoJson.encodeToString(
         MintResult(state.copy(rooms = state.rooms + room), room = room),
@@ -256,8 +302,14 @@ fun resolveRoomCode(registryJson: String, code: String): String =
 fun resolveRoomCodeFor(registryJson: String, code: String, sourceId: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
 
+    // A row past its dead horizon does not resolve: its room deleted itself without the
+    // registry hearing, and admitting the join would create a fresh, empty room under the
+    // dead code — a ghost that then re-touches its own leaked row back to life.
+    fun liveRoom(): RegisteredRoom? =
+        state.rooms.firstOrNull { it.code == code.uppercase() && !it.deadAt(nowMs) }
+
     if (sourceId.isEmpty()) {
-        val room = state.rooms.firstOrNull { it.code == code.uppercase() }
+        val room = liveRoom()
         return VintoJson.encodeToString(
             ResolveResult(known = room != null, room = room, state = state),
         )
@@ -272,7 +324,7 @@ fun resolveRoomCodeFor(registryJson: String, code: String, sourceId: String, now
         )
     }
 
-    val room = state.rooms.firstOrNull { it.code == code.uppercase() }
+    val room = liveRoom()
     if (room != null) {
         // A hit clears the record. Somebody who mistyped twice and then got it right was not
         // guessing, and should not carry those two into their next invitation.
@@ -323,6 +375,11 @@ fun listPublicRooms(registryJson: String, nowMs: Double): String {
 
     val listed = state.rooms
         .filter { it.isPublic }
+        // A room that has stopped speaking has stopped being somewhere a stranger can be
+        // sent. Hidden rather than trusted, because the row's removal (`forgetRoom`) is a
+        // best-effort message from a dying object — this filter is what a browser sees when
+        // that message is lost.
+        .filterNot { it.staleAt(nowMs) }
         // A table somebody can actually sit at comes first, then the busiest of those, and
         // the code breaks ties so the same registry always answers in the same order — a
         // list that reshuffles under a thumb is a list nobody can tap.
@@ -379,6 +436,7 @@ fun touchRoom(
     humans: Int,
     seatsFilled: Int,
     startsAtEpochMs: Double,
+    nowMs: Double,
 ): String {
     val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
     val wanted = code.uppercase()
@@ -393,6 +451,9 @@ fun touchRoom(
                         // Zero means "no countdown"; a nullable Double across the JS boundary
                         // is more trouble than the sentinel is worth here.
                         startsAtEpochMs = startsAtEpochMs.takeIf { at -> at > 0 },
+                        // The lease. Every touch is the room saying "still here", which is
+                        // what keeps [staleAt] and [deadAt] honest about the rooms that are.
+                        lastTouchedAtEpochMs = nowMs,
                     )
                 } else {
                     it

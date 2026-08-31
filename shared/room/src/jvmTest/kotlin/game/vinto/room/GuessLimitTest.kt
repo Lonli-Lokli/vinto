@@ -38,7 +38,14 @@ class GuessLimitTest {
     private fun registryWithARoom(): Pair<String, String> {
         val minted = VintoJson.decodeFromString(
             MintResult.serializer(),
-            mintRoomCode(newRegistry(), "1,2,3,4,5,6", isPublic = false, hostNickname = "host", sourceId = "host"),
+            mintRoomCode(
+                newRegistry(),
+                "1,2,3,4,5,6",
+                isPublic = false,
+                hostNickname = "host",
+                sourceId = "host",
+                nowMs = 0.0,
+            ),
         )
         return VintoJson.encodeToString(RegistryState.serializer(), minted.state) to minted.room!!.code
     }
