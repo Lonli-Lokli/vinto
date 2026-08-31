@@ -25,15 +25,24 @@ import kotlin.test.fail
  */
 class FontCoverageTest {
 
+    /** The locales drawn in whatever face the platform supplies. See [Language.bundledFace]. */
+    private val fallsBackToThePlatform: Set<String>
+        get() = Language.entries.filterNot { it.bundledFace }.map { "values-${it.tag}" }.toSet()
+
     @Test
     fun everyLetterOfEveryTranslationCanBeDrawnInTheBundledFace() {
         val ui = load("fira_medium.ttf")
         val gaps = mutableMapOf<String, MutableSet<Char>>()
 
-        translations().forEach { (locale, text) ->
-            text.filter { it.needsAFont() && !ui.canDisplay(it) }
-                .forEach { gaps.getOrPut(locale) { mutableSetOf() } += it }
-        }
+        translations()
+            // The locales that were *recorded* as falling back, which is the second of the two
+            // answers this case has always offered. `Language.bundledFace` is where that
+            // decision lives, so adding a script without deciding still fails here.
+            .filterNot { (locale, _) -> locale in fallsBackToThePlatform }
+            .forEach { (locale, text) ->
+                text.filter { it.needsAFont() && !ui.canDisplay(it) }
+                    .forEach { gaps.getOrPut(locale) { mutableSetOf() } += it }
+            }
 
         if (gaps.isNotEmpty()) {
             fail(
@@ -49,7 +58,10 @@ class FontCoverageTest {
     @Test
     fun everyWeightCarriesTheSameAlphabet() {
         val weights = listOf("fira_medium.ttf", "fira_semibold.ttf", "fira_bold.ttf").map(::load)
-        val letters = translations().flatMap { (_, text) -> text.toList() }.filter { it.needsAFont() }
+        val letters = translations()
+            .filterNot { (locale, _) -> locale in fallsBackToThePlatform }
+            .flatMap { (_, text) -> text.toList() }
+            .filter { it.needsAFont() }
 
         weights.forEach { face ->
             val missing = letters.filterNot(face::canDisplay).toSet()
@@ -69,6 +81,34 @@ class FontCoverageTest {
 
         name.filter { it.needsAFont() }.forEach {
             assertTrue(wordmark.canDisplay(it), "the wordmark face cannot draw '$it' of \"$name\"")
+        }
+    }
+
+    /**
+     * The list above is a decision, so it is checked against the one that made it.
+     *
+     * Two ways this rots and both are silent. A language could be marked `bundledFace = false`
+     * when Fira draws it perfectly well — which quietly excuses it from the check that exists
+     * to protect it. Or the endonym in the picker could use a script the bundled face cannot
+     * draw, on a language claiming it can — and the picker is the one screen somebody reads
+     * *before* they can read the app, so tofu there is tofu at the worst possible moment.
+     */
+    @Test
+    fun theFallbackListSaysWhatIsActuallyTrue() {
+        val ui = load("fira_medium.ttf")
+
+        Language.entries.forEach { language ->
+            val drawable = language.endonym.filter { it.needsAFont() }.all(ui::canDisplay)
+            assertTrue(
+                drawable == language.bundledFace,
+                if (language.bundledFace) {
+                    "${language.tag} claims the bundled face but its own name needs " +
+                        language.endonym.filterNot { !it.needsAFont() || ui.canDisplay(it) }
+                } else {
+                    "${language.tag} is excused from the font check and does not need to be: " +
+                        "Fira draws \"${language.endonym}\" perfectly well"
+                },
+            )
         }
     }
 

@@ -47,6 +47,9 @@ import game.vinto.app.art.settings_group_game
 import game.vinto.app.art.settings_group_privacy
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
+import game.vinto.app.art.settings_language
+import game.vinto.app.art.settings_language_detail
+import game.vinto.app.art.settings_language_device
 import game.vinto.app.art.settings_link_failed
 import game.vinto.app.art.settings_motion
 import game.vinto.app.art.settings_motion_detail
@@ -157,6 +160,7 @@ fun SettingsScreen(
             Pacing(settings, onChange)
 
             Plaque(stringResource(Res.string.settings_group_feel))
+            Tongue(settings, onChange)
             Motion(settings, onChange)
             Palette(settings, onChange)
             Noise(settings, onChange)
@@ -337,6 +341,57 @@ private fun Plaque(title: String) {
         Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
     }
 }
+
+/**
+ * Which language to read the game in.
+ *
+ * A grid rather than a [ChoiceRow], which is the control every other setting here uses: a
+ * sliding thumb along a track works for three answers and is unreadable at twenty-one. Two
+ * columns of endonyms with the tag underneath, which is what a language list looks like
+ * everywhere it is done well — and the endonym is the point, because somebody hunting for
+ * Ukrainian is hunting for "Українська". "Ukrainian" only helps a person who can already read
+ * the language they are trying to leave.
+ *
+ * "Follow the device" is first and is the default. It is a real answer rather than a null one:
+ * most people want the language their phone is already in, and storing `en` for somebody who
+ * never chose it would pin an English app on a Ukrainian phone the first time they opened this
+ * screen.
+ */
+@Composable
+private fun Tongue(settings: Settings, onChange: (Settings) -> Unit) {
+    Setting(
+        title = stringResource(Res.string.settings_language),
+        detail = stringResource(Res.string.settings_language_detail),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Tight)) {
+            GameButton(
+                label = stringResource(Res.string.settings_language_device),
+                tone = toneFor(chosen = settings.language == null),
+                onClick = { onChange(settings.copy(language = null)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Language.entries.chunked(2).forEach { pair ->
+                Row(horizontalArrangement = Arrangement.spacedBy(Tight)) {
+                    pair.forEach { language ->
+                        GameButton(
+                            label = language.endonym,
+                            tone = toneFor(chosen = settings.language == language.tag),
+                            compact = true,
+                            onClick = { onChange(settings.copy(language = language.tag)) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    // Keeps the last row's single tile the width of a tile rather than of a row.
+                    if (pair.size == 1) Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/** Blue for the language in use, charcoal for the twenty that are not. */
+private fun toneFor(chosen: Boolean): ButtonTone =
+    if (chosen) ButtonTone.KEEP else ButtonTone.NEUTRAL
 
 /**
  * The pages that belong to the game but are not in it, and a way to pass it on.

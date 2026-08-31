@@ -117,6 +117,16 @@ style:
     maxJumpCount: 3
 
 naming:
+  MatchingDeclarationName:
+    # Excludes the wasm source set, and only it.
+    #
+    # The rule strips a platform suffix before comparing — `LocalAppLocale.android.kt` matches
+    # `LocalAppLocale` and passes — but it does not recognise the camelCase `wasmJs`, so the
+    # same file for the same `actual` fails on the same declaration. That is the rule not
+    # knowing a target exists rather than this project disagreeing with it, and the two fixes
+    # available are both worse than the finding: renaming the `actual` is impossible, and
+    # dropping the `.wasmJs` suffix breaks the convention every other platform file follows.
+    excludes: ['**/wasmJsMain/**']
   FunctionNameMaxLength:
     # Test names are sentences here, because they have to be: backticked names with spaces
     # are JVM-only and half these suites are `commonTest` (README section 7). So

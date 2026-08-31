@@ -31,6 +31,31 @@
     <base href="/">
 
     <!--
+      Lets the game be read in a language the browser is not set to.
+      
+      `navigator.languages` is read-only to a page, and it is what Compose's resource lookup
+      reads underneath. So the property is shadowed with one that checks a variable first —
+      `AppLocale.wasmJs.kt` sets it, and everything else falls through to the browser's own
+      answer. Before the app script on purpose: it has to be in place the first time anything
+      asks.
+
+      Absent, the game is in the browser's language and the picker does nothing. That is a
+      working app rather than a broken one, which is why this is a small script and not a
+      dependency.
+    -->
+    <script>
+      (function () {
+        var real = Object.getOwnPropertyDescriptor(Navigator.prototype, 'languages');
+        if (!real || !real.get) return;
+        Object.defineProperty(Navigator.prototype, 'languages', Object.assign({}, real, {
+          get: function () {
+            return window.__vintoLocale ? [window.__vintoLocale] : real.get.apply(this);
+          },
+        }));
+      })();
+    </script>
+
+    <!--
       ============================================================================
       What a link to this page says about itself.
 

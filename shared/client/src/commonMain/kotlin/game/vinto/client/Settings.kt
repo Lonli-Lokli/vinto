@@ -102,6 +102,17 @@ data class Settings(
      * file still decodes.
      */
     val analytics: Boolean = true,
+    /**
+     * The language to read the game in, or null to follow the device.
+     *
+     * A BCP-47 tag — `de`, `pt`, `zh` — and null rather than a default of `"en"`, because
+     * "whatever this phone is set to" is a real answer and the one most people want. Storing
+     * `"en"` for somebody who never chose it would pin an English app on a Ukrainian phone the
+     * first time they opened Settings.
+     *
+     * A default-added field, so a settings file written before this one still decodes.
+     */
+    val language: String? = null,
 ) {
     companion object {
         /** Bumped when the shape changes; an older file is replaced by the defaults. */
