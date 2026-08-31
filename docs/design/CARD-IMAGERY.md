@@ -256,3 +256,22 @@ rules difference between them.
 One drawing lesson worth keeping: the first large-scale jester cap rendered as a crown —
 three upright spikes over a band are a crown whatever you call them. A jester cap needs
 drooping outer horns and hanging bells to not be royalty.
+
+## Postscript 2: the pipeline is complete, and the mark is ours
+
+The deck ships as **vector drawables**. `tools/make-card-faces.py` emits, on every run,
+both the SVGs (for the preview page) and Android vector-drawable XML directly into
+`composeApp/src/commonMain/composeResources/drawable/` under the old PNG names, so no
+call site changed while the art became resolution-independent — the fix for the desktop
+and web quality complaint that started this work. Two vector-drawable gaps were removed
+at the source rather than converted around: the corner indices are monoline stroke-drawn
+glyphs (no `<text>`), and every dashed stroke is emitted as real segments (no
+`stroke-dasharray`). The emitter refuses any SVG feature it does not know, so drift
+fails the generator instead of rendering wrong in the app. A WCAG gate runs before
+anything is written: indices at 4.5:1 on their grounds, grounds at 3:1 against the felt.
+
+The brand mark was also replaced: the old `tools/brand/vinto-mark.png` came from the
+retired web client and could not be legally reused. The mark is now an original
+letterform authored here (`tools/brand/vinto-mark.svg`, the same V the card back
+carries), and every launcher icon, favicon, manifest icon and the share card is
+regenerated from it — the share card fanning five faces of this deck.
