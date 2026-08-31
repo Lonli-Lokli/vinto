@@ -358,12 +358,17 @@ private fun Tone.paint(): ButtonTone = when (this) {
 }
 
 /**
- * The fourteen answers to "name a card", in two rows of seven.
+ * The answers to "name a card", as evenly shared rows of plaques.
  *
  * Left to size themselves they came out as tall narrow pills — a "2" is one character wide
  * and the button was only as wide as its padding, while the height was held at a thumb.
  * Sharing each row out evenly makes them plaques instead: wider than they are tall, the same
- * size whether they say 2 or Joker, and in the same place every time a King is played.
+ * size whether they say 2 or Joker, and in the same place every time.
+ *
+ * The King's fourteen sit seven to a row; the swap declaration's eight action ranks sit
+ * four to a row, because seven-and-one is a row of plaques and an orphan. A muted chip is
+ * still a chip — the King may name an actionless rank on purpose — it just does not dress
+ * like the common case.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -374,12 +379,12 @@ private fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Un
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalArrangement = Arrangement.spacedBy(Half),
-        maxItemsInEachRow = RANKS_PER_ROW,
+        maxItemsInEachRow = if (ranks.size <= 8) ACTION_RANKS_PER_ROW else RANKS_PER_ROW,
     ) {
         ranks.forEach { rank ->
             GameButton(
                 label = rank.rank.serialName,
-                tone = ButtonTone.DECLARE,
+                tone = if (rank.muted) ButtonTone.NEUTRAL else ButtonTone.DECLARE,
                 onClick = { onMove(rank.move) },
                 modifier = Modifier
                     .weight(1f)
@@ -392,6 +397,9 @@ private fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Un
 
 /** Seven and seven: the fourteen ranks, in two rows that fill the rail's width. */
 private const val RANKS_PER_ROW = 7
+
+/** Four and four: the eight action ranks of the swap declaration. */
+private const val ACTION_RANKS_PER_ROW = 4
 
 /** The number of full-width rows that leaves the rail no room for anything else. */
 private const val Crowded = 3

@@ -56,5 +56,13 @@
   // wasted a run on Pages, in the other direction.
   "workers_dev": false,
 
+  // Preview URLs are the exception `workers_dev: false` allows for on purpose: a pull
+  // request's build is uploaded as an unreleased *version* of this Worker
+  // (`wrangler versions upload`, `.github/workflows/preview-web.yml`), and each version
+  // answers at `<hash>-vinto-web.<account>.workers.dev` without touching what
+  // `vinto.kupalinka.app` serves. That address is unguessable, unlinked and per-version —
+  // not the standing second copy of the site the line above refuses.
+  "preview_urls": true,
+
   "observability": { "enabled": true }
 }

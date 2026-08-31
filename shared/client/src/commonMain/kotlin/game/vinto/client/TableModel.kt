@@ -20,6 +20,7 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
+import game.vinto.shapes.hasAction
 
 /**
  * What the table is offering the player, right now.
@@ -83,7 +84,7 @@ data class CardRef(val playerId: String, val position: Int)
 data class Choice(val label: Label, val move: Move, val tone: Tone = Tone.NEUTRAL)
 
 /** A rank the player may name. */
-data class RankChoice(val rank: Rank, val move: Move)
+data class RankChoice(val rank: Rank, val move: Move, val muted: Boolean = false)
 
 /**
  * What kind of move a button is.
@@ -417,7 +418,10 @@ private fun callRankTable(view: PlayerView, position: Int): Table {
             ),
             Choice(Label.Back, Move.Ask(Question.WhichSlot)),
         ),
-        ranks = ALL_RANKS.map { rank ->
+        // Only the action ranks. Declaring a 2-6 or the Joker is legal but pointless -
+        // a right guess wins nothing, since the card has no action to play, while a wrong
+        // one still costs a penalty card. A button that can only lose is not a choice.
+        ranks = ALL_RANKS.filter(::hasAction).map { rank ->
             RankChoice(rank, Move.Send(GameAction.SwapCard(SwapCardPayload(me, position, rank))))
         },
     )
@@ -539,12 +543,16 @@ private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
         Table(
             prompt = Ask.SayWhatItIsAndPlayIt,
             choices = listOf(giveUp(view.viewerId)),
-            ranks = ALL_RANKS.map { rank ->
+            // The King may name any rank - taking an opponent's 2 out of their hand is a
+            // real play - but naming an action rank is the common case, so those lead and
+            // the actionless ranks follow, muted rather than hidden.
+            ranks = ALL_RANKS.sortedBy { !hasAction(it) }.map { rank ->
                 RankChoice(
                     rank,
                     Move.Send(
                         GameAction.DeclareKingAction(DeclareKingActionPayload(view.viewerId, rank)),
                     ),
+                    muted = !hasAction(rank),
                 )
             },
         )

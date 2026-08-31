@@ -1,9 +1,9 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +37,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -110,6 +111,9 @@ import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private val Gap = 6.dp
 private val Tight = 4.dp
@@ -123,11 +127,7 @@ private const val SHADOW_SQUASH = 0.38f
 
 /** Every control in the header is a thumb wide, whatever is drawn inside it. */
 private val HeaderTap = 44.dp
-private val BadgeWidth = 26.dp
 private val WordmarkSize = 19.sp
-
-/** The deck badge the wordmark sits beside: a dark pill in both schemes, like the plates. */
-private val DeckBadge = Color(0xFF14351F)
 
 /**
  * The table, laid out as the web app lays it out on a phone.
@@ -300,6 +300,80 @@ data class TableState(
     val sending: Boolean = false,
 )
 
+/**
+ * One header control: the dressed circle the "?" wears, holding a glyph drawn in the
+ * rail's ink rather than fetched from an emoji font nobody chose.
+ */
+@Composable
+private fun HeaderGlyph(
+    onClick: () -> Unit,
+    description: String,
+    glyph: DrawScope.(Color) -> Unit,
+) {
+    val ink = Rail.inkDim
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.size(HeaderTap).semantics { contentDescription = description },
+        shape = CircleShape,
+        color = Rail.fill,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.size(18.dp)) { glyph(ink) }
+        }
+    }
+}
+
+/** A gear: the ring, eight teeth, and the hub, all strokes. */
+private fun DrawScope.drawGear(ink: Color) {
+    val c = center
+    val r = size.minDimension / 2
+    drawCircle(ink, radius = r * GEAR_RING, center = c, style = Stroke(width = r * GEAR_RING_STROKE))
+    repeat(GEAR_TEETH) { i ->
+        val a = i * (2 * PI.toFloat() / GEAR_TEETH)
+        val from = c + Offset(cos(a), sin(a)) * (r * GEAR_TOOTH_ROOT)
+        val to = c + Offset(cos(a), sin(a)) * r
+        drawLine(ink, from, to, strokeWidth = r * GEAR_TOOTH_STROKE, cap = StrokeCap.Round)
+    }
+    drawCircle(ink, radius = r * GEAR_HUB, center = c)
+}
+
+private const val GEAR_TEETH = 8
+private const val GEAR_RING = 0.58f
+private const val GEAR_RING_STROKE = 0.28f
+private const val GEAR_TOOTH_ROOT = 0.72f
+private const val GEAR_TOOTH_STROKE = 0.30f
+private const val GEAR_HUB = 0.16f
+
+/** A ladybug: the domed body, the wing split, the head, and four spots. */
+private fun DrawScope.drawBug(ink: Color) {
+    val c = center
+    val r = size.minDimension / 2
+    drawCircle(ink, radius = r * BUG_BODY, center = c, style = Stroke(width = r * BUG_SHELL))
+    drawLine(
+        ink,
+        c + Offset(0f, -r * BUG_BODY),
+        c + Offset(0f, r * BUG_BODY),
+        strokeWidth = r * BUG_SPLIT,
+        cap = StrokeCap.Round,
+    )
+    drawCircle(ink, radius = r * BUG_HEAD, center = c + Offset(0f, -r * BUG_NECK))
+    for (dx in listOf(-1f, 1f)) {
+        drawCircle(ink, radius = r * BUG_SPOT, center = c + Offset(dx * r * BUG_WING, -r * BUG_HIGH_SPOT))
+        drawCircle(ink, radius = r * BUG_SPOT, center = c + Offset(dx * r * BUG_WING, r * BUG_LOW_SPOT))
+    }
+}
+
+private const val BUG_BODY = 0.78f
+private const val BUG_SHELL = 0.18f
+private const val BUG_SPLIT = 0.14f
+private const val BUG_HEAD = 0.24f
+private const val BUG_NECK = 0.98f
+private const val BUG_SPOT = 0.14f
+private const val BUG_WING = 0.36f
+private const val BUG_HIGH_SPOT = 0.22f
+private const val BUG_LOW_SPOT = 0.30f
+
 /** Where the round is up to, and how much deck is left. */
 @Composable
 private fun TableHeader(
@@ -368,30 +442,18 @@ private fun TableHeader(
         // meant abandoning the round it was annoying you in, which is a price nobody pays; they
         // put the phone down instead. Theme and haptics are the same shape of want. Going there
         // and coming back returns to this exact table, mid-round, with nothing lost.
-        Box(
-            modifier = Modifier
-                .size(HeaderTap)
-                .clickable(onClick = onSettings)
-                .semantics { contentDescription = settings },
-            contentAlignment = Alignment.Center,
-        ) {
-            // The emoji presentation (U+2699 U+FE0F), the same route the bug beside it takes:
-            // Fira carries neither glyph, so both are drawn by the platform's emoji font. A
-            // monochrome U+2699 on its own would land in whatever fallback the host happened
-            // to have, which on a phone is not a decision anybody made.
-            Text(text = "\u2699\uFE0F", style = MaterialTheme.typography.labelLarge)
+        // The same dressed circle as the "?" beside it. These were colour emoji, which
+        // made the header three different design languages in a row — an outlined glyph,
+        // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
+        // own ink are one decision made once.
+        HeaderGlyph(onClick = onSettings, description = settings) { ink ->
+            drawGear(ink)
         }
 
         // Always reachable, because the moment worth reporting is the moment it goes wrong
         // and nobody navigates to a menu to capture it.
-        Box(
-            modifier = Modifier
-                .size(HeaderTap)
-                .clickable(onClick = onReport)
-                .semantics { contentDescription = report },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = "🐞", style = MaterialTheme.typography.labelLarge)
+        HeaderGlyph(onClick = onReport, description = report) { ink ->
+            drawBug(ink)
         }
 
         // The deck count, which answers when it is asked. It is the one number on the screen
@@ -403,27 +465,26 @@ private fun TableHeader(
         // felt below already reads out "N cards left in the deck", and when this said the same
         // words a screen reader heard one screen say it twice without either saying that one
         // of the two opens an explanation.
+        // Dressed exactly as the three controls beside it — one header, one language.
+        // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
         Surface(
             onClick = onDeck,
             modifier = Modifier
-                .heightIn(min = HeaderTap)
+                .size(HeaderTap)
                 .markedAs(LocalStage.current, Target.BADGE)
                 .semantics { contentDescription = deck },
-            shape = RoundedCornerShape(Tight),
-            color = DeckBadge,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Slate.gold),
+            shape = CircleShape,
+            color = Rail.fill,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
         ) {
-            Text(
-                "${view.drawPileSize}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = Slate.gold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(horizontal = 10.dp)
-                    .widthIn(min = BadgeWidth)
-                    .wrapContentHeight(),
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    "${view.drawPileSize}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.inkDim,
+                )
+            }
         }
     }
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the Android launcher icons from the web app's mark.
+"""Generate the Android launcher icons from the Vinto mark.
 
-The source is `tools/brand/vinto-mark.png` — the orange V the web client shipped,
-so the phone and the browser answer to the same mark. It is 144 px of flat #FF6000 on
-transparency and the only artwork there is; everything below is layout, not drawing.
+The source is `tools/brand/vinto-mark.png`, rendered from `vinto-mark.svg` beside it —
+an original mark authored in this repository: a V of two fanned cards in the brand
+orange. It is the only artwork there is; everything below is layout, not drawing.
 
 Run from anywhere:
 
@@ -32,7 +32,7 @@ from PIL import Image, ImageDraw
 
 # tools/ sits at the repository root, which is also the Gradle root.
 ROOT = Path(__file__).resolve().parents[1]
-# The mark comes from the retired web client — the same V the site used.
+# The mark is original to this repository; vinto-mark.svg beside it is the source of truth.
 SOURCE = ROOT / "tools" / "brand" / "vinto-mark.png"
 # `androidApp`, not `composeApp`. AGP 9 refuses to let an Android *application* be a KMP
 # module, so the application was split out and the launcher icons went with it — and this
@@ -41,9 +41,10 @@ SOURCE = ROOT / "tools" / "brand" / "vinto-mark.png"
 # was found. The manifest that reads them is `androidApp/src/main/AndroidManifest.xml`.
 RES = ROOT / "androidApp" / "src" / "main" / "res"
 
-# The rail — the dark band the app's own controls sit on (`theme/VintoTheme.kt`). The icon
-# is the first frame of the app, and it is the colour the window opens on.
-BACKGROUND = (0x1B, 0x24, 0x30, 0xFF)
+# The felt — the table the whole game is played on (`theme/VintoTheme.kt`). The old
+# dark rail read as a black icon at a glance; the felt is the brand's own green and
+# the orange mark carries on it.
+BACKGROUND = (0x1B, 0x5E, 0x43, 0xFF)
 
 # Density buckets, as multiples of mdpi.
 DENSITIES = {"mdpi": 1.0, "hdpi": 1.5, "xhdpi": 2.0, "xxhdpi": 3.0, "xxxhdpi": 4.0}

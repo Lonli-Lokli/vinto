@@ -66,7 +66,7 @@ class TouchTargetTest {
         assertTrue(tap.bigEnough, tooSmall(what, tap))
     }
 
-    /** The worst case: fourteen ranks, a confirm and a cancel, all in one rail. */
+    /** The crowded case: the eight action ranks, a confirm and a cancel, in one rail. */
     @Test
     fun everyRankChipCanBeHit() = eachTapTarget(Question.CallRank(0)) { what, tap ->
         assertTrue(tap.bigEnough, tooSmall(what, tap))
@@ -93,7 +93,7 @@ class TouchTargetTest {
      * And they are plaques rather than pills: wider than they are tall, and all one size.
      *
      * Left to size themselves the ranks came out narrow — a "2" is one character wide, and
-     * only the height was being held — so a King's fourteen answers read as a row of tally
+     * only the height was being held — so a rank grid's answers read as a row of tally
      * marks. Sharing the row evenly is also what keeps "JOKER" from wrapping and making its
      * row taller than the other.
      */
@@ -118,7 +118,7 @@ class TouchTargetTest {
         waitForIdle()
 
         val ranks = tapTargets().filter { (what, _) -> what in RANKS }
-        assertTrue(ranks.size == RANKS.size, "all fourteen ranks: ${ranks.map { it.first }}")
+        assertTrue(ranks.size == RANKS.size, "all eight action ranks: ${ranks.map { it.first }}")
 
         val widths = ranks.map { it.second.size.width }
         val heights = ranks.map { it.second.size.height }.toSet()
@@ -139,7 +139,7 @@ class TouchTargetTest {
     /**
      * Being big enough is not the same as being on screen, so this asks the other half.
      *
-     * At a doubled system font a King's fourteen chips and the two buttons under them come to
+     * At a doubled system font a rank grid's chips and the two buttons under them come to
      * some five hundred points of rail, and the rail is a fixed share of the screen — about
      * two hundred and forty. Everything below the first row of chips is therefore *below the
      * screen*, and the only reason that is not a control nobody can press is that the rail
@@ -244,7 +244,7 @@ class TouchTargetTest {
      *
      * Not the dealt table: a question like [Question.CallRank] is answered against a *pending*
      * card, and asking it of a table that has none quietly produces the ordinary turn instead.
-     * This case measured that turn for a while and reported that all fourteen rank chips were
+     * This case measured that turn for a while and reported that all the rank chips were
      * the right size, there being none.
      */
     private fun drawn(): PlayerView {
@@ -285,9 +285,10 @@ class TouchTargetTest {
 
     private companion object {
         const val TAP = 44f
-        val RANKS = listOf(
-            "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "Joker",
-        )
+
+        // The swap declaration offers only the ranks with an action to win; the King's
+        // fourteen use the same GameButton in the same grid, just seven to a row.
+        val RANKS = listOf("7", "8", "9", "10", "J", "Q", "K", "A")
 
         /** The two buttons under a rank grid: the last things the rail has room for. */
         val ANSWERS = listOf("Just Swap", "Back")
