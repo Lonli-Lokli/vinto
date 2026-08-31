@@ -20,6 +20,7 @@ import pathlib
 
 W, H = 825, 1125
 CX = W / 2
+CX_INT = int(CX)
 
 INK = "#14181B"
 FELT = "#1B5E43"
@@ -385,25 +386,25 @@ def face_seven():
 
 
 def face_eight():
-    """8: the table; a BIG card of yours rises, the eye opened on the card
-    itself — same act as the 7, bigger card, different picture."""
+    """8: the same act as the 7 — eye above the rising card — on a much
+    bigger card, in its own burnt orange."""
     burnt = ACCENT["8"]
     return (
         board(my_gap=1)
-        + trail(CX, 800, CX, 680, color=burnt)
-        + popped(CX, 590, 190, 262, FELT, GOLD, burnt)
-        + big_eye(CX, 590, s=0.62, iris=burnt)
+        + trail(CX, 800, CX, 736, color=burnt)
+        + popped(CX, 694, 182, 250, FELT, GOLD, burnt)
+        + big_eye(CX, 506, s=0.55, gaze=8, iris=burnt)
     )
 
 
 def face_nine():
-    """9: the table; a small card of THEIRS drops, a slim lens ring on it."""
+    """9: the same magnifier as the 10, smaller, on a smaller card of theirs."""
     steel = ACCENT["9"]
     return (
         board(top_gap=1)
         + trail(CX, 420, CX, 500, color=steel)
         + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, steel)
-        + lens(CX, 560, 96, steel, sw=13)
+        + lens(CX + 4, 550, 92, steel, handle=True, sw=13)
     )
 
 
@@ -517,35 +518,71 @@ def face_joker():
 
 
 def card_back():
-    lattice = []
-    for gy in range(140, 1020, 90):
-        for gx in range(100 + (45 if (gy // 90) % 2 else 0), 760, 90):
-            if abs(gx - CX) < 220 and abs(gy - H / 2) < 260:
-                continue
-            lattice.append(
-                f'<path d="M {gx},{gy - 20} L {gx + 16},{gy} L {gx},{gy + 20} L {gx - 16},{gy} Z" '
-                f'fill="{FELT_DARK}"/>'
+    """A light back: the V in a diamond medallion, flanked by columns of small
+    engraved marks in the deck's four colours — the element-stone look, and
+    point-symmetric so the back has no upside down."""
+    colors = [GOLD, BLUE, FELT, ORANGE]
+
+    def mark(kind, x, y, c):
+        if kind == "bar":
+            return f'<rect x="{x - 26}" y="{y - 6}" width="52" height="12" rx="6" fill="{c}"/>'
+        if kind == "dots":
+            return "".join(
+                f'<circle cx="{x + dx}" cy="{y}" r="8" fill="{c}"/>' for dx in (-22, 0, 22)
             )
-    pips = "".join(
-        f'<path d="M {x},{y - 30} L {x + 22},{y} L {x},{y + 30} L {x - 22},{y} Z" '
-        f'fill="{GOLD}"/>'
-        for x, y in ((CX, H / 2 - 200), (CX, H / 2 + 200), (CX - 160, H / 2), (CX + 160, H / 2))
-    )
+        if kind == "chev":
+            return (
+                f'<polyline points="{x - 24},{y + 10} {x},{y - 12} {x + 24},{y + 10}" '
+                f'fill="none" stroke="{c}" stroke-width="9" stroke-linecap="round" '
+                f'stroke-linejoin="round"/>'
+            )
+        if kind == "diam":
+            return (
+                f'<path d="M {x},{y - 16} L {x + 14},{y} L {x},{y + 16} L {x - 14},{y} Z" '
+                f'fill="{c}"/>'
+            )
+        if kind == "ring":
+            return f'<circle cx="{x}" cy="{y}" r="13" fill="none" stroke="{c}" stroke-width="7"/>'
+        return star(x, y, 17, 7, n=4, color=c)
+
+    kinds = ["bar", "dots", "chev", "diam", "ring", "star"]
+    half = []
+    for col, x in enumerate((150, 675)):
+        for i, y in enumerate(range(150, 540, 78)):
+            k = kinds[(i + col * 3) % 6]
+            half.append(mark(k, x, y, colors[(i + col) % 4]))
+    for i, x in enumerate(range(CX_INT - 156, CX_INT + 157, 78)):
+        half.append(mark(kinds[i % 6], x, 150, colors[(i + 2) % 4]))
+    deco = "".join(half)
+    deco += f'<g transform="rotate(180 {W / 2} {H / 2})">{deco}</g>'
+
+    def diamond(rw, rh, stroke, sw):
+        return (
+            f'<path d="M {CX},{H / 2 - rh} L {CX + rw},{H / 2} L {CX},{H / 2 + rh} '
+            f'L {CX - rw},{H / 2} Z" fill="none" stroke="{stroke}" stroke-width="{sw}"/>'
+        )
+
     v = (
-        f'<path d="M {CX - 96},{H / 2 - 110} L {CX - 40},{H / 2 - 110} L {CX},{H / 2 + 26} '
-        f'L {CX + 40},{H / 2 - 110} L {CX + 96},{H / 2 - 110} L {CX + 34},{H / 2 + 116} '
-        f'L {CX - 34},{H / 2 + 116} Z" fill="{ORANGE}" stroke="{GOLD}" stroke-width="8" '
+        f'<path d="M {CX - 68},{H / 2 - 78} L {CX - 28},{H / 2 - 78} L {CX},{H / 2 + 18} '
+        f'L {CX + 28},{H / 2 - 78} L {CX + 68},{H / 2 - 78} L {CX + 24},{H / 2 + 82} '
+        f'L {CX - 24},{H / 2 + 82} Z" fill="{ORANGE}" stroke="{GOLD}" stroke-width="7" '
         f'stroke-linejoin="round"/>'
+    )
+    pips = "".join(
+        f'<path d="M {CX + dx},{H / 2 + dy - 12} L {CX + dx + 10},{H / 2 + dy} '
+        f'L {CX + dx},{H / 2 + dy + 12} L {CX + dx - 10},{H / 2 + dy} Z" fill="{GOLD}"/>'
+        for dx, dy in ((0, -246), (0, 246), (-212, 0), (212, 0))
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
         f'<rect width="{W}" height="{H}" rx="44" fill="{PAPER}"/>'
-        f'<rect x="22" y="22" width="{W - 44}" height="{H - 44}" rx="32" fill="{FELT}"/>'
-        f'<rect x="40" y="40" width="{W - 80}" height="{H - 80}" rx="26" '
-        f'fill="none" stroke="{GOLD}" stroke-width="8"/>'
-        f'<rect x="58" y="58" width="{W - 116}" height="{H - 116}" rx="22" '
+        f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
+        f'fill="none" stroke="{INK}" stroke-width="6"/>'
+        f'<rect x="38" y="38" width="{W - 76}" height="{H - 76}" rx="26" '
         f'fill="none" stroke="{GOLD}" stroke-width="4"/>'
-        + "".join(lattice)
+        + deco
+        + diamond(240, 300, INK, 6)
+        + diamond(200, 252, GOLD, 8)
         + pips
         + v
         + "</svg>"
