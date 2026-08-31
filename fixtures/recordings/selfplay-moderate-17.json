@@ -1,0 +1,3702 @@
+{
+  "formatVersion": 1,
+  "meta": {
+    "recordedAt": "2026-08-18T14:51:28.278Z",
+    "producer": "vinto-ts/generate-recordings",
+    "label": "selfplay seed=17 difficulty=moderate"
+  },
+  "settings": {
+    "humanPlayerName": "You",
+    "difficulty": "moderate",
+    "seed": 17
+  },
+  "initialState": {
+    "gameId": "vinto-17",
+    "roundNumber": 1,
+    "turnNumber": 1,
+    "phase": "setup",
+    "subPhase": "idle",
+    "finalTurnTriggered": false,
+    "players": [
+      {
+        "id": "human-1",
+        "name": "You",
+        "nickname": "You",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "7_0",
+            "rank": "7",
+            "value": 7,
+            "actionText": "Peek 1 of your cards",
+            "played": false
+          },
+          {
+            "id": "K_1",
+            "rank": "K",
+            "value": 0,
+            "actionText": "Declare any card's action",
+            "played": false
+          },
+          {
+            "id": "9_2",
+            "rank": "9",
+            "value": 9,
+            "actionText": "Peek 1 opponent card",
+            "played": false
+          },
+          {
+            "id": "4_3",
+            "rank": "4",
+            "value": 4,
+            "played": false
+          },
+          {
+            "id": "J_3",
+            "rank": "J",
+            "value": 10,
+            "actionText": "Swap 2 face-down cards from 2 players",
+            "played": false
+          }
+        ],
+        "knownCardPositions": [],
+        "isVintoCaller": false,
+        "coalitionWith": []
+      },
+      {
+        "id": "bot-1",
+        "name": "Raphael",
+        "nickname": "Raph",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "10_0",
+            "rank": "10",
+            "value": 10,
+            "actionText": "Peek 1 opponent card",
+            "played": false
+          },
+          {
+            "id": "9_1",
+            "rank": "9",
+            "value": 9,
+            "actionText": "Peek 1 opponent card",
+            "played": false
+          },
+          {
+            "id": "Joker2",
+            "rank": "Joker",
+            "value": -1,
+            "played": false
+          },
+          {
+            "id": "J_1",
+            "rank": "J",
+            "value": 10,
+            "actionText": "Swap 2 face-down cards from 2 players",
+            "played": false
+          },
+          {
+            "id": "8_3",
+            "rank": "8",
+            "value": 8,
+            "actionText": "Peek 1 of your cards",
+            "played": false
+          }
+        ],
+        "knownCardPositions": [
+          0,
+          1
+        ],
+        "isVintoCaller": false,
+        "coalitionWith": []
+      },
+      {
+        "id": "bot-2",
+        "name": "Michelangelo",
+        "nickname": "Mikey",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "10_2",
+            "rank": "10",
+            "value": 10,
+            "actionText": "Peek 1 opponent card",
+            "played": false
+          },
+          {
+            "id": "7_3",
+            "rank": "7",
+            "value": 7,
+            "actionText": "Peek 1 of your cards",
+            "played": false
+          },
+          {
+            "id": "6_0",
+            "rank": "6",
+            "value": 6,
+            "played": false
+          },
+          {
+            "id": "9_0",
+            "rank": "9",
+            "value": 9,
+            "actionText": "Peek 1 opponent card",
+            "played": false
+          },
+          {
+            "id": "A_2",
+            "rank": "A",
+            "value": 1,
+            "actionText": "Force opponent to draw",
+            "played": false
+          }
+        ],
+        "knownCardPositions": [
+          0,
+          1
+        ],
+        "isVintoCaller": false,
+        "coalitionWith": []
+      },
+      {
+        "id": "bot-3",
+        "name": "Donatello",
+        "nickname": "Don",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "5_0",
+            "rank": "5",
+            "value": 5,
+            "played": false
+          },
+          {
+            "id": "2_0",
+            "rank": "2",
+            "value": 2,
+            "played": false
+          },
+          {
+            "id": "K_2",
+            "rank": "K",
+            "value": 0,
+            "actionText": "Declare any card's action",
+            "played": false
+          },
+          {
+            "id": "2_1",
+            "rank": "2",
+            "value": 2,
+            "played": false
+          },
+          {
+            "id": "5_2",
+            "rank": "5",
+            "value": 5,
+            "played": false
+          }
+        ],
+        "knownCardPositions": [
+          0,
+          1
+        ],
+        "isVintoCaller": false,
+        "coalitionWith": []
+      }
+    ],
+    "currentPlayerIndex": 0,
+    "vintoCallerId": null,
+    "coalitionLeaderId": null,
+    "drawPile": [
+      {
+        "id": "5_1",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "6_3",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "8_1",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "Q_1",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": false
+      },
+      {
+        "id": "6_1",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "4_1",
+        "rank": "4",
+        "value": 4,
+        "played": false
+      },
+      {
+        "id": "K_0",
+        "rank": "K",
+        "value": 0,
+        "actionText": "Declare any card's action",
+        "played": false
+      },
+      {
+        "id": "Q_2",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": false
+      },
+      {
+        "id": "K_3",
+        "rank": "K",
+        "value": 0,
+        "actionText": "Declare any card's action",
+        "played": false
+      },
+      {
+        "id": "8_0",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "4_0",
+        "rank": "4",
+        "value": 4,
+        "played": false
+      },
+      {
+        "id": "10_3",
+        "rank": "10",
+        "value": 10,
+        "actionText": "Peek 1 opponent card",
+        "played": false
+      },
+      {
+        "id": "A_0",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": false
+      },
+      {
+        "id": "9_3",
+        "rank": "9",
+        "value": 9,
+        "actionText": "Peek 1 opponent card",
+        "played": false
+      },
+      {
+        "id": "A_3",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": false
+      },
+      {
+        "id": "3_3",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "A_1",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": false
+      },
+      {
+        "id": "2_2",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "id": "3_2",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "Joker1",
+        "rank": "Joker",
+        "value": -1,
+        "played": false
+      },
+      {
+        "id": "Q_0",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": false
+      },
+      {
+        "id": "3_1",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "10_1",
+        "rank": "10",
+        "value": 10,
+        "actionText": "Peek 1 opponent card",
+        "played": false
+      },
+      {
+        "id": "J_2",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": false
+      },
+      {
+        "id": "2_3",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "id": "7_1",
+        "rank": "7",
+        "value": 7,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "5_3",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "8_2",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "4_2",
+        "rank": "4",
+        "value": 4,
+        "played": false
+      },
+      {
+        "id": "6_2",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "7_2",
+        "rank": "7",
+        "value": 7,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "J_0",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": false
+      },
+      {
+        "id": "Q_3",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": false
+      },
+      {
+        "id": "3_0",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      }
+    ],
+    "discardPile": [],
+    "pendingAction": null,
+    "activeTossIn": null,
+    "turnActions": [],
+    "roundActions": [],
+    "difficulty": "moderate",
+    "roundFailedAttempts": [],
+    "rngState": 2583707594
+  },
+  "actions": [
+    {
+      "action": {
+        "type": "PEEK_SETUP_CARD",
+        "payload": {
+          "playerId": "human-1",
+          "position": 0
+        }
+      },
+      "stateHash": "4796203e91c2361552e846c5d68ddf92ea5774df73fa0177ca8b0e83e1504c2a"
+    },
+    {
+      "action": {
+        "type": "PEEK_SETUP_CARD",
+        "payload": {
+          "playerId": "human-1",
+          "position": 1
+        }
+      },
+      "stateHash": "bcdc2372887fb34bb167b7a65e65dcbe7144c75c80c1d9228546c5f64539ca04"
+    },
+    {
+      "action": {
+        "type": "FINISH_SETUP",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "2ee721f842533ea7f59475834a8561faa1f4f0b4f435eae694fe1d8874f20226"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "40bcf08ee493a68b5c2274576e77e4e3d723b54c7fc2a2318699d414b79c7aca"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "human-1",
+          "position": 0,
+          "declaredRank": "7"
+        }
+      },
+      "stateHash": "4e79db7217e4c4df5d936c0362ebd89e7daedc5a857c47004665f78e12fb87bd"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "human-1",
+          "position": 2
+        }
+      },
+      "stateHash": "49e4393260c49400c9a6eafe579a260d73ffc2356ed8db85452c66ce55dae541"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "246d9a40708fe431d1d10eb150e915bb9415ad77bcfa476317f24626ee0f02eb"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "f5fd80bc2bba245fa966324fc467b3dc65003e0574ca25ada29efddcc88d1a32"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "d223b23a18bb2f67236f26a8fa229e519f5ab69d9bdb720802085d8432eaffab"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "0334de8422115d4f809b8bf73ccabf5b8bba8de757d68a2aa940b6dcf769a740"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "0d523a648ae618c45cb8e5f3a1d21fefefec625e4e274d2453cdbfb42e61bcfc"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "4ac590c62c400a44dff15f7e888381fcfa3f6a43bf6fcf5d58724894e252004a"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "8f5b1d5894e4f814db2a615bd11b317939a4313a1f4c431e7401c1bf4ccba44b"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 3
+        }
+      },
+      "stateHash": "e20f3106dcfbbe86ce9035687f0d9d0f76181230d5382d864bfaa2bf2e2e6863"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "33b9ef1f58352fcf2d7f0c6d4e3ccb1d6ab23718d0e5c55e45e5eecf1f49970e"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "03b291a0d77ce6bace42a40d9d26b2902417a3718ab82fb440809f5ed5a2c8ab"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "59f4d8ed6283d2d60668a753ec3f58d9edc024928899bd5840391ce1aae7ca2e"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "a6a74108a8ca78df4e09a47528bf3c29f28e22a95c60c3e8f6f62f256cdcac95"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "c5f2c6714403d72f92d19dc8ec7b072dbf9b981e0db64a5a53fb891043b45061"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "cbe62f6e3134c84ec475e8c30bb0c30bf227342cc4bb2da8f5db117ca94a610d"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 4
+        }
+      },
+      "stateHash": "e41a32621a677119e86eabac460979672d05b0299ea9c2a14f550e2a8b35b56a"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "d060e0d45d7db13745acb43f2cb40808b512f58f72c947491f852d610a30a126"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6761cb20a8fc8e4349ee17d7e3a324639538b3e186aa2900808b908201c3a784"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "b1e6aaf29eda1694a748ff65d847840aa0b9a11b1ff75478ec9d4f54694e67d3"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "6227450aeb8d520a7a8c591efb4ed6710fe3b89ccac7a92db811f9830b05003e"
+    },
+    {
+      "action": {
+        "type": "PLAY_DISCARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "553303760b6c28939ef329b8ce3c59d40a7ee8a3e6e3c1b69fb29bfbbbcd1af9"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 2
+        }
+      },
+      "stateHash": "4a1582caf31afa37e08c7f6b4e3e7da2dc01d195a4513f46f160cddfe5ac372f"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "b5801247ec721c25a832a52ff758bded226f0fa86ebe66f6485d0f774b1eadf2"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "dba61246e8e35d347296f622771097ac9de9aa66a40453db407e171c7aad540a"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "b946222a6dcad133239ce6089166c9d40402a45455dd39643cd01efacf4e790d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "aec7160ef2fd48d33bb7134c8b311393be5e21cfe98410c66bdc152f15512e52"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "6d3206403e134af8ffd8b4b9646f5f546c244cf4c4e4bc83ef835a366f1b1c6c"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "7ef2222cbdf5393189cc48e0271175cba6cc6204fd7f9a599849bcee13a0b66d"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "4c9ea484d66987d0d49e01dbf29d28e826733358abbd5d6242f454d5f96ee0fd"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-3",
+          "targetPlayerId": "bot-3",
+          "position": 2
+        }
+      },
+      "stateHash": "60205b2c32800c62954193bf05f904f6fd224ac0bd4f9c1391b6e03d879d3fd5"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ecaedbbcecaac5954aa054f6d3c57609f749dc9f356f17d4b7a294e4d61ecb81"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "61c1f4c320cd227f20e188145db8eccc2151aba0e33bcca55c44ee6c901804c1"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "c79b687568ce7ffbc0e0e95de96f613524f06409acc1e2879427ea623e0a8446"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "f4f47245d173b3eab520835333f20fb8dd378f0d172dddca6ecffb11994ca7f5"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "571da3eef6e8de5cd97deeda09b53758c7829e648c21684ec3db814b2d01a92b"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "33438ef01354c88f205852d4335b2e41a4fe5caa19ba9ec5049740db452a6222"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "4306466491c69d449e43760c5e374a7ab3a319b9f1cf7e4dc7c95254b869cc58"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "human-1",
+          "position": 3
+        }
+      },
+      "stateHash": "32ac2ed3c32ae2cc1328dc8699fd986c389ea6f6adb3f91f5fbc8942a75f2766"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-1",
+          "position": 2
+        }
+      },
+      "stateHash": "27d44f77601619c0de55c1951307e19fcc31256b1942aafd4650978c79ef14bd"
+    },
+    {
+      "action": {
+        "type": "EXECUTE_QUEEN_SWAP",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "3e68b391d7b0854a19445d5fa408f1b8fa64f2c13ee64efb9721568175998117"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "1fd7a4e2d799401a83cd6ffa5cabf8a989ba384af47d7db1772f167c75743b9f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "97ecad6816a110e901941e213b9a978eec417690eada6d2578fdd47028d3b330"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "51a0de47d6386d335b13690c0a6fbd14ee4d4c803a3a3702d0f4d5225011b535"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "046447444e1066ef68c861777c8240fd80283a21e413769b91652a21a2f9f3c0"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "0ef23fd440a5c288a2f008a8038f5fd7504a577a161978d30987b45da7525f0a"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 0,
+          "declaredRank": "10"
+        }
+      },
+      "stateHash": "468a51407394b24c013d9abdd882d995cac2d807c3f861e6972d531f30681700"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-1",
+          "targetPlayerId": "bot-3",
+          "position": 0
+        }
+      },
+      "stateHash": "1b62402b6ac967c0568c321670e70f1f26e72e258b6dec648c72bb6bf2e2b551"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "3a2da33b93ec75b71b2ad57993b6c5bb9e1de905ab384b41ee6da889145eb0fa"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "13da26d1216614db9bc240da53a33eb22673b7a5b05e1ec019f8aad0a512b443"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "d3620120a161839e21e0a0487c7624975a202935966a22fc6fbd233a7f5714d7"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "82ac4249c174d6a3d7c98e2269b1a6d3ae128967910c43a72351b4f3c5000a5f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "abaef1c77c3567551d34d20623632855f09abfec8441d0f3438c7add1d35e170"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ba33786572e8a895c5cd55654d31d332306a10222c0ae2f6de62702586ae6845"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "e21a40361a3d00b35768df9289dd930f0b9c66f4919551bc96ebd4c92a5d4dd6"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-3",
+          "position": 3
+        }
+      },
+      "stateHash": "8e5b361802c3d893148b7ecb009ae9faa21f259216a12d2e75a21793f3b2f7c9"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "6c5653f2b6d23ff65939f5253daa999756b8b802637f4c35754c61c1049da22b"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "6b7d39e1b8fd2c2ab0060509ed0c4058633771686c074a21b476ffb21c73d86d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "39a803838c77c8e5ec82633010f7a32b85ca54f8c9da6fb62d948a070c0f49b0"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "055bd9545609e2fe814bb0cadc62a3e4c7bbb03bb9c81982e4454bbe6c60fc17"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "e7586fbceea2aee2177901ef7144d4839719010a4dac1edfebb9d3356a4b89be"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "69db5ec15546603b6c9867cbd47d15c854fbec0230c3513938ba29fee9c4d4b3"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-2",
+          "position": 1,
+          "declaredRank": "9"
+        }
+      },
+      "stateHash": "9012334b68904d08d38b30638e35418e3d2c936179b237c41502d60a5777d993"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-1",
+          "position": 2
+        }
+      },
+      "stateHash": "01904a0f9d4835c170be1cf172daf1a3912a0f8786f60be10c41118d9a9902ae"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "be3febc092712eb56dfdb876385bf8a4351e30579af343cd080fde518ec746d8"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "human-1",
+          "positions": [
+            2
+          ]
+        }
+      },
+      "stateHash": "87de38f509d8fc05505750edfb79e4723f119b9dd33b8210fc24c56cceded2e4"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "6ce4016383df805642ae3a1dacb598ac166a9c8c4d23e15750f0fe96479f9506"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-1",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "2040864f582b145504fbacd151b947a5facf711da62a2f002c666d2b134c17e3"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "3b09cfb51e6369c3b66214b294473916b570c266b881673544c8e9ba1fcaf733"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "bc8295162445d5783e2b60081e199336956292c99d3262718ff29c2944994784"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "652a5a4edd0325d91fb4a84826746269e42136cbd9cd9f5f79ba069edd4dd21f"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "9a71bcfcff499b7e04645c5c48d19cebd76009fb3129c78ecd7b0ed2cf5af670"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-3",
+          "position": 0
+        }
+      },
+      "stateHash": "7cd9bac5c08eb17cb9da145bf88359d5f707071bdab54f4e5471a7495bea0c63"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "c5295a0792b7079db5fe4b816375f879a809edf90c493f18c13134800374305d"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-1",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "b8ea6b2183aa4e4cdc96515bb73c0c6f786deff6744c548e282ce395464a890c"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "7e13425a1722697a5144a548a5c31945c50d04f79ed38149b01c7249983bb9ed"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "ef0c3e0008e175d8af0b23f1aca0d3b494e67e4ea61e1b993070e880628aaabc"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "d65dcc0e9b65a196b345c08bf0471d4b86c6d9bae4417e886c4fb6d5b1f15129"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "4ca633af307a7440f71c5e9a4fa0e4aadcefbd485afedd4f4c6e27d6ed20e61f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "522db0e957651da74d387f9d96128cd9fcfacbe775cb36a0fe36d45a2f725801"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "c2a7d3bcef4f65182ff7e5b06c8e4f09eced15298b0eac8729807f5b9fe19f44"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "63c2366519cc6ff6c5f02d4305275be8fcf892304ef95a091fe080ece21ec609"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-3",
+          "targetPlayerId": "bot-3",
+          "position": 1
+        }
+      },
+      "stateHash": "d15bccfc38093d362a183e1588a5e137ebc4a3fe6a89b4a4387e05c56849687e"
+    },
+    {
+      "action": {
+        "type": "DECLARE_KING_ACTION",
+        "payload": {
+          "playerId": "bot-3",
+          "declaredRank": "2"
+        }
+      },
+      "stateHash": "74ad976c6e3f2ac2bbc598a149364ec0a97180b2ce32c237142c8393d922fd65"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "human-1",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "350a4812b63370edbe8191d02ea5c63be23857281886502ae7c13e0cf595ac69"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "75708a9b60846ad4863e4d1a4090ed68779f2aa0fcf56c70f0b6f568ef08c999"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "0a64133e42da0a33317f9986572f19955754f62ee6bafab7b34233866c6cd5d7"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "e8894447d5b4e1ef2707f7d602e81c00ddfd8debac2e2b17f7bc83266ddb9622"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-3",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "95fa1ba7b4a61675290ea7e71eec1f95268d09592868db6d0d8084066011e3bf"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "70ae27fa128731d37f000f989b141810dff5c9ed5478bdba6b99e9231a95ce81"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "b5d1d1826d4faae1a71344a11dc8e72eb7bfd2790342c7bf5a6101c9528420c4"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ac21f3b349f18595ffc012a0ddd06c3d171979a5b08d4fc54e0201d95b7712b1"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "3a3f77f32137f37e569374c5f22c62277038ccad88bef9ae11c5acc9a3a69e5b"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "a84110b5788772b9c4f764a6cd37b5be4a00ef0ca1f54c4023263d22c932f309"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "2deb606fac9f93b3d44f238528db613e9af9176be2c5d613513e405eec629a85"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "fb9005419f833aa4d3a4a0927d6af125360b717ff14274702a8ac493f02f6eed"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "ec138337c011c19e0526a1354da3f497974e9b7187b4c3dec300f12e07bdedc4"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "013f700f936e828552f38d06c1839a5577141734f58798f5cfd151f1367c4eb3"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "human-1",
+          "position": 2
+        }
+      },
+      "stateHash": "4790e045fa6dc5adc5e735eb8b8dacd0856024565af85c547f803098f988f7a9"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-2",
+          "position": 2
+        }
+      },
+      "stateHash": "6978e491486609a5531ed9f5d9e0fd85879f36c8c87536e4720c5275241800c9"
+    },
+    {
+      "action": {
+        "type": "SKIP_QUEEN_SWAP",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "468fb0e27754a2f7114a94b4a853488f2738756a116cef7ca79225081866a5a7"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "f5723120e413f9d7751de2c87d10a7dcd0883f4a672007f29f10b66c5ce87596"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "f57625f53750818e9a026ab3d8467f534203488f5a9f9c34595508022b9575ec"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "cdfa0d2598ad2d7acc3325cb81574760551c1e68040546cecf89e8880be452d8"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ad9f9db58bf7d5b80b7d0b1ea54597b06bbac412ceb218a9d45bcdb30e31cfc6"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "38a2fc0651311d239abc65fd17cafa47fcecd2422ee2ddb2bb8eab921856241a"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "e62f0b83137d407696c7f84aeeee7d7cf273757da1b7fd13b024d037bec05630"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-1",
+          "targetPlayerId": "bot-1",
+          "position": 0
+        }
+      },
+      "stateHash": "83c735d971a188342a7d6fc7ee377ac72abce52ce9680def063558d872ce01d6"
+    },
+    {
+      "action": {
+        "type": "DECLARE_KING_ACTION",
+        "payload": {
+          "playerId": "bot-1",
+          "declaredRank": "6"
+        }
+      },
+      "stateHash": "2cf1e8aeed9956a4695eecce2bcc0531515bb2eb90cd864f6480ed063c863701"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "0d82e612bbab72903f14b7727a77979c54d42b6a5b1e139581d34e7f7ed31527"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-1",
+          "positions": [
+            2
+          ]
+        }
+      },
+      "stateHash": "136f01b9754aab78e13315a68ffc9174f78ae9c432e67f224b35c43a49ed77c9"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "5e8faf52852183ddeb8efa11feb37bcab4d7ecce1153835573d756785f8896d6"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "6655ee922ca540ae0d857a73f1acfe0e3cdea03b7d09c3b088aa4cce36ba3e2b"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "0a4deb04255c622200c2d98c2e41d5f00b5b90cd75eb53997371083691dcfaea"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "08c340002b3d2c152415289bd0673ddc5cb9099ae068b46c57a4982c586bc10b"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "552df33a56798d8f6f25cc3649f0ba3f6e6bcd32e541b0b5d3c561c027f9b731"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "2f78eb105783e4ff3848a646803a7ff4a4885af1a30a281991e9c1cdc6edaffd"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "9fce35282ab95de378e3e52bcde4d904b3679a263e51e215f34dead67b54f64d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "3f06b97b510acc7c98a4223278c4a19a4c502d0647c34072ce85260ea479815e"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "707386287b60abaf8539142eb566b702fff98ce210b0c45f2a4daa4145e18218"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "6e6fcec68d9ed0e729e2241fc1862b8f99ade339a1bd8b00fdf637fcf37a1318"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "2b43cae3f37b9d5c3172b735256febe3ec25b574a0ec249404e280b7c9954635"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "28935d77ddfc2aa18dc911238491880a162bc13b86f0b4d8b352fc1437cd1a22"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-3",
+          "position": 2
+        }
+      },
+      "stateHash": "181f3176b94e7efbbeec3638ad74a532cc4aa38ea1fa132f6867ee9d21cb20b7"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "human-1",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "ae6a4efc6f338c08a99f3f9ae889c40bd736f046d30f631ba14e23999d772ee5"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "8deb4891b24453bd0bd0dd09c6be695232b0c4e67a4bf98ec56667f27e950b47"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "7a62d6303f1545891c6997d47c8d881c4a8e629148a766307eace47c2cc9319f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "51c5c1a897028a8361e36fa49b1347abceda648796ba5360d684ebd7c85f4777"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-3",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "15336761d5aba5e081d4818e9ee10ba2503e690d2e6c9aba3a71b0fba315f6cb"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "f598fe83b11d77bb26a8e51fb0e74878dfe0c83646212c18ea158eb313e6468d"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "ca3e18ba5d4470f16f0622faa06c3257ec9e603f1058fe4370c70f1ac5fcf33b"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "c03355b545995a419ed5c6e3e5ac0af769e01733e31dae5bd79142e7503378a4"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "7c5246c2711a0a02cd29283dfd83b6e3f1a348d2112d3eb5adce0f4cf2771634"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "937400f27a9893943717f7f0824c68f8a60f3550dde6bf0e75fc5ab5541437fc"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "b89f7044c31fc538d8115951f3fe2fe0a3aa970c629900a6cedc89030d149b6d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "7a60a72aacf3793bfbca968931f170c23cf45cbff13ac7e65914f80a9f73b62f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "39b9bb24813fb62bd548b04dba6e73cb7322daee3cc1deec348e64f5d42bb76d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ebee8efee3c34a8b32ffb91ea1ac629916d81233f0622d0b0cbf1b26978f2e28"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "dd7b6c28ffc18a32b3a86422ef25b7ec55de13294484ff49fcb7b6f26626829a"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "f2dda3fe3199cefca769eb7389ed1d9813202c3df6dd2f2c415428bd974d5108"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-1",
+          "targetPlayerId": "bot-3",
+          "position": 0
+        }
+      },
+      "stateHash": "8f9955962ce7055895d3c7aeaa1f3c6c7e7efe5316477523013822e350b563a8"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "33966b06abab57962a81f82055a2acab25b6c17b62d273809d961956bedd742b"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "7f088663cc70d211bdfa800aac004d2b5d8824b1d53e7bd1d0b1c023284cae01"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            2
+          ]
+        }
+      },
+      "stateHash": "2285aac1ab28d588a900b6bc0aa95c833314f60710907dbcd677b14e2791a917"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "8dcda6b0fd1062a8c35e71f0dd71cf066e3a0424861c8a49166032ad23d1de27"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "c84023c8bd84c7e40ceeae12978b2a76cc7c49386ab451b83b47e925fc0d07d7"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "eba44482b4524acc40641a581cef95fd6a94a91e5c2842a1b4ff6eeacf717ebe"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "e5021617525da73f119c1ea711d907c899cf3e8e52f5e4c90ecc6a17280f8295"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6b5dd6dadc8b7c6027defe0ef252a1e7552d1f611560800b2d32e72d5594dc9c"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "7a5f1d13cfcef051b7be3d8ddb12c512d0b52aef971eb28c0141548952cff9df"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "9d2cb1969114b22d16b3cd13f85fdadb2a04c8eaa5a6ccacd7482cd632cb03a1"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "31817786b4319d74f22a325cd6cc9ec7d6ef970e98c45ace44677feff87e6e83"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "e25e6ac0c814470f0ed5f38345a1ecf6f378bd3ff90571f1c3cec06bf7bf0582"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "e6edd21d1d7fdae8e354519713772e416a35542caff72d904c0b7c2647461499"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "7174678c1dcfbcd4f43c4eed361cef04ad891b8f10323f0939b730df6130c1ab"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "b0dac13ae78e6ccf9fda8d4a88860a135e4f887414d752aab1e8cff147fe2e12"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "1c4ae0d22266a472ea4e6db97e4d096d3c9a40892bf1e9f7c04ea9b9aa6da804"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "19940fdc11625b848e5376dadb20ace7df6773f954e071ccce01383e2a8e1899"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-3",
+          "position": 2
+        }
+      },
+      "stateHash": "77152bf3bcb0eb85a38c1c4d63639e24d9296d782f4244c7f1d28f332829e114"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "0ffa4d947828e633f082ebe7080e4a993afcc139e9a71df6be59e79821acf3ef"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "cd97d3a396cd351bb1a6decef0d634711a36fad898d5add128b33c11deb00669"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "cda4c0073f212386c5057619861b144b547740be731d772432f58bc9d2d3c1ac"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "8b6941873d01edf6508cb710b1ef686d32433bf67fdac21ded753b2c44b1a723"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "de06211a8834cf9316165ab1da8697427e2f824f154c85f365c0a5d4649e249f"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "da7a047e4bd12ff9f00a9e2e25364fd447966f56a0db46737794131456fc453a"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "6e626ce000632f2eae38ce4b7fd0cdc2aab906d9d81c15c1fdc352fb89b7ff1f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "80f6e0962747180a005b9cb71f7525cf22a05d396e238005f652d271c9ec56f6"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "a903168869ad7ddddcd5a4070eb107a6f3515e69cedbea016e1086cca0aaddac"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "f98aea3c843c2d6a339c7059441cc931054da95fd63b9823218729d627a5b3a1"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "54308607edc6f3639e6fee1857d89b80d49f435bc93399774c9ab4a2c74ff8e2"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "d434848718d4712e6a400ba41d7f4879e52807ea5a918a15716657759b6deb10"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "229269f3a41c68fb3a702b38822e0958c5822a4deefbf430425261cf75fbc155"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "b8904d69c2141460fd957fb1a1bca7c3aa2915f7b92833bc3ba2b5519d2d6b9a"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "addfed859e72334938dba9ac1101522ad10c27a1531b303fb2b1117ee0dfbae6"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "a373f8380f091339ba4ee00d903ce22bf8e201464024af280c477a44d9758797"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "91d7b3793d2aa21b6a25fa82a99338a8b102abcf618b210d84a7a4c0debbe55d"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "aec15f7a9dee039ac0571c725b2ee89c46c8c1216307c57d712f60f1a648159e"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 1
+        }
+      },
+      "stateHash": "2f704a8aeb014051bfc9b1ee2fc2f2074620ba6ced7ae5ddf4b8986ab0560d94"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "8c3c0c753fde7ccabd44fd721d1d96d539973f0c49df8a2b967399e4c56d8680"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "473fbe990a85074e6e76278010464443968c17aa50a8f8d5591e0810f202768e"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "58967b19a6777ad590f04755ea79c22c68c2fbb3c23c44bcb4d8b056c26d081e"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "ea91b2e198b6167decbf6eb5b33474601f6e82f937fd599b73a90fb1d7b89924"
+    },
+    {
+      "action": {
+        "type": "PLAY_DISCARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "feacd102f7a9591e0784b374ab6fbfbdba7904a57c683defbdfe088e3b5bc94a"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 1
+        }
+      },
+      "stateHash": "927cba99b3d36286540645134c1d051797f61089294d912e58f043893d120602"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "human-1",
+          "position": 0
+        }
+      },
+      "stateHash": "66991c87907620927c540e044ae5dd4b18e468b4fe60b7c6e3fe76479cd30d91"
+    },
+    {
+      "action": {
+        "type": "EXECUTE_JACK_SWAP",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "906a13d7b27e1bd1367ba762dfe3fbb59f333f67a6d9ada8f651ca4f3f1a243b"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "10d160552bd6f5f90ab80ba93165518183c67d1a8a62f2c5eb7068f62352dcc2"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "3b85f9688ab848cfd037b7d85fdd40933f0970b5c3b7a9e8780b4b4ae847a269"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "fdc904340c37cfe6967c599a170b5dc758894e2a13823acbf7e30caba8583898"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "f9eae465d878ca79b9180561192c817020e24fa89b6235c7251efad1d7aa534a"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "eba7cece728429d8a40b1bfcf1481d7d85877a1d5b9cc0340c71c1b3c3d1d805"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-3",
+          "position": 1
+        }
+      },
+      "stateHash": "3006c582ef1b9f92e8e2d51cee7f57a489cab50f723bb31c9d6c52ec23d86b8f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "8500bff7ab6be25e14fe41a49136d88e3645994b69b6143fc325da3c21bc7487"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "fead3c3261a7eb604eb19a24b4c3840ab71d70a8dc151acf68f820091d225746"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "73c52a7918a602ab3928fd44e202e93789511ae7bf0f8b059f5f19743f8bac0d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "a2fe96442b2b82c0aef3432e27a79b4af521a5410145ca6ef11f76528b6e4318"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "31f8e2a2cc83169240372e470d0093bf769d448738bffe1e473bcc2bf45833e5"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "5aaae5500fb96fee1313ce3b5f51c1fc4ed48e0ec3be9410fefcbeb2db59e2c6"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "ece5d361e90ad3aa6a622e35122373b220fff84edad008ca1d149a5510d23ea5"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "human-1",
+          "position": 1
+        }
+      },
+      "stateHash": "57bb5da2b17854f6626a5819c2687a58043ed3ae2a03759e618897962141832d"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-1",
+          "position": 1
+        }
+      },
+      "stateHash": "305ce440e3eb0140e3ce9fc83772b4a8bb63a555ba73493b6e3ae5713289ddfa"
+    },
+    {
+      "action": {
+        "type": "EXECUTE_QUEEN_SWAP",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "b3908d843350f2fabdca4b955051a9624d2c01825069fbac3692e36a8d42539f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "29d8c0c2591d91711abe687f99478c6e4f4aba54fe36c4e7316eba83a145d59d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "bb77a11a0a043ef0529935d0b7ab7cb80d754d32b843e9e114a0fe8196346568"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "ff0c26253ac1a543c26c3485fd8e82eff69d77b47d9f2c1ae00578b4e3ad57a3"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "2eb0e9ed6ec404c5e4945e2bcf1625f1bf6bc28d32682733e443b43e1accef08"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6ee4144d21ded204fbe98d19a8b82c5925c841351b6267fe307aab2e753f2b8f"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 1
+        }
+      },
+      "stateHash": "350c609345b19ee98a25ade314e14af475442dd1e7a2bb9c6698ec64f45946a1"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "f6914b5f8ffa4785e33a51487863fa426e3719af89febf36d7166eab78ae133c"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "8206bb46a66138bf920ba5cb6df9a2564467fe8cf56d0290aa581230fd59e2a3"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "1600237f581efd4336e63ab7816c6941360560680085960511724f0d0e9f95af"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "6fe290b88bd4a38d607ec41168fe72bbdcfaddb6e19a93900194fd7d83cc7ba2"
+    },
+    {
+      "action": {
+        "type": "PLAY_DISCARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "b47cc14e71052209f06b2ee745f4fd5c0308f6d78def50843808e5d7c1cfb25e"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "3ea0bb046c170f823838f72d28d2ed912b05ecfccbd4bf44fd6b8316ab9d49de"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-3",
+          "position": 1
+        }
+      },
+      "stateHash": "0e7674e1aac4f3dc3fde91854f92e7d6e83fffeed267ac9676a46f3f0f5b6aa4"
+    },
+    {
+      "action": {
+        "type": "EXECUTE_JACK_SWAP",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "774e776939472e31a90f3927e51960a0291cae19e915f7e39f87c1d188af65db"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "8dadabc471aa984011852c2d8ad12cc2c717dc423db82857ccbd28ae96f503a9"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "cd550be42035e86523daae25371072cd7626c1ff0e7a93934473ad0f82fd01c3"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "bafb2b1f1102401d6480140dbb28ea9ab1897047977cd7a83a593f522a90ae78"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "7a91514247e0e9797656c4d7b2cc9158c14e64b0519044328979178c2c19ea5c"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "51cd6dac70534c529a5f82737c54c57de79254e84c1f836434226a0587a82228"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "233854376edc3289981b591bd18819410fbbebfbd259f94b6f10967fa70b0522"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-3",
+          "targetPlayerId": "human-1",
+          "position": 1
+        }
+      },
+      "stateHash": "44a752812a0e2e63fcc2624b70d6df82082b4bcb2283747e64af132702027b89"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "722d02eee64774ae73f804d7b4dc402d297685340bc4a0f366a6cd49cbb629a7"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "6cb2bde45d83d36209ffad1f7f77c7e49ea2b1a6ace3457a28972c08f85845bf"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6956aed69eb595d4d3dfeab9b3f465015de38fccb347cbdb9a927a832dec96b9"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "f8c7180443e5bceb245c1ee062242a34a93e99f01c18d5eb22c52900c1bbebd4"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "a2e2e46bb8b8b8af80a6c356f8291686c3333d0a3309b75b6949c221718dfacc"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "1d0e78cd64ebd67077bf07bfa2324e03bfcf79ea9987bb7acda28f89959a765e"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "db231e737d2e37ccfcf4ab0ead9fd1e4c94ec1bc78f274371083ef8ecb44b293"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "human-1",
+          "position": 0
+        }
+      },
+      "stateHash": "d5796bf014a8c9da97d4a1818c8b9f38a162e819bbb70b37071915b501c3b8d3"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "human-1",
+          "targetPlayerId": "bot-1",
+          "position": 0
+        }
+      },
+      "stateHash": "b1aa4b373383fba5f24c1d86dfeceb682c8c0679969e95170c736c8f73ce4624"
+    },
+    {
+      "action": {
+        "type": "EXECUTE_JACK_SWAP",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "98a1acab4420c7ce9c873ef5928137933a34f218aa898774593ba118ef415932"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "b3f417cdc8c53fd2503cf5c935c42bab98df996b27e906e49158ad9bf48b5e74"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6de6a51feaac818d7cf6f0a24abe14cb7537ef77600934a42d215a7958ca82bc"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "64e3e63ebed6e79f255acb884b19621226ea0bfa4778636eba15b830eda6974f"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "c0c44b5a83578d2d4df8fe74ca349b3e30c9e668b9b74c0cc9a5638ae3d6f226"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "c8e98fcbb4c926ff46d900a2e029e8e28a0f6a177bc0bea951677e957471ab08"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 1
+        }
+      },
+      "stateHash": "0f16c8f28a9362207db5fba9b4436058219aeeda9cd24596ce2af094df848737"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "human-1",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "4275ed07069abbc1a254f52530115d10842817e1b5724536cfcdedb6246a3757"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "4cd7782a21106be00f5fb7e10c0aaf7b489e9cfe96fbf5ddf735d5add8432a16"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "c8745ff093322f4b72cac50a0b63c2dc4a201475690c136c149588d44e8e7137"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "c252229ef74ccdade8c931cae618fbbb234964eb84ccfa1464a8e2fa08946bd3"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-3",
+          "positions": [
+            2
+          ]
+        }
+      },
+      "stateHash": "540e64f234f87330c5ec93b1e2b0189ae23678fadadc95f175c362f8c154460d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "e39205bd0ece0bc00b9b41162dedddf698eb33d705e000482c089d2a77962a06"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "0268332005ec5d9cb68cccbbce70a955b4ef431189d978efb92f029e0cd9cb11"
+    },
+    {
+      "action": {
+        "type": "USE_CARD_ACTION",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "7e647c012bb20e2b38b0720a39d900848f3cafd1c70d940e3788ef2c8c4de48d"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-2",
+          "targetPlayerId": "bot-2",
+          "position": 0
+        }
+      },
+      "stateHash": "5339c2f7038562f67ff224a5b17aaaee24dbc1694117377a8f3082ac9e8145bf"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "dbec05ef25bab2c012c3b47914237e0236cd40242221443c55855f6c16e9d8fb"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "fedc61f9d4fe4b19e8b8127ec5c63f3d995b0659573a05f3bd076e2bd82d257a"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "f1e358d6cb97a63e6c9e75d6f5fe5dbc58eb133a01f6662d0abb1a22ffb76b3a"
+    },
+    {
+      "action": {
+        "type": "CALL_VINTO",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "1a5a4d49d42c7743ea17aa66599d7d5488361080dfb0568e816c3c557073cf1e"
+    },
+    {
+      "action": {
+        "type": "SET_COALITION_LEADER",
+        "payload": {
+          "leaderId": "human-1"
+        }
+      },
+      "stateHash": "4dc2023368afe7bb949858d9dba3a6c4eafe5901f1ba8d31b1086031f853140c"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "664951977ed7da8f33a665f1dae1592e59e07328d966f1b9f6404eb979350416"
+    },
+    {
+      "action": {
+        "type": "DISCARD_CARD",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "12cc34429c9b6b347835434d666429d53ace00f94042c3a4ada64fec3ca95c60"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "48f9a3352f731dbfe75d279750bc96889562ae7997ef62171a25413f0741ad89"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "65ea26d2ef85a39c34165fae84344483f58fc703b13225051851da5f2326ff6a"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "da331d525bc3c7e9a02bd2002e391f92d373d208b2a75e03fec971d80aa6e41e"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "aa018444e93795178f33bc60d0f1d179a93d102c5b277ca7daef2678c875bc33"
+    },
+    {
+      "action": {
+        "type": "DISCARD_CARD",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "ccbd4663f7848650372cd51c6fb03d70aea881f20321b143ba85cd4512bd6897"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "05bfcb42ceab9ccef84a7cdfd5bb74b52ceac92f41b0a5affe15d95531748ccd"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "e66d359ec310046da67e399d0656764acff64e1f317171c7f0e7436a06292265"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "c6d7fb7a130a488f9a165937970a2bceb49c884ac5e2dedfc45718d733b00e71"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "820faef741ff6d142273b8dd677460c80321fd9afea7cf4be25bd73107f5b73e"
+    },
+    {
+      "action": {
+        "type": "SWAP_CARD",
+        "payload": {
+          "playerId": "bot-1",
+          "position": 0
+        }
+      },
+      "stateHash": "7c4cd2298ca1a43cc2156d74e0fb33a581590244d370eb554fe78e83b0d28140"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "5ad3dc29ad5727b2baa9ebdaa533fc21a53639d4f999644fd033abf0fb5aae26"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-1",
+          "positions": [
+            1
+          ]
+        }
+      },
+      "stateHash": "a2ad337ad689828ee2df9816309a02220ba349a6318b84a2c5652a38a134704d"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "87d6aebdc6921a60ffff6b4580103fb20c7abd95a59e0a3671bcec56efbd00f0"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-3",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "d4f3875a2316a83bcb20f86fd06d15cd62e3c9331175cd0cc0be4671132a8c34"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "66ff5cef4d0a25ce0a0019f400552796ece116503e7304a8c4449a0e00b1f20c"
+    }
+  ],
+  "finalState": {
+    "gameId": "vinto-17",
+    "roundNumber": 8,
+    "turnNumber": 29,
+    "phase": "scoring",
+    "subPhase": "idle",
+    "finalTurnTriggered": true,
+    "players": [
+      {
+        "id": "human-1",
+        "name": "You",
+        "nickname": "You",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "4_3",
+            "rank": "4",
+            "value": 4,
+            "played": false
+          }
+        ],
+        "knownCardPositions": [],
+        "isVintoCaller": false,
+        "coalitionWith": [
+          "human-1",
+          "bot-1",
+          "bot-3"
+        ],
+        "opponentKnowledge": {
+          "bot-1": {
+            "knownCards": {
+              "0": {
+                "id": "4_2",
+                "rank": "4",
+                "value": 4,
+                "played": false
+              },
+              "1": {
+                "id": "6_3",
+                "rank": "6",
+                "value": 6,
+                "played": false
+              }
+            }
+          },
+          "bot-2": {
+            "knownCards": {}
+          },
+          "bot-3": {
+            "knownCards": {
+              "0": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "bot-1",
+        "name": "Raphael",
+        "nickname": "Raph",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "4_2",
+            "rank": "4",
+            "value": 4,
+            "played": false
+          }
+        ],
+        "knownCardPositions": [
+          0
+        ],
+        "isVintoCaller": false,
+        "coalitionWith": [
+          "human-1",
+          "bot-1",
+          "bot-3"
+        ],
+        "opponentKnowledge": {
+          "human-1": {
+            "knownCards": {}
+          },
+          "bot-3": {
+            "knownCards": {
+              "0": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
+          },
+          "bot-2": {
+            "knownCards": {}
+          }
+        }
+      },
+      {
+        "id": "bot-2",
+        "name": "Michelangelo",
+        "nickname": "Mikey",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "Joker1",
+            "rank": "Joker",
+            "value": -1,
+            "played": false
+          }
+        ],
+        "knownCardPositions": [
+          0
+        ],
+        "isVintoCaller": true,
+        "coalitionWith": [],
+        "opponentKnowledge": {
+          "human-1": {
+            "knownCards": {}
+          },
+          "bot-1": {
+            "knownCards": {
+              "0": {
+                "id": "4_2",
+                "rank": "4",
+                "value": 4,
+                "played": false
+              },
+              "1": {
+                "id": "6_3",
+                "rank": "6",
+                "value": 6,
+                "played": false
+              }
+            }
+          },
+          "bot-3": {
+            "knownCards": {
+              "0": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "bot-3",
+        "name": "Donatello",
+        "nickname": "Don",
+        "isHuman": false,
+        "isBot": true,
+        "cards": [
+          {
+            "id": "Joker2",
+            "rank": "Joker",
+            "value": -1,
+            "played": false
+          }
+        ],
+        "knownCardPositions": [],
+        "isVintoCaller": false,
+        "coalitionWith": [
+          "human-1",
+          "bot-1",
+          "bot-3"
+        ],
+        "opponentKnowledge": {
+          "human-1": {
+            "knownCards": {}
+          },
+          "bot-1": {
+            "knownCards": {
+              "0": {
+                "id": "4_2",
+                "rank": "4",
+                "value": 4,
+                "played": false
+              },
+              "1": {
+                "id": "6_3",
+                "rank": "6",
+                "value": 6,
+                "played": false
+              }
+            }
+          },
+          "bot-2": {
+            "knownCards": {}
+          }
+        }
+      }
+    ],
+    "currentPlayerIndex": 1,
+    "vintoCallerId": "bot-2",
+    "coalitionLeaderId": "human-1",
+    "drawPile": [
+      {
+        "id": "6_2",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "7_2",
+        "rank": "7",
+        "value": 7,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "J_0",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": false
+      },
+      {
+        "id": "Q_3",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": false
+      },
+      {
+        "id": "3_0",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      }
+    ],
+    "discardPile": [
+      {
+        "id": "2_2",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "id": "2_1",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "id": "2_3",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "id": "8_2",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": false
+      },
+      {
+        "id": "5_3",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "7_1",
+        "rank": "7",
+        "value": 7,
+        "actionText": "Peek 1 of your cards",
+        "played": true
+      },
+      {
+        "id": "3_1",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "3_3",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "3_2",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "J_2",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": true
+      },
+      {
+        "id": "10_1",
+        "rank": "10",
+        "value": 10,
+        "actionText": "Peek 1 opponent card",
+        "played": true
+      },
+      {
+        "id": "J_3",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": true
+      },
+      {
+        "id": "Q_0",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": true
+      },
+      {
+        "id": "4_0",
+        "rank": "4",
+        "value": 4,
+        "played": false
+      },
+      {
+        "id": "4_1",
+        "rank": "4",
+        "value": 4,
+        "played": false
+      },
+      {
+        "id": "J_1",
+        "rank": "J",
+        "value": 10,
+        "actionText": "Swap 2 face-down cards from 2 players",
+        "played": true
+      },
+      {
+        "id": "A_1",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": true
+      },
+      {
+        "rank": "A",
+        "played": true,
+        "id": "tossin_queued_17_bot-2_A_1",
+        "value": 1,
+        "actionText": "Force opponent to draw"
+      },
+      {
+        "id": "9_3",
+        "rank": "9",
+        "value": 9,
+        "actionText": "Peek 1 opponent card",
+        "played": false
+      },
+      {
+        "id": "6_0",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "A_0",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": true
+      },
+      {
+        "rank": "A",
+        "played": true,
+        "id": "tossin_queued_14_bot-2_A_1",
+        "value": 1,
+        "actionText": "Force opponent to draw"
+      },
+      {
+        "id": "10_3",
+        "rank": "10",
+        "value": 10,
+        "actionText": "Peek 1 opponent card",
+        "played": true
+      },
+      {
+        "id": "5_2",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "5_0",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "5_1",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
+        "id": "8_0",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": true
+      },
+      {
+        "id": "6_1",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "6_3",
+        "rank": "6",
+        "value": 6,
+        "played": false
+      },
+      {
+        "id": "K_3",
+        "rank": "K",
+        "value": 0,
+        "actionText": "Declare any card's action",
+        "played": true
+      },
+      {
+        "id": "Q_2",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": true
+      },
+      {
+        "id": "2_0",
+        "rank": "2",
+        "value": 2,
+        "played": false
+      },
+      {
+        "rank": "K",
+        "played": true,
+        "id": "tossin_queued_8_bot-3_K_1",
+        "value": 0,
+        "actionText": "Declare any card's action"
+      },
+      {
+        "rank": "K",
+        "played": true,
+        "id": "tossin_queued_8_human-1_K_2",
+        "value": 0,
+        "actionText": "Declare any card's action"
+      },
+      {
+        "id": "K_0",
+        "rank": "K",
+        "value": 0,
+        "actionText": "Declare any card's action",
+        "played": true
+      },
+      {
+        "id": "9_0",
+        "rank": "9",
+        "value": 9,
+        "actionText": "Peek 1 opponent card",
+        "played": true
+      },
+      {
+        "rank": "9",
+        "played": true,
+        "id": "tossin_queued_7_bot-1_9_1",
+        "value": 9,
+        "actionText": "Peek 1 opponent card"
+      },
+      {
+        "rank": "9",
+        "played": true,
+        "id": "tossin_queued_7_human-1_9_2",
+        "value": 9,
+        "actionText": "Peek 1 opponent card"
+      },
+      {
+        "id": "10_0",
+        "rank": "10",
+        "value": 10,
+        "actionText": "Peek 1 opponent card",
+        "played": true
+      },
+      {
+        "rank": "10",
+        "played": true,
+        "id": "tossin_queued_6_bot-2_10_1",
+        "value": 10,
+        "actionText": "Peek 1 opponent card"
+      },
+      {
+        "id": "Q_1",
+        "rank": "Q",
+        "value": 10,
+        "actionText": "Peek 2 cards from 2 players, swap optional",
+        "played": true
+      },
+      {
+        "id": "8_1",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": true
+      },
+      {
+        "id": "8_3",
+        "rank": "8",
+        "value": 8,
+        "actionText": "Peek 1 of your cards",
+        "played": true
+      },
+      {
+        "id": "7_0",
+        "rank": "7",
+        "value": 7,
+        "actionText": "Peek 1 of your cards",
+        "played": true
+      },
+      {
+        "rank": "7",
+        "played": true,
+        "id": "tossin_queued_1_bot-2_7_1",
+        "value": 7,
+        "actionText": "Peek 1 of your cards"
+      }
+    ],
+    "pendingAction": null,
+    "activeTossIn": null,
+    "turnActions": [
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "drew 4",
+        "timestamp": 267,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "swapped card at position 1",
+        "timestamp": 268,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "tossed in 2",
+        "timestamp": 270,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-3",
+        "playerName": "Don",
+        "description": "tossed in 2",
+        "timestamp": 272,
+        "turnNumber": 29,
+        "roundNumber": 8
+      }
+    ],
+    "roundActions": [
+      {
+        "playerId": "human-1",
+        "playerName": "You",
+        "description": "drew 8",
+        "timestamp": 262,
+        "turnNumber": 28,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "human-1",
+        "playerName": "You",
+        "description": "discarded 8",
+        "timestamp": 263,
+        "turnNumber": 28,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "drew 4",
+        "timestamp": 267,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "swapped card at position 1",
+        "timestamp": 268,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-1",
+        "playerName": "Raph",
+        "description": "tossed in 2",
+        "timestamp": 270,
+        "turnNumber": 29,
+        "roundNumber": 8
+      },
+      {
+        "playerId": "bot-3",
+        "playerName": "Don",
+        "description": "tossed in 2",
+        "timestamp": 272,
+        "turnNumber": 29,
+        "roundNumber": 8
+      }
+    ],
+    "difficulty": "moderate",
+    "roundFailedAttempts": [],
+    "rngState": 2583707594
+  },
+  "finalStateHash": "66ff5cef4d0a25ce0a0019f400552796ece116503e7304a8c4449a0e00b1f20c"
+}

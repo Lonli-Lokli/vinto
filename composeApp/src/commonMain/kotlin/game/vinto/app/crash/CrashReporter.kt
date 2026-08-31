@@ -1,0 +1,160 @@
+package game.vinto.app.crash
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+
+/**
+ * Installs an uncaught-exception handler, if the platform has one to install.
+ *
+ * The one part of crash reporting that cannot be shared: a JVM has a default handler, a
+ * Kotlin/Native binary has a hook, and a browser has an event. All four do the same job —
+ * hand over the throwable that is about to end things — and none of them may swallow it.
+ * A crash reporter that stops a crash is a crash reporter that hides a bug.
+ */
+expect fun installCrashHandler(report: (Throwable) -> Unit)
+
+/**
+ * Waits, briefly, for a crash report to actually leave the device.
+ *
+ * **The one thing standing between a crash and a report.** `report` launches a POST and
+ * returns; the handler above then chains to the platform's, which on Android ends the process
+ * at once. A DNS lookup, a TLS handshake and a POST do not fit in the microseconds between
+ * those two lines, so every fatal crash was reported *nowhere* — the reporter worked, the
+ * envelope was correct, and the process was gone before the packet was.
+ *
+ * So the crashing thread blocks on it, with a short ceiling: a phone that is already dying
+ * must not be held there by a network that is not answering. On the JVM, Android and Apple
+ * that is `runBlocking` with a timeout; in a browser there is nothing to block *for* — the
+ * page is not torn down by an unhandled rejection — and this is a no-op.
+ */
+expect fun awaitCrashReport(job: Job?)
+
+/**
+ * Sends one crash, once, and then gets out of the way.
+ *
+ * Fire-and-forget, on a scope that is not the frame's: the process is usually on its way down
+ * when this runs, and a report that made shutdown slower would be making the failure worse.
+ * Nothing is retried and nothing is queued to disk — a crash that never reached Sentry is a
+ * lost report, not a reason to write a spool file that outlives the bug.
+ *
+ * **A handful per process, and no more.** A handler that fires on every thread's death would
+ * send the same stack a hundred times from a device in a loop, which costs the project's
+ * Sentry quota and tells nobody anything the first one did not. It was *one*, which was right
+ * while the only caller was the fatal handler and wrong the moment non-fatal failures started
+ * arriving too — a background coroutine failing early would then have spent the budget the
+ * crash that actually ended the app needed. [BUDGET] is small enough that a loop cannot run
+ * up a bill and large enough that the first thing to go wrong does not silence the last.
+ */
+class CrashReporter(
+    dsn: String?,
+    private val platform: String,
+    private val release: String,
+    private val environment: String,
+    private val scope: CoroutineScope,
+    private val now: () -> Long,
+    private val nowIso: () -> String,
+    private val surface: () -> CrashSurface,
+    /**
+     * Where in a game the app was, read at the moment of the crash. Defaults to nowhere, so
+     * a caller that has no game — the tests, a menu-only harness — needs to say nothing.
+     */
+    private val place: () -> CrashPlace = { CrashPlace() },
+    private val post: suspend (url: String, auth: String, body: String) -> Unit,
+) {
+    private val target = parseDsn(dsn)
+    private var sent = 0
+    private val seen = mutableSetOf<String>()
+
+    /** True when this build has somewhere to report to. Absent DSN, absent reporting. */
+    val enabled: Boolean get() = target != null
+
+    /**
+     * The envelope for [error], or null when there is nothing to send or nothing new to say.
+     *
+     * Split from [send] so the caller can **write it down before trying the network**. A
+     * process that is about to be killed cannot be relied on to finish a POST, and an envelope
+     * on disk can be sent by the next launch; one that only ever existed inside a dying
+     * process is a crash nobody will ever hear about.
+     */
+    fun envelopeFor(error: Throwable): String? {
+        if (target == null) return null
+        if (sent >= BUDGET) return null
+        // The same failure twice is one bug reported twice. A retry loop that throws the same
+        // exception every second is the ordinary way a client burns a quota, and it is exactly
+        // the shape of the socket loop this reporter now watches.
+        if (!seen.add("${error::class.simpleName}:${error.message}")) return null
+        sent++
+
+        return crashEnvelope(
+            CrashReport(
+                eventId = eventId(now()),
+                sentAtIso = nowIso(),
+                timestampSeconds = now() / MILLIS_PER_SECOND,
+                platform = platform,
+                release = release,
+                environment = environment,
+                surface = surface(),
+                type = error::class.simpleName ?: "Throwable",
+                message = error.message ?: "no message",
+                frames = error.stackTraceToString().lines().drop(1).take(MAX_FRAMES).map { it.trim() },
+                place = place(),
+            ),
+        )
+    }
+
+    /**
+     * Posts one envelope, and says whether it arrived.
+     *
+     * The `Job` is returned so a fatal path can wait on it ([awaitCrashReport]); the `onSent`
+     * callback runs only on success, which is what lets a stored copy be cleared without
+     * guessing.
+     */
+    fun send(envelope: String, onSent: () -> Unit = {}): Job? {
+        val to = target ?: return null
+        return scope.launch {
+            @Suppress("SwallowedException", "TooGenericExceptionCaught")
+            try {
+                post(to.url, sentryAuth(to.key), envelope)
+                onSent()
+            } catch (reportingFailed: Exception) {
+                // Deliberately nothing. The request that mattered has already failed; this
+                // one was only going to say so, and a reporter that throws turns one failure
+                // into two. The stored copy stays put and the next launch tries again.
+            }
+        }
+    }
+
+    /** Builds and sends in one go, for a failure nobody is waiting on. */
+    fun report(error: Throwable): Job? = envelopeFor(error)?.let { send(it) }
+
+    private companion object {
+        /** How many distinct failures one process may report. */
+        const val BUDGET = 5
+
+        const val MILLIS_PER_SECOND = 1000.0
+
+        /** Sentry truncates long traces anyway, and the top of the stack is the useful part. */
+        const val MAX_FRAMES = 30
+    }
+}
+
+/**
+ * An event id: 32 hexadecimal characters, which is what Sentry's envelope header wants.
+ *
+ * Derived from the clock rather than from a random source, because there is exactly one of
+ * these per process and the only property that matters is that two crashes from two devices
+ * do not collide in a way that makes Sentry drop the second. It is **not** an identifier for
+ * a device or a person: it is minted at crash time, never stored, and never reused.
+ */
+internal fun eventId(millis: Long): String {
+    val high = millis.toULong().toString(HEX_RADIX).padStart(HEX_DIGITS / 2, '0')
+    val low = (millis * GOLDEN).toULong().toString(HEX_RADIX).padStart(HEX_DIGITS / 2, '0')
+    return (high.takeLast(HEX_DIGITS / 2) + low.takeLast(HEX_DIGITS / 2))
+}
+
+private const val HEX_RADIX = 16
+private const val HEX_DIGITS = 32
+
+/** Knuth's multiplicative constant, to spread the low half rather than repeat the clock. */
+private const val GOLDEN = 2_654_435_761L

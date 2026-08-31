@@ -1,0 +1,148 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vinto-room",
+  "main": "index.mjs",
+  "compatibility_date": "2026-08-01",
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOM", "class_name": "Room" },
+      // One object owns the room-code namespace (design R4). A code must exist before a room
+      // does, which is what stops a query string creating billable objects.
+      { "name": "REGISTRY", "class_name": "Registry" }
+    ]
+  },
+
+  "migrations": [
+    {
+      // SQLite-backed classes are the only kind available on the free plan (design D9).
+      "tag": "v1",
+      "new_sqlite_classes": ["Room"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["Registry"]
+    }
+  ],
+
+  // Routed at the zone rather than on a workers.dev subdomain, so the room is SAME-SITE with
+  // the client at vinto.kupalinka.app. That keeps the WebSocket origin a first-party one and
+  // means the page's CSP needs a single `connect-src` entry on its own site.
+  //
+  // Its own hostname rather than a path on vinto.kupalinka.app. That was originally because
+  // the website was a Pages project and layering a Worker route over a Pages custom domain is
+  // a precedence puzzle nobody should re-derive during an incident. The website is a Worker
+  // now (composeApp/cloudflare/wrangler.jsonc), so that particular puzzle is gone — and the
+  // split stays anyway, for better reasons: these are two deployments with two failure modes
+  // and two rollback stories, and a bad push to the site should not be able to take the
+  // running rooms down with it. The portfolio does it this way too; px.kupalinka.app is a
+  // separate Worker for the same reason.
+  "routes": [{ "pattern": "vinto-room.kupalinka.app", "custom_domain": true }],
+
+  // **The room is open, and this line is what says so.**
+  //
+  // It said "false" long after the room was opened, because it was opened by passing
+  // `--var ROOM_OPEN:true` from the deploy workflow — so the committed config and the running
+  // service disagreed, and nothing noticed. That was survivable only while every deploy was a
+  // person choosing a value. It stops being survivable the moment a push can deploy: the next
+  // unrelated commit to touch `shared/` would have published this file and **closed a room
+  // people were playing in**, silently, with no step in the workflow that looked wrong.
+  //
+  // So the config is the truth now and a push deploys it as-is. Closing the room is a
+  // committed change to this line, which is reviewable, or a `workflow_dispatch` run with the
+  // choice set — which is deliberate. Neither is a side effect.
+  //
+  // (The original note here said to flip this in the same commit that landed
+  // `ActionValidator`. That landed in phase 4; the flag stayed false for months afterwards,
+  // which is the drift described above.)
+  "vars": { "ROOM_OPEN": "true" },
+
+  // --- Analytics (openspec/changes/add-live-analytics) --------------------------------------
+  //
+  // Workers Analytics Engine. Chosen over D1, KV and Durable Object storage for one reason
+  // that matters more here than the others: `writeDataPoint` does not count against the
+  // invocation's CPU time, and the thing being measured is a Durable Object already spending
+  // its 30-second budget on MCTS.
+  //
+  // **Everything is absent-safe.** With this binding removed the Worker and the room run
+  // identically and emit nothing, which is what lets `wrangler dev` and all ten gate scripts
+  // run with no Cloudflare account at all. `gate-analytics.mjs` asserts that case explicitly
+  // rather than trusting it.
+  //
+  // The dataset is where queries read from; it is created on first write, so there is nothing
+  // to set up in the dashboard beforehand.
+  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "vinto_events" }],
+
+  "observability": { "enabled": true },
+
+  // --- Volume, at the door (design R6) ------------------------------------------------------
+  //
+  // Everything else in this service bounds a *total*: the registry's global and per-source
+  // room caps, the per-seat action budget, the socket cap, the message size cap, the guess
+  // limiter in front of a private room's code. None of them bounds a *rate*, and the cheapest
+  // request here is the most amplifying one — `GET /rooms` wakes the single registry Durable
+  // Object, which is single-threaded, so a flood of the one request that costs a stranger
+  // nothing serialises through the one object every real player also needs.
+  //
+  // 120 a minute per address. Two orders of magnitude above anybody browsing a lobby (a
+  // player refreshing hard does five), and far enough below a flood to make one host useless.
+  // Deliberately generous rather than tight, because the key is an address and a school, an
+  // office or a mobile carrier is one address to us — throttling real players in a group is a
+  // worse failure than serving a slow scan.
+  //
+  // **This is now expressible here, and it was not when the note below was written.** That
+  // note said edge rate limiting was a zone-level dashboard rule that could not go in this
+  // file and could not be exercised by `wrangler dev`, so a config block would be a claim
+  // nothing verifies. `ratelimits` is a first-class binding in wrangler 4.x, workerd emulates
+  // it locally, and `gate-ratelimit.mjs` exercises it — so it is a claim something verifies.
+  //
+  // Absent-safe like every other binding: with this block removed the Worker runs identically
+  // and limits nothing, which is what keeps the other gates runnable with no account.
+  "ratelimits": [
+    { "name": "DOOR", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } }
+  ]
+
+  // --- The stats page (design A6, task 5.1) -------------------------------------------------
+  //
+  // Three secrets, none of them here: ANALYTICS_TOKEN (Account Analytics, read-only),
+  // ANALYTICS_ACCOUNT_ID and DASHBOARD_KEY. Set with `wrangler secret put`; DEPLOYMENT.md §7
+  // walks it through for somebody who does not do this for a living.
+  //
+  // With any of the three missing, GET /counts answers 404 — the same answer a path that does
+  // not exist gets, so a stranger cannot tell a service missing its secret from one that never
+  // had the route. That is also what lets `wrangler dev` and every gate script run without a
+  // Cloudflare account.
+  //
+  // The queries themselves cannot be exercised locally: the Analytics Engine SQL API is the
+  // one part of WAE that `wrangler dev` does not emulate, so `writeDataPoint` calls made in
+  // development go nowhere queryable. `gate-dashboard.mjs` covers the queries' shape and the
+  // route's refusals; the numbers need a deployment with traffic.
+
+  // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
+  //
+  // **Superseded by the `ratelimits` binding above, and the reasoning is worth keeping.**
+  //
+  // This note used to say that rate limiting was a zone-level dashboard rule which could not
+  // be expressed in this file and could not be exercised by `wrangler dev`, so a config block
+  // here would be "a claim nothing verifies". That was a good rule and it had a bad
+  // consequence: what it produced was a paragraph describing two dashboard rules that were
+  // never created. The service ran unmetered for months while its own config said, in
+  // reassuring detail, how it was protected.
+  //
+  // The same thing happened one layer down: R6 also put the room-code guess limit in a
+  // dashboard rule, `resolveRoomCode` counted nothing, and a private room's six characters
+  // were the only thing in the way. That is now a limiter in the registry with a test and a
+  // gate. This is the same correction for the same reason — a defence in the repository can
+  // be verified and reviewed, and one in a dashboard is a thing somebody remembers.
+  //
+  // What still belongs in the dashboard, and genuinely cannot live here: Cloudflare's L3/L4
+  // protection (already on, zone-wide, nothing to configure) and any rule that has to act
+  // before a request reaches the Worker at all. Everything the Worker can see, the Worker
+  // now limits.
+  //
+  // The split that remains is the real one: a rate bounds the *slope* of abuse, and the caps
+  // in the code bound its *total* — the registry's global and per-source room caps
+  // (RegistryCore.kt), the guess limiter (RegistryCore.kt), the per-seat action budget
+  // (RoomCore.kt), the socket cap and the message size cap (index.mjs). An edge rule cannot
+  // see inside a WebSocket, and an in-room limit cannot stop somebody opening ten thousand.
+}

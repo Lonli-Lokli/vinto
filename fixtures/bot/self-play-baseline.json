@@ -1,0 +1,42 @@
+{
+    "version": 1,
+    "seeds": 12,
+    "rows": [
+        {
+            "difficulty": "easy",
+            "games": 12,
+            "finished": 12,
+            "endedOnVinto": 12,
+            "callerWins": 5,
+            "coalitionWins": 7,
+            "meanHandTotalCentis": 1360,
+            "meanActionsCentis": 37766,
+            "bestHandTotal": -1,
+            "worstHandTotal": 35
+        },
+        {
+            "difficulty": "moderate",
+            "games": 12,
+            "finished": 12,
+            "endedOnVinto": 12,
+            "callerWins": 8,
+            "coalitionWins": 4,
+            "meanHandTotalCentis": 1320,
+            "meanActionsCentis": 26841,
+            "bestHandTotal": -1,
+            "worstHandTotal": 36
+        },
+        {
+            "difficulty": "hard",
+            "games": 12,
+            "finished": 12,
+            "endedOnVinto": 12,
+            "callerWins": 7,
+            "coalitionWins": 5,
+            "meanHandTotalCentis": 1468,
+            "meanActionsCentis": 24850,
+            "bestHandTotal": -2,
+            "worstHandTotal": 41
+        }
+    ]
+}

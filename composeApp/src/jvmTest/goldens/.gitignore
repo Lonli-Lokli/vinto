@@ -1,0 +1,2 @@
+# Failure debris: the rendering a mismatching test wrote beside its golden.
+*.actual.png

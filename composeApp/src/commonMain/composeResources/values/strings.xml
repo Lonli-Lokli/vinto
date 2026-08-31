@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Everything the app says, in the language it was written in.
+
+    A translation is a file beside this one — `values-be/strings.xml`, `values-uk/strings.xml`
+    — and nothing else changes. Which is the point: the words are here because a string typed
+    into a composable is a word that can only ever be English.
+
+    Two rules for anybody adding to this file:
+
+    * **Name a string for what it says, not where it sits.** `settings_pace_detail` survives
+      the panel being moved; `second_line_of_third_card` does not.
+    * **Never build a sentence out of two of them.** Word order is not universal, and a
+      translator handed half a sentence cannot fix the half they were not given. Use a format
+      argument and let the whole sentence live in one entry.
+-->
+<resources>
+
+    <!-- The name of the game. Not translated: it is what the game is called. -->
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">Shuffling…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">Lowest hand wins.</string>
+    <!-- `%1$s` is the bot difficulty, which is chosen in Settings and only shown here. -->
+    <string name="home_solo_title">Single player · three bots · %1$s</string>
+    <string name="home_continue">Continue</string>
+    <string name="home_new_game">New game</string>
+    <string name="home_play">Play</string>
+    <string name="home_online">Play online</string>
+    <string name="home_teach">How to play</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_version">v%1$s</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">Play online</string>
+    <string name="online_nickname">Your name at the table</string>
+    <string name="online_nickname_detail">What the other seats see. Not an account — there are none.</string>
+    <string name="online_code">Room code</string>
+    <string name="online_code_detail">Six characters from whoever opened the room.</string>
+    <string name="online_join">Join the room</string>
+    <string name="online_create">Open a new room</string>
+    <string name="trouble_offline">No connection to the room service. Check the network and try again.</string>
+    <string name="trouble_no_such_room">No room with that code. Check the six characters and try again.</string>
+    <string name="trouble_closed">Online play is not open yet. Single player and the lesson work as normal.</string>
+    <string name="trouble_busy">That table is full. Try another, or start one of your own.</string>
+    <string name="trouble_refused">The room service would not accept that.</string>
+    <string name="trouble_broken">The room service is having trouble. Try again in a moment.</string>
+    <string name="online_creating">Opening a room…</string>
+    <string name="online_visibility">Who can find the room</string>
+    <string name="online_visibility_private">By code only</string>
+    <string name="online_visibility_public">Listed publicly</string>
+    <string name="online_visibility_detail">A listed room appears to anybody browsing. A private one is reachable only by its code.</string>
+    <string name="online_browse">Browse public rooms</string>
+    <string name="online_open_detail">Four seats, a code to share, and bots for whoever does not arrive.</string>
+    <string name="online_join_detail">Six characters, from whoever opened the room.</string>
+    <string name="online_browse_detail">Rooms whose hosts chose to be listed. Anybody may sit down.</string>
+    <string name="online_open_title">Open a room</string>
+    <string name="online_join_title">Join with a code</string>
+    <string name="online_open_screen">Open a room</string>
+    <string name="online_join_screen">Join with a code</string>
+    <string name="online_back">Back</string>
+    <string name="online_name_placeholder">Pick a name</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">Public rooms</string>
+    <string name="discover_looking">Looking for open tables…</string>
+    <string name="discover_refresh">Refresh</string>
+    <string name="discover_quiet">No public rooms right now. Open one and it will be listed here.</string>
+    <string name="discover_failed">Could not reach the room service: %1$s</string>
+    <string name="discover_retry">Try again</string>
+    <string name="discover_room_host">%1$s at the table</string>
+    <string name="discover_room_unnamed">Open table</string>
+    <string name="discover_seats">%1$d of 4 seats taken</string>
+    <string name="discover_people">%1$d playing</string>
+    <string name="discover_dealing">Dealing in %1$d</string>
+    <string name="discover_full">Full</string>
+    <string name="discover_join">Join</string>
+    <string name="discover_room_summary">Room %1$s, %2$d of 4 seats taken</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">Invite somebody</string>
+    <string name="invite_subject">Join my Vinto game</string>
+    <!-- The link first, because tapping it is the whole point; the code after it, because
+         the link is useless read down a telephone and the code is what gets read out. -->
+    <string name="invite_body">Join my Vinto game: %1$s\n\nOr open the app and enter room code %2$s</string>
+    <string name="invite_share">Share the code</string>
+    <string name="invite_copy">Copy the code</string>
+    <string name="invite_copied">Copied</string>
+    <string name="invite_read_it_out">Or read it out: six characters, no O or I in them.</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">Room %1$s</string>
+    <string name="lobby_seat_open">Open seat</string>
+    <string name="lobby_seat_you">%1$s — you</string>
+    <string name="lobby_add_bot">Add a bot</string>
+    <string name="lobby_remove_bot">Remove the bot in seat %1$d</string>
+    <string name="lobby_leave">Leave the room</string>
+    <string name="lobby_connecting">Reaching the room…</string>
+    <string name="lobby_needs_human">A game needs two people. Share the code — bots can fill the rest of the table.</string>
+    <string name="lobby_fill_seats">Every seat plays. Fill the empty ones with people or bots, and the deal counts itself down.</string>
+    <string name="lobby_counting_down">All set — dealing in %1$d…</string>
+    <string name="lobby_offered_bots">Nobody else came, so bots have taken the empty seats — dealing in %1$d…. Remove one to keep waiting.</string>
+    <string name="lobby_over">The room has ended.</string>
+    <string name="lobby_unreachable">Could not reach that room. Check the code, or your connection.</string>
+    <string name="lobby_retry">Try again</string>
+    <string name="lobby_seat_working">Changing this seat…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">Connected</string>
+    <string name="net_connecting">Connecting…</string>
+    <string name="net_reconnecting">Reconnecting…</string>
+    <string name="net_closed">Disconnected</string>
+    <string name="table_sending">Sending your move…</string>
+    <string name="table_next_round_waiting">Waiting for the others to agree…</string>
+    <string name="online_session_over">The session is over: %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">Settings</string>
+
+    <!-- The four groups the settings are read in. A heading is not decoration here: eight
+         controls in one column is a list of switches, and four short lists is four decisions. -->
+    <string name="settings_group_game">The game</string>
+    <string name="settings_group_feel">Look and feel</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_detail">Not translated yet? The game falls back to English, and the words a card says never change.</string>
+    <string name="settings_language_device">Follow the device</string>
+    <string name="settings_language_current">Language: %1$s</string>
+    <string name="settings_language_chosen">%1$s, chosen</string>
+    <string name="settings_group_privacy">What leaves this device</string>
+    <string name="settings_group_about">About</string>
+
+    <!-- Pages that belong to the game but are not in it. They open in the phone's browser
+         rather than a view inside the app: these are documents somebody may want to keep,
+         send to themselves, or read properly. -->
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_detail">What is counted, what is not, and how to switch it off.</string>
+    <string name="settings_terms">Terms of use</string>
+    <string name="settings_terms_detail">The short version of what you can expect, and what is expected of you.</string>
+    <string name="settings_contact">Get in touch</string>
+    <string name="settings_contact_detail">A bug, an idea, or a game that went wrong.</string>
+    <string name="settings_open">Open</string>
+    <string name="settings_link_failed">Nothing on this device opened that. The address is %1$s</string>
+
+    <!-- Telling somebody about the game. Not a review prompt: there is no store listing to
+         send anybody to yet, and a button that opens nothing is worse than no button. -->
+    <string name="settings_share">Tell somebody</string>
+    <string name="settings_share_detail">Send the game to a friend. Four seats, and three of them can be bots.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — a card game about holding the lowest hand. Free, in the browser, no sign-up: %1$s</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">Bots</string>
+    <string name="settings_bots_detail">How hard the three of them think about their move.</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_moderate">Moderate</string>
+    <string name="difficulty_hard">Hard</string>
+
+    <string name="settings_pace">Pace</string>
+    <string name="settings_pace_detail">How quickly the table plays out what happened. Three bots take their turns between one tap and the next, and this is how long you get to watch them.</string>
+    <string name="pace_calm">Calm</string>
+    <string name="pace_steady">Steady</string>
+    <string name="pace_brisk">Brisk</string>
+
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_detail">The felt is green either way. This is everything around it.</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <string name="settings_motion">Motion</string>
+    <string name="settings_motion_detail">Whether cards fly, or simply appear where they land. Reduced keeps every ring, verdict and pause — the game is still narrated, it just doesn’t move. System follows your device’s accessibility setting.</string>
+    <string name="motion_system">System</string>
+    <string name="motion_full">Full</string>
+    <string name="motion_reduced">Reduced</string>
+
+    <string name="settings_sound">Sound</string>
+    <string name="settings_sound_detail">A card dealt, a card landing, a penalty, the round ending — and nothing else.</string>
+    <string name="settings_haptics">Haptics</string>
+    <string name="settings_haptics_detail">A small kick under the thumb when a card is touched, a move lands, or a rule bites.</string>
+    <string name="settings_analytics">Anonymous counts</string>
+    <string name="settings_analytics_detail">How many rounds get played, and how long they take. Never your name, your room codes or anything that could point back at you — there is nowhere in what we send to put them. Turning this off sends nothing at all.</string>
+    <string name="settings_on">On</string>
+    <string name="settings_off">Off</string>
+
+    <string name="settings_saved_game">Saved game</string>
+    <string name="settings_saved_game_detail">There is a round in progress. Forgetting it cannot be undone, and the running score of the session goes with it.</string>
+    <string name="settings_forget">Forget it</string>
+    <string name="settings_record">Your record</string>
+    <string name="settings_record_detail">Rounds played, how many you won, your best hand and your streak. Kept on this device only — never sent anywhere.</string>
+    <string name="settings_forget_record">Clear it</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">R%1$d / T%2$d</string>
+    <string name="table_draw">DRAW</string>
+    <string name="table_discard">DISCARD</string>
+    <string name="table_toss_in">Toss-in</string>
+    <string name="table_toss_in_summary">Toss-in window, matching %1$s</string>
+    <string name="table_tossed">Tossed (%1$d)</string>
+    <string name="card_thrown_by">%1$s threw %2$s</string>
+    <string name="table_you">You</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">leads</string>
+    <string name="seat_pointed_turn">%1$s is playing</string>
+    <string name="seat_pointed_vinto">%1$s called Vinto</string>
+    <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
+    <string name="seat_pointed_coalition">%1$s leads the coalition</string>
+    <string name="table_final_round">Final round</string>
+    <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
+    <string name="table_final_leader">You play the coalition’s hand against %1$s.</string>
+    <string name="table_final_ally">%1$s plays the coalition’s hand against %2$s.</string>
+    <string name="table_final_turns_left">%1$d turns to the reveal</string>
+    <string name="table_final_last_turn">last turn</string>
+    <string name="table_final_choosing">One hand between the three of them, against %1$s.</string>
+    <string name="table_final_side_coalition">Together</string>
+    <string name="table_final_side_caller">Called it</string>
+    <string name="table_final_versus">vs</string>
+    <string name="table_final_leads">%1$s leads the others</string>
+    <string name="table_see_score">See the score</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">Report a problem</string>
+    <string name="header_settings">Settings</string>
+    <string name="header_deck_left">%1$d cards left in the deck</string>
+    <!--
+      The header badge is a *button*, and its name says so. The felt's draw pile already
+      says "N cards left in the deck"; when the badge said it too, a screen reader met the
+      same sentence twice on one screen and neither instance said that one of them opens an
+      explanation. The pile is the thing being counted, so it keeps the count; the badge is
+      the thing that answers "what does that number mean", so it says that instead — while
+      still carrying the number it visibly shows, which is what a spoken name must do.
+    -->
+    <string name="header_deck_badge">%1$d in the deck — what that means</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">The deck</string>
+    <string name="deck_body">%1$d cards left to draw from.\n\nWhen it runs out, the discard pile is shuffled back into it and everything anybody had learned from watching that pile stops being worth anything — including what you learned. A round that is nearly out of deck is a round to call Vinto in.</string>
+    <string name="deck_dismiss">Got it</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s, worth %2$d</string>
+    <string name="card_face_down">a face-down card</string>
+    <string name="card_position">%1$s, card %2$d</string>
+    <string name="card_the_deck">the deck</string>
+    <string name="card_discarded">discarded %1$s</string>
+    <!-- The same card, still carrying its action, which the next player may take and play. -->
+    <string name="card_discarded_live">discarded %1$s, action unused</string>
+    <string name="card_in_hand">the card in your hand</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">Round %1$d</string>
+    <string name="score_caller_won">The Vinto call held</string>
+    <string name="score_level">Level — the call held</string>
+    <string name="score_coalition_won">The others beat the call</string>
+    <string name="score_deck_out">Nobody called</string>
+    <string name="score_versus">Vinto %1$d against their best %2$d</string>
+    <string name="score_versus_none">Every hand counted, nothing paid</string>
+    <string name="score_role_caller">called Vinto</string>
+    <string name="score_role_best">best of the others</string>
+    <string name="score_column_hand">hand</string>
+    <string name="score_column_round">round</string>
+    <string name="score_column_game">game</string>
+    <string name="score_you_called">You called Vinto, so your hand was set against the best of the others’.</string>
+    <string name="score_they_called">%1$s called Vinto, so their hand was set against the best of yours.</string>
+    <string name="score_deck_ended">Nobody called Vinto — the deck ran out, so the round ended and every hand was counted.</string>
+    <string name="score_next_round">Deal the next round</string>
+    <string name="score_stop">Stop here</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">Report a problem</string>
+    <string name="report_body">Something the table did that it should not have? Send the game with it.\n\nWhat gets sent is the deal it started from, every move since, and a checksum after each one — enough to replay this exact game, here or in the web app, and see the same thing go wrong. No account, no device details, nothing about you.</string>
+    <string name="report_send">Send…</string>
+    <string name="report_copy">Copy instead</string>
+    <string name="report_copied">Copied to the clipboard</string>
+    <string name="report_dismiss">Not now</string>
+    <string name="report_subject">Vinto — problem report</string>
+
+    <!-- ================================================================ the lesson -->
+    <!-- The lesson's own words. `beat_<id>_title` and `beat_<id>_body` mirror the `Teaches`
+         hierarchy in shared/client one for one; two beats deliberately have no title. See
+         docs/kotlin/README.md §6h. -->
+    <string name="beat_only_look_title">The only look you get</string>
+    <string name="beat_only_look_body">Everybody may look at two of their own cards before the round starts, once. From here on the game is memory: yours against three other people's.</string>
+    <string name="beat_peeks_end_body">They turn face down again — remember where they were. Everybody else has peeked at two of theirs as well.</string>
+    <string name="beat_name_only_seen_title">Only name one you have seen</string>
+    <string name="beat_name_only_seen_body">You looked at this card, so you know what it is. Name it right and you play its action for free. Name it wrong and you take a penalty card — so only name one you are sure of.</string>
+    <string name="beat_toss_in_title">Anybody holding that rank may throw it in</string>
+    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance.</string>
+    <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
+    <string name="beat_aim_it_title">Aim it</string>
+    <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
+    <string name="beat_give_up_worst_title">Give up your worst card</string>
+    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about.</string>
+    <string name="beat_keep_or_throw_title">Keep it or throw it</string>
+    <string name="beat_keep_or_throw_body">Put it in your hand — face down, in place of a card you own, which goes face up on the pile — or throw it away. Every card in your hand counts against you, so a low one is worth keeping. If it has an action, playing it now instead is the third choice, and it costs you nothing to take.</string>
+    <string name="beat_two_ways_to_start_title">Two ways to start a turn</string>
+    <string name="beat_two_ways_to_start_body">From the deck, sight unseen — or off the pile, but only an action card nobody has used, and then you must play it at once rather than keep it.</string>
+    <string name="beat_every_turn_starts_title">Every turn starts the same way</string>
+    <string name="beat_every_turn_starts_body">A turn begins by taking a card. The deck is face down, so what you get is a surprise — that is the risk you are being paid for.</string>
+    <string name="beat_welcome_title">Four players, five cards each</string>
+    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. This is a real round against three real opponents — the coach only walks beside you.</string>
+    <string name="beat_cards_numbers_title">2 to 6 — plain cards</string>
+    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Small ones are what a winning hand is made of.</string>
+    <string name="beat_cards_own_title">7 and 8 — look at one of yours</string>
+    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not.</string>
+    <string name="beat_cards_theirs_title">9 and 10 — look at one of theirs</string>
+    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was. Two turns later it is what tells you whether to call.</string>
+    <string name="beat_cards_jack_title">Jack — swap two cards, blind</string>
+    <string name="beat_cards_jack_body">Worth 10. It swaps two cards belonging to two different players — never two of anybody's own — and nobody looks at either of them first. Good for pushing a card you know is bad into somebody else's hand; a gamble with anything you know is good.</string>
+    <string name="beat_cards_queen_title">Queen — look at two, then decide</string>
+    <string name="beat_cards_queen_body">Also worth 10, and the strongest card in the game: look at any two cards from two different players, and only then choose whether to swap them. The Jack gambles. The Queen knows.</string>
+    <string name="beat_cards_king_title">King — worth nothing, and does anything</string>
+    <string name="beat_cards_king_body">Worth nothing at all, which alone makes it worth keeping. Its action points at any card on the table — yours or anybody's — and names it. Right: that card leaves the hand it was in, and its action becomes yours to play. Wrong: everybody sees what it really was, and you take a penalty card.</string>
+    <string name="beat_cards_king_name_title">What you name is what you get to play</string>
+    <string name="beat_cards_king_name_body">So you are really choosing an action, out of the cards you have seen. Name a 7 or an 8 and you get a look at one of your own. Name a Jack and you get its blind swap — and you pick both cards, which is how a Joker you have spotted comes to you and your worst card goes the other way. Name a Queen and you look at two before deciding whether to trade.</string>
+    <string name="beat_cards_king_whose_title">And whose card you name</string>
+    <string name="beat_cards_king_whose_body">Whoever was holding it, the card you name leaves their hand. Naming your own 10 takes ten points off your total; naming Don's Joker takes his minus one away and leaves him a card worse off. One King, two jobs — which of them matters more is the read.</string>
+    <string name="beat_cards_odd_title">Ace and Joker</string>
+    <string name="beat_cards_odd_body">An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is worth minus one — the best card in the deck, and the one never to give away.</string>
+    <string name="beat_tour_title">The deck and the pile</string>
+    <string name="beat_tour_body">Cards come off the deck. What anybody throws away lands face up beside it, where the whole table can read it — including you.</string>
+    <string name="beat_seats_title">Raph, Mikey and Don</string>
+    <string name="beat_seats_body">Three bots, each with five cards they can see no better than you can. The plate that lights up green is whoever's turn it is.</string>
+    <string name="beat_help_title">The ? is always there</string>
+    <string name="beat_help_body">It explains the moment you are in and what every card does. The boxed game comes with reminder cards for exactly this, one per player — nobody is expected to hold fourteen ranks in their head, here or at a table.</string>
+    <string name="beat_coalition_title">Everybody else plays as one</string>
+    <string name="beat_coalition_body">You, and the two who did not call, are the coalition: one turn each, and only your single best hand is compared with the caller's — so it is a team against one hand. At a real table you would talk it over and pool what you know. Nobody may touch the caller's cards, and the game will not let you try.</string>
+    <string name="beat_your_turn_to_call_title">You can call it too</string>
+    <string name="beat_your_turn_to_call_body">At the end of any turn of yours, the gold button is there: press it when you believe your hand is the lowest at the table. It was hidden while you were learning because it ends the round for everybody — from here on it is yours to press, and pressing it early is how most people lose their first game.</string>
+    <string name="beat_session_title">And that is one round</string>
+    <string name="beat_session_body">A game is rounds, one after another, with those points carried between them, played to a clock somebody agrees beforehand — half an hour is usual. When the time is up the round in progress is finished, and whoever has the most points comes first for 5 game points, second for 3, third for 2. A round won by three counts the same whether you won it by one point or by twenty.</string>
+    <string name="beat_scoring_title">Every hand goes face up</string>
+    <string name="beat_scoring_body">The caller's hand is set against the best hand among everybody else. Lower, and the caller takes +3 while everybody else loses 1 each. Level counts as the caller's: +3 to them, nothing lost by anyone. Beaten, and the caller loses 1 while every one of the others takes +3.</string>
+    <string name="beat_vinto_body">That is the bet that their hand is the lowest at the table. It ends the round: everybody else gets exactly one more turn, and then every hand is turned over.</string>
+    <string name="beat_vinto_title">%1$s called Vinto</string>
+
+    <!-- The prefix on a toss-in window somebody else has already thrown into. The names are
+         joined by list_join_and, which is a grammar decision and not the same in every
+         language. -->
+    <string name="beat_toss_in_also">%1$s just threw one in. </string>
+    <string name="list_join_and"> and </string>
+    <!-- The caller the view could not name. Was the literal English "Somebody". -->
+    <string name="beat_vinto_somebody">Somebody</string>
+    <!-- Said once, the first time somebody presses a button other than the one pointed at. -->
+    <string name="beat_strayed_body">Your table, not mine — nothing here is a wrong move. The lesson picks up wherever you take it.</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">A card that breathes can be touched right now.</string>
+    <string name="gloss_toss">The chip under the piles names the rank the window is open for.</string>
+    <string name="gloss_log">Every move is written down in this box — glance at it when cards moved faster than you could read.</string>
+    <string name="gloss_badge">The green number counts what is left in the deck.</string>
+
+    <!-- A card met for the first time. %1$s is its name and %2$s its value, both from
+         CARD_CONFIGS; %3$s is the card's own description. The frame is here so the sentence
+         can be built the way a language builds one. -->
+    <string name="teach_note">%1$s — worth %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. A hand full of small ones of these is a good hand.</string>
+
+
+    <string name="teach_heading">Learning the game</string>
+    <string name="teach_finished_title">That is the whole game</string>
+    <string name="teach_finished_body">Every hand is face up and the round is scored. Every rule you met in here is one a real game plays by — there is no practice version of it.</string>
+    <string name="teach_watching">Watch what they take, and what they put back down.</string>
+    <string name="teach_go_on">Go on</string>
+    <string name="teach_done">Done</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">Right now</string>
+    <string name="help_the_cards">The cards</string>
+    <string name="help_signals">What the table is telling you</string>
+    <string name="help_group_numbers">Numbers — worth what they say, and nothing else</string>
+    <string name="help_group_lookers">Lookers — buy you a card you can remember</string>
+    <string name="help_group_movers">Movers — put a card somewhere else</string>
+    <string name="help_group_odd">The odd ones</string>
+    <string name="help_no_action">No action.</string>
+    <string name="help_card_worth">%1$s — worth %2$d</string>
+    <string name="help_closing">Every card in a hand counts against you, so the lowest total wins. Call Vinto when you think yours is lowest — everybody else then plays one more turn together, and only their best hand is compared to yours.</string>
+    <!-- The privacy note, in the app's own words rather than a policy's. Said here because
+         this is the sheet a player already opens to find out what something means. -->
+    <!-- What this device remembers about its owner. Stays on the device: no account, no sync,
+         nothing sent anywhere — which is what lets it be personal at all, unlike the
+         anonymous counts. Shown only once there is a round to show. -->
+    <string name="stats_played">%1$d played</string>
+    <string name="stats_won">%1$d%% won</string>
+    <string name="stats_best">best %1$d</string>
+    <string name="stats_streak">%1$d in a row</string>
+    <string name="stats_row">Your record: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <!-- The lesson's chapters, one progress dot each. These are the dots' accessible names:
+         before this they had none, and the words sat unused in a `Chapter.label` field that
+         nothing rendered. -->
+    <string name="chapter_table">The table</string>
+    <string name="chapter_peek">Your two peeks</string>
+    <string name="chapter_draw">Taking a card</string>
+    <string name="chapter_keep">Keep or throw</string>
+    <string name="chapter_declare">Naming a rank</string>
+    <string name="chapter_actions">What the cards do</string>
+    <string name="chapter_toss">Throwing in</string>
+    <string name="chapter_vinto">Calling Vinto</string>
+    <string name="chapter_score">Scoring</string>
+    <string name="chapter_covered">%1$s — covered</string>
+    <string name="chapter_to_come">%1$s — still to come</string>
+
+    <!-- What the "?" explains. `explains_card_*` take the card's name, value,
+         `longDescription` and `helpText` — all presentation. Never `shortDescription`, which
+         is `Card.actionText` and lives inside the canonical hash (CardCopyIsDataTest). -->
+    <string name="explains_card_plain">%1$s. It is worth %2$d. It has no action, so it can only go into your hand or onto the pile.</string>
+    <string name="explains_card_action">%1$s. It is worth %2$d. %3$s. %4$s</string>
+    <string name="explains_setup">Look at two of your own cards and remember them — they go face-down again when the round starts. Everything after that is memory.</string>
+    <string name="explains_scoring">Every hand is face-up. The lowest total wins the round; the player who called Vinto is scored against the best hand among everybody else.</string>
+    <string name="explains_toss_in">Anybody holding a card of the same rank may throw it in, which gets it out of their hand for nothing. Get the rank wrong and you take a penalty card, and you cannot toss in again this round.</string>
+    <string name="explains_final_round">Vinto has been called. Everybody else plays one last turn as a coalition, and only their best hand counts against the caller's.</string>
+    <string name="explains_turn">Draw from the deck, or take the top of the discard pile if it is an action card nobody has played. Keep what lowers your total; call Vinto when you think yours is the lowest.</string>
+
+    <!-- The smaller line under the prompt. `detail_card_does` and `detail_king_declared` take
+         a card's `longDescription`, which is presentation. They must never take
+         `shortDescription`: that one becomes `Card.actionText` and lives inside the canonical
+         hash, so translating it diverges all 50 fixtures (CardCopyIsDataTest). -->
+    <string name="detail_card_does">%1$s</string>
+    <string name="detail_king_declared">The King declared a %1$s: %2$s</string>
+    <string name="detail_tap_to_say">Tap one of your cards to say what you think it is.</string>
+    <string name="detail_table_talk">Table talk — the coalition takes your word for it, right or wrong.</string>
+    <string name="detail_right_plays">Right plays its action; wrong costs you a card.</string>
+    <string name="detail_wrong_costs">A wrong one costs you a penalty card.</string>
+    <string name="detail_barred_card">You guessed wrong on this card, so you are out of this one. The next card to land is a fresh chance.</string>
+    <string name="detail_barred">You guessed wrong, and in the final round that is the rest of the round.</string>
+    <string name="detail_scored_against">%1$s called Vinto, so the round was scored against their hand.</string>
+    <string name="detail_deck_ran_out">The deck ran out, so the round ended and every hand was counted.</string>
+
+    <!-- The line above the buttons: what the table is asking for.
+         Ranks arrive as symbols (%1$s and friends) and are never translated. `ask_or` is the
+         word between two ranks in a toss-in prompt — it is a word, so joining the ranks in
+         Kotlin would have been this module translating badly on the UI's behalf. -->
+    <string name="ask_or"> or </string>
+    <string name="ask_look_at_two_of_yours">Look at two of your cards</string>
+    <string name="ask_one_more_to_look_at">One more card to look at</string>
+    <string name="ask_ready">Ready when you are</string>
+    <string name="ask_your_turn">Your turn</string>
+    <string name="ask_you_drew">You drew the %1$s</string>
+    <string name="ask_you_drew_unknown">You drew a card</string>
+    <string name="ask_which_card_replaced">Which card does it replace?</string>
+    <string name="ask_name_what_you_put_down">Name the card you are putting down?</string>
+    <string name="ask_what_do_you_say">What do you say this card is?</string>
+    <string name="ask_say_and_play">Say what it is, and play that card's action</string>
+    <string name="ask_look_at_one_of_yours">Look at one of your own cards</string>
+    <string name="ask_look_at_one_of_theirs">Look at one card of another player</string>
+    <string name="ask_choose_any_card">Choose any card</string>
+    <string name="ask_choose_two">Choose two cards, from two different players</string>
+    <string name="ask_look_at_two">Look at two cards, from two different players</string>
+    <string name="ask_swap_them">Swap them?</string>
+    <string name="ask_remember_it">Remember it</string>
+    <string name="ask_who_draws">Who draws a card?</string>
+    <string name="ask_card_waiting">The %1$s is waiting</string>
+    <string name="ask_card_waiting_unknown">Waiting</string>
+    <string name="ask_toss_in">The %1$s went down — toss in a match?</string>
+    <string name="ask_toss_in_barred">The %1$s went down</string>
+    <string name="ask_waiting_for_others">Waiting for the others</string>
+    <string name="ask_watching">Watching</string>
+    <string name="ask_somebody_playing">%1$s is playing</string>
+    <string name="ask_who_plays_for_you">%1$s called Vinto. Who plays for the rest of you?</string>
+    <string name="ask_round_over">Round over</string>
+    <string name="ask_round_over_lowest">Round over — you finished lowest on %1$d</string>
+    <string name="ask_round_over_not_lowest">Round over — you finished on %1$d, best was %2$d</string>
+
+    <!-- The buttons on the table. Identified in code by `Label`, not by these words: the
+         lesson points at a control by its type, so rewording one of these cannot silently
+         stop the lesson pointing at it. That coupling used to be a string comparison and it
+         had already broken twice. -->
+    <string name="choice_back">Back</string>
+    <string name="choice_start_round">Start the round</string>
+    <string name="choice_draw_card">Draw Card</string>
+    <string name="choice_use_from_pile">Use %1$s</string>
+    <string name="choice_use_action">Use Action</string>
+    <string name="choice_swap_cards">Swap Cards</string>
+    <string name="choice_discard">Discard</string>
+    <string name="choice_just_swap">Just Swap</string>
+    <string name="choice_put_it_down">Put it down</string>
+    <string name="choice_leave_them">Leave them</string>
+    <string name="choice_continue">Continue</string>
+    <string name="choice_call_vinto">Call Vinto</string>
+    <string name="choice_done">Done</string>
+
+    <!-- The move log.
+         %1$s is who did it — a nickname, or the translated word for "you" below. A rank
+         (%2$s where present) is a mark on a card rather than a word, so it is never
+         translated: a 7 is a 7 in every language this app will ever ship in.
+
+         The paired `_you` / `_they` entries are the reason this file exists at all. English
+         wants "You draw" and "Raph draws" — one suffix — and Belarusian or Ukrainian wants
+         two different sentences. A translator handed the fragment "draws" cannot fix a half
+         they were never given, so every conjugated line is written out in full, twice. -->
+    <string name="log_you">You</string>
+    <string name="log_drew_known">You drew the %1$s</string>
+    <string name="log_draw_you">You draw a card</string>
+    <string name="log_draw_they">%1$s draws a card</string>
+    <string name="log_took">%1$s took the %2$s</string>
+    <string name="log_took_unknown">%1$s took the top card</string>
+    <string name="log_swap_you">You swap card %1$d</string>
+    <string name="log_swap_they">%1$s swaps card %2$d</string>
+    <string name="log_swap_dropping_you">You swap card %1$d, dropping the %2$s</string>
+    <string name="log_swap_dropping_they">%1$s swaps card %2$d, dropping the %3$s</string>
+    <string name="log_throw_you">You throw away the %1$s</string>
+    <string name="log_throw_they">%1$s throws away the %2$s</string>
+    <string name="log_throw_unknown_you">You throw away the card</string>
+    <string name="log_throw_unknown_they">%1$s throws away the card</string>
+    <string name="log_play_you">You play the %1$s</string>
+    <string name="log_play_they">%1$s plays the %2$s</string>
+    <string name="log_play_unknown_you">You play the card</string>
+    <string name="log_play_unknown_they">%1$s plays the card</string>
+    <string name="log_tossed_in">%1$s tossed in the %2$s</string>
+    <string name="log_tossed_in_unknown">%1$s tossed in a card</string>
+    <string name="log_called_vinto">%1$s called Vinto</string>
+    <string name="log_swapped_two">%1$s swapped two cards</string>
+    <string name="log_left_alone">%1$s left them alone</string>
+    <string name="log_declared">%1$s declared a %2$s</string>
+    <string name="log_round_begins">the round begins</string>
+
+    <string name="help_counts_title">What this app counts</string>
+    <string name="help_counts_body">Anonymous counts only: how many rounds are played, how far people get, whether a table stalled, and what a room costs to run. Never your name, your room code, what is in your hand, or anything that could be traced back to you or your device — there is nowhere in what is sent to put those. It can be switched off in Settings, and a browser that asks not to be tracked switches it off for you.</string>
+
+    <string name="signal_turn">A green ring on a seat</string>
+    <string name="signal_turn_meaning">Whose turn it is. It flashes as the turn arrives, because three bots can take theirs between one tap and the next.</string>
+    <string name="signal_vinto">A gold ring</string>
+    <string name="signal_vinto_meaning">That player has called Vinto. Nobody may touch their cards for the rest of the round.</string>
+    <string name="signal_penalty">A red ring, and a hand that flinches</string>
+    <string name="signal_penalty_meaning">A penalty card just landed there — a wrong guess, or a wrong toss-in.</string>
+    <string name="signal_coalition">A blue ring</string>
+    <string name="signal_coalition_meaning">The coalition: everybody except the Vinto caller, playing their last turn together against that one hand.</string>
+    <string name="signal_live">A gold ring on the discard</string>
+    <string name="signal_live_meaning">That card was put down without its action being used, so the next player may take it and play it instead of drawing. A card whose action *was* played has no ring.</string>
+    <string name="signal_tappable">A card that breathes</string>
+    <string name="signal_tappable_meaning">It can be touched right now. If nothing breathes, the table is waiting on somebody else.</string>
+    <string name="signal_reshuffle">Cards sweeping back into the deck</string>
+    <string name="signal_reshuffle_meaning">The deck ran out, so the pile was shuffled back into it. Everything anybody had learned from watching that pile is now out of date.</string>
+    <string name="signal_peek">A card that lifts towards the middle</string>
+    <string name="signal_peek_meaning">Somebody is looking at it. Everyone sees *which* card was looked at — only the player entitled to it sees the face.</string>
+
+</resources>

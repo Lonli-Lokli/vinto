@@ -1,0 +1,26 @@
+# Cloudflare Pages cache rules.
+#
+# The shell is never cached: it is the file that names which build's script to load, so a
+# stale one is a dead page. Everything it names is content-addressed and immutable — the
+# `.wasm` files by the Kotlin/Wasm toolchain, `composeApp.<hash>.js` by the deploy workflow —
+# so a year is safe for those and nothing else.
+#
+# `no-store` rather than `no-cache` because the zone's Browser Cache TTL overrides a weaker
+# origin header (§6c). This is belt and braces over the content hashing, which is the thing
+# actually relied on; if these two ever disagree, the hash wins and this file is the bug.
+/
+  Cache-Control: no-store
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/index.html
+  Cache-Control: no-store
+
+/*.wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/composeApp.*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/composeResources/*
+  Cache-Control: public, max-age=31536000, immutable

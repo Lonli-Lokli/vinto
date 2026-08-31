@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "mcp__nx-mcp__nx_workspace",
+      "Bash(./gradlew:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx eslint:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "ask": []
+  },
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

@@ -1,0 +1,215 @@
+# Overrides on top of detekt's defaults (buildUponDefaultConfig = true), so this file holds
+# only the decisions specific to this project rather than a copy of the whole ruleset.
+#
+# **detekt 2.** Three things about the format changed with it, and all three are easy to get
+# subtly wrong:
+#
+#   * The `build:` block is gone. `maxIssues: 0` is now `failOnSeverity` on the Gradle
+#     extension, in `build.gradle.kts`.
+#   * `threshold: N` became `allowed…: N`, and the **meaning inverted**: `threshold` was the
+#     value at which a rule reports, `allowed` is the largest value it accepts. Every number
+#     below is therefore one lower than it was, which preserves the gate exactly. Copying the
+#     old numbers across would have loosened every one of them by one.
+#   * The `formatting:` ruleset — ktlint's, arriving with the wrapper artifact — is now
+#     called `ktlint:`.
+
+# ---------------------------------------------------------------------------------------
+# What `allRules = true` turns on that this project declines, and why.
+#
+# `allRules` adds every rule detekt ships, including the ones its authors left off by
+# default. Most are worth having. Three families are not, and they are declined here rather
+# than baselined, because a baseline is a list of things to fix and none of these will ever
+# be fixed — they are disagreements about style, and the disagreement belongs in writing.
+#
+# Measured before deciding: 6,726 findings across 51 rules. The three families below are
+# 5,900 of them.
+# ---------------------------------------------------------------------------------------
+
+comments:
+  # This codebase documents *decisions* — why a thing is the way it is — and does not
+  # document signatures. `UndocumentedPublic*` asks for the opposite: KDoc on every public
+  # class, function and property, which on a data class mirroring a wire format means a line
+  # of prose per field saying the field's own name back. 1,188 findings, and adopting them
+  # would bury the comments that carry reasoning under comments that carry nothing.
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+  UndocumentedPublicProperty:
+    active: false
+
+  # And these ask for the exact opposite of the above: that a comment on a private member be
+  # deleted and the member renamed instead. Both cannot be right, and for this codebase
+  # neither is: a private function called `requirePhaseAllows` is well named *and* deserves
+  # the paragraph above it explaining which phases and why. 529 findings.
+  DocumentationOverPrivateFunction:
+    active: false
+  DocumentationOverPrivateProperty:
+    active: false
+
+  # Demands an `@param` for every parameter once a declaration has any KDoc at all. The KDoc
+  # here is prose about behaviour, not a parameter table, so this fires on the documentation
+  # that is doing the most work.
+  OutdatedDocumentation:
+    active: false
+
+complexity:
+  LabeledExpression:
+    # `return@forEach`, `it@`, and the labelled loops in the bot's heuristics. The rule reads
+    # a label as a complexity smell; in Kotlin it is how you return from a lambda, and the
+    # alternative — restructuring 32 call sites into helper functions to avoid a keyword — is
+    # more complexity, not less.
+    active: false
+  LongMethod:
+    # The engine handlers are a file-for-file port of the TypeScript ones (design D3).
+    # Splitting them up would make the parity review harder, which is the opposite of what
+    # this migration needs.
+    allowedLines: 89
+  LongParameterList:
+    allowedFunctionParameters: 7
+    allowedConstructorParameters: 11  # GameState mirrors the TypeScript interface field-for-field
+  CyclomaticComplexMethod:
+    allowedComplexity: 19
+  NestedBlockDepth:
+    allowedDepth: 4
+  TooManyFunctions:
+    allowedFunctionsPerFile: 29
+    allowedFunctionsPerClass: 29
+    allowedFunctionsPerObject: 29
+    allowedFunctionsPerEnum: 29
+    ignorePrivate: true
+
+style:
+  MaxLineLength:
+    maxLineLength: 110
+    excludes:
+      # Tests assert against whole canonical JSON strings. Wrapping them would make a
+      # failing diff harder to read, which is the one moment the line matters.
+      - '**/*Test.kt'
+  ReturnCount:
+    # Engine handlers guard-clause heavily, which reads better than one nested expression.
+    max: 8
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreNamedArgument: true
+    ignoreEnums: true
+    excludes:
+      # Prng and Sha256 transcribe published algorithms. Their literals — mulberry32's
+      # shift amounts, SHA-256's round constants and rotations — *are* the specification,
+      # and naming them individually would hide the correspondence a reviewer checks
+      # against the spec. Both files are covered by test vectors instead.
+      - '**/Prng.kt'
+      - '**/Sha256.kt'
+      # Test data is expected to be literal.
+      - '**/*Test.kt'
+  DataClassContainsFunctions:
+    # `GameState`, `PlayerView` and the wire types carry small derived accessors beside their
+    # fields on purpose: the derivation belongs with the data it derives from, and moving it
+    # to extensions elsewhere is how a projection ends up with two answers.
+    active: false
+  ForbiddenComment:
+    # TODO markers are how the unfinished parts of the port are tracked; they are recorded
+    # in tasks.md rather than banned here.
+    active: false
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 3
+
+naming:
+  MatchingDeclarationName:
+    # Excludes the wasm source set, and only it.
+    #
+    # The rule strips a platform suffix before comparing — `LocalAppLocale.android.kt` matches
+    # `LocalAppLocale` and passes — but it does not recognise the camelCase `wasmJs`, so the
+    # same file for the same `actual` fails on the same declaration. That is the rule not
+    # knowing a target exists rather than this project disagreeing with it, and the two fixes
+    # available are both worse than the finding: renaming the `actual` is impossible, and
+    # dropping the `.wasmJs` suffix breaks the convention every other platform file follows.
+    excludes: ['**/wasmJsMain/**']
+  FunctionNameMaxLength:
+    # Test names are sentences here, because they have to be: backticked names with spaces
+    # are JVM-only and half these suites are `commonTest` (README section 7). So
+    # `theWholeFinalRoundIsHandedToTheTable` is the convention rather than an accident, and
+    # 632 of this rule's findings are test names doing their job.
+    active: false
+
+  FunctionNaming:
+    # Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'  # VintoJson is a configured instance, not a constant
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+  SwallowedException:
+    active: true
+
+performance:
+  SpreadOperator:
+    active: false
+
+ktlint:
+  # ktlint's *experimental* rules come with `allRules = true`, and they are a whole-codebase
+  # reformat rather than more analysis: 3,900 findings, none of them about behaviour. Taking
+  # them would mean one enormous mechanical diff across every file in the repository, which
+  # buries the history of code that is still being reviewed against a parity corpus. Left off
+  # deliberately; the non-experimental ktlint rules stay on and still enforce formatting.
+  MultilineExpressionWrapping:
+    active: false
+  ChainMethodContinuation:
+    active: false
+  FunctionSignature:
+    active: false
+  ClassSignature:
+    active: false
+  WhenEntryBracing:
+    active: false
+  BlankLineBetweenWhenConditions:
+    active: false
+  NoEmptyFirstLineInClassBody:
+    active: false
+  ExpressionOperandWrapping:
+    active: false
+  BlankLineBeforeDeclaration:
+    active: false
+  CascadingCallWrapping:
+    active: false
+  NoBlankLineInList:
+    active: false
+  StatementWrapping:
+    active: false
+  FunctionLiteral:
+    active: false
+
+  # This codebase's file-header comments and the explanations inside `when` branches are both
+  # KDoc, deliberately, because that is what an IDE shows on hover. ktlint calls a top-level
+  # KDoc "dangling" and forbids KDoc inside a `when` outright.
+  Kdoc:
+    active: false
+  NoConsecutiveComments:
+    active: false
+
+  # Two more that duplicate a decision detekt's own rules already carry — the same reasoning
+  # as `MaximumLineLength` and `Filename` below. detekt's `FunctionNaming` exempts
+  # `@Composable`, which is the whole reason Composables are PascalCase; ktlint's `FunctionName`
+  # has no such exemption and flags all 118 of them.
+  FunctionName:
+    active: false
+  PropertyName:
+    active: false
+
+  # ktlint's ruleset arrives with `detekt-rules-ktlint-wrapper`, and two of its rules
+  # duplicate decisions this file has already made — with their own defaults, and with no
+  # knowledge of the reasoning behind them. Deferring to the rules that carry the reasoning.
+  MaximumLineLength:
+    # `style > MaxLineLength` above sets 110 rather than ktlint's 120, and excludes tests
+    # because they assert against whole canonical JSON strings. Wrapping one of those makes
+    # a failing diff harder to read, which is the single moment the line length matters.
+    active: false
+  Filename:
+    # detekt's own `MatchingDeclarationName` says the same thing, and the one file that
+    # violates it is already listed in the baseline. Two rules for one problem means
+    # baselining the same debt twice and fixing it twice to be rid of it.
+    active: false

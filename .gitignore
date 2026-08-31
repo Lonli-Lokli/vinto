@@ -50,7 +50,6 @@ Thumbs.db
 out
 
 test-output
-apps/vinto/.env.local
 
 # Sentry Config File
 .env.sentry-build-plugin
@@ -70,3 +69,47 @@ accessibility-report*.md
 # Accessibility E2E reports
 accessibility-reports/
 .claude/settings.local.json
+
+# Kotlin / Gradle (the Gradle build is the repository root)
+**/build/
+.gradle/
+.kotlin/
+kotlin-js-store/
+local.properties
+
+# Android signing. Without these the release build falls back to the debug key
+# (composeApp/build.gradle.kts), which installs on a phone but cannot be published.
+keystore.properties
+*.jks
+*.keystore
+
+# Xcode per-user state; the shared scheme in xcshareddata/ is committed on purpose.
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# Wrangler local dev state (the local Durable Object SQLite lives here).
+worker/cloudflare/.wrangler/
+
+# Screenshot goldens are accepted by a maintainer looking at the images, never written
+# by a build. `ScreenshotTest` produces them here; CI does not run it, because a fresh
+# runner would write its own and assert nothing (see docs/kotlin/README.md §6i step 1).
+composeApp/src/jvmTest/goldens/*.png
+
+# Store assets are generated, and the reasoning is the goldens' one directly above: a build
+# writes them, so committing them means reviewing a binary diff nobody reads. `zdymak build`
+# rewrites the lot from `zdymak.config.mjs` and the captures.
+marketing/captures/
+marketing/out/
+store-assets/
+
+# App Review contact details are a real person's name, email and phone, and vydanne reads them
+# from here rather than from the committed config for exactly that reason. Demo credentials, if
+# the reviewer ever needs an account, land here too.
+fastlane/metadata/review_information/
+
+# Only `*.local` — never `.env` itself. vydanne's cascade is `.env` -> `.env.<mode>` ->
+# `.env.local` -> `.env.<mode>.local`, and the first two are meant to carry shared non-secret
+# defaults in the repo. Ignoring `.env` would push every contributor's key ids somewhere worse.
+.env.local
+.env.*.local

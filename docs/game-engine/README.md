@@ -19,4 +19,6 @@ The rules were normalized from the official Vinto composite document (see `/docs
 
 ## File Map
 - `/docs/game-engine/SCENARIOS.md` – worked examples and edge cases.
+- `/docs/game-engine/VISIBILITY.md` – what each action reveals to whom, and what the table
+  draws for it; held executable by the two matrix tests it names.
 

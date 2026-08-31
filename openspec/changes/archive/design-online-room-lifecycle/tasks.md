@@ -1,0 +1,126 @@
+# Tasks: room lifecycle, identity and abuse limits
+
+Ordered so that the three open holes close first. Each phase is independently shippable and
+independently verifiable through the gate harnesses; none of it needs the Compose UI.
+
+## 1. Close what is open (security, before anything else)
+
+- [x] 1.1 Server-issued `playerToken`: minted on first seat, returned once in `joined`, stored
+      as a SHA-256 hash, required on every later message. `clientId` from the client is
+      removed entirely rather than kept alongside
+- [x] 1.2 `Seat.ownerId: String?` added and left null — the account seam, populated by nothing
+- [x] 1.3 Server-chosen session seed; `?seed=` removed from the request surface. A test-only
+      seed path stays, guarded by an env var, so the gate harnesses remain deterministic
+- [x] 1.4 Gate: a socket that sends another seat's token, no token, or a wrong token is refused
+      and is never sent that seat's view. Negative controls confirm each check bites
+
+## 2. Registry and room codes
+
+- [x] 2.1 `Registry` Durable Object: mint a 6-character code from the unambiguous alphabet,
+      record the room, resolve a code to a room, forget a room when it dies
+- [x] 2.2 `POST /rooms` creates through the registry; a WebSocket upgrade for an unknown code
+      is refused **without** creating a Durable Object
+- [x] 2.3 Public/private flag; the registry lists public rooms. `forgetRoom` is implemented
+      and idempotent; the **caller** is task 4.5, when a room learns how to die — sweeping
+      needs liveness, and liveness needs the lifecycle
+- [x] 2.4 Gate: an invented code creates nothing (asserted by the object not existing, not by
+      the response text); a private room is joinable by code and absent from the list
+
+## 3. Lobby and start conditions
+
+- [x] 3.1 Four seats; any seated player may add or remove a bot while the room has not started
+- [x] 3.2 A game may not start with fewer than two humans, however the seats are filled
+- [x] 3.3 The fourth seat filling begins a 10 s countdown, held on an **alarm** so it survives
+      hibernation; emptying a seat cancels it and refilling restarts the full ten seconds
+- [x] 3.4 A human displaces a bot in `LOBBY`/`STARTING`; a bot holding a disconnected human's
+      seat is not displaceable, because that seat belongs to its token
+- [x] 3.5 The countdown is broadcast to everyone in the room (`type: 'lobby'`, carrying
+      `msUntilStart`) **and reflected in the registry listing** — `touchRoom` carries humans,
+      seats filled and `startsAtEpochMs`, written on transitions rather than on a timer, so the
+      write count is bounded by play. Landed with 4.5, which needed the same room→registry call
+- [x] 3.6 Gate: a lone player with three bots never starts; a forced start is undone by removing
+      the bot; a seat emptied at t=7s restarts the full countdown; the countdown survives an
+      eviction (driven by firing the alarm, not by waiting)
+
+## 4. Lifecycle
+
+- [x] 4.1 Room states `LOBBY → STARTING → PLAYING ⇄ BETWEEN_ROUNDS → FINISHED`, with the alarm
+      rescheduled on every transition
+- [x] 4.2 Seat grace (30 s) → bot takes over, seat stays reserved by token
+- [x] 4.3 Lonely grace (60 s below two humans, mid-session) → the room ends and deletes itself,
+      running in parallel with seat grace rather than instead of it
+- [x] 4.4 Room TTL (2 min with no human), lobby TTL (10 min unstarted), finished TTL (10 min)
+- [x] 4.5 Deletion tells the registry, so the public list cannot outlive its rooms
+- [x] 4.6 Reconnect after a takeover tells the client its hand changed while it was away
+- [x] 4.7 Gate: an abandoned room is actually gone — asserted by a later join being refused,
+      with the alarm driven rather than waited for; and a game that drops to one human ends
+
+## 5. Abuse limits
+
+- [x] 5.1 In-room token bucket over actions per socket (burst 10, sustained 1/s), refusing
+      with a retry signal rather than serving. This is the expensive path: one action can be
+      1.6 s of CPU
+- [x] 5.2 Registry caps: global live rooms, per-source concurrent rooms
+- [x] 5.3 Edge rate limiting **documented** in `wrangler.jsonc`, not configured there: these are
+      zone rules rather than Worker bindings, so they cannot live in that file and cannot be
+      exercised by `wrangler dev` either. A config block would have been a claim nothing
+      verifies. The limits that *are* code — registry caps, action budget, socket and message
+      caps — are tested
+- [x] 5.4 Message size cap and a maximum socket count per room
+- [x] 5.5 Gate: an action flood is throttled and performs no bot search; the room cap holds
+
+## 6. Sessions of rounds
+
+- [x] 6.1 `SessionState`: completed round results, cumulative points, current `GameState`
+- [x] 6.2 Round scoring per the rules (caller vs lowest coalition, tie to the caller) and game
+      points by final rank
+- [x] 6.3 Per-round seeds derived from the session seed; a whole session replays from one number
+- [x] 6.4 Between-rounds agreement flow, and what happens when somebody declines
+- [x] 6.5 Session clock: 30 minutes from the **first deal**, held on an alarm in the room. The
+      engine is never given wall-clock time — the purity guard already enforces that and must
+      keep passing
+- [x] 6.6 At the buzzer: a round with Vinto declared plays out and is scored; any other round
+      is discarded. Uniformly, including when no round has completed — a session may end with
+      no winner. A new round is always dealt while the session is live
+- [x] 6.7 Remaining time in `PlayerView`, because the discard rule only makes calling Vinto a
+      decision if players can see the deadline
+- [x] 6.8 The room's log records which round was discarded; standings cannot be recomputed from
+      the round recordings alone
+- [x] 6.9 Gate: both buzzer rules, the two-round flow, the visible clock and per-round seeds
+      (`gate-sessions.mjs`, 25 checks). **Not yet**: replaying a whole recorded session from its
+      session seed — that needs the recorder (migrate task 6.4), which does not exist. The
+      *per-round* determinism it would rest on is asserted here; the end-to-end replay is not
+
+## 7. Single-player stays off the network
+
+- [x] 7.1 `LocalGameSession` behind the same interface as the remote one, so the UI cannot
+      tell them apart (migrate-to-kotlin-multiplatform task 6.2) — `:shared:client`, with
+      `GameSession` as the surface both will implement
+- [x] 7.2 Guard: a single-player game opens no socket and creates no room. Asserted by a test
+      that fails if any network call is attempted, not by inspection — `NoNetworkGuardTest`
+      plays a whole round under a `SecurityManager` that throws on any connect, listen or
+      accept, and proves the guard bites before trusting it
+
+Two things the guard turned up, both faithful ports of TypeScript gaps that only a UI was
+keeping shut:
+
+- [x] 7.3 The validator had **no phase gate**: every rule checks the turn and the *sub*-phase,
+      so `DRAW_CARD` passed during setup and again after scoring — reachable from a socket,
+      never from a button. Setup now admits only the setup actions and scoring admits none.
+      The corpus still replays hash-for-hash, since no recording ever drew out of phase
+- [x] 7.4 `PEEK_SETUP_CARD` validated the *named* player rather than the actor, so one player
+      could spend another's peeks. The seat check now lives in `shapes` as `GameAction.actorId`
+      and is read by both the Durable Object and the local session, rather than being copied
+- [x] 7.5 With the phase gate closed, it emerged that **online rounds were skipping setup
+      entirely**: the room deals humans with no peeks and goes straight to playing, and every
+      turn action was accepted while the engine sat in `setup`, so nobody ever saw two of their
+      own cards. `FINISH_SETUP` now takes the whole table being ready rather than whoever
+      pressed it first — in TypeScript those were the same thing, because only one player was
+      ever a person. Both room gates were relying on the hole and now run setup
+
+## 8. Nicknames
+
+- [x] 8.1 Validation: 1–16 characters, restricted character class, trimmed and collapsed —
+      and carried as `PlayerProfile` per token rather than a bare string, so what a seat knows
+      about its player can grow without a wire-format change
+- [x] 8.2 Seat-based disambiguation in the view, since nicknames are not unique

@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BracesOnWhenStatements:Analytics.kt:when</ID>
+    <ID>CognitiveComplexMethod:AnalyticsPrivacyTest.kt:AnalyticsPrivacyTest$@Test fun noEventCanCarryAFreeString</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$/** * The one `index` a data point gets, and what every query groups by. * * It is also each case's `@SerialName`, so the discriminator on the wire and the index in * the store are the same word. A client posting `{"type":"round_end",...}` and a query * saying `WHERE index1 = 'round_end'` are then talking about the same thing, which is one * fewer mapping to keep in step. */ public val name: String</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$BotTookOver : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$Failure : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$Funnel : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$Lesson : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$Reconnected : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$RoomCreated : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$RoundEnd : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$RoundStart : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$SeatFilled : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$SeatVacated : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$SessionEnded : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsEvent$SoloRound : AnalyticsEvent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Cost</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:DataPoint</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Difficulty</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:FailureKind</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:FunnelStep</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:RoundEnding</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:SessionEnding</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Surface</ID>
+  </CurrentIssues>
+</SmellBaseline>

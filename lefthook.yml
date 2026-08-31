@@ -1,10 +1,15 @@
+# Pre-commit hooks.
+#
+# The Kotlin build is the repository root. The npm hooks that used to run here belonged to
+# the web client under legacy-web/, which is on its way out (docs/kotlin/README.md §1d):
+# nothing in CI builds it any more, so nothing at commit time should either.
 pre-commit:
   commands:
-    format:
-      glob: '*.{ts,tsx,js,jsx}'
-      run: npx nx affected --target=lint --fix=true --files={staged_files} --no-error-on-unmatched-pattern
-      staged_fixed: true
-    lint:
-      glob: '*.{ts,tsx,js,jsx}'
-      run: npx nx format:write --files={staged_files}
-      staged_fixed: true
+    # Static analysis for the Kotlin side. maxIssues is 0, so this either passes or names
+    # the file. Scoped by glob so it costs nothing on a commit that touches no Kotlin, and
+    # it runs the whole detekt task rather than only the staged files: detekt analyses per
+    # module, and a violation is just as real when it arrives in a file the commit did not
+    # touch.
+    detekt:
+      glob: '*.{kt,kts}'
+      run: ./gradlew detekt

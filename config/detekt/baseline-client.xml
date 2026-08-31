@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AlsoCouldBeApply:LocalGame.kt:LocalGame.Companion$also</ID>
+    <ID>BracesOnWhenStatements:Choreography.kt:when</ID>
+    <ID>BracesOnWhenStatements:LocalGameSession.kt:LocalGameSession$when</ID>
+    <ID>BracesOnWhenStatements:Narration.kt:when</ID>
+    <ID>BracesOnWhenStatements:RemoteGame.kt:RemoteRoom$when</ID>
+    <ID>BracesOnWhenStatements:TableModel.kt:when</ID>
+    <ID>BracesOnWhenStatements:TransformationMatrixTest.kt:TransformationMatrixTest.Play$when</ID>
+    <ID>CascadingCallWrapping:Choreography.kt:getOrNull(payload.position)</ID>
+    <ID>CascadingCallWrapping:Choreography.kt:getOrNull(target.position)</ID>
+    <ID>CascadingCallWrapping:ChoreographyTest.kt:ChoreographyTest$cards</ID>
+    <ID>CascadingCallWrapping:ChoreographyTest.kt:ChoreographyTest$size</ID>
+    <ID>CascadingCallWrapping:LocalGameTest.kt:LocalGameTest$rank</ID>
+    <ID>CascadingCallWrapping:Settings.kt:VintoJson.decodeFromString(Settings.serializer(), stored) .takeIf { it.version == Settings.FORMAT } ?: Settings()</ID>
+    <ID>CascadingCallWrapping:Stats.kt:VintoJson.decodeFromString(Stats.serializer(), stored) .takeIf { it.version == Stats.FORMAT } ?: Stats()</ID>
+    <ID>CascadingCallWrapping:TableModel.kt:toMap()</ID>
+    <ID>CascadingCallWrapping:TeachScript.kt:view.players.firstOrNull { it.id == view.vintoCallerId } ?.let { Speaker.Named(it.nickname) } ?: Speaker.Nobody</ID>
+    <ID>ClassOrdering:AnimationMapTest.kt:AnimationMapTest$private var watching = false</ID>
+    <ID>ClassOrdering:GameSession.kt:GameSession$suspend fun dispatch: String?</ID>
+    <ID>ClassOrdering:LocalGame.kt:LocalGame$fun dealShown</ID>
+    <ID>ClassOrdering:LocalGameTest.kt:LocalGameTest$@Test fun onlyAFreshDealIsFreshlyDealt</ID>
+    <ID>CognitiveComplexMethod:RemoteGame.kt:RemoteRoom$private suspend fun run</ID>
+    <ID>CognitiveComplexMethod:TeachingDeal.kt:TeachingDirector$override fun nextAction: GameAction?</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Analytics</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Analytics$/** Events accepted since the sink was made. Exposed so a test can prove the cap bites. */ public var accepted: Int = 0 private set</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Analytics$/** Events refused because the buffer was full or consent was absent. */ public var dropped: Int = 0 private set</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Analytics$public fun consentChanged</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:Analytics$public fun record: Boolean</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsConsent</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsConsent$public val allowed: Boolean get() = optedIn &amp;&amp; !platformObjects</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsTransport</ID>
+    <ID>RedundantVisibilityModifier:Analytics.kt:AnalyticsTransport$public suspend fun send</ID>
+    <ID>ReturnCount:TeachingDeal.kt:TeachingDirector$override fun nextAction: GameAction?</ID>
+    <ID>StringLiteralDuplication:TableModel.kt:"Someone"</ID>
+    <ID>StringLiteralDuplication:TeachScript.kt:"scoring"</ID>
+    <ID>UnderscoresInNumericLiterals:FinalRoundIsWatchedTest.kt:FinalRoundIsWatchedTest$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:LocalGameSessionTest.kt:LocalGameSessionTest$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:NoNetworkGuardTest.kt:NoNetworkGuardTest$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:SelfPlayTest.kt:SelfPlayTest.Companion$20260826L</ID>
+    <ID>UnnecessaryParentheses:EveryMoveIsSeenTest.kt:EveryMoveIsSeenTest$(before.pendingAction == null)</ID>
+    <ID>UnnecessaryParentheses:IdentityTest.kt:IdentityTest$(draws * 7919L)</ID>
+    <ID>UnnecessaryParentheses:TeachScript.kt:((view.pendingAction?.card as? CardView.Visible)?.card?.rank)</ID>
+    <ID>UseIfInsteadOfWhen:LabelIdentityTest.kt:LabelIdentityTest$when (label) { is Label.UseFromPile -&gt; "use-from-pile" else -&gt; label.toString() }</ID>
+    <ID>UseIfInsteadOfWhen:TableModel.kt:when { this is Ask.YouDrew &amp;&amp; line is Say.DrewKnown -&gt; line.who is Speaker.You &amp;&amp; line.rank == rank else -&gt; false }</ID>
+    <ID>UseIfInsteadOfWhen:TeachScript.kt:when { "welcome" !in taught.talked -&gt; Lesson( chapter = Chapter.TABLE, teaches = Teaches.Welcome, talkId = "welcome", ) else -&gt; cardTour(taught) ?: tableTour(view, taught) ?: endgameTalk(view, taught) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

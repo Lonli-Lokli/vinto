@@ -6,31 +6,51 @@
 # back at a desk. This workflow is the same deploy, run by GitHub with a scoped API token, and
 # started from the Actions tab — which works from the GitHub mobile app.
 #
-# **Setting it up is two web pages and no computer**: a Cloudflare API token and the account
-# id, added as secrets on a GitHub environment called `room`. The long version, written for
-# somebody who does not do this for a living, is `DEPLOYMENT.md` section 6a on the `kotlin`
-# branch; the short version is in the pull request that brought this file to `master`.
+# **This file has to be on `master` as well as here.** GitHub only offers "Run workflow" for a
+# `workflow_dispatch` workflow that exists on the *default* branch — a workflow living only on
+# a feature branch never appears in the Actions dropdown at all, which is how this was found.
+# It went to `master` on its own in a one-file pull request; keep the two copies in step, or
+# the button runs a version nobody edited.
 #
-# This file lives on `master` for one reason and it is worth knowing: GitHub only offers
-# "Run workflow" for a `workflow_dispatch` workflow that exists on the **default branch**. The
-# rest of the Kotlin work is on `kotlin`, and this had to come across on its own to be usable
-# at all.
+# **A push to `master` that touches the room deploys it.** That reverses the original rule here
+# ("deploying is a decision, not a consequence of merging"), on request, and the trade is worth
+# stating: what it buys is that `master` and the running service cannot drift, which is exactly
+# the failure that had already happened — the committed `ROOM_OPEN` said `false` for months
+# while the live room was open, because the flag had only ever been passed on the command line.
 #
-# **Never on a push.** Deploying is a decision, not a consequence of merging: `wrangler deploy`
-# publishes to a real hostname that real people can reach, and §6d records what a deployment
-# taught that no local run could. So `workflow_dispatch` only, and the flag that opens the room
-# to strangers defaults to *closed* every single time it is run.
+# **That drift is also what made a push trigger dangerous**, so it was fixed before this was
+# added. `wrangler.jsonc` now says `"true"`, and a push deploys the config **as written**
+# without passing `--var` at all. Had it not been fixed, the first unrelated commit to touch
+# `shared/` would have closed a room people were playing in, silently.
+#
+# Closing the room is therefore a committed change to that line, or a manual run with the
+# choice set. `workflow_dispatch` is kept for exactly that, and for redeploying without a code
+# change.
 name: Deploy room
 
 on:
+  # Only the paths that can change what the room runs. `shared/**` is here and in
+  # `deploy-web.yml` both, deliberately: the engine is one module and a change to it changes
+  # the client and the server together.
+  push:
+    branches: [master]
+    paths:
+      - 'worker/**'
+      - 'shared/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/deploy-room.yml'
+
   workflow_dispatch:
     inputs:
       roomOpen:
-        description: 'Open the room to players? Leave false to deploy the engine with the door shut.'
+        description: 'Open the room to players? Leave blank to deploy whatever wrangler.jsonc says.'
         type: choice
-        options: ['false', 'true']
-        default: 'false'
-        required: true
+        options: ['', 'false', 'true']
+        default: ''
+        required: false
       dryRun:
         description: 'Build and measure the bundle without publishing anything.'
         type: boolean
@@ -65,6 +85,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      # The same guard `deploy-web.yml` carries, and it matters more now there is a push
+      # trigger: the paths above do not exist on `master` until the Kotlin branch merges, so
+      # these triggers are inert until then — but a manual run from the wrong branch would
+      # otherwise fail deep in Gradle with an error about a missing project rather than a
+      # sentence about the ref.
+      - name: Check this ref has the worker in it
+        run: |
+          if [ ! -d worker/cloudflare ]; then
+            echo "::error::No worker/cloudflare on ref '${{ github.ref_name }}'. Run this from the branch that carries the Kotlin build (currently 'kotlin')."
+            exit 1
+          fi
 
       - uses: actions/setup-java@v6
         with:
@@ -111,15 +143,40 @@ jobs:
             if ($1 > 3145728) { print "over budget"; exit 1 }
           }'
 
+      # One place decides what the door should be, so the deploy and the check that follows it
+      # cannot disagree. A manual run may override it; a push never does — it publishes the
+      # committed config, which is the whole point of letting a push deploy at all.
+      #
+      # This replaces an earlier arrangement where the flag was *only* ever passed on the
+      # command line, "instead of living in a file where it can be committed by accident". The
+      # reasoning was sound and the consequence was worse: the committed file said `false`
+      # while the live room was open, for months, and nothing could see the disagreement.
+      - name: What the door should be
+        id: door
+        run: |
+          chosen='${{ inputs.roomOpen }}'
+          if [ -n "$chosen" ]; then
+            echo "var=--var ROOM_OPEN:$chosen" >> "$GITHUB_OUTPUT"
+            echo "want=$chosen" >> "$GITHUB_OUTPUT"
+            echo "This run overrides the committed flag: ROOM_OPEN=$chosen"
+          else
+            want=$(grep -oE '"ROOM_OPEN"[[:space:]]*:[[:space:]]*"(true|false)"' \
+                   worker/cloudflare/wrangler.jsonc | grep -oE '(true|false)' | tail -1)
+            if [ -z "$want" ]; then
+              echo "::error::no ROOM_OPEN in worker/cloudflare/wrangler.jsonc"
+              exit 1
+            fi
+            echo "var=" >> "$GITHUB_OUTPUT"
+            echo "want=$want" >> "$GITHUB_OUTPUT"
+            echo "Deploying the committed config: ROOM_OPEN=$want"
+          fi
+
       - name: What would have been deployed
         if: ${{ inputs.dryRun }}
         run: |
           echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
-          echo "ROOM_OPEN would have been set to \`${{ inputs.roomOpen }}\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "ROOM_OPEN would have been \`${{ steps.door.outputs.want }}\`." >> "$GITHUB_STEP_SUMMARY"
 
-      # `--var` rather than editing `wrangler.jsonc`, so the door's state is chosen by whoever
-      # runs this and is recorded on the run, instead of living in a file where it can be
-      # committed by accident and deployed by somebody who did not read it.
       - name: Deploy
         if: ${{ !inputs.dryRun }}
         working-directory: worker/cloudflare
@@ -131,7 +188,7 @@ jobs:
             echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
             exit 1
           fi
-          npx --yes wrangler@${WRANGLER_VERSION} deploy --var ROOM_OPEN:'${{ inputs.roomOpen }}'
+          npx --yes wrangler@${WRANGLER_VERSION} deploy ${{ steps.door.outputs.var }}
 
       # Propagation is not atomic, and §6d records it catching the maintainer out twice: a
       # probe seconds after `wrangler deploy` returned the *old* behaviour and sent them
@@ -141,7 +198,7 @@ jobs:
       - name: Wait for the edge to agree
         if: ${{ !inputs.dryRun }}
         run: |
-          want='${{ inputs.roomOpen }}'
+          want='${{ steps.door.outputs.want }}'
           for attempt in $(seq 1 30); do
             health=$(curl -sS --max-time 10 "$SERVICE/health" || echo '{}')
             echo "attempt $attempt: $health"

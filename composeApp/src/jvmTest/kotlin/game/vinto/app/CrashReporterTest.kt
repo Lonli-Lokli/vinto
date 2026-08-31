@@ -1,0 +1,204 @@
+package game.vinto.app
+
+import game.vinto.app.crash.CrashReporter
+import game.vinto.app.crash.CrashSurface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+
+/**
+ * How the reporter behaves, as opposed to what it writes (`CrashReportTest`).
+ *
+ * Three properties, each protecting against a different way a crash reporter becomes a
+ * liability: one that reports when it was never configured, one that sends the same stack a
+ * hundred times from a device stuck in a loop, and one that throws while reporting and so
+ * replaces the crash with its own.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class CrashReporterTest {
+
+    private class Sent {
+        val bodies = mutableListOf<String>()
+        val auths = mutableListOf<String>()
+        val urls = mutableListOf<String>()
+    }
+
+    private fun reporterFor(
+        dsn: String?,
+        scope: CoroutineScope,
+        sent: Sent = Sent(),
+        post: suspend (String, String, String) -> Unit = { url, auth, body ->
+            sent.urls += url
+            sent.auths += auth
+            sent.bodies += body
+        },
+    ) = CrashReporter(
+        dsn = dsn,
+        platform = "java",
+        release = "vinto@0.1.0",
+        environment = "production",
+        scope = scope,
+        now = { 1_756_512_000_000 },
+        nowIso = { "2026-08-30T00:00:00Z" },
+        surface = { CrashSurface.ONLINE },
+        post = post,
+    )
+
+    /** Mirrors `CrashReporter.BUDGET`, which is private and should stay so. */
+    private val budgetCeiling = 5
+
+    @Test
+    fun aBuildWithNoDsnReportsNothingAndSaysSo() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(dsn = null, scope = CoroutineScope(Dispatchers.Unconfined), sent = sent)
+
+        assertFalse(reporter.enabled, "a build with no DSN claimed to be reporting")
+        reporter.report(IllegalStateException("the stage never drained"))
+        assertTrue(sent.bodies.isEmpty(), "something was sent with nowhere to send it: ${sent.bodies}")
+    }
+
+    @Test
+    fun aConfiguredBuildSendsOneEnvelopeToTheProjectsEndpoint() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        assertTrue(reporter.enabled)
+        reporter.report(IllegalStateException("the stage never drained"))
+
+        assertEquals(1, sent.bodies.size, "expected exactly one report")
+        assertEquals("https://o1.ingest.us.sentry.io/api/456/envelope/", sent.urls.single())
+        assertTrue(sent.auths.single().contains("sentry_key=abc123"), sent.auths.single())
+        assertTrue(sent.bodies.single().contains("the stage never drained"), sent.bodies.single())
+        assertTrue(sent.bodies.single().contains("\"surface\":\"ONLINE\""), sent.bodies.single())
+    }
+
+    @Test
+    fun aDeviceStuckInALoopStillSendsOneReport() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        repeat(100) { reporter.report(IllegalStateException("again")) }
+
+        assertEquals(
+            1,
+            sent.bodies.size,
+            "${sent.bodies.size} reports from one process — a loop would spend the project's quota",
+        )
+    }
+
+    /**
+     * And a different failure afterwards still gets through.
+     *
+     * The budget used to be one report per process, which was right while the fatal handler
+     * was the only caller and wrong the moment background failures started arriving too: a
+     * socket loop failing at launch would then have spent the budget the crash that actually
+     * ended the app needed. What must stay true is that a *loop* cannot spend it, which is
+     * the case above.
+     */
+    @Test
+    fun aSecondDifferentFailureIsStillReported() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        repeat(20) { reporter.report(IllegalStateException("the room never answered")) }
+        reporter.report(IllegalArgumentException("and then the table fell over"))
+
+        assertEquals(2, sent.bodies.size, "one per distinct failure, not one per process")
+        assertTrue(
+            sent.bodies.last().contains("and then the table fell over"),
+            "the second failure was swallowed by the first: ${sent.bodies.last()}",
+        )
+    }
+
+    /** And the budget is a ceiling, however many different things go wrong. */
+    @Test
+    fun aProcessThatKeepsFailingStopsReporting() = runTest {
+        val sent = Sent()
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            sent = sent,
+        )
+
+        repeat(50) { reporter.report(IllegalStateException("failure number $it")) }
+
+        assertTrue(
+            sent.bodies.size in 1..budgetCeiling,
+            "${sent.bodies.size} reports from one process — that is a bill, not a diagnosis",
+        )
+    }
+
+    /**
+     * The envelope exists before the network is touched, and the stored copy is cleared only
+     * when the send actually worked.
+     *
+     * This is the contract that makes a fatal crash reportable at all. A POST started as
+     * Android tears the process down does not finish — so the envelope is written to the vault
+     * first and sent second, and the next launch retries whatever is still there. Clearing on
+     * anything less than success would throw away the one copy that survived.
+     */
+    @Test
+    fun anEnvelopeSurvivesAFailedSendAndIsClearedByASuccessfulOne() = runTest {
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            post = { _, _, _ -> error("the network is down") },
+        )
+
+        val envelope = assertNotNull(
+            reporter.envelopeFor(IllegalStateException("the room never answered")),
+            "no envelope to store, so nothing could have been kept",
+        )
+        assertTrue(envelope.contains("the room never answered"))
+
+        var cleared = false
+        reporter.send(envelope) { cleared = true }
+        assertFalse(cleared, "a send that failed cleared the only copy of the crash")
+
+        val working = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+        )
+        working.send(envelope) { cleared = true }
+        assertTrue(cleared, "a send that worked left the crash stored to be sent again")
+    }
+
+    /** And a build with nowhere to report builds no envelope, so nothing is stored either. */
+    @Test
+    fun aBuildWithNoDsnHasNothingToStore() = runTest {
+        val reporter = reporterFor(dsn = null, scope = CoroutineScope(Dispatchers.Unconfined))
+        assertEquals(null, reporter.envelopeFor(IllegalStateException("nowhere to go")))
+    }
+
+    @Test
+    fun aReporterThatCannotReachSentryDoesNotThrow() = runTest {
+        val reporter = reporterFor(
+            dsn = "https://abc123@o1.ingest.us.sentry.io/456",
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            post = { _, _, _ -> error("the network is down") },
+        )
+
+        // The crash being reported has already happened. If this throws, the reporter has
+        // turned one failure into two — and it throws on the *crash* path, where nothing is
+        // left to catch it.
+        reporter.report(IllegalStateException("the stage never drained"))
+    }
+}

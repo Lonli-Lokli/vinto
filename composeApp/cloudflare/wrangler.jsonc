@@ -1,0 +1,60 @@
+{
+  // The website, as a Worker serving static assets rather than a Pages project.
+  //
+  // It was a Pages project for one deploy, and that deploy worked. The reason for moving is
+  // not that Pages was broken — it is that **a Pages custom domain can only be attached in
+  // the dashboard**. `wrangler pages` has no command for it, so `vinto.kupalinka.app` was
+  // stuck behind "somebody has to open a browser", on a project whose whole deploy story is
+  // otherwise a button in the GitHub mobile app. A Worker claims its hostname from the
+  // `routes` entry below, exactly as `vinto-room.kupalinka.app` already does — so the last
+  // browser-only step becomes part of the deploy.
+  //
+  // Two smaller things came with it, both of which had already bitten us on Pages:
+  // `not_found_handling` states the 404 behaviour in configuration instead of depending on
+  // whether a `404.html` happens to be present, and there is one deployment model in this
+  // repository instead of two.
+  //
+  // `_headers` and `_redirects` are read from the asset directory here exactly as they were
+  // on Pages, so those files are unchanged. Redirects are applied before headers, which is
+  // what keeps `/r/<code>` reaching the app rather than the 404 page.
+  "$schema": "../../worker/cloudflare/node_modules/wrangler/config-schema.json",
+  "name": "vinto-web",
+  "compatibility_date": "2026-08-01",
+
+  // No `main`. This Worker runs no code at all — it is a static site, and every request is
+  // served from the asset store. If that ever changes, note that `_redirects` does **not**
+  // apply to requests handled by Worker code.
+  "assets": {
+    // Written by `./gradlew :composeApp:wasmJsBrowserDistribution`, with the entry script
+    // content-addressed by the deploy workflow afterwards.
+    "directory": "../build/dist/wasmJs/productionExecutable",
+
+    // The whole reason `404.html` exists. The other option, "single-page-application",
+    // answers *every* unmatched path with `index.html` and a **200** — so a browser asking
+    // for a script that is not there is handed a web page and told it succeeded, and the
+    // cache rules keep that answer. That is not hypothetical: it is what the Pages
+    // deployment did, measured (`/no-such-file.js` → `200 text/html`), and it is the trap
+    // `docs/kotlin/README.md` §6c warns about.
+    //
+    // Invitations still work, because `_redirects` maps `/r/*` to the shell explicitly and
+    // redirects are evaluated before this fallback.
+    "not_found_handling": "404-page"
+  },
+
+  // The site's address, created by wrangler rather than by a person in a dashboard. This is
+  // the line that unblocks `vinto.kupalinka.app`; the DNS record and the certificate are
+  // Cloudflare's to make, because it already runs the `kupalinka.app` zone.
+  "routes": [{ "pattern": "vinto.kupalinka.app", "custom_domain": true }],
+
+  // One address, deliberately. A `*.workers.dev` fallback would be a second, publicly
+  // reachable copy of the same site — indexable, shareable, and destined to be pasted into a
+  // chat by somebody who found it first. `<link rel="canonical">` would tell a search engine
+  // which one counts, and would do nothing about the person who bookmarked the wrong one.
+  //
+  // It also means a custom domain that fails to attach is a failed deploy rather than a
+  // silent publish to an address nobody was told about — which is the failure mode that
+  // wasted a run on Pages, in the other direction.
+  "workers_dev": false,
+
+  "observability": { "enabled": true }
+}

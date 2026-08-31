@@ -1,0 +1,210 @@
+package game.vinto.app
+
+import java.awt.Font
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.fail
+
+/**
+ * Every letter of every language the app ships, checked against the type it ships with.
+ *
+ * A bundled font is a promise that the app looks the same in every language, and it is a
+ * promise that breaks silently: a translator adds a locale, one character is missing from the
+ * family, and the platform quietly substitutes its own face for that glyph — so a Romanian
+ * "ț" or a Kazakh "ә" arrives in a different typeface, mid-word, and nobody notices until a
+ * screenshot. This reads the actual `cmap` out of the actual files and fails the build first.
+ *
+ * The bundled family is **Fira Sans Condensed**, which carries Latin, its extensions
+ * (Vietnamese included) and the whole of Cyrillic — so every language written in either
+ * script sets in the same type: Polish, Czech, Romanian, Turkish, Vietnamese, Russian,
+ * Ukrainian, Belarusian, Serbian, Kazakh. Scripts it cannot carry — CJK, Arabic, Hebrew,
+ * Devanagari, Thai — are a deliberate gap rather than an oversight: no font that covers them
+ * fits in a phone game's download, and the platform's own face is the right fallback. This
+ * case is what turns adding such a locale into a decision instead of a surprise.
+ */
+class FontCoverageTest {
+
+    /** The locales drawn in whatever face the platform supplies. See [Language.bundledFace]. */
+    private val fallsBackToThePlatform: Set<String>
+        get() = Language.entries.filterNot { it.bundledFace }.map { "values-${it.tag}" }.toSet()
+
+    @Test
+    fun everyLetterOfEveryTranslationCanBeDrawnInTheBundledFace() {
+        val ui = load("fira_medium.ttf")
+        val gaps = mutableMapOf<String, MutableSet<Char>>()
+
+        translations()
+            // The locales that were *recorded* as falling back, which is the second of the two
+            // answers this case has always offered. `Language.bundledFace` is where that
+            // decision lives, so adding a script without deciding still fails here.
+            .filterNot { (locale, _) -> locale in fallsBackToThePlatform }
+            .forEach { (locale, text) ->
+                text.filter { it.needsAFont() && !ui.canDisplay(it) }
+                    .forEach { gaps.getOrPut(locale) { mutableSetOf() } += it }
+            }
+
+        if (gaps.isNotEmpty()) {
+            fail(
+                gaps.entries.joinToString(prefix = "the bundled face cannot draw: ") { (locale, missing) ->
+                    "$locale needs ${missing.joinToString("")}"
+                } + ". Either bundle a face for that script, or record the locale as one that " +
+                    "falls back to the platform's own type.",
+            )
+        }
+    }
+
+    /** Every weight has to carry the same alphabet, or a bold word changes typeface. */
+    @Test
+    fun everyWeightCarriesTheSameAlphabet() {
+        val weights = listOf("fira_medium.ttf", "fira_semibold.ttf", "fira_bold.ttf").map(::load)
+        val letters = translations()
+            .filterNot { (locale, _) -> locale in fallsBackToThePlatform }
+            .flatMap { (_, text) -> text.toList() }
+            .filter { it.needsAFont() }
+
+        weights.forEach { face ->
+            val missing = letters.filterNot(face::canDisplay).toSet()
+            assertTrue(missing.isEmpty(), "${face.fontName} cannot draw ${missing.joinToString("")}")
+        }
+    }
+
+    /**
+     * The display face is Latin-only and that is allowed, on one condition: it is used for the
+     * name of the game and nothing else, and every `app_name` there is fits inside it.
+     *
+     * **Decided, having looked at the alternatives.** Cinzel carries Latin and latin-ext and
+     * nothing else, so the game's name cannot be translated into Cyrillic — and a display
+     * face that could (Forum and Prata both carry it) was weighed and not taken. VINTO is a
+     * proper noun, it is the same word on every store listing, and the mark is the one place
+     * a change of typeface is the whole design rather than a detail.
+     *
+     * So this sweeps **every** locale rather than the base file. The hole it closes is a
+     * precise one: a translated `app_name` would be caught by nothing, because
+     * [everyLetterOfEveryTranslationCanBeDrawnInTheBundledFace] checks translations against
+     * Fira — which has the Cyrillic — while this one string is drawn in Cinzel, which does
+     * not. "ВИНТО" would pass every gate this file had and arrive on the home screen as
+     * five empty boxes.
+     *
+     * It is about the glyphs and not about the key, deliberately. A locale may carry its own
+     * `app_name` if the mark can draw it — a Turkish or Polish rendering is fine — and what
+     * is refused is a script Cinzel has never had.
+     */
+    @Test
+    fun theDisplayFaceCoversTheOneStringItIsUsedFor() {
+        val wordmark = load("cinzel_bold.ttf")
+        val base = strings(File(resources(), "values/strings.xml"))["app_name"]
+            ?: fail("there is no app_name to set in it")
+
+        val names = localeDirs()
+            .mapNotNull { dir -> strings(File(dir, "strings.xml"))["app_name"]?.let { dir.name to it } }
+            .plus("values" to base)
+
+        names.forEach { (locale, name) ->
+            name.filter { it.needsAFont() }.forEach {
+                assertTrue(
+                    wordmark.canDisplay(it),
+                    "$locale sets the game's name to \"$name\", and the wordmark face cannot " +
+                        "draw '$it'. The mark is Cinzel, which is Latin-only by decision — " +
+                        "leave app_name out of that file and it falls back to the English.",
+                )
+            }
+        }
+    }
+
+    /**
+     * The list above is a decision, so it is checked against the one that made it.
+     *
+     * Two ways this rots and both are silent. A language could be marked `bundledFace = false`
+     * when Fira draws it perfectly well — which quietly excuses it from the check that exists
+     * to protect it. Or the endonym in the picker could use a script the bundled face cannot
+     * draw, on a language claiming it can — and the picker is the one screen somebody reads
+     * *before* they can read the app, so tofu there is tofu at the worst possible moment.
+     */
+    @Test
+    fun theFallbackListSaysWhatIsActuallyTrue() {
+        val ui = load("fira_medium.ttf")
+
+        Language.entries.forEach { language ->
+            val drawable = language.endonym.filter { it.needsAFont() }.all(ui::canDisplay)
+            assertTrue(
+                drawable == language.bundledFace,
+                if (language.bundledFace) {
+                    "${language.tag} claims the bundled face but its own name needs " +
+                        language.endonym.filterNot { !it.needsAFont() || ui.canDisplay(it) }
+                } else {
+                    "${language.tag} is excused from the font check and does not need to be: " +
+                        "Fira draws \"${language.endonym}\" perfectly well"
+                },
+            )
+        }
+    }
+
+    // ------------------------------------------------------------------ the reading
+
+    /**
+     * Skips what no text font is expected to carry: spaces, controls, and emoji.
+     *
+     * Emoji are recognised by being outside the basic plane — 🐞 and 🏆 arrive as surrogate
+     * pairs — and not by a codepoint ceiling. The first version of this used a ceiling, which
+     * quietly excused every script above it: a whole file of Japanese passed without a word
+     * of it being checked, which is precisely the failure this case exists to catch.
+     */
+    private fun Char.needsAFont(): Boolean =
+        !isWhitespace() && !isISOControl() && !isSurrogate() && code !in VARIATION
+
+    /** Every `values*` directory that actually carries a strings file. */
+    private fun localeDirs(): List<File> =
+        resources().listFiles { file -> file.isDirectory && file.name.startsWith("values-") }
+            .orEmpty()
+            .filter { File(it, "strings.xml").isFile }
+            .sortedBy { it.name }
+
+    private fun translations(): List<Pair<String, String>> =
+        resources().listFiles { file -> file.isDirectory && file.name.startsWith("values") }
+            .orEmpty()
+            .flatMap { dir ->
+                val xml = File(dir, "strings.xml")
+                if (!xml.isFile) {
+                    emptyList()
+                } else {
+                    strings(xml).values.map { dir.name to it }
+                }
+            }
+            .also { assertTrue(it.isNotEmpty(), "no strings found to check") }
+
+    /** The values of a compose-resources strings file, entities resolved. */
+    private fun strings(xml: File): Map<String, String> =
+        Regex("""<string name="([^"]+)"\s*>(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
+            .findAll(xml.readText())
+            .associate { match ->
+                match.groupValues[1] to match.groupValues[2]
+                    .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+                    .replace("&quot;", "\"").replace("&apos;", "'").replace("\\'", "'")
+                    .replace(Regex("""\\n"""), "\n")
+                    .replace(Regex("""%\d+\$[sdf]"""), "")
+            }
+
+    private fun load(name: String): Font =
+        Font.createFont(Font.TRUETYPE_FONT, File(fonts(), name))
+
+    private fun fonts(): File = File(resources(), "font")
+
+    private fun resources(): File {
+        // The test's working directory is the module, but that has moved before now.
+        var here: File? = File(System.getProperty("user.dir"))
+        while (here != null) {
+            val candidate = File(here, "composeApp/src/commonMain/composeResources")
+            if (candidate.isDirectory) return candidate
+            val inside = File(here, "src/commonMain/composeResources")
+            if (inside.isDirectory) return inside
+            here = here.parentFile
+        }
+        fail("cannot find composeResources from ${System.getProperty("user.dir")}")
+    }
+
+    private companion object {
+        /** The selectors that ask for an emoji rendering of a character. */
+        val VARIATION = 0xFE00..0xFE0F
+    }
+}

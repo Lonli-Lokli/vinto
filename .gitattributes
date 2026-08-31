@@ -1,1 +1,14 @@
 * text=auto
+
+# Cross-implementation fixtures: keep the committed bytes exactly as generated.
+# Hashes are computed over an in-memory canonical string rather than file bytes, so
+# line-ending normalisation would not break the gate today -- but these files are a
+# byte-level contract with the Kotlin port, and normalising them on checkout would make
+# any future byte comparison platform-dependent.
+fixtures/** -text
+
+# Gradle wrapper: gradlew is a shell script and MUST stay LF, or Linux/CI fails with
+# "bad interpreter". The .bat must stay CRLF for Windows cmd. The jar is binary.
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+gradle/wrapper/gradle-wrapper.jar binary
