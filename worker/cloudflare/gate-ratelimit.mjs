@@ -23,6 +23,9 @@ const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 const FLOODER = { 'cf-connecting-ip': '203.0.113.20' };
 const BYSTANDER = { 'cf-connecting-ip': '203.0.113.21' };
 
+/** The second flood's own bucket, for the window-straddling retry below. */
+const REFLOODER = { 'cf-connecting-ip': '203.0.113.22' };
+
 let failures = 0;
 const check = (name, ok, detail = '') => {
   if (ok) console.log(`  pass  ${name}`);
@@ -45,13 +48,41 @@ console.log(`Door volume against ${BASE}\n`);
 //
 // 200 requests against a limit of 120 a minute. `GET /rooms` because it is the cheap-to-ask,
 // expensive-to-answer one; the limiter does not care which path it is.
-let firstThrottledAt = null;
-let served = 0;
-for (let i = 1; i <= 200; i++) {
-  const res = await fetch(`${BASE}/rooms`, { headers: FLOODER });
-  if (res.status === 429) { if (firstThrottledAt === null) firstThrottledAt = i; }
-  else if (res.status === 200) served += 1;
+//
+// The local limiter counts in fixed windows aligned to the Unix minute, so a flood that
+// starts in the dying seconds of one is granted the tail of that allowance *and* the whole
+// of the next — or, split evenly enough, is never throttled at all. Not hypothetical: a CI
+// run that started this gate at :59.68 measured 154 served against 120, with the 429s
+// beginning exactly as the minute rolled, on a commit whose re-run measured 120 exactly.
+// (The real edge applies a sliding window, so against GATE_URL the wait is merely harmless.)
+// Two defences, both cheap: a flood does not start inside the last stretch of a window, and
+// a reading that still looks straddled is taken once more from a fresh source — a fresh one,
+// because the first source's allowance is spent and re-flooding it would prove nothing.
+const insideOneWindow = async () => {
+  const left = 60_000 - (Date.now() % 60_000);
+  if (left < 15_000) {
+    console.log(`        (${Math.ceil(left / 1000)}s left of this limiter window — waiting it out)`);
+    await new Promise((resolve) => setTimeout(resolve, left + 500));
+  }
+};
+
+const flood = async (source) => {
+  await insideOneWindow();
+  let firstThrottledAt = null;
+  let served = 0;
+  for (let i = 1; i <= 200; i++) {
+    const res = await fetch(`${BASE}/rooms`, { headers: source });
+    if (res.status === 429) { if (firstThrottledAt === null) firstThrottledAt = i; }
+    else if (res.status === 200) served += 1;
+  }
+  return { firstThrottledAt, served };
+};
+
+let reading = await flood(FLOODER);
+if (reading.served > 150 || reading.firstThrottledAt === null) {
+  reading = await flood(REFLOODER);
 }
+const { firstThrottledAt, served } = reading;
 
 check(
   'a flood is cut off',
