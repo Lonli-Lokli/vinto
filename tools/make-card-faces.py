@@ -207,62 +207,101 @@ def face_number(n):
     return "".join(pip_card(x, y) for x, y in PIP_LAYOUTS[n])
 
 
-def face_peek_own():
-    """7 and 8: the poker hole-card peek — your card's corner lifted, your eye
-    glancing down under the flap. Nobody peeks at someone else's card like this."""
-    cw, ch = 320, 440
-    left, top = CX - cw / 2, 520
-    right = left + cw
-    cut = 130
-    card = (
-        f'<rect x="{left}" y="{top}" width="{cw}" height="{ch}" rx="26" '
-        f'fill="{FELT}" stroke="{GOLD}" stroke-width="10"/>'
-        f'<rect x="{left + 22}" y="{top + 22}" width="{cw - 44}" height="{ch - 44}" rx="16" '
-        f'fill="none" stroke="{PAPER}" stroke-width="4" opacity="0.35"/>'
-    )
-    # the lifted corner: the top-right of the card folds down-inward, showing its pale face
-    notch = (
-        f'<path d="M {right - cut},{top - 5} L {right + 5},{top - 5} L {right + 5},{top + cut} '
-        f'L {right - cut},{top - 5} Z" fill="{PAPER}"/>'
-    )
-    flap = (
-        f'<path d="M {right - cut},{top} L {right},{top + cut} L {right - cut + 4},{top + cut - 6} '
-        f'Z" fill="{WHITE}" stroke="{GOLD}" stroke-width="9" stroke-linejoin="round"/>'
-    )
-    peek = sight_dots(CX + 74, 412, right - cut / 2 - 16, top + 30)
-    return card + notch + flap + peek + big_eye(CX + 40, 344, gaze=16)
+PALE = "#A8C2B5"
 
 
-def sight_dots(x1, y1, x2, y2):
+def table_felt():
+    """The board: a dark felt table seen from above, as the app itself draws it."""
     return (
-        f'<line x1="{x1:.0f}" y1="{y1:.0f}" x2="{x2:.0f}" y2="{y2:.0f}" stroke="{INK}" '
-        f'stroke-width="7" stroke-linecap="round" stroke-dasharray="1 26" opacity="0.85"/>'
+        f'<rect x="140" y="290" width="545" height="600" rx="130" fill="{FELT_DARK}" '
+        f'stroke="{GOLD}" stroke-width="8"/>'
+        f'<rect x="162" y="312" width="501" height="556" rx="112" fill="none" '
+        f'stroke="{GOLD}" stroke-width="3" opacity="0.4"/>'
+    )
+
+
+def opponent_seat(cx, cy, rot=0.0, gap=None):
+    """A bust with three small cards in front of it, facing the table's center."""
+    bust = (
+        f'<circle cx="0" cy="-66" r="27" fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
+        f'<path d="M -58,-2 Q -52,-48 0,-52 Q 52,-48 58,-2 Z" '
+        f'fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
+    )
+    cards = "".join(
+        f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
+        f'fill="{FELT_DARK}" stroke="{PALE}" stroke-width="4"/>'
+        for i in range(3)
+        if i != gap
+    )
+    return f'<g transform="translate({cx} {cy}) rotate({rot})">{bust}{cards}</g>'
+
+
+def your_hand(gap=None):
+    """Your three cards at the bottom edge, larger — the seat the app gives you."""
+    return "".join(
+        f'<rect x="{CX + (i - 1) * 116 - 50:.0f}" y="772" width="100" height="138" rx="12" '
+        f'fill="{FELT}" stroke="{GOLD}" stroke-width="7"/>'
+        for i in range(3)
+        if i != gap
+    )
+
+
+def trail(x1, y1, x2, y2, hw=36):
+    """A gold streak from a seat's gap to the card pulled out of it: whose card this is."""
+    return (
+        f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
+        f'fill="{GOLD}" opacity="0.3"/>'
+    )
+
+
+def popped_card(cx, cy, w=140, h=192, rot=0.0):
+    """The card under examination, enlarged at the table's center, face up."""
+    body = (
+        f'<rect x="{cx - w / 2 - 12}" y="{cy - h / 2 - 12}" width="{w + 24}" height="{h + 24}" '
+        f'rx="22" fill="{GOLD}" opacity="0.35"/>'
+        f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="14" '
+        f'fill="{WHITE}" stroke="{GOLD}" stroke-width="8"/>'
+    )
+    return group(rot, cx, cy, body) if rot else body
+
+
+def board(top_gap=None, my_gap=None):
+    return (
+        table_felt()
+        + opponent_seat(CX, 384, gap=top_gap)
+        + opponent_seat(224, 590, rot=90)
+        + opponent_seat(601, 590, rot=-90)
+        + your_hand(gap=my_gap)
+    )
+
+
+def face_peek_own():
+    """7 and 8: the four-player board; one of YOUR cards rises to the light,
+    the gold trail runs from the gap in your own hand."""
+    return (
+        board(my_gap=1)
+        + trail(CX, 800, CX, 700)
+        + popped_card(CX, 620)
+        + big_eye(CX, 588, s=0.62, gaze=6)
     )
 
 
 def face_peek_them():
-    """9 and 10: an opponent sits across the table, their card in front of them,
-    your lens reaching onto it. The person is what says 'theirs'."""
-    bust = (
-        f'<circle cx="{CX}" cy="252" r="82" fill="{FELT_DARK}" stroke="{INK}" stroke-width="8"/>'
-        f'<path d="M {CX - 175},480 Q {CX - 160},330 {CX - 62},322 Q {CX},302 {CX + 62},322 '
-        f'Q {CX + 160},330 {CX + 175},480 Z" '
-        f'fill="{FELT_DARK}" stroke="{INK}" stroke-width="8"/>'
-    )
-    card = big_card(CX, 560, w=270, h=370, mine=False)
-    lens_x, lens_y, r = CX + 66, 720, 145
+    """9 and 10: the same board; the card rises from the TOP opponent's hand,
+    the trail runs from their gap, and your lens does the looking."""
+    scene = board(top_gap=1) + trail(CX, 420, CX, 480) + popped_card(CX, 552)
+    lens_x, lens_y, r = CX + 52, 592, 108
     handle_a = math.radians(52)
     hx1 = lens_x + r * math.cos(handle_a)
     hy1 = lens_y + r * math.sin(handle_a)
-    hx2 = lens_x + (r + 160) * math.cos(handle_a)
-    hy2 = lens_y + (r + 160) * math.sin(handle_a)
+    hx2 = lens_x + (r + 130) * math.cos(handle_a)
+    hy2 = lens_y + (r + 130) * math.sin(handle_a)
     lens = (
-        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
         f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
-        f'stroke="{GOLD}" stroke-width="32" stroke-linecap="round"/>'
-        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="18"/>'
+        f'stroke="{GOLD}" stroke-width="26" stroke-linecap="round"/>'
+        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="15"/>'
     )
-    return bust + card + lens + big_eye(lens_x, lens_y, s=0.66, gaze=-10)
+    return scene + lens + big_eye(lens_x, lens_y, s=0.5, gaze=-6)
 
 
 def blindfold(cx, cy, hw, rot):
@@ -284,27 +323,44 @@ def blindfold(cx, cy, hw, rot):
     return group(rot, cx, cy, body)
 
 
-def swap_pair(dashed):
-    """Two cards — yours and theirs — circled by exchange arrows."""
-    cards = big_card(320, 600, w=270, h=380, mine=True, rot=-13) + big_card(
-        505, 600, w=270, h=380, mine=False, rot=13
+def swap_board(revealed):
+    """The board with one card pulled from your hand and one from the top
+    opponent's, meeting at the center. Trails say whose cards are trading."""
+    scene = board(top_gap=1, my_gap=1)
+    trails = trail(CX - 20, 800, 340, 660, hw=30) + trail(CX + 20, 420, 484, 520, hw=30)
+    if revealed:
+        pair = popped_card(340, 590, w=112, h=154, rot=-9) + popped_card(
+            484, 590, w=112, h=154, rot=9
+        )
+    else:
+        mine = (
+            f'<rect x="284" y="513" width="112" height="154" rx="14" '
+            f'fill="{FELT}" stroke="{GOLD}" stroke-width="8"/>'
+        )
+        theirs = (
+            f'<rect x="428" y="513" width="112" height="154" rx="14" '
+            f'fill="{FELT_DARK}" stroke="{PALE}" stroke-width="8"/>'
+        )
+        pair = group(-9, 340, 590, mine) + group(9, 484, 590, theirs)
+    arrows = arc_arrow(CX, 592, 158, 210, 330, dashed=revealed, sw=13) + arc_arrow(
+        CX, 592, 158, 30, 150, dashed=revealed, sw=13
     )
-    arrows = arc_arrow(CX, 600, 300, 208, 332, dashed=dashed) + arc_arrow(
-        CX, 600, 300, 28, 152, dashed=dashed
-    )
-    return cards, arrows
+    return scene + trails + pair + arrows
 
 
 def face_jack():
-    """The blind swap: the trade happens, the blindfold means nobody looks."""
-    cards, arrows = swap_pair(dashed=False)
-    return cards + blindfold(CX, 590, 250, -6) + arrows
+    """The blind swap: yours for theirs, and the blindfold means nobody looks."""
+    fold = blindfold(CX, 590, 128, -6)
+    return (
+        swap_board(revealed=False)
+        + f'<g transform="translate({CX} 590) scale(0.78) translate(-{CX} -590)">{fold}</g>'
+    )
 
 
 def face_queen():
-    """Look first, then trade if you like: the eye is open, the arrows undecided."""
-    cards, arrows = swap_pair(dashed=True)
-    return cards + big_eye(CX, 590, s=1.05) + arrows
+    """Look first, then trade if you like: both faces up, one open eye,
+    and the arrows still dashed — undecided."""
+    return swap_board(revealed=True) + big_eye(CX, 590, s=0.55)
 
 
 def face_king():
