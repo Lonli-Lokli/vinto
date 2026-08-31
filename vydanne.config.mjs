@@ -18,7 +18,7 @@
 export default {
   // Both stores, one identifier: `androidApp/build.gradle.kts` sets `applicationId` and
   // `iosApp.xcodeproj` sets `PRODUCT_BUNDLE_IDENTIFIER` to this same string.
-  bundleId: 'game.vinto.app',
+  bundleId: 'app.kupalinka.vinto',
 
   // The fallback for every locale without its own listing, so it must be populated. British
   // rather than American because that is the English the app is written in.
@@ -60,7 +60,7 @@ export default {
 
   // Google Play. Package-scoped: vydanne only ever touches this packageName.
   google: {
-    packageName: 'game.vinto.app',
+    packageName: 'app.kupalinka.vinto',
     metadataDir: 'fastlane/metadata/android',
     defaultLocale: 'en-GB',
     // Stays a closed track. `production` is a refusal in vydanne, not a flag, and that is the

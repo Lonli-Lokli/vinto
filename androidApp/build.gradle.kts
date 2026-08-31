@@ -60,7 +60,17 @@ android {
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "game.vinto.app"
+        // The identity both stores know this app by, and the one thing here that can never
+        // be changed after a release: Android treats a different applicationId as a different
+        // app, so a rename post-launch abandons every install and every review. It is
+        // `app.kupalinka.vinto` to sit under the studio's domain, alongside the two hostnames
+        // the game already answers on — and it was changed while 9.10 had not shipped, which
+        // is the only window in which it is free.
+        //
+        // `namespace` above is deliberately NOT this. That is the package R and BuildConfig
+        // are generated into, it matches the Kotlin source, and AGP has never required the two
+        // to agree.
+        applicationId = "app.kupalinka.vinto"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = 1

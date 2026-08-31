@@ -227,6 +227,20 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/wasmJsMain/kotlin"))
         .withPropertyName("wasmSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // And the three files that carry the app's store identity, which `AppIdentityTest` reads
+    // and none of which this module owns: the Android application's build script, the Xcode
+    // project, and the release tooling's config. Fourth time — and this one was caught the
+    // same way as the others, by reverting an iOS bundle id and watching the suite report
+    // success in one second.
+    listOf(
+        "androidApp/build.gradle.kts" to "androidIdentity",
+        "iosApp/iosApp.xcodeproj/project.pbxproj" to "appleIdentity",
+        "vydanne.config.mjs" to "releaseIdentity",
+    ).forEach { (path, name) ->
+        inputs.file(rootProject.layout.projectDirectory.file(path))
+            .withPropertyName(name)
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }
 
 /**

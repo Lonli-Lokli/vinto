@@ -201,7 +201,7 @@
 					"-framework",
 					ComposeApp,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = game.vinto.app;
+				PRODUCT_BUNDLE_IDENTIFIER = app.kupalinka.vinto;
 				PRODUCT_NAME = Vinto;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -224,7 +224,7 @@
 					"-framework",
 					ComposeApp,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = game.vinto.app;
+				PRODUCT_BUNDLE_IDENTIFIER = app.kupalinka.vinto;
 				PRODUCT_NAME = Vinto;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
