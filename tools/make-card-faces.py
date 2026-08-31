@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Generate the meaning-based card faces as SVG.
 
-The deck's visual grammar lives in docs/design/CARD-IMAGERY.md: every action card's emblem is
-a miniature of the table (your row of face-down cards at the bottom under a gold chevron, an
-opponent's row at the top), with an open eye for a peek, a closed eye for the Jack's blind
-swap, dashed arrows for the Queen's optional one. This script exists because an image LLM
-cannot hold that grammar consistent across fourteen faces — code can.
-
-Every face carries the standard corner indices (top-left, bottom-right rotated 180°, with the
-underline on 6 and 9) exactly like a normal deck; the emblem never replaces the rank.
+Design (third revision, docs/design/CARD-IMAGERY.md): every action card carries one big
+heraldic emblem — a single bold symbol of what the card does, the way a poker court card
+carries its figure. Colour says whose card is touched: felt green with a gold border is
+yours, dark ink-bordered green is an opponent's. Number cards are clean pip cards whose
+pips are card shapes — the count is the rank. Every face keeps the standard corner
+indices (top-left, bottom-right rotated 180°, underlined 6 and 9).
 
 Usage:  python3 tools/make-card-faces.py
 Output: tools/card-faces/*.svg and tools/card-faces/preview.html
@@ -38,243 +36,56 @@ def group(rot, cx, cy, body):
     return f'<g transform="rotate({rot} {cx} {cy})">{body}</g>'
 
 
-def mini_card(cx, cy, w=96, h=134, fill=FELT, stroke=GOLD, sw=5, rot=0.0, opacity=1.0):
+def pip_card(cx, cy, w=100, h=138, fill=FELT):
+    """A card-shaped pip: the number cards count in the game's own object."""
+    return (
+        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="12" '
+        f'fill="{fill}" stroke="{GOLD}" stroke-width="5"/>'
+    )
+
+
+def big_card(cx, cy, w=320, h=440, mine=True, rot=0.0):
+    """A large emblem card. Green + gold border = yours; darker + ink border = theirs."""
+    fill, stroke = (FELT, GOLD) if mine else (FELT_DARK, INK)
     body = (
-        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="10" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}" opacity="{opacity}"/>'
+        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="26" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="10"/>'
+        f'<rect x="{cx - w / 2 + 22:.0f}" y="{cy - h / 2 + 22:.0f}" width="{w - 44}" '
+        f'height="{h - 44}" rx="16" fill="none" stroke="{PAPER}" stroke-width="4" opacity="0.35"/>'
     )
     return group(rot, cx, cy, body) if rot else body
 
 
-def revealed_card(cx, cy, rot=0.0, w=96, h=134):
-    """A card tilted out of its row, face showing, with a warm halo."""
-    halo = (
-        f'<rect x="{cx - w / 2 - 16}" y="{cy - h / 2 - 16}" width="{w + 32}" height="{h + 32}"'
-        f' rx="18" fill="{GOLD}" opacity="0.22"/>'
-        f'<rect x="{cx - w / 2 - 8}" y="{cy - h / 2 - 8}" width="{w + 16}" height="{h + 16}"'
-        f' rx="14" fill="{GOLD}" opacity="0.30"/>'
-    )
-    face = (
-        f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="10" '
-        f'fill="{WHITE}" stroke="{GOLD}" stroke-width="6"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="10" fill="{GOLD}"/>'
-    )
-    return group(rot, cx, cy, halo + face)
-
-
-def my_row(cy, skip=None, fills=None):
-    """Five cards, the viewer's hand. skip: index (0-4) left out of the row."""
-    parts = []
-    for i in range(5):
-        if i == skip:
-            continue
-        fill = fills[i] if fills else FELT
-        parts.append(mini_card(CX + (i - 2) * 112, cy, fill=fill))
-    return "".join(parts)
-
-
-def their_row(cy, skip=None, count=5, spacing=112, x0=None):
-    """An opponent's hand: darker cards, ink border, no chevron."""
-    parts = []
-    start = x0 if x0 is not None else CX - (count - 1) * spacing / 2
-    for i in range(count):
-        if i == skip:
-            continue
-        parts.append(mini_card(start + i * spacing, cy, fill=FELT_DARK, stroke=INK, sw=4))
-    return "".join(parts)
-
-
-def chevron(cx, cy, s=1.0):
-    return (
-        f'<polyline points="{cx - 40 * s},{cy + 20 * s} {cx},{cy - 16 * s} {cx + 40 * s},{cy + 20 * s}" '
-        f'fill="none" stroke="{GOLD}" stroke-width="{12 * s:.0f}" '
-        f'stroke-linecap="round" stroke-linejoin="round"/>'
-    )
-
-
-def open_eye(cx, cy, s=1.0):
-    w, h = 82 * s, 52 * s
+def big_eye(cx, cy, s=1.0):
+    w, h = 170 * s, 108 * s
     return (
         f'<path d="M {cx - w},{cy} Q {cx},{cy - h} {cx + w},{cy} Q {cx},{cy + h} {cx - w},{cy} Z" '
-        f'fill="{WHITE}" stroke="{INK}" stroke-width="{9 * s:.0f}" stroke-linejoin="round"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{26 * s:.0f}" fill="{GOLD}"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{12 * s:.0f}" fill="{INK}"/>'
+        f'fill="{WHITE}" stroke="{INK}" stroke-width="{16 * s:.0f}" stroke-linejoin="round"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{56 * s:.0f}" fill="{GOLD}"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{27 * s:.0f}" fill="{INK}"/>'
+        f'<circle cx="{cx + 16 * s:.0f}" cy="{cy - 18 * s:.0f}" r="{10 * s:.0f}" fill="{WHITE}"/>'
     )
 
 
-def closed_eye(cx, cy, s=1.0):
-    w = 74 * s
-    lashes = "".join(
-        f'<line x1="{cx + dx * s}" y1="{cy + (34 - abs(dx) * 0.12) * s}" '
-        f'x2="{cx + dx * 1.22 * s}" y2="{cy + (62 - abs(dx) * 0.12) * s}" '
-        f'stroke="{INK}" stroke-width="{8 * s:.0f}" stroke-linecap="round"/>'
-        for dx in (-46, 0, 46)
-    )
+def arrowhead(x, y, ang, size=40, color=GOLD):
+    p1 = (x - size * 1.4 * math.cos(ang - 0.45), y - size * 1.4 * math.sin(ang - 0.45))
+    p2 = (x - size * 1.4 * math.cos(ang + 0.45), y - size * 1.4 * math.sin(ang + 0.45))
+    return f'<polygon points="{x:.0f},{y:.0f} {p1[0]:.0f},{p1[1]:.0f} {p2[0]:.0f},{p2[1]:.0f}" fill="{color}"/>'
+
+
+def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18):
+    """A circular swap arrow from angle a1 to a2 (degrees, screen coords, clockwise)."""
+    x1 = cx + r * math.cos(math.radians(a1))
+    y1 = cy + r * math.sin(math.radians(a1))
+    x2 = cx + r * math.cos(math.radians(a2))
+    y2 = cy + r * math.sin(math.radians(a2))
+    dash = ' stroke-dasharray="34 26"' if dashed else ""
+    tangent = math.atan2(math.cos(math.radians(a2)), -math.sin(math.radians(a2)))
     return (
-        f'<path d="M {cx - w},{cy} Q {cx},{cy + 52 * s} {cx + w},{cy}" '
-        f'fill="none" stroke="{INK}" stroke-width="{10 * s:.0f}" stroke-linecap="round"/>' + lashes
+        f'<path d="M {x1:.0f},{y1:.0f} A {r} {r} 0 0 1 {x2:.0f},{y2:.0f}" fill="none" '
+        f'stroke="{GOLD}" stroke-width="{sw}" stroke-linecap="round"{dash}/>'
+        + arrowhead(x2, y2, tangent)
     )
-
-
-def sight_line(x1, y1, x2, y2):
-    return (
-        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{INK}" stroke-width="6" '
-        f'stroke-linecap="round" stroke-dasharray="1 22" opacity="0.85"/>'
-    )
-
-
-def arrow(x1, y1, x2, y2, dashed=False, sw=14, color=GOLD):
-    ang = math.atan2(y2 - y1, x2 - x1)
-    head = 34
-    hx, hy = x2 - head * math.cos(ang), y2 - head * math.sin(ang)
-    dash = f' stroke-dasharray="26 20"' if dashed else ""
-    p1 = (x2 - head * 1.5 * math.cos(ang - 0.42), y2 - head * 1.5 * math.sin(ang - 0.42))
-    p2 = (x2 - head * 1.5 * math.cos(ang + 0.42), y2 - head * 1.5 * math.sin(ang + 0.42))
-    return (
-        f'<line x1="{x1}" y1="{y1}" x2="{hx:.0f}" y2="{hy:.0f}" stroke="{color}" '
-        f'stroke-width="{sw}" stroke-linecap="round"{dash}/>'
-        f'<polygon points="{x2},{y2} {p1[0]:.0f},{p1[1]:.0f} {p2[0]:.0f},{p2[1]:.0f}" fill="{color}"/>'
-    )
-
-
-def weight(cx, top_y, r):
-    """A round scale-weight hanging from top_y on a short cord."""
-    cy = top_y + 34 + r
-    return (
-        f'<line x1="{cx}" y1="{top_y}" x2="{cx}" y2="{cy - r}" stroke="{GOLD_DARK}" stroke-width="7"/>'
-        f'<rect x="{cx - 10}" y="{cy - r - 16}" width="20" height="16" rx="5" fill="{GOLD_DARK}"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{GOLD}" stroke="{GOLD_DARK}" stroke-width="6"/>'
-        f'<circle cx="{cx - r * 0.3:.0f}" cy="{cy - r * 0.35:.0f}" r="{r * 0.22:.0f}" fill="{PAPER}" opacity="0.5"/>'
-    )
-
-
-def jester_cap(cx, cy, s=1.0, color=ORANGE):
-    """Three-pointed cap over a band, bells on the tips — the Joker's glyph."""
-    base = cy + 34 * s
-    spikes = (
-        f"M {cx - 62 * s},{base} L {cx - 66 * s},{cy - 44 * s} L {cx - 22 * s},{base - 20 * s} "
-        f"L {cx},{cy - 66 * s} L {cx + 22 * s},{base - 20 * s} "
-        f"L {cx + 66 * s},{cy - 44 * s} L {cx + 62 * s},{base} Z"
-    )
-    band = (
-        f'<rect x="{cx - 62 * s}" y="{base - 6 * s}" width="{124 * s:.0f}" height="{22 * s:.0f}" '
-        f'rx="{10 * s:.0f}" fill="{GOLD}" stroke="{INK}" stroke-width="{4 * s:.0f}"/>'
-    )
-    bells = "".join(
-        f'<circle cx="{cx + dx * s}" cy="{cy + dy * s}" r="{10 * s:.0f}" fill="{GOLD}" '
-        f'stroke="{INK}" stroke-width="{3 * s:.0f}"/>'
-        for dx, dy in ((-66, -44), (0, -66), (66, -44))
-    )
-    return (
-        f'<path d="{spikes}" fill="{color}" stroke="{INK}" stroke-width="{5 * s:.0f}" '
-        f'stroke-linejoin="round"/>' + band + bells
-    )
-
-
-# ---------------------------------------------------------------- the frame
-
-
-def index_glyph(label, underline):
-    """One corner index, drawn at the top-left; the caller mirrors it."""
-    size = 150 if len(label) == 1 else 118
-    t = (
-        f'<text x="66" y="188" font-family="Georgia, \'Times New Roman\', serif" '
-        f'font-size="{size}" font-weight="bold" fill="{INK}">{label}</text>'
-    )
-    if underline:
-        t += f'<rect x="70" y="206" width="76" height="12" rx="6" fill="{INK}"/>'
-    return t
-
-
-def joker_index():
-    return jester_cap(118, 140, s=0.75)
-
-
-def frame(label, emblem, underline=False, joker=False):
-    corner = joker_index() if joker else index_glyph(label, underline)
-    mirrored = f'<g transform="rotate(180 {W / 2} {H / 2})">{corner}</g>'
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
-        f'<rect width="{W}" height="{H}" rx="44" fill="{PAPER}"/>'
-        f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
-        f'fill="none" stroke="{INK}" stroke-width="6"/>'
-        f"{corner}{mirrored}{emblem}</svg>"
-    )
-
-
-# ---------------------------------------------------------------- the faces
-
-
-def face_number(n):
-    """2-6: your own hand dragged down by a growing weight. Value = burden."""
-    fills = {2: "#B9CFBD", 3: "#8FB59A", 4: "#5E9678", 5: "#337052", 6: FELT_DARK}
-    spacing = 136 if n <= 4 else 120
-    cards = "".join(
-        mini_card(CX + (i - (n - 1) / 2) * spacing, 540, w=118, h=164, fill=fills[n])
-        for i in range(n)
-    )
-    right_x = CX + ((n - 1) - (n - 1) / 2) * spacing
-    r = 18 + (n - 2) * 12
-    return cards + weight(right_x, 628, r) + chevron(CX, 800)
-
-
-def face_peek_own(idx):
-    """7 and 8: your row, one card tilted up revealed, your eye looking at it."""
-    cy = 730
-    tx = CX + (idx - 2) * 112
-    return (
-        my_row(cy, skip=idx)
-        + revealed_card(tx, cy - 96, rot=-14)
-        + open_eye(CX, 358)
-        + sight_line(CX + (26 if tx > CX else -26), 408, tx, cy - 180)
-        + chevron(CX, 860)
-    )
-
-
-def face_peek_them(idx):
-    """9 and 10: their row on top, one card tilted down, your eye below."""
-    cy = 340
-    tx = CX + (idx - 2) * 112
-    return (
-        their_row(cy, skip=idx)
-        + revealed_card(tx, cy + 96, rot=14)
-        + sight_line(tx, cy + 184, CX + (26 if tx > CX else -26), 704)
-        + open_eye(CX, 752)
-        + chevron(CX, 866)
-    )
-
-
-def swap_scene(revealed, dashed, eye):
-    """Shared J/Q composition: two rows, the two pulled cards side by side mid-table,
-    crossing arrows between them, and the eye (open or shut) above the trade."""
-    lx, rx, cy = 322, 502, 604
-    if revealed:
-        mine_pulled = revealed_card(lx, cy, rot=-8)
-        theirs_pulled = revealed_card(rx, cy, rot=8)
-    else:
-        mine_pulled = mini_card(lx, cy, fill=FELT, rot=-8)
-        theirs_pulled = mini_card(rx, cy, fill=FELT_DARK, stroke=INK, sw=4, rot=8)
-    arrows = (
-        arrow(lx, cy - 118, rx - 6, cy - 118, dashed=dashed, sw=12)
-        + arrow(rx, cy + 118, lx + 6, cy + 118, dashed=dashed, sw=12)
-    )
-    return (
-        their_row(300, skip=3)
-        + my_row(830, skip=1)
-        + mine_pulled
-        + theirs_pulled
-        + arrows
-        + eye
-        + chevron(CX, 936)
-    )
-
-
-def face_jack():
-    return swap_scene(revealed=False, dashed=False, eye=closed_eye(CX, 402, s=0.95))
-
-
-def face_queen():
-    return swap_scene(revealed=True, dashed=True, eye=open_eye(CX, 408, s=0.85))
 
 
 def crown(cx, cy, s=1.0):
@@ -299,66 +110,205 @@ def crown(cx, cy, s=1.0):
     )
 
 
-def face_king():
-    """A hollow crown choosing among the other emblems in miniature."""
-    fan = []
-    glyphs = []
-    positions = [(226, 790, -12), (412, 758, 0), (598, 790, 12)]
-    for i, (x, y, rot) in enumerate(positions):
-        fan.append(mini_card(x, y, w=158, h=220, fill=WHITE, stroke=INK, sw=5, rot=rot))
-        if i == 0:  # a peek: eye over a green card
-            g = mini_card(x, y + 40, w=56, h=76, sw=4) + open_eye(x, y - 44, s=0.44)
-        elif i == 1:  # the swap: two cards trading
-            g = (
-                mini_card(x - 34, y + 44, w=50, h=68, sw=4)
-                + mini_card(x + 34, y - 44, w=50, h=68, fill=FELT_DARK, stroke=INK, sw=4)
-                + arrow(x - 30, y - 24, x + 26, y - 24, sw=8)
-                + arrow(x + 30, y + 24, x - 26, y + 24, sw=8)
-            )
-        else:  # force draw: a card pushed away
-            g = mini_card(x - 20, y + 32, w=56, h=76, sw=4, rot=8) + arrow(x - 4, y - 4, x + 46, y - 56, sw=9)
-        glyphs.append(group(rot, x, y, g))
-    beam = (
-        f'<polygon points="{CX - 30},408 {CX + 30},408 {CX + 74},628 {CX - 74},628" '
-        f'fill="{GOLD}" opacity="0.18"/>'
+def star(cx, cy, outer, inner, n=8, color=GOLD):
+    pts = []
+    for i in range(n * 2):
+        r = outer if i % 2 == 0 else inner
+        a = math.pi * i / n - math.pi / 2
+        pts.append(f"{cx + r * math.cos(a):.0f},{cy + r * math.sin(a):.0f}")
+    return f'<polygon points="{" ".join(pts)}" fill="{color}"/>'
+
+
+def jester_cap(cx, cy, s=1.0, color=ORANGE):
+    """Three floppy horns over a band, a bell on each tip — unmistakably a jester,
+    never a crown: the side horns droop outward and down."""
+    base = cy + 40 * s
+
+    def petal(x1, ctrl, tip, back):
+        return (
+            f'<path d="M {cx + x1 * s},{base} Q {cx + ctrl[0] * s},{cy + ctrl[1] * s} '
+            f'{cx + tip[0] * s},{cy + tip[1] * s} Q {cx + back[0] * s},{cy + back[1] * s} '
+            f'{cx + x1 / 3 * s},{base - 6 * s} Z" fill="{color}" stroke="{INK}" '
+            f'stroke-width="{5 * s:.0f}" stroke-linejoin="round"/>'
+        )
+
+    left = petal(-64, (-132, -64), (-150, -2), (-78, -24))
+    right = petal(64, (132, -64), (150, -2), (78, -24))
+    middle = (
+        f'<path d="M {cx - 30 * s},{base} Q {cx - 12 * s},{cy - 102 * s} {cx},{cy - 100 * s} '
+        f'Q {cx + 12 * s},{cy - 102 * s} {cx + 30 * s},{base} Z" fill="{color}" '
+        f'stroke="{INK}" stroke-width="{5 * s:.0f}" stroke-linejoin="round"/>'
     )
-    return crown(CX, 320, s=1.2) + beam + "".join(fan) + "".join(glyphs)
+    band = (
+        f'<rect x="{cx - 70 * s}" y="{base - 7 * s}" width="{140 * s:.0f}" height="{24 * s:.0f}" '
+        f'rx="{11 * s:.0f}" fill="{GOLD}" stroke="{INK}" stroke-width="{4 * s:.0f}"/>'
+    )
+    bells = "".join(
+        f'<circle cx="{cx + dx * s}" cy="{cy + dy * s}" r="{11 * s:.0f}" fill="{GOLD}" '
+        f'stroke="{INK}" stroke-width="{3 * s:.0f}"/>'
+        for dx, dy in ((-156, 10), (0, -108), (156, 10))
+    )
+    return left + right + middle + band + bells
+
+
+def teardrop(cx, cy, s=1.0):
+    return (
+        f'<path d="M {cx},{cy - 34 * s} Q {cx + 26 * s},{cy + 4 * s} {cx},{cy + 26 * s} '
+        f'Q {cx - 26 * s},{cy + 4 * s} {cx},{cy - 34 * s} Z" '
+        f'fill="{ORANGE}" stroke="{INK}" stroke-width="{5 * s:.0f}"/>'
+    )
+
+
+# ---------------------------------------------------------------- the frame
+
+
+def index_glyph(label, underline):
+    size = 150 if len(label) == 1 else 118
+    t = (
+        f'<text x="66" y="188" font-family="Georgia, \'Times New Roman\', serif" '
+        f'font-size="{size}" font-weight="bold" fill="{INK}">{label}</text>'
+    )
+    if underline:
+        t += f'<rect x="70" y="206" width="76" height="12" rx="6" fill="{INK}"/>'
+    return t
+
+
+def joker_index():
+    return jester_cap(120, 148, s=0.5)
+
+
+def frame(label, emblem, underline=False, joker=False):
+    corner = joker_index() if joker else index_glyph(label, underline)
+    mirrored = f'<g transform="rotate(180 {W / 2} {H / 2})">{corner}</g>'
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
+        f'<rect width="{W}" height="{H}" rx="44" fill="{PAPER}"/>'
+        f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
+        f'fill="none" stroke="{INK}" stroke-width="6"/>'
+        f"{corner}{mirrored}{emblem}</svg>"
+    )
+
+
+# ---------------------------------------------------------------- the faces
+
+PIP_LAYOUTS = {
+    2: [(CX, 400), (CX, 780)],
+    3: [(CX, 375), (CX, 590), (CX, 805)],
+    4: [(300, 400), (525, 400), (300, 780), (525, 780)],
+    5: [(300, 400), (525, 400), (CX, 590), (300, 780), (525, 780)],
+    6: [(300, 375), (525, 375), (300, 590), (525, 590), (300, 805), (525, 805)],
+}
+
+
+def face_number(n):
+    """2-6: pip cards whose pips are the game's own object. Count = rank."""
+    return "".join(pip_card(x, y) for x, y in PIP_LAYOUTS[n])
+
+
+def face_peek_own():
+    """7 and 8: your own card, and the eye that finally knows it."""
+    return big_card(CX, 590, mine=True) + big_eye(CX, 590)
+
+
+def face_peek_them():
+    """9 and 10: an opponent's card under your lens."""
+    card = big_card(CX - 30, 620, mine=False)
+    lens_x, lens_y, r = 500, 500, 165
+    handle_a = math.radians(48)
+    hx1 = lens_x + r * math.cos(handle_a)
+    hy1 = lens_y + r * math.sin(handle_a)
+    hx2 = lens_x + (r + 170) * math.cos(handle_a)
+    hy2 = lens_y + (r + 170) * math.sin(handle_a)
+    lens = (
+        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
+        f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
+        f'stroke="{GOLD}" stroke-width="34" stroke-linecap="round"/>'
+        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{GOLD}" stroke-width="20"/>'
+    )
+    return card + lens + big_eye(lens_x, lens_y, s=0.78)
+
+
+def blindfold(cx, cy, hw, rot):
+    """A knotted band across both cards: the swap is blind."""
+    body = (
+        f'<polygon points="{cx + hw - 10},{cy - 26} {cx + hw + 128},{cy - 96} '
+        f'{cx + hw + 74},{cy - 2}" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
+        f'<polygon points="{cx + hw - 10},{cy + 22} {cx + hw + 136},{cy + 62} '
+        f'{cx + hw + 58},{cy + 106}" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
+        f'<rect x="{cx - hw}" y="{cy - 44}" width="{hw * 2}" height="88" rx="40" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7"/>'
+        f'<path d="M {cx - hw + 40},{cy - 12} Q {cx},{cy - 30} {cx + hw - 40},{cy - 12}" '
+        f'fill="none" stroke="{GOLD_DARK}" stroke-width="6" stroke-linecap="round"/>'
+        f'<circle cx="{cx + hw + 8}" cy="{cy}" r="20" fill="{GOLD_DARK}" '
+        f'stroke="{INK}" stroke-width="5"/>'
+    )
+    return group(rot, cx, cy, body)
+
+
+def swap_pair(dashed):
+    """Two cards — yours and theirs — circled by exchange arrows."""
+    cards = big_card(320, 600, w=270, h=380, mine=True, rot=-13) + big_card(
+        505, 600, w=270, h=380, mine=False, rot=13
+    )
+    arrows = arc_arrow(CX, 600, 300, 208, 332, dashed=dashed) + arc_arrow(
+        CX, 600, 300, 28, 152, dashed=dashed
+    )
+    return cards, arrows
+
+
+def face_jack():
+    """The blind swap: the trade happens, the blindfold means nobody looks."""
+    cards, arrows = swap_pair(dashed=False)
+    return cards + blindfold(CX, 590, 250, -6) + arrows
+
+
+def face_queen():
+    """Look first, then trade if you like: the eye is open, the arrows undecided."""
+    cards, arrows = swap_pair(dashed=True)
+    return cards + big_eye(CX, 590, s=1.05) + arrows
+
+
+def face_king():
+    """The crown commands any card's power by naming it."""
+    beam = (
+        f'<polygon points="{CX - 34},420 {CX + 34},420 {CX + 96},650 {CX - 96},650" '
+        f'fill="{GOLD}" opacity="0.16"/>'
+    )
+    card = (
+        f'<rect x="{CX - 160}" y="510" width="320" height="440" rx="26" fill="{WHITE}" '
+        f'stroke="{GOLD}" stroke-width="10"/>'
+        f'<rect x="{CX - 138}" y="532" width="276" height="396" rx="16" fill="none" '
+        f'stroke="{GOLD}" stroke-width="4" opacity="0.5"/>'
+    )
+    return crown(CX, 330, s=1.6) + beam + card + star(CX, 730, 120, 52)
 
 
 def face_ace():
-    """The deck pushes one more card into an opponent's growing row."""
-    sx, sy = 260, 680
-    stack = (
-        mini_card(sx + 16, sy + 20, w=118, h=164, fill=FELT)
-        + mini_card(sx + 8, sy + 10, w=118, h=164, fill=FELT)
-        + mini_card(sx, sy, w=118, h=164, fill=FELT)
+    """Your idea of a poison: the flask empties onto an opponent's card."""
+    card = big_card(520, 770, w=290, h=400, mine=False, rot=8)
+    flask_body = (
+        f'<path d="M -34,-150 L 34,-150 L 34,-58 L 96,86 Q 112,126 74,126 L -74,126 '
+        f'Q -112,126 -96,86 L -34,-58 Z" fill="{WHITE}" stroke="{INK}" stroke-width="10" '
+        f'stroke-linejoin="round"/>'
+        f'<path d="M -70,56 L 70,56 L 96,86 Q 112,126 74,126 L -74,126 Q -112,126 -96,86 Z" '
+        f'fill="{ORANGE}" stroke="{INK}" stroke-width="6"/>'
+        f'<rect x="-44" y="-186" width="88" height="40" rx="12" fill="{GOLD}" '
+        f'stroke="{INK}" stroke-width="7"/>'
     )
-    row = their_row(300, count=5, spacing=108, x0=166)
-    slot = (
-        f'<rect x="{646 - 48}" y="{300 - 67}" width="96" height="134" rx="10" fill="none" '
-        f'stroke="{INK}" stroke-width="5" stroke-dasharray="16 14" opacity="0.55"/>'
-    )
-    flying = mini_card(520, 500, fill=FELT_DARK, stroke=INK, sw=4, rot=24)
-    a = arrow(346, 620, 630, 392, sw=15)
-    return stack + row + slot + flying + a + chevron(CX, 880)
+    flask = f'<g transform="translate(300 400) rotate(38)">{flask_body}</g>'
+    drops = teardrop(432, 468, 1.15) + teardrop(478, 552, 0.9) + teardrop(510, 628, 0.7)
+    return card + flask + drops
 
 
 def face_joker():
-    """The one card that lifts your total instead of adding to it."""
-    lift = (
-        mini_card(CX, 620, w=118, h=164, fill=ORANGE, stroke=GOLD, sw=6, rot=-4)
-        + jester_cap(CX, 620, s=0.55, color=GOLD)
-    )
-    motion = "".join(
-        f'<path d="M {CX + dx - 24},{y} Q {CX + dx},{y + 16} {CX + dx + 24},{y}" '
-        f'fill="none" stroke="{GOLD_DARK}" stroke-width="7" stroke-linecap="round" opacity="{op}"/>'
-        for dx, y, op in ((-36, 736, 0.85), (36, 736, 0.85), (0, 772, 0.5))
-    )
+    """The fool's cap, and the minus it is worth."""
     badge = (
-        f'<circle cx="{CX}" cy="384" r="54" fill="none" stroke="{GOLD}" stroke-width="10"/>'
-        f'<rect x="{CX - 28}" y="377" width="56" height="14" rx="7" fill="{GOLD}"/>'
+        f'<circle cx="{CX}" cy="810" r="78" fill="none" stroke="{GOLD}" stroke-width="14"/>'
+        f'<rect x="{CX - 42}" y="800" width="84" height="20" rx="10" fill="{GOLD}"/>'
     )
-    return my_row(856, skip=2) + lift + motion + badge + chevron(CX, 952)
+    return jester_cap(CX, 500, s=2.7) + badge
 
 
 def card_back():
@@ -405,10 +355,10 @@ FACES = {
     "card_4": frame("4", face_number(4)),
     "card_5": frame("5", face_number(5)),
     "card_6": frame("6", face_number(6), underline=True),
-    "card_7": frame("7", face_peek_own(1)),
-    "card_8": frame("8", face_peek_own(3)),
-    "card_9": frame("9", face_peek_them(1), underline=True),
-    "card_10": frame("10", face_peek_them(3)),
+    "card_7": frame("7", face_peek_own()),
+    "card_8": frame("8", face_peek_own()),
+    "card_9": frame("9", face_peek_them(), underline=True),
+    "card_10": frame("10", face_peek_them()),
     "card_j": frame("J", face_jack()),
     "card_q": frame("Q", face_queen()),
     "card_k": frame("K", face_king()),

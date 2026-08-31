@@ -229,3 +229,30 @@ face exactly like a normal deck (rotated bottom-right, underlined 6 and 9), and 
 committed under `tools/card-faces/`, same convention as the launcher icons. The prompt sheet
 above stays as the *specification* the code implements — and as the record of why prompts
 alone were not enough.
+
+## Revision 3 — big heraldic emblems, decided on the product owner's feedback
+
+The mini-table scenes were legible but read as diagrams, and two of their symbols failed the
+owner's review: the seat-chevron ("what does this sign mean?") and the 2–6 scale weights
+("balloons"). Both are gone. The deck now works like a poker deck's court cards: **one big
+emblem per action card**, a single bold symbol of the function, drawn large.
+
+| Card | Emblem |
+| --- | --- |
+| 2–6 | Clean pip cards — but the pips are card shapes, the game's own object; count = rank |
+| 7, 8 | Your card (green, gold border) with a large open eye on it — you know your own card |
+| 9, 10 | An opponent's card (dark, ink border) under a golden magnifying lens |
+| J | Two crossed cards — one yours, one theirs — wearing a knotted blindfold, circled by solid swap arrows |
+| Q | The same two cards with the eye open between them and the swap arrows dashed — look first, trade optionally |
+| K | A hollow crown (value 0) whose beam falls on a white card bearing a star: any card, by naming it |
+| A | A potion flask pouring onto an opponent's card — the poison of one more card (the owner's own image) |
+| Joker | A three-horned jester's cap, bells out, over a −1 badge |
+
+What survives from the grammar is the one code that needs no legend: **green with a gold
+border is yours, dark with an ink border is theirs**. The J/Q pair is still deliberately the
+same image with the Jack blindfolded and the Queen's arrows dashed, because that is the
+rules difference between them.
+
+One drawing lesson worth keeping: the first large-scale jester cap rendered as a crown —
+three upright spikes over a band are a crown whatever you call them. A jester cap needs
+drooping outer horns and hanging bells to not be royalty.
