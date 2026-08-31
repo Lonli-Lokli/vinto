@@ -137,12 +137,15 @@ jobs:
           npx --yes wrangler@${WRANGLER_VERSION} versions upload \
             --message "PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}" \
             | tee upload.log
-          url=$(grep -oE 'https://[a-z0-9-]+\.workers\.dev[^ ]*' upload.log | head -1)
+          # The host has dots in it (<version>-vinto-web.<account>.workers.dev), so the
+          # character class must allow them — run 4 fell to the fallback on exactly that.
+          url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev[^ ]*' upload.log | head -1)
           if [ -z "$url" ]; then
             version=$(grep -oE 'Worker Version ID: [0-9a-f-]+' upload.log | awk '{print $4}')
             [ -n "$version" ] || { echo "::error::wrangler reported no version id"; exit 1; }
             sub=$(curl -sSf "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/subdomain" \
-                  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" | grep -oE '"subdomain":"[^"]+"' | cut -d'"' -f4)
+                  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                  | grep -oE '"subdomain": *"[^"]+"' | grep -oE '"[^"]+"$' | tr -d '"')
             [ -n "$sub" ] || { echo "::error::the account has no workers.dev subdomain — enable it once in the dashboard (Workers & Pages > your subdomain)"; exit 1; }
             url="https://${version%%-*}-vinto-web.${sub}.workers.dev"
           fi
