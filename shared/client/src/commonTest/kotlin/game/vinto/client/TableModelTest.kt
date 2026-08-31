@@ -121,7 +121,8 @@ class TableModelTest {
         assertEquals(Move.Ask(Question.CallRank(2)), slots.taps[CardRef(session.playerId, 2)])
 
         val calling = session.table(Question.CallRank(2))
-        assertEquals(ALL_RANK_COUNT, calling.ranks.size, "any rank can be named")
+        assertEquals(ACTION_RANK_COUNT, calling.ranks.size, "only ranks with an action to win")
+        assertTrue(calling.ranks.none { it.rank == Rank.TWO }, "a rank that cannot win is not offered")
 
         val silent = calling.send(Label.JustSwap) as GameAction.SwapCard
         assertEquals(2, silent.payload.position)
@@ -220,6 +221,8 @@ class TableModelTest {
 
         val declaring = session.table()
         assertEquals(ALL_RANK_COUNT, declaring.ranks.size)
+        assertTrue(declaring.ranks.take(8).none { it.muted }, "action ranks lead, unmuted")
+        assertTrue(declaring.ranks.drop(8).all { it.muted }, "actionless ranks follow, muted")
         val king = (declaring.ranks.first { it.rank == Rank.NINE }.move as Move.Send).action
         assertEquals(Rank.NINE, (king as GameAction.DeclareKingAction).payload.declaredRank)
     }
@@ -440,5 +443,6 @@ class TableModelTest {
         const val FOUR_SEATS = 4
         const val THREE_OPPONENTS = 3
         const val ALL_RANK_COUNT = 14
+        const val ACTION_RANK_COUNT = 8
     }
 }

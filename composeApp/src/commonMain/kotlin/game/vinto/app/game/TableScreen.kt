@@ -37,8 +37,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -300,6 +307,63 @@ data class TableState(
     val sending: Boolean = false,
 )
 
+/**
+ * One header control: the dressed circle the "?" wears, holding a glyph drawn in the
+ * rail's ink rather than fetched from an emoji font nobody chose.
+ */
+@Composable
+private fun HeaderGlyph(
+    onClick: () -> Unit,
+    description: String,
+    glyph: DrawScope.(Color) -> Unit,
+) {
+    val ink = Rail.inkDim
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.size(HeaderTap).semantics { contentDescription = description },
+        shape = CircleShape,
+        color = Rail.fill,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.size(18.dp)) { glyph(ink) }
+        }
+    }
+}
+
+/** A gear: the ring, eight teeth, and the hub, all strokes. */
+private fun DrawScope.drawGear(ink: Color) {
+    val c = center
+    val r = size.minDimension / 2
+    drawCircle(ink, radius = r * 0.58f, center = c, style = Stroke(width = r * 0.28f))
+    repeat(8) { i ->
+        val a = i * (PI.toFloat() / 4)
+        val from = c + Offset(cos(a), sin(a)) * (r * 0.72f)
+        val to = c + Offset(cos(a), sin(a)) * r
+        drawLine(ink, from, to, strokeWidth = r * 0.30f, cap = StrokeCap.Round)
+    }
+    drawCircle(ink, radius = r * 0.16f, center = c)
+}
+
+/** A ladybug: the domed body, the wing split, the head, and four spots. */
+private fun DrawScope.drawBug(ink: Color) {
+    val c = center
+    val r = size.minDimension / 2
+    drawCircle(ink, radius = r * 0.78f, center = c, style = Stroke(width = r * 0.18f))
+    drawLine(
+        ink,
+        c + Offset(0f, -r * 0.78f),
+        c + Offset(0f, r * 0.78f),
+        strokeWidth = r * 0.14f,
+        cap = StrokeCap.Round,
+    )
+    drawCircle(ink, radius = r * 0.24f, center = c + Offset(0f, -r * 0.98f))
+    for (dx in listOf(-1f, 1f)) {
+        drawCircle(ink, radius = r * 0.14f, center = c + Offset(dx * r * 0.36f, -r * 0.22f))
+        drawCircle(ink, radius = r * 0.14f, center = c + Offset(dx * r * 0.36f, r * 0.30f))
+    }
+}
+
 /** Where the round is up to, and how much deck is left. */
 @Composable
 private fun TableHeader(
@@ -368,30 +432,18 @@ private fun TableHeader(
         // meant abandoning the round it was annoying you in, which is a price nobody pays; they
         // put the phone down instead. Theme and haptics are the same shape of want. Going there
         // and coming back returns to this exact table, mid-round, with nothing lost.
-        Box(
-            modifier = Modifier
-                .size(HeaderTap)
-                .clickable(onClick = onSettings)
-                .semantics { contentDescription = settings },
-            contentAlignment = Alignment.Center,
-        ) {
-            // The emoji presentation (U+2699 U+FE0F), the same route the bug beside it takes:
-            // Fira carries neither glyph, so both are drawn by the platform's emoji font. A
-            // monochrome U+2699 on its own would land in whatever fallback the host happened
-            // to have, which on a phone is not a decision anybody made.
-            Text(text = "\u2699\uFE0F", style = MaterialTheme.typography.labelLarge)
+        // The same dressed circle as the "?" beside it. These were colour emoji, which
+        // made the header three different design languages in a row — an outlined glyph,
+        // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
+        // own ink are one decision made once.
+        HeaderGlyph(onClick = onSettings, description = settings) { ink ->
+            drawGear(ink)
         }
 
         // Always reachable, because the moment worth reporting is the moment it goes wrong
         // and nobody navigates to a menu to capture it.
-        Box(
-            modifier = Modifier
-                .size(HeaderTap)
-                .clickable(onClick = onReport)
-                .semantics { contentDescription = report },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = "🐞", style = MaterialTheme.typography.labelLarge)
+        HeaderGlyph(onClick = onReport, description = report) { ink ->
+            drawBug(ink)
         }
 
         // The deck count, which answers when it is asked. It is the one number on the screen
