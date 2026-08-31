@@ -41,7 +41,7 @@ ACCENT = {
     "4": "#4F5AA8",   # indigo
     "5": "#B03A57",   # raspberry
     "6": "#1B5E43",   # the brand green
-    "7": "#8A5600",   # amber, deepened for 4.5:1 on its ground
+    "7": "#1E6B4B",   # deep green — the 7 peeks your own green card
     "8": "#94430D",   # burnt orange — a sibling, not a twin; 4.5:1-safe
     "9": "#256D85",   # steel cyan
     "10": "#3D4EA0",  # indigo — a sibling, not a twin
@@ -54,15 +54,15 @@ ACCENT = {
 # Tinted grounds for the action cards — colour mass tells them apart across a table.
 # The numbers keep the plain cream: they already read perfectly.
 BG = {
-    "7": "#F6E9C9",
-    "8": "#F7DFC8",
-    "9": "#DCEBF2",
-    "10": "#DEE2F5",
-    "j": "#EBDFF4",
-    "q": "#F6DFEB",
-    "k": "#F4E9C7",
-    "a": "#F7DCD7",
-    "joker": "#FBE8D2",
+    "7": "#DBEEDC",   # light green — your-card peek
+    "8": "#FAD5A5",   # orange — the other your-card peek
+    "9": "#DCEBF2",   # cyan
+    "10": "#DEE2F5",  # periwinkle
+    "j": "#EBDFF4",   # lilac
+    "q": "#F6DFEB",   # pink
+    "k": "#F3E5A8",   # the one strong gold — royalty owns it
+    "a": "#F7CEC7",   # salmon red
+    "joker": "#EBEBEB",  # neutral gray: the wild card belongs to no family
 }
 
 OUT = pathlib.Path(__file__).parent / "card-faces"
