@@ -208,6 +208,8 @@ def face_number(n):
 
 
 PALE = "#A8C2B5"
+BLUE = "#5B9BD5"        # opponents' cards: 4.4:1 against the dark felt, distinct from your green
+BLUE_EDGE = "#DCE9F5"
 
 
 def table_felt():
@@ -229,7 +231,7 @@ def opponent_seat(cx, cy, rot=0.0, gap=None):
     )
     cards = "".join(
         f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
-        f'fill="{FELT_DARK}" stroke="{PALE}" stroke-width="4"/>'
+        f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="4"/>'
         for i in range(3)
         if i != gap
     )
@@ -254,15 +256,26 @@ def trail(x1, y1, x2, y2, hw=36):
     )
 
 
-def popped_card(cx, cy, w=140, h=192, rot=0.0):
-    """The card under examination, enlarged at the table's center, face up."""
+def popped_card(cx, cy, w=140, h=192, rot=0.0, fill=WHITE, stroke=GOLD):
+    """The card under examination, enlarged at the table's center.
+    It keeps its owner's colour, so whose card it is travels with it."""
     body = (
         f'<rect x="{cx - w / 2 - 12}" y="{cy - h / 2 - 12}" width="{w + 24}" height="{h + 24}" '
         f'rx="22" fill="{GOLD}" opacity="0.35"/>'
         f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="14" '
-        f'fill="{WHITE}" stroke="{GOLD}" stroke-width="8"/>'
+        f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
     )
     return group(rot, cx, cy, body) if rot else body
+
+
+def trace_path(x1, y1, ctrl, x2, y2):
+    """A dashed curved path with an arrowhead: where the card was taken from."""
+    ang = math.atan2(y2 - ctrl[1], x2 - ctrl[0])
+    return (
+        f'<path d="M {x1},{y1} Q {ctrl[0]},{ctrl[1]} {x2},{y2}" fill="none" '
+        f'stroke="{GOLD}" stroke-width="9" stroke-linecap="round" stroke-dasharray="18 16"/>'
+        + arrowhead(x2, y2, ang, size=26)
+    )
 
 
 def board(top_gap=None, my_gap=None):
@@ -276,20 +289,26 @@ def board(top_gap=None, my_gap=None):
 
 
 def face_peek_own():
-    """7 and 8: the four-player board; one of YOUR cards rises to the light,
-    the gold trail runs from the gap in your own hand."""
+    """7 and 8: the four-player board; one of YOUR cards rises to the light —
+    still in your green — with the trace showing the gap it left."""
     return (
         board(my_gap=1)
         + trail(CX, 800, CX, 700)
-        + popped_card(CX, 620)
+        + popped_card(CX, 620, fill=FELT, stroke=GOLD)
+        + trace_path(CX - 40, 794, (270, 730), 334, 652)
         + big_eye(CX, 588, s=0.62, gaze=6)
     )
 
 
 def face_peek_them():
-    """9 and 10: the same board; the card rises from the TOP opponent's hand,
-    the trail runs from their gap, and your lens does the looking."""
-    scene = board(top_gap=1) + trail(CX, 420, CX, 480) + popped_card(CX, 552)
+    """9 and 10: the same board; the card comes from the TOP opponent's hand,
+    keeps their blue, and the trace runs back to the gap it left."""
+    scene = (
+        board(top_gap=1)
+        + trail(CX, 420, CX, 480)
+        + popped_card(CX, 552, fill=BLUE, stroke=BLUE_EDGE)
+        + trace_path(CX - 40, 436, (270, 476), 334, 542)
+    )
     lens_x, lens_y, r = CX + 52, 592, 108
     handle_a = math.radians(52)
     hx1 = lens_x + r * math.cos(handle_a)
@@ -329,8 +348,8 @@ def swap_board(revealed):
     scene = board(top_gap=1, my_gap=1)
     trails = trail(CX - 20, 800, 340, 660, hw=30) + trail(CX + 20, 420, 484, 520, hw=30)
     if revealed:
-        pair = popped_card(340, 590, w=112, h=154, rot=-9) + popped_card(
-            484, 590, w=112, h=154, rot=9
+        pair = popped_card(340, 590, w=112, h=154, rot=-9, fill=FELT, stroke=GOLD) + popped_card(
+            484, 590, w=112, h=154, rot=9, fill=BLUE, stroke=BLUE_EDGE
         )
     else:
         mine = (
@@ -339,7 +358,7 @@ def swap_board(revealed):
         )
         theirs = (
             f'<rect x="428" y="513" width="112" height="154" rx="14" '
-            f'fill="{FELT_DARK}" stroke="{PALE}" stroke-width="8"/>'
+            f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="8"/>'
         )
         pair = group(-9, 340, 590, mine) + group(9, 484, 590, theirs)
     arrows = arc_arrow(CX, 592, 158, 210, 330, dashed=revealed, sw=13) + arc_arrow(
