@@ -188,12 +188,12 @@ def crown(cx, cy, s=1.0):
     )
 
 
-def jester_cap(cx, cy, s=1.0, color=ORANGE):
-    """Three floppy horns over a band, a bell on each tip — unmistakably a jester,
-    never a crown: the side horns droop outward and down."""
+def jester_cap(cx, cy, s=1.0, colors=("#17766B", ORANGE, "#B03A57")):
+    """Three floppy horns over a band, a bell on each tip — and motley, as a
+    jester's cap traditionally is: each horn its own colour."""
     base = cy + 40 * s
 
-    def petal(x1, ctrl, tip, back):
+    def petal(x1, ctrl, tip, back, color):
         return (
             f'<path d="M {cx + x1 * s},{base} Q {cx + ctrl[0] * s},{cy + ctrl[1] * s} '
             f'{cx + tip[0] * s},{cy + tip[1] * s} Q {cx + back[0] * s},{cy + back[1] * s} '
@@ -201,11 +201,11 @@ def jester_cap(cx, cy, s=1.0, color=ORANGE):
             f'stroke-width="{5 * s:.0f}" stroke-linejoin="round"/>'
         )
 
-    left = petal(-64, (-132, -64), (-150, -2), (-78, -24))
-    right = petal(64, (132, -64), (150, -2), (78, -24))
+    left = petal(-64, (-132, -64), (-150, -2), (-78, -24), colors[0])
+    right = petal(64, (132, -64), (150, -2), (78, -24), colors[2])
     middle = (
         f'<path d="M {cx - 30 * s},{base} Q {cx - 12 * s},{cy - 102 * s} {cx},{cy - 100 * s} '
-        f'Q {cx + 12 * s},{cy - 102 * s} {cx + 30 * s},{base} Z" fill="{color}" '
+        f'Q {cx + 12 * s},{cy - 102 * s} {cx + 30 * s},{base} Z" fill="{colors[1]}" '
         f'stroke="{INK}" stroke-width="{5 * s:.0f}" stroke-linejoin="round"/>'
     )
     band = (
@@ -404,7 +404,7 @@ def face_nine():
         board(top_gap=1)
         + trail(CX, 420, CX, 500, color=steel)
         + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, steel)
-        + lens(CX + 4, 550, 92, steel, handle=True, sw=13)
+        + lens(CX + 4, 550, 72, steel, handle=True, sw=11)
     )
 
 
@@ -415,7 +415,7 @@ def face_ten():
         board(top_gap=1)
         + trail(CX, 420, CX, 480, color=indigo)
         + popped(CX, 580, 190, 262, BLUE, BLUE_EDGE, indigo)
-        + lens(CX + 10, 566, 132, indigo, handle=True)
+        + lens(CX + 10, 566, 152, indigo, handle=True, sw=18)
     )
 
 
@@ -457,23 +457,9 @@ def face_queen():
 
 
 def face_king():
-    """The oracle's own instrument: a crystal ball on its stand, the naming-star
-    glowing inside, rays to a card in every corner — green and blue placed so a
-    180° turn keeps the reading true."""
-    ball = (
-        f'<circle cx="{CX}" cy="520" r="180" fill="{PAPER}" opacity="0.55"/>'
-        f'<circle cx="{CX}" cy="520" r="180" fill="none" stroke="{GOLD}" stroke-width="15"/>'
-        f'<path d="M {CX - 96},430 Q {CX - 44},380 {CX + 22},396" fill="none" '
-        f'stroke="{WHITE}" stroke-width="13" stroke-linecap="round" opacity="0.8"/>'
-        + star(CX, 530, 78, 32)
-        + star(CX - 86, 470, 24, 9, n=4)
-        + star(CX + 96, 590, 18, 7, n=4)
-    )
-    stand = (
-        f'<path d="M {CX - 92},688 L {CX + 92},688 L {CX + 122},762 L {CX - 122},762 Z" '
-        f'fill="{GOLD}" stroke="{GOLD_DARK}" stroke-width="7"/>'
-        f'<rect x="{CX - 148}" y="762" width="296" height="30" rx="14" fill="{GOLD_DARK}"/>'
-    )
+    """The crowned oracle: the crown restored at the center, its rays still
+    reaching a card in every corner — greens and blues placed so a 180° turn
+    keeps the reading true."""
     cards = (
         card_shape(210, 268, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
         + card_shape(615, 268, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
@@ -481,12 +467,12 @@ def face_king():
         + card_shape(615, 880, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
     )
     rays = (
-        ray(285, 400, 252, 356, color=GOLD)
-        + ray(540, 400, 573, 356, color=GOLD)
-        + ray(285, 640, 252, 792, color=GOLD)
-        + ray(540, 640, 573, 792, color=GOLD)
+        ray(295, 430, 255, 355, color=GOLD)
+        + ray(530, 430, 570, 355, color=GOLD)
+        + ray(295, 640, 252, 790, color=GOLD)
+        + ray(530, 640, 573, 790, color=GOLD)
     )
-    return rays + ball + stand + cards
+    return rays + crown(CX, 530, s=1.5) + cards
 
 
 def face_ace():
@@ -592,11 +578,11 @@ def card_back():
 # ---------------------------------------------------------------- output
 
 FACES = {
-    "card_2": frame("2", face_number(2), accent=ACCENT["2"]),
-    "card_3": frame("3", face_number(3), accent=ACCENT["3"]),
-    "card_4": frame("4", face_number(4), accent=ACCENT["4"]),
-    "card_5": frame("5", face_number(5), accent=ACCENT["5"]),
-    "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"]),
+    "card_2": frame("2", face_number(2), accent=ACCENT["2"], bg=WHITE),
+    "card_3": frame("3", face_number(3), accent=ACCENT["3"], bg=WHITE),
+    "card_4": frame("4", face_number(4), accent=ACCENT["4"], bg=WHITE),
+    "card_5": frame("5", face_number(5), accent=ACCENT["5"], bg=WHITE),
+    "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"], bg=WHITE),
     "card_7": frame("7", face_seven(), accent=ACCENT["7"], bg=BG["7"]),
     "card_8": frame("8", face_eight(), accent=ACCENT["8"], bg=BG["8"]),
     "card_9": frame("9", face_nine(), underline=True, accent=ACCENT["9"], bg=BG["9"]),
