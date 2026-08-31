@@ -127,6 +127,8 @@
     <string name="settings_language">Language</string>
     <string name="settings_language_detail">Not translated yet? The game falls back to English, and the words a card says never change.</string>
     <string name="settings_language_device">Follow the device</string>
+    <string name="settings_language_current">Language: %1$s</string>
+    <string name="settings_language_chosen">%1$s, chosen</string>
     <string name="settings_group_privacy">What leaves this device</string>
     <string name="settings_group_about">About</string>
 

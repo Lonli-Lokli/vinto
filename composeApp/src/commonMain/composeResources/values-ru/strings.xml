@@ -111,6 +111,8 @@
     <string name="settings_language">Язык</string>
     <string name="settings_language_detail">Перевода ещё нет? Игра вернётся к английскому, а надписи на самих картах не меняются никогда.</string>
     <string name="settings_language_device">Как на устройстве</string>
+    <string name="settings_language_current">Язык: %1$s</string>
+    <string name="settings_language_chosen">%1$s — выбран</string>
     <string name="settings_group_privacy">Что уходит с устройства</string>
     <string name="settings_group_about">О приложении</string>
 

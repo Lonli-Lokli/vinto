@@ -48,6 +48,8 @@ import game.vinto.app.art.settings_group_privacy
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
 import game.vinto.app.art.settings_language
+import game.vinto.app.art.settings_language_chosen
+import game.vinto.app.art.settings_language_current
 import game.vinto.app.art.settings_language_detail
 import game.vinto.app.art.settings_language_device
 import game.vinto.app.art.settings_link_failed
@@ -81,6 +83,9 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Hairline
+import game.vinto.app.theme.PickerField
+import game.vinto.app.theme.PickerRow
+import game.vinto.app.theme.PickerSheet
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
@@ -120,6 +125,8 @@ fun SettingsScreen(
     onForget: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var pickingLanguage by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -160,7 +167,7 @@ fun SettingsScreen(
             Pacing(settings, onChange)
 
             Plaque(stringResource(Res.string.settings_group_feel))
-            Tongue(settings, onChange)
+            Tongue(settings, onOpen = { pickingLanguage = true })
             Motion(settings, onChange)
             Palette(settings, onChange)
             Noise(settings, onChange)
@@ -199,6 +206,16 @@ fun SettingsScreen(
                 modifier = Modifier.padding(top = Tight),
             )
         }
+
+        // Outside the scrolling column and inside the root box, which is the only place a
+        // full-screen overlay can be composed from: inside the column it would be clipped to
+        // the column's width and scroll away with it.
+        TongueSheet(
+            open = pickingLanguage,
+            settings = settings,
+            onChange = onChange,
+            onDismiss = { pickingLanguage = false },
+        )
     }
 }
 
@@ -343,50 +360,88 @@ private fun Plaque(title: String) {
 }
 
 /**
- * Which language to read the game in.
+ * Which language to read the game in — a drop-down, because there are twenty-one answers.
  *
- * A grid rather than a [ChoiceRow], which is the control every other setting here uses: a
- * sliding thumb along a track works for three answers and is unreadable at twenty-one. Two
- * columns of endonyms with the tag underneath, which is what a language list looks like
- * everywhere it is done well — and the endonym is the point, because somebody hunting for
- * Ukrainian is hunting for "Українська". "Ukrainian" only helps a person who can already read
+ * It was a grid: "Follow the device" full width, then ten rows of two. That is a control taller
+ * than the phone for a setting most people touch once, and it pushed Motion, Theme, Sound and
+ * Haptics — the four things somebody actually came to this screen for — below the fold behind
+ * nineteen languages they were not looking for.
+ *
+ * The endonym is still the point, and it is what the closed field shows. Somebody hunting for
+ * Ukrainian is hunting for "Українська"; "Ukrainian" only helps a person who can already read
  * the language they are trying to leave.
  *
- * "Follow the device" is first and is the default. It is a real answer rather than a null one:
- * most people want the language their phone is already in, and storing `en` for somebody who
- * never chose it would pin an English app on a Ukrainian phone the first time they opened this
- * screen.
+ * "Follow the device" is first in the list and is the default. It is a real answer rather than a
+ * null one: most people want the language their phone is already in, and storing `en` for
+ * somebody who never chose it would pin an English app on a Ukrainian phone the first time they
+ * opened this screen.
+ *
+ * The open flag is the caller's, not this composable's, because the list is composed at the
+ * screen's root where it can cover — see [PickerField]'s note. Splitting the state from the
+ * control is the price of not putting a scroll inside a scroll.
  */
 @Composable
-private fun Tongue(settings: Settings, onChange: (Settings) -> Unit) {
+private fun Tongue(settings: Settings, onOpen: () -> Unit) {
+    val device = stringResource(Res.string.settings_language_device)
+    val current = Language.withTag(settings.language)?.endonym ?: device
+
     Setting(
         title = stringResource(Res.string.settings_language),
         detail = stringResource(Res.string.settings_language_detail),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Tight)) {
-            GameButton(
-                label = stringResource(Res.string.settings_language_device),
-                tone = toneFor(chosen = settings.language == null),
-                onClick = { onChange(settings.copy(language = null)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Language.entries.chunked(2).forEach { pair ->
-                Row(horizontalArrangement = Arrangement.spacedBy(Tight)) {
-                    pair.forEach { language ->
-                        GameButton(
-                            label = language.endonym,
-                            tone = toneFor(chosen = settings.language == language.tag),
-                            compact = true,
-                            onClick = { onChange(settings.copy(language = language.tag)) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    // Keeps the last row's single tile the width of a tile rather than of a row.
-                    if (pair.size == 1) Box(modifier = Modifier.weight(1f))
-                }
+        PickerField(
+            // The panel above already says "Language"; see `PickerField`.
+            label = null,
+            value = current,
+            description = stringResource(Res.string.settings_language_current, current),
+            onOpen = onOpen,
+        )
+    }
+}
+
+/**
+ * The list itself, composed over the screen rather than inside its scroll.
+ *
+ * Every row says what it is *and* whether it is the one in use, because the mark that carries
+ * that is a coloured dot — which a screen reader cannot see, and colour alone is not an answer
+ * to anybody who cannot either.
+ */
+@Composable
+private fun TongueSheet(
+    open: Boolean,
+    settings: Settings,
+    onChange: (Settings) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val device = stringResource(Res.string.settings_language_device)
+
+    PickerSheet(
+        open = open,
+        title = stringResource(Res.string.settings_language),
+        onDismiss = onDismiss,
+    ) {
+        LanguageRow(name = device, chosen = settings.language == null) {
+            onChange(settings.copy(language = null))
+            onDismiss()
+        }
+        Language.entries.forEach { language ->
+            LanguageRow(name = language.endonym, chosen = settings.language == language.tag) {
+                onChange(settings.copy(language = language.tag))
+                onDismiss()
             }
         }
     }
+}
+
+/** One row, with the "chosen" state spoken rather than only coloured. */
+@Composable
+private fun LanguageRow(name: String, chosen: Boolean, onChoose: () -> Unit) {
+    PickerRow(
+        label = name,
+        chosen = chosen,
+        description = if (chosen) stringResource(Res.string.settings_language_chosen, name) else name,
+        onChoose = onChoose,
+    )
 }
 
 /** Blue for the language in use, charcoal for the twenty that are not. */
