@@ -146,14 +146,19 @@ jobs:
             [ -n "$sub" ] || { echo "::error::the account has no workers.dev subdomain — enable it once in the dashboard (Workers & Pages > your subdomain)"; exit 1; }
             url="https://${version%%-*}-vinto-web.${sub}.workers.dev"
           fi
-          # Propagation is not atomic (README section 6d learned this twice): poll until the
-          # address serves this build's shell, then believe it.
-          for i in $(seq 1 30); do
-            if curl -sSf --max-time 10 "$url" | grep -q "composeApp"; then
+          # Propagation is not atomic (README section 6d learned this twice), and a freshly
+          # flipped previews toggle takes its own time on top: run 3 of this workflow gave up
+          # at 150 s on an address that served the shell minutes later. Poll for up to six
+          # minutes, saying what each attempt saw, then believe it.
+          for i in $(seq 1 72); do
+            code=$(curl -s -o body.html -w '%{http_code}' --max-time 10 "$url" || echo "curl-failed")
+            if [ "$code" = "200" ] && grep -q "composeApp" body.html; then
+              echo "poll $i: 200, the shell"
               echo "url=$url" >> "$GITHUB_OUTPUT"
               echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
+            echo "poll $i: $code"
             sleep 5
           done
           echo "::error::the preview at $url never served the shell"
