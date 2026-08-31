@@ -1,0 +1,168 @@
+# A preview of the website for every pull request that could change it.
+#
+# The site is a Worker, not a Pages project (deploy-web.yml says why), so it does not get
+# Pages' automatic preview deployments. What Workers have instead is *versions*:
+# `wrangler versions upload` publishes the build as an unreleased version of the production
+# Worker — same account, same config, same asset store — which answers at its own
+# `<hash>-vinto-web.<account>.workers.dev` address and serves nothing to
+# `vinto.kupalinka.app` until somebody deploys it. `preview_urls` in
+# `composeApp/cloudflare/wrangler.jsonc` is what turns those addresses on, and carries the
+# reasoning for why this does not reopen the `workers_dev: false` decision.
+#
+# Cloudflare's own Workers Builds integration (the GitHub app that comments preview links)
+# was considered and passed over: it builds in Cloudflare's container, which does not carry
+# this repository's JDK 17 + Kotlin/Wasm toolchain, and it would be the one deploy in the
+# repository that does not go through Actions. This workflow builds exactly what
+# deploy-web.yml builds — the same gate, the same content-addressing — and then uploads a
+# version instead of deploying.
+#
+# The preview URL is reported on the pull request as one sticky comment, updated in place on
+# every push rather than stacked — a review thread does not need a ladder of dead links.
+name: Preview web
+
+on:
+  pull_request:
+    paths:
+      - 'composeApp/**'
+      - 'shared/**'
+      - 'build-logic/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/preview-web.yml'
+
+# One preview per pull request, and a newer push cancels the older build — unlike the
+# production deploy, an outdated preview has no value worth finishing.
+concurrency:
+  group: preview-web-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  JAVA_VERSION: '17'
+  # Pinned in step with kmp.yml, deploy-room.yml and deploy-web.yml.
+  WRANGLER_VERSION: '4.127.1'
+  WRANGLER_SEND_METRICS: 'false'
+  DIST: 'composeApp/build/dist/wasmJs/productionExecutable'
+
+jobs:
+  preview:
+    name: preview-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    # A fork's pull request has no secrets, so an upload from one can only fail; skip it
+    # rather than fail it. Same-repo branches (which is how this repository works) run.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+
+    # The same environment as the deploys, because it is the same Cloudflare account and
+    # token. If the environment ever grows required reviewers, previews will queue for the
+    # same approval — which is the right default for anything holding that token.
+    environment: room
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+          validate-wrappers: true
+
+      # The same gate the real deploy runs, for the same reason: a broken shell is cheaper
+      # to learn about here than from a preview link that unfurls into nothing.
+      - name: 'Gate: the web shell'
+        run: ./gradlew --stacktrace :composeApp:jvmTest --tests '*WebShellTest*'
+
+      - name: Build the Compose/Wasm client
+        run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution
+
+      # Identical to deploy-web.yml's step, and it has to be: a preview that skips the
+      # content-addressing is not a preview of what production serves.
+      - name: Content-address the script
+        run: |
+          cd "$DIST"
+          hash=$(sha256sum composeApp.js | cut -c1-16)
+          mv composeApp.js "composeApp.$hash.js"
+          mv composeApp.js.map "composeApp.$hash.js.map"
+          sed -i "s|sourceMappingURL=composeApp.js.map|sourceMappingURL=composeApp.$hash.js.map|" "composeApp.$hash.js"
+          sed -i "s|src=\"composeApp.js\"|src=\"composeApp.$hash.js\"|" index.html
+          grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
+
+      # An unreleased version of the production Worker, not a deploy: nothing reaches
+      # vinto.kupalinka.app. The preview address comes out of wrangler's own answer —
+      # never assembled from a name, which is the lesson deploy-web.yml §"Never construct
+      # the address you verify" was written from.
+      - name: Upload a preview version
+        id: preview
+        working-directory: composeApp/cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::No CLOUDFLARE_API_TOKEN on the 'room' environment. See DEPLOYMENT.md section 6a."
+            exit 1
+          fi
+          npx --yes wrangler@${WRANGLER_VERSION} versions upload \
+            --message "PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}" \
+            | tee upload.log
+          url=$(grep -oE 'https://[a-z0-9-]+\.workers\.dev[^ ]*' upload.log | head -1)
+          [ -n "$url" ] || { echo "::error::wrangler printed no preview URL — is preview_urls set, and does the account have a workers.dev subdomain?"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report the preview on the pull request
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const marker = '<!-- vinto-web-preview -->';
+            const body = [
+              marker,
+              '### Web preview',
+              '',
+              `| | |`,
+              `| --- | --- |`,
+              `| Preview | ${process.env.PREVIEW_URL} |`,
+              `| Built from | ${process.env.HEAD_SHA} |`,
+              '',
+              'An unreleased version of the `vinto-web` Worker — production at',
+              '`vinto.kupalinka.app` is untouched. The link is per-version: pushes to this',
+              'pull request update this comment with a fresh one.',
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const mine = comments.find(c => c.body && c.body.includes(marker));
+            if (mine) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: mine.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

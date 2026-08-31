@@ -130,11 +130,7 @@ private const val SHADOW_SQUASH = 0.38f
 
 /** Every control in the header is a thumb wide, whatever is drawn inside it. */
 private val HeaderTap = 44.dp
-private val BadgeWidth = 26.dp
 private val WordmarkSize = 19.sp
-
-/** The deck badge the wordmark sits beside: a dark pill in both schemes, like the plates. */
-private val DeckBadge = Color(0xFF14351F)
 
 /**
  * The table, laid out as the web app lays it out on a phone.
@@ -455,27 +451,26 @@ private fun TableHeader(
         // felt below already reads out "N cards left in the deck", and when this said the same
         // words a screen reader heard one screen say it twice without either saying that one
         // of the two opens an explanation.
+        // Dressed exactly as the three controls beside it — one header, one language.
+        // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
         Surface(
             onClick = onDeck,
             modifier = Modifier
-                .heightIn(min = HeaderTap)
+                .size(HeaderTap)
                 .markedAs(LocalStage.current, Target.BADGE)
                 .semantics { contentDescription = deck },
-            shape = RoundedCornerShape(Tight),
-            color = DeckBadge,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Slate.gold),
+            shape = CircleShape,
+            color = Rail.fill,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
         ) {
-            Text(
-                "${view.drawPileSize}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = Slate.gold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(horizontal = 10.dp)
-                    .widthIn(min = BadgeWidth)
-                    .wrapContentHeight(),
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    "${view.drawPileSize}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.inkDim,
+                )
+            }
         }
     }
 }
