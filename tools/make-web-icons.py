@@ -55,7 +55,7 @@ OUT = ROOT / "composeApp" / "src" / "wasmJsMain" / "resources"
 
 # Straight out of `theme/VintoTheme.kt` and `androidApp/.../values-night/colors.xml`, so the
 # share card is the colour of the app rather than an approximation of it.
-RAIL = (0x1B, 0x24, 0x30, 0xFF)  # the dark rail; the launcher icon's background
+RAIL = (0x1B, 0x5E, 0x43, 0xFF)  # the felt; the launcher icon's background
 FELT = (0x1B, 0x5E, 0x43)  # Felt
 FELT_DARK = (0x0E, 0x34, 0x28)  # FeltDark, the cloth away from the lamp
 LEAF_GOLD = (0xF2, 0xDF, 0xA6)  # LeafGold — the wordmark, gold leaf rather than gold paint

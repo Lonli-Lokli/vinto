@@ -1,7 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360">
-  <!-- The Vinto mark: an original chunky geometric V, authored in this repository
-       (the same letterform the card back's medallion carries). Flat orange on
-       transparency; everything downstream is layout, not drawing. -->
-  <path d="M 15,15 L 105,15 L 150,171 L 195,15 L 285,15 L 214,345 L 86,345 Z"
-        fill="#E8791E"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 340">
+  <!-- The Vinto mark: a V formed from two leaning cards — the game's own object,
+       fanned the way a hand is held. An original design authored in this repository.
+       Two tones of the brand orange; everything downstream is layout, not drawing. -->
+  <g transform="translate(252 168) rotate(30)">
+    <rect x="-52" y="-100" width="104" height="200" rx="15" fill="#C25F0C"/>
+  </g>
+  <g transform="translate(128 168) rotate(-30)">
+    <rect x="-52" y="-100" width="104" height="200" rx="15" fill="#E8791E"/>
+  </g>
 </svg>
