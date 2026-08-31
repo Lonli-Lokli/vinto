@@ -3,7 +3,8 @@
 Everything needed to pick this migration up on another machine. The iOS targets have now
 been built and tested on a Mac (§5); Android is the remaining untried platform.
 
-- **Plan of record**: `openspec/changes/migrate-to-kotlin-multiplatform/` (proposal, design, tasks)
+- **Plan of record**: `openspec/changes/archive/migrate-to-kotlin-multiplatform/` — archived (§1);
+  what is still open is `openspec/changes/ship-and-operate/`
 - **Cross-language contract**: `docs/game-engine/RECORDING.md`
 - **The release gate, in one command**: `docs/kotlin/RELEASE-GATE.md`
 - **Platform measurements**: `docs/kotlin/PLATFORM-GATE.md`
@@ -13,7 +14,16 @@ been built and tested on a Mac (§5); Android is the remaining untried platform.
 
 ## 1. Where the work stands
 
-Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
+**Merged.** The Kotlin rewrite landed on `master` on 2026-08-31 as 52dcc20 (#184), with all
+six CI checks green. That commit also published both services, because the push triggers §1b
+describes stopped being inert the moment those paths existed on the default branch:
+`Deploy room` and `Deploy web` both ran and both succeeded.
+
+So the migration is over, and `migrate-to-kotlin-multiplatform` is archived
+along with `add-live-analytics` and `retire-legacy-web`. What was left in the first two was
+never code — an upload key, a Mac, a phone, a dashboard, a week of traffic — and it lives in
+`openspec/changes/ship-and-operate` now, one item at a time with its blocker named. §1f below
+is the same list for somebody reading on a phone.
 
 **Done — TypeScript side (`add-game-recording-replay`, 22/26 tasks)**
 
@@ -99,7 +109,7 @@ Branch: **`kotlin`** (not merged; CI has never run on it — see §7).
 
 **Next**
 
-1. **Analytics, before the room opens** — `openspec/changes/add-live-analytics`, phases 1–4.
+1. **Analytics, before the room opens** — `openspec/changes/archive/add-live-analytics`, phases 1–4.
    A blocking release gate rather than a nice-to-have: nothing in this game is measured today,
    so the online funnel phase 9 built is unknowable, the cost of a room is unknown, and every
    client failure is something a player experiences and nobody hears about. §6i step 3
@@ -157,7 +167,7 @@ archiving, and the retired tasks above.
 
 **Tier 1 — the release gate.** Nothing ships before these.
 
-1. Analytics phases 1–4 (§6i step 3, `openspec/changes/add-live-analytics`)
+1. Analytics phases 1–4 (§6i step 3, `openspec/changes/archive/add-live-analytics`) — **done**
 2. Sentry (8.2 client, 9.9 server) — a separate pipe from analytics on purpose
 3. The goldens, the sounds, and walking §6i end to end
 
@@ -249,8 +259,11 @@ override is an explicit choice on a run, and closing the room permanently is a r
 change to one line. The workflow decides that once, in a `door` step, so the deploy and the
 `/health` check that follows cannot disagree about what they expected.
 
-**The triggers are inert until the Kotlin branch merges**, because none of those paths exists
-on `master` yet.
+**The triggers are live.** They were inert only while none of those paths existed on `master`;
+the merge on 2026-08-31 created all of them, and that same commit deployed the room and the
+website. `ROOM_OPEN` was already `"true"` in the committed config, which is the fix that had to
+land before a push could deploy — see the paragraph above for what would otherwise have
+happened to a room people were playing in.
 
 **Both files have to exist on `master` as well as on the branch**, because GitHub only offers
 "Run workflow" for a `workflow_dispatch` workflow that is on the *default* branch. `deploy-room.yml`
@@ -600,6 +613,18 @@ TypeScript engine stops being shipped — but it is a trade, and the parity lang
 in this document should be read with it in mind.
 
 ## 1f. BLOCKED — what cannot be finished from a container
+
+**These are now tracked as `openspec/changes/ship-and-operate`**, one task each with its
+blocker named, since the two changes that used to carry them are archived (§1). This section
+stays because it is the version somebody reads on a phone; if the two disagree, the change file
+is the plan and this is the summary.
+
+Two rows below have moved on since they were written and are corrected in that change rather
+than here: **analytics 5.3** named "the `vinto` Pages project", which is the *leftover* from
+§6c serving a copy nothing links to — switching Web Analytics on there would count nobody and
+look like it worked (DEPLOYMENT.md §7b is corrected). And **a language selector** is no longer
+blocked at all: `values-ru/` exists now, with 403 of the 404 strings, so the thing it was
+waiting for arrived.
 
 Everything here has been attempted and stopped for a reason that is not a missing decision:
 no credentials, no hardware, or no data yet. Each line names what would unblock it, so the
@@ -2465,7 +2490,7 @@ node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
 ```
 
 **3. Land the analytics gate — before the deploy, not after it.**
-`openspec/changes/add-live-analytics`, phases 1–4. This is a blocking step and the reason is
+`openspec/changes/archive/add-live-analytics`, phases 1–4. This is a blocking step and the reason is
 arithmetic rather than principle: an event not collected on launch day is a question that can
 never be asked about launch day. There is no backfill for "how many people who opened it ever
 pressed Play online", and that number is the one that says whether phase 9 was worth building.
@@ -2518,7 +2543,10 @@ analytics answer different questions and should not share a pipe.
 
 **Repo-wide**
 
-- **The Kotlin CI has run now, and four of its five checks are green.** It was written in a
+- **The Kotlin CI runs on `master` now, and all six checks are green** — most recently on the
+  merge commit itself. The paragraph below was written when there were five and four passed;
+  it is kept because what it says about *why* the workflow existed is the part that aged well.
+  It was written in a
   container that cannot compile `composeApp` at all, so every one of its jobs was unverified
   guesswork until the first push; ten runs later `kmp-detekt`, `kmp-jvm`, `kmp-worker` and
   `kmp-ios` pass and `kmp-android` compiles and fails four tests (§1b, §1c). Of the three
@@ -2574,6 +2602,38 @@ analytics answer different questions and should not share a pipe.
   imported by name. `Beacon.ios.kt` called it by its header name and broke `kmp-ios`; it is the
   same shape as the `NSMutableURLRequest` setters above, and the third time this family of
   mistake has been made in this tree. A non-Mac host cannot catch any of them.
+- **`immutable` on a path with no content hash corrupted the app's text, and only for
+  returning visitors.** Reported from a phone against the live site: the home screen perfect,
+  everything behind "Play online" truncated, garbled or blank. A clean-cache load of the *same
+  deployment* was flawless, which is what pointed at caching rather than at the build.
+
+  `_headers` served `/composeResources/*` as `immutable, max-age=31536000`. Nothing under that
+  path carries a content hash — the paths are fixed names baked into the wasm — so the promise
+  was one the URL could not keep. What turned a stale asset into corruption is that **Compose
+  does not look strings up by key at runtime**: the generated accessors carry a byte offset and
+  length into each locale's `strings.commonMain.cvr`, and those numbers live in the wasm, which
+  *is* content-hashed and therefore always the current build's. New offsets against a year-old
+  table read every string after the first changed entry from the wrong place. Entries before it
+  are untouched, which is exactly why the home screen was fine — its keys sort earlier than the
+  lobby's.
+
+  Reproduced twice against the deployed bundle, which is what made it certain rather than
+  plausible: deleting one entry near the top gave blank buttons, "JOI" for "How to play" and
+  mojibake for the version; deleting one positioned *between* the home and online keys
+  reproduced the reported split exactly.
+
+  Fixed by making the tables `no-store` per locale by exact path — a wildcard that silently
+  fails to match is the same failure wearing a hat — and everything else bounded rather than
+  forever. That reaches nobody already affected, because `immutable` means their browser will
+  not ask again for a year, so `index.html` (which is `no-store`, and the only always-fresh
+  file) refetches each table once per build with `cache: "reload"`. Held by two tests in
+  `WebShellTest`: a path may be `immutable` only if it carries a content hash, and every
+  `values-*` locale needs both a rule and a repair entry — because adding a language is meant
+  to be a file and no code, and a missing one is this bug returning in that language alone.
+
+  The general lesson is the one §6c already states and this file did not apply to its own
+  resources: **`immutable` is a claim about a URL, not about a file.**
+
 - **The web client had no `index.html`, and nothing noticed.** `wasmJsBrowserDistribution`
   produced two `.wasm` files, a `.js` and no page to load them, so the Compose web client
   compiled and could not be served — for the whole life of the branch. Nothing caught it

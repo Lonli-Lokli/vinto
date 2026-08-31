@@ -14,11 +14,24 @@ to. Until a change archives, nothing it promised is canonical.
 Neither had been archived before, which is why `openspec/specs/` was empty for the life of the
 project: two changes were complete and their requirements were still filed as proposals.
 
-**Still open**, and not archived for good reasons:
+**Archived on 2026-08-31**, the day the Kotlin rewrite merged to `master` (52dcc20) with CI
+green and both deploy workflows publishing from it.
 
-- `migrate-to-kotlin-multiplatform` — carries six more spec files, including eight further
-  `online-multiplayer` requirements that join the canonical file when it archives
-- `add-live-analytics` — the release gate, not started
-- `retire-legacy-web` — opened by task 10.1, and deliberately not executed in the same pass:
-  its one irreversible step is a deletion, and the decision it records (freeze the corpus
-  rather than port its generator) is worth being read by somebody before it is taken
+| Change | Tasks | Specs synced |
+| --- | --- | --- |
+| `migrate-to-kotlin-multiplatform` | 60 done, 6 carried | `kmp-shared-engine`, `kmp-bot`, `kmp-game-client`, `cross-implementation-parity`, `mobile-app` — 27 requirements — plus the eight `online-multiplayer` ones this file had been promising since the first archive |
+| `add-live-analytics` | 18 done, 4 carried | `analytics` — 5 requirements. Phases 1–4 were the release gate and are done; phase 5 reads data that did not exist until the room opened |
+| `retire-legacy-web` | 16/16 | `game-recording` — **replaced** "Recording fixtures are generated headlessly and committed", which required a generator deleted with the TypeScript engine, with the frozen-corpus rule that supersedes it |
+
+**Carried, not finished.** Ten tasks moved to `ship-and-operate` rather than being ticked, each
+keeping its `[~]` and naming its blocker: an upload key, store accounts, a Mac, a physical
+phone, four willing humans, a Cloudflare dashboard, or a week of traffic. None was blocked on a
+decision and none is blocked on anything in the change it came from — which is the whole reason
+it could move. The precedent is `add-game-recording-replay` above, archived at 22 done and 4
+retired.
+
+The alternative was to hold 40 requirements as proposals until somebody had all of the above.
+A change that stays open because its release is unfinished stops describing what it did.
+
+**Still open:** `ship-and-operate`, which is where those ten went, plus the one requirement none
+of the specs carried — that an invitation link reaches the app.

@@ -19,7 +19,7 @@ Tick only what applies. **A change that takes this repository to production must
 three**, and the runbook for them is `docs/kotlin/README.md` §6i.
 
 - [ ] Not a production release — this is an ordinary change
-- [ ] **Analytics** (`openspec/changes/add-live-analytics`, phases 1–4) is landed and its
+- [ ] **Analytics** (`openspec/changes/archive/add-live-analytics`, phases 1–4) is landed and its
       privacy gate (task 4.4) passes. An event not collected on launch day is a question that
       can never be asked about launch day, and there is no backfill
 - [ ] The room is opened in the **same deploy** that publishes the client builds — `ROOM_OPEN`
