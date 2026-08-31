@@ -1,172 +1,216 @@
 # Card imagery — a deck where every face says what the card does
 
 The idea: generate the card faces with an image LLM (svgmaker.io) so that each face *depicts
-its meaning*. A 7 is a peek at your own hand, so the 7 shows an eye under a lifted card. A
-player who has seen the face once should remember what the rank does without opening the "?"
-sheet — the art becomes a second copy of `CARD_CONFIGS`, drawn instead of written.
+its meaning in this game*. A player who has seen the face once should be able to answer, from
+the picture alone, the three questions every action card poses: **whose card does it touch,
+what happens to it, and do I get to look?** The art becomes a second copy of `CARD_CONFIGS`,
+drawn instead of written.
 
-This file is the prompt sheet: one shared style block, then one prompt per face, all
-copy-paste ready. The meanings come from `shared/shapes/.../CardConfig.kt` and are rules, not
-guesses.
+The first version of this sheet failed that test and is replaced. It described *props* — a
+telescope for the 9, a keyhole for the 10 — and a prop answers none of the three questions: a
+hand holding a telescope could be any game's card. The meanings come from
+`shared/shapes/.../CardConfig.kt` and `docs/game-engine/VINTO_RULES.md`; what was missing was
+a visual grammar that encodes actor and target, not just theme.
+
+## The grammar: every action card is a miniature of the table
+
+Vinto's one universal image is the thing every player stares at all game: **rows of face-down
+cards in front of each seat**. So the emblem on every action card is a tiny top-down table:
+
+| Element | Means |
+| --- | --- |
+| A row of small face-down cards along the **bottom** edge, marked with a gold seat-chevron | **your own hand** |
+| A row of small face-down cards along the **top** edge, in cool ink, no chevron | **another player's hand** |
+| A card tilted up out of its row, face glowing cream-white | a card being **revealed** |
+| A large open **eye** with a dotted sight-line to a card | **you get to look** at that card |
+| An eye firmly **closed** | **nobody looks** (a blind action) |
+| Bold solid gold **crossing arrows** between two cards | a **swap that happens** |
+| The same arrows **dashed** | a swap **you may choose** to make |
+| A neat **stack** of face-down cards | the **draw pile** |
+
+Positions do the work a prop cannot: bottom = mine, top = theirs, eye = information, arrow =
+movement. Once a player has read any one action card, every other one is legible for free —
+and the grammar is honest to the rules: the Jack's eye is closed because the swap is blind
+(`VINTO_RULES.md`: swap two face-down cards, no peek), the Queen's is open and her arrows
+dashed because she looks first and swaps *optionally*.
+
+No people, no hands, no telescopes, no keyholes, no scrolls. Only cards, eyes, arrows, and
+one crown.
 
 ## Where the art lives, and the pipeline
 
 Current faces: `composeApp/src/commonMain/composeResources/drawable/card_*.png`,
-**825 × 1125 px** RGBA (3:4.09, effectively 2.75" × 3.75" poker at 300 dpi). 14 faces +
-`card_back.png`.
+**825 × 1125 px**. The destination format is **vector** — XML vector drawables render on all
+four targets and stay crisp at any size, which raster PNGs demonstrably do not on desktop and
+web (see the options rundown that settled this). Raw `.svg` is not accepted by
+`commonMain` composeResources; convert with Android Studio's Vector Asset importer or
+`avocado`, and keep the art paths-and-solid-fills only so conversion survives.
 
-Two routes from an SVG to the app, pick per asset:
+**Generate the emblem, not the card.** The first generation run produced two failures that
+were never going to stop: a text banner nobody asked for ("THE CARD READER"), and a
+bottom-right index drawn as a "6" instead of a rotated 9. Neither is worth fighting in a
+prompt when the frame is deterministic anyway:
 
-1. **Rasterize to PNG at 825 × 1125** and drop it in under the existing name (or a new
-   `card_7_meaning.png` name if this ships as a second deck — see `MONETIZATION.md`).
-   Zero build changes; this is the safe default.
-2. **Convert SVG → Android vector drawable XML** and put the `.xml` beside the PNGs.
-   Compose resources render XML vectors on every target; raw `.svg` files are **not**
-   supported in `commonMain` composeResources, so an SVG never goes in as-is. Conversion is
-   Android Studio's Vector Asset tool or `avocado`; complex LLM output (gradients, filters,
-   masks) often doesn't survive conversion — if the XML looks wrong, fall back to route 1.
+- The **card template** — border, background, both corner indices (bottom-right rotated
+  180°, with the underline stroke on 6 and 9 that every real deck uses to disambiguate
+  them) — is **one hand-written vector**, built once, correct forever.
+- svgmaker.io generates only the **square central emblem** per rank, dropped into the
+  template's slot. Fourteen generations can no longer disagree about the frame, miscount an
+  index, or invent a label.
 
-Legibility constraints, from how the table actually draws:
-
-- Cards render down to the 44 dp tap floor (`CardScale.crowded()`), where the face is a
-  thumbnail. **The rank index must carry the card at that size**; the motif is what you see
-  when a card is held up (peeks, the help gallery, the lesson).
-- One motif, centered, symmetric enough to read at any of the four seats' orientations.
-  No text besides the rank index — words on faces would re-open the translation problem
-  §6h just closed.
+Legibility constraints, from how the table actually draws: cards render down to the 44 dp tap
+floor (`CardScale.crowded()`), where only the corner index carries the card — the emblem is
+what a player studies during peeks, the help gallery and the lesson. Check every emblem at
+~120 px; if the mini-table turns to noise, reduce the row to three cards instead of five.
 
 ## The shared style block
 
-Paste this in front of every prompt below. It is what makes 14 generations one deck.
+Paste this in front of every emblem prompt below.
 
-> Flat vector playing-card face, portrait 3:4 ratio, clean white-cream background #F7F5EF
-> with a thin rounded border inset in dark ink #14181B. Limited palette: dark ink #14181B,
-> felt green #1B5E43, muted gold #C9A227, one warm orange accent #E8791E used sparingly.
-> Consistent medium line weight throughout, no gradients, no shadows, no photorealism, no
-> texture, no text or letters anywhere except the corner indices described. Large rank index
-> in the top-left and bottom-right corners (bottom-right rotated 180°), bold geometric serif.
-> One central emblem, symmetric composition, generous margins, in the style of a modern
-> minimalist board-game card.
+> Flat vector emblem on a plain cream background #F7F5EF, square composition with generous
+> margins. Limited palette: dark ink #14181B, felt green #1B5E43, muted gold #C9A227, warm
+> orange #E8791E used sparingly. Small face-down playing cards are drawn as rounded
+> felt-green rectangles with a thin gold border; a revealed card is cream-white with a gold
+> glow. Consistent medium line weight, paths and solid fills only — no gradients, no
+> shadows, no masks, no filters, no texture. Absolutely no words, letters, numbers, labels,
+> banners or scrolls anywhere. No people, no hands, no faces, no real-world objects unless
+> the prompt names one.
 
 ## The faces
 
-### 2–6 — the quiet numbers (value = rank, no action)
+### 2–6 — the weight you are holding (value = rank, no action)
 
-One family, five variants. The idea worth encoding: **low is light, high is heavy** — the
-whole game is about holding less, so the art should make a 2 feel like a card you keep and a
-6 like a card you want rid of.
+Not a pip deck. In Vinto a 2–6 *does* nothing — its entire meaning is that it sits in your
+row counting against you, a 2 barely and a 6 badly. So the emblem is your own hand with the
+burden drawn on it:
 
-> Corner indices "2" [3/4/5/6]. Central emblem: [two/three/four/five/six] small felt-green
-> diamond pips arranged in a balanced vertical pattern. For rank 2 the pips are outlined and
-> airy; each higher rank's pips grow slightly larger and more solid, so that 6 reads visibly
-> heavier and darker than 2. Nothing else on the card.
+> A single row of [two/three/four/five/six] small face-down playing cards along the lower
+> half, marked beneath the center with a small gold seat-chevron pointing up at them: the
+> viewer's own hand. Hanging beneath the row, one round gold weight on a short cord, like a
+> scale weight. For the lowest rank the cards are outlined and airy and the weight is tiny;
+> for each higher rank the cards are drawn more solid and darker green and the weight grows
+> visibly larger and heavier, so the highest rank reads as a hand dragged down by what it
+> holds.
 
-(Generate five times, adjusting the bracketed count and the weight note: 2 = outlined,
-3 = thin fill, 4 = solid, 5 = solid and larger, 6 = solid, largest, with a heavier border.)
+Generate all five in one session so the progression actually progresses. **Count the cards
+in each result by hand** — generators miscount, and a "4" showing five cards teaches a lie.
+The count *is* the rank: the card's number told as the number of cards you're stuck with.
 
-### 7 — peek at one of your own cards
+### 7 and 8 — peek at one of your own cards
 
-> Corner indices "7". Central emblem: a single face-down card seen from above, its near
-> corner lifted by a thumb, and beneath the lifted corner one calm open eye looking out at
-> the viewer. Card back in felt green, eye in dark ink with a gold iris. The gesture reads
-> as someone privately checking their own card.
+> A row of five small face-down playing cards along the bottom edge with a gold
+> seat-chevron beneath it: the viewer's own hand. One card of the row is tilted up out of
+> line, glowing cream-white. Above the row, one large calm open eye in dark ink with a gold
+> iris, a fine dotted sight-line running from the eye down to the tilted card. Nothing else.
 
-### 8 — peek at one of your own cards (the 7's sibling)
+Only *your* row appears on the card — that absence is what says "your own, not theirs".
+7 and 8 share the composition deliberately, because they do the same thing; vary only which
+card of the row is tilted (7: second from left; 8: fourth), so the siblings are tellable
+apart without pretending they differ.
 
-Same act, different prop — siblings, not twins, so a player still tells them apart at a
-glance while learning they do the same thing.
+### 9 and 10 — peek at one card of another player
 
-> Corner indices "8". Central emblem: a small round hand-mirror with a gold rim, tilted to
-> reflect the face of a card lying below it; in the mirror's glass, a single card face is
-> visible as a simple felt-green rectangle with an ink pip. The gesture reads as glimpsing
-> your own card in a mirror.
+> A row of five small face-down playing cards along the TOP edge, in cooler darker green
+> with no chevron: another player's hand. One of their cards is tilted down out of line,
+> glowing cream-white. At the bottom edge, a gold seat-chevron with one large open eye
+> above it, dark ink with a gold iris, and a long fine dotted sight-line running from the
+> eye up across the emblem to the tilted card. Nothing else.
 
-### 9 — peek at one opponent's card
+The mirror of the 7/8: their row, top of frame; your eye, bottom. Same sibling rule — 9 and
+10 vary only which of the opponent's cards is tilted.
 
-> Corner indices "9". Central emblem: a brass spyglass in gold and ink, extended and aimed
-> upward-outward toward a face-down felt-green card in the top third of the emblem, a thin
-> dotted sight-line connecting lens to card. The gesture reads as looking at someone else's
-> card from a distance.
+### Jack — swap two face-down cards from two different players, blind
 
-### 10 — peek at one opponent's card (the 9's sibling)
+> Two rows of small face-down playing cards face each other: one along the bottom edge with
+> a gold seat-chevron, one along the top edge without. One card from each row has slid out
+> toward the middle, both still face-down, joined by two bold solid gold arrows crossing in
+> an X. At the center of the X, one firmly closed eye in dark ink — a single curved lash
+> line, unmistakably shut. Rotationally symmetric apart from the chevron and the eye.
 
-> Corner indices "10". Central emblem: an old-fashioned keyhole shape in dark ink, and
-> visible through the keyhole a single face-down felt-green card. A small gold key lies at
-> the foot of the emblem. The gesture reads as peeking at a card behind someone else's door.
+The closed eye is the Jack's whole personality: the swap happens and **nobody looks**
+(`VINTO_RULES.md`: swap two face-down cards belonging to two different players). The two
+rows say "two different players" without a word.
 
-### Jack — swap two face-down cards from two different players (blind)
+### Queen — peek at two cards from two different players, then swap if you want
 
-The idea that must survive: the swap is **blind** — nobody looks.
+> The same composition as a trade between two rows: bottom row with a gold seat-chevron,
+> top row without, one card from each slid toward the middle. Both slid cards are tilted
+> and glowing cream-white, each with a fine dotted sight-line running to one large open eye
+> at the center, dark ink with a gold iris. The two crossing arrows between the cards are
+> drawn DASHED, not solid — a trade being considered, not yet made.
 
-> Corner indices "J". Central emblem: two hands reaching from opposite sides, each sliding a
-> face-down felt-green card toward the other along two crossing arrows in gold; between them
-> a small blindfold ribbon motif in dark ink. Perfectly rotationally symmetric, so it reads
-> the same upside down. The gesture reads as a trade made without looking.
+Deliberately the Jack's sister image with exactly two changes — the eye is open, the arrows
+are dashed — because that *is* the rules difference: the Queen looks first and the swap is
+optional. A player who compares the two faces has learned both cards.
 
-### Queen — peek at two cards, then swap them if you want
+### King — declare any card's action and play it (value 0)
 
-The Queen is the Jack with eyes: look first, then choose.
+> A gold crown drawn as an open outline, hollow and weightless, floating at the top. Below
+> it, a fanned arc of four small cream-white cards, each bearing one tiny glyph from the
+> deck's own grammar: an open eye over a single card; an open eye with a dotted line to a
+> distant card; two solid crossing arrows; a card with a bold arrow pushing it away. A
+> single gold beam drops from the crown to one card of the fan, picking it.
 
-> Corner indices "Q". Central emblem: the same two crossing gold arrows between two
-> face-down felt-green cards as a trade motif, but above the crossing point a single open
-> eye in dark ink with a gold iris, and the arrows drawn dashed rather than solid — a trade
-> considered, not yet made. Rotationally symmetric apart from the eye. The gesture reads as
-> looking at two cards before deciding to trade them.
-
-### King — declare any card and play its action (value 0)
-
-Two ideas, both needed: the King *speaks a rank into being*, and the King *costs nothing*.
-
-> Corner indices "K". Central emblem: a gold crown above an unrolled scroll; on the scroll,
-> instead of writing, a single empty card-shaped outline with a gold question-mark-free
-> blank center — a decree with a slot where any rank can be named. The crown is drawn as an
-> open outline, hollow and weightless. The gesture reads as royalty commanding any card's
-> power by naming it.
+The King *names a rank and plays its action* — so his emblem is a menu of the other emblems,
+with the crown choosing. The glyphs are the 7/8, 9/10, Jack and Ace emblems in miniature,
+which only works because the grammar is consistent. The hollow outline crown carries the
+other fact worth teaching: the mightiest card weighs nothing (value 0).
 
 ### Ace — force an opponent to draw a penalty card (value 1)
 
-> Corner indices "A". Central emblem: a pointing hand in dark ink extending a single
-> face-down felt-green card toward the upper edge, with a short bold gold arrow pushing it
-> away from the giver. The card being pushed has a small weight-like pip on its back. The
-> gesture reads as handing someone a card they did not want.
+> A neat stack of face-down playing cards at the center-left: the draw pile. From its top,
+> one face-down card slides along a single bold gold arrow up toward a row of five
+> face-down cards at the top edge, where a gap has opened to receive it — the row visibly
+> becoming six. At the bottom edge, a small gold seat-chevron pointing up: the viewer
+> commanding it. No eye anywhere — nobody looks at anything.
+
+Deck → their row, one more card, their problem. The growing row is the punchline: in this
+game a bigger hand is a worse hand, and the emblem shows the burden arriving.
 
 ### Joker — value −1, no action
 
-The only card worth less than nothing: it should look like the one thing on the table that
-is lighter than air.
+> A row of five small face-down playing cards along the bottom edge with a gold
+> seat-chevron. One card of the row is drawn in warm orange with a tiny jester-cap glyph
+> on its back, and it is lifting gently off the row, floating slightly above the line with
+> two short motion lines beneath it — lighter than the hand it sits in. Above it, a small
+> gold minus sign inside a thin gold circle.
 
-> Corner indices: a small jester-cap glyph instead of a letter. Central emblem: a jester's
-> cap in orange #E8791E and felt green with gold bells, floating above a small "−1" drawn as
-> an outlined gold token beneath it; two tiny motion lines suggest the cap is drifting
-> upward. The gesture reads as the one card that lifts your total instead of adding to it.
+The one card that pulls your total *down*: shown doing exactly that, in its own seat, in the
+row grammar every other card uses. Corner index on the template is the jester-cap glyph
+rather than a letter.
 
 ### The card back
 
-The back is the face everyone sees most. It must carry the brand (the orange V,
-`tools/brand/vinto-mark.png`) and stay non-directional — a back that reads upside down at
-the far seat looks broken.
+Unchanged from the first sheet — the back is brand, not rules:
 
 > Playing-card back, portrait 3:4. Felt green #1B5E43 field with a thin gold double border
-> inset. Centered: the letter V drawn as a bold geometric mark in warm orange #E8791E with a
-> gold outline, inside a diamond of four small card-pip shapes. Around it a subtle
-> tessellated diamond lattice in a slightly darker green #0E3428, perfectly rotationally
-> symmetric with no top or bottom. No text.
+> inset. Centered: the letter V drawn as a bold geometric mark in warm orange #E8791E with
+> a gold outline, inside a diamond of four small card-pip shapes. Around it a subtle
+> tessellated diamond lattice in slightly darker green #0E3428, perfectly rotationally
+> symmetric with no top or bottom. No text besides the V mark.
 
-## Working notes for the generation session
+## Acceptance checklist, per emblem
 
-- **Generate the siblings together.** 7 and 8 (and 9 and 10) should come from the same
-  session so the shared palette and line weight actually match; regenerating one later
-  usually drifts.
-- **Check every face at thumbnail size** before accepting it — scale to ~120 px tall. If the
-  motif turns to noise, simplify the prompt (fewer elements, thicker lines), don't shrink
-  expectations of the index.
-- **Check both themes.** Faces sit on light paper in light theme and on dark felt in dark
-  theme; the cream background and ink border above are what keep the card edges visible on
-  both. Don't let a generation talk you into a white-on-transparent face.
+Learned from the first generation run; check every result against all six before it goes
+near the repo:
+
+1. **The three questions**: can someone who knows the rules but not this deck answer *whose
+   card, what happens, do I look* from the emblem alone? If they answer wrong, the emblem is
+   wrong, however pretty.
+2. **No text leaked in.** The generator will try; the style block forbids it; check anyway.
+3. **Counts are exact** — cards in a 2–6 row, cards in a hand row (five), arrows (two).
+4. **Grammar consistency**: chevron only on your row, your row only at the bottom, closed
+   eye only on the Jack, dashed arrows only on the Queen.
+5. **Thumbnail test** at ~120 px: rows still read as rows, the eye still reads as an eye.
+6. **Paths and solid fills only**, or the vector-drawable conversion will mangle it.
+
+## Working notes
+
 - **The art is presentation, never data.** `CardConfig.shortDescription` reaches the hashed
-  game state (`CardCopyIsDataTest`); nothing about new art touches that. New faces are new
-  drawables and nothing else — no engine, no corpus, no test churn beyond any golden images
-  a maintainer chooses to refresh.
-- **If this ships as a premium deck** rather than a replacement, the files take a suffixed
-  name (`card_7_meaning.png`), the default deck stays as-is, and the deck choice is a
-  cosmetic id per `MONETIZATION.md`.
+  game state (`CardCopyIsDataTest`); new faces are new drawables and nothing else — no
+  engine, no corpus, no test churn beyond any goldens a maintainer refreshes.
+- **Sibling pairs (7/8, 9/10) and sister pairs (J/Q) generate in one session each**, or the
+  palette and line weight drift and the deliberate near-identity stops being deliberate.
+- **If this ships as a premium deck** rather than a replacement, files take a suffixed name
+  (`card_7_meaning.xml`), the default deck stays, and the deck choice is a cosmetic id per
+  `MONETIZATION.md`.
