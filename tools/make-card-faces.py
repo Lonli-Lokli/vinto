@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """Generate the meaning-based card faces as SVG.
 
-Design (third revision, docs/design/CARD-IMAGERY.md): every action card carries one big
-heraldic emblem — a single bold symbol of what the card does, the way a poker court card
-carries its figure. Colour says whose card is touched: felt green with a gold border is
-yours, dark ink-bordered green is an opponent's. Number cards are clean pip cards whose
-pips are card shapes — the count is the rank. Every face keeps the standard corner
-indices (top-left, bottom-right rotated 180°, underlined 6 and 9).
+Design (docs/design/CARD-IMAGERY.md): every action card carries one big emblem with a
+UNIQUE SILHOUETTE in its family colour, so cards are distinguishable from across a table
+the way real cards are — by shape and colour mass, not by reading. Ownership is a colour
+that needs no legend: felt green with a gold border is your card, blue is an opponent's,
+cream is the deck. There is no table background — it made every action card the same
+dark blob at a distance.
+
+Silhouettes: amber eye over a green card (7/8), steel lens ring over a blue card (9/10),
+violet circle of arrows around a blindfolded pair (J), plum eye on the same pair with
+dashed arrows (Q), gold crown-oracle raying three cards (K), red diagonal throw from the
+deck (A), orange jester cap (Joker). Numbers are pip cards, each rank its own colour.
+Every face keeps standard corner indices (bottom-right rotated, 6 and 9 underlined).
 
 Usage:  python3 tools/make-card-faces.py
 Output: tools/card-faces/*.svg and tools/card-faces/preview.html
@@ -26,6 +32,26 @@ GOLD_DARK = "#8A6D1B"
 PAPER = "#F7F5EF"
 ORANGE = "#E8791E"
 WHITE = "#FFFFFF"
+PALE = "#A8C2B5"
+BLUE = "#5B9BD5"        # opponents' cards — distinct from your green at any size
+BLUE_EDGE = "#DCE9F5"
+
+# One accent per rank family, dark enough to hold as a corner index on cream.
+ACCENT = {
+    "2": "#17766B",   # teal
+    "3": "#2F5E8C",   # blue
+    "4": "#4F5AA8",   # indigo
+    "5": "#B03A57",   # raspberry
+    "6": "#1B5E43",   # the brand green
+    "7": "#A96A00",   # amber
+    "8": "#A96A00",
+    "9": "#256D85",   # steel cyan
+    "10": "#256D85",
+    "j": "#7C3AA0",   # violet
+    "q": "#A23B72",   # plum
+    "k": "#A8791B",   # deep gold
+    "a": "#9E2B25",   # red
+}
 
 OUT = pathlib.Path(__file__).parent / "card-faces"
 
@@ -44,16 +70,28 @@ def pip_card(cx, cy, w=100, h=138, fill=FELT):
     )
 
 
-def big_card(cx, cy, w=320, h=440, mine=True, rot=0.0):
-    """A large emblem card. Green + gold border = yours; darker + ink border = theirs."""
-    fill, stroke = (FELT, GOLD) if mine else (FELT_DARK, INK)
+def card_shape(cx, cy, w, h, rot=0.0, fill=FELT, stroke=GOLD, sw=9):
+    """A game card: green/gold yours, blue theirs, cream the deck's."""
     body = (
-        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="26" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="10"/>'
-        f'<rect x="{cx - w / 2 + 22:.0f}" y="{cy - h / 2 + 22:.0f}" width="{w - 44}" '
-        f'height="{h - 44}" rx="16" fill="none" stroke="{PAPER}" stroke-width="4" opacity="0.35"/>'
+        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w:.0f}" height="{h:.0f}" '
+        f'rx="{w * 0.09:.0f}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
+        f'<rect x="{cx - w / 2 + w * 0.07:.0f}" y="{cy - h / 2 + w * 0.07:.0f}" '
+        f'width="{w * 0.86:.0f}" height="{h - w * 0.14:.0f}" rx="{w * 0.06:.0f}" '
+        f'fill="none" stroke="{PAPER}" stroke-width="3" opacity="0.35"/>'
     )
     return group(rot, cx, cy, body) if rot else body
+
+
+def bust(cx, cy, s=1.0):
+    """A small opponent, head and shoulders — the 'someone else' marker."""
+    return (
+        f'<circle cx="{cx}" cy="{cy - 66 * s:.0f}" r="{34 * s:.0f}" fill="{INK}" '
+        f'stroke="{PALE}" stroke-width="{5 * s:.0f}"/>'
+        f'<path d="M {cx - 72 * s:.0f},{cy + 10 * s:.0f} Q {cx - 64 * s:.0f},{cy - 46 * s:.0f} '
+        f'{cx},{cy - 52 * s:.0f} Q {cx + 64 * s:.0f},{cy - 46 * s:.0f} '
+        f'{cx + 72 * s:.0f},{cy + 10 * s:.0f} Z" '
+        f'fill="{INK}" stroke="{PALE}" stroke-width="{5 * s:.0f}"/>'
+    )
 
 
 def big_eye(cx, cy, s=1.0, gaze=0.0, iris=GOLD):
@@ -90,6 +128,23 @@ def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18, color=GOLD):
     )
 
 
+def sight(x1, y1, x2, y2, color=GOLD):
+    """A dashed glance from an eye to a card."""
+    return (
+        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="10" '
+        f'stroke-linecap="round" stroke-dasharray="4 26"/>'
+    )
+
+
+def ray(x1, y1, x2, y2, color=GOLD):
+    """A dashed sight-ray with an arrowhead: the oracle pointing at a card."""
+    ang = math.atan2(y2 - y1, x2 - x1)
+    return (
+        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="9" '
+        f'stroke-linecap="round" stroke-dasharray="16 14"/>' + arrowhead(x2, y2, ang, size=24, color=color)
+    )
+
+
 def crown(cx, cy, s=1.0):
     """Hollow outline crown — mighty, weighs nothing."""
     w, h = 130 * s, 96 * s
@@ -110,15 +165,6 @@ def crown(cx, cy, s=1.0):
         f'<line x1="{cx - w}" y1="{cy + h * 0.74}" x2="{cx + w}" y2="{cy + h * 0.74}" '
         f'stroke="{GOLD}" stroke-width="{13 * s:.0f}" stroke-linecap="round"/>' + dots
     )
-
-
-def star(cx, cy, outer, inner, n=8, color=GOLD):
-    pts = []
-    for i in range(n * 2):
-        r = outer if i % 2 == 0 else inner
-        a = math.pi * i / n - math.pi / 2
-        pts.append(f"{cx + r * math.cos(a):.0f},{cy + r * math.sin(a):.0f}")
-    return f'<polygon points="{" ".join(pts)}" fill="{color}"/>'
 
 
 def jester_cap(cx, cy, s=1.0, color=ORANGE):
@@ -153,12 +199,23 @@ def jester_cap(cx, cy, s=1.0, color=ORANGE):
     return left + right + middle + band + bells
 
 
-def teardrop(cx, cy, s=1.0):
-    return (
-        f'<path d="M {cx},{cy - 34 * s} Q {cx + 26 * s},{cy + 4 * s} {cx},{cy + 26 * s} '
-        f'Q {cx - 26 * s},{cy + 4 * s} {cx},{cy - 34 * s} Z" '
-        f'fill="{ORANGE}" stroke="{INK}" stroke-width="{5 * s:.0f}"/>'
+def blindfold(cx, cy, hw, rot):
+    """A knotted band across both cards: the swap is blind."""
+    body = (
+        f'<polygon points="{cx + hw - 10},{cy - 26} {cx + hw + 128},{cy - 96} '
+        f'{cx + hw + 74},{cy - 2}" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
+        f'<polygon points="{cx + hw - 10},{cy + 22} {cx + hw + 136},{cy + 62} '
+        f'{cx + hw + 58},{cy + 106}" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
+        f'<rect x="{cx - hw}" y="{cy - 44}" width="{hw * 2}" height="88" rx="40" '
+        f'fill="{GOLD}" stroke="{INK}" stroke-width="7"/>'
+        f'<path d="M {cx - hw + 40},{cy - 12} Q {cx},{cy - 30} {cx + hw - 40},{cy - 12}" '
+        f'fill="none" stroke="{GOLD_DARK}" stroke-width="6" stroke-linecap="round"/>'
+        f'<circle cx="{cx + hw + 8}" cy="{cy}" r="20" fill="{GOLD_DARK}" '
+        f'stroke="{INK}" stroke-width="5"/>'
     )
+    return group(rot, cx, cy, body)
 
 
 # ---------------------------------------------------------------- the frame
@@ -209,258 +266,106 @@ PIP_LAYOUTS = {
 
 
 def face_number(n):
-    """2-6: pip cards whose pips are the game's own object, each rank in its own colour."""
+    """2-6: pip cards whose pips are the game's own object, each rank its own colour."""
     return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
-PALE = "#A8C2B5"
-BLUE = "#5B9BD5"        # opponents' cards: 4.4:1 against the dark felt, distinct from your green
-BLUE_EDGE = "#DCE9F5"
-
-# One accent per rank family — the deck is colourful the way the chip rack is,
-# while the board's meaning-colours (green yours, blue theirs, cream deck) stay fixed.
-# Each is dark enough to hold its own as a corner index on cream.
-ACCENT = {
-    "2": "#17766B",   # teal
-    "3": "#2F5E8C",   # blue
-    "4": "#4F5AA8",   # indigo
-    "5": "#B03A57",   # raspberry
-    "6": "#1B5E43",   # the brand green
-    "7": "#A96A00",   # amber
-    "8": "#A96A00",
-    "9": "#256D85",   # steel cyan
-    "10": "#256D85",
-    "j": "#7C3AA0",   # violet
-    "q": "#A23B72",   # plum
-    "k": "#A8791B",   # deep gold
-    "a": "#9E2B25",   # red
-}
-
-
-def table_felt():
-    """The board: a dark felt table seen from above, as the app itself draws it."""
-    return (
-        f'<rect x="140" y="290" width="545" height="600" rx="130" fill="{FELT_DARK}" '
-        f'stroke="{GOLD}" stroke-width="8"/>'
-        f'<rect x="162" y="312" width="501" height="556" rx="112" fill="none" '
-        f'stroke="{GOLD}" stroke-width="3" opacity="0.4"/>'
-    )
-
-
-def opponent_seat(cx, cy, rot=0.0, gap=None):
-    """A bust with three small cards in front of it, facing the table's center."""
-    bust = (
-        f'<circle cx="0" cy="-66" r="27" fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-        f'<path d="M -58,-2 Q -52,-48 0,-52 Q 52,-48 58,-2 Z" '
-        f'fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-    )
-    cards = "".join(
-        f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
-        f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="4"/>'
-        for i in range(3)
-        if i != gap
-    )
-    return f'<g transform="translate({cx} {cy}) rotate({rot})">{bust}{cards}</g>'
-
-
-def your_hand(gap=None):
-    """Your three cards at the bottom edge, larger — the seat the app gives you."""
-    return "".join(
-        f'<rect x="{CX + (i - 1) * 116 - 50:.0f}" y="772" width="100" height="138" rx="12" '
-        f'fill="{FELT}" stroke="{GOLD}" stroke-width="7"/>'
-        for i in range(3)
-        if i != gap
-    )
-
-
-def trail(x1, y1, x2, y2, hw=36, color=GOLD):
-    """A streak from a seat's gap to the card pulled out of it: whose card this is."""
-    return (
-        f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
-        f'fill="{color}" opacity="0.3"/>'
-    )
-
-
-def popped_card(cx, cy, w=140, h=192, rot=0.0, fill=WHITE, stroke=GOLD, halo=GOLD):
-    """The card under examination, enlarged at the table's center.
-    It keeps its owner's colour, so whose card it is travels with it."""
-    body = (
-        f'<rect x="{cx - w / 2 - 12}" y="{cy - h / 2 - 12}" width="{w + 24}" height="{h + 24}" '
-        f'rx="22" fill="{halo}" opacity="0.35"/>'
-        f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="14" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
-    )
-    return group(rot, cx, cy, body) if rot else body
-
-
-def trace_path(x1, y1, ctrl, x2, y2, color=GOLD):
-    """A dashed curved path with an arrowhead: where the card was taken from."""
-    ang = math.atan2(y2 - ctrl[1], x2 - ctrl[0])
-    return (
-        f'<path d="M {x1},{y1} Q {ctrl[0]},{ctrl[1]} {x2},{y2}" fill="none" '
-        f'stroke="{color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="18 16"/>'
-        + arrowhead(x2, y2, ang, size=26, color=color)
-    )
-
-
-def board(top_gap=None, my_gap=None):
-    return (
-        table_felt()
-        + opponent_seat(CX, 384, gap=top_gap)
-        + opponent_seat(224, 590, rot=90)
-        + opponent_seat(601, 590, rot=-90)
-        + your_hand(gap=my_gap)
-    )
-
-
 def face_peek_own():
-    """7 and 8: the four-player board; one of YOUR cards rises to the light —
-    still in your green — with the trace showing the gap it left."""
+    """7 and 8: a giant amber eye over one big card of YOURS.
+    Silhouette at a distance: eye above a green card."""
     amber = ACCENT["7"]
     return (
-        board(my_gap=1)
-        + trail(CX, 800, CX, 700, color=amber)
-        + popped_card(CX, 620, fill=FELT, stroke=GOLD, halo=amber)
-        + trace_path(CX - 40, 794, (270, 730), 334, 652, color=amber)
-        + big_eye(CX, 588, s=0.62, gaze=6, iris=amber)
+        card_shape(CX, 700, 310, 425, fill=FELT, stroke=GOLD)
+        + big_eye(CX, 320, s=1.15, gaze=12, iris=amber)
+        + sight(CX, 442, CX, 496, color=amber)
     )
 
 
 def face_peek_them():
-    """9 and 10: the same board; the card comes from the TOP opponent's hand,
-    keeps their blue, and the trace runs back to the gap it left."""
+    """9 and 10: a giant steel lens over one big card of THEIRS, its owner
+    peeking out from behind. Silhouette: ring with a handle over a blue card."""
     steel = ACCENT["9"]
-    scene = (
-        board(top_gap=1)
-        + trail(CX, 420, CX, 480, color=steel)
-        + popped_card(CX, 552, fill=BLUE, stroke=BLUE_EDGE, halo=steel)
-        + trace_path(CX - 40, 436, (270, 476), 334, 542, color=steel)
-    )
-    lens_x, lens_y, r = CX + 52, 592, 108
-    handle_a = math.radians(52)
+    lens_x, lens_y, r = 460, 520, 190
+    handle_a = math.radians(55)
     hx1 = lens_x + r * math.cos(handle_a)
     hy1 = lens_y + r * math.sin(handle_a)
-    hx2 = lens_x + (r + 130) * math.cos(handle_a)
-    hy2 = lens_y + (r + 130) * math.sin(handle_a)
-    lens = (
-        f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
-        f'stroke="{steel}" stroke-width="26" stroke-linecap="round"/>'
-        f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{steel}" stroke-width="15"/>'
+    hx2 = lens_x + (r + 210) * math.cos(handle_a)
+    hy2 = lens_y + (r + 210) * math.sin(handle_a)
+    return (
+        bust(560, 330, s=1.25)
+        + card_shape(380, 650, 290, 400, rot=-6, fill=BLUE, stroke=BLUE_EDGE)
+        + f'<line x1="{hx1:.0f}" y1="{hy1:.0f}" x2="{hx2:.0f}" y2="{hy2:.0f}" '
+        f'stroke="{steel}" stroke-width="34" stroke-linecap="round"/>'
+        + f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="{PAPER}" opacity="0.2"/>'
+        + f'<circle cx="{lens_x}" cy="{lens_y}" r="{r}" fill="none" stroke="{steel}" stroke-width="22"/>'
+        + big_eye(lens_x, lens_y, s=0.8, iris=steel)
     )
-    return scene + lens + big_eye(lens_x, lens_y, s=0.5, gaze=-6, iris=steel)
 
 
-def blindfold(cx, cy, hw, rot):
-    """A knotted band across both cards: the swap is blind."""
-    body = (
-        f'<polygon points="{cx + hw - 10},{cy - 26} {cx + hw + 128},{cy - 96} '
-        f'{cx + hw + 74},{cy - 2}" '
-        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
-        f'<polygon points="{cx + hw - 10},{cy + 22} {cx + hw + 136},{cy + 62} '
-        f'{cx + hw + 58},{cy + 106}" '
-        f'fill="{GOLD}" stroke="{INK}" stroke-width="7" stroke-linejoin="round"/>'
-        f'<rect x="{cx - hw}" y="{cy - 44}" width="{hw * 2}" height="88" rx="40" '
-        f'fill="{GOLD}" stroke="{INK}" stroke-width="7"/>'
-        f'<path d="M {cx - hw + 40},{cy - 12} Q {cx},{cy - 30} {cx + hw - 40},{cy - 12}" '
-        f'fill="none" stroke="{GOLD_DARK}" stroke-width="6" stroke-linecap="round"/>'
-        f'<circle cx="{cx + hw + 8}" cy="{cy}" r="20" fill="{GOLD_DARK}" '
-        f'stroke="{INK}" stroke-width="5"/>'
+def swap_pair():
+    """One big card of yours and one of theirs, crossed — the two-player trade."""
+    return card_shape(322, 600, 255, 350, rot=-13, fill=FELT, stroke=GOLD) + card_shape(
+        502, 600, 255, 350, rot=13, fill=BLUE, stroke=BLUE_EDGE
     )
-    return group(rot, cx, cy, body)
-
-
-def swap_board(revealed, accent):
-    """The board with one card pulled from your hand and one from the top
-    opponent's, meeting at the center. Trails say whose cards are trading."""
-    scene = board(top_gap=1, my_gap=1)
-    trails = trail(CX - 20, 800, 340, 660, hw=30, color=accent) + trail(
-        CX + 20, 420, 484, 520, hw=30, color=accent
-    )
-    if revealed:
-        pair = popped_card(
-            340, 590, w=112, h=154, rot=-9, fill=FELT, stroke=GOLD, halo=accent
-        ) + popped_card(484, 590, w=112, h=154, rot=9, fill=BLUE, stroke=BLUE_EDGE, halo=accent)
-    else:
-        mine = (
-            f'<rect x="284" y="513" width="112" height="154" rx="14" '
-            f'fill="{FELT}" stroke="{GOLD}" stroke-width="8"/>'
-        )
-        theirs = (
-            f'<rect x="428" y="513" width="112" height="154" rx="14" '
-            f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="8"/>'
-        )
-        pair = group(-9, 340, 590, mine) + group(9, 484, 590, theirs)
-    arrows = arc_arrow(CX, 592, 158, 210, 330, dashed=revealed, sw=13, color=accent) + arc_arrow(
-        CX, 592, 158, 30, 150, dashed=revealed, sw=13, color=accent
-    )
-    return scene + trails + pair + arrows
 
 
 def face_jack():
-    """The blind swap: yours for theirs, and the blindfold means nobody looks."""
-    fold = blindfold(CX, 590, 128, -6)
-    return (
-        swap_board(revealed=False, accent=ACCENT["j"])
-        + f'<g transform="translate({CX} 590) scale(0.78) translate(-{CX} -590)">{fold}</g>'
+    """The blind swap: a violet circle of arrows around the blindfolded pair.
+    Silhouette: a ring of motion around crossed cards, banded."""
+    violet = ACCENT["j"]
+    arrows = arc_arrow(CX, 600, 295, 208, 332, sw=17, color=violet) + arc_arrow(
+        CX, 600, 295, 28, 152, sw=17, color=violet
     )
+    return swap_pair() + blindfold(CX, 590, 240, -6) + arrows
 
 
 def face_queen():
-    """Look first, then trade if you like: both faces up, one open eye,
-    and the arrows still dashed — undecided."""
-    return swap_board(revealed=True, accent=ACCENT["q"]) + big_eye(
-        CX, 590, s=0.55, iris=ACCENT["q"]
+    """Look first, then trade if you like: a huge plum eye on the pair,
+    the arrows dashed — undecided. Silhouette: eye over crossed cards."""
+    plum = ACCENT["q"]
+    arrows = arc_arrow(CX, 600, 295, 208, 332, dashed=True, sw=17, color=plum) + arc_arrow(
+        CX, 600, 295, 28, 152, dashed=True, sw=17, color=plum
     )
-
-
-def ray(x1, y1, x2, y2):
-    """A dashed sight-ray with an arrowhead: the oracle pointing at a card."""
-    ang = math.atan2(y2 - y1, x2 - x1)
-    return (
-        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{GOLD}" stroke-width="9" '
-        f'stroke-linecap="round" stroke-dasharray="16 14"/>' + arrowhead(x2, y2, ang, size=24)
-    )
+    return swap_pair() + big_eye(CX, 590, s=1.0, iris=plum) + arrows
 
 
 def face_king():
-    """The oracle: the crowned eye at the table's center, and its sight-rays
-    reaching every hand — the opponents' and your own alike."""
-    oracle = crown(CX, 528, s=0.62) + big_eye(CX, 606, s=0.5)
-    rays = (
-        ray(CX, 552, CX, 476)            # the top opponent's hand
-        + ray(CX - 96, 606, 314, 600)    # the left opponent's
-        + ray(CX + 96, 606, 510, 600)    # the right opponent's
-        + ray(CX, 662, CX, 750)          # your own
+    """The oracle: a great crown over an all-seeing eye, raying every hand —
+    yours and both opponents'. Silhouette: crown, eye, three cards."""
+    cards = (
+        card_shape(240, 855, 155, 212, rot=-8, fill=FELT, stroke=GOLD)
+        + card_shape(CX, 880, 155, 212, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(584, 855, 155, 212, rot=8, fill=BLUE, stroke=BLUE_EDGE)
     )
-    return board() + rays + oracle
+    rays = (
+        ray(330, 620, 268, 728, color=GOLD)
+        + ray(CX, 648, CX, 752, color=GOLD)
+        + ray(494, 620, 556, 728, color=GOLD)
+    )
+    return crown(CX, 310, s=1.65) + big_eye(CX, 540, s=0.85) + rays + cards
 
 
 def face_ace():
-    """A card hurled from the deck at the table's center into an opponent's hand."""
-    stack = "".join(
-        f'<rect x="{CX - 55 + dx}" y="{620 + dy}" width="110" height="150" rx="12" '
-        f'fill="{PAPER}" stroke="{GOLD}" stroke-width="6"/>'
-        for dx, dy in ((10, 14), (5, 7), (0, 0))
-    )
+    """The throw: a card hurled from the deck stack across the table at an
+    opponent. Silhouette: a big red diagonal with a tilted card riding it."""
     red = ACCENT["a"]
+    target = bust(600, 300, s=1.1) + card_shape(600, 402, 96, 132, fill=BLUE, stroke=BLUE_EDGE)
+    stack = "".join(
+        card_shape(250 + dx, 800 + dy, 180, 246, fill="#EAD9A6", stroke=GOLD_DARK, sw=7)
+        for dx, dy in ((18, 22), (9, 11), (0, 0))
+    )
+    ang = math.atan2(430 - 700, 560 - 320)
     throw = (
-        f'<line x1="{CX}" y1="640" x2="{CX}" y2="470" stroke="{red}" stroke-width="13" '
-        f'stroke-linecap="round"/>' + arrowhead(CX, 452, -math.pi / 2, size=32, color=red)
+        f'<line x1="320" y1="700" x2="545" y2="447" stroke="{red}" stroke-width="16" '
+        f'stroke-linecap="round"/>' + arrowhead(560, 430, ang, size=36, color=red)
     )
     streaks = "".join(
-        f'<line x1="{CX + dx}" y1="{y}" x2="{CX + dx}" y2="{y + 40}" stroke="{red}" '
-        f'stroke-width="7" stroke-linecap="round" opacity="{op}"/>'
-        for dx, y, op in ((-64, 560, 0.7), (64, 560, 0.7))
+        f'<line x1="{x}" y1="{y}" x2="{x + 34}" y2="{y - 38}" stroke="{red}" '
+        f'stroke-width="8" stroke-linecap="round" opacity="{op}"/>'
+        for x, y, op in ((300, 640, 0.7), (352, 700, 0.5))
     )
-    fx = CX + 74
-    flying = group(
-        -18,
-        fx,
-        512,
-        f'<rect x="{fx - 45}" y="{512 - 62}" width="90" height="124" rx="10" '
-        f'fill="{PAPER}" stroke="{GOLD}" stroke-width="6"/>',
-    )
-    return board() + throw + streaks + stack + flying
+    flying = card_shape(455, 545, 180, 246, rot=-24, fill="#EAD9A6", stroke=GOLD_DARK)
+    return target + throw + streaks + stack + flying
 
 
 def face_joker():
