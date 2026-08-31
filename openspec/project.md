@@ -98,7 +98,7 @@ evidence.
 
 - **Cloudflare** — Workers + Durable Objects for rooms, Pages for the web client. The free
   tier is the budget.
-- **Analytics**: none yet, and it is a release gate — `openspec/changes/add-live-analytics`
+- **Analytics**: none yet, and it is a release gate — `openspec/changes/archive/add-live-analytics`
   must land before the room opens (§6i step 3).
 - **Crash reporting**: none yet. Sentry is planned (tasks 8.2 and 9.9) and stays a separate
   pipe from analytics on purpose.

@@ -481,12 +481,25 @@ and they are exactly the people worth knowing about.
 
 **It is a switch in the Cloudflare dashboard, not something in the code.**
 
-1. Cloudflare dashboard → **Workers & Pages** → the **vinto** Pages project.
-2. Open **Settings** → **Web Analytics**.
-3. Switch it on.
+**Do not switch it on for the `vinto` Pages project.** That project is the leftover described
+in §6c — it serves an older copy at `vinto-6dr.pages.dev` that nothing links to, so counting
+there would count nobody and still look like it had worked. The website is a **Worker** now
+(`vinto-web`), for the reason in `docs/kotlin/README.md` §6c: a Pages custom domain can only
+be attached by hand in the dashboard, and this project's whole deploy story is a button in the
+GitHub mobile app.
 
-That is all. Cloudflare adds the counting script to the pages it serves; nothing needs to be
-rebuilt or redeployed.
+So add the **site**, by hostname, rather than opening a project's settings:
+
+1. Cloudflare dashboard → **Analytics & Logs** → **Web Analytics**.
+2. **Add a site**, and give it `vinto.kupalinka.app` — the hostname
+   `composeApp/cloudflare/wrangler.jsonc` claims in its `routes`.
+3. Choose the automatic option if it is offered for this hostname. It is on a zone Cloudflare
+   proxies, so Cloudflare can inject the counting script itself and nothing needs rebuilding.
+
+If the automatic option is not offered, Cloudflare gives you a small `<script>` snippet with a
+site token in it instead. That one **is** a code change: it belongs in
+`composeApp/src/wasmJsMain/resources/index.html`, and the token is not a secret — it is public
+by design and identifies the site rather than the account.
 
 It is free, it uses **no cookies**, and it does not follow anybody between sites — which is
 why there is no consent banner to add. Results appear under **Analytics & Logs** →
@@ -624,4 +637,4 @@ what you want.
 
 The technical version of all of this, with the reasoning behind each decision, is
 `docs/kotlin/README.md` — §6i is the same runbook written for somebody who will read the code.
-The analytics design is `openspec/changes/add-live-analytics/`.
+The analytics design is `openspec/changes/archive/add-live-analytics/`.
