@@ -142,6 +142,15 @@ def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18, color=GOLD):
     )
 
 
+def star(cx, cy, outer, inner, n=8, color=GOLD):
+    pts = []
+    for i in range(n * 2):
+        r = outer if i % 2 == 0 else inner
+        a = math.pi * i / n - math.pi / 2
+        pts.append(f"{cx + r * math.cos(a):.0f},{cy + r * math.sin(a):.0f}")
+    return f'<polygon points="{" ".join(pts)}" fill="{color}"/>'
+
+
 def sight(x1, y1, x2, y2, color=GOLD):
     """A dashed glance from an eye to a card."""
     return (
@@ -284,47 +293,131 @@ def face_number(n):
     return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
+# --- the table scene the four peeks share -----------------------------------
+
+
+def table_felt():
+    """The board: the four-player table, as the app itself draws it."""
+    return (
+        f'<rect x="140" y="290" width="545" height="600" rx="130" fill="{FELT_DARK}" '
+        f'stroke="{GOLD}" stroke-width="8"/>'
+        f'<rect x="162" y="312" width="501" height="556" rx="112" fill="none" '
+        f'stroke="{GOLD}" stroke-width="3" opacity="0.4"/>'
+    )
+
+
+def opponent_seat(cx, cy, rot=0.0, gap=None):
+    """A bust with three small blue cards in front of it, facing the center."""
+    seat_bust = (
+        f'<circle cx="0" cy="-66" r="27" fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
+        f'<path d="M -58,-2 Q -52,-48 0,-52 Q 52,-48 58,-2 Z" '
+        f'fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
+    )
+    cards = "".join(
+        f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
+        f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="4"/>'
+        for i in range(3)
+        if i != gap
+    )
+    return f'<g transform="translate({cx} {cy}) rotate({rot})">{seat_bust}{cards}</g>'
+
+
+def your_hand(gap=None):
+    """Your three green cards at the bottom edge, larger — the seat the app gives you."""
+    return "".join(
+        f'<rect x="{CX + (i - 1) * 116 - 50:.0f}" y="772" width="100" height="138" rx="12" '
+        f'fill="{FELT}" stroke="{GOLD}" stroke-width="7"/>'
+        for i in range(3)
+        if i != gap
+    )
+
+
+def board(top_gap=None, my_gap=None):
+    return (
+        table_felt()
+        + opponent_seat(CX, 384, gap=top_gap)
+        + opponent_seat(224, 590, rot=90)
+        + opponent_seat(601, 590, rot=-90)
+        + your_hand(gap=my_gap)
+    )
+
+
+def trail(x1, y1, x2, y2, hw=36, color=GOLD):
+    """A streak from a seat's gap to the card pulled out of it: whose card this is."""
+    return (
+        f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
+        f'fill="{color}" opacity="0.35"/>'
+    )
+
+
+def popped(cx, cy, w, h, fill, stroke, halo):
+    return (
+        f'<rect x="{cx - w / 2 - 11:.0f}" y="{cy - h / 2 - 11:.0f}" width="{w + 22}" '
+        f'height="{h + 22}" rx="20" fill="{halo}" opacity="0.4"/>'
+        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="13" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
+    )
+
+
+def lens(cx, cy, r, color, handle=False, sw=16):
+    """The spying glyph for peeking at THEIR card — a tool, not an eye."""
+    parts = (
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{color}" stroke-width="{sw}"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r * 0.14:.0f}" fill="{color}"/>'
+    )
+    if handle:
+        a = math.radians(52)
+        parts += (
+            f'<line x1="{cx + r * math.cos(a):.0f}" y1="{cy + r * math.sin(a):.0f}" '
+            f'x2="{cx + (r + 150) * math.cos(a):.0f}" y2="{cy + (r + 150) * math.sin(a):.0f}" '
+            f'stroke="{color}" stroke-width="{sw + 10}" stroke-linecap="round"/>'
+        )
+    return parts
+
+
 def face_seven():
-    """7: your green card between two mirrored amber eyes — double-ended like a
-    court card, so it reads the same from both seats."""
+    """7: the table; a small card of YOURS rises, your eye above it."""
     amber = ACCENT["7"]
     return (
-        card_shape(CX, 562, 265, 364, fill=FELT, stroke=GOLD)
-        + big_eye(CX, 255, s=0.85, gaze=10, iris=amber)
-        + group(180, CX, 870, big_eye(CX, 870, s=0.85, gaze=10, iris=amber))
-        + sight(CX, 352, CX, 384, color=amber)
-        + sight(CX, 740, CX, 772, color=amber)
+        board(my_gap=1)
+        + trail(CX, 800, CX, 724, color=amber)
+        + popped(CX, 680, 122, 168, FELT, GOLD, amber)
+        + big_eye(CX, 524, s=0.55, gaze=8, iris=amber)
     )
 
 
 def face_eight():
-    """8: one big green card that has opened its eye — self-symmetric."""
-    return card_shape(CX, 562, 320, 438, fill=FELT, stroke=GOLD) + big_eye(
-        CX, 562, s=1.0, iris=ACCENT["8"]
+    """8: the table; a BIG card of yours rises, the eye opened on the card
+    itself — same act as the 7, bigger card, different picture."""
+    burnt = ACCENT["8"]
+    return (
+        board(my_gap=1)
+        + trail(CX, 800, CX, 680, color=burnt)
+        + popped(CX, 590, 190, 262, FELT, GOLD, burnt)
+        + big_eye(CX, 590, s=0.62, iris=burnt)
     )
 
 
 def face_nine():
-    """9: an opponent's blue card under a lens ring — no handle, so the
-    emblem is the same upside down."""
+    """9: the table; a small card of THEIRS drops, a slim lens ring on it."""
     steel = ACCENT["9"]
     return (
-        card_shape(CX, 562, 320, 438, fill=BLUE, stroke=BLUE_EDGE)
-        + f'<circle cx="{CX}" cy="562" r="172" fill="{PAPER}" opacity="0.25"/>'
-        f'<circle cx="{CX}" cy="562" r="172" fill="none" stroke="{steel}" stroke-width="24"/>'
-        + big_eye(CX, 562, s=0.72, iris=steel)
+        board(top_gap=1)
+        + trail(CX, 420, CX, 500, color=steel)
+        + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, steel)
+        + lens(CX, 560, 96, steel, sw=13)
     )
 
 
 def face_ten():
-    """10: an opponent's blue card between two mirrored indigo eyes."""
+    """10: the table; a BIG card of theirs drops under a full magnifier."""
     indigo = ACCENT["10"]
     return (
-        card_shape(CX, 562, 265, 364, fill=BLUE, stroke=BLUE_EDGE)
-        + big_eye(CX, 255, s=0.85, gaze=10, iris=indigo)
-        + group(180, CX, 870, big_eye(CX, 870, s=0.85, gaze=10, iris=indigo))
-        + sight(CX, 352, CX, 384, color=indigo)
-        + sight(CX, 740, CX, 772, color=indigo)
+        board(top_gap=1)
+        + trail(CX, 420, CX, 480, color=indigo)
+        + popped(CX, 580, 190, 262, BLUE, BLUE_EDGE, indigo)
+        + lens(CX + 10, 566, 132, indigo, handle=True)
     )
 
 
@@ -353,21 +446,25 @@ def face_jack():
 
 
 def face_queen():
-    """Look first, then trade if you like: a huge plum eye on the pair,
-    the arrows dashed — undecided. Silhouette: eye over crossed cards."""
+    """The Queen peeks TWO cards, so she has two eyes — one opened on each card
+    of the pair — and her arrows stay dashed: the trade is hers to decline."""
     plum = ACCENT["q"]
     arrows = arc_arrow(CX, 600, 295, 208, 332, dashed=True, sw=17, color=plum) + arc_arrow(
         CX, 600, 295, 28, 152, dashed=True, sw=17, color=plum
     )
-    return swap_pair() + big_eye(CX, 590, s=1.0, iris=plum) + arrows
+    eyes = group(-13, 322, 600, big_eye(322, 600, s=0.5, iris=plum)) + group(
+        13, 502, 600, big_eye(502, 600, s=0.5, iris=plum)
+    )
+    return swap_pair() + eyes + arrows
 
 
 def face_king():
-    """The oracle, double-ended like a real court card: a crown above and its
-    mirror below, the all-seeing eye between them, rays to a card in every
-    corner — green and blue placed so a 180° turn maps the face onto itself."""
-    crowns = crown(CX, 400, s=0.95) + group(180, CX, 724, crown(CX, 724, s=0.95))
-    eye = big_eye(CX, 562, s=0.72)
+    """The oracle, double-ended like a real court card and without an eye —
+    an oracle radiates, he does not peer. Crown above, its mirror below, the
+    naming-star between them, rays to a card in every corner; green and blue
+    placed so a 180° turn maps the face onto itself."""
+    crowns = crown(CX, 412, s=0.95) + group(180, CX, 712, crown(CX, 712, s=0.95))
+    named = star(CX, 562, 66, 28)
     cards = (
         card_shape(228, 292, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
         + card_shape(597, 292, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
@@ -380,7 +477,7 @@ def face_king():
         + ray(322, 644, 278, 736, color=GOLD)
         + ray(503, 644, 547, 736, color=GOLD)
     )
-    return rays + crowns + eye + cards
+    return rays + crowns + named + cards
 
 
 def face_ace():
