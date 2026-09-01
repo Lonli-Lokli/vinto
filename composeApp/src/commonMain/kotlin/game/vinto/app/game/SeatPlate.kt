@@ -43,9 +43,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
 import game.vinto.app.art.avatar_donatello
+import game.vinto.app.art.avatar_leonardo
 import game.vinto.app.art.avatar_michelangelo
 import game.vinto.app.art.avatar_raphael
-import game.vinto.app.art.avatar_you
 import game.vinto.app.art.seat_is_a_bot
 import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
@@ -297,11 +297,14 @@ internal fun portraitFor(name: String): DrawableResource = when {
     name.startsWith("Raph") -> Res.drawable.avatar_raphael
     name.startsWith("Mikey") || name.startsWith("Michel") -> Res.drawable.avatar_michelangelo
     name.startsWith("Don") -> Res.drawable.avatar_donatello
-    // Leonardo is named by `RoomCore.botName` for seat zero, which is a bot only in a
-    // networked room whose host has gone. There is no `avatar_leonardo` yet, so he borrows
-    // the fallback like any unrecognised name — the bot badge is what tells him from a
-    // person, and it is on the portrait rather than in it for that reason.
-    else -> Res.drawable.avatar_you
+    name.startsWith("Leo") -> Res.drawable.avatar_leonardo
+    // Leonardo is also the fallback, because the seat he plays is the one the offline game
+    // gives the human: his portrait was filed as `avatar_you` and read as "a picture of the
+    // viewer", which is true of exactly one game mode. Online the viewer is whoever typed
+    // their name in, and seat zero can be Leonardo himself when the room fills it with a bot.
+    // The file is named for the character now; the fallback is a separate decision that
+    // happens to land on him.
+    else -> Res.drawable.avatar_leonardo
 }
 
 private val PlateTap = 44.dp
