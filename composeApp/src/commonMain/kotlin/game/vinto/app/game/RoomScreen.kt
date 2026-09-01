@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -153,17 +155,8 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                 ConnectionBadge(connection)
             }
 
-            // Before the first lobby broadcast there are no seats to draw, and an empty gap
-            // between a title and a button reads as a screen that has finished loading and
-            // has nothing in it. The badge above says "Connecting…" in four small words; this
-            // says it where the eye already is, which is the space the table will occupy.
             if (ui.seats.isEmpty() && !ui.canRetry) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = Waiting),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    VintoSpinner(description = stringResource(Res.string.lobby_connecting))
-                }
+                WaitingSeats()
             }
 
             ui.seats.forEach { seat ->
@@ -220,7 +213,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
  * about it, not the whole lobby greying out.
  */
 @Composable
-private fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) {
+internal fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) {
     Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(Gap),
@@ -250,6 +243,59 @@ private fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) 
                     onClick = onRemove,
                     compact = true,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * The four seats, before the room has said who is in them.
+ *
+ * Two faults in one, both reported from a phone. There was a spinner here, and the badge
+ * beside the title was already spinning — so a single wait was announced twice, and a player
+ * looking at two turning rings has to work out whether they are two things or one. The badge
+ * keeps it: the connection is what is being waited for, and the badge is where a connection
+ * lives all game.
+ *
+ * And this column is CENTRED, so its height is the screen's layout. A 40 dp box standing in
+ * for 190 dp of seats meant that at the moment the room answered, the title, the invitation
+ * and the leave button all jumped a couple of hundred pixels — the one instant the player is
+ * reading the screen hardest. Four placeholders, sized by the same type in the same padding
+ * as the rows that replace them, so nothing moves when the answer arrives.
+ *
+ * Four is not a guess: a Vinto room deals exactly four seats (`RoomCore.SEAT_COUNT`), and at
+ * this moment none of them can carry a remove button yet, so the rows they become are the
+ * plain text-only kind these match.
+ */
+@Composable
+private fun WaitingSeats() {
+    // One description for the group. Four silent rows would otherwise be four blanks to
+    // read out, and what a listener needs is the sentence the badge is showing.
+    val spoken = stringResource(Res.string.lobby_connecting)
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Gap),
+        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
+    ) {
+        repeat(SEATS) { WaitingSeat() }
+    }
+}
+
+@Composable
+internal fun WaitingSeat() {
+    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The bar wraps a blank line of the row's own type rather than taking a height
+            // in dp. That is what makes this exactly as tall as the `SeatRow` it stands in
+            // for — a hard-coded height is a guess that drifts the next time the type does.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(WaitingBar)
+                    .background(Rail.inkDim.copy(alpha = Ghost), MaterialTheme.shapes.small),
+            ) {
+                Text(" ")
             }
         }
     }
@@ -620,8 +666,13 @@ private val Gap = 10.dp
 private val LobbyMax = 420.dp
 private val StripMax = 420.dp
 
-/** The space the seats will fill, held open while the room is still being reached. */
-private val Waiting = 40.dp
+/** A Vinto room is always four seats — see `RoomCore.SEAT_COUNT`, which is a design
+ * constant rather than a setting. */
+private const val SEATS = 4
+
+/** How much of a waiting row the placeholder bar fills, and how faint it is. */
+private const val WaitingBar = 0.45f
+private const val Ghost = 0.25f
 
 private val Dot = 10.dp
 private val DotGap = 6.dp

@@ -132,7 +132,13 @@ fun DiscoverScreen(
                 label = stringResource(Res.string.discover_refresh),
                 tone = ButtonTone.NEUTRAL,
                 onClick = { load(first = false) },
-                busy = state.refreshing || state.loading,
+                // Busy only for a refresh, which is the wait this button owns. The first
+                // load already has the middle of the screen turning and saying why, and two
+                // spinners for one wait is a player told twice and sure of neither. Not
+                // busy but not live either: `enabled` is "there is nothing to ask for yet",
+                // which is exactly the case while the first answer is still coming.
+                busy = state.refreshing,
+                enabled = !state.loading,
                 modifier = Modifier.fillMaxWidth(),
             )
             GameButton(
