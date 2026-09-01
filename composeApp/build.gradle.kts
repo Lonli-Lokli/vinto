@@ -163,9 +163,12 @@ tasks.withType<Test>().configureEach {
 }
 
 /**
- * The card art and the four player portraits, shared with the web app they were drawn for
- * (`legacy-web/apps/vinto/src/app/images`). One deck, one set of faces: a second, plainer deck for the
- * Kotlin clients would make them look like a different game rather than the same one.
+ * The card art and the four player portraits. One deck, one set of faces: a second, plainer
+ * deck for a second client would make them look like a different game rather than the same one.
+ *
+ * The `drawable/card_…xml` faces are **generated** — `python3 tools/make-card-faces.py` writes
+ * both those and the SVG preview in `tools/card-faces/` from one source, so an edit made here is
+ * lost on the next run. Change the generator.
  */
 compose.resources {
     publicResClass = true

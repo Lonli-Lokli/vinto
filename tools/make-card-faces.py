@@ -1,15 +1,29 @@
 #!/usr/bin/env python3
 """Generate the meaning-based card faces as SVG.
 
-Design (docs/design/CARD-IMAGERY.md): each rank has its own tinted ground and accent,
-and ownership is a colour that needs no legend: felt green with a gold border is your
-card, blue is an opponent's, pale gold the deck's. The four peeks (7-10) sit on the
-four-player table scene — seats, hands, and the examined card popping out — with the
-board TRANSPARENT (gold outline only) so each rank's tint carries the face. 7/8 use the
-eye (yours), 9/10 the lens (theirs), sized differently within each pair. J trades the
-pair under a slashed eye, Q under two open eyes with dashed arrows, K reads a crystal
-ball raying the corner cards, A throws a deck card at an opponent, Joker is the cap.
-Every face keeps standard corner indices (bottom-right rotated, 6 and 9 underlined).
+Design (docs/design/CARD-IMAGERY.md). Ownership is a colour that needs no legend: felt
+green is your card, blue is an opponent's, cream the deck's, and every one of them is
+outlined in ink so it holds on any ground.
+
+The ground says what the card DOES, in four families rather than nine tints — green
+reaches your own cards (7, 8), blue reaches theirs (9, 10), orange moves one between two
+players (J, Q), yellow is the crown and the deck the Ace throws from (K, A). Two ranks in
+one family are separated by LIGHTNESS, so the pair survives a dichromat; the plain
+numbers keep a white ground, because doing nothing is their whole meaning.
+
+The emblems: 7/8 stand a card up out of your row under a wide eye, 9/10 drop one out of
+theirs under a round lens — opposite silhouettes, not one scene twice. J trades the pair
+under a slashed eye, Q under two open eyes with dashed arrows, K rays a crown at a card
+in each corner, A throws a deck card at an opponent, the Joker is its cap over its name.
+
+Every face carries standard corner indices (bottom-right rotated, 6 and 9 underlined),
+drawn bold and at large-print size because on the felt they are often the only part of a
+card big enough to read.
+
+Three gates run before anything is written, and each one exists because something got
+past the two before it: `check_contrast` (WCAG on text and grounds), `check_separation`
+(two cards that do the same thing are still two cards) and `check_emblem_ink` (every
+shape is visible on the ground it is painted on).
 
 Usage:  python3 tools/make-card-faces.py
 Output: tools/card-faces/*.svg and tools/card-faces/preview.html
@@ -32,6 +46,12 @@ ORANGE = "#E8791E"
 WHITE = "#FFFFFF"
 PALE = "#A8C2B5"
 BLUE = "#5B9BD5"        # opponents' cards — distinct from your green at any size
+JOKER_INK = "#A34A08"   # the Joker's name: orange darkened to hold on its grey ground
+PENALTY = "#9E2B25"     # the Ace's throw — the one red left in the deck, and it means harm
+# The back's four engraved marks. Darker than the deck colours they stand for, because
+# they are the one place a colour is drawn with no outline to fall back on, and gold,
+# blue and orange all sat under 3:1 on cream — 2.2, 2.7 and 2.7.
+ENGRAVED = ("#8A6D1B", "#2A6BB0", "#1B5E43", "#C25E10")
 BLUE_EDGE = "#DCE9F5"
 
 # One accent per rank family, dark enough to hold as a corner index on cream.
@@ -41,28 +61,45 @@ ACCENT = {
     "4": "#4F5AA8",   # indigo
     "5": "#B03A57",   # raspberry
     "6": "#1B5E43",   # the brand green
-    "7": "#1E6B4B",   # deep green — the 7 peeks your own green card
-    "8": "#94430D",   # burnt orange — a sibling, not a twin; 4.5:1-safe
-    "9": "#256D85",   # steel cyan
-    "10": "#3D4EA0",  # indigo — a sibling, not a twin
-    "j": "#7C3AA0",   # violet
-    "q": "#A23B72",   # plum
-    "k": "#7E5C11",   # deep gold, darkened for 4.5:1 on its ground
-    "a": "#9E2B25",   # red
+    "7": "#1B7A3E",   # green — the peeks that reach your own cards
+    "8": "#145C2E",
+    "9": "#1B477A",   # blue — the peeks that reach somebody else's
+    "10": "#073870",
+    "j": "#7A441B",   # orange — a card crossing between two players
+    "q": "#663006",
+    "k": "#7A641B",   # yellow — the crown, and the deck the Ace throws from
+    "a": "#664916",
 }
 
-# Tinted grounds for the action cards — colour mass tells them apart across a table.
-# The numbers keep the plain cream: they already read perfectly.
+# Tinted grounds for the action cards. Four families, and which family a rank belongs to
+# is decided by WHAT THE CARD DOES rather than by picking nine pleasant tints:
+#
+#     green   the action reaches one of your own cards      7, 8
+#     blue    it reaches one of somebody else's             9, 10
+#     orange  a card crosses between two players            J, Q
+#     yellow  the crown, and the deck the Ace throws from   K, A
+#
+# which is the same legend the emblems already draw with — your cards are felt green on
+# every face, theirs are blue — so the ground now agrees with the picture on it instead of
+# being a tenth colour with nothing to say. The numbers keep the plain white: they do
+# nothing, which is their whole meaning.
+#
+# Within a family the two ranks split by LIGHTNESS, not by hue. They used to be
+# neighbouring tints — "a sibling, not a twin" — and measured, 9 and 10 were dE 7.7 apart
+# and J and Q were 6.2, which is not a sibling, it is the same colour twice; worse, what
+# little separated them was hue alone, so the player who most needed the cue was the one
+# who could not use it. `check_separation` holds all three pairs at arm's length, with a
+# simulated deuteranope and protanope looking at them.
 BG = {
-    "7": "#DBEEDC",   # light green — your-card peek
-    "8": "#FAD5A5",   # orange — the other your-card peek
-    "9": "#DCEBF2",   # cyan
-    "10": "#DEE2F5",  # periwinkle
-    "j": "#EBDFF4",   # lilac
-    "q": "#F6DFEB",   # pink
-    "k": "#F3E5A8",   # the one strong gold — royalty owns it
-    "a": "#F7CEC7",   # salmon red
-    "joker": "#EBEBEB",  # neutral gray: the wild card belongs to no family
+    "7": "#CCFCDE",   # green: this action reaches one of YOUR cards
+    "8": "#70E099",
+    "9": "#D7E8FC",   # blue: this action reaches one of THEIRS
+    "10": "#74AAE8",
+    "j": "#F7E2D2",   # orange: a card crosses between two players
+    "q": "#E0A170",
+    "k": "#FCEDB8",   # yellow: the crown, and the deck the Ace throws from
+    "a": "#F0BE69",
+    "joker": "#C6C6C6",  # neutral: the wild card belongs to no family
 }
 
 OUT = pathlib.Path(__file__).parent / "card-faces"
@@ -83,13 +120,21 @@ def pip_card(cx, cy, w=100, h=138, fill=FELT):
 
 
 def card_shape(cx, cy, w, h, rot=0.0, fill=FELT, stroke=GOLD, sw=9):
-    """A game card: green/gold yours, blue theirs, cream the deck's."""
+    """A game card: green yours, blue theirs, cream the deck's, and the colour of the
+    fill is the entire ownership legend.
+
+    The outline is INK and the rank's own colour is an inner line inside it. It used to
+    be the other way round — a gold or pale-blue edge and no dark outline — which put the
+    whole burden of being visible on the fill, and measured, the opponents' blue managed
+    3:1 against *not one* of the nine grounds it is drawn on. A dark outline costs
+    nothing, holds on any ground a card is ever given, and is what makes these read as
+    cards rather than as smudges once they are 12 px wide."""
     body = (
         f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w:.0f}" height="{h:.0f}" '
-        f'rx="{w * 0.09:.0f}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
-        f'<rect x="{cx - w / 2 + w * 0.07:.0f}" y="{cy - h / 2 + w * 0.07:.0f}" '
-        f'width="{w * 0.86:.0f}" height="{h - w * 0.14:.0f}" rx="{w * 0.06:.0f}" '
-        f'fill="none" stroke="{PAPER}" stroke-width="3" opacity="0.35"/>'
+        f'rx="{w * 0.09:.0f}" fill="{fill}" stroke="{INK}" stroke-width="{sw}"/>'
+        f'<rect x="{cx - w / 2 + w * 0.08:.0f}" y="{cy - h / 2 + w * 0.08:.0f}" '
+        f'width="{w * 0.84:.0f}" height="{h - w * 0.16:.0f}" rx="{w * 0.06:.0f}" '
+        f'fill="none" stroke="{stroke}" stroke-width="{max(4, sw * 0.5):.0f}"/>'
     )
     return group(rot, cx, cy, body) if rot else body
 
@@ -160,15 +205,6 @@ def arc_arrow(cx, cy, r, a1, a2, dashed=False, sw=18, color=GOLD):
     return body + arrowhead(x2, y2, tangent, color=color)
 
 
-def star(cx, cy, outer, inner, n=8, color=GOLD):
-    pts = []
-    for i in range(n * 2):
-        r = outer if i % 2 == 0 else inner
-        a = math.pi * i / n - math.pi / 2
-        pts.append(f"{cx + r * math.cos(a):.0f},{cy + r * math.sin(a):.0f}")
-    return f'<polygon points="{" ".join(pts)}" fill="{color}"/>'
-
-
 def ray(x1, y1, x2, y2, color=GOLD):
     """A dashed sight-ray with an arrowhead — dashes drawn as real segments,
     because vector drawables have no stroke-dasharray."""
@@ -188,7 +224,7 @@ def ray(x1, y1, x2, y2, color=GOLD):
     return "".join(segs) + arrowhead(x2, y2, ang, size=24, color=color)
 
 
-def crown(cx, cy, s=1.0):
+def crown(cx, cy, s=1.0, color=GOLD):
     """Hollow outline crown — mighty, weighs nothing."""
     w, h = 130 * s, 96 * s
     d = (
@@ -199,14 +235,14 @@ def crown(cx, cy, s=1.0):
     )
     dots = "".join(
         f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{11 * s:.0f}" fill="none" '
-        f'stroke="{GOLD}" stroke-width="{7 * s:.0f}"/>'
+        f'stroke="{color}" stroke-width="{7 * s:.0f}"/>'
         for x, y in ((cx - w, cy - h * 0.42), (cx, cy - h * 0.78), (cx + w, cy - h * 0.42))
     )
     return (
-        f'<path d="{d}" fill="none" stroke="{GOLD}" stroke-width="{13 * s:.0f}" '
+        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{13 * s:.0f}" '
         f'stroke-linejoin="round"/>'
         f'<line x1="{cx - w}" y1="{cy + h * 0.74}" x2="{cx + w}" y2="{cy + h * 0.74}" '
-        f'stroke="{GOLD}" stroke-width="{13 * s:.0f}" stroke-linecap="round"/>' + dots
+        f'stroke="{color}" stroke-width="{13 * s:.0f}" stroke-linecap="round"/>' + dots
     )
 
 
@@ -264,6 +300,27 @@ def blindfold(cx, cy, hw, rot):
 # ---------------------------------------------------------------- the frame
 
 
+# The corner index is drawn bold and at large-print size, and that is an accessibility
+# decision rather than a style one. On the felt a card is 32-56 dp wide, and below the tap
+# floor the emblem is a smudge while the index still has to be a number — CARD-IMAGERY.md
+# says as much: "only the corner index carries the card". At the old 0.95 and stroke 17 the
+# numeral was 11% of the card's width, about 6 dp on the table, in a stroke a third of a
+# device pixel wide on the side seats. At 1.55 it is 19% of the width in a bold weight,
+# which is what a large-print ("jumbo index") deck uses — the affordance low-vision players
+# already buy a whole deck to get.
+INDEX_SCALE = 1.55
+INDEX_X, INDEX_Y = 66, 62
+# The 10 is two glyphs, so it is set smaller to keep the pair inside the same corner and
+# dropped so both indices share an optical centre. The 1 is a stem in a full-width box, so
+# the pair is kerned tighter than two boxes would otherwise sit.
+TEN_SCALE = INDEX_SCALE * 0.78
+TEN_KERN = 86
+TEN_DROP = 26
+# Bold. Measured against the glyph skeletons rather than chosen: at 26 the 8's counters and
+# the 4's triangle start to fill in, which costs more legibility at a thumbnail than the
+# extra weight buys.
+GLYPH_STROKE = 23
+
 # Monoline glyph skeletons on a 100-wide, 124-tall box, drawn as strokes.
 # Vector drawables cannot render text, so the indices are geometry like
 # everything else — which also frees them from platform fonts.
@@ -281,51 +338,79 @@ GLYPHS = {
     "9": ["M24 106 Q36 118 52 116 Q86 110 86 58 Q86 8 50 8 Q16 8 16 40 Q16 68 50 68 Q78 68 85 48"],
     "1": ["M28 24 L50 8 L50 116"],
     "0": ["M50 8 Q15 8 15 62 Q15 116 50 116 Q85 116 85 62 Q85 8 50 8"],
+    "O": ["M50 8 Q15 8 15 62 Q15 116 50 116 Q85 116 85 62 Q85 8 50 8"],
+    "E": ["M24 8 L24 116", "M24 8 L86 8", "M24 62 L76 62", "M24 116 L86 116"],
     "J": ["M68 8 L68 88 Q68 116 44 116 Q22 116 16 96"],
     "Q": ["M50 8 Q15 8 15 62 Q15 116 50 116 Q85 116 85 62 Q85 8 50 8", "M60 94 L88 124"],
     "K": ["M22 8 L22 116", "M82 8 L24 66", "M44 50 L86 116"],
+    "R": ["M24 116 L24 8 L58 8 Q86 8 86 35 Q86 62 58 62 L24 62", "M54 62 L88 116"],
     "A": ["M12 116 L50 8 L88 116", "M27 82 L73 82"],
 }
 
 
-def glyph(ch, x, y, scale, color):
+def glyph(ch, x, y, scale, color, weight=GLYPH_STROKE):
     body = "".join(
-        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="17" '
+        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{weight}" '
         f'stroke-linecap="round" stroke-linejoin="round"/>'
         for d in GLYPHS[ch]
     )
     return f'<g transform="translate({x} {y}) scale({scale})">{body}</g>'
 
 
+def word(text, cx, y, scale, color, kern=86):
+    """A word set in the index letterforms. The deck draws no text anywhere else — a
+    vector drawable cannot render a font, and every other label a card might want is
+    something the emblem says better."""
+    span = (len(text) - 1) * kern * scale
+    x0 = cx - span / 2 - 50 * scale
+    return "".join(
+        glyph(c, x0 + i * kern * scale, y, scale, color) for i, c in enumerate(text)
+    )
+
+
 def index_glyph(label, underline, color=INK):
     if label == "10":
-        t = glyph("1", 44, 64, 0.72, color) + glyph("0", 106, 64, 0.72, color)
+        t = glyph("1", INDEX_X, INDEX_Y + TEN_DROP, TEN_SCALE, color) + glyph(
+            "0", INDEX_X + TEN_KERN * TEN_SCALE, INDEX_Y + TEN_DROP, TEN_SCALE, color
+        )
     else:
-        t = glyph(label, 64, 54, 0.95, color)
+        t = glyph(label, INDEX_X, INDEX_Y, INDEX_SCALE, color)
     if underline:
-        t += f'<rect x="70" y="196" width="80" height="13" rx="6" fill="{color}"/>'
+        k = INDEX_SCALE
+        t += (
+            f'<rect x="{INDEX_X + 8 * k:.0f}" y="{INDEX_Y + 148.5 * k:.0f}" '
+            f'width="{85 * k:.0f}" height="{13 * k:.0f}" rx="{6 * k:.0f}" fill="{color}"/>'
+        )
     return t
 
 
 def joker_index():
-    return jester_cap(120, 148, s=0.5)
+    """The Joker's corner mark is its cap rather than a letter, and it grows with the
+    indices — but not as far, because a silhouette carries at a size a stroke does not
+    and the emblem below it is already the widest on the deck."""
+    return jester_cap(168, 178, s=0.72)
 
 
-def frame(label, emblem, underline=False, joker=False, accent=None, bg=PAPER):
+def frame(label, emblem, underline=False, joker=False, accent=None, bg=PAPER, edge=False):
+    """One card: a ground, two indices and an emblem, and as little else as possible.
+
+    `edge` draws the one ink rule, and only the plain numbers ask for it — their ground is
+    white, so without it the card has no edge at all. A tinted card needs none: the ground
+    is the edge. There used to be two rules on every card, an ink one and a thinner accent
+    one inside it, which on a white 3 read as a double border and on a coloured card was a
+    frame drawn around a frame."""
     corner = joker_index() if joker else index_glyph(label, underline, color=accent or INK)
     mirrored = f'<g transform="rotate(180 {W / 2} {H / 2})">{corner}</g>'
-    inner = (
-        f'<rect x="38" y="38" width="{W - 76}" height="{H - 76}" rx="26" '
-        f'fill="none" stroke="{accent}" stroke-width="5"/>'
-        if accent
+    rule = (
+        f'<rect x="26" y="26" width="{W - 52}" height="{H - 52}" rx="30" '
+        f'fill="none" stroke="{INK}" stroke-width="6"/>'
+        if edge
         else ""
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
         f'<rect width="{W}" height="{H}" rx="44" fill="{bg}"/>'
-        f'<rect x="20" y="20" width="{W - 40}" height="{H - 40}" rx="32" '
-        f'fill="none" stroke="{INK}" stroke-width="6"/>'
-        f"{inner}{corner}{mirrored}{emblem}</svg>"
+        f"{rule}{corner}{mirrored}{emblem}</svg>"
     )
 
 
@@ -345,110 +430,74 @@ def face_number(n):
     return "".join(pip_card(x, y, fill=ACCENT[str(n)]) for x, y in PIP_LAYOUTS[n])
 
 
-# --- the table scene the four peeks share -----------------------------------
-
-
-def table_felt():
-    """The board: the four-player table, as the app itself draws it."""
-    return (
-        f'<rect x="140" y="290" width="545" height="600" rx="130" fill="none" '
-        f'stroke="{GOLD}" stroke-width="8"/>'
-        f'<rect x="162" y="312" width="501" height="556" rx="112" fill="none" '
-        f'stroke="{GOLD}" stroke-width="3" opacity="0.4"/>'
-    )
-
-
-def opponent_seat(cx, cy, rot=0.0, gap=None):
-    """A bust with three small blue cards in front of it, facing the center."""
-    seat_bust = (
-        f'<circle cx="0" cy="-66" r="27" fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-        f'<path d="M -58,-2 Q -52,-48 0,-52 Q 52,-48 58,-2 Z" '
-        f'fill="{INK}" stroke="{PALE}" stroke-width="4"/>'
-    )
-    cards = "".join(
-        f'<rect x="{(i - 1) * 64 - 27}" y="14" width="54" height="74" rx="8" '
-        f'fill="{BLUE}" stroke="{BLUE_EDGE}" stroke-width="4"/>'
-        for i in range(3)
-        if i != gap
-    )
-    return f'<g transform="translate({cx} {cy}) rotate({rot})">{seat_bust}{cards}</g>'
-
-
-def your_hand(gap=None):
-    """Your three green cards at the bottom edge, larger — the seat the app gives you."""
-    return "".join(
-        f'<rect x="{CX + (i - 1) * 116 - 50:.0f}" y="772" width="100" height="138" rx="12" '
-        f'fill="{FELT}" stroke="{GOLD}" stroke-width="7"/>'
-        for i in range(3)
-        if i != gap
-    )
-
-
-def board(top_gap=None, my_gap=None):
-    return (
-        table_felt()
-        + opponent_seat(CX, 384, gap=top_gap)
-        + opponent_seat(224, 590, rot=90)
-        + opponent_seat(601, 590, rot=-90)
-        + your_hand(gap=my_gap)
-    )
-
-
-def trail(x1, y1, x2, y2, hw=36, color=GOLD):
-    """A streak from a seat's gap to the card pulled out of it: whose card this is."""
-    return (
-        f'<polygon points="{x1 - hw},{y1} {x1 + hw},{y1} {x2 + 12},{y2} {x2 - 12},{y2}" '
-        f'fill="{color}" opacity="0.35"/>'
-    )
-
-
 def popped(cx, cy, w, h, fill, stroke, halo):
+    """The one card the action is about, with a glow of the rank's accent behind it."""
     return (
-        f'<rect x="{cx - w / 2 - 11:.0f}" y="{cy - h / 2 - 11:.0f}" width="{w + 22}" '
-        f'height="{h + 22}" rx="20" fill="{halo}" opacity="0.4"/>'
-        f'<rect x="{cx - w / 2:.0f}" y="{cy - h / 2:.0f}" width="{w}" height="{h}" rx="13" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="8"/>'
+        f'<rect x="{cx - w / 2 - 13:.0f}" y="{cy - h / 2 - 13:.0f}" width="{w + 26}" '
+        f'height="{h + 26}" rx="22" fill="{halo}" opacity="0.45"/>'
+        + card_shape(cx, cy, w, h, fill=fill, stroke=stroke, sw=10)
     )
 
 
-def lens(cx, cy, r, color, handle=False, sw=16):
-    """The spying glyph for peeking at THEIR card — a tool, not an eye."""
-    parts = (
-        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{PAPER}" opacity="0.25"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{color}" stroke-width="{sw}"/>'
-        f'<circle cx="{cx}" cy="{cy}" r="{r * 0.14:.0f}" fill="{color}"/>'
+def lens(cx, cy, r, color, sw=16, angle=128, reach=165):
+    """The spying glyph for peeking at THEIR card — a tool, not an eye.
+
+    The glass is empty rather than tinted. It is drawn over the card it is looking at,
+    and a wash across that card was the difference between reading their card through a
+    lens and reading a smudge. The handle leans down-left for one reason: down-right is
+    where the second index lives."""
+    a = math.radians(angle)
+    return (
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{color}" '
+        f'stroke-width="{sw}"/>'
+        f'<line x1="{cx + r * math.cos(a):.0f}" y1="{cy + r * math.sin(a):.0f}" '
+        f'x2="{cx + (r + reach) * math.cos(a):.0f}" '
+        f'y2="{cy + (r + reach) * math.sin(a):.0f}" '
+        f'stroke="{color}" stroke-width="{sw + 12}" stroke-linecap="round"/>'
     )
-    if handle:
-        a = math.radians(52)
-        parts += (
-            f'<line x1="{cx + r * math.cos(a):.0f}" y1="{cy + r * math.sin(a):.0f}" '
-            f'x2="{cx + (r + 150) * math.cos(a):.0f}" y2="{cy + (r + 150) * math.sin(a):.0f}" '
-            f'stroke="{color}" stroke-width="{sw + 10}" stroke-linecap="round"/>'
-        )
-    return parts
+
+
+def hand_row(cy, fill, stroke, gap=None, n=3, w=150, h=205, step=172):
+    """One seat's row of face-down cards. Colour is the whole ownership legend — felt
+    green under a gold border is yours, blue is theirs — so a row needs no chevron and
+    no label to say whose hand it is."""
+    return "".join(
+        card_shape(CX + (i - (n - 1) / 2) * step, cy, w, h, fill=fill, stroke=stroke)
+        for i in range(n)
+        if i != gap
+    )
 
 
 def peek_own(accent):
-    """The 7's composition, shared verbatim by the 8: your card rises from
-    your hand, the eye above it. Only number, ground and accent differ."""
+    """The 7's composition, shared verbatim by the 8: a card stands up out of YOUR row
+    along the bottom, and one large eye looks down at it.
+
+    Only your row is drawn, and the absence is the point — there is no opponent on this
+    card because the action cannot reach one. It replaced a four-seat table that carried
+    the same fact and charged the emblem everything to carry it: at the 96 px a side seat
+    actually renders at, four busts and twelve cards are a texture, and the eye that says
+    what the card DOES was a fifth of the width and lost inside it."""
     return (
-        board(my_gap=1)
-        + trail(CX, 800, CX, 724, color=accent)
-        + popped(CX, 680, 122, 168, FELT, GOLD, accent)
-        + big_eye(CX, 524, s=0.55, gaze=8, iris=accent)
+        hand_row(752, FELT, GOLD, gap=1)
+        + popped(CX, 616, 200, 274, FELT, GOLD, accent)
+        + big_eye(CX, 340, s=1.15, gaze=16, iris=accent)
     )
 
 
 def peek_them(accent):
-    """The 9's composition, shared verbatim by the 10: their card drops from
-    their hand, the magnifier on it. Only number, ground and accent differ."""
-    return (
-        board(top_gap=1)
-        + trail(CX, 420, CX, 500, color=accent)
-        + popped(CX, 560, 122, 168, BLUE, BLUE_EDGE, accent)
-        + lens(CX + 4, 550, 92, accent, handle=True, sw=13)
-    )
+    """The 9's composition, shared verbatim by the 10, and the 7/8 turned over: THEIR row
+    sits at the top in blue, one of their cards drops out of it, and the magnifier — a
+    tool you point at somebody else, where an eye is simply yours — closes over it.
 
+    The two silhouettes are opposites deliberately. Mass low under a wide flat eye is one
+    of mine; mass high over a round lens is one of theirs. Colour says it a third time, so
+    none of the three cues is carrying it alone — which is the whole point of saying it
+    three ways to somebody who cannot use one of them."""
+    return (
+        hand_row(418, BLUE, BLUE_EDGE, gap=1, w=140, h=192, step=162)
+        + card_shape(CX, 670, 190, 260, fill=BLUE, stroke=BLUE_EDGE)
+        + lens(CX, 670, 158, accent, sw=26)
+    )
 
 
 def swap_pair():
@@ -489,28 +538,29 @@ def face_queen():
 
 
 def face_king():
-    """The crowned oracle: the crown restored at the center, its rays still
-    reaching a card in every corner — greens and blues placed so a 180° turn
-    keeps the reading true."""
+    """The crowned oracle: the crown at the center, its rays still reaching a card in
+    every corner — greens and blues placed so a 180° turn keeps the reading true, and
+    the four pulled in off the ends of the card so the bigger indices keep their two."""
+    gold = ACCENT["k"]
     cards = (
-        card_shape(210, 268, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
-        + card_shape(615, 268, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(210, 880, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(615, 880, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        card_shape(210, 350, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        + card_shape(615, 350, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(210, 775, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(615, 775, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
     )
     rays = (
-        ray(295, 430, 255, 355, color=GOLD)
-        + ray(530, 430, 570, 355, color=GOLD)
-        + ray(295, 640, 252, 790, color=GOLD)
-        + ray(530, 640, 573, 790, color=GOLD)
+        ray(318, 462, 256, 412, color=gold)
+        + ray(507, 462, 569, 412, color=gold)
+        + ray(318, 663, 256, 713, color=gold)
+        + ray(507, 663, 569, 713, color=gold)
     )
-    return rays + crown(CX, 530, s=1.5) + cards
+    return rays + crown(CX, 530, s=1.5, color=gold) + cards
 
 
 def face_ace():
     """The throw: a card hurled from the deck stack across the table at an
     opponent. Silhouette: a big red diagonal with a tilted card riding it."""
-    red = ACCENT["a"]
+    red = PENALTY
     target = bust(600, 300, s=1.1) + card_shape(600, 402, 96, 132, fill=BLUE, stroke=BLUE_EDGE)
     stack = "".join(
         card_shape(250 + dx, 800 + dy, 180, 246, fill="#EAD9A6", stroke=GOLD_DARK, sw=7)
@@ -531,47 +581,49 @@ def face_ace():
 
 
 def face_joker():
-    """The fool's cap, and nothing else — the one card that needs no diagram."""
-    return jester_cap(CX, 562, s=2.9)
+    """The fool's cap over its own name.
+
+    The cap was drawn at s=2.9 — 930 units wide on an 825-wide card — so both its outer
+    horns and their bells were cropped off the edges, and what was left read as a tent.
+    It fits now. The name is spelled out underneath because the Joker is the one rank
+    with no numeral to enlarge: every other card got a bigger index out of this pass and
+    this one had only a silhouette, which is fine on the felt and no help at all to
+    somebody meeting the deck for the first time in the help sheet."""
+    return jester_cap(CX, 470, s=2.05) + word("JOKER", CX, 700, 0.92, JOKER_INK)
 
 
 def card_back():
-    """A light back: the V in a diamond medallion, flanked by columns of small
-    engraved marks in the deck's four colours — the element-stone look, and
-    point-symmetric so the back has no upside down."""
-    colors = [GOLD, BLUE, FELT, ORANGE]
+    """A light back: the V in a diamond medallion, ringed by eight large engraved marks
+    in the deck's four colours, point-symmetric so the back has no upside down.
+
+    Light rather than felt green, which is what the brief asked for, because the back is
+    dealt onto green felt and `check_contrast` holds every ground to 3:1 against it — a
+    green back would be a card you cannot see the edge of."""
+    # Four engraved marks, one per deck colour, mirrored to eight. They were six kinds
+    # in thirty copies at a fifth of this size, which is not a pattern at the size a card
+    # is dealt — it is a speckle, unreadable at 330 px and dirt at 96. Kept rather than
+    # dropped: they are the deck's own element-stone motif and the only place the four
+    # colours appear together. Bigger, and far fewer, is the whole fix.
+    colors = ENGRAVED
 
     def mark(kind, x, y, c):
         if kind == "bar":
-            return f'<rect x="{x - 26}" y="{y - 6}" width="52" height="12" rx="6" fill="{c}"/>'
+            return f'<rect x="{x - 62}" y="{y - 14}" width="124" height="28" rx="14" fill="{c}"/>'
         if kind == "dots":
             return "".join(
-                f'<circle cx="{x + dx}" cy="{y}" r="8" fill="{c}"/>' for dx in (-22, 0, 22)
+                f'<circle cx="{x + dx}" cy="{y}" r="19" fill="{c}"/>' for dx in (-52, 0, 52)
             )
         if kind == "chev":
             return (
-                f'<polyline points="{x - 24},{y + 10} {x},{y - 12} {x + 24},{y + 10}" '
-                f'fill="none" stroke="{c}" stroke-width="9" stroke-linecap="round" '
+                f'<polyline points="{x - 57},{y + 24} {x},{y - 28} {x + 57},{y + 24}" '
+                f'fill="none" stroke="{c}" stroke-width="21" stroke-linecap="round" '
                 f'stroke-linejoin="round"/>'
             )
-        if kind == "diam":
-            return (
-                f'<path d="M {x},{y - 16} L {x + 14},{y} L {x},{y + 16} L {x - 14},{y} Z" '
-                f'fill="{c}"/>'
-            )
-        if kind == "ring":
-            return f'<circle cx="{x}" cy="{y}" r="13" fill="none" stroke="{c}" stroke-width="7"/>'
-        return star(x, y, 17, 7, n=4, color=c)
+        return f'<circle cx="{x}" cy="{y}" r="30" fill="none" stroke="{c}" stroke-width="17"/>'
 
-    kinds = ["bar", "dots", "chev", "diam", "ring", "star"]
-    half = []
-    for col, x in enumerate((150, 675)):
-        for i, y in enumerate(range(150, 540, 78)):
-            k = kinds[(i + col * 3) % 6]
-            half.append(mark(k, x, y, colors[(i + col) % 4]))
-    for i, x in enumerate(range(CX_INT - 156, CX_INT + 157, 78)):
-        half.append(mark(kinds[i % 6], x, 150, colors[(i + 2) % 4]))
-    deco = "".join(half)
+    kinds = ["bar", "dots", "chev", "ring"]
+    spots = ((104, 250), (721, 250), (CX_INT, 132), (104, 562))
+    deco = "".join(mark(kinds[i], x, y, colors[i]) for i, (x, y) in enumerate(spots))
     deco += f'<g transform="rotate(180 {W / 2} {H / 2})">{deco}</g>'
 
     def diamond(rw, rh, stroke, sw):
@@ -583,7 +635,7 @@ def card_back():
     v = (
         f'<path d="M {CX - 68},{H / 2 - 78} L {CX - 28},{H / 2 - 78} L {CX},{H / 2 + 18} '
         f'L {CX + 28},{H / 2 - 78} L {CX + 68},{H / 2 - 78} L {CX + 24},{H / 2 + 82} '
-        f'L {CX - 24},{H / 2 + 82} Z" fill="{ORANGE}" stroke="{GOLD}" stroke-width="7" '
+        f'L {CX - 24},{H / 2 + 82} Z" fill="{ORANGE}" stroke="{INK}" stroke-width="7" '
         f'stroke-linejoin="round"/>'
     )
     pips = "".join(
@@ -610,11 +662,11 @@ def card_back():
 # ---------------------------------------------------------------- output
 
 FACES = {
-    "card_2": frame("2", face_number(2), accent=ACCENT["2"], bg=WHITE),
-    "card_3": frame("3", face_number(3), accent=ACCENT["3"], bg=WHITE),
-    "card_4": frame("4", face_number(4), accent=ACCENT["4"], bg=WHITE),
-    "card_5": frame("5", face_number(5), accent=ACCENT["5"], bg=WHITE),
-    "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"], bg=WHITE),
+    "card_2": frame("2", face_number(2), accent=ACCENT["2"], bg=WHITE, edge=True),
+    "card_3": frame("3", face_number(3), accent=ACCENT["3"], bg=WHITE, edge=True),
+    "card_4": frame("4", face_number(4), accent=ACCENT["4"], bg=WHITE, edge=True),
+    "card_5": frame("5", face_number(5), accent=ACCENT["5"], bg=WHITE, edge=True),
+    "card_6": frame("6", face_number(6), underline=True, accent=ACCENT["6"], bg=WHITE, edge=True),
     "card_7": frame("7", peek_own(ACCENT["7"]), accent=ACCENT["7"], bg=BG["7"]),
     "card_8": frame("8", peek_own(ACCENT["8"]), accent=ACCENT["8"], bg=BG["8"]),
     "card_9": frame("9", peek_them(ACCENT["9"]), underline=True, accent=ACCENT["9"], bg=BG["9"]),
@@ -776,10 +828,13 @@ def preview_html():
     )
 
 
+def _lin(c):
+    return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+
 def relative_luminance(hex_color):
-    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
-    lin = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    r, g, b = (_lin(int(hex_color[i:i + 2], 16) / 255) for i in (1, 3, 5))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
 def contrast(a, b):
@@ -787,11 +842,117 @@ def contrast(a, b):
     return (hi + 0.05) / (lo + 0.05)
 
 
+def lab(hex_color):
+    r, g, b = (relative_luminance.__globals__["_lin"](int(hex_color[i:i + 2], 16) / 255)
+               for i in (1, 3, 5))
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+
+    def f(t):
+        return t ** (1 / 3) if t > 216 / 24389 else (841 / 108) * t + 4 / 29
+
+    fx, fy, fz = f(x), f(y), f(z)
+    return (116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz))
+
+
+def delta_e(a, b):
+    return math.dist(lab(a), lab(b))
+
+
+# Viénot's linear dichromat simulation. Approximate, and the right kind of approximate:
+# it answers "do these two still differ" rather than "what exactly does he see".
+_RGB2LMS = ((17.8824, 43.5161, 4.11935), (3.45565, 27.1554, 3.86714),
+            (0.0299566, 0.184309, 1.46709))
+_LMS2RGB = ((0.080944, -0.130504, 0.116721), (-0.0102485, 0.0540194, -0.113615),
+            (-0.000365294, -0.00412163, 0.693513))
+_DICHROMAT = {
+    "deuteranope": ((1, 0, 0), (0.494207, 0, 1.24827), (0, 0, 1)),
+    "protanope": ((0, 2.02344, -2.52581), (0, 1, 0), (0, 0, 1)),
+}
+
+
+def _apply(matrix, vector):
+    return [sum(m * v for m, v in zip(row, vector)) for row in matrix]
+
+
+def simulate(hex_color, kind):
+    lin = relative_luminance.__globals__["_lin"]
+    v = [lin(int(hex_color[i:i + 2], 16) / 255) for i in (1, 3, 5)]
+    out = _apply(_LMS2RGB, _apply(_DICHROMAT[kind], _apply(_RGB2LMS, v)))
+
+    def gamma(c):
+        return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+    return "#" + "".join(f"{max(0, min(255, round(gamma(c) * 255))):02X}" for c in out)
+
+
+# Two cards that do the same thing still have to be two cards. The WCAG gate below says
+# nothing about this — every ground passed it while 9 and 10 were dE 7.7 apart — so the
+# distance is held here, in lightness as well as hue, and with the hue taken away.
+SIBLINGS = (("7", "8"), ("9", "10"), ("j", "q"))
+
+
+def check_separation():
+    problems = []
+    for a, b in SIBLINGS:
+        ga, gb = BG[a], BG[b]
+        gap = delta_e(ga, gb)
+        lightness = abs(lab(ga)[0] - lab(gb)[0])
+        if gap < 24:
+            problems.append(f"{a}/{b} grounds only dE {gap:.1f} apart")
+        if lightness < 12:
+            problems.append(f"{a}/{b} differ by L* {lightness:.1f} — hue is doing it alone")
+        for kind in _DICHROMAT:
+            seen = delta_e(simulate(ga, kind), simulate(gb, kind))
+            if seen < 18:
+                problems.append(f"{a}/{b} collapse to dE {seen:.1f} for a {kind}")
+    grounds = list(BG.items()) + [("numbers", WHITE)]
+    for i, (ra, ca) in enumerate(grounds):
+        for rb, cb in grounds[i + 1:]:
+            if delta_e(ca, cb) < 12:
+                problems.append(f"{ra} and {rb} grounds are dE {delta_e(ca, cb):.1f} apart")
+    if problems:
+        raise SystemExit("card separation gate failed:\n  " + "\n  ".join(problems))
+
+
+# What each emblem paints, and on which ground. A shape is perceivable when its fill OR
+# its outline clears 3:1 (WCAG 1.4.11) — the outline is why every emblem card has an ink
+# one, and this is the check that says so out loud.
+def check_emblem_ink():
+    yours, theirs = (FELT, INK), (BLUE, INK)
+    eye, deck = (WHITE, INK), ("#EAD9A6", INK)
+    painted = {
+        "7": (yours, eye), "8": (yours, eye), "9": (theirs,), "10": (theirs,),
+        "j": (yours, theirs, eye), "q": (yours, theirs, eye),
+        "k": (yours, theirs, ("none", ACCENT["k"])),
+        "a": (deck, theirs, (INK, PALE), ("none", PENALTY)),
+        "joker": ((ORANGE, INK), (JOKER_INK, "none")),
+        # the back is cream, and its marks carry no outline at all
+        "back": ((ORANGE, INK),) + tuple((c, "none") for c in ENGRAVED),
+    }
+    problems = []
+    for rank, shapes in painted.items():
+        ground = PAPER if rank == "back" else BG[rank]
+        for fill, stroke in shapes:
+            best = max(contrast(c, ground) for c in (fill, stroke) if c != "none")
+            if best < 3.0:
+                problems.append(f"{rank}: a {fill}/{stroke} shape is {best:.2f} on {ground}")
+    if problems:
+        raise SystemExit("emblem ink gate failed:\n  " + "\n  ".join(problems))
+
+
 def check_contrast():
-    """WCAG gate: indices need 4.5:1 on their grounds (large text would allow 3,
-    but the indices are the one thing that must always read); card grounds need
-    3:1 against the felt they sit on in the app. The light theme's surface is
-    covered by every card's 6px ink border (1.4.11 boundary), not by the ground."""
+    """WCAG gate: indices need 4.5:1 on their grounds (large text would allow 3, but the
+    indices are the one thing that must always read); card grounds need 3:1 against the
+    felt they sit on in the app.
+
+    Against the light theme's Paper surface — the help sheet and the lesson — no ground
+    reaches 3:1, the white number cards included, and that is not held here. It cannot
+    usefully be: the ratio is luminance only, and what separates a pale green card from
+    cream is hue, which the formula cannot see and the eye can. The plain numbers keep an
+    ink rule because white on cream really is nothing; the tinted ones are checked by
+    looking at them."""
     problems = []
     for rank, accent in ACCENT.items():
         bg = BG.get(rank, WHITE)
@@ -807,6 +968,8 @@ def check_contrast():
 
 def main():
     check_contrast()
+    check_separation()
+    check_emblem_ink()
     OUT.mkdir(exist_ok=True)
     for name, svg in FACES.items():
         (OUT / f"{name}.svg").write_text(svg)
