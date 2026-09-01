@@ -39,12 +39,17 @@ one crown.
 
 ## Where the art lives, and the pipeline
 
-Current faces: `composeApp/src/commonMain/composeResources/drawable/card_*.png`,
-**825 × 1125 px**. The destination format is **vector** — XML vector drawables render on all
-four targets and stay crisp at any size, which raster PNGs demonstrably do not on desktop and
-web (see the options rundown that settled this). Raw `.svg` is not accepted by
-`commonMain` composeResources; convert with Android Studio's Vector Asset importer or
-`avocado`, and keep the art paths-and-solid-fills only so conversion survives.
+Current faces: `composeApp/src/commonMain/composeResources/drawable/card_*.xml`, drawn on an
+**825 × 1125** viewport. The format is **vector** — XML vector drawables render on all four
+targets and stay crisp at any size, which raster PNGs demonstrably do not on desktop and web
+(see the options rundown that settled this).
+
+They are **generated, not drawn**: `python3 tools/make-card-faces.py` writes both those drawables
+and the `tools/card-faces/*.svg` preview from one source, so editing the XML by hand is work
+thrown away on the next run. Raw `.svg` is not accepted by `commonMain` composeResources, so the
+generator emits the vector drawables itself, through a converter that handles only the subset it
+uses and refuses anything else — a new SVG feature fails there rather than rendering wrong in the
+app.
 
 **Generate the emblem, not the card.** The first generation run produced two failures that
 were never going to stop: a text banner nobody asked for ("THE CARD READER"), and a
@@ -62,6 +67,58 @@ Legibility constraints, from how the table actually draws: cards render down to 
 floor (`CardScale.crowded()`), where only the corner index carries the card — the emblem is
 what a player studies during peeks, the help gallery and the lesson. Check every emblem at
 ~120 px; if the mini-table turns to noise, reduce the row to three cards instead of five.
+
+**That constraint was written, and then not applied — four times.** The first two were reported
+by a player rather than found by a check; the last two were found by measuring the deck against
+itself while fixing them. All four are worth knowing before drawing anything else here.
+
+The first is the sentence above taken at its word: *only the corner index carries the card.* The
+index was drawn at a poker deck's proportions, 11% of the card's width in a light monoline —
+which on the side seats is about 6 dp, in a stroke a third of a device pixel wide. The one
+element that has to survive every size was the smallest thing on the card. It is now **bold and
+19% of the width**, which is what a large-print ("jumbo index") deck uses; low-vision players
+buy a whole deck to get that, and it costs nothing here. The weight is capped by the letterforms
+rather than by taste — at stroke 26 the 8's counters and the 4's triangle start to fill in, so 23
+is the number. `INDEX_SCALE` and `GLYPH_STROKE` in the generator carry the reasoning.
+
+The second is the 7/8 and 9/10 emblems, which were drawn as the **whole four-seat table** rather
+than as the one row the prompts below specify. It reads at 420 px and it is a texture at 96: four
+busts and twelve cards, with the eye that says what the card *does* a fifth of the width and lost
+in the middle of them. 7 and 8 were then separable only by ground colour — which is exactly the
+cue a colour-blind player does not have. They are back to one row, and the pair now differs three
+ways at once: **position** (your row low, theirs high), **glyph** (a wide flat eye, a round lens)
+and **colour** (green, blue), so no single cue is carrying it alone.
+
+The third is the grounds themselves. Nine ranks had nine pleasant tints, chosen one at a time,
+and measured against each other they were **the same colour twice**: 9 and 10 were dE 7.7 apart,
+J and Q were 6.2, and what little separated each pair was hue with no lightness behind it — so
+the player least able to use the cue was the one being asked to. They are four families now, and
+which family a rank joins is decided by *what the card does*:
+
+| family | meaning | ranks |
+| --- | --- | --- |
+| green | the action reaches one of **your own** cards | 7, 8 |
+| blue | it reaches one of **somebody else's** | 9, 10 |
+| orange | a card **crosses between** two players | J, Q |
+| yellow | the crown, and the deck the Ace throws from | K, A |
+| white | it does nothing — which is the whole meaning of a number card | 2–6 |
+
+That is the legend the emblems already draw with (your cards green, theirs blue), so the ground
+now agrees with the picture standing on it instead of being a tenth colour with nothing to say.
+Within a family the two ranks split by **lightness**, which is the one cue a dichromat keeps.
+
+The fourth is what the emblems are painted *in*. Chasing the third turned up that the opponents'
+blue cleared 3:1 against **not one** of the nine grounds it is drawn on — it never had, on the old
+grounds either — because an emblem card was drawn with a pale edge and no dark outline, leaving
+the fill to carry being visible on its own. Every emblem card is outlined in ink now, with its
+own colour as an inner line. It costs nothing, it holds on any ground a card is ever given, and
+it is what makes these read as cards rather than smudges at 12 px.
+
+The rule all four breaches share: an emblem is not checked until it has been looked at *at the
+size it ships*, and a colour is not checked until it has been measured *against the others*.
+`tools/card-faces/preview.html` renders every face at 320 px and at 120 px for the first.
+`check_separation` and `check_emblem_ink` in the generator do the second, and both refuse to
+write a deck that fails — they are the reason none of this can quietly come back.
 
 ## The shared style block
 

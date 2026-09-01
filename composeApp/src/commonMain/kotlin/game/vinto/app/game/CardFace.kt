@@ -86,8 +86,10 @@ private fun CardScale.footprintHeight(turned: Boolean) = if (turned) width else 
  * One card, drawn from the same artwork the web app uses.
  *
  * Shared art rather than a Compose-drawn rank and value: the deck is the game's face, and two
- * clients with different decks look like two games. The images live in `composeResources` and
- * are copied from `legacy-web/apps/vinto/src/app/images`, so a redraw lands in both.
+ * clients with different decks look like two games. The images live in `composeResources` as
+ * vector drawables, and they are **generated** — `python3 tools/make-card-faces.py` writes them
+ * and the SVG preview in `tools/card-faces/` from one source. A card is redrawn there, and
+ * never here: an edit to the XML is thrown away by the next run of the generator.
  *
  * Face-down cards carry no identity at all — [CardView.Hidden] holds nothing, because a card
  * id encodes its rank and shipping one for a face-down card would leak every hand while

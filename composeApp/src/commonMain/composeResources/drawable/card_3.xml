@@ -2,14 +2,13 @@
     android:width="825dp" android:height="1125dp"
     android:viewportWidth="825" android:viewportHeight="1125">
     <path android:pathData="M44.0,0.0 L781.0,0.0 A44.0,44.0 0 0 1 825.0,44.0 L825.0,1081.0 A44.0,44.0 0 0 1 781.0,1125.0 L44.0,1125.0 A44.0,44.0 0 0 1 0.0,1081.0 L0.0,44.0 A44.0,44.0 0 0 1 44.0,0.0 Z" android:fillColor="#FFFFFF"/>
-    <path android:pathData="M52.0,20.0 L773.0,20.0 A32.0,32.0 0 0 1 805.0,52.0 L805.0,1073.0 A32.0,32.0 0 0 1 773.0,1105.0 L52.0,1105.0 A32.0,32.0 0 0 1 20.0,1073.0 L20.0,52.0 A32.0,32.0 0 0 1 52.0,20.0 Z" android:strokeColor="#14181B" android:strokeWidth="6"/>
-    <path android:pathData="M64.0,38.0 L761.0,38.0 A26.0,26.0 0 0 1 787.0,64.0 L787.0,1061.0 A26.0,26.0 0 0 1 761.0,1087.0 L64.0,1087.0 A26.0,26.0 0 0 1 38.0,1061.0 L38.0,64.0 A26.0,26.0 0 0 1 64.0,38.0 Z" android:strokeColor="#2F5E8C" android:strokeWidth="5"/>
-    <group android:translateX="64" android:translateY="54" android:scaleX="0.95" android:scaleY="0.95">
-        <path android:pathData="M16 28 Q24 8 50 8 Q84 8 84 32 Q84 56 50 60 Q86 64 86 92 Q86 116 50 116 Q22 116 14 98" android:strokeColor="#2F5E8C" android:strokeWidth="17" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M56.0,26.0 L769.0,26.0 A30.0,30.0 0 0 1 799.0,56.0 L799.0,1069.0 A30.0,30.0 0 0 1 769.0,1099.0 L56.0,1099.0 A30.0,30.0 0 0 1 26.0,1069.0 L26.0,56.0 A30.0,30.0 0 0 1 56.0,26.0 Z" android:strokeColor="#14181B" android:strokeWidth="6"/>
+    <group android:translateX="66" android:translateY="62" android:scaleX="1.55" android:scaleY="1.55">
+        <path android:pathData="M16 28 Q24 8 50 8 Q84 8 84 32 Q84 56 50 60 Q86 64 86 92 Q86 116 50 116 Q22 116 14 98" android:strokeColor="#2F5E8C" android:strokeWidth="23" android:strokeLineCap="round" android:strokeLineJoin="round"/>
     </group>
     <group android:rotation="180" android:pivotX="412.5" android:pivotY="562.5">
-        <group android:translateX="64" android:translateY="54" android:scaleX="0.95" android:scaleY="0.95">
-            <path android:pathData="M16 28 Q24 8 50 8 Q84 8 84 32 Q84 56 50 60 Q86 64 86 92 Q86 116 50 116 Q22 116 14 98" android:strokeColor="#2F5E8C" android:strokeWidth="17" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+        <group android:translateX="66" android:translateY="62" android:scaleX="1.55" android:scaleY="1.55">
+            <path android:pathData="M16 28 Q24 8 50 8 Q84 8 84 32 Q84 56 50 60 Q86 64 86 92 Q86 116 50 116 Q22 116 14 98" android:strokeColor="#2F5E8C" android:strokeWidth="23" android:strokeLineCap="round" android:strokeLineJoin="round"/>
         </group>
     </group>
     <path android:pathData="M374.0,306.0 L450.0,306.0 A12.0,12.0 0 0 1 462.0,318.0 L462.0,432.0 A12.0,12.0 0 0 1 450.0,444.0 L374.0,444.0 A12.0,12.0 0 0 1 362.0,432.0 L362.0,318.0 A12.0,12.0 0 0 1 374.0,306.0 Z" android:fillColor="#2F5E8C" android:strokeColor="#C9A227" android:strokeWidth="5"/>
