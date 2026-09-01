@@ -69,10 +69,14 @@ fun VintoField(
     val rim by animateColorAsState(if (focused) Rail.gold else Rail.edge, label = "rim")
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LabelGap)) {
+        // The plaque above the slot stands on the *felt*, not on the slot: every screen with
+        // a field is a green table, and `Rail.inkDim` here was the light scheme's dark grey
+        // written on dark green cloth — 1.01:1, which is the screenshot that started
+        // `ScreenContrastTest`. Same for the detail line below.
         Text(
             text = label,
             style = stamped(size = LabelSize),
-            color = Rail.inkDim,
+            color = MaterialTheme.colorScheme.onFelt(),
         )
         // The groove is drawn *inside* the field's own decoration rather than around it, and
         // that is a tap-target decision rather than a layout one. Wrapped the other way the
@@ -95,9 +99,11 @@ fun VintoField(
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         // Under the text rather than a decoration on the field, so it goes the
-                        // moment there is anything real to read.
+                        // moment there is anything real to read. The typing ink, not a dimmed
+                        // one: the groove's cut shadow already cost `Rail.inkDim` its 4.5:1,
+                        // and a placeholder is an instruction, not a decoration.
                         if (value.isEmpty() && placeholder != null) {
-                            Text(placeholder, style = bodyStyle(Rail.inkDim), maxLines = 1)
+                            Text(placeholder, style = bodyStyle(Rail.ink), maxLines = 1)
                         }
                         field()
                     }
@@ -105,7 +111,7 @@ fun VintoField(
             },
         )
         detail?.let {
-            Text(it, style = bodyStyle(Rail.inkDim, size = DetailSize))
+            Text(it, style = bodyStyle(MaterialTheme.colorScheme.onFelt(), size = DetailSize))
         }
     }
 }
@@ -145,7 +151,8 @@ fun CodeField(
     val focused by interaction.collectIsFocusedAsState()
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LabelGap)) {
-        Text(text = label, style = stamped(size = LabelSize), color = Rail.inkDim)
+        // On the felt, like VintoField's plaque above.
+        Text(text = label, style = stamped(size = LabelSize), color = MaterialTheme.colorScheme.onFelt())
 
         Box {
             // The real field, invisible and full-size: it owns focus, the keyboard, the
@@ -185,7 +192,7 @@ fun CodeField(
             )
         }
 
-        detail?.let { Text(it, style = bodyStyle(Rail.inkDim, size = DetailSize)) }
+        detail?.let { Text(it, style = bodyStyle(MaterialTheme.colorScheme.onFelt(), size = DetailSize)) }
     }
 }
 

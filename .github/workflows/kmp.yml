@@ -372,6 +372,10 @@ jobs:
         working-directory: worker/cloudflare
         run: node gate-lifecycle.mjs
 
+      - name: 'Gate: a dead room leaves the public list'
+        working-directory: worker/cloudflare
+        run: node gate-delisting.mjs
+
       - name: 'Gate: the limits'
         working-directory: worker/cloudflare
         run: node gate-limits.mjs

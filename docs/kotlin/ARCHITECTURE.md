@@ -61,6 +61,8 @@ named here so that the claim can be checked rather than believed.
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
 | A bot follows the rules, and games end | `SelfPlayGateTest` — every proposed action through `ActionValidator`, every game to `scoring` |
 | Nothing identifying is ever counted or reported | `AnalyticsPrivacyTest` (types), `AnalyticsPrivacyUiTest` (the app), `gate-analytics.mjs` (the wire), `CrashReportTest` (crashes) |
+| Every screen's text clears WCAG AA, in both themes | `ContrastTest` (every declared pair of colours), `ScreenContrastTest` (every screen, measured from its own pixels) |
+| The public list cannot outlive its rooms | `gate-delisting.mjs` (the real Room's forget meeting the real Registry handler), `RegistryLeaseTest` (silence hides, then sweeps, a row whose forget was lost) |
 | A card's `actionText` is *data*, not copy — it is in the hash, so it cannot be translated | `CardCopyIsDataTest` |
 
 **The engine's purity is not a style preference.** It is what lets the same code be the

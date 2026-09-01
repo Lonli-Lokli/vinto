@@ -50,6 +50,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.InlineSize
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoSpinner
+import game.vinto.app.theme.errorOnFelt
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.DiscoveryRow
@@ -191,7 +192,9 @@ private fun ColumnScope.DiscoverBody(
             Text(
                 text = troubled(refused.trouble),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                // The scheme's own error is chosen against its surfaces; on the felt the
+                // light scheme's deep red measured 1.04:1. See `errorOnFelt`.
+                color = MaterialTheme.colorScheme.errorOnFelt(),
             )
             Text(
                 text = stringResource(Res.string.discover_failed, refused.reason),
@@ -295,4 +298,5 @@ private val Empty = 48.dp
 private val ColumnMax = 480.dp
 
 /** The service's own words, under the sentence that says what to do about them. */
-private const val Quiet = 0.6f
+// Quieter than the sentence above it, and no quieter: 0.6 measured 3.35:1 on the lighter felt.
+private const val Quiet = 0.85f

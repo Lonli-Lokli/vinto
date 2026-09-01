@@ -136,6 +136,20 @@ private val LeafGold = Color(0xFFF2DFA6)
 private val FeltInk = Color(0xFFF2F5F0)
 
 /**
+ * Something wrong, said on the felt.
+ *
+ * The scheme's own `error` is chosen against the scheme's surfaces, and the light scheme's is
+ * a deep red for paper — 1.04:1 on green cloth, which `ScreenContrastTest` measured on the
+ * public-rooms screen the first time it looked. The felt is dark in both schemes, so like
+ * [onFelt] and [feltGold] this is one colour: the pale red the dark schemes of the world use
+ * for the same job, lightened until it clears 4.5:1 on the lighter cloth.
+ */
+@Suppress("UnusedReceiverParameter")
+fun ColorScheme.errorOnFelt(): Color = FeltError
+
+private val FeltError = Color(0xFFFFD2CC)
+
+/**
  * The rail, and everything cut from the same material: the band under the felt, the home
  * panel, the settings sections, the score sheet, the help sheet.
  *

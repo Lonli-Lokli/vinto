@@ -14,7 +14,6 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
-import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -126,9 +125,9 @@ class ContrastTest {
             "a penalty landed" to Signal.penalty,
             "the coalition" to Signal.coalition,
         ).forEach { (meaning, ring) ->
-            val best = (felt + Slate.fill).maxOf { contrast(ring, it) }
+            val best = (felt + Slate.fill).maxOf { Wcag.contrast(ring, it) }
             assertTrue(
-                best >= UI,
+                best >= Wcag.UI,
                 "$scheme: the ring for \"$meaning\" is %.2f:1 against everything it touches"
                     .format(best),
             )
@@ -165,46 +164,25 @@ class ContrastTest {
         val light = capture(dark = false) { Rail.fill to Rail.ink }
 
         assertTrue(dark.first != light.first, "the rail is a different material in each scheme")
-        assertTrue(luminance(light.first) > luminance(dark.first), "and the light one is lighter")
-        assertTrue(luminance(light.second) < luminance(dark.second), "with its ink the other way")
+        assertTrue(
+            Wcag.luminance(light.first) > Wcag.luminance(dark.first),
+            "and the light one is lighter",
+        )
+        assertTrue(
+            Wcag.luminance(light.second) < Wcag.luminance(dark.second),
+            "with its ink the other way",
+        )
     }
 
     // ---------------------------------------------------------------- the measuring
 
-    private fun text(fg: Color, bg: Color, what: String) = held(fg, bg, TEXT, what)
+    private fun text(fg: Color, bg: Color, what: String) = held(fg, bg, Wcag.TEXT, what)
 
-    private fun ui(fg: Color, bg: Color, what: String) = held(fg, bg, UI, what)
+    private fun ui(fg: Color, bg: Color, what: String) = held(fg, bg, Wcag.UI, what)
 
     private fun held(fg: Color, bg: Color, need: Double, what: String) {
-        // An indicator that fades is only as good as its faintest frame, and a colour drawn
-        // at less than full alpha is really the colour it is drawn *over*.
-        val got = contrast(fg.compositeOver(bg), bg)
+        val got = Wcag.contrast(Wcag.over(fg, bg), bg)
         assertTrue(got >= need, "%s is %.2f:1, and has to be %.1f:1".format(what, got, need))
-    }
-
-    private fun Color.compositeOver(bg: Color): Color =
-        if (alpha == 1f) {
-            this
-        } else {
-            Color(
-                red = red * alpha + bg.red * (1 - alpha),
-                green = green * alpha + bg.green * (1 - alpha),
-                blue = blue * alpha + bg.blue * (1 - alpha),
-            )
-        }
-
-    private fun contrast(a: Color, b: Color): Double {
-        val (hi, lo) = listOf(luminance(a), luminance(b)).sorted().reversed()
-        return (hi + OFFSET) / (lo + OFFSET)
-    }
-
-    /** Relative luminance, as WCAG 2.1 defines it. */
-    private fun luminance(c: Color): Double {
-        fun channel(v: Float): Double {
-            val d = v.toDouble()
-            return if (d <= LINEAR_MAX) d / LINEAR_DIV else ((d + A) / (1 + A)).pow(GAMMA)
-        }
-        return R * channel(c.red) + G * channel(c.green) + B * channel(c.blue)
     }
 
     /** Runs the block inside each scheme in turn, so every case is really two. */
@@ -222,19 +200,7 @@ class ContrastTest {
     }
 
     private companion object {
-        const val TEXT = 4.5
-        const val UI = 3.0
-
         /** The trough of the tappable card's breath — see `CardFace`. */
         const val DIMMEST = 0.7f
-
-        const val OFFSET = 0.05
-        const val LINEAR_MAX = 0.03928
-        const val LINEAR_DIV = 12.92
-        const val GAMMA = 2.4
-        const val A = 0.055
-        const val R = 0.2126
-        const val G = 0.7152
-        const val B = 0.0722
     }
 }

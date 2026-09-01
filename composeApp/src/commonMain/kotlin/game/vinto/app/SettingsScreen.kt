@@ -87,6 +87,7 @@ import game.vinto.app.theme.PickerField
 import game.vinto.app.theme.PickerRow
 import game.vinto.app.theme.PickerSheet
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.stamped
@@ -348,14 +349,16 @@ private fun Plaque(title: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Gap),
     ) {
-        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
+        // Gold leaf, not the rail's brass: these plaques are stamped on the felt, where the
+        // brass is 2.9:1 against the lighter cloth. Same metal, under the table's own lamp.
+        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.feltGold())
         Text(
             text = title.uppercase(),
             style = stamped(size = PlaqueSize, weight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.feltGold(),
             modifier = Modifier.semantics { heading() },
         )
-        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.secondary)
+        Hairline(modifier = Modifier.weight(1f), colour = MaterialTheme.colorScheme.feltGold())
     }
 }
 

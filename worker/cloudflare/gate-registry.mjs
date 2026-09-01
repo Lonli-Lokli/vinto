@@ -22,13 +22,16 @@ const parse = JSON.parse;
 /** Stands in for `crypto.getRandomValues`, which is the platform's job in `index.mjs`. */
 const bytes = (...values) => values.join(',');
 
+/** One clock for the whole gate; the lease logic reads it. */
+const NOW = 1_700_000_000_000;
+
 console.log('\nRoom-code registry\n');
 
 let registryJson = newRegistry();
 check('a fresh registry is empty', registrySize(registryJson) === 0);
 
 // --- minting -----------------------------------------------------------------------------
-let result = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, 'Ada', 'gate-source'));
+let result = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, 'Ada', 'gate-source', NOW));
 check('minting returns a room', Boolean(result.room) && !result.error);
 check('the code is six characters', result.room.code.length === 6, result.room.code);
 
@@ -39,7 +42,7 @@ check(
   result.room.code,
 );
 check('the code is deterministic in its bytes', 
-  parse(mintRoomCode(newRegistry(), bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source')).room.code === result.room.code);
+  parse(mintRoomCode(newRegistry(), bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source', NOW)).room.code === result.room.code);
 
 registryJson = JSON.stringify(result.state);
 const privateCode = result.room.code;
@@ -62,7 +65,7 @@ check(
 );
 
 // --- collisions --------------------------------------------------------------------------
-const collision = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source'));
+const collision = parse(mintRoomCode(registryJson, bytes(0, 1, 2, 3, 4, 5), false, '', 'gate-source', NOW));
 check(
   'the same bytes twice is refused rather than silently reusing a room',
   Boolean(collision.error),
@@ -71,11 +74,10 @@ check(
 check('and the registry is unchanged by the refusal', registrySize(JSON.stringify(collision.state)) === 1);
 
 // --- public and private ------------------------------------------------------------------
-result = parse(mintRoomCode(registryJson, bytes(9, 9, 9, 9, 9, 9), true, 'Bo', 'gate-source'));
+result = parse(mintRoomCode(registryJson, bytes(9, 9, 9, 9, 9, 9), true, 'Bo', 'gate-source', NOW));
 registryJson = JSON.stringify(result.state);
 const publicCode = result.room.code;
 
-const NOW = 1_700_000_000_000;
 const listed = parse(listPublicRooms(registryJson, NOW));
 check('the public room is listed', listed.rooms.some((r) => r.code === publicCode));
 check('the private one is not', !listed.rooms.some((r) => r.code === privateCode));
@@ -107,6 +109,7 @@ const shouty = parse(mintRoomCode(
   true,
   `${'A'.repeat(200)}\u0000<script>`,
   'gate-source',
+  NOW,
 ));
 const cleaned = parse(listPublicRooms(JSON.stringify(shouty.state), NOW))
   .rooms.find((r) => r.code === shouty.room.code);
@@ -117,13 +120,13 @@ check(
 );
 
 // --- what a lobby browser needs -----------------------------------------------------------
-const touched = touchRoom(registryJson, publicCode, 3, 4, 1_234_567);
+const touched = touchRoom(registryJson, publicCode, 3, 4, 1_234_567, NOW);
 const browsing = parse(listPublicRooms(touched, NOW)).rooms.find((r) => r.code === publicCode);
 check('a touched room reports how full it is', browsing.humans === 3 && browsing.seatsFilled === 4);
 
 // A duration rather than a deadline, resolved against the service's clock: a browser reading
 // an absolute time would render its own clock's error as somebody else's countdown.
-const soon = touchRoom(touched, publicCode, 3, 4, NOW + 5_000);
+const soon = touchRoom(touched, publicCode, 3, 4, NOW + 5_000, NOW);
 check(
   'and how long until it deals',
   parse(listPublicRooms(soon, NOW)).rooms.find((r) => r.code === publicCode).msUntilStart === 5_000,
@@ -134,12 +137,12 @@ check(
 );
 check(
   'zero means no countdown rather than a start at the epoch',
-  parse(listPublicRooms(touchRoom(touched, publicCode, 2, 2, 0), NOW))
+  parse(listPublicRooms(touchRoom(touched, publicCode, 2, 2, 0, NOW), NOW))
     .rooms.find((r) => r.code === publicCode).msUntilStart === null,
 );
 check(
   'touching a code the registry does not know changes nothing',
-  registrySize(touchRoom(registryJson, 'ZZZZZZ', 4, 4, 1)) === registrySize(registryJson),
+  registrySize(touchRoom(registryJson, 'ZZZZZZ', 4, 4, 1, NOW)) === registrySize(registryJson),
 );
 
 // --- forgetting --------------------------------------------------------------------------

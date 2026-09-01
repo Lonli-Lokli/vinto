@@ -177,7 +177,7 @@ export class Registry {
         const bytes = [...crypto.getRandomValues(new Uint8Array(6))].join(',');
         const result = JSON.parse(
           mintRoomCode(registryJson, bytes, Boolean(body.isPublic), body.hostNickname ?? '',
-            body.sourceId ?? ''),
+            body.sourceId ?? '', Date.now()),
         );
         if (!result.error) {
           await this.ctx.storage.put(REGISTRY_KEY, JSON.stringify(result.state));
@@ -213,13 +213,24 @@ export class Registry {
       await this.ctx.storage.put(
         REGISTRY_KEY,
         touchRoom(registryJson, body.code ?? '', body.humans ?? 0, body.seatsFilled ?? 0,
-          body.startsAtEpochMs ?? 0),
+          body.startsAtEpochMs ?? 0, Date.now()),
       );
       return Response.json({ ok: true });
     }
 
     if (request.method === 'POST' && url.pathname === '/forget') {
-      const code = url.searchParams.get('code') ?? '';
+      // From the body, like /touch beside it — the caller sends { code } and always has.
+      // This used to read the query string, so every forget a dying room ever sent removed
+      // the room whose code is the empty string: nothing, answered { ok: true }. The row
+      // outlived its room indefinitely, which is how three ghost lobbies came to sit on the
+      // live public list for hours. Hence the refusal below rather than a default: a code
+      // the registry could never have issued is a caller bug, and answering it with success
+      // is exactly the silence that let the mismatch ship.
+      const body = await request.json().catch(() => ({}));
+      const code = String(body.code ?? '');
+      if (!looksLikeRoomCode(code)) {
+        return Response.json({ error: 'forget needs a code in the body' }, { status: 400 });
+      }
       await this.ctx.storage.put(REGISTRY_KEY, forgetRoom(registryJson, code));
       return Response.json({ ok: true });
     }
@@ -435,10 +446,19 @@ export class Room {
   async #tellRegistry(path, body) {
     try {
       const registry = this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry'));
-      await registry.fetch(new Request(`https://registry${path}`, {
+      const answer = await registry.fetch(new Request(`https://registry${path}`, {
         method: 'POST',
         body: JSON.stringify(body),
       }));
+      // A refusal is a bug in this conversation, not in the registry — the two sides have
+      // disagreed about the message. Reported rather than thrown: the room must survive it
+      // (the registry's own lease hides and sweeps whatever this failed to remove), but the
+      // last such disagreement went unseen for as long as nothing looked.
+      if (!answer.ok) {
+        reportError(this.env, new Error(`registry ${path} answered ${answer.status}`), {
+          surface: 'room-registry',
+        });
+      }
     } catch {
       // A registry that is briefly unreachable must not take a room down with it. The public
       // list going stale is recoverable; a game dying because a listing failed is not.
@@ -507,6 +527,10 @@ export class Room {
 
     await this.#save(JSON.stringify(result.state));
     await this.#fileRecording(stateJson, result.state);
+    // Every wake renews the room's lease on its registry row. The lease is what lets the
+    // registry treat silence as death, and a live room's deadlines are never further apart
+    // than the lease is long — but only because this line makes every one of them speak.
+    await this.#reflectInRegistry(JSON.stringify(result.state));
     this.#observe(stateJson, result.state);
 
     // Anything the alarm produced messages for — a deal, a takeover's moves, a pacing
@@ -828,6 +852,10 @@ export class Room {
     const stateJson = await this.ctx.storage.get(ROOM_KEY);
     if (stateJson) {
       const refreshed = await this.#refreshPresence(stateJson);
+      // The registry hears about departures as well as arrivals: without this, a room's
+      // listed occupancy froze at whatever the last *join* reported, and its lease was not
+      // renewed by anything a leaver did.
+      await this.#reflectInRegistry(refreshed);
       const state = JSON.parse(refreshed);
       // `grace: true` because the seat is kept — design D9 hands it to a bot only after the
       // grace period, and the person can still come back to it. A vacancy and a departure

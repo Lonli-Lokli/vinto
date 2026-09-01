@@ -145,7 +145,8 @@ fun mintRoomCode(
     isPublic: Boolean,
     hostNickname: String,
     sourceId: String,
-): String = coreMintRoomCode(registryJson, randomBytes, isPublic, hostNickname, sourceId)
+    nowMs: Double,
+): String = coreMintRoomCode(registryJson, randomBytes, isPublic, hostNickname, sourceId, nowMs)
 
 @JsExport
 fun looksLikeRoomCode(code: String): Boolean = coreLooksLikeRoomCode(code)
@@ -189,7 +190,8 @@ fun touchRoom(
     humans: Int,
     seatsFilled: Int,
     startsAtEpochMs: Double,
-): String = coreTouchRoom(registryJson, code, humans, seatsFilled, startsAtEpochMs)
+    nowMs: Double,
+): String = coreTouchRoom(registryJson, code, humans, seatsFilled, startsAtEpochMs, nowMs)
 
 @JsExport
 fun registrySize(registryJson: String): Int = coreRegistrySize(registryJson)
