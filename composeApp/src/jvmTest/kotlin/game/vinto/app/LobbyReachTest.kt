@@ -16,6 +16,7 @@ import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -87,6 +88,8 @@ class LobbyReachTest {
             }
             waitForIdle()
             press("Play online")
+            onNodeWithContentDescription("Your name at the table").performTextInput("Ada")
+            waitForIdle()
 
             sweep("the front door", check)
 

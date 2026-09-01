@@ -34,6 +34,7 @@ import game.vinto.app.art.online_join
 import game.vinto.app.art.online_join_detail
 import game.vinto.app.art.online_join_screen
 import game.vinto.app.art.online_join_title
+import game.vinto.app.art.online_name_needed
 import game.vinto.app.art.online_name_placeholder
 import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
@@ -90,11 +91,20 @@ fun OnlineScreen(
 ) {
     var nickname by remember { mutableStateOf(vault.identity { freshSeed() }.nickname) }
 
+    // Trimmed once, here, and it is the trimmed name that travels. A name is typed on a
+    // phone keyboard that offers a space after every word, so " Ada " is what a careful
+    // person produces; the room would have taken it and shown it to three strangers with
+    // the spaces in. Blank is refused outright rather than quietly accepted: an empty name
+    // reaches the room, which fills it in as "Player 1", and the player is then introduced
+    // to the table by a placeholder they never chose and cannot see is theirs.
+    val named = nickname.trim()
+    val ready = named.isNotEmpty()
+
     // Saved on the way out of this screen rather than on every keystroke: the vault is a
     // write to storage, and a name is typed a character at a time.
     fun leaveWith(go: (String) -> Unit) {
-        vault.rememberNickname(nickname)
-        go(nickname)
+        vault.rememberNickname(named)
+        go(named)
     }
 
     Scaffold(title = stringResource(Res.string.online_screen_title), onBack = onBack) {
@@ -102,7 +112,9 @@ fun OnlineScreen(
             value = nickname,
             onValueChange = { nickname = it.take(NicknameMax) },
             label = stringResource(Res.string.online_nickname),
-            detail = stringResource(Res.string.online_nickname_detail),
+            detail = stringResource(
+                if (ready) Res.string.online_nickname_detail else Res.string.online_name_needed,
+            ),
             placeholder = stringResource(Res.string.online_name_placeholder),
         )
 
@@ -112,16 +124,19 @@ fun OnlineScreen(
             detail = stringResource(Res.string.online_open_detail),
             accent = ButtonTone.PLAY.rim,
             onClick = { leaveWith(onOpenRoom) },
+            enabled = ready,
         )
         ActionTile(
             title = stringResource(Res.string.online_join_title),
             detail = stringResource(Res.string.online_join_detail),
             onClick = { leaveWith(onJoinByCode) },
+            enabled = ready,
         )
         ActionTile(
             title = stringResource(Res.string.online_browse),
             detail = stringResource(Res.string.online_browse_detail),
             onClick = { leaveWith(onBrowse) },
+            enabled = ready,
         )
     }
 }

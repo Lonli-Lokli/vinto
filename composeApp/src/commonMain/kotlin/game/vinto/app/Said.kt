@@ -31,6 +31,7 @@ import game.vinto.app.art.ask_who_draws
 import game.vinto.app.art.ask_who_plays_for_you
 import game.vinto.app.art.ask_you_drew
 import game.vinto.app.art.ask_you_drew_unknown
+import game.vinto.app.art.ask_you_playing
 import game.vinto.app.art.ask_your_turn
 import game.vinto.app.art.beat_aim_it_body
 import game.vinto.app.art.beat_aim_it_title
@@ -236,6 +237,22 @@ fun said(say: Say): String {
 }
 
 /**
+ * "You are playing" against "Raph is playing".
+ *
+ * Written out as two whole sentences rather than one with the name swapped in: the verb
+ * conjugates, and "is" against "are" is an English accident that a language with more of them
+ * cannot repair from a fragment. Before this the viewer's own seat took the named form and
+ * the table read **"You is playing"**, because the engine calls seat zero "You".
+ */
+@Composable
+private fun whoIsPlaying(who: Speaker): String =
+    if (who == Speaker.You) {
+        stringResource(Res.string.ask_you_playing)
+    } else {
+        stringResource(Res.string.ask_somebody_playing, speakerName(who))
+    }
+
+/**
  * What to call the person who acted.
  *
  * "You" is a translated word; a nickname is not — it is what somebody typed, and translating
@@ -335,7 +352,7 @@ fun asked(ask: Ask): String = when (ask) {
 
     Ask.WaitingForTheOthers -> stringResource(Res.string.ask_waiting_for_others)
     Ask.Watching -> stringResource(Res.string.ask_watching)
-    is Ask.SomebodyIsPlaying -> stringResource(Res.string.ask_somebody_playing, speakerName(ask.who))
+    is Ask.SomebodyIsPlaying -> whoIsPlaying(ask.who)
     is Ask.WhoPlaysForYou -> stringResource(Res.string.ask_who_plays_for_you, speakerName(ask.caller))
 
     is Ask.RoundOver -> when {

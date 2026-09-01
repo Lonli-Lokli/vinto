@@ -1028,6 +1028,7 @@ private fun Plate(
             modifier = Modifier.markedAs(stage, "seat:${seat.id}"),
             pointed = pointed,
             marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
+            bot = seat.isBot,
             size = sizes.avatar,
             onClick = tap?.let { { onMove(it) } },
         )

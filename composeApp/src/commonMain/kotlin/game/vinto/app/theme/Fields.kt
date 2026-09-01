@@ -91,7 +91,15 @@ fun VintoField(
             cursorBrush = SolidColor(Rail.gold),
             interactionSource = interaction,
             keyboardOptions = KeyboardOptions(capitalization = capitalise),
-            modifier = Modifier.fillMaxWidth().heightIn(min = MinTap),
+            // Named for a screen reader. `CodeField` beside it has carried a description
+            // since it was written; this one never did, so the one field a player types their
+            // own name into announced itself as an unlabelled edit box. The label above it is
+            // a separate `Text` — near it on screen, and nothing to a reader landing on the
+            // field itself.
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = MinTap)
+                .semantics { contentDescription = label },
             decorationBox = { field ->
                 Slot(rim = rim, modifier = Modifier.fillMaxWidth()) {
                     Box(

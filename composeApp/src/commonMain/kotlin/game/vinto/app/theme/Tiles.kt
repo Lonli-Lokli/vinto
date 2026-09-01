@@ -55,6 +55,12 @@ fun ActionTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     accent: Color? = null,
+    /**
+     * Whether there is anything to ask for yet. The same distinction [GameButton] draws:
+     * a tile that needs a name typed above it is not broken, it is waiting, and a live-
+     * looking tile whose `onClick` quietly returns is the worse of the two.
+     */
+    enabled: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -63,6 +69,7 @@ fun ActionTile(
     val feedback = LocalFeedback.current
 
     Surface(
+        enabled = enabled,
         onClick = {
             feedback.commit()
             onClick()
@@ -79,8 +86,9 @@ fun ActionTile(
         // was the light scheme's near-black on that charcoal, at 1.4:1. Same inks the seat
         // plates use, for the same reason.
         contentColor = Slate.ink,
-        border = BorderStroke(Edge, accent ?: Rail.edge),
-        shadowElevation = lift,
+        border = BorderStroke(Edge, (accent ?: Rail.edge).copy(alpha = if (enabled) 1f else Dimmed)),
+        // The lift is the whole affordance, so losing it says "not now" before any colour does.
+        shadowElevation = if (enabled) lift else 0.dp,
         interactionSource = interaction,
     ) {
         Box(
@@ -179,6 +187,9 @@ private val PadH = 18.dp
 private val PadV = 16.dp
 private val Gap = 12.dp
 private val TitleGap = 5.dp
+
+/** How far a tile that has nothing to ask for yet stands back. */
+private const val Dimmed = 0.4f
 
 private const val TitleSize = 16
 private const val ChevronSize = 26
