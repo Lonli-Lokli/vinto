@@ -1,7 +1,7 @@
 {
-  "name": "Vinto — a card game about holding the lowest hand",
+  "name": "Vinto — hold less, know more",
   "short_name": "Vinto",
-  "description": "A four-player card game about holding the lowest hand. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest.",
+  "description": "A four-player card game where you hold less and know more. Draw, swap, and play action cards to peek, trade and steal — then call Vinto when you think you are lowest.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -22,7 +22,7 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Vinto — lowest hand wins"
+      "label": "Vinto — hold less, know more"
     }
   ]
 }

@@ -521,7 +521,12 @@ private fun twoCardTable(
     swap: GameAction,
     leave: GameAction,
 ): Table = if (pending.targets.size < TWO_TARGETS) {
-    Table(prompt = prompt, choices = listOf(giveUp(view.viewerId)), taps = anyTaps(view, pending))
+    Table(
+        prompt = prompt,
+        choices = listOf(giveUp(view.viewerId)),
+        taps = anyTaps(view, pending),
+        detail = aimedSoFar(view, pending),
+    )
 } else {
     Table(
         prompt = Ask.SwapThem,
@@ -529,8 +534,34 @@ private fun twoCardTable(
             Choice(Label.SwapCards, Move.Send(swap), Tone.PLAY),
             Choice(Label.LeaveThem, Move.Send(leave)),
         ),
+        detail = aimedSoFar(view, pending),
     )
 }
+
+/**
+ * The cards already chosen, named as well as ringed.
+ *
+ * A chosen card wears the gold ring, and on a crowded table that ring is the only record of
+ * what a Jack or Queen is pointed at. The detail line says it in words — whose hand, which
+ * slot — so the player confirming "swap them?" is told what "them" is.
+ */
+private fun aimedSoFar(view: PlayerView, pending: PendingActionView): Detail? =
+    pending.targets.takeIf { it.isNotEmpty() }?.let { targets ->
+        Detail.Aimed(
+            targets.map { target ->
+                ChosenCard(who = speakerFor(view, target.playerId), slot = target.position + 1)
+            },
+        )
+    }
+
+private fun speakerFor(view: PlayerView, playerId: String): Speaker =
+    if (playerId == view.viewerId) {
+        Speaker.You
+    } else {
+        view.players.firstOrNull { it.id == playerId }?.nickname
+            ?.let(Speaker::Named)
+            ?: Speaker.Nobody
+    }
 
 private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
     if (pending.targets.isEmpty()) {

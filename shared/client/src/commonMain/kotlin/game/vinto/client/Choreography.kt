@@ -225,6 +225,32 @@ fun revealScene(revealed: List<PublicReveal>): List<Scene> = revealed
     .orEmpty()
 
 /**
+ * One move's scenes and its reveals, in the order a player can follow.
+ *
+ * A reveal normally trails the move that caused it — a wrong King declaration is answered
+ * after the card flies. A failed toss-in is the one move whose reveal *is* the beginning of
+ * the story: the thrown card turns face up where it lies, and the verdict follows — the
+ * penalty card, the flinch, the line. The old order played the punishment first and showed
+ * the card it was for last, which read as being fined before being told what for.
+ */
+fun scenesFor(
+    action: GameAction,
+    before: PlayerView,
+    after: PlayerView,
+    revealed: List<PublicReveal>,
+): List<Scene> {
+    val scenes = choreograph(action, before, after)
+    val reveal = revealScene(revealed)
+
+    val failedToss = action is GameAction.ParticipateInTossIn &&
+        handSize(after, action.payload.playerId) > handSize(before, action.payload.playerId)
+    return if (failedToss) reveal + scenes else scenes + reveal
+}
+
+private fun handSize(view: PlayerView, playerId: String): Int =
+    view.players.firstOrNull { it.id == playerId }?.cards?.size ?: 0
+
+/**
  * The opening deal, as a dealer deals it: one card to every seat, five times round.
  *
  * The deal is not an action — the dealt table precedes the first `GameAction` — so it cannot
@@ -663,20 +689,33 @@ private fun tossScene(
     //
     // What it looks like on the table is what a person does: the card goes onto the pile as
     // it is thrown, face up, because a toss-in is a public claim about a rank.
-    val face = after.discardTop?.takeIf { after.discardCount > before.discardCount }
-        ?: after.activeTossIn?.queuedActions?.lastOrNull()?.let { queued ->
-            Card(
-                id = "thrown-${queued.playerId}-${queued.rank.serialName}",
-                rank = queued.rank,
-                value = getCardValue(queued.rank),
-                played = false,
-            )
-        }
+    // And the face is the pile's new top only when the top actually *changed*. A successful
+    // non-action toss is slid in beneath the top (`addBeforeTop`, so an unplayed action stays
+    // reachable), which grows the pile without changing its top — and a flight wearing the
+    // untouched top's identity told the pile its own top card was in the air, so the pile hid
+    // it and sat empty for the length of the throw. A thrown card that is not the new top is
+    // synthesised instead: from the queue for an action card, from the window's rank for a
+    // plain one — a card only matches the window by carrying that rank.
+    val face = after.discardTop?.takeIf {
+        after.discardCount > before.discardCount && it.id != before.discardTop?.id
+    }
+        ?: after.activeTossIn?.queuedActions?.lastOrNull()
+            ?.takeIf { it.playerId == who }
+            ?.let { queued -> thrownCard(queued.playerId, queued.rank) }
+        ?: before.activeTossIn?.ranks?.firstOrNull()?.let { rank -> thrownCard(who, rank) }
 
     return action.payload.positions.take(thrown).map { position ->
         Beat.Move(Anchor.Seat(who, position), Anchor.Discard, face)
     }
 }
+
+/** A stand-in for a thrown card the view cannot name: right rank, synthetic identity. */
+private fun thrownCard(playerId: String, rank: Rank) = Card(
+    id = "thrown-$playerId-${rank.serialName}",
+    rank = rank,
+    value = getCardValue(rank),
+    played = false,
+)
 
 private fun PlayerView.pendingCard(): Card? = (pendingAction?.card as? CardView.Visible)?.card
 

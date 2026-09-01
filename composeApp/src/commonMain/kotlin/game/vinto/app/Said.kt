@@ -90,6 +90,7 @@ import game.vinto.app.art.beat_welcome_body
 import game.vinto.app.art.beat_welcome_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
+import game.vinto.app.art.card_position
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
 import game.vinto.app.art.choice_continue
@@ -103,6 +104,8 @@ import game.vinto.app.art.choice_start_round
 import game.vinto.app.art.choice_swap_cards
 import game.vinto.app.art.choice_use_action
 import game.vinto.app.art.choice_use_from_pile
+import game.vinto.app.art.detail_aimed_one
+import game.vinto.app.art.detail_aimed_two
 import game.vinto.app.art.detail_barred
 import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
@@ -141,12 +144,15 @@ import game.vinto.app.art.log_swap_dropping_you
 import game.vinto.app.art.log_swap_they
 import game.vinto.app.art.log_swap_you
 import game.vinto.app.art.log_swapped_two
+import game.vinto.app.art.log_swapped_two_named
 import game.vinto.app.art.log_throw_they
 import game.vinto.app.art.log_throw_unknown_they
 import game.vinto.app.art.log_throw_unknown_you
 import game.vinto.app.art.log_throw_you
 import game.vinto.app.art.log_took
 import game.vinto.app.art.log_took_unknown
+import game.vinto.app.art.log_toss_in_missed
+import game.vinto.app.art.log_toss_in_missed_unknown
 import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
@@ -228,8 +234,23 @@ fun said(say: Say): String {
             stringResource(Res.string.log_tossed_in_unknown, name)
         }
 
+        is Say.TossInMissed -> if (say.rank != null) {
+            stringResource(Res.string.log_toss_in_missed, name, say.rank!!.serialName)
+        } else {
+            stringResource(Res.string.log_toss_in_missed_unknown, name)
+        }
+
         is Say.CalledVinto -> stringResource(Res.string.log_called_vinto, name)
-        is Say.SwappedTwo -> stringResource(Res.string.log_swapped_two, name)
+        is Say.SwappedTwo -> if (say.cards.size == 2) {
+            stringResource(
+                Res.string.log_swapped_two_named,
+                name,
+                stringResource(Res.string.card_position, speakerName(say.cards[0].who), say.cards[0].slot),
+                stringResource(Res.string.card_position, speakerName(say.cards[1].who), say.cards[1].slot),
+            )
+        } else {
+            stringResource(Res.string.log_swapped_two, name)
+        }
         is Say.LeftThemAlone -> stringResource(Res.string.log_left_alone, name)
         is Say.DeclaredRank -> stringResource(Res.string.log_declared, name, say.rank.serialName)
         Say.RoundBegins -> stringResource(Res.string.log_round_begins)
@@ -388,6 +409,19 @@ fun detailed(detail: Detail): String = when (detail) {
     Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
     Detail.BarredFromThisCard -> stringResource(Res.string.detail_barred_card)
     Detail.BarredForTheRestOfTheRound -> stringResource(Res.string.detail_barred)
+    // Each card arrives as one whole "name, card N" phrase (the same one a screen reader
+    // speaks), so a translator is never handed half a sentence.
+    is Detail.Aimed -> {
+        val named = detail.cards.map {
+            stringResource(Res.string.card_position, speakerName(it.who), it.slot)
+        }
+        if (named.size == 1) {
+            stringResource(Res.string.detail_aimed_one, named[0])
+        } else {
+            stringResource(Res.string.detail_aimed_two, named[0], named[1])
+        }
+    }
+
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)

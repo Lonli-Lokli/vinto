@@ -49,7 +49,10 @@ import game.vinto.app.art.signal_turn_meaning
 import game.vinto.app.art.signal_vinto
 import game.vinto.app.art.signal_vinto_meaning
 import game.vinto.app.explained
+import game.vinto.app.theme.CardWhite
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.Signal
+import game.vinto.app.theme.Slate
 import game.vinto.app.theme.VintoSheet
 import game.vinto.client.Explains
 import game.vinto.shapes.CardConfig
@@ -197,28 +200,42 @@ private val GROUPS = listOf(
  * get from watching hands and faces, and a player who has not worked them out is playing a
  * different, worse game.
  *
- * The colours here are the ones the table actually draws (`SeatPlate.kt`, `CardFace.kt`); if
- * one changes there it must change here, which is the price of explaining anything.
+ * The swatches are [Signal] itself — the same values the table draws — because this list once
+ * carried its own copies and they drifted: the sheet showed a white chip for the "can be
+ * touched" ring while the felt drew it deep green, and a player went looking for a white ring
+ * that does not exist.
  */
-private data class Signal(
+private data class Cue(
     val swatch: Color,
+    /** What the real ring is drawn against: a white card, or the dark seat plate. */
+    val ground: Color,
     val name: StringResource,
     val meaning: StringResource,
 )
 
 private val SIGNALS = listOf(
-    Signal(Color(0xFF6FD3A6), Res.string.signal_turn, Res.string.signal_turn_meaning),
-    Signal(Color(0xFFE0A32A), Res.string.signal_vinto, Res.string.signal_vinto_meaning),
-    Signal(Color(0xFFE0674A), Res.string.signal_penalty, Res.string.signal_penalty_meaning),
-    Signal(Color(0xFF8AB4F8), Res.string.signal_coalition, Res.string.signal_coalition_meaning),
-    Signal(Color(0xFFA8801A), Res.string.signal_live, Res.string.signal_live_meaning),
-    Signal(Color(0xFFF2F5F0), Res.string.signal_tappable, Res.string.signal_tappable_meaning),
-    Signal(Color(0xFFF2C14E), Res.string.signal_peek, Res.string.signal_peek_meaning),
-    Signal(Color(0xFF9AA5B1), Res.string.signal_reshuffle, Res.string.signal_reshuffle_meaning),
+    Cue(Signal.turn, Slate.fill, Res.string.signal_turn, Res.string.signal_turn_meaning),
+    Cue(Signal.vinto, Slate.fill, Res.string.signal_vinto, Res.string.signal_vinto_meaning),
+    Cue(Signal.penalty, Slate.fill, Res.string.signal_penalty, Res.string.signal_penalty_meaning),
+    Cue(
+        Signal.coalition,
+        Slate.fill,
+        Res.string.signal_coalition,
+        Res.string.signal_coalition_meaning,
+    ),
+    Cue(Signal.live, CardWhite, Res.string.signal_live, Res.string.signal_live_meaning),
+    Cue(Signal.tappable, CardWhite, Res.string.signal_tappable, Res.string.signal_tappable_meaning),
+    Cue(Signal.peeked, CardWhite, Res.string.signal_peek, Res.string.signal_peek_meaning),
+    Cue(
+        Color(0xFF9AA5B1),
+        CardWhite,
+        Res.string.signal_reshuffle,
+        Res.string.signal_reshuffle_meaning,
+    ),
 )
 
 @Composable
-private fun SignalRow(signal: Signal) {
+private fun SignalRow(signal: Cue) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(RowGap),
@@ -227,7 +244,7 @@ private fun SignalRow(signal: Signal) {
         Surface(
             modifier = Modifier.size(Chip),
             shape = RoundedCornerShape(Corner),
-            color = Rail.fill,
+            color = signal.ground,
             border = BorderStroke(SwatchRing, signal.swatch),
             content = {},
         )

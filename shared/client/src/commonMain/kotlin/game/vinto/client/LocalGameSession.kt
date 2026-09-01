@@ -173,7 +173,7 @@ class LocalGameSession(
                 // What the table was shown rides beside the move, because it is not in the
                 // state: a card turned face up by a wrong declaration is public for that
                 // moment and private again afterwards.
-                scenes = choreograph(action, seenBefore, _view.value) + revealScene(revealed),
+                scenes = scenesFor(action, seenBefore, _view.value, revealed),
                 view = _view.value,
             ),
         )
@@ -258,7 +258,7 @@ class LocalGameSession(
             val after = projectView(move.after, playerId)
             Frame(
                 move.action,
-                choreograph(move.action, before, after) + revealScene(move.revealed),
+                scenesFor(move.action, before, after, move.revealed),
                 after,
             )
         }

@@ -48,11 +48,36 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
 
         is GameAction.UseCardAction -> Say.Played(who, before.pendingAction?.card?.rank)
 
-        is GameAction.ParticipateInTossIn -> Say.TossedIn(who, after.discardPile.peekTop()?.rank)
+        is GameAction.ParticipateInTossIn -> {
+            // The rank read from the thrower's hand in the *before* state — exact for both
+            // outcomes. The pile's top said the wrong thing twice over: a failed throw never
+            // reaches the pile, and a successful one can slide in beneath an unresolved
+            // action card, so the top was the window's card rather than the one thrown.
+            val rank = action.payload.positions.firstOrNull()?.let { position ->
+                before.players.firstOrNull { it.id == actor }?.cards?.getOrNull(position)?.rank
+            }
+            val missed = after.roundFailedAttempts.size > before.roundFailedAttempts.size
+            if (missed) Say.TossInMissed(who, rank) else Say.TossedIn(who, rank)
+        }
 
         is GameAction.CallVinto -> Say.CalledVinto(who)
 
-        is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap -> Say.SwappedTwo(who)
+        is GameAction.ExecuteJackSwap, is GameAction.ExecuteQueenSwap -> Say.SwappedTwo(
+            who = who,
+            // Which two cards, read from the aim the swap is resolving: whose hand and which
+            // slot is public — the whole table watched them be chosen — even where a face is
+            // not.
+            cards = before.pendingAction?.targets.orEmpty().map { target ->
+                val owner = if (target.playerId == viewerId) {
+                    Speaker.You
+                } else {
+                    before.players.firstOrNull { it.id == target.playerId }?.nickname
+                        ?.let(Speaker::Named)
+                        ?: Speaker.Nobody
+                }
+                ChosenCard(owner, target.position + 1)
+            },
+        )
         is GameAction.SkipJackSwap, is GameAction.SkipQueenSwap -> Say.LeftThemAlone(who)
 
         is GameAction.DeclareKingAction -> Say.DeclaredRank(who, action.payload.declaredRank)

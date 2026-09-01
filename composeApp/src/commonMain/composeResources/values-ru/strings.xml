@@ -18,7 +18,7 @@
 
     <string name="opening_shuffling">Тасуем…</string>
 
-    <string name="home_tagline">Побеждает самая младшая рука.</string>
+    <string name="home_tagline">Держи меньше. Знай больше.</string>
     <string name="home_solo_title">Одиночная игра · три бота · %1$s</string>
     <string name="home_continue">Продолжить</string>
     <string name="home_new_game">Новая игра</string>
@@ -128,7 +128,7 @@
     <string name="settings_share">Рассказать другим</string>
     <string name="settings_share_detail">Отправьте игру другу. Четыре места, и три из них могут занять боты.</string>
     <string name="settings_share_subject">Vinto</string>
-    <string name="settings_share_body">Vinto — карточная игра о том, чтобы остаться с самой младшей рукой. Бесплатно, прямо в браузере, без регистрации: %1$s</string>
+    <string name="settings_share_body">Vinto — карточная игра, где выигрывает тот, кто держит меньше и знает больше. Бесплатно, прямо в браузере, без регистрации: %1$s</string>
     <string name="settings_back">Назад</string>
     <string name="settings_version">Vinto v%1$s</string>
 
@@ -364,6 +364,8 @@
     <string name="detail_barred">Вы не угадали, а в последнем круге это до конца раунда.</string>
     <string name="detail_scored_against">Винто объявил(а) %1$s, поэтому раунд считали против его руки.</string>
     <string name="detail_deck_ran_out">Кончилась колода, раунд закрыли и посчитали все руки.</string>
+    <string name="detail_aimed_one">Выбрано: %1$s</string>
+    <string name="detail_aimed_two">Выбрано: %1$s и %2$s</string>
 
     <string name="ask_or"> или </string>
     <string name="ask_look_at_two_of_yours">Посмотрите две свои карты</string>
@@ -430,8 +432,11 @@
     <string name="log_play_unknown_they">%1$s играет карту</string>
     <string name="log_tossed_in">%1$s подкинул(а) %2$s</string>
     <string name="log_tossed_in_unknown">%1$s подкинул(а) карту</string>
+    <string name="log_toss_in_missed">%1$s подкинул(а) %2$s — мимо, и это стоило штрафной карты</string>
+    <string name="log_toss_in_missed_unknown">%1$s подкинул(а) не ту карту — штрафная карта</string>
     <string name="log_called_vinto">%1$s объявил(а) Винто</string>
     <string name="log_swapped_two">%1$s поменял(а) две карты</string>
+    <string name="log_swapped_two_named">%1$s поменял(а) местами: %2$s и %3$s</string>
     <string name="log_left_alone">%1$s оставил(а) их как есть</string>
     <string name="log_declared">%1$s назвал(а) %2$s</string>
     <string name="log_round_begins">раунд начинается</string>

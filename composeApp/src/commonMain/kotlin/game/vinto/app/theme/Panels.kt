@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -31,7 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -95,14 +99,26 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
                 contentColor = Rail.ink,
                 border = BorderStroke(Line, Rail.line),
             ) {
-                Column(
-                    // Expanded, a sheet can reach the top of the screen, and without this the
-                    // first line of it sits under the clock.
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Grip()
-                    content()
+                Box(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
+                    Column(
+                        // Expanded, a sheet can reach the top of the screen, and without
+                        // this the first line of it sits under the clock.
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Grip()
+                        content()
+                    }
+
+                    // The way out that is always on screen. The scrim dismisses on tap and
+                    // Android's back gesture dismisses — but a sheet tall enough to cover
+                    // the scrim, on a platform with no back gesture (the browser, iOS),
+                    // left a phone user with no exit at all. The help sheet is exactly
+                    // that sheet.
+                    CloseButton(
+                        onDismiss = onDismiss,
+                        modifier = Modifier.align(Alignment.TopEnd),
+                    )
                 }
             }
         }
@@ -191,6 +207,36 @@ private fun Scrim(open: Boolean, onDismiss: () -> Unit) {
     }
 }
 
+/**
+ * A ✕ in the sheet's own chrome, drawn as strokes rather than fetched from a glyph font —
+ * the same decision the header's gear made. Spoken as "Close", matching the scrim: the theme
+ * layer is deliberately resource-free, and the two exits should announce themselves alike.
+ */
+@Composable
+private fun CloseButton(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        modifier = modifier
+            .padding(GripPad)
+            .size(CloseSize)
+            .clip(RoundedCornerShape(CloseSize))
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onDismiss,
+            )
+            .semantics { contentDescription = "Close" },
+        contentAlignment = Alignment.Center,
+    ) {
+        val ink = Rail.inkDim
+        Canvas(modifier = Modifier.size(CloseGlyph)) {
+            val stroke = CloseStroke.toPx()
+            drawLine(ink, Offset(0f, 0f), Offset(size.width, size.height), stroke, StrokeCap.Round)
+            drawLine(ink, Offset(size.width, 0f), Offset(0f, size.height), stroke, StrokeCap.Round)
+        }
+    }
+}
+
 /** The bar that says a panel is a panel. Decorative: it is not draggable, and claims nothing. */
 @Composable
 private fun Grip() {
@@ -214,6 +260,9 @@ private val DialogLift = 8.dp
 private val GripWidth = 36.dp
 private val GripHeight = 4.dp
 private val GripPad = 10.dp
+private val CloseSize = 44.dp
+private val CloseGlyph = 12.dp
+private val CloseStroke = 2.dp
 
 private const val ScrimAlpha = 0.62f
 private const val RiseMs = 220

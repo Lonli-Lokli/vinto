@@ -46,6 +46,7 @@ import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Sfx
+import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Sounds
 import game.vinto.client.Anchor
 import game.vinto.client.AnimationQueue
@@ -150,7 +151,7 @@ private const val SWELL = 0.2f
 private const val SHOWN_SWELL = 0.5f
 
 /** The light a card travels in: a plain lift, or a green announcement. */
-private val ShownGlow = Color(0xFF22C55E)
+private val ShownGlow = Signal.peeked
 private const val LIFT = 0.28f
 private const val SHOWN_GLOW = 0.85f
 private const val GLOW_SPREAD = 0.8f
@@ -207,6 +208,19 @@ class Stage {
 
     /** Seats the table is pointing at, and why. */
     internal val attention = mutableStateMapOf<String, Attention>()
+
+    /**
+     * Slots a flight has already landed in during the current move.
+     *
+     * A swap flies two cards through one slot: the drawn card lands in it while the old one
+     * is still on its way out — and a *declared* swap makes the outgoing flight the slower
+     * of the two, so for half a second the slot both showed its landed card and, being in
+     * `leaving`, held a gap open as well. A hand of five drew six places and wrapped onto a
+     * second row until the outgoing card landed. A slot that has received its card this move
+     * needs no gap held for it, whatever is still leaving — [hasLanded] remembers, and
+     * `prepareFor` forgets at the next move.
+     */
+    internal val arrived = mutableStateListOf<Anchor>()
 
     /**
      * The player's chosen speed, as a multiplier on every duration here.
@@ -332,6 +346,8 @@ class Stage {
      * from the first frame rather than the third.
      */
     internal val expecting = mutableStateMapOf<Anchor, CardView>()
+
+    fun hasLanded(anchor: Anchor): Boolean = anchor in arrived
 
     /**
      * Cards the stepped view already shows face-up whose reveal has not been *played* yet.
@@ -708,6 +724,7 @@ fun CardStage(
                 val ms = stage.travel(flightMs(shown = flight.shown, quick = flight.quick))
                 InFlight(flight, sizes, ms) {
                     stage.sounds.play(Sfx.LAND)
+                    stage.arrived += flight.landingAt
                     stage.flying.remove(flight)
                 }
             }
@@ -755,6 +772,7 @@ private suspend fun Stage.playOpening(opening: List<Scene>, firstId: Long): Long
  * King's named card is transient and never in `revealedTo`, so it lifts as it always has.
  */
 private fun Stage.prepareFor(frame: Frame) {
+    arrived.clear()
     expecting.clear()
     frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
         // The card as well as the place: a pile deciding what to draw underneath an

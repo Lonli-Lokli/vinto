@@ -523,7 +523,7 @@ class RemoteGameSession internal constructor(
                 val reveals = entry.revealed.map { PublicReveal(it.playerId, it.position, it.card) }
                 batch += Frame(
                     entry.action,
-                    choreograph(entry.action, last, after) + revealScene(reveals),
+                    scenesFor(entry.action, last, after, reveals),
                     after,
                 )
                 last = after

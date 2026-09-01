@@ -23,7 +23,7 @@
     <string name="opening_shuffling">Shuffling…</string>
 
     <!-- ================================================================ home -->
-    <string name="home_tagline">Lowest hand wins.</string>
+    <string name="home_tagline">Hold less. Know more.</string>
     <!-- `%1$s` is the bot difficulty, which is chosen in Settings and only shown here. -->
     <string name="home_solo_title">Single player · three bots · %1$s</string>
     <string name="home_continue">Continue</string>
@@ -150,7 +150,7 @@
     <string name="settings_share">Tell somebody</string>
     <string name="settings_share_detail">Send the game to a friend. Four seats, and three of them can be bots.</string>
     <string name="settings_share_subject">Vinto</string>
-    <string name="settings_share_body">Vinto — a card game about holding the lowest hand. Free, in the browser, no sign-up: %1$s</string>
+    <string name="settings_share_body">Vinto — the card game of holding less and knowing more. Free, in the browser, no sign-up: %1$s</string>
     <string name="settings_back">Back</string>
     <string name="settings_version">Vinto v%1$s</string>
 
@@ -432,6 +432,8 @@
     <string name="detail_barred">You guessed wrong, and in the final round that is the rest of the round.</string>
     <string name="detail_scored_against">%1$s called Vinto, so the round was scored against their hand.</string>
     <string name="detail_deck_ran_out">The deck ran out, so the round ended and every hand was counted.</string>
+    <string name="detail_aimed_one">Chosen: %1$s</string>
+    <string name="detail_aimed_two">Chosen: %1$s and %2$s</string>
 
     <!-- The line above the buttons: what the table is asking for.
          Ranks arrive as symbols (%1$s and friends) and are never translated. `ask_or` is the
@@ -519,8 +521,11 @@
     <string name="log_play_unknown_they">%1$s plays the card</string>
     <string name="log_tossed_in">%1$s tossed in the %2$s</string>
     <string name="log_tossed_in_unknown">%1$s tossed in a card</string>
+    <string name="log_toss_in_missed">%1$s tossed in the %2$s — wrong, and it cost a penalty card</string>
+    <string name="log_toss_in_missed_unknown">%1$s tossed in the wrong card — a penalty card</string>
     <string name="log_called_vinto">%1$s called Vinto</string>
     <string name="log_swapped_two">%1$s swapped two cards</string>
+    <string name="log_swapped_two_named">%1$s swapped %2$s with %3$s</string>
     <string name="log_left_alone">%1$s left them alone</string>
     <string name="log_declared">%1$s declared a %2$s</string>
     <string name="log_round_begins">the round begins</string>
