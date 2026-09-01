@@ -101,9 +101,15 @@ fun DiscoverScreen(
             .fillMaxSize()
             .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
     ) {
+        // The list grows and shrinks — asking, refused, empty, four rows — and the two
+        // buttons used to ride on top of it, so they moved every time the answer changed and
+        // a thumb already on its way to Refresh landed on Back. They are at the foot of the
+        // screen now and the list takes the space between, which is the one arrangement where
+        // what the player is aiming at does not depend on what the room said.
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .fillMaxSize()
                 .widthIn(max = ColumnMax)
                 .padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
@@ -126,13 +132,23 @@ fun DiscoverScreen(
                 }
             }
 
-            DiscoverBody(state, onJoin) { load(first = state.rows.isEmpty()) }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Gap)) {
+                    DiscoverBody(state, onJoin) { load(first = state.rows.isEmpty()) }
+                }
+            }
 
             GameButton(
                 label = stringResource(Res.string.discover_refresh),
                 tone = ButtonTone.NEUTRAL,
                 onClick = { load(first = false) },
-                busy = state.refreshing || state.loading,
+                // Busy only for a refresh, which is the wait this button owns. The first
+                // load already has the middle of the screen turning and saying why, and two
+                // spinners for one wait is a player told twice and sure of neither. Not
+                // busy but not live either: `enabled` is "there is nothing to ask for yet",
+                // which is exactly the case while the first answer is still coming.
+                busy = state.refreshing,
+                enabled = !state.loading,
                 modifier = Modifier.fillMaxWidth(),
             )
             GameButton(

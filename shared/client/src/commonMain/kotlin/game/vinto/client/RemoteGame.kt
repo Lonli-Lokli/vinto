@@ -77,6 +77,17 @@ sealed interface SendOutcome {
  * replay of everything they missed — the catch-up collapses to one frame by design.
  */
 @Suppress("TooManyFunctions")
+/**
+ * What a player is told when a move never left the phone.
+ *
+ * English in a module with no resources, like the sentences beside it — these reasons are
+ * still `String`, and the rest of the client moved to typed messages (`Say`, `Ask`, `Label`)
+ * precisely so the UI could render them in the phone's language. `dispatch` returning
+ * `String?` is the last of that work; recorded here rather than done, because it is a seam
+ * change and not this fix.
+ */
+private const val FAILED_TO_SEND = "The move did not reach the room."
+
 class RemoteRoom(
     private val connector: RoomConnector,
     val code: String,
@@ -345,11 +356,18 @@ class RemoteRoom(
             SendOutcome.Sent
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (@Suppress("TooGenericExceptionCaught") failed: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught", "SwallowedException") failed: Exception) {
             // Every platform fails its own way and there is no useful common supertype. What
             // matters is that this is the *only* place that has to know, and that what leaves
             // it is a value the compiler makes the caller read.
-            SendOutcome.Failed(failed.message ?: "the move did not reach the room")
+            //
+            // The exception's own message is deliberately dropped. This reason is *shown to
+            // the player*, and the messages are plumbing: OkHttp's send returns false when
+            // the socket has gone and this threw `error("socket closed")`, which is what a
+            // real game put on the felt in red under the prompt. It is the same fault
+            // `troubled()` exists for — true, addressed to somebody who works on this, and
+            // no use at all to somebody holding five cards.
+            SendOutcome.Failed(FAILED_TO_SEND)
         }
     }
 

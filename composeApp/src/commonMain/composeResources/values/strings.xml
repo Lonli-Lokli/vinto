@@ -63,6 +63,7 @@
     <string name="online_join_screen">Join with a code</string>
     <string name="online_back">Back</string>
     <string name="online_name_placeholder">Pick a name</string>
+    <string name="online_name_needed">Pick a name first — the other seats need something to call you.</string>
 
     <!-- The public-room browser. -->
     <string name="discover_title">Public rooms</string>
@@ -205,6 +206,7 @@
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">leads</string>
     <string name="seat_pointed_turn">%1$s is playing</string>
+    <string name="seat_is_a_bot">a bot</string>
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>
@@ -461,6 +463,10 @@
     <string name="ask_waiting_for_others">Waiting for the others</string>
     <string name="ask_watching">Watching</string>
     <string name="ask_somebody_playing">%1$s is playing</string>
+    <!-- Written out in full rather than sharing a stem with the line above it: "is" and
+         "are" is an English accident, and a translator handed half a sentence cannot fix
+         the half they were not given. -->
+    <string name="ask_you_playing">You are playing</string>
     <string name="ask_who_plays_for_you">%1$s called Vinto. Who plays for the rest of you?</string>
     <string name="ask_round_over">Round over</string>
     <string name="ask_round_over_lowest">Round over — you finished lowest on %1$d</string>

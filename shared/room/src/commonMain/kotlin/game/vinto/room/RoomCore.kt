@@ -68,6 +68,22 @@ import kotlin.random.Random
 private const val SEAT_COUNT = 4
 
 /**
+ * What a bot is called at a networked table, by the seat it fills.
+ *
+ * They were "Bot 2" and "Bot 3", which is a slot number rather than an opponent, and it sat
+ * next to real people's names. The four are the deck's own cast — the same three the offline
+ * game deals, plus **Leonardo**, who never appears there because offline seat zero is the
+ * human. Online it can be a bot, so he is in the list for exactly that case.
+ *
+ * By seat rather than in order taken, so the same seat is the same character every time and
+ * two bots can never collide on a name. `portraitFor` in the client matches on these.
+ */
+private val BOT_NAMES = listOf("Leo", "Raph", "Mikey", "Don")
+
+internal fun botName(seatIndex: Int): String =
+    BOT_NAMES.getOrElse(seatIndex) { "Bot ${seatIndex + 1}" }
+
+/**
  * A game needs two people (design R2a).
  *
  * One human against three bots is precisely what `LocalGameSession` does on the device, for
@@ -630,7 +646,7 @@ fun addBot(stateJson: String, token: String, nowMs: Double): String {
 
     val seats = state.seats.map {
         if (it.index == free.index) {
-            it.copy(isBot = true, profile = PlayerProfile(nickname = "Bot ${free.index + 1}"))
+            it.copy(isBot = true, profile = PlayerProfile(nickname = botName(free.index)))
         } else {
             it
         }
@@ -1027,7 +1043,7 @@ private fun offerBotsIfDue(state: RoomState, nowMs: Double): RoomState {
         if (it.occupied) {
             it
         } else {
-            it.copy(isBot = true, profile = PlayerProfile(nickname = "Bot ${it.index + 1}"))
+            it.copy(isBot = true, profile = PlayerProfile(nickname = botName(it.index)))
         }
     }
     return marked.copy(

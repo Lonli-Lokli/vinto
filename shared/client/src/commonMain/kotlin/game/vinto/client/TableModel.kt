@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
+import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
@@ -229,8 +230,7 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
 
     val current = view.players.getOrNull(view.currentPlayerIndex)
     if (current?.id != view.viewerId || pending != null) {
-        val who = current?.nickname ?: "Someone"
-        val watching = Table(prompt = Ask.SomebodyIsPlaying(Speaker.Named(who)), waiting = true)
+        val watching = Table(prompt = Ask.SomebodyIsPlaying(playing(current, view)), waiting = true)
         // A coalition member waiting through the final round can still talk: tapping one of
         // their own cards opens the claim picker.
         return if (mayDeclare(view)) {
@@ -615,6 +615,21 @@ private fun positional(me: String, targetId: String, position: Int): Move = Move
 )
 
 // ---------------------------------------------------------------------------- toss-in
+
+/**
+ * Whose turn it is, as a [Speaker] rather than a name — because the answer conjugates.
+ *
+ * The seat being waited on can be the viewer's own: a pending action belonging to somebody
+ * else reaches the watching branch on your own turn. It used to be `Speaker.Named(nickname)`
+ * unconditionally, and `initializeGame` calls seat zero "You", so the table read
+ * **"You is playing"**. The engine's nickname cannot be corrected instead: `PlayerState` is
+ * in `GameState`, which is inside the canonical hash the frozen corpus pins.
+ */
+private fun playing(current: PlayerSeatView?, view: PlayerView): Speaker = when {
+    current == null -> Speaker.Nobody
+    current.id == view.viewerId -> Speaker.You
+    else -> Speaker.Named(current.nickname)
+}
 
 private fun tossInTable(view: PlayerView): Table? {
     val toss = view.activeTossIn ?: return null

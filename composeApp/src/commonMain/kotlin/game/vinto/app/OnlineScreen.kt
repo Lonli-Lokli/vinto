@@ -34,6 +34,7 @@ import game.vinto.app.art.online_join
 import game.vinto.app.art.online_join_detail
 import game.vinto.app.art.online_join_screen
 import game.vinto.app.art.online_join_title
+import game.vinto.app.art.online_name_needed
 import game.vinto.app.art.online_name_placeholder
 import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
@@ -90,19 +91,40 @@ fun OnlineScreen(
 ) {
     var nickname by remember { mutableStateOf(vault.identity { freshSeed() }.nickname) }
 
+    // Trimmed once, here, and it is the trimmed name that travels. A name is typed on a
+    // phone keyboard that offers a space after every word, so " Ada " is what a careful
+    // person produces; the room would have taken it and shown it to three strangers with
+    // the spaces in. Blank is refused outright rather than quietly accepted: an empty name
+    // reaches the room, which fills it in as "Player 1", and the player is then introduced
+    // to the table by a placeholder they never chose and cannot see is theirs.
+    val named = nickname.trim()
+    val ready = named.isNotEmpty()
+    // Set by a press that could not go anywhere, cleared the moment a character arrives.
+    var warned by remember { mutableStateOf(false) }
+
     // Saved on the way out of this screen rather than on every keystroke: the vault is a
     // write to storage, and a name is typed a character at a time.
     fun leaveWith(go: (String) -> Unit) {
-        vault.rememberNickname(nickname)
-        go(nickname)
+        if (!ready) {
+            warned = true
+            return
+        }
+        vault.rememberNickname(named)
+        go(named)
     }
 
     Scaffold(title = stringResource(Res.string.online_screen_title), onBack = onBack) {
         VintoField(
             value = nickname,
-            onValueChange = { nickname = it.take(NicknameMax) },
+            onValueChange = {
+                nickname = it.take(NicknameMax)
+                warned = false
+            },
             label = stringResource(Res.string.online_nickname),
-            detail = stringResource(Res.string.online_nickname_detail),
+            detail = stringResource(
+                if (ready) Res.string.online_nickname_detail else Res.string.online_name_needed,
+            ),
+            warned = warned,
             placeholder = stringResource(Res.string.online_name_placeholder),
         )
 

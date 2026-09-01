@@ -55,6 +55,18 @@ fun ActionTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     accent: Color? = null,
+    /**
+     * Whether there is anything to ask for yet.
+     *
+     * A tile that is not ready still takes the press and still calls [onClick] — because the
+     * press is how the player finds out *why*, and the caller is the only thing that knows.
+     * It was `Surface(enabled = false)` for one build, which swallowed the tap: reported as
+     * "buttons look enabled and nothing is shown if I press", which is exactly what a
+     * disabled control that does not look disabled is. Dimming it harder was the other way
+     * out and the worse one — a form whose only feedback is that a control looks slightly
+     * greyer leaves the player to guess which of the fields above it is at fault.
+     */
+    enabled: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -79,8 +91,9 @@ fun ActionTile(
         // was the light scheme's near-black on that charcoal, at 1.4:1. Same inks the seat
         // plates use, for the same reason.
         contentColor = Slate.ink,
-        border = BorderStroke(Edge, accent ?: Rail.edge),
-        shadowElevation = lift,
+        border = BorderStroke(Edge, (accent ?: Rail.edge).copy(alpha = if (enabled) 1f else Dimmed)),
+        // The lift is the whole affordance, so losing it says "not now" before any colour does.
+        shadowElevation = if (enabled) lift else 0.dp,
         interactionSource = interaction,
     ) {
         Box(
@@ -179,6 +192,9 @@ private val PadH = 18.dp
 private val PadV = 16.dp
 private val Gap = 12.dp
 private val TitleGap = 5.dp
+
+/** How far a tile that has nothing to ask for yet stands back. */
+private const val Dimmed = 0.4f
 
 private const val TitleSize = 16
 private const val ChevronSize = 26
