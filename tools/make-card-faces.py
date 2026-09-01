@@ -64,7 +64,7 @@ ACCENT = {
     "7": "#1B7A3E",   # green — the peeks that reach your own cards
     "8": "#145C2E",
     "9": "#1B477A",   # blue — the peeks that reach somebody else's
-    "10": "#073870",
+    "10": "#171E75",
     "j": "#7A441B",   # orange — a card crossing between two players
     "q": "#663006",
     "k": "#7A641B",   # yellow — the crown, and the deck the Ace throws from
@@ -94,7 +94,7 @@ BG = {
     "7": "#CCFCDE",   # green: this action reaches one of YOUR cards
     "8": "#70E099",
     "9": "#D7E8FC",   # blue: this action reaches one of THEIRS
-    "10": "#74AAE8",
+    "10": "#B6BAFC",  # periwinkle, shifted off the opponents' own blue
     "j": "#F7E2D2",   # orange: a card crosses between two players
     "q": "#E0A170",
     "k": "#FCEDB8",   # yellow: the crown, and the deck the Ace throws from
@@ -162,6 +162,31 @@ def big_eye(cx, cy, s=1.0, gaze=0.0, iris=GOLD):
         f'<circle cx="{cx}" cy="{cy + g:.0f}" r="{27 * s:.0f}" fill="{INK}"/>'
         f'<circle cx="{cx + 16 * s:.0f}" cy="{cy + g - 18 * s:.0f}" r="{10 * s:.0f}" fill="{WHITE}"/>'
     )
+
+
+def lashed_eye(cx, cy, s=1.0, iris=GOLD, side=1):
+    """The Queen's eye: the same eye, with lashes swept out from its outer corner.
+
+    She is the only face with a person in it rather than a tool or a diagram, and the
+    Jack beside her is the same two cards under the same eye — so the pair needs telling
+    apart by more than an open lid versus a slashed one. `side` is which way the lashes
+    sweep, so the two eyes lean away from each other rather than both leaning right."""
+    w, h = 170 * s, 108 * s
+    lashes = ""
+    for t, reach in ((0.58, 0.86), (0.71, 1.0), (0.84, 0.82)):
+        u = t if side > 0 else 1 - t
+        # A point on the upper lid, which is one quadratic: x is linear in u and the
+        # lid's height is 2h*u*(1-u), so the lashes sit on the curve rather than near it.
+        x, y = cx + w * (2 * u - 1), cy - 2 * h * u * (1 - u)
+        dx, dy = side * 0.6, -1.0
+        n = math.hypot(dx, dy)
+        length = 52 * s * reach
+        lashes += (
+            f'<line x1="{x:.0f}" y1="{y:.0f}" x2="{x + length * dx / n:.0f}" '
+            f'y2="{y + length * dy / n:.0f}" stroke="{INK}" '
+            f'stroke-width="{12 * s:.0f}" stroke-linecap="round"/>'
+        )
+    return big_eye(cx, cy, s, iris=iris) + lashes
 
 
 def arrowhead(x, y, ang, size=40, color=GOLD):
@@ -376,9 +401,12 @@ def index_glyph(label, underline, color=INK):
     else:
         t = glyph(label, INDEX_X, INDEX_Y, INDEX_SCALE, color)
     if underline:
+        # Tucked under the digit rather than floating below it. It used to sit 32 units
+        # clear of the glyph and 10 off the emblem underneath, which is the wrong way
+        # round for a mark whose whole job is to belong to the 6 or the 9 above it.
         k = INDEX_SCALE
         t += (
-            f'<rect x="{INDEX_X + 8 * k:.0f}" y="{INDEX_Y + 148.5 * k:.0f}" '
+            f'<rect x="{INDEX_X + 8 * k:.0f}" y="{INDEX_Y + 138 * k:.0f}" '
             f'width="{85 * k:.0f}" height="{13 * k:.0f}" rx="{6 * k:.0f}" fill="{color}"/>'
         )
     return t
@@ -478,7 +506,7 @@ def peek_own(accent):
     actually renders at, four busts and twelve cards are a texture, and the eye that says
     what the card DOES was a fifth of the width and lost inside it."""
     return (
-        hand_row(752, FELT, GOLD, gap=1)
+        hand_row(734, FELT, GOLD, gap=1, w=140, h=192, step=162)
         + popped(CX, 616, 200, 274, FELT, GOLD, accent)
         + big_eye(CX, 340, s=1.15, gaze=16, iris=accent)
     )
@@ -546,12 +574,14 @@ def face_jack():
 
 
 def face_queen():
-    """The Queen peeks TWO cards, so she has two eyes — one opened on each card
-    of the pair — and her arrows stay dashed: the trade is hers to decline."""
+    """The Queen peeks TWO cards, so she has two eyes — one opened on each card of the
+    pair — and her arrows stay dashed: the trade is hers to decline. The eyes are lashed,
+    which is the one thing on the deck drawn as a person rather than as a diagram, and
+    the only thing separating her emblem from the Jack's beyond an open lid."""
     plum = ACCENT["q"]
     arrows = swap_arrows(plum, dashed=True)
-    eyes = group(-13, 322, 600, big_eye(322, 600, s=0.5, iris=plum)) + group(
-        13, 502, 600, big_eye(502, 600, s=0.5, iris=plum)
+    eyes = group(-13, 322, 600, lashed_eye(322, 600, s=0.52, iris=plum, side=-1)) + group(
+        13, 502, 600, lashed_eye(502, 600, s=0.52, iris=plum, side=1)
     )
     return swap_pair() + eyes + arrows
 
@@ -559,19 +589,20 @@ def face_queen():
 def face_king():
     """The crowned oracle: the crown at the center, its rays still reaching a card in
     every corner — greens and blues placed so a 180° turn keeps the reading true, and
-    the four pulled in off the ends of the card so the bigger indices keep their two."""
+    the four pulled in off the ends of the card so the bigger indices keep their two —
+    measured, not judged: the top-left card came within 5 units of the K above it."""
     gold = ACCENT["k"]
     cards = (
-        card_shape(210, 350, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
-        + card_shape(615, 350, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(210, 775, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
-        + card_shape(615, 775, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        card_shape(238, 382, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
+        + card_shape(587, 382, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(238, 743, 118, 162, rot=8, fill=BLUE, stroke=BLUE_EDGE)
+        + card_shape(587, 743, 118, 162, rot=-8, fill=FELT, stroke=GOLD)
     )
     rays = (
-        ray(318, 462, 256, 412, color=gold)
-        + ray(507, 462, 569, 412, color=gold)
-        + ray(318, 663, 256, 713, color=gold)
-        + ray(507, 663, 569, 713, color=gold)
+        ray(330, 470, 288, 428, color=gold)
+        + ray(495, 470, 537, 428, color=gold)
+        + ray(330, 655, 288, 697, color=gold)
+        + ray(495, 655, 537, 697, color=gold)
     )
     return rays + crown(CX, 530, s=1.5, color=gold) + cards
 
