@@ -204,7 +204,8 @@ fun TeachScreen(
                 hold = { showing?.talkId != null },
                 pointer = showing?.point,
             ),
-        ) { shown ->
+            recent = log,
+        ) { shown, told ->
             val table = holder.tableFor(shown).beforeTheEnd(shown.vintoCallerId != null)
             labels = table.choices.associate { it.move to it.label }
             showing = lessonFor(shown, table, taught)
@@ -218,7 +219,7 @@ fun TeachScreen(
                         view = shown,
                         table = table,
                         refusal = holder.refusal,
-                        recent = log,
+                        recent = told,
                         round = 1,
                         teaching = true,
                     ),

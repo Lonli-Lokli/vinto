@@ -115,6 +115,17 @@
   Pre-commit Hooks:
   Uses lefthook for git hooks
 
+  Fixing a reported bug
+
+  **Reproduce it with a failing test first, then fix it — whenever the bug can be reached by
+  a test at all.** The order is the rule: the test is written against the report, watched go
+  red on the code as it stands, and only then is the code changed until it goes green. A test
+  written after the fix proves the fix compiles; one written before it proves the bug was
+  understood. Pick the lowest layer that exhibits it — the engine for a rules fault, the
+  client model for a prompt or a log line, the Compose suite for what the screen draws — and
+  name the test for the report rather than for the code. The rare bug no test can reach (a
+  phone's own keyboard, a store listing) is fixed with a note saying why not.
+
   Common Tasks
 
   Adding a New Game Action — **one engine, and a corpus that is not regenerated**:

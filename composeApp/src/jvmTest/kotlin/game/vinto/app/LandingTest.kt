@@ -192,9 +192,9 @@ class LandingTest {
     ) {
         VintoTheme {
             Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                CardStage(frames = frames, live = view, sizes = layout.sizes, pace = 1f) {
+                CardStage(frames = frames, live = view, sizes = layout.sizes, pace = 1f) { shown, _ ->
                     TableScreen(
-                        state = TableState(it, tableFor(it), null, emptyList(), 1),
+                        state = TableState(shown, tableFor(shown), null, emptyList(), 1),
                         layout = layout,
                         onMove = {},
                         onHelp = {},

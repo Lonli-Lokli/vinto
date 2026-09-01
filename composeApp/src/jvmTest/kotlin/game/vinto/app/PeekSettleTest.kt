@@ -54,7 +54,7 @@ class PeekSettleTest {
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    CardStage(frames = frames, live = view, sizes = layout.sizes, pace = 1f) { shown ->
+                    CardStage(frames = frames, live = view, sizes = layout.sizes, pace = 1f) { shown, _ ->
                         TableScreen(
                             state = TableState(shown, tableFor(shown), null, emptyList(), 1),
                             layout = layout,
