@@ -515,11 +515,15 @@ def face_jack():
     arrows = arc_arrow(CX, 600, 295, 208, 332, sw=17, color=violet) + arc_arrow(
         CX, 600, 295, 28, 152, sw=17, color=violet
     )
-    slash = (
-        f'<line x1="{CX - 108}" y1="702" x2="{CX + 108}" y2="486" stroke="{PAPER}" '
-        f'stroke-width="34" stroke-linecap="round"/>'
-        f'<line x1="{CX - 108}" y1="702" x2="{CX + 108}" y2="486" stroke="{INK}" '
-        f'stroke-width="16" stroke-linecap="round"/>'
+    # A pale bar in a dark casing, and that way round for a reason: the slash crosses two
+    # dark cards and one white eye, so whichever colour is the core, the casing has to be
+    # the one that reads against the other. It used to be a cream casing around an INK
+    # core — which put the visible half of the line dark on dark green and dark on blue
+    # for all but the 80 units of it that cross the eye.
+    slash = "".join(
+        f'<line x1="{CX - 108}" y1="702" x2="{CX + 108}" y2="486" stroke="{color}" '
+        f'stroke-width="{width}" stroke-linecap="round"/>'
+        for color, width in ((INK, 38), (PAPER, 20))
     )
     return swap_pair() + big_eye(CX, 594, s=0.82, iris=violet) + slash + arrows
 
@@ -938,6 +942,12 @@ def check_emblem_ink():
             best = max(contrast(c, ground) for c in (fill, stroke) if c != "none")
             if best < 3.0:
                 problems.append(f"{rank}: a {fill}/{stroke} shape is {best:.2f} on {ground}")
+    # The Jack's slash is the one shape drawn over other shapes rather than over a ground,
+    # so it is checked against each of the three it crosses. Neither of its two colours
+    # reads on all three alone — which is the whole reason it is a cased line.
+    for crossed in (FELT, BLUE, WHITE):
+        if max(contrast(PAPER, crossed), contrast(INK, crossed)) < 3.0:
+            problems.append(f"the Jack's slash cannot be seen over {crossed}")
     if problems:
         raise SystemExit("emblem ink gate failed:\n  " + "\n  ".join(problems))
 
