@@ -32,18 +32,17 @@
         <path android:pathData="M488.0,600.0 A14.0,14.0 0 1 1 516.0,600.0 A14.0,14.0 0 1 1 488.0,600.0 Z" android:fillColor="#14181B"/>
         <path android:pathData="M505.0,591.0 A5.0,5.0 0 1 1 515.0,591.0 A5.0,5.0 0 1 1 505.0,591.0 Z" android:fillColor="#FFFFFF"/>
     </group>
-    <path android:pathData="M 152,462 A 295 295 0 0 1 170,432" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 185,412 A 295 295 0 0 1 209,387" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 228,370 A 295 295 0 0 1 256,350" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 278,337 A 295 295 0 0 1 309,324" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 334,316 A 295 295 0 0 1 367,308" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 393,306 A 295 295 0 0 1 427,305" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 453,308 A 295 295 0 0 1 486,314" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 511,322 A 295 295 0 0 1 543,335" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 565,348 A 295 295 0 0 1 593,367" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 613,384 A 295 295 0 0 1 637,408" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M 653,429 A 295 295 0 0 1 671,458" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
-    <path android:pathData="M673,462 L628,428 L671,406 Z" android:fillColor="#663006"/>
+    <path android:pathData="M 177,422 A 295 295 0 0 1 199,397" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 218,379 A 295 295 0 0 1 244,358" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 266,344 A 295 295 0 0 1 297,329" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 321,320 A 295 295 0 0 1 354,311" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 380,307 A 295 295 0 0 1 414,305" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 440,306 A 295 295 0 0 1 473,311" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 498,318 A 295 295 0 0 1 530,330" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 554,341 A 295 295 0 0 1 582,359" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 603,375 A 295 295 0 0 1 628,398" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M 645,418 A 295 295 0 0 1 648,422" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
+    <path android:pathData="M648,422 L598,397 L637,368 Z" android:fillColor="#663006"/>
     <path android:pathData="M 673,738 A 295 295 0 0 1 655,768" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
     <path android:pathData="M 640,788 A 295 295 0 0 1 616,813" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>
     <path android:pathData="M 597,830 A 295 295 0 0 1 569,850" android:strokeColor="#663006" android:strokeWidth="17" android:strokeLineCap="round"/>

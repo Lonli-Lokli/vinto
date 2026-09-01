@@ -500,6 +500,25 @@ def peek_them(accent):
     )
 
 
+# The two arcs are one circle, and they are not the same length. They look as though they
+# should be: rotate the top one by 180 degrees and you get the bottom one's angles exactly.
+# The CARDS underneath are not point-symmetric though — they are mirrored, tilted -13 and
+# +13 — so their top outer corners sit 291 units from the emblem's centre where the bottom
+# ones sit 265. Against a 295 circle that is the difference between an arc clearing the
+# cards by 21 and an arc cutting 4 units into them, which is what the top one was doing.
+# Measured both ways, and the top arc is shortened by exactly enough to match the bottom's
+# clearance rather than by eye.
+TOP_ARC = (217, 323)
+BOTTOM_ARC = (28, 152)
+
+
+def swap_arrows(color, dashed=False):
+    """The rotation the Jack and the Queen share: two arcs of one circle around the pair."""
+    return arc_arrow(
+        CX, 600, 295, *TOP_ARC, dashed=dashed, sw=17, color=color
+    ) + arc_arrow(CX, 600, 295, *BOTTOM_ARC, dashed=dashed, sw=17, color=color)
+
+
 def swap_pair():
     """One big card of yours and one of theirs, crossed — the two-player trade."""
     return card_shape(322, 600, 255, 350, rot=-13, fill=FELT, stroke=GOLD) + card_shape(
@@ -512,9 +531,7 @@ def face_jack():
     slashed eye — the same glyph every password field uses — says nobody looks.
     A slashed eye upside down is still a slashed eye."""
     violet = ACCENT["j"]
-    arrows = arc_arrow(CX, 600, 295, 208, 332, sw=17, color=violet) + arc_arrow(
-        CX, 600, 295, 28, 152, sw=17, color=violet
-    )
+    arrows = swap_arrows(violet)
     # A pale bar in a dark casing, and that way round for a reason: the slash crosses two
     # dark cards and one white eye, so whichever colour is the core, the casing has to be
     # the one that reads against the other. It used to be a cream casing around an INK
@@ -532,9 +549,7 @@ def face_queen():
     """The Queen peeks TWO cards, so she has two eyes — one opened on each card
     of the pair — and her arrows stay dashed: the trade is hers to decline."""
     plum = ACCENT["q"]
-    arrows = arc_arrow(CX, 600, 295, 208, 332, dashed=True, sw=17, color=plum) + arc_arrow(
-        CX, 600, 295, 28, 152, dashed=True, sw=17, color=plum
-    )
+    arrows = swap_arrows(plum, dashed=True)
     eyes = group(-13, 322, 600, big_eye(322, 600, s=0.5, iris=plum)) + group(
         13, 502, 600, big_eye(502, 600, s=0.5, iris=plum)
     )
