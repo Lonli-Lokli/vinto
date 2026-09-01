@@ -18,6 +18,15 @@ fun extractActionPlan(node: MctsNode): BotActionDecision? {
     val move = actionChild.move ?: return null
     if (move.targets.isEmpty()) return null
 
+    // The follow-up has to be *this seat's aiming move*, or there is no plan to read. The
+    // model does not play a King's borrowed action out as its own ply — after the King the
+    // most-visited child is simply the next player's turn — and reading that node anyway
+    // cached another seat's targets as this bot's plan. Spent on the borrowed card, it is
+    // how a Queen came to peek two other players' cards in an ordinary round, with the
+    // bot's own hand left out of its own action.
+    if (move.playerId != node.move?.playerId) return null
+    if (move.type != MctsMoveType.USE_ACTION) return null
+
     return BotActionDecision(
         targets = move.targets.map { BotActionTarget(it.playerId, it.position) },
         shouldSwap = move.shouldSwap,
