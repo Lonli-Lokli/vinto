@@ -56,9 +56,15 @@ fun ActionTile(
     modifier: Modifier = Modifier,
     accent: Color? = null,
     /**
-     * Whether there is anything to ask for yet. The same distinction [GameButton] draws:
-     * a tile that needs a name typed above it is not broken, it is waiting, and a live-
-     * looking tile whose `onClick` quietly returns is the worse of the two.
+     * Whether there is anything to ask for yet.
+     *
+     * A tile that is not ready still takes the press and still calls [onClick] — because the
+     * press is how the player finds out *why*, and the caller is the only thing that knows.
+     * It was `Surface(enabled = false)` for one build, which swallowed the tap: reported as
+     * "buttons look enabled and nothing is shown if I press", which is exactly what a
+     * disabled control that does not look disabled is. Dimming it harder was the other way
+     * out and the worse one — a form whose only feedback is that a control looks slightly
+     * greyer leaves the player to guess which of the fields above it is at fault.
      */
     enabled: Boolean = true,
 ) {
@@ -69,7 +75,6 @@ fun ActionTile(
     val feedback = LocalFeedback.current
 
     Surface(
-        enabled = enabled,
         onClick = {
             feedback.commit()
             onClick()

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -63,10 +64,33 @@ fun VintoField(
     detail: String? = null,
     placeholder: String? = null,
     capitalise: KeyboardCapitalization = KeyboardCapitalization.None,
+    /**
+     * Whether this field is what is standing in the way.
+     *
+     * Not "the value is invalid" — the field is empty, which is a perfectly ordinary state to
+     * leave a form in. It means the player has just asked for something this field has to be
+     * filled in for, and it is the answer to that press.
+     */
+    warned: Boolean = false,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
-    val rim by animateColorAsState(if (focused) Rail.gold else Rail.edge, label = "rim")
+    // Two reds, because they are on two different materials. The rim is drawn against the
+    // groove, which is paper in the light scheme and slate in the dark one, so it takes the
+    // scheme's own error the way `Notice` does. The line underneath is on the felt, which is
+    // green in both, and takes the felt's — `errorOnFelt` exists because the light scheme's
+    // deep red measured 1.04:1 there. Using the felt's red for the rim would have made the
+    // warning invisible on a light phone, which is the half of the fault this is fixing.
+    val rimError = MaterialTheme.colorScheme.error
+    val lineError = MaterialTheme.colorScheme.errorOnFelt()
+    val rim by animateColorAsState(
+        when {
+            warned -> rimError
+            focused -> Rail.gold
+            else -> Rail.edge
+        },
+        label = "rim",
+    )
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LabelGap)) {
         // The plaque above the slot stands on the *felt*, not on the slot: every screen with
@@ -99,7 +123,13 @@ fun VintoField(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = MinTap)
-                .semantics { contentDescription = label },
+                .semantics {
+                    contentDescription = label
+                    // Marked as an error state rather than only turning red, because a
+                    // warning a screen reader cannot hear is a warning the player who most
+                    // needs it never gets — and this one is the answer to a press.
+                    if (warned && detail != null) error(detail)
+                },
             decorationBox = { field ->
                 Slot(rim = rim, modifier = Modifier.fillMaxWidth()) {
                     Box(
@@ -119,7 +149,13 @@ fun VintoField(
             },
         )
         detail?.let {
-            Text(it, style = bodyStyle(MaterialTheme.colorScheme.onFelt(), size = DetailSize))
+            Text(
+                it,
+                style = bodyStyle(
+                    if (warned) lineError else MaterialTheme.colorScheme.onFelt(),
+                    size = DetailSize,
+                ),
+            )
         }
     }
 }

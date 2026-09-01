@@ -134,11 +134,20 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             .fillMaxSize()
             .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
     ) {
+        // Top-anchored, with the invitation and the way out at the foot of the screen.
+        //
+        // This column used to be CENTRED, which makes its height the whole screen's layout:
+        // a seat arriving, the room refusing, a retry button appearing — each of them moved
+        // the title, the code and the leave button by whatever it was worth. Holding the
+        // seats' space fixed the biggest of those jumps and none of the rest, because the
+        // rest are things that genuinely appear and disappear. Anchoring both ends is what
+        // actually settles it: what changes size is the middle, and nothing a thumb is
+        // aiming at rides on top of it.
         Column(
             modifier = Modifier
-                .align(Alignment.Center)
+                .align(Alignment.TopCenter)
+                .fillMaxSize()
                 .widthIn(max = LobbyMax)
-                .verticalScroll(rememberScrollState())
                 .padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
@@ -155,40 +164,48 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                 ConnectionBadge(connection)
             }
 
-            if (ui.seats.isEmpty() && !ui.canRetry) {
-                WaitingSeats()
-            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Gap),
+            ) {
+                if (ui.seats.isEmpty() && !ui.canRetry) {
+                    WaitingSeats()
+                }
 
-            ui.seats.forEach { seat ->
-                SeatRow(seat, changing = seat.index in pending) { room.removeBot(seat.index) }
-            }
+                ui.seats.forEach { seat ->
+                    SeatRow(seat, changing = seat.index in pending) { room.removeBot(seat.index) }
+                }
 
-            LobbyLine(ui.word, ui.msUntilStart)
-            Notice(notice)
+                LobbyLine(ui.word, ui.msUntilStart)
+                Notice(notice)
 
-            // A room that was never reached is the one failure worth offering an answer to.
-            // Giving up with no way back would be a worse screen than the spinner that used to
-            // sit here for ever: at least that one was still trying.
-            if (ui.canRetry) {
-                GameButton(
-                    label = stringResource(Res.string.lobby_retry),
-                    tone = ButtonTone.PLAY,
-                    onClick = room::retry,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+                // A room that was never reached is the one failure worth offering an answer to.
+                // Giving up with no way back would be a worse screen than the spinner that used to
+                // sit here for ever: at least that one was still trying.
+                if (ui.canRetry) {
+                    GameButton(
+                        label = stringResource(Res.string.lobby_retry),
+                        tone = ButtonTone.PLAY,
+                        onClick = room::retry,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
 
-            if (ui.canAddBot) {
-                GameButton(
-                    label = stringResource(Res.string.lobby_add_bot),
-                    tone = ButtonTone.PLAY,
-                    onClick = room::addBot,
-                    // Busy while any seat is mid-change: the room fills the first free seat,
-                    // so two quick taps are two bots, and the second was asked for by
-                    // somebody who had no way of knowing the first had landed.
-                    busy = pending.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (ui.canAddBot) {
+                    GameButton(
+                        label = stringResource(Res.string.lobby_add_bot),
+                        tone = ButtonTone.PLAY,
+                        onClick = room::addBot,
+                        // Busy while any seat is mid-change: the room fills the first free seat,
+                        // so two quick taps are two bots, and the second was asked for by
+                        // somebody who had no way of knowing the first had landed.
+                        busy = pending.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             InviteRow(room.code)

@@ -99,10 +99,16 @@ fun OnlineScreen(
     // to the table by a placeholder they never chose and cannot see is theirs.
     val named = nickname.trim()
     val ready = named.isNotEmpty()
+    // Set by a press that could not go anywhere, cleared the moment a character arrives.
+    var warned by remember { mutableStateOf(false) }
 
     // Saved on the way out of this screen rather than on every keystroke: the vault is a
     // write to storage, and a name is typed a character at a time.
     fun leaveWith(go: (String) -> Unit) {
+        if (!ready) {
+            warned = true
+            return
+        }
         vault.rememberNickname(named)
         go(named)
     }
@@ -110,11 +116,15 @@ fun OnlineScreen(
     Scaffold(title = stringResource(Res.string.online_screen_title), onBack = onBack) {
         VintoField(
             value = nickname,
-            onValueChange = { nickname = it.take(NicknameMax) },
+            onValueChange = {
+                nickname = it.take(NicknameMax)
+                warned = false
+            },
             label = stringResource(Res.string.online_nickname),
             detail = stringResource(
                 if (ready) Res.string.online_nickname_detail else Res.string.online_name_needed,
             ),
+            warned = warned,
             placeholder = stringResource(Res.string.online_name_placeholder),
         )
 
@@ -124,19 +134,16 @@ fun OnlineScreen(
             detail = stringResource(Res.string.online_open_detail),
             accent = ButtonTone.PLAY.rim,
             onClick = { leaveWith(onOpenRoom) },
-            enabled = ready,
         )
         ActionTile(
             title = stringResource(Res.string.online_join_title),
             detail = stringResource(Res.string.online_join_detail),
             onClick = { leaveWith(onJoinByCode) },
-            enabled = ready,
         )
         ActionTile(
             title = stringResource(Res.string.online_browse),
             detail = stringResource(Res.string.online_browse_detail),
             onClick = { leaveWith(onBrowse) },
-            enabled = ready,
         )
     }
 }

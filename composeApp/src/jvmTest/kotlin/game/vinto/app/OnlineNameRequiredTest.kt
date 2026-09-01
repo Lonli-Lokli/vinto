@@ -1,8 +1,11 @@
 package game.vinto.app
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
@@ -14,34 +17,34 @@ import game.vinto.client.MemoryVault
 import kotlin.test.Test
 
 /**
- * Online play will not start without a name, and what travels is the trimmed one.
+ * Online play will not start without a name, and pressing anyway is how you find that out.
  *
- * The field began empty and the three ways in were live anyway, so the easiest thing to do on
- * that screen was walk past it. The room then fills a blank name in as "Player 1", and the
- * player is introduced to three strangers by a placeholder they never chose and cannot tell is
- * theirs — which is exactly what a screenshot from a real game showed.
+ * The field began empty and the three ways in were live, so the easiest thing to do on that
+ * screen was walk past it. The room then fills a blank name in as "Player 1", and the player
+ * is introduced to three strangers by a placeholder they never chose and cannot tell is
+ * theirs — which is what a screenshot from a real game showed.
  *
- * Whitespace is the other half. A phone keyboard offers a space after every word, so " Ada "
- * is what a careful person types; untrimmed it reaches the room and is shown to the table with
- * the spaces in, and a name of nothing but spaces passes an `isEmpty` check.
+ * The first fix disabled the tiles, and that was reported straight back: "buttons look
+ * enabled and nothing is shown if I press". A control that swallows a press and says nothing
+ * is the worst of the three available answers, because the player's next move is to press it
+ * again. So the tiles still take the press, and the press is what marks the field.
+ *
+ * The mark is a semantics error and not only a red rim, because a warning a screen reader
+ * cannot hear is a warning the one player who most needs it never gets.
  */
 @OptIn(ExperimentalTestApi::class)
 class OnlineNameRequiredTest {
 
     @Test
-    fun thereIsNoWayInUntilYouHaveSaidWhatToCallYou() = runComposeUiTest {
+    fun pressingAWayInWithNoNameSaysSoInsteadOfGoing() = runComposeUiTest {
         online()
+        onNodeWithContentDescription(NAME).assert(noComplaint())
 
-        listOf("Open a room", "Join with a code", "Browse public rooms").forEach { way ->
-            onNodeWithContentDescription(way).assertIsNotEnabled()
-        }
+        press("Open a room")
 
-        onNodeWithContentDescription(NAME).performTextInput("Ada")
-        waitForIdle()
-
-        listOf("Open a room", "Join with a code", "Browse public rooms").forEach { way ->
-            onNodeWithContentDescription(way).assertIsEnabled()
-        }
+        // Still here, and the field is now the thing being complained about.
+        onNodeWithContentDescription("Open a room").assertIsDisplayed()
+        onNodeWithContentDescription(NAME).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error))
     }
 
     /** Spaces are not a name, however many of them there are. */
@@ -50,18 +53,37 @@ class OnlineNameRequiredTest {
         online()
 
         onNodeWithContentDescription(NAME).performTextInput("   ")
-        waitForIdle()
+        press("Open a room")
 
-        onNodeWithContentDescription("Open a room").assertIsNotEnabled()
+        onNodeWithContentDescription("Open a room").assertIsDisplayed()
+        onNodeWithContentDescription(NAME).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error))
     }
 
-    private fun androidx.compose.ui.test.ComposeUiTest.online() {
-        setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
+    /** And typing takes the complaint back, rather than leaving it up until the next press. */
+    @Test
+    fun theComplaintGoesTheMomentThereIsSomethingToCallYou() = runComposeUiTest {
+        online()
+        press("Open a room")
+
+        onNodeWithContentDescription(NAME).performTextInput("Ada")
         waitForIdle()
-        val node = onNodeWithContentDescription("Play online")
+
+        onNodeWithContentDescription(NAME).assert(noComplaint())
+    }
+
+    private fun noComplaint() = SemanticsMatcher.keyNotDefined(SemanticsProperties.Error)
+
+    private fun ComposeUiTest.press(label: String) {
+        val node = onNodeWithContentDescription(label)
         if (!node.isDisplayed()) node.performScrollTo()
         node.performClick()
         waitForIdle()
+    }
+
+    private fun ComposeUiTest.online() {
+        setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
+        waitForIdle()
+        press("Play online")
     }
 
     private companion object {
