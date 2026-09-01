@@ -154,6 +154,16 @@ class RemoteRoom(
     fun nextRound() = fire(ClientMessage.NextRound(token()))
 
     /**
+     * Asks for more time on the open toss-in window.
+     *
+     * Fire-and-forget like the other verbs: a granted extension arrives as an empty events
+     * message whose view carries the refreshed [game.vinto.engine.PlayerView.tossInMsRemaining],
+     * and a refusal — asking when the window is not waiting on this seat, or after the
+     * room's per-window allowance is spent — arrives on [notices].
+     */
+    fun moreTime() = fire(ClientMessage.MoreTime(token()))
+
+    /**
      * Holds a seat pending until the next lobby broadcast, or until the room has plainly not
      * answered.
      *
@@ -523,7 +533,7 @@ class RemoteGameSession internal constructor(
                 val reveals = entry.revealed.map { PublicReveal(it.playerId, it.position, it.card) }
                 batch += Frame(
                     entry.action,
-                    choreograph(entry.action, last, after) + revealScene(reveals),
+                    scenesFor(entry.action, last, after, reveals),
                     after,
                 )
                 last = after

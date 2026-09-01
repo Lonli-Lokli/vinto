@@ -270,6 +270,9 @@ object Signal {
      * takes it or covers it.
      */
     val live = Color(0xFFA8801A)
+
+    /** The halo on a card being looked at, and on a revealed card flying shown. */
+    val peeked = Color(0xFF22C55E)
 }
 
 /** The white of a card face: what [Signal.tappable] and its neighbours are drawn against. */

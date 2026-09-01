@@ -67,6 +67,8 @@ import game.vinto.app.art.net_reconnecting
 import game.vinto.app.art.online_session_over
 import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
+import game.vinto.app.art.toss_clock_moves_on
+import game.vinto.app.art.toss_more_time
 import game.vinto.app.link.inviteLink
 import game.vinto.app.shareText
 import game.vinto.app.theme.BusyLine
@@ -86,6 +88,8 @@ import game.vinto.client.RemoteRoom
 import game.vinto.client.RoundResult
 import game.vinto.client.lobbyUi
 import game.vinto.client.roundPoints
+import game.vinto.engine.PlayerView
+import game.vinto.engine.mySeat
 import game.vinto.shapes.GamePhase
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -578,6 +582,12 @@ private fun RemoteGameScreen(
                     modifier = Modifier.weight(1f),
                 )
 
+                // The room's toss-in clock, and the one thing a player can do about it.
+                // Reads the *live* view rather than the animated one: the clock is the
+                // room's pacing, and a countdown that waited for the cards to finish
+                // flying would show time the room has already spent.
+                TossClock(room, holder.current)
+
                 // A refused lobby op — a next round the room would not start — belongs where
                 // the tap was, not in a log. `agreed` above would otherwise sit true for ever
                 // waiting for a deal that was declined.
@@ -635,6 +645,46 @@ private fun RemoteGameScreen(
     }
 }
 
+/**
+ * The toss-in countdown, with the ask that moves it.
+ *
+ * Shown only to a seat the window is still waiting on: everybody sees the seconds on the
+ * felt's toss-in corner, but the strip is a call to act — throw, pass, or ask for more
+ * time — and showing it to the seats that have already answered would be a countdown to
+ * somebody else's decision. "More time" is fire-and-forget: a granted extension comes back
+ * as a refreshed clock on the view, and a spent allowance comes back as a notice, both
+ * already rendered by the surfaces beside this one.
+ */
+@Composable
+private fun TossClock(room: RemoteRoom, view: PlayerView) {
+    val toss = view.activeTossIn
+    val waitedOn = view.mySeat != null &&
+        toss != null &&
+        toss.waitingForInput &&
+        view.viewerId !in toss.playersReadyForNextTurn
+    val seconds = rememberCountdownSeconds(view.tossInMsRemaining.takeIf { waitedOn }) ?: return
+
+    Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
+        Row(
+            modifier = Modifier.padding(horizontal = Gap, vertical = TossClockPad).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(Res.string.toss_clock_moves_on, seconds),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Rail.ink,
+            )
+            GameButton(
+                label = stringResource(Res.string.toss_more_time),
+                tone = ButtonTone.NEUTRAL,
+                compact = true,
+                onClick = { room.moreTime() },
+            )
+        }
+    }
+}
+
 /** The strips under a remote table: the connection when it wavers, the score when it ends. */
 @Composable
 private fun BelowTheFelt(
@@ -680,6 +730,7 @@ private fun BelowTheFelt(
 
 private val Pad = 24.dp
 private val Gap = 10.dp
+private val TossClockPad = 6.dp
 private val LobbyMax = 420.dp
 private val StripMax = 420.dp
 

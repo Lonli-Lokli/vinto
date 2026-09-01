@@ -204,7 +204,7 @@ def share_card() -> Image.Image:
 
     draw.text(
         (w / 2, h * 0.325),
-        "Lowest hand wins.",
+        "Hold less. Know more.",
         font=body,
         fill=FELT_INK + (0xCC,),
         anchor="mt",

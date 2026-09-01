@@ -1,5 +1,11 @@
 package game.vinto.app.game
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -79,6 +85,7 @@ import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
+import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.theme.Rail
@@ -109,6 +116,7 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
@@ -177,6 +185,7 @@ fun TableScreen(
                     state = state,
                     sizes = layout.sizes,
                     onMove = onMove,
+                    onHelp = onHelp,
                     modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
                 )
             }
@@ -204,6 +213,7 @@ fun TableScreen(
                 state = state,
                 sizes = layout.sizes,
                 onMove = onMove,
+                onHelp = onHelp,
                 modifier = Modifier.weight(1f).padding(horizontal = Edge),
             )
 
@@ -222,6 +232,7 @@ private fun FeltTable(
     state: TableState,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
+    onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val view = state.view
@@ -260,6 +271,7 @@ private fun FeltTable(
                 table = table,
                 sizes = sizes,
                 onMove = onMove,
+                onHelp = onHelp,
             )
 
             // Four chairs and four players. Seated, the bottom one is yours; watching, it is
@@ -717,6 +729,7 @@ private fun MiddleRow(
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
+    onHelp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
@@ -727,7 +740,7 @@ private fun MiddleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
-        Piles(view, sizes)
+        Piles(view, sizes, onHelp)
         SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove)
     }
 }
@@ -881,8 +894,15 @@ private fun Cards(
     // (in the air *and* in the hand at once), the hand was a card wider for the length of the
     // flight, and every anchor after it was off by one. `SeatCard` already draws the gap for a
     // card that is landing; this is only for a hand that has actually lost one.
+    //
+    // "Arriving" has two tenses, and both matter: a declared swap's outgoing flight is the
+    // slower one, so the incoming card *has landed* while the old one is still in the air —
+    // the slot is drawn and needs no gap, which is what [Stage.hasLanded] remembers.
     val gaps = stage.leaving[seat.id].orEmpty()
-        .filterNot { Anchor.Seat(seat.id, it) in stage.inFlight }
+        .filterNot {
+            val anchor = Anchor.Seat(seat.id, it)
+            anchor in stage.inFlight || stage.hasLanded(anchor)
+        }
         .toSet()
 
     var position = 0
@@ -1051,8 +1071,12 @@ private fun SeatCard(
     val anchor = Anchor.Seat(seat.id, position)
 
     if (anchor in stage.inFlight || stage.isPeeking(anchor)) {
-        val w = if (turned) scale.height else scale.width
-        val h = if (turned) scale.width else scale.height
+        // The same footprint the landed card will claim — `CardFace` pads itself out to
+        // [TapTarget], so a gap measured at the bare card size grew on landing, and the first
+        // card of a deal to arrive re-pitched the whole row: every card still in the air then
+        // settled sideways at the last moment, and the seat plate slid over to make room.
+        val w = maxOf(if (turned) scale.height else scale.width, TapTarget)
+        val h = maxOf(if (turned) scale.width else scale.height, TapTarget)
         Box(modifier = Modifier.size(w, h).anchoredAt(stage, anchor, scale))
         return
     }
@@ -1102,7 +1126,7 @@ private fun SeatCard(
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
-private fun Piles(view: PlayerView, sizes: TableSizes) {
+private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: () -> Unit) {
     val stage = LocalStage.current
 
     // The web app's two-by-two, and the reason for it: what a player draws is public, so it
@@ -1140,7 +1164,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
             verticalAlignment = Alignment.Top,
             modifier = Modifier.padding(top = Tight),
         ) {
-            DrawnCard(view, sizes, stage)
+            DrawnCard(view, sizes, stage, onHelp)
             TossIn(view)
         }
     }
@@ -1157,7 +1181,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes) {
  * The slot is always there, empty or not, so nothing moves when a card arrives in it.
  */
 @Composable
-private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
+private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: () -> Unit) {
     val drawn = view.pendingAction?.takeIf { it.from == PendingCardOrigin.DRAWING }
     val slot = Modifier.anchoredAt(stage, Anchor.Pending, sizes.theirs)
 
@@ -1173,11 +1197,15 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage) {
         if (drawn == null || elsewhere) {
             EmptySlot(sizes.theirs, "", slot)
         } else {
+            // Tapping the drawn card opens the help sheet, whose "right now" block explains
+            // exactly this card — the shortest route to "what does this do" for somebody who
+            // has not found the "?" yet.
             CardFace(
                 drawn.card,
                 sizes.theirs,
                 modifier = slot,
                 label = stringResource(Res.string.card_in_hand),
+                onClick = onHelp,
             )
         }
     }
@@ -1259,17 +1287,41 @@ private fun TossIn(view: PlayerView) {
     ) {
         val toss = view.activeTossIn ?: return@Column
 
+        // Online, the room finishes the window for whoever stays silent, and the heading
+        // carries the countdown it is finishing on. Solo there is no clock and no suffix —
+        // the view simply never carries the duration.
+        val seconds = rememberCountdownSeconds(view.tossInMsRemaining)
         Text(
-            stringResource(Res.string.table_toss_in),
+            if (seconds != null) {
+                stringResource(Res.string.table_toss_in_timed, seconds)
+            } else {
+                stringResource(Res.string.table_toss_in)
+            },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onFelt(),
+        )
+
+        // The window breathes while it is open for throws, the same signal a tappable card
+        // wears: this is the one moment that belongs to the whole table at once, and a
+        // static chip read as furniture — a player who missed the cards' rings had nothing
+        // saying "the table is waiting on this".
+        val open = toss.waitingForInput
+        val pulse = rememberInfiniteTransition(label = "tossWindow")
+        val breath by pulse.animateFloat(
+            initialValue = TossQuiet,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(TossBreathMs, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "tossBreath",
         )
         Surface(
             shape = RoundedCornerShape(Tight),
             color = MaterialTheme.colorScheme.surface.copy(alpha = TossFill),
             border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.onFelt(),
+                if (open) 2.dp else 1.dp,
+                MaterialTheme.colorScheme.onFelt().copy(alpha = if (open) breath else 1f),
             ),
         ) {
             // On one line, whatever the rank is called. Confined to a card's width, "Joker"
@@ -1290,6 +1342,35 @@ private fun TossIn(view: PlayerView) {
 }
 
 private const val TossFill = 0.15f
+
+/** The trough of the open window's breath, and its period — see `CardFace`'s pulse. */
+private const val TossQuiet = 0.45f
+private const val TossBreathMs = 1100
+
+/**
+ * Seconds left on a service clock, counted down locally between broadcasts.
+ *
+ * The wire carries a *duration* — the room's convention, because a phone whose own clock is
+ * a minute out would render an absolute deadline as a minute of nonsense — so the client
+ * takes it at receipt and ticks from there. Every broadcast that carries a fresh duration
+ * resnaps the count to the room's truth. Rounded up, so a fifteen-second window opens on
+ * "15" rather than "14", and floored at zero: the room may be a beat late finishing the
+ * window, and a countdown must never say less than nothing.
+ */
+@Composable
+internal fun rememberCountdownSeconds(msLeft: Long?): Int? {
+    if (msLeft == null) return null
+    var left by remember(msLeft) { mutableStateOf(msLeft) }
+    LaunchedEffect(msLeft) {
+        while (left > 0) {
+            delay(CLOCK_TICK_MS)
+            left -= CLOCK_TICK_MS
+        }
+    }
+    return ((left + CLOCK_TICK_MS - 1) / CLOCK_TICK_MS).toInt().coerceAtLeast(0)
+}
+
+private const val CLOCK_TICK_MS = 1000L
 
 /** The room a toss-in window takes, kept whether one is open or not. */
 private val TossHeight = 96.dp

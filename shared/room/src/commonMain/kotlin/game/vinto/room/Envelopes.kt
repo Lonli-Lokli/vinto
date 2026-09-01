@@ -88,7 +88,9 @@ fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String {
     val state = result.state
     val remaining = remainingMs(state, nowMs)
     val messages = seated(state).associate { (seatIndex, playerId) ->
-        val view = state.game?.let { projectView(it, playerId, remaining) }
+        val view = state.game?.let {
+            projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), leaderMsLeft(state, nowMs))
+        }
         val message = if (state.phase == RoomPhase.PLAYING) {
             ServerMessage.Started(view, state.nextIndex, standings = state.session.rounds)
         } else {
@@ -114,7 +116,9 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String {
 
     val messages = when {
         result.started -> seated(state).associate { (seatIndex, playerId) ->
-            val view = state.game?.let { projectView(it, playerId, remaining) }
+            val view = state.game?.let {
+                projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), leaderMsLeft(state, nowMs))
+            }
             seatIndex to ProtocolJson.encodeToString(
                 ServerMessage.serializer(),
                 ServerMessage.Started(view, state.nextIndex),
@@ -152,10 +156,16 @@ fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): 
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val from = sinceIndex.coerceIn(0, state.log.size)
     val playerId = state.seats.getOrNull(seat)?.playerId
-    val view = if (playerId != null) {
-        state.game?.let { projectView(it, playerId, remainingMs(state, nowMs)) }
-    } else {
-        null
+    val view = playerId?.let { id ->
+        state.game?.let {
+            projectView(
+                it,
+                id,
+                remainingMs(state, nowMs),
+                tossInMsLeft(state, nowMs),
+                leaderMsLeft(state, nowMs),
+            )
+        }
     }
 
     return ProtocolJson.encodeToString(
@@ -173,6 +183,8 @@ fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): 
 /** An `events` message per seated seat, each entry carrying that seat's view of its step. */
 private fun eventsPerSeat(state: RoomState, steps: List<Step>, nowMs: Double): Map<Int, String> {
     val remaining = remainingMs(state, nowMs)
+    val tossLeft = tossInMsLeft(state, nowMs)
+    val leaderLeft = leaderMsLeft(state, nowMs)
     return seated(state).associate { (seatIndex, playerId) ->
         val entries = steps.map { step ->
             EventEntry(
@@ -181,18 +193,34 @@ private fun eventsPerSeat(state: RoomState, steps: List<Step>, nowMs: Double): M
                 playerId = step.logged.playerId,
                 action = step.logged.action,
                 byBot = step.logged.byBot,
-                view = projectView(step.after, playerId, remaining),
+                view = projectView(step.after, playerId, remaining, tossLeft, leaderLeft),
                 revealed = step.revealed.map { RevealedCard(it.playerId, it.position, it.card) },
             )
         }
         // The top-level view is where the batch *ends* — after settling, so a FINISHED room
         // sends its trail with a null destination and the client falls back to the entries.
-        val view = state.game?.let { projectView(it, playerId, remaining) }
+        val view = state.game?.let { projectView(it, playerId, remaining, tossLeft, leaderLeft) }
         seatIndex to ProtocolJson.encodeToString(
             ServerMessage.serializer(),
             ServerMessage.Events(events = entries, nextIndex = state.nextIndex, view = view),
         )
     }
+}
+
+/**
+ * [moreTimeApplied], with the refreshed clock broadcast to every seat: an `events` message
+ * with no entries, whose view carries the extended countdown. Nothing moved on the table —
+ * there is nothing to animate — but every phone's clock has to jump together, or the table
+ * disagrees about how long it is waiting.
+ */
+fun moreTimeEnvelopes(stateJson: String, token: String, nowMs: Double): String {
+    val applied = moreTimeApplied(stateJson, token)
+    if (applied.error != null) {
+        return VintoJson.encodeToString(Envelopes(applied.state, error = applied.error))
+    }
+    return VintoJson.encodeToString(
+        Envelopes(applied.state, messages = eventsPerSeat(applied.state, emptyList(), nowMs)),
+    )
 }
 
 /** The seats that map to a player, as (seat index, player id) — the ones messages go to. */
@@ -202,3 +230,10 @@ private fun seated(state: RoomState): List<Pair<Int, String>> =
 /** The session clock as a view carries it; the projection never reads one itself. */
 private fun remainingMs(state: RoomState, nowMs: Double): Long? =
     state.session.endsAtEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
+
+/** The toss-in clock as a duration, for the same reason: a phone's own clock may be wrong. */
+private fun tossInMsLeft(state: RoomState, nowMs: Double): Long? =
+    state.tossInDeadlineEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
+
+private fun leaderMsLeft(state: RoomState, nowMs: Double): Long? =
+    state.leaderDeadlineEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }

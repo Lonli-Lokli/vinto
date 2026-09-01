@@ -24,7 +24,7 @@ export default {
     title: '#F2F5F0', // FeltInk
     sub: '#F2DFA6', // LeafGold
     name: 'Vinto',
-    tagline: 'Lowest hand wins.', // the app's own tagline, not a new one invented for a store
+    tagline: 'Hold less. Know more.', // the app's own tagline, not a new one invented for a store
     endline: 'Call it, and hold the lowest hand.',
     endsub: 'Free · no ads · no account',
     logo: './tools/brand/vinto-mark.png',
@@ -43,7 +43,7 @@ export default {
    * handle exists, which is why they are screens and not slogans.
    */
   scenes: [
-    { id: 'home', title: 'Lowest hand wins.', sub: 'Five cards. You may look at two.', move: 'pushInSlow' },
+    { id: 'home', title: 'Hold less. Know more.', sub: 'Five cards. You may look at two.', move: 'pushInSlow' },
     { id: 'table', title: 'Draw, or take the discard.', sub: 'Then swap, or play the card’s action.', move: 'driftUp' },
     { id: 'teach', title: 'Learn by playing a round.', sub: 'Not by reading the rules.', move: 'pullBack' },
     { id: 'lobby', title: 'Or sit down with friends.', sub: 'A six-character code is the whole invitation.', move: 'pushIn' },

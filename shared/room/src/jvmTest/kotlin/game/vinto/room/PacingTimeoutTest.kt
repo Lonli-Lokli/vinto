@@ -98,6 +98,87 @@ class PacingTimeoutTest {
     }
 
     @Test
+    fun moreTimeExtendsTheWindowTwiceAndNoFurther() {
+        val (state, _) = playedToOpenWindow()
+        val room = decodeRoom(state)
+        val deadline = assertNotNull(room.tossInDeadlineEpochMs)
+        val lagging = laggingHumanIds(room)
+        val seat = room.seats.first { it.playerId == lagging.first() }
+        val token = TOKENS[seat.index]!!
+        val now = deadline - 5_000.0
+
+        // First ask: a full window again, measured from the running deadline — asking early
+        // must not cost the time still on the clock. Every seat is told, as an empty events
+        // message whose view carries the refreshed countdown.
+        val first = VintoJson.decodeFromString(
+            Envelopes.serializer(),
+            moreTimeEnvelopes(state, token, now),
+        )
+        assertNull(first.error, "a lagging human's first ask is granted: ${first.error}")
+        assertEquals(deadline + MORE_TIME_MS, first.state.tossInDeadlineEpochMs)
+        assertEquals(1, first.state.tossInExtensions)
+        assertTrue(first.messages.isNotEmpty(), "the moved clock reaches the table")
+        first.messages.values.forEach { text ->
+            val events = assertIs<ServerMessage.Events>(
+                ProtocolJson.decodeFromString(ServerMessage.serializer(), text),
+            )
+            assertTrue(events.events.isEmpty(), "nothing moved on the table")
+            assertEquals(
+                (deadline + MORE_TIME_MS - now).toLong(),
+                assertNotNull(events.view?.tossInMsRemaining, "the view carries the countdown"),
+            )
+        }
+
+        // A second ask is granted; a third is the wall.
+        val second = askedForTime(first.state, token, now)
+        assertNull(second.error)
+        assertEquals(2, second.state.tossInExtensions)
+        val third = askedForTime(second.state, token, now)
+        assertNotNull(third.error, "a window is extended at most twice")
+
+        // And the allowance dies with the window: the expiry clears both the deadline and
+        // the count, so the next window starts fresh.
+        val fired = VintoJson.decodeFromString(
+            AlarmEnvelopes.serializer(),
+            alarmEnvelopes(encode(second.state), second.state.tossInDeadlineEpochMs!! + 1),
+        )
+        assertNull(fired.state.tossInDeadlineEpochMs)
+        assertEquals(0, fired.state.tossInExtensions)
+    }
+
+    @Test
+    fun onlySomebodyTheWindowWaitsOnMayAskForTime() {
+        val (state, _) = playedToOpenWindow()
+        val room = decodeRoom(state)
+        val lagging = laggingHumanIds(room)
+
+        // A token no seat holds is refused outright.
+        val stranger = VintoJson.decodeFromString(
+            Envelopes.serializer(),
+            moreTimeEnvelopes(state, "token-mallory", NOW),
+        )
+        assertNotNull(stranger.error, "an unseated token cannot hold the table")
+
+        // A seated human the window is not waiting on is refused too — the clock is not
+        // theirs to move. Only checkable when the window is not waiting on both humans.
+        val rested = room.seats.firstOrNull { it.tokenHash != null && it.playerId !in lagging }
+        if (rested != null) {
+            val refused = VintoJson.decodeFromString(
+                Envelopes.serializer(),
+                moreTimeEnvelopes(state, TOKENS[rested.index]!!, NOW),
+            )
+            assertNotNull(refused.error, "a seat that already answered cannot buy time")
+        }
+    }
+
+    /** One more-time ask against an in-memory state, decoded. */
+    private fun askedForTime(state: RoomState, token: String, now: Double): Envelopes =
+        VintoJson.decodeFromString(
+            Envelopes.serializer(),
+            moreTimeEnvelopes(encode(state), token, now),
+        )
+
+    @Test
     fun theCoalitionGetsADefaultLeaderInTableOrder() {
         // A final round stalled on the leader choice, built directly: the engine's own
         // tests cover reaching this position; this one covers what the room does about it.
@@ -233,6 +314,7 @@ class PacingTimeoutTest {
         const val NOW = 1_000_000.0
         const val MOVE_LIMIT = 600
         const val TOSS_IN_MS = 15_000.0
+        const val MORE_TIME_MS = 15_000.0
         val SEEDS = listOf(42L, 7L, 11L)
         val TOKENS = mapOf(0 to "token-ann", 1 to "token-bob")
     }

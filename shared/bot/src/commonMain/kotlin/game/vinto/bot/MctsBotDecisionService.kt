@@ -106,7 +106,7 @@ class MctsBotDecisionService(
             return false
         }
 
-        rememberOrForgetPlan(context.botId, result.actionPlan)
+        rememberOrForgetPlan(context.botId, result.actionPlan?.copy(forRank = drawnCard.rank))
         return true
     }
 
@@ -119,9 +119,11 @@ class MctsBotDecisionService(
         // It is checked against the table first. A plan is read out of a node one ply deep in
         // the search, and a toss-in between then and now renumbers whatever it survived —
         // so a stale plan names a position that no longer exists. It is a hint, and a hint
-        // that no longer fits is dropped rather than played.
+        // that no longer fits is dropped rather than played. It is also checked against the
+        // *card*: a plan is stamped with the rank it aims, and one left over from a
+        // different action is not a hint at all.
         cachedActionPlans.remove(context.botId)
-            ?.takeIf { it.stillFits(context) }
+            ?.takeIf { it.stillFits(context) && it.isForCurrentAction(context) }
             ?.let { return it }
 
         val gameState = constructGameState(context)
@@ -158,9 +160,17 @@ class MctsBotDecisionService(
             player != null && target.position in player.cards.indices
         }
 
+    /** A stamped plan is spent only on the action it was made for; unstamped is trusted. */
+    private fun BotActionDecision.isForCurrentAction(context: BotDecisionContext): Boolean {
+        val current = (context.activeActionCard ?: context.pendingCard)?.rank
+        return forRank == null || forRank == current
+    }
+
     private fun MctsMove.toDecision() = BotActionDecision(
         targets = targets.map { BotActionTarget(it.playerId, it.position) },
-        // A Queen carries the answer on the move; a Jack's swap is the move type itself.
+        // Jack and Queen candidates both carry the answer on the move now. The fallback used
+        // to matter — the Jack's candidates carried null, and coercing null against a move
+        // type the generator never produces made every solo Jack skip its swap.
         shouldSwap = shouldSwap ?: (type == MctsMoveType.SWAP),
         declaredRank = declaredRank,
     )
@@ -206,7 +216,9 @@ class MctsBotDecisionService(
             return Rank.QUEEN
         }
 
-        rememberOrForgetPlan(context.botId, result.actionPlan)
+        // The plan made alongside a declaration aims the *declared* rank's action, and is
+        // stamped as such: it may only be spent on that card once the engine hands it over.
+        rememberOrForgetPlan(context.botId, result.actionPlan?.copy(forRank = declared))
         return declared
     }
 

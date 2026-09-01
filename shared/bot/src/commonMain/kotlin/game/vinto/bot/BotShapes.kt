@@ -54,6 +54,15 @@ data class BotActionDecision(
     val shouldSwap: Boolean? = null,
     /** King: the rank being declared. */
     val declaredRank: Rank? = null,
+    /**
+     * The rank of the action this plan aims, stamped when the plan is cached.
+     *
+     * A cached plan used to be spent on whatever action was current when the follow-up
+     * question arrived — `stillFits` checks only that the positions still exist, not what
+     * the plan was *for* — so a plan left over from one card could aim a different one.
+     * Null means unstamped, and an unstamped plan is trusted the way it always was.
+     */
+    val forRank: Rank? = null,
 )
 
 enum class TurnAction { DRAW, TAKE_DISCARD }

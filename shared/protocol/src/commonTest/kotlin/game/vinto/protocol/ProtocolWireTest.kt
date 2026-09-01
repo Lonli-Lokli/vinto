@@ -72,6 +72,7 @@ class ProtocolWireTest {
             """{"type":"add-bot"}""",
             """{"type":"remove-bot","seat":2}""",
             """{"type":"next-round"}""",
+            """{"type":"more-time","token":"tok-abc"}""",
         ).forEach { literal ->
             assertSameJson(literal, encodeClient(decodeClient(literal)))
         }

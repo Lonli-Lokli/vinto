@@ -57,6 +57,7 @@ Client → server:
 | `add-bot` | `token?` | Fill the first empty seat with a bot (any seated player may) |
 | `remove-bot` | `token?`, `seat` | Take a filler bot back out; cancels a countdown |
 | `next-round` | `token?` | Agree to another round; the last connected human deals it |
+| `more-time` | `token?` | Ask for more time on the open toss-in window. Granted only to a seat the window is still waiting on, at most twice per window (a full window's worth each time); a refusal comes back as `error`. A grant reaches every seat as an empty `events` message whose view carries the refreshed clock |
 
 Server → client:
 
@@ -93,6 +94,23 @@ step cap and the rate limiter in front of it.
 
 Both additions are optional keys with absent defaults, honouring the additive rule in both
 directions.
+
+## The clocks a view carries
+
+Three durations ride on `PlayerView`, all following the same rule: the wire carries **how
+long is left**, never an epoch deadline, because a phone whose own clock is a minute out
+would render an absolute deadline as a minute of nonsense. Each is resolved against the
+room's clock at send time, absent when its situation is not running, and re-sent (and so
+re-snapped) by every message that carries a view:
+
+| field | running while | expiry does |
+| --- | --- | --- |
+| `sessionMsRemaining` | a session is underway | the buzzer: an undeclared round is discarded |
+| `tossInMsRemaining` | a toss-in window waits on a human | the room finishes the window for the laggards (`more-time` moves it) |
+| `leaderMsRemaining` | the coalition owes a leader choice | the room appoints the first coalition seat in table order |
+
+Solo play never sets any of them — `projectView`'s clock parameters are the room's to pass,
+and the engine itself reads no clock.
 
 ## Compatibility rule
 

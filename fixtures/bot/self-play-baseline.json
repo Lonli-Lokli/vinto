@@ -7,12 +7,12 @@
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 5,
-            "coalitionWins": 7,
-            "meanHandTotalCentis": 1360,
-            "meanActionsCentis": 37766,
-            "bestHandTotal": -1,
-            "worstHandTotal": 35
+            "callerWins": 6,
+            "coalitionWins": 6,
+            "meanHandTotalCentis": 1460,
+            "meanActionsCentis": 30616,
+            "bestHandTotal": 0,
+            "worstHandTotal": 38
         },
         {
             "difficulty": "moderate",
@@ -21,22 +21,22 @@
             "endedOnVinto": 12,
             "callerWins": 8,
             "coalitionWins": 4,
-            "meanHandTotalCentis": 1320,
-            "meanActionsCentis": 26841,
-            "bestHandTotal": -1,
-            "worstHandTotal": 36
+            "meanHandTotalCentis": 1572,
+            "meanActionsCentis": 26858,
+            "bestHandTotal": 0,
+            "worstHandTotal": 44
         },
         {
             "difficulty": "hard",
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 7,
-            "coalitionWins": 5,
-            "meanHandTotalCentis": 1468,
-            "meanActionsCentis": 24850,
-            "bestHandTotal": -2,
-            "worstHandTotal": 41
+            "callerWins": 10,
+            "coalitionWins": 2,
+            "meanHandTotalCentis": 1466,
+            "meanActionsCentis": 23666,
+            "bestHandTotal": -1,
+            "worstHandTotal": 32
         }
     ]
 }

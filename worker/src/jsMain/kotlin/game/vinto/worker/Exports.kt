@@ -14,6 +14,7 @@ import game.vinto.room.lobbyView as coreLobbyView
 import game.vinto.room.maxLiveRooms as coreMaxLiveRooms
 import game.vinto.room.maxRoomsPerSource as coreMaxRoomsPerSource
 import game.vinto.room.mintRoomCode as coreMintRoomCode
+import game.vinto.room.moreTimeEnvelopes as coreMoreTimeEnvelopes
 import game.vinto.room.newRegistry as coreNewRegistry
 import game.vinto.room.newRoom as coreNewRoom
 import game.vinto.room.nextAlarmAt as coreNextAlarmAt
@@ -108,6 +109,10 @@ fun applyActionEnvelopes(stateJson: String, token: String, actionJson: String, n
 @JsExport
 fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String =
     coreReadyEnvelopes(stateJson, token, nowMs)
+
+@JsExport
+fun moreTimeEnvelopes(stateJson: String, token: String, nowMs: Double): String =
+    coreMoreTimeEnvelopes(stateJson, token, nowMs)
 
 @JsExport
 fun alarmEnvelopes(stateJson: String, nowMs: Double): String =

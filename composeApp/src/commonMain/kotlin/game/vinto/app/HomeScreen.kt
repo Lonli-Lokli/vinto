@@ -261,19 +261,20 @@ private fun SoloPanel(
                 color = Rail.inkDim,
             )
 
-            // Continuing comes first when there is something to continue. A game left
-            // half-played is the reason the app was opened; starting a new one over the top of
-            // it is the rarer intent and the destructive one.
+            // A new game is the green button even when a saved one exists — the product
+            // owner's call, reversing the earlier arrangement: a solo game against bots is
+            // mostly started fresh, and a half-played round from last week is the rarer
+            // intent. Continue stays first so the save is still seen before it is played over.
             if (canContinue) {
                 GameButton(
                     label = stringResource(Res.string.home_continue),
-                    tone = ButtonTone.PLAY,
+                    tone = ButtonTone.NEUTRAL,
                     onClick = onContinue,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 GameButton(
                     label = stringResource(Res.string.home_new_game),
-                    tone = ButtonTone.NEUTRAL,
+                    tone = ButtonTone.PLAY,
                     onClick = onPlay,
                     modifier = Modifier.fillMaxWidth(),
                 )

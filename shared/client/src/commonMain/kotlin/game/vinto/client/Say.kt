@@ -58,9 +58,28 @@ sealed interface Say {
      */
     data class TossedIn(override val who: Speaker, val rank: Rank?) : Say
 
+    /**
+     * A toss-in that guessed wrong: the card stays, and a penalty card arrives.
+     *
+     * Its own message rather than [TossedIn], because the old line reported a failed throw as
+     * a successful one — and with the *pile's* rank, since the thrown card never got there.
+     * [rank] is the card actually tried, which the whole table saw turned over.
+     */
+    data class TossInMissed(override val who: Speaker, val rank: Rank?) : Say
+
     data class CalledVinto(override val who: Speaker) : Say
 
-    data class SwappedTwo(override val who: Speaker) : Say
+    /**
+     * A Jack or Queen's swap, with what it moved.
+     *
+     * "Mikey swapped two cards" names an event and neither card; the two hands and slots are
+     * the fact a player is trying to track. [cards] can be empty when the targets were not
+     * carried, and the renderer falls back to the unnamed line.
+     */
+    data class SwappedTwo(
+        override val who: Speaker,
+        val cards: List<ChosenCard> = emptyList(),
+    ) : Say
 
     /** A Jack or Queen whose owner looked and then chose to change nothing. */
     data class LeftThemAlone(override val who: Speaker) : Say

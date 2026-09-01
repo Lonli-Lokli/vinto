@@ -244,6 +244,20 @@ class TwoClientGameTest {
                     lobbyChange(socket, removeBot(stateJson, message.token ?: socket.token!!, message.seat, now))
 
                 is ClientMessage.NextRound -> Unit // one round is this harness's scope
+                is ClientMessage.MoreTime -> moreTime(socket, message)
+            }
+        }
+
+        private fun moreTime(socket: FakeSocket, message: ClientMessage.MoreTime) {
+            val result = VintoJson.decodeFromString(
+                Envelopes.serializer(),
+                moreTimeEnvelopes(stateJson, message.token ?: socket.token!!, now),
+            )
+            if (result.error != null) {
+                deliver(socket, encodeServer(ServerMessage.Error(result.error)))
+            } else {
+                stateJson = encode(result.state)
+                sendPrebuilt(result.messages)
             }
         }
 

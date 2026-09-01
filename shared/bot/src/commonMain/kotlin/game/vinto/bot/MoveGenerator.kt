@@ -136,6 +136,14 @@ object MoveGenerator {
      * preference. The shortlist pairs the bot's worst known card against opponents' best,
      * which is the trade worth searching; Queen additionally prefers cards it has not seen,
      * since it peeks before deciding.
+     *
+     * Every candidate carries `shouldSwap = true`, because the swap *is* the plan and it is
+     * what the search simulates. It used to be null for the Jack, and the decision service
+     * coerced a null to `false` on the way out — so a solo bot aimed its Jack, the search
+     * valued the trade, and then it skipped the swap. Every time. The one legitimate "no"
+     * is its own candidate: a Jack may be tossed in and *have* to be aimed, and a search
+     * that was never offered the skip could not choose it when every trade on the table
+     * loses points.
      */
     private fun generateTwoPlayerMoves(
         state: MctsGameState,
@@ -145,7 +153,10 @@ object MoveGenerator {
         val ownPositions = if (peekFirst) {
             unknownPositions(currentPlayer).ifEmpty { knownPositionsByValue(currentPlayer) }
         } else {
+            // Give away the dearest card it knows — or, knowing none of its own, trade a
+            // blind card rather than having no Jack plan at all.
             knownPositionsByValue(currentPlayer).reversed()
+                .ifEmpty { unknownPositions(currentPlayer) }
         }.take(SHORTLIST)
 
         val moves = mutableListOf<MctsMove>()
@@ -153,7 +164,10 @@ object MoveGenerator {
             val opponentPositions = if (peekFirst) {
                 unknownPositions(opponent).ifEmpty { (0 until opponent.cardCount).toList() }
             } else {
-                knownPositionsByValue(opponent).reversed()
+                // Cheapest first: a blind swap *receives* this card, so the Joker the bot
+                // has seen in an opponent's hand is the whole point of playing the Jack.
+                // Most-expensive-first was offering to import their King.
+                knownPositionsByValue(opponent)
                     .ifEmpty { (0 until opponent.cardCount).toList() }
             }.take(SHORTLIST)
 
@@ -166,10 +180,17 @@ object MoveGenerator {
                             MctsActionTarget(currentPlayer.id, own),
                             MctsActionTarget(opponent.id, theirs),
                         ),
-                        shouldSwap = if (peekFirst) true else null,
+                        shouldSwap = true,
                     )
                 }
             }
+        }
+
+        // The Jack's "aim and then leave them alone", as a move the search can weigh against
+        // the trades. Queen needs no such candidate here: she peeks first, and declining her
+        // swap is decided after the peek by `shouldSwapAfterPeek`.
+        if (!peekFirst) {
+            moves.firstOrNull()?.let { moves += it.copy(shouldSwap = false) }
         }
         return moves
     }
