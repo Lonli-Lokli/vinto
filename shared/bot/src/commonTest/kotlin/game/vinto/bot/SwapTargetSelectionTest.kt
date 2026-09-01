@@ -154,6 +154,34 @@ class SwapTargetSelectionTest {
         assertTrue(botTargets(decision).isNotEmpty())
     }
 
+    @Test
+    fun aJackAimedAtAKnownJokerActuallySwaps() {
+        // The regression that made every solo Jack a no-op: the generator left `shouldSwap`
+        // null, the decision service coerced null to false, and the runner skipped the swap
+        // it had just aimed. Holding three known tens against a seen Joker, the trade sheds
+        // eleven points — a plan that declines it is not a judgement call.
+        val joker = testCard(Rank.JOKER, "human-joker")
+        val decision = service().selectActionTargets(
+            contextFor(
+                actionCard = testCard(Rank.JACK, "jack-card"),
+                botCards = listOf(
+                    testCard(Rank.TEN, "bot-card-0"),
+                    testCard(Rank.TEN, "bot-card-1"),
+                    testCard(Rank.TEN, "bot-card-2"),
+                ),
+                botKnown = listOf(0, 1, 2),
+                humanCards = listOf(joker, testCard(Rank.KING, "human-card-1")),
+                knownOfHuman = mapOf(0 to joker),
+            ),
+        )
+
+        assertTwoTargetsFromDifferentPlayers(decision)
+        assertTrue(
+            decision.shouldSwap != false,
+            "the Jack was aimed and then declined its own swap",
+        )
+    }
+
     // --- Queen ----------------------------------------------------------------------------
 
     @Test

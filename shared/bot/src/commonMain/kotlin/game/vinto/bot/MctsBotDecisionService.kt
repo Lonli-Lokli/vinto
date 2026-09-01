@@ -160,7 +160,9 @@ class MctsBotDecisionService(
 
     private fun MctsMove.toDecision() = BotActionDecision(
         targets = targets.map { BotActionTarget(it.playerId, it.position) },
-        // A Queen carries the answer on the move; a Jack's swap is the move type itself.
+        // Jack and Queen candidates both carry the answer on the move now. The fallback used
+        // to matter — the Jack's candidates carried null, and coercing null against a move
+        // type the generator never produces made every solo Jack skip its swap.
         shouldSwap = shouldSwap ?: (type == MctsMoveType.SWAP),
         declaredRank = declaredRank,
     )

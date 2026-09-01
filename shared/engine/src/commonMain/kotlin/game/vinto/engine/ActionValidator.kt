@@ -149,21 +149,30 @@ object ActionValidator {
             }
             ?: Validation.Valid
 
-        is GameAction.CallVinto -> state.requireTurn(action.payload.playerId, "CALL_VINTO")
-            ?: when {
-                state.vintoCallerId != null -> Validation.Invalid("Vinto already called")
-                // Vinto is declared at the end of one's own turn. During a toss-in window
-                // `currentPlayerIndex` can rest on a toss-in actor while the queue drains,
-                // and that seat passing `requireTurn` must not let it call Vinto out of
-                // order — only the player whose turn the window closes may call.
-                state.activeTossIn?.let {
-                    state.players.getOrNull(it.originalPlayerIndex)?.id != action.payload.playerId
-                } == true -> Validation.Invalid(
+        is GameAction.CallVinto -> {
+            // Vinto is declared at the end of one's own turn. During a toss-in window
+            // `currentPlayerIndex` can rest on a toss-in actor while the queue drains, so
+            // there the window's owner — `originalPlayerIndex`'s seat — is the one test,
+            // *replacing* the turn check rather than adding to it: requiring both refused
+            // everybody, the toss-in actor on ownership and the rightful owner on turn,
+            // and a table where a bot had tossed into the owner's window could never call.
+            val owner = state.activeTossIn?.let {
+                state.players.getOrNull(it.originalPlayerIndex)?.id
+            }
+            when {
+                owner == null -> state.requireTurn(action.payload.playerId, "CALL_VINTO")
+                owner != action.payload.playerId -> Validation.Invalid(
                     "Vinto can only be called at the end of your own turn",
                 )
 
-                else -> Validation.Valid
+                else -> null
             }
+                ?: if (state.vintoCallerId != null) {
+                    Validation.Invalid("Vinto already called")
+                } else {
+                    Validation.Valid
+                }
+        }
 
         is GameAction.ExecuteJackSwap ->
             validateTwoTargetSwap(state, action.payload.playerId, "EXECUTE_JACK_SWAP", "Jack")

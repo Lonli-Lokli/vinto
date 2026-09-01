@@ -314,7 +314,10 @@ object StateTransition {
 
         when (actionCard.rank) {
             Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN -> applyPeek(state, move.targets.first())
-            Rank.JACK -> applySwapAction(state, move.targets)
+            // A declined Jack moves nothing — the "aim and leave them alone" candidate the
+            // generator offers has to simulate as what it is, or the search prices it as a
+            // free swap and the skip can never win.
+            Rank.JACK -> if (move.shouldSwap != false) applySwapAction(state, move.targets)
             Rank.QUEEN -> applyPeekAndSwap(state, move.targets, move.shouldSwap == true)
             Rank.ACE -> applyForcedDraw(state, move.targets.first())
             // A King declares a rank and plays that rank's action, which the model does not
