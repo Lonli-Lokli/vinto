@@ -85,6 +85,7 @@ import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
+import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.theme.Rail
@@ -115,6 +116,7 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.actionIsLive
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
@@ -1285,8 +1287,16 @@ private fun TossIn(view: PlayerView) {
     ) {
         val toss = view.activeTossIn ?: return@Column
 
+        // Online, the room finishes the window for whoever stays silent, and the heading
+        // carries the countdown it is finishing on. Solo there is no clock and no suffix —
+        // the view simply never carries the duration.
+        val seconds = rememberCountdownSeconds(view.tossInMsRemaining)
         Text(
-            stringResource(Res.string.table_toss_in),
+            if (seconds != null) {
+                stringResource(Res.string.table_toss_in_timed, seconds)
+            } else {
+                stringResource(Res.string.table_toss_in)
+            },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onFelt(),
         )
@@ -1336,6 +1346,31 @@ private const val TossFill = 0.15f
 /** The trough of the open window's breath, and its period — see `CardFace`'s pulse. */
 private const val TossQuiet = 0.45f
 private const val TossBreathMs = 1100
+
+/**
+ * Seconds left on a service clock, counted down locally between broadcasts.
+ *
+ * The wire carries a *duration* — the room's convention, because a phone whose own clock is
+ * a minute out would render an absolute deadline as a minute of nonsense — so the client
+ * takes it at receipt and ticks from there. Every broadcast that carries a fresh duration
+ * resnaps the count to the room's truth. Rounded up, so a fifteen-second window opens on
+ * "15" rather than "14", and floored at zero: the room may be a beat late finishing the
+ * window, and a countdown must never say less than nothing.
+ */
+@Composable
+internal fun rememberCountdownSeconds(msLeft: Long?): Int? {
+    if (msLeft == null) return null
+    var left by remember(msLeft) { mutableStateOf(msLeft) }
+    LaunchedEffect(msLeft) {
+        while (left > 0) {
+            delay(CLOCK_TICK_MS)
+            left -= CLOCK_TICK_MS
+        }
+    }
+    return ((left + CLOCK_TICK_MS - 1) / CLOCK_TICK_MS).toInt().coerceAtLeast(0)
+}
+
+private const val CLOCK_TICK_MS = 1000L
 
 /** The room a toss-in window takes, kept whether one is open or not. */
 private val TossHeight = 96.dp

@@ -176,6 +176,9 @@
     <string name="table_draw">КОЛОДА</string>
     <string name="table_discard">СБРОС</string>
     <string name="table_toss_in">Подкидывание</string>
+    <string name="table_toss_in_timed">Подкидывание · %1$d с</string>
+    <string name="toss_clock_moves_on">Стол продолжит через %1$d с</string>
+    <string name="toss_more_time">Ещё время</string>
     <string name="table_toss_in_summary">Окно подкидывания, совпадение по %1$s</string>
     <string name="table_tossed">Подкинуто (%1$d)</string>
     <string name="card_thrown_by">%1$s сбросил(а) %2$s</string>

@@ -71,6 +71,18 @@ sealed interface ClientMessage {
     @Serializable
     @SerialName("next-round")
     data class NextRound(val token: String? = null) : ClientMessage
+
+    /**
+     * Ask for more time on the open toss-in window.
+     *
+     * Only somebody the window is still waiting on may ask, and the room grants a bounded
+     * number of extensions per window — the refusals arrive as [ServerMessage.Error]. The
+     * refreshed countdown reaches every seat as `PlayerView.tossInMsRemaining` on an empty
+     * `events` message, because every phone's clock has to jump together.
+     */
+    @Serializable
+    @SerialName("more-time")
+    data class MoreTime(val token: String? = null) : ClientMessage
 }
 
 /**

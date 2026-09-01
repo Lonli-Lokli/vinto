@@ -24,7 +24,7 @@ import {
   sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
-  applyActionEnvelopes, readyEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
+  applyActionEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
   listPublicRooms, forgetRoom,
   registrySize, touchRoom,
@@ -725,6 +725,23 @@ export class Room {
           return ws.send(JSON.stringify({ type: 'error', message: 'join before agreeing' }));
         }
         const result = JSON.parse(readyEnvelopes(stateJson, token, Date.now()));
+        if (result.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+        }
+        await this.#save(JSON.stringify(result.state));
+        return this.#sendPrebuilt(result.messages);
+      }
+
+      // More time on the open toss-in window, asked by whoever it is waiting on. The room
+      // decides whether to grant it; a granted extension reaches every seat as an empty
+      // `events` message whose view carries the refreshed countdown, and `#save` re-arms
+      // the alarm from the moved deadline.
+      case 'more-time': {
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before asking for time' }));
+        }
+        const result = JSON.parse(moreTimeEnvelopes(stateJson, token, Date.now()));
         if (result.error) {
           return ws.send(JSON.stringify({ type: 'error', message: result.error }));
         }

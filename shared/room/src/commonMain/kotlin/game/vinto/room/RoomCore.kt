@@ -193,6 +193,19 @@ private const val TOSS_IN_MS = 15_000.0
  */
 private const val LEADER_MS = 20_000.0
 
+/**
+ * What one "more time" request buys, and how many a single window will grant.
+ *
+ * A full window again per ask, at most twice — so a toss-in never holds the table longer
+ * than forty-five seconds however hard somebody thinks, and asking is an explicit act by
+ * the person being waited on rather than something the table can be idled into.
+ */
+private const val MORE_TIME_MS = 15_000.0
+private const val MAX_TOSS_EXTENSIONS = 2
+
+/** One refusal, worded once: three doors check the same credential. */
+private const val NO_SEAT_FOR_TOKEN = "no seat holds that token"
+
 // PlayerProfile, RoundResult, LoggedAction, RoomPhase, LobbySeat and LobbyView moved verbatim
 // to `shared/protocol` (game.vinto.protocol): they travel on the wire, so the client and the
 // room must read one declaration rather than two that resemble each other. The room still
@@ -417,6 +430,13 @@ data class RoomState(
     // engine's — the reducer has no clock, so the expiry arrives as an ordinary action.
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tossInDeadlineEpochMs: Double? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val leaderDeadlineEpochMs: Double? = null,
+    /**
+     * How many extensions this toss-in window has been granted, reset when it closes.
+     *
+     * Counted per window rather than per seat: an extension holds the whole table, so who
+     * asked matters less than how long everybody has already waited.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tossInExtensions: Int = 0,
 ) {
     val nextIndex: Int get() = log.size
 
@@ -778,17 +798,53 @@ private fun awaitingLeader(state: RoomState): Boolean {
  */
 private fun withPacing(state: RoomState, nowMs: Double): RoomState {
     val playing = state.phase == RoomPhase.PLAYING
+    val tossDeadline = if (playing && laggingHumans(state).isNotEmpty()) {
+        state.tossInDeadlineEpochMs ?: (nowMs + TOSS_IN_MS)
+    } else {
+        null
+    }
     return state.copy(
-        tossInDeadlineEpochMs = if (playing && laggingHumans(state).isNotEmpty()) {
-            state.tossInDeadlineEpochMs ?: (nowMs + TOSS_IN_MS)
-        } else {
-            null
-        },
+        tossInDeadlineEpochMs = tossDeadline,
         leaderDeadlineEpochMs = if (playing && awaitingLeader(state)) {
             state.leaderDeadlineEpochMs ?: (nowMs + LEADER_MS)
         } else {
             null
         },
+        // A window's extensions die with it; the next window starts with a full allowance.
+        tossInExtensions = if (tossDeadline == null) 0 else state.tossInExtensions,
+    )
+}
+
+/**
+ * Grants a lagging human more time on the open toss-in window.
+ *
+ * The auto-advance exists so one person's silence does not hold four people; the extension
+ * exists so a person who is *present and thinking* is not played over by a clock. Only
+ * somebody the window is actually waiting on may ask, and a window can be extended at most
+ * [MAX_TOSS_EXTENSIONS] times — the table has agreed to wait, not to wait forever.
+ */
+@Suppress("ReturnCount")
+internal fun moreTimeApplied(stateJson: String, token: String): Applied {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+
+    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return Applied(state, error = NO_SEAT_FOR_TOKEN)
+    val deadline = state.tossInDeadlineEpochMs
+        ?: return Applied(state, error = "no toss-in clock is running")
+    if (seatEntry.playerId !in laggingHumans(state)) {
+        return Applied(state, error = "the window is not waiting on you")
+    }
+    if (state.tossInExtensions >= MAX_TOSS_EXTENSIONS) {
+        return Applied(state, error = "the window has been extended as far as it goes")
+    }
+
+    return Applied(
+        state.copy(
+            // From the running deadline, not from now: asking early must not cost the time
+            // still on the clock, and asking at the last second must not mint extra.
+            tossInDeadlineEpochMs = deadline + MORE_TIME_MS,
+            tossInExtensions = state.tossInExtensions + 1,
+        ),
     )
 }
 
@@ -872,7 +928,7 @@ fun readyForNextRound(stateJson: String, token: String, nowMs: Double): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
 
     val seat = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
-        ?: return VintoJson.encodeToString(JoinResult(state, -1, "no seat holds that token"))
+        ?: return VintoJson.encodeToString(JoinResult(state, -1, NO_SEAT_FOR_TOKEN))
     if (state.phase != RoomPhase.BETWEEN_ROUNDS) {
         return VintoJson.encodeToString(JoinResult(state, -1, "there is no round to agree to"))
     }
@@ -1261,7 +1317,7 @@ internal fun applyActionApplied(
     // seat parameter to disagree with the token, so there is no way to send one seat's token
     // and another seat's number and see which check notices first.
     val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
-        ?: return Applied(state, error = "no seat holds that token")
+        ?: return Applied(state, error = NO_SEAT_FOR_TOKEN)
     val seat = seatEntry.index
 
     // The budget is charged before anything else costs anything. Order matters: validating

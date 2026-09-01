@@ -88,6 +88,17 @@ class TossInAreaTest {
         )
     }
 
+    @Test
+    fun anOnlineWindowCountsItselfDown() = runComposeUiTest {
+        // The room's clock rides the view as a duration; a view without one — every solo
+        // game — draws the plain heading. Twelve full seconds round up to 12, not 11.
+        show(tossing(teachingSession().view.value).copy(tossInMsRemaining = 12_000L))
+        assertTrue(
+            texts().any { it == "Toss-in · 12s" },
+            "the heading does not carry the room's countdown: ${texts()}",
+        )
+    }
+
     /** The same table with a toss-in window open, and a card or two already in it. */
     private fun tossing(
         view: PlayerView,

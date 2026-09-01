@@ -135,6 +135,19 @@ data class PlayerView(
      * the player can see the deadline they are playing against.
      */
     val sessionMsRemaining: Long? = null,
+    /**
+     * Milliseconds before the room finishes the open toss-in window for whoever is still
+     * being waited on, or null when no such clock runs — a solo game, or a window every
+     * human has already answered.
+     *
+     * Same discipline as [sessionMsRemaining]: **passed in, never read** — the engine has no
+     * clock, and a deadline is the room's pacing, not the game's state. It travels as a
+     * duration rather than an epoch so a phone with a wrong clock still counts down the
+     * right number of seconds.
+     */
+    val tossInMsRemaining: Long? = null,
+    /** The same clock for the coalition's leader choice, which the room also paces. */
+    val leaderMsRemaining: Long? = null,
 )
 
 /**
@@ -181,7 +194,13 @@ val PlayerView.mySeat: PlayerSeatView?
  * Never included at all: the draw pile's contents, other seats' `opponentKnowledge`, and
  * `botMemory`. Bots do not use views — they run in the same process as the full state.
  */
-fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = null): PlayerView {
+fun projectView(
+    state: GameState,
+    playerId: String,
+    sessionMsRemaining: Long? = null,
+    tossInMsRemaining: Long? = null,
+    leaderMsRemaining: Long? = null,
+): PlayerView {
     val revealedToViewer = revealedByCurrentAction(state, playerId)
     // Every hand is turned over once the game is scored.
     val everythingRevealed = state.phase == GamePhase.SCORING
@@ -293,6 +312,8 @@ fun projectView(state: GameState, playerId: String, sessionMsRemaining: Long? = 
             null
         },
         sessionMsRemaining = sessionMsRemaining,
+        tossInMsRemaining = tossInMsRemaining,
+        leaderMsRemaining = leaderMsRemaining,
     )
 }
 

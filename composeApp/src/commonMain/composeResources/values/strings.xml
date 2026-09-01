@@ -199,6 +199,9 @@
     <string name="table_draw">DRAW</string>
     <string name="table_discard">DISCARD</string>
     <string name="table_toss_in">Toss-in</string>
+    <string name="table_toss_in_timed">Toss-in · %1$ds</string>
+    <string name="toss_clock_moves_on">The table moves on in %1$d s</string>
+    <string name="toss_more_time">More time</string>
     <string name="table_toss_in_summary">Toss-in window, matching %1$s</string>
     <string name="table_tossed">Tossed (%1$d)</string>
     <string name="card_thrown_by">%1$s threw %2$s</string>
