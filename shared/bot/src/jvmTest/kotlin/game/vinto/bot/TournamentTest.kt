@@ -80,15 +80,19 @@ class TournamentTest {
             (1L..seeds).map { seed -> playSelfPlayGame(seed, difficulty) }
         }
 
+        val mixed = (1L..seeds).map { seed -> playMixedGame(seed) }
+
         val measured = Baseline(
             seeds = seeds.toInt(),
             rows = Difficulty.entries.map { tally(it, played.getValue(it)) },
+            mixed = Difficulty.entries.map { tallyMixed(it, mixed) },
         )
         println(report(measured, played))
+        println(mixedReport(measured))
 
         // `easy` and `hard` are held to the gate's bar here; SelfPlayGateTest only plays
         // `moderate`, so without this the other two are never played out end to end at all.
-        val bad = played.values.flatten().filter { !it.finished || it.callerHandChanged }
+        val bad = (played.values.flatten() + mixed).filter { !it.finished || it.callerHandChanged }
         assertTrue(
             bad.isEmpty(),
             "games that did not play out cleanly:\n" +
@@ -121,6 +125,35 @@ class TournamentTest {
                 "the ${row.difficulty} bot plays differently than the committed baseline. " +
                     "If that is the point of the change, regenerate with -Ptournament=write " +
                     "and say in the commit which way it got better.",
+            )
+        }
+        for (row in measured.mixed) {
+            assertEquals(
+                committed.mixed.firstOrNull { it.difficulty == row.difficulty },
+                row,
+                "the ${row.difficulty} bot fares differently at the mixed table than the " +
+                    "committed baseline. If that is the point of the change, regenerate with " +
+                    "-Ptournament=write and say in the commit which way it got better.",
+            )
+        }
+    }
+
+    /** The mixed table: the one that ranks the difficulties. */
+    private fun mixedReport(measured: Baseline): String = buildString {
+        appendLine()
+        appendLine("mixed table, seats ${MIXED_TABLE.joinToString("/") { it.serialName }} rotated by seed")
+        appendLine("mixed table  seats  mean round points  mean hand  lowest finishes")
+        for (row in measured.mixed) {
+            appendLine(
+                String.format(
+                    Locale.ROOT,
+                    "%-11s %6d %18.2f %10.2f %16d",
+                    row.difficulty,
+                    row.seats,
+                    row.meanRoundPointsCentis / CENTIS,
+                    row.meanHandTotalCentis / CENTIS,
+                    row.lowestFinishes,
+                ),
             )
         }
     }
