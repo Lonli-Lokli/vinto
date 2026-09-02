@@ -2,43 +2,38 @@ package game.vinto.bot
 
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
+import game.vinto.shapes.getCardShortDescription
+import game.vinto.shapes.getCardValue
+import game.vinto.shapes.isActionable
 
 /**
- * How the search moves a position forward, ported from
- * `legacy-web/packages/bot/src/lib/mcts-state-transition.ts`.
+ * How the search moves a sampled world forward.
  *
  * **This is a forward model, not the game.** The engine decides what actually happens; this
- * only has to be plausible enough that the score at the end of a rollout means something.
- * Legality of what the bot finally *proposes* is settled elsewhere — [MoveGenerator] offers
- * only legal moves and `ActionValidator` rejects anything that slipped through — so a
- * simplification here costs playing strength, never a rule violation.
+ * only has to be faithful enough that the outcome of a rollout means something. Legality of
+ * what the bot finally *proposes* is settled elsewhere — [MoveGenerator] offers only legal
+ * moves and `ActionValidator` rejects anything that slipped through — so a simplification
+ * here costs playing strength, never a rule violation.
  *
- * Three simplifications are inherited from the TypeScript deliberately, and are worth knowing
- * before reading a search result too literally:
+ * It works on a determinized state: every hidden card has a value and the deck has an order,
+ * so a draw deals a real card, a swap moves real points, and a toss-in window sheds the cards
+ * that actually match. What it simplifies, deliberately:
  *
- * - **A draw is just a turn.** [applyDraw] shrinks the deck and passes play on without
- *   dealing a card, because dealing one would mean sampling inside the transition. The
- *   sampling the bot does do is [determinize], once per simulation.
- * - **Only known cards are tossed in.** A player sheds a matching card when the searching bot
- *   believes they hold one, so the model never invents a wrong toss-in or its penalty.
- * - **Vinto ends the game on lowest hand.** Round scoring — the caller against the coalition,
- *   +3/-1 — belongs to the coalition planner, not to a rollout.
+ * - **Opponents know their own hands.** They toss in whatever matches and declare whatever
+ *   they swap out. The bot itself acts only on what it remembers, which is what gives a peek
+ *   its value in the search: a card the bot has not read cannot be tossed, declared, or
+ *   counted towards a Vinto call.
+ * - **A tossed-in action card is not played.** The window sheds it and stops there.
+ * - **Nobody can be wrong.** A King names only a card its declarer knows, so a declaration
+ *   is right by construction; a toss-in is only ever of a matching card.
  */
 object StateTransition {
 
-    /** A memory below this is a hunch; the model only acts on what the bot is sure of. */
-
-    /** Stands in for a card nobody has seen — roughly a mid-deck value. */
-    private const val UNKNOWN_CARD_ESTIMATE = 6.0
-
-    /** A player who is not in the state at all: assume the worst rather than zero. */
-    private const val MISSING_PLAYER_SCORE = 50.0
-
-    /** What an Ace is assumed to cost its victim, averaged over the deck. */
-    private const val ACE_PENALTY_ESTIMATE = 5.0
-
     /** A rollout this long has stopped telling the search anything; cut it off. */
     private const val MAX_SEARCH_TURNS = 200
+
+    /** Stands in for a card the world never dealt — a deck run dry beyond what memory can pad. */
+    private val FALLBACK_RANK = Rank.SIX
 
     fun applyMove(state: MctsGameState, move: MctsMove): MctsGameState {
         val working = MutableMctsState(state)
@@ -58,391 +53,262 @@ object StateTransition {
     }
 
     /**
-     * The game is over, or far enough gone that searching on is wasted effort.
-     *
-     * The last two are not rules — a long game is still a game — they are the guards that
-     * stop a rollout running forever. An empty deck reshuffles in `advanceTurn` exactly as
-     * the real game does, so `deckSize <= 0` is only reachable once the discard pile has
-     * nothing left to fold back in — the whole table is holding every card, and no one can
-     * draw.
+     * The round is scored, or the search has run far enough. The last two are guards rather
+     * than rules: a deck that cannot be refilled leaves no legal draw, and the real engine
+     * ends such a round through `END_ROUND`.
      */
     fun isTerminal(state: MctsGameState): Boolean =
-        state.isTerminal ||
-            state.players.any { it.cardCount == 0 } ||
-            state.turnCount > MAX_SEARCH_TURNS ||
-            state.deckSize <= 0
+        state.isTerminal || state.turnCount > MAX_SEARCH_TURNS || isStarved(state)
 
-    data class TerminalOutcome(val winner: String, val scores: Map<String, Double>)
+    /** No deck, nothing to fold back into it, and no card in play: nobody can draw. */
+    private fun isStarved(state: MctsGameState): Boolean =
+        state.deckSize <= 0 && state.discardCount <= 1 && state.pendingCard == null
 
-    /** Lowest hand wins, which is the objective of a round. */
-    fun evaluateTerminal(state: MctsGameState): TerminalOutcome {
-        val scores = state.players.associate { it.id to it.score }
-        return TerminalOutcome(winner = lowestScoringPlayerId(state), scores = scores)
-    }
-
-    /** What a hand is really worth given the cards determinization dealt it. */
-    fun calculatePlayerScore(state: MctsGameState, playerId: String): Double {
-        val player = state.players.firstOrNull { it.id == playerId } ?: return MISSING_PLAYER_SCORE
-
-        return (0 until player.cardCount).sumOf { position ->
-            state.hiddenCards[state.hiddenCardKey(playerId, position)]?.value?.toDouble()
-                ?: UNKNOWN_CARD_ESTIMATE
+    /**
+     * What a hand is worth in this world. Before determinization a position the bot has not
+     * read is priced at the average of what is still unaccounted for, which is the only
+     * honest number for it.
+     */
+    fun handTotal(state: MctsGameState, playerId: String): Int {
+        val player = state.players.firstOrNull { it.id == playerId } ?: return 0
+        var total = 0
+        var unread = 0
+        for (position in 0 until player.cardCount) {
+            val dealt = state.hiddenCards[state.hiddenCardKey(playerId, position)]
+            val remembered = player.knownCards[position]?.takeIf { it.confidence > TRUSTED_CONFIDENCE }?.card
+            when {
+                dealt != null -> total += dealt.value
+                remembered != null -> total += remembered.value
+                else -> unread++
+            }
         }
+        if (unread > 0) total += (unread * averageRemainingCardValue(state.botMemory)).toInt()
+        return total
     }
-
-    /** Re-derives every estimate from the dealt cards, after determinization has run. */
-    fun updateScoreEstimates(state: MctsGameState): MctsGameState =
-        state.copy(
-            players = state.players.map { it.copy(score = calculatePlayerScore(state, it.id)) },
-        )
-
-    fun advanceToNextPlayer(state: MctsGameState): MctsGameState =
-        state.copy(
-            currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.size,
-            turnCount = state.turnCount + 1,
-        )
-
-    /** Used to look one ply ahead without paying for a full transition. */
-    fun wouldMoveEndGame(state: MctsGameState, move: MctsMove): Boolean = when (move.type) {
-        MctsMoveType.CALL_VINTO -> true
-        MctsMoveType.TOSS_IN ->
-            state.players.firstOrNull { it.id == move.playerId }?.cardCount == 1
-        else -> false
-    }
-
-    private fun lowestScoringPlayerId(state: MctsGameState): String =
-        state.players.minByOrNull { it.score }?.id ?: ""
 
     // --- moves ---------------------------------------------------------------------------
 
-    /**
-     * Drawing costs a card from the deck and the turn, and nothing else.
-     *
-     * No card is dealt: see the class comment. The drawn card is credited to the discard
-     * pile — whatever the player does with it, exactly one card lands there by the end of
-     * the turn (the card itself, or the one it displaced) — which is what keeps the
-     * reshuffle bookkeeping conserved.
-     */
+    /** Drawing deals the top of the sampled deck, face up to the table, and waits for a reply. */
     private fun applyDraw(state: MutableMctsState) {
-        if (state.deckSize > 0) {
-            state.deckSize--
-            state.discardCount++
-        }
-        state.advanceTurn()
+        state.pendingCard = state.takeFromDeck("drawn")
+        state.pendingOrigin = PendingOrigin.DRAWN
     }
 
-    /**
-     * The taken card is played immediately by rule, so the pile top is simply gone — and
-     * lands back on the pile once played, so the count does not move.
-     */
+    /** Taking the pile's top card commits its taker to playing it. */
     private fun applyTakeDiscard(state: MutableMctsState) {
+        val top = state.discardPileTop
+        if (top == null) {
+            state.advanceTurn()
+            return
+        }
+        state.pendingCard = top.copy(played = false)
+        state.pendingOrigin = PendingOrigin.COMMITTED
         state.discardPileTop = null
-        state.advanceTurn()
+        state.discarded.removeLastOrNull()
+        if (state.discardCount > 0) state.discardCount--
     }
 
     private fun applyUseAction(state: MutableMctsState, move: MctsMove) {
-        val actionCard = state.pendingCard ?: return
-        if (state.currentPlayer() == null) return
-
-        applyActionEffect(state, move, actionCard)
-
-        state.discardPileTop = actionCard.copy(played = true)
-        state.discardCount++
+        val card = state.pendingCard ?: return
         state.pendingCard = null
+        state.pendingOrigin = null
 
-        finishTurnWithTossIn(state, actionCard.rank)
+        applyActionEffect(state, move, card)
+
+        state.putOnPile(card.copy(played = true))
+        state.finishPlay(card.rank)
     }
 
     /**
-     * Swapping the drawn card into hand, and discarding what it displaced.
+     * Swapping the drawn card into hand and discarding what it displaced.
      *
-     * The discarded card opens a toss-in window on its rank, which is where most of a hand
-     * actually disappears — modelling the swap without the cascade would systematically
-     * undervalue it.
+     * A displaced action card its owner knows is declared on the way out, so its action is the
+     * owner's to play before the turn ends — the same rule the runner plays by.
      */
     private fun applySwap(state: MutableMctsState, move: MctsMove) {
         val position = move.swapPosition ?: return
         val player = state.currentPlayer() ?: return
-        val drawnCard = state.pendingCard ?: return
-        val displaced = state.hiddenCards[state.key(player.id, position)] ?: return
+        val drawn = state.pendingCard ?: return
+        val key = state.key(player.id, position)
 
-        state.hiddenCards[state.key(player.id, position)] = drawnCard
-        player.knownCards[position] = certainMemory(drawnCard)
+        val displaced = state.hiddenCards[key] ?: state.fallbackCard("$key-unknown")
+        val knewIt = state.knows(player, position)
 
-        state.discardPileTop = displaced.copy(played = false)
-        state.discardCount++
+        state.hiddenCards[key] = drawn
+        player.knownCards[position] = certainMemory(drawn)
         state.pendingCard = null
+        state.pendingOrigin = null
 
-        finishTurnWithTossIn(state, displaced.rank)
+        if (knewIt && displaced.rank.isActionable()) {
+            state.pendingCard = displaced.copy(played = false)
+            state.pendingOrigin = PendingOrigin.BORROWED
+        } else {
+            state.putOnPile(displaced.copy(played = false))
+        }
+        state.finishPlay(displaced.rank)
     }
 
+    /** Putting the card in play down. A taken or borrowed card put down unaimed is spent. */
     private fun applyDiscard(state: MutableMctsState) {
-        val discarded = state.pendingCard ?: return
-        if (state.currentPlayer() == null) return
-
-        state.discardPileTop = discarded.copy(played = false)
-        state.discardCount++
+        val card = state.pendingCard ?: return
         state.pendingCard = null
-
-        finishTurnWithTossIn(state, discarded.rank)
+        state.putOnPile(card.copy(played = state.pendingOrigin != PendingOrigin.DRAWN))
+        state.pendingOrigin = null
+        state.finishPlay(card.rank)
     }
 
-    /**
-     * A player throwing in matching cards of their own.
-     *
-     * The turn does *not* advance: a toss-in window stays open for further toss-ins until
-     * someone passes, which is what [applyPass] is for.
-     */
+    /** A player throwing matching cards of their own into the open window. */
     private fun applyTossIn(state: MutableMctsState, move: MctsMove) {
         if (move.tossInPositions.isEmpty()) return
         val player = state.findPlayer(move.playerId) ?: return
-
-        removeCardsAt(state, player, move.tossInPositions)
-        state.discardCount += move.tossInPositions.size
+        state.shed(player, move.tossInPositions)
     }
 
     private fun applyPass(state: MutableMctsState) {
-        state.isTossInPhase = false
-        state.advanceTurn()
-    }
-
-    /**
-     * Calling Vinto.
-     *
-     * The rules give the caller one more round and then score the caller against the
-     * coalition; the search stops here and awards the round to the lowest hand. That is a
-     * cruder rule than the game's, and it is the reason the coalition planner exists.
-     */
-    private fun applyCallVinto(state: MutableMctsState) {
-        state.isTerminal = true
-        state.finalTurnTriggered = true
-        state.winner = state.players.minByOrNull { it.score }?.id ?: ""
-    }
-
-    /** Every discard opens a toss-in window; resolve it, then pass play on. */
-    private fun finishTurnWithTossIn(state: MutableMctsState, discardedRank: Rank) {
-        simulateTossInCascade(state, discardedRank)
-        state.advanceTurn()
+        state.awaitingVintoDecision = false
         state.isTossInPhase = false
         state.tossInRanks = emptyList()
+        state.advanceTurn()
     }
 
-    // --- toss-in -------------------------------------------------------------------------
-
-    /**
-     * Everyone who knows they hold the discarded rank sheds it.
-     *
-     * This is one pass, not a recursion: a King tossed into the window would declare a rank
-     * of its own and open a second window, and the TypeScript never modelled that either.
-     * Worth revisiting when the bot is tuned — it undervalues Kings — but it undervalues them
-     * equally in every branch, so it does not bias the comparison the search is making.
-     */
-    private fun simulateTossInCascade(state: MutableMctsState, discardedRank: Rank): List<Card> {
-        val tossed = mutableListOf<Card>()
-
-        for (player in state.players) {
-            val matching = (0 until player.cardCount).filter { position ->
-                val memory = player.knownCards[position]
-                memory != null &&
-                    memory.confidence > TRUSTED_CONFIDENCE &&
-                    memory.card.rank == discardedRank
-            }
-            if (matching.isEmpty()) continue
-
-            matching.forEach { tossed += player.knownCards.getValue(it).card }
-            removeCardsAt(state, player, matching)
-            state.discardCount += matching.size
-        }
-
-        return tossed
-    }
-
-    /**
-     * Takes cards out of a hand and closes the gaps.
-     *
-     * Positions are an index into the hand, so removing one renumbers everything after it —
-     * in the dealt cards and in the memories alike. Renumbering only one of the two would
-     * silently attach a memory to a different card, which is the kind of bug that shows up
-     * as the bot "misremembering" much later.
-     */
-    private fun removeCardsAt(
-        state: MutableMctsState,
-        player: MutableMctsPlayer,
-        positions: List<Int>,
-    ) {
-        val removed = positions.toSet()
-        val originalCount = player.cardCount
-
-        player.score -= removed.sumOf { position ->
-            state.hiddenCards[state.key(player.id, position)]?.value?.toDouble() ?: 0.0
-        }
-        player.cardCount = originalCount - removed.size
-
-        val survivingCards = mutableMapOf<Int, Card>()
-        val survivingMemories = mutableMapOf<Int, CardMemory>()
-        var newPosition = 0
-
-        for (oldPosition in 0 until originalCount) {
-            if (oldPosition in removed) continue
-            state.hiddenCards[state.key(player.id, oldPosition)]?.let {
-                survivingCards[newPosition] = it
-            }
-            player.knownCards[oldPosition]?.let { survivingMemories[newPosition] = it }
-            newPosition++
-        }
-
-        for (position in 0 until originalCount) {
-            state.hiddenCards.remove(state.key(player.id, position))
-        }
-        survivingCards.forEach { (position, card) ->
-            state.hiddenCards[state.key(player.id, position)] = card
-        }
-        player.knownCards = survivingMemories
+    /** Calling Vinto: the final round starts, and everybody else gets one more turn. */
+    private fun applyCallVinto(state: MutableMctsState) {
+        val caller = state.currentPlayer() ?: return
+        state.vintoCallerId = caller.id
+        state.finalTurnTriggered = true
+        state.awaitingVintoDecision = false
+        state.isTossInPhase = false
+        state.tossInRanks = emptyList()
+        state.advanceTurn()
     }
 
     // --- action effects ------------------------------------------------------------------
 
-    /**
-     * What each action card does to the model.
-     *
-     * `knownCards` here means *what the searching bot knows about that player's card*, which
-     * is why peeking an opponent writes to the opponent's map rather than the bot's.
-     */
     private fun applyActionEffect(state: MutableMctsState, move: MctsMove, actionCard: Card) {
         if (move.targets.isEmpty()) return
-        if (state.currentPlayer() == null) return
+        val mover = state.currentPlayer() ?: return
 
         when (actionCard.rank) {
-            Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN -> applyPeek(state, move.targets.first())
-            // A declined Jack moves nothing — the "aim and leave them alone" candidate the
-            // generator offers has to simulate as what it is, or the search prices it as a
-            // free swap and the skip can never win.
-            Rank.JACK -> if (move.shouldSwap != false) applySwapAction(state, move.targets)
-            Rank.QUEEN -> applyPeekAndSwap(state, move.targets, move.shouldSwap == true)
+            Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN -> state.peek(mover, move.targets.first())
+            Rank.JACK -> if (move.shouldSwap != false) state.exchange(move.targets)
+            Rank.QUEEN -> applyPeekAndSwap(state, mover, move.targets)
             Rank.ACE -> applyForcedDraw(state, move.targets.first())
-            // A King declares a rank and plays that rank's action, which the model does not
-            // carry out — see [simulateTossInCascade]. All it records is the card it looked
-            // at to choose the declaration.
-            Rank.KING -> if (move.declaredRank != null) applyPeek(state, move.targets.first())
+            Rank.KING -> applyKing(state, mover, move)
             else -> Unit
         }
     }
 
-    /** 7/8 look at one of your own cards, 9/10 at somebody else's. Both are the same write. */
-    private fun applyPeek(state: MutableMctsState, target: MctsActionTarget) {
-        val card = state.hiddenCards[state.key(target.playerId, target.position)] ?: return
-        state.findPlayer(target.playerId)?.knownCards?.set(target.position, certainMemory(card))
-    }
-
-    /** Jack: swap two cards outright. Both hands change value, so both estimates move. */
-    private fun applySwapAction(state: MutableMctsState, targets: List<MctsActionTarget>) {
-        if (targets.size < 2) return
-        val (first, second) = targets
-        val firstCard = state.hiddenCards[state.key(first.playerId, first.position)] ?: return
-        val secondCard = state.hiddenCards[state.key(second.playerId, second.position)] ?: return
-
-        exchange(state, first, firstCard, second, secondCard)
-
-        state.findPlayer(first.playerId)?.knownCards?.set(first.position, certainMemory(secondCard))
-        state.findPlayer(second.playerId)?.knownCards?.set(second.position, certainMemory(firstCard))
-    }
-
-    /** Queen: see both, then decide. The knowledge is kept whether or not the swap happens. */
+    /**
+     * Queen: see both, then trade exactly when it sheds the mover's points. The move's own
+     * `shouldSwap` is an intention formed before the peek; what the runner actually does is
+     * decided on the cards seen, and the model follows the same rule.
+     */
     private fun applyPeekAndSwap(
         state: MutableMctsState,
+        mover: MutableMctsPlayer,
         targets: List<MctsActionTarget>,
-        shouldSwap: Boolean,
     ) {
         if (targets.size < 2) return
-        val (first, second) = targets
-        val firstCard = state.hiddenCards[state.key(first.playerId, first.position)]
-        val secondCard = state.hiddenCards[state.key(second.playerId, second.position)]
+        targets.forEach { state.peek(mover, it) }
 
-        firstCard?.let {
-            state.findPlayer(first.playerId)?.knownCards?.set(first.position, certainMemory(it))
-        }
-        secondCard?.let {
-            state.findPlayer(second.playerId)?.knownCards?.set(second.position, certainMemory(it))
-        }
-
-        if (!shouldSwap || firstCard == null || secondCard == null) return
-        exchange(state, first, firstCard, second, secondCard)
+        val own = targets.firstOrNull { it.playerId == mover.id } ?: return
+        val theirs = targets.first { it != own }
+        val ownValue = state.hiddenCards[state.key(own.playerId, own.position)]?.value ?: return
+        val theirValue = state.hiddenCards[state.key(theirs.playerId, theirs.position)]?.value ?: return
+        if (ownValue > theirValue) state.exchange(targets)
     }
 
-    private fun exchange(
-        state: MutableMctsState,
-        first: MctsActionTarget,
-        firstCard: Card,
-        second: MctsActionTarget,
-        secondCard: Card,
-    ) {
-        state.hiddenCards[state.key(first.playerId, first.position)] = secondCard
-        state.hiddenCards[state.key(second.playerId, second.position)] = firstCard
-
-        state.findPlayer(first.playerId)?.let {
-            it.score = it.score - firstCard.value + secondCard.value
-        }
-        state.findPlayer(second.playerId)?.let {
-            it.score = it.score - secondCard.value + firstCard.value
-        }
+    /** Ace: the victim draws a card nobody has seen. */
+    private fun applyForcedDraw(state: MutableMctsState, target: MctsActionTarget) {
+        val victim = state.findPlayer(target.playerId) ?: return
+        val position = victim.cardCount
+        victim.cardCount++
+        val drawn = state.takeFromDeck("forced-${victim.id}-$position")
+        state.hiddenCards[state.key(victim.id, position)] = drawn
     }
 
     /**
-     * Ace: the victim gains a card the bot cannot see, so it gains an estimate — and the
-     * deck loses the card, which the model used to forget entirely.
+     * King: name a card and declare its rank. Right, and the card leaves its hand — to be
+     * played by the declarer if it has an action — and both King and the declared rank open
+     * the toss-in window. Wrong, and the declarer draws a penalty card while the table learns
+     * what the card really was. The generator only names cards the mover knows, so the wrong
+     * branch is reachable only from a hand-built move.
      */
-    private fun applyForcedDraw(state: MutableMctsState, target: MctsActionTarget) {
-        val victim = state.findPlayer(target.playerId) ?: return
-        victim.cardCount++
-        victim.score += ACE_PENALTY_ESTIMATE
-        if (state.deckSize > 0) state.deckSize--
+    private fun applyKing(state: MutableMctsState, mover: MutableMctsPlayer, move: MctsMove) {
+        val declared = move.declaredRank ?: return
+        val target = move.targets.first()
+        val owner = state.findPlayer(target.playerId) ?: return
+        val key = state.key(owner.id, target.position)
+        val actual = state.hiddenCards[key] ?: return
+
+        if (actual.rank != declared) {
+            state.peek(mover, target)
+            val penaltyPosition = mover.cardCount
+            mover.cardCount++
+            val penalty = state.takeFromDeck("penalty-$penaltyPosition")
+            state.hiddenCards[state.key(mover.id, penaltyPosition)] = penalty
+            return
+        }
+
+        val removed = state.removeCardsAt(owner, listOf(target.position)).firstOrNull() ?: return
+        state.queuedTossRanks += declared
+        if (removed.rank.isActionable()) {
+            state.pendingCard = removed.copy(played = false)
+            state.pendingOrigin = PendingOrigin.BORROWED
+        } else {
+            state.discarded += removed
+            state.discardCount++
+        }
     }
 
-    private fun certainMemory(card: Card) =
+    internal fun certainMemory(card: Card) =
         CardMemory(card = card, confidence = 1.0, lastSeen = 0L, observations = 1)
+
+    internal fun fallbackCard(id: String) = Card(
+        id = id,
+        rank = FALLBACK_RANK,
+        value = getCardValue(FALLBACK_RANK),
+        actionText = getCardShortDescription(FALLBACK_RANK).takeIf { it.isNotEmpty() },
+        played = false,
+    )
 }
 
 /**
  * A mutable working copy of a position, for the duration of one transition.
  *
- * [MctsGameState] is immutable and the handlers below are a port of code that mutated freely;
- * threading `copy()` through them would obscure the correspondence for no gain. The mutation
- * never escapes [StateTransition.applyMove] — the working copy is frozen back on the way out
- * — so the search still sees only immutable states.
- *
- * `botMemory` and `opponentModeler` are carried by reference on purpose: they are the bot's
- * own long-lived knowledge, shared across every node of the tree rather than owned by a
- * position.
+ * [MctsGameState] is immutable; the handlers above mutate this and [freeze] hands the result
+ * back. The mutation never escapes [StateTransition.applyMove]. `botMemory` and
+ * `opponentModeler` are carried by reference on purpose: they are the bot's own long-lived
+ * knowledge, shared across every node of the tree rather than owned by a position.
  */
 private class MutableMctsPlayer(source: MctsPlayerState) {
     val id: String = source.id
     var cardCount: Int = source.cardCount
     var knownCards: MutableMap<Int, CardMemory> = source.knownCards.toMutableMap()
-    var score: Double = source.score
 
-    fun freeze() = MctsPlayerState(
-        id = id,
-        cardCount = cardCount,
-        knownCards = knownCards.toMap(),
-        score = score,
-    )
+    fun freeze() = MctsPlayerState(id = id, cardCount = cardCount, knownCards = knownCards.toMap())
 }
 
 private class MutableMctsState(private val source: MctsGameState) {
     val players: List<MutableMctsPlayer> = source.players.map { MutableMctsPlayer(it) }
     val hiddenCards: MutableMap<String, Card> = source.hiddenCards.toMutableMap()
+    val deck: MutableList<Card> = source.deckOrder.toMutableList()
+    val discarded: MutableList<Card> = source.discarded.toMutableList()
+    val queuedTossRanks: MutableList<Rank> = source.queuedTossRanks.toMutableList()
 
     var discardPileTop: Card? = source.discardPileTop
     var pendingCard: Card? = source.pendingCard
+    var pendingOrigin: PendingOrigin? = source.pendingOrigin
     var deckSize: Int = source.deckSize
     var discardCount: Int = source.discardCount
     var currentPlayerIndex: Int = source.currentPlayerIndex
     var turnCount: Int = source.turnCount
     var isTossInPhase: Boolean = source.isTossInPhase
     var tossInRanks: List<Rank> = source.tossInRanks
+    var awaitingVintoDecision: Boolean = source.awaitingVintoDecision
     var isTerminal: Boolean = source.isTerminal
     var finalTurnTriggered: Boolean = source.finalTurnTriggered
-    var winner: String? = source.winner
+    var vintoCallerId: String? = source.vintoCallerId
 
     fun key(playerId: String, position: Int) = source.hiddenCardKey(playerId, position)
 
@@ -450,33 +316,177 @@ private class MutableMctsState(private val source: MctsGameState) {
 
     fun findPlayer(playerId: String): MutableMctsPlayer? = players.firstOrNull { it.id == playerId }
 
+    fun fallbackCard(id: String) = StateTransition.fallbackCard(id)
+
+    /** The next card off the sampled deck. A deck the sample could not fill deals a stand-in. */
+    fun takeFromDeck(id: String): Card {
+        if (deckSize > 0) deckSize--
+        return deck.removeFirstOrNull() ?: fallbackCard(id)
+    }
+
+    /**
+     * Whether this player can act on the card at [position]. The searching bot only knows
+     * what it remembers; everyone else is assumed to know their own hand.
+     */
+    fun knows(player: MutableMctsPlayer, position: Int): Boolean {
+        if (player.id != source.botPlayerId) return true
+        val memory = player.knownCards[position] ?: return false
+        return memory.confidence > TRUSTED_CONFIDENCE
+    }
+
+    fun putOnPile(card: Card) {
+        discardPileTop = card
+        discarded += card
+        discardCount++
+    }
+
+    /**
+     * A card was played or put down. If its play borrowed another card (a King's declared
+     * card, a declared swap-out), that card is aimed on the next ply and the window waits;
+     * otherwise every rank that has been queued opens the toss-in window at once, and the
+     * turn ends with the Vinto question if it may be asked.
+     */
+    fun finishPlay(rank: Rank) {
+        queuedTossRanks += rank
+        if (pendingCard != null) return
+
+        resolveTossIn(queuedTossRanks.toList())
+        queuedTossRanks.clear()
+
+        if (MoveGenerator.mayCallVinto(vintoCallerId, turnCount, players.size)) {
+            awaitingVintoDecision = true
+        } else {
+            advanceTurn()
+        }
+    }
+
     fun advanceTurn() {
-        if (players.isNotEmpty()) currentPlayerIndex = (currentPlayerIndex + 1) % players.size
+        if (players.isEmpty()) return
+        val next = (currentPlayerIndex + 1) % players.size
+        if (vintoCallerId != null && players[next].id == vintoCallerId) {
+            isTerminal = true
+            return
+        }
+        currentPlayerIndex = next
         turnCount++
 
         // The reshuffle, as the real game plays it: a deck about to run dry folds the pile
-        // back in, keeping only the top card. Without this the rollout hit a wall the real
-        // game does not have, and every plan near the end of the deck was priced against a
-        // game ending that was never going to happen.
-        if (deckSize <= 1 && discardCount > 1) {
-            deckSize += discardCount - 1
-            discardCount = 1
+        // back in, keeping only the top card.
+        if (deckSize <= 1 && discardCount > 1) reshuffle()
+    }
+
+    private fun reshuffle() {
+        val top = discarded.removeLastOrNull()
+        deck += discarded
+        deckSize += discarded.size
+        discarded.clear()
+        top?.let { discarded += it }
+        discardCount = 1
+    }
+
+    /**
+     * Everyone who holds the window's ranks — and knows it — sheds them. The caller never
+     * tosses; the rules take that away with the call.
+     */
+    private fun resolveTossIn(ranks: List<Rank>) {
+        for (player in players) {
+            if (player.id == vintoCallerId) continue
+            val matching = (0 until player.cardCount).filter { position ->
+                val card = hiddenCards[key(player.id, position)]
+                    ?: player.knownCards[position]?.takeIf { it.confidence > TRUSTED_CONFIDENCE }?.card
+                card != null && card.rank in ranks && card.value >= 0 && knows(player, position)
+            }
+            if (matching.isNotEmpty()) shed(player, matching)
         }
+    }
+
+    /** Tossed cards leave the hand and go under the pile's top card. */
+    fun shed(player: MutableMctsPlayer, positions: List<Int>) {
+        val removed = removeCardsAt(player, positions)
+        val top = discarded.removeLastOrNull()
+        discarded += removed
+        top?.let { discarded += it }
+        discardCount += removed.size
+    }
+
+    /** The bot learns a card; anybody else peeking changes nothing the bot can see. */
+    fun peek(mover: MutableMctsPlayer, target: MctsActionTarget) {
+        if (mover.id != source.botPlayerId) return
+        val card = hiddenCards[key(target.playerId, target.position)] ?: return
+        findPlayer(target.playerId)?.knownCards?.set(target.position, StateTransition.certainMemory(card))
+    }
+
+    /** Two cards change hands, and what is known about each travels with it. */
+    fun exchange(targets: List<MctsActionTarget>) {
+        if (targets.size < 2) return
+        val (first, second) = targets
+        val firstKey = key(first.playerId, first.position)
+        val secondKey = key(second.playerId, second.position)
+        val firstCard = hiddenCards[firstKey] ?: return
+        val secondCard = hiddenCards[secondKey] ?: return
+
+        hiddenCards[firstKey] = secondCard
+        hiddenCards[secondKey] = firstCard
+
+        val firstOwner = findPlayer(first.playerId)
+        val secondOwner = findPlayer(second.playerId)
+        val firstMemory = firstOwner?.knownCards?.remove(first.position)
+        val secondMemory = secondOwner?.knownCards?.remove(second.position)
+        secondMemory?.let { firstOwner?.knownCards?.set(first.position, it) }
+        firstMemory?.let { secondOwner?.knownCards?.set(second.position, it) }
+    }
+
+    /**
+     * Takes cards out of a hand and closes the gaps.
+     *
+     * Positions are an index into the hand, so removing one renumbers everything after it —
+     * in the dealt cards and in the memories alike. Renumbering only one of the two would
+     * silently attach a memory to a different card.
+     */
+    fun removeCardsAt(player: MutableMctsPlayer, positions: List<Int>): List<Card> {
+        val removed = positions.toSet()
+        val originalCount = player.cardCount
+        val taken = mutableListOf<Card>()
+
+        val survivingCards = mutableMapOf<Int, Card>()
+        val survivingMemories = mutableMapOf<Int, CardMemory>()
+        var newPosition = 0
+
+        for (oldPosition in 0 until originalCount) {
+            val card = hiddenCards.remove(key(player.id, oldPosition))
+            if (oldPosition in removed) {
+                card?.let { taken += it }
+                continue
+            }
+            card?.let { survivingCards[newPosition] = it }
+            player.knownCards[oldPosition]?.let { survivingMemories[newPosition] = it }
+            newPosition++
+        }
+
+        survivingCards.forEach { (position, card) -> hiddenCards[key(player.id, position)] = card }
+        player.knownCards = survivingMemories
+        player.cardCount = originalCount - removed.count { it in 0 until originalCount }
+        return taken
     }
 
     fun freeze(): MctsGameState = source.copy(
         players = players.map { it.freeze() },
         hiddenCards = hiddenCards.toMap(),
+        deckOrder = deck.toList(),
+        discarded = discarded.toList(),
+        queuedTossRanks = queuedTossRanks.toList(),
         discardPileTop = discardPileTop,
         pendingCard = pendingCard,
+        pendingOrigin = pendingOrigin,
         deckSize = deckSize,
         discardCount = discardCount,
         currentPlayerIndex = currentPlayerIndex,
         turnCount = turnCount,
         isTossInPhase = isTossInPhase,
         tossInRanks = tossInRanks,
+        awaitingVintoDecision = awaitingVintoDecision,
         isTerminal = isTerminal,
         finalTurnTriggered = finalTurnTriggered,
-        winner = winner,
+        vintoCallerId = vintoCallerId,
     )
 }

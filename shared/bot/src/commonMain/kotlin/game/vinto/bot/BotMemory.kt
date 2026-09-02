@@ -79,7 +79,13 @@ private const val JOKER_COUNT = 2
 /** Fallback when nothing is known about what is left; roughly a mid-deck card. */
 private const val NEUTRAL_AVERAGE_CARD_VALUE = 6.0
 
-/** A memory below this confidence is a hunch, not a fact, and is estimated rather than trusted. */
+/**
+ * A memory below this confidence is a hunch, not a fact, and is estimated rather than
+ * trusted. One threshold for the whole bot: the same 0.5 decides what the search deals from
+ * memory, what the generator may name, what the solver believes, and what a declaration
+ * claims — a memory the bot acts on anywhere is a memory it acts on everywhere.
+ */
+internal const val TRUSTED_CONFIDENCE = 0.5
 
 class BotMemory(
     private val botId: String,

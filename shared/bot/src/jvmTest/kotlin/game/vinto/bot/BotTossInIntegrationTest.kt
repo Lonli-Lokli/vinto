@@ -66,7 +66,9 @@ class BotTossInIntegrationTest {
     ) = GameState(
         gameId = "tossin-test",
         roundNumber = 1,
-        turnNumber = 4,
+        // The opening, so the window's owner cannot end the round by calling Vinto — which a
+        // bot on twelve points against an unread hand will otherwise do, and rightly.
+        turnNumber = 1,
         phase = GamePhase.PLAYING,
         subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE,
         finalTurnTriggered = false,
@@ -103,7 +105,9 @@ class BotTossInIntegrationTest {
      * would stop the run half way through resolving a tossed-in card.
      */
     private fun closeTheWindow(start: GameState, limit: Int = 200): Run {
-        val runner = BotRunner(Difficulty.MODERATE, Random(6))
+        // Perfect memory on purpose: a moderate bot fails to record a card a quarter of the
+        // time, and whether it tosses then depends on the seed rather than on the window.
+        val runner = BotRunner(Difficulty.HARD, Random(6))
         var state = start
         val taken = mutableListOf<GameAction>()
 

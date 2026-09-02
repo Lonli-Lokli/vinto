@@ -56,6 +56,8 @@ class MoveGeneratorTest {
         botMemory = memory(),
         hiddenCards = hiddenCards,
         pendingCard = pendingCard,
+        // Committed, so a pending card offers only its action and the tests read the aims alone.
+        pendingOrigin = pendingCard?.let { PendingOrigin.COMMITTED },
         isTossInPhase = isTossInPhase,
         tossInRanks = tossInRanks,
         turnCount = turnCount,
@@ -63,18 +65,16 @@ class MoveGeneratorTest {
         coalitionLeaderId = coalitionLeaderId,
     )
 
-    private fun seat(id: String, cards: Int = 4, knownCards: Map<Int, CardMemory> = emptyMap(), score: Double = 20.0) =
-        MctsPlayerState(id, cardCount = cards, knownCards = knownCards, score = score)
+    private fun seat(id: String, cards: Int = 4, knownCards: Map<Int, CardMemory> = emptyMap()) =
+        MctsPlayerState(id, cardCount = cards, knownCards = knownCards)
 
     @Test
     fun aTossInWindowOffersOnlyTossingInOrPassing() {
-        val hidden = mapOf("bot-1-0" to testCard(Rank.SEVEN, "7_0"))
         val moves = MoveGenerator.generateMoves(
             state(
-                listOf(seat("bot-1"), seat("p2")),
+                listOf(seat("bot-1", knownCards = known(0 to Rank.SEVEN)), seat("p2")),
                 isTossInPhase = true,
                 tossInRanks = listOf(Rank.SEVEN),
-                hiddenCards = hidden,
             ),
         )
 
@@ -85,11 +85,25 @@ class MoveGeneratorTest {
     fun allMatchingCardsGoInAsOneMove() {
         // The rules resolve a toss-in as a single act; splitting it would let the search
         // explore throwing one of a pair and keeping the other.
-        val hidden = mapOf(
-            "bot-1-0" to testCard(Rank.SEVEN, "7_0"),
-            "bot-1-2" to testCard(Rank.SEVEN, "7_1"),
-        )
         val moves = MoveGenerator.generateMoves(
+            state(
+                listOf(seat("bot-1", knownCards = known(0 to Rank.SEVEN, 2 to Rank.SEVEN)), seat("p2")),
+                isTossInPhase = true,
+                tossInRanks = listOf(Rank.SEVEN),
+            ),
+        )
+
+        val tossIn = moves.single { it.type == MctsMoveType.TOSS_IN }
+        assertEquals(listOf(0, 2), tossIn.tossInPositions)
+    }
+
+    @Test
+    fun theBotThrowsOnlyWhatItRemembersEvenWhenTheWorldSaysItHoldsAMatch() {
+        // A sampled world may deal the bot a 7 it has never read. The real bot cannot know
+        // that, so the move is not offered — a rival's unread match, which the rival knows
+        // about, is.
+        val hidden = mapOf("bot-1-0" to testCard(Rank.SEVEN, "7_0"), "p2-0" to testCard(Rank.SEVEN, "7_1"))
+        val self = MoveGenerator.generateMoves(
             state(
                 listOf(seat("bot-1"), seat("p2")),
                 isTossInPhase = true,
@@ -97,9 +111,18 @@ class MoveGeneratorTest {
                 hiddenCards = hidden,
             ),
         )
+        assertFalse(self.any { it.type == MctsMoveType.TOSS_IN }, "the bot tossed a card it never read")
 
-        val tossIn = moves.single { it.type == MctsMoveType.TOSS_IN }
-        assertEquals(listOf(0, 2), tossIn.tossInPositions)
+        val rival = MoveGenerator.generateMoves(
+            state(
+                listOf(seat("bot-1"), seat("p2")),
+                currentIndex = 1,
+                isTossInPhase = true,
+                tossInRanks = listOf(Rank.SEVEN),
+                hiddenCards = hidden,
+            ).copy(botPlayerId = "bot-1"),
+        )
+        assertTrue(rival.any { it.type == MctsMoveType.TOSS_IN })
     }
 
     @Test
@@ -224,36 +247,68 @@ class MoveGeneratorTest {
     }
 
     @Test
-    fun vintoIsNotOfferedInTheOpening() {
-        val ahead = seat("bot-1", score = 0.0)
-        val behind = seat("p2", score = 30.0)
+    fun vintoIsAskedAtTheEndOfATurnAndNotInTheOpening() {
+        // The rules: Vinto is declared at the end of a turn, and nobody calls before everyone
+        // has had a couple of turns. Neither is a judgement about the hand.
+        val players = listOf(seat("bot-1"), seat("p2"))
 
         assertFalse(
-            MoveGenerator.generateMoves(state(listOf(ahead, behind), turnCount = 2))
+            MoveGenerator.generateMoves(state(players, turnCount = 20))
+                .any { it.type == MctsMoveType.CALL_VINTO },
+            "Vinto was offered at the start of a turn",
+        )
+        assertFalse(
+            MoveGenerator.generateMoves(state(players, turnCount = 2).copy(awaitingVintoDecision = true))
                 .any { it.type == MctsMoveType.CALL_VINTO },
         )
-        assertTrue(
-            MoveGenerator.generateMoves(state(listOf(ahead, behind), turnCount = 20))
-                .any { it.type == MctsMoveType.CALL_VINTO },
+        val endOfTurn = MoveGenerator.generateMoves(state(players, turnCount = 20).copy(awaitingVintoDecision = true))
+        assertTrue(endOfTurn.any { it.type == MctsMoveType.CALL_VINTO })
+        assertTrue(endOfTurn.any { it.type == MctsMoveType.PASS })
+        assertFalse(
+            MoveGenerator.generateMoves(
+                state(players, turnCount = 20, vintoCallerId = "p2").copy(awaitingVintoDecision = true),
+            ).any { it.type == MctsMoveType.CALL_VINTO },
+            "a second call was offered after somebody had called",
         )
     }
 
     @Test
-    fun aKnownKingInAnOpponentHandMakesTheBotWaryOfCallingVinto() {
-        // A six-point lead clears the base threshold of five, and nothing more.
-        val ahead = seat("bot-1", score = 14.0)
-        val plainOpponent = seat("p2", score = 20.0)
-        assertTrue(
-            MoveGenerator.generateMoves(state(listOf(ahead, plainOpponent)))
-                .any { it.type == MctsMoveType.CALL_VINTO },
+    fun aDrawnCardMayBePlayedSwappedInAnywhereOrDiscarded() {
+        val self = seat("bot-1", cards = 3, knownCards = known(0 to Rank.TEN))
+        val moves = MoveGenerator.generateMoves(
+            state(listOf(self, seat("p2")), pendingCard = testCard(Rank.NINE, "9_0"))
+                .copy(pendingOrigin = PendingOrigin.DRAWN),
         )
 
-        // A King can rearrange the table before the round ends, so the same lead is no
-        // longer enough.
-        val armed = seat("p2", score = 20.0, knownCards = known(0 to Rank.KING, 1 to Rank.QUEEN))
-        assertFalse(
-            MoveGenerator.generateMoves(state(listOf(ahead, armed)))
-                .any { it.type == MctsMoveType.CALL_VINTO },
+        assertEquals(setOf(0, 1, 2), moves.filter { it.type == MctsMoveType.SWAP }.map { it.swapPosition }.toSet())
+        assertEquals(1, moves.count { it.type == MctsMoveType.DISCARD })
+        assertTrue(moves.any { it.type == MctsMoveType.USE_ACTION })
+        assertTrue(moves.all { it.cardInPlay == Rank.NINE }, "a reply did not carry the rank it was about")
+    }
+
+    @Test
+    fun aCommittedCardWithNowhereToAimCanOnlyBePutDown() {
+        // A peek-own by a bot that has already read every card of its own has nowhere to look.
+        val self = seat("bot-1", cards = 2, knownCards = known(0 to Rank.KING, 1 to Rank.TWO))
+        val moves = MoveGenerator.generateMoves(
+            state(listOf(self, seat("p2")), pendingCard = testCard(Rank.SEVEN, "7_0")),
         )
+
+        assertEquals(listOf(MctsMoveType.DISCARD), moves.map { it.type })
+    }
+
+    @Test
+    fun aKingNamesOnlyCardsItsHolderKnows() {
+        val self = seat("bot-1", cards = 3, knownCards = known(0 to Rank.TEN, 1 to Rank.TEN))
+        val rival = seat("p2", cards = 3, knownCards = known(2 to Rank.QUEEN))
+        val moves = MoveGenerator.generateMoves(
+            state(listOf(self, rival), pendingCard = testCard(Rank.KING, "K_0")),
+        )
+
+        val named = moves.filter { it.type == MctsMoveType.USE_ACTION }
+        assertEquals(3, named.size)
+        assertTrue(named.all { it.declaredRank != null && it.targets.size == 1 })
+        assertTrue(named.any { it.targets.single() == MctsActionTarget("p2", 2) && it.declaredRank == Rank.QUEEN })
+        assertTrue(named.none { it.targets.single() == MctsActionTarget("bot-1", 2) }, "a blind card was named")
     }
 }

@@ -10,11 +10,10 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * Ported from `legacy-web/packages/bot/src/lib/__tests__/mcts-determinization.test.ts`.
- *
  * Determinization is where an imperfect-information game becomes searchable, so the property
  * that matters is that each sampled world is *possible* — not that any particular card comes
- * out of it.
+ * out of it. A world is possible when every card in it is one the bot has not accounted for,
+ * no card is in two places, and the deck it draws from is the rest of the same pool.
  */
 class DeterminizationTest {
 
@@ -22,6 +21,7 @@ class DeterminizationTest {
         knownCards: Map<Int, CardMemory> = emptyMap(),
         discard: Pile = Pile(),
         modeler: OpponentModeler? = null,
+        deckSize: Int = 20,
     ): MctsGameState {
         val memory = BotMemory("bot-1", Difficulty.HARD, Random(1))
         return MctsGameState(
@@ -32,93 +32,30 @@ class DeterminizationTest {
             currentPlayerIndex = 0,
             botPlayerId = "bot-1",
             discardPile = discard,
+            deckSize = deckSize,
             botMemory = memory,
             opponentModeler = modeler,
         )
     }
 
-    // --- the weighting itself ---------------------------------------------------------------
-
-    @Test
-    fun everyRankCarriesTheWeightTheTableSays() {
-        // A table, so every entry is checked. The exact numbers are judgement and may be
-        // re-tuned; what may not change silently is one entry drifting out of order.
-        val expected = listOf(
-            Rank.JOKER to 2.0,
-            Rank.QUEEN to 1.8,
-            Rank.JACK to 1.7,
-            Rank.KING to 1.6,
-            Rank.SEVEN to 1.4,
-            Rank.EIGHT to 1.4,
-            Rank.ACE to 1.3,
-            Rank.NINE to 1.1,
-            Rank.TEN to 1.1,
-            Rank.SIX to 0.7,
-            Rank.FIVE to 0.6,
-            Rank.TWO to 0.5,
-            Rank.THREE to 0.5,
-            Rank.FOUR to 0.5,
-        )
-
-        for ((rank, weight) in expected) {
-            assertEquals(weight, getStrategicProbabilityWeight(rank), "${rank.serialName}")
-        }
-    }
-
-    @Test
-    fun everyActionCardOutweighsEveryPlainLowCard() {
-        val actions = listOf(Rank.QUEEN, Rank.JACK, Rank.KING, Rank.SEVEN, Rank.EIGHT, Rank.ACE)
-        val low = listOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX)
-
-        for (action in actions) {
-            for (plain in low) {
-                assertTrue(
-                    getStrategicProbabilityWeight(action) > getStrategicProbabilityWeight(plain),
-                    "${action.serialName} was not weighted above ${plain.serialName}",
-                )
-            }
-        }
-    }
-
-    @Test
-    fun theJokerOutweighsEverything() {
-        val joker = getStrategicProbabilityWeight(Rank.JOKER)
-        for (rank in Rank.entries.filter { it != Rank.JOKER }) {
-            assertTrue(joker > getStrategicProbabilityWeight(rank), "${rank.serialName}")
-        }
-    }
-
-    @Test
-    fun aPlainLowCardIsAlwaysBelowEven() {
-        // Below 1.0 means "less likely than chance": opponents keep good cards and shed bad
-        // ones, so an unseen card is likelier to be good than the deck alone would suggest.
-        for (rank in listOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX)) {
-            assertTrue(getStrategicProbabilityWeight(rank) < 1.0, "${rank.serialName}")
-        }
-    }
-
     // --- sampling ----------------------------------------------------------------------------
 
     @Test
-    fun samplingActuallyFollowsTheWeights() {
-        // A statistical check rather than a spot one: the weights only mean anything if they
-        // show up in the draws. Seeded, so it cannot fail intermittently.
+    fun samplingIsUniformOverWhatIsLeft() {
+        // No prior says an unseen card is likelier to be a Queen than a 2: with one of each
+        // in the pool the two come out about as often. Seeded, so it cannot fail intermittently.
         val random = Random(2026)
-        val counts = mutableMapOf(Rank.JOKER to 0, Rank.QUEEN to 0, Rank.TWO to 0)
+        val counts = mutableMapOf(Rank.QUEEN to 0, Rank.TWO to 0)
 
         repeat(10_000) { index ->
-            val pool = mutableListOf(Rank.JOKER, Rank.QUEEN, Rank.TWO)
+            val pool = mutableListOf(Rank.QUEEN, Rank.TWO)
             val card = sampleCardFromPool(pool, "test", index, random)
             counts[card.rank] = (counts[card.rank] ?: 0) + 1
         }
 
-        val joker = counts.getValue(Rank.JOKER)
         val queen = counts.getValue(Rank.QUEEN)
         val two = counts.getValue(Rank.TWO)
-
-        assertTrue(joker > queen, "Joker (2.0) did not beat Queen (1.8): $joker vs $queen")
-        assertTrue(queen > two, "Queen (1.8) did not beat 2 (0.5): $queen vs $two")
-        assertTrue(joker > two * 2, "Joker should be well over twice a 2: $joker vs $two")
+        assertTrue(queen in 4_700..5_300 && two in 4_700..5_300, "not uniform: Queen $queen, 2 $two")
     }
 
     @Test
@@ -135,8 +72,8 @@ class DeterminizationTest {
 
     @Test
     fun samplingFromNothingFailsLoudlyRatherThanQuietly() {
-        // The TypeScript checks it "handles it gracefully". A silent fallback would deal a
-        // card the deck cannot contain, so this fails instead — the caller has a bug.
+        // A silent fallback would deal a card the deck cannot contain, so this fails instead —
+        // the caller has a bug.
         assertFailsWith<IllegalArgumentException> {
             sampleCardFromPool(mutableListOf(), "p", 0, Random(1))
         }
@@ -178,6 +115,8 @@ class DeterminizationTest {
         assertEquals(1, pool.count { it == Rank.JOKER })
     }
 
+    // --- a whole world -----------------------------------------------------------------------
+
     @Test
     fun everyHiddenCardIsFilledIn() {
         val world = determinize(state(), Random(4))
@@ -187,9 +126,23 @@ class DeterminizationTest {
     }
 
     @Test
+    fun theDeckIsDealtTooAndIsTheRestOfTheSamePool() {
+        val world = determinize(state(deckSize = 20), Random(4))
+
+        assertEquals(20, world.deckOrder.size, "the sampled deck is the real deck's size")
+
+        // Hands plus deck together hold each rank at most as often as the deck has copies.
+        val dealt = world.hiddenCards.values.map { it.rank } + world.deckOrder.map { it.rank }
+        for (rank in Rank.entries) {
+            val copies = STANDARD_DECK_RANKS.count { it == rank }
+            assertTrue(dealt.count { it == rank } <= copies, "${rank.serialName} was over-dealt")
+        }
+    }
+
+    @Test
     fun aSampledWorldNeverDealsTheSameCardTwice() {
         val world = determinize(state(), Random(11))
-        val ids = world.hiddenCards.values.map { it.id }
+        val ids = world.hiddenCards.values.map { it.id } + world.deckOrder.map { it.id }
 
         assertEquals(ids.size, ids.toSet().size, "a card was dealt into two places at once")
     }
@@ -206,20 +159,20 @@ class DeterminizationTest {
     }
 
     @Test
+    fun theDiscardPileIsCarriedIntoTheWorldForTheReshuffle() {
+        val discard = Pile(listOf(testCard(Rank.KING, "K_0"), testCard(Rank.TWO, "2_0")))
+        val world = determinize(state(discard = discard), Random(5))
+
+        assertEquals(listOf("K_0", "2_0"), world.discarded.map { it.id })
+    }
+
+    @Test
     fun samplingIsReproducibleFromASeed() {
         // Sorted by key rather than `toSortedMap`, which the stdlib only offers on the JVM.
         fun ranks() = determinize(state(), Random(77)).hiddenCards.entries
             .sortedBy { it.key }
-            .map { it.value.rank }
+            .map { it.value.rank } + determinize(state(), Random(77)).deckOrder.map { it.rank }
         assertEquals(ranks(), ranks())
-    }
-
-    @Test
-    fun goodCardsAreAssumedMoreLikelyThanBadOnes() {
-        // Opponents keep what helps them, so an unseen card is likelier to be a Queen than a 3.
-        assertTrue(getStrategicProbabilityWeight(Rank.JOKER) > getStrategicProbabilityWeight(Rank.SIX))
-        assertTrue(getStrategicProbabilityWeight(Rank.QUEEN) > getStrategicProbabilityWeight(Rank.TEN))
-        assertTrue(getStrategicProbabilityWeight(Rank.KING) > getStrategicProbabilityWeight(Rank.TWO))
     }
 
     @Test
