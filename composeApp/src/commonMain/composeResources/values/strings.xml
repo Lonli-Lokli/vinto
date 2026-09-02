@@ -50,6 +50,7 @@
     <string name="online_code_detail">Six characters from whoever opened the room.</string>
     <string name="online_join">Join the room</string>
     <string name="online_create">Open a new room</string>
+    <string name="online_offline">No network right now. Online play needs one; single player and the lesson work as normal.</string>
     <string name="trouble_offline">No connection to the room service. Check the network and try again.</string>
     <string name="trouble_no_such_room">No room with that code. Check the six characters and try again.</string>
     <string name="trouble_closed">Online play is not open yet. Single player and the lesson work as normal.</string>

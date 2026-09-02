@@ -38,6 +38,7 @@ import game.vinto.app.art.online_name_needed
 import game.vinto.app.art.online_name_placeholder
 import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
+import game.vinto.app.art.online_offline
 import game.vinto.app.art.online_open_detail
 import game.vinto.app.art.online_open_screen
 import game.vinto.app.art.online_open_title
@@ -58,10 +59,12 @@ import game.vinto.app.theme.VintoField
 import game.vinto.app.theme.errorOnFelt
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
+import game.vinto.client.OnlineWord
 import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.Vault
 import game.vinto.client.identity
+import game.vinto.client.onlineDoor
 import game.vinto.client.rememberNickname
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -102,9 +105,18 @@ fun OnlineScreen(
     // Set by a press that could not go anywhere, cleared the moment a character arrives.
     var warned by remember { mutableStateOf(false) }
 
+    // Whether any of the three can work at all. Aeroplane mode used to be found out one
+    // screen later, as a failure with a hostname in it; the platform knew before the tap, so
+    // the menu says so before the tap. Only certainty shuts the door — a desktop that cannot
+    // tell is not told it is offline — and the screens behind it keep their own handling for
+    // a network that is there and dead.
+    val door = onlineDoor(LocalReachability.current)
+
     // Saved on the way out of this screen rather than on every keystroke: the vault is a
     // write to storage, and a name is typed a character at a time.
     fun leaveWith(go: (String) -> Unit) {
+        // The sentence is already on the screen; a press on a dimmed tile has nothing to add.
+        if (!door.open) return
         if (!ready) {
             warned = true
             return
@@ -128,22 +140,37 @@ fun OnlineScreen(
             placeholder = stringResource(Res.string.online_name_placeholder),
         )
 
+        // Exhaustive, so a third word is a compile error here rather than a menu that dims
+        // its tiles and says nothing about why.
+        when (door.word) {
+            OnlineWord.READY -> Unit
+            OnlineWord.OFFLINE -> Text(
+                text = stringResource(Res.string.online_offline),
+                style = MaterialTheme.typography.bodyMedium,
+                // On the felt, like `Trouble` below: the scheme's own error red is 1:1 on cloth.
+                color = MaterialTheme.colorScheme.errorOnFelt(),
+            )
+        }
+
         // The one that needs nothing from anybody else, so it is the one wearing the colour.
         ActionTile(
             title = stringResource(Res.string.online_open_title),
             detail = stringResource(Res.string.online_open_detail),
             accent = ButtonTone.PLAY.rim,
             onClick = { leaveWith(onOpenRoom) },
+            enabled = door.open,
         )
         ActionTile(
             title = stringResource(Res.string.online_join_title),
             detail = stringResource(Res.string.online_join_detail),
             onClick = { leaveWith(onJoinByCode) },
+            enabled = door.open,
         )
         ActionTile(
             title = stringResource(Res.string.online_browse),
             detail = stringResource(Res.string.online_browse_detail),
             onClick = { leaveWith(onBrowse) },
+            enabled = door.open,
         )
     }
 }

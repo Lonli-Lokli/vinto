@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        The one permission this app asks for, and it was missing.
+        The first of the two permissions this app asks for, and it was missing.
 
         Without it Android refuses every socket the process opens, so online play could not
         work at all *and* no crash report could ever leave the device — which is why a crash
@@ -10,11 +10,17 @@
         and the POST was denied by the platform before it reached the network. Two failures
         that look like one, from a line that was never written.
 
-        Nothing else is asked for. There is no camera, no location, no contacts and no
-        advertising id here, and `INTERNET` is a normal permission: it is granted at install
-        and never prompts.
+        Nothing else is asked for beyond the second line below. There is no camera, no
+        location, no contacts and no advertising id here, and `INTERNET` is a normal
+        permission: it is granted at install and never prompts.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+        The second: whether a network exists at all, so the online menu can say "no network"
+        before a tap rather than fail after it (`Connectivity.android.kt`). Normal too, and
+        it reads nothing about which network — only whether the default one is there.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="Vinto"

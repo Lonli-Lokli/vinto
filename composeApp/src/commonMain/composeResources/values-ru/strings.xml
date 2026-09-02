@@ -37,6 +37,7 @@
     <string name="online_code_detail">Шесть символов от того, кто открыл комнату.</string>
     <string name="online_join">Войти в комнату</string>
     <string name="online_create">Открыть комнату</string>
+    <string name="online_offline">Сейчас нет сети. Для игры по сети она нужна; одиночная игра и урок работают как обычно.</string>
     <string name="trouble_offline">Нет связи с сервисом комнат. Проверьте сеть и попробуйте снова.</string>
     <string name="trouble_no_such_room">Комнаты с таким кодом нет. Проверьте шесть символов и попробуйте снова.</string>
     <string name="trouble_closed">Игра по сети ещё не открыта. Одиночная игра и урок работают как обычно.</string>

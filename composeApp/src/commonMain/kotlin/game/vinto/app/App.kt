@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
+import game.vinto.client.Reachability
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoomConnector
 import game.vinto.client.Settings
@@ -113,6 +115,10 @@ fun App(
 
     val dark = settings.theme.isDark()
     SystemBars(dark)
+    // The network, as the platform reports it: read once here, for the one screen that asks.
+    // `UNKNOWN` until the platform has spoken, so the first frame never says "offline" on the
+    // strength of nothing.
+    val reachability by remember { platformReachability() }.collectAsState(Reachability.UNKNOWN)
     // Outside the theme, because changing language throws the composition away and re-reads
     // every string — and the theme is cheaper to rebuild than to reason about half-rebuilt.
     InLanguage(settings.language) {
@@ -121,6 +127,7 @@ fun App(
                 LocalFeedback provides rememberFeedback(settings.haptics),
                 LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
                 LocalSounds provides rememberSounds(settings.sound),
+                LocalReachability provides reachability,
             ) {
                 // Every phone has something drawn over its edges — a status bar, a gesture handle, a
                 // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
