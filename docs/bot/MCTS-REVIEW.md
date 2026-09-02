@@ -472,9 +472,25 @@ and the next three dozen said 5.3, which is how much twelve games are worth. Wha
 established is why hard's 5,000 iterations and thirty-ply rollouts do worse than moderate's
 2,000 and twenty, with a memory that is strictly better. It is recorded rather than tuned:
 setting budgets against a few dozen games would be the same mistake this whole change exists
-to remove, in a different costume. The budgets are the one place a constant still lives, the
-mixed table is the tool for setting them, and the two obvious experiments — hard at
-moderate's rollout depth, hard at moderate's iterations — are the next thing to run.
+to remove, in a different costume.
+
+The two obvious experiments were run on the same thirty-six seeds, giving the hard seats
+moderate's rollout depth and then moderate's iterations (not committed; the service and the
+mixed-table game both take an experiment's budget as a parameter):
+
+| Hard seats' budget | Hard: points / hand / lowest | Moderate: points / hand / lowest |
+| --- | --- | --- |
+| 5,000 iterations, 30 plies (as shipped) | 0.65 / 10.3 / 20 of 72 | 1.08 / 7.9 / 11 of 36 |
+| 5,000 iterations, 20 plies | 0.50 / 7.6 / 21 of 72 | 1.13 / 7.0 / 16 of 36 |
+| 2,000 iterations, 30 plies | 0.23 / 7.9 / 21 of 72 | 1.13 / 5.5 / 20 of 36 |
+
+Neither closes the gap, so the budget is not what separates them, and the remaining
+difference is the memory. The likeliest mechanism is the Vinto call: the rollouts play the
+final round as three selfish seats, but the real coalition pools its hands through the
+planner, so a bot that always knows its whole hand reaches a call it values too highly more
+often than one whose forgotten cards are priced as unknown. That is a hypothesis about the
+rollout's coalition, not about a weight, and it is being checked by counting who calls and
+who wins.
 
 ### What is left
 

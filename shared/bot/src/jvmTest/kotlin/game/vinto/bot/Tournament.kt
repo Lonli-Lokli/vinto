@@ -38,6 +38,8 @@ internal data class PlayedGame(
     val roundPoints: List<Int> = emptyList(),
     /** The difficulty each seat played at, seat order. */
     val seatDifficulties: List<Difficulty> = emptyList(),
+    /** Which seat called Vinto, or -1 when nobody did. */
+    val callerSeat: Int = -1,
     /** True when a Vinto call was made *and* the caller was not beaten. */
     val callerWon: Boolean = false,
     /**
@@ -179,6 +181,7 @@ private fun playGame(
         handTotals = if (scored) totals else emptyList(),
         roundPoints = if (scored) state.players.map { points.getValue(it.id) } else emptyList(),
         seatDifficulties = seatDifficulties,
+        callerSeat = state.players.indexOfFirst { it.id == state.vintoCallerId },
         // The rules give a tie to the caller, so this is `<=` and not `<`.
         callerWon = callerTotal != null && bestCoalition != null && callerTotal <= bestCoalition,
         callerHandChanged = callerFrozenHand != null && callerFrozenHand != caller?.cards?.map { it.id },
