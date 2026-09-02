@@ -471,6 +471,20 @@ data class RoomState(
         get() = phase == RoomPhase.PLAYING || phase == RoomPhase.BETWEEN_ROUNDS
 
     /**
+     * Whether the session clock still has anything to end.
+     *
+     * Two cases where it does not, and both used to be woken for it anyway. A round in play
+     * with Vinto declared is left to finish — `closeSession` hands the state back untouched
+     * and `settleRound` ends the session when the round does — and a finished room has no
+     * session left. An alarm set for a moment already gone fires again at once, so naming
+     * the buzzer in either case had the object waking itself in a loop: every wake decided
+     * nothing and asked for the same past moment, for as long as the final round took, or
+     * for the ten minutes a finished scoreboard stands. `SessionClockTest` holds both.
+     */
+    private val buzzerPending: Boolean
+        get() = inSession && !(phase == RoomPhase.PLAYING && game?.vintoCallerId != null)
+
+    /**
      * The earliest thing that has to happen, or null if nothing is pending.
      *
      * The whole point of keeping deadlines as data: one alarm, whichever comes first, and the
@@ -497,7 +511,7 @@ data class RoomState(
             } else {
                 null
             },
-            session.endsAtEpochMs,
+            if (buzzerPending) session.endsAtEpochMs else null,
         ).plus(seatGrace.values).minOrNull()
 }
 
@@ -997,12 +1011,17 @@ private fun closeSession(state: RoomState, nowMs: Double): RoomState {
     // behind — the round ending is what closes the session, in [recordRoundEnd].
     if (vintoDeclared && game.phase != GamePhase.SCORING) return state
 
-    val scored = if (game != null && game.phase == GamePhase.SCORING) {
-        recordRoundEnd(state)
-    } else {
+    val scored = when {
+        // Already filed: `settleRound` recorded the round on the way into BETWEEN_ROUNDS, and
+        // the game is kept on the table only so the scoreboard has something to show. Filing
+        // it again paid every round that ended before the buzzer twice.
+        state.phase == RoomPhase.BETWEEN_ROUNDS -> state
+
+        game != null && game.phase == GamePhase.SCORING -> recordRoundEnd(state)
+
         // Discarded: recorded as such, because the standings cannot be recomputed from the
         // round recordings alone.
-        state.copy(session = state.session.copy(discardedRound = state.session.rounds.size + 1))
+        else -> state.copy(session = state.session.copy(discardedRound = state.session.rounds.size + 1))
     }
 
     return scored.copy(

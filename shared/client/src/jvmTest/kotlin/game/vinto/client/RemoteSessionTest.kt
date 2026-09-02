@@ -1,24 +1,15 @@
 package game.vinto.client
 
-import game.vinto.engine.PlayerView
-import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.EventEntry
-import game.vinto.protocol.LobbySeat
-import game.vinto.protocol.LobbyView
 import game.vinto.protocol.ProtocolJson
-import game.vinto.protocol.PublicRoom
-import game.vinto.protocol.PublicSeat
-import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
-import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,11 +21,11 @@ import kotlin.test.assertTrue
 /**
  * The remote session against a scripted wire.
  *
- * The socket here is a pair of channels and every message is built with the real
- * [ProtocolJson] — the same serializer the room's envelope builders use — so what these
- * cases exercise is the session's actual parsing, cursor-keeping, frame-building and
- * reconnect behaviour, with only the transport faked. The full server loop gets its turn in
- * the two-client harness next door in `shared/room`.
+ * The socket is a pair of channels and every message is built with the real [ProtocolJson]
+ * — the same serializer the room's envelope builders use — so what these cases exercise is
+ * the session's actual parsing, cursor-keeping, frame-building and reconnect behaviour, with
+ * only the transport faked. The harness is [Wire], shared with `RemoteRoomLifecycleTest`;
+ * the full server loop gets its turn in the two-client harness next door in `shared/room`.
  */
 class RemoteSessionTest {
 
@@ -45,7 +36,7 @@ class RemoteSessionTest {
         wire.deliverJoined(view = null)
         wire.settle()
 
-        assertEquals("tok-1", wire.vault.seatToken(CODE), "the token is filed on arrival")
+        assertEquals("tok-1", wire.vault.seatToken(WIRE_CODE), "the token is filed on arrival")
         assertEquals(0, wire.room.seat.value)
         assertEquals(ConnectionState.Connected, wire.room.connection.value)
         assertNotNull(wire.room.lobby.value, "the lobby rides on the join")
@@ -73,8 +64,8 @@ class RemoteSessionTest {
         wire.deliver(
             ServerMessage.Events(
                 events = listOf(
-                    entry(0, other, wire.dealtView),
-                    entry(1, other, wire.dealtView),
+                    botEntry(0, other, wire.dealtView),
+                    botEntry(1, other, wire.dealtView),
                 ),
                 nextIndex = 2,
                 view = wire.dealtView,
@@ -191,103 +182,5 @@ class RemoteSessionTest {
         assertTrue(session.isOver)
 
         wire.room.leave()
-    }
-
-    // ------------------------------------------------------------------ the scripted wire
-
-    private class ScriptedSocket : RoomSocket {
-        val sent = mutableListOf<String>()
-        private val channel = Channel<String>(Channel.UNLIMITED)
-        override val incoming = channel
-        override suspend fun send(text: String) {
-            sent += text
-        }
-
-        fun deliver(text: String) {
-            channel.trySend(text)
-        }
-
-        fun fail(cause: Throwable) {
-            channel.close(cause)
-        }
-
-        override fun close() {
-            channel.close()
-        }
-    }
-
-    private inner class Wire(
-        scope: kotlinx.coroutines.test.TestScope,
-        spareSockets: List<ScriptedSocket> = emptyList(),
-    ) {
-        val socket = ScriptedSocket()
-        val vault = MemoryVault()
-        val state = initializeGame(9L, Difficulty.EASY)
-        val dealtView: PlayerView = projectView(state, state.players.first().id)
-
-        private val sockets = ArrayDeque(listOf(socket) + spareSockets)
-        private val connector = object : RoomConnector {
-            override suspend fun connect(code: String): RoomAnswer<RoomSocket> =
-                RoomAnswer.Ok(sockets.removeFirst())
-
-            override suspend fun createRoom(isPublic: Boolean, hostNickname: String) =
-                RoomAnswer.Ok(CreatedRoom(CODE, "room-$CODE"))
-
-            /** Nothing in this suite browses; the room it drives is one it was handed. */
-            override suspend fun listPublicRooms(): RoomAnswer<List<PublicRoom>> =
-                RoomAnswer.Ok(emptyList())
-        }
-
-        private val testScope = scope
-        val room = RemoteRoom(
-            connector = connector,
-            code = CODE,
-            vault = vault,
-            nickname = "Ann",
-            scope = scope,
-        )
-
-        fun deliver(message: ServerMessage) =
-            socket.deliver(ProtocolJson.encodeToString(ServerMessage.serializer(), message))
-
-        fun deliverJoined(view: PlayerView?) = socket.deliver(joinedJson(view))
-
-        fun joinedJson(view: PlayerView?): String = ProtocolJson.encodeToString(
-            ServerMessage.serializer(),
-            ServerMessage.Joined(
-                seat = 0,
-                token = "tok-1",
-                seats = List(SEATS) { PublicSeat(index = it, occupied = it == 0) },
-                nextIndex = 0,
-                lobby = LobbyView(
-                    phase = RoomPhase.LOBBY,
-                    seats = List(SEATS) {
-                        LobbySeat(it, occupied = it == 0, isBot = false, removable = false)
-                    },
-                    humans = 1,
-                ),
-                view = view,
-            ),
-        )
-
-        /** Lets the room's loop drain what the wire delivered. */
-        fun settle() = testScope.testScheduler.advanceUntilIdle()
-
-        /** Runs what is ready without advancing the clock — for steps holding a timeout. */
-        fun pump() = testScope.testScheduler.runCurrent()
-    }
-
-    private fun entry(index: Int, playerId: String, view: PlayerView) = EventEntry(
-        index = index,
-        seat = 1,
-        playerId = playerId,
-        action = GameAction.DrawCard(PlayerIdPayload(playerId)),
-        byBot = true,
-        view = view,
-    )
-
-    private companion object {
-        const val CODE = "TEST42"
-        const val SEATS = 4
     }
 }

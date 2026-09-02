@@ -154,7 +154,8 @@ sealed interface RoomAnswer<out T> {
  * The one place in the client that is allowed to catch broadly, and it exists so that nowhere
  * else has to: each connector wraps its own transport here, and everything above sees values.
  * A [RoomServiceException] carries a trouble the service itself named and keeps it;
- * anything else is the network not being there.
+ * anything else is the network not being there, and says so in [UNREACHABLE_SERVICE]'s words
+ * rather than the platform's.
  */
 suspend fun <T> answering(call: suspend () -> T): RoomAnswer<T> =
     try {
@@ -164,9 +165,20 @@ suspend fun <T> answering(call: suspend () -> T): RoomAnswer<T> =
         throw cancelled
     } catch (refused: RoomServiceException) {
         RoomAnswer.Failed(refused.trouble, refused.message)
-    } catch (@Suppress("TooGenericExceptionCaught") failed: Exception) {
-        RoomAnswer.Failed(
-            RoomTrouble.OFFLINE,
-            failed.message ?: "could not reach the room service",
-        )
+    } catch (@Suppress("TooGenericExceptionCaught") _: Exception) {
+        // The exception's own message is deliberately dropped — the same decision
+        // `RemoteRoom.sendOrSay` makes for a write that fails, for the same reason.
+        RoomAnswer.Failed(RoomTrouble.OFFLINE, UNREACHABLE_SERVICE)
     }
+
+/**
+ * What a player is told when the network was not there, whatever the platform said about it.
+ *
+ * Every transport's sentence names the host: Android's is `Unable to resolve host
+ * "vinto-room.kupalinka.app": No address associated with hostname`, the JVM's adds a port, a
+ * browser's is `Failed to fetch`. Each was the detail line under "No connection to the room
+ * service" — a hostname in front of somebody in aeroplane mode, on the one screen where they
+ * had done nothing wrong. The trouble is the whole of what a person can act on, and a
+ * sentence written for a log is not made for a phone by being printed smaller.
+ */
+private const val UNREACHABLE_SERVICE = "could not reach the room service"

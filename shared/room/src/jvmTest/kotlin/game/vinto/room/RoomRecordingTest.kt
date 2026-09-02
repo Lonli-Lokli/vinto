@@ -96,6 +96,14 @@ class RoomRecordingTest {
     }
 
     @Test
+    fun aLobbyHasNoRoundToRecord() {
+        val undealt = roundRecording(lobbyOfTwo(), recordedAt = "2026-08-26T00:00:00Z")
+        val result = VintoJson.decodeFromString(RecordingResult.serializer(), undealt)
+        assertNull(result.recording)
+        assertEquals("no round has been dealt", result.error)
+    }
+
+    @Test
     fun anUnfinishedRoundHasNoRecordingYet() {
         val dealt = roundRecording(dealtRoom(), recordedAt = "2026-08-26T00:00:00Z")
         val result = VintoJson.decodeFromString(RecordingResult.serializer(), dealt)
