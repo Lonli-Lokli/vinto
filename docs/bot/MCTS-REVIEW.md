@@ -362,3 +362,118 @@ bot's own cards are all known and the opponent's known cards are passed through
 `shouldExtractActionPlan`, `OpponentModeler.getMostLikelyVintoCaller` and the `vintoReadiness`
 machinery behind it, and the three unreachable branches of `RolloutPolicy` (§3.4). Steps 1–3 above
 either use them or delete them; none should survive as-is.
+
+## 6. What was done — 2026-09-02
+
+Steps 0–5 above landed the same day, in two commits on this branch. The order was kept; each
+step is described by what it deleted.
+
+**The search is an information-set MCTS.** `MctsBotDecisionService.search` samples one world
+per iteration (`determinize`: hands *and* a deck order, uniform over what the memory has not
+accounted for, narrowed by the opponent modeler's bounds), descends the shared tree applying
+each node's move to that world, expands once, plays the rest out and backs up a reward vector.
+`MctsNode` keys children on the move, keeps an availability count per child, and selects by
+UCB over the children legal in the current world from the *mover's* entry of the reward
+(§3.5). `hiddenCards` is never empty when a move is applied, which is the whole of §3.1.
+
+**The whole turn is in the tree.** `DRAW` deals the top of the sampled deck and waits; the
+replies carry the rank they were about (`MctsMove.cardInPlay`), so a drawn 10 and a drawn 2 are
+different information sets. A drawn card may be played (with its targets, or a King's target and
+declaration, in one move), swapped into any position — a known action card swapped out is
+declared and borrowed, as the runner plays it — or discarded. `TAKE_DISCARD` sets the card in
+play as committed. The turn ends with the Vinto question, a two-way node. Deleted:
+`OutcomeSimulator`, `SwapWeights`, `CardProtection`, `BotHeuristics` (the Q/7/8 and Ace rules),
+`ActionPlanning`; the generator's dead `generateSwapPositionMoves` became the live swap moves.
+
+**Rollouts play by card values** (`RolloutPolicy`): trade the card in play for the dearest card
+the mover can name when that sheds points, otherwise play an action worth playing, otherwise
+put a cheap card into a blind slot or discard; call Vinto when the hand is lowest at the table
+and its owner knows it. Opponents are assumed to know their own hands; the bot acts only on
+what it remembers, which is where a peek's value comes from.
+
+**The reward is the round's points** (`Outcome.kt`): once somebody has called, +3 / 0 / −1
+per seat mapped onto 0–1 with the tie to the caller; before a call, where the hand stands
+between the lowest and highest at the table. Deleted: `StateEvaluator`, `EvaluationHelpers`.
+
+**Vinto is a move.** `shouldCallVinto` searches the end-of-turn node and calls when the call's
+child is the most visited. Deleted: `VintoCallRule`, `VintoRoundSolver`, `VintoCallWiring`, the
+full-hand gate. What stays is the opening rule (no call before everyone has had two turns),
+which is pacing and says so.
+
+**Coalition.** A tossed-in Ace is put down rather than aimed at a teammate
+(`BotRunner.actionTargetAction`); 7/8/9/10 are in the planner's option set as a chance node over
+what the placeholder turns out to be (`CoalitionSearch.enumeratePeeks`); take-versus-draw is
+searched in full on both sides; the caller's unseen total is convolved without replacement.
+
+### What the gates say
+
+`MctsDiscriminationTest` (JVM, twelve seeds each, at least eleven must agree):
+
+| Position | Old search | New search |
+| --- | --- | --- |
+| Jack: give a 10 for a known Joker rather than a known 9, and swap | 11 / 40 | 12 / 12 |
+| Jack that can only lose points: not traded | 0 / 20 | 12 / 12 |
+| Unplayed Jack on the pile with a Joker on offer: take it | 21 / 40 | 12 / 12 |
+| King: declare the own pair rather than a rival's single Queen | 19 / 40 | 12 / 12 |
+| A drawn 2 goes in over the known 10, never the known Joker | — | 12 / 12 |
+| A drawn 10 never goes into a hand of 2, 3, 4 | — | 12 / 12 |
+| The most visited root child is also the best-scoring one | — | 12 / 12 |
+
+One of the review's own probes was wrong, and the search said so: with three known 10s, a
+declared swap-out and the toss-in it opens shed all three, which beats trading one for the
+Joker. The test now holds a hand with no pair.
+
+`SelfPlayGateTest`, `CoalitionFinalRoundTest`, `CoalitionHardScenariosTest` and the client's
+`FinishesTest` and `RecordingRoundTripTest` are green unchanged. Two toss-in integration windows
+moved into the opening, because a bot on twelve points against an unread hand now calls Vinto
+in them, and that is the right call.
+
+### The baseline, regenerated
+
+`fixtures/bot/self-play-baseline.json` is version 2 and was regenerated with
+`-Ptournament=write`. The homogeneous tables, before and after:
+
+| Difficulty | Mean final hand | Mean actions | Caller won |
+| --- | --- | --- | --- |
+| easy | 5.43 → 8.20 | 347 → 249 | 9 → 9 of 12 |
+| moderate | 5.47 → 9.04 | 282 → 248 | 8 → 8 of 12 |
+| hard | 9.45 → 7.83 | 280 → 267 | 7 → 10 of 12 |
+
+Read the first column with care, because it is the one that looks like a regression and is
+not. Rounds are a quarter to a third shorter: the caller now calls when the call's expected
+value beats playing on, and it is still winning three times in four — against a break-even of
+one in four under +3 / −1. The old bot only ever called on a hand it could prove safe, or
+after twelve laps, so the table had another hundred actions to shed cards into before anybody
+ended it. A homogeneous table's mean hand says how long the round ran, not who played better
+(`docs/kotlin/README.md` §6k said as much), which is why the baseline now has a second table.
+
+**The mixed table** — easy, moderate, hard, hard in rotating chairs, twelve seeds — is the one
+that ranks the difficulties, on the rule's own verdict:
+
+| Difficulty | Seats | Mean round points | Mean final hand | Finished lowest |
+| --- | --- | --- | --- | --- |
+| easy | 12 | 0.75 | 14.50 | 1 |
+| moderate | 12 | 1.75 | 6.58 | 7 |
+| hard | 24 | 0.54 | 9.91 | 5 |
+
+Easy is last by every measure, which is the memory model doing its job: a bot that records
+less than half of what it sees finishes with twice the hand. Moderate and hard are not
+separated the way the search budgets would predict — moderate's 2,000 iterations do better
+than hard's 5,000 here — and on twelve games that gap is about two standard errors, which is
+suggestive and not a result. It is recorded rather than tuned: setting budgets against twelve
+games would be the same mistake this whole change exists to remove, in a different costume.
+Two things are worth checking with a bigger run before anything is changed: whether it holds at
+all, and whether the two `hard` seats — which sit in coalition against each other more often
+than any other pair — are paying for each other's calls.
+
+### What is left
+
+- **Rollout policy is a policy.** It plays by card values and has no weights, but it is still
+  hand-written; a search that reached terminal states without it would need none, and that is
+  the next thing to try if the budget allows.
+- **Opponents are assumed to know their own hands** in the sampled world. Modelling what an
+  opponent has actually seen — the engine records it — would sharpen the coalition's play in
+  particular.
+- **Difficulty budgets** (iterations 500 / 2,000 / 5,000, exploration 0.7, rollout depth
+  15 / 20 / 30 plies) are the constants that remain, and they are search budgets rather than
+  judgement. The mixed table is the tool for setting them.
