@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_in_play
+import game.vinto.app.art.card_the_deck
 import game.vinto.app.art.rail_card_action
 import game.vinto.app.art.rail_card_plain
 import game.vinto.app.art.table_sending
@@ -63,7 +64,6 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
 import game.vinto.client.Detail
-import game.vinto.client.Label
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
@@ -75,6 +75,7 @@ import game.vinto.client.echoedBy
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
+import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
@@ -191,7 +192,7 @@ fun ControlPanel(
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
-        val inPlay = cardTheRailIsAbout(state.view, table)
+        val inPlay = railCard(state.view)
 
         RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, onMove)
     }
@@ -203,7 +204,7 @@ fun ControlPanel(
 private fun RailBody(
     state: TableState,
     table: Table,
-    inPlay: Card?,
+    inPlay: CardView?,
     recent: List<Say>,
     crowded: Boolean,
     promptLine: Dp,
@@ -231,7 +232,7 @@ private fun RailBody(
 private fun RailBlock(
     state: TableState,
     table: Table,
-    inPlay: Card?,
+    inPlay: CardView?,
     recent: List<Say>,
     crowded: Boolean,
     twoLines: Dp,
@@ -250,19 +251,17 @@ private fun RailBlock(
             // *what*; the rail is where the decision is made. Whole or not at all: above a
             // rank grid the block is a line deep, and a sliver of a card is a thing that
             // looks broken.
-            // The column is kept whether or not there is a card in it: an empty slot where the
-            // card goes, so the words beside it are the same width on every turn. A column that
-            // came and went with the card moved the prompt and the log sideways on every move.
-            if (cardScale != null) {
-                if (inPlay != null) {
-                    CardFace(
-                        card = CardView.Visible(inPlay),
-                        scale = cardScale,
-                        label = stringResource(Res.string.card_in_play, inPlay.rank.serialName),
-                    )
-                } else {
-                    EmptySlot(cardScale, "")
+            // The column is there for the whole of the viewer's turn and not otherwise, and it
+            // always holds a card (`railCard` says which), so nothing beside it moves between
+            // one move and the next of the same turn. It came and went with the card once,
+            // and then held an empty slot on every bot's turn; both moved, or looked wrong.
+            if (cardScale != null && inPlay != null) {
+                val label = when (inPlay) {
+                    is CardView.Visible ->
+                        stringResource(Res.string.card_in_play, inPlay.card.rank.serialName)
+                    CardView.Hidden -> stringResource(Res.string.card_the_deck)
                 }
+                CardFace(card = inPlay, scale = cardScale, label = label)
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -275,7 +274,8 @@ private fun RailBlock(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    Heading(table = table, teaching = state.teaching, shown = inPlay)
+                    val shown = (inPlay as? CardView.Visible)?.card
+                    Heading(table = table, teaching = state.teaching, shown = shown)
                     Answer(state)
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
@@ -350,22 +350,35 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
 }
 
 /**
- * The card the prompt is about, if the rail can show one.
+ * The card in the rail — and whether the rail has a column for one at all.
  *
- * Whoever's it is: a card being decided about is public — the rules have a drawn card
- * revealed — and "Raph is playing" beside the Queen he is aiming says more than the words
- * alone. In a toss-in window, the card that went down: "the 4 went down" beside a 4 is the
- * whole question. And before anything is drawn, the card on offer from the pile, when the
- * prompt offers it: the decision then is *about* that card.
- * It used to be the viewer's own pending card and nothing else, which read as the rail
- * sometimes showing a card and sometimes not, for no reason a player could see.
+ * The column is there for the whole of the viewer's turn and for none of anybody else's. A
+ * card being decided about is public, so it *could* show a bot's Queen being aimed; what
+ * that bought was a rail that changed shape with every move of every seat, a card for one
+ * beat and an empty slot the next, which the player read as the layout jumping — and on a
+ * bot's turn the words are the thing to read, so they take the width.
+ *
+ * Within the turn it always holds a card, so nothing beside it moves from one move to the
+ * next: the pending card while there is one, whoever's — a bot's tossed-in Jack resolving
+ * inside the viewer's window is still the viewer's turn; otherwise the top of the pile,
+ * which is the card the turn is about before a draw (take it?), after a swap (declare it?)
+ * and in the toss-in window (match it?); and the deck's back when the pile is empty, which
+ * is the first turn of a round and the card about to be drawn.
  */
-private fun cardTheRailIsAbout(view: PlayerView, table: Table): Card? {
-    (view.pendingAction?.card as? CardView.Visible)?.let { return it.card }
-    // A toss-in window is about the card that went down; so is an offer to take it.
-    val aboutThePile = view.activeTossIn != null || table.choices.any { it.label is Label.UseFromPile }
-    if (aboutThePile) return view.discardTop
-    return null
+private fun railCard(view: PlayerView): CardView? {
+    if (!yourTurn(view)) return null
+    (view.pendingAction?.card as? CardView.Visible)?.let { return it }
+    return view.discardTop?.let { CardView.Visible(it) } ?: CardView.Hidden
+}
+
+/**
+ * Whether the turn on the table is the viewer's. Inside a toss-in window the turn is still
+ * the one that opened it, whoever is throwing a card into it; setup and scoring are nobody's.
+ */
+private fun yourTurn(view: PlayerView): Boolean {
+    if (view.phase != GamePhase.PLAYING && view.phase != GamePhase.FINAL) return false
+    val owner = view.activeTossIn?.originalPlayerIndex ?: view.currentPlayerIndex
+    return view.players.getOrNull(owner)?.id == view.viewerId
 }
 
 /**

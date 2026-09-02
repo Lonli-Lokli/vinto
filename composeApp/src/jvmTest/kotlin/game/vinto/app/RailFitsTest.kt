@@ -2,6 +2,7 @@ package game.vinto.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -11,6 +12,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Density
@@ -84,6 +86,67 @@ class RailFitsTest {
 
         val rank = (view.pendingAction?.card as game.vinto.engine.CardView.Visible).card.rank.serialName
         onNodeWithContentDescription("in play: $rank").assertIsDisplayed()
+    }
+
+    /**
+     * The card's column is there for the whole of your turn — before the draw it holds the
+     * deck's back — and not at all on a bot's turn or during setup, where the words take the
+     * width. A column that came and went within a turn was the layout jumping.
+     */
+    @Test
+    fun theColumnIsThereForYourTurnAndNotForABots() = runComposeUiTest {
+        val (setup, yourTurn) = beforeTheDraw()
+        val botsTurn = yourTurn.copy(currentPlayerIndex = (yourTurn.currentPlayerIndex + 1) % yourTurn.players.size)
+
+        setContent {
+            VintoTheme {
+                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) { Rail(yourTurn) }
+            }
+        }
+        waitForIdle()
+        onNodeWithContentDescription("the deck").assertIsDisplayed()
+
+        for (view in listOf(setup, botsTurn)) {
+            setContent {
+                VintoTheme {
+                    Box(modifier = Modifier.size(PHONE_W, PHONE_H)) { Rail(view) }
+                }
+            }
+            waitForIdle()
+            val cards = onAllNodes(
+                hasContentDescription("the deck") or hasContentDescription("in play: ", substring = true),
+            ).fetchSemanticsNodes()
+            assertTrue(cards.isEmpty(), "no card column on somebody else's turn or in setup")
+        }
+    }
+
+    @Composable
+    private fun Rail(view: PlayerView) {
+        TableScreen(
+            state = TableState(view, tableFor(view), null, emptyList(), 1),
+            layout = TableLayout.forScreen(PHONE_H),
+            onMove = {},
+            onHelp = {},
+            onSettings = {},
+            onReport = {},
+            onDeck = {},
+        )
+    }
+
+    /** The view during setup, and the view at the top of your first turn, before the draw. */
+    private fun beforeTheDraw(): Pair<PlayerView, PlayerView> {
+        lateinit var setup: PlayerView
+        lateinit var turn: PlayerView
+        runTest {
+            val session = teachingSession()
+            val me = session.playerId
+            session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+            session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+            setup = session.view.value
+            session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+            turn = session.view.value
+        }
+        return setup to turn
     }
 
     private fun everyChoiceIsWhole(width: Dp, height: Dp, fontScale: Float = 1f) = runComposeUiTest {

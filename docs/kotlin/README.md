@@ -1702,15 +1702,21 @@ one line**, joined by an arrow, so a turn reads as one thing that happened and t
 grows in place rather than pushing the others up. A tap on a card on the felt — the one drawn,
 or the top of the pile — opens the help sheet on that card alone; the "?" still opens all of it.
 
-And four from the session after that. **The card's column is kept when there is no card** —
-an empty slot where it goes — so the prompt and the log are the same width on every turn;
-they used to move sideways every time a card came or went. **Any card the rail shows is
-explained under the prompt**, name, points and action, whoever's it is. **The log keeps two
-turns** — this one and the one it is answering — where it kept the whole round, which was a
-transcript to scroll rather than a table to read. And **a draw is narrated with its rank to
-every seat**, as the felt already shows it: the rules reveal a drawn card publicly, and a log
-that named it to the drawer alone was hiding a Joker the whole table had just watched come
-off the deck.
+And four from the session after that. **The card's column is there for the whole of your
+turn and not for a bot's.** It first came and went with the card, which moved the prompt and
+the log sideways on every move; then it was kept always, with an empty slot, which put a
+large empty rectangle beside "Look at two of your cards" and a bot's Jack beside "Mikey is
+playing" — a rail that changed shape with every seat's every move. Now the column exists
+exactly while the turn is yours, a toss-in window included, and always holds a card: the
+card in play, else the top of the pile (which is what the turn is about before the draw,
+after a swap and in the window), else the deck's back. On a bot's turn the words take the
+width. The one change of shape left is at the turn boundary, which is a change of *whose*
+turn it is and reads as one. **Any card the rail shows is explained under the prompt**,
+name, points and action. **The log keeps two turns** — this one and the one it is answering
+— where it kept the whole round, which was a transcript to scroll rather than a table to
+read. And **a draw is narrated with its rank to every seat**, as the felt already shows it:
+the rules reveal a drawn card publicly, and a log that named it to the drawer alone was
+hiding a Joker the whole table had just watched come off the deck.
 
 **The jump.** The felt took what the control panel left
 
