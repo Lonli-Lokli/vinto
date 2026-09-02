@@ -435,9 +435,9 @@ in them, and that is the right call.
 
 | Difficulty | Mean final hand | Mean actions | Caller won |
 | --- | --- | --- | --- |
-| easy | 5.43 → 8.20 | 347 → 249 | 9 → 9 of 12 |
-| moderate | 5.47 → 9.04 | 282 → 248 | 8 → 8 of 12 |
-| hard | 9.45 → 7.83 | 280 → 267 | 7 → 10 of 12 |
+| easy | 5.43 → 8.54 | 347 → 247 | 9 → 9 of 12 |
+| moderate | 5.47 → 9.25 | 282 → 248 | 8 → 8 of 12 |
+| hard | 9.45 → 8.33 | 280 → 266 | 7 → 10 of 12 |
 
 Read the first column with care, because it is the one that looks like a regression and is
 not. Rounds are a quarter to a third shorter: the caller now calls when the call's expected
@@ -452,9 +452,9 @@ that ranks the difficulties, on the rule's own verdict:
 
 | Difficulty | Seats | Mean round points | Mean final hand | Finished lowest |
 | --- | --- | --- | --- | --- |
-| easy | 12 | 0.75 | 14.50 | 1 |
-| moderate | 12 | 1.75 | 6.58 | 7 |
-| hard | 24 | 0.54 | 9.91 | 5 |
+| easy | 12 | 0.75 | 14.16 | 1 |
+| moderate | 12 | 1.75 | 8.08 | 5 |
+| hard | 24 | 0.54 | 8.83 | 7 |
 
 Twelve games is few, so thirty-six more were played (seeds 13–48, not committed) and the two
 runs combined:
@@ -523,6 +523,13 @@ and it is cheaper besides. The experiment's plumbing stays too — the service t
 and the mixed-table game takes a per-seat factory — because the next question will be asked
 the same way. What separates moderate from hard is still open, and with three dozen games per
 experiment the honest statement is that the two are close and moderate is ahead, not why.
+
+Regenerated once more after the coalition search's cost fix below. Callers and round points
+did not move at all — nine, eight and ten calls held, and the mixed table's 0.75 / 1.75 / 0.54
+are the same to the hundredth — while the mean hands rose by a third of a point and the
+lowest finishes at the mixed table shifted from moderate towards hard. That is the shape of a
+coalition that searches less widely finishing its hands a little less tidily without winning
+any less often, and it is the trade the next section is about.
 
 ### The coalition search's cost, and what it was spent on
 
