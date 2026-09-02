@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -35,16 +37,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Measurable
-import androidx.compose.ui.layout.MeasurePolicy
-import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
@@ -80,14 +77,17 @@ import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
 
-/** The card in play, drawn in the rail: the size of a card in your own hand on a phone. */
+/** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
+
+/** The most of the rail's width the card may take; the words beside it need the rest. */
+private const val RailCardShare = 0.4f
 private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
 
-/** The well's depth in lines, its line pitch, and how much darker than the rail it sits. */
-private const val LogLines = 3
+/** The well's greatest depth in lines, its line pitch, and how much darker than the rail it sits. */
+private const val LogLines = 8
 private const val LogLineFactor = 1.4f
 private const val PromptLineFactor = 1.35f
 private const val LogWell = 0.45f
@@ -119,7 +119,6 @@ fun ControlPanel(
     side: Boolean = false,
 ) {
     val table = state.table
-    val stage = LocalStage.current
     val edge = MaterialTheme.colorScheme.feltEdge()
     Surface(
         modifier = modifier
@@ -159,161 +158,147 @@ fun ControlPanel(
             },
         color = Rail.fill,
     ) {
-        // Three slots, because the rail is a fixed height and every box in it should be a
-        // fixed size too — a table whose panels change shape between moves is a table the eye
-        // has to find again after each one. The prompt is at the top, under the felt, and
-        // keeps two lines' room whether or not the rule under it is still being said. The
-        // choices are pinned to the foot, where a thumb rests, and share one row rather than
-        // stacking: vertical room is the scarce thing on a phone and horizontal room is not.
-        // Never scrolled, never pushed — a rail that scrolled to reach its second button had
-        // that button half under the edge of the screen on every phone taller than the one
-        // it was drawn on, and "Leave them" is not a control a player should have to go
-        // looking for. The box of recent moves takes the middle at a fixed depth, and is the
-        // one thing that gives way when a wrapped prompt or a large font leaves it less than
-        // that: three moves ago matters less than reaching the move now.
+        // Two columns and a foot, because the rail is a fixed height and vertical room is the
+        // scarce thing on a phone. The choices are pinned to the foot, where a thumb rests, and
+        // share one row rather than stacking; never scrolled, never pushed — a rail that
+        // scrolled to reach its second button had that button half under the edge of the
+        // screen on every phone taller than the one it was drawn on. Everything above them is
+        // one block that fills the rest: the card being decided about on the left, as tall as
+        // the block, and beside it the prompt with the box of recent moves under it, the log
+        // taking whatever the prompt leaves. Nothing in it is a fixed depth that could leave
+        // a strip of rail empty above the buttons, and nothing in it moves between one move
+        // and the next on the same phone, which is what a fixed box is for.
         //
-        // Scrolling survives only inside the slots, as the last resort for a doubled system
-        // font: the prompt scrolls within its own room, and a King's fourteen chips within
-        // theirs, and neither can push the buttons off the rail.
+        // Scrolling survives only as the last resort for a doubled system font: the prompt
+        // scrolls within its own room, and a King's fourteen chips within theirs, and the
+        // foot may never take the prompt's first line.
         val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
         val crowded = table.ranks.isNotEmpty() || rows >= Crowded
         val recent = state.recent.filterNot { table.prompt.echoedBy(it) }
-        val promptLine = with(LocalDensity.current) { (PromptSize * PromptLineFactor).toDp() }
-        val twoLines = promptLine + with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
-        // The head is as tall as the card it can hold, whether or not it is holding one, so
-        // the log under it does not move when a card is drawn.
-        val headRoom = maxOf(twoLines, RailCard.height)
+        val density = LocalDensity.current
+        val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
+        val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
         val inPlay = state.view.ownCardInPlay()
 
-        RailSlots(
-            modifier = Modifier.fillMaxWidth().padding(PanelPad),
-            promptLine = promptLine,
-            head = {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val room = maxHeight
-                    Row(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = headRoom),
-                        horizontalArrangement = Arrangement.spacedBy(PanelPad),
-                    ) {
-                        // The card the player is deciding about, at a size its face can be
-                        // read at, beside the words about it — as the web table showed it.
-                        // The felt has it too, in the slot it was drawn into, at a size that
-                        // says *where* it is rather than *what*; the rail is where the
-                        // decision is made, and a phone has the width for both. Whole or not
-                        // at all: above a rank grid the head keeps one line, and a sliver of
-                        // a card is a thing that looks broken.
-                        inPlay?.takeIf { room >= RailCard.height }?.let { card ->
-                            CardFace(
-                                card = CardView.Visible(card),
-                                scale = RailCard,
-                                label = stringResource(Res.string.card_in_play, card.rank.serialName),
-                            )
-                        }
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = headRoom)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(Gap),
-                        ) {
-                            Heading(table = table, teaching = state.teaching)
-                            Answer(state)
-                        }
-                    }
-                }
-            },
-            // The log is what happened *before* now. The prompt above is now, and the two are
-            // built from the same narration, so the top line of the log was routinely the
-            // heading again in smaller type — "You drew the A", under "You drew the A".
-            // Counted in full-width rows rather than in buttons, because a stakes move brings
-            // a rule and the word "or" down with it.
-            middle = { if (!crowded) RecentActions(recent) },
-            choices = {
+        RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, onMove)
+    }
+}
+
+/** The two columns and the foot: everything the rail draws, laid out by the rule above. */
+@Suppress("LongParameterList")
+@Composable
+private fun RailBody(
+    state: TableState,
+    table: Table,
+    inPlay: Card?,
+    recent: List<Say>,
+    crowded: Boolean,
+    promptLine: Dp,
+    twoLines: Dp,
+    onMove: (Move) -> Unit,
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(PanelPad)) {
+        val rail = maxHeight
+        val footCap =
+            if (rail.isFinite) (rail - promptLine - Gap).coerceAtLeast(promptLine) else Dp.Unspecified
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(Gap),
+        ) {
+            RailBlock(state, table, inPlay, recent, crowded, twoLines, modifier = Modifier.weight(1f))
+            if (table.ranks.isNotEmpty() || table.choices.isNotEmpty()) {
+                RailFoot(table, footCap, onMove)
+            }
+        }
+    }
+}
+
+/** The card being decided about, and beside it the prompt over the box of recent moves. */
+@Suppress("LongParameterList")
+@Composable
+private fun RailBlock(
+    state: TableState,
+    table: Table,
+    inPlay: Card?,
+    recent: List<Say>,
+    crowded: Boolean,
+    twoLines: Dp,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val block = maxHeight
+        val cardScale = inPlay?.let { railCardFor(block, maxWidth) }
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(PanelPad),
+        ) {
+            // The card the player is deciding about, at a size its face can be read at,
+            // beside the words about it — as the web table showed it. The felt has it too, in
+            // the slot it was drawn into, at a size that says *where* it is rather than
+            // *what*; the rail is where the decision is made. Whole or not at all: above a
+            // rank grid the block is a line deep, and a sliver of a card is a thing that
+            // looks broken.
+            if (inPlay != null && cardScale != null) {
+                CardFace(
+                    card = CardView.Visible(inPlay),
+                    scale = cardScale,
+                    label = stringResource(Res.string.card_in_play, inPlay.rank.serialName),
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(Gap),
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = minOf(twoLines, block), max = block)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    RankGrid(table.ranks, stage, onMove)
-                    Choices(table, onMove)
+                    Heading(table = table, teaching = state.teaching)
+                    Answer(state)
                 }
-            },
-        )
+                // The log is what happened *before* now. The prompt above is now, and the
+                // two are built from the same narration, so the top line of the log was
+                // routinely the heading again in smaller type. Counted in full-width rows
+                // rather than in buttons, because a stakes move brings a rule and the word
+                // "or" down.
+                if (!crowded) {
+                    Box(modifier = Modifier.fillMaxWidth().weight(1f)) { RecentActions(recent) }
+                }
+            }
+        }
     }
 }
 
-/**
- * The rail's three tenants, laid out by the rule above: choices at the foot, the prompt at
- * the head, and the middle given exactly what is left. A rail with nothing to choose centres
- * its words instead — "Raph is playing", and nothing to do about it, should sit in the middle
- * rather than cling to the felt above a void.
- */
+/** The rank grid, when there is one, and the choices under it — pinned, and never the whole rail. */
 @Composable
-private fun RailSlots(
-    modifier: Modifier,
-    /** One line of the prompt, which the choices may never take from it. */
-    promptLine: Dp,
-    head: @Composable () -> Unit,
-    middle: @Composable () -> Unit,
-    choices: @Composable () -> Unit,
-) {
-    Layout(
-        modifier = modifier,
-        content = {
-            Box(modifier = Modifier.layoutId(Slot.HEAD)) { head() }
-            Box(modifier = Modifier.layoutId(Slot.MIDDLE)) { middle() }
-            Box(modifier = Modifier.layoutId(Slot.CHOICES)) { choices() }
-        },
-        measurePolicy = railPolicy(Gap, promptLine),
-    )
-}
-
-/**
- * Measured in the order they are entitled to the room: the choices take what they need, short
- * of the prompt's first line — a question the player cannot see is not one they can answer,
- * whatever they can press — then the prompt takes what it needs of the rest, and the middle
- * gets the remainder.
- */
-private fun railPolicy(gapBetween: Dp, promptLine: Dp) = MeasurePolicy { measurables, constraints ->
-    val gap = gapBetween.roundToPx()
-    val room = RailRoom(constraints, gap)
-
-    val foot = measurables.slot(Slot.CHOICES).measure(room.leaving(promptLine.roundToPx().plusGap(gap)))
-    val head = measurables.slot(Slot.HEAD).measure(room.leaving(foot.height.plusGap(gap)))
-    val middle = measurables.slot(Slot.MIDDLE)
-        .measure(room.leaving(foot.height.plusGap(gap) + head.height.plusGap(gap)))
-
-    val between = if (head.height > 0 && middle.height > 0) gap else 0
-    val words = head.height + between + middle.height
-    val used = words + (if (words > 0 && foot.height > 0) gap else 0) + foot.height
-    val railHeight = if (room.bounded) room.height else used
-
-    layout(room.width, railHeight) {
-        // Words at the head when there is something to press at the foot; centred when there
-        // is not.
-        val top = if (foot.height > 0) 0 else ((railHeight - words) / 2).coerceAtLeast(0)
-        head.placeRelative(0, top)
-        middle.placeRelative(0, top + head.height + between)
-        foot.placeRelative(0, railHeight - foot.height)
+private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = footCap)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Gap),
+    ) {
+        RankGrid(table.ranks, LocalStage.current, onMove)
+        Choices(table, onMove)
     }
 }
 
-/** The rail's height, and what is left of it once some of it is spoken for. */
-private class RailRoom(constraints: Constraints, private val gap: Int) {
-    val width = constraints.maxWidth
-    val bounded = constraints.hasBoundedHeight
-    val height = constraints.maxHeight
-    private val loose = constraints.copy(minWidth = width, minHeight = 0)
-
-    fun leaving(taken: Int): Constraints =
-        if (bounded) loose.copy(maxHeight = (height - taken).coerceAtLeast(0)) else loose
+/**
+ * How large the card in play is drawn: as tall as the block beside the words, short of a
+ * share of the rail's width the words need — and not at all when the block is shorter than
+ * a card in your own hand, which is the size a face stops being readable at.
+ */
+private fun railCardFor(block: Dp, width: Dp): CardScale? {
+    val tallest = if (block.isFinite) block else RailCard.height
+    val height = minOf(tallest, width * RailCardShare * (RailCard.height / RailCard.width))
+    if (height < RailCard.height) return null
+    return CardScale(height * (RailCard.width / RailCard.height), height)
 }
-
-/** A slot's height plus the gap that follows it — or nothing, for a slot with nothing in it. */
-private fun Int.plusGap(gap: Int) = if (this > 0) this + gap else 0
-
-private fun List<Measurable>.slot(slot: Slot) = first { it.layoutId == slot }
-
-private enum class Slot { HEAD, MIDDLE, CHOICES }
 
 /** What the player can do: the ordinary moves, and a stakes move set apart under a rule. */
 @Composable
@@ -467,9 +452,10 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
  * It used to be the last two lines, which on a table where a turn is a draw, a swap, a
  * toss-in window and three throws meant the toss-ins were gone before they were read. It is
  * a well now: every line the rail keeps, newest at the foot and the eye kept there, in a box
- * whose height is fixed at a few lines so the buttons under it never move — what there is to
- * read scrolls inside it rather than pushing the controls down. The newest line is written in
- * full ink and the rest dimmed, so the eye finds "now" without a marker.
+ * as deep as the rail can afford — the same depth on the same phone from one move to the next,
+ * so the buttons under it never move — and what there is to read scrolls inside it rather than
+ * pushing the controls down. The newest line is written in full ink and the rest dimmed, so
+ * the eye finds "now" without a marker.
  *
  * The caller drops any line that only repeats the prompt, by the model's own `echoedBy` rule.
  * That was briefly a comparison of two *rendered* strings — which worked by coincidence, an
@@ -493,9 +479,10 @@ private fun RecentActions(recent: List<Say>) {
         if (rendered.isNotEmpty()) listState.animateScrollToItem(rendered.lastIndex)
     }
 
-    // As deep as the rail can afford, up to the well's full depth, and absent below one line:
-    // the rail hands this box what its prompt and its buttons leave, and a log with no room
-    // for a line is a strip of well with nothing readable in it.
+    // As deep as the rail can afford, and absent below one line: the rail hands this box what
+    // its prompt and its buttons leave, and a log with no room for a line is a strip of well
+    // with nothing readable in it. On one phone that is always the same number of lines,
+    // which is what keeps the box a fixed size from one move to the next.
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val lines = logDepth(room = maxHeight, lineHeight = lineHeight)
         if (lines < 1) return@BoxWithConstraints
@@ -525,7 +512,7 @@ private fun RecentActions(recent: List<Say>) {
     }
 }
 
-/** How many lines of log fit in [room], up to the well's full depth; none when less than one. */
+/** How many lines of log fit in [room], up to the well's greatest depth; none when less than one. */
 private fun logDepth(room: Dp, lineHeight: Dp): Int =
     if (room.isFinite) minOf(LogLines, ((room - Gap * 2) / lineHeight).toInt()) else LogLines
 

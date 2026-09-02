@@ -1677,18 +1677,19 @@ card — the felt's bottom edge stayed at the same pixel in every one.
 the design's last resort and had become its first: on a phone taller than the one the rail was
 drawn on, a prompt, a four-line log and two stacked buttons overran a 270 dp rail by forty, and
 "Leave them" sat half under the edge of the screen in three screenshots running. The rail is
-three slots now, laid out by `RailSlots` in `ControlPanel.kt`: the prompt at the head, keeping
-two lines' room whether or not the rule under it is still being said, with **the card being
-decided about beside it** at the size of a card in your own hand — the web table showed the
-drawn card large in its panel, and the felt's in-play slot says where a card is rather than
-what; the choices pinned to the
-foot, in **one row** rather than a stack — a phone has width to spare where it has no height;
-and the box of recent moves in the middle at a fixed three lines, the one tenant that gives
-way, line by line and then entirely, when a wrapped prompt or a doubled font leaves it less.
-Nothing outside the slots scrolls, so a button cannot be pushed off the rail; inside them,
-the prompt scrolls within its own room and a King's fourteen chips within theirs, and the
-foot may never take the prompt's first line. `RailFitsTest` measures both choices *clipped*
-on the test phone, on a 20:9 one, and at a doubled font, which is the failure exactly.
+two columns over a foot now (`ControlPanel.kt`): the choices pinned to the foot, in **one row**
+rather than a stack — a phone has width to spare where it has no height; and above them one
+block that fills the rest, with **the card being decided about on the left, as tall as the
+block** — the web table showed the drawn card large in its panel, and the felt's in-play slot
+says where a card is rather than what — and beside it the prompt, keeping two lines' room
+whether or not the rule under it is still being said, with the box of recent moves under it
+taking whatever the prompt leaves. Nothing is a fixed depth that could leave a strip of rail
+empty above the buttons, and nothing moves between one move and the next on the same phone,
+which is what a fixed box is for. Nothing outside the foot scrolls, so a button cannot be
+pushed off the rail; the prompt scrolls within its own room and a King's fourteen chips within
+theirs, and the foot may never take the prompt's first line. `RailFitsTest` measures both
+choices *clipped* on the test phone, on a 20:9 one, and at a doubled font, which is the
+failure exactly, and that the card is drawn beside the prompt.
 
 **The jump.** The felt took what the control panel left
 
