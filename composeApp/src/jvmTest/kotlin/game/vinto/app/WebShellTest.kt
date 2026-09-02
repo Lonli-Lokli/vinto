@@ -439,4 +439,43 @@ class WebShellTest {
             "the repair in index.html builds its paths from a different package than packageOfResClass ($pkg)",
         )
     }
+
+    /**
+     * The page says whose game this is, and links to it, without running a byte of wasm.
+     *
+     * This is the one frame two visitors ever see — a crawler that will not execute four
+     * megabytes of WebAssembly, and somebody whose browser has no WasmGC — and both of them
+     * are exactly the readers who cannot be shown the app's own credit line. So the shell
+     * carries it too: the word, the address, and a real anchor rather than a sentence about
+     * one, because a link a person cannot follow is a citation and not an attribution.
+     *
+     * The wordmark is separately the way to this app's page on the studio's site, which is
+     * the closest thing this canvas-only client has to a logo somebody can click.
+     */
+    @Test
+    fun theShellSaysThisIsAnUnofficialAppAndLinksToTheGame() {
+        val shell = withoutComments(read("index.html"))
+
+        assertTrue(
+            shell.contains("unofficial", ignoreCase = true),
+            "the pre-boot content does not say the app is unofficial",
+        )
+        assertTrue(
+            shell.contains("""<a href="${Pages.OFFICIAL}">"""),
+            "the pre-boot content has no link to the game itself (${Pages.OFFICIAL})",
+        )
+        assertTrue(
+            shell.contains("""<h1><a href="${Pages.THIS_APP}">"""),
+            "the wordmark does not open this app's own page (${Pages.THIS_APP})",
+        )
+
+        // And a machine reading the page is told the same thing, in the vocabulary it has for
+        // it: a rich result that presents this as the original would be the same claim the
+        // copy is careful not to make.
+        val json = Regex("""<script type="application/ld\+json">(.*?)</script>""", RegexOption.DOT_MATCHES_ALL)
+            .find(shell)
+            ?.groupValues
+            ?.get(1)
+        assertTrue(json != null && json.contains(Pages.OFFICIAL), "the structured data does not name the original")
+    }
 }

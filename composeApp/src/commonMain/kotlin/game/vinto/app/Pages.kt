@@ -26,4 +26,17 @@ object Pages {
 
     /** Where somebody sent the game ends up: the game itself, not the studio. */
     const val GAME: String = "https://$INVITE_HOST"
+
+    /**
+     * The card game itself, and the people who made it.
+     *
+     * **The one address here that is deliberately not ours.** Vinto is somebody else's game;
+     * this repository is an unofficial client for it, and every screen that says so links
+     * here. `SettingsLinksTest` knows about the exception and asserts it by name, so nothing
+     * else can quietly slip an outside host into this file.
+     */
+    const val OFFICIAL: String = "https://vinto.game"
+
+    /** This app's own page on the studio's site: what it is, and what else is on the shelf. */
+    const val THIS_APP: String = "$STUDIO/games/vinto"
 }

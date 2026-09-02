@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +14,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -44,6 +47,8 @@ import game.vinto.app.art.home_settings
 import game.vinto.app.art.home_solo_title
 import game.vinto.app.art.home_tagline
 import game.vinto.app.art.home_teach
+import game.vinto.app.art.home_unofficial
+import game.vinto.app.art.home_unofficial_action
 import game.vinto.app.art.home_version
 import game.vinto.app.art.stats_best
 import game.vinto.app.art.stats_played
@@ -226,7 +231,41 @@ private fun Hero() {
             color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
             textAlign = TextAlign.Center,
         )
+
+        Unofficial()
     }
+}
+
+/**
+ * Whose game this is, said on the first screen rather than in a panel behind two taps.
+ *
+ * VINTO is somebody else's card game and this is an unofficial app for it. That is a fact a
+ * player is entitled to *before* they sit down, not one to be discovered in an About list, so
+ * it goes under the wordmark on every client's first screen — Android, iOS, the browser and
+ * the desktop window all draw this same line.
+ *
+ * The whole line is the tap target rather than the address inside it: picking the address out
+ * of the sentence means matching a substring of translated copy, which is the same mistake as
+ * identifying a button by its English label. And the address is *in* the sentence on purpose,
+ * so where a platform has nothing that opens a link — a locked-down desktop — the line still
+ * carries the entire answer and there is nothing to report as failed.
+ */
+@Composable
+private fun Unofficial() {
+    val open = stringResource(Res.string.home_unofficial_action)
+    Text(
+        text = stringResource(Res.string.home_unofficial),
+        fontSize = FootnoteSize,
+        lineHeight = CreditLine,
+        color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            // Outside the height, so the thumb gets 44dp even though the words are 12sp.
+            .clickable(onClickLabel = open) { openUrl(Pages.OFFICIAL) }
+            .heightIn(min = TapMin)
+            .wrapContentHeight(Alignment.CenterVertically)
+            .padding(horizontal = Tight),
+    )
 }
 
 /**
@@ -316,6 +355,12 @@ private val LabelSize = 12.sp
 private const val Quiet = 0.75f
 
 private val FootnoteSize = 12.sp
+
+/** Two lines of credit under the wordmark, set closer than the default for 12sp. */
+private val CreditLine = 16.sp
+
+/** What a thumb is owed, the same 44dp `TouchTargetTest` holds the table to. */
+private val TapMin = 44.dp
 
 /**
  * The four numbers this device remembers, on one line.

@@ -33,6 +33,14 @@
     <string name="home_teach">How to play</string>
     <string name="home_settings">Settings</string>
     <string name="home_version">v%1$s</string>
+    <!-- The credit under the wordmark, on the first screen of every client.
+
+         VINTO is not our game. This app is an unofficial way to play it, the line says so
+         before anything else on the screen does, and tapping it opens the game it belongs to.
+         The address is inside the sentence on purpose: where a platform has nothing that
+         opens a link, the words are still the whole answer. -->
+    <string name="home_unofficial">An unofficial app for the card game VINTO. The original is at vinto.game</string>
+    <string name="home_unofficial_action">Open vinto.game, the official home of the card game</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Play online</string>
@@ -142,6 +150,12 @@
     <string name="settings_terms_detail">The short version of what you can expect, and what is expected of you.</string>
     <string name="settings_contact">Get in touch</string>
     <string name="settings_contact_detail">A bug, an idea, or a game that went wrong.</string>
+    <!-- The two rows that say whose game this is. First the game, then the app: the order is
+         the point, and it is the same order the home screen says it in. -->
+    <string name="settings_original">The original game</string>
+    <string name="settings_original_detail">VINTO is somebody else's card game, and this is an unofficial app for it. The game, its rules and the people who made it are at vinto.game.</string>
+    <string name="settings_studio">About this app</string>
+    <string name="settings_studio_detail">Who made this app, what else is on the shelf, and how it is put together.</string>
     <string name="settings_open">Open</string>
     <string name="settings_link_failed">Nothing on this device opened that. The address is %1$s</string>
 

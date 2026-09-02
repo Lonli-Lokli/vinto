@@ -26,6 +26,12 @@
   See @docs/game-engine/SCENARIOS.md for worked examples and edge cases
 
   ## Project Overview
+  **This is an unofficial client for somebody else's game.** VINTO is a card game designed
+  and published by other people; the official game is at <https://vinto.game>, and nothing
+  here is affiliated with or endorsed by them. Every client says so on its first screen and
+  links there (`HomeScreen.kt`, `Pages.OFFICIAL`, held by `AttributionTest`) — treat that
+  line, and the two rows in Settings under About, as load-bearing rather than decoration.
+
   A strategic multiplayer card game. The rules live **once**, in Kotlin, as a pure reducer.
   They used to live twice; what survives that is a frozen replay corpus carrying the state
   hashes the other implementation computed.

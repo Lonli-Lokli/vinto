@@ -7,9 +7,22 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A strategic four-player card game built with **Kotlin Multiplatform**, **Compose Multiplatform**
-and a **pure reducer**. One rule set runs on Android, iOS, the web and inside a Cloudflare
-Durable Object — the same `GameEngine.reduce`, not a client copy of a server's rules.
+An **unofficial** client for the card game **VINTO**, built with **Kotlin Multiplatform**,
+**Compose Multiplatform** and a **pure reducer**. One rule set runs on Android, iOS, the web
+and inside a Cloudflare Durable Object — the same `GameEngine.reduce`, not a client copy of a
+server's rules.
+
+> ### Whose game this is
+>
+> **VINTO is not ours.** It is a card game designed and published by other people, and this
+> repository is an unofficial app for playing it — written out of admiration, with no
+> affiliation to or endorsement from its creators.
+>
+> **The original is at [vinto.game](https://vinto.game)** — the rules, the printed deck, and
+> the people who made it. If you enjoy the game here, that is where to go next.
+>
+> Every client says so on its own first screen, and links there; `AttributionTest` fails if a
+> refactor loses the line.
 
 ## Features
 

@@ -145,6 +145,7 @@
       "playMode": ["SinglePlayer", "MultiPlayer"],
       "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 2, "maxValue": 4 },
       "gamePlatform": ["Web browser", "Android", "iOS"],
+      "isBasedOn": { "@type": "Game", "name": "VINTO", "url": "https://vinto.game" },
       "applicationCategory": "GameApplication",
       "operatingSystem": "Any",
       "inLanguage": "en",
@@ -195,6 +196,14 @@
         }
 
         #loading p { margin: 0; max-width: 34rem; }
+
+        /* The wordmark is the way to the studio's page for this app, and the credit is the
+           way to the game itself. Gold rather than a browser's blue, because this is the one
+           frame of the site a person sees before Compose paints over it, and a default link
+           colour on baize reads as a broken page rather than a considered one. */
+        #loading a { color: #F2DFA6; text-decoration-color: rgba(242, 223, 166, 0.5); }
+        #loading .credit { font-size: 0.85rem; color: #7f8792; }
+        #loading .credit a { color: #9aa3ad; }
     </style>
 </head>
 <body>
@@ -212,10 +221,20 @@
       no human will ever be shown.
     -->
     <div id="loading">
-        <h1>VINTO</h1>
+        <h1><a href="https://kupalinka.app/games/vinto">VINTO</a></h1>
         <p>
             A card game where you hold less and know more. Draw, swap, and play action cards to
             peek, trade and steal — then call Vinto when you think you are lowest.
+        </p>
+        <!--
+          Whose game this is, in the one frame a crawler and a browser without WasmGC will
+          ever read. The app says the same thing under its own wordmark a moment later
+          (`HomeScreen.kt`, `AttributionTest`); this is the half of it that survives the game
+          never loading, and `WebShellTest` fails if either the word or the address goes.
+        -->
+        <p class="credit">
+            An unofficial app for the card game VINTO. The original — its rules, its deck and
+            the people who made it — is at <a href="https://vinto.game">vinto.game</a>.
         </p>
         <p><small>Dealing…</small></p>
         <noscript>

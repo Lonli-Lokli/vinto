@@ -58,6 +58,8 @@ import game.vinto.app.art.settings_motion_detail
 import game.vinto.app.art.settings_off
 import game.vinto.app.art.settings_on
 import game.vinto.app.art.settings_open
+import game.vinto.app.art.settings_original
+import game.vinto.app.art.settings_original_detail
 import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_privacy
@@ -72,6 +74,8 @@ import game.vinto.app.art.settings_share_detail
 import game.vinto.app.art.settings_share_subject
 import game.vinto.app.art.settings_sound
 import game.vinto.app.art.settings_sound_detail
+import game.vinto.app.art.settings_studio
+import game.vinto.app.art.settings_studio_detail
 import game.vinto.app.art.settings_terms
 import game.vinto.app.art.settings_terms_detail
 import game.vinto.app.art.settings_theme
@@ -484,6 +488,23 @@ private fun About() {
         title = stringResource(Res.string.settings_contact),
         detail = stringResource(Res.string.settings_contact_detail),
         url = Pages.CONTACT,
+        onFailed = { failed.value = it },
+    )
+
+    // Whose game this is, and whose app. The home screen already says the first of these
+    // under the wordmark; this is where somebody who went looking for it finds the address
+    // itself, beside the studio's own page for the app. The order is the honest one: the game
+    // that existed first, then the client somebody wrote for it.
+    LinkRow(
+        title = stringResource(Res.string.settings_original),
+        detail = stringResource(Res.string.settings_original_detail),
+        url = Pages.OFFICIAL,
+        onFailed = { failed.value = it },
+    )
+    LinkRow(
+        title = stringResource(Res.string.settings_studio),
+        detail = stringResource(Res.string.settings_studio_detail),
+        url = Pages.THIS_APP,
         onFailed = { failed.value = it },
     )
 

@@ -36,9 +36,16 @@ class SettingsLinksTest {
         settings()
 
         // Matched on the words the panel shows. Only `GameButton` sets a content description,
-        // and all three link buttons say "Open" — the panel around each is what says which
-        // page it opens, so that is what a person reads and what this asserts.
-        listOf("Privacy", "Terms of use", "Get in touch", "Tell somebody").forEach {
+        // and every link button says "Open" — the panel around each is what says which page it
+        // opens, so that is what a person reads and what this asserts.
+        listOf(
+            "Privacy",
+            "Terms of use",
+            "Get in touch",
+            "The original game",
+            "About this app",
+            "Tell somebody",
+        ).forEach {
             onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
     }
@@ -71,6 +78,12 @@ class SettingsLinksTest {
      * goes wrong: a relative path (which resolves against whatever page is showing — the bug
      * that broke every invitation link), plain `http`, and a typo'd host that quietly belongs
      * to somebody else.
+     *
+     * **`Pages.OFFICIAL` is excluded by name rather than by loosening the rule**, because it
+     * is the one link in this app that is deliberately somebody else's: the card game this is
+     * an unofficial client for. Naming it here means the next outside host somebody adds has
+     * to be argued for in this test rather than slipped past it — see `AttributionTest`, which
+     * pins what that address is.
      */
     @Test
     fun thePagesAreAbsoluteAndOnAHostWeOwn() {
@@ -79,6 +92,7 @@ class SettingsLinksTest {
             "terms" to Pages.TERMS,
             "contact" to Pages.CONTACT,
             "the game" to Pages.GAME,
+            "this app's page" to Pages.THIS_APP,
         )
         pages.forEach { (what, url) ->
             assertTrue(url.startsWith("https://"), "$what is not absolute https: $url")
@@ -87,6 +101,11 @@ class SettingsLinksTest {
                 "$what points somewhere we do not own: $url",
             )
         }
+
+        assertTrue(
+            Pages.OFFICIAL.startsWith("https://"),
+            "the original game is not absolute https: ${Pages.OFFICIAL}",
+        )
     }
 
     private fun ComposeUiTest.settings() {
