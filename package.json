@@ -1,0 +1,41 @@
+{
+  "name": "vinto-release",
+  "private": true,
+  "type": "module",
+  "description": "Release tooling that runs from the repo ROOT: zdymak (store screenshots, App Preview, Play feature graphic) and vydanne (App Store Connect / Google Play listing, declarations, compliance, build upload). Root, not a subfolder — both tools resolve their config and every relative path inside it against the working directory, so `npm run` from anywhere else silently reads the wrong paths. The COMPLETE surface is wired on purpose: an ad-hoc `npx vydanne` is how two commands stayed broken for months elsewhere in the portfolio. The Gradle build is unaffected; this file adds nothing to it.",
+  "scripts": {
+    "store:auth": "vydanne auth",
+    "store:inspect": "vydanne inspect",
+    "store:diff": "vydanne diff",
+    "store:preflight": "vydanne preflight",
+    "store:prepare": "vydanne prepare",
+    "store:fill": "vydanne fill",
+    "store:previews": "vydanne previews",
+    "store:locales": "vydanne locales",
+    "store:appinfo": "vydanne appinfo",
+    "store:age-rating": "vydanne age-rating",
+    "store:review-contact": "vydanne review-contact",
+    "store:accessibility": "vydanne accessibility",
+    "store:privacy": "vydanne privacy",
+    "store:compliance": "vydanne compliance",
+    "store:prerelease": "vydanne prerelease",
+    "store:push": "vydanne push",
+    "play:inspect": "vydanne inspect --store google",
+    "play:diff": "vydanne diff --store google",
+    "play:preflight": "vydanne preflight --store google",
+    "play:fill": "vydanne fill --store google",
+    "play:internal": "VYDANNE_TRACK=internal vydanne prerelease --store google",
+    "play:closed": "VYDANNE_TRACK=alpha vydanne prerelease --store google",
+    "store-assets": "zdymak build --clean && npm run store-bridge",
+    "store-screenshots": "zdymak screenshots && npm run store-bridge",
+    "store-previews": "zdymak reel",
+    "store-preview": "zdymak reel --only appstore-preview",
+    "store-promo": "zdymak reel --only play-promo",
+    "store-bridge": "vydanne bridge",
+    "store-specs": "zdymak specs"
+  },
+  "devDependencies": {
+    "vydanne": "^0.9.0",
+    "zdymak": "^0.22.0"
+  }
+}

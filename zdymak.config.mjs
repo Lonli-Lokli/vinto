@@ -103,14 +103,35 @@ export default {
 };
 
 /**
- * To make `npx zdymak capture --platform android` work, `MainActivity` needs to read a state
- * extra and open that screen — roughly `intent.getStringExtra("vinto.screen")` mapped to the
- * `Screen` the name picks, beside the `offerOpenedLink` call that already reads a deep link.
- * iOS capture needs the same as a launch argument in `MainViewController`.
+ * `npx zdymak capture` and what it would take — DECIDED 2026-09-02: a **debug-only** handle.
  *
- * It is deliberately not added here, because it is a way to open any screen from outside the app
- * and that is a decision about the shipped build rather than about marketing: debug-only keeps
- * the release surface unchanged and means captures come from a debug build, which is what the
- * store sees; always-on captures the real thing and adds one entry point to it. Neither is
- * obviously right and it is not a call to make silently.
+ * The owner's call on the question this note used to leave open: the state handle goes in the
+ * debug build only, so the release surface is unchanged and the store shots come from a debug
+ * binary. On Android that is a `src/debug` source set reading `intent.getStringExtra`, with a
+ * no-op twin in `src/release` — a build-variant gate rather than an `if`, because an intent extra
+ * is an entry point any app on the phone can use and a runtime check leaves it in the binary. On
+ * iOS a launch argument in `MainViewController` needs no variant: only whoever launches the
+ * process can set one, and `Platform.isDebugBinary` guards it anyway.
+ *
+ * **It is more than the handle, and that is the part worth knowing before starting.** Two of the
+ * five scenes are a screen name and nothing else — `home` is `Screen.Home`, `teach` is
+ * `Screen.Teaching`, both reachable by opening the app. The other three are not:
+ *
+ *   table   needs a LocalGame dealt from a pinned seed and advanced to a readable middle — cards
+ *           on the discard, a peek spent, somebody's hand half known.
+ *   score   needs a round played out, which is the end of that same staged game rather than a
+ *           screen you can jump to.
+ *   lobby   needs a room, and a room is the network. Either a staged RemoteRoom that never opens
+ *           a socket, or the shot stays hand-taken.
+ *
+ * Palon solved exactly this with a `MarketingState` that builds the board at a chosen point from
+ * a fixed seed (`--arg -state --states fresh,building,duel,solved`), which is the shape to copy:
+ * the handle names a STATE the app can construct deterministically, not a screen it can navigate
+ * to. Until that exists the scene ids below are names for shots taken by hand, and the
+ * `capture-*` scripts are deliberately absent from `package.json` rather than present and silently
+ * photographing a home screen five times.
+ *
+ * **Do not run the media pipeline yet.** The four seat portraits are the ninja-turtle cast — see
+ * the note at the foot of `vydanne.config.mjs` — and every screenshot of a table, plus the App
+ * Preview, would bake them in.
  */

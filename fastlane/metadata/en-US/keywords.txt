@@ -1,0 +1,1 @@
+deduction,bluff,multiplayer,online,party,tabletop,strategy,offline,noads,solo,bot,deck,rank,hand
