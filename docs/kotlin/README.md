@@ -1673,6 +1673,20 @@ system font cannot push a button off the bottom. Measured on the device across f
 states — a toss-in prompt, a two-line prompt with a two-line log, bots playing, a turn, a drawn
 card — the felt's bottom edge stayed at the same pixel in every one.
 
+**And the rail's own boxes are fixed too, since 2026-09-02.** The scrolling column above was
+the design's last resort and had become its first: on a phone taller than the one the rail was
+drawn on, a prompt, a four-line log and two stacked buttons overran a 270 dp rail by forty, and
+"Leave them" sat half under the edge of the screen in three screenshots running. The rail is
+three slots now, laid out by `RailSlots` in `ControlPanel.kt`: the prompt at the head, keeping
+two lines' room whether or not the rule under it is still being said; the choices pinned to the
+foot, in **one row** rather than a stack — a phone has width to spare where it has no height;
+and the box of recent moves in the middle at a fixed three lines, the one tenant that gives
+way, line by line and then entirely, when a wrapped prompt or a doubled font leaves it less.
+Nothing outside the slots scrolls, so a button cannot be pushed off the rail; inside them,
+the prompt scrolls within its own room and a King's fourteen chips within theirs, and the
+foot may never take the prompt's first line. `RailFitsTest` measures both choices *clipped*
+on the test phone, on a 20:9 one, and at a doubled font, which is the failure exactly.
+
 **The jump.** The felt took what the control panel left
 
 ## 6h. Words, and where they live

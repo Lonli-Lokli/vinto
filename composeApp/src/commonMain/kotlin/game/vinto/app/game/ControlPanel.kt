@@ -1,6 +1,8 @@
 package game.vinto.app.game
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,12 +35,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.table_sending
@@ -70,8 +80,9 @@ private val Half = 4.dp
 private val LogCorner = 6.dp
 
 /** The well's depth in lines, its line pitch, and how much darker than the rail it sits. */
-private const val LogLines = 4
+private const val LogLines = 3
 private const val LogLineFactor = 1.4f
+private const val PromptLineFactor = 1.35f
 private const val LogWell = 0.45f
 
 /**
@@ -141,79 +152,177 @@ fun ControlPanel(
             },
         color = Rail.fill,
     ) {
-        // The Surface's minimum has to reach the content for the centring below to have room
-        // to work in; a wrapped Column would simply be as tall as its own children.
-        // The rail is a fixed height, so this is what adapts. Centred, so a short panel —
-        // "Raph is playing", and nothing to do about it — sits in the middle rather than
-        // clinging to the felt above a void, and a full one fills the space either way, so the
-        // buttons stay where a thumb left them.
+        // Three slots, because the rail is a fixed height and every box in it should be a
+        // fixed size too — a table whose panels change shape between moves is a table the eye
+        // has to find again after each one. The prompt is at the top, under the felt, and
+        // keeps two lines' room whether or not the rule under it is still being said. The
+        // choices are pinned to the foot, where a thumb rests, and share one row rather than
+        // stacking: vertical room is the scarce thing on a phone and horizontal room is not.
+        // Never scrolled, never pushed — a rail that scrolled to reach its second button had
+        // that button half under the edge of the screen on every phone taller than the one
+        // it was drawn on, and "Leave them" is not a control a player should have to go
+        // looking for. The box of recent moves takes the middle at a fixed depth, and is the
+        // one thing that gives way when a wrapped prompt or a large font leaves it less than
+        // that: three moves ago matters less than reaching the move now.
         //
-        // Scrolling is the last resort rather than the design: the worst case is a King's
-        // fourteen ranks, which fit because they are a compact grid and because the box of
-        // recent moves stands aside for them (below). It exists so that a large system font
-        // cannot push a button off the bottom of the rail.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(PanelPad),
-            verticalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterVertically),
-        ) {
-            Heading(table = table, teaching = state.teaching)
+        // Scrolling survives only inside the slots, as the last resort for a doubled system
+        // font: the prompt scrolls within its own room, and a King's fourteen chips within
+        // theirs, and neither can push the buttons off the rail.
+        val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
+        val crowded = table.ranks.isNotEmpty() || rows >= Crowded
+        val recent = state.recent.filterNot { table.prompt.echoedBy(it) }
+        val promptLine = with(LocalDensity.current) { (PromptSize * PromptLineFactor).toDp() }
+        val headRoom = promptLine + with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
 
-            Answer(state)
-
-            // The one thing that gives way when the rail is crowded, and the rail is a fixed
-            // height, so something has to. Naming a rank asks for fourteen chips and two
-            // buttons; a drawn action card asks for three full-width ones. Either way what
-            // happened three moves ago matters less than being able to reach them — and the
-            // heading has already said what the moment is.
-            // The log is what happened *before* now. The prompt above is now, and the two
-            // are built from the same narration, so the top line of the log was routinely the
+        RailSlots(
+            modifier = Modifier.fillMaxWidth().padding(PanelPad),
+            promptLine = promptLine,
+            head = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = headRoom)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(Gap),
+                ) {
+                    Heading(table = table, teaching = state.teaching)
+                    Answer(state)
+                }
+            },
+            // The log is what happened *before* now. The prompt above is now, and the two are
+            // built from the same narration, so the top line of the log was routinely the
             // heading again in smaller type — "You drew the A", under "You drew the A".
-            // Counted in full-width rows rather than in buttons, because a stakes move
-            // brings a rule and the word "or" down with it — which is what pushed "Call
-            // Vinto" off the bottom of the rail while the button count still said two.
-            val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
-            val crowded = table.ranks.isNotEmpty() || rows >= Crowded
-            if (!crowded) RecentActions(state.recent.filterNot { table.prompt.echoedBy(it) })
-
-            RankGrid(table.ranks, stage, onMove)
-
-            // A stakes move is set below a rule, as the web app sets Call Vinto below an
-            // "or": it is not the next step in what you were doing, it is a different thing
-            // to do, and the line is what stops a thumb finding it by accident.
-            val (ordinary, stakes) = table.choices.partition { it.tone != Tone.STAKES }
-
-            // Side by side under a rank grid, stacked everywhere else. Fourteen chips, a
-            // heading and two full-width buttons is more than the rail has: the last button
-            // was drawn six points tall against the bottom of the screen, which is a control
-            // that exists and cannot be pressed.
-            if (table.ranks.isNotEmpty() && ordinary.size > 1) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Half),
+            // Counted in full-width rows rather than in buttons, because a stakes move brings
+            // a rule and the word "or" down with it.
+            middle = { if (!crowded) RecentActions(recent) },
+            choices = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    ordinary.forEach { choice ->
-                        ChoiceButton(choice, onMove, Modifier.weight(1f))
-                    }
+                    RankGrid(table.ranks, stage, onMove)
+                    Choices(table, onMove)
                 }
-            } else {
-                ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
-            }
+            },
+        )
+    }
+}
 
-            if (stakes.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Gap),
-                ) {
-                    Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
-                    Text("or", fontSize = DetailSize, color = Rail.inkDim)
-                    Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
+/**
+ * The rail's three tenants, laid out by the rule above: choices at the foot, the prompt at
+ * the head, and the middle given exactly what is left. A rail with nothing to choose centres
+ * its words instead — "Raph is playing", and nothing to do about it, should sit in the middle
+ * rather than cling to the felt above a void.
+ */
+@Composable
+private fun RailSlots(
+    modifier: Modifier,
+    /** One line of the prompt, which the choices may never take from it. */
+    promptLine: Dp,
+    head: @Composable () -> Unit,
+    middle: @Composable () -> Unit,
+    choices: @Composable () -> Unit,
+) {
+    Layout(
+        modifier = modifier,
+        content = {
+            Box(modifier = Modifier.layoutId(Slot.HEAD)) { head() }
+            Box(modifier = Modifier.layoutId(Slot.MIDDLE)) { middle() }
+            Box(modifier = Modifier.layoutId(Slot.CHOICES)) { choices() }
+        },
+        measurePolicy = railPolicy(Gap, promptLine),
+    )
+}
+
+/**
+ * Measured in the order they are entitled to the room: the choices take what they need, short
+ * of the prompt's first line — a question the player cannot see is not one they can answer,
+ * whatever they can press — then the prompt takes what it needs of the rest, and the middle
+ * gets the remainder.
+ */
+private fun railPolicy(gapBetween: Dp, promptLine: Dp) = MeasurePolicy { measurables, constraints ->
+    val gap = gapBetween.roundToPx()
+    val room = RailRoom(constraints, gap)
+
+    val foot = measurables.slot(Slot.CHOICES).measure(room.leaving(promptLine.roundToPx().plusGap(gap)))
+    val head = measurables.slot(Slot.HEAD).measure(room.leaving(foot.height.plusGap(gap)))
+    val middle = measurables.slot(Slot.MIDDLE)
+        .measure(room.leaving(foot.height.plusGap(gap) + head.height.plusGap(gap)))
+
+    val between = if (head.height > 0 && middle.height > 0) gap else 0
+    val words = head.height + between + middle.height
+    val used = words + (if (words > 0 && foot.height > 0) gap else 0) + foot.height
+    val railHeight = if (room.bounded) room.height else used
+
+    layout(room.width, railHeight) {
+        // Words at the head when there is something to press at the foot; centred when there
+        // is not.
+        val top = if (foot.height > 0) 0 else ((railHeight - words) / 2).coerceAtLeast(0)
+        head.placeRelative(0, top)
+        middle.placeRelative(0, top + head.height + between)
+        foot.placeRelative(0, railHeight - foot.height)
+    }
+}
+
+/** The rail's height, and what is left of it once some of it is spoken for. */
+private class RailRoom(constraints: Constraints, private val gap: Int) {
+    val width = constraints.maxWidth
+    val bounded = constraints.hasBoundedHeight
+    val height = constraints.maxHeight
+    private val loose = constraints.copy(minWidth = width, minHeight = 0)
+
+    fun leaving(taken: Int): Constraints =
+        if (bounded) loose.copy(maxHeight = (height - taken).coerceAtLeast(0)) else loose
+}
+
+/** A slot's height plus the gap that follows it — or nothing, for a slot with nothing in it. */
+private fun Int.plusGap(gap: Int) = if (this > 0) this + gap else 0
+
+private fun List<Measurable>.slot(slot: Slot) = first { it.layoutId == slot }
+
+private enum class Slot { HEAD, MIDDLE, CHOICES }
+
+/** What the player can do: the ordinary moves, and a stakes move set apart under a rule. */
+@Composable
+private fun Choices(table: Table, onMove: (Move) -> Unit) {
+    // A stakes move is set below a rule, as the web app sets Call Vinto below an "or": it is
+    // not the next step in what you were doing, it is a different thing to do, and the line
+    // is what stops a thumb finding it by accident.
+    val (ordinary, stakes) = table.choices.partition { it.tone != Tone.STAKES }
+    if (ordinary.isEmpty() && stakes.isEmpty()) return
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Gap),
+    ) {
+        // Side by side, sharing the width: two or three choices in one row cost the rail one
+        // button's height rather than two or three, and a phone has width to spare where it
+        // has no height. A lone choice keeps the whole row, so the one thing to press is the
+        // biggest thing to press.
+        if (ordinary.size > 1) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Half),
+            ) {
+                ordinary.forEach { choice ->
+                    ChoiceButton(choice, onMove, Modifier.weight(1f))
                 }
-                stakes.forEach { choice -> ChoiceButton(choice, onMove) }
             }
+        } else {
+            ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
+        }
+
+        if (stakes.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Gap),
+            ) {
+                Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
+                Text("or", fontSize = DetailSize, color = Rail.inkDim)
+                Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
+            }
+            stakes.forEach { choice -> ChoiceButton(choice, onMove) }
         }
     }
 }
@@ -339,29 +448,41 @@ private fun RecentActions(recent: List<Say>) {
         if (rendered.isNotEmpty()) listState.animateScrollToItem(rendered.lastIndex)
     }
 
-    Surface(
-        shape = RoundedCornerShape(LogCorner),
-        color = Rail.line.copy(alpha = LogWell),
-        modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(lineHeight * LogLines + Gap * 2)
-                .padding(horizontal = Gap, vertical = Gap),
+    // As deep as the rail can afford, up to the well's full depth, and absent below one line:
+    // the rail hands this box what its prompt and its buttons leave, and a log with no room
+    // for a line is a strip of well with nothing readable in it.
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val lines = logDepth(room = maxHeight, lineHeight = lineHeight)
+        if (lines < 1) return@BoxWithConstraints
+
+        Surface(
+            shape = RoundedCornerShape(LogCorner),
+            color = Rail.line.copy(alpha = LogWell),
+            modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
         ) {
-            itemsIndexed(rendered) { index, line ->
-                Text(
-                    text = line,
-                    fontSize = DetailSize,
-                    lineHeight = DetailSize * LogLineFactor,
-                    color = if (index == rendered.lastIndex) Rail.ink else Rail.inkDim,
-                )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(lineHeight * lines + Gap * 2)
+                    .padding(horizontal = Gap, vertical = Gap),
+            ) {
+                itemsIndexed(rendered) { index, line ->
+                    Text(
+                        text = line,
+                        fontSize = DetailSize,
+                        lineHeight = DetailSize * LogLineFactor,
+                        color = if (index == rendered.lastIndex) Rail.ink else Rail.inkDim,
+                    )
+                }
             }
         }
     }
 }
+
+/** How many lines of log fit in [room], up to the well's full depth; none when less than one. */
+private fun logDepth(room: Dp, lineHeight: Dp): Int =
+    if (room.isFinite) minOf(LogLines, ((room - Gap * 2) / lineHeight).toInt()) else LogLines
 
 @Composable
 private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modifier = Modifier) {
