@@ -266,15 +266,49 @@ let current = JSON.stringify(played.state);
 let clientActions = 0;
 let botActions = 0;
 let readyActions = 0;
+let leaderChoices = 0;
 
 const collectBots = (outcome) => {
   botActions += outcome.events.filter((e) => e.byBot).length;
   return outcome;
 };
 
+// The last state in which the round was still being played. The bots can now end a round
+// inside these steps, and once it is scored every hand is turned over by rule — so the
+// redaction checks below read this, not wherever the loop stopped.
+let lastPlaying = current;
+
 for (let step = 0; step < 120; step++) {
   const room = parse(current);
   if (room.game.phase === 'scoring') break;
+  lastPlaying = current;
+
+  // 0. A coalition leader the seated players owe.
+  //
+  // A bot's Vinto call with a person in the coalition holds *every* bot move — a toss-in
+  // window included — until that person names the leader: `BotRunner.nextAction` puts the
+  // choice ahead of everything else, and the room's only other way out is its twenty-second
+  // leader alarm, which this harness never fires. A client shows a prompt at that moment;
+  // the harness answers it the simplest way a person could, naming the first seated
+  // coalition member. Left out, a bot that finds a hand worth calling on inside the 120
+  // steps stops the table dead and the failure surfaces as a draw refused in a window.
+  if (room.game.vintoCallerId && !room.game.coalitionLeaderId) {
+    const member = room.seats.find(
+      (s) => s.tokenHash && s.playerId !== room.game.vintoCallerId,
+    );
+    if (member) {
+      try {
+        current = JSON.stringify(collectBots(act(current, member.index, {
+          type: 'SET_COALITION_LEADER', payload: { leaderId: member.playerId },
+        })).state);
+        leaderChoices++;
+        continue;
+      } catch (failure) {
+        check(`step ${step}: naming the coalition leader`, false, failure.message);
+        break;
+      }
+    }
+  }
 
   // 1. An open window that a seated player has not answered.
   const tossIn = room.game.activeTossIn;
@@ -342,6 +376,9 @@ for (let step = 0; step < 120; step++) {
 }
 
 check('the toss-in windows were answered by the seated players', readyActions > 0, `${readyActions}`);
+if (leaderChoices > 0) {
+  check('a bot\'s Vinto call was answered by a person naming the leader', leaderChoices === 1, `${leaderChoices}`);
+}
 
 const finalRoom = parse(current);
 check('the client got to play several turns', clientActions >= 4, `${clientActions} actions`);
@@ -373,20 +410,21 @@ check('resync returns only what was missed', sync.events.length === 3, `${sync.e
 // fellow coalition members, who pool their cards by design. Note what is *not* on that list:
 // `projectView` hides a drawn card from everyone but the player who drew it, which is
 // stricter than the written rule that a card drawn from the deck is revealed publicly.
-const midGame = parse(viewForSeat(current, 0, clock)).view;
+const playing = parse(lastPlaying);
+const midGame = parse(viewForSeat(lastPlaying, 0, clock)).view;
 const viewerId = midGame.viewerId;
-const callerId = finalRoom.game.vintoCallerId;
+const callerId = playing.game.vintoCallerId;
 const inCoalition = callerId !== null && viewerId !== callerId;
 
 const permitted = new Set([
-  ...finalRoom.game.players.find((p) => p.id === viewerId).cards.map((c) => c.id),
-  ...finalRoom.game.discardPile.map((c) => c.id),
+  ...playing.game.players.find((p) => p.id === viewerId).cards.map((c) => c.id),
+  ...playing.game.discardPile.map((c) => c.id),
 ]);
-if (midGame.pendingAction?.playerId === viewerId && finalRoom.game.pendingAction) {
-  permitted.add(finalRoom.game.pendingAction.card.id);
+if (midGame.pendingAction?.playerId === viewerId && playing.game.pendingAction) {
+  permitted.add(playing.game.pendingAction.card.id);
 }
 if (inCoalition) {
-  for (const player of finalRoom.game.players) {
+  for (const player of playing.game.players) {
     if (player.id !== callerId) player.cards.forEach((c) => permitted.add(c.id));
   }
 }
@@ -402,9 +440,9 @@ check(
 // This is what makes calling it a commitment, and it is the one leak that would decide games.
 if (callerId !== null && viewerId !== callerId) {
   const callersCards = new Set(
-    finalRoom.game.players.find((p) => p.id === callerId).cards.map((c) => c.id),
+    playing.game.players.find((p) => p.id === callerId).cards.map((c) => c.id),
   );
-  const discarded = new Set(finalRoom.game.discardPile.map((c) => c.id));
+  const discarded = new Set(playing.game.discardPile.map((c) => c.id));
   const callerLeak = [...visibleIn(midGame)].filter(
     (id) => callersCards.has(id) && !discarded.has(id),
   );
@@ -415,6 +453,21 @@ if (callerId !== null && viewerId !== callerId) {
   );
 } else {
   console.log('  skip  no Vinto was called in this run, so the caller rule was not exercised');
+}
+
+// And the other half of that rule: the moment the round is scored, nothing is hidden from
+// anybody — the hands are turned over and compared, which is what the whole round was for.
+if (finalRoom.game.phase === 'scoring') {
+  const everyCard = new Set(finalRoom.game.players.flatMap((p) => p.cards.map((c) => c.id)));
+  const scored = parse(viewForSeat(current, 0, clock)).view;
+  const shown = visibleIn(scored);
+  check(
+    'once the round is scored every hand is turned over',
+    [...everyCard].every((id) => shown.has(id)),
+    `${[...everyCard].filter((id) => !shown.has(id)).length} still hidden`,
+  );
+} else {
+  console.log('  skip  the round did not end in this run, so the scored table was not checked');
 }
 
 console.log(`\n${failures === 0 ? 'REAL ROOM GATE PASS' : `REAL ROOM GATE FAIL (${failures})`}\n`);
