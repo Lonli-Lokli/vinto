@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_in_play
+import game.vinto.app.art.rail_card_action
+import game.vinto.app.art.rail_card_plain
 import game.vinto.app.art.table_sending
 import game.vinto.app.asked
 import game.vinto.app.detailed
@@ -73,6 +75,8 @@ import game.vinto.client.echoedBy
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
+import game.vinto.shapes.Rank
+import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
@@ -92,6 +96,9 @@ private val LogCorner = 6.dp
 
 /** Between two things one actor did in one turn. */
 private const val LogJoin = " ➜ "
+
+/** How many turns the log keeps: this one, and the one it is answering. */
+private const val TurnsKept = 2
 
 /** The well's greatest depth in lines, its line pitch, and how much darker than the rail it sits. */
 private const val LogLines = 8
@@ -180,7 +187,7 @@ fun ControlPanel(
         // scrolls within its own room, and a King's fourteen chips within theirs, and the
         // foot may never take the prompt's first line.
         val crowded = table.ranks.isNotEmpty()
-        val recent = state.recent.filterNot { table.prompt.echoedBy(it) }
+        val recent = lastTurns(state.recent).filterNot { table.prompt.echoedBy(it) }
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
@@ -232,7 +239,7 @@ private fun RailBlock(
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val block = maxHeight
-        val cardScale = inPlay?.let { railCardFor(block, maxWidth) }
+        val cardScale = railCardFor(block, maxWidth)
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(PanelPad),
@@ -243,12 +250,19 @@ private fun RailBlock(
             // *what*; the rail is where the decision is made. Whole or not at all: above a
             // rank grid the block is a line deep, and a sliver of a card is a thing that
             // looks broken.
-            if (inPlay != null && cardScale != null) {
-                CardFace(
-                    card = CardView.Visible(inPlay),
-                    scale = cardScale,
-                    label = stringResource(Res.string.card_in_play, inPlay.rank.serialName),
-                )
+            // The column is kept whether or not there is a card in it: an empty slot where the
+            // card goes, so the words beside it are the same width on every turn. A column that
+            // came and went with the card moved the prompt and the log sideways on every move.
+            if (cardScale != null) {
+                if (inPlay != null) {
+                    CardFace(
+                        card = CardView.Visible(inPlay),
+                        scale = cardScale,
+                        label = stringResource(Res.string.card_in_play, inPlay.rank.serialName),
+                    )
+                } else {
+                    EmptySlot(cardScale, "")
+                }
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -261,7 +275,7 @@ private fun RailBlock(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(Gap),
                 ) {
-                    Heading(table = table, teaching = state.teaching)
+                    Heading(table = table, teaching = state.teaching, shown = inPlay)
                     Answer(state)
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
@@ -340,14 +354,17 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
  *
  * Whoever's it is: a card being decided about is public — the rules have a drawn card
  * revealed — and "Raph is playing" beside the Queen he is aiming says more than the words
- * alone. Before anything is drawn, the card on offer from the pile, when the prompt offers
- * it: the decision then is *about* that card, and it is the one the player is looking for.
+ * alone. In a toss-in window, the card that went down: "the 4 went down" beside a 4 is the
+ * whole question. And before anything is drawn, the card on offer from the pile, when the
+ * prompt offers it: the decision then is *about* that card.
  * It used to be the viewer's own pending card and nothing else, which read as the rail
  * sometimes showing a card and sometimes not, for no reason a player could see.
  */
 private fun cardTheRailIsAbout(view: PlayerView, table: Table): Card? {
     (view.pendingAction?.card as? CardView.Visible)?.let { return it.card }
-    if (table.choices.any { it.label is Label.UseFromPile }) return view.discardTop
+    // A toss-in window is about the card that went down; so is an offer to take it.
+    val aboutThePile = view.activeTossIn != null || table.choices.any { it.label is Label.UseFromPile }
+    if (aboutThePile) return view.discardTop
     return null
 }
 
@@ -383,9 +400,12 @@ private fun ColumnScope.Answer(state: TableState) {
     }
 }
 
-/** The prompt, and — when it is still worth saying — the rule under it. */
+/**
+ * The prompt; under it, the card the rail is showing, explained — its name, its points and
+ * what it does, for whoever's card it is — and, when it is still worth saying, the rule.
+ */
 @Composable
-private fun Heading(table: Table, teaching: Boolean) {
+private fun Heading(table: Table, teaching: Boolean, shown: Card?) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = asked(table.prompt),
@@ -396,9 +416,25 @@ private fun Heading(table: Table, teaching: Boolean) {
             // table is asking, which is the one line that matters.
             modifier = Modifier.semantics { heading() },
         )
-        table.detail?.takeIf { worthSaying(it, teaching) }?.let { detail ->
-            Text(text = detailed(detail), fontSize = DetailSize, color = Rail.inkDim)
+        shown?.let { card ->
+            Text(text = cardLine(card.rank), fontSize = DetailSize, color = Rail.inkDim)
         }
+        // A rule that only repeats what the card line just said is not said twice.
+        table.detail
+            ?.takeIf { !(it is Detail.WhatTheCardDoes && shown != null) }
+            ?.takeIf { worthSaying(it, teaching) }
+            ?.let { detail -> Text(text = detailed(detail), fontSize = DetailSize, color = Rail.inkDim) }
+    }
+}
+
+/** What a card is and does, in one line: the help sheet's row, without the sheet. */
+@Composable
+private fun cardLine(rank: Rank): String {
+    val config = getCardConfig(rank)
+    return if (config.action == null) {
+        stringResource(Res.string.rail_card_plain, config.name, config.value)
+    } else {
+        stringResource(Res.string.rail_card_action, config.name, config.value, config.longDescription)
     }
 }
 
@@ -509,6 +545,25 @@ private fun RecentActions(recent: List<Say>) {
             }
         }
     }
+}
+
+/**
+ * The current turn and the one before it: what was just played, and what the player was
+ * answering when they played it. The rail kept every line of the round, which was a
+ * transcript to scroll rather than a table to read; a turn starts where somebody draws or
+ * takes from the pile, and the deal's own line starts everything over.
+ */
+internal fun lastTurns(recent: List<Say>, turns: Int = TurnsKept): List<Say> {
+    var starts = 0
+    for (index in recent.indices.reversed()) {
+        val entry = recent[index]
+        if (entry is Say.RoundBegins) return recent.subList(index, recent.size)
+        if (entry is Say.Drew || entry is Say.DrewKnown || entry is Say.Took) {
+            starts++
+            if (starts == turns) return recent.subList(index, recent.size)
+        }
+    }
+    return recent
 }
 
 /** One line per run of moves by the same actor, joined by [LogJoin]; the table's own lines stand alone. */

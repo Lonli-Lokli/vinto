@@ -32,9 +32,12 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
 
     return when (action) {
         is GameAction.DrawCard -> {
-            // Only the drawer sees what it was; to everyone else it is a card off the deck.
+            // The rules have a drawn card revealed publicly, and the table draws it face-up
+            // under the deck for every seat (VISIBILITY.md); the log says what the felt shows.
+            // It used to name the rank to the drawer alone, which read as the log missing a
+            // Joker everybody had just watched come off the deck.
             val card = after.pendingAction?.card
-            if (actor == viewerId && card != null) Say.DrewKnown(who, card.rank) else Say.Drew(who)
+            if (card != null) Say.DrewKnown(who, card.rank) else Say.Drew(who)
         }
 
         is GameAction.PlayDiscard -> Say.Took(who, before.discardPile.peekTop()?.rank)

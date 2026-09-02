@@ -133,6 +133,7 @@ import game.vinto.app.art.log_declared
 import game.vinto.app.art.log_draw_they
 import game.vinto.app.art.log_draw_you
 import game.vinto.app.art.log_drew_known
+import game.vinto.app.art.log_drew_known_they
 import game.vinto.app.art.log_left_alone
 import game.vinto.app.art.log_made_draw_they
 import game.vinto.app.art.log_made_draw_you
@@ -195,7 +196,11 @@ fun said(say: Say): String {
     val you = say.who is Speaker.You
 
     return when (say) {
-        is Say.DrewKnown -> stringResource(Res.string.log_drew_known, say.rank.serialName)
+        is Say.DrewKnown -> if (you) {
+            stringResource(Res.string.log_drew_known, say.rank.serialName)
+        } else {
+            stringResource(Res.string.log_drew_known_they, name, say.rank.serialName)
+        }
 
         is Say.Drew -> if (you) {
             stringResource(Res.string.log_draw_you)

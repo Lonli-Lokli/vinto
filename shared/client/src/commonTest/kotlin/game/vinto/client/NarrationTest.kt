@@ -50,25 +50,27 @@ class NarrationTest {
     }
 
     @Test
-    fun theDrawerSeesWhatTheyDrewAndNobodyElseDoes() {
+    fun everybodyIsToldWhatWasDrawnBecauseTheTableShowsIt() {
         val before = playing()
         val action = GameAction.DrawCard(PlayerIdPayload(before.players[before.currentPlayerIndex].id))
         val after = GameEngine.reduce(before, action).state
         val actor = before.players[before.currentPlayerIndex].id
+        val drawn = after.pendingAction?.card?.rank
 
-        // To the person who drew it: the rank, because they are looking at it.
+        // To the person who drew it: the rank, as "you".
         val toDrawer = narrate(action, before, after, viewerId = actor)
         assertIs<Say.DrewKnown>(toDrawer, "the drawer was not told what they drew")
         assertEquals(Speaker.You, toDrawer.who)
-        assertEquals(after.pendingAction?.card?.rank, toDrawer.rank)
+        assertEquals(drawn, toDrawer.rank)
 
-        // To everybody else: a card off the deck, and never which one. This is the same
-        // redaction the view enforces, said in words — and asserting the *type* is what makes
-        // it impossible for a rank to leak back in unnoticed.
+        // And to everybody else, by name: the rules reveal a drawn card publicly and the felt
+        // draws it face-up for every seat, so a log that hid the rank was hiding what the
+        // table had just shown — a Joker off the deck with no line saying so.
         val other = before.players.first { it.id != actor }.id
         val toOthers = narrate(action, before, after, viewerId = other)
-        assertIs<Say.Drew>(toOthers, "somebody who did not draw was told the rank")
+        assertIs<Say.DrewKnown>(toOthers, "somebody watching was not told what came off the deck")
         assertEquals(Speaker.Named(before.players.first { it.id == actor }.nickname), toOthers.who)
+        assertEquals(drawn, toOthers.rank)
     }
 
     @Test

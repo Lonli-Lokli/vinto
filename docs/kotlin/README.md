@@ -1702,6 +1702,16 @@ one line**, joined by an arrow, so a turn reads as one thing that happened and t
 grows in place rather than pushing the others up. A tap on a card on the felt — the one drawn,
 or the top of the pile — opens the help sheet on that card alone; the "?" still opens all of it.
 
+And four from the session after that. **The card's column is kept when there is no card** —
+an empty slot where it goes — so the prompt and the log are the same width on every turn;
+they used to move sideways every time a card came or went. **Any card the rail shows is
+explained under the prompt**, name, points and action, whoever's it is. **The log keeps two
+turns** — this one and the one it is answering — where it kept the whole round, which was a
+transcript to scroll rather than a table to read. And **a draw is narrated with its rank to
+every seat**, as the felt already shows it: the rules reveal a drawn card publicly, and a log
+that named it to the drawer alone was hiding a Joker the whole table had just watched come
+off the deck.
+
 **The jump.** The felt took what the control panel left
 
 ## 6h. Words, and where they live
