@@ -73,6 +73,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sign
 import kotlin.math.sin
 
 /**
@@ -143,7 +144,7 @@ private const val STAGE_GROW_MS = 300
 private const val STAGE_MS = 900
 private const val VERDICT_MS = 900
 private const val ATTEND_MS = 700
-private const val LIFT_FRACTION = 0.28f
+private const val LIFT_FRACTION = 0.4f
 private const val STAGE_SCALE = 1.5f
 private const val START_SCALE = 0.6f
 
@@ -488,12 +489,27 @@ class Stage {
         val quick: Boolean = false,
     )
 
-    /** The middle of the table, which is where a lifted card rises towards. */
+    /** The middle of the table, which says which way "out of the row" is for every seat. */
     internal fun tableCentre(): Offset = berths[Anchor.Discard]?.centre ?: Offset.Zero
 
-    /** Where a card lifted from [berth] hovers, [fraction] of the way up. */
-    internal fun liftedCentre(berth: Berth, fraction: Float = 1f): Offset =
-        berth.centre + (tableCentre() - berth.centre) * (LIFT_FRACTION * fraction)
+    /**
+     * Where a card lifted from [berth] hovers, [fraction] of the way up.
+     *
+     * Straight out of its slot towards the table, by a share of the card's own long side —
+     * not a share of the way to the middle. Flown towards the middle, a side seat's card came
+     * to rest on top of its neighbour, and two cards lifted from one seat converged on each
+     * other; raised over its own slot, a card stays in the row it came from with its slot's
+     * gap directly under it, which is what says where it came from.
+     */
+    internal fun liftedCentre(berth: Berth, fraction: Float = 1f): Offset {
+        val towards = tableCentre() - berth.centre
+        val rise = berth.card.height * LIFT_FRACTION * fraction
+        return if (berth.turned) {
+            Offset(berth.centre.x + sign(towards.x) * rise, berth.centre.y)
+        } else {
+            Offset(berth.centre.x, berth.centre.y + sign(towards.y) * rise)
+        }
+    }
 }
 
 /**

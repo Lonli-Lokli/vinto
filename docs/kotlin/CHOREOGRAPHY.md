@@ -76,7 +76,7 @@ never started or stopped by a beat:
 | --- | --- |
 | The **flip** — a card turning over where it lies | this seat's entitlement to the face changed (`CardView`) |
 | The **breath** — a slow pulse on a card | the card can be touched right now |
-| The **lift** — a card risen towards the middle, glowing | the running action has taken this card up (`pendingAction.targets`) |
+| The **lift** — a card raised out of its row, glowing | the running action has taken this card up (`pendingAction.targets`) |
 | The **turn glow** on a plate | this seat holds the turn (`turnHolderId`) |
 | The **gold ring** on the pile | the top discard's action is unused, so it may be taken |
 | The **held gap** in a hand | a card of this hand is in the air or lifted |
