@@ -455,8 +455,11 @@ class BotRunner(
                     declareKing(state, player, pending, plan, trustPlan = coalition != null)
                 }
 
-            // The victim draws; there is no position to name.
-            Rank.ACE -> aceTarget(state, player, plan)
+            // The victim draws; there is no position to name. In the final round every
+            // possible victim is a teammate — the caller is out of reach — so a coalition
+            // bot's Ace (a tossed-in one; the planner never plays one from hand) is put down
+            // unaimed rather than forced on the one hand that might still win.
+            Rank.ACE -> if (coalition != null) abandonAction(player) else aceTarget(state, player, plan)
 
             else -> abandonAction(player)
         }

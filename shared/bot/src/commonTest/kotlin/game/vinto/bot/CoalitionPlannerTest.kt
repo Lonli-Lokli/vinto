@@ -56,6 +56,8 @@ class CoalitionPlannerTest {
         knownHumanCards: List<Int>? = null,
         phase: GamePhase = GamePhase.FINAL,
         vintoCallerId: String? = HUMAN,
+        /** Positions a bot has neither read nor declared: placeholders in the plan. */
+        unread: Map<String, List<Int>> = emptyMap(),
     ): GameState {
         val caller = testPlayer(HUMAN, "Human", isHuman = true, cards = human.map(::card))
             .copy(isVintoCaller = true)
@@ -63,13 +65,21 @@ class CoalitionPlannerTest {
         val botIds = listOf(BOT1, BOT2, BOT3)
         val bots = listOf(bot1, bot2, bot3).mapIndexed { index, ranks ->
             val cards = ranks.map(::card)
-            testPlayer(botIds[index], "Bot ${index + 1}", isHuman = false, cards = cards)
-                .copy(
-                    coalitionWith = botIds,
-                    // The scenarios assume a fully shared coalition picture, which now means
-                    // fully *declared*: every bot has said out loud what it holds, truthfully.
-                    declaredCards = cards.mapIndexed { position, c -> position to c.rank }.toMap(),
-                )
+            val blind = unread[botIds[index]].orEmpty()
+            testPlayer(
+                botIds[index],
+                "Bot ${index + 1}",
+                isHuman = false,
+                cards = cards,
+                knownCardPositions = cards.indices.filter { it !in blind },
+            ).copy(
+                coalitionWith = botIds,
+                // The scenarios assume a fully shared coalition picture, which now means
+                // fully *declared*: every bot has said out loud what it holds, truthfully.
+                declaredCards = cards.mapIndexed { position, c -> position to c.rank }
+                    .filter { (position, _) -> position !in blind }
+                    .toMap(),
+            )
         }
 
         val knownIndices = knownHumanCards ?: caller.cards.indices.toList()
@@ -359,9 +369,35 @@ class CoalitionPlannerTest {
         val input = assertNotNull(buildCoalitionPlanInput(state, BOT2))
 
         assertTrue(shouldCoalitionUseAction(input, card(Rank.JACK)))
-        // A peek reveals a card the coalition already shares, and an Ace hurts a teammate.
+        // Every card here is declared, so a peek has nothing to reveal; and an Ace hurts a
+        // teammate whatever the position.
         assertTrue(!shouldCoalitionUseAction(input, card(Rank.SEVEN)))
         assertTrue(!shouldCoalitionUseAction(input, card(Rank.ACE)))
+        assertEquals(emptyList(), planCoalitionActionTargets(input, card(Rank.NINE)).targets)
+    }
+
+    @Test
+    fun aPeekAtAnUnreadCardIsWorthPlayingWhenATeammateCanThenNameIt() {
+        // The caller sits on 2. Bot2 holds an Ace and a card it has never read; bot3, still
+        // to play, holds a King. Read the card and bot3 can declare it out of bot2's hand,
+        // leaving bot2 on 1 — a win. Unread, it cannot be named, and the round is lost.
+        val state = buildState(
+            human = listOf(Rank.ACE, Rank.ACE),
+            bot1 = listOf(Rank.SIX, Rank.SIX),
+            bot2 = listOf(Rank.NINE, Rank.ACE),
+            bot3 = listOf(Rank.KING, Rank.THREE),
+            currentPlayerIndex = 2,
+            unread = mapOf(BOT2 to listOf(0)),
+        )
+        val input = assertNotNull(buildCoalitionPlanInput(state, BOT2))
+        assertTrue(!input.members.first { it.id == BOT2 }.cards[0].known, "the fixture read the card")
+
+        assertTrue(shouldCoalitionUseAction(input, card(Rank.SEVEN)), "the peek was not worth playing")
+        assertEquals(
+            listOf(BotActionTarget(BOT2, 0)),
+            planCoalitionActionTargets(input, card(Rank.SEVEN)).targets,
+        )
+        // A 9 looks at a teammate's card, and none of theirs is unread.
         assertEquals(emptyList(), planCoalitionActionTargets(input, card(Rank.NINE)).targets)
     }
 
