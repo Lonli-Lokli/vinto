@@ -3,7 +3,7 @@ package game.vinto.app
 actual fun openUrl(url: String): Boolean = openInTab(url)
 
 /**
- * One expression, which is the shape §7 recommends for reaching a browser global from Wasm.
+ * One expression, which is the shape TRAPS.md §7 recommends for reaching a browser global from Wasm.
  *
  * `noopener` is not decoration: without it the page opened here is handed a `window.opener`
  * reference back to the game — a live handle to a tab holding somebody's seat token.

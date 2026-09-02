@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.minutes
  * `UncompletedCoroutinesError` on `kmp-ios` and nowhere else.
  *
  * So the budget lives here rather than in a companion object per suite: it was a rule written
- * in `README.md` §7 and then not applied to the very next test written in the same session,
+ * in `TRAPS.md` §7 and then not applied to the very next test written in the same session,
  * which is what a rule that has no home does.
  *
  * **This number is a CI budget on the slowest target, not a claim about the code.** Nothing

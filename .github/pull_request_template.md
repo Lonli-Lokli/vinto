@@ -16,7 +16,7 @@
 ## Release gates
 
 Tick only what applies. **A change that takes this repository to production must satisfy all
-three**, and the runbook for them is `docs/kotlin/README.md` §6i.
+three**, and the runbook for them is `docs/kotlin/ROOM.md` §6i.
 
 - [ ] Not a production release — this is an ordinary change
 - [ ] **Analytics** (`openspec/changes/archive/add-live-analytics`, phases 1–4) is landed and its
@@ -24,7 +24,7 @@ three**, and the runbook for them is `docs/kotlin/README.md` §6i.
       can never be asked about launch day, and there is no backfill
 - [ ] The room is opened in the **same deploy** that publishes the client builds — `ROOM_OPEN`
       stays `"false"` until then, never before
-- [ ] Walked §6i end to end, including proving it with people
+- [ ] Walked ROOM.md §6i end to end, including proving it with people
 
 ## Anything a reviewer should look at first
 

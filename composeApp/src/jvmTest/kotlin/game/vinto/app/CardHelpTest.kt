@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
  *
  * The other half of `TableModelTest.everyStateExplainsItself`. That test used to assert on the
  * assembled paragraph — "starts with Queen", "contains swap", "contains 10" — which was the
- * right claim in the wrong module: after §6h the model says only *which* explanation is
+ * right claim in the wrong module: after WORDS.md §6h the model says only *which* explanation is
  * wanted, and the words are here.
  *
  * Splitting it kept the claim rather than dropping it, which is the part worth being careful

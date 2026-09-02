@@ -10,7 +10,7 @@ import kotlin.native.setUnhandledExceptionHook
  * Kotlin/Native's own hook, and deliberately nothing from Objective-C.
  *
  * `setUnhandledExceptionHook` is plain Kotlin standard library rather than an Objective-C
- * binding, which is deliberate: README §7 records two mistakes that were only findable on a
+ * binding, which is deliberate: TRAPS.md §7 records two mistakes that were only findable on a
  * Mac and both were bindings, so avoiding them removes that whole family of failure.
  *
  * It did not remove all of it. The hook is `@ExperimentalNativeApi` and a missing opt-in is a

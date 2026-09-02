@@ -15,7 +15,7 @@ package game.vinto.app
  *   are `"1"`, `"0"`, `"unspecified"` and `null` depending on the browser, and only `"1"` is
  *   a request.
  *
- * §6c binds this zone to honouring both. This is that paragraph as code.
+ * HOSTING.md §6c binds this zone to honouring both. This is that paragraph as code.
  */
 actual fun platformObjectsToTracking(): Boolean = browserObjects()
 

@@ -5,7 +5,7 @@ import game.vinto.shapes.Rank
 /**
  * What the table is asking of the player, as a message rather than as a sentence.
  *
- * The third slice of §6h, and the counterpart to [Label]: that names the buttons, this names
+ * The third slice of WORDS.md §6h, and the counterpart to [Label]: that names the buttons, this names
  * the line above them. Same reasoning — `shared/client` has no resources, so a sentence built
  * here is English whatever the phone is set to.
  *

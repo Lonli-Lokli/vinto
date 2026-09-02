@@ -5,7 +5,7 @@ import game.vinto.shapes.Rank
 /**
  * Something the table has to say, as a *message* rather than as a sentence.
  *
- * This is the first slice of the change §6h describes. `shared/client` has no Compose and no
+ * This is the first slice of the change WORDS.md §6h describes. `shared/client` has no Compose and no
  * resources, and until now it answered questions like "what just happened" with an English
  * string — so the menus and the settings followed the phone's language and the table did not.
  *

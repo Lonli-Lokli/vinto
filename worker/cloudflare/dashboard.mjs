@@ -49,7 +49,7 @@ export const QUERIES = [
   {
     id: 'acquisition',
     title: 'People opening the app',
-    note: 'One row per day. Counts the app being opened, not a device — nothing here can tell a returning player from a new one, which is the trade §6c makes on purpose.',
+    note: 'One row per day. Counts the app being opened, not a device — nothing here can tell a returning player from a new one, which is the trade HOSTING.md §6c makes on purpose.',
     sql: `SELECT toDate(timestamp) AS day, sum(${WEIGHT}) AS opens
           FROM ${DATASET}
           WHERE index1 = 'funnel' AND blob1 = 'APP_OPENED'

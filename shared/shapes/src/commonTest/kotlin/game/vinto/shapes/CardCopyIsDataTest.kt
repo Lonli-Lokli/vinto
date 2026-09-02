@@ -17,10 +17,10 @@ import kotlin.test.assertTrue
  * 50 fixtures pins against the value TypeScript computed. Change the words and every recording
  * diverges.
  *
- * So the localization work in §6h stops at this boundary. `name`, `longDescription` and
+ * So the localization work in WORDS.md §6h stops at this boundary. `name`, `longDescription` and
  * `helpText` are presentation and may be translated; `shortDescription` may not, until
  * `actionText` stops being a string in the state at all — which is the right fix and needs the
- * corpus regenerated, something §1d says is on its way to being impossible.
+ * corpus regenerated, something CI.md §1d says is on its way to being impossible.
  */
 class CardCopyIsDataTest {
 
@@ -45,7 +45,7 @@ class CardCopyIsDataTest {
                 getCardShortDescription(rank),
                 "$rank's shortDescription reaches Card.actionText, which is inside the canonical " +
                     "hash. Changing it diverges all 50 fixtures from TypeScript. If this is a " +
-                    "translation, see docs/kotlin/README.md §6h — this field is data, not copy.",
+                    "translation, see docs/kotlin/WORDS.md §6h — this field is data, not copy.",
             )
         }
     }

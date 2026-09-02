@@ -18,7 +18,7 @@ import kotlin.test.assertNull
 /**
  * What the table says, checked as *meaning* rather than as English.
  *
- * This test is the argument for §6h's change, made concrete. Before it, the only way to check
+ * This test is the argument for WORDS.md §6h's change, made concrete. Before it, the only way to check
  * the move log was to assert on a sentence — which meant a test that would fail the day
  * somebody translated the app, and which said what the log currently *reads* rather than what
  * it is supposed to *mean*. `assertEquals(Say.DrewKnown(You, SEVEN), …)` cannot be broken by a
@@ -33,7 +33,7 @@ class NarrationTest {
      *
      * The two peeks belong to the person holding the phone — the bots do not take theirs
      * through the engine — and one `FinishSetup` starts the round. The validator has a phase
-     * gate (§6d), so a `DrawCard` before this point is *refused* and the state comes back
+     * gate (ROOM.md §6r), so a `DrawCard` before this point is *refused* and the state comes back
      * unchanged, which is exactly how the first draft of this test quietly asserted nothing:
      * it read a narration of a move that never happened.
      */

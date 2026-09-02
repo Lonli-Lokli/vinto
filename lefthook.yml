@@ -1,7 +1,7 @@
 # Pre-commit hooks.
 #
 # The Kotlin build is the repository root. The npm hooks that used to run here belonged to
-# the web client under legacy-web/, which is on its way out (docs/kotlin/README.md §1d):
+# the web client under legacy-web/, which is on its way out (docs/kotlin/CI.md §1d):
 # nothing in CI builds it any more, so nothing at commit time should either.
 pre-commit:
   commands:

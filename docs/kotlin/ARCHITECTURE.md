@@ -207,10 +207,18 @@ Until `legacy-web/` is actually deleted, a rules change still belongs in both en
 
 | Question | File |
 | --- | --- |
-| What is done, what is blocked, what to run | `README.md` (this directory) |
+| What is done, what is blocked, what to run | `README.md` (this directory) — and its §0, which says which file holds every other section |
+| The six CI checks, and the web client whose CI went first | `CI.md` |
+| How each port is gated: shapes, the engine, the validator, the bot | `GATES.md` |
+| The website: its shell, its caching, its CORS | `HOSTING.md` |
+| The room Worker, the solo game, and the runbook for opening it | `ROOM.md` |
+| The screens: the phone, the menu and lesson, the lobby, the endgame | `UI.md` |
+| Where every string a player sees lives | `WORDS.md` |
+| Crashes, and why errors cross the wire as values | `RELIABILITY.md` |
+| The traps that have each cost somebody an afternoon | `TRAPS.md` |
 | The wire, message by message | `PROTOCOL.md` |
 | What each action reveals, and to whom | `../game-engine/VISIBILITY.md` |
 | The rules, and where the engines depart from the PDF | `../game-engine/VINTO_RULES.md` |
 | How a move becomes an animation | `CHOREOGRAPHY.md`, `ANIMATIONS.md` |
 | The measurements behind the platform choices | `PLATFORM-GATE.md` |
-| Why the bot is verified by rule-following and not decision parity | `README.md` §6e |
+| Why the bot is verified by rule-following and not decision parity | `GATES.md` §6e |

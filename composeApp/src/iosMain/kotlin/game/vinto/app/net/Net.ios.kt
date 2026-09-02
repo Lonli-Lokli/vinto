@@ -101,7 +101,7 @@ private class IosRoomConnector(private val baseUrl: String) : RoomConnector {
      * serialization error about a character offset instead of being told the room is not there.
      *
      * `NSHTTPURLResponse.statusCode` is a plain readonly property, so it is not one of the
-     * binding traps README §7 collects — no category setter, no class factory renamed to
+     * binding traps TRAPS.md §7 collects — no category setter, no class factory renamed to
      * `create`. It still cannot be compiled on a machine without Xcode, which is why it is one
      * line and shaped exactly like the other three platforms'.
      */

@@ -17,7 +17,7 @@ import game.vinto.shapes.actorId
  * over, nominating a coalition leader. Narrating those would bury the ones that matter.
  *
  * Answers a [Say] rather than a sentence. This module has no resources and no Compose, so a
- * sentence built here is an English one whatever the phone is set to — see [Say] and §6h.
+ * sentence built here is an English one whatever the phone is set to — see [Say] and WORDS.md §6h.
  *
  * @param before the state the action was applied to, which is where the cards still are.
  */

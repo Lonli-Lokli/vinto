@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
  * What the lesson actually says, now that it says it from resources.
  *
  * The other half of `TeachScriptTest`, split the same way `CardHelpTest` was split off
- * `TableModelTest` (§6h). After the conversion the script says only *which* beat, so a test in
+ * `TableModelTest` (WORDS.md §6h). After the conversion the script says only *which* beat, so a test in
  * `shared/client` asserting "the body contains +3" has nothing to assert on — and the easy,
  * wrong move at that point is to let the claim go and call the suite green.
  *
@@ -75,7 +75,7 @@ class LessonCopyTest {
 
     /**
      * A caller the view could not name. This used to interpolate the literal English
-     * "Somebody" inside a module with no resources, which is precisely the shape §6h exists
+     * "Somebody" inside a module with no resources, which is precisely the shape WORDS.md §6h exists
      * to remove.
      */
     @Test

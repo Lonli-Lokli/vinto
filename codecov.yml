@@ -2,7 +2,7 @@
 #
 # Nothing uploads coverage any more. Everything Codecov measured lived in the web client
 # under legacy-web/, and the workflow that ran its tests and pushed the lcov report is gone
-# (docs/kotlin/README.md §1d). The Kotlin build reports no coverage yet.
+# (docs/kotlin/CI.md §1d). The Kotlin build reports no coverage yet.
 #
 # So the statuses are off rather than the file deleted. A project/patch status with nothing
 # to compare against does not quietly skip — it blocks, or it sits pending forever, and

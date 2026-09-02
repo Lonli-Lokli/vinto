@@ -17,7 +17,10 @@
   ## Quick Reference
   See @README.md for project overview and architecture
   See @docs/kotlin/ARCHITECTURE.md for the shape of the system: the invariants and why
-  See @docs/kotlin/README.md for the Kotlin workspace: setup, module map, commands, traps
+  See @docs/kotlin/README.md for the Kotlin workspace: setup, module map, commands, state —
+  its §0 says which companion file holds every other section (`CI.md`, `GATES.md`,
+  `HOSTING.md`, `ROOM.md`, `UI.md`, `WORDS.md`, `RELIABILITY.md`, `TRAPS.md`, all in
+  `docs/kotlin/`; the traps live in `TRAPS.md`)
   See @docs/game-engine/README.md for game engine documentation
   See @docs/game-engine/VINTO_RULES.md for complete game rules
   See @docs/game-engine/SCENARIOS.md for worked examples and edge cases
@@ -177,5 +180,5 @@
 
   Both claim their hostname from `routes` in their own `wrangler.jsonc`, so there is no
   dashboard step. Android and iOS go through the stores (phase 8, not yet set up). The
-  maintainer's runbook is `docs/kotlin/README.md` §6i, and DEPLOYMENT.md is the plain-language
+  maintainer's runbook is `docs/kotlin/ROOM.md` §6i, and DEPLOYMENT.md is the plain-language
   version.

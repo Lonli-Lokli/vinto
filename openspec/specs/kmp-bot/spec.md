@@ -2,7 +2,7 @@
   Canonical spec, synced from `migrate-to-kotlin-multiplatform` when it was archived.
 
   The bot, verified by rule-following rather than by decision parity — the reasoning is in
-  docs/kotlin/README.md section 6e.
+  docs/kotlin/GATES.md §6e.
 
   Deltas land here on archive, not before — a requirement in a change folder is a
   proposal, and a requirement here is what the game is held to.

@@ -5,7 +5,7 @@ import game.vinto.shapes.Rank
 /**
  * What the "?" explains, for whatever is happening.
  *
- * The sixth slice of §6h, and the last of `TableModel`. The card in play when there is one,
+ * The sixth slice of WORDS.md §6h, and the last of `TableModel`. The card in play when there is one,
  * since that is nearly always what the player is unsure about; otherwise the rule that governs
  * the phase.
  *

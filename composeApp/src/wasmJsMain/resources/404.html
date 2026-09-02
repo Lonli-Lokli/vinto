@@ -12,7 +12,7 @@
 
       Without it, Pages answers any unmatched path with `index.html`, **200**, `text/html` —
       so a browser asking for a script that is not there is handed a web page and told the
-      request succeeded, and a cache rule then keeps that answer. `docs/kotlin/README.md` §6c
+      request succeeded, and a cache rule then keeps that answer. `docs/kotlin/HOSTING.md` §6c
       warns about it and `_redirects` was scoped to `/r/` specifically to avoid it; that was
       not enough, because the fallback is Pages' own default rather than something the
       redirect rules were causing. Measured against the live deployment:

@@ -251,7 +251,7 @@ tasks.withType<Test>().configureEach {
  *
  * There is no desktop release and none is planned — this exists so a UI change can be looked
  * at in seconds instead of after an emulator boot, and because the sounds cannot be checked
- * from a headless test suite (§6i step 1 asks for exactly that and, until now, named
+ * from a headless test suite (ROOM.md §6i step 1 asks for exactly that and, until now, named
  * something that did not exist).
  *
  *     ./gradlew :composeApp:run

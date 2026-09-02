@@ -85,7 +85,7 @@ class HeaderControlsTest {
 
         // Scrolled to first: the settings column is taller than the window, and Compose clips
         // `boundsInRoot` to what is on screen — so a click aimed at an off-screen control lands
-        // on the window's corner and reports success (§1c).
+        // on the window's corner and reports success (CI.md §1c).
         onNodeWithContentDescription("Back").performScrollTo().performClick()
         waitForIdle()
 

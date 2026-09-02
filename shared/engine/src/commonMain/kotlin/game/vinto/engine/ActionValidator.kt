@@ -409,7 +409,7 @@ object ActionValidator {
         // the same allowance CONFIRM_PEEK, DECLARE_KING_ACTION and SELECT_ACTION_TARGET all
         // make. The TypeScript omits it on these two alone, which leaves a bot that tossed in
         // a Jack or Queen with targets chosen and no legal way to finish. See the deviation
-        // note in docs/kotlin/README.md.
+        // note in docs/kotlin/GATES.md §6e.
         state.requireSubPhase(GameSubPhase.AWAITING_ACTION, GameSubPhase.SELECTING) {
             "Cannot execute $cardName action in phase ${state.subPhase.serialName}"
         }?.let { return it }

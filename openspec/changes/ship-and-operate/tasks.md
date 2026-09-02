@@ -43,13 +43,13 @@ app — which is why the `vinto://` scheme is there and works today.
 - [ ] 3.1 The eight screenshot goldens. **Needs a maintainer's machine and a human looking at
       the images.** `ScreenshotTest` writes them and CI deliberately does not run it — a fresh
       runner would write its own and assert nothing, and glyph rasterisation differs by JVM
-      (was README §6i step 1)
+      (was ROOM.md §6i step 1)
 - [ ] 3.2 The four sounds, listened to once through `./gradlew :composeApp:run`. **Needs ears**
 - [ ] 3.3 The animation layer watched on real hardware — an Android phone, and the iOS
       simulator looked at by a person. Compiled and simulator-tested by `kmp-ios`; never
       *watched*. **Needs a phone and a Mac** (was migrate 7.1)
 - [ ] 3.4 A four-human table, which is 9.7's second verification and cannot be scripted. The
-      scripted half is done against the live deployment (README §6q). **Needs four people**
+      scripted half is done against the live deployment (ROOM.md §6q). **Needs four people**
 - [ ] 3.5 A native crash on iOS — a signal or a Swift trap, which is what the Sentry KMP SDK
       would add over `setUnhandledExceptionHook`. **Needs Xcode, and a decision on the SDK**
       against its weight in a 3.7 MB wasm bundle; flagged rather than settled in

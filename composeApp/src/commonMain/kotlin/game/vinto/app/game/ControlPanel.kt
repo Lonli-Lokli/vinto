@@ -489,7 +489,7 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
 /**
  * The turn so far, in the phone's language.
  *
- * Rendering happens here rather than in the model, which is the whole of §6h's change: the
+ * Rendering happens here rather than in the model, which is the whole of WORDS.md §6h's change: the
  * log arrives as [Say] — what happened — and becomes words where the resources are.
  *
  * It used to be the last two lines, which on a table where a turn is a draw, a swap, a

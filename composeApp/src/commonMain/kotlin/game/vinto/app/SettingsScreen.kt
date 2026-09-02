@@ -460,7 +460,7 @@ private fun toneFor(chosen: Boolean): ButtonTone =
  * is a listing and not before.
  *
  * **No language selector either**, for the same shape of reason: the only translation that
- * exists is `values/`. §6h made adding one a file and no code, and no file has been added, so
+ * exists is `values/`. WORDS.md §6h made adding one a file and no code, and no file has been added, so
  * a selector today is a control with a single option. The unblocking step is a translated
  * `strings.xml`, not screen work.
  */

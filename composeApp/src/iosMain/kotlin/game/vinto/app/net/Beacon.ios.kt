@@ -42,7 +42,7 @@ actual suspend fun postBeacon(url: String, body: String, contentType: String, au
  * name in the header does not exist in Kotlin and the one that does has to be imported by
  * name, because it is an extension on the companion rather than a member. The same shape as
  * `setHTTPBody` above, and the same shape as the `NSMutableURLRequest` setters that caught
- * this file's first version — see README §1b. Only a compiler on a Mac finds these.
+ * this file's first version — see CI.md §1b. Only a compiler on a Mac finds these.
  *
  * `dataWithBytes:` copies, so the pinned buffer does not have to outlive this call.
  */

@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
  * **Deliberately not a port of the TypeScript assertions.** Those read "wins by using a drawn
  * Jack to move a Joker into a teammate", "wins by declaring a King on a teammate's high card"
  * — each a specific *mechanism*, each with a 30-second timeout, and each depending on what an
- * MCTS search happens to choose. README §7 already lists two TypeScript tests as flaky for
+ * MCTS search happens to choose. TRAPS.md §7 already lists two TypeScript tests as flaky for
  * exactly that reason. Asserting a stochastic search picks one particular tactic is a test
  * that fails on a Tuesday for no reason anybody can act on.
  *

@@ -4,12 +4,13 @@ Thanks for wanting to. This is a Kotlin Multiplatform project: the Gradle build 
 repository root, and one rule set ships to Android, iOS, the browser and a Cloudflare Durable
 Object.
 
-The two documents worth reading before anything else:
+The documents worth reading before anything else:
 
 | | |
 | --- | --- |
 | [`docs/kotlin/ARCHITECTURE.md`](docs/kotlin/ARCHITECTURE.md) | The **shape** — what the invariants are and why. Changes when a decision changes |
-| [`docs/kotlin/README.md`](docs/kotlin/README.md) | The **state** — setup, module map, commands, and a long list of traps that have each cost somebody an afternoon |
+| [`docs/kotlin/README.md`](docs/kotlin/README.md) | The **state** — setup, module map, commands, and an index (§0) of the files beside it, one per area |
+| [`docs/kotlin/TRAPS.md`](docs/kotlin/TRAPS.md) | The long list of traps that have each cost somebody an afternoon. Read it when something fails in a way that makes no sense |
 
 ---
 

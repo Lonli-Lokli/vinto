@@ -129,7 +129,7 @@ naming:
     excludes: ['**/wasmJsMain/**']
   FunctionNameMaxLength:
     # Test names are sentences here, because they have to be: backticked names with spaces
-    # are JVM-only and half these suites are `commonTest` (README section 7). So
+    # are JVM-only and half these suites are `commonTest` (docs/kotlin/TRAPS.md). So
     # `theWholeFinalRoundIsHandedToTheTable` is the convention rather than an accident, and
     # 632 of this rule's findings are test names doing their job.
     active: false

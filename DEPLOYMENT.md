@@ -484,7 +484,7 @@ and they are exactly the people worth knowing about.
 **Do not switch it on for the `vinto` Pages project.** That project is the leftover described
 in §6c — it serves an older copy at `vinto-6dr.pages.dev` that nothing links to, so counting
 there would count nobody and still look like it had worked. The website is a **Worker** now
-(`vinto-web`), for the reason in `docs/kotlin/README.md` §6c: a Pages custom domain can only
+(`vinto-web`), for the reason in `docs/kotlin/HOSTING.md` §6c: a Pages custom domain can only
 be attached by hand in the dashboard, and this project's whole deploy story is a button in the
 GitHub mobile app.
 
@@ -636,5 +636,6 @@ what you want.
 ## For developers
 
 The technical version of all of this, with the reasoning behind each decision, is
-`docs/kotlin/README.md` — §6i is the same runbook written for somebody who will read the code.
+`docs/kotlin/README.md` and the files beside it — `docs/kotlin/ROOM.md` §6i is the same
+runbook written for somebody who will read the code.
 The analytics design is `openspec/changes/archive/add-live-analytics/`.

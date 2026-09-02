@@ -91,7 +91,7 @@ evidence.
   with matching per-action hashes, on the JVM and inside workerd.
 - Cloudflare free tier is the budget. The client is a 3.7 MB gzipped wasm bundle — accepted,
   not comfortable — so a dependency added to `composeApp` is a decision, not a detail.
-- No cookies, no identifiers, GPC/DNT honoured (`docs/kotlin/README.md` §6c). This binds
+- No cookies, no identifiers, GPC/DNT honoured (`docs/kotlin/HOSTING.md` §6c). This binds
   analytics as much as anything else.
 
 ## External Dependencies
@@ -99,7 +99,7 @@ evidence.
 - **Cloudflare** — Workers + Durable Objects for rooms, Pages for the web client. The free
   tier is the budget.
 - **Analytics**: none yet, and it is a release gate — `openspec/changes/archive/add-live-analytics`
-  must land before the room opens (§6i step 3).
+  must land before the room opens (`docs/kotlin/ROOM.md` §6i step 3).
 - **Crash reporting**: none yet. Sentry is planned (tasks 8.2 and 9.9) and stays a separate
   pipe from analytics on purpose.
 - Vercel hosted the retired web client and is not part of the Kotlin deployment.

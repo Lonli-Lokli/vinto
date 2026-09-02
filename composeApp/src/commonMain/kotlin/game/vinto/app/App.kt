@@ -284,7 +284,7 @@ private sealed interface Screen {
      * The settings, and where to go when they are closed.
      *
      * It carries its own way back rather than always returning Home, because the settings are
-     * now reachable from the table's header (§6g): pace is the setting somebody wants to change
+     * now reachable from the table's header (UI.md §6g): pace is the setting somebody wants to change
      * *during* the round that is too slow, and a Back that abandoned the round would make it a
      * setting nobody ever changes. [back] is the screen the gear was pressed on — the same
      * `Playing` holding the same `LocalGame`, so nothing is re-dealt or re-connected.
@@ -364,7 +364,7 @@ expect fun platformName(): String
  *
  * **Not gated on the analytics opt-out**, and that is a decision rather than an oversight.
  * The two answer different questions: a count is about what people chose to do, a crash is
- * the app failing at something it promised to do. §6i keeps them on separate pipes for the
+ * the app failing at something it promised to do. ROOM.md §6i keeps them on separate pipes for the
  * same reason. Neither carries an identifier, which is what makes the distinction honest
  * instead of merely convenient.
  */

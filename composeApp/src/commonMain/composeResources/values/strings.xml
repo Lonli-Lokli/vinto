@@ -291,7 +291,7 @@
     <!-- ================================================================ the lesson -->
     <!-- The lesson's own words. `beat_<id>_title` and `beat_<id>_body` mirror the `Teaches`
          hierarchy in shared/client one for one; two beats deliberately have no title. See
-         docs/kotlin/README.md §6h. -->
+         docs/kotlin/WORDS.md §6h. -->
     <string name="beat_only_look_title">The only look you get</string>
     <string name="beat_only_look_body">Everybody may look at two of their own cards before the round starts, once. From here on the game is memory: yours against three other people's.</string>
     <string name="beat_peeks_end_body">They turn face down again — remember where they were. Everybody else has peeked at two of theirs as well.</string>

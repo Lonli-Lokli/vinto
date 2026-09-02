@@ -285,7 +285,7 @@ constants were standing in for, and each is gated by a test that would have caug
 **0. Gate first.** Turn the three probe positions in §3.1 into tests that assert the right answer
 in ≥ 38 of 40 seeds (`aJackTakesAKnownJokerOverAKnownNine`, `anUnplayedJackIsTakenWhenAJokerIsOnOffer`,
 `aKingDeclaresItsOwnPair`). They fail today. Add a mixed-difficulty table to `TournamentTest` so the
-difficulties can be ranked at all (`docs/kotlin/README.md` §6k notes a homogeneous table cannot).
+difficulties can be ranked at all (`docs/kotlin/GATES.md` §6k notes a homogeneous table cannot).
 
 **1. Make the tree search a determinized world.** This is the standard information-set MCTS shape
 (Cowling, Powley & Whitehouse 2012): at the start of each iteration, determinize the *root*, then
@@ -332,7 +332,7 @@ for replayability, and the coalition planner as it is.
 
 Steps 1–3 are inside `shared/bot` and touch no rule: `ActionValidator` still checks every proposed
 action and `SelfPlayGateTest` still proves games end. The corpus is untouched (the bot is verified by
-rule-following, not decision parity — `docs/kotlin/README.md` §6e). The baseline in
+rule-following, not decision parity — `docs/kotlin/GATES.md` §6e). The baseline in
 `fixtures/bot/self-play-baseline.json` will move, deliberately, and the commit that moves it should
 say which way. Per-decision cost will rise with step 2's chance node; the deck distribution has at
 most fourteen ranks, so it is a fourteen-way branch at draw nodes, and the iteration budgets are
@@ -445,7 +445,7 @@ value beats playing on, and it is still winning three times in four — against 
 one in four under +3 / −1. The old bot only ever called on a hand it could prove safe, or
 after twelve laps, so the table had another hundred actions to shed cards into before anybody
 ended it. A homogeneous table's mean hand says how long the round ran, not who played better
-(`docs/kotlin/README.md` §6k said as much), which is why the baseline now has a second table.
+(`docs/kotlin/GATES.md` §6k said as much), which is why the baseline now has a second table.
 
 **The mixed table** — easy, moderate, hard, hard in rotating chairs, twelve seeds — is the one
 that ranks the difficulties, on the rule's own verdict:

@@ -17,7 +17,7 @@ import game.vinto.app.crash.appReportingScope
  * which is the difference between trying a spacing change and deciding not to bother.
  *
  * It is also the only way to check the things the JVM test suites cannot: that the four
- * sounds actually play and land where they should (`docs/kotlin/README.md` §6i step 1 asks
+ * sounds actually play and land where they should (`docs/kotlin/ROOM.md` §6i step 1 asks
  * for exactly this, and until this file existed there was nothing to run).
  *
  * The same `App()` as every other target — a desktop entry point that assembled its own
@@ -35,7 +35,7 @@ private fun desktop() = application {
         // A phone's proportions, because that is what the layout is designed against and a
         // maximised desktop window would show the tablet arrangement instead — useful, but
         // not the thing you are usually checking. Resize it to see the other one; the felt
-        // is capped and centred above a certain width by design (§6f).
+        // is capped and centred above a certain width by design (UI.md §6f).
         state = rememberWindowState(size = DpSize(430.dp, 860.dp)),
     ) {
         App()

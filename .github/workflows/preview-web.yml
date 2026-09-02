@@ -149,7 +149,7 @@ jobs:
             [ -n "$sub" ] || { echo "::error::the account has no workers.dev subdomain — enable it once in the dashboard (Workers & Pages > your subdomain)"; exit 1; }
             url="https://${version%%-*}-vinto-web.${sub}.workers.dev"
           fi
-          # Propagation is not atomic (README section 6d learned this twice), and a freshly
+          # Propagation is not atomic (ROOM.md §6d learned this twice), and a freshly
           # flipped previews toggle takes its own time on top: run 3 of this workflow gave up
           # at 150 s on an address that served the shell minutes later. Poll for up to six
           # minutes, saying what each attempt saw, then believe it.

@@ -85,7 +85,7 @@ class LanguagePickerTest {
 
     /**
      * The row in use is marked with a coloured dot, and colour alone is not information — so it
-     * is said in words too. This is the same failure the chapter dots had before §6h slice 7.
+     * is said in words too. This is the same failure the chapter dots had before WORDS.md §6h slice 7.
      */
     @Test
     fun theLanguageInUseSaysSoOutLoud() = runComposeUiTest {

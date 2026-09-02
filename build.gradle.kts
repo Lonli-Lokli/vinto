@@ -32,7 +32,7 @@ allprojects {
      * opinion.
      *
      * It matters more than it did: `lefthook` used to run `nx format:write` over the staged
-     * files, and that hook went with the web client's tooling (§1d). Nothing has enforced
+     * files, and that hook went with the web client's tooling (CI.md §1d). Nothing has enforced
      * formatting since.
      */
     dependencies {
@@ -206,8 +206,8 @@ allprojects {
  * Coverage, which this repository had none of.
  *
  * What Codecov used to measure was the TypeScript workspace, and its upload went with that
- * workspace's CI (§1d) — so the number went to zero without anything saying so. Kover is the
- * Kotlin-native answer and, unlike the old setup, it can see a multiplatform module: it
+ * workspace's CI (CI.md §1d) — so the number went to zero without anything saying so. Kover
+ * is the Kotlin-native answer and, unlike the old setup, it can see a multiplatform module: it
  * measures the JVM compilation, which is where every shared module's tests actually run.
  *
  * Aggregated here rather than reported per module, because the interesting question is what
@@ -247,8 +247,8 @@ kover {
  *
  * Three of the five gates 8.3 named have changed shape since it was written, and the document
  * records why. In particular the tournament is **not** here: it is 6m 39s of MCTS and a
- * manually-run gate by design (§6k), and folding it in would make the one command something
- * nobody runs.
+ * manually-run gate by design (GATES.md §6k), and folding it in would make the one command
+ * something nobody runs.
  */
 tasks.register("releaseGate") {
     group = "verification"

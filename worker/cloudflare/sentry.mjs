@@ -43,10 +43,10 @@ export function parseDsn(dsn) {
 /**
  * Scrubs an event of anything that could identify a player.
  *
- * The same rule as analytics, and for the same reason: §6c binds this zone to no identifiers,
- * and a stack trace is a place secrets go to hide. Room codes are the specific hazard — they
- * are shared secrets that appear in URLs, so an unscrubbed request URL in an error report
- * publishes one into a store people can read.
+ * The same rule as analytics, and for the same reason: HOSTING.md §6c binds this zone to no
+ * identifiers, and a stack trace is a place secrets go to hide. Room codes are the specific
+ * hazard — they are shared secrets that appear in URLs, so an unscrubbed request URL in an
+ * error report publishes one into a store people can read.
  *
  * Applied to the whole serialised event rather than to named fields, because the field that
  * leaks is always the one nobody thought to name.
@@ -150,10 +150,10 @@ function framesOf(stack) {
  * this function is as much what it *omits* as what it includes.
  *
  * **It never carries the room code.** A code is a join credential that travels in a URL, and
- * §6c binds this zone to no identifiers; `scrub` would strip one that arrived by accident, and
- * this is the same rule applied on purpose. `gameId` is the deal's own id: it is not a
- * credential, it cannot be used to join anything, and it is what the stored recording carries,
- * which is the only reason to send an id at all.
+ * HOSTING.md §6c binds this zone to no identifiers; `scrub` would strip one that arrived by
+ * accident, and this is the same rule applied on purpose. `gameId` is the deal's own id: it
+ * is not a credential, it cannot be used to join anything, and it is what the stored recording
+ * carries, which is the only reason to send an id at all.
  *
  * Tolerant of a room that has not been dealt yet, or of state that will not parse — a context
  * builder that throws on an error path turns one failure into two, and the failure it was

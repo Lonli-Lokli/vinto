@@ -25,13 +25,13 @@ does not cover this" and "nobody remembered this" is the whole point of writing 
 | --- | --- |
 | Static analysis, every module and source set | `detekt`, `maxIssues: 0`, baseline at `config/detekt/baseline.xml` |
 | The rules, on the JVM | `:shared:*:jvmTest` — the 50-recording corpus replay, the validator's 18,066 impersonation attempts, the self-play legality gate |
-| The rules, where a `Long` is two `Int`s | `:shared:*:jsNodeTest`, `:shared:*:wasmJsNodeTest` — including the whole-game round trip from §6l |
+| The rules, where a `Long` is two `Int`s | `:shared:*:jsNodeTest`, `:shared:*:wasmJsNodeTest` — including the whole-game round trip from GATES.md §6l |
 | The screens | `:composeApp:jvmTest`, headless. Goldens excluded — see the note on the test task |
 | The Worker compiles | `:worker:jsProductionExecutableCompileSync` |
 
 ## 2. What the one command deliberately leaves out
 
-### The self-play tournament — a manually-run gate (§6k)
+### The self-play tournament — a manually-run gate (GATES.md §6k)
 
 ```sh
 ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament
@@ -42,10 +42,10 @@ would make the one command something nobody runs. **Run it whenever a bot heuris
 and if the numbers move, say in the commit which way the bot got better.
 
 8.3 originally read "tournament within 5 pp", which was a tolerance for comparing against
-TypeScript. There is no TypeScript to compare against (§1d), and the comparison that replaced it
-is against the bot's own committed numbers — where an *exact* match is both achievable and
-stricter, so there is no tolerance to set. Every committed figure is an integer for that reason;
-latency is printed and never committed.
+TypeScript. There is no TypeScript to compare against (CI.md §1d), and the comparison that
+replaced it is against the bot's own committed numbers — where an *exact* match is both
+achievable and stricter, so there is no tolerance to set. Every committed figure is an integer
+for that reason; latency is printed and never committed.
 
 ### The room, which needs Node and workerd
 
@@ -66,7 +66,7 @@ CI runs these as `kmp-worker`, each gate its own named step.
 `kmp-ios` covers it on CI: simulator tests for the five Apple-target modules, `composeApp`
 compiling for the simulator, and the framework Xcode embeds. **A `commonMain` change that breaks
 iOS cannot fail on a non-Mac host** (§5), and this has caught three separate Objective-C interop
-mistakes that nothing on Linux could have (§7).
+mistakes that nothing on Linux could have (TRAPS.md §7).
 
 ### Android device parity — task 4.8, blocked
 
@@ -77,7 +77,7 @@ that can resolve androidx — §1f.
 
 ### The goldens, the sounds, the deploy, and four humans
 
-§6i, unchanged, and none of it is unblocked by a faster machine:
+ROOM.md §6i, unchanged, and none of it is unblocked by a faster machine:
 
 - the eight golden screenshots, written on a maintainer's machine and looked at by a person
 - the four sounds, through `./gradlew :composeApp:run`
@@ -90,4 +90,4 @@ that can resolve androidx — §1f.
 2. The tournament, **if a bot heuristic changed**
 3. The room gates, **if anything under `worker/` or `shared/room/` changed**
 4. Push, and read `kmp-ios` — the only leg that can fail for a reason Linux cannot see
-5. §6i steps 1, 4 and 5, on the maintainer's machine, for a release rather than a change
+5. ROOM.md §6i steps 1, 4 and 5, on the maintainer's machine, for a release rather than a change

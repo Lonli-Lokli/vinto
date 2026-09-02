@@ -2,7 +2,7 @@
   Canonical spec, synced from `add-game-recording-replay` when it was archived.
 
   The change closed with four tasks marked retired rather than done: they were browser-side
-  work in the Next.js client, which is being deleted (docs/kotlin/README.md §1d). The
+  work in the Next.js client, which is being deleted (docs/kotlin/CI.md §1d). The
   requirements below are not retired — they are held by the Kotlin engine and by the frozen
   corpus in `fixtures/`, which CI replays on the JVM, on Kotlin/JS and inside workerd.
 -->

@@ -12,7 +12,7 @@ properties this codebase already has and must not lose:
    same `ActionValidator` as everyone else. A purchase must never change what a player can
    *do* or *know* at the table — no pay-to-win, no extra peeks, no undo, no hints.
 3. **Online play stays free** until the room-cost numbers exist (analytics 2.3 / §6i step 3
-   in `docs/kotlin/README.md` is what answers "what does a room cost"). Cosmetics-only keeps
+   in `docs/kotlin/ROOM.md` is what answers "what does a room cost"). Cosmetics-only keeps
    that promise cheap to keep.
 
 ## What is for sale
@@ -37,7 +37,7 @@ sellable part, and it needs no account: it is a cosmetic id, not a person.
 
 - **A `Store` seam, same shape as `Vault` and `shareText`**: an `expect` in `composeApp` with
   per-platform actuals — Play Billing on Android, StoreKit on iOS. The web and desktop actuals
-  answer "not available here" and the shop UI says so plainly (the §6p rule: a trouble picks
+  answer "not available here" and the shop UI says so plainly (the RELIABILITY.md §6p rule: a trouble picks
   the sentence). Web payments (Stripe/Paddle) are a later, separate decision — they carry tax
   and receipt obligations the stores handle for you.
 - **Entitlements live in the vault**, restored through the platform's own restore-purchases

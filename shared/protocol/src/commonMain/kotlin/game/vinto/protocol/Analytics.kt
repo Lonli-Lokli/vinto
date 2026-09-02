@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 /**
  * Everything the game is allowed to count, and nothing else.
  *
- * This is a **closed** type on purpose. The privacy rule in `docs/kotlin/README.md` §6c is not
+ * This is a **closed** type on purpose. The privacy rule in `docs/kotlin/HOSTING.md` §6c is not
  * "remember not to log the room code" — it is that there is nowhere to put it. Every field
  * below is an enum, a boolean or a number; not one of them can carry a string a player typed
  * or a server minted. A nickname, a room code, a seat token and an IP are not filtered out

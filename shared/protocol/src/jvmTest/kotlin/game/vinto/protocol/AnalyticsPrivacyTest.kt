@@ -8,7 +8,7 @@ import kotlin.test.fail
 /**
  * The privacy rule, held by the compiler's own view of the types rather than by review.
  *
- * §6c binds this zone to no cookies, no identifiers and nothing that follows a person. The
+ * HOSTING.md §6c binds this zone to no cookies, no identifiers and nothing that follows a person. The
  * cheap way to keep that promise is to make the promise unrepresentable to break: every field
  * of every analytics event is a number, a boolean or an enum, so a room code, a nickname, a
  * seat token or an IP has nowhere to sit.

@@ -5,8 +5,8 @@
  *
  * The scrubbing case is the one that matters. A room code is a shared secret that travels in
  * a URL, and a stack trace is exactly where one ends up without anybody deciding it should.
- * §6c binds this zone to no identifiers; this is that rule applied to the pipe nobody thinks
- * of as telemetry.
+ * HOSTING.md §6c binds this zone to no identifiers; this is that rule applied to the pipe
+ * nobody thinks of as telemetry.
  */
 import { parseDsn, scrub, reportError, roomContext } from './sentry.mjs';
 

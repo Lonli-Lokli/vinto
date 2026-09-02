@@ -26,7 +26,7 @@ not move a file between them.
 ## Adding one
 
 `Recorder` produces a `Recording`; `session.report(...)` is the same document a player's bug
-report carries, and it drops straight into `replayRecording` (README §6l — that round trip goes
+report carries, and it drops straight into `replayRecording` (docs/kotlin/GATES.md §6l — that round trip goes
 through *text*, deliberately, which is how a missing `formatVersion` was found). Name the file
 for the behaviour it pins rather than for a seed, and say in the commit what would make it go
 red, because a recording nobody can interpret gets deleted the first time it fails.

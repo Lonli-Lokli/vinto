@@ -3,7 +3,7 @@
 # Two ecosystems, and the one that used to be here is gone. The `npm` block watched `/`,
 # which stopped having a `package.json` when the Kotlin build took the repository root and
 # the web client moved to `legacy-web/` — so it had been resolving nothing for a while, and
-# the app it served is being deleted (docs/kotlin/README.md §1d). Nothing under
+# the app it served is being deleted (docs/kotlin/CI.md §1d). Nothing under
 # `worker/cloudflare` has a manifest either; wrangler is run through `npx` at a version the
 # workflow pins.
 #

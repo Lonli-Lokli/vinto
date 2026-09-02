@@ -190,9 +190,9 @@ jobs:
           fi
           npx --yes wrangler@${WRANGLER_VERSION} deploy ${{ steps.door.outputs.var }}
 
-      # Propagation is not atomic, and §6d records it catching the maintainer out twice: a
-      # probe seconds after `wrangler deploy` returned the *old* behaviour and sent them
-      # chasing a bug that did not exist. So this polls until the edge agrees, and fails if it
+      # Propagation is not atomic, and ROOM.md §6d records it catching the maintainer out
+      # twice: a probe seconds after `wrangler deploy` returned the *old* behaviour and sent
+      # them chasing a bug that did not exist. So this polls until the edge agrees, and fails if it
       # never does — a deploy that reports success while the old code is still answering is
       # worse than one that reports failure.
       - name: Wait for the edge to agree

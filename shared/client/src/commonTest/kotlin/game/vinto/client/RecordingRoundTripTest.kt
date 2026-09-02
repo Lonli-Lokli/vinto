@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  * The round trip used to be across *languages*: TypeScript generated the corpus and Kotlin
  * replayed it. Once one engine ships that check has nothing on the other side of it, and the
  * corpus in `fixtures/recordings` becomes a frozen artefact rather than evidence that two
- * implementations agree today (README §1d). What replaces it is a round trip across
+ * implementations agree today (CI.md §1d). What replaces it is a round trip across
  * **targets**, and that is not a weaker property — it is the one that can still fail:
  *
  * - a `Long` is a pair of `Int`s on Kotlin/JS. `seed` and `rngState` are `Long`s, and they go

@@ -54,7 +54,7 @@ sealed interface Target {
      * It was a `String` — the button's English — which meant the lesson identified a control
      * by text that a translation would change and a rewording would break. It already had:
      * the "two ways to start a turn" beat looked for a label beginning "Take the" while the
-     * model produced "Use Queen", so a beat the director deliberately sets up (§6g) never
+     * model produced "Use Queen", so a beat the director deliberately sets up (UI.md §6g) never
      * fired and nothing said so.
      */
     data class Button(val label: Label) : Target
@@ -78,7 +78,7 @@ data class Lesson(
      * Which beat this is — the message, not the words.
      *
      * It used to be a `title: String?` and a `body: String` assembled here, which meant the
-     * lesson was English whatever the phone was set to (§6h). One field now: a [Teaches] carries
+     * lesson was English whatever the phone was set to (WORDS.md §6h). One field now: a [Teaches] carries
      * its own identity and whatever varies within it, and the UI renders both halves from
      * resources. Two beats have no heading at all, and that stays true — it is the *renderer*
      * that answers null for a title, because "does this beat have a heading" is a fact about

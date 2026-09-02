@@ -35,7 +35,7 @@ a real defect in an instruction rather than a stale nuance.
 The task says Web Analytics is "a per-site switch in the dashboard… there is nothing in this
 repository to change", and DEPLOYMENT.md §7b says to open **Workers & Pages → the `vinto`
 Pages project → Settings → Web Analytics**. Both were written when the site was a Pages
-project. It is not one. README §6c records the move to a Worker — a Pages custom domain can
+project. It is not one. docs/kotlin/HOSTING.md §6c records the move to a Worker — a Pages custom domain can
 only be attached in the dashboard, which is the one thing this project's deploy story refuses
 to require — and DEPLOYMENT.md §6c says in as many words that the `vinto` Pages project is a
 **leftover**, serving an older copy at `vinto-6dr.pages.dev` that nothing links to.

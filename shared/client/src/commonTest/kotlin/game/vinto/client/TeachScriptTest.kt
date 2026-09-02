@@ -137,7 +137,7 @@ class TeachScriptTest {
     /**
      * Scoring is explained *before* the session beat that depends on it.
      *
-     * What the numbers say moved to `LessonCopyTest` in composeApp when the words did (§6h) —
+     * What the numbers say moved to `LessonCopyTest` in composeApp when the words did (WORDS.md §6h) —
      * this is what is left here, and it is the half that belongs here: the running order is a
      * fact about the script, and explaining what a round is worth after explaining that a game
      * is many of them is explaining it backwards.

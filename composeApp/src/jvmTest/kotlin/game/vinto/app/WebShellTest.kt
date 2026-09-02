@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
  * Nothing else in this repository looks at `wasmJsMain/resources` at all. `kmp-web` *compiles*
  * the web client, `kmp-android` and `kmp-ios` build the other two, and no job has ever opened
  * a browser — which is how the branch went its whole life with no `index.html` whatsoever
- * (docs/kotlin/README.md §7) and then with an `index.html` referencing a `favicon.png` that
+ * (docs/kotlin/TRAPS.md §7) and then with an `index.html` referencing a `favicon.png` that
  * was not there. A compile gate is not a serve gate, and this is the serve gate's stand-in:
  * the cheapest possible check, that every file the shell names is a file that exists and that
  * the tags a crawler reads say the same thing as each other.
@@ -252,7 +252,7 @@ class WebShellTest {
         // `contains` reports the very thing this is here to allow.
         assertTrue(
             redirects.lineSequence().none { it.trim().startsWith("/* ") },
-            "a blanket SPA fallback answers a missing asset with HTML; see README section 6c",
+            "a blanket SPA fallback answers a missing asset with HTML; see HOSTING.md §6c",
         )
         assertTrue(
             robots.contains("Disallow: $INVITE_PATH"),
@@ -272,7 +272,7 @@ class WebShellTest {
      * because that fallback is Pages' own default rather than something the redirect rules
      * were causing: measured against the live deployment, `/no-such-file.js` came back
      * `200 text/html; charset=utf-8`. So a browser asking for a script it cannot have is
-     * handed a web page and told it succeeded, and §6c's cache rules keep that answer.
+     * handed a web page and told it succeeded, and HOSTING.md §6c's cache rules keep that answer.
      *
      * The file is the whole fix, which is exactly why it is worth a test — nothing about
      * deleting it would look wrong.
@@ -325,7 +325,7 @@ class WebShellTest {
             "without custom_domain the route does not create the DNS record, which is the whole reason this is a Worker",
         )
         // The other option, "single-page-application", answers every unmatched path with the
-        // shell and a 200 — measured on the Pages deployment, and the trap README section 6c
+        // shell and a 200 — measured on the Pages deployment, and the trap HOSTING.md §6c
         // is about. `404.html` only does its job under this setting.
         assertTrue(
             text.contains("\"not_found_handling\": \"404-page\""),
@@ -390,7 +390,7 @@ class WebShellTest {
      * that file again for a year, `immutable` being a promise not to.
      *
      * The reason this is a test rather than a comment is that both halves name their locales
-     * literally, and adding `values-be/` is meant to be a file and no code (README section 6h).
+     * literally, and adding `values-be/` is meant to be a file and no code (WORDS.md §6h).
      * A new locale with no line in either place is a silent return of the same corruption, in
      * that language only.
      */

@@ -5,7 +5,7 @@ import game.vinto.shapes.Rank
 /**
  * What a button says, as an *identity* rather than as words.
  *
- * The second slice of §6h, and the one that turned out to carry a bug rather than only a
+ * The second slice of WORDS.md §6h, and the one that turned out to carry a bug rather than only a
  * translation problem.
  *
  * `Choice.label` was a `String`, and two things read it: the UI, to draw the button, and
@@ -14,7 +14,7 @@ import game.vinto.shapes.Rank
  * and no compiler checks — and it was already broken: the lesson looked for a label starting
  * with `"Take the"`, the model produced `"Use Queen"`, and so the beat that teaches the second
  * way to start a turn never fired. The lesson's director goes to deliberate trouble to leave
- * an unused action card on the pile for that beat (§6g), and nothing was said when it arrived.
+ * an unused action card on the pile for that beat (UI.md §6g), and nothing was said when it arrived.
  *
  * With a type, the lesson asks `is Label.UseFromPile` and the compiler answers. A translation
  * cannot break it, and neither can a reworded button.

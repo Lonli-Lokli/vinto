@@ -34,7 +34,7 @@
     // for a script that is not there is handed a web page and told it succeeded, and the
     // cache rules keep that answer. That is not hypothetical: it is what the Pages
     // deployment did, measured (`/no-such-file.js` → `200 text/html`), and it is the trap
-    // `docs/kotlin/README.md` §6c warns about.
+    // `docs/kotlin/HOSTING.md` §6c warns about.
     //
     // Invitations still work, because `_redirects` maps `/r/*` to the shell explicitly and
     // redirects are evaluated before this fallback.

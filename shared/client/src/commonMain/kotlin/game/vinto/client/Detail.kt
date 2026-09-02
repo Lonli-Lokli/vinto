@@ -5,7 +5,7 @@ import game.vinto.shapes.Rank
 /**
  * The smaller line under the prompt: the rule that applies, or what the card in play does.
  *
- * The fifth slice of §6h, and the one that had to wait for a boundary to be established
+ * The fifth slice of WORDS.md §6h, and the one that had to wait for a boundary to be established
  * (`CardCopyIsDataTest`): most of what fills a detail comes from `CardConfig`, and one of that
  * type's fields is **hashed state** rather than copy.
  *

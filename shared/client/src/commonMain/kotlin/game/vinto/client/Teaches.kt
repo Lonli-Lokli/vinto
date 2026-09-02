@@ -3,7 +3,7 @@ package game.vinto.client
 /**
  * One thing the lesson says, as a *message* rather than as two paragraphs of English.
  *
- * The last piece of §6h, and the same move `Say`, `Label`, `Ask`, `Detail` and `Explains`
+ * The last piece of WORDS.md §6h, and the same move `Say`, `Label`, `Ask`, `Detail` and `Explains`
  * already made: `shared/client` has no Compose and no resources, so a sentence assembled here
  * is an English one whatever the phone is set to. The lesson was the largest holdout —
  * twenty-eight beats and roughly a hundred and thirty literals — and it is the one a player
@@ -21,7 +21,7 @@ package game.vinto.client
  * still means what it meant.
  *
  * **Why [id] rather than making `Taught.talked` a `Set<Teaches>`.** That was the plan written
- * down in README §6h, and it is wrong for exactly the two beats that section identified as
+ * down in WORDS.md §6h, and it is wrong for exactly the two beats that section identified as
  * irregular. [TossIn] and [VintoCalled] carry arguments, so two instances of the same beat are
  * *unequal* — a toss-in window with one thrower and the same window with two would be two
  * different entries in the set, and the lesson would say itself twice. The id is the beat's

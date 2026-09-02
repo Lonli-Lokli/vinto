@@ -4,7 +4,7 @@
 # was no DNS record, because the web client had no deploy path at all: the portfolio's shared
 # tooling mirrors a `web/` module layout this repository does not have, and hand-copying its
 # two scripts here would have made Vinto the third copy of files the brief warns about
-# copying (`docs/kotlin/README.md` §6c). So the client compiled and there was nowhere to put
+# copying (`docs/kotlin/HOSTING.md` §6c). So the client compiled and there was nowhere to put
 # it. This is that verification living in CI instead of in a script somebody pastes.
 #
 # **It publishes a Worker, not a Pages project**, and the reason is this workflow's own
@@ -120,7 +120,7 @@ jobs:
       # Content-addressing, and this is the step the whole workflow exists around.
       #
       # The `kupalinka.app` zone's Browser Cache TTL *overrides* a weaker origin
-      # `Cache-Control` (README §6c), so a fixed-name script is cached past the deploy that
+      # `Cache-Control` (HOSTING.md §6c), so a fixed-name script is cached past the deploy that
       # replaces it — and because the Kotlin/Wasm toolchain already content-hashes the `.wasm`
       # files, a stale `composeApp.js` keeps naming a binary that is no longer there. That is
       # a 404 and a dead page, not a stale one, and it has taken portfolio sites down before.
@@ -196,16 +196,17 @@ jobs:
           fi
           # The first deploy creates the DNS record for the custom domain, which needs zone
           # permissions on kupalinka.app and not only Workers ones — the same thing the room's
-          # first deploy needed (README §6d).
+          # first deploy needed (ROOM.md §6d).
           npx --yes wrangler@${WRANGLER_VERSION} deploy
 
-      # Propagation is not atomic. §6d records that catching the maintainer out twice on the
-      # room Worker, and §6c records the static-hosting version of the same hazard.
+      # Propagation is not atomic. ROOM.md §6d records that catching the maintainer out twice
+      # on the room Worker, and HOSTING.md §6c records the static-hosting version of the same
+      # hazard.
       #
       # So this does not ask "is it up". It asks whether the page being served names *this*
       # build's script, which is a question only the new deploy can answer correctly, and it
-      # probes with a cache-buster because §6c says in as many words never to point anything
-      # at a fresh deploy without one.
+      # probes with a cache-buster because HOSTING.md §6c says in as many words never to
+      # point anything at a fresh deploy without one.
       #
       # A first deploy also has to wait for DNS and for a certificate, which is slower than a
       # redeploy — hence the generous budget rather than the room's.

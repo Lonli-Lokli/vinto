@@ -178,7 +178,7 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * A [Say] in the phone's own language.
  *
- * This is the half of §6h's design that lives where the resources are. `shared/client` says
+ * This is the half of WORDS.md §6h's design that lives where the resources are. `shared/client` says
  * *what happened*; this says it in words. Splitting them is what lets the table's move log be
  * translated at all — the module that knows the game has no Compose and therefore no way to
  * reach a string table, and building a sentence there produced English whatever the phone was
@@ -480,7 +480,7 @@ fun explained(explains: Explains): String = when (explains) {
  *
  * The null is the point rather than an oversight: two beats deliberately carry no heading, and
  * "does this beat have a heading" is a fact about the words, so it is answered here and not by
- * the model. See `Teaches` and README §6h.
+ * the model. See `Teaches` and WORDS.md §6h.
  */
 @Composable
 @Suppress("CyclomaticComplexMethod")
