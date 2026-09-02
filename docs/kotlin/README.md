@@ -1202,6 +1202,17 @@ deliberate decision rather than a side effect of a build.
 
 ## 6e. The bot, and what a self-play gate is for
 
+**The search was rewritten on 2026-09-02**, after a review found that the ported tree never
+applied its moves — the belief state has no hidden cards until a rollout samples them, so every
+Jack in the tree traded nothing and the choice among candidates was a seeded coin flip. It is
+an information-set MCTS now: each iteration samples a world from the bot's memory and plays
+the tree's moves on that world, the whole turn is in the tree (draw, then play or swap or
+discard, then the Vinto question), rollouts play by card values, and the reward is the
+round's own points per seat. The swap weights, the evaluator, the Vinto thresholds and the
+Q/7/8 heuristics went with it. `docs/bot/MCTS-REVIEW.md` has the finding, the measurements
+and what replaced each constant; `MctsDiscriminationTest` holds the search to positions with
+one right answer. What follows describes the port and its gates, and still applies.
+
 The bot is ported in full, and the verification is worth explaining because it is not the one
 the other phases use.
 
@@ -1283,7 +1294,7 @@ the TypeScript replayer, which has no such action.
 | One bot engine (v1/MCTS); v2 deleted for reading hidden hands               | `docs/bot/BOT-ENGINE-DECISION.md`         |
 | Canonical hash excludes history + `botMemory`, includes `opponentKnowledge` | `RECORDING.md` §4                         |
 | Every game is exactly 4 players                                             | deterministic-engine spec                 |
-| Bots call Vinto when hand is fully known and worth ≤ 0                      | `legacy-web/packages/bot/src/lib/vinto-call-rule.ts` |
+| Bots call Vinto when the search values calling above playing on — no threshold, no full-hand gate | `MctsBotDecisionService.shouldCallVinto`, `docs/bot/MCTS-REVIEW.md` §5 |
 | Bot verification is rule-following, not decision parity                     | §6e, tasks 5.5/5.6                        |
 | One decision service **per bot**, not one shared across seats               | `BotRunner`; TypeScript wipes memory each turn |
 
