@@ -261,11 +261,29 @@ class ScreenContrastTest {
      *
      * The most common colour inside the bounds is not enough: over a gradient every scanline
      * is its own colour, so the text's hundreds of identical pixels win the vote and the node
-     * measures as ink on ink. So pixels near the ink's own colour are set aside first — the
-     * glyphs and their antialiased edges — and the rest are pooled into coarse buckets so a
-     * gradient's neighbouring rows count together. Every bucket holding at least a tenth of
-     * the ground is a colour the text must clear. If nothing survives the setting-aside, all
-     * the ground there is looks like the ink, and the plain mode is the honest answer.
+     * measures as ink on ink. So the glyphs are set aside first and the rest is pooled into
+     * coarse buckets, so a gradient's neighbouring rows count together. Every bucket holding
+     * at least a tenth of the ground is a colour the text must clear. If nothing survives the
+     * setting-aside, all the ground there is looks like the ink, and the plain mode is the
+     * honest answer.
+     *
+     * **A glyph is not the colour of its ink when the ink is translucent**, and that is the
+     * whole of the correction here. `onFelt().copy(alpha = 0.75f)` never puts a single pixel
+     * of `#F2F5F0` on the screen: it puts `#BAC8BF`, which is that ink composited over the
+     * dark felt, and which is nowhere near the ink by [near]'s reckoning. So the glyphs were
+     * kept as ground, a line of 12sp text covers well over a tenth of its own line box, and
+     * two perfectly readable labels were reported as 1.44:1 and 1.28:1 — each of them, on
+     * inspection, the text measured against itself. Both cleared 6:1 against the felt they
+     * are actually drawn on.
+     *
+     * So the pass is: find what most of this box is (for a line of text, the ground), work
+     * out what a glyph of this ink looks like *there*, and set aside both that and the raw
+     * ink. Opaque ink composites to itself, so nothing changes for it.
+     *
+     * The fallback is what keeps this honest rather than merely quiet. Text that genuinely
+     * cannot be read is text whose glyphs are near their own ground — so the setting-aside
+     * removes everything, `kept` is zero, and the dominant colour is returned and measured
+     * against, which is exactly the 1:1 report that case deserves.
      *
      * The bounds are the clipped ones on purpose: text scrolled off the screen measures empty
      * and is skipped, because a screen is judged as it is shown.
@@ -279,18 +297,27 @@ class ScreenContrastTest {
         if (right - left < SPAN || bottom - top < SPAN) return null
 
         val everything = HashMap<Color, Int>()
+        for (y in top until bottom) {
+            for (x in left until right) {
+                everything.merge(image[x, y], 1, Int::plus)
+            }
+        }
+        val dominant = everything.maxByOrNull { it.value }?.key ?: return null
+
+        // What a glyph of this ink looks like on that ground — the ink itself when opaque.
+        val glyph = Wcag.over(ink, dominant)
+
         val buckets = HashMap<Int, Bucket>()
         var kept = 0
         for (y in top until bottom) {
             for (x in left until right) {
                 val pixel = image[x, y]
-                everything.merge(pixel, 1, Int::plus)
-                if (pixel.near(ink)) continue
+                if (pixel.near(ink) || pixel.near(glyph)) continue
                 kept++
                 buckets.getOrPut(pixel.bucketKey()) { Bucket() }.add(pixel)
             }
         }
-        if (kept == 0) return everything.maxByOrNull { it.value }?.key?.let { listOf(it) }
+        if (kept == 0) return listOf(dominant)
 
         val floor = kept * SHARE
         val main = buckets.values.filter { it.count >= floor }
