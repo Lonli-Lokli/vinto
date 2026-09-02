@@ -1678,7 +1678,10 @@ the design's last resort and had become its first: on a phone taller than the on
 drawn on, a prompt, a four-line log and two stacked buttons overran a 270 dp rail by forty, and
 "Leave them" sat half under the edge of the screen in three screenshots running. The rail is
 three slots now, laid out by `RailSlots` in `ControlPanel.kt`: the prompt at the head, keeping
-two lines' room whether or not the rule under it is still being said; the choices pinned to the
+two lines' room whether or not the rule under it is still being said, with **the card being
+decided about beside it** at the size of a card in your own hand — the web table showed the
+drawn card large in its panel, and the felt's in-play slot says where a card is rather than
+what; the choices pinned to the
 foot, in **one row** rather than a stack — a phone has width to spare where it has no height;
 and the box of recent moves in the middle at a fixed three lines, the one tenant that gives
 way, line by line and then entirely, when a wrapped prompt or a doubled font leaves it less.

@@ -251,6 +251,8 @@
     <string name="card_position">%1$s, card %2$d</string>
     <string name="card_the_deck">the deck</string>
     <string name="card_discarded">discarded %1$s</string>
+    <!-- The card the player is deciding about, shown large in the rail beside the prompt. -->
+    <string name="card_in_play">in play: %1$s</string>
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">discarded %1$s, action unused</string>
     <string name="card_in_hand">the card in your hand</string>

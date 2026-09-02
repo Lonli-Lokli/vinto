@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.card_in_play
 import game.vinto.app.art.table_sending
 import game.vinto.app.asked
 import game.vinto.app.detailed
@@ -71,10 +72,16 @@ import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
 import game.vinto.client.echoedBy
+import game.vinto.engine.CardView
+import game.vinto.engine.PlayerView
+import game.vinto.shapes.Card
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
+
+/** The card in play, drawn in the rail: the size of a card in your own hand on a phone. */
+private val RailCard = CardScale(56.dp, 78.dp)
 private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
@@ -172,21 +179,47 @@ fun ControlPanel(
         val crowded = table.ranks.isNotEmpty() || rows >= Crowded
         val recent = state.recent.filterNot { table.prompt.echoedBy(it) }
         val promptLine = with(LocalDensity.current) { (PromptSize * PromptLineFactor).toDp() }
-        val headRoom = promptLine + with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
+        val twoLines = promptLine + with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
+        // The head is as tall as the card it can hold, whether or not it is holding one, so
+        // the log under it does not move when a card is drawn.
+        val headRoom = maxOf(twoLines, RailCard.height)
+        val inPlay = state.view.ownCardInPlay()
 
         RailSlots(
             modifier = Modifier.fillMaxWidth().padding(PanelPad),
             promptLine = promptLine,
             head = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = headRoom)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(Gap),
-                ) {
-                    Heading(table = table, teaching = state.teaching)
-                    Answer(state)
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val room = maxHeight
+                    Row(
+                        modifier = Modifier.fillMaxWidth().heightIn(min = headRoom),
+                        horizontalArrangement = Arrangement.spacedBy(PanelPad),
+                    ) {
+                        // The card the player is deciding about, at a size its face can be
+                        // read at, beside the words about it — as the web table showed it.
+                        // The felt has it too, in the slot it was drawn into, at a size that
+                        // says *where* it is rather than *what*; the rail is where the
+                        // decision is made, and a phone has the width for both. Whole or not
+                        // at all: above a rank grid the head keeps one line, and a sliver of
+                        // a card is a thing that looks broken.
+                        inPlay?.takeIf { room >= RailCard.height }?.let { card ->
+                            CardFace(
+                                card = CardView.Visible(card),
+                                scale = RailCard,
+                                label = stringResource(Res.string.card_in_play, card.rank.serialName),
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = headRoom)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(Gap),
+                        ) {
+                            Heading(table = table, teaching = state.teaching)
+                            Answer(state)
+                        }
+                    }
                 }
             },
             // The log is what happened *before* now. The prompt above is now, and the two are
@@ -325,6 +358,18 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
             stakes.forEach { choice -> ChoiceButton(choice, onMove) }
         }
     }
+}
+
+/**
+ * The card the person holding the phone is deciding about, if there is one and it is theirs.
+ *
+ * Another seat's pending card is on the felt for everyone to watch; it is not this player's
+ * decision, and the rail is about what this player can do.
+ */
+private fun PlayerView.ownCardInPlay(): Card? {
+    val pending = pendingAction ?: return null
+    if (pending.playerId != viewerId) return null
+    return (pending.card as? CardView.Visible)?.card
 }
 
 /**

@@ -10,6 +10,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -55,6 +57,34 @@ class RailFitsTest {
 
     @Test
     fun bothChoicesAreWhollyOnScreenAtADoubledFont() = everyChoiceIsWhole(PHONE_W, PHONE_H, fontScale = 2f)
+
+    /**
+     * The card being decided about is in the rail, beside the prompt, at a size its face can
+     * be read at — and both choices are still whole under it.
+     */
+    @Test
+    fun theCardInPlayIsDrawnBesideThePrompt() = runComposeUiTest {
+        val (view, said) = drawn()
+        setContent {
+            VintoTheme {
+                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                    TableScreen(
+                        state = TableState(view, tableFor(view), null, said, 1),
+                        layout = TableLayout.forScreen(PHONE_H),
+                        onMove = {},
+                        onHelp = {},
+                        onSettings = {},
+                        onReport = {},
+                        onDeck = {},
+                    )
+                }
+            }
+        }
+        waitForIdle()
+
+        val rank = (view.pendingAction?.card as game.vinto.engine.CardView.Visible).card.rank.serialName
+        onNodeWithContentDescription("in play: $rank").assertIsDisplayed()
+    }
 
     private fun everyChoiceIsWhole(width: Dp, height: Dp, fontScale: Float = 1f) = runComposeUiTest {
         val (view, said) = drawn()
