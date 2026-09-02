@@ -209,8 +209,8 @@ Full setup, including the Android SDK pointer and the iOS bring-up:
 ### Development
 
 ```sh
-./gradlew :composeApp:assembleDebug     # Android APK
-./gradlew :composeApp:installDebug      # ...onto a connected phone or emulator
+./gradlew :androidApp:assembleDebug     # Android APK
+./gradlew :androidApp:installDebug      # ...onto a connected phone or emulator
 ./gradlew :composeApp:wasmJsBrowserDistribution   # the Compose web bundle
 ```
 

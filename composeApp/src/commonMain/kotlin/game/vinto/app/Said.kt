@@ -104,8 +104,6 @@ import game.vinto.app.art.choice_start_round
 import game.vinto.app.art.choice_swap_cards
 import game.vinto.app.art.choice_use_action
 import game.vinto.app.art.choice_use_from_pile
-import game.vinto.app.art.detail_aimed_one
-import game.vinto.app.art.detail_aimed_two
 import game.vinto.app.art.detail_barred
 import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
@@ -407,8 +405,14 @@ fun asked(ask: Ask): String = when (ask) {
  */
 @Composable
 fun detailed(detail: Detail): String = when (detail) {
-    is Detail.WhatTheCardDoes ->
-        stringResource(Res.string.detail_card_does, getCardConfig(detail.rank).longDescription)
+    // Named, priced and explained, because this line is now what the card's own picture used
+    // to say by being there — the rail gives its column to the choice while an action is being
+    // aimed, so "Peek at any two cards" would arrive with no card attached to it. Deliberately
+    // the same shape as `rail_card_action`, which is the version drawn *beside* a card, so the
+    // sentence does not change when the picture comes and goes.
+    is Detail.WhatTheCardDoes -> with(getCardConfig(detail.rank)) {
+        stringResource(Res.string.detail_card_does, name, value, longDescription)
+    }
 
     is Detail.KingDeclared -> stringResource(
         Res.string.detail_king_declared,
@@ -422,19 +426,6 @@ fun detailed(detail: Detail): String = when (detail) {
     Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
     Detail.BarredFromThisCard -> stringResource(Res.string.detail_barred_card)
     Detail.BarredForTheRestOfTheRound -> stringResource(Res.string.detail_barred)
-    // Each card arrives as one whole "name, card N" phrase (the same one a screen reader
-    // speaks), so a translator is never handed half a sentence.
-    is Detail.Aimed -> {
-        val named = detail.cards.map {
-            stringResource(Res.string.card_position, speakerName(it.who), it.slot)
-        }
-        if (named.size == 1) {
-            stringResource(Res.string.detail_aimed_one, named[0])
-        } else {
-            stringResource(Res.string.detail_aimed_two, named[0], named[1])
-        }
-    }
-
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)

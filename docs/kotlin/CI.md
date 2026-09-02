@@ -246,7 +246,7 @@ Two more things about that host, in case the next one is like it:
 ./gradlew detekt                                    # the gate, all modules
 ./gradlew :shared:shapes:jvmTest :shared:engine:jvmTest :shared:bot:jvmTest \
           :shared:client:jvmTest :shared:protocol:jvmTest :shared:room:jvmTest
-./gradlew :composeApp:assembleDebug                 # green as of CI run 10
+./gradlew :androidApp:assembleDebug                 # green as of CI run 10
 ./gradlew :composeApp:jvmTest                       # 73 tests, 4 red — the work below
 ```
 

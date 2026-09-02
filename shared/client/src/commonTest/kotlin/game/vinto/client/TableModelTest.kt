@@ -233,9 +233,40 @@ class TableModelTest {
         val table = session.table()
 
         assertEquals(Ask.WhoDrawsACard, table.prompt)
-        assertTrue(table.taps.isEmpty(), "an Ace has no card to aim at")
-        assertEquals(THREE_OPPONENTS, table.seatTaps.size, "and cannot be aimed at myself")
-        assertFalse(session.playerId in table.seatTaps)
+        assertEquals(THREE_OPPONENTS, table.seats.size, "and cannot be aimed at myself")
+        assertFalse(table.seats.any { it.id == session.playerId })
+    }
+
+    /**
+     * And what it names is a *hand*, so the whole hand answers.
+     *
+     * An Ace does not choose a card — the victim draws one they have not seen — so there was
+     * nothing on the felt to touch and the only target was the seat plate, a chip beside five
+     * cards that are the thing actually being aimed at. Every card of every opponent sends the
+     * same move now, which makes the target the size of the hand and lights the hand up, since
+     * a tappable card wears the ring that says so.
+     */
+    @Test
+    fun anAcePointsAtWholeHandsRatherThanAtOneChip() = runTest {
+        val session = aiming(Rank.ACE)
+        val table = session.table()
+        val opponents = session.view.value.players.filter { it.id != session.playerId }
+
+        assertEquals(
+            opponents.sumOf { it.cards.size },
+            table.taps.size,
+            "every card of every opponent is a way of naming them",
+        )
+        assertFalse(
+            table.taps.keys.any { it.playerId == session.playerId },
+            "and none of mine: an Ace cannot be pointed at me",
+        )
+
+        opponents.forEach { seat ->
+            val fromACard = (table.taps.getValue(CardRef(seat.id, 0)) as Move.Send).action
+            val fromThePlate = (table.seats.first { it.id == seat.id }.move as Move.Send).action
+            assertEquals(fromThePlate, fromACard, "touching ${seat.nickname}'s hand names them")
+        }
     }
 
     // ------------------------------------------------------------------ toss-in

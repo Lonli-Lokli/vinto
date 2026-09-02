@@ -11,7 +11,7 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
 ---
 ## 6f. Putting it on a phone
 
-The solo game is playable on Android today — `./gradlew :composeApp:installDebug` and it is on
+The solo game is playable on Android today — `./gradlew :androidApp:installDebug` and it is on
 the device. What was missing was everything around the game rather than in it, and four of
 those are now done. None of them is the Play release (task 8.1 proper): there is still no CI,
 no upload key, no track.
@@ -403,6 +403,82 @@ name, points and action. **The log keeps two turns** — this one and the one it
 read. And **a draw is narrated with its rank to every seat**, as the felt already shows it:
 the rules reveal a drawn card publicly, and a log that named it to the drawer alone was
 hiding a Joker the whole table had just watched come off the deck.
+
+### While a Jack or a Queen is being aimed, the column holds what it is aimed at
+
+The column above always holds the card in play, and for one action that was the wrong card.
+Playing a Queen filled it with the Queen — which the player had chosen to play a moment
+earlier and could read off the discard where the felt draws it — while the two cards being
+swapped, the actual decision, were one line of small text under the prompt: "Chosen: You,
+card 3 and Don, card 5". A player who had used both this table and the web one it replaced
+said so in as many words: on the old screen you could see more about the cards being changed.
+
+So a two-card action carries its aim (`Table.aim`), and the column draws it: two slots side
+by side with the mark that says they exchange places, each holding a card once one has been
+chosen and a card-shaped outline until then. **The face is whatever the projection handed
+over** — a Queen looks before it swaps, so its targets arrive face-up; a Jack does not, so
+they arrive as backs — which is what keeps the rail from becoming a second place the
+redaction rule has to be right in. Each slot is named underneath, "You, card 3", and a chosen
+card wears the same gold ring it wears on the felt.
+
+Three departures from the web screen this restores, because it was not right either. **Both
+slots are drawn from the moment the action starts**, empty, rather than appearing as they
+fill — the column is one shape for the whole action, and two empty slots say "two cards are
+wanted" better than a counter does, which is why there is no "1/2". **The pair takes the same
+share of the width one card took**, so the prompt's column does not narrow when an action
+starts. And the face comes from the view rather than from a rule written twice: the web
+component hard-coded "a Jack shows backs", which was true and was still a second opinion
+about redaction.
+
+What the card in play used to say by being there, the words say now: `WhatTheCardDoes` under
+the prompt, which fades on the usual terms (`worthSaying`) for somebody who has met it — and
+that line names and prices the card, the same sentence `rail_card_action` writes beside a card
+that *is* drawn, so it does not change shape when the picture comes and goes.
+
+### When the table asks which *player*, the players are on the rail
+
+Two moves name a person rather than a card — an Ace, which makes somebody draw, and the
+coalition choosing who plays its hand — and for both, the only way to answer was to tap that
+seat's plate out on the felt. Nothing said so. The rail asked "Who draws a card?" and offered
+one button, "Put it down", so the screen read as a question whose only answer was to give up;
+the plate did take a gold ring, but gold is also what a plate wears when it is simply
+somebody's turn. Every other question the table asks is answered on the rail, so this one was
+the odd one out, and the report was the plain one: *now I have to understand that I need to
+click on a person icon*.
+
+`Table.seats` carries them and `SeatGrid` draws them in the foot, where the King's ranks go and
+in the same amber, because it is the same verb: name one of these. Never more than three to a
+row — the table is four seats and one is always excluded, the player themselves for an Ace and
+the caller for the coalition — and a narrow side rail wraps them the way it wraps ranks.
+
+**Each button wears that seat's portrait, above the name and at the size the web table drew
+it** (56dp; the web's `Avatar size="md"` was 64 CSS px). That number is the whole point of the
+control: at the 26dp it started at, beside the label rather than above it, the artwork was a
+coloured dot and the row read as three words again. Stacking it also gives the name a whole
+line, which is what stops a long one being cut to three letters. `GameButton` grew a `stacked`
+slot for this rather than a second button being written, because everything else about it — the
+bevel, the tone, the press, the spoken label — is what makes it that button.
+
+**And the whole hand is the target, not the chip beside it.** An Ace lands on a *hand* — the
+victim draws a card nobody chooses — so every card of every opponent sends the same move, which
+makes the target five cards wide instead of one plate and lights the hand up, since a tappable
+card already wears the ring that says so. Aiming at a seat plate alone was a small target
+carrying a gold ring that also means "it is their turn".
+
+The portrait needs a mapping that can say **no**. `portraitFor` cannot: it falls back to
+Leonardo, which is right for the round hole in a felt plate and wrong here, because a stranger
+wearing Leonardo's face is worse than a stranger wearing none — and online a seat is whoever
+typed their name in, with no portrait to carry. So `portraitOrNull` is the honest half (the
+four the offline game deals, plus the "You" seat the felt already draws Leonardo on) and
+`portraitFor` is the same thing with the fallback, for the felt.
+
+**And the card asking gives its column up**, as it does for an aim. The player drew the Ace,
+read it and chose to play it — three screens with the card on them — and the rail then spent
+its one card of room on it for a fourth. What is undecided is who, so the room goes to the log
+and the answer goes on the foot.
+
+The felt still answers: the plates are still tappable, and tapping one is the better gesture
+once you know it is there. What is new is that the rail says the choice exists.
 
 ## 6j. Finding a table, getting somebody to it, and saying so while you wait
 

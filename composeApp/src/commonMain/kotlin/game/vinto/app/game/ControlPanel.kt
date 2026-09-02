@@ -1,5 +1,7 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,10 +17,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -32,23 +36,37 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.card_described
+import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_in_play
+import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
+import game.vinto.app.art.rail_aim_empty
+import game.vinto.app.art.rail_aim_first
+import game.vinto.app.art.rail_aim_second
+import game.vinto.app.art.rail_aiming_at
 import game.vinto.app.art.rail_card_action
 import game.vinto.app.art.rail_card_plain
 import game.vinto.app.art.table_sending
@@ -57,16 +75,20 @@ import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
 import game.vinto.app.said
+import game.vinto.app.speakerName
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
+import game.vinto.client.Aim
+import game.vinto.client.AimedCard
 import game.vinto.client.Choice
 import game.vinto.client.Detail
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
+import game.vinto.client.SeatChoice
 import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
@@ -79,6 +101,8 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
@@ -89,8 +113,33 @@ private val FootRow = 50.dp
 /** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
 
-/** The most of the rail's width the card may take; the words beside it need the rest. */
+/**
+ * The most of the rail's width the card column may take; the words beside it need the rest.
+ *
+ * One number for one card and for two, which is the point: a pair allowed to be as wide as
+ * two cards would take the prompt's column with it, and the aim's job is done at any size the
+ * faces can be told apart at — well under the size a card being *decided about* wants.
+ */
 private const val RailCardShare = 0.4f
+
+/** The mark between the two aimed cards, which is what says they exchange places. */
+private val SwapMarkWidth = 14.dp
+private val SwapMarkHeight = 12.dp
+
+/** Where the two shafts sit in that box, how long a barb is, and how thick a stroke — all of its height. */
+private const val SwapUpper = 0.25f
+private const val SwapLower = 0.75f
+private const val SwapHead = 0.25f
+private const val SwapHair = 0.125f
+
+/** The line under each aimed card: whose hand it is in, and which card along it. */
+private val AimSize = 11.sp
+private const val AimCaptionLines = 2
+
+/** The outline of an end nothing has been chosen for. */
+private val EmptyDash = 3.dp
+private val EmptyStroke = 1.dp
+
 private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
@@ -187,12 +236,15 @@ fun ControlPanel(
         // Scrolling survives only as the last resort for a doubled system font: the prompt
         // scrolls within its own room, and a King's fourteen chips within theirs, and the
         // foot may never take the prompt's first line.
+        // Only the *rank* grid crowds the foot: fourteen chips is four rows and there is no
+        // log under them. Three seats is one row, and the space the card gave up is better
+        // spent on what has been happening than left blank.
         val crowded = table.ranks.isNotEmpty()
         val recent = lastTurns(state.recent).filterNot { table.prompt.echoedBy(it) }
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
-        val inPlay = railCard(state.view)
+        val inPlay = railCard(state.view, table)
 
         RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, onMove)
     }
@@ -240,7 +292,8 @@ private fun RailBlock(
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val block = maxHeight
-        val cardScale = railCardFor(block, maxWidth)
+        val room = maxWidth
+        val caption = with(LocalDensity.current) { (AimSize * LogLineFactor).toDp() } * AimCaptionLines
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(PanelPad),
@@ -255,13 +308,24 @@ private fun RailBlock(
             // always holds a card (`railCard` says which), so nothing beside it moves between
             // one move and the next of the same turn. It came and went with the card once,
             // and then held an empty slot on every bot's turn; both moved, or looked wrong.
-            if (cardScale != null && inPlay != null) {
-                val label = when (inPlay) {
-                    is CardView.Visible ->
-                        stringResource(Res.string.card_in_play, inPlay.card.rank.serialName)
-                    CardView.Hidden -> stringResource(Res.string.card_the_deck)
+            //
+            // The exception, and the reason [Table.aim] exists: while a Jack or a Queen is
+            // being aimed, the column holds the two cards it is aimed *at* instead. The card
+            // in play would be the Queen — which the player chose to play a moment ago and
+            // can read off the discard — while the pair being swapped, the actual decision,
+            // was one line of small text. The web table drew the pair, and it was right to.
+            val aim = table.aim
+            if (aim != null) {
+                railPairFor(block, room, caption)?.let { AimedPair(aim, it, caption) }
+            } else if (inPlay != null) {
+                railCardFor(block, room)?.let { cardScale ->
+                    val label = when (inPlay) {
+                        is CardView.Visible ->
+                            stringResource(Res.string.card_in_play, inPlay.card.rank.serialName)
+                        CardView.Hidden -> stringResource(Res.string.card_the_deck)
+                    }
+                    CardFace(card = inPlay, scale = cardScale, label = label)
                 }
-                CardFace(card = inPlay, scale = cardScale, label = label)
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -290,10 +354,13 @@ private fun RailBlock(
 }
 
 /**
- * The rank grid, when there is one, and the choices under it — pinned, and never the whole
- * rail. It keeps one row's room even with nothing to press — "Raph is playing" — so the block
- * above it, and the log in it, are the same size on every turn of the round: a box that grew
- * when the buttons went and shrank when they came back was the one thing still moving.
+ * The grid of answers, when there is one, and the choices under it — pinned, and never the
+ * whole rail. It keeps one row's room even with nothing to press — "Raph is playing" — so the
+ * block above it, and the log in it, are the same size on every turn of the round: a box that
+ * grew when the buttons went and shrank when they came back was the one thing still moving.
+ *
+ * Two questions fill the grid, and they are the same question: name one of these. A King names
+ * a rank; an Ace and the coalition name a player.
  */
 @Composable
 private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
@@ -305,6 +372,7 @@ private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(Gap),
     ) {
         RankGrid(table.ranks, LocalStage.current, onMove)
+        SeatGrid(table.seats, onMove)
         Choices(table, onMove)
     }
 }
@@ -319,6 +387,153 @@ private fun railCardFor(block: Dp, width: Dp): CardScale? {
     val height = minOf(tallest, width * RailCardShare * (RailCard.height / RailCard.width))
     if (height < RailCard.height) return null
     return CardScale(height * (RailCard.width / RailCard.height), height)
+}
+
+/**
+ * How large each of the two aimed cards is drawn: the same column, split between them.
+ *
+ * Two differences from the single card. The pair has to leave height for the line naming each
+ * card's owner and slot, so [caption] comes off the block first. And its floor is the tap
+ * target rather than a hand's card — nothing here is tapped, and a face this small is still a
+ * rank and a colour, which is what the player is comparing. Below that the pair is dropped
+ * whole rather than drawn as two slivers.
+ */
+private fun railPairFor(block: Dp, width: Dp, caption: Dp): CardScale? {
+    val tallest = (if (block.isFinite) block else RailCard.height) - caption
+    val each = (width * RailCardShare - SwapMarkWidth - Half * 2) / 2
+    val height = minOf(tallest, each * (RailCard.height / RailCard.width))
+    if (height < TapTarget) return null
+    return CardScale(height * (RailCard.width / RailCard.height), height)
+}
+
+/**
+ * The two cards a Jack or a Queen is pointed at, side by side, with the mark that says they
+ * exchange places between them.
+ *
+ * Each end is drawn whether or not it has been chosen, so the column is the same shape from
+ * the moment the action starts to the moment it resolves — and an empty end is itself the
+ * clearest statement of what the table is waiting for. A chosen card wears the same gold ring
+ * it wears on the felt, which is what ties the two pictures together.
+ */
+@Composable
+private fun AimedPair(aim: Aim, scale: CardScale, caption: Dp) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Half)) {
+        AimSlot(aim.first, scale, caption, stringResource(Res.string.rail_aim_first))
+        // Against the middle of the cards, not the middle of the row: the captions hang below
+        // them, and a mark centred on the whole column sits under the cards it is between.
+        Box(modifier = Modifier.height(scale.height), contentAlignment = Alignment.Center) {
+            SwapMark()
+        }
+        AimSlot(aim.second, scale, caption, stringResource(Res.string.rail_aim_second))
+    }
+}
+
+/**
+ * One end of the aim: the card if it has been chosen, and under it whose hand it is in.
+ *
+ * The face is whatever the view carried, which is the projection's decision and not this
+ * screen's: a Queen looks before it swaps and its targets arrive face-up, a Jack does not and
+ * they arrive as backs. Drawing the card as it comes is what stops the rail becoming a second
+ * place the redaction rule has to be right in.
+ */
+@Composable
+private fun AimSlot(aimed: AimedCard?, scale: CardScale, caption: Dp, waiting: String) {
+    val width = maxOf(scale.width, TapTarget)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (aimed == null) {
+            EmptySlot(scale)
+        } else {
+            // Spoken as the card itself, prefixed — never the bare phrase the felt uses for
+            // the same card, or the two would be one node to anything counting them.
+            val face = when (val card = aimed.card) {
+                is CardView.Visible ->
+                    stringResource(Res.string.card_described, card.card.rank.serialName, card.card.value)
+
+                CardView.Hidden -> stringResource(Res.string.card_face_down)
+            }
+            CardFace(
+                card = aimed.card,
+                scale = scale,
+                state = CardState(chosen = true),
+                label = stringResource(Res.string.rail_aiming_at, face),
+            )
+        }
+        Text(
+            text = aimed
+                ?.let { stringResource(Res.string.card_position, speakerName(it.who), it.slot) }
+                ?: waiting,
+            fontSize = AimSize,
+            lineHeight = AimSize * LogLineFactor,
+            color = Rail.inkDim,
+            textAlign = TextAlign.Center,
+            maxLines = AimCaptionLines,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(width).height(caption),
+        )
+    }
+}
+
+/** An end nothing has been chosen for: a card's outline, drawn open. */
+@Composable
+private fun EmptySlot(scale: CardScale) {
+    val empty = stringResource(Res.string.rail_aim_empty)
+    val ink = Rail.inkDim
+    val corner = with(LocalDensity.current) { TableSizes.Corner.toPx() }
+    val dash = with(LocalDensity.current) { EmptyDash.toPx() }
+    val stroke = with(LocalDensity.current) { EmptyStroke.toPx() }
+
+    Box(
+        // The same footprint a card claims, so choosing one does not re-pitch the row.
+        modifier = Modifier
+            .size(maxOf(scale.width, TapTarget), maxOf(scale.height, TapTarget))
+            .semantics { contentDescription = empty },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(scale.width, scale.height)
+                .drawBehind {
+                    drawRoundRect(
+                        color = ink,
+                        cornerRadius = CornerRadius(corner, corner),
+                        style = Stroke(
+                            width = stroke,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "?", fontSize = PromptSize, color = ink)
+        }
+    }
+}
+
+/**
+ * Two arrows passing, drawn rather than set.
+ *
+ * A character would do it in one line, and would be the one glyph in the app whose presence
+ * in the bundled face nothing checks — `FontCoverageTest` reads the translations, not the
+ * source. Eight strokes of a canvas cannot go missing on somebody's phone.
+ */
+@Composable
+private fun SwapMark() {
+    val ink = Rail.inkDim
+    Canvas(modifier = Modifier.size(SwapMarkWidth, SwapMarkHeight)) {
+        val head = size.height * SwapHead
+        val hair = size.height * SwapHair
+        // The upper arrow points right and the lower one left, which is what a pair passing
+        // looks like — two arrows the same way round is a queue.
+        listOf(size.height * SwapUpper to true, size.height * SwapLower to false)
+            .forEach { (y, rightwards) ->
+                val from = if (rightwards) 0f else size.width
+                val to = if (rightwards) size.width else 0f
+                val barb = if (rightwards) to - head else to + head
+                drawLine(ink, Offset(from, y), Offset(to, y), strokeWidth = hair)
+                drawLine(ink, Offset(to, y), Offset(barb, y - head), strokeWidth = hair)
+                drawLine(ink, Offset(to, y), Offset(barb, y + head), strokeWidth = hair)
+            }
+    }
 }
 
 /**
@@ -364,8 +579,15 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
  * which is the card the turn is about before a draw (take it?), after a swap (declare it?)
  * and in the toss-in window (match it?); and the deck's back when the pile is empty, which
  * is the first turn of a round and the card about to be drawn.
+ *
+ * **Except while the table is asking the player to point at something**, when there is no
+ * card in the column: an aim takes it (the two cards being swapped), and a seat question
+ * gives it up entirely, because by then the player has drawn the card, read it and chosen to
+ * play it and the rail would be showing it a fourth time. What is undecided is who, and the
+ * answer to that is on the foot.
  */
-private fun railCard(view: PlayerView): CardView? {
+private fun railCard(view: PlayerView, table: Table): CardView? {
+    if (table.aim != null || table.seats.isNotEmpty()) return null
     if (!yourTurn(view)) return null
     (view.pendingAction?.card as? CardView.Visible)?.let { return it }
     return view.discardTop?.let { CardView.Visible(it) } ?: CardView.Hidden
@@ -625,6 +847,67 @@ private fun Tone.paint(): ButtonTone = when (this) {
 }
 
 /**
+ * The answers to "name a player", in the same place and the same dress as the ranks.
+ *
+ * Both moves that name a person — an Ace, and the coalition choosing whose hand it plays —
+ * could only be answered by tapping a seat's plate out on the felt, and nothing said so. The
+ * rail asked "Who draws a card?" and offered one button, "Put it down", so the screen read as
+ * a question whose only answer was to give up. The plates are still tappable and are still the
+ * better gesture; this is the part that says there is a choice.
+ *
+ * Amber, like the rank grid, because it is the same verb: name one of these, and the game
+ * moves. Never a row wider than three, which is all there ever are — the table is four seats
+ * and one of them is always excluded, the player themselves for an Ace and the caller for the
+ * coalition.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SeatGrid(seats: List<SeatChoice>, onMove: (Move) -> Unit) {
+    if (seats.isEmpty()) return
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Half),
+        verticalArrangement = Arrangement.spacedBy(Half),
+        maxItemsInEachRow = SEATS_PER_ROW,
+    ) {
+        seats.forEach { seat ->
+            // Keyed on the seat's own name rather than on what the button calls them: the
+            // label reads "You" for your own seat, and "You" is not a face.
+            val portrait = portraitOrNull(seat.nickname)
+            GameButton(
+                label = speakerName(seat.who),
+                tone = ButtonTone.DECLARE,
+                onClick = { onMove(seat.move) },
+                modifier = Modifier.weight(1f),
+                compact = true,
+                leadingContent = portrait?.let { face -> { SeatFace(face) } },
+                // Above the name where there is a face to show, beside it where there is not:
+                // a plaque with a blank space over the word is worse than a plain plaque.
+                stacked = portrait != null,
+            )
+        }
+    }
+}
+
+/**
+ * A seat's portrait, in the button that names them.
+ *
+ * The same face the plate wears on the felt, which is the point — three names in a row are
+ * three words to read, and three faces are the same three seats the player has been looking
+ * at all round. Silent to a screen reader: the name is right beside it.
+ */
+@Composable
+private fun SeatFace(portrait: DrawableResource) {
+    Image(
+        painter = painterResource(portrait),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.size(SeatFaceSize).clip(CircleShape),
+    )
+}
+
+/**
  * The answers to "name a card", as evenly shared rows of plaques.
  *
  * Left to size themselves they came out as tall narrow pills — a "2" is one character wide
@@ -667,6 +950,19 @@ private const val RANKS_PER_ROW = 7
 
 /** Four and four: the eight action ranks of the swap declaration. */
 private const val ACTION_RANKS_PER_ROW = 4
+
+/** Every seat question excludes exactly one of the four seats, so three is the whole row. */
+private const val SEATS_PER_ROW = 3
+
+/**
+ * The portrait in a seat button.
+ *
+ * Large on purpose, and this is the size the web table used: the artwork is the reason a row
+ * of three reads as three opponents rather than three words, and at the 26dp it started at it
+ * was a coloured dot with none of the drawing in it. It sits above the name rather than beside
+ * it, so the width is the tile's rather than what is left after the label.
+ */
+private val SeatFaceSize = 56.dp
 
 /** How many times a hint is given before it waits to be asked for. */
 private const val FreelyOffered = 2

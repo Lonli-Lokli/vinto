@@ -1019,7 +1019,7 @@ private fun Plate(
         if (seat.id == view.coalitionLeaderId) add(stringResource(Res.string.table_leads_mark))
         view.scores?.get(seat.id)?.let { add("$it") }
     }
-    val tap = table.seatTaps[seat.id]
+    val tap = table.seats.firstOrNull { it.id == seat.id }?.move
     val stage = LocalStage.current
     val line = stage.lineFor(seat.id)
     val pointed = stage.attentionOn(seat.id)

@@ -252,13 +252,13 @@ class ChoreographyTest {
         val session = aiming(Rank.ACE)
         val scenes = scenesOf(session)
 
-        val victim = session.table().seatTaps.keys.first()
-        session.dispatch((session.table().seatTaps.getValue(victim) as Move.Send).action)
+        val victim = session.table().seats.first()
+        session.dispatch((victim.move as Move.Send).action)
         runCurrent()
 
         val beats = scenes.flatten().flatten()
         assertTrue(
-            beats.any { it is Beat.Attend && it.playerId == victim },
+            beats.any { it is Beat.Attend && it.playerId == victim.id },
             "the table points at them: $beats",
         )
     }

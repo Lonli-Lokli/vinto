@@ -337,11 +337,22 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 | `shared:protocol` | jvm, android, js, wasmJs, (iOS on macOS)              | The wire, declared once: `ClientMessage`/`ServerMessage`, the room-facing types, `ProtocolJson`. See `PROTOCOL.md`.               |
 | `shared:room`   | jvm, js                                                 | The room and registry cores, moved out of the worker so the JVM can test them. Envelope builders, recordings, pacing.             |
 | `worker`        | js                                                      | Cloudflare Worker + `Room` Durable Object: `@JsExport` delegates over `shared:room`, under the thin JS shim in `worker/cloudflare/`. |
-| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients: the solo game, the lesson, and the online lobby + table. |
+| `composeApp`    | android, wasmJs, (iosArm64, iosSimulatorArm64 on macOS) | Compose UI — one `commonMain` for all three clients: the solo game, the lesson, and the online lobby + table. A KMP **library**, so it has no `assembleDebug`. |
+| `androidApp`    | android                                                 | The Android **application**: manifest, `MainActivity`, launcher icons, applicationId, signing. `:androidApp:assembleDebug` is the APK. |
 | `iosApp`        | —                                                       | Xcode project embedding `composeApp`'s `ComposeApp` framework. macOS only.                                 |
 
 The full intended layout is in design D1. Modules are added as they are ported rather than
 scaffolded empty.
+
+**`composeApp` is a library and `androidApp` is the app**, which is worth stating because the
+obvious guess is wrong and fails late: `./gradlew :composeApp:assembleDebug` is not a task that
+exists, and Gradle answers "task 'assembleDebug' not found in project ':composeApp'" rather
+than pointing anywhere useful. The split is not a preference — **AGP 9 refuses to let
+`com.android.application` share a module with the Kotlin Multiplatform plugin**, with no
+property to bypass it, so the whole UI and every Android `actual` stay in `composeApp` and
+`androidApp` holds only what an application is. `androidApp/build.gradle.kts` carries the
+reasoning. It also makes the two sides symmetrical: `iosApp` was always a thin project
+embedding `composeApp`'s framework, and this is its counterpart.
 
 ## 4. Commands
 
@@ -351,9 +362,9 @@ scaffolded empty.
 ./gradlew :shared:shapes:jvmTest              # just the JVM leg, when iterating
 ./gradlew :worker:jsNodeProductionRun         # PRNG self-check (prints the gate number)
 ./gradlew :composeApp:wasmJsBrowserDistribution   # build the Compose web bundle
-./gradlew :composeApp:assembleDebug           # Android APK
-./gradlew :composeApp:installDebug            # ...onto a connected phone or emulator
-./gradlew :composeApp:assembleRelease         # release APK; debug-signed — see UI.md §6f
+./gradlew :androidApp:assembleDebug           # Android APK — the *app* module (§3)
+./gradlew :androidApp:installDebug            # ...onto a connected phone or emulator
+./gradlew :androidApp:assembleRelease         # release APK; debug-signed — see UI.md §6f
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64   # just the iOS framework
 ./gradlew build                               # everything available on this host
 

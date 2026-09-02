@@ -54,8 +54,11 @@
     client/          # GameSession: LocalGameSession and RemoteGameSession
     protocol/        # The wire, declared once (see docs/kotlin/PROTOCOL.md)
     room/            # Room and registry cores, testable off the Worker
-  composeApp/        # Compose Multiplatform UI — one commonMain for all three clients
-  androidApp/        # The Android application: manifest, MainActivity, icons, signing
+  composeApp/        # Compose Multiplatform UI — one commonMain for all three clients.
+                     # A KMP *library*: it has no assembleDebug (AGP 9 will not let the
+                     # application plugin share a module with KMP)
+  androidApp/        # The Android *application*: manifest, MainActivity, icons, signing.
+                     # `:androidApp:assembleDebug` is the APK
   worker/            # Cloudflare Worker + Durable Object; JS shim in worker/cloudflare/
   iosApp/            # Xcode project embedding composeApp's framework (macOS only)
   build-logic/       # Convention plugins
@@ -69,7 +72,7 @@
   ```bash
   ./gradlew :shared:engine:jvmTest        # the parity gate for one module
   ./gradlew detekt                        # static analysis, every module
-  ./gradlew :composeApp:assembleDebug     # Android APK
+  ./gradlew :androidApp:assembleDebug     # Android APK — `androidApp`, not `composeApp`
   ./gradlew :composeApp:jvmTest           # Compose UI suites, headless
   ./gradlew :composeApp:run               # the desktop window — fastest look at a UI change
   ./gradlew :worker:jsProductionExecutableCompileSync   # the Worker bundle

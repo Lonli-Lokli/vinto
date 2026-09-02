@@ -270,6 +270,16 @@
     <!-- Under the prompt, for any card shown in the rail: its name, its points, and what it does. -->
     <string name="rail_card_action">%1$s, worth %2$d: %3$s</string>
     <string name="rail_card_plain">%1$s, worth %2$d</string>
+    <!--
+      The two cards a Jack or a Queen is being pointed at, drawn in the rail. `%1$s` is the
+      card itself as a screen reader would say it — "Q, worth 10", or "a face-down card" for
+      a Jack, which swaps without looking.
+    -->
+    <string name="rail_aiming_at">aiming at %1$s</string>
+    <string name="rail_aim_empty">a card still to choose</string>
+    <!-- Under an end of the aim nothing has been chosen for yet. -->
+    <string name="rail_aim_first">First</string>
+    <string name="rail_aim_second">Second</string>
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">discarded %1$s, action unused</string>
     <string name="card_in_hand">the card in your hand</string>
@@ -443,8 +453,10 @@
     <!-- The smaller line under the prompt. `detail_card_does` and `detail_king_declared` take
          a card's `longDescription`, which is presentation. They must never take
          `shortDescription`: that one becomes `Card.actionText` and lives inside the canonical
-         hash, so translating it diverges all 50 fixtures (CardCopyIsDataTest). -->
-    <string name="detail_card_does">%1$s</string>
+         hash, so translating it diverges all 50 fixtures (CardCopyIsDataTest).
+         `detail_card_does` is the card named, priced and explained — the same sentence as
+         `rail_card_action`, because it is that sentence when no card is drawn beside it. -->
+    <string name="detail_card_does">%1$s, worth %2$d: %3$s</string>
     <string name="detail_king_declared">The King declared a %1$s: %2$s</string>
     <string name="detail_tap_to_say">Tap one of your cards to say what you think it is.</string>
     <string name="detail_table_talk">Table talk — the coalition takes your word for it, right or wrong.</string>
@@ -454,8 +466,6 @@
     <string name="detail_barred">You guessed wrong, and in the final round that is the rest of the round.</string>
     <string name="detail_scored_against">%1$s called Vinto, so the round was scored against their hand.</string>
     <string name="detail_deck_ran_out">The deck ran out, so the round ended and every hand was counted.</string>
-    <string name="detail_aimed_one">Chosen: %1$s</string>
-    <string name="detail_aimed_two">Chosen: %1$s and %2$s</string>
 
     <!-- The line above the buttons: what the table is asking for.
          Ranks arrive as symbols (%1$s and friends) and are never translated. `ask_or` is the

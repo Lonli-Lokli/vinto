@@ -45,16 +45,6 @@ sealed interface Detail {
     /** The same, in the final round, where the bar runs to the end of it. */
     data object BarredForTheRestOfTheRound : Detail
 
-    /**
-     * What a two-card action has aimed at so far, in the order it was chosen.
-     *
-     * The gold ring on a chosen card is the only record there was, and on a crowded table a
-     * ring is easy to lose — so the line under the prompt names the hand and the slot:
-     * "Raph, card 3". Slots are one-based, because they are read by a person counting cards
-     * along a row.
-     */
-    data class Aimed(val cards: List<ChosenCard>) : Detail
-
     /** The round was scored against the caller's hand. */
     data class ScoredAgainstTheCaller(val caller: Speaker) : Detail
 
@@ -62,5 +52,10 @@ sealed interface Detail {
     data object TheDeckRanOut : Detail
 }
 
-/** One card an action is aimed at: whose hand, and which slot along it (one-based). */
+/**
+ * One card an action moved: whose hand, and which slot along it (one-based).
+ *
+ * The log's half of the story. What a two-card action is *currently* aimed at is [Aim], which
+ * carries the face as well, because the rail draws it rather than reading it out.
+ */
 data class ChosenCard(val who: Speaker, val slot: Int)

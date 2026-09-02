@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -48,6 +49,21 @@ fun GameButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leading: String? = null,
+    /**
+     * Something drawn in the label's place before it — a seat's portrait, where [leading] would
+     * only take a character. Decorative by contract: the label beside it says who or what this
+     * is, so anything drawn here passes `contentDescription = null` and adds nothing to speak.
+     */
+    leadingContent: (@Composable () -> Unit)? = null,
+    /**
+     * Whether [leadingContent] sits *above* the label rather than beside it.
+     *
+     * For a button whose picture is the point — a seat's portrait, which a player recognises
+     * faster than they read three similar names. Beside the label a portrait has to share the
+     * width with it and ends up a coloured dot; above it, it gets the whole width and the name
+     * gets a whole line, which is also what stops a long one being cut to three letters.
+     */
+    stacked: Boolean = false,
     compact: Boolean = false,
     busy: Boolean = false,
     /**
@@ -109,14 +125,15 @@ fun GameButton(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Row(
-                modifier = Modifier.padding(
-                    horizontal = if (compact) CompactPadH else PadH,
-                    vertical = if (compact) CompactPadV else PadV,
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Gap),
-            ) {
+            val pad = Modifier.padding(
+                horizontal = if (compact) CompactPadH else PadH,
+                vertical = if (compact) CompactPadV else PadV,
+            )
+            // One set of contents, laid out one of two ways. Written as a slot rather than
+            // duplicated, because everything above this — the bevel, the tone, the press, the
+            // spoken label — is what makes a button this button, and a second copy of it
+            // drifts from the first the first time one of them is touched.
+            val contents: @Composable () -> Unit = {
                 // In the label's place rather than beside it, so the button does not change
                 // width mid-press and shift whatever sits under it.
                 if (busy) {
@@ -126,6 +143,7 @@ fun GameButton(
                         description = label,
                     )
                 } else {
+                    leadingContent?.invoke()
                     leading?.let { Text(it, fontSize = LabelSize) }
                     // Stamped rather than written: caps and letterspaced, the way the word on a
                     // chip or a plaque is cut into it. A button that reads like a sentence is a
@@ -147,6 +165,22 @@ fun GameButton(
                         maxLines = if (compact) 1 else 2,
                     )
                 }
+            }
+
+            if (stacked) {
+                Column(
+                    modifier = pad,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(StackGap),
+                    content = { contents() },
+                )
+            } else {
+                Row(
+                    modifier = pad,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Gap),
+                    content = { contents() },
+                )
             }
         }
     }
@@ -212,6 +246,9 @@ private val PadV = 12.dp
 private val CompactPadH = 4.dp
 private val CompactPadV = 8.dp
 private val Gap = 8.dp
+
+/** Tighter than [Gap]: a portrait and the name under it are one object, not two things in a row. */
+private val StackGap = 3.dp
 private val LabelSize = 15.sp
 private val CompactLabel = 13.sp
 private val Tracking = 1.1.sp

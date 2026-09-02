@@ -131,10 +131,10 @@ class HumanCoalitionLeaderTest {
         // The prompt is live: every non-caller seat on offer, the caller not among them.
         val table = tableFor(session.view.value)
         assertIs<Ask.WhoPlaysForYou>(table.prompt, "expected the leader prompt, got '${table.prompt}'")
-        assertEquals(setOf("human-1", "bot-3", "bot-4"), table.seatTaps.keys)
+        assertEquals(listOf("human-1", "bot-3", "bot-4"), table.seats.map { it.id })
 
         // The human picks a seat; the bots resume and play through to their own turn.
-        val pick = table.seatTaps.getValue("bot-3") as Move.Send
+        val pick = table.seats.first { it.id == "bot-3" }.move as Move.Send
         session.dispatch(pick.action)
         assertEquals("bot-3", session.view.value.coalitionLeaderId)
 

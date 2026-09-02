@@ -287,25 +287,40 @@ fun SeatPlate(
 }
 
 /**
- * The portrait for a seat.
+ * The portrait for a seat, where the seat has one.
  *
  * Keyed on the name the engine deals, which is fixed: `initializeGame` always seats You,
- * Raphael, Michelangelo and Donatello in that order. Online the seats are people with their
- * own nicknames, and this will need a real mapping — one more reason it is a single function.
+ * Raphael, Michelangelo and Donatello in that order. Online the seats are people who typed
+ * their own nicknames and **have no portrait at all** — not yet; nothing carries one over the
+ * wire — which is what this returns null for.
+ *
+ * That null is the whole reason this exists beside [portraitFor]. Somewhere that draws a
+ * portrait *beside a name already on the screen* — the rail's seat buttons — can simply leave
+ * it out, and a stranger with no face is honest. Somewhere that has a round hole to fill
+ * whatever happens, like the felt's plate, needs a fallback, and that is [portraitFor]'s job.
  */
-internal fun portraitFor(name: String): DrawableResource = when {
+internal fun portraitOrNull(name: String): DrawableResource? = when {
     name.startsWith("Raph") -> Res.drawable.avatar_raphael
     name.startsWith("Mikey") || name.startsWith("Michel") -> Res.drawable.avatar_michelangelo
     name.startsWith("Don") -> Res.drawable.avatar_donatello
     name.startsWith("Leo") -> Res.drawable.avatar_leonardo
-    // Leonardo is also the fallback, because the seat he plays is the one the offline game
-    // gives the human: his portrait was filed as `avatar_you` and read as "a picture of the
-    // viewer", which is true of exactly one game mode. Online the viewer is whoever typed
-    // their name in, and seat zero can be Leonardo himself when the room fills it with a bot.
-    // The file is named for the character now; the fallback is a separate decision that
-    // happens to land on him.
-    else -> Res.drawable.avatar_leonardo
+    // The offline game's human seat is dealt as "You" and the felt draws Leonardo on it, so
+    // this says the same rather than leaving the one seat in a solo game faceless.
+    name == "You" -> Res.drawable.avatar_leonardo
+    else -> null
 }
+
+/**
+ * The portrait for a seat, whoever they are.
+ *
+ * Leonardo is the fallback, because the seat he plays is the one the offline game gives the
+ * human: his portrait was filed as `avatar_you` and read as "a picture of the viewer", which
+ * is true of exactly one game mode. Online the viewer is whoever typed their name in, and
+ * seat zero can be Leonardo himself when the room fills it with a bot. The file is named for
+ * the character now; the fallback is a separate decision that happens to land on him.
+ */
+internal fun portraitFor(name: String): DrawableResource =
+    portraitOrNull(name) ?: Res.drawable.avatar_leonardo
 
 private val PlateTap = 44.dp
 

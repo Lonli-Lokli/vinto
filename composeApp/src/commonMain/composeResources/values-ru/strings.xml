@@ -225,6 +225,10 @@
     <string name="card_in_play">в игре: %1$s</string>
     <string name="rail_card_action">%1$s, ценность %2$d: %3$s</string>
     <string name="rail_card_plain">%1$s, ценность %2$d</string>
+    <string name="rail_aiming_at">прицел: %1$s</string>
+    <string name="rail_aim_empty">карта ещё не выбрана</string>
+    <string name="rail_aim_first">Первая</string>
+    <string name="rail_aim_second">Вторая</string>
     <string name="card_discarded_live">сброшена %1$s, действие не использовано</string>
     <string name="card_in_hand">карта у вас в руке</string>
 
@@ -366,7 +370,7 @@
     <string name="explains_final_round">Винто объявлено. Все остальные играют последний ход как коалиция, и против объявившего идёт только их лучшая рука.</string>
     <string name="explains_turn">Возьмите карту из колоды или верхнюю из сброса, если это карта с неразыгранным действием. Оставляйте то, что уменьшает вашу сумму; объявляйте Винто, когда решите, что она самая младшая.</string>
 
-    <string name="detail_card_does">%1$s</string>
+    <string name="detail_card_does">%1$s, ценность %2$d: %3$s</string>
     <string name="detail_king_declared">Король назвал %1$s: %2$s</string>
     <string name="detail_tap_to_say">Коснитесь своей карты и скажите, что это по-вашему.</string>
     <string name="detail_table_talk">Разговор за столом — коалиция верит вам на слово, правы вы или нет.</string>
@@ -376,8 +380,6 @@
     <string name="detail_barred">Вы не угадали, а в последнем круге это до конца раунда.</string>
     <string name="detail_scored_against">Винто объявил(а) %1$s, поэтому раунд считали против его руки.</string>
     <string name="detail_deck_ran_out">Кончилась колода, раунд закрыли и посчитали все руки.</string>
-    <string name="detail_aimed_one">Выбрано: %1$s</string>
-    <string name="detail_aimed_two">Выбрано: %1$s и %2$s</string>
 
     <string name="ask_or"> или </string>
     <string name="ask_look_at_two_of_yours">Посмотрите две свои карты</string>

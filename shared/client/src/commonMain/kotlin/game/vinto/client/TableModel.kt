@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PendingActionView
+import game.vinto.engine.PendingTargetView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
@@ -52,8 +53,17 @@ data class Table(
     val choices: List<Choice> = emptyList(),
     /** Cards that can be touched, and what touching one does. */
     val taps: Map<CardRef, Move> = emptyMap(),
-    /** Whole seats that can be touched — only an Ace names a player rather than a card. */
-    val seatTaps: Map<String, Move> = emptyMap(),
+    /**
+     * Whole seats on offer, for the two moves that name a person rather than a card: an Ace,
+     * which makes somebody draw, and the coalition choosing who plays its hand.
+     *
+     * A list rather than a map keyed by id, because these are drawn twice and one of the two
+     * needs them in order and by name. The felt makes each seat's plate tappable, which is the
+     * better gesture; the rail draws them as buttons, which is the part that says the choice
+     * exists at all. Every other question the table asks is answered on the rail, so a
+     * question answerable only by tapping the felt read as a question with no answer.
+     */
+    val seats: List<SeatChoice> = emptyList(),
     /** Ranks on offer, when a declaration is being asked for. */
     val ranks: List<RankChoice> = emptyList(),
     /**
@@ -76,13 +86,53 @@ data class Table(
      * only as good as the memory it came from.
      */
     val badges: Map<CardRef, String> = emptyMap(),
+    /**
+     * The two cards a Jack or a Queen is being pointed at, for as long as it is being pointed.
+     *
+     * Present from the moment the action starts, with both ends empty, because the first
+     * thing it has to say is that two cards are wanted. Null for every other action, which is
+     * how the rail knows whether it is drawing an aim or the card in play.
+     */
+    val aim: Aim? = null,
 )
 
 /** A card on the table: whose, and which slot. */
 data class CardRef(val playerId: String, val position: Int)
 
+/**
+ * A two-card action, half-aimed or fully aimed.
+ *
+ * Two named ends rather than a list, because the order is the whole of what the player is
+ * tracking — the first card chosen and the one still to choose are different questions, and a
+ * list of one leaves the reader to work out which end it is.
+ */
+data class Aim(val first: AimedCard? = null, val second: AimedCard? = null)
+
+/**
+ * One end of an aim: whose hand, which card along it (one-based, as a person counts along a
+ * row), and its face — a real card for a Queen, which looks before it swaps, and
+ * [CardView.Hidden] for a Jack, which does not. The projection has already decided which;
+ * this only carries what it was given, so a Jack cannot leak a face by being drawn.
+ */
+data class AimedCard(val who: Speaker, val slot: Int, val card: CardView)
+
 /** A button. */
 data class Choice(val label: Label, val move: Move, val tone: Tone = Tone.NEUTRAL)
+
+/**
+ * A seat the table is offering: who they are, and what naming them does.
+ *
+ * [who] is how to *address* them — "You" for your own seat, which the coalition question can
+ * offer — and [nickname] is who they *are*, which is a different question and the one a
+ * portrait is keyed on. They differ for exactly one seat and that is the seat a face would
+ * otherwise be missing from.
+ */
+data class SeatChoice(
+    val id: String,
+    val nickname: String,
+    val who: Speaker,
+    val move: Move,
+)
 
 /** A rank the player may name. */
 data class RankChoice(val rank: Rank, val move: Move, val muted: Boolean = false)
@@ -531,7 +581,8 @@ private fun twoCardTable(
         prompt = prompt,
         choices = listOf(giveUp(view.viewerId)),
         taps = anyTaps(view, pending),
-        detail = aimedSoFar(view, pending),
+        detail = whatItIs(pending),
+        aim = aimedSoFar(view, pending),
     )
 } else {
     Table(
@@ -540,25 +591,46 @@ private fun twoCardTable(
             Choice(Label.SwapCards, Move.Send(swap), Tone.PLAY),
             Choice(Label.LeaveThem, Move.Send(leave)),
         ),
-        detail = aimedSoFar(view, pending),
+        detail = whatItIs(pending),
+        aim = aimedSoFar(view, pending),
     )
 }
 
 /**
- * The cards already chosen, named as well as ringed.
+ * The cards already chosen, and the room left for the ones that are not.
  *
  * A chosen card wears the gold ring, and on a crowded table that ring is the only record of
- * what a Jack or Queen is pointed at. The detail line says it in words — whose hand, which
- * slot — so the player confirming "swap them?" is told what "them" is.
+ * what a Jack or Queen is pointed at. This is the other record, and it used to be a line of
+ * words — "Chosen: You, card 3 and Don, card 5" — under a rail column spending its one card
+ * of room on the Queen doing the pointing. The player already knows about the Queen; they
+ * chose to play it, and it is lying on the discard. What they are deciding about is the pair,
+ * so the pair is what the column draws.
  */
-private fun aimedSoFar(view: PlayerView, pending: PendingActionView): Detail? =
-    pending.targets.takeIf { it.isNotEmpty() }?.let { targets ->
-        Detail.Aimed(
-            targets.map { target ->
-                ChosenCard(who = speakerFor(view, target.playerId), slot = target.position + 1)
-            },
-        )
-    }
+private fun aimedSoFar(view: PlayerView, pending: PendingActionView): Aim = Aim(
+    first = pending.targets.getOrNull(0)?.let { aimedCard(view, it) },
+    second = pending.targets.getOrNull(1)?.let { aimedCard(view, it) },
+)
+
+private fun aimedCard(view: PlayerView, target: PendingTargetView) = AimedCard(
+    who = speakerFor(view, target.playerId),
+    slot = target.position + 1,
+    card = target.card,
+)
+
+/**
+ * What the card running this action is, now that it is no longer drawn beside the words.
+ *
+ * The rail used to say this by showing the card; the aim has the column, so the sentence has
+ * to carry it.
+ *
+ * A King needs no special case, which is worth saying because it looks as though it should.
+ * Naming a card correctly takes that card out of the hand and makes *it* the pending card, so
+ * a King that fetched a Jack reads "Jack, worth 10: swap any two…" — the borrowed card, which
+ * is the one being aimed. The King is already on the discard. [withBorrowed] covers the other
+ * shape, where a pending action carries a `declaredRank` of its own.
+ */
+private fun whatItIs(pending: PendingActionView): Detail? =
+    (pending.card as? CardView.Visible)?.card?.rank?.let(Detail::WhatTheCardDoes)
 
 private fun speakerFor(view: PlayerView, playerId: String): Speaker =
     if (playerId == view.viewerId) {
@@ -595,14 +667,40 @@ private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
         )
     }
 
-/** The only action that names a player rather than a card. */
+/**
+ * The only action that names a player rather than a card.
+ *
+ * It still aims at the felt, because what an Ace lands on is a *hand*: every card of every
+ * opponent sends the same move, so the target is the size of five cards rather than of the
+ * chip beside them, and the hand lights up as one — a tappable card wears the ring that says
+ * so. There is no card to *choose*; the victim draws one nobody has seen. Which is why the
+ * rail carries the seats as well, for the player who reads the question before the table.
+ */
 private fun forceDrawTable(view: PlayerView): Table = Table(
     prompt = Ask.WhoDrawsACard,
-    choices = listOf(giveUp(view.viewerId)),
-    seatTaps = view.players.filter { it.id != view.viewerId }.associate { seat ->
-        seat.id to Move.Send(
-            GameAction.SelectActionTarget(
+    taps = view.players
+        .filter { it.id != view.viewerId }
+        .flatMap { seat ->
+            val name = GameAction.SelectActionTarget(
                 SelectActionTargetPayload.Ace(view.viewerId, seat.id),
+            )
+            seat.cards.indices.map { position -> CardRef(seat.id, position) to Move.Send(name) }
+        }
+        .toMap(),
+    // The rail no longer draws the Ace while it asks — the player drew it, read it and chose
+    // to play it, and a fourth showing is not news — so the sentence carries what the picture
+    // used to. Without this the question arrives with no statement of what saying yes does.
+    detail = Detail.WhatTheCardDoes(Rank.ACE),
+    choices = listOf(giveUp(view.viewerId)),
+    seats = view.players.filter { it.id != view.viewerId }.map { seat ->
+        SeatChoice(
+            id = seat.id,
+            nickname = seat.nickname,
+            who = speakerFor(view, seat.id),
+            move = Move.Send(
+                GameAction.SelectActionTarget(
+                    SelectActionTargetPayload.Ace(view.viewerId, seat.id),
+                ),
             ),
         )
     },
@@ -762,11 +860,17 @@ private fun coalitionTable(view: PlayerView): Table {
 
     return Table(
         prompt = Ask.WhoPlaysForYou(Speaker.Named(caller)),
-        seatTaps = view.players
+        // The viewer is among them: nominating yourself is a real answer, and it is the one
+        // the rail has to be able to say, since a player cannot tap their own plate to mean
+        // "me" and be sure that is what it meant.
+        seats = view.players
             .filter { it.id != view.vintoCallerId }
-            .associate { seat ->
-                seat.id to Move.Send(
-                    GameAction.SetCoalitionLeader(LeaderIdPayload(seat.id)),
+            .map { seat ->
+                SeatChoice(
+                    id = seat.id,
+                    nickname = seat.nickname,
+                    who = speakerFor(view, seat.id),
+                    move = Move.Send(GameAction.SetCoalitionLeader(LeaderIdPayload(seat.id))),
                 )
             },
     )
