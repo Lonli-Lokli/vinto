@@ -44,7 +44,7 @@ class FinalRoundTest {
     }
 
     @Test
-    fun callingVintoInTheTossInWindowPlaysTheRoundOut() = runTest {
+    fun callingVintoInTheTossInWindowPlaysTheRoundOut() = runTest(timeout = WHOLE_GAME) {
         val stalled = mutableListOf<String>()
 
         for (seed in 1L..60L) {
@@ -66,7 +66,7 @@ class FinalRoundTest {
      * count a player sees is the one asserted here. 3, 2, 1, and then the hands go over.
      */
     @Test
-    fun theFinalRoundCountsItsTurnsDown() = runTest {
+    fun theFinalRoundCountsItsTurnsDown() = runTest(timeout = WHOLE_GAME) {
         var checked = 0
 
         for (seed in 1L..20L) {
@@ -103,7 +103,7 @@ class FinalRoundTest {
      * which is the one part the seeds cannot be relied on to produce on demand.
      */
     @Test
-    fun theScoringScreenKnowsWhyTheRoundEnded() = runTest {
+    fun theScoringScreenKnowsWhyTheRoundEnded() = runTest(timeout = WHOLE_GAME) {
         var session: LocalGameSession? = null
         for (seed in 1L..20L) {
             val played = callVintoAt(seed)

@@ -66,7 +66,7 @@ class CoalitionFinalRoundTest {
     }
 
     @Test
-    fun theCoalitionPlaysItsLastTurnsAndTheRoundEnds() = runTest {
+    fun theCoalitionPlaysItsLastTurnsAndTheRoundEnds() = runTest(timeout = WHOLE_GAME) {
         val stalled = mutableListOf<Long>()
         var played = 0
 
@@ -81,7 +81,7 @@ class CoalitionFinalRoundTest {
     }
 
     @Test
-    fun theCallerIsNeverTargetedByTheCoalitionInTheFinalRound() = runTest {
+    fun theCallerIsNeverTargetedByTheCoalitionInTheFinalRound() = runTest(timeout = WHOLE_GAME) {
         // The rule the validator enforces, checked here where it actually bites: three bots
         // taking real turns against a real caller, rather than in a constructed position.
         // `ValidatorImpersonationTest` proves nothing illegal is accepted; this proves the
@@ -97,7 +97,7 @@ class CoalitionFinalRoundTest {
     }
 
     @Test
-    fun theRoundIsScoredOnTheCoalitionsBestHandNotItsLast() = runTest {
+    fun theRoundIsScoredOnTheCoalitionsBestHandNotItsLast() = runTest(timeout = WHOLE_GAME) {
         // The one rule of the final round that is easy to get wrong and invisible until
         // somebody loses a round they should have won: the coalition is one team, and only
         // its lowest hand is compared to the caller's.

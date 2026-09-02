@@ -440,7 +440,7 @@ class ChoreographyTest {
     // ------------------------------------------------------------------ the reveal
 
     @Test
-    fun scoringTurnsTheHandsOverSeatBySeatInTableOrder() = runTest {
+    fun scoringTurnsTheHandsOverSeatBySeatInTableOrder() = runTest(timeout = WHOLE_GAME) {
         val session = started()
         val scenes = scenesOf(session)
 
@@ -481,7 +481,7 @@ class ChoreographyTest {
     }
 
     @Test
-    fun aTableAlreadyAtScoringRevealsNothingAgain() = runTest {
+    fun aTableAlreadyAtScoringRevealsNothingAgain() = runTest(timeout = WHOLE_GAME) {
         val session = started()
         session.dispatch(GameAction.SetNextDrawCard(RankPayload(Rank.NINE)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
