@@ -509,16 +509,49 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
      * multiset of ranks per hand. Ranks are ordered by the enum rather than by name — any
      * consistent order canonicalises a hand, and this one does not depend on how a rank
      * happens to spell itself.
+     *
+     * The depth is in the key because the value is not a property of the position alone: a
+     * position reached deep in the tree is searched narrowly and cut off sooner, and handing
+     * that number to a shallower visit made the answer depend on which branch got there
+     * first.
      */
-    private fun memoKey(hands: Hands, discardTop: PlanCard?, queueIndex: Int): String = buildString {
+    private fun memoKey(
+        hands: Hands,
+        discardTop: PlanCard?,
+        queueIndex: Int,
+        depth: Int,
+    ): String = buildString {
         append(queueIndex)
+        append('@')
+        append(depth)
         append('#')
+        appendHands(hands)
+        append(if (isTakeableAction(discardTop)) discardTop?.rank?.serialName else "-")
+    }
+
+    private fun StringBuilder.appendHands(hands: Hands) {
         for (hand in hands) {
             // An unknown card keys as "?" — its placeholder rank is not information.
             hand.map { if (it.known) it.rank.serialName else "?" }.sorted().joinTo(this, ",")
             append('|')
         }
-        append(if (isTakeableAction(discardTop)) discardTop?.rank?.serialName else "-")
+    }
+
+    /**
+     * Everything the lookahead can tell two outcomes apart by. Two options with the same key
+     * are worth the same by construction — a peek at one of a hand's unread cards and a peek
+     * at another, a swap into either of two placeholders — so the lookahead is spent on one
+     * of them. A five-card table with three unread hands would otherwise search the same
+     * position several times over, each time through every card the reveal could be.
+     */
+    private fun outcomeKey(outcome: CoalitionOutcome): String = buildString {
+        append(if (isTakeableAction(outcome.discardTop)) outcome.discardTop?.rank?.serialName else "-")
+        for ((probability, hands) in outcome.alternatives) {
+            append('#')
+            append(probability)
+            append(':')
+            appendHands(hands)
+        }
     }
 
     /** What the coalition position is worth at the start of the queued member's turn. */
@@ -530,7 +563,7 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         // somebody else's hand.
         if (!memberIsBot[member]) return valueAtTurnStart(hands, discardTop, queueIndex + 1, depth)
 
-        val key = memoKey(hands, discardTop, queueIndex)
+        val key = memoKey(hands, discardTop, queueIndex, depth)
         memo[key]?.let { return it }
 
         val width = pruneWidthAt(depth)
@@ -559,28 +592,37 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         return best
     }
 
-    fun <T : CoalitionOutcome> pruneOptions(options: List<T>, width: Int): List<T> =
-        if (options.size <= width) {
-            options
+    fun <T : CoalitionOutcome> pruneOptions(options: List<T>, width: Int): List<T> {
+        val distinct = options.distinctBy(::outcomeKey)
+        return if (distinct.size <= width) {
+            distinct
         } else {
-            options.sortedByDescending { evaluate(it.hands) }.take(width)
+            distinct.sortedByDescending { evaluate(it.hands) }.take(width)
         }
+    }
 
     /** The value of one outcome of the acting bot's own turn; lookahead starts after it. */
     fun valueOfOutcome(outcome: CoalitionOutcome): Double = valueAfter(outcome, queueIndex = 0, depth = 1)
 
     /** What an outcome is worth once the queued member plays: an expectation over what it revealed. */
-    private fun valueAfter(outcome: CoalitionOutcome, queueIndex: Int, depth: Int): Double =
-        outcome.alternatives.sumOf { (probability, hands) ->
-            probability * valueAtTurnStart(hands, outcome.discardTop, queueIndex, depth)
+    private fun valueAfter(outcome: CoalitionOutcome, queueIndex: Int, depth: Int): Double {
+        val alternatives = outcome.alternatives
+        // A reveal is a chance node as wide as a draw — one branch per rank still unseen — so
+        // it is charged the lookahead turn a draw costs. Left free, a peek at every level
+        // multiplied the tree by the deck's width a second time per turn, and one turn-start
+        // decision searched half a million positions.
+        val after = if (alternatives.size > 1) depth + 1 else depth
+        return alternatives.sumOf { (probability, hands) ->
+            probability * valueAtTurnStart(hands, outcome.discardTop, queueIndex, after)
         }
+    }
 
     data class Ranked<T>(val option: T, val value: Double)
 
     /** Pre-rank cheaply, then spend the full lookahead on the shortlist. */
-    fun <T : CoalitionOutcome> pickBest(options: List<T>): Ranked<T>? {
+    fun <T : CoalitionOutcome> pickBest(options: List<T>, width: Int = ROOT_WIDTH): Ranked<T>? {
         val best = Best<T>()
-        for (option in pruneOptions(options, ROOT_WIDTH)) {
+        for (option in pruneOptions(options, width)) {
             best.offer(option, valueOfOutcome(option))
         }
         return best.item?.let { Ranked(it, best.value) }

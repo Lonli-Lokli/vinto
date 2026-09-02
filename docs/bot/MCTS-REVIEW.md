@@ -524,6 +524,48 @@ and the mixed-table game takes a per-seat factory — because the next question 
 the same way. What separates moderate from hard is still open, and with three dozen games per
 experiment the honest statement is that the two are close and moderate is ahead, not why.
 
+### The coalition search's cost, and what it was spent on
+
+Found by CI rather than by the tournament: the client's final-round suites went from six
+seconds to three minutes on the coalition commit, and the iOS simulator hit `runTest`'s
+sixty-second wall clock on three of them. The tournament had not noticed because its bots
+declare every card, so the plan holds no placeholders and no peek is ever worth modelling.
+A human at the table has five undeclared cards, and an easy bot has forgotten some of its
+own, and that is where the new chance node showed what it cost.
+
+One turn-start decision for an easy bot, measured at the position the client's
+`FinalRoundTest` reaches (a 9 on the pile, a human caller):
+
+| | positions searched | time |
+| --- | --- | --- |
+| as committed | 486,000 | 2.4 s |
+| a reveal charged as a lookahead turn | 42,000 | 0.5 s |
+| and the draw side pruned to the lookahead's width | ~5,000 | 0.1–0.4 s |
+
+Three changes, none of them a weight:
+
+- **A reveal is a chance node as wide as a draw** — one branch per rank still unseen — and is
+  now charged the lookahead turn a draw costs. Left free, a peek at every level multiplied the
+  tree by the deck's width a second time per turn.
+- **The turn-start comparison prunes both sides to the same width**, the lookahead's own, because
+  neither card is in hand yet: what to do with the card is decided again at the root's full
+  width once it is. Searching every reply to every possible draw in full was thirteen root
+  searches per turn start, ninety-eight per cent of the decision's cost.
+- **Options that are the same position are searched once.** A peek at either of a hand's unread
+  cards, a swap into either of two placeholders: `pruneOptions` keys each option by the
+  positions it can leave behind and keeps one of each, so the width is spent on different
+  answers rather than on copies of one.
+
+And one correction the measurement turned up: the lookahead's memo keyed a position by its
+hands, the pile and whose turn it was — and not by *depth*. A position reached deep in the
+tree is searched narrowly and cut off sooner, and handing that number to a shallower visit
+made the answer depend on which branch got there first. The depth is in the key now.
+`takesAnUnplayedJackOffTheDiscardWhenItWinsTheRound` moved with it: its position had the
+caller on 6, where any low draw swapped over the 9 won as surely as the Jack did and the
+toss-ins a discarded card sets off made drawing near-certain too — a knife edge that the old
+memo order happened to land on the expected side of. The caller sits on 1 now, and the Jack
+is the only certain win.
+
 ### What is left
 
 - **Rollout policy is a policy.** It plays by card values and has no weights, but it is still

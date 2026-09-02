@@ -291,11 +291,17 @@ class CoalitionPlannerTest {
 
     @Test
     fun takesAnUnplayedJackOffTheDiscardWhenItWinsTheRound() {
+        // The caller sits on 1, so only a hand at 0 or below beats it: the Jack that puts
+        // bot1's Ace beside bot2's Joker does, for certain. A draw wins only if it turns up
+        // one of the few cards that can reach that — an Ace, a swap card, a King — so the
+        // certain win has to be preferred to the gamble. (With the caller on 6 the position
+        // did not discriminate: any low draw swapped over the 9 won too, and the toss-ins a
+        // discarded card sets off made drawing as near-certain as taking.)
         val state = buildState(
-            human = listOf(Rank.TWO, Rank.THREE, Rank.ACE),
-            bot1 = listOf(Rank.THREE, Rank.FIVE),
+            human = listOf(Rank.ACE, Rank.ACE, Rank.JOKER),
+            bot1 = listOf(Rank.ACE, Rank.FIVE),
             bot2 = listOf(Rank.JOKER, Rank.NINE),
-            bot3 = listOf(Rank.SEVEN, Rank.FIVE),
+            bot3 = listOf(Rank.SEVEN, Rank.TEN),
             currentPlayerIndex = 2,
             discardPile = listOf(Rank.JACK),
         )

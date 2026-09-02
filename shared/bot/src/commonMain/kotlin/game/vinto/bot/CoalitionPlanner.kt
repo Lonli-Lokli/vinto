@@ -250,13 +250,22 @@ fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): Coalition
 
 enum class CoalitionTurnStart { DRAW, TAKE_DISCARD }
 
-/** Draw from the deck, or take an unplayed action card off the discard? */
+/**
+ * Draw from the deck, or take an unplayed action card off the discard?
+ *
+ * Two expectations compared, and both are pruned to the same width — the lookahead's, because
+ * neither card is in hand yet: what to *do* with the card is decided again, at the root's full
+ * width, once it is. Searching every reply to every possible draw in full cost thirteen root
+ * searches per turn start, and the answer is the same.
+ */
 fun planCoalitionTurnStart(input: CoalitionPlanInput): CoalitionTurnStart {
     val search = CoalitionSearch(input)
     if (!search.hasActor) return CoalitionTurnStart.DRAW
+    val width = pruneWidthAt(1)
 
     val take = search.pickBest(
         search.enumerateTakeDiscard(search.rootHands, search.rootDiscardTop, SearchMode.FULL),
+        width,
     ) ?: return CoalitionTurnStart.DRAW
 
     // What drawing is worth: the value of the best reply to each possible card, weighted by
@@ -271,6 +280,7 @@ fun planCoalitionTurnStart(input: CoalitionPlanInput): CoalitionTurnStart {
                 option.card,
                 SearchMode.FULL,
             ),
+            width,
         )
         drawValue += option.probability * (best?.value ?: search.evaluate(search.rootHands))
     }
