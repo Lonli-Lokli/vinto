@@ -111,6 +111,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
 import game.vinto.engine.mySeat
 import game.vinto.engine.turnHolderId
+import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
@@ -1182,7 +1183,13 @@ private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: () -> Unit) {
  */
 @Composable
 private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: () -> Unit) {
-    val drawn = view.pendingAction?.takeIf { it.from == PendingCardOrigin.DRAWING }
+    // Only while its player is *deciding* about it. The moment the action is engaged the
+    // card is on the pile — that is `cardInPlay`'s exact rule, and this is its complement:
+    // without the phase check a drawn 8 being aimed sat in this slot and on the discard at
+    // once, the same card in two places for the length of its own action.
+    val drawn = view.pendingAction?.takeIf {
+        it.from == PendingCardOrigin.DRAWING && it.actionPhase == ActionPhase.CHOOSING_ACTION
+    }
     val slot = Modifier.anchoredAt(stage, Anchor.Pending, sizes.theirs)
 
     // Empty whenever the card is somewhere else: on its way in, on its way out, or being

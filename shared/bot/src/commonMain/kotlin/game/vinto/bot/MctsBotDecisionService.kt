@@ -509,11 +509,16 @@ class MctsBotDecisionService(
      * Fold everything the engine says this bot can see into its memory, and drop what the
      * table has since invalidated.
      *
-     * Forgetting first matters. A toss-in removes cards from the middle of a hand and
-     * renumbers everything after them, but a memory keeps the index it was written with — so
-     * a hand that has shrunk still "remembers" a card past its own end. Left alone that
-     * distorts every ratio computed against hand size, and it used to reach the move
-     * generator as a target the engine rejects outright.
+     * Forgetting first matters, and it has to be *forgetting* rather than re-reading. A
+     * toss-in removes cards from the middle of a hand and renumbers everything after them,
+     * but a memory keeps the index it was written with — so a hand that has shrunk still
+     * "remembered" a card past its own end, and, worse, remembered the thrown card at the
+     * position the next card slid into. Re-reading that position looked like enough, and
+     * was not: on easy and moderate a read silently fails some of the time, and a failed
+     * read left the stale belief standing. A bot then tossed the card that had slid in as a
+     * match for the one it had just thrown, and paid for it. So anything the engine no
+     * longer backs — a position it says is unread, or a different card at it — goes first,
+     * and a missed glance leaves an honest gap instead of a wrong card.
      */
     private fun updateMemoryFromContext(context: BotDecisionContext) {
         // The table's public cards first: everything on the discard pile plus the card in
@@ -524,7 +529,7 @@ class MctsBotDecisionService(
                 listOfNotNull(context.pendingCard?.rank),
         )
 
-        forgetVanishedPositions(context)
+        forgetStaleSightings(context)
         context.botPlayer.cards.forEachIndexed { position, card ->
             if (position !in context.botPlayer.knownCardPositions) return@forEachIndexed
             if (botMemory.getCardMemory(botId, position)?.card?.id != card.id) {
@@ -541,11 +546,21 @@ class MctsBotDecisionService(
         }
     }
 
-    /** Positions that no longer exist in a hand this bot has an opinion about. */
-    private fun forgetVanishedPositions(context: BotDecisionContext) {
+    /**
+     * Every memory the engine does not stand behind: a position that no longer exists, one
+     * this bot is not recorded as having read, or one holding a different card from the one
+     * remembered there. The engine's record is what the bot has legitimately seen, and it is
+     * renumbered on every removal and cleared on every blind swap — so a memory it does not
+     * back is a stale index, never a sighting the engine missed.
+     */
+    private fun forgetStaleSightings(context: BotDecisionContext) {
         for (player in context.allPlayers) {
-            botMemory.getPlayerMemory(player.id).keys
-                .filter { it !in player.cards.indices }
+            val seen = context.opponentKnowledge[player.id].orEmpty()
+            botMemory.getPlayerMemory(player.id)
+                .filter { (position, memory) ->
+                    position !in player.cards.indices || seen[position]?.id != memory.card.id
+                }
+                .keys
                 .forEach { botMemory.forgetCard(player.id, it) }
         }
     }

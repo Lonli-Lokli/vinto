@@ -125,7 +125,8 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
             sizes = layout.sizes,
             pace = pace.scale,
             opening = opening,
-        ) { shown ->
+            recent = log,
+        ) { shown, told ->
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     // `shown` rather than the live view: while the bots' moves are being played
@@ -135,7 +136,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
                         view = shown,
                         table = holder.tableFor(shown),
                         refusal = holder.refusal,
-                        recent = log,
+                        recent = told,
                         round = round,
                     ),
                     layout = layout,

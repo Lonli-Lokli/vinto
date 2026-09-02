@@ -55,6 +55,7 @@ import game.vinto.client.Beat
 import game.vinto.client.CardRef
 import game.vinto.client.Frame
 import game.vinto.client.Pacing
+import game.vinto.client.Say
 import game.vinto.client.Scene
 import game.vinto.client.Target
 import game.vinto.client.heldUp
@@ -162,6 +163,9 @@ private const val BESIDE_PX = 150f
 private const val FLINCH_MS = 420
 private const val SAY_MS = 1400
 
+/** How much of the log the rail keeps: a whole turn with its toss-in window, and the one before. */
+private const val TOLD_LENGTH = 24
+
 /**
  * Where the table's fixed places are on screen, and what is currently happening at them.
  *
@@ -208,6 +212,15 @@ class Stage {
 
     /** Seats the table is pointing at, and why. */
     internal val attention = mutableStateMapOf<String, Attention>()
+
+    /**
+     * The log as far as the table has been drawn: each frame's lines, added as it plays.
+     *
+     * The session's own log runs at engine speed and had three bots' turns on the rail before
+     * a card had moved. This is the same log stepped, and it is resnapped to the session's
+     * whenever the stage catches up, so a dropped backlog costs it nothing.
+     */
+    internal val told = mutableStateListOf<Say>()
 
     /**
      * Slots a flight has already landed in during the current move.
@@ -348,6 +361,25 @@ class Stage {
     internal val expecting = mutableStateMapOf<Anchor, CardView>()
 
     fun hasLanded(anchor: Anchor): Boolean = anchor in arrived
+
+    /** Adds a frame's lines to the stepped log, forgetting the oldest past [TOLD_LENGTH]. */
+    fun tell(lines: List<Say>) {
+        if (lines.isEmpty()) return
+        told += lines
+        while (told.size > TOLD_LENGTH) told.removeAt(0)
+    }
+
+    /** Takes a batch's lines back off the tail, if they were seeded there ahead of it. */
+    fun untell(lines: List<Say>) {
+        if (lines.isEmpty() || told.size < lines.size) return
+        if (told.takeLast(lines.size) == lines) repeat(lines.size) { told.removeAt(told.lastIndex) }
+    }
+
+    /** Resnaps the stepped log to the session's, once nothing is left to play. */
+    fun tellAll(lines: List<Say>) {
+        told.clear()
+        told += lines.takeLast(TOLD_LENGTH)
+    }
 
     /**
      * Cards the stepped view already shows face-up whose reveal has not been *played* yet.
@@ -580,9 +612,16 @@ fun CardStage(
      * replayed on a resume, which is the caller's `freshlyDealt` to decide.
      */
     opening: List<Scene> = emptyList(),
-    content: @Composable (PlayerView) -> Unit,
+    /**
+     * The session's log as it stands — every line the engine has produced, including the
+     * ones for moves not yet drawn. The stage does not show it; it steps its own copy
+     * ([Stage.told]) as frames play, and resnaps to this the moment it has caught up.
+     */
+    recent: List<Say> = emptyList(),
+    content: @Composable (view: PlayerView, told: List<Say>) -> Unit,
 ) {
     val stage = remember { Stage() }
+    val liveLog = rememberUpdatedState(recent)
     val feedback = LocalFeedback.current
     val reducedMotion = LocalReducedMotion.current
     val sounds = LocalSounds.current
@@ -626,6 +665,9 @@ fun CardStage(
         var next = 0L
         var lastActor: String? = null
 
+        // Whatever the log already says — a resumed round — is the starting point.
+        stage.tellAll(liveLog.value)
+
         // The deal, before anything else — see [playOpening].
         next = stage.playOpening(opening, next)
 
@@ -634,6 +676,10 @@ fun CardStage(
         stage.holdUp(current)
 
         frames.collect { batch ->
+            // A batch replayed into a fresh stage — the screen recreated under a rotation —
+            // arrives after the session's log already holds its lines, and the seed above
+            // took them. They come off again here so the frames can tell them in step.
+            stage.untell(batch.flatMap { it.said })
             queue.submit(batch.tossedTogether())
             draining = true
 
@@ -655,8 +701,11 @@ fun CardStage(
 
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
-                // for the gap to be in the right place.
+                // for the gap to be in the right place. The log steps with it: what the
+                // rail says about a move appears as the move is drawn, not when the engine
+                // finished it.
                 behind = frame.view
+                stage.tell(frame.said)
 
                 for (scene in frame.scenes) {
                     // One frame first, so the table has re-laid-out and reported where things
@@ -701,11 +750,17 @@ fun CardStage(
             // and nothing else is.
             behind = null
             stage.holdUp(current)
+            stage.tellAll(liveLog.value)
         }
     }
 
     Box(modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) }) {
-        CompositionLocalProvider(LocalStage provides stage) { content(behind ?: live) }
+        CompositionLocalProvider(LocalStage provides stage) {
+            // Always the stepped copy, never the live log: a new batch's lines are in the
+            // session's log before its first frame has been picked up, which is the same
+            // race one step earlier.
+            content(behind ?: live, stage.told)
+        }
 
         // Keyed by anchor: two cards can hover at once now, and positional memoization over
         // a map's iteration order would let one card's rise adopt another's animation state.

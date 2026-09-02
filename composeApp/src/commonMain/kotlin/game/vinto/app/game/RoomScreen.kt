@@ -562,7 +562,8 @@ private fun RemoteGameScreen(
             live = holder.current,
             sizes = layout.sizes,
             pace = pace.scale,
-        ) { shown ->
+            recent = log,
+        ) { shown, told ->
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     state = TableState(
@@ -570,7 +571,7 @@ private fun RemoteGameScreen(
                         table = holder.tableFor(shown),
                         refusal = holder.refusal,
                         sending = holder.sending,
-                        recent = log,
+                        recent = told,
                         round = standings.size + 1,
                     ),
                     layout = layout,

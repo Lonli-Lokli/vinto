@@ -67,9 +67,9 @@ class QueenAimTest {
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) {
+                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) { shown, _ ->
                         TableScreen(
-                            state = TableState(it, tableFor(it), null, emptyList(), 1),
+                            state = TableState(shown, tableFor(shown), null, emptyList(), 1),
                             layout = layout,
                             onMove = {},
                             onHelp = {},
@@ -122,9 +122,9 @@ class QueenAimTest {
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) {
+                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) { shown, _ ->
                         TableScreen(
-                            state = TableState(it, tableFor(it), null, emptyList(), 1),
+                            state = TableState(shown, tableFor(shown), null, emptyList(), 1),
                             layout = layout,
                             onMove = {},
                             onHelp = {},
@@ -178,9 +178,9 @@ class QueenAimTest {
             scale = LocalDensity.current.density
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) {
+                    CardStage(frames = frames, live = live, sizes = layout.sizes, pace = 1f) { shown, _ ->
                         TableScreen(
-                            state = TableState(it, tableFor(it), null, emptyList(), 1),
+                            state = TableState(shown, tableFor(shown), null, emptyList(), 1),
                             layout = layout,
                             onMove = {},
                             onHelp = {},

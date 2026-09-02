@@ -1,6 +1,5 @@
 package game.vinto.app.game
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -8,8 +7,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -65,7 +69,10 @@ private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
 
-private const val RECENT_SHOWN = 2
+/** The well's depth in lines, its line pitch, and how much darker than the rail it sits. */
+private const val LogLines = 4
+private const val LogLineFactor = 1.4f
+private const val LogWell = 0.45f
 
 /**
  * What the player can do, and nothing else.
@@ -298,10 +305,17 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
 }
 
 /**
- * The last few moves, in the phone's language.
+ * The turn so far, in the phone's language.
  *
  * Rendering happens here rather than in the model, which is the whole of §6h's change: the
  * log arrives as [Say] — what happened — and becomes words where the resources are.
+ *
+ * It used to be the last two lines, which on a table where a turn is a draw, a swap, a
+ * toss-in window and three throws meant the toss-ins were gone before they were read. It is
+ * a well now: every line the rail keeps, newest at the foot and the eye kept there, in a box
+ * whose height is fixed at a few lines so the buttons under it never move — what there is to
+ * read scrolls inside it rather than pushing the controls down. The newest line is written in
+ * full ink and the rest dimmed, so the eye finds "now" without a marker.
  *
  * The caller drops any line that only repeats the prompt, by the model's own `echoedBy` rule.
  * That was briefly a comparison of two *rendered* strings — which worked by coincidence, an
@@ -312,20 +326,38 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
 private fun RecentActions(recent: List<Say>) {
     if (recent.isEmpty()) return
 
+    // A plain loop rather than `map`: `said` is a composable, and a composable call inside
+    // a non-inline lambda is not one the compiler will accept.
+    val rendered = ArrayList<String>(recent.size)
+    for (entry in recent) rendered += said(entry)
+
+    // Sized in lines rather than points, so a large system font gets the same number of
+    // lines rather than fewer, clipped.
+    val lineHeight = with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
+    val listState = rememberLazyListState()
+    LaunchedEffect(rendered.size) {
+        if (rendered.isNotEmpty()) listState.animateScrollToItem(rendered.lastIndex)
+    }
+
     Surface(
         shape = RoundedCornerShape(LogCorner),
-        color = Rail.fill,
-        border = BorderStroke(1.dp, Rail.line),
+        color = Rail.line.copy(alpha = LogWell),
         modifier = Modifier.fillMaxWidth().markedAs(LocalStage.current, Target.LOG),
     ) {
-        Column(modifier = Modifier.padding(Gap)) {
-            // A plain loop rather than `map`: `said` is a composable, and a composable call
-            // inside a non-inline lambda is not one the compiler will accept.
-            val rendered = ArrayList<String>(recent.size)
-            for (entry in recent) rendered += said(entry)
-
-            rendered.takeLast(RECENT_SHOWN).forEach { line ->
-                Text(text = line, fontSize = DetailSize, color = Rail.inkDim)
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(lineHeight * LogLines + Gap * 2)
+                .padding(horizontal = Gap, vertical = Gap),
+        ) {
+            itemsIndexed(rendered) { index, line ->
+                Text(
+                    text = line,
+                    fontSize = DetailSize,
+                    lineHeight = DetailSize * LogLineFactor,
+                    color = if (index == rendered.lastIndex) Rail.ink else Rail.inkDim,
+                )
             }
         }
     }

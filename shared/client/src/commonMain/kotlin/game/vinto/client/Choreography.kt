@@ -185,6 +185,17 @@ data class Frame(
     val action: GameAction,
     val scenes: List<Scene>,
     val view: PlayerView,
+    /**
+     * What the log says about this move, riding with the move rather than published ahead
+     * of it.
+     *
+     * The session narrates every action the moment the engine accepts it, and the screen
+     * used to read that log live — so three bots' lines were on the rail before a single one
+     * of their cards had moved, and a wrong toss-in was announced before the card was shown.
+     * A line arrives here with its frame, and the stage tells it when the frame plays. A list
+     * rather than one line, because merged toss-in frames carry every thrower's.
+     */
+    val said: List<Say> = emptyList(),
 ) {
     /** Whoever made the move, or null for the engine's own bookkeeping. */
     val actorId: String? get() = action.actorId
@@ -335,6 +346,7 @@ fun List<Frame>.tossedTogether(): List<Frame> {
                     action = group.last().action,
                     scenes = listOfNotNull(flights.takeIf { it.isNotEmpty() }) + rest,
                     view = group.last().view,
+                    said = group.flatMap { it.said },
                 )
             }
         }

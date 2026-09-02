@@ -167,6 +167,7 @@ class LocalGameSession(
         runner.observe(action, before, state)
 
         publish()
+        val line = narrate(action, before, state, playerId)
         val seen = mutableListOf(
             Frame(
                 action = action,
@@ -175,9 +176,10 @@ class LocalGameSession(
                 // moment and private again afterwards.
                 scenes = scenesFor(action, seenBefore, _view.value, revealed),
                 view = _view.value,
+                said = listOfNotNull(line),
             ),
         )
-        record(action, before, state)
+        record(action, state, line)
 
         seen += playBots()
         _frames.tryEmit(seen)
@@ -190,11 +192,9 @@ class LocalGameSession(
      * The log is trimmed to the recent past because it is read at a glance; the recording is
      * not, because it is read by a replay.
      */
-    private fun record(action: GameAction, before: GameState, after: GameState) {
+    private fun record(action: GameAction, after: GameState, line: Say?) {
         recorder.record(action, after)
-        narrate(action, before, after, playerId)?.let { line ->
-            _log.value = (_log.value + line).takeLast(LOG_LENGTH)
-        }
+        line?.let { _log.value = (_log.value + it).takeLast(LOG_LENGTH) }
     }
 
     /**
@@ -253,17 +253,19 @@ class LocalGameSession(
         // Reveals ride with each move, exactly as they do for the human's own dispatch above.
         // They used to be dropped here, which meant a bot's wrong King or failed throw turned
         // a card face up for the table and the one person at it never saw the card.
-        val seen = told.map { move ->
+        val lines = told.map { move -> narrate(move.action, move.before, move.after, playerId) }
+        val seen = told.zip(lines) { move, line ->
             val before = projectView(move.before, playerId)
             val after = projectView(move.after, playerId)
             Frame(
                 move.action,
                 scenesFor(move.action, before, after, move.revealed),
                 after,
+                said = listOfNotNull(line),
             )
         }
 
-        told.forEach { move -> record(move.action, move.before, move.after) }
+        told.zip(lines) { move, line -> record(move.action, move.after, line) }
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.
@@ -332,6 +334,8 @@ class LocalGameSession(
         const val EVENT_BUFFER = 64
 
         /** Enough to see a turn go by, not enough to become a transcript. */
-        const val LOG_LENGTH = 6
+        // A whole turn with its toss-in window, and the one before it — the rail scrolls now,
+        // so it keeps enough to read back through what just happened.
+        const val LOG_LENGTH = 24
     }
 }
