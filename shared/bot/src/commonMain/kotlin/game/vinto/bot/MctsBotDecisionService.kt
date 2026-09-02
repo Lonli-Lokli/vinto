@@ -38,9 +38,9 @@ import kotlin.time.TimeSource
 class MctsBotDecisionService(
     private val difficulty: Difficulty,
     private val random: Random = Random.Default,
+    /** The search budget; the difficulty's own unless an experiment overrides it. */
+    private val config: MctsConfig = MCTS_DIFFICULTY_CONFIGS.getValue(difficulty),
 ) : BotDecisionService {
-
-    private val config: MctsConfig = MCTS_DIFFICULTY_CONFIGS.getValue(difficulty)
 
     private var botId: String = ""
     private var botMemory: BotMemory = BotMemory(botId = "", difficulty, random)

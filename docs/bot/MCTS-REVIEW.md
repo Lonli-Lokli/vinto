@@ -456,15 +456,25 @@ that ranks the difficulties, on the rule's own verdict:
 | moderate | 12 | 1.75 | 6.58 | 7 |
 | hard | 24 | 0.54 | 9.91 | 5 |
 
-Easy is last by every measure, which is the memory model doing its job: a bot that records
-less than half of what it sees finishes with twice the hand. Moderate and hard are not
-separated the way the search budgets would predict — moderate's 2,000 iterations do better
-than hard's 5,000 here — and on twelve games that gap is about two standard errors, which is
-suggestive and not a result. It is recorded rather than tuned: setting budgets against twelve
-games would be the same mistake this whole change exists to remove, in a different costume.
-Two things are worth checking with a bigger run before anything is changed: whether it holds at
-all, and whether the two `hard` seats — which sit in coalition against each other more often
-than any other pair — are paying for each other's calls.
+Twelve games is few, so thirty-six more were played (seeds 13–48, not committed) and the two
+runs combined:
+
+| Difficulty | Seats | Mean round points | Mean final hand | Finished lowest |
+| --- | --- | --- | --- | --- |
+| easy | 48 | 0.54 | 7.60 | 12 (25 %) |
+| moderate | 48 | 1.25 | 7.58 | 18 (38 %) |
+| hard | 96 | 0.62 | 10.20 | 25 (26 %) |
+
+Two things in it are real and one is not yet. Moderate is the strongest seat at the table, by
+round points and by how often it finishes lowest, and the gap to hard is about two standard
+errors over forty-eight games. Easy's hand is not the worst — its first dozen games said 14.5
+and the next three dozen said 5.3, which is how much twelve games are worth. What is *not*
+established is why hard's 5,000 iterations and thirty-ply rollouts do worse than moderate's
+2,000 and twenty, with a memory that is strictly better. It is recorded rather than tuned:
+setting budgets against a few dozen games would be the same mistake this whole change exists
+to remove, in a different costume. The budgets are the one place a constant still lives, the
+mixed table is the tool for setting them, and the two obvious experiments — hard at
+moderate's rollout depth, hard at moderate's iterations — are the next thing to run.
 
 ### What is left
 

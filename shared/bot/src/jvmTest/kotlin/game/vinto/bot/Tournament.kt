@@ -59,6 +59,10 @@ internal data class PlayedGame(
 /** A whole game is a few hundred actions; well past that means it has stopped advancing. */
 private const val ACTION_LIMIT = 1_500
 
+/** The production bot; an experiment may hand a seat a different search budget instead. */
+private fun defaultService(difficulty: Difficulty, random: Random): BotDecisionService =
+    BotDecisionServiceFactory.create(difficulty, random)
+
 /**
  * Plays one game with four bots of one difficulty, and reports what happened.
  *
@@ -71,7 +75,7 @@ private const val ACTION_LIMIT = 1_500
  * property of the bot rather than of the run.
  */
 internal fun playSelfPlayGame(seed: Long, difficulty: Difficulty): PlayedGame =
-    playGame(seed, difficulty) { difficulty }
+    playGame(seed, difficulty) { _ -> difficulty }
 
 /**
  * The seats of a mixed table, rotated by seed so that over twelve seeds each difficulty sits
@@ -86,23 +90,27 @@ internal val MIXED_TABLE: List<Difficulty> =
  * difficulties can be *ranked*: at a homogeneous table a lower mean hand says the table was
  * easier to sit at, not that the bot was better.
  */
-internal fun playMixedGame(seed: Long): PlayedGame {
+internal fun playMixedGame(
+    seed: Long,
+    serviceFactory: (Difficulty, Random) -> BotDecisionService = ::defaultService,
+): PlayedGame {
     val rotated = List(MIXED_TABLE.size) { seat ->
         MIXED_TABLE[((seat + seed) % MIXED_TABLE.size).toInt()]
     }
-    return playGame(seed, Difficulty.MODERATE) { seat -> rotated[seat] }
+    return playGame(seed, Difficulty.MODERATE, serviceFactory) { seat -> rotated[seat] }
 }
 
 @Suppress("ReturnCount")
 private fun playGame(
     seed: Long,
     gameDifficulty: Difficulty,
+    serviceFactory: (Difficulty, Random) -> BotDecisionService = ::defaultService,
     difficultyOfSeat: (Int) -> Difficulty,
 ): PlayedGame {
     var state = allBots(initializeGame(seed, gameDifficulty))
     val seatIds = state.players.map { it.id }
     val seatDifficulties = seatIds.indices.map(difficultyOfSeat)
-    val runner = BotRunner(gameDifficulty, Random(seed)) { botId ->
+    val runner = BotRunner(gameDifficulty, Random(seed), serviceFactory) { botId ->
         seatDifficulties[seatIds.indexOf(botId)]
     }
     val difficulty = gameDifficulty
