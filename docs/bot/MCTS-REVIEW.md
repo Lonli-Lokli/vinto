@@ -500,7 +500,28 @@ thirty-six seeds does not support it:
 
 Hard calls *less* often per seat than either, and later; every difficulty's calls are far above
 the one-in-four break-even. Moderate's calls are the best judged, and that is where its points
-come from. What separates it from hard is still open, and with three dozen games per
+come from.
+
+The cooperative coalition was tried anyway, since it is the more faithful model: in a rollout
+after a call, each coalition seat played the one-ply move that left the coalition's *lowest*
+hand lowest, the planner's objective played greedily. Every gate passed and calls held 89 %
+of the time instead of 69 %, at three times the cost per decision and rounds half as long
+again. Head to head — at every table one hard and one moderate seat with the cooperative
+rollout against one of each with the shipped one, thirty-six seeds:
+
+| Seat | Mean round points | Mean final hand | Finished lowest | Called / held |
+| --- | --- | --- | --- | --- |
+| hard, cooperative | 0.50 | 9.11 | 12 | 11 / 7 |
+| hard, selfish (shipped) | 0.58 | 13.03 | 6 | 7 / 5 |
+| moderate, cooperative | 0.69 | 11.72 | 12 | 7 / 6 |
+| moderate, selfish (shipped) | 0.97 | 7.92 | 15 | 11 / 9 |
+
+The shipped policy scores more points at both difficulties. A stronger imagined coalition makes
+the bot wait for a safer call, and waiting costs more than the extra safety buys: the rule
+pays +3 for a call that holds and the break-even is one in four. So the selfish rollout stays,
+and it is cheaper besides. The experiment's plumbing stays too — the service takes its budget
+and the mixed-table game takes a per-seat factory — because the next question will be asked
+the same way. What separates moderate from hard is still open, and with three dozen games per
 experiment the honest statement is that the two are close and moderate is ahead, not why.
 
 ### What is left

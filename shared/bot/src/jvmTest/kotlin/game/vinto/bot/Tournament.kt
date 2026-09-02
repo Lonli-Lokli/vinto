@@ -102,6 +102,31 @@ internal fun playMixedGame(
     return playGame(seed, Difficulty.MODERATE, serviceFactory) { seat -> rotated[seat] }
 }
 
+/**
+ * A mixed game whose seats may also differ in *how* they search, keyed by seat id — an
+ * experiment's tool. `difficultyFor` runs before the factory for the same seat, which is how
+ * the factory learns which seat it is building for.
+ */
+internal fun playMixedGameWith(
+    seed: Long,
+    difficultyOfSeat: (Int) -> Difficulty,
+    serviceForSeat: (String, Difficulty, Random) -> BotDecisionService,
+): PlayedGame {
+    val state = allBots(initializeGame(seed, Difficulty.MODERATE))
+    val seatIds = state.players.map { it.id }
+    val seatDifficulties = seatIds.indices.map(difficultyOfSeat)
+    var building = ""
+    val runner = BotRunner(
+        Difficulty.MODERATE,
+        Random(seed),
+        { d, r -> serviceForSeat(building, d, r) },
+    ) { id ->
+        building = id
+        seatDifficulties[seatIds.indexOf(id)]
+    }
+    return playOut(seed, Difficulty.MODERATE, seatDifficulties, runner, state)
+}
+
 @Suppress("ReturnCount")
 private fun playGame(
     seed: Long,
@@ -109,13 +134,24 @@ private fun playGame(
     serviceFactory: (Difficulty, Random) -> BotDecisionService = ::defaultService,
     difficultyOfSeat: (Int) -> Difficulty,
 ): PlayedGame {
-    var state = allBots(initializeGame(seed, gameDifficulty))
+    val state = allBots(initializeGame(seed, gameDifficulty))
     val seatIds = state.players.map { it.id }
     val seatDifficulties = seatIds.indices.map(difficultyOfSeat)
     val runner = BotRunner(gameDifficulty, Random(seed), serviceFactory) { botId ->
         seatDifficulties[seatIds.indexOf(botId)]
     }
-    val difficulty = gameDifficulty
+    return playOut(seed, gameDifficulty, seatDifficulties, runner, state)
+}
+
+@Suppress("ReturnCount")
+private fun playOut(
+    seed: Long,
+    difficulty: Difficulty,
+    seatDifficulties: List<Difficulty>,
+    runner: BotRunner,
+    start: GameState,
+): PlayedGame {
+    var state = start
 
     var actions = 0
     var calledVinto = false
