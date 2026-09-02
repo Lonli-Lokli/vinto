@@ -6,129 +6,84 @@ import kotlin.random.Random
 /**
  * How a simulation plays out a position once it leaves the tree.
  *
- * A pure-random rollout would tell the search almost nothing here: Vinto has enough legal
- * but pointless moves that random play looks the same from a good position as from a bad
- * one. So rollouts are *prioritised* — end the game when winning, gather information,
- * shed points, defend — and only fall back to random when none of those apply. The point is
- * not to play well, it is to play plausibly enough that the resulting score means something.
- *
- * Ported from `legacy-web/packages/bot/src/lib/mcts-rollout-policy.ts`.
+ * A rollout is a policy, not an evaluation: it only has to play plausibly enough that where
+ * the round ends up says something about the position it started from. So every choice here
+ * is a comparison of card values in the world being simulated, and none is a weight —
+ * shed the dearest card for a cheaper one, use an action that is worth using, call Vinto
+ * when you hold the lowest hand and know it. Where nothing decides, the move is random.
  */
-
-/** How far ahead the bot must be before ending the game is clearly right. */
-private const val WINNING_MARGIN = 5
-
-/** Rollouts take a peek most of the time, but not always — variety is the point of a rollout. */
-private const val PEEK_PROBABILITY = 0.75
-
-/** A hand this short is close enough to winning to be worth attacking. */
-private const val NEARLY_WINNING_HAND = 2
-
-/** Worth swapping away. */
-private const val EXPENSIVE_CARD = 9
-
-/** Worth swapping in. */
-private const val CHEAP_CARD = 3
-
 fun selectRolloutMove(state: MctsGameState, moves: List<MctsMove>, random: Random): MctsMove? {
     if (moves.isEmpty()) return null
-    val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return moves.first()
+    if (moves.size == 1) return moves.first()
+    val player = state.currentPlayer ?: return moves.first()
 
-    return selectGameEndingMove(state, moves, currentPlayer)
-        ?: selectInfoGatheringMove(state, moves, currentPlayer, random)
-        ?: selectScoreReductionMove(state, moves, currentPlayer)
-        ?: selectDefensiveMove(state, moves, currentPlayer)
-        ?: moves[random.nextInt(moves.size)]
+    return when {
+        state.awaitingVintoDecision -> vintoDecision(state, moves, player)
+        state.isTossInPhase -> moves.firstOrNull { it.type == MctsMoveType.TOSS_IN } ?: moves.first()
+        state.pendingCard != null -> pendingCardPolicy(state, moves, player)
+        else -> moves[random.nextInt(moves.size)]
+    }
 }
 
-/** Calling Vinto from in front, or shedding a last card, ends the game on your terms. */
-private fun selectGameEndingMove(
-    state: MctsGameState,
-    moves: List<MctsMove>,
-    currentPlayer: MctsPlayerState,
-): MctsMove? {
-    val vintoMoves = moves.filter { it.type == MctsMoveType.CALL_VINTO }
-    if (vintoMoves.isNotEmpty()) {
-        val opponentScores = state.players.filter { it.id != currentPlayer.id }.map { it.score }
-        val averageOpponentScore =
-            if (opponentScores.isEmpty()) 0.0 else opponentScores.sum() / opponentScores.size
+/**
+ * Call when this hand is the lowest at the table — a tie goes to the caller — and its owner
+ * knows it. The searching bot knows only what it has read; everybody else is assumed to know
+ * their own hand, which is the same assumption the transition makes.
+ */
+private fun vintoDecision(state: MctsGameState, moves: List<MctsMove>, player: MctsPlayerState): MctsMove {
+    val call = moves.firstOrNull { it.type == MctsMoveType.CALL_VINTO } ?: return moves.first()
+    val pass = moves.firstOrNull { it.type == MctsMoveType.PASS } ?: call
 
-        if (currentPlayer.score < averageOpponentScore - WINNING_MARGIN) return vintoMoves.first()
-    }
+    if (player.id == state.botPlayerId && MoveGenerator.unknownPositions(player).isNotEmpty()) return pass
 
-    val tossInMoves = moves.filter { it.type == MctsMoveType.TOSS_IN }
-    if (tossInMoves.isNotEmpty() && currentPlayer.cardCount == 1) return tossInMoves.first()
-
-    return null
+    val mine = StateTransition.handTotal(state, player.id)
+    val lowestOther = state.players
+        .filter { it.id != player.id }
+        .minOfOrNull { StateTransition.handTotal(state, it.id) }
+        ?: return pass
+    return if (mine <= lowestOther) call else pass
 }
 
-/** Shedding a card you are sure of, or looking at one you are not. */
-private fun selectInfoGatheringMove(
+/**
+ * With a card in play: trade it for the dearest card the mover can name if that sheds
+ * points; otherwise play its action if the action is worth playing; otherwise put a cheap
+ * card into a blind slot, or discard.
+ */
+private fun pendingCardPolicy(
     state: MctsGameState,
     moves: List<MctsMove>,
-    currentPlayer: MctsPlayerState,
-    random: Random,
-): MctsMove? {
-    val discardRank = state.discardPileTop?.rank
-    if (discardRank != null) {
-        val certainTossIn = moves
-            .filter { it.type == MctsMoveType.TOSS_IN }
-            .firstOrNull { move ->
-                move.tossInPositions.any { position ->
-                    val memory = currentPlayer.knownCards[position]
-                    val card = state.hiddenCards[state.hiddenCardKey(currentPlayer.id, position)]
-                    memory != null && memory.confidence > TRUSTED_CONFIDENCE &&
-                        card != null && card.rank == discardRank
-                }
-            }
-        if (certainTossIn != null) return certainTossIn
+    player: MctsPlayerState,
+): MctsMove {
+    val pending = state.pendingCard ?: return moves.first()
+    val isBot = player.id == state.botPlayerId
+
+    val values = (0 until player.cardCount).mapNotNull { position ->
+        val known = isBot && MoveGenerator.knownCards(player).containsKey(position)
+        val dealt = state.hiddenCards[state.hiddenCardKey(player.id, position)]
+        if (dealt != null && (!isBot || known)) position to dealt.value else null
+    }
+    val dearest = values.maxByOrNull { it.second }
+    if (dearest != null && dearest.second > pending.value) {
+        moves.firstOrNull { it.type == MctsMoveType.SWAP && it.swapPosition == dearest.first }
+            ?.let { return it }
     }
 
-    val pendingRank = state.pendingCard?.rank
-    val peekMoves = moves.filter {
-        it.type == MctsMoveType.USE_ACTION &&
-            (pendingRank == Rank.SEVEN || pendingRank == Rank.EIGHT || pendingRank == Rank.QUEEN)
+    moves.firstOrNull { it.type == MctsMoveType.USE_ACTION && worthUsing(state, it) }?.let { return it }
+
+    if (isBot && pending.value < averageRemainingCardValue(state.botMemory)) {
+        val blind = MoveGenerator.unknownPositions(player).firstOrNull()
+        moves.firstOrNull { it.type == MctsMoveType.SWAP && it.swapPosition == blind }?.let { return it }
     }
 
-    if (peekMoves.isNotEmpty() && random.nextDouble() < PEEK_PROBABILITY) {
-        return peekMoves[random.nextInt(peekMoves.size)]
-    }
-
-    return null
+    return moves.firstOrNull { it.type == MctsMoveType.DISCARD } ?: moves.first()
 }
 
-/** Trading something expensive for something cheap, when the bot is sure of both. */
-private fun selectScoreReductionMove(
-    state: MctsGameState,
-    moves: List<MctsMove>,
-    currentPlayer: MctsPlayerState,
-): MctsMove? = moves
-    .filter { it.type == MctsMoveType.SWAP }
-    .firstOrNull { move ->
-        val position = move.swapPosition ?: return@firstOrNull false
-        val oldCard = state.hiddenCards[state.hiddenCardKey(currentPlayer.id, position)]
-        val newCard = state.pendingCard
-        val memory = currentPlayer.knownCards[position]
-
-        oldCard != null && newCard != null && memory != null &&
-            memory.confidence > TRUSTED_CONFIDENCE &&
-            oldCard.value > EXPENSIVE_CARD && newCard.value < CHEAP_CARD
-    }
-
-/** An Ace aimed at whoever is closest to going out. */
-private fun selectDefensiveMove(
-    state: MctsGameState,
-    moves: List<MctsMove>,
-    currentPlayer: MctsPlayerState,
-): MctsMove? {
-    val closeToWinning = state.players
-        .filter { it.id != currentPlayer.id && it.cardCount <= NEARLY_WINNING_HAND }
-    if (closeToWinning.isEmpty()) return null
-
-    if (state.pendingCard?.rank != Rank.ACE) return null
-    val aceMoves = moves.filter { it.type == MctsMoveType.USE_ACTION }
-    if (aceMoves.isEmpty()) return null
-
-    val target = closeToWinning.minBy { it.cardCount }
-    return aceMoves.firstOrNull { it.targets.firstOrNull()?.playerId == target.id }
+/** A Jack is worth playing when the trade it names sheds the mover's points; anything else, always. */
+private fun worthUsing(state: MctsGameState, move: MctsMove): Boolean {
+    if (state.pendingCard?.rank != Rank.JACK || move.shouldSwap == false) return move.shouldSwap != false
+    val own = move.targets.firstOrNull { it.playerId == move.playerId } ?: return false
+    val theirs = move.targets.firstOrNull { it.playerId != move.playerId } ?: return false
+    val ownValue = state.hiddenCards[state.hiddenCardKey(own.playerId, own.position)]?.value
+    val theirValue = state.hiddenCards[state.hiddenCardKey(theirs.playerId, theirs.position)]?.value
+    return ownValue != null && theirValue != null && ownValue > theirValue
 }

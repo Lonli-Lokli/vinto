@@ -34,7 +34,6 @@ data class DifficultyMemoryConfig(
     val maxMemorySize: Int,
     /** Chance of dropping any given memory at a turn boundary. */
     val forgetChance: Double,
-    val observationRequired: Int,
 )
 
 val DIFFICULTY_CONFIGS: Map<Difficulty, DifficultyMemoryConfig> = mapOf(
@@ -43,14 +42,12 @@ val DIFFICULTY_CONFIGS: Map<Difficulty, DifficultyMemoryConfig> = mapOf(
         memoryDecayRate = 0.00015,
         maxMemorySize = 4,
         forgetChance = 0.3,
-        observationRequired = 3,
     ),
     Difficulty.MODERATE to DifficultyMemoryConfig(
         memoryAccuracy = 0.75,
         memoryDecayRate = 0.00008,
         maxMemorySize = 8,
         forgetChance = 0.1,
-        observationRequired = 2,
     ),
     // Perfect and non-decaying, which is also what makes hard-difficulty tests deterministic.
     Difficulty.HARD to DifficultyMemoryConfig(
@@ -58,7 +55,6 @@ val DIFFICULTY_CONFIGS: Map<Difficulty, DifficultyMemoryConfig> = mapOf(
         memoryDecayRate = 0.0,
         maxMemorySize = 100,
         forgetChance = 0.0,
-        observationRequired = 1,
     ),
 )
 
@@ -79,7 +75,13 @@ private const val JOKER_COUNT = 2
 /** Fallback when nothing is known about what is left; roughly a mid-deck card. */
 private const val NEUTRAL_AVERAGE_CARD_VALUE = 6.0
 
-/** A memory below this confidence is a hunch, not a fact, and is estimated rather than trusted. */
+/**
+ * A memory below this confidence is a hunch, not a fact, and is estimated rather than
+ * trusted. One threshold for the whole bot: the same 0.5 decides what the search deals from
+ * memory, what the generator may name, what the solver believes, and what a declaration
+ * claims — a memory the bot acts on anywhere is a memory it acts on everywhere.
+ */
+internal const val TRUSTED_CONFIDENCE = 0.5
 
 class BotMemory(
     private val botId: String,

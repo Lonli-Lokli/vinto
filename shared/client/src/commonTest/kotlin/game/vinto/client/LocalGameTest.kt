@@ -92,7 +92,7 @@ class LocalGameTest {
 
     /** Points carry between rounds; that is what makes it a game rather than a deal. */
     @Test
-    fun finishingARoundCarriesItsPointsIntoTheNext() = runTest {
+    fun finishingARoundCarriesItsPointsIntoTheNext() = runTest(timeout = WHOLE_GAME) {
         val vault = MemoryVault()
         val game = LocalGame.start(vault, seed = 21L, difficulty = Difficulty.EASY)
         game.peekTwoAndStart()

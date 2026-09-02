@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 2,
     "seeds": 12,
     "rows": [
         {
@@ -9,10 +9,10 @@
             "endedOnVinto": 12,
             "callerWins": 9,
             "coalitionWins": 3,
-            "meanHandTotalCentis": 543,
-            "meanActionsCentis": 34691,
-            "bestHandTotal": -2,
-            "worstHandTotal": 29
+            "meanHandTotalCentis": 854,
+            "meanActionsCentis": 24741,
+            "bestHandTotal": -1,
+            "worstHandTotal": 27
         },
         {
             "difficulty": "moderate",
@@ -21,22 +21,45 @@
             "endedOnVinto": 12,
             "callerWins": 8,
             "coalitionWins": 4,
-            "meanHandTotalCentis": 547,
-            "meanActionsCentis": 28216,
+            "meanHandTotalCentis": 925,
+            "meanActionsCentis": 24833,
             "bestHandTotal": -1,
-            "worstHandTotal": 35
+            "worstHandTotal": 30
         },
         {
             "difficulty": "hard",
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 7,
-            "coalitionWins": 5,
-            "meanHandTotalCentis": 945,
-            "meanActionsCentis": 28033,
+            "callerWins": 10,
+            "coalitionWins": 2,
+            "meanHandTotalCentis": 833,
+            "meanActionsCentis": 26558,
             "bestHandTotal": -1,
-            "worstHandTotal": 39
+            "worstHandTotal": 42
+        }
+    ],
+    "mixed": [
+        {
+            "difficulty": "easy",
+            "seats": 12,
+            "meanRoundPointsCentis": 75,
+            "meanHandTotalCentis": 1416,
+            "lowestFinishes": 1
+        },
+        {
+            "difficulty": "moderate",
+            "seats": 12,
+            "meanRoundPointsCentis": 175,
+            "meanHandTotalCentis": 808,
+            "lowestFinishes": 5
+        },
+        {
+            "difficulty": "hard",
+            "seats": 24,
+            "meanRoundPointsCentis": 54,
+            "meanHandTotalCentis": 883,
+            "lowestFinishes": 7
         }
     ]
 }

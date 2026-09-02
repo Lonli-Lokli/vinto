@@ -76,8 +76,19 @@ sealed interface CoalitionDrawnCardDecision {
     data class Swap(val position: Int, val declaredRank: Rank? = null) : CoalitionDrawnCardDecision
 }
 
-/** Only these three can move points between hands; a peek cannot help the coalition win. */
+/** The three that move points between hands. */
 internal val COALITION_ACTION_RANKS = setOf(Rank.JACK, Rank.QUEEN, Rank.KING)
+
+/**
+ * The four that reveal a card. They move nothing, but the plan carries placeholders for the
+ * cards nobody has read — the acting member's own unread positions, a teammate's undeclared
+ * ones — and a card the plan can name is a card it can toss in or declare. A peek turns a
+ * placeholder into a card, which is worth exactly what the lookahead then finds to do with it.
+ */
+internal val COALITION_PEEK_RANKS = setOf(Rank.SEVEN, Rank.EIGHT, Rank.NINE, Rank.TEN)
+
+internal fun Rank.helpsTheCoalition(): Boolean =
+    this in COALITION_ACTION_RANKS || this in COALITION_PEEK_RANKS
 
 internal val DECK_COUNTS: Map<Rank, Int> =
     ALL_RANKS.associateWith { if (it == Rank.JOKER) JOKER_COPIES else COPIES_PER_RANK }
@@ -239,17 +250,27 @@ fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): Coalition
 
 enum class CoalitionTurnStart { DRAW, TAKE_DISCARD }
 
-/** Draw from the deck, or take an unplayed Jack/Queen/King off the discard? */
+/**
+ * Draw from the deck, or take an unplayed action card off the discard?
+ *
+ * Two expectations compared, and both are pruned to the same width — the lookahead's, because
+ * neither card is in hand yet: what to *do* with the card is decided again, at the root's full
+ * width, once it is. Searching every reply to every possible draw in full cost thirteen root
+ * searches per turn start, and the answer is the same.
+ */
 fun planCoalitionTurnStart(input: CoalitionPlanInput): CoalitionTurnStart {
     val search = CoalitionSearch(input)
     if (!search.hasActor) return CoalitionTurnStart.DRAW
+    val width = pruneWidthAt(1)
 
     val take = search.pickBest(
         search.enumerateTakeDiscard(search.rootHands, search.rootDiscardTop, SearchMode.FULL),
+        width,
     ) ?: return CoalitionTurnStart.DRAW
 
     // What drawing is worth: the value of the best reply to each possible card, weighted by
-    // how likely that card is.
+    // how likely that card is. Searched as widely as the take, or the comparison leans
+    // towards whichever side was allowed more options.
     var drawValue = 0.0
     for (option in search.drawDistribution) {
         val best = search.pickBest(
@@ -257,8 +278,9 @@ fun planCoalitionTurnStart(input: CoalitionPlanInput): CoalitionTurnStart {
                 search.rootHands,
                 search.actorIndex,
                 option.card,
-                SearchMode.GREEDY,
+                SearchMode.FULL,
             ),
+            width,
         )
         drawValue += option.probability * (best?.value ?: search.evaluate(search.rootHands))
     }
@@ -288,11 +310,12 @@ fun planCoalitionDrawnCard(
 /**
  * Whether a pending action card is worth playing at all.
  *
- * Only Jack, Queen and King can be: a peek reveals a card the coalition already shares, and a
- * forced draw hurts a coalition member.
+ * A swap or a King can move points; a peek can turn a placeholder into a card the plan can
+ * use, and is worth playing exactly when the lookahead finds something to do with it. An Ace
+ * never is: a forced draw can only land on a teammate.
  */
 fun shouldCoalitionUseAction(input: CoalitionPlanInput, card: Card): Boolean {
-    if (card.rank !in COALITION_ACTION_RANKS) return false
+    if (!card.rank.helpsTheCoalition()) return false
     val search = CoalitionSearch(input)
     if (!search.hasActor) return false
 
@@ -308,11 +331,11 @@ fun shouldCoalitionUseAction(input: CoalitionPlanInput, card: Card): Boolean {
  * Where to point the acting bot's action card.
  *
  * King takes one target and the rank to declare; Jack and Queen take two, from two different
- * coalition members. Anything else returns nothing, and the caller is unreachable by
- * construction.
+ * coalition members; a peek takes one placeholder. Anything else returns nothing, and the
+ * caller is unreachable by construction.
  */
 fun planCoalitionActionTargets(input: CoalitionPlanInput, actionCard: Card): BotActionDecision {
-    if (actionCard.rank !in COALITION_ACTION_RANKS) return BotActionDecision()
+    if (!actionCard.rank.helpsTheCoalition()) return BotActionDecision()
     val search = CoalitionSearch(input)
     if (!search.hasActor) return BotActionDecision()
 
@@ -354,6 +377,6 @@ internal fun minScore(hands: List<List<PlanCard>>): Int =
     hands.minOfOrNull { handScore(it) } ?: 0
 
 internal fun isTakeableAction(card: PlanCard?): Boolean =
-    card != null && !card.played && card.rank in COALITION_ACTION_RANKS
+    card != null && !card.played && card.rank.helpsTheCoalition()
 
 internal fun pruneWidthAt(depth: Int) = PRUNE_WIDTH[minOf(depth, PRUNE_WIDTH.size - 1)]

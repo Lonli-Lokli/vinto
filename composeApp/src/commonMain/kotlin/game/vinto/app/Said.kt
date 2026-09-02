@@ -133,7 +133,11 @@ import game.vinto.app.art.log_declared
 import game.vinto.app.art.log_draw_they
 import game.vinto.app.art.log_draw_you
 import game.vinto.app.art.log_drew_known
+import game.vinto.app.art.log_drew_known_they
 import game.vinto.app.art.log_left_alone
+import game.vinto.app.art.log_made_draw_they
+import game.vinto.app.art.log_made_draw_you
+import game.vinto.app.art.log_made_you_draw
 import game.vinto.app.art.log_play_they
 import game.vinto.app.art.log_play_unknown_they
 import game.vinto.app.art.log_play_unknown_you
@@ -192,7 +196,11 @@ fun said(say: Say): String {
     val you = say.who is Speaker.You
 
     return when (say) {
-        is Say.DrewKnown -> stringResource(Res.string.log_drew_known, say.rank.serialName)
+        is Say.DrewKnown -> if (you) {
+            stringResource(Res.string.log_drew_known, say.rank.serialName)
+        } else {
+            stringResource(Res.string.log_drew_known_they, name, say.rank.serialName)
+        }
 
         is Say.Drew -> if (you) {
             stringResource(Res.string.log_draw_you)
@@ -253,6 +261,11 @@ fun said(say: Say): String {
         }
         is Say.LeftThemAlone -> stringResource(Res.string.log_left_alone, name)
         is Say.DeclaredRank -> stringResource(Res.string.log_declared, name, say.rank.serialName)
+        is Say.MadeDraw -> when {
+            you -> stringResource(Res.string.log_made_draw_you, speakerName(say.victim))
+            say.victim == Speaker.You -> stringResource(Res.string.log_made_you_draw, name)
+            else -> stringResource(Res.string.log_made_draw_they, name, speakerName(say.victim))
+        }
         Say.RoundBegins -> stringResource(Res.string.log_round_begins)
     }
 }

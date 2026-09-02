@@ -277,8 +277,14 @@ private fun declaredBadges(view: PlayerView): Map<CardRef, String> =
         }
         .toMap()
 
-private fun Table.showing(view: PlayerView) =
-    copy(revealed = revealedTo(view), help = helpFor(view), badges = declaredBadges(view))
+private fun Table.showing(view: PlayerView): Table {
+    val revealed = revealedTo(view)
+    // A claim is worn on a card's back. Once the face is up — at scoring, every card — the
+    // card says what it is and the claim beside it is either the same word twice or a
+    // contradiction, and a player reading the reveal needs neither.
+    val badges = declaredBadges(view).filterKeys { it !in revealed }
+    return copy(revealed = revealed, help = helpFor(view), badges = badges)
+}
 
 /**
  * What the "?" explains, for whatever is happening.

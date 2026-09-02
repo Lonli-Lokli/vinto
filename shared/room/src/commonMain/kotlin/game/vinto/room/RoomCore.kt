@@ -776,6 +776,11 @@ fun startGame(stateJson: String, nowMs: Double): String {
 private fun laggingHumans(state: RoomState): List<String> {
     val game = state.game ?: return emptyList()
     val toss = game.activeTossIn ?: return emptyList()
+    // The engine keeps the window's record after it closes — the ranks describe the cards on
+    // top of the pile — with its ready list emptied. Only a window still *open for throws*
+    // is waiting on anyone; reading the record alone put the two humans on the clock during
+    // one of their own turns, and the room then answered the window for them.
+    if (!toss.waitingForInput) return emptyList()
     return game.players
         .filter { it.isHuman && it.id !in toss.playersReadyForNextTurn }
         .map { it.id }

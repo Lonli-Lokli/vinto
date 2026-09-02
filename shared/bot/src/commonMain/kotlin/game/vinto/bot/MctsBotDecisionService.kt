@@ -4,31 +4,32 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Rank
-import game.vinto.shapes.getCardAction
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
 import kotlin.random.Random
 import kotlin.time.TimeSource
 
 /**
- * The bot, ported from `legacy-web/packages/bot/src/lib/mcts-bot-decision.ts`.
+ * The bot.
  *
- * Every question the engine asks a bot arrives here. Most are answered by MCTS over
- * [MctsGameState] — the bot's *beliefs*, never the real hands — but a few are answered by a
- * rule instead, and those are deliberate rather than shortcuts:
+ * Every question the engine asks a bot is answered by one search: an information-set Monte
+ * Carlo tree search over the bot's *beliefs*, never the real hands. Each iteration samples a
+ * world consistent with what the bot remembers ([determinize]), walks the shared tree
+ * applying the chosen moves to that world, plays the rest out with [selectRolloutMove], and
+ * scores the end by the round's own rule ([rewards]). The move to play is the one the search
+ * spent most of its iterations on.
  *
- * - **Vinto** is decided by the score rule steered by [VintoRoundSolver] (see
- *   [VintoCallWiring]), not by the search. The search cannot answer it: the engine only
- *   asks during the toss-in window, and in that window the move generator legitimately
- *   offers nothing but toss-in and pass, so `CALL_VINTO` is unreachable. The TypeScript
- *   carried that bug long enough for games to simply never end.
- * - **Peeks and high-value discards** are taken by heuristic, because information is worth
- *   more than any single position the search would evaluate.
- * - **Which card to swap** is [OutcomeSimulator]'s one-ply question, not a tree search.
+ * What is *not* a search, and why:
  *
- * Two departures from the TypeScript, both required rather than cosmetic:
+ * - **Tossing in** is a rule: a card the bot believes matches goes in. There is nothing to
+ *   weigh — the card leaves the hand and takes its points with it — and what makes a weak bot
+ *   weak here is a wrong belief, which is the memory model's business.
+ * - **A Queen's swap** is decided on the two cards it has just seen: trade when it sheds
+ *   points. Exact, and the search would only rediscover it.
  *
- * - [random] is injected and threaded through determinization, rollouts and expansion, so a
+ * Two things hold for every search:
+ *
+ * - [random] is injected and threaded through determinization, expansion and rollouts, so a
  *   decision is reproducible from a seed (design D4).
  * - The search runs on its iteration budget alone unless a caller opts into
  *   [MctsConfig.timeLimitMillis]. A clock-bounded search returns different moves on different
@@ -37,9 +38,9 @@ import kotlin.time.TimeSource
 class MctsBotDecisionService(
     private val difficulty: Difficulty,
     private val random: Random = Random.Default,
+    /** The search budget; the difficulty's own unless an experiment overrides it. */
+    private val config: MctsConfig = MCTS_DIFFICULTY_CONFIGS.getValue(difficulty),
 ) : BotDecisionService {
-
-    private val config: MctsConfig = MCTS_DIFFICULTY_CONFIGS.getValue(difficulty)
 
     private var botId: String = ""
     private var botMemory: BotMemory = BotMemory(botId = "", difficulty, random)
@@ -51,27 +52,21 @@ class MctsBotDecisionService(
     private var lastSeenTurnNumber: Int = -1
 
     /**
-     * Plans made at one decision point and spent at the next, keyed by bot.
+     * The last answer about a card in play, keyed on the position it was given for.
      *
-     * Keyed rather than a single field because a coalition leader plans for more than itself.
+     * The engine asks about one drawn card in pieces — play it? where? failing that, swap it
+     * where? — and one search answers all of them. Re-searching each piece could answer the
+     * second in a way that contradicts the first; reading the one answer back cannot.
      */
-    private val cachedActionPlans = mutableMapOf<String, BotActionDecision>()
+    private var lastAnswer: Pair<String, MctsMove>? = null
 
     // ---------------------------------------------------------------- the interface
 
     override fun decideTurnAction(context: BotDecisionContext): BotTurnDecision {
         initializeIfNeeded(context)
-
-        // A powerful action on the discard is worth more than anything a search would find,
-        // and taking it commits the bot to playing it — which is the rule, not a choice.
-        if (shouldAlwaysTakeDiscardPeekCard(context.discardTop, context.botPlayer)) {
-            return BotTurnDecision(TurnAction.TAKE_DISCARD)
-        }
-
-        val result = runMctsWithPlan(constructGameState(context))
-
-        return if (result.move.type == MctsMoveType.TAKE_DISCARD) {
-            BotTurnDecision(TurnAction.TAKE_DISCARD, actionDecision = result.actionPlan)
+        val best = search(constructGameState(context, pending = null))
+        return if (best?.type == MctsMoveType.TAKE_DISCARD) {
+            BotTurnDecision(TurnAction.TAKE_DISCARD)
         } else {
             BotTurnDecision(TurnAction.DRAW)
         }
@@ -81,99 +76,18 @@ class MctsBotDecisionService(
         initializeIfNeeded(context)
         if (drawnCard.actionText == null || drawnCard.played) return false
 
-        // A peek is information, and information compounds; take it.
-        if (shouldAlwaysUsePeekAction(drawnCard, context.botPlayer)) return true
-
-        // An Ace only earns its keep defensively, against somebody close to calling Vinto.
-        if (drawnCard.rank == Rank.ACE) {
-            cachedActionPlans.remove(context.botId)
-            return shouldUseAceAction(context.botPlayer, context.allPlayers, context.botId, botMemory)
-        }
-
-        val gameState = constructGameState(context)
-
-        // Committing to an action the bot then cannot aim leaves it stuck mid-turn, so the
-        // targets are checked to exist before the search is asked whether to want them.
-        val actionType = getCardAction(drawnCard.rank)
-        if (actionType == null || MoveGenerator.generateActionMoves(gameState, actionType).isEmpty()) {
-            cachedActionPlans.remove(context.botId)
-            return false
-        }
-
-        val result = runMctsWithPlan(gameState)
-        if (result.move.type != MctsMoveType.USE_ACTION) {
-            cachedActionPlans.remove(context.botId)
-            return false
-        }
-
-        rememberOrForgetPlan(context.botId, result.actionPlan?.copy(forRank = drawnCard.rank))
-        return true
+        val best = answerAbout(context, drawnCard, PendingOrigin.DRAWN)
+        return best?.type == MctsMoveType.USE_ACTION
     }
 
     override fun selectActionTargets(context: BotDecisionContext): BotActionDecision {
         initializeIfNeeded(context)
+        val card = context.activeActionCard ?: context.pendingCard ?: return BotActionDecision()
 
-        // A plan made when the action was chosen. Spending it here is what keeps the bot's
-        // reason for taking the card and its use of the card the same decision.
-        //
-        // It is checked against the table first. A plan is read out of a node one ply deep in
-        // the search, and a toss-in between then and now renumbers whatever it survived —
-        // so a stale plan names a position that no longer exists. It is a hint, and a hint
-        // that no longer fits is dropped rather than played. It is also checked against the
-        // *card*: a plan is stamped with the rank it aims, and one left over from a
-        // different action is not a hint at all.
-        cachedActionPlans.remove(context.botId)
-            ?.takeIf { it.stillFits(context) && it.isForCurrentAction(context) }
-            ?.let { return it }
-
-        val gameState = constructGameState(context)
-        val bestMove = runMcts(gameState)
-        if (bestMove.targets.isNotEmpty()) return bestMove.toDecision()
-
-        // By the time this is asked, the engine has already committed the card — a card
-        // taken from the discard, or a tossed-in action being resolved. "Would I rather
-        // swap?" is no longer a question the bot gets to answer, so a search that came back
-        // with a swap has answered the wrong one. Take the best *aimed* move instead.
-        return firstAimedActionMove(gameState, context)?.toDecision() ?: BotActionDecision()
+        val best = answerAbout(context, card, PendingOrigin.COMMITTED)
+        if (best?.type != MctsMoveType.USE_ACTION || best.targets.isEmpty()) return BotActionDecision()
+        return best.toDecision()
     }
-
-    /**
-     * The generator's first choice among moves that actually name a target.
-     *
-     * It orders by its own judgement, so first is best; and it only offers legal targets, so
-     * this cannot produce an action the engine will refuse. `null` means there is genuinely
-     * nowhere to point the card — every own card already read, for a peek — which the caller
-     * has to handle by abandoning the action rather than by inventing a target.
-     */
-    private fun firstAimedActionMove(state: MctsGameState, context: BotDecisionContext): MctsMove? {
-        val card = context.activeActionCard ?: context.pendingCard ?: return null
-        val actionType = getCardAction(card.rank) ?: return null
-
-        return MoveGenerator.generateActionMoves(state, actionType)
-            .firstOrNull { it.targets.isNotEmpty() }
-    }
-
-    /** Every target still names a card that exists, in a hand that still exists. */
-    private fun BotActionDecision.stillFits(context: BotDecisionContext): Boolean =
-        targets.isNotEmpty() && targets.all { target ->
-            val player = context.allPlayers.firstOrNull { it.id == target.playerId }
-            player != null && target.position in player.cards.indices
-        }
-
-    /** A stamped plan is spent only on the action it was made for; unstamped is trusted. */
-    private fun BotActionDecision.isForCurrentAction(context: BotDecisionContext): Boolean {
-        val current = (context.activeActionCard ?: context.pendingCard)?.rank
-        return forRank == null || forRank == current
-    }
-
-    private fun MctsMove.toDecision() = BotActionDecision(
-        targets = targets.map { BotActionTarget(it.playerId, it.position) },
-        // Jack and Queen candidates both carry the answer on the move now. The fallback used
-        // to matter — the Jack's candidates carried null, and coercing null against a move
-        // type the generator never produces made every solo Jack skip its swap.
-        shouldSwap = shouldSwap ?: (type == MctsMoveType.SWAP),
-        declaredRank = declaredRank,
-    )
 
     override fun shouldSwapAfterPeek(peekedCards: List<Card>, context: BotDecisionContext): Boolean {
         initializeIfNeeded(context)
@@ -186,40 +100,37 @@ class MctsBotDecisionService(
 
         // The two targets are committed — the only question left is swap or walk away, and
         // the peek has answered it. When one of the cards is the bot's own, swap exactly
-        // when it sheds points. (Re-running the search here was wrong twice over: it
-        // re-planned targets that are no longer up for choice, and its answer was read
-        // against a move type that node can never produce — so the Queen always skipped.)
+        // when it sheds points. Both cards belonging to rivals, there is no upside to model.
         if (targets.size == 2 && peekedCards.size == 2) {
             val ownIndex = targets.indexOfFirst { it.playerId == context.botId }
-            if (ownIndex >= 0) {
-                return peekedCards[ownIndex].value > peekedCards[1 - ownIndex].value
-            }
-            // Both cards belong to rivals: no modelled upside in shuffling their hands.
-            return false
+            return ownIndex >= 0 && peekedCards[ownIndex].value > peekedCards[1 - ownIndex].value
         }
 
-        // No committed targets reached us (a hand-built context): fall back to the search.
-        val bestMove = runMcts(constructGameState(context))
-        return bestMove.type == MctsMoveType.SWAP && bestMove.shouldSwap == true
+        // No committed targets reached us (a hand-built context): ask the search.
+        val card = context.activeActionCard ?: context.pendingCard ?: return false
+        val best = answerAbout(context, card, PendingOrigin.COMMITTED)
+        return best?.type == MctsMoveType.USE_ACTION && best.shouldSwap == true
     }
 
+    /**
+     * The rank to declare for the card the King has already been pointed at. The search
+     * names both together, so the answer is read off the move that aims where the engine
+     * says the King is pointing; failing that, what the bot remembers being there.
+     */
     override fun selectKingDeclaration(context: BotDecisionContext): Rank {
         initializeIfNeeded(context)
+        val pointedAt = context.gameState.pendingAction?.targets?.lastOrNull()
+        val card = context.activeActionCard ?: context.pendingCard
 
-        val result = runMctsWithPlan(constructGameState(context))
-        val declared = result.move.declaredRank
+        val remembered = pointedAt?.let { botMemory.getCardMemory(it.playerId, it.position) }
+            ?.takeIf { it.confidence > TRUSTED_CONFIDENCE }
+            ?.card
+            ?.rank
+        if (remembered != null) return remembered
 
-        if (declared == null) {
-            cachedActionPlans.remove(context.botId)
-            // A Queen is the most useful thing to be wrong about: it sees two cards and may
-            // swap them.
-            return Rank.QUEEN
-        }
-
-        // The plan made alongside a declaration aims the *declared* rank's action, and is
-        // stamped as such: it may only be spent on that card once the engine hands it over.
-        rememberOrForgetPlan(context.botId, result.actionPlan?.copy(forRank = declared))
-        return declared
+        val best = card?.let { answerAbout(context, it, PendingOrigin.COMMITTED) }
+        // A Queen is the most useful thing to be wrong about: it sees two cards and may swap.
+        return best?.declaredRank ?: Rank.QUEEN
     }
 
     /**
@@ -242,104 +153,21 @@ class MctsBotDecisionService(
     /** Null means discard the drawn card rather than swapping it in. */
     override fun selectBestSwapPosition(drawnCard: Card, context: BotDecisionContext): Int? {
         initializeIfNeeded(context)
-
-        // The hand as this bot remembers it: real values only where a trusted memory says
-        // so, the expected unseen value everywhere else. A position the bot never read is
-        // priced as an average card, never as what actually sits there — so the Joker
-        // nobody saw earns no protection, and a weak memory misprices honestly.
-        val believed = OutcomeSimulator.BelievedHand(
-            cards = botMemory.getPlayerMemory(botId)
-                .filterKeys { it in context.botPlayer.cards.indices }
-                .filterValues { it.confidence > TRUSTED_CONFIDENCE }
-                .mapValues { (_, memory) -> memory.card },
-            handSize = context.botPlayer.cards.size,
-            expectedUnseenValue = averageRemainingCardValue(botMemory),
-        )
-
-        var bestScore = OutcomeSimulator.calculateOutcomeScore(
-            OutcomeSimulator.simulateDiscardOutcome(drawnCard, context.botPlayer, believed),
-        )
-        var bestPosition: Int? = null
-
-        for (position in context.botPlayer.cards.indices) {
-            val outcome = OutcomeSimulator.simulateTurnOutcome(
-                drawnCard,
-                position,
-                context.botPlayer,
-                context,
-                believed,
-            )
-            val score = OutcomeSimulator.calculateStrategicOutcomeScore(
-                outcome,
-                drawnCard,
-                believed.cards[position],
-            )
-
-            if (score > bestScore) {
-                bestScore = score
-                bestPosition = position
-            }
-        }
-
-        return bestPosition
+        val best = answerAbout(context, drawnCard, PendingOrigin.DRAWN)
+        return best?.takeIf { it.type == MctsMoveType.SWAP }?.swapPosition
     }
 
+    /**
+     * Vinto is asked at the end of the bot's turn, and the search answers it like any other
+     * move: the call's value against the value of letting play go on, over worlds sampled
+     * from what the bot remembers. A hand it has not fully read is not a bar to calling — it
+     * is a distribution the search prices, as the coalition planner prices the caller's.
+     */
     override fun shouldCallVinto(context: BotDecisionContext): Boolean {
         initializeIfNeeded(context)
-        // Judged on what the bot remembers of its own hand, not the engine's record — the
-        // same beliefs it would declare to a coalition. A weak memory can misjudge a call,
-        // which is the difficulty model doing its job.
-        val believed = botMemory.believedOwnCards()
-        if (!vintoCallGatesOpen(context, believed)) return false
-
-        val believedScore = believed.values.sumOf { getCardValue(it) }
-        val lateGame =
-            context.gameState.turnNumber >= context.allPlayers.size * VintoCallWiring.LATE_GAME_LAPS
-        if (believedScore > VintoCallWiring.ENABLER_MAX_SCORE && !lateGame) return false
-
-        // The solver's worst case is what the best-placed opponent could still reach with
-        // everything going their way. Its own verdict uses a strict `<`, but a Vinto tie
-        // goes to the caller, so the comparisons here are tie-aware: the caller is beaten
-        // only when an opponent can get *strictly* below it.
-        val result = VintoRoundSolver(botMemory).validateVintoCall(
-            botCards = believed.entries.sortedBy { it.key }.map { (position, rank) ->
-                Card(
-                    id = "believed_$position",
-                    rank = rank,
-                    value = getCardValue(rank),
-                    played = false,
-                )
-            },
-            opponents = context.allPlayers
-                .filter { it.id != context.botId }
-                .map { VintoRoundSolver.OpponentHand(it.id, it.cards.size) },
-        )
-        val beatenInWorstCase = result.worstCaseOpponentScore < believedScore
-
-        return when {
-            // A zero hand calls by right; the solver may only veto it with real knowledge.
-            believedScore <= 0 ->
-                !(beatenInWorstCase && result.confidence >= VintoCallWiring.VETO_CONFIDENCE)
-
-            // A small positive hand calls when the solver approves at higher confidence —
-            // the path that ends games where nobody ever assembles a zero.
-            believedScore <= VintoCallWiring.ENABLER_MAX_SCORE &&
-                !beatenInWorstCase && result.confidence >= VintoCallWiring.ENABLER_CONFIDENCE -> true
-
-            // Deep into a stalemated game, provable safety gives way to relative judgement:
-            // call when no opponent is *expected* to do better (a tie goes to the caller).
-            // The bot holding the lowest believed hand always clears this bar, which is what
-            // guarantees the game ends. See [VintoCallWiring.LATE_GAME_LAPS].
-            lateGame -> {
-                val bestExpectedOpponent = context.allPlayers
-                    .filter { it.id != context.botId }
-                    .minOfOrNull { estimatePlayerScore(it.cards.size, botMemory, it.id) }
-                    ?: Double.MAX_VALUE
-                believedScore <= bestExpectedOpponent
-            }
-
-            else -> false
-        }
+        val root = constructGameState(context, pending = null, awaitingVintoDecision = true)
+        if (!MoveGenerator.mayCallVinto(root)) return false
+        return search(root)?.type == MctsMoveType.CALL_VINTO
     }
 
     /**
@@ -356,119 +184,108 @@ class MctsBotDecisionService(
 
     // ---------------------------------------------------------------- the search
 
-    private data class SearchResult(val move: MctsMove, val actionPlan: BotActionDecision? = null)
+    /**
+     * One search per card in play, whatever is asked about it. The answer is keyed on the
+     * deal, the turn, the card and the hand, so a later question about the same card reads
+     * the same answer — the targets for an action the search chose to play a moment ago —
+     * and a question about a different position runs a fresh search.
+     */
+    private fun answerAbout(context: BotDecisionContext, card: Card, origin: PendingOrigin): MctsMove? {
+        val key = listOf(
+            context.gameState.gameId,
+            context.gameState.turnNumber,
+            card.id,
+            context.botPlayer.cards.joinToString(",") { it.id },
+        ).joinToString("#")
+
+        lastAnswer?.takeIf { it.first == key }?.let { return it.second }
+
+        val best = search(constructGameState(context, pending = card, origin = origin))
+        lastAnswer = best?.let { key to it }
+        return best
+    }
+
+    private fun MctsMove.toDecision() = BotActionDecision(
+        targets = targets.map { BotActionTarget(it.playerId, it.position) },
+        shouldSwap = shouldSwap,
+        declaredRank = declaredRank,
+    )
 
     /**
-     * One search, plus the follow-up plan for moves that will be asked a second question.
-     *
-     * See [extractActionPlan] for why the plan is taken now rather than re-derived later.
+     * Information-set MCTS: every iteration samples one world from the root's beliefs and
+     * plays it down the shared tree, so a node's statistics average over every world in which
+     * its move was legal. Moves are applied to the sampled world, never to the beliefs — the
+     * difference between a Jack that trades two real cards and one that trades nothing.
      */
-    private fun runMctsWithPlan(rootState: MctsGameState): SearchResult {
-        val root = buildRoot(rootState) ?: return SearchResult(passMove())
-        search(root)
+    private fun search(root: MctsGameState): MctsMove? {
+        val rootMoves = MoveGenerator.generateMoves(root)
+        if (rootMoves.isEmpty()) return null
+        if (rootMoves.size == 1) return rootMoves.first()
 
-        val bestChild = root.selectMostVisitedChild()
-        val move = bestChild?.move ?: return SearchResult(passMove())
-
-        return SearchResult(move, planFor(bestChild, move))
+        return searchTree(root).mostVisitedChild()?.move
     }
 
-    private fun runMcts(rootState: MctsGameState): MctsMove {
-        val root = buildRoot(rootState) ?: return passMove()
-        search(root)
-        return root.selectMostVisitedChild()?.move ?: passMove()
-    }
-
-    /** Null when the position offers nothing — an empty deck, or a dead discard pile. */
-    private fun buildRoot(rootState: MctsGameState): MctsNode? {
-        val root = MctsNode(rootState, move = null, parent = null)
-        root.untriedMoves = MoveGenerator.generateMoves(rootState).toMutableList()
-        return root.takeIf { it.untriedMoves.isNotEmpty() }
-    }
-
-    /** Select, expand, simulate, backpropagate — until the budget runs out. */
-    private fun search(root: MctsNode) {
+    /** The whole tree, for a test that wants to read the root's statistics. */
+    internal fun searchTree(root: MctsGameState): MctsNode {
+        val tree = MctsNode(move = null, parent = null, seats = root.players.size)
         val deadline = config.timeLimitMillis?.let { TimeSource.Monotonic.markNow() }
         var iterations = 0
 
         while (iterations < config.iterations) {
-            if (deadline != null && deadline.elapsedNow().inWholeMilliseconds >= config.timeLimitMillis) break
+            val limit = config.timeLimitMillis
+            if (deadline != null && limit != null && deadline.elapsedNow().inWholeMilliseconds >= limit) break
 
-            var node = select(root)
-            if (!node.isTerminal && node.hasUntriedMoves()) node = expand(node)
-            node.backpropagate(simulate(node.state))
+            val world = determinize(root, random)
+            val (leaf, state) = descend(tree, world)
+            leaf.backpropagate(rewards(rollout(state)))
 
             iterations++
         }
+
+        return tree
     }
 
-    private fun planFor(bestChild: MctsNode, move: MctsMove): BotActionDecision? = when {
-        move.type == MctsMoveType.TAKE_DISCARD && move.actionCard?.actionText != null ->
-            extractActionPlan(bestChild)
+    /** Select by UCB until a node has something untried in this world, then expand it once. */
+    private fun descend(tree: MctsNode, world: MctsGameState): Pair<MctsNode, MctsGameState> {
+        var node = tree
+        var state = world
+        var expanded = false
 
-        // A King that declared an action card will be asked where to point it.
-        move.type == MctsMoveType.USE_ACTION && move.declaredRank?.let { getCardAction(it) } != null ->
-            extractActionPlan(bestChild)
+        while (!expanded && !StateTransition.isTerminal(state)) {
+            val legal = MoveGenerator.generateMoves(state)
+            val untried = node.untried(legal)
+            val next = when {
+                legal.isEmpty() -> null
+                untried.isNotEmpty() -> {
+                    expanded = true
+                    node.child(untried[random.nextInt(untried.size)])
+                }
+                else -> node.selectChild(legal, state.currentPlayerIndex, config.explorationConstant)
+            } ?: return node to state
+            val move = next.move ?: return node to state
 
-        // A Jack, Queen or Ace played straight from hand already names its targets.
-        move.type == MctsMoveType.USE_ACTION && move.targets.isNotEmpty() ->
-            BotActionDecision(
-                targets = move.targets.map { BotActionTarget(it.playerId, it.position) },
-                shouldSwap = move.shouldSwap,
-                declaredRank = move.declaredRank,
-            )
-
-        else -> null
-    }
-
-    /** Descend by UCB1 until a node has something new to try. */
-    private fun select(root: MctsNode): MctsNode {
-        var node = root
-        while (!node.isTerminal) {
-            if (node.hasUntriedMoves() || !node.isFullyExpanded) return node
-            node = node.selectBestChildUcb1(config.explorationConstant) ?: break
+            node = next
+            state = StateTransition.applyMove(state, move)
         }
-        return node
+
+        return node to state
     }
 
-    private fun expand(node: MctsNode): MctsNode {
-        val move = node.takeRandomUntriedMove(random) ?: return node
-
-        val child = MctsNode(StateTransition.applyMove(node.state, move), move, node)
-        child.untriedMoves = MoveGenerator.generateMoves(child.state).toMutableList()
-        node.addChild(child)
-
-        return child
-    }
-
-    /**
-     * Play the position out and score where it ends up.
-     *
-     * Determinization happens per simulation, not once per search: each rollout deals the
-     * hidden cards differently, so a move that only works against one arrangement is found
-     * out rather than rewarded.
-     */
-    private fun simulate(state: MctsGameState): Double {
-        var current = determinize(state, random)
+    private fun rollout(start: MctsGameState): MctsGameState {
+        var state = start
         var depth = 0
 
-        while (!StateTransition.isTerminal(current) && depth < config.rolloutDepth) {
-            val moves = MoveGenerator.generateMoves(current)
-            val move = selectRolloutMove(current, moves, random) ?: break
-            current = StateTransition.applyMove(current, move)
+        while (!StateTransition.isTerminal(state) && depth < config.rolloutDepth) {
+            val moves = MoveGenerator.generateMoves(state)
+            val move = selectRolloutMove(state, moves, random) ?: break
+            state = StateTransition.applyMove(state, move)
             depth++
         }
 
-        return evaluateState(current, botId)
+        return state
     }
-
-    private fun passMove() = MctsMove(MctsMoveType.PASS, playerId = botId)
 
     // ---------------------------------------------------------------- context
-
-    private fun rememberOrForgetPlan(botId: String, plan: BotActionDecision?) {
-        if (plan != null) cachedActionPlans[botId] = plan else cachedActionPlans.remove(botId)
-    }
 
     /**
      * A service instance can be reused across bots, so the memory follows whoever is asking.
@@ -483,17 +300,15 @@ class MctsBotDecisionService(
             botId = context.botId
             lastGameId = context.gameState.gameId
             lastSeenTurnNumber = -1
-            cachedActionPlans.clear()
+            lastAnswer = null
             botMemory = BotMemory(context.botId, difficulty, random)
         }
 
         // Time passes at turn boundaries, never off a clock. One tick per *table lap*, not
         // per seat: the forget-chance and decay constants were calibrated as per-own-turn
-        // rates, and four seats' turns are one of this bot's. Ticking per seat quadrupled
-        // the forgetting, full-hand belief became rare, and — since only a Vinto call ends
-        // a Vinto game — self-play stopped terminating. HARD draws nothing from Random
-        // here (forget chance and decay rate are both zero), so perfect-memory fixtures
-        // are bit-identical.
+        // rates, and four seats' turns are one of this bot's. HARD draws nothing from Random
+        // here (forget chance and decay rate are both zero), so perfect-memory fixtures are
+        // bit-identical.
         val turn = context.gameState.turnNumber
         if (lastSeenTurnNumber in 0 until turn) {
             val seats = maxOf(1, context.allPlayers.size)
@@ -515,10 +330,9 @@ class MctsBotDecisionService(
      * "remembered" a card past its own end, and, worse, remembered the thrown card at the
      * position the next card slid into. Re-reading that position looked like enough, and
      * was not: on easy and moderate a read silently fails some of the time, and a failed
-     * read left the stale belief standing. A bot then tossed the card that had slid in as a
-     * match for the one it had just thrown, and paid for it. So anything the engine no
-     * longer backs — a position it says is unread, or a different card at it — goes first,
-     * and a missed glance leaves an honest gap instead of a wrong card.
+     * read left the stale belief standing. So anything the engine no longer backs — a
+     * position it says is unread, or a different card at it — goes first, and a missed
+     * glance leaves an honest gap instead of a wrong card.
      */
     private fun updateMemoryFromContext(context: BotDecisionContext) {
         // The table's public cards first: everything on the discard pile plus the card in
@@ -565,6 +379,12 @@ class MctsBotDecisionService(
         }
     }
 
+    /** The root a question would be searched from, for a test that wants to read the tree. */
+    internal fun rootFor(context: BotDecisionContext, pending: Card?): MctsGameState {
+        initializeIfNeeded(context)
+        return constructGameState(context, pending)
+    }
+
     /**
      * The position the search works from — built out of memory, not out of the real hands.
      *
@@ -572,18 +392,22 @@ class MctsBotDecisionService(
      * cards are in [BotDecisionContext] and are never read here; that omission is the whole
      * discipline (`docs/bot/BOT-ENGINE-DECISION.md`).
      */
-    private fun constructGameState(context: BotDecisionContext): MctsGameState {
+    private fun constructGameState(
+        context: BotDecisionContext,
+        pending: Card?,
+        origin: PendingOrigin? = null,
+        awaitingVintoDecision: Boolean = false,
+    ): MctsGameState {
         val players = context.allPlayers.map { player ->
             MctsPlayerState(
                 id = player.id,
                 cardCount = player.cards.size,
                 knownCards = botMemory.getPlayerMemory(player.id),
-                score = estimatePlayerScore(player.cards.size, botMemory, player.id),
             )
         }
 
         val activeTossIn = context.gameState.activeTossIn
-        val isTossInPhase =
+        val isTossInPhase = !awaitingVintoDecision && pending == null &&
             context.gameState.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE && activeTossIn != null
 
         return MctsGameState(
@@ -592,25 +416,23 @@ class MctsBotDecisionService(
             botPlayerId = context.botId,
             discardPileTop = simulationDiscardTop(context, isTossInPhase),
             discardPile = context.discardPile,
-            // The real count, not a constant. The TypeScript hardcodes a full deck here, which
-            // hides the endgame from the search entirely — a rollout can never run the deck
-            // out, and the bot will happily plan a draw that the engine has no card for.
             deckSize = context.gameState.drawPile.size,
             discardCount = context.discardPile.size,
             botMemory = botMemory,
-            // Left empty on purpose: determinization deals them, once per simulation.
+            // Left empty on purpose: determinization deals them, once per iteration.
             hiddenCards = emptyMap(),
-            pendingCard = context.activeActionCard ?: context.pendingCard,
+            pendingCard = pending,
+            pendingOrigin = pending?.let { origin ?: PendingOrigin.COMMITTED },
             isTossInPhase = isTossInPhase,
             // No safe call: `isTossInPhase` carries `activeTossIn != null`, and K2 reads that.
             tossInRanks = if (isTossInPhase) activeTossIn.ranks else emptyList(),
+            awaitingVintoDecision = awaitingVintoDecision,
             turnCount = context.gameState.turnNumber,
             finalTurnTriggered = context.gameState.finalTurnTriggered,
             vintoCallerId = context.gameState.vintoCallerId,
             coalitionLeaderId = context.coalitionLeaderId,
             opponentModeler = context.opponentModeler,
             isTerminal = false,
-            winner = null,
         )
     }
 

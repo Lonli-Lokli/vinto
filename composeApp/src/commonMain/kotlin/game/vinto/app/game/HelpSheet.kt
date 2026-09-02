@@ -79,7 +79,14 @@ private val Chip = 46.dp
  * app shows. One set of rules, written once.
  */
 @Composable
-fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit) {
+fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit, focus: Rank? = null) {
+    // A tap on one card asks about that card and nothing else: its line, its row, and the
+    // sheet is done. The whole reference is behind the "?" for whoever wants it.
+    if (focus != null) {
+        FocusedHelp(open, focus, onDismiss)
+        return
+    }
+
     VintoSheet(open = open, onDismiss = onDismiss) {
         LazyColumn(
             modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
@@ -176,6 +183,33 @@ fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit) {
 }
 
 /** The four kinds of card there are, in the order a player meets them. */
+@Composable
+private fun FocusedHelp(open: Boolean, rank: Rank, onDismiss: () -> Unit) {
+    VintoSheet(open = open, onDismiss = onDismiss) {
+        Column(
+            modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(RowGap),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(Corner),
+                color = Rail.fill,
+                border = BorderStroke(1.dp, Rail.line),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(Gap)) {
+                    Text(
+                        text = getCardConfig(rank).name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TitleSize,
+                    )
+                    Text(explained(Explains.TheCardInPlay(rank)), fontSize = BodySize, color = Rail.inkDim)
+                }
+            }
+            RankRow(getCardConfig(rank))
+        }
+    }
+}
+
 private data class Group(val title: StringResource, val ranks: List<Rank>)
 
 private val GROUPS = listOf(

@@ -10,20 +10,17 @@ import kotlin.random.Random
 /**
  * Filling in the cards the bot cannot see.
  *
- * MCTS cannot search a position it only partly knows, so before each simulation the unknown
- * cards are replaced with a *plausible* set — one consistent possible world. Run enough
- * simulations over enough sampled worlds and the good moves are the ones that survive most
- * of them. This is what makes an imperfect-information game tractable at all.
+ * MCTS cannot search a position it only partly knows, so every iteration replaces the unknown
+ * cards with one *plausible* world — a consistent deal of everything the bot has not seen,
+ * plus an order for the deck — and plays that world forward. Run enough iterations over enough
+ * worlds and the good moves are the ones that survive most of them.
  *
- * Two things make the sampling better than uniform. The pool is what is genuinely left,
- * after removing everything on the discard pile and everything the bot remembers; and the
- * draw is weighted, because opponents *keep* good cards and shed bad ones, so an unseen card
- * is likelier to be a Queen than a 3.
- *
- * Ported from `legacy-web/packages/bot/src/lib/mcts-determinization.ts`.
+ * The sampling is uniform over what is genuinely left: the deck minus the discard pile, the
+ * card in play and every card the bot remembers. No prior says an unseen card is likelier to
+ * be a Queen than a 3 — the one that used to did so by a hand-written table, and a table is
+ * a guess. What *does* narrow a draw is evidence: the [OpponentModeler]'s bounds on a card
+ * whose owner was seen to keep it in preference to a known one.
  */
-
-/** Below this, a memory is a hunch and the card is sampled rather than assumed. */
 
 private const val COPIES_PER_RANK = 4
 private const val JOKER_COUNT = 2
@@ -57,39 +54,6 @@ fun buildAvailableRanksPool(state: MctsGameState): MutableList<Rank> {
 }
 
 /**
- * How likely an unseen card is to be a given rank.
- *
- * Not uniform, because players are not random: they keep the cards that help them and swap
- * away the ones that do not. The ordering is the strategic ranking of the deck —
- * Joker > Q > J > K > 7/8 > A > 9/10 > 6 > 5 > 2-4 — so a hidden card is assumed to be
- * better than average, which is what an opponent's hand actually looks like by mid-game.
- */
-@Suppress("MagicNumber")
-fun getStrategicProbabilityWeight(rank: Rank): Double = when (rank) {
-    Rank.JOKER -> 2.0
-    Rank.QUEEN -> 1.8
-    Rank.JACK -> 1.7
-    Rank.KING -> 1.6
-    Rank.SEVEN, Rank.EIGHT -> 1.4
-    Rank.ACE -> 1.3
-    Rank.NINE, Rank.TEN -> 1.1
-    Rank.SIX -> 0.7
-    Rank.FIVE -> 0.6
-    Rank.TWO, Rank.THREE, Rank.FOUR -> 0.5
-}
-
-private fun buildCumulativeProbabilities(ranks: List<Rank>): List<Double> {
-    val weights = ranks.map { getStrategicProbabilityWeight(it) }
-    val total = weights.sum()
-
-    var running = 0.0
-    return weights.map { weight ->
-        running += weight / total
-        running
-    }
-}
-
-/**
  * Draws one card from [availableRanks], **removing it** so a later draw cannot produce the
  * same physical card twice — the sampled world has to be internally consistent.
  *
@@ -108,27 +72,23 @@ fun sampleCardFromPool(
 ): Card {
     require(availableRanks.isNotEmpty()) { "Cannot sample from an empty card pool" }
 
-    var constrained = availableRanks.toList()
+    var constrained: List<Rank> = availableRanks
     if (minValue != null || maxValue != null) {
-        val filtered = constrained.filter { rank ->
+        val filtered = availableRanks.filter { rank ->
             val value = getCardValue(rank)
             (minValue == null || value >= minValue) && (maxValue == null || value <= maxValue)
         }
         if (filtered.isNotEmpty()) constrained = filtered
     }
 
-    val cumulative = buildCumulativeProbabilities(constrained)
-    val roll = random.nextDouble()
-    val index = cumulative.indexOfFirst { roll <= it }.takeIf { it >= 0 } ?: 0
-
-    val sampledRank = constrained[index]
+    val sampledRank = constrained[random.nextInt(constrained.size)]
     availableRanks.remove(sampledRank)
 
-    return sampledCard(sampledRank, playerId, position)
+    return sampledCard(sampledRank, "$playerId-$position-sampled")
 }
 
-private fun sampledCard(rank: Rank, playerId: String, position: Int) = Card(
-    id = "$playerId-$position-sampled",
+private fun sampledCard(rank: Rank, id: String) = Card(
+    id = id,
     rank = rank,
     value = getCardValue(rank),
     actionText = getCardShortDescription(rank).takeIf { it.isNotEmpty() },
@@ -136,8 +96,10 @@ private fun sampledCard(rank: Rank, playerId: String, position: Int) = Card(
 )
 
 /**
- * Produces one consistent possible world: every card either known, or drawn from what is
- * plausibly left.
+ * Produces one consistent possible world: every hidden card either known or drawn from what
+ * is plausibly left, and the rest of the pool shuffled into a deck for the rollout to draw
+ * from. The discard pile is carried across so a reshuffle in the world folds back the same
+ * cards the real one would.
  */
 fun determinize(state: MctsGameState, random: Random): MctsGameState {
     val availableRanks = buildAvailableRanksPool(state)
@@ -153,28 +115,33 @@ fun determinize(state: MctsGameState, random: Random): MctsGameState {
                 continue
             }
 
-            hiddenCards[key] = when {
-                availableRanks.isNotEmpty() -> {
-                    val belief = state.opponentModeler?.getBelief(player.id, position)
-                    sampleCardFromPool(
-                        availableRanks = availableRanks,
-                        playerId = player.id,
-                        position = position,
-                        random = random,
-                        minValue = belief?.minValue,
-                        maxValue = belief?.maxValue,
-                    )
-                }
-
-                // Pool exhausted: fall back to what memory says is still unaccounted for.
-                else -> sampledCard(
-                    state.botMemory.sampleCardFromDistribution() ?: FALLBACK_RANK,
-                    player.id,
-                    position,
+            hiddenCards[key] = if (availableRanks.isNotEmpty()) {
+                val belief = state.opponentModeler?.getBelief(player.id, position)
+                sampleCardFromPool(
+                    availableRanks = availableRanks,
+                    playerId = player.id,
+                    position = position,
+                    random = random,
+                    minValue = belief?.minValue,
+                    maxValue = belief?.maxValue,
                 )
+            } else {
+                // Pool exhausted: fall back to what memory says is still unaccounted for.
+                sampledCard(state.botMemory.sampleCardFromDistribution() ?: FALLBACK_RANK, key)
             }
         }
     }
 
-    return state.copy(hiddenCards = hiddenCards)
+    // The deck is the rest of the pool, in a random order. A memory that over-counts what
+    // is out of the deck leaves the pool short; it is padded from the memory's own
+    // distribution rather than left short, so a rollout can always draw.
+    val deck = availableRanks.shuffled(random).toMutableList()
+    while (deck.size < state.deckSize) deck += state.botMemory.sampleCardFromDistribution() ?: FALLBACK_RANK
+    val deckOrder = deck.take(state.deckSize).mapIndexed { index, rank -> sampledCard(rank, "deck-$index") }
+
+    return state.copy(
+        hiddenCards = hiddenCards,
+        deckOrder = deckOrder,
+        discarded = state.discardPile.toList(),
+    )
 }

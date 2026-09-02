@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.engine.calculateCardTotal
+import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
@@ -33,6 +34,12 @@ internal data class PlayedGame(
     val refused: String = "",
     /** Every seat's final card total, seat order. Empty unless the game reached `scoring`. */
     val handTotals: List<Int> = emptyList(),
+    /** What each seat scored for the round, seat order. Empty unless the game reached `scoring`. */
+    val roundPoints: List<Int> = emptyList(),
+    /** The difficulty each seat played at, seat order. */
+    val seatDifficulties: List<Difficulty> = emptyList(),
+    /** Which seat called Vinto, or -1 when nobody did. */
+    val callerSeat: Int = -1,
     /** True when a Vinto call was made *and* the caller was not beaten. */
     val callerWon: Boolean = false,
     /**
@@ -54,6 +61,10 @@ internal data class PlayedGame(
 /** A whole game is a few hundred actions; well past that means it has stopped advancing. */
 private const val ACTION_LIMIT = 1_500
 
+/** The production bot; an experiment may hand a seat a different search budget instead. */
+private fun defaultService(difficulty: Difficulty, random: Random): BotDecisionService =
+    BotDecisionServiceFactory.create(difficulty, random)
+
 /**
  * Plays one game with four bots of one difficulty, and reports what happened.
  *
@@ -65,10 +76,82 @@ private const val ACTION_LIMIT = 1_500
  * failure names a seed that reproduces it exactly — and so the tournament's numbers are a
  * property of the bot rather than of the run.
  */
+internal fun playSelfPlayGame(seed: Long, difficulty: Difficulty): PlayedGame =
+    playGame(seed, difficulty) { _ -> difficulty }
+
+/**
+ * The seats of a mixed table, rotated by seed so that over twelve seeds each difficulty sits
+ * in each chair three times. Two `hard` seats rather than one so that the strongest bot also
+ * meets itself, which is the table a person playing on `hard` actually faces.
+ */
+internal val MIXED_TABLE: List<Difficulty> =
+    listOf(Difficulty.EASY, Difficulty.MODERATE, Difficulty.HARD, Difficulty.HARD)
+
+/**
+ * A table where the seats play at different difficulties. This is the only way the
+ * difficulties can be *ranked*: at a homogeneous table a lower mean hand says the table was
+ * easier to sit at, not that the bot was better.
+ */
+internal fun playMixedGame(
+    seed: Long,
+    serviceFactory: (Difficulty, Random) -> BotDecisionService = ::defaultService,
+): PlayedGame {
+    val rotated = List(MIXED_TABLE.size) { seat ->
+        MIXED_TABLE[((seat + seed) % MIXED_TABLE.size).toInt()]
+    }
+    return playGame(seed, Difficulty.MODERATE, serviceFactory) { seat -> rotated[seat] }
+}
+
+/**
+ * A mixed game whose seats may also differ in *how* they search, keyed by seat id — an
+ * experiment's tool. `difficultyFor` runs before the factory for the same seat, which is how
+ * the factory learns which seat it is building for.
+ */
+internal fun playMixedGameWith(
+    seed: Long,
+    difficultyOfSeat: (Int) -> Difficulty,
+    serviceForSeat: (String, Difficulty, Random) -> BotDecisionService,
+): PlayedGame {
+    val state = allBots(initializeGame(seed, Difficulty.MODERATE))
+    val seatIds = state.players.map { it.id }
+    val seatDifficulties = seatIds.indices.map(difficultyOfSeat)
+    var building = ""
+    val runner = BotRunner(
+        Difficulty.MODERATE,
+        Random(seed),
+        { d, r -> serviceForSeat(building, d, r) },
+    ) { id ->
+        building = id
+        seatDifficulties[seatIds.indexOf(id)]
+    }
+    return playOut(seed, Difficulty.MODERATE, seatDifficulties, runner, state)
+}
+
 @Suppress("ReturnCount")
-internal fun playSelfPlayGame(seed: Long, difficulty: Difficulty): PlayedGame {
-    var state = allBots(initializeGame(seed, difficulty))
-    val runner = BotRunner(difficulty, Random(seed))
+private fun playGame(
+    seed: Long,
+    gameDifficulty: Difficulty,
+    serviceFactory: (Difficulty, Random) -> BotDecisionService = ::defaultService,
+    difficultyOfSeat: (Int) -> Difficulty,
+): PlayedGame {
+    val state = allBots(initializeGame(seed, gameDifficulty))
+    val seatIds = state.players.map { it.id }
+    val seatDifficulties = seatIds.indices.map(difficultyOfSeat)
+    val runner = BotRunner(gameDifficulty, Random(seed), serviceFactory) { botId ->
+        seatDifficulties[seatIds.indexOf(botId)]
+    }
+    return playOut(seed, gameDifficulty, seatDifficulties, runner, state)
+}
+
+@Suppress("ReturnCount")
+private fun playOut(
+    seed: Long,
+    difficulty: Difficulty,
+    seatDifficulties: List<Difficulty>,
+    runner: BotRunner,
+    start: GameState,
+): PlayedGame {
+    var state = start
 
     var actions = 0
     var calledVinto = false
@@ -122,13 +205,19 @@ internal fun playSelfPlayGame(seed: Long, difficulty: Difficulty): PlayedGame {
     val bestCoalition = caller
         ?.let { c -> state.players.filter { it.id != c.id }.minOfOrNull { calculateCardTotal(it.cards) } }
 
+    val scored = state.phase == GamePhase.SCORING
+    val points = calculateRoundPoints(state.players, state.vintoCallerId)
+
     return PlayedGame(
         seed = seed,
         difficulty = difficulty,
         actions = actions,
         finalPhase = state.phase,
         calledVinto = calledVinto,
-        handTotals = if (state.phase == GamePhase.SCORING) totals else emptyList(),
+        handTotals = if (scored) totals else emptyList(),
+        roundPoints = if (scored) state.players.map { points.getValue(it.id) } else emptyList(),
+        seatDifficulties = seatDifficulties,
+        callerSeat = state.players.indexOfFirst { it.id == state.vintoCallerId },
         // The rules give a tie to the caller, so this is `<=` and not `<`.
         callerWon = callerTotal != null && bestCoalition != null && callerTotal <= bestCoalition,
         callerHandChanged = callerFrozenHand != null && callerFrozenHand != caller?.cards?.map { it.id },
@@ -206,15 +295,31 @@ internal data class DifficultyRow(
     val worstHandTotal: Int,
 )
 
+/**
+ * One difficulty's showing at the mixed table: what its seats scored, averaged, and how often
+ * one of them finished with the lowest hand. Round points are the rule's own verdict —
+ * +3 for a call that held or a coalition that beat one, −1 for the other side, 0 for the
+ * coalition on a tie — so their mean is the number that says which bot is *better*.
+ */
+@Serializable
+internal data class MixedRow(
+    val difficulty: String,
+    val seats: Int,
+    val meanRoundPointsCentis: Int,
+    val meanHandTotalCentis: Int,
+    val lowestFinishes: Int,
+)
+
 @Serializable
 internal data class Baseline(
     /** Bumped by hand when the shape of a row changes, so a stale file says so. */
     val version: Int = FORMAT,
     val seeds: Int,
     val rows: List<DifficultyRow>,
+    val mixed: List<MixedRow> = emptyList(),
 ) {
     companion object {
-        const val FORMAT = 1
+        const val FORMAT = 2
     }
 }
 
@@ -236,5 +341,23 @@ internal fun tally(difficulty: Difficulty, games: List<PlayedGame>): DifficultyR
         meanActionsCentis = if (scored.isEmpty()) 0 else scored.sumOf { it.actions } * CENTIS / scored.size,
         bestHandTotal = totals.minOrNull() ?: 0,
         worstHandTotal = totals.maxOrNull() ?: 0,
+    )
+}
+
+internal fun tallyMixed(difficulty: Difficulty, games: List<PlayedGame>): MixedRow {
+    val seats = games.filter { it.finished }.flatMap { game ->
+        val lowest = game.handTotals.minOrNull() ?: 0
+        game.seatDifficulties.indices
+            .filter { game.seatDifficulties[it] == difficulty }
+            .map { seat ->
+                Triple(game.handTotals[seat], game.roundPoints[seat], game.handTotals[seat] == lowest)
+            }
+    }
+    return MixedRow(
+        difficulty = difficulty.serialName,
+        seats = seats.size,
+        meanRoundPointsCentis = if (seats.isEmpty()) 0 else seats.sumOf { it.second } * CENTIS / seats.size,
+        meanHandTotalCentis = if (seats.isEmpty()) 0 else seats.sumOf { it.first } * CENTIS / seats.size,
+        lowestFinishes = seats.count { it.third },
     )
 }

@@ -28,6 +28,9 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
 
     private val callerKnownSum: Int = input.callerKnownValues.sum()
 
+    /** How many of each rank the plan believes are still unseen. */
+    private val unseenCounts: Map<Rank, Int>
+
     /** Total → probability, over the caller's cards nobody has seen. */
     private val callerUnknownDistribution: Map<Int, Double>
 
@@ -46,6 +49,7 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         val accountedFor = ALL_RANKS.sumOf { input.unseenCounts[it] ?: 0 }
         val counts = if (accountedFor > 0) input.unseenCounts else DECK_COUNTS
         val total = if (accountedFor > 0) accountedFor else FULL_DECK_SIZE
+        unseenCounts = counts
 
         drawDistribution = ALL_RANKS.mapNotNull { rank ->
             val count = counts[rank] ?: 0
@@ -67,27 +71,58 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
     // ---------------------------------------------------------------- the caller
 
     /**
-     * The distribution of the caller's hidden total, by convolving one unseen card at a time.
+     * The distribution of the caller's hidden total: every way of choosing [unknownCount]
+     * cards from what is unseen, without replacement, weighted by how many ways each choice
+     * can be made.
      *
      * Exact rather than sampled: there are at most a handful of unseen cards and fourteen
      * ranks, so the whole distribution is cheaper than the samples it would take to estimate
-     * it — and it does not wobble between two runs of the same position.
+     * it — and it does not wobble between two runs of the same position. Without replacement
+     * because the caller's two unseen cards cannot both be the last Joker, which drawing
+     * independently would allow.
      */
     private fun buildUnknownSumDistribution(unknownCount: Int): Map<Int, Double> {
-        var distribution = mapOf(0 to 1.0)
+        if (unknownCount == 0) return mapOf(0 to 1.0)
 
-        repeat(unknownCount) {
-            val next = mutableMapOf<Int, Double>()
-            for ((sum, probability) in distribution) {
-                for (draw in drawDistribution) {
-                    val total = sum + draw.card.value
-                    next[total] = (next[total] ?: 0.0) + probability * draw.probability
-                }
-            }
-            distribution = next
+        // ways[taken][sum]: the number of ways to have taken that many cards with that total.
+        var ways: List<Map<Int, Double>> = List(unknownCount + 1) { taken ->
+            if (taken == 0) mapOf(0 to 1.0) else emptyMap()
+        }
+        for (rank in ALL_RANKS) {
+            val copies = unseenCounts[rank] ?: 0
+            if (copies > 0) ways = takingSomeOf(ways, copies, getCardValue(rank), unknownCount)
         }
 
-        return distribution
+        val complete = ways[unknownCount]
+        val all = complete.values.sum()
+        if (all <= 0.0) return mapOf(0 to 1.0)
+        return complete.mapValues { it.value / all }
+    }
+
+    /** Extends the ways table by taking zero or more of one rank's [copies], each worth [value]. */
+    private fun takingSomeOf(
+        ways: List<Map<Int, Double>>,
+        copies: Int,
+        value: Int,
+        unknownCount: Int,
+    ): List<Map<Int, Double>> {
+        val next = List(unknownCount + 1) { mutableMapOf<Int, Double>() }
+        for (taken in 0..unknownCount) {
+            for ((sum, count) in ways[taken]) {
+                for (extra in 0..minOf(copies, unknownCount - taken)) {
+                    val total = sum + extra * value
+                    val target = next[taken + extra]
+                    target[total] = (target[total] ?: 0.0) + count * choose(copies, extra)
+                }
+            }
+        }
+        return next
+    }
+
+    private fun choose(n: Int, k: Int): Double {
+        var result = 1.0
+        for (i in 1..k) result = result * (n - k + i) / i
+        return result
     }
 
     /** P(the caller's total beats [target]) — the coalition needs to be strictly lower. */
@@ -325,7 +360,7 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         )
     }
 
-    /** Ways to play an action card. Only Jack, Queen and King have any here. */
+    /** Ways to play an action card: a swap, a King, or a look at a card the plan cannot name. */
     fun enumerateActionUse(
         hands: Hands,
         card: PlanCard,
@@ -341,7 +376,59 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
             ActionOutcome(after.hands, after.discardTop, swap.plan)
         }
 
+        Rank.SEVEN, Rank.EIGHT -> enumeratePeeks(hands, card, mode, ownHand = true)
+        Rank.NINE, Rank.TEN -> enumeratePeeks(hands, card, mode, ownHand = false)
+
         else -> emptyList()
+    }
+
+    /**
+     * Every placeholder a peek could turn into a card: the actor's own for a 7 or 8, a
+     * teammate's for a 9 or 10 (the caller's are off limits, and are not in [rootHands] to be
+     * named). What the card turns out to be is a chance the lookahead averages over — each
+     * rank still unseen, with its probability — so a peek is worth exactly what the coalition
+     * can then do with a card it can name.
+     */
+    private fun enumeratePeeks(
+        hands: Hands,
+        card: PlanCard,
+        mode: SearchMode,
+        ownHand: Boolean,
+    ): List<ActionOutcome> {
+        if (!hasActor) return emptyList()
+        val members = if (ownHand) listOf(actorIndex) else hands.indices.filter { it != actorIndex }
+        val outcomes = mutableListOf<ActionOutcome>()
+
+        for (member in members) {
+            for (position in hands[member].indices) {
+                if (hands[member][position].known) continue
+                val alternatives = drawDistribution.map { draw ->
+                    val revealed = PlanCard(
+                        id = "peeked-$member-$position-${draw.card.rank.serialName}",
+                        rank = draw.card.rank,
+                        value = draw.card.value,
+                        played = false,
+                    )
+                    val after = afterDiscard(
+                        replaceCard(hands, member, position, revealed),
+                        card,
+                        played = true,
+                        tossRanks = listOf(card.rank),
+                    )
+                    draw.probability to after.hands
+                }
+                outcomes += ActionOutcome(
+                    hands = afterDiscard(hands, card, played = true, tossRanks = listOf(card.rank)).hands,
+                    discardTop = card.copy(played = true),
+                    plan = CoalitionActionPlan(
+                        targets = listOf(CoalitionActionTarget(memberIds[member], position)),
+                    ),
+                    alternatives = alternatives,
+                )
+                if (mode == SearchMode.GREEDY) return outcomes
+            }
+        }
+        return outcomes
     }
 
     /** Every way the acting member can finish a turn after drawing [card]. */
@@ -359,12 +446,13 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         }
 
         // 2. Play its action, if it has one worth playing.
-        if (card.rank in COALITION_ACTION_RANKS) {
+        if (card.rank.helpsTheCoalition()) {
             enumerateActionUse(hands, card, mode).forEach {
                 options += DrawnOutcome(
                     it.hands,
                     it.discardTop,
                     CoalitionDrawnCardDecision.UseAction(it.plan),
+                    it.alternatives,
                 )
             }
         }
@@ -383,12 +471,13 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
                 continue
             }
 
-            if (displaced.rank in COALITION_ACTION_RANKS) {
+            if (displaced.rank.helpsTheCoalition()) {
                 enumerateActionUse(swapped, displaced, mode).forEach {
                     options += DrawnOutcome(
                         it.hands,
                         it.discardTop,
                         CoalitionDrawnCardDecision.Swap(position, displaced.rank),
+                        it.alternatives,
                     )
                 }
             }
@@ -420,16 +509,49 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
      * multiset of ranks per hand. Ranks are ordered by the enum rather than by name — any
      * consistent order canonicalises a hand, and this one does not depend on how a rank
      * happens to spell itself.
+     *
+     * The depth is in the key because the value is not a property of the position alone: a
+     * position reached deep in the tree is searched narrowly and cut off sooner, and handing
+     * that number to a shallower visit made the answer depend on which branch got there
+     * first.
      */
-    private fun memoKey(hands: Hands, discardTop: PlanCard?, queueIndex: Int): String = buildString {
+    private fun memoKey(
+        hands: Hands,
+        discardTop: PlanCard?,
+        queueIndex: Int,
+        depth: Int,
+    ): String = buildString {
         append(queueIndex)
+        append('@')
+        append(depth)
         append('#')
+        appendHands(hands)
+        append(if (isTakeableAction(discardTop)) discardTop?.rank?.serialName else "-")
+    }
+
+    private fun StringBuilder.appendHands(hands: Hands) {
         for (hand in hands) {
             // An unknown card keys as "?" — its placeholder rank is not information.
             hand.map { if (it.known) it.rank.serialName else "?" }.sorted().joinTo(this, ",")
             append('|')
         }
-        append(if (isTakeableAction(discardTop)) discardTop?.rank?.serialName else "-")
+    }
+
+    /**
+     * Everything the lookahead can tell two outcomes apart by. Two options with the same key
+     * are worth the same by construction — a peek at one of a hand's unread cards and a peek
+     * at another, a swap into either of two placeholders — so the lookahead is spent on one
+     * of them. A five-card table with three unread hands would otherwise search the same
+     * position several times over, each time through every card the reveal could be.
+     */
+    private fun outcomeKey(outcome: CoalitionOutcome): String = buildString {
+        append(if (isTakeableAction(outcome.discardTop)) outcome.discardTop?.rank?.serialName else "-")
+        for ((probability, hands) in outcome.alternatives) {
+            append('#')
+            append(probability)
+            append(':')
+            appendHands(hands)
+        }
     }
 
     /** What the coalition position is worth at the start of the queued member's turn. */
@@ -441,14 +563,14 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         // somebody else's hand.
         if (!memberIsBot[member]) return valueAtTurnStart(hands, discardTop, queueIndex + 1, depth)
 
-        val key = memoKey(hands, discardTop, queueIndex)
+        val key = memoKey(hands, discardTop, queueIndex, depth)
         memo[key]?.let { return it }
 
         val width = pruneWidthAt(depth)
         var best = Double.NEGATIVE_INFINITY
 
         for (outcome in enumerateTakeDiscard(hands, discardTop, SearchMode.GREEDY)) {
-            best = maxOf(best, valueAtTurnStart(outcome.hands, outcome.discardTop, queueIndex + 1, depth + 1))
+            best = maxOf(best, valueAfter(outcome, queueIndex + 1, depth + 1))
         }
 
         // Drawing is an expectation over what could come up, not a choice.
@@ -460,10 +582,7 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
             )
             var bestOption = Double.NEGATIVE_INFINITY
             for (option in options) {
-                bestOption = maxOf(
-                    bestOption,
-                    valueAtTurnStart(option.hands, option.discardTop, queueIndex + 1, depth + 1),
-                )
+                bestOption = maxOf(bestOption, valueAfter(option, queueIndex + 1, depth + 1))
             }
             drawValue += draw.probability * bestOption
         }
@@ -473,23 +592,37 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
         return best
     }
 
-    fun <T : CoalitionOutcome> pruneOptions(options: List<T>, width: Int): List<T> =
-        if (options.size <= width) {
-            options
+    fun <T : CoalitionOutcome> pruneOptions(options: List<T>, width: Int): List<T> {
+        val distinct = options.distinctBy(::outcomeKey)
+        return if (distinct.size <= width) {
+            distinct
         } else {
-            options.sortedByDescending { evaluate(it.hands) }.take(width)
+            distinct.sortedByDescending { evaluate(it.hands) }.take(width)
         }
+    }
 
     /** The value of one outcome of the acting bot's own turn; lookahead starts after it. */
-    fun valueOfOutcome(outcome: CoalitionOutcome): Double =
-        valueAtTurnStart(outcome.hands, outcome.discardTop, queueIndex = 0, depth = 1)
+    fun valueOfOutcome(outcome: CoalitionOutcome): Double = valueAfter(outcome, queueIndex = 0, depth = 1)
+
+    /** What an outcome is worth once the queued member plays: an expectation over what it revealed. */
+    private fun valueAfter(outcome: CoalitionOutcome, queueIndex: Int, depth: Int): Double {
+        val alternatives = outcome.alternatives
+        // A reveal is a chance node as wide as a draw — one branch per rank still unseen — so
+        // it is charged the lookahead turn a draw costs. Left free, a peek at every level
+        // multiplied the tree by the deck's width a second time per turn, and one turn-start
+        // decision searched half a million positions.
+        val after = if (alternatives.size > 1) depth + 1 else depth
+        return alternatives.sumOf { (probability, hands) ->
+            probability * valueAtTurnStart(hands, outcome.discardTop, queueIndex, after)
+        }
+    }
 
     data class Ranked<T>(val option: T, val value: Double)
 
     /** Pre-rank cheaply, then spend the full lookahead on the shortlist. */
-    fun <T : CoalitionOutcome> pickBest(options: List<T>): Ranked<T>? {
+    fun <T : CoalitionOutcome> pickBest(options: List<T>, width: Int = ROOT_WIDTH): Ranked<T>? {
         val best = Best<T>()
-        for (option in pruneOptions(options, ROOT_WIDTH)) {
+        for (option in pruneOptions(options, width)) {
             best.offer(option, valueOfOutcome(option))
         }
         return best.item?.let { Ranked(it, best.value) }
@@ -498,9 +631,17 @@ internal class CoalitionSearch(input: CoalitionPlanInput) {
 
 internal typealias Hands = List<List<PlanCard>>
 
+/**
+ * Where a play leaves the coalition. [hands] is the position as far as it is known; a play
+ * that *reveals* something — a peek at a placeholder — leaves one of several positions
+ * instead, and [alternatives] carries them with their probabilities. Anything that judges an
+ * outcome by its hands alone reads [hands]; anything that looks ahead averages over
+ * [alternatives].
+ */
 internal interface CoalitionOutcome {
     val hands: Hands
     val discardTop: PlanCard?
+    val alternatives: List<Pair<Double, Hands>> get() = listOf(1.0 to hands)
 }
 
 internal data class SimpleOutcome(
@@ -512,12 +653,14 @@ internal data class ActionOutcome(
     override val hands: Hands,
     override val discardTop: PlanCard?,
     val plan: CoalitionActionPlan,
+    override val alternatives: List<Pair<Double, Hands>> = listOf(1.0 to hands),
 ) : CoalitionOutcome
 
 internal data class DrawnOutcome(
     override val hands: Hands,
     override val discardTop: PlanCard?,
     val decision: CoalitionDrawnCardDecision,
+    override val alternatives: List<Pair<Double, Hands>> = listOf(1.0 to hands),
 ) : CoalitionOutcome
 
 internal data class KingOutcome(

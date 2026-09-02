@@ -47,8 +47,13 @@ class BotRunner(
     private val serviceFactory: (Difficulty, Random) -> BotDecisionService = { d, r ->
         BotDecisionServiceFactory.create(d, r)
     },
+    /**
+     * The difficulty each seat plays at — the one difficulty for every seat unless a caller
+     * says otherwise. A mixed table is how the difficulties are ranked against each other
+     * (`TournamentTest`); a game only ever has one.
+     */
+    private val difficultyFor: (String) -> Difficulty = { difficulty },
 ) {
-    private val difficultyInUse = difficulty
     private val services = mutableMapOf<String, BotDecisionService>()
 
     /**
@@ -61,7 +66,7 @@ class BotRunner(
     private var modelerGameId: String? = null
 
     private fun serviceFor(botId: String): BotDecisionService =
-        services.getOrPut(botId) { serviceFactory(difficultyInUse, random) }
+        services.getOrPut(botId) { serviceFactory(difficultyFor(botId), random) }
 
     /** The table model, exposed so a test can check what [observe] taught it. */
     internal fun tableModelForTesting(): OpponentModeler = opponentModeler
@@ -455,8 +460,11 @@ class BotRunner(
                     declareKing(state, player, pending, plan, trustPlan = coalition != null)
                 }
 
-            // The victim draws; there is no position to name.
-            Rank.ACE -> aceTarget(state, player, plan)
+            // The victim draws; there is no position to name. In the final round every
+            // possible victim is a teammate — the caller is out of reach — so a coalition
+            // bot's Ace (a tossed-in one; the planner never plays one from hand) is put down
+            // unaimed rather than forced on the one hand that might still win.
+            Rank.ACE -> if (coalition != null) abandonAction(player) else aceTarget(state, player, plan)
 
             else -> abandonAction(player)
         }

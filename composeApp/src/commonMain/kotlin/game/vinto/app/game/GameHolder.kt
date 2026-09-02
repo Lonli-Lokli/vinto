@@ -146,3 +146,24 @@ fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Un
         }
     }
 }
+
+/**
+ * The table's taps, minus the ones that would land on a hand the engine has already changed.
+ *
+ * The screen draws the table as it was after the move being animated, and the taps are built
+ * from that same picture. While the picture lags the engine — a toss-in flying to the pile —
+ * a tap on "card 3" names card 3 *as shown*, and the engine reads card 3 *as it is now*: a
+ * hand that lost a card has slid, and the second tap on the same slot threw a different card,
+ * which cost a penalty. Reported from a phone, twice on one window.
+ *
+ * Only the viewer's own hand is checked, and only their own taps are withheld: another seat's
+ * throw changes nothing about where this player's cards are, so their window stays open while
+ * the felt catches up — which, online, is the moment two people throw at once.
+ */
+internal fun Table.withoutStaleTaps(shown: PlayerView, live: PlayerView): Table {
+    val me = shown.viewerId
+    val mineShown = shown.players.firstOrNull { it.id == me }?.cards
+    val mineLive = live.players.firstOrNull { it.id == me }?.cards
+    if (mineShown == mineLive) return this
+    return copy(taps = taps.filterKeys { it.playerId != me })
+}

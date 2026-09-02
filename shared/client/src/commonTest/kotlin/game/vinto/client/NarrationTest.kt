@@ -8,6 +8,8 @@ import game.vinto.shapes.GameState
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.RankPayload
+import game.vinto.shapes.SelectActionTargetPayload
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -48,25 +50,27 @@ class NarrationTest {
     }
 
     @Test
-    fun theDrawerSeesWhatTheyDrewAndNobodyElseDoes() {
+    fun everybodyIsToldWhatWasDrawnBecauseTheTableShowsIt() {
         val before = playing()
         val action = GameAction.DrawCard(PlayerIdPayload(before.players[before.currentPlayerIndex].id))
         val after = GameEngine.reduce(before, action).state
         val actor = before.players[before.currentPlayerIndex].id
+        val drawn = after.pendingAction?.card?.rank
 
-        // To the person who drew it: the rank, because they are looking at it.
+        // To the person who drew it: the rank, as "you".
         val toDrawer = narrate(action, before, after, viewerId = actor)
         assertIs<Say.DrewKnown>(toDrawer, "the drawer was not told what they drew")
         assertEquals(Speaker.You, toDrawer.who)
-        assertEquals(after.pendingAction?.card?.rank, toDrawer.rank)
+        assertEquals(drawn, toDrawer.rank)
 
-        // To everybody else: a card off the deck, and never which one. This is the same
-        // redaction the view enforces, said in words — and asserting the *type* is what makes
-        // it impossible for a rank to leak back in unnoticed.
+        // And to everybody else, by name: the rules reveal a drawn card publicly and the felt
+        // draws it face-up for every seat, so a log that hid the rank was hiding what the
+        // table had just shown — a Joker off the deck with no line saying so.
         val other = before.players.first { it.id != actor }.id
         val toOthers = narrate(action, before, after, viewerId = other)
-        assertIs<Say.Drew>(toOthers, "somebody who did not draw was told the rank")
+        assertIs<Say.DrewKnown>(toOthers, "somebody watching was not told what came off the deck")
         assertEquals(Speaker.Named(before.players.first { it.id == actor }.nickname), toOthers.who)
+        assertEquals(drawn, toOthers.rank)
     }
 
     @Test
@@ -120,6 +124,7 @@ class NarrationTest {
             Say.SwappedTwo(Speaker.You),
             Say.LeftThemAlone(Speaker.You),
             Say.DeclaredRank(Speaker.You, Rank.KING),
+            Say.MadeDraw(Speaker.You, Speaker.Named("Don")),
             Say.RoundBegins,
         )
 
@@ -129,5 +134,36 @@ class NarrationTest {
             assertEquals(one, one, "a message must be a value, comparable by what it means")
         }
         assertEquals(said.size, said.toSet().size, "two messages collided")
+    }
+
+    /**
+     * An Ace's aim is narrated — "Don made you draw a card" — because a card landing in a
+     * hand with no line saying why is the most confusing thing this table does. Reported
+     * from a phone: the log said Don had declared and tossed an Ace, and then nothing.
+     */
+    @Test
+    fun anAcePointedAtSomebodyIsSaidFromBothSides() {
+        var state = playing()
+        val you = state.players.first { it.isHuman }.id
+        val victim = state.players.first { !it.isHuman }
+        state = GameEngine.reduce(state, GameAction.SetNextDrawCard(RankPayload(Rank.ACE))).state
+        state = GameEngine.reduce(state, GameAction.DrawCard(PlayerIdPayload(you))).state
+        state = GameEngine.reduce(state, GameAction.UseCardAction(PlayerIdPayload(you))).state
+        check(state.pendingAction?.card?.rank == Rank.ACE) { "the Ace is not in play" }
+
+        val aim = GameAction.SelectActionTarget(SelectActionTargetPayload.Ace(you, victim.id))
+        val after = GameEngine.reduce(state, aim).state
+        check(after.players.first { it.id == victim.id }.cards.size == victim.cards.size + 1) {
+            "the Ace made nobody draw"
+        }
+
+        assertEquals(
+            Say.MadeDraw(Speaker.You, Speaker.Named(victim.nickname)),
+            narrate(aim, state, after, you),
+        )
+        assertEquals(
+            Say.MadeDraw(Speaker.Named(state.players.first { it.id == you }.nickname), Speaker.You),
+            narrate(aim, state, after, victim.id),
+        )
     }
 }

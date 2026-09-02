@@ -18,7 +18,8 @@ import kotlin.test.assertTrue
  * comment lists where. What it has to get right is *itself*: a position it produces must be
  * one the rest of the search can read. The two ways that breaks are a hand whose cards and
  * memories have drifted out of alignment, and a transition that writes back into the state it
- * was given, which would corrupt every sibling branch of the tree at once.
+ * was given, which would corrupt every sibling branch of the tree at once. And it has to
+ * move real cards: the search is only as good as the world it plays forward.
  */
 class StateTransitionTest {
 
@@ -31,12 +32,8 @@ class StateTransitionTest {
     private fun hunch(card: Card) =
         CardMemory(card, confidence = 0.3, lastSeen = 0, observations = 1)
 
-    private fun seat(
-        id: String,
-        cards: Int = 4,
-        knownCards: Map<Int, CardMemory> = emptyMap(),
-        score: Double = 20.0,
-    ) = MctsPlayerState(id, cardCount = cards, knownCards = knownCards, score = score)
+    private fun seat(id: String, cards: Int = 4, knownCards: Map<Int, CardMemory> = emptyMap()) =
+        MctsPlayerState(id, cardCount = cards, knownCards = knownCards)
 
     // Mirrors MctsGameState's own breadth, as in MoveGeneratorTest.
     @Suppress("LongParameterList")
@@ -45,8 +42,10 @@ class StateTransitionTest {
         currentIndex: Int = 0,
         hiddenCards: Map<String, Card> = emptyMap(),
         pendingCard: Card? = null,
+        pendingOrigin: PendingOrigin = PendingOrigin.DRAWN,
         discardTop: Card? = null,
         deckSize: Int = 20,
+        deckOrder: List<Card> = List(deckSize) { testCard(Rank.SIX, "deck-$it") },
         isTossInPhase: Boolean = false,
         turnCount: Int = 20,
     ) = MctsGameState(
@@ -56,14 +55,20 @@ class StateTransitionTest {
         discardPileTop = discardTop,
         discardPile = Pile(),
         deckSize = deckSize,
+        deckOrder = deckOrder,
+        discarded = listOfNotNull(discardTop),
+        discardCount = listOfNotNull(discardTop).size,
         botMemory = memory(),
         hiddenCards = hiddenCards,
         pendingCard = pendingCard,
+        pendingOrigin = pendingCard?.let { pendingOrigin },
         isTossInPhase = isTossInPhase,
         turnCount = turnCount,
     )
 
     private fun MctsGameState.seatNamed(id: String) = players.first { it.id == id }
+
+    private fun MctsGameState.total(id: String) = StateTransition.handTotal(this, id)
 
     // --- the alignment property ------------------------------------------------------------
 
@@ -90,6 +95,7 @@ class StateTransitionTest {
                 "bot-1-3" to king,
                 "p2-0" to testCard(Rank.THREE, "3_0"),
             ),
+            isTossInPhase = true,
         )
 
         val after = StateTransition.applyMove(
@@ -110,6 +116,7 @@ class StateTransitionTest {
         // The vacated slot is gone rather than left dangling, and nobody else moved.
         assertFalse(after.hiddenCards.containsKey("bot-1-3"))
         assertEquals("3_0", after.hiddenCards.getValue("p2-0").id)
+        assertEquals(listOf("7_0"), after.discarded.map { it.id }, "the tossed card went to the pile")
     }
 
     @Test
@@ -127,6 +134,7 @@ class StateTransitionTest {
                 seat("p2", cards = 4),
             ),
             hiddenCards = cards.indices.associate { "bot-1-$it" to cards[it] },
+            isTossInPhase = true,
         )
 
         val after = StateTransition.applyMove(
@@ -154,10 +162,7 @@ class StateTransitionTest {
             pendingCard = testCard(Rank.SEVEN, "7_1"),
         )
 
-        StateTransition.applyMove(
-            before,
-            MctsMove(MctsMoveType.DISCARD, playerId = "bot-1"),
-        )
+        StateTransition.applyMove(before, MctsMove(MctsMoveType.DISCARD, playerId = "bot-1"))
 
         // The move discards a 7, which tosses the bot's 7 in — so if the working copy leaked,
         // this seat would already be a card lighter.
@@ -166,6 +171,7 @@ class StateTransitionTest {
         assertEquals(1, before.seatNamed("bot-1").knownCards.size)
         assertEquals(20, before.turnCount)
         assertNull(before.discardPileTop)
+        assertEquals(20, before.deckOrder.size)
     }
 
     // --- toss-in cascade -------------------------------------------------------------------
@@ -178,8 +184,8 @@ class StateTransitionTest {
 
         val before = state(
             listOf(
-                seat("bot-1", cards = 2, knownCards = mapOf(0 to known(botSeven)), score = 9.0),
-                seat("p2", cards = 2, knownCards = mapOf(0 to known(rivalSeven), 1 to known(rivalTwo)), score = 9.0),
+                seat("bot-1", cards = 2, knownCards = mapOf(0 to known(botSeven))),
+                seat("p2", cards = 2),
             ),
             hiddenCards = mapOf(
                 "bot-1-0" to botSeven,
@@ -194,37 +200,82 @@ class StateTransitionTest {
 
         assertEquals(1, after.seatNamed("bot-1").cardCount)
         assertEquals(1, after.seatNamed("p2").cardCount)
-        assertEquals(2.0, after.seatNamed("bot-1").score)
-        assertEquals(2.0, after.seatNamed("p2").score)
+        assertEquals(3, after.total("bot-1"))
+        assertEquals(2, after.total("p2"))
         assertEquals("2_p2", after.hiddenCards.getValue("p2-0").id)
     }
 
     @Test
-    fun aCardTheHolderOnlySuspectsIsNotTossedIn() {
-        val suspected = testCard(Rank.SEVEN, "7_p2")
+    fun theBotOnlyTossesWhatItRemembersButARivalKnowsItsOwnHand() {
+        // The bot's second card is a 7 it has never read: it stays. The rival's unread 7 is
+        // one the rival knows about, and goes.
         val before = state(
-            listOf(
-                seat("bot-1", cards = 2),
-                seat("p2", cards = 2, knownCards = mapOf(0 to hunch(suspected))),
+            listOf(seat("bot-1", cards = 2), seat("p2", cards = 2)),
+            hiddenCards = mapOf(
+                "bot-1-0" to testCard(Rank.THREE, "3_bot"),
+                "bot-1-1" to testCard(Rank.SEVEN, "7_bot"),
+                "p2-0" to testCard(Rank.SEVEN, "7_p2"),
+                "p2-1" to testCard(Rank.TWO, "2_p2"),
             ),
-            hiddenCards = mapOf("p2-0" to suspected),
             pendingCard = testCard(Rank.SEVEN, "7_drawn"),
         )
 
         val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DISCARD, playerId = "bot-1"))
 
-        assertEquals(2, after.seatNamed("p2").cardCount)
+        assertEquals(2, after.seatNamed("bot-1").cardCount)
+        assertEquals(1, after.seatNamed("p2").cardCount)
+    }
+
+    @Test
+    fun aCardTheBotOnlySuspectsItHoldsIsNotTossedIn() {
+        val suspected = testCard(Rank.SEVEN, "7_bot")
+        val before = state(
+            listOf(seat("bot-1", cards = 2, knownCards = mapOf(0 to hunch(suspected))), seat("p2", cards = 2)),
+            hiddenCards = mapOf("bot-1-0" to suspected, "bot-1-1" to testCard(Rank.TWO, "2_bot")),
+            pendingCard = testCard(Rank.SEVEN, "7_drawn"),
+        )
+
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DISCARD, playerId = "bot-1"))
+
+        assertEquals(2, after.seatNamed("bot-1").cardCount)
     }
 
     // --- individual moves ------------------------------------------------------------------
 
     @Test
+    fun drawingDealsTheTopOfTheSampledDeckAndWaitsForAReply() {
+        val deck = listOf(testCard(Rank.QUEEN, "Q_top"), testCard(Rank.TWO, "2_next"))
+        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 2, deckOrder = deck)
+
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1"))
+
+        assertEquals("Q_top", after.pendingCard?.id)
+        assertEquals(PendingOrigin.DRAWN, after.pendingOrigin)
+        assertEquals(1, after.deckSize)
+        assertEquals(listOf("2_next"), after.deckOrder.map { it.id })
+        assertEquals(0, after.currentPlayerIndex, "the turn is not over until the card is dealt with")
+    }
+
+    @Test
+    fun takingTheDiscardCommitsItsTakerToPlayingIt() {
+        val jack = testCard(Rank.JACK, "J_top")
+        val before = state(listOf(seat("bot-1"), seat("p2")), discardTop = jack)
+
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.TAKE_DISCARD, playerId = "bot-1"))
+
+        assertEquals("J_top", after.pendingCard?.id)
+        assertEquals(PendingOrigin.COMMITTED, after.pendingOrigin)
+        assertNull(after.discardPileTop)
+        assertEquals(0, after.discardCount)
+    }
+
+    @Test
     fun swappingPutsTheDrawnCardInHandAndDiscardsWhatItDisplaced() {
-        val displaced = testCard(Rank.KING, "K_0")
+        val displaced = testCard(Rank.FIVE, "5_0")
         val drawn = testCard(Rank.THREE, "3_drawn")
         val before = state(
-            listOf(seat("bot-1", cards = 2, score = 10.0), seat("p2", cards = 4)),
-            hiddenCards = mapOf("bot-1-0" to displaced, "bot-1-1" to testCard(Rank.FIVE, "5_0")),
+            listOf(seat("bot-1", cards = 2), seat("p2", cards = 4)),
+            hiddenCards = mapOf("bot-1-0" to displaced, "bot-1-1" to testCard(Rank.FIVE, "5_1")),
             pendingCard = drawn,
         )
 
@@ -235,19 +286,53 @@ class StateTransitionTest {
 
         assertEquals("3_drawn", after.hiddenCards.getValue("bot-1-0").id)
         assertEquals("3_drawn", after.seatNamed("bot-1").knownCards.getValue(0).card.id)
-        assertEquals("K_0", after.discardPileTop?.id)
+        assertEquals("5_0", after.discardPileTop?.id)
         assertFalse(after.discardPileTop?.played ?: true)
         assertNull(after.pendingCard)
-        assertEquals(1, after.currentPlayerIndex)
+        assertTrue(after.awaitingVintoDecision, "the turn ends with the Vinto question")
+        assertEquals(0, after.currentPlayerIndex)
     }
 
     @Test
-    fun aJackExchangesTwoCardsAndMovesBothScores() {
+    fun swappingOutAKnownActionCardDeclaresItAndBorrowsItsAction() {
+        val king = testCard(Rank.KING, "K_0")
+        val before = state(
+            listOf(seat("bot-1", cards = 2, knownCards = mapOf(0 to known(king))), seat("p2", cards = 2)),
+            hiddenCards = mapOf(
+                "bot-1-0" to king,
+                "bot-1-1" to testCard(Rank.FIVE, "5_1"),
+                "p2-0" to testCard(Rank.TEN, "10_p2"),
+                "p2-1" to testCard(Rank.TWO, "2_p2"),
+            ),
+            pendingCard = testCard(Rank.THREE, "3_drawn"),
+        )
+
+        val after = StateTransition.applyMove(
+            before,
+            MctsMove(MctsMoveType.SWAP, playerId = "bot-1", swapPosition = 0),
+        )
+
+        assertEquals("K_0", after.pendingCard?.id)
+        assertEquals(PendingOrigin.BORROWED, after.pendingOrigin)
+        assertFalse(after.awaitingVintoDecision, "the turn waits for the borrowed action")
+        assertEquals(listOf(Rank.KING), after.queuedTossRanks)
+    }
+
+    @Test
+    fun aJackExchangesTwoCardsAndWhatIsKnownAboutThem() {
         val mine = testCard(Rank.KING, "K_0")
         val theirs = testCard(Rank.FIVE, "5_0")
         val before = state(
-            listOf(seat("bot-1", cards = 2, score = 10.0), seat("p2", cards = 2, score = 12.0)),
-            hiddenCards = mapOf("bot-1-0" to mine, "p2-0" to theirs),
+            listOf(
+                seat("bot-1", cards = 2, knownCards = mapOf(0 to known(mine))),
+                seat("p2", cards = 2),
+            ),
+            hiddenCards = mapOf(
+                "bot-1-0" to mine,
+                "bot-1-1" to testCard(Rank.TWO, "2_0"),
+                "p2-0" to theirs,
+                "p2-1" to testCard(Rank.TWO, "2_1"),
+            ),
             pendingCard = testCard(Rank.JACK, "J_0"),
         )
 
@@ -257,25 +342,29 @@ class StateTransitionTest {
                 MctsMoveType.USE_ACTION,
                 playerId = "bot-1",
                 targets = listOf(MctsActionTarget("bot-1", 0), MctsActionTarget("p2", 0)),
+                shouldSwap = true,
             ),
         )
 
         assertEquals("5_0", after.hiddenCards.getValue("bot-1-0").id)
         assertEquals("K_0", after.hiddenCards.getValue("p2-0").id)
         // King is 0 and five is 5, so the bot takes on five points and the rival sheds them.
-        assertEquals(15.0, after.seatNamed("bot-1").score)
-        assertEquals(7.0, after.seatNamed("p2").score)
+        assertEquals(7, after.total("bot-1"))
+        assertEquals(2, after.total("p2"))
+        // The bot knew its King; it now knows the King is in the rival's hand, and not what it got.
+        assertEquals("K_0", after.seatNamed("p2").knownCards.getValue(0).card.id)
+        assertNull(after.seatNamed("bot-1").knownCards[0])
         assertTrue(after.discardPileTop?.played ?: false)
     }
 
     @Test
-    fun aQueenThatDeclinesTheSwapStillLearnsBothCards() {
+    fun aDeclinedJackMovesNothing() {
         val mine = testCard(Rank.KING, "K_0")
         val theirs = testCard(Rank.FIVE, "5_0")
         val before = state(
-            listOf(seat("bot-1", cards = 2, score = 10.0), seat("p2", cards = 2, score = 12.0)),
+            listOf(seat("bot-1", cards = 1), seat("p2", cards = 1)),
             hiddenCards = mapOf("bot-1-0" to mine, "p2-0" to theirs),
-            pendingCard = testCard(Rank.QUEEN, "Q_0"),
+            pendingCard = testCard(Rank.JACK, "J_0"),
         )
 
         val after = StateTransition.applyMove(
@@ -290,17 +379,70 @@ class StateTransitionTest {
 
         assertEquals("K_0", after.hiddenCards.getValue("bot-1-0").id)
         assertEquals("5_0", after.hiddenCards.getValue("p2-0").id)
-        assertEquals("K_0", after.seatNamed("bot-1").knownCards.getValue(0).card.id)
-        assertEquals("5_0", after.seatNamed("p2").knownCards.getValue(0).card.id)
-        assertEquals(10.0, after.seatNamed("bot-1").score)
     }
 
     @Test
-    fun anAceCostsItsVictimACardTheyCannotSee() {
+    fun aQueenLearnsBothCardsAndTradesOnlyWhenThatShedsPoints() {
+        val mine = testCard(Rank.KING, "K_0")
+        val theirs = testCard(Rank.FIVE, "5_0")
         val before = state(
-            listOf(seat("bot-1", cards = 2), seat("p2", cards = 3, score = 12.0)),
+            listOf(seat("bot-1", cards = 1), seat("p2", cards = 1)),
+            hiddenCards = mapOf("bot-1-0" to mine, "p2-0" to theirs),
+            pendingCard = testCard(Rank.QUEEN, "Q_0"),
+        )
+        val move = MctsMove(
+            MctsMoveType.USE_ACTION,
+            playerId = "bot-1",
+            targets = listOf(MctsActionTarget("bot-1", 0), MctsActionTarget("p2", 0)),
+            shouldSwap = true,
+        )
+
+        val kept = StateTransition.applyMove(before, move)
+        assertEquals("K_0", kept.hiddenCards.getValue("bot-1-0").id, "a King is not traded for a 5")
+        assertEquals("K_0", kept.seatNamed("bot-1").knownCards.getValue(0).card.id)
+        assertEquals("5_0", kept.seatNamed("p2").knownCards.getValue(0).card.id)
+
+        val worse = before.copy(hiddenCards = mapOf("bot-1-0" to theirs, "p2-0" to mine))
+        val traded = StateTransition.applyMove(worse, move)
+        assertEquals("K_0", traded.hiddenCards.getValue("bot-1-0").id, "a 5 is traded for a King")
+    }
+
+    @Test
+    fun anAceCostsItsVictimACardOffTheDeck() {
+        val deck = listOf(testCard(Rank.NINE, "9_deck"))
+        val before = state(
+            listOf(seat("bot-1", cards = 2), seat("p2", cards = 1)),
             hiddenCards = mapOf("p2-0" to testCard(Rank.FIVE, "5_0")),
             pendingCard = testCard(Rank.ACE, "A_0"),
+            deckSize = 1,
+            deckOrder = deck,
+        )
+
+        val after = StateTransition.applyMove(
+            before,
+            MctsMove(MctsMoveType.USE_ACTION, playerId = "bot-1", targets = listOf(MctsActionTarget("p2", 0))),
+        )
+
+        assertEquals(2, after.seatNamed("p2").cardCount)
+        assertEquals("9_deck", after.hiddenCards.getValue("p2-1").id)
+        assertEquals(0, after.deckSize)
+        assertNull(after.seatNamed("p2").knownCards[1], "nobody saw the forced card")
+    }
+
+    @Test
+    fun aKingTakesTheNamedCardOutOfItsHandAndBorrowsItsAction() {
+        val jack = testCard(Rank.JACK, "J_p2")
+        val before = state(
+            listOf(
+                seat("bot-1", cards = 1),
+                seat("p2", cards = 2, knownCards = mapOf(0 to known(jack))),
+            ),
+            hiddenCards = mapOf(
+                "bot-1-0" to testCard(Rank.TWO, "2_0"),
+                "p2-0" to jack,
+                "p2-1" to testCard(Rank.FOUR, "4_p2"),
+            ),
+            pendingCard = testCard(Rank.KING, "K_0"),
         )
 
         val after = StateTransition.applyMove(
@@ -309,11 +451,50 @@ class StateTransitionTest {
                 MctsMoveType.USE_ACTION,
                 playerId = "bot-1",
                 targets = listOf(MctsActionTarget("p2", 0)),
+                declaredRank = Rank.JACK,
             ),
         )
 
-        assertEquals(4, after.seatNamed("p2").cardCount)
-        assertTrue(after.seatNamed("p2").score > 12.0)
+        assertEquals(1, after.seatNamed("p2").cardCount)
+        assertEquals("4_p2", after.hiddenCards.getValue("p2-0").id, "the hand closed up")
+        assertEquals("J_p2", after.pendingCard?.id, "the declared Jack is the declarer's to play")
+        assertEquals(PendingOrigin.BORROWED, after.pendingOrigin)
+        assertEquals("K_0", after.discardPileTop?.id)
+        assertEquals(setOf(Rank.JACK, Rank.KING), after.queuedTossRanks.toSet())
+    }
+
+    @Test
+    fun aKingNamingAPlainCardOpensTheWindowOnBothRanks() {
+        val before = state(
+            listOf(
+                seat("bot-1", cards = 2),
+                seat("p2", cards = 2),
+            ),
+            hiddenCards = mapOf(
+                "bot-1-0" to testCard(Rank.FIVE, "5_bot"),
+                "bot-1-1" to testCard(Rank.KING, "K_bot"),
+                "p2-0" to testCard(Rank.FIVE, "5_p2"),
+                "p2-1" to testCard(Rank.TWO, "2_p2"),
+            ),
+            pendingCard = testCard(Rank.KING, "K_0"),
+        )
+
+        val after = StateTransition.applyMove(
+            before,
+            MctsMove(
+                MctsMoveType.USE_ACTION,
+                playerId = "bot-1",
+                targets = listOf(MctsActionTarget("p2", 0)),
+                declaredRank = Rank.FIVE,
+            ),
+        )
+
+        // The rival's 5 left by declaration; the rival knows nothing else matches. The bot
+        // has not read its own cards, so it tosses nothing — a 5 and a King it cannot name.
+        assertEquals(1, after.seatNamed("p2").cardCount)
+        assertEquals(2, after.seatNamed("bot-1").cardCount)
+        assertNull(after.pendingCard)
+        assertTrue(after.queuedTossRanks.isEmpty(), "the window was resolved")
     }
 
     @Test
@@ -339,47 +520,61 @@ class StateTransitionTest {
     }
 
     @Test
-    fun callingVintoEndsTheSearchAndAwardsItToTheLowestHand() {
-        val before = state(
-            listOf(seat("bot-1", score = 8.0), seat("p2", score = 14.0), seat("p3", score = 6.0)),
-        )
+    fun callingVintoGivesEverybodyElseOneTurnAndThenScores() {
+        val before = state(listOf(seat("bot-1"), seat("p2"), seat("p3")))
+            .copy(awaitingVintoDecision = true)
 
-        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.CALL_VINTO, playerId = "bot-1"))
+        val called = StateTransition.applyMove(before, MctsMove(MctsMoveType.CALL_VINTO, playerId = "bot-1"))
+        assertEquals("bot-1", called.vintoCallerId)
+        assertTrue(called.finalTurnTriggered)
+        assertFalse(called.isTerminal)
+        assertEquals(1, called.currentPlayerIndex)
 
-        assertTrue(after.isTerminal)
-        assertTrue(after.finalTurnTriggered)
-        assertEquals("p3", after.winner)
+        // Two more turns, each ending in a pass with no Vinto question (somebody has called).
+        var state = called
+        repeat(2) {
+            val mover = state.currentPlayer!!.id
+            state = StateTransition.applyMove(state, MctsMove(MctsMoveType.DRAW, playerId = mover))
+            state = StateTransition.applyMove(state, MctsMove(MctsMoveType.DISCARD, playerId = mover))
+            assertFalse(state.awaitingVintoDecision)
+        }
+        assertTrue(state.isTerminal, "the round scores when the turn comes back to the caller")
     }
 
     @Test
-    fun drawingCostsADeckCardAndTheTurn() {
-        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 5)
-        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1"))
+    fun passingTheVintoQuestionMovesPlayOn() {
+        val before = state(listOf(seat("bot-1"), seat("p2"))).copy(awaitingVintoDecision = true)
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.PASS, playerId = "bot-1"))
 
-        assertEquals(4, after.deckSize)
+        assertFalse(after.awaitingVintoDecision)
         assertEquals(1, after.currentPlayerIndex)
         assertEquals(before.turnCount + 1, after.turnCount)
     }
 
-    // --- terminal conditions ---------------------------------------------------------------
+    @Test
+    fun theVintoQuestionIsNotAskedInTheOpening() {
+        val before = state(listOf(seat("bot-1"), seat("p2")), pendingCard = testCard(Rank.TWO, "2_d"), turnCount = 1)
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DISCARD, playerId = "bot-1"))
+
+        assertFalse(after.awaitingVintoDecision)
+        assertEquals(1, after.currentPlayerIndex)
+    }
+
+    // --- terminal conditions and totals ----------------------------------------------------
 
     @Test
-    fun theSearchStopsOnAnEmptyHandAnEmptyDeckOrARunawayRollout() {
+    fun theSearchStopsOnAScoredRoundAStarvedDeckOrARunawayRollout() {
         val running = state(listOf(seat("bot-1"), seat("p2")), deckSize = 5)
         assertFalse(StateTransition.isTerminal(running))
 
-        assertTrue(StateTransition.isTerminal(running.copy(deckSize = 0)))
+        assertTrue(StateTransition.isTerminal(running.copy(deckSize = 0, discardCount = 1)))
+        assertFalse(StateTransition.isTerminal(running.copy(deckSize = 0, discardCount = 5)), "a pile can fold back")
         assertTrue(StateTransition.isTerminal(running.copy(turnCount = 201)))
-        assertTrue(
-            StateTransition.isTerminal(
-                running.copy(players = listOf(seat("bot-1", cards = 0), seat("p2"))),
-            ),
-        )
         assertTrue(StateTransition.isTerminal(running.copy(isTerminal = true)))
     }
 
     @Test
-    fun anUnseenCardIsScoredAsAnEstimateRatherThanAsNothing() {
+    fun anUnreadCardIsPricedAtTheAverageOfWhatIsLeftRatherThanAsNothing() {
         val before = state(
             listOf(seat("bot-1", cards = 3), seat("p2")),
             hiddenCards = mapOf("bot-1-0" to testCard(Rank.TWO, "2_0")),
@@ -387,90 +582,37 @@ class StateTransitionTest {
 
         // Two known points plus two cards nobody has seen; the estimate must not be zero, or
         // an unread hand would look like a winning one.
-        assertTrue(StateTransition.calculatePlayerScore(before, "bot-1") > 2.0)
-        assertEquals(50.0, StateTransition.calculatePlayerScore(before, "nobody"))
-    }
-
-    @Test
-    fun updatingEstimatesRederivesEveryScoreFromTheDealtCards() {
-        val before = state(
-            listOf(seat("bot-1", cards = 2, score = 99.0), seat("p2", cards = 1, score = 99.0)),
-            hiddenCards = mapOf(
-                "bot-1-0" to testCard(Rank.TWO, "2_0"),
-                "bot-1-1" to testCard(Rank.THREE, "3_0"),
-                "p2-0" to testCard(Rank.KING, "K_0"),
-            ),
-        )
-
-        val after = StateTransition.updateScoreEstimates(before)
-
-        assertEquals(5.0, after.seatNamed("bot-1").score)
-        assertEquals(0.0, after.seatNamed("p2").score)
-    }
-
-    @Test
-    fun aLastCardTossedInEndsTheGameAndTheLookaheadSaysSo() {
-        val before = state(listOf(seat("bot-1", cards = 1), seat("p2", cards = 3)))
-
-        assertTrue(
-            StateTransition.wouldMoveEndGame(
-                before,
-                MctsMove(MctsMoveType.TOSS_IN, playerId = "bot-1", tossInPositions = listOf(0)),
-            ),
-        )
-        assertFalse(
-            StateTransition.wouldMoveEndGame(
-                before,
-                MctsMove(MctsMoveType.TOSS_IN, playerId = "p2", tossInPositions = listOf(0)),
-            ),
-        )
-        assertTrue(
-            StateTransition.wouldMoveEndGame(before, MctsMove(MctsMoveType.CALL_VINTO, playerId = "p2")),
-        )
-        assertFalse(StateTransition.wouldMoveEndGame(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1")))
+        assertTrue(StateTransition.handTotal(before, "bot-1") > 2)
+        assertEquals(0, StateTransition.handTotal(before, "nobody"))
     }
 
     // --- the reshuffle -------------------------------------------------------------------
 
     @Test
     fun aDeckRunningDryFoldsTheDiscardPileBackInLikeTheRealGame() {
-        // Two cards left, twelve on the pile. Drawing the next-to-last card triggers the
-        // fold at the turn boundary: the pile's cards return to the deck except the top one.
-        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 2)
-            .copy(discardCount = 12)
+        // One card left on the deck and three on the pile. Ending the turn folds the pile
+        // back in, keeping only its top card, and the folded cards are drawable again.
+        val pile = listOf(testCard(Rank.TWO, "2_p"), testCard(Rank.THREE, "3_p"), testCard(Rank.FOUR, "4_p"))
+        val before = state(
+            listOf(seat("bot-1"), seat("p2")),
+            deckSize = 1,
+            deckOrder = listOf(testCard(Rank.SIX, "6_d")),
+        ).copy(discarded = pile, discardCount = 3, discardPileTop = pile.last(), awaitingVintoDecision = true)
 
-        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.DRAW, playerId = "bot-1"))
+        val after = StateTransition.applyMove(before, MctsMove(MctsMoveType.PASS, playerId = "bot-1"))
 
-        // 2 - 1 drawn = 1 left, the drawn card joins the pile (13), then 12 of the 13 fold
-        // back: deck 13, pile 1.
-        assertEquals(13, after.deckSize)
+        assertEquals(3, after.deckSize)
         assertEquals(1, after.discardCount)
+        assertEquals(listOf("6_d", "2_p", "3_p"), after.deckOrder.map { it.id })
+        assertEquals(listOf("4_p"), after.discarded.map { it.id })
         assertFalse(StateTransition.isTerminal(after), "a reshuffled deck is not an ended game")
     }
 
     @Test
     fun anEmptyDeckWithNothingToFoldBackIsStillTerminal() {
-        val starved = state(listOf(seat("bot-1"), seat("p2")), deckSize = 0)
+        val starved = state(listOf(seat("bot-1"), seat("p2")), deckSize = 0, deckOrder = emptyList())
             .copy(discardCount = 1)
 
         assertTrue(StateTransition.isTerminal(starved))
-    }
-
-    @Test
-    fun aForcedDrawCostsTheDeckACard() {
-        val before = state(listOf(seat("bot-1"), seat("p2")), deckSize = 10)
-            .copy(pendingCard = testCard(Rank.ACE, "A_0"))
-
-        val after = StateTransition.applyMove(
-            before,
-            MctsMove(
-                MctsMoveType.USE_ACTION,
-                playerId = "bot-1",
-                targets = listOf(MctsActionTarget("p2", -1)),
-            ),
-        )
-
-        assertEquals(9, after.deckSize, "the Ace's victim drew from somewhere")
-        assertEquals(5, after.seatNamed("p2").cardCount)
     }
 }

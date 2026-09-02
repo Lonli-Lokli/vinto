@@ -196,6 +196,22 @@ class HumanCoalitionLeaderTest {
     }
 
     @Test
+    fun aRevealedCardWearsNoClaim() {
+        // At scoring every face is up, and a claim beside a face is the same word twice or a
+        // contradiction — the reveal is what a claim was standing in for.
+        val state = finalRound(
+            callerId = "bot-2",
+            leaderId = "bot-3",
+            currentPlayerIndex = 2,
+            declaredOnBot3 = mapOf(0 to Rank.FIVE),
+        ).copy(phase = GamePhase.SCORING)
+
+        val table = tableFor(projectView(state, "human-1"))
+        assertTrue(CardRef("bot-3", 0) in table.revealed, "scoring reveals the card")
+        assertNull(table.badges[CardRef("bot-3", 0)], "the claim is still worn over the face")
+    }
+
+    @Test
     fun declaredBadgesAppearOnEverySeatsTable() {
         val state = finalRound(
             callerId = "bot-2",

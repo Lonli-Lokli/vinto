@@ -86,6 +86,9 @@ sealed interface Say {
 
     data class DeclaredRank(override val who: Speaker, val rank: Rank) : Say
 
+    /** An Ace, pointed: [victim] draws a card they did not want. */
+    data class MadeDraw(override val who: Speaker, val victim: Speaker) : Say
+
     /** The deal is over and play starts. Nobody's move, so nobody's name. */
     data object RoundBegins : Say {
         override val who: Speaker get() = Speaker.Nobody

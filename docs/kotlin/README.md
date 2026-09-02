@@ -1202,6 +1202,17 @@ deliberate decision rather than a side effect of a build.
 
 ## 6e. The bot, and what a self-play gate is for
 
+**The search was rewritten on 2026-09-02**, after a review found that the ported tree never
+applied its moves — the belief state has no hidden cards until a rollout samples them, so every
+Jack in the tree traded nothing and the choice among candidates was a seeded coin flip. It is
+an information-set MCTS now: each iteration samples a world from the bot's memory and plays
+the tree's moves on that world, the whole turn is in the tree (draw, then play or swap or
+discard, then the Vinto question), rollouts play by card values, and the reward is the
+round's own points per seat. The swap weights, the evaluator, the Vinto thresholds and the
+Q/7/8 heuristics went with it. `docs/bot/MCTS-REVIEW.md` has the finding, the measurements
+and what replaced each constant; `MctsDiscriminationTest` holds the search to positions with
+one right answer. What follows describes the port and its gates, and still applies.
+
 The bot is ported in full, and the verification is worth explaining because it is not the one
 the other phases use.
 
@@ -1283,7 +1294,7 @@ the TypeScript replayer, which has no such action.
 | One bot engine (v1/MCTS); v2 deleted for reading hidden hands               | `docs/bot/BOT-ENGINE-DECISION.md`         |
 | Canonical hash excludes history + `botMemory`, includes `opponentKnowledge` | `RECORDING.md` §4                         |
 | Every game is exactly 4 players                                             | deterministic-engine spec                 |
-| Bots call Vinto when hand is fully known and worth ≤ 0                      | `legacy-web/packages/bot/src/lib/vinto-call-rule.ts` |
+| Bots call Vinto when the search values calling above playing on — no threshold, no full-hand gate | `MctsBotDecisionService.shouldCallVinto`, `docs/bot/MCTS-REVIEW.md` §5 |
 | Bot verification is rule-following, not decision parity                     | §6e, tasks 5.5/5.6                        |
 | One decision service **per bot**, not one shared across seats               | `BotRunner`; TypeScript wipes memory each turn |
 
@@ -1662,6 +1673,51 @@ system font cannot push a button off the bottom. Measured on the device across f
 states — a toss-in prompt, a two-line prompt with a two-line log, bots playing, a turn, a drawn
 card — the felt's bottom edge stayed at the same pixel in every one.
 
+**And the rail's own boxes are fixed too, since 2026-09-02.** The scrolling column above was
+the design's last resort and had become its first: on a phone taller than the one the rail was
+drawn on, a prompt, a four-line log and two stacked buttons overran a 270 dp rail by forty, and
+"Leave them" sat half under the edge of the screen in three screenshots running. The rail is
+two columns over a foot now (`ControlPanel.kt`): the choices pinned to the foot, in **one row**
+rather than a stack — a phone has width to spare where it has no height; and above them one
+block that fills the rest, with **the card being decided about on the left, as tall as the
+block** — the web table showed the drawn card large in its panel, and the felt's in-play slot
+says where a card is rather than what — and beside it the prompt, keeping two lines' room
+whether or not the rule under it is still being said, with the box of recent moves under it
+taking whatever the prompt leaves. Nothing is a fixed depth that could leave a strip of rail
+empty above the buttons, and nothing moves between one move and the next on the same phone,
+which is what a fixed box is for. Nothing outside the foot scrolls, so a button cannot be
+pushed off the rail; the prompt scrolls within its own room and a King's fourteen chips within
+theirs, and the foot may never take the prompt's first line. `RailFitsTest` measures both
+choices *clipped* on the test phone, on a 20:9 one, and at a doubled font, which is the
+failure exactly, and that the card is drawn beside the prompt.
+
+Four more, from a play session on the phone the same day. **The foot keeps one row's room
+with nothing to press**, so the log is the same size on a bot's turn as on yours; **Call
+Vinto shares the row** in its own tone rather than sitting under an "or", which was a second
+row on exactly the turns that also had a rule to show. **The card in the rail is the card the
+prompt is about**, whoever's it is — a bot's Queen being aimed, or the action card on offer
+from the pile — where it used to be the viewer's own and nothing else, which read as the rail
+sometimes showing a card and sometimes not. And **the log folds one actor's run of moves onto
+one line**, joined by an arrow, so a turn reads as one thing that happened and the last line
+grows in place rather than pushing the others up. A tap on a card on the felt — the one drawn,
+or the top of the pile — opens the help sheet on that card alone; the "?" still opens all of it.
+
+And four from the session after that. **The card's column is there for the whole of your
+turn and not for a bot's.** It first came and went with the card, which moved the prompt and
+the log sideways on every move; then it was kept always, with an empty slot, which put a
+large empty rectangle beside "Look at two of your cards" and a bot's Jack beside "Mikey is
+playing" — a rail that changed shape with every seat's every move. Now the column exists
+exactly while the turn is yours, a toss-in window included, and always holds a card: the
+card in play, else the top of the pile (which is what the turn is about before the draw,
+after a swap and in the window), else the deck's back. On a bot's turn the words take the
+width. The one change of shape left is at the turn boundary, which is a change of *whose*
+turn it is and reads as one. **Any card the rail shows is explained under the prompt**,
+name, points and action. **The log keeps two turns** — this one and the one it is answering
+— where it kept the whole round, which was a transcript to scroll rather than a table to
+read. And **a draw is narrated with its rank to every seat**, as the felt already shows it:
+the rules reveal a drawn card publicly, and a log that named it to the drawer alone was
+hiding a Joker the whole table had just watched come off the deck.
+
 **The jump.** The felt took what the control panel left
 
 ## 6h. Words, and where they live
@@ -2023,6 +2079,13 @@ hand-written platform implementations would be four APIs to get right for a job 
 has already done.
 
 ## 6k. How good is the bot, and did that just change?
+
+**The baseline moved on 2026-09-02**, with the search rewrite (§6e): rounds are shorter because
+the bot calls Vinto on expected value, and `hard` went from the worst mean hand to the best.
+The file is version 2 and carries a second table — easy, moderate, hard, hard in rotating
+chairs — because that is the only table that can *rank* the difficulties, which the paragraph
+below on homogeneous tables explains. `docs/bot/MCTS-REVIEW.md` §6 has both tables and what
+they do and do not say.
 
 `SelfPlayGateTest` asks whether the bot follows the rules. It says nothing about whether it
 plays *well*, and until now nothing did — the original task 5.6 compared against a TypeScript

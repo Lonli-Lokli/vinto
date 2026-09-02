@@ -116,6 +116,7 @@ import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
+import game.vinto.shapes.Rank
 import game.vinto.shapes.actionIsLive
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
@@ -164,7 +165,7 @@ fun TableScreen(
     state: TableState,
     layout: TableLayout,
     onMove: (Move) -> Unit,
-    onHelp: () -> Unit,
+    onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
     onReport: () -> Unit,
     onDeck: () -> Unit,
@@ -233,7 +234,7 @@ private fun FeltTable(
     state: TableState,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
-    onHelp: () -> Unit,
+    onHelp: (Rank?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val view = state.view
@@ -392,7 +393,7 @@ private const val BUG_LOW_SPOT = 0.30f
 private fun TableHeader(
     view: PlayerView,
     round: Int,
-    onHelp: () -> Unit,
+    onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
     onReport: () -> Unit,
     onDeck: () -> Unit,
@@ -432,7 +433,7 @@ private fun TableHeader(
         // button the next. A control that is always available and never changes belongs in
         // the header, where nothing else changes either.
         Surface(
-            onClick = onHelp,
+            onClick = { onHelp(null) },
             modifier = Modifier.size(HeaderTap).markedAs(LocalStage.current, Target.HELP),
             shape = CircleShape,
             color = Rail.fill,
@@ -730,7 +731,7 @@ private fun MiddleRow(
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
-    onHelp: () -> Unit,
+    onHelp: (Rank?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
@@ -1127,7 +1128,7 @@ private fun SeatCard(
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
-private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: () -> Unit) {
+private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: (Rank?) -> Unit) {
     val stage = LocalStage.current
 
     // The web app's two-by-two, and the reason for it: what a player draws is public, so it
@@ -1156,7 +1157,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: () -> Unit) {
             }
 
             Pile(stringResource(Res.string.table_discard)) {
-                Discard(view, sizes, stage)
+                Discard(view, sizes, stage, onHelp)
             }
         }
 
@@ -1182,7 +1183,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: () -> Unit) {
  * The slot is always there, empty or not, so nothing moves when a card arrives in it.
  */
 @Composable
-private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: () -> Unit) {
+private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (Rank?) -> Unit) {
     // Only while its player is *deciding* about it. The moment the action is engaged the
     // card is on the pile — that is `cardInPlay`'s exact rule, and this is its complement:
     // without the phase check a drawn 8 being aimed sat in this slot and on the discard at
@@ -1212,7 +1213,7 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp:
                 sizes.theirs,
                 modifier = slot,
                 label = stringResource(Res.string.card_in_hand),
-                onClick = onHelp,
+                onClick = { onHelp((drawn.card as? CardView.Visible)?.card?.rank) },
             )
         }
     }
@@ -1412,7 +1413,7 @@ private val ThrownRow = 44.dp
  *   it at both ends makes the eye follow the copy rather than the movement.
  */
 @Composable
-private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
+private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (Rank?) -> Unit) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard, sizes.theirs)
 
     // The pile draws every card that is lying on it, and never one that is somewhere else.
@@ -1467,6 +1468,8 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage) {
             if (face.actionIsLive()) Res.string.card_discarded_live else Res.string.card_discarded,
             face.rank.serialName,
         ),
+        // What does this one do — asked of the card itself, answered about the card itself.
+        onClick = { onHelp(face.rank) },
     )
 }
 

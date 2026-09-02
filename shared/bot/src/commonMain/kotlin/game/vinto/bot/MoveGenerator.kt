@@ -9,59 +9,92 @@ import game.vinto.shapes.isActionable
 /**
  * Every move the search may consider from a position.
  *
- * Ported from `legacy-web/packages/bot/src/lib/mcts-move-generator.ts`. Two kinds of thing live in
- * here and they are not equally negotiable:
+ * Two kinds of thing live in here and they are not equally negotiable:
  *
  *  - **Rules**, which must be exact. Only toss-in or pass during a toss-in; the discard pile
  *    is only takeable when its top card is an unused action; Jack and Queen need two cards
- *    from two *different* players; and the coalition may not touch the Vinto caller's cards
- *    in the final round. A generator that proposes an illegal move produces a bot that
- *    cheats, or one the engine rejects mid-game.
- *  - **Priorities**, which are judgement. Which swaps are worth searching, which King
- *    declaration to try first. These are ported in spirit and in ordering rather than
- *    line-for-line; the search explores what it is given, so a different shortlist makes a
- *    different bot, not a broken one.
+ *    from two *different* players; the coalition may not touch the Vinto caller's cards in
+ *    the final round; and Vinto is called at the end of a turn, not the start. A generator
+ *    that proposes an illegal move produces a bot the engine rejects mid-game.
+ *  - **Orderings**, which are a search budget. A Jack could pair any of its owner's cards
+ *    with any card at the table; the shortlist below keeps the pairs a player would actually
+ *    consider — the dearest card it holds against the cheapest it has seen, and a blind slot
+ *    against a blind slot — so the iterations go on comparing them rather than enumerating
+ *    them. The shortlist orders candidates; the search chooses among them.
  */
 object MoveGenerator {
 
-    /** Worth removing from a hand, or worth forcing an opponent to keep. */
-    private const val HIGH_VALUE_CARD = 9
-
-    /** Vinto is not considered before everyone has had two turns. */
+    /** Vinto is not considered before everyone has had two turns. A pacing rule, not a tactic. */
     private const val OPENING_TURNS_PER_PLAYER = 2
 
+    /** Own and opposing positions kept per Jack or Queen, each side. */
+    private const val SHORTLIST = 3
+
     fun generateMoves(state: MctsGameState): List<MctsMove> {
-        val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return emptyList()
+        val currentPlayer = state.currentPlayer ?: return emptyList()
+
+        if (state.awaitingVintoDecision) return endOfTurnMoves(state, currentPlayer)
 
         // A toss-in window is not a turn: the only choices are to throw matching cards in or
         // to sit it out.
         if (state.isTossInPhase) return tossInMoves(state, currentPlayer)
 
-        // Holding an action card mid-play means the only decision left is where to aim it.
-        val pending = state.pendingCard
-        if (pending != null && pending.rank.isActionable()) {
-            getCardAction(pending.rank)?.let { return generateActionMoves(state, it) }
-        }
+        state.pendingCard?.let { return pendingCardMoves(state, currentPlayer, it) }
 
         val moves = mutableListOf<MctsMove>()
-
-        if (state.deckSize > 0) {
-            moves += MctsMove(MctsMoveType.DRAW, currentPlayer.id)
-        }
+        if (state.deckSize > 0) moves += MctsMove(MctsMoveType.DRAW, currentPlayer.id)
 
         // Taking from the discard commits you to playing the action, so it is only offered
         // when there is an unused one to play.
         val discardTop = state.discardPileTop
         if (discardTop != null && !discardTop.actionText.isNullOrEmpty() && !discardTop.played) {
-            moves += MctsMove(MctsMoveType.TAKE_DISCARD, currentPlayer.id, actionCard = discardTop)
+            moves += MctsMove(MctsMoveType.TAKE_DISCARD, currentPlayer.id)
         }
+        return moves
+    }
 
-        if (state.turnCount >= state.players.size * OPENING_TURNS_PER_PLAYER &&
-            assessVintoThreat(state)
-        ) {
-            moves += MctsMove(MctsMoveType.CALL_VINTO, currentPlayer.id)
+    /** The turn is over: call Vinto, or let play move on. */
+    private fun endOfTurnMoves(state: MctsGameState, currentPlayer: MctsPlayerState): List<MctsMove> {
+        val moves = mutableListOf(MctsMove(MctsMoveType.PASS, currentPlayer.id))
+        if (mayCallVinto(state)) moves += MctsMove(MctsMoveType.CALL_VINTO, currentPlayer.id)
+        return moves
+    }
+
+    /** Nobody has called yet, and the opening is over. */
+    fun mayCallVinto(state: MctsGameState): Boolean =
+        mayCallVinto(state.vintoCallerId, state.turnCount, state.players.size)
+
+    fun mayCallVinto(vintoCallerId: String?, turnCount: Int, seats: Int): Boolean =
+        vintoCallerId == null && turnCount >= seats * OPENING_TURNS_PER_PLAYER
+
+    /**
+     * What may be done with the card in play. Drawn, it may be played, swapped in at any
+     * position, or discarded; taken or borrowed, it must be aimed — or put down unplayed when
+     * there is nowhere to aim it, which is the exit the engine offers for a peek with nothing
+     * left to look at.
+     */
+    private fun pendingCardMoves(
+        state: MctsGameState,
+        currentPlayer: MctsPlayerState,
+        pending: Card,
+    ): List<MctsMove> {
+        val moves = mutableListOf<MctsMove>()
+        val action = getCardAction(pending.rank).takeIf { pending.rank.isActionable() && !pending.played }
+        if (action != null) moves += generateActionMoves(state, action)
+
+        if (state.pendingOrigin == PendingOrigin.DRAWN) {
+            for (position in 0 until currentPlayer.cardCount) {
+                moves += MctsMove(
+                    MctsMoveType.SWAP,
+                    currentPlayer.id,
+                    swapPosition = position,
+                    cardInPlay = pending.rank,
+                )
+            }
+            moves += MctsMove(MctsMoveType.DISCARD, currentPlayer.id, cardInPlay = pending.rank)
+        } else if (moves.isEmpty()) {
+            moves += MctsMove(MctsMoveType.DISCARD, currentPlayer.id, cardInPlay = pending.rank)
         }
-
         return moves
     }
 
@@ -75,15 +108,19 @@ object MoveGenerator {
     private fun tossInMoves(state: MctsGameState, currentPlayer: MctsPlayerState): List<MctsMove> {
         val moves = mutableListOf(MctsMove(MctsMoveType.PASS, currentPlayer.id))
 
-        val validRanks = state.tossInRanks.ifEmpty {
-            listOfNotNull(state.discardPileTop?.rank)
-        }
+        val validRanks = state.tossInRanks.ifEmpty { listOfNotNull(state.discardPileTop?.rank) }
         if (validRanks.isEmpty()) return moves
 
+        // The searching bot may only throw what it remembers; anyone else, in a sampled
+        // world, throws what the world dealt them.
         val matching = (0 until currentPlayer.cardCount).filter { position ->
-            val card = currentPlayer.knownCards[position]?.card
+            val remembered = currentPlayer.knownCards[position]
+                ?.takeIf { it.confidence > TRUSTED_CONFIDENCE }
+                ?.card
+            val card = remembered
                 ?: state.hiddenCards[state.hiddenCardKey(currentPlayer.id, position)]
-            card != null && card.rank in validRanks
+                    ?.takeIf { currentPlayer.id != state.botPlayerId }
+            card != null && card.rank in validRanks && card.value >= 0
         }
 
         if (matching.isNotEmpty()) {
@@ -93,187 +130,128 @@ object MoveGenerator {
     }
 
     fun generateActionMoves(state: MctsGameState, actionType: CardAction): List<MctsMove> {
-        val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return emptyList()
+        val currentPlayer = state.currentPlayer ?: return emptyList()
+        val rank = state.pendingCard?.rank
 
         return when (actionType) {
             CardAction.PEEK_OWN -> unknownPositions(currentPlayer).map { position ->
-                MctsMove(
-                    MctsMoveType.USE_ACTION,
-                    currentPlayer.id,
-                    targets = listOf(MctsActionTarget(currentPlayer.id, position)),
-                )
+                aimed(currentPlayer, rank, listOf(MctsActionTarget(currentPlayer.id, position)))
             }
 
             CardAction.PEEK_OPPONENT -> targetableOpponents(state, currentPlayer).flatMap { opponent ->
                 unknownPositions(opponent).map { position ->
-                    MctsMove(
-                        MctsMoveType.USE_ACTION,
-                        currentPlayer.id,
-                        targets = listOf(MctsActionTarget(opponent.id, position)),
-                    )
+                    aimed(currentPlayer, rank, listOf(MctsActionTarget(opponent.id, position)))
                 }
             }
 
-            CardAction.SWAP_CARDS -> generateTwoPlayerMoves(state, currentPlayer, peekFirst = false)
-            CardAction.PEEK_AND_SWAP -> generateTwoPlayerMoves(state, currentPlayer, peekFirst = true)
-            CardAction.FORCE_DRAW -> generateForceDrawMoves(state, currentPlayer)
-            CardAction.DECLARE_ACTION -> generateKingMoves(state, currentPlayer)
+            CardAction.SWAP_CARDS -> twoPlayerMoves(state, currentPlayer, peekFirst = false)
+            CardAction.PEEK_AND_SWAP -> twoPlayerMoves(state, currentPlayer, peekFirst = true)
+            CardAction.FORCE_DRAW -> forceDrawMoves(state, currentPlayer)
+            CardAction.DECLARE_ACTION -> kingMoves(state, currentPlayer)
         }
     }
 
-    /** After drawing, the card either goes into a position or straight to the discard. */
-    fun generateSwapPositionMoves(state: MctsGameState): List<MctsMove> {
-        val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return emptyList()
-
-        return listOf(MctsMove(MctsMoveType.DISCARD, currentPlayer.id)) +
-            (0 until currentPlayer.cardCount).map { position ->
-                MctsMove(MctsMoveType.SWAP, currentPlayer.id, swapPosition = position)
-            }
-    }
+    private fun aimed(
+        player: MctsPlayerState,
+        rank: Rank?,
+        targets: List<MctsActionTarget>,
+        shouldSwap: Boolean? = null,
+        declaredRank: Rank? = null,
+    ) = MctsMove(
+        MctsMoveType.USE_ACTION,
+        player.id,
+        targets = targets,
+        shouldSwap = shouldSwap,
+        declaredRank = declaredRank,
+        cardInPlay = rank,
+    )
 
     /**
      * Jack and Queen both take two cards from two *different* players — a rule, not a
-     * preference. The shortlist pairs the bot's worst known card against opponents' best,
-     * which is the trade worth searching; Queen additionally prefers cards it has not seen,
-     * since it peeks before deciding.
+     * preference. The shortlist pairs the mover's dearest known cards (or a blind slot, which
+     * the search prices by sampling it) against the cheapest cards it has seen in each
+     * opponent's hand, plus that opponent's blind slots; the Queen, which looks before it
+     * trades, prefers blind slots on both sides.
      *
-     * Every candidate carries `shouldSwap = true`, because the swap *is* the plan and it is
-     * what the search simulates. It used to be null for the Jack, and the decision service
-     * coerced a null to `false` on the way out — so a solo bot aimed its Jack, the search
-     * valued the trade, and then it skipped the swap. Every time. The one legitimate "no"
-     * is its own candidate: a Jack may be tossed in and *have* to be aimed, and a search
-     * that was never offered the skip could not choose it when every trade on the table
-     * loses points.
+     * The Jack also gets the one legitimate "no": aim it and leave both cards where they
+     * are. A Jack that was tossed in has to be aimed, and a search never offered the skip
+     * could not choose it when every trade on the table loses points.
      */
-    private fun generateTwoPlayerMoves(
+    private fun twoPlayerMoves(
         state: MctsGameState,
         currentPlayer: MctsPlayerState,
         peekFirst: Boolean,
     ): List<MctsMove> {
+        val rank = state.pendingCard?.rank
         val ownPositions = if (peekFirst) {
-            unknownPositions(currentPlayer).ifEmpty { knownPositionsByValue(currentPlayer) }
+            unknownPositions(currentPlayer) + knownPositionsByValue(currentPlayer).reversed()
         } else {
-            // Give away the dearest card it knows — or, knowing none of its own, trade a
-            // blind card rather than having no Jack plan at all.
-            knownPositionsByValue(currentPlayer).reversed()
-                .ifEmpty { unknownPositions(currentPlayer) }
+            knownPositionsByValue(currentPlayer).reversed() + unknownPositions(currentPlayer)
         }.take(SHORTLIST)
 
         val moves = mutableListOf<MctsMove>()
         for (opponent in targetableOpponents(state, currentPlayer)) {
-            val opponentPositions = if (peekFirst) {
-                unknownPositions(opponent).ifEmpty { (0 until opponent.cardCount).toList() }
+            val theirPositions = if (peekFirst) {
+                unknownPositions(opponent) + knownPositionsByValue(opponent)
             } else {
-                // Cheapest first: a blind swap *receives* this card, so the Joker the bot
-                // has seen in an opponent's hand is the whole point of playing the Jack.
-                // Most-expensive-first was offering to import their King.
-                knownPositionsByValue(opponent)
-                    .ifEmpty { (0 until opponent.cardCount).toList() }
+                // Cheapest first: a blind swap *receives* this card, so the Joker the bot has
+                // seen in an opponent's hand is the whole point of playing the Jack.
+                knownPositionsByValue(opponent) + unknownPositions(opponent)
             }.take(SHORTLIST)
 
             for (own in ownPositions) {
-                for (theirs in opponentPositions) {
-                    moves += MctsMove(
-                        MctsMoveType.USE_ACTION,
-                        currentPlayer.id,
-                        targets = listOf(
-                            MctsActionTarget(currentPlayer.id, own),
-                            MctsActionTarget(opponent.id, theirs),
-                        ),
-                        shouldSwap = true,
+                for (theirs in theirPositions) {
+                    val targets = listOf(
+                        MctsActionTarget(currentPlayer.id, own),
+                        MctsActionTarget(opponent.id, theirs),
                     )
+                    moves += aimed(currentPlayer, rank, targets, shouldSwap = true)
                 }
             }
         }
 
-        // The Jack's "aim and then leave them alone", as a move the search can weigh against
-        // the trades. Queen needs no such candidate here: she peeks first, and declining her
-        // swap is decided after the peek by `shouldSwapAfterPeek`.
-        if (!peekFirst) {
-            moves.firstOrNull()?.let { moves += it.copy(shouldSwap = false) }
-        }
+        if (!peekFirst) moves.firstOrNull()?.let { moves += it.copy(shouldSwap = false) }
         return moves
     }
-
-    private const val SHORTLIST = 2
 
     /**
      * An Ace makes someone draw. The coalition must not aim it at the Vinto caller (the rule
      * forbidding interaction with their cards) and should not aim it at its own champion
      * either — handing a card to the one member who can still win is friendly fire.
      */
-    private fun generateForceDrawMoves(
-        state: MctsGameState,
-        currentPlayer: MctsPlayerState,
-    ): List<MctsMove> {
+    private fun forceDrawMoves(state: MctsGameState, currentPlayer: MctsPlayerState): List<MctsMove> {
         val championId = coalitionChampion(state)?.id
         val inCoalition = isCoalitionMember(state, currentPlayer.id)
 
         return targetableOpponents(state, currentPlayer)
             .filterNot { inCoalition && it.id == championId }
-            .map { opponent ->
-                // An Ace names a player, not a card; position 0 is a placeholder.
-                MctsMove(
-                    MctsMoveType.USE_ACTION,
-                    currentPlayer.id,
-                    targets = listOf(MctsActionTarget(opponent.id, 0)),
-                )
-            }
+            // An Ace names a player, not a card; position 0 is a placeholder.
+            .map { aimed(currentPlayer, state.pendingCard?.rank, listOf(MctsActionTarget(it.id, 0))) }
     }
 
     /**
-     * A King declares a rank, and every matching card at the table gets tossed in.
-     *
-     * The priority order is the whole strategy: a rank the bot holds two of sheds two of its
-     * own cards at once; then its own expensive single cards; then an opponent's expensive
-     * cards, which costs them. In coalition, the caller's cards come first — that is the one
-     * time harming a specific player is the goal.
+     * A King names a card and declares its rank; if right, that card leaves its hand and its
+     * action is the declarer's to play, and every matching card at the table may be tossed
+     * in. Only a card the mover *knows* is a candidate — naming a card blind costs a penalty
+     * card, and the search has nothing to learn from a guess. Own cards come first, then each
+     * opponent's; in coalition the caller's cards are off limits, as everywhere.
      */
-    private fun generateKingMoves(
-        state: MctsGameState,
-        currentPlayer: MctsPlayerState,
-    ): List<MctsMove> {
-        val ownKnown = knownCards(currentPlayer)
-        val ranks = mutableListOf<Rank>()
+    private fun kingMoves(state: MctsGameState, currentPlayer: MctsPlayerState): List<MctsMove> {
+        val rank = state.pendingCard?.rank
+        val holders = listOf(currentPlayer) + targetableOpponents(state, currentPlayer)
 
-        // 1. Own cascades — two or more of a rank leave together.
-        ownKnown.values.groupingBy { it.rank }.eachCount()
-            .filter { it.value >= 2 }
-            .keys
-            .let(ranks::addAll)
-
-        // 2. Own expensive singles.
-        ownKnown.values.filter { it.value >= HIGH_VALUE_CARD }.map { it.rank }.let(ranks::addAll)
-
-        // 3. Opponents' expensive cards. In coalition the caller is the target of choice,
-        //    and that is also the only case where the caller may be named at all.
-        val inCoalition = isCoalitionMember(state, currentPlayer.id)
-        val opponents = if (inCoalition) {
-            state.players.filter { it.id == state.vintoCallerId }
-        } else {
-            state.players.filter { it.id != currentPlayer.id }
+        return holders.flatMap { holder ->
+            knownCards(holder).entries
+                .sortedByDescending { it.value.value }
+                .map { (position, card) ->
+                    aimed(
+                        currentPlayer,
+                        rank,
+                        listOf(MctsActionTarget(holder.id, position)),
+                        declaredRank = card.rank,
+                    )
+                }
         }
-        opponents.flatMap { knownCards(it).values }
-            .filter { it.value >= HIGH_VALUE_CARD }
-            .map { it.rank }
-            .let(ranks::addAll)
-
-        return ranks.distinct().map { rank ->
-            MctsMove(MctsMoveType.USE_ACTION, currentPlayer.id, declaredRank = rank)
-        }
-    }
-
-    /** Rough ordering for progressive widening: decisive moves before filler. */
-    @Suppress("MagicNumber")
-    fun getMovePriority(move: MctsMove): Int = when (move.type) {
-        MctsMoveType.CALL_VINTO -> 100
-        MctsMoveType.USE_ACTION -> 80
-        MctsMoveType.TAKE_DISCARD -> 70
-        MctsMoveType.TOSS_IN -> 60
-        MctsMoveType.DRAW -> 50
-        MctsMoveType.SWAP -> 40
-        MctsMoveType.DISCARD -> 30
-        MctsMoveType.PASS -> 10
     }
 
     /**
@@ -282,7 +260,7 @@ object MoveGenerator {
      * has moved on.
      */
     fun isLegalMove(state: MctsGameState, move: MctsMove): Boolean {
-        val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return false
+        val currentPlayer = state.currentPlayer ?: return false
         if (move.playerId != currentPlayer.id) return false
 
         if (state.isTossInPhase) {
@@ -296,51 +274,6 @@ object MoveGenerator {
         return move.targets.all { target ->
             val targetPlayer = state.players.firstOrNull { it.id == target.playerId }
             targetPlayer != null && target.position < targetPlayer.cardCount
-        }
-    }
-
-    /**
-     * Whether calling Vinto is even worth putting in front of the search.
-     *
-     * Being ahead is not enough: an opponent holding a Jack, Queen or King can rearrange the
-     * table before the round ends, so known action cards raise the margin required. Three or
-     * more and the bot wants a clear lead over the *best* opponent, not just the average.
-     */
-    @Suppress("MagicNumber")
-    private fun assessVintoThreat(state: MctsGameState): Boolean {
-        val currentPlayer = state.players.getOrNull(state.currentPlayerIndex) ?: return false
-        val opponents = state.players.filter { it.id != currentPlayer.id }
-        if (opponents.isEmpty()) return false
-
-        val averageOpponentScore = opponents.sumOf { it.score } / opponents.size
-        val minOpponentScore = opponents.minOf { it.score }
-        val baseThreshold = 5
-
-        if (currentPlayer.score > averageOpponentScore - baseThreshold) return false
-
-        val dangerous = setOf(
-            CardAction.SWAP_CARDS,
-            CardAction.PEEK_AND_SWAP,
-            CardAction.DECLARE_ACTION,
-        )
-        var threatLevel = 0
-        for (opponent in opponents) {
-            for (memory in opponent.knownCards.values) {
-                if (memory.confidence <= TRUSTED_CONFIDENCE) continue
-                val action = getCardAction(memory.card.rank) ?: continue
-                if (action !in dangerous) continue
-
-                threatLevel++
-                if (action == CardAction.DECLARE_ACTION) threatLevel += 2
-                if (action == CardAction.PEEK_AND_SWAP) threatLevel += 1
-            }
-        }
-
-        return when {
-            threatLevel == 0 -> currentPlayer.score <= averageOpponentScore - baseThreshold
-            threatLevel <= 2 -> currentPlayer.score <= averageOpponentScore - (baseThreshold + 3)
-            else -> currentPlayer.score <= averageOpponentScore - (baseThreshold + 5) &&
-                currentPlayer.score < minOpponentScore - 3
         }
     }
 
@@ -364,14 +297,16 @@ object MoveGenerator {
         }
     }
 
-    private fun isCoalitionMember(state: MctsGameState, playerId: String): Boolean =
-        state.vintoCallerId != null &&
-            state.coalitionLeaderId != null &&
-            playerId != state.vintoCallerId
+    /** Everybody but the caller, from the moment of the call: the protection does not wait for a leader. */
+    fun isCoalitionMember(state: MctsGameState, playerId: String): Boolean =
+        state.vintoCallerId != null && playerId != state.vintoCallerId
 
+    /** The coalition member with the lowest hand in this world; null outside the final round. */
     fun coalitionChampion(state: MctsGameState): MctsPlayerState? {
-        if (state.vintoCallerId == null || state.coalitionLeaderId == null) return null
-        return state.players.filter { it.id != state.vintoCallerId }.minByOrNull { it.score }
+        if (state.vintoCallerId == null) return null
+        return state.players
+            .filter { it.id != state.vintoCallerId }
+            .minByOrNull { StateTransition.handTotal(state, it.id) }
     }
 
     /**
@@ -383,19 +318,19 @@ object MoveGenerator {
      * Without the bound the generator offers a target the engine rejects outright, and the
      * bot is left holding an action it cannot aim.
      */
-    private fun knownCards(player: MctsPlayerState): Map<Int, Card> =
+    fun knownCards(player: MctsPlayerState): Map<Int, Card> =
         player.knownCards
             .filterKeys { it in 0 until player.cardCount }
             .filterValues { it.confidence > TRUSTED_CONFIDENCE }
             .mapValues { it.value.card }
 
-    private fun unknownPositions(player: MctsPlayerState): List<Int> =
+    fun unknownPositions(player: MctsPlayerState): List<Int> =
         (0 until player.cardCount).filter { position ->
             val memory = player.knownCards[position]
             memory == null || memory.confidence <= TRUSTED_CONFIDENCE
         }
 
     /** Known positions, cheapest first. */
-    private fun knownPositionsByValue(player: MctsPlayerState): List<Int> =
+    fun knownPositionsByValue(player: MctsPlayerState): List<Int> =
         knownCards(player).entries.sortedBy { it.value.value }.map { it.key }
 }
