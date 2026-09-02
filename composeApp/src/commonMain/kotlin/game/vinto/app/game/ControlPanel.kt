@@ -57,14 +57,15 @@ import game.vinto.app.said
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.Hairline
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Choice
 import game.vinto.client.Detail
+import game.vinto.client.Label
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
+import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -77,6 +78,9 @@ import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
 
+/** One row of buttons: the room the foot keeps whether or not there is anything to press. */
+private val FootRow = 50.dp
+
 /** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
 
@@ -85,6 +89,9 @@ private const val RailCardShare = 0.4f
 private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
+
+/** Between two things one actor did in one turn. */
+private const val LogJoin = " ➜ "
 
 /** The well's greatest depth in lines, its line pitch, and how much darker than the rail it sits. */
 private const val LogLines = 8
@@ -172,13 +179,12 @@ fun ControlPanel(
         // Scrolling survives only as the last resort for a doubled system font: the prompt
         // scrolls within its own room, and a King's fourteen chips within theirs, and the
         // foot may never take the prompt's first line.
-        val rows = table.choices.size + if (table.choices.any { it.tone == Tone.STAKES }) 1 else 0
-        val crowded = table.ranks.isNotEmpty() || rows >= Crowded
+        val crowded = table.ranks.isNotEmpty()
         val recent = state.recent.filterNot { table.prompt.echoedBy(it) }
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
-        val inPlay = state.view.ownCardInPlay()
+        val inPlay = cardTheRailIsAbout(state.view, table)
 
         RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, onMove)
     }
@@ -207,9 +213,7 @@ private fun RailBody(
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
             RailBlock(state, table, inPlay, recent, crowded, twoLines, modifier = Modifier.weight(1f))
-            if (table.ranks.isNotEmpty() || table.choices.isNotEmpty()) {
-                RailFoot(table, footCap, onMove)
-            }
+            RailFoot(table, footCap, onMove)
         }
     }
 }
@@ -262,9 +266,7 @@ private fun RailBlock(
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
                 // two are built from the same narration, so the top line of the log was
-                // routinely the heading again in smaller type. Counted in full-width rows
-                // rather than in buttons, because a stakes move brings a rule and the word
-                // "or" down.
+                // routinely the heading again in smaller type. Only a rank grid takes its room.
                 if (!crowded) {
                     Box(modifier = Modifier.fillMaxWidth().weight(1f)) { RecentActions(recent) }
                 }
@@ -273,13 +275,18 @@ private fun RailBlock(
     }
 }
 
-/** The rank grid, when there is one, and the choices under it — pinned, and never the whole rail. */
+/**
+ * The rank grid, when there is one, and the choices under it — pinned, and never the whole
+ * rail. It keeps one row's room even with nothing to press — "Raph is playing" — so the block
+ * above it, and the log in it, are the same size on every turn of the round: a box that grew
+ * when the buttons went and shrank when they came back was the one thing still moving.
+ */
 @Composable
 private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = footCap)
+            .heightIn(min = FootRow, max = footCap)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Gap),
     ) {
@@ -300,61 +307,48 @@ private fun railCardFor(block: Dp, width: Dp): CardScale? {
     return CardScale(height * (RailCard.width / RailCard.height), height)
 }
 
-/** What the player can do: the ordinary moves, and a stakes move set apart under a rule. */
+/**
+ * What the player can do, in one row.
+ *
+ * A stakes move — Call Vinto — used to sit alone under a rule and the word "or", which was
+ * a second row the rail had to find room for on exactly the turns it also had a prompt and
+ * a rule to show. It shares the row now, in its own tone: the gold is what says "this is a
+ * different kind of thing to press", and a row is what keeps the foot one height on every
+ * turn. A lone choice keeps the whole row, so the one thing to press is the biggest.
+ */
 @Composable
 private fun Choices(table: Table, onMove: (Move) -> Unit) {
-    // A stakes move is set below a rule, as the web app sets Call Vinto below an "or": it is
-    // not the next step in what you were doing, it is a different thing to do, and the line
-    // is what stops a thumb finding it by accident.
-    val (ordinary, stakes) = table.choices.partition { it.tone != Tone.STAKES }
-    if (ordinary.isEmpty() && stakes.isEmpty()) return
+    val choices = table.choices
+    if (choices.isEmpty()) return
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Gap),
-    ) {
-        // Side by side, sharing the width: two or three choices in one row cost the rail one
-        // button's height rather than two or three, and a phone has width to spare where it
-        // has no height. A lone choice keeps the whole row, so the one thing to press is the
-        // biggest thing to press.
-        if (ordinary.size > 1) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Half),
-            ) {
-                ordinary.forEach { choice ->
-                    ChoiceButton(choice, onMove, Modifier.weight(1f))
-                }
+    if (choices.size > 1) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Half),
+        ) {
+            choices.forEach { choice ->
+                ChoiceButton(choice, onMove, Modifier.weight(1f))
             }
-        } else {
-            ordinary.forEach { choice -> ChoiceButton(choice, onMove) }
         }
-
-        if (stakes.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Gap),
-            ) {
-                Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
-                Text("or", fontSize = DetailSize, color = Rail.inkDim)
-                Hairline(modifier = Modifier.weight(1f), colour = Rail.line)
-            }
-            stakes.forEach { choice -> ChoiceButton(choice, onMove) }
-        }
+    } else {
+        ChoiceButton(choices.single(), onMove)
     }
 }
 
 /**
- * The card the person holding the phone is deciding about, if there is one and it is theirs.
+ * The card the prompt is about, if the rail can show one.
  *
- * Another seat's pending card is on the felt for everyone to watch; it is not this player's
- * decision, and the rail is about what this player can do.
+ * Whoever's it is: a card being decided about is public — the rules have a drawn card
+ * revealed — and "Raph is playing" beside the Queen he is aiming says more than the words
+ * alone. Before anything is drawn, the card on offer from the pile, when the prompt offers
+ * it: the decision then is *about* that card, and it is the one the player is looking for.
+ * It used to be the viewer's own pending card and nothing else, which read as the rail
+ * sometimes showing a card and sometimes not, for no reason a player could see.
  */
-private fun PlayerView.ownCardInPlay(): Card? {
-    val pending = pendingAction ?: return null
-    if (pending.playerId != viewerId) return null
-    return (pending.card as? CardView.Visible)?.card
+private fun cardTheRailIsAbout(view: PlayerView, table: Table): Card? {
+    (view.pendingAction?.card as? CardView.Visible)?.let { return it.card }
+    if (table.choices.any { it.label is Label.UseFromPile }) return view.discardTop
+    return null
 }
 
 /**
@@ -468,8 +462,13 @@ private fun RecentActions(recent: List<Say>) {
 
     // A plain loop rather than `map`: `said` is a composable, and a composable call inside
     // a non-inline lambda is not one the compiler will accept.
-    val rendered = ArrayList<String>(recent.size)
-    for (entry in recent) rendered += said(entry)
+    // One line per actor rather than per action, joined by an arrow: "Don draws a card ➜
+    // Don swaps card 1, dropping the 9" is one thing that happened, read once, and the line
+    // grows in place as the turn goes on rather than pushing the last one up. A move by
+    // somebody else, or the table's own line, starts a new one.
+    val lines = ArrayList<Pair<Speaker, String>>(recent.size)
+    for (entry in recent) lines += entry.who to said(entry)
+    val rendered = foldedByActor(lines)
 
     // Sized in lines rather than points, so a large system font gets the same number of
     // lines rather than fewer, clipped.
@@ -510,6 +509,21 @@ private fun RecentActions(recent: List<Say>) {
             }
         }
     }
+}
+
+/** One line per run of moves by the same actor, joined by [LogJoin]; the table's own lines stand alone. */
+internal fun foldedByActor(lines: List<Pair<Speaker, String>>): List<String> {
+    val folded = ArrayList<String>(lines.size)
+    var lastWho: Speaker? = null
+    for ((who, line) in lines) {
+        if (folded.isNotEmpty() && who != Speaker.Nobody && who == lastWho) {
+            folded[folded.lastIndex] = folded.last() + LogJoin + line
+        } else {
+            folded += line
+        }
+        lastWho = who
+    }
+    return folded
 }
 
 /** How many lines of log fit in [room], up to the well's greatest depth; none when less than one. */
@@ -585,9 +599,6 @@ private const val RANKS_PER_ROW = 7
 
 /** Four and four: the eight action ranks of the swap declaration. */
 private const val ACTION_RANKS_PER_ROW = 4
-
-/** The number of full-width rows that leaves the rail no room for anything else. */
-private const val Crowded = 3
 
 /** How many times a hint is given before it waits to be asked for. */
 private const val FreelyOffered = 2

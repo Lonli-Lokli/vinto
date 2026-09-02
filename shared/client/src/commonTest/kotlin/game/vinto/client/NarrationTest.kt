@@ -8,6 +8,8 @@ import game.vinto.shapes.GameState
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.RankPayload
+import game.vinto.shapes.SelectActionTargetPayload
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -120,6 +122,7 @@ class NarrationTest {
             Say.SwappedTwo(Speaker.You),
             Say.LeftThemAlone(Speaker.You),
             Say.DeclaredRank(Speaker.You, Rank.KING),
+            Say.MadeDraw(Speaker.You, Speaker.Named("Don")),
             Say.RoundBegins,
         )
 
@@ -129,5 +132,36 @@ class NarrationTest {
             assertEquals(one, one, "a message must be a value, comparable by what it means")
         }
         assertEquals(said.size, said.toSet().size, "two messages collided")
+    }
+
+    /**
+     * An Ace's aim is narrated — "Don made you draw a card" — because a card landing in a
+     * hand with no line saying why is the most confusing thing this table does. Reported
+     * from a phone: the log said Don had declared and tossed an Ace, and then nothing.
+     */
+    @Test
+    fun anAcePointedAtSomebodyIsSaidFromBothSides() {
+        var state = playing()
+        val you = state.players.first { it.isHuman }.id
+        val victim = state.players.first { !it.isHuman }
+        state = GameEngine.reduce(state, GameAction.SetNextDrawCard(RankPayload(Rank.ACE))).state
+        state = GameEngine.reduce(state, GameAction.DrawCard(PlayerIdPayload(you))).state
+        state = GameEngine.reduce(state, GameAction.UseCardAction(PlayerIdPayload(you))).state
+        check(state.pendingAction?.card?.rank == Rank.ACE) { "the Ace is not in play" }
+
+        val aim = GameAction.SelectActionTarget(SelectActionTargetPayload.Ace(you, victim.id))
+        val after = GameEngine.reduce(state, aim).state
+        check(after.players.first { it.id == victim.id }.cards.size == victim.cards.size + 1) {
+            "the Ace made nobody draw"
+        }
+
+        assertEquals(
+            Say.MadeDraw(Speaker.You, Speaker.Named(victim.nickname)),
+            narrate(aim, state, after, you),
+        )
+        assertEquals(
+            Say.MadeDraw(Speaker.Named(state.players.first { it.id == you }.nickname), Speaker.You),
+            narrate(aim, state, after, victim.id),
+        )
     }
 }

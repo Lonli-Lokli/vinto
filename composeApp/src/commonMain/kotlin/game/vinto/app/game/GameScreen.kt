@@ -55,6 +55,7 @@ import game.vinto.client.saveStats
 import game.vinto.client.toJson
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
@@ -82,7 +83,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
     // A refused move is a defect wherever it happens; the surface says which table it was.
     CountRefusals(holder.refusal)
 
-    var helpOpen by remember { mutableStateOf(false) }
+    val help = remember { HelpState() }
     var scoreOpen by remember(round) { mutableStateOf(false) }
     val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
@@ -134,14 +135,14 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
                     // catches up the moment there is nothing left to animate.
                     state = TableState(
                         view = shown,
-                        table = holder.tableFor(shown),
+                        table = holder.tableFor(shown).withoutStaleTaps(shown, holder.current),
                         refusal = holder.refusal,
                         recent = told,
                         round = round,
                     ),
                     layout = layout,
                     onMove = act,
-                    onHelp = { helpOpen = true },
+                    onHelp = help::show,
                     onSettings = onSettings,
                     // The whole game, in the format the replay harness already reads. A bug
                     // report for a card game is worth what it is reproducible for, and "the bots
@@ -186,7 +187,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
         onDismiss = { deckOpen = false },
     )
 
-    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
+    HelpSheet(open = help.open, now = holder.table.help, focus = help.focus, onDismiss = help::dismiss)
 
     if (scoreOpen) {
         SoloScore(
@@ -411,5 +412,25 @@ private fun RecordRound(result: RoundResult, viewerId: String) {
     val vault = LocalVault.current
     remember(result) {
         vault?.let { it.saveStats(it.loadStats().plus(result, viewerId) ?: return@let) }
+    }
+}
+
+/**
+ * The help sheet's two facts: whether it is up, and the one card it was asked about — null
+ * for the whole reference, which is what the "?" opens.
+ */
+private class HelpState {
+    var open by mutableStateOf(false)
+        private set
+    var focus by mutableStateOf<Rank?>(null)
+        private set
+
+    fun show(rank: Rank?) {
+        focus = rank
+        open = true
+    }
+
+    fun dismiss() {
+        open = false
     }
 }

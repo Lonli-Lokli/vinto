@@ -1691,6 +1691,17 @@ theirs, and the foot may never take the prompt's first line. `RailFitsTest` meas
 choices *clipped* on the test phone, on a 20:9 one, and at a doubled font, which is the
 failure exactly, and that the card is drawn beside the prompt.
 
+Four more, from a play session on the phone the same day. **The foot keeps one row's room
+with nothing to press**, so the log is the same size on a bot's turn as on yours; **Call
+Vinto shares the row** in its own tone rather than sitting under an "or", which was a second
+row on exactly the turns that also had a rule to show. **The card in the rail is the card the
+prompt is about**, whoever's it is — a bot's Queen being aimed, or the action card on offer
+from the pile — where it used to be the viewer's own and nothing else, which read as the rail
+sometimes showing a card and sometimes not. And **the log folds one actor's run of moves onto
+one line**, joined by an arrow, so a turn reads as one thing that happened and the last line
+grows in place rather than pushing the others up. A tap on a card on the felt — the one drawn,
+or the top of the pile — opens the help sheet on that card alone; the "?" still opens all of it.
+
 **The jump.** The felt took what the control panel left
 
 ## 6h. Words, and where they live

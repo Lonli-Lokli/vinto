@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameState
+import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.actorId
 
 /**
@@ -82,6 +83,11 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
 
         is GameAction.DeclareKingAction -> Say.DeclaredRank(who, action.payload.declaredRank)
 
+        // An Ace's aim is the one target worth a line of its own: a card lands in somebody's
+        // hand and they did nothing to earn it. A peek's aim is drawn on the table instead —
+        // the lift says which card — and a swap's is narrated when the swap resolves.
+        is GameAction.SelectActionTarget -> aimed(action.payload, who, before, viewerId)
+
         // Nothing. Confirming a peek says only that a player stopped looking at a card the
         // reader was never shown — it is the end of a private moment, and putting it in the
         // log spends a line saying so. The web app drops it for the same reason: "don't show
@@ -95,3 +101,24 @@ fun narrate(action: GameAction, before: GameState, after: GameState, viewerId: S
         else -> null
     }
 }
+
+/** An Ace's aim, said; every other aim is drawn on the table rather than written down. */
+private fun aimed(
+    payload: SelectActionTargetPayload,
+    who: Speaker,
+    before: GameState,
+    viewerId: String,
+): Say? =
+    if (payload is SelectActionTargetPayload.Ace) {
+        Say.MadeDraw(who, speakerFor(payload.targetPlayerId, before, viewerId))
+    } else {
+        null
+    }
+
+/** Who a seat is to the reader: "you", or the nickname on the plate. */
+private fun speakerFor(playerId: String, state: GameState, viewerId: String): Speaker =
+    if (playerId == viewerId) {
+        Speaker.You
+    } else {
+        state.players.firstOrNull { it.id == playerId }?.nickname?.let(Speaker::Named) ?: Speaker.Nobody
+    }

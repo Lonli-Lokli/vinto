@@ -443,6 +443,9 @@
     <string name="log_swapped_two_named">%1$s поменял(а) местами: %2$s и %3$s</string>
     <string name="log_left_alone">%1$s оставил(а) их как есть</string>
     <string name="log_declared">%1$s назвал(а) %2$s</string>
+    <string name="log_made_draw_you">Вы заставили %1$s взять карту</string>
+    <string name="log_made_you_draw">%1$s заставил вас взять карту</string>
+    <string name="log_made_draw_they">%1$s заставил %2$s взять карту</string>
     <string name="log_round_begins">раунд начинается</string>
 
     <string name="help_counts_title">Что считает это приложение</string>

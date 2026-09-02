@@ -532,7 +532,11 @@
     <string name="log_swapped_two">%1$s swapped two cards</string>
     <string name="log_swapped_two_named">%1$s swapped %2$s with %3$s</string>
     <string name="log_left_alone">%1$s left them alone</string>
-    <string name="log_declared">%1$s declared a %2$s</string>
+    <string name="log_declared">%1$s declared %2$s</string>
+    <!-- An Ace's aim: three sentences, because the verb and "you" both move. -->
+    <string name="log_made_draw_you">You made %1$s draw a card</string>
+    <string name="log_made_you_draw">%1$s made you draw a card</string>
+    <string name="log_made_draw_they">%1$s made %2$s draw a card</string>
     <string name="log_round_begins">the round begins</string>
 
     <string name="help_counts_title">What this app counts</string>
