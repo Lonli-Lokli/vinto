@@ -488,9 +488,20 @@ Neither closes the gap, so the budget is not what separates them, and the remain
 difference is the memory. The likeliest mechanism is the Vinto call: the rollouts play the
 final round as three selfish seats, but the real coalition pools its hands through the
 planner, so a bot that always knows its whole hand reaches a call it values too highly more
-often than one whose forgotten cards are priced as unknown. That is a hypothesis about the
-rollout's coalition, not about a weight, and it is being checked by counting who calls and
-who wins.
+often than one whose forgotten cards are priced as unknown. That was a hypothesis about the
+rollout's coalition, not about a weight, and counting who calls and who wins on the same
+thirty-six seeds does not support it:
+
+| Difficulty | Seats | Called | Call held | Actions at the call |
+| --- | --- | --- | --- | --- |
+| easy | 36 | 11 | 6 (55 %) | 222 |
+| moderate | 36 | 9 | 8 (89 %) | 241 |
+| hard | 72 | 16 | 11 (69 %) | 259 |
+
+Hard calls *less* often per seat than either, and later; every difficulty's calls are far above
+the one-in-four break-even. Moderate's calls are the best judged, and that is where its points
+come from. What separates it from hard is still open, and with three dozen games per
+experiment the honest statement is that the two are close and moderate is ahead, not why.
 
 ### What is left
 
