@@ -134,11 +134,14 @@ A third piece of English assembly went with it: the toss-in prompt joined its ra
 `" or "`, hard-coded in a module with no way to translate it. `Ask.TossIn` carries the ranks
 and the renderer joins them with `ask_or`.
 
-And the thing slice 1 had to leave in the UI came back to the model, better than it left.
-Dropping a log line that only repeats the prompt used to compare two *rendered strings* — which
-worked by coincidence, `Ask.YouDrew` and `Say.DrewKnown` being different types that happen to
-produce the same English. `Ask.echoedBy(Say)` says the relationship instead, and survives a
-language where those two sentences differ.
+And the thing slice 1 had to leave in the UI came back to the model, better than it left —
+and has since gone altogether. Dropping a log line that only repeats the prompt used to
+compare two *rendered strings*, which worked by coincidence, `Ask.YouDrew` and `Say.DrewKnown`
+being different types that happen to produce the same English; `Ask.echoedBy(Say)` said the
+relationship instead. It is deleted now, because the fold was wrong rather than
+untranslatable: with "You drew the Joker" folded out, the newest line in the box was the
+*previous* seat's move, and the log read as though the draw had not happened (product owner,
+from a real round). The heading and the log say the same thing once each, on purpose.
 
 ### The boundary: `shortDescription` is data, and cannot be translated
 

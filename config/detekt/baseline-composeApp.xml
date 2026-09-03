@@ -35,7 +35,6 @@
     <ID>CognitiveComplexMethod:Said.kt:@Composable @Suppress("CyclomaticComplexMethod") fun said: String</ID>
     <ID>CognitiveComplexMethod:Standings.kt:@Composable private fun Line</ID>
     <ID>CognitiveComplexMethod:TableScreen.kt:@Composable private fun HandLine</ID>
-    <ID>CognitiveComplexMethod:TeachScreen.kt:@Composable private fun Coach</ID>
     <ID>FunctionNameMinLength:CardStage.kt:Stage$internal fun ms: Int</ID>
     <ID>FunctionNameMinLength:ContrastTest.kt:ContrastTest$private fun ui</ID>
     <ID>LambdaParameterNaming:TableScreen.kt:throw_</ID>
@@ -70,6 +69,5 @@
     <ID>UseIfInsteadOfWhen:DiscoverScreen.kt:when { row.humans &gt; 0 -&gt; stringResource(Res.string.discover_people, row.humans) else -&gt; stringResource(Res.string.discover_seats, row.seatsFilled) }</ID>
     <ID>UseIfInsteadOfWhen:RoomScreen.kt:when (val playing = session) { null -&gt; LobbyScreen(room, onLeft) else -&gt; RemoteGameScreen( room, playing, pace, endedReason = ended, onSettings = onSettings, onLeft = onLeft, ) }</ID>
     <ID>UseIfInsteadOfWhen:Said.kt:when (label) { is Label.UseFromPile -&gt; "use-from-pile" else -&gt; label.toString() }</ID>
-    <ID>UseIfInsteadOfWhen:TeachScreen.kt:when { finished -&gt; stringResource(Res.string.teach_finished_title) else -&gt; lesson?.teaches?.let { taughtTitle(it) } ?: stringResource(Res.string.teach_heading) }</ID>
   </CurrentIssues>
 </SmellBaseline>

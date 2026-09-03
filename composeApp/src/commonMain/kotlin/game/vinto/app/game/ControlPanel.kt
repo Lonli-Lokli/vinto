@@ -93,12 +93,13 @@ import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
-import game.vinto.client.echoedBy
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
+import game.vinto.shapes.TargetType
+import game.vinto.shapes.actionIsLive
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
@@ -240,7 +241,12 @@ fun ControlPanel(
         // log under them. Three seats is one row, and the space the card gave up is better
         // spent on what has been happening than left blank.
         val crowded = table.ranks.isNotEmpty()
-        val recent = lastTurns(state.recent).filterNot { table.prompt.echoedBy(it) }
+        // Every line, the player's own draw included. It used to be folded out whenever
+        // the prompt above it said the same thing — "You drew the Joker", twice — and what
+        // that left in the box was the previous seat's move, so the log read as though your
+        // draw had not happened and the last thing on the table was Don's (product owner).
+        // A line repeated once is cheaper than a line missing.
+        val recent = lastTurns(state.recent)
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
@@ -586,11 +592,30 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
  * play it and the rail would be showing it a fourth time. What is undecided is who, and the
  * answer to that is on the foot.
  */
-private fun railCard(view: PlayerView, table: Table): CardView? {
+internal fun railCard(view: PlayerView, table: Table): CardView? {
     if (table.aim != null || table.seats.isNotEmpty()) return null
     if (!yourTurn(view)) return null
+    // A peek that has found its card shows *that* card, not the one that bought the look:
+    // the rail was holding up the 8 and saying what an 8 does while the Joker it had just
+    // turned over lay on the felt unexplained (product owner). The look is the news.
+    peekedCard(view)?.let { return it }
     (view.pendingAction?.card as? CardView.Visible)?.let { return it }
-    return view.discardTop?.let { CardView.Visible(it) } ?: CardView.Hidden
+    // With nothing in play the rail falls back to the top of the pile — but only face up
+    // when it is a card the player could take. A played 8 held up large beside "Your turn",
+    // with "Eight, worth 8: Peek at one of your own cards" under it, read as a card on
+    // offer, and it was not (product owner). The pile itself keeps its face: what went down
+    // is public and the whole table reads it. The rail is about *your* choice.
+    val top = view.discardTop ?: return CardView.Hidden
+    return if (top.actionIsLive()) CardView.Visible(top) else CardView.Hidden
+}
+
+/** The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at. */
+private fun peekedCard(view: PlayerView): CardView.Visible? {
+    val pending = view.pendingAction ?: return null
+    if (pending.playerId != view.viewerId) return null
+    val looks = pending.targetType == TargetType.OWN_CARD || pending.targetType == TargetType.OPPONENT_CARD
+    if (!looks) return null
+    return pending.targets.firstNotNullOfOrNull { it.card as? CardView.Visible }
 }
 
 /**
@@ -722,10 +747,9 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
  * pushing the controls down. The newest line is written in full ink and the rest dimmed, so
  * the eye finds "now" without a marker.
  *
- * The caller drops any line that only repeats the prompt, by the model's own `echoedBy` rule.
- * That was briefly a comparison of two *rendered* strings — which worked by coincidence, an
- * [Ask] and a [Say] being different types that happen to produce the same words in English.
- * As a rule it survives a language where they do not.
+ * Nothing is folded out for repeating the prompt. There was an `echoedBy` rule that dropped
+ * "You drew the 5" when the heading already said it, and the box then showed the move
+ * *before* yours as its newest line, which read as the log having missed your draw.
  */
 @Composable
 private fun RecentActions(recent: List<Say>) {
@@ -787,18 +811,25 @@ private fun RecentActions(recent: List<Say>) {
  * answering when they played it. The rail kept every line of the round, which was a
  * transcript to scroll rather than a table to read; a turn starts where somebody draws or
  * takes from the pile, and the deal's own line starts everything over.
+ *
+ * **A copy, never a view.** [recent] is the stage's stepped log, a snapshot list the stage
+ * appends to as frames play, and the rail's box is composed inside a `BoxWithConstraints` —
+ * that is, during measure, some time after this ran. A `subList` of a snapshot list is a live
+ * view that checks the list has not moved since it was made, and by then it had:
+ * `SwapAnimationTest` met a `ConcurrentModificationException` on the first read. The fold
+ * that used to follow this call copied the view by accident; this copies it on purpose.
  */
 internal fun lastTurns(recent: List<Say>, turns: Int = TurnsKept): List<Say> {
     var starts = 0
     for (index in recent.indices.reversed()) {
         val entry = recent[index]
-        if (entry is Say.RoundBegins) return recent.subList(index, recent.size)
+        if (entry is Say.RoundBegins) return recent.subList(index, recent.size).toList()
         if (entry is Say.Drew || entry is Say.DrewKnown || entry is Say.Took) {
             starts++
-            if (starts == turns) return recent.subList(index, recent.size)
+            if (starts == turns) return recent.subList(index, recent.size).toList()
         }
     }
-    return recent
+    return recent.toList()
 }
 
 /** One line per run of moves by the same actor, joined by [LogJoin]; the table's own lines stand alone. */

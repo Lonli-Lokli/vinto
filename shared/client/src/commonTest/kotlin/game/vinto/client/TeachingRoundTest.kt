@@ -9,6 +9,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.hashGameState
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -51,9 +52,10 @@ class TeachingRoundTest {
         val session = teachingSession()
         val you = session.state.players.first { it.isHuman }
 
-        assertTrue(Rank.SEVEN in you.cards.map { it.rank }, "a peek-own card to find and use")
+        assertTrue(Rank.SEVEN in you.cards.map { it.rank }, "a peek-own card to throw in and use")
+        assertTrue(Rank.EIGHT in you.cards.map { it.rank }, "and one to give up and name")
         assertTrue(Rank.JOKER in you.cards.map { it.rank }, "the card worth minus one, to meet")
-        assertEquals(Rank.FOUR, session.state.drawPile.peekTop()?.rank, "a plain card to draw")
+        assertEquals(Rank.TWO, session.state.drawPile.peekTop()?.rank, "a plain card to draw")
     }
 
     /**
@@ -104,37 +106,82 @@ class TeachingRoundTest {
     }
 
     /**
-     * The deal exists to put two particular cards in the player's hands: a Queen, whose look
-     * is the best in the game, and a King, which borrows another rank's action. They are the
-     * two set-pieces the lesson is built around, and a deck edit that loses them would leave
-     * the coach with nothing to point at.
+     * The round, played the way the coach says to play it.
      *
-     * Taking from the discard is *not* asserted here, deliberately. Whether an unused action
-     * card is still sitting on the pile when the player's turn comes round depends on what the
-     * bots did with it — and a bot taking it first is correct play, not a fault. The director
-     * makes the seat before the player draw rather than take, which helps; the rule itself is
-     * taught in words either way, and the pointed version happens when the round allows it.
+     * `TeachingDeal` plans eight turns move by move, and every one of them is a claim the
+     * lesson makes to the learner: name the 8 and it finds your Joker, throw in the 7 beside
+     * Raph's and it finds a King, watch Mikey's 9 look at you, take Don's Queen and trade your
+     * last King for his Joker, call on a hand every card of which you have seen and which
+     * adds up to nothing, then watch an Ace, a King and a 9 played against you.
+     * This follows the coach's pointer at every step — the buttons it names, the cards it
+     * points at, the rank chip it chooses — and asserts each of those claims against the
+     * engine. A deck edit, a director change or a script change that breaks the line breaks
+     * this, long before it breaks somebody's first five minutes with the game.
      */
     @Test
-    fun theDealPutsAQueenAndAKingInThePlayersHands() = runTest {
+    fun theRoundRunsAsTheCoachTellsIt() = runTest {
         val session = teachingSession()
         val me = session.playerId
+        val learner = Learner(session)
 
-        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
-        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
-        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        learner.follow()
 
-        val player = SimplePlayer(session)
-        player.play()
+        val played = session.report(at = "2026-08-20T00:00:00Z", label = "the lesson").actions.map { it.action }
+        val raph = session.state.players[1].id
+        val mikey = session.state.players[2].id
 
-        assertTrue(
-            player.asked.any { it == Ask.YouDrew(Rank.QUEEN) },
-            "the Queen has to reach the player: ${player.asked}",
+        // Turn 1: the 2 went in for the 8, which was named, and its look found the Joker.
+        val swap = played.filterIsInstance<GameAction.SwapCard>().first { it.payload.playerId == me }
+        assertEquals(1, swap.payload.position, "the 8 was in the second slot, the worse of the two peeked")
+        assertEquals(Rank.EIGHT, swap.payload.declaredRank, "and it was named as it went down")
+        val peeked = played.filterIsInstance<GameAction.SelectActionTarget>()
+            .first { it.payload.playerId == me }
+        assertEquals(me, peeked.payload.targetPlayerId, "the 8's look is at one of your own")
+
+        // Turn 2: your 7 and Raph's went into the same window.
+        val tossed = played.filterIsInstance<GameAction.ParticipateInTossIn>().map { it.payload.playerId }
+        assertTrue(me in tossed, "the learner threw the 7 in: $tossed")
+        assertTrue(raph in tossed, "and so did Raph, where they could watch: $tossed")
+
+        // Turn 3: Mikey's 9 looked at one of yours.
+        val looked = played.filterIsInstance<GameAction.SelectActionTarget>()
+            .first { it.payload.playerId == mikey }
+        assertEquals(me, looked.payload.targetPlayerId, "Mikey's 9 is aimed at the learner")
+
+        // Turn 5: the Queen came off the pile, looked, and traded the last King for Raph's Joker.
+        assertTrue(played.any { it is GameAction.PlayDiscard && it.payload.playerId == me }, "took the Queen")
+        assertTrue(played.any { it is GameAction.ExecuteQueenSwap }, "and traded on what it saw")
+        val call = played.indexOfFirst { it is GameAction.CallVinto }
+        assertTrue(call >= 0, "the learner called Vinto")
+        assertEquals(me, (played[call] as GameAction.CallVinto).payload.playerId, "themselves, not a bot")
+
+        // On a hand nothing can get under: a 2, both Jokers and a King, every one of them seen.
+        val hand = session.state.players.first { it.id == me }
+        assertEquals(
+            listOf(Rank.TWO, Rank.JOKER, Rank.KING, Rank.JOKER),
+            hand.cards.map { it.rank },
+            "the finished hand",
         )
+        assertEquals(hand.cards.indices.toList(), hand.knownCardPositions.sorted(), "all of it seen")
+
+        // The final round: the three cards the learner never held, played where they can watch.
+        val after = played.drop(call)
         assertTrue(
-            player.asked.any { it == Ask.YouDrew(Rank.KING) },
-            "and so does the King: ${player.asked}",
+            after.any { it is GameAction.SelectActionTarget && it.payload is SelectActionTargetPayload.Ace },
+            "an Ace was played against the coalition's own",
         )
+        assertTrue(after.any { it is GameAction.DeclareKingAction }, "a King named a card")
+        assertTrue(
+            after.filterIsInstance<GameAction.SelectActionTarget>().none { it.payload.targetPlayerId == me },
+            "and none of it touched the caller's cards",
+        )
+
+        // And the call held.
+        assertEquals(GamePhase.SCORING, session.state.phase)
+        val view = projectView(session.state, me)
+        val scores = assertNotNull(view.scores)
+        assertEquals(0, scores[me], "a 2, two Jokers and a King")
+        assertEquals(scores.values.min(), scores[me], "the lowest hand at the table")
     }
 
     /**
@@ -207,6 +254,63 @@ class TeachingRoundTest {
             hashGameState(state),
             "and it ends where it said it ended",
         )
+    }
+}
+
+/**
+ * The learner: does exactly what the coach points at, and nothing it does not.
+ *
+ * Reads the position the way the screen does — `tableFor(view, question)` with the seat's
+ * own memory — asks `lessonFor` what to say about it, and then presses the button, taps the
+ * card or picks the rank chip the lesson points at. A talk beat is acknowledged. A lesson
+ * that points at nothing while there is something to do fails the walk, because that is a
+ * learner left standing.
+ */
+private class Learner(private val session: LocalGameSession) {
+
+    private var taught = Taught()
+    private var question: Question = Question.None
+
+    suspend fun follow(steps: Int = STEPS) {
+        repeat(steps) {
+            if (session.isOver && session.state.phase == GamePhase.SCORING) return
+            val view = projectView(session.state, session.playerId)
+            val table = tableFor(view, question)
+            val lesson = lessonFor(view, table, taught, session.rememberedHand())
+                ?: return
+
+            if (lesson.talkId != null) {
+                taught = taught.heard(lesson)
+                return@repeat
+            }
+
+            val move = moveFor(lesson, table)
+                ?: fail("the coach pointed at nothing the table offers: ${lesson.teaches} -> ${lesson.point}")
+            taught = taught.heard(lesson)
+            when (move) {
+                is Move.Ask -> {
+                    question = move.question
+                }
+
+                is Move.Send -> {
+                    val refusal = session.dispatch(move.action)
+                    assertEquals(null, refusal, "the coach pointed at a move the engine refused")
+                    question = Question.None
+                }
+            }
+        }
+        fail("the walk did not reach the scoring in $steps steps")
+    }
+
+    private fun moveFor(lesson: Lesson, table: Table): Move? = when (val point = lesson.point) {
+        is Target.Button -> table.choices.firstOrNull { it.label == point.label }?.move
+        is Target.Place -> (point.anchor as? Anchor.Seat)?.let { table.taps[CardRef(it.playerId, it.position)] }
+        is Target.Chip -> table.ranks.firstOrNull { it.rank == point.rank }?.move
+        is Target.Seat, is Target.Furniture, null -> null
+    }
+
+    private companion object {
+        const val STEPS = 120
     }
 }
 

@@ -323,12 +323,40 @@
     <string name="beat_name_only_seen_title">Only name one you have seen</string>
     <string name="beat_name_only_seen_body">You looked at this card, so you know what it is. Name it right and you play its action for free. Name it wrong and you take a penalty card — so only name one you are sure of.</string>
     <string name="beat_toss_in_title">Anybody holding that rank may throw it in</string>
-    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance.</string>
+    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance. Worth doing for a card that counts against you; a King costs nothing to hold.</string>
     <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
+    <!-- Over a bot's action as it is played: who, which card, and the card's own description
+         from CARD_CONFIGS. "Mikey plays the Nine — Peek at one card of another player". -->
+    <string name="beat_watching_title">%1$s plays the %2$s — %3$s</string>
+    <string name="beat_do_not_guess_title">Do not guess</string>
+    <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
+    <string name="beat_coalition_leader_title">%1$s plays the coalition’s hand</string>
+    <string name="beat_coalition_leader_body">The coalition has chosen whose hand it plays: at the end, only %1$s’s total is set against yours. The other two spend their last turn making that hand lower — a King can take a bad card out of it, a Jack or a Queen can trade a better one in — or finding out what is in it.</string>
+    <string name="beat_final_play_title">%1$s plays the %2$s</string>
+    <string name="beat_final_play_ace">An Ace makes one player draw a card from the deck, face down, and one more card is one more card counting against them. It cannot be aimed at you now — a caller’s cards are out of reach — so it lands on the coalition’s own side. Watch who has to draw.</string>
+    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it.</string>
+    <string name="beat_final_play_look">A 9 or a 10 looks at one card in somebody else’s hand. In the final round that is how the coalition finds out what it is holding, since yours is out of bounds — and what one of them learns, they may all use.</string>
+    <string name="beat_final_play_other">Watch what it does: this is a card you have not held yet, and the box of recent moves under the table says what happened.</string>
+    <string name="beat_swap_them_title">Trade them</string>
+    <string name="beat_swap_them_body">You have seen both. Theirs is worth less than yours, so swap: your card goes to them and theirs comes to you — and you know exactly what you are holding afterwards.</string>
+    <string name="beat_leave_them_title">Leave them</string>
+    <string name="beat_leave_them_body">You have seen both, and yours is the better card. There is nothing to gain from a trade, so put them back where they were.</string>
+    <string name="beat_call_now_title">Call it</string>
+    <string name="beat_call_now_body">You know every card in your hand, and together they come to nothing or less — nobody at this table can finish below you. Press Call Vinto: everybody else gets exactly one more turn, and then every hand goes face up.</string>
+    <string name="beat_you_called_title">You called Vinto</string>
+    <string name="beat_you_called_body">The round ends on your terms. Raph, Mikey and Don each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
+    <string name="beat_coalition_vs_you_title">Now they play as one</string>
+    <string name="beat_coalition_vs_you_body">The three who did not call are the coalition: one turn each, and only their single best hand is compared with yours — so it is a team against your one hand. At a real table they would talk it over and pool what they know. Watch what they do with their last turn: this is where you see the cards you have not held yet.</string>
     <string name="beat_aim_it_title">Aim it</string>
     <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
+    <string name="beat_remember_it_title">Remember it</string>
+    <string name="beat_remember_it_body">That is what the look bought you. Fix where it lies and what it is, then put it back — from here on it is a card you know, and the game is played on those.</string>
     <string name="beat_give_up_worst_title">Give up your worst card</string>
-    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about.</string>
+    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about. If it has an action and you are sure of it, name it as it goes down: its action is then yours for free.</string>
+    <string name="beat_swap_blind_title">Trade it for one you have not seen</string>
+    <string name="beat_swap_blind_body">Nothing you know about is worse than this card, so trading it for one of those would be throwing knowledge away. Put it in a slot you have never looked at instead: an unseen card is more likely worse than better, and either way you will know one more of your own cards afterwards.</string>
+    <string name="beat_nothing_worse_title">Nothing here wants replacing</string>
+    <string name="beat_nothing_worse_body">Every card you know about is better than this one, and it is too high to gamble on a slot you have not seen. Go back and throw it away — the pile can have it.</string>
     <string name="beat_keep_or_throw_title">Keep it or throw it</string>
     <string name="beat_keep_or_throw_body">Put it in your hand — face down, in place of a card you own, which goes face up on the pile — or throw it away. Every card in your hand counts against you, so a low one is worth keeping. If it has an action, playing it now instead is the third choice, and it costs you nothing to take.</string>
     <string name="beat_two_ways_to_start_title">Two ways to start a turn</string>
@@ -336,13 +364,15 @@
     <string name="beat_every_turn_starts_title">Every turn starts the same way</string>
     <string name="beat_every_turn_starts_body">A turn begins by taking a card. The deck is face down, so what you get is a surprise — that is the risk you are being paid for.</string>
     <string name="beat_welcome_title">Four players, five cards each</string>
-    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. This is a real round against three real opponents — the coach only walks beside you.</string>
+    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. Your five lie face down in front of you, and you do not get to look at them — the game is knowing what you hold. This is a real round against three real opponents; the coach only walks beside you.</string>
+    <string name="beat_memory_title">Know your own cards</string>
+    <string name="beat_memory_body">You will see two of your five before the round starts, and the other three only if a card lets you. So the round is played on what you remember: which slots you have looked at, and what is in them. That changes what a high card is worth. Early on, a 9 or a 10 that buys you a look is a fair trade — you know what it is, so you can put it down and name it later. The card that loses you the round is the one you never found out about.</string>
     <string name="beat_cards_numbers_title">2 to 6 — plain cards</string>
-    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Small ones are what a winning hand is made of.</string>
+    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Do not mistake a small one for a good one: the hand that wins a round usually adds up to zero or less — Kings, Jokers, an Ace at most. A 2 is fine to sit on for a while; any plain card is one to trade away before the end.</string>
     <string name="beat_cards_own_title">7 and 8 — look at one of yours</string>
-    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not.</string>
+    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding at the end. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not. Keep one early if it buys you a look; swap it out and name it once you have nothing left to learn.</string>
     <string name="beat_cards_theirs_title">9 and 10 — look at one of theirs</string>
-    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was. Two turns later it is what tells you whether to call.</string>
+    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was — two turns later it is what tells you whether to call, or where to aim a Jack. Worth 9 and 10, and still worth taking early: a high card you know you hold is one you can put down and name, and a low card you cannot see is only a guess.</string>
     <string name="beat_cards_jack_title">Jack — swap two cards, blind</string>
     <string name="beat_cards_jack_body">Worth 10. It swaps two cards belonging to two different players — never two of anybody's own — and nobody looks at either of them first. Good for pushing a card you know is bad into somebody else's hand; a gamble with anything you know is good.</string>
     <string name="beat_cards_queen_title">Queen — look at two, then decide</string>
@@ -392,7 +422,7 @@
          CARD_CONFIGS; %3$s is the card's own description. The frame is here so the sentence
          can be built the way a language builds one. -->
     <string name="teach_note">%1$s — worth %2$s. %3$s.</string>
-    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. A hand full of small ones of these is a good hand.</string>
+    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. Fine to hold for now, and one to trade away before somebody calls.</string>
 
 
     <string name="teach_heading">Learning the game</string>
@@ -439,6 +469,11 @@
     <string name="chapter_score">Scoring</string>
     <string name="chapter_covered">%1$s — covered</string>
     <string name="chapter_to_come">%1$s — still to come</string>
+    <!-- The same dots while the coach is still introducing the game, when they count its
+         beats rather than the chapters: nothing has been played yet, so the chapters would
+         stand still through fourteen taps of "Go on". -->
+    <string name="intro_part_covered">Part %1$d of %2$d — read</string>
+    <string name="intro_part_to_come">Part %1$d of %2$d — still to come</string>
 
     <!-- What the "?" explains. `explains_card_*` take the card's name, value,
          `longDescription` and `helpText` — all presentation. Never `shortDescription`, which

@@ -1,5 +1,7 @@
 package game.vinto.client
 
+import game.vinto.shapes.Rank
+
 /**
  * One thing the lesson says, as a *message* rather than as two paragraphs of English.
  *
@@ -36,6 +38,19 @@ sealed interface Teaches {
 
     data object Welcome : Teaches {
         override val id = "welcome"
+    }
+
+    /**
+     * What the game is *really* about, said second: you never look at your own cards, so
+     * the whole round is knowing what you hold — and a high card that bought you a look
+     * was a fair trade, early on.
+     *
+     * Added on the product owner's read of the old opening, which told the player that
+     * every card counts and stopped there: a newcomer then throws every 9 back in fright,
+     * which is how you finish a round holding five cards you know nothing about.
+     */
+    data object Memory : Teaches {
+        override val id = "memory"
     }
 
     // --- The deck, card by card, in the order they get harder ------------------------------
@@ -109,6 +124,43 @@ sealed interface Teaches {
         override val id = "coalition"
     }
 
+    /**
+     * The same two beats from the other chair: the learner called, so the three bots are the
+     * coalition and the learner is the one hand they play against. The round is planned for
+     * this to be the way it ends — see `TeachingDeal`.
+     */
+    data object YouCalled : Teaches {
+        override val id = "you_called"
+    }
+
+    data object CoalitionAgainstYou : Teaches {
+        override val id = "coalition_vs_you"
+    }
+
+    /**
+     * The coalition has chosen whose hand it plays. Said once the leader is named, over the
+     * final round, so the learner watches the other two work for that hand rather than
+     * three bots taking three unrelated turns.
+     */
+    data class CoalitionLeader(val who: Speaker) : Teaches {
+        override val id = ID
+
+        companion object {
+            const val ID = "coalition_leader"
+        }
+    }
+
+    /**
+     * A coalition member playing an action card in the final round, held while it is in
+     * play so the rule can be read before the card does its work. Once per rank: the
+     * taught round shows an Ace, a King and a 9, which are the three the learner never
+     * holds, and this is where they are explained (product owner: "fully show the
+     * coalition's play, explaining the rules while they are playing").
+     */
+    data class FinalPlay(val who: Speaker, val rank: Rank) : Teaches {
+        override val id = "final_${rank.serialName}"
+    }
+
     data object YourTurnToCall : Teaches {
         override val id = "your_turn_to_call"
     }
@@ -151,16 +203,70 @@ sealed interface Teaches {
         }
     }
 
-    data object Watching : Teaches {
-        override val id = "watching"
+    /**
+     * Somebody else's turn.
+     *
+     * [who] and [playing] name a bot and the action card it has in play, when it has one —
+     * the coach's one line then says what a 9, a King or an Ace is doing as it is done,
+     * which is how the learner meets the three cards the round never puts in their hand.
+     * Both null while a bot is merely deciding, which has no heading, as before.
+     */
+    data class Watching(val who: Speaker? = null, val playing: Rank? = null) : Teaches {
+        override val id = ID
+
+        companion object {
+            const val ID = "watching"
+        }
+    }
+
+    /** The Queen has looked at both cards, and theirs is the better one: trade. */
+    data object SwapThem : Teaches {
+        override val id = "swap_them"
+    }
+
+    /** Or yours is: leave them where they are. */
+    data object LeaveThem : Teaches {
+        override val id = "leave_them"
+    }
+
+    /**
+     * Every card in the hand is one the learner has seen and the total is at or below zero.
+     * The round is planned to reach this at the end of their second turn.
+     */
+    data object CallNow : Teaches {
+        override val id = "call_now"
+    }
+
+    /** The card going down is one the learner never looked at: put it down without a word. */
+    data object DoNotGuess : Teaches {
+        override val id = "do_not_guess"
     }
 
     data object AimIt : Teaches {
         override val id = "aim_it"
     }
 
+    /** A card turned up by a peek, being looked at: the moment it becomes something to remember. */
+    data object RememberIt : Teaches {
+        override val id = "remember_it"
+    }
+
     data object GiveUpWorst : Teaches {
         override val id = "give_up_worst"
+    }
+
+    /**
+     * Nothing the player knows about is worse than the card in hand, so the slot to take
+     * is one they have never looked at — a trade that costs nothing they know of and buys a
+     * card they now know.
+     */
+    data object SwapBlind : Teaches {
+        override val id = "swap_blind"
+    }
+
+    /** And when even that is a bad trade: go back and throw it away. */
+    data object NothingWorse : Teaches {
+        override val id = "nothing_worse"
     }
 
     data object KeepOrThrow : Teaches {

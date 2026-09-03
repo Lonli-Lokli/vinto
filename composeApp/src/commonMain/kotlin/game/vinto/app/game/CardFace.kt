@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -262,9 +263,18 @@ fun CardPicture(rank: Rank, width: Dp, modifier: Modifier = Modifier) {
         painter = painterResource(artFor(rank)),
         contentDescription = null,
         contentScale = ContentScale.Fit,
-        modifier = modifier.width(width),
+        // The card's own shape, stated, rather than read off the painter. On the web the
+        // drawable arrives *after* the first frame — `painterResource` answers an empty
+        // painter until the resource has loaded — and an image sized from an empty painter
+        // is zero pixels tall. So every card the lesson held up drew its row collapsed and
+        // then popped open a frame later, and the coach's box did the same around it, which
+        // from a phone looked like the dialog closing and reopening between beats.
+        modifier = modifier.width(width).aspectRatio(CARD_ASPECT),
     )
 }
+
+/** The deck's proportion: the faces are drawn on an 825 by 1125 canvas. */
+private const val CARD_ASPECT = 825f / 1125f
 
 /** The picture for a rank. Internal because the toss-in area draws thrown cards too. */
 internal fun artFor(rank: Rank): DrawableResource = when (rank) {

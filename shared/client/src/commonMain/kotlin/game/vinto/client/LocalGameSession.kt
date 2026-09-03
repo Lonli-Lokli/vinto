@@ -11,6 +11,7 @@ import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
+import game.vinto.shapes.Card
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -130,6 +131,26 @@ class LocalGameSession(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
     override val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
+
+    /**
+     * What this seat has seen of its own hand, as the engine remembers it: every position in
+     * its `knownCardPositions`, with the card lying there.
+     *
+     * For the coach, and only the coach. The view deliberately does not carry this —
+     * remembering your hand is the game, and a screen that drew it would have won it for
+     * you — but a coach that says "give up your worst card" has to know which card that is,
+     * and pointing at the highest card *you have looked at* is advice, where pointing at one
+     * you have not would be cheating on your behalf. It never names a card the player has
+     * not seen. The engine already keeps the list, because a Jack that swaps a card out from
+     * under you takes the position off it, which is the bookkeeping this would otherwise
+     * have to repeat.
+     */
+    fun rememberedHand(): Map<Int, Card> {
+        val me = state.players.first { it.id == playerId }
+        return me.knownCardPositions
+            .mapNotNull { position -> me.cards.getOrNull(position)?.let { position to it } }
+            .toMap()
+    }
 
     override suspend fun dispatch(action: GameAction): String? {
         // The seat boundary, the same one the Durable Object checks before the engine sees

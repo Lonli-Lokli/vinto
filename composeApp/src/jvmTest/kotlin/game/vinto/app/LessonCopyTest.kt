@@ -57,6 +57,32 @@ class LessonCopyTest {
         )
     }
 
+    /**
+     * The second beat says what the first assumes: the game is played on what you remember
+     * of your own hand, and a high card that bought a look was a fair trade early on. The old
+     * opening said every card counts and stopped, which sent newcomers throwing every 9
+     * back (product owner).
+     */
+    @Test
+    fun theSecondBeatSaysTheGameIsMemoryAndAHighCardCanBeWorthIt() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.Memory) }
+        assertTrue(words.contains("remember"), "it does not say the game is memory: $words")
+        assertTrue(words.contains("9 or a 10"), "it does not rehabilitate the high lookers: $words")
+    }
+
+    /**
+     * The plain cards used to be introduced as "what a winning hand is made of", which is
+     * untrue: the hand that wins a round is usually at zero or below — Kings and Jokers —
+     * and a coalition can nearly always reach that. A player told a hand of 2s and 3s is a
+     * winning hand calls Vinto on it and loses.
+     */
+    @Test
+    fun thePlainCardsAreNotCalledAWinningHand() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.CardsNumbers) }
+        assertTrue(words.contains("zero or less"), "it does not say what a winning hand adds up to: $words")
+        assertTrue(!words.contains("winning hand is made of"), "the old claim is still there: $words")
+    }
+
     @Test
     fun theCallSaysWhatCallingDoes() = runComposeUiTest {
         val words = read { taughtBody(Teaches.VintoCalled(Speaker.Named("Raph"))) }
@@ -144,6 +170,58 @@ class LessonCopyTest {
         setContent { read.value = taughtTitle(Teaches.PeeksEnd) }
         waitForIdle()
         assertNull(read.value, "a beat that should have no heading has one: ${read.value}")
+    }
+
+    /**
+     * Somebody else's turn has no heading while they are deciding, and names the card and
+     * what it does the moment they play one — the learner's only sight of a 9, a King or an
+     * Ace at work is a bot's.
+     */
+    @Test
+    fun aBotPlayingACardIsNamedWithWhatTheCardDoes() = runComposeUiTest {
+        val read = mutableStateOf<Pair<String?, String?>?>(null)
+        setContent {
+            read.value = taughtTitle(Teaches.Watching()) to
+                taughtTitle(Teaches.Watching(Speaker.Named("Mikey"), Rank.NINE))
+        }
+        waitForIdle()
+
+        val (deciding, playing) = read.value!!
+        assertNull(deciding, "a bot merely deciding has no heading: $deciding")
+        assertTrue(playing!!.contains("Mikey"), "who: $playing")
+        assertTrue(playing.contains("Nine"), "which card: $playing")
+        assertTrue(playing.contains("Peek at one card of another player"), "and what it does: $playing")
+    }
+
+    /** Each of the three cards the coalition plays is explained by what it does. */
+    @Test
+    fun theCoalitionsCardsAreExplainedByWhatTheyDo() = runComposeUiTest {
+        val read = mutableStateOf(emptyList<String>())
+        setContent {
+            read.value = listOf(
+                taughtTitle(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)) ?: "",
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Mikey"), Rank.KING)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Don"), Rank.NINE)),
+                taughtBody(Teaches.CoalitionLeader(Speaker.Named("Raph"))),
+            )
+        }
+        waitForIdle()
+
+        val said = read.value
+        assertTrue(said[0].contains("Raph") && said[0].contains("Ace"), "who and what: ${said[0]}")
+        assertTrue(said[1].contains("draw a card"), "an Ace makes somebody draw: ${said[1]}")
+        assertTrue(said[2].contains("penalty card"), "a wrong name costs a card: ${said[2]}")
+        assertTrue(said[3].contains("looks at one card"), "a 9 looks: ${said[3]}")
+        assertTrue(said[4].contains("Raph"), "the leader is named: ${said[4]}")
+    }
+
+    /** The call the round is built to end on says why the hand cannot be beaten. */
+    @Test
+    fun theCallNowBeatSaysWhyTheHandIsSafe() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.CallNow) }
+        assertTrue(words.contains("nothing or less"), "the total: $words")
+        assertTrue(words.contains("one more turn"), "and what the call does: $words")
     }
 
     /**

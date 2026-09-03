@@ -1,15 +1,25 @@
 package game.vinto.client
 
+import game.vinto.engine.CardView
+import game.vinto.engine.PendingActionView
 import game.vinto.engine.projectView
+import game.vinto.shapes.ActionPhase
+import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
+import game.vinto.shapes.SwapCardPayload
+import game.vinto.shapes.TargetType
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * What the coach says, checked against the positions it says it in.
@@ -63,6 +73,254 @@ class TeachScriptTest {
         )
     }
 
+    /**
+     * The second thing said is what every card's explanation assumes: you cannot see your
+     * own hand, so a card you have looked at is worth more than its number says. Added on
+     * the product owner's reading of the old opening, which said every card counts and left
+     * a newcomer throwing every 9 back in fright.
+     */
+    @Test
+    fun theSecondThingSaidIsThatTheGameIsMemory() = runTest {
+        val session = teachingSession()
+        val opening = assertNotNull(teach(session))
+        val taught = Taught().heard(opening)
+
+        val second = assertNotNull(teach(session, taught))
+        assertEquals(Teaches.Memory, second.teaches)
+        assertEquals("memory", second.talkId, "and it is read, not done")
+    }
+
+    /**
+     * The dots over the coach count the intro's beats while the intro is being read. Every
+     * talk beat before the table is handed over is one of them, in the order they are said,
+     * and nothing after the hand-over is.
+     */
+    @Test
+    fun everyIntroBeatIsAStepOfTheIntroAndNothingAfterItIs() = runTest {
+        val session = teachingSession()
+        var taught = Taught()
+        var expected = 0
+        repeat(TALK_LIMIT) {
+            val lesson = teach(session, taught) ?: return@repeat
+            if (lesson.talkId == null) {
+                assertEquals(null, introStep(lesson), "a lesson to *do* is not an intro step")
+                assertEquals(INTRO_BEATS.size, expected, "every intro beat was said before the table")
+                return@runTest
+            }
+            assertEquals(expected, introStep(lesson), "the intro is said in the order the dots count")
+            expected += 1
+            taught = taught.heard(lesson)
+        }
+        fail("the intro never ended")
+    }
+
+    /**
+     * While the coach is talking nothing on the table may be touched. The first thing a
+     * newcomer does with five breathing cards under a paragraph is tap one, and the peek
+     * used to happen under the welcome.
+     */
+    @Test
+    fun aTableHeldStillHasNothingToTouch() = runTest {
+        val session = teachingSession()
+        val view = stateOf(session)
+        val live = tableFor(view)
+        assertTrue(live.taps.isNotEmpty(), "the setup table offers the player's cards")
+
+        val held = live.heldStill()
+        assertTrue(held.taps.isEmpty(), "and held, it offers none of them")
+        assertTrue(held.choices.isEmpty() && held.seats.isEmpty() && held.ranks.isEmpty())
+        assertEquals(live.prompt, held.prompt, "the prompt still says what will be asked")
+    }
+
+    /**
+     * The swap advice, on the shape of hand it was reported with: two cards peeked, a low one
+     * drawn. The coach used to point at the first card whatever it was — it read the *view*,
+     * which hides what you have seen. The worse of the two peeked is the card to give up: it
+     * is worse than the draw, and it is known, so it can be named as it goes down.
+     */
+    @Test
+    fun theCardToGiveUpIsTheWorstOneThePlayerHasSeen() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+
+        val memory = session.rememberedHand()
+        assertEquals(setOf(0, 1), memory.keys, "the two peeks are what the player remembers")
+        assertEquals(Rank.EIGHT, memory.getValue(1).rank)
+
+        val view = stateOf(session)
+        val lesson = assertNotNull(lessonFor(view, tableFor(view, Question.WhichSlot), taught, memory))
+        assertEquals(Teaches.GiveUpWorst, lesson.teaches)
+        assertEquals(Target.Place(Anchor.Seat(me, 1)), lesson.point, "the 8, not the 7")
+    }
+
+    /**
+     * And when nothing the player knows is worse than the card in hand — the Joker and a King
+     * peeked, a 2 drawn — the slot to take is one they have not looked at, because giving up a
+     * known King for a 2 is a trade that loses two points and learns nothing.
+     */
+    @Test
+    fun withNothingWorseKnownTheSwapGoesIntoAnUnseenSlot() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 2)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 3)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+
+        val memory = session.rememberedHand()
+        assertEquals(Rank.JOKER, memory.getValue(2).rank, "the deal's Joker is where the lesson says")
+
+        val view = stateOf(session)
+        val lesson = assertNotNull(lessonFor(view, tableFor(view, Question.WhichSlot), taught, memory))
+        assertEquals(Teaches.SwapBlind, lesson.teaches)
+        assertEquals(Target.Place(Anchor.Seat(me, 0)), lesson.point, "the first slot never looked at")
+
+        // Before the slot is even asked for, the same reading points at Swap rather than Discard.
+        val deciding = assertNotNull(lessonFor(view, tableFor(view), taught, memory))
+        assertEquals(Teaches.KeepOrThrow, deciding.teaches)
+        assertEquals(Target.Button(Label.SwapCards), deciding.point)
+    }
+
+    /**
+     * The card going down is named from memory, not from the view — the view shows none of
+     * your cards after the setup peeks, so the chip the coach pointed at was always null and
+     * the 7 went down unnamed in the first round anybody played (product owner). And a card
+     * the learner never looked at is a guess, which the coach says not to make.
+     */
+    @Test
+    fun theRankToNameIsReadFromMemoryAndAnUnseenCardIsNotGuessedAt() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        val memory = session.rememberedHand()
+        val view = stateOf(session)
+
+        val known = assertNotNull(lessonFor(view, tableFor(view, Question.CallRank(0)), taught, memory))
+        assertEquals(Teaches.NameOnlySeen, known.teaches)
+        assertEquals(Target.Chip(Rank.SEVEN), known.point, "the 7 in the first slot, which was peeked")
+
+        val unseen = assertNotNull(lessonFor(view, tableFor(view, Question.CallRank(3)), taught, memory))
+        assertEquals(Teaches.DoNotGuess, unseen.teaches)
+        assertEquals(Target.Button(Label.JustSwap), unseen.point, "put it down without a word")
+    }
+
+    /**
+     * A hand every card of which has been seen, adding up to nothing or less, is one to call
+     * on — and the coach says so over the window that offers the button, ahead of the toss-in
+     * beat that window would otherwise get.
+     */
+    @Test
+    fun aFullySeenHandAtZeroOrBelowIsOneToCallOn() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val view = stateOf(session)
+        val hand = view.players.first { it.id == me }.cards.indices
+
+        val joker = Card(id = "Joker1", rank = Rank.JOKER, value = -1, played = false)
+        val king = Card(id = "K_0", rank = Rank.KING, value = 0, played = false)
+        val four = Card(id = "4_0", rank = Rank.FOUR, value = 4, played = false)
+        assertTrue(readyToCall(view, hand.associateWith { if (it == 0) joker else king }), "two Jokers' worth")
+        assertTrue(!readyToCall(view, hand.associateWith { four }), "not on a hand of 4s")
+        assertTrue(!readyToCall(view, mapOf(0 to joker)), "and not with four cards never looked at")
+    }
+
+    /** Somebody else's turn points at nothing: the arrow at the log box was noise (product owner). */
+    @Test
+    fun watchingABotPointsAtNothing() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
+
+        // The bots have moved on; whatever the table shows now is theirs or a window of theirs.
+        val view = stateOf(session)
+        val table = tableFor(view)
+        if (table.waiting) {
+            val lesson = assertNotNull(lessonFor(view, table, taught, session.rememberedHand()))
+            assertTrue(lesson.teaches is Teaches.Watching, "$lesson")
+            assertEquals(null, lesson.point, "nothing to point at while somebody else plays")
+        }
+    }
+
+    /**
+     * The coalition's play is explained as it happens: when the leader is named, and each
+     * time a member has an action card in play — held so the rule is read before the card
+     * does its work, once per rank. Built by hand because the bots' final round runs
+     * inside one dispatch on the JVM; the screen sees these frames one at a time.
+     */
+    @Test
+    fun theCoalitionsPlayIsExplainedAsItHappens() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val base = stateOf(session)
+        val raph = base.players[1]
+        val mikey = base.players[2]
+        val taught = talkedThrough(session).heard(
+            Lesson(Chapter.VINTO, Teaches.YouCalled, talkId = "you_called"),
+        ).heard(
+            Lesson(Chapter.VINTO, Teaches.CoalitionAgainstYou, talkId = "coalition_vs_you"),
+        )
+
+        val led = base.copy(phase = GamePhase.FINAL, vintoCallerId = me, coalitionLeaderId = raph.id)
+        val leader = assertNotNull(lessonFor(led, tableFor(led), taught, emptyMap()))
+        assertEquals(Teaches.CoalitionLeader(Speaker.Named(raph.nickname)), leader.teaches)
+        assertEquals(Target.Seat(raph.id), leader.point, "and points at whose hand it is")
+        assertEquals(Teaches.CoalitionLeader.ID, leader.talkId, "read, not done")
+
+        val king = Card(id = "K_0", rank = Rank.KING, value = 0, played = false)
+        val playing = led.copy(
+            pendingAction = PendingActionView(
+                playerId = mikey.id,
+                actionPhase = ActionPhase.SELECTING_TARGET,
+                from = PendingCardOrigin.DRAWING,
+                targetType = TargetType.DECLARE_ACTION,
+                card = CardView.Visible(king),
+                targets = emptyList(),
+            ),
+        )
+        val afterLeader = taught.heard(leader)
+        val play = assertNotNull(lessonFor(playing, tableFor(playing), afterLeader, emptyMap()))
+        assertEquals(Teaches.FinalPlay(Speaker.Named(mikey.nickname), Rank.KING), play.teaches)
+        assertEquals("final_K", play.talkId, "once per rank")
+        assertEquals(Target.Seat(mikey.id), play.point)
+
+        val again = lessonFor(playing, tableFor(playing), afterLeader.heard(play), emptyMap())
+        assertTrue(again?.teaches !is Teaches.FinalPlay, "a second King is not explained twice: $again")
+    }
+
+    /** A peek that has found its card says "remember it" over the Done button, not "aim it". */
+    @Test
+    fun aPeekedCardIsSomethingToRemember() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.SwapCard(SwapCardPayload(me, 1, Rank.EIGHT)))
+        session.dispatch(GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, me, 2)))
+
+        val view = stateOf(session)
+        val lesson = assertNotNull(lessonFor(view, tableFor(view), taught, session.rememberedHand()))
+        assertEquals(Teaches.RememberIt, lesson.teaches)
+        assertEquals(Target.Button(Label.Done), lesson.point)
+    }
+
     /** The tour is finite: keep acknowledging and it hands the player back their table. */
     @Test
     fun theTourEndsAndTheGameBegins() = runTest {
@@ -82,7 +340,7 @@ class TeachScriptTest {
         val me = session.playerId
         val taught = talkedThrough(session)
 
-        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
 
         val lesson = assertNotNull(teach(session, taught))
         assertEquals(

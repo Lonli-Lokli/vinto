@@ -4,6 +4,7 @@ import game.vinto.engine.projectView
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,12 +38,18 @@ class DiscardTopTest {
 
             view.activeTossIn?.let { window ->
                 windows++
-                assertEquals(
-                    window.ranks.toSet(),
-                    setOfNotNull(view.discardTop?.rank),
-                    "the window is open for what is showing on the pile, and the pile has " +
-                        "${view.discardCount} cards on it",
+                val top = view.discardTop?.rank
+                assertTrue(
+                    top != null && top in window.ranks,
+                    "the window is open for what is showing on the pile ($top of ${window.ranks}), " +
+                        "and the pile has ${view.discardCount} cards on it",
                 )
+                // A King that names a card right opens the window for both: the King goes
+                // down, the named card goes down on top of it, and the pile can only show
+                // one of them. Nothing else opens a window for two ranks at once.
+                if (window.ranks.size > 1) {
+                    assertTrue(Rank.KING in window.ranks, "two ranks in a window not opened by a King: $window")
+                }
             }
             session.play()
         }

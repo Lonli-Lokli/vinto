@@ -314,6 +314,27 @@ One drawing lesson worth keeping: the first large-scale jester cap rendered as a
 three upright spikes over a band are a crown whatever you call them. A jester cap needs
 drooping outer horns and hanging bells to not be royalty.
 
+## Revision 4 — three fixes from a phone, on the product owner's feedback
+
+Three things the contact sheet in `preview.html` did not show and a phone did:
+
+- **The Joker's ground is pink (`#F6CFE1`), not grey.** Grey was chosen as "belongs to no
+  family", and on a phone it read as a *disabled* card — the one rank in the deck drawn as
+  though it could not be played. Pink is the one hue no family uses (green reaches yours,
+  blue theirs, orange moves, yellow crowns), so it still says "no family" without saying
+  "off". The name stays in the darkened orange, which holds 4.2:1 on the new ground.
+- **The Queen's ground is coral (`#F5A98A`), not tan.** She was the darker of the orange
+  pair by lightness, and the colour that came out of that arithmetic was a brown — which on
+  a card table reads as a stain. Coral keeps her in the movers' family and the pair's
+  separation (dE 30 from the Jack, 27 from the Ace, and both dichromat simulations clear)
+  while being unmistakably a colour rather than a lack of one. Brown and grey are now both
+  off the deck, on purpose.
+- **The 7 and 8's eye is lifted clear of the card it looks at.** It sat on the popped
+  card's halo, so at table size the two shapes fused into one stack; the 9 and 10's lens
+  clears their row by a card's margin, and the eye now clears the card by the same.
+
+All three went through the three gates unchanged, which is the point of having them.
+
 ## Postscript 2: the pipeline is complete, and the mark is ours
 
 The deck ships as **vector drawables**. `tools/make-card-faces.py` emits, on every run,

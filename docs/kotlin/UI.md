@@ -137,22 +137,32 @@ the sequence rather than the game, and has to say no the first time you deviate.
 The design came out of a session with the `fable` model against the repo (`VINTO_RULES.md`,
 `SCENARIOS.md`, the client sources); what shipped follows it closely. Five parts:
 
-- **A stacked deal.** `initializeTeachingGame(deck)` takes a deck order instead of a seed, and
-  refuses anything that is not a permutation of the real 54 cards — so the lesson cannot deal a
-  hand that could not have been shuffled. `TeachingDeal` writes the order down: a 7 and a Joker
-  to peek at, an 8 to throw in later, a plain 4 to draw first, then a Queen, a King and finally
-  a Joker on the last turn. Seed search was considered and rejected: the constraints are joint
-  over a dozen named positions, and a seed found today would be silently invalidated by the
-  next bot or engine change. The recording contract is untouched, because `GameRecording`
-  carries `initialState` in full and `replayRecording` starts from it.
+- **A stacked deal, planned move by move.** `initializeTeachingGame(deck)` takes a deck order
+  instead of a seed, and refuses anything that is not a permutation of the real 54 cards — so
+  the lesson cannot deal a hand that could not have been shuffled. `TeachingDeal` writes the
+  order down for an eight-turn round in which the learner does each thing the game has once
+  and watches the bots do the rest (product owner's brief, after playing the first version):
+  turn 1 you draw a 4 and swap it for the 7 you peeked, naming it, and its look finds a King;
+  turn 2 Raph puts a 4 down and you throw yours in beside his; turn 3 Mikey plays a 9 at one
+  of your cards; turn 4 Don throws a Queen away unplayed; turn 5 you take that Queen off the
+  pile, look at your one unread card and Raph's first, trade your 8 for his Joker — and call,
+  on two Jokers and two Kings, which no hand can get under; then Raph's Ace, Mikey's King and
+  Don's 9 are played in the final round where you can watch them. Seed search was considered
+  and rejected: the constraints are joint over a dozen named positions, and a seed found today
+  would be silently invalidated by the next bot or engine change. The recording contract is
+  untouched, because `GameRecording` carries `initialState` in full and `replayRecording`
+  starts from it. `TeachingRoundTest.theRoundRunsAsTheCoachTellsIt` walks the whole line by
+  following the coach's pointer and asserts every claim above against the engine.
 - **A director for the bots.** The deck says what a bot *draws*, not what it does. A
   `BotDirector` on `LocalGameSession` may name a bot's move before the search is asked;
   whatever it names still passes `ActionValidator`, and a refused move falls through to MCTS —
-  a script that has drifted costs the lesson its shape, not its playability. It does two
-  things: bots put drawn cards down rather than swapping them into hand, and, once the round
-  has taught what it can, **Don calls Vinto** — so the final round, the coalition and the
-  scoring are played rather than described. Left alone a bot will not call inside a short
-  round: the rule wants eight rotations, a fully known hand and a total of zero or less.
+  a script that has drifted costs the lesson its shape, not its playability. Bots draw rather
+  than take, so the written-down deck lands; what they draw they *play* if it is a 9, a King
+  or an Ace — each aimed by the script, the King at a plain card the bot knows it holds — and
+  put down otherwise, which is how the Queen reaches the pile. And, if the learner plays on
+  instead of calling, **Don calls Vinto** late, so the round still ends while they are
+  watching. Left alone a bot will not call inside a short round: the rule wants eight
+  rotations, a fully known hand and a total of zero or less.
 - **A coach derived from the position.** `lessonFor(view, table, taught)` is a pure function:
   it reads the table and says what is in front of the player. That is what lets every legal
   move stay legal — deviate and it simply talks about wherever you got to. Ordered talk beats
@@ -180,14 +190,51 @@ The design came out of a session with the `fable` model against the repo (`VINTO
   the web app's card reference already did: a player who learned "Q" from a list still has to
   match it against a picture on the felt, and showing the picture skips that step.
 
-The director has one more job than "make the bots play their parts": the seat immediately
-before the player **draws rather than takes**, so that an unused action card is still on the
-pile when the player's turn comes round and the second way to start a turn can be shown. A bot
-taking it first is correct play, not a fault, which is why the lesson teaches that rule in
-words either way and points at it when the round allows. The Vinto call is timed on
+The Call Vinto button is hidden until the coach has something to say about it: the hand is
+one to call on — every card seen, the total at or below zero, `readyToCall` — or a bot has
+called first. The taught round reaches the first at the end of the second turn, and the
+`CallNow` beat points at the gold button over the toss-in window that offers it; the endgame
+beats then come from the caller's chair (`YouCalled`, `CoalitionAgainstYou`), with the
+bot-called versions kept for a learner who played on. The fallback call is timed on
 `turnNumber`, which counts *turns* and not rotations — the first version called it on turn 4,
 which is the third bot's **first** turn, and ended the lesson before the player had taken a
 second one.
+
+**The coach reads memory wherever a card's face matters**, not only for the swap advice: the
+rank chip it points at for a declaration, the card it points at in a toss-in window, and the
+slot a peek should be spent on all come from `rememberedHand`. Each of the three was reading
+the view, which shows none of your cards after the setup peeks, so each pointed at nothing or
+at card one — the 7 went down unnamed in the first round anybody played. A declaration on a
+slot never looked at gets `DoNotGuess` instead. A toss-in is only pointed at for a card worth
+being rid of: a King costs nothing to hold, and throwing one in buys a declaration.
+
+**Somebody else's turn points at nothing** — the arrow at the box of recent moves for as long
+as the gloss was unsaid was an arrow at a paragraph while three bots moved cards over it — and
+the shut coach's one line names a bot's action card as it is played: "Mikey plays the Nine —
+Peek at one card of another player", from `CARD_CONFIGS`. That line, and the final round's
+Ace, King and 9, are the learner's only sight of the three cards the round never puts in
+their hand.
+
+**The coalition's play is explained as it happens.** Two more talk beats after the learner's
+call, held over the felt: when the coalition names whose hand it plays (`CoalitionLeader`),
+and each time a member has an action card in play (`FinalPlay`, once per rank) — the frame
+with the card engaged is drawn, the stage holds, the rule is read, and "Go on" lets the card
+do its work. The taught round has the bots play an Ace, a King and a 9 there, which are the
+three cards the learner never holds. The rail also shows the card a peek *turned up* rather
+than the card that bought the look (the 8 was held up and explained while the Joker it had
+found lay on the felt), and with nothing in play it shows the top of the pile face up **only
+when it is a card the player could take**: a played 8 held up large beside "Your turn", with
+"Peek at one of your own cards" under it, read as a card on offer. The pile itself always
+keeps its face — what went down is public and the whole table reads it; the rail is about
+the player's choice. (A first reading of that report turned the *pile's* card over instead,
+which on the next phone looked like an empty pile under "the 8 went down"; that is undone.)
+
+**A talking coach is sized to leave its target uncovered.** It picks whichever end of the felt
+leaves more room clear of the pointer's target and shrinks its body to fit that room, down to
+a floor it scrolls inside. It used to pick an end by which half the target was in and keep the
+full body regardless, and on a phone whose felt is barely taller than the coach that put the
+seats beat over the very plate it was pointing at. The body is the fixed height only for a
+beat that points at nothing, which is the card tour, where "Go on" staying put matters most.
 
 It also makes **one bot throw a card into a toss-in window**, once, the first time a bot is
 holding a match it has actually seen. The window is the one moment in Vinto that belongs to
@@ -220,6 +267,59 @@ top of the felt, and the table underneath keeps exactly the layout it has in a r
 It is also **shut while the game is being played** — one line and the progress dots, one tap to
 open — because everything under it is something the player has to see and touch. A talk beat
 opens it, since the table is held for it anyway.
+
+**Where it lies is decided by what it is pointing at.** Two reports from a phone: the tour
+beat pointed at the discard from under the coach's own edge, and the seats beat pointed at a
+plate the coach was lying on; and once play started, the shut coach at the top covered the
+opposite seat's whole row for the length of the round. So a *talking* coach goes to whichever
+end of the felt is away from its pointer — the top by default, the bottom when the target's
+centre is in the felt's upper half, measured from the stage's own bounds — and a *playing*
+coach lies in the band of empty felt between the side seats, under the piles and above your
+hand, measured the same way. In the band the dots go under the title rather than beside it,
+because a title beside nine dots in 200 dp is a title wrapped to four lines. If the table has
+not been measured yet or leaves no band worth the name, the top is the fallback.
+
+**Nothing on the table can be touched while it talks.** `Table.heldStill()` strips the taps,
+the buttons, the seats and the rank chips for as long as a talk beat is up. The stage is held
+for the beat, so a move made during one would be made against a table the player has not
+seen the last moves of — and the first thing a newcomer did with five breathing cards under
+the welcome was tap one, which peeked it under the paragraph.
+
+**It knows what you have seen.** The swap advice used to read the *view*, which after the setup
+peeks shows none of your cards — the view hides what you have seen, on purpose — so every
+card scored the same and "give up your worst card" pointed at card one whatever it was.
+Reported with the exact hand: a 3 and a 7 peeked, a 4 drawn, the coach pointing at the 3.
+`LocalGameSession.rememberedHand()` now hands the coach the seat's `knownCardPositions` with
+the cards at them — what the player has looked at and nothing they have not — and the advice
+has three answers in order: the highest known card worse than the drawn one (the 7, which the
+declaration beat then has you name); failing that, a slot never looked at, provided the drawn
+card is a 5 or lower (the deck averages about five and a half); failing that, go back and
+throw it away. The keep-or-throw beat points at Swap or Discard by the same reading.
+
+**The dots count the intro while the intro is being read.** Fourteen talk beats come before a
+card is dealt with, and the chapters are met by playing, so the row of nine did not move
+through fourteen taps of "Go on". `INTRO_BEATS` is the run, `introStep` says where a lesson is
+in it, and the coach draws one dot per beat until the table is handed over. A chapter is also
+met when its lesson is *heard* now, not only when a move proves it: the call and the scoring
+are taught in words over things a bot does, and a player who never called Vinto themselves
+used to finish with those two dots empty.
+
+**Fixed heights, so nothing blinks.** The talk body is a fixed height rather than a ceiling —
+it was documented as fixed and implemented as `heightIn(max)`, so the box grew and shrank
+with every paragraph — and the row of held-up cards is a fixed height too, with the cards
+centred and as large as the row allows (one card fills its height; five share the width). The
+last cause was on the web only: `painterResource` answers an empty painter until the drawable
+has loaded, and an image sized from an empty painter is zero pixels tall, so every card the
+lesson held up drew its row collapsed and popped it open a frame later. `CardPicture` states
+the deck's aspect now instead of reading it off the painter.
+
+**The opening says the game is memory.** A second beat, `Teaches.Memory`, before the card
+tour: you see two of your five and the rest only if a card lets you, so the round is played on
+what you remember, and a 9 or a 10 that bought you a look was a fair trade early on. The old
+opening said every card counts and stopped, and the plain-cards beat then called small cards
+"what a winning hand is made of" — which is untrue: the hand that wins a round is usually at
+zero or below, and a coalition can nearly always reach that (product owner). `LessonCopyTest`
+pins both corrections.
 
 The old note about the panel's reserved height, kept because it is why the coach was ever put
 there:
@@ -274,18 +374,19 @@ Audited beat by beat against `docs/game-engine/VINTO_RULES.md`:
 | Rule | Where it is taught |
 | --- | --- |
 | Objective — lowest hand wins | opening beat |
+| You cannot look at your own cards; the round is played on memory | the second beat |
 | Four players, five cards each, face down | opening beat |
 | Peek at two of your own, once | setup lesson, pointed |
 | Every rank's value and action (2–6, 7·8, 9·10, J, Q, K, A, Joker) | eight card beats, each holding up the cards |
-| King: names any card, right takes it out of that hand and gives you its action | three beats, with the worked example |
+| King: names any card, right takes it out of that hand and gives you its action | three beats, with the worked example; then Mikey's King, watched in the final round |
 | Option A — draw from the deck | turn lesson, pointed |
 | Keep it, throw it, or play its action now | keep-or-throw lesson |
 | Declare the rank you put down; right plays its action, wrong costs a card | declaration lesson, pointed at a rank you have seen |
-| Option B — take an unused action card off the pile and play it at once | turn lesson (in words; pointed when the round offers it) |
+| Option B — take an unused action card off the pile and play it at once | turn lesson, pointed at Don's Queen on turn 5 |
 | Toss-in: anybody may match the rank; wrong costs a card and bars you | toss-in lesson, plus a bot demonstrating it |
-| Calling Vinto at the end of your own turn | the "you can call it too" beat, after a bot has called |
+| Calling Vinto at the end of your own turn | the "call it" beat, over the window at the end of the learner's second turn |
 | Final round — one more turn each | the call beat |
-| Coalition — best single hand counts, caller's cards untouchable | the coalition beat |
+| Coalition — best single hand counts, caller's cards untouchable | the coalition beat, from the caller's chair |
 | Scoring — +3 / −1 / level counts as the caller's | the scoring beat, pinned by a test |
 | A session is rounds; 5 / 3 / 2 game points by rank | the session beat |
 | The deck running out and the pile going back into it | help sheet ("what the table is telling you") |
