@@ -37,14 +37,20 @@ import kotlin.test.assertEquals
  * only button leaves. The learner saw the score, pressed the one button there was, and the
  * round they had played the whole hand for never ran (product owner, twice — once diagnosed
  * as the animation queue dropping the batch, which it was not).
+ *
+ * The view a frame carries is asserted against the frame, not against a phase written out
+ * here: this case's first version expected `PLAYING` of a freshly dealt table, which is in
+ * `SETUP`, and failed for its own reason rather than the code's.
  */
 @OptIn(ExperimentalTestApi::class)
 class StageStepsBeforeTheCoachTest {
 
     @Test
     fun theTableStepsToTheMoveBeforeTheCoachIsAskedToHold() = runComposeUiTest {
-        val playing = teachingSession().view.value
-        val scored = playing.copy(phase = GamePhase.SCORING)
+        // A table the round is still being played on — whatever phase a fresh deal is in;
+        // what matters is only that it is not the phase the finished view below carries.
+        val stepped = teachingSession().view.value
+        val scored = stepped.copy(phase = GamePhase.SCORING)
         val frames = MutableSharedFlow<List<Frame>>(replay = 1)
         var shown: PlayerView? = null
 
@@ -67,11 +73,11 @@ class StageStepsBeforeTheCoachTest {
             }
         }
 
-        frames.tryEmit(listOf(moveStillBeingPlayed(playing)))
+        frames.tryEmit(listOf(moveStillBeingPlayed(stepped)))
         repeat(STEPS) { mainClock.advanceTimeBy(STEP_MS) }
 
         assertEquals(
-            GamePhase.PLAYING,
+            stepped.phase,
             shown?.phase,
             "the coach was held over the finished round instead of the move it explains",
         )

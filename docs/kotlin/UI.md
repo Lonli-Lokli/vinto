@@ -233,7 +233,7 @@ which on the next phone looked like an empty pile under "the 8 went down"; that 
 the learner and the ending their whole hand had been played for, and both looked like the
 ending working.
 
-The first is an ordering the stage got backwards. A session publishes the view its whole
+The first is *when* the stage asks the coach to hold. A session publishes the view its whole
 dispatch arrived at *before* it emits the frames for the moves that got there — it has to,
 the game really has moved on, and the frames are how the screen catches up — so between the
 two there is an instant where the screen is showing the end of the batch. The stage asked the
@@ -241,9 +241,21 @@ coach whether to hold in exactly that instant, before stepping to the first move
 Vinto call the view published first is the **scored** one, so the coach read a round that was
 already over, decided the lesson was finished, and held the table on an end card whose only
 button leaves. The learner saw the score, pressed the one button there was, and the coalition's
-final round sat behind it unplayed. The hold is asked *after* the step now, so the coach is
-always reading the move it is about to explain — which is what every beat that holds was
-written for. `StageStepsBeforeTheCoachTest` pins it.
+final round sat behind it unplayed. The coach is asked from a batch's **second** move onwards
+now, and nothing is lost by not asking before the first: a talking coach takes the table's
+taps away, so the only thing that can have produced a batch is the player acting, and acting
+is itself the answer to whatever the coach was saying. `StageStepsBeforeTheCoachTest` pins it.
+
+The first *fix* for it asked after the step instead. That works too, but it moves `prepareFor`
+and the table's step above the think-pause, so the gap a card is about to land in opens a beat
+before the card leaves — the blink that ordering exists to avoid. Asking from the second move
+leaves the loop's timing untouched, which is why it is the one that stayed.
+
+Three wrong turns are recorded around this one report, because each looked like the answer:
+the animation queue dropping the batch (it does not — the taught ending is inside the budget),
+the reordering above (it was replaced for the reason given, not because it failed), and a test
+that expected `PLAYING` of a freshly dealt table, which is in `SETUP`, and so went red on its
+own mistake and made the reordering look guilty.
 
 The first *diagnosis* of that report was `AnimationQueue` dropping the batch for being longer
 than its budget, and it was wrong: `theCoalitionsWholeFinalRoundIsHandedToTheTable` was written
