@@ -213,12 +213,26 @@ fun TeachScreen(
         ) { shown, told ->
             // The coach reads the seat's own memory of its hand — what the player has seen,
             // never what they have not — so "give up your worst card" can name one.
+            //
+            // Memory is the engine's, and the table on screen may be a move behind it, so it
+            // is only handed over while the two agree about the hand. They disagree for the
+            // second or so after a card leaves it, and in that second every position means
+            // the card next to the one it meant: the finger slid one card along, live, while
+            // the player watched (product owner). The taps are withheld for the same reason
+            // and by the same test — a lesson may not be the one screen where the throw that
+            // costs a penalty is still offered.
             val memory = session.rememberedHand()
+            val settled = shown.showsTheSameHandAs(holder.current)
             val table = coaching.read(
                 shown = shown,
                 live = holder.tableFor(shown)
-                    .beforeTheEnd(shown.vintoCallerId != null || readyToCall(shown, memory)),
-                memory = memory,
+                    .withoutStaleTaps(shown, holder.current)
+                    // From the live view: whether the gold button exists is a fact about the
+                    // game, and reading it off a lagging one made it come and go mid-flight.
+                    .beforeTheEnd(
+                        holder.current.vintoCallerId != null || readyToCall(holder.current, memory),
+                    ),
+                memory = if (settled) memory else emptyMap(),
             )
             // Chapters reached, counted as the coach covers them. `Taught.chapters` only
             // grows, so its size is how far somebody got before they stopped.
@@ -265,7 +279,7 @@ fun TeachScreen(
 @Composable
 private fun LessonTable(state: TableState, coaching: Coached, room: Room, hooks: Hooks) {
     val lesson = coaching.showing
-    val finished = state.view.phase == GamePhase.SCORING
+    val finished = lessonIsOver(state.view, lesson)
     val talking = lesson?.talkId != null || finished
     val stage = LocalStage.current
 
@@ -301,6 +315,20 @@ private fun LessonTable(state: TableState, coaching: Coached, room: Room, hooks:
         )
     }
 }
+
+/**
+ * Whether the lesson has run out of things to say.
+ *
+ * The hands being face-up is *not* it, and reading it that way threw away the end of the
+ * lesson: the moment the engine reached scoring the coach swapped its beat for "that is the
+ * lesson" and a Done button, so the beats about who won the round and how the session is
+ * scored — written, translated, and reachable only here — were replaced by a button that
+ * closes the lesson, and the ending the player was watching for ended in one tap (product
+ * owner). The round being over is when the *last* beats are said, not when they stop being
+ * said, so the end card waits until the coach has nothing left.
+ */
+internal fun lessonIsOver(view: PlayerView, lesson: Lesson?): Boolean =
+    view.phase == GamePhase.SCORING && lesson == null
 
 /** What the screen around the lesson can do: play a move, open the help, the settings, leave. */
 private class Hooks(

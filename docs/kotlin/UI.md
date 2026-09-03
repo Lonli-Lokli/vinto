@@ -229,6 +229,42 @@ keeps its face — what went down is public and the whole table reads it; the ra
 the player's choice. (A first reading of that report turned the *pile's* card over instead,
 which on the next phone looked like an empty pile under "the 8 went down"; that is undone.)
 
+**The coalition's round is watched, and the lesson ends after it.** Two things stood between
+the learner and the ending their whole hand had been played for, and both looked like the
+ending working.
+
+The first is an ordering the stage got backwards. A session publishes the view its whole
+dispatch arrived at *before* it emits the frames for the moves that got there — it has to,
+the game really has moved on, and the frames are how the screen catches up — so between the
+two there is an instant where the screen is showing the end of the batch. The stage asked the
+coach whether to hold in exactly that instant, before stepping to the first move. After a
+Vinto call the view published first is the **scored** one, so the coach read a round that was
+already over, decided the lesson was finished, and held the table on an end card whose only
+button leaves. The learner saw the score, pressed the one button there was, and the coalition's
+final round sat behind it unplayed. The hold is asked *after* the step now, so the coach is
+always reading the move it is about to explain — which is what every beat that holds was
+written for. `StageStepsBeforeTheCoachTest` pins it.
+
+The first *diagnosis* of that report was `AnimationQueue` dropping the batch for being longer
+than its budget, and it was wrong: `theCoalitionsWholeFinalRoundIsHandedToTheTable` was written
+to prove it and disproved it instead — the taught final round is comfortably inside 24. That
+case stays, because if the ending ever does outgrow the budget the queue will drop it and this
+report comes straight back.
+
+The second is the end card itself: the coach treated the hands going face up as the end of the
+lesson, so the beats about who won the round and how a session is scored — written and
+translated — could never be reached, and the payoff was one tap and the menu. `lessonIsOver`
+now waits for the coach to run out of things to say.
+
+**A pointer is only as current as the hand under it.** The lesson reads memory from the
+engine and draws the table a move behind it, and in the second after a card leaves the hand
+every position means the card next to the one it meant — so the finger slid one card along
+while the player watched. Memory is handed to the script only while `showsTheSameHandAs` says
+the two agree, and the same predicate now withholds the lesson's taps, which is the guard the
+ordinary table has had since a stale tap threw the wrong card and cost a penalty. Whether the
+gold button exists is read from the live view rather than the drawn one: that is a fact about
+the game, and reading it off a lagging view made it come and go mid-flight.
+
 **A talking coach is sized to leave its target uncovered.** It picks whichever end of the felt
 leaves more room clear of the pointer's target and shrinks its body to fit that room, down to
 a floor it scrolls inside. It used to pick an end by which half the target was in and keep the

@@ -702,15 +702,6 @@ fun CardStage(
             while (true) {
                 val frame = queue.next() ?: break
 
-                // Wait out whatever the coach is saying before showing the next move.
-                snapshotFlow(coaching.hold).first { !it }
-
-                // The beat where a person would be thinking. Without it, three bot turns are
-                // one long stream of cards with no way to tell whose move any of them was —
-                // and with it, a turn arriving *feels* like somebody taking one.
-                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
-                if (frame.hasSomethingToSee) lastActor = frame.actorId
-
                 // What this move is about to move and to reveal, marked before the table
                 // steps to it — see [prepareFor].
                 stage.prepareFor(frame)
@@ -722,6 +713,25 @@ fun CardStage(
                 // finished it.
                 behind = frame.view
                 stage.tell(frame.said)
+
+                // Wait out whatever the coach is saying before playing this move.
+                //
+                // **After the step, not before it.** A session publishes the view its whole
+                // dispatch arrived at *before* it emits the frames for the moves that got
+                // there — it has to, the game really has moved on — so until the first move
+                // is stepped to, this screen is showing the end of the batch. A coach asked
+                // to hold at that instant is reading a round that is already over: at the
+                // end of a lesson it held the table on "that is the lesson", whose one
+                // button leaves, and the coalition's whole final round sat behind it unplayed
+                // (product owner, twice). Asked here, the coach is always reading the move it
+                // is about to explain, which is what every beat that holds was written for.
+                snapshotFlow(coaching.hold).first { !it }
+
+                // The beat where a person would be thinking. Without it, three bot turns are
+                // one long stream of cards with no way to tell whose move any of them was —
+                // and with it, a turn arriving *feels* like somebody taking one.
+                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
+                if (frame.hasSomethingToSee) lastActor = frame.actorId
 
                 for (scene in frame.scenes) {
                     // One frame first, so the table has re-laid-out and reported where things

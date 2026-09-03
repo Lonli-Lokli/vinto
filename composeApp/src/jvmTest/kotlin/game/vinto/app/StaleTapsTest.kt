@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import game.vinto.app.game.showsTheSameHandAs
 import game.vinto.app.game.withoutStaleTaps
 import game.vinto.client.CardRef
 import game.vinto.client.Question
@@ -12,6 +13,7 @@ import game.vinto.shapes.PositionPayload
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -64,6 +66,29 @@ class StaleTapsTest {
         val table = tableFor(shown, Question.None)
         assertEquals(table, table.withoutStaleTaps(shown, shown))
         assertTrue(table.taps.containsKey(CardRef(shown.viewerId, 0)))
+    }
+
+    /**
+     * The same question the coach's finger has to ask.
+     *
+     * A lesson points at slots — the card to give up, the one to look at, the match to throw
+     * in — and it picks them from the seat's *memory*, which is the engine's. While the screen
+     * is a card behind, position two means one card to the engine and its neighbour on the
+     * felt, so the finger slid along while the player watched. One predicate answers it for
+     * the taps and for the pointer, so the two cannot disagree about which moment they are in.
+     */
+    @Test
+    fun aHandTheEngineHasChangedIsNotTheHandOnScreen() {
+        val shown = tossWindow()
+        val me = shown.viewerId
+        val live = shown.copy(
+            players = shown.players.map { seat ->
+                if (seat.id == me) seat.copy(cards = seat.cards.drop(1)) else seat
+            },
+        )
+
+        assertTrue(shown.showsTheSameHandAs(shown), "a screen that has caught up is settled")
+        assertFalse(shown.showsTheSameHandAs(live), "a hand that lost a card is not settled")
     }
 
     /** A toss-in window on the player's own discard, where their cards are tappable. */
