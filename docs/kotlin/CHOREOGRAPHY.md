@@ -79,6 +79,7 @@ never started or stopped by a beat:
 | The **lift** — a card raised out of its row, glowing | the running action has taken this card up (`pendingAction.targets`) |
 | The **turn glow** on a plate | this seat holds the turn (`turnHolderId`) |
 | The **gold ring** on the pile | the top discard's action is unused, so it may be taken |
+| The **back** on the pile | the top discard's action has been used — nothing there to take |
 | The **held gap** in a hand | a card of this hand is in the air or lifted |
 | The **coalition line** above the felt | who plays for whom, once a leader is chosen |
 
@@ -209,6 +210,9 @@ they can watch arrive.
   **Discarding** it is a plain flight to the pile; **playing** it is a flourish and a lit
   flight, and the difference is the point: a played action is spent, a discarded one is
   there for the taking, and the pile's gold ring keeps saying so after the moment has passed.
+  A played card goes on **face down** once its action is finished (`Card.spent`): face up it
+  looked exactly like a card the next player could take, and the ring alone was too quiet to
+  carry the difference on a phone. A plain card, which was never anything to take, stays up.
 - **Swapping** is two flights that cross in one scene: the drawn card in, the old card out
   face-up. A declaration adds the verdict ring — green and the outgoing flight lit when the
   call was right; red, a penalty flight, a flinch and a line when it was wrong.

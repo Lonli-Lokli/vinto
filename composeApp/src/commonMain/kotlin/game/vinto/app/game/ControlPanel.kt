@@ -93,7 +93,6 @@ import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
-import game.vinto.client.echoedBy
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
@@ -240,7 +239,12 @@ fun ControlPanel(
         // log under them. Three seats is one row, and the space the card gave up is better
         // spent on what has been happening than left blank.
         val crowded = table.ranks.isNotEmpty()
-        val recent = lastTurns(state.recent).filterNot { table.prompt.echoedBy(it) }
+        // Every line, the player's own draw included. It used to be folded out whenever
+        // the prompt above it said the same thing — "You drew the Joker", twice — and what
+        // that left in the box was the previous seat's move, so the log read as though your
+        // draw had not happened and the last thing on the table was Don's (product owner).
+        // A line repeated once is cheaper than a line missing.
+        val recent = lastTurns(state.recent)
         val density = LocalDensity.current
         val promptLine = with(density) { (PromptSize * PromptLineFactor).toDp() }
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
@@ -722,10 +726,9 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
  * pushing the controls down. The newest line is written in full ink and the rest dimmed, so
  * the eye finds "now" without a marker.
  *
- * The caller drops any line that only repeats the prompt, by the model's own `echoedBy` rule.
- * That was briefly a comparison of two *rendered* strings — which worked by coincidence, an
- * [Ask] and a [Say] being different types that happen to produce the same words in English.
- * As a rule it survives a language where they do not.
+ * Nothing is folded out for repeating the prompt. There was an `echoedBy` rule that dropped
+ * "You drew the 5" when the heading already said it, and the box then showed the move
+ * *before* yours as its newest line, which read as the log having missed your draw.
  */
 @Composable
 private fun RecentActions(recent: List<Say>) {

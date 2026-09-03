@@ -61,6 +61,7 @@ import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
+import game.vinto.app.art.card_discarded_used
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_thrown_by
@@ -1454,8 +1455,15 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
         return
     }
 
+    // A card whose action has been used lies face down. Face up, a played 8 looked exactly
+    // like one the next player could take, and a gold ring on the live ones was too quiet
+    // to say otherwise on a phone (product owner, from a real round). Turned over, the pile
+    // says "nothing here to take" in the one way a card can. What was played is still on
+    // the record — the log names it, the toss-in chip names its rank while the window is
+    // open, and a screen reader is told the rank and that its action is spent.
+    val spent = face.spent()
     CardFace(
-        card = CardView.Visible(face),
+        card = if (spent) CardView.Hidden else CardView.Visible(face),
         scale = sizes.theirs,
         modifier = pile,
         state = CardState(
@@ -1465,13 +1473,26 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
             live = face.actionIsLive(),
         ),
         label = stringResource(
-            if (face.actionIsLive()) Res.string.card_discarded_live else Res.string.card_discarded,
+            when {
+                face.actionIsLive() -> Res.string.card_discarded_live
+                spent -> Res.string.card_discarded_used
+                else -> Res.string.card_discarded
+            },
             face.rank.serialName,
         ),
         // What does this one do — asked of the card itself, answered about the card itself.
         onClick = { onHelp(face.rank) },
     )
 }
+
+/**
+ * Whether a card on the pile has had its action used, and so lies face down there.
+ *
+ * Only an action card can be spent: a plain 4 was never anything anybody could take, so
+ * it stays face up where the whole table can read it. A 7 thrown away unplayed stays up
+ * too — it is exactly the card the next player may take.
+ */
+internal fun Card.spent(): Boolean = actionText != null && played
 
 /**
  * The one card the discard pile shows.

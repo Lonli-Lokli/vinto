@@ -38,6 +38,19 @@ sealed interface Teaches {
         override val id = "welcome"
     }
 
+    /**
+     * What the game is *really* about, said second: you never look at your own cards, so
+     * the whole round is knowing what you hold — and a high card that bought you a look
+     * was a fair trade, early on.
+     *
+     * Added on the product owner's read of the old opening, which told the player that
+     * every card counts and stopped there: a newcomer then throws every 9 back in fright,
+     * which is how you finish a round holding five cards you know nothing about.
+     */
+    data object Memory : Teaches {
+        override val id = "memory"
+    }
+
     // --- The deck, card by card, in the order they get harder ------------------------------
 
     data object CardsNumbers : Teaches {
@@ -161,6 +174,20 @@ sealed interface Teaches {
 
     data object GiveUpWorst : Teaches {
         override val id = "give_up_worst"
+    }
+
+    /**
+     * Nothing the player knows about is worse than the card in hand, so the slot to take
+     * is one they have never looked at — a trade that costs nothing they know of and buys a
+     * card they now know.
+     */
+    data object SwapBlind : Teaches {
+        override val id = "swap_blind"
+    }
+
+    /** And when even that is a bad trade: go back and throw it away. */
+    data object NothingWorse : Teaches {
+        override val id = "nothing_worse"
     }
 
     data object KeepOrThrow : Teaches {

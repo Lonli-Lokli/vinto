@@ -221,6 +221,59 @@ It is also **shut while the game is being played** — one line and the progress
 open — because everything under it is something the player has to see and touch. A talk beat
 opens it, since the table is held for it anyway.
 
+**Where it lies is decided by what it is pointing at.** Two reports from a phone: the tour
+beat pointed at the discard from under the coach's own edge, and the seats beat pointed at a
+plate the coach was lying on; and once play started, the shut coach at the top covered the
+opposite seat's whole row for the length of the round. So a *talking* coach goes to whichever
+end of the felt is away from its pointer — the top by default, the bottom when the target's
+centre is in the felt's upper half, measured from the stage's own bounds — and a *playing*
+coach lies in the band of empty felt between the side seats, under the piles and above your
+hand, measured the same way. In the band the dots go under the title rather than beside it,
+because a title beside nine dots in 200 dp is a title wrapped to four lines. If the table has
+not been measured yet or leaves no band worth the name, the top is the fallback.
+
+**Nothing on the table can be touched while it talks.** `Table.heldStill()` strips the taps,
+the buttons, the seats and the rank chips for as long as a talk beat is up. The stage is held
+for the beat, so a move made during one would be made against a table the player has not
+seen the last moves of — and the first thing a newcomer did with five breathing cards under
+the welcome was tap one, which peeked it under the paragraph.
+
+**It knows what you have seen.** The swap advice used to read the *view*, which after the setup
+peeks shows none of your cards — the view hides what you have seen, on purpose — so every
+card scored the same and "give up your worst card" pointed at card one whatever it was.
+Reported with the exact hand: a 3 and a 7 peeked, a 4 drawn, the coach pointing at the 3.
+`LocalGameSession.rememberedHand()` now hands the coach the seat's `knownCardPositions` with
+the cards at them — what the player has looked at and nothing they have not — and the advice
+has three answers in order: the highest known card worse than the drawn one (the 7, which the
+declaration beat then has you name); failing that, a slot never looked at, provided the drawn
+card is a 5 or lower (the deck averages about five and a half); failing that, go back and
+throw it away. The keep-or-throw beat points at Swap or Discard by the same reading.
+
+**The dots count the intro while the intro is being read.** Fourteen talk beats come before a
+card is dealt with, and the chapters are met by playing, so the row of nine did not move
+through fourteen taps of "Go on". `INTRO_BEATS` is the run, `introStep` says where a lesson is
+in it, and the coach draws one dot per beat until the table is handed over. A chapter is also
+met when its lesson is *heard* now, not only when a move proves it: the call and the scoring
+are taught in words over things a bot does, and a player who never called Vinto themselves
+used to finish with those two dots empty.
+
+**Fixed heights, so nothing blinks.** The talk body is a fixed height rather than a ceiling —
+it was documented as fixed and implemented as `heightIn(max)`, so the box grew and shrank
+with every paragraph — and the row of held-up cards is a fixed height too, with the cards
+centred and as large as the row allows (one card fills its height; five share the width). The
+last cause was on the web only: `painterResource` answers an empty painter until the drawable
+has loaded, and an image sized from an empty painter is zero pixels tall, so every card the
+lesson held up drew its row collapsed and popped it open a frame later. `CardPicture` states
+the deck's aspect now instead of reading it off the painter.
+
+**The opening says the game is memory.** A second beat, `Teaches.Memory`, before the card
+tour: you see two of your five and the rest only if a card lets you, so the round is played on
+what you remember, and a 9 or a 10 that bought you a look was a fair trade early on. The old
+opening said every card counts and stopped, and the plain-cards beat then called small cards
+"what a winning hand is made of" — which is untrue: the hand that wins a round is usually at
+zero or below, and a coalition can nearly always reach that (product owner). `LessonCopyTest`
+pins both corrections.
+
 The old note about the panel's reserved height, kept because it is why the coach was ever put
 there:
 Stacking it above cost the felt 150 dp and the side seats' hands re-flowed into rows — the
@@ -274,6 +327,7 @@ Audited beat by beat against `docs/game-engine/VINTO_RULES.md`:
 | Rule | Where it is taught |
 | --- | --- |
 | Objective — lowest hand wins | opening beat |
+| You cannot look at your own cards; the round is played on memory | the second beat |
 | Four players, five cards each, face down | opening beat |
 | Peek at two of your own, once | setup lesson, pointed |
 | Every rank's value and action (2–6, 7·8, 9·10, J, Q, K, A, Joker) | eight card beats, each holding up the cards |

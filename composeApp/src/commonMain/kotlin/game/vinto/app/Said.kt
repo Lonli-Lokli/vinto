@@ -63,8 +63,12 @@ import game.vinto.app.art.beat_help_body
 import game.vinto.app.art.beat_help_title
 import game.vinto.app.art.beat_keep_or_throw_body
 import game.vinto.app.art.beat_keep_or_throw_title
+import game.vinto.app.art.beat_memory_body
+import game.vinto.app.art.beat_memory_title
 import game.vinto.app.art.beat_name_only_seen_body
 import game.vinto.app.art.beat_name_only_seen_title
+import game.vinto.app.art.beat_nothing_worse_body
+import game.vinto.app.art.beat_nothing_worse_title
 import game.vinto.app.art.beat_only_look_body
 import game.vinto.app.art.beat_only_look_title
 import game.vinto.app.art.beat_peeks_end_body
@@ -75,6 +79,8 @@ import game.vinto.app.art.beat_seats_title
 import game.vinto.app.art.beat_session_body
 import game.vinto.app.art.beat_session_title
 import game.vinto.app.art.beat_strayed_body
+import game.vinto.app.art.beat_swap_blind_body
+import game.vinto.app.art.beat_swap_blind_title
 import game.vinto.app.art.beat_toss_in_also
 import game.vinto.app.art.beat_toss_in_body
 import game.vinto.app.art.beat_toss_in_title
@@ -481,10 +487,13 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     is Teaches.TossIn -> stringResource(Res.string.beat_toss_in_title)
     Teaches.AimIt -> stringResource(Res.string.beat_aim_it_title)
     Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_title)
+    Teaches.SwapBlind -> stringResource(Res.string.beat_swap_blind_title)
+    Teaches.NothingWorse -> stringResource(Res.string.beat_nothing_worse_title)
     Teaches.KeepOrThrow -> stringResource(Res.string.beat_keep_or_throw_title)
     Teaches.TwoWaysToStart -> stringResource(Res.string.beat_two_ways_to_start_title)
     Teaches.EveryTurnStarts -> stringResource(Res.string.beat_every_turn_starts_title)
     Teaches.Welcome -> stringResource(Res.string.beat_welcome_title)
+    Teaches.Memory -> stringResource(Res.string.beat_memory_title)
     Teaches.CardsNumbers -> stringResource(Res.string.beat_cards_numbers_title)
     Teaches.CardsOwn -> stringResource(Res.string.beat_cards_own_title)
     Teaches.CardsTheirs -> stringResource(Res.string.beat_cards_theirs_title)
@@ -523,10 +532,13 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.Watching -> stringResource(Res.string.beat_watching_body)
     Teaches.AimIt -> stringResource(Res.string.beat_aim_it_body)
     Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_body)
+    Teaches.SwapBlind -> stringResource(Res.string.beat_swap_blind_body)
+    Teaches.NothingWorse -> stringResource(Res.string.beat_nothing_worse_body)
     Teaches.KeepOrThrow -> stringResource(Res.string.beat_keep_or_throw_body)
     Teaches.TwoWaysToStart -> stringResource(Res.string.beat_two_ways_to_start_body)
     Teaches.EveryTurnStarts -> stringResource(Res.string.beat_every_turn_starts_body)
     Teaches.Welcome -> stringResource(Res.string.beat_welcome_body)
+    Teaches.Memory -> stringResource(Res.string.beat_memory_body)
     Teaches.CardsNumbers -> stringResource(Res.string.beat_cards_numbers_body)
     Teaches.CardsOwn -> stringResource(Res.string.beat_cards_own_body)
     Teaches.CardsTheirs -> stringResource(Res.string.beat_cards_theirs_body)

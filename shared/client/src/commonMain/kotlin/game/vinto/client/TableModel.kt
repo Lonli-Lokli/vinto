@@ -957,20 +957,3 @@ fun roundEndReason(view: PlayerView): RoundEndReason? = when {
 /** A card taken from the discard pile must be played; only a drawn one may be kept. */
 private val PendingActionView.canGoToHand: Boolean
     get() = from == PendingCardOrigin.DRAWING
-
-/**
- * Whether a line of the move log is only repeating what the panel is already asking.
- *
- * The panel's prompt and the log are built from the same events, so the newest line was
- * routinely the sentence directly above it — "You drew the 5", twice, six pixels apart.
- *
- * This used to be a comparison of two rendered strings, which worked by coincidence: an [Ask]
- * and a [Say] are different types that happened to produce the same words. Saying it as a
- * rule instead makes the relationship explicit and survives translation — two sentences that
- * merely *look* alike in English are no longer silently deduplicated in a language where they
- * do not.
- */
-fun Ask.echoedBy(line: Say): Boolean = when {
-    this is Ask.YouDrew && line is Say.DrewKnown -> line.who is Speaker.You && line.rank == rank
-    else -> false
-}

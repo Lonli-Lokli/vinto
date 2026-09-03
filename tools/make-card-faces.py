@@ -46,7 +46,7 @@ ORANGE = "#E8791E"
 WHITE = "#FFFFFF"
 PALE = "#A8C2B5"
 BLUE = "#5B9BD5"        # opponents' cards — distinct from your green at any size
-JOKER_INK = "#A34A08"   # the Joker's name: orange darkened to hold on its grey ground
+JOKER_INK = "#A34A08"   # the Joker's name: orange darkened to hold on its pink ground
 PENALTY = "#9E2B25"     # the Ace's throw — the one red left in the deck, and it means harm
 # The back's four engraved marks. Darker than the deck colours they stand for, because
 # they are the one place a colour is drawn with no outline to fall back on, and gold,
@@ -96,10 +96,12 @@ BG = {
     "9": "#D7E8FC",   # blue: this action reaches one of THEIRS
     "10": "#B6BAFC",  # periwinkle, shifted off the opponents' own blue
     "j": "#F7E2D2",   # orange: a card crosses between two players
-    "q": "#E0A170",
+    "q": "#F5A98A",   # coral, not tan: the darker of the pair used to be a brown, and a
+                      # brown ground reads as a stain on a card table (product owner)
     "k": "#FCEDB8",   # yellow: the crown, and the deck the Ace throws from
     "a": "#F0BE69",
-    "joker": "#C6C6C6",  # neutral: the wild card belongs to no family
+    "joker": "#F6CFE1",  # pink: the wild card belongs to no family, and grey — the old
+                         # answer to "no family" — read as a disabled card (product owner)
 }
 
 OUT = pathlib.Path(__file__).parent / "card-faces"
@@ -508,7 +510,10 @@ def peek_own(accent):
     return (
         hand_row(734, FELT, GOLD, gap=1, w=140, h=192, step=162)
         + popped(CX, 616, 200, 274, FELT, GOLD, accent)
-        + big_eye(CX, 340, s=1.15, gaze=16, iris=accent)
+        # Lifted clear of the card it looks at. The eye used to sit on the popped card's
+        # halo — a stack rather than a look — where the 9's lens clears its row by a
+        # card's margin; the same margin here, measured from the lid to the halo.
+        + big_eye(CX, 305, s=1.12, gaze=16, iris=accent)
     )
 
 

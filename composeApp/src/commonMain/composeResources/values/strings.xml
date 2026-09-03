@@ -283,6 +283,9 @@
     <string name="rail_aim_second">Second</string>
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">discarded %1$s, action unused</string>
+    <!-- The same card once its action has been played: it lies face down on the pile, so
+         the rank is said here and nowhere on the felt. -->
+    <string name="card_discarded_used">discarded %1$s, action used</string>
     <string name="card_in_hand">the card in your hand</string>
 
     <!-- ================================================================ the score sheet -->
@@ -328,7 +331,11 @@
     <string name="beat_aim_it_title">Aim it</string>
     <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
     <string name="beat_give_up_worst_title">Give up your worst card</string>
-    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about.</string>
+    <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about. If it has an action and you are sure of it, name it as it goes down: its action is then yours for free.</string>
+    <string name="beat_swap_blind_title">Trade it for one you have not seen</string>
+    <string name="beat_swap_blind_body">Nothing you know about is worse than this card, so trading it for one of those would be throwing knowledge away. Put it in a slot you have never looked at instead: an unseen card is more likely worse than better, and either way you will know one more of your own cards afterwards.</string>
+    <string name="beat_nothing_worse_title">Nothing here wants replacing</string>
+    <string name="beat_nothing_worse_body">Every card you know about is better than this one, and it is too high to gamble on a slot you have not seen. Go back and throw it away — the pile can have it.</string>
     <string name="beat_keep_or_throw_title">Keep it or throw it</string>
     <string name="beat_keep_or_throw_body">Put it in your hand — face down, in place of a card you own, which goes face up on the pile — or throw it away. Every card in your hand counts against you, so a low one is worth keeping. If it has an action, playing it now instead is the third choice, and it costs you nothing to take.</string>
     <string name="beat_two_ways_to_start_title">Two ways to start a turn</string>
@@ -336,13 +343,15 @@
     <string name="beat_every_turn_starts_title">Every turn starts the same way</string>
     <string name="beat_every_turn_starts_body">A turn begins by taking a card. The deck is face down, so what you get is a surprise — that is the risk you are being paid for.</string>
     <string name="beat_welcome_title">Four players, five cards each</string>
-    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. This is a real round against three real opponents — the coach only walks beside you.</string>
+    <string name="beat_welcome_body">Every card counts against you and the lowest hand wins. Your five lie face down in front of you, and you do not get to look at them — the game is knowing what you hold. This is a real round against three real opponents; the coach only walks beside you.</string>
+    <string name="beat_memory_title">Know your own cards</string>
+    <string name="beat_memory_body">You will see two of your five before the round starts, and the other three only if a card lets you. So the round is played on what you remember: which slots you have looked at, and what is in them. That changes what a high card is worth. Early on, a 9 or a 10 that buys you a look is a fair trade — you know what it is, so you can put it down and name it later. The card that loses you the round is the one you never found out about.</string>
     <string name="beat_cards_numbers_title">2 to 6 — plain cards</string>
-    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Small ones are what a winning hand is made of.</string>
+    <string name="beat_cards_numbers_body">Worth exactly what they say and nothing else. Do not mistake a small one for a good one: the hand that wins a round usually adds up to zero or less — Kings, Jokers, an Ace at most. A 2 is fine to sit on for a while; any plain card is one to trade away before the end.</string>
     <string name="beat_cards_own_title">7 and 8 — look at one of yours</string>
-    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not.</string>
+    <string name="beat_cards_own_body">Worth 7 and 8, which is a lot to be holding at the end. What you get for it is a look at one of your own cards — and this game is memory, so a card you have seen is worth more to you than a card you have not. Keep one early if it buys you a look; swap it out and name it once you have nothing left to learn.</string>
     <string name="beat_cards_theirs_title">9 and 10 — look at one of theirs</string>
-    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was. Two turns later it is what tells you whether to call.</string>
+    <string name="beat_cards_theirs_body">The same look, pointed the other way: one card in somebody else's hand. Remember where it was — two turns later it is what tells you whether to call, or where to aim a Jack. Worth 9 and 10, and still worth taking early: a high card you know you hold is one you can put down and name, and a low card you cannot see is only a guess.</string>
     <string name="beat_cards_jack_title">Jack — swap two cards, blind</string>
     <string name="beat_cards_jack_body">Worth 10. It swaps two cards belonging to two different players — never two of anybody's own — and nobody looks at either of them first. Good for pushing a card you know is bad into somebody else's hand; a gamble with anything you know is good.</string>
     <string name="beat_cards_queen_title">Queen — look at two, then decide</string>
@@ -392,7 +401,7 @@
          CARD_CONFIGS; %3$s is the card's own description. The frame is here so the sentence
          can be built the way a language builds one. -->
     <string name="teach_note">%1$s — worth %2$s. %3$s.</string>
-    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. A hand full of small ones of these is a good hand.</string>
+    <string name="teach_note_plain">%1$s — worth %2$s, and it does nothing at all. Fine to hold for now, and one to trade away before somebody calls.</string>
 
 
     <string name="teach_heading">Learning the game</string>
@@ -439,6 +448,11 @@
     <string name="chapter_score">Scoring</string>
     <string name="chapter_covered">%1$s — covered</string>
     <string name="chapter_to_come">%1$s — still to come</string>
+    <!-- The same dots while the coach is still introducing the game, when they count its
+         beats rather than the chapters: nothing has been played yet, so the chapters would
+         stand still through fourteen taps of "Go on". -->
+    <string name="intro_part_covered">Part %1$d of %2$d — read</string>
+    <string name="intro_part_to_come">Part %1$d of %2$d — still to come</string>
 
     <!-- What the "?" explains. `explains_card_*` take the card's name, value,
          `longDescription` and `helpText` — all presentation. Never `shortDescription`, which

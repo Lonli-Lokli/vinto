@@ -3,6 +3,7 @@ package game.vinto.client
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ActionPhase
+import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
@@ -152,6 +153,11 @@ data class Taught(
             talked = lesson.talkId?.let { talked + it } ?: talked,
             notedRanks = lesson.noteRank?.let { notedRanks + it } ?: notedRanks,
             glossed = lesson.gloss?.let { glossed + it.id } ?: glossed,
+            // A chapter is met when its lesson has been heard, not only when a move proves
+            // it. Two of the nine — the call and the scoring — are taught in words over
+            // things a bot does, and a player who reached the end of the lesson without
+            // calling Vinto themselves used to finish with those two dots still empty.
+            chapters = chapters + lesson.chapter,
         )
     }
 }
@@ -170,7 +176,18 @@ data class Taught(
  * before the round is scored is not an explanation.
  */
 @Suppress("ReturnCount", "CyclomaticComplexMethod", "LongMethod")
-fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
+fun lessonFor(
+    view: PlayerView,
+    table: Table,
+    taught: Taught,
+    /**
+     * What the player has seen of their own hand — position to card — as
+     * `LocalGameSession.rememberedHand` reports it. Empty for a coach with no memory to
+     * consult, which is every caller but the lesson screen; the swap advice then treats
+     * every card as unseen, which is the honest reading.
+     */
+    memory: Map<Int, Card> = emptyMap(),
+): Lesson? {
     talkFor(view, taught)?.let { return it }
 
     val you = view.players.first { it.id == view.viewerId }
@@ -212,7 +229,7 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
             gloss = glossOnce(taught, Gloss.LOG),
         )
 
-        else -> playing(view, table, taught)
+        else -> playing(view, table, taught, memory)
     }?.let { lesson ->
         val rank = visibleRanks(view).firstOrNull { it !in taught.notedRanks }
         lesson.copy(noteRank = rank)
@@ -220,7 +237,7 @@ fun lessonFor(view: PlayerView, table: Table, taught: Taught): Lesson? {
 }
 
 /** The moves of your own turn: take a card, then decide what to do with it. */
-private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
+private fun playing(view: PlayerView, table: Table, taught: Taught, memory: Map<Int, Card>): Lesson? {
     val pending = (view.pendingAction?.card as? CardView.Visible)?.card
 
     val mine = view.pendingAction?.playerId == view.viewerId
@@ -235,16 +252,12 @@ private fun playing(view: PlayerView, table: Table, taught: Taught): Lesson? {
         )
 
         // Choosing which of your own cards the drawn one replaces.
-        pending != null && mine && table.taps.isNotEmpty() -> Lesson(
-            chapter = Chapter.KEEP,
-            teaches = Teaches.GiveUpWorst,
-            point = worstKnown(view, table)?.let { Target.Place(it) },
-        )
+        pending != null && mine && table.taps.isNotEmpty() -> swapAdvice(view, table, memory, pending)
 
-        pending != null && view.pendingAction?.playerId == view.viewerId -> Lesson(
+        pending != null && mine -> Lesson(
             chapter = Chapter.KEEP,
             teaches = Teaches.KeepOrThrow,
-            point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
+            point = keepOrThrow(view, table, memory, pending)?.let { Target.Button(it.label) },
         )
 
         // `is`, not `startsWith`. This is the beat the string comparison silently lost.
@@ -291,8 +304,53 @@ private fun talkFor(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "welcome",
     )
 
+    // Said before a single card is explained, because it is the thing every card's
+    // explanation assumes: you cannot see your own hand, so a card you have looked at is
+    // worth more to you than its number says, and one you have not is worth less.
+    "memory" !in taught.talked -> Lesson(
+        chapter = Chapter.TABLE,
+        teaches = Teaches.Memory,
+        talkId = "memory",
+    )
+
     else -> cardTour(taught) ?: tableTour(view, taught) ?: endgameTalk(view, taught)
 }
+
+/**
+ * The talk beats before a card is dealt with, in the order they are said.
+ *
+ * The row of dots over the coach is the lesson's *chapters*, and during these fourteen beats
+ * not one of them changes — the chapters are met by playing, and nothing has been played
+ * yet — so a player pressing "Go on" thirteen times watched a progress row that did not move
+ * (product owner). While the coach is in this run the dots count *these* instead, one per
+ * beat; the chapters take over the moment the table is theirs.
+ */
+val INTRO_BEATS: List<String> = listOf(
+    Teaches.Welcome, Teaches.Memory,
+    Teaches.CardsNumbers, Teaches.CardsOwn, Teaches.CardsTheirs, Teaches.CardsJack, Teaches.CardsQueen,
+    Teaches.CardsKing, Teaches.CardsKingName, Teaches.CardsKingWhose, Teaches.CardsOdd,
+    Teaches.Tour, Teaches.Seats, Teaches.Help,
+).map { it.id }
+
+/** Which of the [INTRO_BEATS] a lesson is, or null for anything past them. */
+fun introStep(lesson: Lesson?): Int? =
+    lesson?.talkId?.let { INTRO_BEATS.indexOf(it) }?.takeIf { it >= 0 }
+
+/**
+ * The table with nothing on it that can be touched.
+ *
+ * Offered while the coach is talking. A talk beat holds the stage, so a move made during one
+ * would be made against a table the player has not been shown the last moves of; and the
+ * first thing a newcomer does with five breathing cards under a paragraph is tap one, which
+ * used to work — the peek happened under the welcome (product owner). The prompt stays, so
+ * the rail still says what is about to be asked.
+ */
+fun Table.heldStill(): Table = copy(
+    choices = emptyList(),
+    taps = emptyMap(),
+    seats = emptyList(),
+    ranks = emptyList(),
+)
 
 /**
  * Every card in the deck, held up, in the order they get harder.
@@ -474,23 +532,76 @@ private fun worthLookingAt(view: PlayerView, table: Table): Target? {
 }
 
 /**
- * The card the player should most want rid of: the highest one they can actually see.
+ * Which of your own cards the drawn one should replace, and the lesson that goes with it.
  *
- * Pointing at a card they know nothing about would be advice the coach cannot justify — the
- * whole point of the lesson is that you play what you remember.
+ * Three answers, in order. **A card you know is worse than this one**: give up the highest
+ * of those, which is the trade that loses points for certain — and if it has an action, the
+ * declaration beat that follows will have you name it. **Nothing you know is worse**: then
+ * trading a card you know for one you know is worth *more* is throwing knowledge away, so
+ * the slot to take is one you have never looked at, provided the drawn card is a fair one —
+ * the deck averages about five and a half, so up to a 5 an unseen card is more likely worse
+ * than better, and either way you know one more of your own cards afterwards. **Neither**:
+ * go back and throw it away.
+ *
+ * It used to point at the highest card the *view* showed face up, which after the setup
+ * peeks is none of them — the view hides what you have seen, on purpose — so every value
+ * was the same and it pointed at card one whatever it was. Reported with the exact hand: a
+ * 3 and a 7 known, a 4 drawn, and the coach pointing at the 3.
  */
-private fun worstKnown(view: PlayerView, table: Table): Anchor? {
+private fun swapAdvice(view: PlayerView, table: Table, memory: Map<Int, Card>, drawn: Card): Lesson {
     val you = view.viewerId
     val mine = table.taps.keys.filter { it.playerId == you }
-    if (mine.isEmpty()) return null
 
-    val hand = view.players.first { it.id == you }.cards
-    val best = mine.maxByOrNull { ref ->
-        (hand.getOrNull(ref.position) as? CardView.Visible)?.card?.value ?: Int.MIN_VALUE
-    } ?: return null
+    val worse = mine
+        .filter { memory[it.position]?.value ?: Int.MIN_VALUE > drawn.value }
+        .maxByOrNull { memory.getValue(it.position).value }
+    if (worse != null) {
+        return Lesson(
+            chapter = Chapter.KEEP,
+            teaches = Teaches.GiveUpWorst,
+            point = Target.Place(Anchor.Seat(you, worse.position)),
+        )
+    }
 
-    return Anchor.Seat(best.playerId, best.position)
+    val unseen = mine.firstOrNull { it.position !in memory }
+    if (unseen != null && drawn.value <= BLIND_SWAP_UP_TO) {
+        return Lesson(
+            chapter = Chapter.KEEP,
+            teaches = Teaches.SwapBlind,
+            point = Target.Place(Anchor.Seat(you, unseen.position)),
+        )
+    }
+
+    return Lesson(
+        chapter = Chapter.KEEP,
+        teaches = Teaches.NothingWorse,
+        point = table.choices.firstOrNull { it.label is Label.Back }?.let { Target.Button(it.label) },
+    )
 }
+
+/**
+ * Which button to press with a drawn card in hand: its action if it has one — the lesson's
+ * deal puts a Queen and a King in the player's way for exactly that — otherwise swap when
+ * [swapAdvice] would have somewhere to put it, and throw it away when it would not.
+ */
+private fun keepOrThrow(view: PlayerView, table: Table, memory: Map<Int, Card>, drawn: Card): Choice? {
+    table.choices.firstOrNull { it.label is Label.UseAction }?.let { return it }
+
+    val hand = view.players.first { it.id == view.viewerId }.cards.indices
+    val knownWorse = hand.any { memory[it]?.value ?: Int.MIN_VALUE > drawn.value }
+    val blindIsFair = hand.any { it !in memory } && drawn.value <= BLIND_SWAP_UP_TO
+    val wanted = if (knownWorse || blindIsFair) Label.SwapCards else Label.Discard
+
+    return table.choices.firstOrNull { it.label == wanted } ?: table.choices.firstOrNull()
+}
+
+/**
+ * The highest drawn card worth swapping blind for one you have never seen.
+ *
+ * The deck's average card is worth about five and a half — fifty-four cards summing to 298 —
+ * so a 5 is more likely than not to beat whatever is under an unread slot, and a 6 is not.
+ */
+private const val BLIND_SWAP_UP_TO = 5
 
 /** Which of the player's own cards they have not seen yet — the one worth spending a peek on. */
 private fun unknownOwn(view: PlayerView): Int? = view.players

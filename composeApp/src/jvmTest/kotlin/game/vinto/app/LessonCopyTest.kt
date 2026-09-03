@@ -57,6 +57,32 @@ class LessonCopyTest {
         )
     }
 
+    /**
+     * The second beat says what the first assumes: the game is played on what you remember
+     * of your own hand, and a high card that bought a look was a fair trade early on. The old
+     * opening said every card counts and stopped, which sent newcomers throwing every 9
+     * back (product owner).
+     */
+    @Test
+    fun theSecondBeatSaysTheGameIsMemoryAndAHighCardCanBeWorthIt() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.Memory) }
+        assertTrue(words.contains("remember"), "it does not say the game is memory: $words")
+        assertTrue(words.contains("9 or a 10"), "it does not rehabilitate the high lookers: $words")
+    }
+
+    /**
+     * The plain cards used to be introduced as "what a winning hand is made of", which is
+     * untrue: the hand that wins a round is usually at zero or below — Kings and Jokers —
+     * and a coalition can nearly always reach that. A player told a hand of 2s and 3s is a
+     * winning hand calls Vinto on it and loses.
+     */
+    @Test
+    fun thePlainCardsAreNotCalledAWinningHand() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.CardsNumbers) }
+        assertTrue(words.contains("zero or less"), "it does not say what a winning hand adds up to: $words")
+        assertTrue(!words.contains("winning hand is made of"), "the old claim is still there: $words")
+    }
+
     @Test
     fun theCallSaysWhatCallingDoes() = runComposeUiTest {
         val words = read { taughtBody(Teaches.VintoCalled(Speaker.Named("Raph"))) }
