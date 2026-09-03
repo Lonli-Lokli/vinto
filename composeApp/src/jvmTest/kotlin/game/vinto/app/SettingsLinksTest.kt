@@ -44,6 +44,7 @@ class SettingsLinksTest {
             "Get in touch",
             "The original game",
             "About this app",
+            "Rate this game",
             "Tell somebody",
         ).forEach {
             onNodeWithText(it).performScrollTo().assertIsDisplayed()
@@ -105,6 +106,35 @@ class SettingsLinksTest {
         assertTrue(
             Pages.OFFICIAL.startsWith("https://"),
             "the original game is not absolute https: ${Pages.OFFICIAL}",
+        )
+    }
+
+    /**
+     * The two store listings, which are the other addresses here we deliberately do not own.
+     *
+     * Named one at a time for the same reason `Pages.OFFICIAL` is: the rule above exists so that
+     * an outside host has to be argued for in a test rather than slipped past one, and a store
+     * link is exactly the kind of thing somebody would otherwise add by loosening the rule.
+     *
+     * What is pinned is the shape, not the id — that each is absolute https on the store's real
+     * host, that Apple's carries the review action rather than just opening the listing, and that
+     * Play's names this app's package. **Neither listing is live yet**, and that is on purpose
+     * (see `Pages`); a 404 is not something a test can catch anyway, so what it can catch is a
+     * malformed address that would still 404 after the listings appear.
+     */
+    @Test
+    fun theStoreLinksAreWellFormedEvenBeforeTheListingsExist() {
+        assertTrue(
+            Pages.APPLE_REVIEW.startsWith("https://apps.apple.com/app/id"),
+            "the Apple review link is not an App Store address: ${Pages.APPLE_REVIEW}",
+        )
+        assertTrue(
+            Pages.APPLE_REVIEW.endsWith("?action=write-review"),
+            "the Apple link opens the listing rather than the review sheet: ${Pages.APPLE_REVIEW}",
+        )
+        assertTrue(
+            Pages.PLAY_REVIEW == "https://play.google.com/store/apps/details?id=app.kupalinka.vinto",
+            "the Play link does not name this app's package: ${Pages.PLAY_REVIEW}",
         )
     }
 

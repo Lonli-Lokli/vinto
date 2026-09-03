@@ -34,9 +34,6 @@ import game.vinto.app.art.online_join
 import game.vinto.app.art.online_join_detail
 import game.vinto.app.art.online_join_screen
 import game.vinto.app.art.online_join_title
-import game.vinto.app.art.online_name_needed
-import game.vinto.app.art.online_name_placeholder
-import game.vinto.app.art.online_nickname
 import game.vinto.app.art.online_nickname_detail
 import game.vinto.app.art.online_offline
 import game.vinto.app.art.online_open_detail
@@ -55,7 +52,6 @@ import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.CodeField
 import game.vinto.app.theme.CodeLength
 import game.vinto.app.theme.GameButton
-import game.vinto.app.theme.VintoField
 import game.vinto.app.theme.errorOnFelt
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
@@ -66,6 +62,8 @@ import game.vinto.client.Vault
 import game.vinto.client.identity
 import game.vinto.client.onlineDoor
 import game.vinto.client.rememberNickname
+import game.vinto.protocol.looksMinted
+import game.vinto.protocol.mintNickname
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -92,18 +90,25 @@ fun OnlineScreen(
     onBrowse: (nickname: String) -> Unit,
     onBack: () -> Unit,
 ) {
-    var nickname by remember { mutableStateOf(vault.identity { freshSeed() }.nickname) }
-
-    // Trimmed once, here, and it is the trimmed name that travels. A name is typed on a
-    // phone keyboard that offers a space after every word, so " Ada " is what a careful
-    // person produces; the room would have taken it and shown it to three strangers with
-    // the spaces in. Blank is refused outright rather than quietly accepted: an empty name
-    // reaches the room, which fills it in as "Player 1", and the player is then introduced
-    // to the table by a placeholder they never chose and cannot see is theirs.
-    val named = nickname.trim()
-    val ready = named.isNotEmpty()
-    // Set by a press that could not go anywhere, cleared the moment a character arrives.
-    var warned by remember { mutableStateOf(false) }
+    /**
+     * The name this player sits down under — **minted, never typed**.
+     *
+     * There was a text field here. It was ordinary and it was the app's only piece of
+     * user-generated content: text one person authors that three strangers then read, which is
+     * what App Store Review Guideline 1.2 is about and what obliges an app to ship filtering,
+     * reporting and blocking. Generating the name removes the category instead of policing it —
+     * see `shared/protocol`'s `Nickname.kt` for the whole reasoning.
+     *
+     * A remembered name is kept only if this vocabulary could still have produced it. That
+     * matters on upgrade rather than in theory: every existing player has a hand-typed name in
+     * their vault, and reading it back would put exactly the text this change removes onto the
+     * felt of the first room they joined.
+     */
+    var nickname by remember {
+        mutableStateOf(
+            vault.identity { freshSeed() }.nickname.takeIf(::looksMinted) ?: mintNickname(freshSeed()),
+        )
+    }
 
     // Whether any of the three can work at all. Aeroplane mode used to be found out one
     // screen later, as a failure with a hostname in it; the platform knew before the tap, so
@@ -117,27 +122,17 @@ fun OnlineScreen(
     fun leaveWith(go: (String) -> Unit) {
         // The sentence is already on the screen; a press on a dimmed tile has nothing to add.
         if (!door.open) return
-        if (!ready) {
-            warned = true
-            return
-        }
-        vault.rememberNickname(named)
-        go(named)
+        vault.rememberNickname(nickname)
+        go(nickname)
     }
 
     Scaffold(title = stringResource(Res.string.online_screen_title), onBack = onBack) {
-        VintoField(
-            value = nickname,
-            onValueChange = {
-                nickname = it.take(NicknameMax)
-                warned = false
-            },
-            label = stringResource(Res.string.online_nickname),
-            detail = stringResource(
-                if (ready) Res.string.online_nickname_detail else Res.string.online_name_needed,
-            ),
-            warned = warned,
-            placeholder = stringResource(Res.string.online_name_placeholder),
+        // The name itself is the title, because it is the thing being looked at; the row is a
+        // press rather than a field because the only choice on offer is "not that one".
+        ActionTile(
+            title = nickname,
+            detail = stringResource(Res.string.online_nickname_detail),
+            onClick = { nickname = mintNickname(freshSeed()) },
         )
 
         // Exhaustive, so a third word is a compile error here rather than a menu that dims
@@ -363,7 +358,6 @@ private val Pad = 24.dp
 private val Gap = 14.dp
 private val TitleGap = 2.dp
 private val ColumnMax = 420.dp
-private const val NicknameMax = 16
 
 /**
  * The service's own words, under the sentence that says what to do about them. Quieter than

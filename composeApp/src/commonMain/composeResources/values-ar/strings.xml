@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">جارٍ الخلط…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">احمل أقل. اعرف أكثر.</string>
+    <string name="home_solo_title">لاعب واحد · ثلاثة روبوتات · %1$s</string>
+    <string name="home_continue">متابعة</string>
+    <string name="home_new_game">لعبة جديدة</string>
+    <string name="home_play">العب</string>
+    <string name="home_online">العب عبر الإنترنت</string>
+    <string name="home_teach">كيف تُلعب</string>
+    <string name="home_settings">الإعدادات</string>
+    <string name="home_version">الإصدار %1$s</string>
+    <string name="home_unofficial">تطبيق غير رسمي للعبة الورق VINTO. النسخة الأصلية على vinto.game</string>
+    <string name="home_unofficial_action">افتح vinto.game، الموقع الرسمي للعبة الورق</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">العب عبر الإنترنت</string>
+    <string name="online_nickname">اسمك على الطاولة</string>
+    <string name="online_nickname_detail">ما يراه بقية اللاعبين. اضغط لاختيار اسم آخر. ليس حسابًا — لا توجد حسابات.</string>
+    <string name="online_code">رمز الغرفة</string>
+    <string name="online_code_detail">ستة أحرف ممن فتح الغرفة.</string>
+    <string name="online_join">انضم إلى الغرفة</string>
+    <string name="online_create">افتح غرفة جديدة</string>
+    <string name="online_offline">لا يوجد اتصال بالشبكة الآن. اللعب عبر الإنترنت يحتاج إلى اتصال؛ اللعب الفردي والدرس يعملان كالمعتاد.</string>
+    <string name="trouble_offline">تعذّر الاتصال بخدمة الغرف. تحقق من الشبكة وحاول مرة أخرى.</string>
+    <string name="trouble_no_such_room">لا توجد غرفة بهذا الرمز. تحقق من الأحرف الستة وحاول مرة أخرى.</string>
+    <string name="trouble_closed">اللعب عبر الإنترنت غير متاح بعد. اللعب الفردي والدرس يعملان كالمعتاد.</string>
+    <string name="trouble_busy">تلك الطاولة ممتلئة. جرّب طاولة أخرى، أو افتح واحدة خاصة بك.</string>
+    <string name="trouble_refused">لم تقبل خدمة الغرف هذا الطلب.</string>
+    <string name="trouble_broken">خدمة الغرف تواجه مشكلة. حاول مرة أخرى بعد قليل.</string>
+    <string name="online_creating">جارٍ فتح غرفة…</string>
+    <string name="online_visibility">من يمكنه إيجاد الغرفة</string>
+    <string name="online_visibility_private">بالرمز فقط</string>
+    <string name="online_visibility_public">مُدرَجة للعامة</string>
+    <string name="online_visibility_detail">تظهر الغرفة المُدرَجة لكل من يتصفح. أما الخاصة فلا يصلها إلا من يملك رمزها.</string>
+    <string name="online_browse">تصفّح الغرف العامة</string>
+    <string name="online_open_detail">أربعة مقاعد، ورمز للمشاركة، وروبوتات لمن لم يصل بعد.</string>
+    <string name="online_join_detail">ستة أحرف، ممن فتح الغرفة.</string>
+    <string name="online_browse_detail">غرف اختار أصحابها إدراجها للعامة. يمكن لأي أحد الانضمام إليها.</string>
+    <string name="online_open_title">افتح غرفة</string>
+    <string name="online_join_title">انضم برمز</string>
+    <string name="online_open_screen">افتح غرفة</string>
+    <string name="online_join_screen">انضم برمز</string>
+    <string name="online_back">رجوع</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">الغرف العامة</string>
+    <string name="discover_looking">جارٍ البحث عن طاولات مفتوحة…</string>
+    <string name="discover_refresh">تحديث</string>
+    <string name="discover_quiet">لا توجد غرف عامة حاليًا. افتح واحدة وستظهر هنا.</string>
+    <string name="discover_failed">تعذّر الوصول إلى خدمة الغرف: %1$s</string>
+    <string name="discover_retry">حاول مرة أخرى</string>
+    <string name="discover_room_host">%1$s على الطاولة</string>
+    <string name="discover_room_unnamed">طاولة مفتوحة</string>
+    <string name="discover_seats">%1$d من 4 مقاعد مشغولة</string>
+    <string name="discover_people">%1$d يلعبون</string>
+    <string name="discover_dealing">التوزيع خلال %1$d</string>
+    <string name="discover_full">ممتلئة</string>
+    <string name="discover_join">انضم</string>
+    <string name="discover_room_summary">الغرفة %1$s، %2$d من 4 مقاعد مشغولة</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">ادعُ أحدًا</string>
+    <string name="invite_subject">انضم إلى لعبتي في Vinto</string>
+    <string name="invite_body">انضم إلى لعبتي في Vinto: %1$s\n\nأو افتح التطبيق وأدخل رمز الغرفة %2$s</string>
+    <string name="invite_share">شارك الرمز</string>
+    <string name="invite_copy">انسخ الرمز</string>
+    <string name="invite_copied">تم النسخ</string>
+    <string name="invite_read_it_out">أو اقرأه بصوت عالٍ: ستة أحرف، بلا حرف O أو I فيها.</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">الغرفة %1$s</string>
+    <string name="lobby_seat_open">مقعد شاغر</string>
+    <string name="lobby_seat_you">%1$s — أنت</string>
+    <string name="lobby_add_bot">أضف روبوتًا</string>
+    <string name="lobby_remove_bot">أزل الروبوت من المقعد %1$d</string>
+    <string name="lobby_leave">غادر الغرفة</string>
+    <string name="lobby_connecting">جارٍ الوصول إلى الغرفة…</string>
+    <string name="lobby_needs_human">اللعبة تحتاج إلى شخصين. شارك الرمز — يمكن للروبوتات ملء بقية الطاولة.</string>
+    <string name="lobby_fill_seats">كل مقعد يلعب. املأ المقاعد الشاغرة بأشخاص أو روبوتات، والتوزيع يُعَدّ تنازليًا من تلقاء نفسه.</string>
+    <string name="lobby_counting_down">كل شيء جاهز — التوزيع خلال %1$d…</string>
+    <string name="lobby_offered_bots">لم يصل أحد آخر، فشغلت الروبوتات المقاعد الشاغرة — التوزيع خلال %1$d…. أزل واحدًا للبقاء في الانتظار.</string>
+    <string name="lobby_over">انتهت الغرفة.</string>
+    <string name="lobby_unreachable">تعذّر الوصول إلى تلك الغرفة. تحقق من الرمز أو من اتصالك.</string>
+    <string name="lobby_retry">حاول مرة أخرى</string>
+    <string name="lobby_seat_working">جارٍ تغيير هذا المقعد…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">متصل</string>
+    <string name="net_connecting">جارٍ الاتصال…</string>
+    <string name="net_reconnecting">جارٍ إعادة الاتصال…</string>
+    <string name="net_closed">غير متصل</string>
+    <string name="table_sending">جارٍ إرسال حركتك…</string>
+    <string name="table_next_round_waiting">في انتظار موافقة البقية…</string>
+    <string name="online_session_over">انتهت الجلسة: %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">الإعدادات</string>
+
+    <string name="settings_group_game">اللعبة</string>
+    <string name="settings_group_feel">المظهر والإحساس</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_language_detail">لم تُترجم بعد؟ ترجع اللعبة إلى الإنجليزية، ونص أي بطاقة لا يتغيّر أبدًا.</string>
+    <string name="settings_language_device">اتبع لغة الجهاز</string>
+    <string name="settings_language_current">اللغة: %1$s</string>
+    <string name="settings_language_chosen">%1$s، مُختارة</string>
+    <string name="settings_group_privacy">ما يُرسَل من هذا الجهاز</string>
+    <string name="settings_group_about">حول التطبيق</string>
+
+    <string name="settings_privacy">الخصوصية</string>
+    <string name="settings_privacy_detail">ما يُحصى، وما لا يُحصى، وكيف تُوقف ذلك.</string>
+    <string name="settings_terms">شروط الاستخدام</string>
+    <string name="settings_terms_detail">النسخة المختصرة لما يمكنك توقعه، وما هو متوقع منك.</string>
+    <string name="settings_contact">تواصل معنا</string>
+    <string name="settings_contact_detail">خلل، فكرة، أو لعبة سارت على نحو خاطئ.</string>
+    <string name="settings_original">اللعبة الأصلية</string>
+    <string name="settings_original_detail">VINTO لعبة ورق لأشخاص آخرين، وهذا تطبيق غير رسمي لها. اللعبة وقواعدها وصانعوها على vinto.game.</string>
+    <string name="settings_studio">حول هذا التطبيق</string>
+    <string name="settings_studio_detail">من صنع هذا التطبيق، وماذا غيره متوفر، وكيف صُنع.</string>
+    <string name="settings_rate">قيّم هذه اللعبة</string>
+    <string name="settings_rate_detail">اترك تقييمًا في المتجر الذي حمّلت منه التطبيق. إنه الشيء الوحيد الذي يساعد لعبة صغيرة على أن تُكتشف.</string>
+    <string name="settings_open">افتح</string>
+    <string name="settings_link_failed">لا شيء في هذا الجهاز فتح ذلك. العنوان هو %1$s</string>
+
+    <string name="settings_share">أخبر أحدًا</string>
+    <string name="settings_share_detail">أرسل اللعبة إلى صديق. أربعة مقاعد، وثلاثة منها يمكن أن تكون روبوتات.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — لعبة ورق حمل أقل ومعرفة أكثر. مجانية، في المتصفح، بلا تسجيل: %1$s</string>
+    <string name="settings_back">رجوع</string>
+    <string name="settings_version">Vinto الإصدار %1$s</string>
+
+    <string name="settings_bots">الروبوتات</string>
+    <string name="settings_bots_detail">مدى تفكير الروبوتات الثلاثة في حركتها.</string>
+    <string name="difficulty_easy">سهل</string>
+    <string name="difficulty_moderate">متوسط</string>
+    <string name="difficulty_hard">صعب</string>
+
+    <string name="settings_pace">الإيقاع</string>
+    <string name="settings_pace_detail">مدى سرعة عرض الطاولة لما حدث. تلعب الروبوتات الثلاثة أدوارها بين لمسة وأخرى، وهذا هو الوقت المتاح لك لمشاهدتها.</string>
+    <string name="pace_calm">هادئ</string>
+    <string name="pace_steady">معتدل</string>
+    <string name="pace_brisk">سريع</string>
+
+    <string name="settings_theme">المظهر</string>
+    <string name="settings_theme_detail">الطاولة خضراء في الحالتين. هذا كل ما حولها.</string>
+    <string name="theme_system">النظام</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">داكن</string>
+
+    <string name="settings_motion">الحركة</string>
+    <string name="settings_motion_detail">هل تطير البطاقات، أم تظهر ببساطة حيث تحطّ. الحركة المخفّفة تُبقي كل حلقة وحكم ووقفة — تبقى اللعبة موصوفة بالكلام، وحسب لا تتحرك. النظام يتبع إعداد إمكانية الوصول في جهازك.</string>
+    <string name="motion_system">النظام</string>
+    <string name="motion_full">كاملة</string>
+    <string name="motion_reduced">مخفّفة</string>
+
+    <string name="settings_sound">الصوت</string>
+    <string name="settings_sound_detail">بطاقة تُوزَّع، بطاقة تحط، عقوبة، نهاية جولة — ولا شيء غير ذلك.</string>
+    <string name="settings_haptics">الاهتزاز</string>
+    <string name="settings_haptics_detail">نبضة خفيفة تحت الإبهام عند لمس بطاقة، أو نجاح حركة، أو تطبيق قاعدة.</string>
+    <string name="settings_analytics">إحصاءات مجهولة</string>
+    <string name="settings_analytics_detail">كم جولة تُلعب، وكم تستغرق من وقت. لا اسمك أبدًا، ولا رموز غرفك، ولا أي شيء قد يُشير إليك — فلا مكان فيما نرسله لوضعها. إيقاف هذا الخيار يعني عدم إرسال أي شيء إطلاقًا.</string>
+    <string name="settings_on">مفعّل</string>
+    <string name="settings_off">معطّل</string>
+
+    <string name="settings_saved_game">لعبة محفوظة</string>
+    <string name="settings_saved_game_detail">هناك جولة قيد التقدّم. نسيانها لا يمكن التراجع عنه، والنتيجة التراكمية للجلسة تذهب معها.</string>
+    <string name="settings_forget">انسَها</string>
+    <string name="settings_record">سجلّك</string>
+    <string name="settings_record_detail">الجولات التي لُعبت، عدد ما فزت به، أفضل يد لك وسلسلة انتصاراتك. يُحفظ على هذا الجهاز فقط — لا يُرسل إلى أي مكان.</string>
+    <string name="settings_forget_record">امحه</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">ج%1$d / د%2$d</string>
+    <string name="table_draw">سحب</string>
+    <string name="table_discard">تخلّص</string>
+    <string name="table_toss_in">رمي مطابق</string>
+    <string name="table_toss_in_timed">رمي مطابق · %1$dث</string>
+    <string name="toss_clock_moves_on">تتابع الطاولة خلال %1$d ث</string>
+    <string name="toss_more_time">وقت إضافي</string>
+    <string name="table_toss_in_summary">نافذة الرمي المطابق، تطابق %1$s</string>
+    <string name="table_tossed">مرمي (%1$d)</string>
+    <string name="card_thrown_by">%1$s رمى %2$s</string>
+    <string name="table_you">أنت</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">يتصدّر</string>
+    <string name="seat_pointed_turn">%1$s يلعب الآن</string>
+    <string name="seat_is_a_bot">روبوت</string>
+    <string name="seat_pointed_vinto">%1$s نادى بـ Vinto</string>
+    <string name="seat_pointed_penalty">%1$s يأخذ بطاقة من المكدس</string>
+    <string name="seat_pointed_coalition">%1$s يقود التحالف</string>
+    <string name="table_final_round">الجولة الأخيرة</string>
+    <string name="table_final_caller">يلعب الجميع يدًا واحدة بينهم، في مواجهة يدك.</string>
+    <string name="table_final_leader">تلعب يد التحالف في مواجهة %1$s.</string>
+    <string name="table_final_ally">%1$s يلعب يد التحالف في مواجهة %2$s.</string>
+    <string name="table_final_turns_left">%1$d أدوار حتى الكشف</string>
+    <string name="table_final_last_turn">الدور الأخير</string>
+    <string name="table_final_choosing">يد واحدة بين الثلاثة، في مواجهة %1$s.</string>
+    <string name="table_final_side_coalition">معًا</string>
+    <string name="table_final_side_caller">نادى بها</string>
+    <string name="table_final_versus">مقابل</string>
+    <string name="table_final_leads">%1$s يتصدّر البقية</string>
+    <string name="table_see_score">شاهد النتيجة</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">أبلغ عن مشكلة</string>
+    <string name="header_settings">الإعدادات</string>
+    <string name="header_deck_left">%1$d بطاقة متبقية في المكدس</string>
+    <string name="header_deck_badge">%1$d في المكدس — ماذا يعني ذلك</string>
+
+    <string name="deck_title">المكدس</string>
+    <string name="deck_body">%1$d بطاقة متبقية للسحب.\n\nعند نفادها، تُخلط بطاقات التخلّص من جديد داخل المكدس، وكل ما تعلّمه أي أحد من مراقبة تلك البطاقات يفقد قيمته — بما في ذلك ما تعلمته أنت. الجولة التي أوشك مكدسها على النفاد جولة مناسبة لمناداة Vinto فيها.</string>
+    <string name="deck_dismiss">فهمت</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s، بقيمة %2$d</string>
+    <string name="card_face_down">بطاقة مقلوبة</string>
+    <string name="card_position">%1$s، البطاقة %2$d</string>
+    <string name="card_the_deck">المكدس</string>
+    <string name="card_discarded">تم التخلص من %1$s</string>
+    <string name="card_in_play">قيد اللعب: %1$s</string>
+    <string name="rail_card_action">%1$s، بقيمة %2$d: %3$s</string>
+    <string name="rail_card_plain">%1$s، بقيمة %2$d</string>
+    <string name="rail_aiming_at">موجّهة نحو %1$s</string>
+    <string name="rail_aim_empty">بطاقة ما زال يجب اختيارها</string>
+    <string name="rail_aim_first">الأولى</string>
+    <string name="rail_aim_second">الثانية</string>
+    <string name="card_discarded_live">تم التخلص من %1$s، والفعل لم يُستخدم</string>
+    <string name="card_in_hand">البطاقة في يدك</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">الجولة %1$d</string>
+    <string name="score_caller_won">نداء Vinto نجح</string>
+    <string name="score_level">تعادل — النداء نجح</string>
+    <string name="score_coalition_won">البقية تغلّبوا على النداء</string>
+    <string name="score_deck_out">لم ينادِ أحد</string>
+    <string name="score_versus">Vinto بـ %1$d في مواجهة أفضلهم بـ %2$d</string>
+    <string name="score_versus_none">كل يد احتُسبت، ولم يُدفع شيء</string>
+    <string name="score_role_caller">نادى بـ Vinto</string>
+    <string name="score_role_best">الأفضل بين البقية</string>
+    <string name="score_column_hand">اليد</string>
+    <string name="score_column_round">الجولة</string>
+    <string name="score_column_game">اللعبة</string>
+    <string name="score_you_called">ناديت بـ Vinto، فقورنت يدك بأفضل يد بين البقية.</string>
+    <string name="score_they_called">%1$s نادى بـ Vinto، فقورنت يده بأفضل يد لديك.</string>
+    <string name="score_deck_ended">لم ينادِ أحد بـ Vinto — نفد المكدس، فانتهت الجولة واحتُسبت كل يد.</string>
+    <string name="score_next_round">وزّع الجولة التالية</string>
+    <string name="score_stop">توقّف هنا</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">أبلغ عن مشكلة</string>
+    <string name="report_body">هل فعلت الطاولة شيئًا لم يكن ينبغي له؟ أرسل اللعبة معه.\n\nما يُرسَل هو التوزيعة التي بدأت منها، وكل حركة منذ ذلك الحين، ومجموع تحقّق بعد كل واحدة — يكفي لإعادة تشغيل هذه اللعبة بالضبط، هنا أو في تطبيق الويب، ورؤية نفس الخطأ يتكرر. لا حساب، لا تفاصيل جهاز، لا شيء عنك.</string>
+    <string name="report_send">أرسل…</string>
+    <string name="report_copy">انسخ بدلًا من ذلك</string>
+    <string name="report_copied">تم النسخ إلى الحافظة</string>
+    <string name="report_dismiss">ليس الآن</string>
+    <string name="report_subject">Vinto — بلاغ عن مشكلة</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="beat_only_look_title">النظرة الوحيدة التي تحصل عليها</string>
+    <string name="beat_only_look_body">يمكن لكل شخص أن ينظر إلى بطاقتين من بطاقاته الخاصة قبل بدء الجولة، مرة واحدة فقط. من هنا فصاعدًا اللعبة ذاكرة: ذاكرتك في مواجهة ذاكرة ثلاثة أشخاص آخرين.</string>
+    <string name="beat_peeks_end_body">تنقلب مجددًا لتصبح مقلوبة — تذكّر أماكنها. لقد نظر الجميع أيضًا إلى بطاقتين من بطاقاتهم.</string>
+    <string name="beat_name_only_seen_title">سمِّ فقط ما رأيته</string>
+    <string name="beat_name_only_seen_body">نظرت إلى هذه البطاقة، فأنت تعرف ما هي. سمّها بشكل صحيح فتلعب فعلها مجانًا. سمّها بشكل خاطئ فتأخذ بطاقة عقوبة — لذا سمِّ فقط ما أنت متأكد منه.</string>
+    <string name="beat_toss_in_title">من يحمل تلك الرتبة يمكنه رميها</string>
+    <string name="beat_toss_in_body">في اللحظة التي تحط فيها بطاقة مكشوفة، يحصل الجميع على فرصة للتخلص من مطابقة — واستخدام فعلها. الرتبة الخاطئة تكلّفك بطاقة عقوبة وتمنعك من تلك البطاقة — البطاقة التالية التي تحط تمنحك فرصة جديدة. يستحق فعلها إن كانت بطاقة تُحسب ضدك؛ الملك لا يكلّف شيئًا للاحتفاظ به.</string>
+    <string name="beat_watching_body">راقب ما يأخذونه وما يضعونه. هذا، وسطر السجل تحته، هو كل ما ستعرفه عن أيديهم.</string>
+    <string name="beat_watching_title">%1$s يلعب %2$s — %3$s</string>
+    <string name="beat_do_not_guess_title">لا تُخمِّن</string>
+    <string name="beat_do_not_guess_body">لم تنظر إلى هذه البطاقة قط، فتسميتها تخمين، والتخمين الخاطئ يكلّفك بطاقة عقوبة. ضعها دون كلمة.</string>
+    <string name="beat_coalition_leader_title">%1$s يلعب يد التحالف</string>
+    <string name="beat_coalition_leader_body">اختار التحالف يد من سيلعب: في النهاية، مجموع %1$s وحده يُقارن بمجموعك. يقضي الاثنان الآخران دورهما الأخير في خفض تلك اليد — الملك قد يُخرج بطاقة سيئة منها، والولد أو الملكة قد يستبدلان بطاقة أفضل بها — أو في اكتشاف محتواها.</string>
+    <string name="beat_final_play_title">%1$s يلعب %2$s</string>
+    <string name="beat_final_play_ace">الآص يجعل لاعبًا واحدًا يسحب بطاقة من المكدس مقلوبة، وبطاقة إضافية تعني نقاطًا إضافية تُحسب ضده. لا يمكن توجيهه إليك الآن — بطاقات المنادي بعيدة عن المتناول — فيقع على جانب التحالف نفسه. راقب من يضطر إلى السحب.</string>
+    <string name="beat_final_play_king">الملك يشير إلى بطاقة ويسمّيها، ويجب أن تكون التسمية صحيحة. صحيحة: تخرج البطاقة من اليد التي كانت فيها ويُلعب فعلها. خاطئة: يرى الجميع ما كانت عليه فعلًا، ويأخذ المسمّي بطاقة عقوبة. يسمّي اللاعب بطاقة رآها من قبل — غالبًا واحدة من بطاقاته، للتخلص منها.</string>
+    <string name="beat_final_play_look">السبعة أو العشرة تنظر إلى بطاقة في يد شخص آخر. في الجولة الأخيرة هذا ما يتيح للتحالف معرفة ما يحمله، بما أن يدك خارج النطاق — وما يتعلّمه أحدهم يمكن أن يستخدمه الجميع.</string>
+    <string name="beat_final_play_other">راقب ما تفعله: هذه بطاقة لم تحملها بعد، وصندوق الحركات الأخيرة تحت الطاولة يوضّح ما جرى.</string>
+    <string name="beat_swap_them_title">بادلهما</string>
+    <string name="beat_swap_them_body">رأيت الاثنتين. بطاقتهم أقل قيمة من بطاقتك، فبادل: تذهب بطاقتك إليهم وتأتي بطاقتهم إليك — وستعرف تمامًا ما تحمله بعدها.</string>
+    <string name="beat_leave_them_title">اتركهما</string>
+    <string name="beat_leave_them_body">رأيت الاثنتين، وبطاقتك هي الأفضل. لا فائدة من المبادلة، فأعدهما إلى مكانهما.</string>
+    <string name="beat_call_now_title">نادِ بها</string>
+    <string name="beat_call_now_body">تعرف كل بطاقة في يدك، ومجموعها معًا صفر أو أقل — لا أحد على هذه الطاولة يمكنه إنهاء اللعبة بأقل منك. اضغط "نادِ بـ Vinto": يحصل الجميع على دور أخير واحد بالضبط، ثم تُكشف كل الأيدي.</string>
+    <string name="beat_you_called_title">ناديت بـ Vinto</string>
+    <string name="beat_you_called_body">تنتهي الجولة بشروطك. يحصل كل من إمبر وسكاي ودون على دور أخير واحد، ولا يمكن لأحد لمس بطاقاتك الآن. ثم تُقلب كل يد وتُقارن يدك بأفضل ما لديهم.</string>
+    <string name="beat_coalition_vs_you_title">الآن يلعبون كواحد</string>
+    <string name="beat_coalition_vs_you_body">الثلاثة الذين لم ينادوا هم التحالف: دور واحد لكل منهم، وتُقارن يدهم الوحيدة الأفضل بيدك — فهو فريق في مواجهة يد واحدة. على طاولة حقيقية سيتناقشون ويجمعون ما يعرفونه. راقب ما يفعلونه في دورهم الأخير: هنا ترى البطاقات التي لم تحملها بعد.</string>
+    <string name="beat_aim_it_title">وجّهها</string>
+    <string name="beat_aim_it_body">هذا فعل البطاقة نفسه، وهو مجاني — لا يكلّفك شيئًا استخدامه، وتذهب البطاقة إلى الكومة بعد ذلك على أي حال.</string>
+    <string name="beat_remember_it_title">تذكّرها</string>
+    <string name="beat_remember_it_body">هذا ما اشترته لك النظرة. ثبّت في ذهنك مكانها وما هي، ثم أعدها — من هنا فصاعدًا هي بطاقة تعرفها، وتُلعب اللعبة على أساس تلك المعرفة.</string>
+    <string name="beat_give_up_worst_title">تخلَّ عن أسوأ بطاقة لديك</string>
+    <string name="beat_give_up_worst_body">تدخل البطاقة الجديدة مقلوبة، وتخرج التي حلّت محلها مكشوفة على الكومة ليقرأها الجميع. تخلَّ عن البطاقة التي تودّ التخلص منها أكثر من غيرها — الأعلى قيمة التي تعرفها. إن كان لها فعل وأنت متأكد منه، سمّها وهي تنزل: يصبح فعلها لك مجانًا.</string>
+    <string name="beat_swap_blind_title">بادلها ببطاقة لم ترها</string>
+    <string name="beat_swap_blind_body">لا شيء تعرفه أسوأ من هذه البطاقة، فمبادلتها بواحدة منها ستكون إهدارًا للمعرفة. ضعها بدلًا من ذلك في مكان لم تنظر إليه قط: البطاقة غير المرئية أرجح أن تكون أسوأ منها أفضل، وفي الحالتين ستعرف بطاقة إضافية من بطاقاتك بعد ذلك.</string>
+    <string name="beat_nothing_worse_title">لا شيء هنا يستحق الاستبدال</string>
+    <string name="beat_nothing_worse_body">كل بطاقة تعرفها أفضل من هذه، وهي مرتفعة جدًا للمجازفة بها في مكان لم تره. عد وارمها — يمكن للكومة أن تأخذها.</string>
+    <string name="beat_keep_or_throw_title">احتفظ بها أو ارمها</string>
+    <string name="beat_keep_or_throw_body">ضعها في يدك — مقلوبة، مكان بطاقة تملكها، والتي تذهب مكشوفة إلى الكومة — أو ارمها. كل بطاقة في يدك تُحسب ضدك، فالبطاقة المنخفضة تستحق الاحتفاظ بها. إن كان لها فعل، فلعبها الآن هو الخيار الثالث، ولا يكلّفك شيئًا اتخاذه.</string>
+    <string name="beat_two_ways_to_start_title">طريقتان لبدء الدور</string>
+    <string name="beat_two_ways_to_start_body">من المكدس، دون رؤية مسبقة — أو من الكومة، لكن فقط بطاقة فعل لم يستخدمها أحد، وعندئذ يجب أن تلعبها فورًا بدلًا من الاحتفاظ بها.</string>
+    <string name="beat_every_turn_starts_title">كل دور يبدأ بالطريقة نفسها</string>
+    <string name="beat_every_turn_starts_body">يبدأ الدور بأخذ بطاقة. المكدس مقلوب، فما تحصل عليه مفاجأة — وهذا هو الخطر الذي يُدفع لك مقابله.</string>
+    <string name="beat_welcome_title">أربعة لاعبين، خمس بطاقات لكل منهم</string>
+    <string name="beat_welcome_body">كل بطاقة تُحسب ضدك، واليد الأقل تفوز. تكمن بطاقاتك الخمس مقلوبة أمامك، ولا يمكنك النظر إليها — اللعبة هي معرفة ما تحمله. هذه جولة حقيقية في مواجهة ثلاثة خصوم حقيقيين؛ المدرّب يمشي بجانبك فقط.</string>
+    <string name="beat_memory_title">اعرف بطاقاتك</string>
+    <string name="beat_memory_body">ستنظر إلى بطاقتين من خمسك قبل بدء الجولة، والثلاث الأخرى فقط إن سمحت لك بطاقة بذلك. فتُلعب الجولة على ما تتذكره: الأماكن التي نظرت إليها، وما فيها. هذا يغيّر قيمة البطاقة المرتفعة. في البداية، سبعة أو عشرة تشتري لك نظرة صفقة عادلة — تعرف ما هي، فيمكنك وضعها وتسميتها لاحقًا. البطاقة التي تخسرك الجولة هي التي لم تعرف عنها شيئًا أبدًا.</string>
+    <string name="beat_cards_numbers_title">من 2 إلى 6 — بطاقات عادية</string>
+    <string name="beat_cards_numbers_body">قيمتها بالضبط ما تقوله، ولا شيء غير ذلك. لا تخلط بين البطاقة الصغيرة والبطاقة الجيدة: اليد التي تفوز بالجولة عادةً ما يكون مجموعها صفرًا أو أقل — ملوك، جوكرات، آص على الأكثر. البطاقة "2" جيدة للاحتفاظ بها لفترة؛ أي بطاقة عادية جديرة بالمبادلة قبل النهاية.</string>
+    <string name="beat_cards_own_title">7 و8 — انظر إلى واحدة من بطاقاتك</string>
+    <string name="beat_cards_own_body">قيمتهما 7 و8، وهذا كثير للاحتفاظ به في النهاية. ما تحصل عليه مقابلهما نظرة إلى واحدة من بطاقاتك — وهذه اللعبة ذاكرة، فالبطاقة التي رأيتها أثمن من التي لم ترها. احتفظ بواحدة في البداية إن كانت تشتري لك نظرة؛ بادلها وسمّها حين لا يبقى لك ما تتعلمه.</string>
+    <string name="beat_cards_theirs_title">9 و10 — انظر إلى بطاقة لأحدهم</string>
+    <string name="beat_cards_theirs_body">النظرة نفسها، موجّهة في الاتجاه الآخر: بطاقة واحدة في يد شخص آخر. تذكّر مكانها — بعد دورين تصبح ما يخبرك متى تنادي، أو أين توجّه الولد. قيمتهما 9 و10، ولا تزال تستحق الأخذ مبكرًا: البطاقة المرتفعة التي تعرف أنك تحملها يمكنك وضعها وتسميتها، والبطاقة المنخفضة التي لا تراها مجرد تخمين.</string>
+    <string name="beat_cards_jack_title">الولد — بادل بطاقتين، دون رؤية</string>
+    <string name="beat_cards_jack_body">قيمته 10. يبادل بطاقتين تخصّان لاعبين مختلفين — أبدًا اثنتين لنفس الشخص — ولا ينظر أحد إلى أي منهما أولًا. جيد لدفع بطاقة تعرف أنها سيئة إلى يد شخص آخر؛ مجازفة مع أي شيء تعرف أنه جيد.</string>
+    <string name="beat_cards_queen_title">الملكة — انظر إلى اثنتين، ثم قرّر</string>
+    <string name="beat_cards_queen_body">قيمتها أيضًا 10، وهي أقوى بطاقة في اللعبة: انظر إلى أي بطاقتين من لاعبين مختلفين، وعندها فقط قرّر إن كنت ستبادل بينهما. الولد يجازف. الملكة تعرف.</string>
+    <string name="beat_cards_king_title">الملك — لا قيمة له، ويفعل أي شيء</string>
+    <string name="beat_cards_king_body">لا قيمة له إطلاقًا، وهذا وحده يجعله يستحق الاحتفاظ به. فعله يشير إلى أي بطاقة على الطاولة — بطاقتك أو بطاقة أي أحد — ويسمّيها. صحيحة: تخرج تلك البطاقة من اليد التي كانت فيها، ويصبح فعلها لك لتلعبه. خاطئة: يرى الجميع ما كانت عليه فعلًا، وتأخذ بطاقة عقوبة.</string>
+    <string name="beat_cards_king_name_title">ما تسمّيه هو ما تلعبه</string>
+    <string name="beat_cards_king_name_body">فأنت في الحقيقة تختار فعلًا، من بين البطاقات التي رأيتها. سمِّ 7 أو 8 فتحصل على نظرة إلى واحدة من بطاقاتك. سمِّ الولد فتحصل على مبادلته العمياء — وتختار البطاقتين كلتيهما، وهكذا يأتيك جوكر رصدته وتذهب أسوأ بطاقة لديك إلى الجهة الأخرى. سمِّ الملكة فتنظر إلى اثنتين قبل أن تقرّر المبادلة.</string>
+    <string name="beat_cards_king_whose_title">وبطاقة من تسمّي</string>
+    <string name="beat_cards_king_whose_body">مهما كان حاملها، البطاقة التي تسمّيها تخرج من يده. تسمية عشرتك تُنزل عشر نقاط من مجموعك؛ تسمية جوكر أحد الخصوم تنزع منه ناقص واحد وتترك له بطاقة أسوأ. ملك واحد، ومهمتان — أيهما أهم هو ما عليك قراءته.</string>
+    <string name="beat_cards_odd_title">الآص والجوكر</string>
+    <string name="beat_cards_odd_body">قيمة الآص 1، ويجعل من تختاره يسحب بطاقة عقوبة. قيمة الجوكر ناقص واحد — أفضل بطاقة في المكدس، والتي لا يُتخلى عنها أبدًا.</string>
+    <string name="beat_tour_title">المكدس والكومة</string>
+    <string name="beat_tour_body">تأتي البطاقات من المكدس. ما يرميه أي أحد يحط مكشوفًا بجانبه، حيث يمكن للطاولة كلها قراءته — بما فيك أنت.</string>
+    <string name="beat_seats_title">إمبر وسكاي ودون</string>
+    <string name="beat_seats_body">ثلاثة روبوتات، لكل منها خمس بطاقات لا يرونها بشكل أفضل مما تراه أنت. اللوحة التي تضيء بالأخضر هي دور من عليه اللعب.</string>
+    <string name="beat_help_title">علامة الـ ؟ موجودة دومًا</string>
+    <string name="beat_help_body">تشرح اللحظة التي أنت فيها وما تفعله كل بطاقة. تأتي اللعبة الأصلية ببطاقات تذكير لهذا الغرض بالضبط، واحدة لكل لاعب — لا يُتوقع من أحد حفظ أربع عشرة رتبة في رأسه، هنا أو على طاولة حقيقية.</string>
+    <string name="beat_coalition_title">يلعب الجميع كواحد</string>
+    <string name="beat_coalition_body">أنت، والاثنان اللذان لم ينادِيا، هم التحالف: دور واحد لكل منكم، وتُقارن يدكم الوحيدة الأفضل بيد المنادي — فهو فريق في مواجهة يد واحدة. على طاولة حقيقية ستتناقشون وتجمعون ما تعرفونه. لا يمكن لأحد لمس بطاقات المنادي، ولن تسمح اللعبة بمحاولة ذلك.</string>
+    <string name="beat_your_turn_to_call_title">يمكنك أن تنادي بها أيضًا</string>
+    <string name="beat_your_turn_to_call_body">في نهاية أي دور من أدوارك، الزر الذهبي موجود: اضغطه حين تعتقد أن يدك هي الأقل على الطاولة. كان مخفيًا أثناء تعلّمك لأنه ينهي الجولة للجميع — من هنا فصاعدًا هو لك لتضغطه، والضغط عليه مبكرًا هو كيف يخسر معظم الناس لعبتهم الأولى.</string>
+    <string name="beat_session_title">وتلك جولة واحدة</string>
+    <string name="beat_session_body">اللعبة جولات، واحدة تلو الأخرى، وتُنقل تلك النقاط بينها، وتُلعب وفق ساعة يُتفق عليها مسبقًا — نصف ساعة أمر معتاد. حين ينتهي الوقت تُنهى الجولة الجارية، ومن لديه أكثر النقاط يأتي أولًا بخمس نقاط لعبة، والثاني بثلاث، والثالث باثنتين. الجولة التي تُفاز بثلاث نقاط تُحسب نفسها سواء فزت بها بنقطة أو بعشرين.</string>
+    <string name="beat_scoring_title">تُكشف كل يد</string>
+    <string name="beat_scoring_body">تُقارن يد المنادي بأفضل يد بين البقية. إن كانت أقل، يأخذ المنادي +3 بينما يخسر كل من البقية نقطة واحدة. التعادل يُحتسب لصالح المنادي: +3 له، ولا يخسر أحد شيئًا. إن هُزم، يخسر المنادي نقطة واحدة بينما يأخذ كل واحد من البقية +3.</string>
+    <string name="beat_vinto_body">هذا رهان أن يده هي الأقل على الطاولة. ينهي الجولة: يحصل الجميع على دور أخير واحد بالضبط، ثم تُقلب كل يد.</string>
+    <string name="beat_vinto_title">%1$s نادى بـ Vinto</string>
+
+    <string name="beat_toss_in_also">%1$s رمى واحدة للتو. </string>
+    <string name="list_join_and"> و </string>
+    <string name="beat_vinto_somebody">أحدهم</string>
+    <string name="beat_strayed_body">طاولتك، لا طاولتي — لا شيء هنا حركة خاطئة. يتابع الدرس من حيث تأخذه.</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">البطاقة التي تنبض يمكن لمسها الآن.</string>
+    <string name="gloss_toss">الشارة تحت الكومتين تسمّي الرتبة التي فُتحت النافذة من أجلها.</string>
+    <string name="gloss_log">كل حركة مسجّلة في هذا الصندوق — ألقِ نظرة عليه حين تتحرك البطاقات أسرع مما يمكنك قراءته.</string>
+    <string name="gloss_badge">الرقم الأخضر يُحصي ما تبقّى في المكدس.</string>
+
+    <string name="teach_note">%1$s — بقيمة %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — بقيمة %2$s، ولا تفعل شيئًا إطلاقًا. جيدة للاحتفاظ بها الآن، وجديرة بالمبادلة قبل أن ينادي أحد.</string>
+
+
+    <string name="teach_heading">تعلّم اللعبة</string>
+    <string name="teach_finished_title">هذه هي اللعبة كاملة</string>
+    <string name="teach_finished_body">كل يد مكشوفة والجولة محتسَبة. كل قاعدة صادفتها هنا هي قاعدة تُلعب بها اللعبة الحقيقية — لا نسخة تدريبية منها.</string>
+    <string name="teach_watching">راقب ما يأخذونه، وما يعيدون وضعه.</string>
+    <string name="teach_go_on">تابع</string>
+    <string name="teach_done">تم</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">الآن</string>
+    <string name="help_the_cards">البطاقات</string>
+    <string name="help_signals">ما تخبرك به الطاولة</string>
+    <string name="help_group_numbers">الأرقام — بقيمتها كما تقول، ولا شيء غير ذلك</string>
+    <string name="help_group_lookers">الناظرات — تشتري لك بطاقة تتذكّرها</string>
+    <string name="help_group_movers">المحرّكات — تضع بطاقة في مكان آخر</string>
+    <string name="help_group_odd">الغريبتان</string>
+    <string name="help_no_action">لا فعل لها.</string>
+    <string name="help_card_worth">%1$s — بقيمة %2$d</string>
+    <string name="help_closing">كل بطاقة في اليد تُحسب ضدك، فالمجموع الأقل يفوز. نادِ بـ Vinto حين تعتقد أن يدك هي الأقل — يلعب الجميع بعدها دورًا أخيرًا واحدًا معًا، وتُقارن أفضل يد بينهم بيدك فقط.</string>
+    <string name="stats_played">%1$d جولة لُعبت</string>
+    <string name="stats_won">%1$d%% فوز</string>
+    <string name="stats_best">أفضل %1$d</string>
+    <string name="stats_streak">%1$d متتالية</string>
+    <string name="stats_row">سجلّك: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <!-- The lesson's chapters, one progress dot each. -->
+    <string name="chapter_table">الطاولة</string>
+    <string name="chapter_peek">نظرتاك</string>
+    <string name="chapter_draw">أخذ بطاقة</string>
+    <string name="chapter_keep">الاحتفاظ أو الرمي</string>
+    <string name="chapter_declare">تسمية رتبة</string>
+    <string name="chapter_actions">ما تفعله البطاقات</string>
+    <string name="chapter_toss">الرمي المطابق</string>
+    <string name="chapter_vinto">مناداة Vinto</string>
+    <string name="chapter_score">الاحتساب</string>
+    <string name="chapter_covered">%1$s — مكتمل</string>
+    <string name="chapter_to_come">%1$s — لم يُغطَّ بعد</string>
+    <string name="intro_part_covered">الجزء %1$d من %2$d — مقروء</string>
+    <string name="intro_part_to_come">الجزء %1$d من %2$d — لم يُقرأ بعد</string>
+
+    <!-- What the "?" explains. -->
+    <string name="explains_card_plain">%1$s. قيمتها %2$d. لا فعل لها، لذا يمكنها فقط الذهاب إلى يدك أو إلى الكومة.</string>
+    <string name="explains_card_action">%1$s. قيمتها %2$d. %3$s. %4$s</string>
+    <string name="explains_setup">انظر إلى بطاقتين من بطاقاتك وتذكّرهما — تنقلبان مجددًا حين تبدأ الجولة. كل ما يلي ذلك ذاكرة.</string>
+    <string name="explains_scoring">كل يد مكشوفة. المجموع الأقل يفوز بالجولة؛ اللاعب الذي نادى بـ Vinto يُحتسب في مقابل أفضل يد بين البقية.</string>
+    <string name="explains_toss_in">من يحمل بطاقة من الرتبة نفسها يمكنه رميها، فيتخلص منها مجانًا. أخطئ في الرتبة فتأخذ بطاقة عقوبة، ولا يمكنك الرمي مجددًا هذه الجولة.</string>
+    <string name="explains_final_round">تم النداء بـ Vinto. يلعب الجميع دورًا أخيرًا واحدًا كتحالف، وتُقارن أفضل يدهم فقط بيد المنادي.</string>
+    <string name="explains_turn">اسحب من المكدس، أو خذ أعلى كومة التخلص إن كانت بطاقة فعل لم يلعبها أحد. احتفظ بما يخفّض مجموعك؛ نادِ بـ Vinto حين تعتقد أن يدك هي الأقل.</string>
+
+    <!-- The smaller line under the prompt. -->
+    <string name="detail_card_does">%1$s، بقيمة %2$d: %3$s</string>
+    <string name="detail_king_declared">أعلن الملك عن %1$s: %2$s</string>
+    <string name="detail_tap_to_say">اضغط إحدى بطاقاتك لتقول ما تعتقد أنها هي.</string>
+    <string name="detail_table_talk">حديث الطاولة — يأخذ التحالف كلمتك بها، صحيحة كانت أو خاطئة.</string>
+    <string name="detail_right_plays">الصحيحة تلعب فعلها؛ الخاطئة تكلّفك بطاقة.</string>
+    <string name="detail_wrong_costs">الخاطئة تكلّفك بطاقة عقوبة.</string>
+    <string name="detail_barred_card">أخطأت في هذه البطاقة، فأنت خارج هذه النافذة. البطاقة التالية تمنحك فرصة جديدة.</string>
+    <string name="detail_barred">أخطأت، وفي الجولة الأخيرة يعني ذلك بقية الجولة كلها.</string>
+    <string name="detail_scored_against">%1$s نادى بـ Vinto، فاحتُسبت الجولة في مواجهة يده.</string>
+    <string name="detail_deck_ran_out">نفد المكدس، فانتهت الجولة واحتُسبت كل يد.</string>
+
+    <!-- The line above the buttons -->
+    <string name="ask_or"> أو </string>
+    <string name="ask_look_at_two_of_yours">انظر إلى بطاقتين من بطاقاتك</string>
+    <string name="ask_one_more_to_look_at">بطاقة أخرى للنظر إليها</string>
+    <string name="ask_ready">جاهز متى كنت جاهزًا</string>
+    <string name="ask_your_turn">دورك</string>
+    <string name="ask_you_drew">سحبت %1$s</string>
+    <string name="ask_you_drew_unknown">سحبت بطاقة</string>
+    <string name="ask_which_card_replaced">أي بطاقة تستبدلها؟</string>
+    <string name="ask_name_what_you_put_down">سمِّ البطاقة التي تضعها؟</string>
+    <string name="ask_what_do_you_say">ما رأيك في هذه البطاقة؟</string>
+    <string name="ask_say_and_play">قل ما هي، والعب فعل تلك البطاقة</string>
+    <string name="ask_look_at_one_of_yours">انظر إلى واحدة من بطاقاتك</string>
+    <string name="ask_look_at_one_of_theirs">انظر إلى بطاقة لاعب آخر</string>
+    <string name="ask_choose_any_card">اختر أي بطاقة</string>
+    <string name="ask_choose_two">اختر بطاقتين، من لاعبين مختلفين</string>
+    <string name="ask_look_at_two">انظر إلى بطاقتين، من لاعبين مختلفين</string>
+    <string name="ask_swap_them">تبادلهما؟</string>
+    <string name="ask_remember_it">تذكّرها</string>
+    <string name="ask_who_draws">من يسحب بطاقة؟</string>
+    <string name="ask_card_waiting">%1$s في الانتظار</string>
+    <string name="ask_card_waiting_unknown">في الانتظار</string>
+    <string name="ask_toss_in">نزلت %1$s — هل ترمي مطابقًا؟</string>
+    <string name="ask_toss_in_barred">نزلت %1$s</string>
+    <string name="ask_waiting_for_others">في انتظار البقية</string>
+    <string name="ask_watching">مراقبة</string>
+    <string name="ask_somebody_playing">%1$s يلعب الآن</string>
+    <string name="ask_you_playing">أنت تلعب الآن</string>
+    <string name="ask_who_plays_for_you">%1$s نادى بـ Vinto. من يلعب نيابة عن البقية منكم؟</string>
+    <string name="ask_round_over">انتهت الجولة</string>
+    <string name="ask_round_over_lowest">انتهت الجولة — أنهيت بأقل نتيجة عند %1$d</string>
+    <string name="ask_round_over_not_lowest">انتهت الجولة — أنهيت عند %1$d، وكان الأفضل %2$d</string>
+
+    <!-- The buttons on the table. -->
+    <string name="choice_back">رجوع</string>
+    <string name="choice_start_round">ابدأ الجولة</string>
+    <string name="choice_draw_card">اسحب بطاقة</string>
+    <string name="choice_use_from_pile">استخدم %1$s</string>
+    <string name="choice_use_action">استخدم الفعل</string>
+    <string name="choice_swap_cards">بادل البطاقات</string>
+    <string name="choice_discard">تخلّص</string>
+    <string name="choice_just_swap">بادل فقط</string>
+    <string name="choice_put_it_down">ضعها</string>
+    <string name="choice_leave_them">اتركهما</string>
+    <string name="choice_continue">متابعة</string>
+    <string name="choice_call_vinto">نادِ بـ Vinto</string>
+    <string name="choice_done">تم</string>
+
+    <!-- The move log. -->
+    <string name="log_you">أنت</string>
+    <string name="log_drew_known">سحبت %1$s</string>
+    <string name="log_drew_known_they">%1$s سحب %2$s</string>
+    <string name="log_draw_you">تسحب بطاقة</string>
+    <string name="log_draw_they">%1$s يسحب بطاقة</string>
+    <string name="log_took">%1$s أخذ %2$s</string>
+    <string name="log_took_unknown">%1$s أخذ البطاقة العليا</string>
+    <string name="log_swap_you">تبادل البطاقة %1$d</string>
+    <string name="log_swap_they">%1$s يبادل البطاقة %2$d</string>
+    <string name="log_swap_dropping_you">تبادل البطاقة %1$d، وتُسقط %2$s</string>
+    <string name="log_swap_dropping_they">%1$s يبادل البطاقة %2$d، ويُسقط %3$s</string>
+    <string name="log_throw_you">ترمي %1$s</string>
+    <string name="log_throw_they">%1$s يرمي %2$s</string>
+    <string name="log_throw_unknown_you">ترمي البطاقة</string>
+    <string name="log_throw_unknown_they">%1$s يرمي البطاقة</string>
+    <string name="log_play_you">تلعب %1$s</string>
+    <string name="log_play_they">%1$s يلعب %2$s</string>
+    <string name="log_play_unknown_you">تلعب البطاقة</string>
+    <string name="log_play_unknown_they">%1$s يلعب البطاقة</string>
+    <string name="log_tossed_in">%1$s رمى %2$s</string>
+    <string name="log_tossed_in_unknown">%1$s رمى بطاقة</string>
+    <string name="log_toss_in_missed">%1$s رمى %2$s — خطأ، وكلّفه بطاقة عقوبة</string>
+    <string name="log_toss_in_missed_unknown">%1$s رمى البطاقة الخاطئة — بطاقة عقوبة</string>
+    <string name="log_called_vinto">%1$s نادى بـ Vinto</string>
+    <string name="log_swapped_two">%1$s بادل بطاقتين</string>
+    <string name="log_swapped_two_named">%1$s بادل %2$s بـ %3$s</string>
+    <string name="log_left_alone">%1$s تركهما</string>
+    <string name="log_declared">%1$s أعلن %2$s</string>
+    <string name="log_made_draw_you">جعلت %1$s يسحب بطاقة</string>
+    <string name="log_made_you_draw">%1$s جعلك تسحب بطاقة</string>
+    <string name="log_made_draw_they">%1$s جعل %2$s يسحب بطاقة</string>
+    <string name="log_round_begins">تبدأ الجولة</string>
+
+    <string name="help_counts_title">ما يحصيه هذا التطبيق</string>
+    <string name="help_counts_body">إحصاءات مجهولة فقط: كم جولة تُلعب، وإلى أين يصل اللاعبون، وهل توقفت طاولة، وكم تكلّف الغرفة لتشغيلها. لا اسمك أبدًا، ولا رمز غرفتك، ولا محتوى يدك، ولا أي شيء قد يُعاد تتبّعه إليك أو إلى جهازك — فلا مكان فيما يُرسَل لوضع ذلك. يمكن إيقافه من الإعدادات، والمتصفح الذي يطلب عدم التتبع يوقفه تلقائيًا لك.</string>
+
+    <string name="signal_turn">حلقة خضراء على مقعد</string>
+    <string name="signal_turn_meaning">دور من يلعب الآن. تومض عند وصول الدور، لأن ثلاثة روبوتات قد تلعب أدوارها بين لمسة وأخرى.</string>
+    <string name="signal_vinto">حلقة ذهبية</string>
+    <string name="signal_vinto_meaning">نادى ذلك اللاعب بـ Vinto. لا يمكن لأحد لمس بطاقاته لبقية الجولة.</string>
+    <string name="signal_penalty">حلقة حمراء، ويد ترتعش</string>
+    <string name="signal_penalty_meaning">بطاقة عقوبة نزلت هناك للتو — تخمين خاطئ، أو رمي مطابق خاطئ.</string>
+    <string name="signal_coalition">حلقة زرقاء</string>
+    <string name="signal_coalition_meaning">التحالف: الجميع باستثناء منادي Vinto، يلعبون دورهم الأخير معًا في مواجهة تلك اليد الواحدة.</string>
+    <string name="signal_live">حلقة ذهبية على كومة التخلص</string>
+    <string name="signal_live_meaning">وُضعت تلك البطاقة دون استخدام فعلها، فيمكن للاعب التالي أخذها ولعبها بدلًا من السحب. البطاقة التي *لُعب* فعلها لا حلقة لها.</string>
+    <string name="signal_tappable">بطاقة تنبض</string>
+    <string name="signal_tappable_meaning">يمكن لمسها الآن. إن لم تنبض بطاقة، فالطاولة في انتظار شخص آخر.</string>
+    <string name="signal_reshuffle">بطاقات تعود إلى المكدس</string>
+    <string name="signal_reshuffle_meaning">نفد المكدس، فخُلطت الكومة من جديد فيه. كل ما تعلّمه أي أحد من مراقبة تلك الكومة أصبح الآن قديمًا.</string>
+    <string name="signal_peek">بطاقة ترتفع نحو المنتصف</string>
+    <string name="signal_peek_meaning">أحدهم ينظر إليها. يرى الجميع *أي* بطاقة نُظر إليها — فقط اللاعب المخوّل يرى وجهها.</string>
+
+
+    <!-- The cards, in words. -->
+    <string name="card_name_two">اثنان</string>
+    <string name="card_name_three">ثلاثة</string>
+    <string name="card_name_four">أربعة</string>
+    <string name="card_name_five">خمسة</string>
+    <string name="card_name_six">ستة</string>
+    <string name="card_name_seven">سبعة</string>
+    <string name="card_name_eight">ثمانية</string>
+    <string name="card_name_nine">تسعة</string>
+    <string name="card_name_ten">عشرة</string>
+    <string name="card_name_jack">الولد</string>
+    <string name="card_name_queen">الملكة</string>
+    <string name="card_name_king">الملك</string>
+    <string name="card_name_ace">الآص</string>
+    <string name="card_name_joker">الجوكر</string>
+
+    <string name="card_long_seven">انظر إلى واحدة من بطاقاتك الخاصة</string>
+    <string name="card_long_eight">انظر إلى واحدة من بطاقاتك الخاصة</string>
+    <string name="card_long_nine">انظر إلى بطاقة لاعب آخر</string>
+    <string name="card_long_ten">انظر إلى بطاقة لاعب آخر</string>
+    <string name="card_long_jack">بادل أي بطاقتين مقلوبتين من لاعبين مختلفين</string>
+    <string name="card_long_queen">انظر إلى أي بطاقتين من لاعبين مختلفين، ثم بادلهما اختياريًا</string>
+    <string name="card_long_king">أعلن فعل بطاقة أخرى من أي لاعب (7-آص)</string>
+    <string name="card_long_ace">أجبر خصمًا على سحب بطاقة عقوبة</string>
+
+    <string name="card_help_two">بطاقة رقمية بقيمة 2</string>
+    <string name="card_help_three">بطاقة رقمية بقيمة 3</string>
+    <string name="card_help_four">بطاقة رقمية بقيمة 4</string>
+    <string name="card_help_five">بطاقة رقمية بقيمة 5</string>
+    <string name="card_help_six">بطاقة رقمية بقيمة 6</string>
+    <string name="card_help_seven">اضغط إحدى بطاقاتك لكشفها مؤقتًا وحفظ قيمتها في ذاكرتك. يمكنك تخطي هذا الفعل إن أردت.</string>
+    <string name="card_help_eight">اضغط إحدى بطاقاتك لكشفها مؤقتًا وحفظ قيمتها في ذاكرتك. يمكنك تخطي هذا الفعل إن أردت.</string>
+    <string name="card_help_nine">اضغط بطاقة خصم لكشفها مؤقتًا ورؤية قيمتها. يمكنك تخطي هذا الفعل إن أردت.</string>
+    <string name="card_help_ten">اضغط بطاقة خصم لكشفها مؤقتًا ورؤية قيمتها. يمكنك تخطي هذا الفعل إن أردت.</string>
+    <string name="card_help_jack">اختر بطاقتين من لاعبين مختلفين لتبديل مكانيهما - يمكنك تضمين بطاقاتك الخاصة أو الاقتصار على الخصوم. لا يمكنك اختيار بطاقتين من اللاعب نفسه. يمكنك إعادة ضبط اختيارك أو تخطي هذا الفعل.</string>
+    <string name="card_help_queen">1. انظر إلى بطاقتين من لاعبين مختلفين (يمكن أن تكونا بطاقتيك أو بطاقتي خصمين، لكن يجب أن تكونا من لاعبين مختلفين)\n2. بعد النظر إلى البطاقتين، قرّر ما إذا كنت ستبادل بينهما</string>
+    <string name="card_help_king">اختر أي فعل بطاقة تنفّذه: 7 (انظر إلى بطاقتك)، 8 (انظر إلى بطاقتك)، 9/10 (انظر إلى بطاقة خصم)، الولد (بادل)، الملكة (انظر وبادل)، الآص (أجبر على السحب). يمكنك أيضًا إعلان بطاقات بلا فعل (2-6، الملك، الجوكر).</string>
+    <string name="card_help_ace">اختر خصمًا لإجباره على سحب بطاقة عقوبة من المكدس. هذا يزيد حجم يده ومجموع بطاقاته. يمكنك تخطي هذا الفعل إن أردت.</string>
+    <string name="card_help_joker">جوكر بقيمة -1</string>
+</resources>

@@ -438,14 +438,17 @@ fun detailed(detail: Detail): String = when (detail) {
     // aimed, so "Peek at any two cards" would arrive with no card attached to it. Deliberately
     // the same shape as `rail_card_action`, which is the version drawn *beside* a card, so the
     // sentence does not change when the picture comes and goes.
-    is Detail.WhatTheCardDoes -> with(getCardConfig(detail.rank)) {
-        stringResource(Res.string.detail_card_does, name, value, longDescription)
-    }
+    is Detail.WhatTheCardDoes -> stringResource(
+        Res.string.detail_card_does,
+        cardName(detail.rank),
+        getCardConfig(detail.rank).value,
+        cardLong(detail.rank),
+    )
 
     is Detail.KingDeclared -> stringResource(
         Res.string.detail_king_declared,
         detail.rank.serialName,
-        getCardConfig(detail.rank).longDescription,
+        cardLong(detail.rank),
     )
 
     Detail.TapACardToSayWhatItIs -> stringResource(Res.string.detail_tap_to_say)
@@ -475,14 +478,14 @@ fun explained(explains: Explains): String = when (explains) {
     is Explains.TheCardInPlay -> {
         val config = getCardConfig(explains.rank)
         if (config.action == null) {
-            stringResource(Res.string.explains_card_plain, config.name, config.value)
+            stringResource(Res.string.explains_card_plain, cardName(explains.rank), config.value)
         } else {
             stringResource(
                 Res.string.explains_card_action,
-                config.name,
+                cardName(explains.rank),
                 config.value,
-                config.longDescription,
-                config.helpText,
+                cardLong(explains.rank),
+                cardHelp(explains.rank),
             )
         }
     }
@@ -537,7 +540,7 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     is Teaches.FinalPlay -> stringResource(
         Res.string.beat_final_play_title,
         speakerName(teaches.who),
-        getCardConfig(teaches.rank).name,
+        cardName(teaches.rank),
     )
     Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_title)
     Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_title)
@@ -558,12 +561,11 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     // 9 — Peek at one card of another player" — which is how a learner meets the cards the
     // round never puts in their hand. A bot merely deciding has no heading.
     is Teaches.Watching -> teaches.playing?.let { rank ->
-        val config = getCardConfig(rank)
         stringResource(
             Res.string.beat_watching_title,
             speakerName(teaches.who ?: Speaker.Nobody),
-            config.name,
-            config.longDescription,
+            cardName(rank),
+            cardLong(rank),
         )
     }
 
@@ -662,21 +664,17 @@ fun glossed(gloss: Gloss): String = when (gloss) {
 /**
  * A card met for the first time, said in the game's own words.
  *
- * The words are `CARD_CONFIGS` — the same copy the help sheet and the web app show, so the
- * lesson cannot teach a rule the rest of the game does not have. What moved here is the
- * *frame* around them, which is a sentence and was being built in a module with no resources.
+ * The words are `CardWords` — the same copy the help sheet shows, so the lesson cannot teach a
+ * rule the rest of the game does not have. They used to be `CARD_CONFIGS` directly, which is
+ * why a translated frame kept arriving around English nouns.
  */
 @Composable
 fun noteOn(rank: Rank): String {
-    val config = getCardConfig(rank)
-    return if (config.longDescription.isEmpty()) {
-        stringResource(Res.string.teach_note_plain, config.name, config.value.toString())
+    val value = getCardConfig(rank).value.toString()
+    val long = cardLong(rank)
+    return if (long.isEmpty()) {
+        stringResource(Res.string.teach_note_plain, cardName(rank), value)
     } else {
-        stringResource(
-            Res.string.teach_note,
-            config.name,
-            config.value.toString(),
-            config.longDescription,
-        )
+        stringResource(Res.string.teach_note, cardName(rank), value, long)
     }
 }

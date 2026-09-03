@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en-GB</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleDisplayName</key>
+    <string>Vinto</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <!-- Both come from the project's own build settings (project.yml), so the version a person
+         reads in the App Store and the version the build calls itself cannot drift apart. -->
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+
+    <!-- FREE TO ROTATE, on both device families, and that matches Android rather than merely
+         resembling it: `AndroidManifest.xml` dropped its portrait lock for the same reason, and
+         cites the same code. The table has a real landscape arrangement — the control rail
+         stands beside the felt instead of under it (`TableLayout` in `CardScale.kt`) — so a
+         turned device gets a layout that was designed, not a stretched one.
+
+         Upside-down is iPad-only. A phone held upside down puts the earpiece at the bottom and
+         is almost always an accident; a tablet has no wrong way up. -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- Required by Compose Multiplatform's PlistSanityCheck: without it the framework runs the
+         UI at 60 Hz on a 120 Hz phone, and the animation layer is the thing that would show it. -->
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+
+    <!-- INVITATIONS, the custom-scheme half.
+         `vinto://7KQ2MP` is what `iOSApp.swift`'s `onOpenURL` receives, and registering it here is
+         what makes that callback ever fire — the Swift was written before this file existed, so
+         until now the scheme half of invitations was dead code on iOS.
+
+         It is the belt to the Universal Link's braces. The https form is better (it opens the app
+         *and* falls back to the website for somebody who has not installed it) but it cannot work
+         until vinto.kupalinka.app/.well-known/apple-app-site-association is published against this
+         team and bundle id. This one needs no hosted file and works today.
+
+         The Android counterpart is the `android:scheme="vinto"` intent filter. -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>app.kupalinka.vinto.invite</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>vinto</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Export compliance, answered here so App Store Connect stops asking on every upload.
+         Vinto implements no cryptography of its own: the room socket, the two beacons and Sentry
+         all go over the operating system's own TLS, which is exempt under the EAR. This is the
+         same answer `vydanne.config.mjs` files as `export.encryption: 'exempt'`, and the two must
+         agree — a `true` here with an `exempt` there is a contradiction somebody has to unpick
+         mid-review. -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+</dict>
+</plist>

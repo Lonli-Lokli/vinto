@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "JNHFD8PCM8.app.kupalinka.vinto"
+        ],
+        "components": [
+          {
+            "/": "/r/*",
+            "comment": "a room invitation"
+          }
+        ]
+      }
+    ]
+  }
+}

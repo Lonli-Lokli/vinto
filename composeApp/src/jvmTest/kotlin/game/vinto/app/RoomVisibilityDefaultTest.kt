@@ -8,7 +8,6 @@ import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
@@ -40,10 +39,6 @@ class RoomVisibilityDefaultTest {
         waitForIdle()
 
         press("Play online")
-        waitForIdle()
-        // A name is required before the three ways in are live, so type one. That gate is the
-        // point of `OnlineNameRequiredTest`; here it is only the door to everything past it.
-        onNodeWithContentDescription("Your name at the table").performTextInput("Ada")
         waitForIdle()
 
         // The choice lives on the path that creates a room now, and nowhere else. It used to

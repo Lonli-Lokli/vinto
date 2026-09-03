@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- FERN — teal, a leaf. Seat zero: the offline human's own plate, and the first bot a room
+       fills. Teal rather than the brand green because this disc is drawn ON the felt, and
+       #1B5E43 on #1B5E43 has no edge. -->
+  <!-- The disc, the deck's ink ring, and the court cards' gold hairline just inside it.
+       Circles are arc paths because a vector drawable has no <circle> element. -->
+  <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#17766B" stroke="#14181B" stroke-width="20"/>
+  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
+  <!-- The blade, and a midrib cut back out of it in the seat's own colour. The midrib is not
+       decoration: without it this silhouette is a pointed oval, which at 44 dp is the same
+       shape as the flame next to it. -->
+  <path d="M512 258 C696 396 696 628 512 766 C328 628 328 396 512 258 Z" fill="#F7F5EF"/>
+  <path d="M512 300 L512 724" fill="none" stroke="#17766B" stroke-width="26" stroke-linecap="round"/>
+</svg>

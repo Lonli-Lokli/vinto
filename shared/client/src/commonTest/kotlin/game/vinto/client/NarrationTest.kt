@@ -112,19 +112,19 @@ class NarrationTest {
         // grammar, because it does not attempt any.
         val said: List<Say> = listOf(
             Say.DrewKnown(Speaker.You, Rank.SEVEN),
-            Say.Drew(Speaker.Named("Raph")),
+            Say.Drew(Speaker.Named("Ember")),
             Say.Took(Speaker.You, Rank.QUEEN),
             Say.Took(Speaker.You, null),
             Say.Swapped(Speaker.You, slot = 3, dropped = Rank.KING),
-            Say.Swapped(Speaker.Named("Mikey"), slot = 1, dropped = null),
+            Say.Swapped(Speaker.Named("Sky"), slot = 1, dropped = null),
             Say.ThrewAway(Speaker.You, Rank.ACE),
-            Say.Played(Speaker.Named("Don"), Rank.JACK),
-            Say.TossedIn(Speaker.Named("Leo"), Rank.SIX),
+            Say.Played(Speaker.Named("Dune"), Rank.JACK),
+            Say.TossedIn(Speaker.Named("Fern"), Rank.SIX),
             Say.CalledVinto(Speaker.You),
             Say.SwappedTwo(Speaker.You),
             Say.LeftThemAlone(Speaker.You),
             Say.DeclaredRank(Speaker.You, Rank.KING),
-            Say.MadeDraw(Speaker.You, Speaker.Named("Don")),
+            Say.MadeDraw(Speaker.You, Speaker.Named("Dune")),
             Say.RoundBegins,
         )
 

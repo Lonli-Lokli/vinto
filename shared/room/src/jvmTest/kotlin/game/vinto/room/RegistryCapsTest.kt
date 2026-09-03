@@ -167,13 +167,18 @@ class RegistryCapsTest {
     }
 
     @Test
-    fun aHostsNameIsCleanedBeforeStrangersSeeIt() {
-        val minted = mint(newRegistry(), "1,2,3,4,5,6", source = "a", public = true, host = "  <b>Ada</b>   Lovelace  ")
-        assertEquals("bAdab Lovelace", minted.room?.hostNickname)
+    fun onlyAHostNameFromTheSharedVocabularyReachesTheList() {
+        val real = mint(newRegistry(), "1,2,3,4,5,6", source = "a", public = true, host = "Quiet Heron")
+        assertEquals("Quiet Heron", real.room?.hostNickname, "a minted name is kept")
 
-        val nameless = mint(newRegistry(), "1,2,3,4,5,6", source = "a", public = true, host = "!!!")
-        assertNull(nameless.room?.hostNickname, "a host with nothing displayable is no host, not 'Player 1'")
-        assertNull(listed(encodeRegistry(nameless.state), NOW).single().hostNickname)
+        // The public list is the one place a stranger reads a name without having joined
+        // anything, so it is the place typed text must not reach. Filtering characters was the
+        // old rule and never had an opinion about words; the vocabulary does.
+        listOf("  <b>Ada</b>   Lovelace  ", "!!!", "Ada", "quiet heron").forEach { host ->
+            val sent = mint(newRegistry(), "1,2,3,4,5,6", source = "a", public = true, host = host)
+            assertNull(sent.room?.hostNickname, "'$host' reached the public list")
+            assertNull(listed(encodeRegistry(sent.state), NOW).single().hostNickname)
+        }
     }
 
     // ------------------------------------------------------------------ plumbing

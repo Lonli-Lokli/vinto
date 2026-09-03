@@ -23,7 +23,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -115,7 +114,7 @@ class ScreenContrastTest {
             press("Back")
 
             press("Play online")
-            onNodeWithContentDescription("Your name at the table").performTextInput("Ada")
+            // Nothing to type: the name is minted, so the screen is fully drawn on arrival.
             waitForIdle()
             found += unreadableHere("the front door of online play")
 
@@ -475,13 +474,13 @@ class ScreenContrastTest {
 
         val SEATS = listOf(
             "p1" to "You",
-            "p2" to "Raphael",
-            "p3" to "Michelangelo",
-            "p4" to "Donatello",
+            "p2" to "Ember",
+            "p3" to "Sky",
+            "p4" to "Dune",
         )
 
         val OPEN_TABLES = listOf(
-            PublicRoom(code = "ABC234", hostNickname = "Raphael", humans = 2, seatsFilled = 3),
+            PublicRoom(code = "ABC234", hostNickname = "Ember", humans = 2, seatsFilled = 3),
             PublicRoom(code = "DEF567", hostNickname = null, humans = 1, seatsFilled = 4),
         )
     }

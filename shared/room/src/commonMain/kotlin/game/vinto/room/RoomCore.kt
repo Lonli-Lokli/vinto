@@ -16,6 +16,8 @@ import game.vinto.protocol.LoggedAction
 import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
+import game.vinto.protocol.looksMinted
+import game.vinto.protocol.mintNickname
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -71,14 +73,19 @@ private const val SEAT_COUNT = 4
  * What a bot is called at a networked table, by the seat it fills.
  *
  * They were "Bot 2" and "Bot 3", which is a slot number rather than an opponent, and it sat
- * next to real people's names. The four are the deck's own cast — the same three the offline
- * game deals, plus **Leonardo**, who never appears there because offline seat zero is the
- * human. Online it can be a bot, so he is in the list for exactly that case.
+ * next to real people's names. The four are the same three the offline game deals, plus
+ * **Fern**, who never appears there because offline seat zero is the human. Online it can be a
+ * bot, so it is in the list for exactly that case.
  *
- * By seat rather than in order taken, so the same seat is the same character every time and
- * two bots can never collide on a name. `portraitFor` in the client matches on these.
+ * Each name is the emblem on its seat's portrait — a leaf, a flame, a crescent, a ridge
+ * (`brand/avatars/`). That is not decoration: the portraits have to be told apart without
+ * colour (`vydanne.config.mjs` claims as much to Apple), and a name that says which shape it
+ * is makes the picture and the label agree instead of competing.
+ *
+ * By seat rather than in order taken, so the same seat is the same opponent every time and two
+ * bots can never collide on a name. `portraitFor` in the client matches on these exactly.
  */
-private val BOT_NAMES = listOf("Leo", "Raph", "Mikey", "Don")
+private val BOT_NAMES = listOf("Fern", "Ember", "Sky", "Dune")
 
 internal fun botName(seatIndex: Int): String =
     BOT_NAMES.getOrElse(seatIndex) { "Bot ${seatIndex + 1}" }
@@ -212,32 +219,34 @@ private const val NO_SEAT_FOR_TOKEN = "no seat holds that token"
 // owns how they are produced.
 
 /**
- * Trims a nickname to something displayable, or gives it a name.
+ * The name a seat is shown under, which must be one the shared vocabulary can mint.
  *
- * 1–16 characters after collapsing whitespace, letters, digits, spaces and a little
- * punctuation. Not unique, and not meant to be — two players may both be "Bob", and the view
+ * Not unique, and not meant to be — two players may both draw "Quiet Heron", and the view
  * distinguishes them by seat. Rejecting duplicates would be a worse experience than the
  * ambiguity, and would leak who is already in a room.
+ *
+ * **Anything else is replaced rather than refused**, and deliberately so. A seat must be called
+ * something; failing the join would turn a rejected name into a player who cannot sit down, and
+ * the honest thing to do with a string this room will not display is to display a different one.
+ * The seed is the seat index, so the substitute is stable for the seat rather than random.
  */
 internal fun sanitiseNickname(raw: String, seatIndex: Int): String =
-    cleanNickname(raw).ifEmpty { "Player ${seatIndex + 1}" }
+    if (looksMinted(raw)) raw else mintNickname(seatIndex.toLong())
 
 /**
  * The same rule without the fallback, for the places where "no name" is a legitimate answer.
  *
- * A seat must be called something, so [sanitiseNickname] names an unnamed one after its
- * index. A room's host need not be: the public list simply shows no host. Splitting the two
- * is what lets the registry apply one rule rather than inventing a second — and it must apply
- * one, because a nickname posted to `/rooms` is displayed to strangers who never agreed to
- * read whatever length of whatever characters somebody sent.
+ * A seat must be called something, so [sanitiseNickname] mints a substitute. A room's host need
+ * not be: the public list simply shows no host, which is a better answer than inventing one for
+ * a row strangers read.
+ *
+ * **This is the check that makes "the app has no text field" true of the SERVICE.** The client
+ * mints names and never lets anybody type one, but the room's door is open to anything that
+ * speaks the protocol — so without this, a modified client could put arbitrary text on every
+ * other player's screen and in the public `/rooms` list. Filtering characters, which is what
+ * this used to do, would not help: the objectionable nicknames are made of ordinary letters.
  */
-internal fun cleanNickname(raw: String): String {
-    val collapsed = raw.trim().replace(Regex("\\s+"), " ")
-    val allowed = collapsed.filter { it.isLetterOrDigit() || it == ' ' || it in "-_.'" }
-    return allowed.take(MAX_NICKNAME_LENGTH).trim()
-}
-
-private const val MAX_NICKNAME_LENGTH = 16
+internal fun cleanNickname(raw: String): String = if (looksMinted(raw)) raw else ""
 
 /**
  * A session: several rounds, one clock, cumulative points.

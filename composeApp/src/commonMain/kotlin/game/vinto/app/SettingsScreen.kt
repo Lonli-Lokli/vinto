@@ -64,6 +64,8 @@ import game.vinto.app.art.settings_pace
 import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_privacy
 import game.vinto.app.art.settings_privacy_detail
+import game.vinto.app.art.settings_rate
+import game.vinto.app.art.settings_rate_detail
 import game.vinto.app.art.settings_record
 import game.vinto.app.art.settings_record_detail
 import game.vinto.app.art.settings_saved_game
@@ -458,10 +460,13 @@ private fun toneFor(chosen: Boolean): ButtonTone =
 /**
  * The pages that belong to the game but are not in it, and a way to pass it on.
  *
- * **No "rate this app".** There is no store listing to send anybody to — 9.10 has not shipped
- * — and a review button that opens nothing is worse than an absent one: it reads as the app
- * being broken by the person most inclined to say so publicly. It belongs here the day there
- * is a listing and not before.
+ * **"Rate this game" is here, and its links point at listings that are not live yet.** That
+ * reverses an earlier decision recorded in this file, which said a review button opening
+ * nothing reads as the app being broken. The reasoning was sound and the arithmetic was wrong:
+ * adding two constants later costs a whole review cycle on each store, while the window in which
+ * the links are dead is one in which the only people who can press them are TestFlight and Play
+ * internal testers — who know what they are testing. Each link heals itself the moment its store
+ * approves, with no build. `storeReviewUrl()` picks the right one per platform.
  *
  * **No language selector either**, for the same shape of reason: the only translation that
  * exists is `values/`. WORDS.md §6h made adding one a file and no code, and no file has been added, so
@@ -505,6 +510,16 @@ private fun About() {
         title = stringResource(Res.string.settings_studio),
         detail = stringResource(Res.string.settings_studio_detail),
         url = Pages.THIS_APP,
+        onFailed = { failed.value = it },
+    )
+
+    // Ask for the review from the store the player actually got the game from — and on the web
+    // and the desktop, where there is no such store, from the app's own page. Never hidden: a
+    // control that exists on two platforms and not the other two is read as a fault.
+    LinkRow(
+        title = stringResource(Res.string.settings_rate),
+        detail = stringResource(Res.string.settings_rate_detail),
+        url = storeReviewUrl(),
         onFailed = { failed.value = it },
     )
 

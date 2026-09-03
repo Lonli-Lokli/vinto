@@ -84,7 +84,8 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
     CountRefusals(holder.refusal)
 
     val help = remember { HelpState() }
-    var scoreOpen by remember(round) { mutableStateOf(false) }
+    // Open already if this screen arrived at a round that is ALREADY over — see [scoreOpensItself].
+    var scoreOpen by remember(round) { mutableStateOf(game.result != null) }
     val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
     var deckOpen by remember { mutableStateOf(false) }
@@ -221,6 +222,18 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
  * frame recomposes this for its own reasons, finds both conditions true, and the sheet
  * appears a beat late looking like pacing. On a table that has stopped — every card
  * landed, nothing queued — there is no next frame, and the button is simply dead.
+ */
+
+/**
+ * Why `scoreOpen` starts open on an already-finished round.
+ *
+ * In normal play it is always false at first composition — the round is in progress — and
+ * `remember(round)` does not re-run when it ends, so the player still presses "See the score" and
+ * nothing about that changes.
+ *
+ * The case it does change is a screen that ARRIVES at a finished round: resuming one, or the
+ * store-capture handle asking for `MarketingScene.SCORE`. Hiding the result behind a button there
+ * is asking somebody to press for the only thing the screen has to say.
  */
 @Composable
 private fun SoloScore(

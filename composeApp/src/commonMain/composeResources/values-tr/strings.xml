@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- The name of the game. Not translated: it is what the game is called. -->
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">Karılıyor…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">Az tut. Çok bil.</string>
+    <!-- `%1$s` is the bot difficulty, which is chosen in Settings and only shown here. -->
+    <string name="home_solo_title">Tek kişilik · üç bot · %1$s</string>
+    <string name="home_continue">Devam et</string>
+    <string name="home_new_game">Yeni oyun</string>
+    <string name="home_play">Oyna</string>
+    <string name="home_online">Çevrimiçi oyna</string>
+    <string name="home_teach">Nasıl oynanır</string>
+    <string name="home_settings">Ayarlar</string>
+    <string name="home_version">s%1$s</string>
+    <!-- The credit under the wordmark, on the first screen of every client. -->
+    <string name="home_unofficial">VINTO kart oyunu için resmi olmayan bir uygulama. Orijinali vinto.game adresinde</string>
+    <string name="home_unofficial_action">Kart oyununun resmi adresi vinto.game'i aç</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">Çevrimiçi oyna</string>
+    <string name="online_nickname">Masadaki adın</string>
+    <string name="online_nickname_detail">Diğer koltukların gördüğü şey. Farklı biri için dokun. Hesap değil — hiç yok.</string>
+    <string name="online_code">Oda kodu</string>
+    <string name="online_code_detail">Odayı açan kişiden aldığın altı karakter.</string>
+    <string name="online_join">Odaya katıl</string>
+    <string name="online_create">Yeni oda aç</string>
+    <string name="online_offline">Şu anda ağ yok. Çevrimiçi oyun için bağlantı gerekir; tek kişilik oyun ve ders her zamanki gibi çalışır.</string>
+    <string name="trouble_offline">Oda hizmetine bağlantı yok. Ağı kontrol edip yeniden dene.</string>
+    <string name="trouble_no_such_room">Bu kodla bir oda yok. Altı karakteri kontrol edip yeniden dene.</string>
+    <string name="trouble_closed">Çevrimiçi oyun henüz açık değil. Tek kişilik oyun ve ders her zamanki gibi çalışır.</string>
+    <string name="trouble_busy">O masa dolu. Başka bir masa dene, ya da kendi masanı aç.</string>
+    <string name="trouble_refused">Oda hizmeti bunu kabul etmedi.</string>
+    <string name="trouble_broken">Oda hizmetinde sorun var. Biraz sonra yeniden dene.</string>
+    <string name="online_creating">Oda açılıyor…</string>
+    <string name="online_visibility">Odayı kim bulabilir</string>
+    <string name="online_visibility_private">Yalnızca kodla</string>
+    <string name="online_visibility_public">Herkese açık listelenir</string>
+    <string name="online_visibility_detail">Listelenen bir oda göz atan herkese görünür. Özel bir oda ise yalnızca kodla erişilebilir.</string>
+    <string name="online_browse">Herkese açık odalara göz at</string>
+    <string name="online_open_detail">Dört koltuk, paylaşılacak bir kod ve gelmeyenler için botlar.</string>
+    <string name="online_join_detail">Odayı açan kişiden aldığın altı karakter.</string>
+    <string name="online_browse_detail">Sahiplerinin listelenmeyi seçtiği odalar. Herkes oturabilir.</string>
+    <string name="online_open_title">Oda aç</string>
+    <string name="online_join_title">Kodla katıl</string>
+    <string name="online_open_screen">Oda aç</string>
+    <string name="online_join_screen">Kodla katıl</string>
+    <string name="online_back">Geri</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">Herkese açık odalar</string>
+    <string name="discover_looking">Açık masalar aranıyor…</string>
+    <string name="discover_refresh">Yenile</string>
+    <string name="discover_quiet">Şu anda herkese açık oda yok. Bir oda aç, burada listelensin.</string>
+    <string name="discover_failed">Oda hizmetine ulaşılamadı: %1$s</string>
+    <string name="discover_retry">Yeniden dene</string>
+    <string name="discover_room_host">Masada %1$s</string>
+    <string name="discover_room_unnamed">Açık masa</string>
+    <string name="discover_seats">4 koltuktan %1$d dolu</string>
+    <string name="discover_people">%1$d kişi oynuyor</string>
+    <string name="discover_dealing">%1$d saniye içinde dağıtım</string>
+    <string name="discover_full">Dolu</string>
+    <string name="discover_join">Katıl</string>
+    <string name="discover_room_summary">Oda %1$s, 4 koltuktan %2$d dolu</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">Birini davet et</string>
+    <string name="invite_subject">Vinto oyunuma katıl</string>
+    <string name="invite_body">Vinto oyunuma katıl: %1$s\n\nYa da uygulamayı aç ve %2$s oda kodunu gir</string>
+    <string name="invite_share">Kodu paylaş</string>
+    <string name="invite_copy">Kodu kopyala</string>
+    <string name="invite_copied">Kopyalandı</string>
+    <string name="invite_read_it_out">Ya da sesli oku: altı karakter, içinde O ya da I yok.</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">Oda %1$s</string>
+    <string name="lobby_seat_open">Boş koltuk</string>
+    <string name="lobby_seat_you">%1$s — sen</string>
+    <string name="lobby_add_bot">Bot ekle</string>
+    <string name="lobby_remove_bot">%1$d. koltuktaki botu çıkar</string>
+    <string name="lobby_leave">Odadan ayrıl</string>
+    <string name="lobby_connecting">Odaya ulaşılıyor…</string>
+    <string name="lobby_needs_human">Bir oyun için iki kişi gerekir. Kodu paylaş — masanın geri kalanını botlar doldurabilir.</string>
+    <string name="lobby_fill_seats">Her koltuk oynar. Boşları insanlarla ya da botlarla doldur, dağıtım geri sayıma başlar.</string>
+    <string name="lobby_counting_down">Her şey hazır — %1$d saniye içinde dağıtım…</string>
+    <string name="lobby_offered_bots">Kimse gelmedi, boş koltukları botlar aldı — %1$d saniye içinde dağıtım…. Beklemeye devam etmek için birini çıkar.</string>
+    <string name="lobby_over">Oda kapandı.</string>
+    <string name="lobby_unreachable">O odaya ulaşılamadı. Kodu ya da bağlantını kontrol et.</string>
+    <string name="lobby_retry">Yeniden dene</string>
+    <string name="lobby_seat_working">Bu koltuk değiştiriliyor…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">Bağlandı</string>
+    <string name="net_connecting">Bağlanıyor…</string>
+    <string name="net_reconnecting">Yeniden bağlanıyor…</string>
+    <string name="net_closed">Bağlantı kesildi</string>
+    <string name="table_sending">Hamlen gönderiliyor…</string>
+    <string name="table_next_round_waiting">Diğerlerinin onayı bekleniyor…</string>
+    <string name="online_session_over">Oturum sona erdi: %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">Ayarlar</string>
+
+    <string name="settings_group_game">Oyun</string>
+    <string name="settings_group_feel">Görünüm ve his</string>
+    <string name="settings_language">Dil</string>
+    <string name="settings_language_detail">Henüz çevrilmedi mi? Oyun İngilizceye döner, ve bir kartın söylediği söz hiç değişmez.</string>
+    <string name="settings_language_device">Cihazı izle</string>
+    <string name="settings_language_current">Dil: %1$s</string>
+    <string name="settings_language_chosen">%1$s, seçildi</string>
+    <string name="settings_group_privacy">Bu cihazdan ne çıkar</string>
+    <string name="settings_group_about">Hakkında</string>
+
+    <string name="settings_privacy">Gizlilik</string>
+    <string name="settings_privacy_detail">Neyin sayıldığı, neyin sayılmadığı ve nasıl kapatılacağı.</string>
+    <string name="settings_terms">Kullanım koşulları</string>
+    <string name="settings_terms_detail">Senden ve senin için beklenenlerin kısa hâli.</string>
+    <string name="settings_contact">İletişime geç</string>
+    <string name="settings_contact_detail">Bir hata, bir fikir, ya da ters giden bir oyun.</string>
+    <string name="settings_original">Orijinal oyun</string>
+    <string name="settings_original_detail">VINTO başkasının kart oyunudur, bu ise onun için resmi olmayan bir uygulamadır. Oyun, kuralları ve onu yapanlar vinto.game adresinde.</string>
+    <string name="settings_studio">Bu uygulama hakkında</string>
+    <string name="settings_studio_detail">Bu uygulamayı kim yaptı, rafta başka ne var, ve nasıl bir araya geldi.</string>
+    <string name="settings_rate">Bu oyunu değerlendir</string>
+    <string name="settings_rate_detail">İndirdiğin mağazaya bir yorum bırak. Küçük bir oyunun bulunmasına yardım eden tek şey budur.</string>
+    <string name="settings_open">Aç</string>
+    <string name="settings_link_failed">Bu cihazda hiçbir şey bunu açmadı. Adres: %1$s</string>
+
+    <string name="settings_share">Birine söyle</string>
+    <string name="settings_share_detail">Oyunu bir arkadaşa gönder. Dört koltuk, üçü bot olabilir.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — az tutup çok bilme kart oyunu. Ücretsiz, tarayıcıda, üyelik gerekmez: %1$s</string>
+    <string name="settings_back">Geri</string>
+    <string name="settings_version">Vinto s%1$s</string>
+
+    <string name="settings_bots">Botlar</string>
+    <string name="settings_bots_detail">Üçünün hamlelerini ne kadar düşündüğü.</string>
+    <string name="difficulty_easy">Kolay</string>
+    <string name="difficulty_moderate">Orta</string>
+    <string name="difficulty_hard">Zor</string>
+
+    <string name="settings_pace">Tempo</string>
+    <string name="settings_pace_detail">Masanın olanları ne kadar hızlı oynadığı. Üç bot sıralarını bir dokunuşla bir sonraki arasında oynar, bu da onları izlemek için ne kadar süren olduğunu belirler.</string>
+    <string name="pace_calm">Sakin</string>
+    <string name="pace_steady">Ölçülü</string>
+    <string name="pace_brisk">Hızlı</string>
+
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_detail">Keçe her hâlükârda yeşil. Bu, onun etrafındaki her şey.</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+
+    <string name="settings_motion">Hareket</string>
+    <string name="settings_motion_detail">Kartların uçup uçmayacağı, ya da sadece yerlerinde belirmesi. Azaltılmışta her halka, sonuç ve duraklama kalır — oyun yine anlatılır, sadece hareket etmez. Sistem, cihazının erişilebilirlik ayarını izler.</string>
+    <string name="motion_system">Sistem</string>
+    <string name="motion_full">Tam</string>
+    <string name="motion_reduced">Azaltılmış</string>
+
+    <string name="settings_sound">Ses</string>
+    <string name="settings_sound_detail">Dağıtılan bir kart, düşen bir kart, bir ceza, turun bitişi — ve başka hiçbir şey.</string>
+    <string name="settings_haptics">Titreşim</string>
+    <string name="settings_haptics_detail">Bir kart dokunulduğunda, bir hamle sonuçlandığında, ya da bir kural işlediğinde parmağının altında küçük bir tık.</string>
+    <string name="settings_analytics">Anonim sayımlar</string>
+    <string name="settings_analytics_detail">Kaç tur oynandığı ve ne kadar sürdüğü. Asla adın, oda kodların, ya da seni işaret edebilecek hiçbir şey — gönderdiğimizde bunlar için yer yok. Bunu kapatmak hiçbir şey göndermez.</string>
+    <string name="settings_on">Açık</string>
+    <string name="settings_off">Kapalı</string>
+
+    <string name="settings_saved_game">Kayıtlı oyun</string>
+    <string name="settings_saved_game_detail">Devam eden bir tur var. Unutmak geri alınamaz, ve oturumun toplam skoru da onunla birlikte gider.</string>
+    <string name="settings_forget">Unut</string>
+    <string name="settings_record">Kayıtların</string>
+    <string name="settings_record_detail">Oynanan turlar, kaç tanesini kazandığın, en iyi elin ve serin. Yalnızca bu cihazda tutulur — hiçbir yere gönderilmez.</string>
+    <string name="settings_forget_record">Temizle</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">T%1$d / S%2$d</string>
+    <string name="table_draw">ÇEK</string>
+    <string name="table_discard">AT</string>
+    <string name="table_toss_in">Katıl</string>
+    <string name="table_toss_in_timed">Katıl · %1$ds</string>
+    <string name="toss_clock_moves_on">Masa %1$d sn içinde devam ediyor</string>
+    <string name="toss_more_time">Daha fazla süre</string>
+    <string name="table_toss_in_summary">Katılma penceresi, eşleşen: %1$s</string>
+    <string name="table_tossed">Katıldı (%1$d)</string>
+    <string name="card_thrown_by">%1$s %2$s attı</string>
+    <string name="table_you">Sen</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">önde</string>
+    <string name="seat_pointed_turn">%1$s oynuyor</string>
+    <string name="seat_is_a_bot">bir bot</string>
+    <string name="seat_pointed_vinto">%1$s Vinto dedi</string>
+    <string name="seat_pointed_penalty">%1$s desteden kart alıyor</string>
+    <string name="seat_pointed_coalition">%1$s koalisyona öncülük ediyor</string>
+    <string name="table_final_round">Son tur</string>
+    <string name="table_final_caller">Diğer herkes seninkine karşı tek bir eli birlikte oynuyor.</string>
+    <string name="table_final_leader">Koalisyonun elini %1$s'e karşı oynuyorsun.</string>
+    <string name="table_final_ally">%1$s koalisyonun elini %2$s'e karşı oynuyor.</string>
+    <string name="table_final_turns_left">Açılışa %1$d el kaldı</string>
+    <string name="table_final_last_turn">son el</string>
+    <string name="table_final_choosing">Üçünün arasında %1$s'e karşı tek bir el.</string>
+    <string name="table_final_side_coalition">Birlikte</string>
+    <string name="table_final_side_caller">Çağırdı</string>
+    <string name="table_final_versus">karşı</string>
+    <string name="table_final_leads">%1$s diğerlerine önde</string>
+    <string name="table_see_score">Skoru gör</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">Sorun bildir</string>
+    <string name="header_settings">Ayarlar</string>
+    <string name="header_deck_left">Destede %1$d kart kaldı</string>
+    <string name="header_deck_badge">Destede %1$d — bunun anlamı</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">Deste</string>
+    <string name="deck_body">Çekilecek %1$d kart kaldı.\n\nBittiğinde, atım destesi tekrar karılır ve o desteyi izleyerek öğrenilen her şey — senin öğrendiğin dahil — değerini kaybeder. Destesi neredeyse tükenen bir tur, Vinto demek için bir turdur.</string>
+    <string name="deck_dismiss">Anladım</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s, değeri %2$d</string>
+    <string name="card_face_down">yüzü kapalı bir kart</string>
+    <string name="card_position">%1$s, %2$d. kart</string>
+    <string name="card_the_deck">deste</string>
+    <string name="card_discarded">atılan %1$s</string>
+    <!-- The card the player is deciding about, shown large in the rail beside the prompt. -->
+    <string name="card_in_play">oyunda: %1$s</string>
+    <!-- Under the prompt, for any card shown in the rail: its name, its points, and what it does. -->
+    <string name="rail_card_action">%1$s, değeri %2$d: %3$s</string>
+    <string name="rail_card_plain">%1$s, değeri %2$d</string>
+    <string name="rail_aiming_at">hedeflenen: %1$s</string>
+    <string name="rail_aim_empty">henüz seçilecek bir kart</string>
+    <!-- Under an end of the aim nothing has been chosen for yet. -->
+    <string name="rail_aim_first">Birinci</string>
+    <string name="rail_aim_second">İkinci</string>
+    <!-- The same card, still carrying its action, which the next player may take and play. -->
+    <string name="card_discarded_live">atılan %1$s, eylemi kullanılmadı</string>
+    <string name="card_in_hand">elindeki kart</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">Tur %1$d</string>
+    <string name="score_caller_won">Vinto çağrısı tuttu</string>
+    <string name="score_level">Berabere — çağrı tuttu</string>
+    <string name="score_coalition_won">Diğerleri çağrıyı yendi</string>
+    <string name="score_deck_out">Kimse çağırmadı</string>
+    <string name="score_versus">Vinto %1$d, en iyilerine karşı %2$d</string>
+    <string name="score_versus_none">Her el sayıldı, hiçbiri ödenmedi</string>
+    <string name="score_role_caller">Vinto çağırdı</string>
+    <string name="score_role_best">diğerlerinin en iyisi</string>
+    <string name="score_column_hand">el</string>
+    <string name="score_column_round">tur</string>
+    <string name="score_column_game">oyun</string>
+    <string name="score_you_called">Vinto'yu sen çağırdın, bu yüzden elin diğerlerinin en iyisine karşı değerlendirildi.</string>
+    <string name="score_they_called">%1$s Vinto çağırdı, bu yüzden onun eli seninkilerin en iyisine karşı değerlendirildi.</string>
+    <string name="score_deck_ended">Kimse Vinto çağırmadı — deste bitti, tur sona erdi ve her el sayıldı.</string>
+    <string name="score_next_round">Sonraki turu dağıt</string>
+    <string name="score_stop">Burada dur</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">Sorun bildir</string>
+    <string name="report_body">Masa yapmaması gereken bir şey mi yaptı? Oyunu onunla birlikte gönder.\n\nGönderilen şey: başladığı dağıtım, o zamandan beri her hamle ve her birinden sonraki bir sağlama toplamı — bu tam oyunu, burada ya da web uygulamasında yeniden oynatıp aynı hatayı görmeye yeter. Hesap yok, cihaz detayı yok, senin hakkında hiçbir şey yok.</string>
+    <string name="report_send">Gönder…</string>
+    <string name="report_copy">Bunun yerine kopyala</string>
+    <string name="report_copied">Panoya kopyalandı</string>
+    <string name="report_dismiss">Şimdi değil</string>
+    <string name="report_subject">Vinto — sorun bildirimi</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="beat_only_look_title">Alacağın tek bakış</string>
+    <string name="beat_only_look_body">Herkes tur başlamadan önce kendi kartlarından ikisine bir kez bakabilir. Buradan sonra oyun bellektir: seninki üç kişiye karşı.</string>
+    <string name="beat_peeks_end_body">Tekrar yüzü kapalı hale geliyorlar — nerede olduklarını hatırla. Diğer herkes de kendi ikisine baktı.</string>
+    <string name="beat_name_only_seen_title">Yalnızca gördüğünü söyle</string>
+    <string name="beat_name_only_seen_body">Bu karta baktın, ne olduğunu biliyorsun. Doğru söylersen eylemini bedava oynarsın. Yanlış söylersen bir ceza kartı alırsın — o yüzden yalnızca emin olduğun bir şeyi söyle.</string>
+    <string name="beat_toss_in_title">O değere sahip olan herkes atabilir</string>
+    <string name="beat_toss_in_body">Bir kart yüzü açık düştüğü an, herkes eşleşen bir karttan kurtulma — ve eylemini kullanma — şansı yakalar. Yanlış değer sana bir ceza kartına mal olur ve o karttan seni dışlar — bir sonraki düşen kart yeni bir şans. Sana karşı sayan bir kart için buna değer; bir Papaz'ı tutmak hiçbir şeye mal olmaz.</string>
+    <string name="beat_watching_body">Ne aldıklarını ve ne bıraktıklarını izle. Bu, ve buradaki satır satır kayıt, elleri hakkında bilebileceğin her şeydir.</string>
+    <string name="beat_watching_title">%1$s %2$s oynuyor — %3$s</string>
+    <string name="beat_do_not_guess_title">Tahmin etme</string>
+    <string name="beat_do_not_guess_body">Bu karta hiç bakmadın, o yüzden söylemek tahmin olur, ve yanlış tahmin sana bir ceza kartına mal olur. Tek kelime etmeden bırak.</string>
+    <string name="beat_coalition_leader_title">%1$s koalisyonun elini oynuyor</string>
+    <string name="beat_coalition_leader_body">Koalisyon kimin elini oynayacağını seçti: sonunda yalnızca %1$s'in toplamı seninkine karşı değerlendirilir. Diğer ikisi son ellerini o eli düşürmeye harcıyor — bir Papaz kötü bir kartı çıkarabilir, bir Vale ya da Kız daha iyi bir kartla değiştirebilir — ya da içinde ne olduğunu öğreniyor.</string>
+    <string name="beat_final_play_title">%1$s %2$s oynuyor</string>
+    <string name="beat_final_play_ace">Bir As bir oyuncuyu desteden yüzü kapalı bir kart çekmeye zorlar, ve bir kart daha ona karşı sayan bir kart daha demektir. Şimdi sana hedeflenemez — çağıranın kartları erişilmezdir — bu yüzden koalisyonun kendi tarafına iner. Kimin çekmek zorunda kaldığını izle.</string>
+    <string name="beat_final_play_king">Bir Papaz bir karta işaret eder ve adını söyler, ve adı doğru olmalıdır. Doğru: o kart bulunduğu elden çıkar ve eylemi oynanır. Yanlış: herkes onun gerçekte ne olduğunu görür, ve söyleyen bir ceza kartı çeker. Bir oyuncu gördüğü bir kartı söyler — genelde ondan kurtulmak için kendi kartlarından birini.</string>
+    <string name="beat_final_play_look">Bir 9 ya da 10 başka birinin elindeki bir karta bakar. Son turda koalisyon elindekini bu şekilde öğrenir, çünkü seninki erişim dışıdır — ve biri ne öğrenirse, hepsi kullanabilir.</string>
+    <string name="beat_final_play_other">Ne yaptığını izle: bu senin henüz tutmadığın bir kart, ve masanın altındaki son hamleler kutusu ne olduğunu söylüyor.</string>
+    <string name="beat_swap_them_title">Değiştir</string>
+    <string name="beat_swap_them_body">İkisini de gördün. Onunki seninkinden değersiz, o yüzden değiştir: senin kartın ona gider, onunki sana gelir — ve sonrasında tam olarak ne tuttuğunu bilirsin.</string>
+    <string name="beat_leave_them_title">Bırak</string>
+    <string name="beat_leave_them_body">İkisini de gördün, ve seninki daha iyi kart. Değişimden kazanılacak bir şey yok, o yüzden oldukları yere geri koy.</string>
+    <string name="beat_call_now_title">Çağır</string>
+    <string name="beat_call_now_body">Elindeki her kartı biliyorsun, ve toplamları sıfır ya da altında — bu masada kimse senin altına inemez. Vinto Çağır'a bas: diğer herkes tam olarak bir el daha oynar, sonra her el açılır.</string>
+    <string name="beat_you_called_title">Vinto çağırdın</string>
+    <string name="beat_you_called_body">Tur senin koşullarınla bitiyor. Ember, Sky ve Dune birer el daha oynuyor, ve artık kimse kartlarına dokunamıyor. Sonra her el açılıyor ve seninki diğerlerinin en iyisine karşı değerlendiriliyor.</string>
+    <string name="beat_coalition_vs_you_title">Şimdi tek bir taraf olarak oynuyorlar</string>
+    <string name="beat_coalition_vs_you_body">Çağırmayan üç kişi koalisyondur: birer el, ve yalnızca en iyi tek elleri seninkiyle karşılaştırılır — yani bir takım senin tek eline karşı. Gerçek bir masada bunu konuşup bildiklerini paylaşırlardı. Son ellerinde ne yaptıklarını izle: burası henüz tutmadığın kartları göreceğin yer.</string>
+    <string name="beat_aim_it_title">Hedefle</string>
+    <string name="beat_aim_it_body">Bu kartın kendi eylemi, ve bedava — kullanmak sana hiçbir şeye mal olmaz, ve kart her hâlükârda daha sonra desteye gider.</string>
+    <string name="beat_remember_it_title">Hatırla</string>
+    <string name="beat_remember_it_body">Bakışın sana kazandırdığı şey buydu. Nerede yattığını ve ne olduğunu aklında tut, sonra geri koy — buradan sonra bildiğin bir kart, ve oyun bunlar üzerinden oynanır.</string>
+    <string name="beat_give_up_worst_title">En kötü kartından vazgeç</string>
+    <string name="beat_give_up_worst_body">Yeni kart yüzü kapalı girer, ve yerini aldığı kart herkesin okuması için yüzü açık desteye gider. En az tutmak istediğin karttan vazgeç — bildiğin en yüksek olandan. Bir eylemi varsa ve emin isen, düşerken adını söyle: eylemi böylece bedavaya senin olur.</string>
+    <string name="beat_swap_blind_title">Görmediğin biriyle değiştir</string>
+    <string name="beat_swap_blind_body">Bildiğin hiçbir şey bu karttan kötü değil, o yüzden onlardan biriyle değiştirmek bilgiyi çöpe atmak olur. Bunun yerine hiç bakmadığın bir yuvaya koy: görülmemiş bir kart daha iyi olmaktan çok daha kötü olma ihtimali taşır, ve her iki durumda da sonrasında kendi kartlarından birini daha bilirsin.</string>
+    <string name="beat_nothing_worse_title">Burada değiştirilecek bir şey yok</string>
+    <string name="beat_nothing_worse_body">Bildiğin her kart bundan daha iyi, ve görmediğin bir yuvada denemek için de fazla yüksek. Geri dön ve at — deste onu alabilir.</string>
+    <string name="beat_keep_or_throw_title">Tut ya da at</string>
+    <string name="beat_keep_or_throw_body">Onu eline koy — yüzü kapalı, sahip olduğun bir kartın yerine, o da yüzü açık desteye gider — ya da at. Elindeki her kart sana karşı sayar, o yüzden düşük bir kart tutmaya değer. Bir eylemi varsa, şimdi onu oynamak üçüncü seçenek, ve almak sana hiçbir şeye mal olmaz.</string>
+    <string name="beat_two_ways_to_start_title">Bir tura başlamanın iki yolu</string>
+    <string name="beat_two_ways_to_start_body">Desteden, görmeden — ya da yığından, ama yalnızca kimsenin kullanmadığı bir eylem kartı, ve o zaman onu tutmak yerine hemen oynamak zorundasın.</string>
+    <string name="beat_every_turn_starts_title">Her tur aynı şekilde başlar</string>
+    <string name="beat_every_turn_starts_body">Bir tur bir kart alarak başlar. Deste yüzü kapalı, o yüzden alacağın sürpriz — karşılığını aldığın risk bu.</string>
+    <string name="beat_welcome_title">Dört oyuncu, kişi başı beş kart</string>
+    <string name="beat_welcome_body">Her kart sana karşı sayar ve en düşük el kazanır. Beşin önünde yüzü kapalı duruyor, ve onlara bakma şansın yok — oyun ne tuttuğunu bilmektir. Bu, üç gerçek rakibe karşı gerçek bir tur; koç yalnızca yanında yürüyor.</string>
+    <string name="beat_memory_title">Kendi kartlarını bil</string>
+    <string name="beat_memory_body">Tur başlamadan önce beşinden ikisini göreceksin, diğer üçünü ise yalnızca bir kart izin verirse. Yani tur hatırladığın şey üzerinden oynanır: hangi yuvalara baktığın ve içlerinde ne olduğu. Bu, yüksek bir kartın değerini değiştirir. Erken bir 9 ya da 10 sana bir bakış satın alıyorsa iyi bir alışveriş — ne olduğunu bilirsin, o yüzden onu bırakıp sonra adını söyleyebilirsin. Turu sana kaybettiren kart, hiç öğrenmediğin karttır.</string>
+    <string name="beat_cards_numbers_title">2'den 6'ya — düz kartlar</string>
+    <string name="beat_cards_numbers_body">Tam olarak yazdıkları değerde, başka bir şey değil. Küçük bir kartı iyi kartla karıştırma: bir turu kazanan el genelde sıfıra ya da altına iner — Papazlar, Jokerler, en fazla bir As. Bir süre bir 2 üzerinde oturmak sorun değil; herhangi bir düz kart sonun öncesinde değiştirilmesi gereken bir karttır.</string>
+    <string name="beat_cards_own_title">7 ve 8 — kendi kartlarından birine bak</string>
+    <string name="beat_cards_own_body">7 ve 8 değerinde, ki bu sonunda tutmak için çok fazla. Karşılığında kendi kartlarından birine bir bakış alırsın — ve bu oyun bellek, o yüzden gördüğün bir kart görmediğinden daha değerlidir. Bir bakış satın alıyorsa erkenden birini tut; öğrenecek bir şey kalmadığında değiştir ve adını söyle.</string>
+    <string name="beat_cards_theirs_title">9 ve 10 — onlarınkine bak</string>
+    <string name="beat_cards_theirs_body">Aynı bakış, sadece diğer yöne çevrilmiş: başka birinin elindeki bir kart. Nerede olduğunu hatırla — iki tur sonra bu, çağırıp çağırmayacağını ya da bir Vale'yi nereye hedefleyeceğini söyler. 9 ve 10 değerinde, ve erken almaya hâlâ değer: tuttuğunu bildiğin yüksek bir kart bırakıp adını söyleyebileceğin bir karttır, göremediğin düşük bir kart ise sadece tahmindir.</string>
+    <string name="beat_cards_jack_title">Vale — iki kartı körlemesine değiştir</string>
+    <string name="beat_cards_jack_body">10 değerinde. İki farklı oyuncuya ait iki kartı değiştirir — asla birinin kendi ikisini değil — ve kimse ikisine de önce bakmaz. Kötü olduğunu bildiğin bir kartı başkasının eline itmek için iyi; iyi olduğunu bildiğin bir şeyle ise bir kumar.</string>
+    <string name="beat_cards_queen_title">Kız — ikisine bak, sonra karar ver</string>
+    <string name="beat_cards_queen_body">Yine 10 değerinde, ve oyundaki en güçlü kart: iki farklı oyuncudan herhangi iki karta bak, ve ancak sonra değiştirip değiştirmeyeceğine karar ver. Vale kumar oynar. Kız bilir.</string>
+    <string name="beat_cards_king_title">Papaz — hiçbir şeye mal olmaz, ve her şeyi yapar</string>
+    <string name="beat_cards_king_body">Hiç değeri yok, ki bu bile onu tutmaya değer kılıyor. Eylemi masadaki herhangi bir karta işaret eder — seninki ya da başkasının — ve adını söyler. Doğru: o kart bulunduğu elden çıkar, ve eylemi senin oynaman için olur. Yanlış: herkes gerçekte ne olduğunu görür, ve sen bir ceza kartı alırsın.</string>
+    <string name="beat_cards_king_name_title">Söylediğin şey, oynayacağın şeydir</string>
+    <string name="beat_cards_king_name_body">Yani aslında gördüğün kartlar arasından bir eylem seçiyorsun. Bir 7 ya da 8 söylersen kendi kartlarından birine bakarsın. Bir Vale söylersen onun körlemesine değişimini alırsın — ve iki kartı da sen seçersin, gördüğün bir Joker'in sana gelmesi ve en kötü kartının diğer yöne gitmesi böyle olur. Bir Kız söylersen değiştirmeden önce ikisine bakarsın.</string>
+    <string name="beat_cards_king_whose_title">Ve kimin kartını söylediğin</string>
+    <string name="beat_cards_king_whose_body">Onu kim tutuyorsa, söylediğin kart onun elinden çıkar. Kendi 10'unu söylemek toplamından on puan alır; bir rakibin Joker'ini söylemek ondan eksi biri alır ve onu daha kötü bir kartla bırakır. Bir Papaz, iki iş — hangisinin daha önemli olduğu okuman.</string>
+    <string name="beat_cards_odd_title">As ve Joker</string>
+    <string name="beat_cards_odd_body">Bir As, değeri 1'dir ve seçtiğin kişiyi bir ceza kartı çekmeye zorlar. Bir Joker eksi bir değerindedir — destedeki en iyi kart, ve asla vazgeçilmemesi gereken.</string>
+    <string name="beat_tour_title">Deste ve yığın</string>
+    <string name="beat_tour_body">Kartlar desteden gelir. Birinin attığı şey yanına yüzü açık düşer, tüm masanın okuyabileceği yerde — sen dahil.</string>
+    <string name="beat_seats_title">Ember, Sky ve Dune</string>
+    <string name="beat_seats_body">Üç bot, her biri senden daha iyi göremediği beş karta sahip. Yeşil yanan plaka sırası gelen kişidir.</string>
+    <string name="beat_help_title">? her zaman orada</string>
+    <string name="beat_help_body">İçinde bulunduğun anı ve her kartın ne yaptığını açıklar. Kutulu oyun tam bunun için hatırlatma kartlarıyla gelir, oyuncu başına bir tane — burada ya da bir masada kimseden on dört değeri aklında tutması beklenmez.</string>
+    <string name="beat_coalition_title">Diğer herkes tek bir taraf olarak oynuyor</string>
+    <string name="beat_coalition_body">Sen, ve çağırmayan iki kişi, koalisyonsunuz: birer el, ve yalnızca en iyi tek eliniz çağıranınkiyle karşılaştırılır — yani bir takım tek bir ele karşı. Gerçek bir masada bunu konuşup bildiklerinizi paylaşırdınız. Kimse çağıranın kartlarına dokunamaz, ve oyun denemene bile izin vermez.</string>
+    <string name="beat_your_turn_to_call_title">Sen de çağırabilirsin</string>
+    <string name="beat_your_turn_to_call_body">Herhangi bir elinin sonunda altın düğme orada: elinin masadaki en düşük olduğuna inandığında bas. Öğrenirken gizliydi çünkü herkes için turu bitiriyor — buradan sonra basmak sana kalmış, ve erken basmak çoğu kişinin ilk oyununu kaybetme sebebi.</string>
+    <string name="beat_session_title">Ve bu bir tur</string>
+    <string name="beat_session_body">Bir oyun art arda turlardır, bu puanlar aralarında taşınır, önceden anlaşılan bir saate göre oynanır — genelde yarım saat. Süre dolduğunda devam eden tur bitirilir, ve en çok puanı olan birinci için 5, ikinci için 3, üçüncü için 2 oyun puanı alır. Bir puanla kazanılan bir tur, yirmi puanla kazanılanla aynı sayılır.</string>
+    <string name="beat_scoring_title">Her el açılır</string>
+    <string name="beat_scoring_body">Çağıranın eli herkesin arasındaki en iyi ele karşı değerlendirilir. Daha düşükse, çağıran +3 alır, herkes 1'er kaybeder. Berabere çağıranın lehine sayılır: ona +3, kimse kaybetmez. Yenilirse, çağıran 1 kaybeder, diğerlerinin her biri +3 alır.</string>
+    <string name="beat_vinto_body">Bu, elinin masadaki en düşük olduğuna dair bir bahis. Turu bitirir: diğer herkes tam olarak bir el daha oynar, sonra her el açılır.</string>
+    <string name="beat_vinto_title">%1$s Vinto çağırdı</string>
+
+    <string name="beat_toss_in_also">%1$s az önce bir tane attı. </string>
+    <string name="list_join_and"> ve </string>
+    <string name="beat_vinto_somebody">Biri</string>
+    <string name="beat_strayed_body">Senin masan, benim değil — burada yanlış hamle yok. Ders nereden bırakırsan oradan devam eder.</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">Nefes alan bir kart şimdi dokunulabilir.</string>
+    <string name="gloss_toss">Yığınların altındaki jeton, pencerenin hangi değer için açık olduğunu söyler.</string>
+    <string name="gloss_log">Her hamle bu kutuya yazılır — kartlar okuyabileceğinden hızlı hareket ettiğinde bir göz at.</string>
+    <string name="gloss_badge">Yeşil sayı destede kalanı sayar.</string>
+
+    <string name="teach_note">%1$s — değeri %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — değeri %2$s, ve hiçbir şey yapmaz. Şimdilik tutmak sorun değil, biri çağırmadan önce değiştirilecek biri.</string>
+
+
+    <string name="teach_heading">Oyunu öğrenmek</string>
+    <string name="teach_finished_title">İşte tüm oyun bu</string>
+    <string name="teach_finished_body">Her el açık ve tur puanlanıyor. Burada karşılaştığın her kural gerçek bir oyunun oynadığı kuraldır — bunun bir prova sürümü yok.</string>
+    <string name="teach_watching">Ne aldıklarını, ve ne geri bıraktıklarını izle.</string>
+    <string name="teach_go_on">Devam et</string>
+    <string name="teach_done">Bitti</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">Şu anda</string>
+    <string name="help_the_cards">Kartlar</string>
+    <string name="help_signals">Masa sana ne söylüyor</string>
+    <string name="help_group_numbers">Sayılar — yazdıkları değerde, başka bir şey değil</string>
+    <string name="help_group_lookers">Bakanlar — hatırlayabileceğin bir kart satın alır</string>
+    <string name="help_group_movers">Taşıyanlar — bir kartı başka bir yere koyar</string>
+    <string name="help_group_odd">Farklı olanlar</string>
+    <string name="help_no_action">Eylem yok.</string>
+    <string name="help_card_worth">%1$s — değeri %2$d</string>
+    <string name="help_closing">Bir elde her kart sana karşı sayar, o yüzden en düşük toplam kazanır. Seninkinin en düşük olduğunu düşündüğünde Vinto çağır — diğer herkes birlikte bir el daha oynar, ve yalnızca en iyi elleri seninkiyle karşılaştırılır.</string>
+    <string name="stats_played">%1$d oynandı</string>
+    <string name="stats_won">%%%1$d kazanıldı</string>
+    <string name="stats_best">en iyi %1$d</string>
+    <string name="stats_streak">%1$d üst üste</string>
+    <string name="stats_row">Kayıtların: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <string name="chapter_table">Masa</string>
+    <string name="chapter_peek">İki bakışın</string>
+    <string name="chapter_draw">Kart alma</string>
+    <string name="chapter_keep">Tut ya da at</string>
+    <string name="chapter_declare">Bir değer söylemek</string>
+    <string name="chapter_actions">Kartlar ne yapar</string>
+    <string name="chapter_toss">Atarak katılmak</string>
+    <string name="chapter_vinto">Vinto çağırmak</string>
+    <string name="chapter_score">Puanlama</string>
+    <string name="chapter_covered">%1$s — işlendi</string>
+    <string name="chapter_to_come">%1$s — henüz gelecek</string>
+    <string name="intro_part_covered">%2$d bölümden %1$d — okundu</string>
+    <string name="intro_part_to_come">%2$d bölümden %1$d — henüz gelecek</string>
+
+    <!-- What the "?" explains. -->
+    <string name="explains_card_plain">%1$s. Değeri %2$d. Eylemi yok, o yüzden yalnızca eline ya da yığına gidebilir.</string>
+    <string name="explains_card_action">%1$s. Değeri %2$d. %3$s. %4$s</string>
+    <string name="explains_setup">Kendi kartlarından ikisine bak ve onları hatırla — tur başladığında tekrar yüzleri kapanır. Bundan sonra her şey bellektir.</string>
+    <string name="explains_scoring">Her el yüzü açık. En düşük toplam turu kazanır; Vinto çağıran oyuncu herkesin arasındaki en iyi ele karşı değerlendirilir.</string>
+    <string name="explains_toss_in">Aynı değere sahip herhangi biri onu atabilir, bu da onu bedava elinden çıkarır. Değeri yanlış söylersen bir ceza kartı alırsın, ve bu tur içinde tekrar katılamazsın.</string>
+    <string name="explains_final_round">Vinto çağrıldı. Diğer herkes bir koalisyon olarak son bir el oynuyor, ve yalnızca en iyi elleri çağıranınkine karşı sayılır.</string>
+    <string name="explains_turn">Desteden çek, ya da kimsenin oynamadığı bir eylem kartıysa atım yığınının üstünü al. Toplamını düşüreni tut; seninkinin en düşük olduğunu düşündüğünde Vinto çağır.</string>
+
+    <!-- The smaller line under the prompt. -->
+    <string name="detail_card_does">%1$s, değeri %2$d: %3$s</string>
+    <string name="detail_king_declared">Papaz %1$s dedi: %2$s</string>
+    <string name="detail_tap_to_say">Ne olduğunu düşündüğünü söylemek için kartlarından birine dokun.</string>
+    <string name="detail_table_talk">Masa konuşması — koalisyon, doğru ya da yanlış, sözünü kabul eder.</string>
+    <string name="detail_right_plays">Doğruysa eylemini oynar; yanlışsa sana bir karta mal olur.</string>
+    <string name="detail_wrong_costs">Yanlış olan sana bir ceza kartına mal olur.</string>
+    <string name="detail_barred_card">Bu kartta yanlış tahmin ettin, o yüzden bu karttan dışlandın. Bir sonraki düşen kart yeni bir şans.</string>
+    <string name="detail_barred">Yanlış tahmin ettin, ve son turda bu, turun geri kalanı demek.</string>
+    <string name="detail_scored_against">%1$s Vinto çağırdı, bu yüzden tur onun eline karşı puanlandı.</string>
+    <string name="detail_deck_ran_out">Deste bitti, bu yüzden tur sona erdi ve her el sayıldı.</string>
+
+    <!-- The line above the buttons: what the table is asking for. -->
+    <string name="ask_or"> ya da </string>
+    <string name="ask_look_at_two_of_yours">Kartlarından ikisine bak</string>
+    <string name="ask_one_more_to_look_at">Bakılacak bir kart daha</string>
+    <string name="ask_ready">Hazır olduğunda</string>
+    <string name="ask_your_turn">Sıra sende</string>
+    <string name="ask_you_drew">%1$s çektin</string>
+    <string name="ask_you_drew_unknown">Bir kart çektin</string>
+    <string name="ask_which_card_replaced">Hangi kartın yerine geçiyor?</string>
+    <string name="ask_name_what_you_put_down">Bıraktığın kartı söyle?</string>
+    <string name="ask_what_do_you_say">Bu kartın ne olduğunu düşünüyorsun?</string>
+    <string name="ask_say_and_play">Ne olduğunu söyle, ve o kartın eylemini oyna</string>
+    <string name="ask_look_at_one_of_yours">Kendi kartlarından birine bak</string>
+    <string name="ask_look_at_one_of_theirs">Başka bir oyuncunun bir kartına bak</string>
+    <string name="ask_choose_any_card">Herhangi bir kart seç</string>
+    <string name="ask_choose_two">İki farklı oyuncudan iki kart seç</string>
+    <string name="ask_look_at_two">İki farklı oyuncudan iki karta bak</string>
+    <string name="ask_swap_them">Değiştirilsin mi?</string>
+    <string name="ask_remember_it">Hatırla</string>
+    <string name="ask_who_draws">Kim kart çekiyor?</string>
+    <string name="ask_card_waiting">%1$s bekliyor</string>
+    <string name="ask_card_waiting_unknown">Bekliyor</string>
+    <string name="ask_toss_in">%1$s düştü — bir eşleşme atacak mısın?</string>
+    <string name="ask_toss_in_barred">%1$s düştü</string>
+    <string name="ask_waiting_for_others">Diğerleri bekleniyor</string>
+    <string name="ask_watching">İzliyor</string>
+    <string name="ask_somebody_playing">%1$s oynuyor</string>
+    <string name="ask_you_playing">Sen oynuyorsun</string>
+    <string name="ask_who_plays_for_you">%1$s Vinto çağırdı. Geri kalanınız için kim oynuyor?</string>
+    <string name="ask_round_over">Tur bitti</string>
+    <string name="ask_round_over_lowest">Tur bitti — %1$d ile en düşükte bitirdin</string>
+    <string name="ask_round_over_not_lowest">Tur bitti — %1$d ile bitirdin, en iyisi %2$d idi</string>
+
+    <!-- The buttons on the table. -->
+    <string name="choice_back">Geri</string>
+    <string name="choice_start_round">Turu başlat</string>
+    <string name="choice_draw_card">Kart Çek</string>
+    <string name="choice_use_from_pile">%1$s Kullan</string>
+    <string name="choice_use_action">Eylemi Kullan</string>
+    <string name="choice_swap_cards">Kartları Değiştir</string>
+    <string name="choice_discard">At</string>
+    <string name="choice_just_swap">Yalnızca Değiştir</string>
+    <string name="choice_put_it_down">Bırak</string>
+    <string name="choice_leave_them">Bırak</string>
+    <string name="choice_continue">Devam et</string>
+    <string name="choice_call_vinto">Vinto Çağır</string>
+    <string name="choice_done">Bitti</string>
+
+    <!-- The move log. -->
+    <string name="log_you">Sen</string>
+    <string name="log_drew_known">%1$s çektin</string>
+    <string name="log_drew_known_they">%1$s %2$s çekti</string>
+    <string name="log_draw_you">Bir kart çekiyorsun</string>
+    <string name="log_draw_they">%1$s bir kart çekiyor</string>
+    <string name="log_took">%1$s %2$s aldı</string>
+    <string name="log_took_unknown">%1$s üstteki kartı aldı</string>
+    <string name="log_swap_you">%1$d. kartını değiştiriyorsun</string>
+    <string name="log_swap_they">%1$s %2$d. kartını değiştiriyor</string>
+    <string name="log_swap_dropping_you">%1$d. kartını değiştiriyorsun, %2$s'i bırakıyorsun</string>
+    <string name="log_swap_dropping_they">%1$s %2$d. kartını değiştiriyor, %3$s'i bırakıyor</string>
+    <string name="log_throw_you">%1$s'i atıyorsun</string>
+    <string name="log_throw_they">%1$s %2$s'i atıyor</string>
+    <string name="log_throw_unknown_you">Kartı atıyorsun</string>
+    <string name="log_throw_unknown_they">%1$s kartı atıyor</string>
+    <string name="log_play_you">%1$s oynuyorsun</string>
+    <string name="log_play_they">%1$s %2$s oynuyor</string>
+    <string name="log_play_unknown_you">Kartı oynuyorsun</string>
+    <string name="log_play_unknown_they">%1$s kartı oynuyor</string>
+    <string name="log_tossed_in">%1$s %2$s attı</string>
+    <string name="log_tossed_in_unknown">%1$s bir kart attı</string>
+    <string name="log_toss_in_missed">%1$s %2$s attı — yanlış, ve bir ceza kartına mal oldu</string>
+    <string name="log_toss_in_missed_unknown">%1$s yanlış kart attı — bir ceza kartı</string>
+    <string name="log_called_vinto">%1$s Vinto çağırdı</string>
+    <string name="log_swapped_two">%1$s iki kartı değiştirdi</string>
+    <string name="log_swapped_two_named">%1$s %2$s ile %3$s'i değiştirdi</string>
+    <string name="log_left_alone">%1$s onları olduğu gibi bıraktı</string>
+    <string name="log_declared">%1$s %2$s dedi</string>
+    <!-- An Ace's aim: three sentences, because the verb and "you" both move. -->
+    <string name="log_made_draw_you">%1$s'i kart çekmeye zorladın</string>
+    <string name="log_made_you_draw">%1$s seni kart çekmeye zorladı</string>
+    <string name="log_made_draw_they">%1$s %2$s'i kart çekmeye zorladı</string>
+    <string name="log_round_begins">tur başlıyor</string>
+
+    <string name="help_counts_title">Bu uygulama neyi sayar</string>
+    <string name="help_counts_body">Yalnızca anonim sayımlar: kaç tur oynandığı, insanların ne kadar ilerlediği, bir masanın takılıp takılmadığı, ve bir odayı çalıştırmanın maliyeti. Asla adın, oda kodun, elinde ne olduğu, ya da seni ya da cihazını işaret edebilecek hiçbir şey — gönderilende bunlar için yer yok. Ayarlar'dan kapatılabilir, ve izlenmemeyi isteyen bir tarayıcı bunu senin için kapatır.</string>
+
+    <string name="signal_turn">Bir koltukta yeşil bir halka</string>
+    <string name="signal_turn_meaning">Sıranın kimde olduğu. Sıra geldikçe yanıp söner, çünkü üç bot sırasını bir dokunuşla bir sonraki arasında alabilir.</string>
+    <string name="signal_vinto">Altın bir halka</string>
+    <string name="signal_vinto_meaning">O oyuncu Vinto çağırdı. Turun geri kalanında kimse kartlarına dokunamaz.</string>
+    <string name="signal_penalty">Kırmızı bir halka, ve ürperen bir el</string>
+    <string name="signal_penalty_meaning">Az önce oraya bir ceza kartı indi — yanlış bir tahmin, ya da yanlış bir katılım.</string>
+    <string name="signal_coalition">Mavi bir halka</string>
+    <string name="signal_coalition_meaning">Koalisyon: Vinto çağıran hariç herkes, son ellerini o tek ele karşı birlikte oynuyor.</string>
+    <string name="signal_live">Atım yığınında altın bir halka</string>
+    <string name="signal_live_meaning">O kart, eylemi kullanılmadan bırakıldı, o yüzden bir sonraki oyuncu çekmek yerine onu alıp oynayabilir. Eylemi *oynanmış* bir kartın halkası yoktur.</string>
+    <string name="signal_tappable">Nefes alan bir kart</string>
+    <string name="signal_tappable_meaning">Şimdi dokunulabilir. Hiçbir şey nefes almıyorsa, masa başka birini bekliyordur.</string>
+    <string name="signal_reshuffle">Desteye geri süpürülen kartlar</string>
+    <string name="signal_reshuffle_meaning">Deste bitti, o yüzden yığın tekrar karıldı. O yığını izleyerek öğrenilen her şey artık geçerliliğini yitirdi.</string>
+    <string name="signal_peek">Ortaya doğru kalkan bir kart</string>
+    <string name="signal_peek_meaning">Biri ona bakıyor. Herkes *hangi* karta bakıldığını görür — yalnızca hakkı olan oyuncu yüzünü görür.</string>
+
+
+    <!-- The cards, in words. -->
+    <string name="card_name_two">İkili</string>
+    <string name="card_name_three">Üçlü</string>
+    <string name="card_name_four">Dörtlü</string>
+    <string name="card_name_five">Beşli</string>
+    <string name="card_name_six">Altılı</string>
+    <string name="card_name_seven">Yedili</string>
+    <string name="card_name_eight">Sekizli</string>
+    <string name="card_name_nine">Dokuzlu</string>
+    <string name="card_name_ten">Onlu</string>
+    <string name="card_name_jack">Vale</string>
+    <string name="card_name_queen">Kız</string>
+    <string name="card_name_king">Papaz</string>
+    <string name="card_name_ace">As</string>
+    <string name="card_name_joker">Joker</string>
+
+    <string name="card_long_seven">Kendi kartlarından birine bak</string>
+    <string name="card_long_eight">Kendi kartlarından birine bak</string>
+    <string name="card_long_nine">Başka bir oyuncunun bir kartına bak</string>
+    <string name="card_long_ten">Başka bir oyuncunun bir kartına bak</string>
+    <string name="card_long_jack">İki farklı oyuncunun yüzü kapalı iki kartını değiştir</string>
+    <string name="card_long_queen">İki farklı oyuncudan herhangi iki karta bak, sonra istersen değiştir</string>
+    <string name="card_long_king">Herhangi bir oyuncudan başka bir kart eylemini beyan et (7-A)</string>
+    <string name="card_long_ace">Bir rakibi ceza kartı çekmeye zorla</string>
+
+    <string name="card_help_two">2 değerinde sayı kartı</string>
+    <string name="card_help_three">3 değerinde sayı kartı</string>
+    <string name="card_help_four">4 değerinde sayı kartı</string>
+    <string name="card_help_five">5 değerinde sayı kartı</string>
+    <string name="card_help_six">6 değerinde sayı kartı</string>
+    <string name="card_help_seven">Geçici olarak açıp değerini ezberlemek için kartlarından birine tıkla. İstersen bu eylemi atlayabilirsin.</string>
+    <string name="card_help_eight">Geçici olarak açıp değerini ezberlemek için kartlarından birine tıkla. İstersen bu eylemi atlayabilirsin.</string>
+    <string name="card_help_nine">Geçici olarak açıp değerini görmek için bir rakibin kartına tıkla. İstersen bu eylemi atlayabilirsin.</string>
+    <string name="card_help_ten">Geçici olarak açıp değerini görmek için bir rakibin kartına tıkla. İstersen bu eylemi atlayabilirsin.</string>
+    <string name="card_help_jack">Yerlerini değiştirmek için farklı oyunculardan iki kart seç — kendi kartlarını ya da yalnızca rakiplerinkini dahil edebilirsin. Aynı oyuncudan iki kart seçemezsin. Seçimini sıfırlayabilir ya da bu eylemi atlayabilirsin.</string>
+    <string name="card_help_queen">1. Farklı oyunculardan iki karta bak (kendi kartların ya da rakiplerinki olabilir, ama farklı oyunculardan olmalı)\n2. İki kartı da gördükten sonra değiştirip değiştirmeyeceğine karar ver</string>
+    <string name="card_help_king">Hangi kart eyleminin uygulanacağını seç: 7 (kendine bak), 8 (kendine bak), 9/10 (rakibe bak), V (değiştir), K (bak ve değiştir), A (çekmeye zorla). Eylemi olmayan kartları da (2-6, Papaz, Joker) beyan edebilirsin.</string>
+    <string name="card_help_ace">Bir rakibi desteden ceza kartı çekmeye zorlamak için seç. Bu onun el büyüklüğünü ve kart toplamını artırır. İstersen bu eylemi atlayabilirsin.</string>
+    <string name="card_help_joker">-1 değerinde Joker</string>
+</resources>

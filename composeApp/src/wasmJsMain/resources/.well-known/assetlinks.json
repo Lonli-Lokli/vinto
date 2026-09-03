@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.kupalinka.vinto",
+      "sha256_cert_fingerprints": [
+        "EC:D8:8D:F5:AB:93:6B:DE:E6:9D:AD:C7:C4:6D:23:09:BE:54:13:89:C6:DD:C9:5B:86:EA:C6:F4:54:C0:BD:26"
+      ]
+    }
+  }
+]

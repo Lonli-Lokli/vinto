@@ -16,8 +16,29 @@ fun MainViewController(): platform.UIKit.UIViewController {
     // Before the controller is built, so a failure in the first composition is reported.
     // `install` is idempotent, and Swift may well ask for a second controller.
     Crashes.install(appReportingScope())
-    return ComposeUIViewController { App() }
+    return ComposeUIViewController { App(marketing = captureScene()) }
 }
+
+/**
+ * The state a store capture asked for, from a launch argument.
+ *
+ *     xcrun simctl launch <device> app.kupalinka.vinto -vinto.capture table
+ *
+ * `zdymak` drives exactly this; `MarketingScene` lists the states and says what each is.
+ *
+ * **No debug/release split here, unlike Android.** The counterpart there reads an intent extra —
+ * an entry point any app on the phone can send — so it is gated by a `src/debug` source set. A
+ * launch argument is different in kind: only whoever *starts the process* can set one, which on a
+ * device means Xcode, `simctl`, or nobody. There is no caller to defend against, so there is no
+ * variant to maintain. `zdymak.config.mjs` reached the same conclusion when the handle was
+ * specified.
+ *
+ * `NSUserDefaults` rather than `NSProcessInfo.arguments`: iOS parses `-key value` launch
+ * arguments into the argument domain, so this reads the pair without splitting the array by hand
+ * — and it is the same call the vault already makes, so no new API is reached for.
+ */
+private fun captureScene(): String? =
+    platform.Foundation.NSUserDefaults.standardUserDefaults.stringForKey("vinto.capture")
 
 /**
  * An invitation, handed over from Swift.

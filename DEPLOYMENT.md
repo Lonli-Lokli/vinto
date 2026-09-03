@@ -559,7 +559,7 @@ Empty means the apps report nothing at all, which is what a development build sh
 To check it works, look in Sentry for an event called `VintoSetupCheck` — one was sent while
 this was being set up.
 
-## 8. The Android signing key
+## 8. The Android signing key, and the file you upload
 
 > **The single most important warning in this document.** Android identifies an app by the key
 > it was signed with. If you lose this file or its passwords, you can **never** update the app
@@ -567,39 +567,65 @@ this was being set up.
 > have to find and install the new one by hand. Back it up somewhere safe that is not only
 > your laptop.
 
-Create it once:
+**The key already exists**: `keystore/vinto-upload.jks`, with `keystore.properties` beside it.
+Both are gitignored, so they are on this machine and nowhere else — **back both up now** if that
+has not been done. If you ever need to make a new one:
 
 ```sh
-keytool -genkeypair -v -keystore ~/keys/vinto-upload.jks -alias vinto \
+keytool -genkeypair -v -keystore keystore/vinto-upload.jks -alias vinto-upload \
   -keyalg RSA -keysize 4096 -validity 10000
 ```
 
-It asks for a password and some details about you. Keep the password somewhere safe — a
-password manager, not a note on your desk.
-
-Then create a file called `keystore.properties` in the main Vinto folder, containing four
-lines:
+`keystore.properties` names it, in the main Vinto folder:
 
 ```properties
-storeFile=/Users/you/keys/vinto-upload.jks
-storePassword=the password you just chose
-keyAlias=vinto
-keyPassword=the password you just chose
+storeFile=keystore/vinto-upload.jks
+storePassword=the password you chose
+keyAlias=vinto-upload
+keyPassword=the password you chose
 ```
-
-Replace `/Users/you/...` with wherever the file actually is.
-
-Build the app to upload:
-
-```sh
-./gradlew :composeApp:assembleRelease
-```
-
-The file appears at `composeApp/build/outputs/apk/release/`.
 
 > If `keystore.properties` does not exist, the build still works, but produces an app that
 > **cannot be published** — it is for testing only. That is deliberate: a build that failed
 > because a secret was missing would be a build nobody tested until the day it mattered.
+
+### Building the file Play takes
+
+Play wants an **app bundle** (`.aab`), not an APK, and it comes from `androidApp` — not
+`composeApp`, which is a library and has no such task:
+
+```sh
+./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"
+```
+
+It appears at `androidApp/build/outputs/bundle/release/androidApp-release.aab`. The version
+number comes from the script rather than by hand — VERSIONING.md says why, and Play refuses an
+upload whose number does not go up.
+
+### Then look inside it, every time
+
+```sh
+unzip -l androidApp/build/outputs/bundle/release/androidApp-release.aab | grep composeResources
+```
+
+Two different things have gone wrong here, and neither showed up any other way.
+
+**Resources missing entirely.** For one build the bundle contained no strings, no cards and no
+portraits, and the app died on the launcher at the first word it tried to draw. Every test was
+green, because the tests read resources off the classpath rather than out of the package. If
+that list comes back empty, that is what has happened.
+
+**Deleted files still present.** The four seat portraits were replaced, the old ones deleted, and
+they were still in the bundle — the task that assembles them only ever *added* files, so anything
+from a previous build stayed. That mattered a great deal here: the old art is the reason the app
+could not be submitted at all. It is fixed (the task mirrors the sources now), but the check is
+cheap and the failure is invisible:
+
+```sh
+unzip -l …/androidApp-release.aab | grep -i "avatar"    # four .xml files, nothing else
+```
+
+A stale file in a package is not something `git status` can see.
 
 ---
 

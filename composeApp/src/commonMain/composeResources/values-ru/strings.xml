@@ -15,6 +15,7 @@
       и читается как обычная надпись в интерфейсе, а не как обрубленная фраза.
 -->
 <resources>
+    <string name="app_name">VINTO</string>
 
     <string name="opening_shuffling">Тасуем…</string>
 
@@ -32,7 +33,7 @@
 
     <string name="online_screen_title">Игра по сети</string>
     <string name="online_nickname">Ваше имя за столом</string>
-    <string name="online_nickname_detail">Его видят остальные. Это не аккаунт — аккаунтов здесь нет.</string>
+    <string name="online_nickname_detail">Его видят остальные. Нажмите, чтобы взять другое. Это не аккаунт — аккаунтов здесь нет.</string>
     <string name="online_code">Код комнаты</string>
     <string name="online_code_detail">Шесть символов от того, кто открыл комнату.</string>
     <string name="online_join">Войти в комнату</string>
@@ -58,7 +59,6 @@
     <string name="online_open_screen">Открыть комнату</string>
     <string name="online_join_screen">Войти по коду</string>
     <string name="online_back">Назад</string>
-    <string name="online_name_placeholder">Придумайте имя</string>
 
     <string name="discover_title">Открытые комнаты</string>
     <string name="discover_looking">Ищем свободные столы…</string>
@@ -129,6 +129,8 @@
     <string name="settings_original_detail">VINTO — не наша игра. Это неофициальное приложение для неё, а сама игра, её правила и те, кто её придумал, — на vinto.game.</string>
     <string name="settings_studio">Об этом приложении</string>
     <string name="settings_studio_detail">Кто сделал это приложение, что ещё есть на полке и как оно устроено.</string>
+    <string name="settings_rate">Оценить игру</string>
+    <string name="settings_rate_detail">Оставьте отзыв в магазине, откуда установили игру. Небольшой игре это помогает найтись больше всего остального.</string>
     <string name="settings_open">Открыть</string>
     <string name="settings_link_failed">На этом устройстве нечем это открыть. Адрес: %1$s</string>
 
@@ -193,6 +195,7 @@
     <string name="table_vinto_mark">Винто</string>
     <string name="table_leads_mark">ведёт</string>
     <string name="seat_pointed_turn">Ходит %1$s</string>
+    <string name="seat_is_a_bot">бот</string>
     <string name="seat_pointed_vinto">%1$s объявил(а) Винто</string>
     <string name="seat_pointed_penalty">%1$s берёт карту из колоды</string>
     <string name="seat_pointed_coalition">%1$s ведёт коалицию</string>
@@ -284,7 +287,7 @@
     <string name="beat_call_now_title">Объявляйте</string>
     <string name="beat_call_now_body">Вы знаете каждую карту в своей руке, и вместе они дают ноль или меньше — никто за этим столом не сможет закончить ниже вас. Нажмите «Винто»: у всех остальных ровно по одному ходу, а потом все руки вскрывают.</string>
     <string name="beat_you_called_title">Вы объявили Винто</string>
-    <string name="beat_you_called_body">Раунд заканчивается на ваших условиях. У Рафа, Майки и Дона по одному ходу, и теперь никто не может трогать ваши карты. Потом все руки вскрывают, и вашу сравнивают с лучшей из их рук.</string>
+    <string name="beat_you_called_body">Раунд заканчивается на ваших условиях. У Эмбер, Скай и Дюны по одному ходу, и теперь никто не может трогать ваши карты. Потом все руки вскрывают, и вашу сравнивают с лучшей из их рук.</string>
     <string name="beat_coalition_vs_you_title">Теперь они играют как один</string>
     <string name="beat_coalition_vs_you_body">Трое, кто не объявлял, — коалиция: по ходу каждому, а с вашей рукой сравнят только их единственную лучшую руку — то есть команда против вашей одной руки. За настоящим столом они бы всё обсудили и сложили то, что знают. Смотрите, что они делают своим последним ходом: здесь вы увидите карты, которых ещё не держали.</string>
     <string name="beat_aim_it_title">Наведите</string>
@@ -322,12 +325,12 @@
     <string name="beat_cards_king_name_title">Что назовёте, то и разыграете</string>
     <string name="beat_cards_king_name_body">То есть вы на самом деле выбираете действие — из тех карт, что уже видели. Назовёте 7 или 8 — посмотрите свою. Назовёте валета — получите его слепую мену, причём обе карты выбираете вы: так замеченный джокер приходит к вам, а ваша худшая уходит навстречу. Назовёте даму — сначала посмотрите две, а потом решите, менять ли.</string>
     <string name="beat_cards_king_whose_title">И чью карту вы назовёте</string>
-    <string name="beat_cards_king_whose_body">Названная карта уходит из руки того, кто её держал. Назвать свою десятку — снять с себя десять очков; назвать джокера у Дона — забрать у него минус один и оставить его на карту беднее. Один король, две задачи — что важнее, решаете вы.</string>
+    <string name="beat_cards_king_whose_body">Названная карта уходит из руки того, кто её держал. Назвать свою десятку — снять с себя десять очков; назвать джокера у соперника — забрать у него минус один и оставить его на карту беднее. Один король, две задачи — что важнее, решаете вы.</string>
     <string name="beat_cards_odd_title">Туз и джокер</string>
     <string name="beat_cards_odd_body">Туз стоит 1 и заставляет выбранного вами игрока взять штрафную карту. Джокер стоит минус один — лучшая карта в колоде и та, которую нельзя отдавать.</string>
     <string name="beat_tour_title">Колода и сброс</string>
     <string name="beat_tour_body">Карты приходят из колоды. Всё, что выбрасывают, ложится рядом лицом вверх — и это читает весь стол, вы в том числе.</string>
-    <string name="beat_seats_title">Раф, Майки и Дон</string>
+    <string name="beat_seats_title">Эмбер, Скай и Дюна</string>
     <string name="beat_seats_body">Три бота, у каждого пять карт, и видят они их не лучше вашего. Табличка, которая загорается зелёным, — чей сейчас ход.</string>
     <string name="beat_help_title">Знак ? всегда на месте</string>
     <string name="beat_help_body">Он объясняет, что происходит сейчас, и что делает каждая карта. В коробочной игре для этого есть карточки-подсказки, по одной на игрока: никто и не должен держать четырнадцать достоинств в голове — ни здесь, ни за настоящим столом.</string>
@@ -438,6 +441,7 @@
     <string name="ask_waiting_for_others">Ждём остальных</string>
     <string name="ask_watching">Наблюдение</string>
     <string name="ask_somebody_playing">Ходит %1$s</string>
+    <string name="ask_you_playing">Ходите вы</string>
     <string name="ask_who_plays_for_you">%1$s объявил(а) Винто. Кто сыграет за остальных?</string>
     <string name="ask_round_over">Раунд окончен</string>
     <string name="ask_round_over_lowest">Раунд окончен — у вас самая младшая рука, %1$d</string>
@@ -509,5 +513,44 @@
     <string name="signal_reshuffle_meaning">Колода кончилась, и сброс перетасовали обратно в неё. Всё, что кто-либо вычитал из этого сброса, теперь устарело.</string>
     <string name="signal_peek">Карта, поднимающаяся к середине</string>
     <string name="signal_peek_meaning">Кто-то на неё смотрит. Все видят, какую именно карту смотрели, — но лицо видит только тот, кому это положено.</string>
+
+    <string name="card_name_two">Двойка</string>
+    <string name="card_name_three">Тройка</string>
+    <string name="card_name_four">Четвёрка</string>
+    <string name="card_name_five">Пятёрка</string>
+    <string name="card_name_six">Шестёрка</string>
+    <string name="card_name_seven">Семёрка</string>
+    <string name="card_name_eight">Восьмёрка</string>
+    <string name="card_name_nine">Девятка</string>
+    <string name="card_name_ten">Десятка</string>
+    <string name="card_name_jack">Валет</string>
+    <string name="card_name_queen">Дама</string>
+    <string name="card_name_king">Король</string>
+    <string name="card_name_ace">Туз</string>
+    <string name="card_name_joker">Джокер</string>
+
+    <string name="card_long_seven">Посмотреть одну свою карту</string>
+    <string name="card_long_eight">Посмотреть одну свою карту</string>
+    <string name="card_long_nine">Посмотреть одну карту другого игрока</string>
+    <string name="card_long_ten">Посмотреть одну карту другого игрока</string>
+    <string name="card_long_jack">Поменять местами любые две закрытые карты у двух разных игроков</string>
+    <string name="card_long_queen">Посмотреть любые две карты у двух разных игроков, затем по желанию поменять их местами</string>
+    <string name="card_long_king">Назвать действие другой карты у любого игрока (7–туз)</string>
+    <string name="card_long_ace">Заставить соперника взять штрафную карту</string>
+
+    <string name="card_help_two">Числовая карта, достоинство 2</string>
+    <string name="card_help_three">Числовая карта, достоинство 3</string>
+    <string name="card_help_four">Числовая карта, достоинство 4</string>
+    <string name="card_help_five">Числовая карта, достоинство 5</string>
+    <string name="card_help_six">Числовая карта, достоинство 6</string>
+    <string name="card_help_seven">Коснитесь одной из своих карт, чтобы на миг открыть её и запомнить значение. Это действие можно пропустить.</string>
+    <string name="card_help_eight">Коснитесь одной из своих карт, чтобы на миг открыть её и запомнить значение. Это действие можно пропустить.</string>
+    <string name="card_help_nine">Коснитесь карты соперника, чтобы на миг открыть её и увидеть значение. Это действие можно пропустить.</string>
+    <string name="card_help_ten">Коснитесь карты соперника, чтобы на миг открыть её и увидеть значение. Это действие можно пропустить.</string>
+    <string name="card_help_jack">Выберите две карты у разных игроков, чтобы поменять их местами — можно взять свою и чужую или только чужие. Нельзя выбрать две карты одного игрока. Выбор можно сбросить или пропустить всё действие.</string>
+    <string name="card_help_queen">1. Посмотрите две карты у разных игроков (свою и чужую или только чужие, но обязательно у двух разных игроков)\n2. Посмотрев обе, решите, менять ли их местами</string>
+    <string name="card_help_king">Выберите, чьё действие сыграть: 7 (посмотреть свою), 8 (посмотреть свою), 9/10 (посмотреть чужую), валет (поменять), дама (посмотреть и поменять), туз (штраф сопернику). Можно также назвать карту без действия (2–6, король, джокер).</string>
+    <string name="card_help_ace">Выберите соперника, который возьмёт штрафную карту из колоды. Это увеличивает его руку и сумму очков. Это действие можно пропустить.</string>
+    <string name="card_help_joker">Джокер, достоинство −1</string>
 
 </resources>

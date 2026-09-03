@@ -32,7 +32,11 @@
     "store-preview": "zdymak reel --only appstore-preview",
     "store-promo": "zdymak reel --only play-promo",
     "store-bridge": "vydanne bridge",
-    "store-specs": "zdymak specs"
+    "store-specs": "zdymak specs",
+    "capture-ios": "zdymak capture --platform ios --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/ios",
+    "capture-ipad": "zdymak capture --platform ios --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/ios-ipad",
+    "capture-android": "zdymak capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/android",
+    "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun"
   },
   "devDependencies": {
     "vydanne": "^0.9.0",

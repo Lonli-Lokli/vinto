@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- SKY — blue, a crescent. The deck's opponent family (an action reaching somebody else). -->
+  <!-- The disc, the deck's ink ring, and the court cards' gold hairline just inside it.
+       Circles are arc paths because a vector drawable has no <circle> element. -->
+  <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#2A6BB0" stroke="#14181B" stroke-width="20"/>
+  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
+  <!-- Two arcs and no fill rule: the outer edge sweeps the long way anticlockwise, the inner one
+       cuts back the short way clockwise. Written as one closed subpath so it needs no evenOdd. -->
+  <path d="M470 280 A232 232 0 1 0 470 744 A268 268 0 0 1 470 280 Z" fill="#F7F5EF"/>
+</svg>

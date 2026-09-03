@@ -1,0 +1,104 @@
+# The iOS app, declared rather than drawn.
+#
+#     xcodegen generate --spec iosApp/project.yml --project iosApp
+#
+# `iosApp.xcodeproj` is GENERATED FROM THIS FILE and is still committed, so a machine without
+# xcodegen can open and build the project exactly as before. Edit this file, re-run the command,
+# commit both. Editing the `.xcodeproj` in Xcode and not folding the change back here is the one
+# way to lose work: the next generate overwrites it.
+#
+# It became a generated project when the App Store half of the release was built. Until then the
+# target carried its whole configuration in `INFOPLIST_KEY_*` build settings and had no
+# `Info.plist`, no entitlements, no asset catalogue and no privacy manifest — which was fine
+# while nothing had ever been submitted, and is exactly the set of files a submission needs. Four
+# new files hand-merged into a `.pbxproj` is how a project file gets quietly corrupted; the rest
+# of the portfolio already generates, and this is now the same shape as `game-deduction`.
+
+name: iosApp
+
+options:
+  bundleIdPrefix: app.kupalinka
+  createIntermediateGroups: true
+  deploymentTarget:
+    # 15.0 is Compose Multiplatform's floor, not a product decision. Raising it drops devices;
+    # lowering it does not build.
+    iOS: "15.0"
+
+settings:
+  base:
+    # The version, single-sourced here so the Info.plist can reference it and the two cannot
+    # drift. MARKETING_VERSION is what a person reads in the App Store; CURRENT_PROJECT_VERSION
+    # is the build number, which App Store Connect requires to increase on every upload of the
+    # same version — pass it on the archive command rather than editing this line.
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+    # The Gradle build phase below writes into the build directory, which the sandbox forbids.
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+    # Automatic signing against the studio's team. Xcode fetches or creates the App Store
+    # provisioning profile for PRODUCT_BUNDLE_IDENTIFIER when the Mac is signed in; the archive
+    # command passes `-allowProvisioningUpdates` so a fresh machine can do it unattended.
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: JNHFD8PCM8
+
+  configs:
+    Debug:
+      # A simulator build needs no identity, so a contributor with no Apple account can still
+      # run the game. Release keeps signing on, because that is the build that leaves.
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    settings:
+      base:
+        PRODUCT_NAME: Vinto
+        PRODUCT_BUNDLE_IDENTIFIER: app.kupalinka.vinto
+        INFOPLIST_FILE: iosApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: iosApp/iosApp.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+        # iPhone and iPad. The table has a landscape arrangement already (`TableLayout` in
+        # `CardScale.kt`, which the Android manifest cites for the same reason), so a tablet
+        # gets the layout the wider screen wants rather than a stretched phone.
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+        SWIFT_VERSION: "5.0"
+
+        # Where `embedAndSignAppleFrameworkForXcode` leaves the Kotlin framework, and the
+        # `-framework ComposeApp` that links it. `ContentView.swift` imports it by that name;
+        # renaming the framework in `composeApp/build.gradle.kts` breaks this and the import
+        # together, and nothing checks that for you.
+        FRAMEWORK_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - -framework
+          - ComposeApp
+
+    preBuildScripts:
+      - name: SwiftLint (strict)
+        basedOnDependencyAnalysis: false
+        script: |
+          # Skips with a warning rather than failing when SwiftLint is absent, so the build
+          # still works on a machine that has not installed it.
+          if which swiftlint >/dev/null; then
+            cd "$SRCROOT/.." && swiftlint lint --strict --config .swiftlint.yml
+          else
+            echo "warning: SwiftLint not installed — run 'brew install swiftlint' to lint Swift"
+          fi
+
+      - name: Build Kotlin framework
+        basedOnDependencyAnalysis: false
+        script: |
+          # Xcode does not inherit a login shell, so JAVA_HOME may be unset here. Resolving it
+          # rather than hardcoding a path is what lets this build on somebody else's Mac.
+          export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 17)}"
+          cd "$SRCROOT/.."
+          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode

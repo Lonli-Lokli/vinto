@@ -59,5 +59,80 @@
 /composeResources/game.vinto.app.art/values/strings.commonMain.cvr
   Cache-Control: no-store
 
+/composeResources/game.vinto.app.art/values-ar/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-be/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-bn/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-de/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-es/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-fr/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-he/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-hi/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-id/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-it/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-ja/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-ko/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-pl/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-pt/strings.commonMain.cvr
+  Cache-Control: no-store
+
 /composeResources/game.vinto.app.art/values-ru/strings.commonMain.cvr
   Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-tr/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-uk/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-ur/strings.commonMain.cvr
+  Cache-Control: no-store
+
+/composeResources/game.vinto.app.art/values-zh/strings.commonMain.cvr
+  Cache-Control: no-store
+# --- App Links ---------------------------------------------------------------------------
+#
+# The two files that let an https invitation open the app rather than the website
+# (docs/kotlin/APP-LINKS.md). Both must be reachable and both must be JSON.
+#
+# `apple-app-site-association` HAS NO FILE EXTENSION, which is Apple's requirement and this
+# host's problem: Cloudflare infers a content type from the extension, finds none, and serves
+# it as something iOS will not parse. iOS then reports nothing at all — no error, no retry,
+# and universal links simply stay dead. Setting it here is the whole fix.
+#
+# Not cached hard, on purpose. Each is read by the OS at install and occasionally after, and
+# both are expected to CHANGE without an app release: assetlinks.json gains Google's app
+# signing fingerprint the day the Play listing exists. A long TTL on a file whose whole job is
+# to be re-read is the same mistake the string tables above document.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600, must-revalidate

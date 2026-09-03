@@ -63,7 +63,11 @@
   iosApp/            # Xcode project embedding composeApp's framework (macOS only)
   build-logic/       # Convention plugins
   config/detekt/     # Ruleset and the per-module baselines
-  tools/             # Icon and sound generators (Python); the mark in tools/brand/
+  tools/             # Generators and checks (Node); the mark in tools/brand/
+  brand/             # The icon master SVG, the four seat-portrait masters, znachok's output
+  Scripts/           # build-number.sh — the one source of the build number for both stores
+  keystore/          # The Play upload key. Gitignored, and on ONE machine — back it up
+  fastlane/metadata/ # The store listings, per locale, pushed by vydanne
   fixtures/          # The frozen corpus: 50 recordings + PRNG vectors
 
   ## Development Commands
@@ -77,9 +81,42 @@
   ./gradlew :composeApp:run               # the desktop window — fastest look at a UI change
   ./gradlew :worker:jsProductionExecutableCompileSync   # the Worker bundle
   ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament   # bot strength
+  ./gradlew detekt -PdetektFix            # let ktlint FIX the formatting it would report
+  ```
+
+  **Releasing** — never hand-edit a version; VERSIONING.md says which number is which:
+  ```bash
+  ./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"   # the .aab Play takes
+  xcodegen generate --spec iosApp/project.yml --project iosApp   # after editing project.yml
+  node tools/check-translations.mjs       # every locale against the English source
+  node ../znachok/bin/znachok.mjs --config znachok.config.mjs    # app icons from brand/vinto-icon.svg
+  node /path/to/vydanne/bin/vydanne.mjs preflight                # what the stores are still missing
   ```
 
   Full command list, including iOS and the Worker gates: `docs/kotlin/README.md` §4.
+
+  ## Tooling is Kotlin or Node — never Python
+
+  Anything written for this repository is Kotlin or Node.js. This is a portfolio-wide rule, not a
+  preference about this one game, and it applies to generators and checks as much as to shipped
+  code: `tools/svg-to-drawable.mjs`, `tools/check-translations.mjs` and `Scripts/build-number.sh`
+  are the shape to copy.
+
+  Four Python generators predate the rule and still work — `make-card-faces.py`,
+  `make-launcher-icons.py`, `make-sfx.py`, `make-web-icons.py`. Nothing runs them automatically
+  and their output is committed, so they are inert until somebody edits the art. **Do not add a
+  fifth**, and port one when you next need to change it.
+
+  ## Art is SVG, and drawables are generated from it
+
+  The deck is `card_*.xml` — Android vector drawables, which Compose Multiplatform reads on every
+  target. New art follows: author an SVG master under `brand/`, then
+  `node tools/svg-to-drawable.mjs <master.svg…> --out composeApp/src/commonMain/composeResources/drawable`.
+  Commit both halves. The converter refuses anything it has no mapping for rather than dropping
+  it silently, so a master that needs groups or gradients is a deliberate change to the converter.
+
+  A PNG is the exception, not the default — the four seat portraits were 780 KB of PNG and are
+  3.5 KB of XML.
 
   Coding Conventions
 

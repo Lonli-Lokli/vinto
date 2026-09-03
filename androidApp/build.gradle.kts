@@ -73,8 +73,28 @@ android {
         applicationId = "app.kupalinka.vinto"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        // The build number, and it is NEVER hand-edited — see VERSIONING.md. Play refuses an
+        // upload whose versionCode does not strictly exceed the last one on the track, and the
+        // commit count is monotonic for free, needs no stored state, and gives the same number
+        // to the iOS archive built from the same commit.
+        //
+        // `-PversionCode=` overrides it, which is what a shallow CI checkout needs: counting
+        // commits in a truncated clone is not monotonic. A tree with no git at all falls back
+        // to 1 rather than failing the build.
+        // `providers.exec` rather than a plain `"git".execute()`: the configuration cache is ON
+        // in this build (gradle.properties says why), and shelling out at configuration time any
+        // other way is a cache violation that fails the build rather than degrading it.
+        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull()
+            ?: runCatching {
+                project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+                    .standardOutput.asText.get().trim().toInt()
+            }.getOrDefault(1)
+
+        // The human semver, bumped by hand at a release and deliberately NOT synced with iOS.
+        // Stores gate uploads on the build number rising within a marketing version; they do not
+        // care that two platforms share one, and forcing lockstep would mean burning a version on
+        // one platform to match the other.
+        versionName = "1.0"
     }
 
     compileOptions {
@@ -117,10 +137,34 @@ android {
     }
 
     buildTypes {
-        // No shrinking yet: there is no release pipeline until phase 8, and enabling R8
-        // now would mean maintaining keep rules for code that is still being ported.
+        /**
+         * R8 is ON, and it halves the download.
+         *
+         * The note here used to say "no shrinking yet: there is no release pipeline until phase 8,
+         * and enabling R8 now would mean maintaining keep rules for code that is still being
+         * ported." Both halves have expired — this IS phase 8, and the port finished — so it was
+         * measured rather than argued about: **10.30 MB unminified against 5.93 MB with R8**, on
+         * the same commit. For a card game that is the difference between a download somebody
+         * waits for and one they do not.
+         *
+         * `proguard-rules.pro` is nearly empty and explains why at length: nothing here resolves a
+         * class by name at runtime. Read it before adding a keep.
+         *
+         * `isShrinkResources` is safe alongside it for a reason worth knowing rather than
+         * assuming: it removes unused Android `res/`, and every string, card and portrait this app
+         * draws is an *asset* under `assets/composeResources/` instead. Verified on the bundle
+         * rather than believed — 19 locale string tables, 19 drawables and 4 fonts are all still
+         * inside the minified .aab.
+         *
+         * **The check R8 needs and a build cannot give it is a device.** Its failures are runtime
+         * ones: the build stays green and the app dies on a screen. Nothing here has been run on a
+         * phone yet, so installing the release build once and walking a round is the outstanding
+         * step — ship-and-operate 3.3 was going to want that anyway.
+         */
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
                 ?: signingConfigs.getByName("debug")
         }
@@ -149,7 +193,29 @@ android {
  */
 private val resPackage = "game.vinto.app.art"
 
-private val composeResourceAssets = tasks.register<Copy>("assembleComposeResourceAssets") {
+/**
+ * `Sync`, not `Copy`, and the difference is what keeps a DELETED resource out of the package.
+ *
+ * A `Copy` only ever adds: anything already sitting in the destination stays there, whatever the
+ * source now contains. So a drawable removed from `composeApp/src/commonMain/composeResources/`
+ * remains in `androidApp/build/generated/composeAssets/` from the previous build, gets picked up
+ * by the asset merge, and **ships**. `Sync` mirrors the source instead, deleting what is no
+ * longer in it.
+ *
+ * This was found rather than foreseen, on the first Play bundle ever built. The four seat
+ * portraits had just been replaced — the old ones were derivative of somebody else's characters,
+ * which is why they had to go (`brand/avatars/_shared.md`) — and `unzip -l` on the .aab showed
+ * `avatar_donatello.png`, `avatar_leonardo.png`, `avatar_michelangelo.png` and
+ * `avatar_raphael.png` all still inside it, next to the four replacements. The source tree was
+ * clean, every test was green, and the bundle carried the exact files the release existed to
+ * remove.
+ *
+ * Nothing else would have caught it. `git status` is clean, `grep` finds nothing, and the app
+ * looks right because the code asks for the new names — the old bytes are simply along for the
+ * ride. The only check that sees it is listing the archive, which is why that is now a step in
+ * DEPLOYMENT.md rather than a thing somebody thought to do once.
+ */
+private val composeResourceAssets = tasks.register<Sync>("assembleComposeResourceAssets") {
     dependsOn(":composeApp:prepareComposeResourcesTaskForCommonMain")
     from(
         project(":composeApp").layout.buildDirectory
@@ -170,7 +236,37 @@ android {
     )
 }
 
-// So the assets exist before anything merges them.
-tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
+/**
+ * So the assets exist before anything READS them, which is a wider set of tasks than it looks.
+ *
+ * This used to match only `merge*Assets`, which is what packages them, and that was enough for
+ * every build anybody had run. **`bundleRelease` fails on it**, with two configuration errors
+ * rather than a missing file:
+ *
+ *     Task ':androidApp:lintVitalAnalyzeRelease' uses this output of task
+ *     ':androidApp:assembleComposeResourceAssets' without declaring an explicit or implicit
+ *     dependency. This can lead to incorrect results being produced…
+ *
+ * `lintVital` is the release-only lint pass — it does not run for `assembleDebug` or for the JVM
+ * suites — so the first thing that ever asked for it was the first Play bundle ever built. It
+ * walks the merged asset directory to look for problems in it, which makes it a consumer of the
+ * generated directory just as much as the packaging step is, and Gradle's dependency validation
+ * refuses to guess the ordering.
+ *
+ * Matched on the name rather than by wiring the four tasks explicitly, because AGP names them per
+ * variant (`lintVitalAnalyzeRelease`, `generateReleaseLintVitalReportModel`, and the plain `lint*`
+ * pair) and a list of literals goes stale the first time a build type is added. The whole block
+ * disappears the day Compose Multiplatform configures its own task — the header above says how to
+ * tell whether that day has come.
+ *
+ * `ignoreCase` is load-bearing, and getting it wrong fixes exactly half the problem: AGP
+ * capitalises the word where it sits mid-name (`generateReleaseLintVitalReportModel`) and not
+ * where it starts one (`lintVitalAnalyzeRelease`). A `contains("Lint")` therefore silences one of
+ * the two errors and leaves the other, which reads as the fix not having worked at all.
+ */
+tasks.matching {
+    (it.name.startsWith("merge") && it.name.endsWith("Assets")) ||
+        it.name.contains("lint", ignoreCase = true)
+}.configureEach {
     dependsOn(composeResourceAssets)
 }

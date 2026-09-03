@@ -138,9 +138,8 @@ class LobbyFlowTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
         press("Play online")
-        // A name is required before the three ways in are live, so type one. That gate is the
-        // point of `OnlineNameRequiredTest`; here it is only the door to everything past it.
-        onNodeWithContentDescription("Your name at the table").performTextInput("Ada")
+        // No name to supply any more: the screen mints one, so the three ways in are live the
+        // moment it opens. `MintedNameTest` is what holds that.
         waitForIdle()
     }
 

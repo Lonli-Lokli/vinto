@@ -85,18 +85,18 @@ class LessonCopyTest {
 
     @Test
     fun theCallSaysWhatCallingDoes() = runComposeUiTest {
-        val words = read { taughtBody(Teaches.VintoCalled(Speaker.Named("Raph"))) }
+        val words = read { taughtBody(Teaches.VintoCalled(Speaker.Named("Ember"))) }
         assertTrue(words.contains("one more turn"), "it does not say what a call does: $words")
     }
 
     @Test
     fun theCallerIsNamedInTheHeading() = runComposeUiTest {
         val read = mutableStateOf<String?>("")
-        setContent { read.value = taughtTitle(Teaches.VintoCalled(Speaker.Named("Raph"))) }
+        setContent { read.value = taughtTitle(Teaches.VintoCalled(Speaker.Named("Ember"))) }
         waitForIdle()
 
         val heading by read
-        assertTrue(heading!!.contains("Raph"), "the caller is not named: $heading")
+        assertTrue(heading!!.contains("Ember"), "the caller is not named: $heading")
     }
 
     /**
@@ -158,8 +158,8 @@ class LessonCopyTest {
         val alone = read { taughtBody(Teaches.TossIn(emptyList())) }
         assertTrue(alone.startsWith("The moment"), "an empty prefix left something behind: $alone")
 
-        val watched = read { taughtBody(Teaches.TossIn(listOf("Raph", "Mikey"))) }
-        assertTrue(watched.startsWith("Raph and Mikey"), watched)
+        val watched = read { taughtBody(Teaches.TossIn(listOf("Ember", "Sky"))) }
+        assertTrue(watched.startsWith("Ember and Sky"), watched)
         assertTrue(watched.contains("The moment"), "the rest of the beat went missing: $watched")
     }
 
@@ -182,13 +182,13 @@ class LessonCopyTest {
         val read = mutableStateOf<Pair<String?, String?>?>(null)
         setContent {
             read.value = taughtTitle(Teaches.Watching()) to
-                taughtTitle(Teaches.Watching(Speaker.Named("Mikey"), Rank.NINE))
+                taughtTitle(Teaches.Watching(Speaker.Named("Sky"), Rank.NINE))
         }
         waitForIdle()
 
         val (deciding, playing) = read.value!!
         assertNull(deciding, "a bot merely deciding has no heading: $deciding")
-        assertTrue(playing!!.contains("Mikey"), "who: $playing")
+        assertTrue(playing!!.contains("Sky"), "who: $playing")
         assertTrue(playing.contains("Nine"), "which card: $playing")
         assertTrue(playing.contains("Peek at one card of another player"), "and what it does: $playing")
     }
@@ -199,21 +199,21 @@ class LessonCopyTest {
         val read = mutableStateOf(emptyList<String>())
         setContent {
             read.value = listOf(
-                taughtTitle(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)) ?: "",
-                taughtBody(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)),
-                taughtBody(Teaches.FinalPlay(Speaker.Named("Mikey"), Rank.KING)),
-                taughtBody(Teaches.FinalPlay(Speaker.Named("Don"), Rank.NINE)),
-                taughtBody(Teaches.CoalitionLeader(Speaker.Named("Raph"))),
+                taughtTitle(Teaches.FinalPlay(Speaker.Named("Ember"), Rank.ACE)) ?: "",
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Ember"), Rank.ACE)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Sky"), Rank.KING)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Dune"), Rank.NINE)),
+                taughtBody(Teaches.CoalitionLeader(Speaker.Named("Ember"))),
             )
         }
         waitForIdle()
 
         val said = read.value
-        assertTrue(said[0].contains("Raph") && said[0].contains("Ace"), "who and what: ${said[0]}")
+        assertTrue(said[0].contains("Ember") && said[0].contains("Ace"), "who and what: ${said[0]}")
         assertTrue(said[1].contains("draw a card"), "an Ace makes somebody draw: ${said[1]}")
         assertTrue(said[2].contains("penalty card"), "a wrong name costs a card: ${said[2]}")
         assertTrue(said[3].contains("looks at one card"), "a 9 looks: ${said[3]}")
-        assertTrue(said[4].contains("Raph"), "the leader is named: ${said[4]}")
+        assertTrue(said[4].contains("Ember"), "the leader is named: ${said[4]}")
     }
 
     /** The call the round is built to end on says why the hand cannot be beaten. */

@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Українська.
+
+    Кілька рішень, ухвалених один раз і витриманих по всьому файлу:
+
+    * Гравця тут завжди називають на «ви» — це формальна, ввічлива форма звертання, а не
+      знак дистанції. Побічний ефект зручний: у минулому часі «ви» вимагає форми множини
+      («ви взяли», «ви зіграли»), а вона не залежить від статі гравця.
+    * Для ботів і для будь-якої третьої особи, чия стать невідома, дієслова дії стоять у
+      теперішньому часі («%1$s кидає», «%1$s оголошує Вінто») замість минулого — минулий
+      час однини в українській узгоджується зі статтю («кинув» / «кинула»), а вгадувати
+      її нема з чого. Це не «жива» розповідь заднім числом, а спосіб лишитися нейтральним.
+    * Лічильники записані як «іменник: N» — «у колоді залишилося: 34». В англійському
+      рядку «%1$d cards» узгоджується сама собою, а в українській для 1, 2–4 і 5+ потрібні
+      три різні форми, яких цей формат ресурсів поки не підтримує. Двокрапка знімає
+      питання і читається як звичайний напис в інтерфейсі.
+-->
+<resources>
+
+    <string name="app_name">VINTO</string>
+
+    <string name="opening_shuffling">Тасуємо…</string>
+
+    <string name="home_tagline">Тримайте менше. Знайте більше.</string>
+    <string name="home_solo_title">Одиночна гра · три боти · %1$s</string>
+    <string name="home_continue">Продовжити</string>
+    <string name="home_new_game">Нова гра</string>
+    <string name="home_play">Грати</string>
+    <string name="home_online">Грати онлайн</string>
+    <string name="home_teach">Як грати</string>
+    <string name="home_settings">Налаштування</string>
+    <string name="home_version">v%1$s</string>
+    <string name="home_unofficial">Неофіційний застосунок для карткової гри VINTO. Оригінал — на vinto.game</string>
+    <string name="home_unofficial_action">Відкрити vinto.game — офіційний сайт гри</string>
+
+    <string name="online_screen_title">Гра онлайн</string>
+    <string name="online_nickname">Ваше ім'я за столом</string>
+    <string name="online_nickname_detail">Його бачать інші місця за столом. Торкніться, щоб узяти інше. Це не акаунт — акаунтів тут немає.</string>
+    <string name="online_code">Код кімнати</string>
+    <string name="online_code_detail">Шість символів від того, хто відкрив кімнату.</string>
+    <string name="online_join">Увійти в кімнату</string>
+    <string name="online_create">Відкрити нову кімнату</string>
+    <string name="online_offline">Зараз немає мережі. Для гри онлайн вона потрібна; одиночна гра та урок працюють як завжди.</string>
+    <string name="trouble_offline">Немає зв'язку зі службою кімнат. Перевірте мережу і спробуйте ще раз.</string>
+    <string name="trouble_no_such_room">Кімнати з таким кодом немає. Перевірте шість символів і спробуйте ще раз.</string>
+    <string name="trouble_closed">Гра онлайн ще не відкрита. Одиночна гра та урок працюють як завжди.</string>
+    <string name="trouble_busy">За цим столом немає місць. Спробуйте інший стіл або відкрийте свій.</string>
+    <string name="trouble_refused">Служба кімнат це не прийняла.</string>
+    <string name="trouble_broken">У служби кімнат негаразди. Спробуйте за хвилину.</string>
+    <string name="online_creating">Відкриваємо кімнату…</string>
+    <string name="online_visibility">Хто зможе знайти кімнату</string>
+    <string name="online_visibility_private">Лише за кодом</string>
+    <string name="online_visibility_public">У загальному списку</string>
+    <string name="online_visibility_detail">Кімната зі списку видна кожному, хто його переглядає. У закриту можна увійти лише за кодом.</string>
+    <string name="online_browse">Переглянути відкриті кімнати</string>
+    <string name="online_open_detail">Чотири місця, код, яким можна поділитися, і боти на всіх, хто не прийшов.</string>
+    <string name="online_join_detail">Шість символів від того, хто відкрив кімнату.</string>
+    <string name="online_browse_detail">Кімнати, чиї господарі обрали список. Сісти може будь-хто.</string>
+    <string name="online_open_title">Відкрити кімнату</string>
+    <string name="online_join_title">Увійти за кодом</string>
+    <string name="online_open_screen">Відкрити кімнату</string>
+    <string name="online_join_screen">Увійти за кодом</string>
+    <string name="online_back">Назад</string>
+
+    <string name="discover_title">Відкриті кімнати</string>
+    <string name="discover_looking">Шукаємо вільні столи…</string>
+    <string name="discover_refresh">Оновити</string>
+    <string name="discover_quiet">Відкритих кімнат зараз немає. Відкрийте свою — вона з'явиться тут.</string>
+    <string name="discover_failed">Не вдалося зв'язатися зі службою кімнат: %1$s</string>
+    <string name="discover_retry">Спробувати ще раз</string>
+    <string name="discover_room_host">%1$s за столом</string>
+    <string name="discover_room_unnamed">Вільний стіл</string>
+    <string name="discover_seats">Зайнято місць: %1$d із 4</string>
+    <string name="discover_people">Грають: %1$d</string>
+    <string name="discover_dealing">Роздача через %1$d</string>
+    <string name="discover_full">Місць немає</string>
+    <string name="discover_join">Увійти</string>
+    <string name="discover_room_summary">Кімната %1$s, зайнято місць: %2$d із 4</string>
+
+    <string name="invite_title">Запросити когось</string>
+    <string name="invite_subject">Запрошую до Vinto</string>
+    <string name="invite_body">Запрошую до гри Vinto: %1$s\n\nАбо відкрийте застосунок і введіть код кімнати %2$s</string>
+    <string name="invite_share">Поділитися кодом</string>
+    <string name="invite_copy">Скопіювати код</string>
+    <string name="invite_copied">Скопійовано</string>
+    <string name="invite_read_it_out">Або продиктуйте: шість символів, без літер O та I.</string>
+
+    <string name="lobby_title">Кімната %1$s</string>
+    <string name="lobby_seat_open">Вільне місце</string>
+    <string name="lobby_seat_you">%1$s — ви</string>
+    <string name="lobby_add_bot">Додати бота</string>
+    <string name="lobby_remove_bot">Прибрати бота з місця %1$d</string>
+    <string name="lobby_leave">Залишити кімнату</string>
+    <string name="lobby_connecting">З'єднуємося з кімнатою…</string>
+    <string name="lobby_needs_human">Для гри потрібні двоє. Поділіться кодом — решту місць можуть зайняти боти.</string>
+    <string name="lobby_fill_seats">Грають усі чотири місця. Заповніть вільні людьми або ботами — і почнеться відлік до роздачі.</string>
+    <string name="lobby_counting_down">Усе готово — роздача через %1$d…</string>
+    <string name="lobby_offered_bots">Більше ніхто не прийшов, тож вільні місця зайняли боти — роздача через %1$d…. Приберіть одного, щоб зачекати ще.</string>
+    <string name="lobby_over">Кімнату закрито.</string>
+    <string name="lobby_unreachable">Не вдалося потрапити в цю кімнату. Перевірте код або з'єднання.</string>
+    <string name="lobby_retry">Спробувати ще раз</string>
+    <string name="lobby_seat_working">Змінюємо це місце…</string>
+
+    <string name="net_connected">На зв'язку</string>
+    <string name="net_connecting">З'єднання…</string>
+    <string name="net_reconnecting">Перепідключення…</string>
+    <string name="net_closed">Зв'язок втрачено</string>
+    <string name="table_sending">Надсилаємо ваш хід…</string>
+    <string name="table_next_round_waiting">Чекаємо, поки погодяться інші…</string>
+    <string name="online_session_over">Сесію завершено: %1$s</string>
+
+    <string name="settings_title">Налаштування</string>
+
+    <string name="settings_group_game">Гра</string>
+    <string name="settings_group_feel">Вигляд і звук</string>
+    <string name="settings_language">Мова</string>
+    <string name="settings_language_detail">Перекладу ще немає? Гра повертається до англійської, а написи на самих картах не змінюються ніколи.</string>
+    <string name="settings_language_device">Як на пристрої</string>
+    <string name="settings_language_current">Мова: %1$s</string>
+    <string name="settings_language_chosen">%1$s — обрано</string>
+    <string name="settings_group_privacy">Що залишає цей пристрій</string>
+    <string name="settings_group_about">Про застосунок</string>
+
+    <string name="settings_privacy">Конфіденційність</string>
+    <string name="settings_privacy_detail">Що рахується, що ні, і як це вимкнути.</string>
+    <string name="settings_terms">Умови використання</string>
+    <string name="settings_terms_detail">Коротко про те, чого чекати від нас і чого чекають від вас.</string>
+    <string name="settings_contact">Написати нам</string>
+    <string name="settings_contact_detail">Помилка, ідея або партія, що пішла не так.</string>
+    <string name="settings_original">Оригінальна гра</string>
+    <string name="settings_original_detail">VINTO — не наша гра. Це неофіційний застосунок для неї, а сама гра, її правила та ті, хто її створив, — на vinto.game.</string>
+    <string name="settings_studio">Про цей застосунок</string>
+    <string name="settings_studio_detail">Хто зробив цей застосунок, що ще є на полиці, і як він влаштований.</string>
+    <string name="settings_rate">Оцінити гру</string>
+    <string name="settings_rate_detail">Залиште відгук у крамниці, звідки встановили гру. Невеликій грі це найбільше допомагає знайтися.</string>
+    <string name="settings_open">Відкрити</string>
+    <string name="settings_link_failed">На цьому пристрої немає чим це відкрити. Адреса: %1$s</string>
+
+    <string name="settings_share">Розповісти іншим</string>
+    <string name="settings_share_detail">Надішліть гру другові. Чотири місця, і три з них можуть зайняти боти.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — карткова гра про те, як тримати менше і знати більше. Безкоштовно, просто в браузері, без реєстрації: %1$s</string>
+    <string name="settings_back">Назад</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">Боти</string>
+    <string name="settings_bots_detail">Наскільки старанно всі троє обмірковують хід.</string>
+    <string name="difficulty_easy">Легко</string>
+    <string name="difficulty_moderate">Середньо</string>
+    <string name="difficulty_hard">Складно</string>
+
+    <string name="settings_pace">Темп</string>
+    <string name="settings_pace_detail">Наскільки швидко стіл показує те, що сталося. Три боти встигають зробити хід між двома вашими дотиками — ось скільки часу у вас є, щоб за цим стежити.</string>
+    <string name="pace_calm">Спокійний</string>
+    <string name="pace_steady">Рівний</string>
+    <string name="pace_brisk">Швидкий</string>
+
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_detail">Сукно зелене в будь-якому разі. Це все, що навколо нього.</string>
+    <string name="theme_system">Як у системі</string>
+    <string name="theme_light">Світла</string>
+    <string name="theme_dark">Темна</string>
+
+    <string name="settings_motion">Рух</string>
+    <string name="settings_motion_detail">Чи літають карти, чи просто з'являються там, де лягли. «Менше» зберігає кожне підсвічування, кожен підсумок і кожну паузу — гра, як і раніше, усе розповідає, просто нічого не рухається. «Як у системі» слідує налаштуванням доступності вашого пристрою.</string>
+    <string name="motion_system">Як у системі</string>
+    <string name="motion_full">Повний</string>
+    <string name="motion_reduced">Менше</string>
+
+    <string name="settings_sound">Звук</string>
+    <string name="settings_sound_detail">Роздача, приземлення карти, штраф, кінець раунду — і більше нічого.</string>
+    <string name="settings_haptics">Вібровідгук</string>
+    <string name="settings_haptics_detail">Короткий поштовх під пальцем, коли ви торкаєтеся картки, зроблено хід або спрацювало правило.</string>
+    <string name="settings_analytics">Анонімна статистика</string>
+    <string name="settings_analytics_detail">Скільки раундів зіграно і скільки вони тривають. Ніколи — ваше ім'я, коди кімнат чи щось таке, що вказало б на вас: у тому, що надсилається, для цього просто немає місця. Якщо вимкнути, не надсилається нічого.</string>
+    <string name="settings_on">Увімк.</string>
+    <string name="settings_off">Вимк.</string>
+
+    <string name="settings_saved_game">Збережена партія</string>
+    <string name="settings_saved_game_detail">Є незавершений раунд. Забути його не можна скасувати, і поточний рахунок сесії піде разом із ним.</string>
+    <string name="settings_forget">Забути</string>
+    <string name="settings_record">Ваша статистика</string>
+    <string name="settings_record_detail">Зіграно раундів, скільки виграно, найкраща рука і серія. Зберігається лише на цьому пристрої — нікуди не надсилається.</string>
+    <string name="settings_forget_record">Очистити</string>
+
+    <string name="table_round_turn">Р%1$d / Х%2$d</string>
+    <string name="table_draw">КОЛОДА</string>
+    <string name="table_discard">СКИД</string>
+    <string name="table_toss_in">Підкидання</string>
+    <string name="table_toss_in_timed">Підкидання · %1$d с</string>
+    <string name="toss_clock_moves_on">Стіл продовжить через %1$d с</string>
+    <string name="toss_more_time">Ще часу</string>
+    <string name="table_toss_in_summary">Вікно підкидання, збіг за %1$s</string>
+    <string name="table_tossed">Підкинуто (%1$d)</string>
+    <string name="card_thrown_by">%1$s скидає %2$s</string>
+    <string name="table_you">Ви</string>
+    <string name="table_vinto_mark">Вінто</string>
+    <string name="table_leads_mark">веде</string>
+    <string name="seat_pointed_turn">Ходить %1$s</string>
+    <string name="seat_is_a_bot">бот</string>
+    <string name="seat_pointed_vinto">%1$s оголошує Вінто</string>
+    <string name="seat_pointed_penalty">%1$s бере карту з колоди</string>
+    <string name="seat_pointed_coalition">%1$s веде коаліцію</string>
+    <string name="table_final_round">Останнє коло</string>
+    <string name="table_final_caller">Усі інші виставляють одну руку на всіх — проти вашої.</string>
+    <string name="table_final_leader">Ви граєте рукою коаліції проти %1$s.</string>
+    <string name="table_final_ally">%1$s грає рукою коаліції проти %2$s.</string>
+    <string name="table_final_turns_left">Ходів до розкриття: %1$d</string>
+    <string name="table_final_last_turn">останній хід</string>
+    <string name="table_final_choosing">Одна рука на трьох — проти %1$s.</string>
+    <string name="table_final_side_coalition">Разом</string>
+    <string name="table_final_side_caller">Заявник</string>
+    <string name="table_final_versus">проти</string>
+    <string name="table_final_leads">%1$s веде інших</string>
+    <string name="table_see_score">Переглянути рахунок</string>
+
+    <string name="header_report">Повідомити про проблему</string>
+    <string name="header_settings">Налаштування</string>
+    <string name="header_deck_left">У колоді залишилося: %1$d</string>
+    <string name="header_deck_badge">У колоді %1$d — що це означає</string>
+
+    <string name="deck_title">Колода</string>
+    <string name="deck_body">Карт для взяття залишилося: %1$d.\n\nКоли колода закінчиться, скид перетасують назад у неї — і все, що хтось дізнався зі спостереження за цим скидом, одразу втратить сенс, включно з тим, що дізналися ви. Раунд на межі закінчення колоди — це раунд, у якому варто оголошувати Вінто.</string>
+    <string name="deck_dismiss">Зрозуміло</string>
+
+    <string name="card_described">%1$s, коштує %2$d</string>
+    <string name="card_face_down">карта сорочкою вгору</string>
+    <string name="card_position">%1$s, карта %2$d</string>
+    <string name="card_the_deck">колода</string>
+    <string name="card_discarded">скинуто %1$s</string>
+    <string name="card_in_play">у грі: %1$s</string>
+    <string name="rail_card_action">%1$s, коштує %2$d: %3$s</string>
+    <string name="rail_card_plain">%1$s, коштує %2$d</string>
+    <string name="rail_aiming_at">прицілено на %1$s</string>
+    <string name="rail_aim_empty">карту ще не обрано</string>
+    <string name="rail_aim_first">Перша</string>
+    <string name="rail_aim_second">Друга</string>
+    <string name="card_discarded_live">скинуто %1$s, дію не використано</string>
+    <string name="card_in_hand">карта у вас у руці</string>
+
+    <string name="score_round">Раунд %1$d</string>
+    <string name="score_caller_won">Заявка на Вінто встояла</string>
+    <string name="score_level">Порівну — заявка встояла</string>
+    <string name="score_coalition_won">Інші перебили заявку</string>
+    <string name="score_deck_out">Ніхто не оголосив</string>
+    <string name="score_versus">Вінто %1$d проти найкращої серед інших %2$d</string>
+    <string name="score_versus_none">Порахували всі руки, ніхто не заплатив</string>
+    <string name="score_role_caller">заявник Вінто</string>
+    <string name="score_role_best">найкраща рука серед інших</string>
+    <string name="score_column_hand">рука</string>
+    <string name="score_column_round">раунд</string>
+    <string name="score_column_game">гра</string>
+    <string name="score_you_called">Ви оголосили Вінто, тож вашу руку порівняли з найкращою рукою серед інших.</string>
+    <string name="score_they_called">%1$s оголошує Вінто, тож цю руку порівняли з вашою найкращою рукою.</string>
+    <string name="score_deck_ended">Ніхто не оголосив Вінто — колода закінчилася, раунд завершили та порахували всі руки.</string>
+    <string name="score_next_round">Роздати наступний раунд</string>
+    <string name="score_stop">Зупинитися тут</string>
+
+    <string name="report_title">Повідомити про проблему</string>
+    <string name="report_body">Стіл зробив щось не так? Надішліть партію разом із повідомленням.\n\nНадсилається роздача, з якої все почалося, кожен хід після неї та контрольна сума після кожного — цього достатньо, щоб відтворити саме цю партію тут або у веб-версії й побачити ту саму помилку. Жодного акаунта, жодних даних про пристрій, нічого про вас.</string>
+    <string name="report_send">Надіслати…</string>
+    <string name="report_copy">Натомість скопіювати</string>
+    <string name="report_copied">Скопійовано в буфер обміну</string>
+    <string name="report_dismiss">Не зараз</string>
+    <string name="report_subject">Vinto — повідомлення про проблему</string>
+
+    <string name="beat_only_look_title">Єдиний погляд, який ви отримаєте</string>
+    <string name="beat_only_look_body">Перед початком раунду кожен один раз дивиться на дві свої карти. Далі гра триває на пам'яті: вашій проти пам'яті трьох інших гравців.</string>
+    <string name="beat_peeks_end_body">Вони знову лягають сорочкою вгору — запам'ятайте, де що було. Усі інші так само подивилися на дві свої.</string>
+    <string name="beat_name_only_seen_title">Називайте лише те, що бачили</string>
+    <string name="beat_name_only_seen_body">Цю карту ви бачили, тож знаєте, що це. Назвете правильно — зіграєте її дію безкоштовно. Назвете неправильно — візьмете штрафну карту. Тож називайте лише те, у чому впевнені.</string>
+    <string name="beat_toss_in_title">Таке достоїнство може підкинути будь-хто</string>
+    <string name="beat_toss_in_body">Щойно карта лягає лицем угору, у всіх з'являється шанс позбутися такої самої — і зіграти її дію. Помилилися з достоїнством — штрафна карта, і ця карта для вас закрита; наступна, що впаде, дасть новий шанс. Варто робити заради карти, яка йде вам у мінус; Короля тримати не шкода.</string>
+    <string name="beat_watching_body">Дивіться, що беруть і що кладуть. Це і рядки внизу — все, що вам взагалі дано знати про їхні руки.</string>
+    <string name="beat_watching_title">%1$s грає %2$s — %3$s</string>
+    <string name="beat_do_not_guess_title">Не вгадуйте</string>
+    <string name="beat_do_not_guess_body">Цю карту ви не бачили, тож назвати її — означає вгадувати, а помилка коштує штрафної карти. Покладіть її мовчки.</string>
+    <string name="beat_coalition_leader_title">За коаліцію грає %1$s</string>
+    <string name="beat_coalition_leader_body">Коаліція обрала, чия рука стане спільною: наприкінці з вашою порівняють лише суму %1$s. Двоє інших витрачають останній хід на те, щоб ця рука стала меншою — Король може прибрати з неї погану карту, Валет чи Дама — поміняти на кращу, — або на те, щоб дізнатися, що в ній лежить.</string>
+    <string name="beat_final_play_title">%1$s грає %2$s</string>
+    <string name="beat_final_play_ace">Туз змушує одного гравця взяти карту з колоди сорочкою вгору, а зайва карта — це зайві очки проти нього. Зараз навести його на вас не можна — карти заявника недоторканні, — тож він ляже на бік самої коаліції. Дивіться, кому доведеться брати.</string>
+    <string name="beat_final_play_king">Король вказує на карту й називає її, і назвати потрібно правильно. Правильно — карта покидає ту руку, де лежала, і її дію розігрують. Неправильно — усі бачать, чим вона була насправді, і додається штрафна карта. Називають карту, яку вже бачили, — часто свою, щоб її позбутися.</string>
+    <string name="beat_final_play_look">Дев'ятка чи десятка дивиться на одну карту в чужій руці. В останньому колі саме так коаліція дізнається, що в неї на руках, — ваші карти поза межами досяжності, — а те, що дізнається хтось один, можуть використати всі.</string>
+    <string name="beat_final_play_other">Дивіться, що вона робить: цю карту ви ще не тримали, а вікно останніх ходів під столом розповість, що сталося.</string>
+    <string name="beat_swap_them_title">Поміняйте</string>
+    <string name="beat_swap_them_body">Ви бачили обидві. Їхня карта коштує менше за вашу, тож міняйте: ваша йде до них, їхня — до вас, і після цього ви точно знаєте, що тримаєте.</string>
+    <string name="beat_leave_them_title">Залиште як є</string>
+    <string name="beat_leave_them_body">Ви бачили обидві, і ваша краща. Від обміну виграти нема чого — поверніть їх на місце.</string>
+    <string name="beat_call_now_title">Оголошуйте</string>
+    <string name="beat_call_now_body">Ви знаєте кожну карту у своїй руці, і разом вони дають нуль або менше — ніхто за цим столом не зможе закінчити нижче за вас. Натисніть «Вінто»: у всіх інших рівно по одному ходу, а потім усі руки розкривають.</string>
+    <string name="beat_you_called_title">Ви оголосили Вінто</string>
+    <string name="beat_you_called_body">Раунд закінчується на ваших умовах. Ембер, Скай і Дюна отримують ще по одному ходу, і тепер ніхто не може торкатися ваших карт. Потім усі руки перевертають, і вашу порівнюють із найкращою серед їхніх.</string>
+    <string name="beat_coalition_vs_you_title">Тепер вони грають як один</string>
+    <string name="beat_coalition_vs_you_body">Троє, хто не оголошував, — це коаліція: по ходу кожному, а з вашою рукою порівняють лише їхню єдину найкращу руку — тобто команда проти вашої однієї руки. За справжнім столом вони б усе обговорили й об'єднали те, що знають. Дивіться, що вони роблять останнім ходом: тут ви побачите карти, яких ще не тримали.</string>
+    <string name="beat_aim_it_title">Наведіть</string>
+    <string name="beat_aim_it_body">Це власна дія карти, і вона безкоштовна — вам вона нічого не коштує, а карта в будь-якому разі йде в скид.</string>
+    <string name="beat_remember_it_title">Запам'ятайте її</string>
+    <string name="beat_remember_it_body">Ось що купив вам цей погляд. Запам'ятайте, де вона лежить і що це, і покладіть назад — відтепер це відома вам карта, а гра будується саме на таких.</string>
+    <string name="beat_give_up_worst_title">Віддайте найгіршу карту</string>
+    <string name="beat_give_up_worst_body">Нова карта лягає сорочкою вгору, а та, яку вона замінює, йде в скид лицем угору — її прочитає весь стіл. Віддавайте ту, яку найменше хочете тримати, — найстаршу з тих, що знаєте. Якщо в неї є дія і ви в ній впевнені, назвіть її, коли вона лягає: її дія дістанеться вам безкоштовно.</string>
+    <string name="beat_swap_blind_title">Поміняйте на ту, яку не бачили</string>
+    <string name="beat_swap_blind_body">Серед карт, які ви знаєте, немає гіршої за цю, тож міняти її на одну з них — викидати знання. Покладіть її на місце, куди ще не заглядали: невідома карта швидше гірша, ніж краща, і в будь-якому разі після цього ви знатимете на одну свою карту більше.</string>
+    <string name="beat_nothing_worse_title">Тут нічого міняти</string>
+    <string name="beat_nothing_worse_body">Усі карти, які ви знаєте, кращі за цю, а вона надто старша, щоб грати наосліп на незнайоме місце. Поверніться і скиньте її — нехай дістається скиду.</string>
+    <string name="beat_keep_or_throw_title">Залишити чи скинути</string>
+    <string name="beat_keep_or_throw_body">Покладіть її в руку — сорочкою вгору, замість своєї карти, яка піде в скид лицем угору, — або скиньте. Кожна карта в руці йде вам у мінус, тож молодшу варто залишити. Якщо в неї є дія, третій варіант — зіграти її прямо зараз, і це нічого не коштує.</string>
+    <string name="beat_two_ways_to_start_title">Два способи почати хід</string>
+    <string name="beat_two_ways_to_start_body">З колоди, наосліп — або зі скиду, але лише карту з дією, яку ще не розіграли, і тоді її потрібно розіграти одразу, а не залишити собі.</string>
+    <string name="beat_every_turn_starts_title">Кожен хід починається однаково</string>
+    <string name="beat_every_turn_starts_body">Хід починається зі взяття карти. Колода лежить сорочкою вгору, тож вона — сюрприз: саме за цей ризик вам і платять.</string>
+    <string name="beat_welcome_title">Четверо гравців, по п'ять карт</string>
+    <string name="beat_welcome_body">Кожна карта йде вам у мінус, перемагає наймолодша рука. Ваші п'ять лежать перед вами сорочкою вгору, і дивитися на них не можна — гра саме в тому, щоб знати, що у вас на руках. Це справжній раунд проти трьох справжніх суперників; наставник лише йде поруч.</string>
+    <string name="beat_memory_title">Знайте свої карти</string>
+    <string name="beat_memory_body">Дві з п'яти ви побачите перед початком раунду, інші три — лише якщо дозволить карта. Тож раунд грається на тому, що ви пам'ятаєте: у які місця ви заглядали і що там лежить. Це змінює ціну старшої карти. Спочатку 9 чи 10, які купують вам погляд, — чесна угода: ви знаєте, що це, тож можете покласти її і назвати пізніше. Раунд програє та карта, про яку ви так і не дізналися.</string>
+    <string name="beat_cards_numbers_title">Від 2 до 6 — прості карти</string>
+    <string name="beat_cards_numbers_body">Коштують рівно стільки, скільки на них написано, і нічого більше. Не плутайте дрібну карту з гарною: рука, яка виграє раунд, зазвичай дає в сумі нуль або менше — Королі, Джокери, щонайбільше Туз. На двійці можна трохи посидіти; будь-яку просту карту варто поміняти до кінця раунду.</string>
+    <string name="beat_cards_own_title">7 і 8 — погляд на свою</string>
+    <string name="beat_cards_own_body">Коштують 7 і 8 — це багато, щоб тримати наприкінці. Натомість ви дивитеся на одну свою карту — а гра тримається на пам'яті, тож бачена карта коштує для вас більше, ніж небачена. Спочатку її можна й залишити, якщо вона купила вам погляд; коли дізнаватися більше нема чого — поміняйте її і назвіть.</string>
+    <string name="beat_cards_theirs_title">9 і 10 — погляд на чужу</string>
+    <string name="beat_cards_theirs_body">Той самий погляд, але в інший бік: одна карта в чужій руці. Запам'ятайте, де вона лежала — за два ходи саме це підкаже, оголошувати чи ні, і куди навести Валета. Коштують 9 і 10, і все одно варті того, щоб брати їх спочатку: старшу карту, яку ви знаєте, можна покласти і назвати, а молодшу, яку не бачили, — лише вгадати.</string>
+    <string name="beat_cards_jack_title">Валет — міняє дві карти наосліп</string>
+    <string name="beat_cards_jack_body">Коштує 10. Міняє місцями дві карти у двох різних гравців — ніколи дві свої — і ніхто в них перед цим не заглядає. Гарний, щоб позбутися завідомо поганої карти в чужу руку; з хорошою це лотерея.</string>
+    <string name="beat_cards_queen_title">Дама — спочатку дивиться, потім вирішує</string>
+    <string name="beat_cards_queen_body">Теж коштує 10 і найсильніша карта в грі: дивиться будь-які дві карти у двох різних гравців — і лише потім ви вирішуєте, міняти їх чи ні. Валет грає наосліп. Дама знає.</string>
+    <string name="beat_cards_king_title">Король — не коштує нічого і вміє все</string>
+    <string name="beat_cards_king_body">Не коштує зовсім нічого — вже за це його варто тримати. Його дія вказує на будь-яку карту на столі, вашу чи чужу, і називає її. Правильно — карта покидає ту руку, де лежала, і її дія дістається вам. Неправильно — усі бачать, чим вона була насправді, і додається штрафна карта.</string>
+    <string name="beat_cards_king_name_title">Що назвете, те й зіграєте</string>
+    <string name="beat_cards_king_name_body">Тобто насправді ви обираєте дію — з тих карт, що вже бачили. Назвете 7 чи 8 — подивитеся свою. Назвете Валета — отримаєте його сліпу заміну, причому обидві карти обираєте ви: так помічений Джокер приходить до вас, а найгірша ваша йде назустріч. Назвете Даму — спочатку подивитеся дві, а потім вирішите, міняти чи ні.</string>
+    <string name="beat_cards_king_whose_title">І чию карту ви назвете</string>
+    <string name="beat_cards_king_whose_body">Названа карта йде з тієї руки, де лежала. Назвати свою десятку — зняти з себе десять очок; назвати Джокер у суперника — забрати в нього мінус один, залишивши йому карту бідніше. Один Король, дві задачі — що важливіше, вирішуєте ви.</string>
+    <string name="beat_cards_odd_title">Туз і Джокер</string>
+    <string name="beat_cards_odd_body">Туз коштує 1 і змушує обраного вами гравця взяти штрафну карту. Джокер коштує мінус один — найкраща карта в колоді, і та, яку ніколи не варто віддавати.</string>
+    <string name="beat_tour_title">Колода і скид</string>
+    <string name="beat_tour_body">Карти приходять із колоди. Усе, що хтось викидає, лягає поруч лицем угору, де це може прочитати весь стіл, включно з вами.</string>
+    <string name="beat_seats_title">Ембер, Скай і Дюна</string>
+    <string name="beat_seats_body">Три боти, у кожного п'ять карт, і бачать вони їх не краще за вас. Табличка, що загорається зеленим, показує, чий зараз хід.</string>
+    <string name="beat_help_title">Знак ? завжди під рукою</string>
+    <string name="beat_help_body">Він пояснює, що відбувається зараз, і що робить кожна карта. У коробковій грі для цього є картки-підказки, по одній на гравця: нікому не потрібно тримати чотирнадцять достоїнств у голові — ні тут, ні за справжнім столом.</string>
+    <string name="beat_coalition_title">Усі інші грають як один</string>
+    <string name="beat_coalition_body">Ви і ті двоє, хто не оголошував, — це коаліція: по ходу кожному, а з рукою заявника порівняють лише вашу єдину найкращу руку — тобто команда проти однієї руки. За справжнім столом ви б усе обговорили й об'єднали те, що знаєте. Карт заявника торкатися не можна, і гра просто не дасть цього зробити.</string>
+    <string name="beat_your_turn_to_call_title">Ви теж можете оголосити</string>
+    <string name="beat_your_turn_to_call_body">Наприкінці будь-якого свого ходу є золота кнопка: натисніть її, коли повірите, що ваша рука за столом найменша. Поки ви навчалися, її ховали — вона завершує раунд для всіх. Відтепер вона ваша, і саме раннім натисканням більшість програє свою першу партію.</string>
+    <string name="beat_session_title">Ось і весь раунд</string>
+    <string name="beat_session_body">Гра — це раунди один за одним, очки переходять між ними, а грають до часу, про який домовилися заздалегідь — зазвичай півгодини. Коли час вийде, розпочатий раунд дограють, і перше місце та 5 ігрових очок отримує гравець із найбільшою кількістю очок, друге місце — 3, третє — 2. Виграний раунд рахується однаково, чи виграли ви його в одне очко, чи в двадцять.</string>
+    <string name="beat_scoring_title">Усі руки розкривають</string>
+    <string name="beat_scoring_body">Руку заявника порівнюють із найкращою рукою серед усіх інших. Менша — заявник отримує +3, а кожен з інших втрачає по 1. Порівну рахується на користь заявника: +3 заявнику, ніхто нічого не втрачає. Перебита — заявник втрачає 1, а кожен з інших отримує +3.</string>
+    <string name="beat_vinto_body">Це ставка на те, що ця рука за столом найменша. Раунд на цьому закінчується: у всіх інших рівно по одному ходу, а потім усі руки розкривають.</string>
+    <string name="beat_vinto_title">%1$s оголошує Вінто</string>
+
+    <string name="beat_toss_in_also">%1$s щойно підкидає. </string>
+    <string name="list_join_and"> і </string>
+    <string name="beat_vinto_somebody">Хтось</string>
+    <string name="beat_strayed_body">Ваш стіл, не мій — тут немає неправильних ходів. Урок продовжиться там, куди ви його поведете.</string>
+
+    <string name="gloss_pulse">Карту, яка дихає, можна торкнутися просто зараз.</string>
+    <string name="gloss_toss">Фішка під стопками називає достоїнство, для якого відкрито вікно.</string>
+    <string name="gloss_log">Кожен хід записується в це віконце — зазирніть туди, якщо карти рухалися швидше, ніж ви встигали читати.</string>
+    <string name="gloss_badge">Зелене число рахує, скільки залишилося в колоді.</string>
+
+    <string name="teach_note">%1$s — коштує %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — коштує %2$s і не робить рівним рахунком нічого. Поки можна тримати, але до чиєїсь заявки її варто поміняти.</string>
+
+
+    <string name="teach_heading">Вчимося грати</string>
+    <string name="teach_finished_title">Ось і вся гра</string>
+    <string name="teach_finished_body">Усі руки розкрито, раунд пораховано. Кожне правило, яке ви тут зустріли, діє й у справжній грі — навчальної версії в неї немає.</string>
+    <string name="teach_watching">Дивіться, що беруть і що кладуть назад.</string>
+    <string name="teach_go_on">Далі</string>
+    <string name="teach_done">Готово</string>
+
+    <string name="help_right_now">Прямо зараз</string>
+    <string name="help_the_cards">Карти</string>
+    <string name="help_signals">Про що говорить стіл</string>
+    <string name="help_group_numbers">Числа — коштують стільки, скільки написано, і нічого більше</string>
+    <string name="help_group_lookers">Спостерігачі — купують карту, яку можна запам'ятати</string>
+    <string name="help_group_movers">Переставники — перекладають карту в інше місце</string>
+    <string name="help_group_odd">Особливі</string>
+    <string name="help_no_action">Дії немає.</string>
+    <string name="help_card_worth">%1$s — коштує %2$d</string>
+    <string name="help_closing">Кожна карта в руці йде вам у мінус, тож перемагає найменша сума. Оголошуйте Вінто, коли вважаєте, що ваша найменша: усі інші тоді грають ще один хід разом, і з вашою порівнюють лише їхню найкращу руку.</string>
+    <string name="stats_played">Зіграно: %1$d</string>
+    <string name="stats_won">Виграно: %1$d%%</string>
+    <string name="stats_best">найкраща: %1$d</string>
+    <string name="stats_streak">поспіль: %1$d</string>
+    <string name="stats_row">Ваша статистика: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <string name="chapter_table">Стіл</string>
+    <string name="chapter_peek">Два ваших погляди</string>
+    <string name="chapter_draw">Взяття карти</string>
+    <string name="chapter_keep">Залишити чи скинути</string>
+    <string name="chapter_declare">Називання достоїнства</string>
+    <string name="chapter_actions">Що роблять карти</string>
+    <string name="chapter_toss">Підкидання</string>
+    <string name="chapter_vinto">Оголошення Вінто</string>
+    <string name="chapter_score">Підрахунок</string>
+    <string name="chapter_covered">%1$s — пройдено</string>
+    <string name="chapter_to_come">%1$s — ще попереду</string>
+    <string name="intro_part_covered">Частина %1$d з %2$d — прочитано</string>
+    <string name="intro_part_to_come">Частина %1$d з %2$d — ще попереду</string>
+
+    <string name="explains_card_plain">%1$s. Коштує %2$d. Дії немає, тож їй одна дорога — до вас у руку або в скид.</string>
+    <string name="explains_card_action">%1$s. Коштує %2$d. %3$s. %4$s</string>
+    <string name="explains_setup">Подивіться на дві свої карти і запам'ятайте їх — з початком раунду вони знову ляжуть сорочкою вгору. Усе подальше тримається на пам'яті.</string>
+    <string name="explains_scoring">Усі руки розкрито. Раунд виграє найменша сума, а руку заявника Вінто порівнюють із найкращою рукою серед усіх інших.</string>
+    <string name="explains_toss_in">Будь-хто, у кого є карта того самого достоїнства, може її підкинути — і вона йде з руки просто так. Помилитеся з достоїнством — візьмете штрафну і до кінця раунду більше підкидати не зможете.</string>
+    <string name="explains_final_round">Вінто оголошено. Усі інші грають останній хід як коаліція, і проти заявника йде лише їхня найкраща рука.</string>
+    <string name="explains_turn">Візьміть карту з колоди або верхню зі скиду, якщо це карта з нерозіграною дією. Залишайте те, що зменшує вашу суму; оголошуйте Вінто, коли вважаєте, що вона найменша.</string>
+
+    <string name="detail_card_does">%1$s, коштує %2$d: %3$s</string>
+    <string name="detail_king_declared">Король назвав %1$s: %2$s</string>
+    <string name="detail_tap_to_say">Торкніться однієї зі своїх карт, щоб сказати, що це, на вашу думку.</string>
+    <string name="detail_table_talk">Розмова за столом — коаліція вірить вам на слово, праві ви чи ні.</string>
+    <string name="detail_right_plays">Правильно — грає дію; неправильно — коштує вам карти.</string>
+    <string name="detail_wrong_costs">Помилка коштує штрафної карти.</string>
+    <string name="detail_barred_card">На цій карті ви не вгадали, тож вона для вас закрита. Наступна, що впаде, дасть новий шанс.</string>
+    <string name="detail_barred">Ви не вгадали, а в останньому колі це до кінця раунду.</string>
+    <string name="detail_scored_against">%1$s оголошує Вінто, тож раунд порахували проти цієї руки.</string>
+    <string name="detail_deck_ran_out">Колода закінчилася, раунд завершили та порахували всі руки.</string>
+
+    <string name="ask_or"> або </string>
+    <string name="ask_look_at_two_of_yours">Подивіться на дві свої карти</string>
+    <string name="ask_one_more_to_look_at">Залишилася ще одна карта, щоб подивитися</string>
+    <string name="ask_ready">Коли будете готові</string>
+    <string name="ask_your_turn">Ваш хід</string>
+    <string name="ask_you_drew">Ви взяли %1$s</string>
+    <string name="ask_you_drew_unknown">Ви взяли карту</string>
+    <string name="ask_which_card_replaced">Яку карту вона замінить?</string>
+    <string name="ask_name_what_you_put_down">Назвати карту, яку кладете?</string>
+    <string name="ask_what_do_you_say">Що це за карта, на вашу думку?</string>
+    <string name="ask_say_and_play">Назвіть її і зіграйте дію цієї карти</string>
+    <string name="ask_look_at_one_of_yours">Подивіться на одну свою карту</string>
+    <string name="ask_look_at_one_of_theirs">Подивіться на одну карту іншого гравця</string>
+    <string name="ask_choose_any_card">Виберіть будь-яку карту</string>
+    <string name="ask_choose_two">Виберіть дві карти у двох різних гравців</string>
+    <string name="ask_look_at_two">Подивіться на дві карти у двох різних гравців</string>
+    <string name="ask_swap_them">Поміняти їх місцями?</string>
+    <string name="ask_remember_it">Запам'ятайте її</string>
+    <string name="ask_who_draws">Хто бере карту?</string>
+    <string name="ask_card_waiting">%1$s чекає</string>
+    <string name="ask_card_waiting_unknown">Очікування</string>
+    <string name="ask_toss_in">Лягла %1$s — підкинете таку саму?</string>
+    <string name="ask_toss_in_barred">Лягла %1$s</string>
+    <string name="ask_waiting_for_others">Чекаємо на інших</string>
+    <string name="ask_watching">Спостереження</string>
+    <string name="ask_somebody_playing">Ходить %1$s</string>
+    <string name="ask_you_playing">Ви граєте</string>
+    <string name="ask_who_plays_for_you">%1$s оголошує Вінто. Хто грає за решту?</string>
+    <string name="ask_round_over">Раунд закінчено</string>
+    <string name="ask_round_over_lowest">Раунд закінчено — у вас найменша рука, %1$d</string>
+    <string name="ask_round_over_not_lowest">Раунд закінчено — у вас %1$d, найкраще було %2$d</string>
+
+    <string name="choice_back">Назад</string>
+    <string name="choice_start_round">Почати раунд</string>
+    <string name="choice_draw_card">Взяти карту</string>
+    <string name="choice_use_from_pile">Зіграти %1$s</string>
+    <string name="choice_use_action">Зіграти дію</string>
+    <string name="choice_swap_cards">Поміняти карти</string>
+    <string name="choice_discard">Скинути</string>
+    <string name="choice_just_swap">Просто поміняти</string>
+    <string name="choice_put_it_down">Покласти</string>
+    <string name="choice_leave_them">Залишити як є</string>
+    <string name="choice_continue">Далі</string>
+    <string name="choice_call_vinto">Оголосити Вінто</string>
+    <string name="choice_done">Готово</string>
+
+    <string name="log_you">Ви</string>
+    <string name="log_drew_known">Ви взяли %1$s</string>
+    <string name="log_drew_known_they">%1$s бере %2$s</string>
+    <string name="log_draw_you">Ви берете карту</string>
+    <string name="log_draw_they">%1$s бере карту</string>
+    <string name="log_took">%1$s бере %2$s</string>
+    <string name="log_took_unknown">%1$s бере верхню карту</string>
+    <string name="log_swap_you">Ви міняєте карту %1$d</string>
+    <string name="log_swap_they">%1$s міняє карту %2$d</string>
+    <string name="log_swap_dropping_you">Ви міняєте карту %1$d, скидаючи %2$s</string>
+    <string name="log_swap_dropping_they">%1$s міняє карту %2$d, скидаючи %3$s</string>
+    <string name="log_throw_you">Ви викидаєте %1$s</string>
+    <string name="log_throw_they">%1$s викидає %2$s</string>
+    <string name="log_throw_unknown_you">Ви викидаєте карту</string>
+    <string name="log_throw_unknown_they">%1$s викидає карту</string>
+    <string name="log_play_you">Ви граєте %1$s</string>
+    <string name="log_play_they">%1$s грає %2$s</string>
+    <string name="log_play_unknown_you">Ви граєте карту</string>
+    <string name="log_play_unknown_they">%1$s грає карту</string>
+    <string name="log_tossed_in">%1$s підкидає %2$s</string>
+    <string name="log_tossed_in_unknown">%1$s підкидає карту</string>
+    <string name="log_toss_in_missed">%1$s підкидає %2$s — мимо, і це коштує штрафної карти</string>
+    <string name="log_toss_in_missed_unknown">%1$s підкидає не ту карту — штрафна карта</string>
+    <string name="log_called_vinto">%1$s оголошує Вінто</string>
+    <string name="log_swapped_two">%1$s міняє дві карти</string>
+    <string name="log_swapped_two_named">%1$s міняє місцями %2$s і %3$s</string>
+    <string name="log_left_alone">%1$s залишає їх як є</string>
+    <string name="log_declared">%1$s називає %2$s</string>
+    <string name="log_made_draw_you">Ви змушуєте %1$s взяти карту</string>
+    <string name="log_made_you_draw">%1$s змушує вас взяти карту</string>
+    <string name="log_made_draw_they">%1$s змушує %2$s взяти карту</string>
+    <string name="log_round_begins">раунд починається</string>
+
+    <string name="help_counts_title">Що рахує цей застосунок</string>
+    <string name="help_counts_body">Лише анонімна статистика: скільки раундів зіграно, як далеко доходять гравці, чи зависав стіл і скільки коштує утримання кімнати. Ніколи — ваше ім'я, код кімнати, вміст вашої руки чи щось таке, що можна пов'язати з вами або вашим пристроєм: у тому, що надсилається, для цього просто немає місця. Це можна вимкнути в налаштуваннях, а браузеру, який просить не відстежувати його, вимикати нічого не потрібно — це врахують самі.</string>
+
+    <string name="signal_turn">Зелене кільце на місці</string>
+    <string name="signal_turn_meaning">Чий зараз хід. Воно спалахує на початку ходу, бо три боти встигають зробити хід між двома вашими дотиками.</string>
+    <string name="signal_vinto">Золоте кільце</string>
+    <string name="signal_vinto_meaning">Тут оголошено Вінто. До кінця раунду ці карти торкатися не можна.</string>
+    <string name="signal_penalty">Червоне кільце і рука, що здригається</string>
+    <string name="signal_penalty_meaning">Сюди щойно лягла штрафна карта — за неправильну здогадку або невдале підкидання.</string>
+    <string name="signal_coalition">Синє кільце</string>
+    <string name="signal_coalition_meaning">Коаліція: усі, крім того, хто оголосив Вінто, грають останній хід разом проти цієї однієї руки.</string>
+    <string name="signal_live">Золоте кільце на скиді</string>
+    <string name="signal_live_meaning">Цю карту поклали, не розігравши дію, тож наступний гравець може взяти її і зіграти замість того, щоб тягнути з колоди. У карти, чию дію вже зіграно, кільця немає.</string>
+    <string name="signal_tappable">Карта, яка дихає</string>
+    <string name="signal_tappable_meaning">Її можна торкнутися просто зараз. Якщо ніщо не дихає, стіл чекає на когось іншого.</string>
+    <string name="signal_reshuffle">Карти, що змітаються назад у колоду</string>
+    <string name="signal_reshuffle_meaning">Колода закінчилася, тож скид перетасували назад у неї. Усе, що хтось дізнався зі спостереження за цим скидом, тепер застаріло.</string>
+    <string name="signal_peek">Карта, що піднімається до середини</string>
+    <string name="signal_peek_meaning">Хтось на неї дивиться. Усі бачать, яку саме карту дивилися, — але лице бачить лише той, кому це належить.</string>
+
+
+    <string name="card_name_two">Двійка</string>
+    <string name="card_name_three">Трійка</string>
+    <string name="card_name_four">Четвірка</string>
+    <string name="card_name_five">П'ятірка</string>
+    <string name="card_name_six">Шістка</string>
+    <string name="card_name_seven">Сімка</string>
+    <string name="card_name_eight">Вісімка</string>
+    <string name="card_name_nine">Дев'ятка</string>
+    <string name="card_name_ten">Десятка</string>
+    <string name="card_name_jack">Валет</string>
+    <string name="card_name_queen">Дама</string>
+    <string name="card_name_king">Король</string>
+    <string name="card_name_ace">Туз</string>
+    <string name="card_name_joker">Джокер</string>
+
+    <string name="card_long_seven">Подивитися на одну зі своїх карт</string>
+    <string name="card_long_eight">Подивитися на одну зі своїх карт</string>
+    <string name="card_long_nine">Подивитися на одну карту іншого гравця</string>
+    <string name="card_long_ten">Подивитися на одну карту іншого гравця</string>
+    <string name="card_long_jack">Поміняти будь-які дві закриті карти у двох різних гравців</string>
+    <string name="card_long_queen">Подивитися будь-які дві карти у двох різних гравців, потім за бажанням поміняти їх</string>
+    <string name="card_long_king">Оголосити дію іншої карти від будь-якого гравця (7-A)</string>
+    <string name="card_long_ace">Змусити суперника взяти штрафну карту</string>
+
+    <string name="card_help_two">Числова карта номіналом 2</string>
+    <string name="card_help_three">Числова карта номіналом 3</string>
+    <string name="card_help_four">Числова карта номіналом 4</string>
+    <string name="card_help_five">Числова карта номіналом 5</string>
+    <string name="card_help_six">Числова карта номіналом 6</string>
+    <string name="card_help_seven">Торкніться однієї зі своїх карт, щоб тимчасово відкрити її і запам'ятати значення. Цю дію можна пропустити.</string>
+    <string name="card_help_eight">Торкніться однієї зі своїх карт, щоб тимчасово відкрити її і запам'ятати значення. Цю дію можна пропустити.</string>
+    <string name="card_help_nine">Торкніться карти суперника, щоб тимчасово відкрити її і побачити значення. Цю дію можна пропустити.</string>
+    <string name="card_help_ten">Торкніться карти суперника, щоб тимчасово відкрити її і побачити значення. Цю дію можна пропустити.</string>
+    <string name="card_help_jack">Виберіть дві карти в різних гравців, щоб поміняти їх місцями — можна включати свої карти або лише карти суперників. Не можна вибрати дві карти в одного гравця. Вибір можна скинути або пропустити цю дію.</string>
+    <string name="card_help_queen">1. Подивіться на дві карти в різних гравців (можуть бути ваші або суперників, але обов'язково в різних гравців)\n2. Подивившись обидві карти, вирішіть, чи міняти їх</string>
+    <string name="card_help_king">Виберіть, яку дію карти виконати: 7 (подивитися свою), 8 (подивитися свою), 9/10 (подивитися карту суперника), J (поміняти), Q (подивитися й поміняти), A (змусити взяти карту). Також можна оголосити карти без дії (2-6, K, Джокер).</string>
+    <string name="card_help_ace">Виберіть суперника, якого змусите взяти штрафну карту з колоди. Це збільшує розмір його руки та суму очок. Цю дію можна пропустити.</string>
+    <string name="card_help_joker">Джокер номіналом -1</string>
+</resources>

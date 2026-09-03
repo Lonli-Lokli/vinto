@@ -17,27 +17,27 @@ import kotlin.test.assertEquals
  */
 class LogFoldTest {
 
-    private val don = Speaker.Named("Don")
-    private val raph = Speaker.Named("Raph")
+    private val dune = Speaker.Named("Dune")
+    private val ember = Speaker.Named("Ember")
 
     @Test
     fun theLogKeepsThisTurnAndTheOneBefore() {
         val round = listOf(
             Say.RoundBegins,
-            Say.DrewKnown(don, Rank.SEVEN),
-            Say.Swapped(don, slot = 3, dropped = Rank.SEVEN),
+            Say.DrewKnown(dune, Rank.SEVEN),
+            Say.Swapped(dune, slot = 3, dropped = Rank.SEVEN),
             Say.DrewKnown(Speaker.You, Rank.EIGHT),
             Say.Played(Speaker.You, Rank.EIGHT),
-            Say.TossedIn(raph, Rank.EIGHT),
-            Say.DrewKnown(raph, Rank.JOKER),
-            Say.Swapped(raph, slot = 5, dropped = Rank.JACK),
+            Say.TossedIn(ember, Rank.EIGHT),
+            Say.DrewKnown(ember, Rank.JOKER),
+            Say.Swapped(ember, slot = 5, dropped = Rank.JACK),
         )
         assertEquals(round.drop(3), lastTurns(round))
     }
 
     @Test
     fun theDealStartsTheCountOver() {
-        val round = listOf(Say.DrewKnown(don, Rank.TWO), Say.RoundBegins, Say.DrewKnown(raph, Rank.THREE))
+        val round = listOf(Say.DrewKnown(dune, Rank.TWO), Say.RoundBegins, Say.DrewKnown(ember, Rank.THREE))
         assertEquals(round.drop(1), lastTurns(round))
     }
 
@@ -45,11 +45,11 @@ class LogFoldTest {
     fun oneActorsRunFoldsOntoOneLineAndTheTablesOwnLineStandsAlone() {
         val lines = listOf(
             Speaker.Nobody to "the round begins",
-            don to "Don drew the 7",
-            don to "Don swaps card 3, dropping the 7",
+            dune to "Don drew the 7",
+            dune to "Don swaps card 3, dropping the 7",
             Speaker.You to "You drew the 8",
-            raph to "Raph tossed in the 8",
-            raph to "Raph drew the Joker",
+            ember to "Raph tossed in the 8",
+            ember to "Raph drew the Joker",
         )
         assertEquals(
             listOf(

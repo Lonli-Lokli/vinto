@@ -48,6 +48,8 @@ import game.vinto.app.art.signal_turn
 import game.vinto.app.art.signal_turn_meaning
 import game.vinto.app.art.signal_vinto
 import game.vinto.app.art.signal_vinto_meaning
+import game.vinto.app.cardLong
+import game.vinto.app.cardName
 import game.vinto.app.explained
 import game.vinto.app.theme.CardWhite
 import game.vinto.app.theme.Rail
@@ -308,12 +310,15 @@ private fun RankRow(config: CardConfig) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                stringResource(Res.string.help_card_worth, config.name, config.value),
+                stringResource(Res.string.help_card_worth, cardName(config.rank), config.value),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = BodySize,
             )
             Text(
-                text = config.longDescription.ifEmpty { stringResource(Res.string.help_no_action) },
+                // `cardLong`, not `config.longDescription`: the sentence around this was
+                // translated long before the words inside it were, which is what made the "?"
+                // read as half-English. CardCopyIsTranslatedTest fails if it comes back.
+                text = cardLong(config.rank).ifEmpty { stringResource(Res.string.help_no_action) },
                 fontSize = BodySize,
                 color = Rail.inkDim,
             )

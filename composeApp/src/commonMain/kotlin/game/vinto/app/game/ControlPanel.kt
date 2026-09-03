@@ -71,6 +71,8 @@ import game.vinto.app.art.rail_card_action
 import game.vinto.app.art.rail_card_plain
 import game.vinto.app.art.table_sending
 import game.vinto.app.asked
+import game.vinto.app.cardLong
+import game.vinto.app.cardName
 import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
@@ -691,10 +693,12 @@ private fun Heading(table: Table, teaching: Boolean, shown: Card?) {
 @Composable
 private fun cardLine(rank: Rank): String {
     val config = getCardConfig(rank)
+    // The value and the action come off CardConfig — a number and an enum are rules. The WORDS
+    // come from CardWords, or this line is English inside a translated screen.
     return if (config.action == null) {
-        stringResource(Res.string.rail_card_plain, config.name, config.value)
+        stringResource(Res.string.rail_card_plain, cardName(rank), config.value)
     } else {
-        stringResource(Res.string.rail_card_action, config.name, config.value, config.longDescription)
+        stringResource(Res.string.rail_card_action, cardName(rank), config.value, cardLong(rank))
     }
 }
 

@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- The name of the game. Not translated: it is what the game is called. -->
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">シャッフル中…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">手札は少なく、知ることは多く。</string>
+    <string name="home_solo_title">一人プレイ・ボット3人・%1$s</string>
+    <string name="home_continue">続ける</string>
+    <string name="home_new_game">新しいゲーム</string>
+    <string name="home_play">プレイ</string>
+    <string name="home_online">オンラインで遊ぶ</string>
+    <string name="home_teach">遊び方</string>
+    <string name="home_settings">設定</string>
+    <string name="home_version">v%1$s</string>
+    <string name="home_unofficial">VINTOの非公式アプリです。本家は vinto.game にあります。</string>
+    <string name="home_unofficial_action">本家カードゲームVINTOの公式サイト vinto.game を開く</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">オンラインで遊ぶ</string>
+    <string name="online_nickname">テーブルでの名前</string>
+    <string name="online_nickname_detail">他の席から見える名前です。タップすると変更できます。アカウントではありません — そもそも存在しません。</string>
+    <string name="online_code">ルームコード</string>
+    <string name="online_code_detail">ルームを開いた人からもらう6文字です。</string>
+    <string name="online_join">ルームに参加</string>
+    <string name="online_create">新しいルームを開く</string>
+    <string name="online_offline">現在ネットワークに接続されていません。オンラインプレイには接続が必要です。一人プレイとレッスンは通常どおり利用できます。</string>
+    <string name="trouble_offline">ルームサービスに接続できません。ネットワークを確認してもう一度お試しください。</string>
+    <string name="trouble_no_such_room">そのコードのルームはありません。6文字を確認してもう一度お試しください。</string>
+    <string name="trouble_closed">オンラインプレイはまだ開始されていません。一人プレイとレッスンは通常どおり利用できます。</string>
+    <string name="trouble_busy">そのテーブルは満席です。別のテーブルを試すか、自分で新しく開いてください。</string>
+    <string name="trouble_refused">ルームサービスに拒否されました。</string>
+    <string name="trouble_broken">ルームサービスに問題が発生しています。少し待ってからもう一度お試しください。</string>
+    <string name="online_creating">ルームを開いています…</string>
+    <string name="online_visibility">ルームを見つけられる人</string>
+    <string name="online_visibility_private">コードを知っている人のみ</string>
+    <string name="online_visibility_public">公開する</string>
+    <string name="online_visibility_detail">公開ルームは誰でも一覧から見つけられます。非公開ルームはコードでしか入れません。</string>
+    <string name="online_browse">公開ルームを探す</string>
+    <string name="online_open_detail">4席、共有するコード、来ない人の分はボットが埋めます。</string>
+    <string name="online_join_detail">ルームを開いた人からもらう6文字です。</string>
+    <string name="online_browse_detail">公開を選んだホストのルームです。誰でも参加できます。</string>
+    <string name="online_open_title">ルームを開く</string>
+    <string name="online_join_title">コードで参加</string>
+    <string name="online_open_screen">ルームを開く</string>
+    <string name="online_join_screen">コードで参加</string>
+    <string name="online_back">戻る</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">公開ルーム</string>
+    <string name="discover_looking">開いているテーブルを探しています…</string>
+    <string name="discover_refresh">更新</string>
+    <string name="discover_quiet">今は公開ルームがありません。ルームを開くとここに表示されます。</string>
+    <string name="discover_failed">ルームサービスに接続できませんでした: %1$s</string>
+    <string name="discover_retry">もう一度試す</string>
+    <string name="discover_room_host">%1$sのテーブル</string>
+    <string name="discover_room_unnamed">参加可能なテーブル</string>
+    <string name="discover_seats">4席中%1$d席が埋まっています</string>
+    <string name="discover_people">%1$d人がプレイ中</string>
+    <string name="discover_dealing">%1$d秒後に配り始めます</string>
+    <string name="discover_full">満席</string>
+    <string name="discover_join">参加</string>
+    <string name="discover_room_summary">ルーム%1$s、4席中%2$d席が埋まっています</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">招待する</string>
+    <string name="invite_subject">Vintoのゲームに参加しよう</string>
+    <string name="invite_body">Vintoのゲームに参加しよう: %1$s\n\nまたはアプリを開いてルームコード%2$sを入力してください</string>
+    <string name="invite_share">コードを共有</string>
+    <string name="invite_copy">コードをコピー</string>
+    <string name="invite_copied">コピーしました</string>
+    <string name="invite_read_it_out">読み上げる場合はこちら: 6文字で、OとIは使われていません。</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">ルーム %1$s</string>
+    <string name="lobby_seat_open">空席</string>
+    <string name="lobby_seat_you">%1$s — あなた</string>
+    <string name="lobby_add_bot">ボットを追加</string>
+    <string name="lobby_remove_bot">%1$d番席のボットを削除</string>
+    <string name="lobby_leave">ルームを退出</string>
+    <string name="lobby_connecting">ルームに接続しています…</string>
+    <string name="lobby_needs_human">ゲームには2人以上必要です。コードを共有してください — 残りの席はボットが埋められます。</string>
+    <string name="lobby_fill_seats">全員が席についてプレイします。空いている席は人かボットで埋めてください。埋まると配り始めるまでの秒数が表示されます。</string>
+    <string name="lobby_counting_down">準備完了 — %1$d秒後に配ります…</string>
+    <string name="lobby_offered_bots">他に誰も来なかったため、空席にボットが入りました — %1$d秒後に配ります…。待ち続けるにはボットを削除してください。</string>
+    <string name="lobby_over">ルームは終了しました。</string>
+    <string name="lobby_unreachable">そのルームに接続できませんでした。コードか接続状態を確認してください。</string>
+    <string name="lobby_retry">もう一度試す</string>
+    <string name="lobby_seat_working">この席を変更しています…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">接続済み</string>
+    <string name="net_connecting">接続中…</string>
+    <string name="net_reconnecting">再接続中…</string>
+    <string name="net_closed">切断されました</string>
+    <string name="table_sending">手を送信しています…</string>
+    <string name="table_next_round_waiting">他の人の同意を待っています…</string>
+    <string name="online_session_over">セッションは終了しました: %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">設定</string>
+
+    <string name="settings_group_game">ゲーム</string>
+    <string name="settings_group_feel">見た目と操作感</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_language_detail">まだ翻訳されていない場合は英語で表示されます。カードのセリフは変わりません。</string>
+    <string name="settings_language_device">端末の設定に従う</string>
+    <string name="settings_language_current">言語: %1$s</string>
+    <string name="settings_language_chosen">%1$s（選択中）</string>
+    <string name="settings_group_privacy">送信される情報</string>
+    <string name="settings_group_about">このアプリについて</string>
+
+    <string name="settings_privacy">プライバシー</string>
+    <string name="settings_privacy_detail">何が計測され、何がされないか、そしてオフにする方法。</string>
+    <string name="settings_terms">利用規約</string>
+    <string name="settings_terms_detail">あなたが期待できること、あなたに期待されることの要約。</string>
+    <string name="settings_contact">お問い合わせ</string>
+    <string name="settings_contact_detail">不具合、アイデア、うまくいかなかったゲームについて。</string>
+    <string name="settings_original">本家のゲーム</string>
+    <string name="settings_original_detail">VINTOは他の方が制作したカードゲームで、このアプリはその非公式版です。ゲーム本体・ルール・制作者については vinto.game をご覧ください。</string>
+    <string name="settings_studio">このアプリについて</string>
+    <string name="settings_studio_detail">制作者、他の作品、そしてこのアプリの仕組みについて。</string>
+    <string name="settings_rate">このゲームを評価する</string>
+    <string name="settings_rate_detail">インストールしたストアでレビューを残してください。小さなゲームが見つけてもらう一番の助けになります。</string>
+    <string name="settings_open">開く</string>
+    <string name="settings_link_failed">この端末では開けませんでした。アドレスは %1$s です</string>
+
+    <string name="settings_share">誰かに教える</string>
+    <string name="settings_share_detail">友達にゲームを送りましょう。4席のうち3席はボットにできます。</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — 持たずに知るカードゲーム。無料、ブラウザで、登録不要: %1$s</string>
+    <string name="settings_back">戻る</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">ボット</string>
+    <string name="settings_bots_detail">3人のボットがどれだけ深く考えるか。</string>
+    <string name="difficulty_easy">簡単</string>
+    <string name="difficulty_moderate">普通</string>
+    <string name="difficulty_hard">難しい</string>
+
+    <string name="settings_pace">テンポ</string>
+    <string name="settings_pace_detail">テーブルが結果を再現する速さです。3人のボットは一度のタップの間に手番を終えるので、これはその間どれだけ見ていられるかを決めます。</string>
+    <string name="pace_calm">ゆったり</string>
+    <string name="pace_steady">標準</string>
+    <string name="pace_brisk">きびきび</string>
+
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_theme_detail">卓の緑色はどちらでも同じです。変わるのはその周りだけです。</string>
+    <string name="theme_system">システム</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_dark">ダーク</string>
+
+    <string name="settings_motion">モーション</string>
+    <string name="settings_motion_detail">カードが飛ぶか、置かれた場所にそのまま現れるかです。「減らす」でもリングや判定、間は残ります — 説明は変わらず、動きが減るだけです。「システム」は端末のアクセシビリティ設定に従います。</string>
+    <string name="motion_system">システム</string>
+    <string name="motion_full">フル</string>
+    <string name="motion_reduced">減らす</string>
+
+    <string name="settings_sound">サウンド</string>
+    <string name="settings_sound_detail">カードを配る音、置く音、ペナルティの音、ラウンド終了の音 — それだけです。</string>
+    <string name="settings_haptics">触覚フィードバック</string>
+    <string name="settings_haptics_detail">カードに触れたとき、手が成立したとき、ルールに引っかかったときの小さな振動。</string>
+    <string name="settings_analytics">匿名の統計</string>
+    <string name="settings_analytics_detail">プレイされたラウンド数とその所要時間のみです。名前もルームコードも、あなたを特定できるものは一切含まれません — 送信するデータにそもそも入れる場所がありません。オフにすると何も送信されなくなります。</string>
+    <string name="settings_on">オン</string>
+    <string name="settings_off">オフ</string>
+
+    <string name="settings_saved_game">保存されたゲーム</string>
+    <string name="settings_saved_game_detail">進行中のラウンドがあります。削除すると元に戻せず、セッションの累計スコアも失われます。</string>
+    <string name="settings_forget">削除する</string>
+    <string name="settings_record">記録</string>
+    <string name="settings_record_detail">プレイしたラウンド数、勝った数、ベストハンド、連勝記録。この端末のみに保存され、送信されることはありません。</string>
+    <string name="settings_forget_record">記録を消す</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">R%1$d / T%2$d</string>
+    <string name="table_draw">ドロー</string>
+    <string name="table_discard">捨てる</string>
+    <string name="table_toss_in">投げ込み</string>
+    <string name="table_toss_in_timed">投げ込み・%1$d秒</string>
+    <string name="toss_clock_moves_on">あと%1$d秒でテーブルが進みます</string>
+    <string name="toss_more_time">もう少し時間を</string>
+    <string name="table_toss_in_summary">投げ込みウィンドウ、対象は%1$s</string>
+    <string name="table_tossed">投げ込み済み（%1$d）</string>
+    <string name="card_thrown_by">%1$sが%2$sを投げました</string>
+    <string name="table_you">あなた</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">リード</string>
+    <string name="seat_pointed_turn">%1$sの番です</string>
+    <string name="seat_is_a_bot">ボット</string>
+    <string name="seat_pointed_vinto">%1$sがVintoを宣言しました</string>
+    <string name="seat_pointed_penalty">%1$sが山札からカードを引いています</string>
+    <string name="seat_pointed_coalition">%1$sが連合を率いています</string>
+    <string name="table_final_round">最終ラウンド</string>
+    <string name="table_final_caller">残りの全員が力を合わせて一つの手であなたと勝負します。</string>
+    <string name="table_final_leader">あなたが連合の手を代表して%1$sと勝負します。</string>
+    <string name="table_final_ally">%1$sが連合の手を代表して%2$sと勝負します。</string>
+    <string name="table_final_turns_left">公開まであと%1$d手番</string>
+    <string name="table_final_last_turn">最後の手番</string>
+    <string name="table_final_choosing">3人で一つの手を作り、%1$sと勝負します。</string>
+    <string name="table_final_side_coalition">連合</string>
+    <string name="table_final_side_caller">宣言者</string>
+    <string name="table_final_versus">対</string>
+    <string name="table_final_leads">%1$sが他をリードしています</string>
+    <string name="table_see_score">スコアを見る</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">問題を報告</string>
+    <string name="header_settings">設定</string>
+    <string name="header_deck_left">山札に残り%1$d枚</string>
+    <string name="header_deck_badge">山札に%1$d枚 — その意味</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">山札</string>
+    <string name="deck_body">引ける残り%1$dです。\n\nなくなると捨て札の山がシャッフルされて山札に戻り、その山を見て学んだことはすべて — あなたが学んだことも含めて — 意味を失います。山札が残り少ないラウンドはVintoを宣言するタイミングです。</string>
+    <string name="deck_dismiss">わかりました</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s、%2$d点</string>
+    <string name="card_face_down">伏せられたカード</string>
+    <string name="card_position">%1$s、%2$d枚目</string>
+    <string name="card_the_deck">山札</string>
+    <string name="card_discarded">%1$sを捨てました</string>
+    <string name="card_in_play">場に出ているカード: %1$s</string>
+    <string name="rail_card_action">%1$s、%2$d点: %3$s</string>
+    <string name="rail_card_plain">%1$s、%2$d点</string>
+    <string name="rail_aiming_at">%1$sを狙っています</string>
+    <string name="rail_aim_empty">まだ選ばれていないカード</string>
+    <string name="rail_aim_first">1枚目</string>
+    <string name="rail_aim_second">2枚目</string>
+    <string name="card_discarded_live">%1$sを捨てました、アクション未使用</string>
+    <string name="card_in_hand">手札のカード</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">ラウンド%1$d</string>
+    <string name="score_caller_won">Vintoの宣言が成立</string>
+    <string name="score_level">同点 — 宣言が成立</string>
+    <string name="score_coalition_won">他の全員が宣言者を上回った</string>
+    <string name="score_deck_out">誰も宣言しませんでした</string>
+    <string name="score_versus">Vinto %1$d 対 最良%2$d</string>
+    <string name="score_versus_none">全員の手が数えられ、精算なし</string>
+    <string name="score_role_caller">Vintoを宣言</string>
+    <string name="score_role_best">他の中で最良</string>
+    <string name="score_column_hand">手</string>
+    <string name="score_column_round">ラウンド</string>
+    <string name="score_column_game">通算</string>
+    <string name="score_you_called">あなたがVintoを宣言したので、あなたの手は他の中で最良のものと比べられました。</string>
+    <string name="score_they_called">%1$sがVintoを宣言したので、その手はあなたたちの中で最良のものと比べられました。</string>
+    <string name="score_deck_ended">誰もVintoを宣言しませんでした — 山札が尽きたのでラウンドは終了し、全員の手が数えられました。</string>
+    <string name="score_next_round">次のラウンドを配る</string>
+    <string name="score_stop">ここで終える</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">問題を報告</string>
+    <string name="report_body">テーブルが何かおかしな動きをしましたか？その内容を添えてゲームを送信してください。\n\n送信されるのは配られた時点の状態、それ以降のすべての手、そして各手の後のチェックサムです — このアプリでもウェブ版でも、同じゲームを再現して同じ問題を確認できるだけの情報です。アカウントや端末の情報、あなた自身についての情報は含まれません。</string>
+    <string name="report_send">送信…</string>
+    <string name="report_copy">代わりにコピー</string>
+    <string name="report_copied">クリップボードにコピーしました</string>
+    <string name="report_dismiss">今はしない</string>
+    <string name="report_subject">Vinto — 不具合報告</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="beat_only_look_title">最初で最後の一目</string>
+    <string name="beat_only_look_body">ラウンドが始まる前に、誰もが自分のカードのうち2枚を一度だけ見られます。ここから先はゲームは記憶勝負です — あなたの記憶と、他の3人の記憶の。</string>
+    <string name="beat_peeks_end_body">また伏せられます — どこに何があったか覚えておいてください。他の全員も同じように2枚を見ています。</string>
+    <string name="beat_name_only_seen_title">見たことのあるカードだけ名乗る</string>
+    <string name="beat_name_only_seen_body">このカードは見たことがあるので、何かわかっています。正しく名乗ればそのアクションを無料で使えます。間違えればペナルティカードを引くことになります — だから確信のあるものだけ名乗りましょう。</string>
+    <string name="beat_toss_in_title">そのランクを持つ人は誰でも投げ込める</string>
+    <string name="beat_toss_in_body">カードが表向きに置かれた瞬間、全員にそれを手放すチャンス — そしてそのアクションを使うチャンス — が訪れます。ランクを間違えるとペナルティカードを引き、そのカードには投げ込めなくなります — 次に置かれるカードで新しいチャンスが来ます。自分に不利なカードなら試す価値があります。キングは持っていても損はありません。</string>
+    <string name="beat_watching_body">何を取って何を捨てたか見ておきましょう。それと、ここに出る一行の記録が、相手の手について知り得るすべてです。</string>
+    <string name="beat_watching_title">%1$sが%2$sをプレイ — %3$s</string>
+    <string name="beat_do_not_guess_title">推測しない</string>
+    <string name="beat_do_not_guess_body">このカードは見たことがないので、名乗るのは推測になり、外せばペナルティカードを引きます。何も言わずに置きましょう。</string>
+    <string name="beat_coalition_leader_title">%1$sが連合の手を代表します</string>
+    <string name="beat_coalition_leader_body">連合はどの手を使うか決めました。最後には%1$sの合計だけがあなたの手と比べられます。残りの2人は最後の手番を使ってその手を良くします — キングで悪いカードを抜いたり、ジャックやクイーンで良いカードと入れ替えたり、あるいは中身を探ったりします。</string>
+    <string name="beat_final_play_title">%1$sが%2$sをプレイします</string>
+    <string name="beat_final_play_ace">エースは指定した1人に山札から1枚伏せて引かせます。カードが1枚増えればその分不利になります。今のあなたには狙えません — 宣言者のカードには手が出せないためです — なので連合側の誰かに向けられます。誰が引かされるか見ておきましょう。</string>
+    <string name="beat_final_play_king">キングはカードを1枚指定し、その名を宣言します。正解でなければなりません。正解: そのカードは手を離れ、そのアクションが使われます。不正解: 実物が明らかになり、宣言した人がペナルティカードを引きます。宣言するのは自分が見たことのあるカード — 多くの場合、手放したい自分のカードです。</string>
+    <string name="beat_final_play_look">9か10は他の誰かの手のカードを1枚見ます。最終ラウンドでは、あなたの手には触れられない分、これが連合が自分たちの手を知る手段になります — そして1人が知ったことは全員が使えます。</string>
+    <string name="beat_final_play_other">何が起こるか見ておきましょう。これはまだあなたが持ったことのないカードなので、テーブル下の履歴が起きたことを教えてくれます。</string>
+    <string name="beat_swap_them_title">交換する</string>
+    <string name="beat_swap_them_body">両方見ました。相手のほうがあなたのより価値が低いので交換しましょう — あなたのカードが相手に渡り、相手のカードがあなたに来ます。その後、自分が何を持っているか正確にわかります。</string>
+    <string name="beat_leave_them_title">そのままにする</string>
+    <string name="beat_leave_them_body">両方見ましたが、あなたのほうが良いカードです。交換して得るものはないので、元の場所に戻しましょう。</string>
+    <string name="beat_call_now_title">宣言する</string>
+    <string name="beat_call_now_body">自分の手札はすべてわかっていて、合計は0以下です — このテーブルの誰もあなたより下では終われません。Call Vintoを押しましょう。他の全員がもう一手ずつプレイした後、すべての手が公開されます。</string>
+    <string name="beat_you_called_title">あなたがVintoを宣言しました</string>
+    <string name="beat_you_called_body">ラウンドはあなたの合図で終わります。エンバー、スカイ、デューンがそれぞれもう一手ずつプレイし、もう誰もあなたのカードに触れられません。その後すべての手が公開され、あなたの手は他の中で最良のものと比べられます。</string>
+    <string name="beat_coalition_vs_you_title">今度は3人がひとつになります</string>
+    <string name="beat_coalition_vs_you_body">宣言しなかった3人が連合です。それぞれ一手ずつ、比べられるのは彼らの最良の一つの手だけ — つまりチーム対あなたの一つの手です。実際のテーブルでは話し合って情報を持ち寄るでしょう。最後の手番で何をするか見ておきましょう。まだ持ったことのないカードがここでわかります。</string>
+    <string name="beat_aim_it_title">使う</string>
+    <string name="beat_aim_it_body">これはそのカード自身のアクションで、無料です — 使っても損はなく、どちらにせよカードは山に置かれます。</string>
+    <string name="beat_remember_it_title">覚えておく</string>
+    <string name="beat_remember_it_body">それが今の一目で得たものです。場所と中身を頭に入れたら元に戻しましょう — ここから先はあなたが知っているカードとして、そこで勝負します。</string>
+    <string name="beat_give_up_worst_title">一番悪いカードを手放す</string>
+    <string name="beat_give_up_worst_body">新しいカードは伏せて入り、代わりに出たカードは表向きで山に置かれ、皆が見ます。手放すのは持っていたくないカード — わかっている中で一番高いものです。アクション付きで確信があれば、出すと同時に名乗りましょう。そのアクションが無料で使えます。</string>
+    <string name="beat_swap_blind_title">見たことのないカードと交換する</string>
+    <string name="beat_swap_blind_body">知っている中にこれより悪いものはないので、それと交換するのは知識を捨てるようなものです。代わりに見たことのない枠に入れましょう — 未知のカードは良いより悪い可能性のほうが高く、どちらにせよ後で自分のカードを一枚多く知ることになります。</string>
+    <string name="beat_nothing_worse_title">入れ替える必要のあるものはありません</string>
+    <string name="beat_nothing_worse_body">知っている中のどのカードもこれより良く、見たことのない枠に賭けるには高すぎます。戻って捨てましょう — 山が引き取ります。</string>
+    <string name="beat_keep_or_throw_title">手元に置くか、捨てるか</string>
+    <string name="beat_keep_or_throw_body">手札に入れる — 伏せて、持っていたカードと入れ替え、そのカードは表向きで山に置かれます — か、捨てましょう。手札のカードはすべて不利になるので、低いものは持っておく価値があります。アクション付きなら、今すぐ使うのが3つ目の選択肢で、無料です。</string>
+    <string name="beat_two_ways_to_start_title">手番の始め方は2つ</string>
+    <string name="beat_two_ways_to_start_body">山札から見ずに引くか、山から取る場合は誰も使っていないアクションカードに限り、すぐに使わなければなりません。</string>
+    <string name="beat_every_turn_starts_title">どの手番も同じ始まり方をします</string>
+    <string name="beat_every_turn_starts_body">手番はカードを取ることから始まります。山札は伏せられているので、何が来るかはお楽しみです — それがあなたが賭けているリスクです。</string>
+    <string name="beat_welcome_title">4人、それぞれ5枚</string>
+    <string name="beat_welcome_body">すべてのカードが不利に数えられ、一番低い手が勝ちます。あなたの5枚は目の前に伏せて並び、見ることはできません — このゲームは自分の持ち札を知っていることが勝負です。これはコーチが隣にいるだけの、3人の本物の相手との本物のラウンドです。</string>
+    <string name="beat_memory_title">自分のカードを知っておく</string>
+    <string name="beat_memory_body">ラウンドが始まる前に5枚のうち2枚を見られます。残りの3枚はカードが許してくれたときだけです。だからラウンドはあなたが覚えていること — どの枠を見たか、そこに何があったか — で進みます。それによって高いカードの価値も変わります。序盤なら、一目見られる9や10は割の良い取引です — 中身がわかっているので、後で置いて名乗れます。ラウンドを失わせるのは、最後まで知らなかった一枚です。</string>
+    <string name="beat_cards_numbers_title">2から6 — 普通のカード</string>
+    <string name="beat_cards_numbers_body">書かれている数字がそのまま価値で、それ以外は何もありません。小さいカードを良いカードと勘違いしないように — 勝つ手は大抵合計0以下です。キング、ジョーカー、多くてエース1枚くらいです。2はしばらく持っていても問題ありませんが、普通のカードは終盤までに手放すべきです。</string>
+    <string name="beat_cards_own_title">7と8 — 自分の1枚を見る</string>
+    <string name="beat_cards_own_body">価値は7と8で、最後まで持っていると大きな痛手です。得られるのは自分のカード1枚を見ることです。このゲームは記憶勝負なので、見たことのあるカードは見たことのないカードより価値があります。一目見られるうちは序盤に持っておき、知ることがなくなったら入れ替えて名乗りましょう。</string>
+    <string name="beat_cards_theirs_title">9と10 — 相手の1枚を見る</string>
+    <string name="beat_cards_theirs_body">同じ一目を、他の誰かの手に向けたものです。どこにあったか覚えておきましょう — 2手後、それが宣言すべきかどうか、ジャックをどこに狙うかを教えてくれます。価値は9と10で、序盤に取る価値もあります。自分が持っていると知っている高いカードは置いて名乗れますが、見えない低いカードはただの推測です。</string>
+    <string name="beat_cards_jack_title">ジャック — 2枚を見ずに交換</string>
+    <string name="beat_cards_jack_body">価値は10です。2人の異なるプレイヤーが持つカードを2枚交換します — 自分同士のカードを2枚交換することはできません — そしてどちらも見ずに行います。自分が悪いと知っているカードを他の誰かに押し付けるのに向いています。良いとわかっているカードでは賭けになります。</string>
+    <string name="beat_cards_queen_title">クイーン — 2枚見てから決める</string>
+    <string name="beat_cards_queen_body">こちらも価値は10で、ゲーム最強のカードです。2人の異なるプレイヤーから任意の2枚を見て、それから交換するかどうかを決められます。ジャックは賭け、クイーンは確信です。</string>
+    <string name="beat_cards_king_title">キング — 無価値で、何でもできる</string>
+    <string name="beat_cards_king_body">価値は0で、それだけで持つ価値があります。そのアクションは場のどのカードでも — 自分のでも誰かのでも — 指名して名乗ります。正解: そのカードは手を離れ、そのアクションがあなたのものになります。不正解: 実物が全員に明らかになり、あなたがペナルティカードを引きます。</string>
+    <string name="beat_cards_king_name_title">名乗ったものがそのままプレイできます</string>
+    <string name="beat_cards_king_name_body">つまり実際には、見たことのあるカードの中からアクションを選んでいるのです。7か8を名乗れば自分の1枚を見られます。ジャックを名乗ればその見ずに行う交換ができ — しかも両方のカードを自分で選べるので、見つけておいたジョーカーを自分に呼び込み、一番悪いカードを相手に押し付けられます。クイーンを名乗れば2枚見てから交換するかどうか決められます。</string>
+    <string name="beat_cards_king_whose_title">そして誰のカードを名乗るか</string>
+    <string name="beat_cards_king_whose_body">誰が持っていたにせよ、名乗ったカードはその人の手を離れます。自分の10を名乗れば合計から10点減ります。相手のジョーカーを名乗ればその人のマイナス1点が消え、代わりに悪いカードが残ります。1枚のキングで2つの仕事 — どちらが大事かがあなたの読みです。</string>
+    <string name="beat_cards_odd_title">エースとジョーカー</string>
+    <string name="beat_cards_odd_body">エースは価値1で、指名した相手にペナルティカードを引かせます。ジョーカーは価値マイナス1 — デッキ最強のカードで、決して手放してはいけません。</string>
+    <string name="beat_tour_title">山札と捨て札</string>
+    <string name="beat_tour_body">カードは山札から出てきます。誰かが捨てたカードはその横に表向きで置かれ、テーブル全員が — あなたも含めて — 読み取れます。</string>
+    <string name="beat_seats_title">エンバー、スカイ、デューン</string>
+    <string name="beat_seats_body">3人のボットで、それぞれ5枚のカードをあなたと同じようにしか見られません。緑に光る席が今の手番です。</string>
+    <string name="beat_help_title">？はいつでもそこにあります</string>
+    <string name="beat_help_body">今の状況と、それぞれのカードが何をするかを説明します。箱入りのゲームにはこのための備忘カードが1人1枚付属します — このアプリでも実際のテーブルでも、14のランクを全部覚えておく必要はありません。</string>
+    <string name="beat_coalition_title">他の全員がひとつになってプレイします</string>
+    <string name="beat_coalition_body">あなたと、宣言しなかったもう2人が連合です。それぞれ一手ずつ、比べられるのはあなたたちの最良の一つの手だけ — つまりチーム対一つの手です。実際のテーブルなら話し合って情報を持ち寄るでしょう。宣言者のカードには誰も触れられず、ゲームもそれを許しません。</string>
+    <string name="beat_your_turn_to_call_title">あなたも宣言できます</string>
+    <string name="beat_your_turn_to_call_body">あなたの手番の終わりには、金色のボタンがそこにあります。自分の手が卓で一番低いと思ったら押しましょう。学んでいる間は隠されていました — それを押すとみんなのラウンドが終わるからです。ここから先はあなたが押すもので、早く押しすぎるのが最初のゲームでよくある負け方です。</string>
+    <string name="beat_session_title">それが1ラウンドです</string>
+    <string name="beat_session_body">ゲームは何ラウンドも続き、得点は持ち越され、あらかじめ決めた時間まで — 30分が一般的です — プレイされます。時間になると進行中のラウンドが終わり、得点が一番多い人が1位で5ゲームポイント、2位で3、3位で2を得ます。3点差で勝ったラウンドも20点差で勝ったラウンドも同じ扱いです。</string>
+    <string name="beat_scoring_title">すべての手が公開されます</string>
+    <string name="beat_scoring_body">宣言者の手は他の全員の中で最良の手と比べられます。宣言者が低ければ宣言者は+3、他の全員はそれぞれ-1です。同点なら宣言者の勝ちとして扱われ、宣言者に+3、他の誰も失いません。宣言者が上回られれば宣言者は-1、他の全員がそれぞれ+3です。</string>
+    <string name="beat_vinto_body">それは自分の手が卓で一番低いという賭けです。ラウンドはそこで終わり、他の全員がもう一手ずつプレイした後、すべての手が公開されます。</string>
+    <string name="beat_vinto_title">%1$sがVintoを宣言しました</string>
+
+    <!-- The prefix on a toss-in window somebody else has already thrown into. The names are
+         joined by list_join_and, which is a grammar decision and not the same in every
+         language. -->
+    <string name="beat_toss_in_also">%1$sが今投げ込みました。 </string>
+    <string name="list_join_and"> と </string>
+    <!-- The caller the view could not name. Was the literal English "Somebody". -->
+    <string name="beat_vinto_somebody">誰か</string>
+    <!-- Said once, the first time somebody presses a button other than the one pointed at. -->
+    <string name="beat_strayed_body">あなたのテーブルです、私のではありません — ここに間違った手はありません。レッスンはどこから再開してもかまいません。</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">呼吸するように光るカードは、今触れられます。</string>
+    <string name="gloss_toss">山の下のチップが、投げ込みが開いているランクを示します。</string>
+    <string name="gloss_log">すべての手はこの枠に記録されます — カードが速く動きすぎて追えなかったときはここを見てください。</string>
+    <string name="gloss_badge">緑の数字は山札に残っている枚数です。</string>
+
+    <!-- A card met for the first time. -->
+    <string name="teach_note">%1$s — 価値%2$s。%3$s。</string>
+    <string name="teach_note_plain">%1$s — 価値%2$s、アクションはありません。今は持っておいて構いませんが、誰かが宣言する前に手放すべき一枚です。</string>
+
+
+    <string name="teach_heading">ゲームを学ぶ</string>
+    <string name="teach_finished_title">これでひととおり終わりです</string>
+    <string name="teach_finished_body">すべての手が公開され、ラウンドが採点されます。ここで学んだルールはすべて実際のゲームで使われるものです — 練習用の別ルールはありません。</string>
+    <string name="teach_watching">何を取って何を戻すか見ておきましょう。</string>
+    <string name="teach_go_on">続ける</string>
+    <string name="teach_done">完了</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">今</string>
+    <string name="help_the_cards">カード</string>
+    <string name="help_signals">テーブルが伝えていること</string>
+    <string name="help_group_numbers">数字カード — 書かれた通りの価値、それ以外はなし</string>
+    <string name="help_group_lookers">見るカード — 覚えておけるカードを得る</string>
+    <string name="help_group_movers">動かすカード — カードを別の場所へ</string>
+    <string name="help_group_odd">特殊なカード</string>
+    <string name="help_no_action">アクションなし。</string>
+    <string name="help_card_worth">%1$s — 価値%2$d</string>
+    <string name="help_closing">手札のカードはすべて不利に数えられるので、合計が一番低い人が勝ちます。自分が一番低いと思ったらVintoを宣言しましょう — その後、他の全員がもう一手ずつ力を合わせてプレイし、彼らの最良の手だけがあなたと比べられます。</string>
+    <string name="stats_played">%1$d回プレイ</string>
+    <string name="stats_won">勝率%1$d%%</string>
+    <string name="stats_best">ベスト%1$d</string>
+    <string name="stats_streak">%1$d連勝</string>
+    <string name="stats_row">あなたの記録: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <!-- The lesson's chapters, one progress dot each. -->
+    <string name="chapter_table">テーブル</string>
+    <string name="chapter_peek">最初の2枚</string>
+    <string name="chapter_draw">カードを取る</string>
+    <string name="chapter_keep">持つか捨てるか</string>
+    <string name="chapter_declare">ランクを名乗る</string>
+    <string name="chapter_actions">カードの効果</string>
+    <string name="chapter_toss">投げ込み</string>
+    <string name="chapter_vinto">Vintoの宣言</string>
+    <string name="chapter_score">採点</string>
+    <string name="chapter_covered">%1$s — 終了</string>
+    <string name="chapter_to_come">%1$s — これから</string>
+    <string name="intro_part_covered">パート%1$d/%2$d — 既読</string>
+    <string name="intro_part_to_come">パート%1$d/%2$d — これから</string>
+
+    <!-- What the "?" explains. -->
+    <string name="explains_card_plain">%1$s。価値は%2$dです。アクションはないので、手札か捨て札の山に置くだけです。</string>
+    <string name="explains_card_action">%1$s。価値は%2$dです。%3$s。%4$s</string>
+    <string name="explains_setup">自分のカードのうち2枚を見て覚えておきましょう — ラウンドが始まると再び伏せられます。それ以降はすべて記憶勝負です。</string>
+    <string name="explains_scoring">すべての手が表向きになります。合計が一番低い人がラウンドの勝者です。Vintoを宣言した人は他の全員の中で最良の手と比べられます。</string>
+    <string name="explains_toss_in">同じランクのカードを持っている人は誰でも投げ込め、それで手札から無料で手放せます。ランクを間違えるとペナルティカードを引き、このラウンドではもう投げ込めなくなります。</string>
+    <string name="explains_final_round">Vintoが宣言されました。他の全員が連合として最後の一手をプレイし、彼らの最良の手だけが宣言者の手と比べられます。</string>
+    <string name="explains_turn">山札から引くか、捨て札の一番上が誰も使っていないアクションカードならそれを取りましょう。合計を下げるものは持ち、自分が一番低いと思ったらVintoを宣言してください。</string>
+
+    <!-- The smaller line under the prompt. -->
+    <string name="detail_card_does">%1$s、価値%2$d: %3$s</string>
+    <string name="detail_king_declared">キングが%1$sを宣言: %2$s</string>
+    <string name="detail_tap_to_say">自分のカードのどれかをタップして、それが何だと思うか答えましょう。</string>
+    <string name="detail_table_talk">テーブルトーク — 連合はあなたの言葉を、正誤にかかわらず信じます。</string>
+    <string name="detail_right_plays">正解ならアクションが使え、不正解ならカードを1枚失います。</string>
+    <string name="detail_wrong_costs">間違えるとペナルティカードを1枚引きます。</string>
+    <string name="detail_barred_card">このカードでは推測を外したので、もう投げ込めません。次に置かれるカードで新しいチャンスが来ます。</string>
+    <string name="detail_barred">推測を外しました。最終ラウンドではこれが残り全体に及びます。</string>
+    <string name="detail_scored_against">%1$sがVintoを宣言したので、ラウンドはその手を基準に採点されました。</string>
+    <string name="detail_deck_ran_out">山札が尽きたので、ラウンドは終了しすべての手が数えられました。</string>
+
+    <!-- The line above the buttons: what the table is asking for. -->
+    <string name="ask_or"> か </string>
+    <string name="ask_look_at_two_of_yours">自分のカードを2枚見る</string>
+    <string name="ask_one_more_to_look_at">もう1枚見られます</string>
+    <string name="ask_ready">準備ができたら</string>
+    <string name="ask_your_turn">あなたの番です</string>
+    <string name="ask_you_drew">%1$sを引きました</string>
+    <string name="ask_you_drew_unknown">カードを引きました</string>
+    <string name="ask_which_card_replaced">どのカードと入れ替えますか？</string>
+    <string name="ask_name_what_you_put_down">置くカードを名乗りますか？</string>
+    <string name="ask_what_do_you_say">このカードは何だと思いますか？</string>
+    <string name="ask_say_and_play">何かを名乗り、そのカードのアクションを使う</string>
+    <string name="ask_look_at_one_of_yours">自分のカードを1枚見る</string>
+    <string name="ask_look_at_one_of_theirs">他のプレイヤーのカードを1枚見る</string>
+    <string name="ask_choose_any_card">好きなカードを選ぶ</string>
+    <string name="ask_choose_two">異なる2人のプレイヤーから、カードを2枚選ぶ</string>
+    <string name="ask_look_at_two">異なる2人のプレイヤーから、カードを2枚見る</string>
+    <string name="ask_swap_them">交換しますか？</string>
+    <string name="ask_remember_it">覚えておく</string>
+    <string name="ask_who_draws">誰がカードを引きますか？</string>
+    <string name="ask_card_waiting">%1$sが待っています</string>
+    <string name="ask_card_waiting_unknown">待っています</string>
+    <string name="ask_toss_in">%1$sが出ました — 投げ込みますか？</string>
+    <string name="ask_toss_in_barred">%1$sが出ました</string>
+    <string name="ask_waiting_for_others">他の人を待っています</string>
+    <string name="ask_watching">見ています</string>
+    <string name="ask_somebody_playing">%1$sがプレイ中</string>
+    <string name="ask_you_playing">あなたがプレイ中です</string>
+    <string name="ask_who_plays_for_you">%1$sがVintoを宣言しました。残りの皆さんの代わりに誰がプレイしますか？</string>
+    <string name="ask_round_over">ラウンド終了</string>
+    <string name="ask_round_over_lowest">ラウンド終了 — あなたは%1$dで最も低く終えました</string>
+    <string name="ask_round_over_not_lowest">ラウンド終了 — あなたは%1$d、最良は%2$dでした</string>
+
+    <!-- The buttons on the table. -->
+    <string name="choice_back">戻る</string>
+    <string name="choice_start_round">ラウンドを始める</string>
+    <string name="choice_draw_card">カードを引く</string>
+    <string name="choice_use_from_pile">%1$sを使う</string>
+    <string name="choice_use_action">アクションを使う</string>
+    <string name="choice_swap_cards">カードを交換</string>
+    <string name="choice_discard">捨てる</string>
+    <string name="choice_just_swap">そのまま交換</string>
+    <string name="choice_put_it_down">置く</string>
+    <string name="choice_leave_them">そのままにする</string>
+    <string name="choice_continue">続ける</string>
+    <string name="choice_call_vinto">Vintoを宣言</string>
+    <string name="choice_done">完了</string>
+
+    <!-- The move log. -->
+    <string name="log_you">あなた</string>
+    <string name="log_drew_known">%1$sを引きました</string>
+    <string name="log_drew_known_they">%1$sが%2$sを引きました</string>
+    <string name="log_draw_you">カードを引きます</string>
+    <string name="log_draw_they">%1$sがカードを引きます</string>
+    <string name="log_took">%1$sが%2$sを取りました</string>
+    <string name="log_took_unknown">%1$sが一番上のカードを取りました</string>
+    <string name="log_swap_you">カード%1$dを交換します</string>
+    <string name="log_swap_they">%1$sがカード%2$dを交換します</string>
+    <string name="log_swap_dropping_you">カード%1$dを交換し、%2$sを捨てます</string>
+    <string name="log_swap_dropping_they">%1$sがカード%2$dを交換し、%3$sを捨てます</string>
+    <string name="log_throw_you">%1$sを捨てます</string>
+    <string name="log_throw_they">%1$sが%2$sを捨てます</string>
+    <string name="log_throw_unknown_you">カードを捨てます</string>
+    <string name="log_throw_unknown_they">%1$sがカードを捨てます</string>
+    <string name="log_play_you">%1$sをプレイします</string>
+    <string name="log_play_they">%1$sが%2$sをプレイします</string>
+    <string name="log_play_unknown_you">カードをプレイします</string>
+    <string name="log_play_unknown_they">%1$sがカードをプレイします</string>
+    <string name="log_tossed_in">%1$sが%2$sを投げ込みました</string>
+    <string name="log_tossed_in_unknown">%1$sがカードを投げ込みました</string>
+    <string name="log_toss_in_missed">%1$sが%2$sを投げ込みました — 誤りで、ペナルティカードを引きました</string>
+    <string name="log_toss_in_missed_unknown">%1$sが誤ったカードを投げ込みました — ペナルティカード</string>
+    <string name="log_called_vinto">%1$sがVintoを宣言しました</string>
+    <string name="log_swapped_two">%1$sがカードを2枚交換しました</string>
+    <string name="log_swapped_two_named">%1$sが%2$sと%3$sを交換しました</string>
+    <string name="log_left_alone">%1$sはそのままにしました</string>
+    <string name="log_declared">%1$sが%2$sを宣言しました</string>
+    <!-- An Ace's aim: three sentences, because the verb and "you" both move. -->
+    <string name="log_made_draw_you">%1$sにカードを引かせました</string>
+    <string name="log_made_you_draw">%1$sにカードを引かされました</string>
+    <string name="log_made_draw_they">%1$sが%2$sにカードを引かせました</string>
+    <string name="log_round_begins">ラウンド開始</string>
+
+    <string name="help_counts_title">このアプリが計測すること</string>
+    <string name="help_counts_body">匿名の統計のみです。プレイされたラウンド数、どこまで進んだか、テーブルが止まったかどうか、ルームの運用コストなど。名前もルームコードも、手札の中身も、あなたや端末を特定できるものは一切含まれません — 送信するデータにそもそも入れる場所がありません。設定でオフにでき、追跡拒否を求めるブラウザでは自動的にオフになります。</string>
+
+    <string name="signal_turn">席の緑のリング</string>
+    <string name="signal_turn_meaning">誰の番かを示します。3人のボットは一度のタップの間に手番を終えるので、番が来ると点滅します。</string>
+    <string name="signal_vinto">金色のリング</string>
+    <string name="signal_vinto_meaning">そのプレイヤーがVintoを宣言しました。ラウンドが終わるまで誰もそのカードに触れられません。</string>
+    <string name="signal_penalty">赤いリングと震える手</string>
+    <string name="signal_penalty_meaning">ペナルティカードがたった今そこに置かれました — 推測を外したか、投げ込みを誤ったかです。</string>
+    <string name="signal_coalition">青いリング</string>
+    <string name="signal_coalition_meaning">連合です。Vintoを宣言した人以外の全員が、最後の手番をその一つの手に対して共にプレイします。</string>
+    <string name="signal_live">捨て札の金色のリング</string>
+    <string name="signal_live_meaning">そのカードはアクションが使われないまま置かれたので、次のプレイヤーは引く代わりにそれを取ってプレイできます。アクションが使われたカードにはリングがありません。</string>
+    <string name="signal_tappable">呼吸するカード</string>
+    <string name="signal_tappable_meaning">今すぐ触れられます。何も呼吸していなければ、テーブルは他の誰かを待っています。</string>
+    <string name="signal_reshuffle">カードが山札に戻っていく</string>
+    <string name="signal_reshuffle_meaning">山札が尽きたので、捨て札の山がシャッフルされて戻されました。その山を見て学んだことはすべて過去のものになりました。</string>
+    <string name="signal_peek">中央に向けて持ち上がるカード</string>
+    <string name="signal_peek_meaning">誰かがそれを見ています。どのカードが見られたかは全員にわかりますが、権利のある本人だけが表を見られます。</string>
+
+
+    <!-- The cards, in words. -->
+    <string name="card_name_two">2</string>
+    <string name="card_name_three">3</string>
+    <string name="card_name_four">4</string>
+    <string name="card_name_five">5</string>
+    <string name="card_name_six">6</string>
+    <string name="card_name_seven">7</string>
+    <string name="card_name_eight">8</string>
+    <string name="card_name_nine">9</string>
+    <string name="card_name_ten">10</string>
+    <string name="card_name_jack">ジャック</string>
+    <string name="card_name_queen">クイーン</string>
+    <string name="card_name_king">キング</string>
+    <string name="card_name_ace">エース</string>
+    <string name="card_name_joker">ジョーカー</string>
+
+    <string name="card_long_seven">自分のカードを1枚見る</string>
+    <string name="card_long_eight">自分のカードを1枚見る</string>
+    <string name="card_long_nine">他のプレイヤーのカードを1枚見る</string>
+    <string name="card_long_ten">他のプレイヤーのカードを1枚見る</string>
+    <string name="card_long_jack">異なる2人のプレイヤーの伏せたカードを2枚交換する</string>
+    <string name="card_long_queen">異なる2人のプレイヤーから任意の2枚を見て、選んで交換する</string>
+    <string name="card_long_king">他のカードのアクションを宣言する（7〜A）</string>
+    <string name="card_long_ace">相手にペナルティカードを引かせる</string>
+
+    <string name="card_help_two">価値2の数字カード</string>
+    <string name="card_help_three">価値3の数字カード</string>
+    <string name="card_help_four">価値4の数字カード</string>
+    <string name="card_help_five">価値5の数字カード</string>
+    <string name="card_help_six">価値6の数字カード</string>
+    <string name="card_help_seven">自分のカードの1枚をタップすると一時的に表向きになり、その価値を確認できます。この行動は省略してもかまいません。</string>
+    <string name="card_help_eight">自分のカードの1枚をタップすると一時的に表向きになり、その価値を確認できます。この行動は省略してもかまいません。</string>
+    <string name="card_help_nine">相手のカードをタップすると一時的に表向きになり、その価値を確認できます。この行動は省略してもかまいません。</string>
+    <string name="card_help_ten">相手のカードをタップすると一時的に表向きになり、その価値を確認できます。この行動は省略してもかまいません。</string>
+    <string name="card_help_jack">異なるプレイヤーのカードを2枚選んで位置を交換します — 自分のカードを含めても、相手同士だけでもかまいません。同じプレイヤーから2枚は選べません。選択はやり直せますし、この行動を省略することもできます。</string>
+    <string name="card_help_queen">1. 異なるプレイヤーのカードを2枚見ます（自分のものでも相手のものでもかまいませんが、異なるプレイヤーである必要があります）\n2. 両方を見た後、交換するかどうかを決めます</string>
+    <string name="card_help_king">実行するカードのアクションを選びます: 7（自分を見る）、8（自分を見る）、9/10（相手を見る）、J（交換）、Q（見て交換）、A（強制ドロー）。アクションを持たないカード（2〜6、K、ジョーカー）を宣言することもできます。</string>
+    <string name="card_help_ace">相手を選んで山札からペナルティカードを引かせます。手札の枚数と合計点が増えます。この行動は省略してもかまいません。</string>
+    <string name="card_help_joker">価値-1のジョーカー</string>
+</resources>

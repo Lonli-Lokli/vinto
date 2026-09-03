@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!--
+    The app icon master, for znachok. ONE full-bleed, opaque, square SVG; every size for every
+    store is rasterized from this file and nothing is drawn twice.
+
+    FULL BLEED IS A REQUIREMENT, not a style. iOS applies its own corner mask and Android its own
+    adaptive mask, so a pre-rounded tile floating on transparency leaves corners the App Store
+    rejects outright. The ground therefore runs edge to edge and the masks cut into it.
+
+    The composition is the launcher icon Android already ships (`tools/make-launcher-icons.py`):
+    the brand's orange V on the felt the game is played on. This file exists so iOS and the Play
+    listing can have the same icon from the same source, rather than a second drawing that
+    resembles it.
+
+    The V is the capital of Cinzel Bold — the wordmark's own face, and the app's display type
+    (`theme/Type.kt`). The outline below was extracted from `composeResources/font/cinzel_bold.ttf`
+    with fontTools; the SIL Open Font License permits using a glyph's outlines this way.
+    `tools/brand/vinto-mark.svg` is the same path on transparency, and the two must stay in step.
+
+    THE GLYPH IS AT 50% OF THE CANVAS, which is smaller than it looks like it should be, and the
+    reason is masking. Android guarantees only the central 72 of 108 dp — a circle of radius
+    0.333 — and iOS's squircle bites the corners. At 50% the V's arms stay inside both, so no
+    launcher ever clips a serif off.
+
+    Every colour here is a UNIQUE hex, because znachok's dark theme is a hex-for-hex swap: two
+    elements sharing a value can never be recoloured apart.
+
+    Re-run znachok after any edit to this file; `znachok.config.mjs` beside it carries the
+    command and the reason Android is not one of its targets.
+  -->
+  <rect width="1024" height="1024" fill="#1B5E43"/>
+  <g transform="translate(234.45 256) scale(0.673684)">
+    <g transform="translate(48 720) scale(1 -1)">
+      <path d="M368 -20 37 694H216L429 173ZM368 -20 365 102 619 697H691L426 111Q424 105 416.5 88.5Q409 72 400.0 51.0Q391 30 384.5 10.5Q378 -9 377 -20ZM589 627Q602 657 586.0 673.5Q570 690 551 690H542V700H756V690Q756 690 751.5 690.0Q747 690 747 690Q725 690 700.5 675.5Q676 661 660 627ZM244 627H68Q52 661 27.5 675.5Q3 690 -20 690Q-20 690 -24.0 690.0Q-28 690 -28 690V700H290V690H281Q262 690 247.5 673.5Q233 657 244 627Z" fill="#E8791E"/>
+    </g>
+  </g>
+</svg>

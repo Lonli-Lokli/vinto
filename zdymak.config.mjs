@@ -9,11 +9,11 @@
  * Pinned to zdymak 0.22.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from.
  * Behaviour here is version-specific (the output layout changed at 0.15), so bump both together.
  *
- * **`npx zdymak capture` cannot drive this app yet.** Android capture works by
- * `am start --es <arg> <state>`, and `MainActivity` reads no such extra — it reads a deep link and
- * nothing else. Until that handle exists, `capture` is the one verb here that does not apply and
- * the scene ids below are names for shots taken by hand. Everything else works on any folder of
- * PNGs. See the note at the foot of this file.
+ * **`npx zdymak capture` drives this app now.** The handle the note at the foot of this file
+ * specified is built: `MarketingScene` in `composeApp`, read from an intent extra on Android
+ * (debug source set) and a launch argument on iOS. `npm run capture-ios`, `capture-ipad` and
+ * `capture-android` pass the five scene ids below; `npm run capture-headless` renders the same
+ * five without a device at all.
  */
 export default {
   // The table's own palette, from `composeApp/.../theme/VintoTheme.kt` rather than picked to
@@ -103,35 +103,49 @@ export default {
 };
 
 /**
- * `npx zdymak capture` and what it would take — DECIDED 2026-09-02: a **debug-only** handle.
+ * `npx zdymak capture` — BUILT, to the design this note used to specify.
  *
- * The owner's call on the question this note used to leave open: the state handle goes in the
- * debug build only, so the release surface is unchanged and the store shots come from a debug
- * binary. On Android that is a `src/debug` source set reading `intent.getStringExtra`, with a
- * no-op twin in `src/release` — a build-variant gate rather than an `if`, because an intent extra
- * is an entry point any app on the phone can use and a runtime check leaves it in the binary. On
- * iOS a launch argument in `MainViewController` needs no variant: only whoever launches the
- * process can set one, and `Platform.isDebugBinary` guards it anyway.
+ * The owner's call was a **debug-only** handle, so the release surface is unchanged and the store
+ * shots come from a debug binary. That is what shipped:
  *
- * **It is more than the handle, and that is the part worth knowing before starting.** Two of the
- * five scenes are a screen name and nothing else — `home` is `Screen.Home`, `teach` is
- * `Screen.Teaching`, both reachable by opening the app. The other three are not:
+ *   Android  `captureScene(intent)` in `androidApp/src/debug`, with a no-op twin in
+ *            `src/release`. A build-variant gate rather than an `if`, because an intent extra is
+ *            an entry point any app on the phone can send and a runtime check leaves the reader in
+ *            the shipped binary.
+ *   iOS      a launch argument read in `MainViewController`. No variant needed: only whoever
+ *            starts the process can set one.
  *
- *   table   needs a LocalGame dealt from a pinned seed and advanced to a readable middle — cards
- *           on the discard, a peek spent, somebody's hand half known.
- *   score   needs a round played out, which is the end of that same staged game rather than a
- *           screen you can jump to.
- *   lobby   needs a room, and a room is the network. Either a staged RemoteRoom that never opens
- *           a socket, or the shot stays hand-taken.
+ * **The handle names a STATE, not a screen**, which was the important half. `MarketingScene`
+ * carries the five ids and `MarketingState.stagedGame` builds the two that are not screens, from
+ * a pinned seed with the bots on the calling thread — so the table in the shot is the same table
+ * next release, and a listing does not need re-reviewing for a change nobody made.
  *
- * Palon solved exactly this with a `MarketingState` that builds the board at a chosen point from
- * a fixed seed (`--arg -state --states fresh,building,duel,solved`), which is the shape to copy:
- * the handle names a STATE the app can construct deterministically, not a screen it can navigate
- * to. Until that exists the scene ids below are names for shots taken by hand, and the
- * `capture-*` scripts are deliberately absent from `package.json` rather than present and silently
- * photographing a home screen five times.
+ * What each scene turned out to need, against this note's own estimate:
  *
- * **Do not run the media pipeline yet.** The four seat portraits are the ninja-turtle cast — see
- * the note at the foot of `vydanne.config.mjs` — and every screenshot of a table, plus the App
- * Preview, would bake them in.
+ *   home   a screen. As predicted.
+ *   teach  a screen. As predicted.
+ *   table  the peeks spent and a card drawn — a Queen, as it happens. As predicted.
+ *   score  MORE than predicted. Calling Vinto is not the end of a round: the drawn card has to be
+ *          dealt with first and the coalition each take one more turn. Stopping at the call leaves
+ *          the FINAL ROUND banner up with every hand still face down — a perfectly good picture,
+ *          and not this one. It also turned up a real defect: a screen first composed onto an
+ *          already-finished round hid the result behind "See the score", which is now open.
+ *   lobby  NOT staged, and that is the honest answer rather than a shortfall. Both options this
+ *          note listed are still the only two — a live socket during a screenshot run, or a second
+ *          implementation of the room's state machine for one picture — and neither is worth it.
+ *          The id opens the online MENU, which is a real screen showing what online play offers.
+ *
+ * `CaptureHandleTest` holds all five. It is worth knowing WHY that test is strict: a broken handle
+ * does not crash, it opens the home screen — so a capture run photographs five home screens and
+ * the listing gets five identical pictures nobody notices until review. Two drafts of that test
+ * passed on the wrong screen before the third one could not.
+ *
+ * **There is also a device-free path.** `npm run capture-headless` renders the same five states at
+ * 1290×2796 through `ImageComposeScene`, which is the same Compose that draws the phone. No
+ * simulator, no emulator, no handle — and the shots cannot drift from the app because they are the
+ * app. Use it for a quick set; use `zdymak capture` when the shot needs a real device's status bar.
+ *
+ * **The media pipeline is unblocked.** The seat portraits were the ninja-turtle cast and are
+ * original emblems now (`brand/avatars/_shared.md`), so screenshots and the App Preview no longer
+ * bake somebody else's characters into the listing.
  */

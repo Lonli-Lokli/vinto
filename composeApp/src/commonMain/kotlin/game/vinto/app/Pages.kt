@@ -39,4 +39,24 @@ object Pages {
 
     /** This app's own page on the studio's site: what it is, and what else is on the shelf. */
     const val THIS_APP: String = "$STUDIO/games/vinto"
+
+    /**
+     * The two store listings, for the rate button. `storeReviewUrl()` picks between them.
+     *
+     * **Both are filled in before either listing is live, deliberately.** A dead link is a
+     * temporary embarrassment; shipping a build to add two constants costs a whole review cycle,
+     * and until release the only people who can press this are testers on TestFlight and the
+     * Play internal track. Each heals itself the moment its store approves.
+     *
+     * The Apple id is the created app record's (`vydanne inspect` — 6803030533), not a guess.
+     * The Play package has no record yet at all: the Publishing API cannot create one, so
+     * somebody has to make the app in the Play Console by hand. The URL below is what that
+     * listing will answer on, because a Play listing's address is its package name.
+     *
+     * `?action=write-review` opens Apple's review sheet directly rather than the listing, which
+     * is the difference between "rate" and "look at the app you already have". Play has no
+     * equivalent parameter that works from outside the store app, so it gets the listing.
+     */
+    const val APPLE_REVIEW: String = "https://apps.apple.com/app/id6803030533?action=write-review"
+    const val PLAY_REVIEW: String = "https://play.google.com/store/apps/details?id=app.kupalinka.vinto"
 }

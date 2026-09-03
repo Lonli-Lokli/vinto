@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- App Store export options for `xcodebuild -exportArchive`, which turns the archive into the
+     .ipa that `npm run store:prerelease` uploads.
+
+     It needs an Apple Distribution certificate and an App Store provisioning profile for
+     app.kupalinka.vinto. Automatic signing plus `-allowProvisioningUpdates` on the archive
+     command creates both on a paid account, including the Associated Domains capability the
+     entitlements file asks for.
+
+         xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Release \
+           -destination 'generic/platform=iOS' -archivePath build/Vinto.xcarchive \
+           -allowProvisioningUpdates archive
+         xcodebuild -exportArchive -archivePath build/Vinto.xcarchive \
+           -exportOptionsPlist ExportOptions.plist -exportPath ../dist
+
+     `../dist` is where `vydanne.config.mjs` looks for the .ipa (`ios.ipa`). -->
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>teamID</key>
+    <string>JNHFD8PCM8</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <!-- Upload the dSYMs with the build, so a Sentry report from TestFlight symbolicates
+         without anybody having to find and post them afterwards. -->
+    <key>uploadSymbols</key>
+    <true/>
+    <key>destination</key>
+    <string>export</string>
+</dict>
+</plist>

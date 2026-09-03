@@ -2,6 +2,7 @@ package game.vinto.room
 
 import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.RoomPhase
+import game.vinto.protocol.looksMinted
 import game.vinto.shapes.Sha256
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -72,7 +73,9 @@ class LobbyRefusalsTest {
         val taken = carol.state.seats[2]
         assertEquals(Sha256.hex("token-carol"), taken.tokenHash)
         assertFalse(taken.isBot, "the seat is a person's now")
-        assertEquals("Carol", taken.profile?.nickname)
+        // Identity is the token hash above; the NAME is now whatever the shared vocabulary
+        // allows, because "Carol" is typed text and the room no longer displays any.
+        assertTrue(looksMinted(taken.profile?.nickname.orEmpty()), "a typed name reached a seat plate")
 
         val bob = carol.state.seats[1]
         assertTrue(bob.isBot && bob.tokenHash != null, "Bob's held seat was touched")
@@ -194,32 +197,53 @@ class LobbyRefusalsTest {
 
     /**
      * A nickname is displayed to strangers who never agreed to read whatever somebody sent.
-     * One rule, applied on the way in: whitespace collapsed, markup and control characters
-     * dropped, sixteen characters at most, and a seat that ends up nameless is named after
-     * its index rather than left blank.
+     *
+     * The rule used to be a *filter* — collapse whitespace, drop markup, sixteen characters —
+     * and it has been replaced by an allow-list, because filtering was never the right shape
+     * for this. The objectionable nicknames are made of ordinary letters, and no amount of
+     * character-class filtering has an opinion about them. The client now mints a name from a
+     * fixed vocabulary instead of taking one (`shared/protocol`'s `Nickname.kt`), which is what
+     * lets the app declare no user-generated content at all.
+     *
+     * **This is the check that makes that claim true of the SERVICE rather than of the build.**
+     * The room's door is open to anything speaking the protocol, so a modified client can still
+     * send whatever it likes; what it cannot do is have it displayed.
      */
     @Test
-    fun aNicknameIsTrimmedToSomethingDisplayable() {
-        assertEquals("Mary Ann", sanitiseNickname("  Mary " + "\t" + "\n" + "  Ann  ", 0))
-        assertEquals("Ann script", sanitiseNickname("Ann <script>", 0))
-        assertEquals("O'Brien-Smith_1.", sanitiseNickname("O'Brien-Smith_1.", 0), "a little punctuation is allowed")
-        assertEquals(16, sanitiseNickname("A".repeat(40), 0).length)
-        assertEquals("Player 3", sanitiseNickname("   ", 2))
-        assertEquals("Player 1", sanitiseNickname("!!!", 0), "nothing displayable is nothing")
+    fun onlyANameFromTheSharedVocabularyIsEverDisplayed() {
+        assertEquals("Quiet Heron", sanitiseNickname("Quiet Heron", 0), "a minted name is kept as it is")
+
+        // Everything else is replaced rather than refused: a seat must be called something, and
+        // failing the join would turn a rejected name into a player who cannot sit down.
+        listOf("Mary Ann", "Ann <script>", "O'Brien-Smith_1.", "A".repeat(40), "   ", "!!!", "quiet heron")
+            .forEach { sent ->
+                val shown = sanitiseNickname(sent, 2)
+                assertTrue(looksMinted(shown), "'$sent' reached a seat plate as '$shown'")
+            }
+        assertEquals(
+            sanitiseNickname("anything", 2),
+            sanitiseNickname("something else", 2),
+            "the substitute is the seat's, so it is stable rather than random",
+        )
+
         assertEquals("", cleanNickname("<>"), "the registry's version has no fallback: a host may be nameless")
+        assertEquals("Quiet Heron", cleanNickname("Quiet Heron"), "and it keeps a real one")
 
         val seated = decodeJoin(joinRoom(newRoom("room-N", 1.0, "easy", START), TOKEN_A, "  <b>Ann</b>  ", START))
-        assertEquals("bAnnb", seated.state.seats[0].profile?.nickname, "the rule is applied where a name comes in")
+        assertTrue(
+            looksMinted(seated.state.seats[0].profile?.nickname.orEmpty()),
+            "typed text reached a seat: ${seated.state.seats[0].profile?.nickname}",
+        )
     }
 
     @Test
     fun aBotIsNamedByItsSeatSoTwoNeverCollide() {
-        assertEquals(listOf("Leo", "Raph", "Mikey", "Don"), (0..3).map(::botName))
+        assertEquals(listOf("Fern", "Ember", "Sky", "Dune"), (0..3).map(::botName))
         assertEquals("Bot 8", botName(7), "a seat that does not exist still gets a name rather than a crash")
 
         var state = lobbyOfTwo()
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
-        assertEquals(listOf("Mikey", "Don"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
+        assertEquals(listOf("Sky", "Dune"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
     }
 }

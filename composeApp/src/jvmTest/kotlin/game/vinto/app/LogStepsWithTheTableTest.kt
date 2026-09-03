@@ -41,8 +41,8 @@ class LogStepsWithTheTableTest {
     @Test
     fun aLineAppearsWithItsFrameAndNotBefore() = runComposeUiTest {
         val view = teachingSession().view.value
-        val first = Say.Drew(Speaker.Named("Raph"))
-        val second = Say.Drew(Speaker.Named("Mikey"))
+        val first = Say.Drew(Speaker.Named("Ember"))
+        val second = Say.Drew(Speaker.Named("Sky"))
         val frames = MutableSharedFlow<List<Frame>>(replay = 1)
         var told: List<Say> = emptyList()
 

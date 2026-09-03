@@ -14,29 +14,45 @@ The app half is built and tested; what is missing is two files on the website, e
 credential nothing here has. Until they exist the `https` links open the site instead of the
 app — which is why the `vinto://` scheme is there and works today.
 
-- [ ] 1.1 `/.well-known/assetlinks.json` — **needs the release keystore's SHA-256 fingerprint**
-      (`keytool -list -v -keystore …`), which does not exist until 2.1. Goes in
-      `composeApp/src/wasmJsMain/resources/.well-known/`, which every deploy publishes
-- [ ] 1.2 `/.well-known/apple-app-site-association` — **needs the Apple team id and bundle id**,
-      served as `application/json` with no extension
+- [~] 1.1 `/.well-known/assetlinks.json` — **written**, carrying the upload key's SHA-256 now
+      that 2.1 exists. Still half done, knowingly: with Play App Signing the delivered app is
+      signed by Google's key rather than ours, so Google's fingerprint has to go beside this one
+      once the Play Console shows it. `docs/kotlin/APP-LINKS.md` has the steps and the verifier
+      URL. No code — a file edit and a website deploy
+- [x] 1.2 `/.well-known/apple-app-site-association` — written, naming
+      `JNHFD8PCM8.app.kupalinka.vinto` and claiming `/r/*` and nothing else. Served as
+      `application/json` by an explicit `_headers` rule, because the file has no extension and
+      Cloudflare would otherwise guess a type iOS silently refuses. The matching
+      `com.apple.developer.associated-domains` entitlement is in the app
 - [ ] 1.3 Verify both from a device: an `https` invitation opens the app rather than the
       browser, on Android and on iOS. **Needs a phone of each kind**, and 1.1/1.2 deployed
 
 ## 2. Store releases
 
-- [ ] 2.1 An upload key, and `keystore.properties` beside it. **Needs somebody to generate and
-      keep a secret.** Built already: `assembleRelease` signs with the upload key when that file
-      exists and with the debug key when it does not, so the path is exercised without it
-      (was migrate 8.1)
-- [ ] 2.2 A Play Console account and an internal track; an Apple developer account and
-      TestFlight. **Needs accounts and money** (was migrate 8.1, 9.10)
-- [ ] 2.3 A release job on tags, publishing to both. **Needs 2.1 and 2.2**; R8 and everything
-      iOS sit behind the same accounts (was migrate 8.1)
-- [ ] 2.4 The iOS privacy manifest and permissions review. **Needs Xcode** (was migrate 8.2)
-- [ ] 2.5 Settings — "rate this app". **Needs a published listing.** Deliberately absent rather
-      than built and hidden: a review button that opens nothing reads as the app being broken,
-      to the one person most inclined to say so in public. Four lines and a `market://` URL the
-      day 2.3 ships
+- [x] 2.1 An upload key, and `keystore.properties` beside it. Generated: 4096-bit RSA at
+      `keystore/vinto-upload.jks`, both files gitignored. `bundleRelease` produces a signed .aab
+      (verified with `jarsigner`), and its fingerprint is what 1.1 carries. **It exists on one
+      machine and nowhere else — back both files up** (was migrate 8.1)
+- [~] 2.2 A Play Console account and an internal track; an Apple developer account and
+      TestFlight. **The accounts exist and are reachable by API**: Apple holds the app record
+      (6803030533, 1.0 PREPARE_FOR_SUBMISSION) with its listing, categories, content rights and
+      age rating all pushed, and Play holds `app.kupalinka.vinto` with its listing and icon. What
+      has not happened is a BUILD reaching either — TestFlight needs Xcode signed in to the
+      developer account on the build machine (automatic provisioning fails with "No Accounts"),
+      and the Play internal track needs the .aab uploaded. Neither is a decision; both are one
+      person at a keyboard (was migrate 8.1, 9.10)
+- [ ] 2.3 A release job on tags, publishing to both. The *versioning* it needs is in place now
+      — `Scripts/build-number.sh`, VERSIONING.md, and both platforms reading it — so what is left
+      is the workflow. R8 is still off (was migrate 8.1)
+- [x] 2.4 The iOS privacy manifest and permissions review. `PrivacyInfo.xcprivacy` declares the
+      five collected types (matching `vydanne.config.mjs`) and `NSUserDefaults` under CA92.1 —
+      without which an upload is rejected with ITMS-91053. The app asks for no permissions at all
+      (was migrate 8.2)
+- [x] 2.5 Settings — "rate this game". Built, pointing at listings that are not live yet, which
+      reverses the reasoning that kept it out: adding two constants later costs a review cycle per
+      store, and the window in which the links are dead is one where only TestFlight and
+      Play-internal testers can press them. `storeReviewUrl()` picks per platform; the web and
+      desktop builds, which have no store, go to the app's own page
 
 ## 3. The gates only a person can walk
 
@@ -91,9 +107,12 @@ app — which is why the `vinto://` scheme is there and works today.
       runs `:shared:client:iosSimulatorArm64Test`, so a whole game is generated and replayed
       through the real harness on Kotlin/Native every run. An hour's work on a machine that can
       build `composeApp` (was migrate 4.8)
-- [ ] 5.2 A language selector in Settings. **Needs a second translation to select between** —
-      and there is one now: `values-ru/` exists with 403 of the 404 strings. This stopped being
-      blocked while nobody was looking, and is the one item here that is now ordinary work
+- [x] 5.2 A language selector in Settings. The control was built while this was still blocked —
+      `Tongue` in `SettingsScreen`, with "follow the device" and the twenty entries of
+      `Language.kt` — and what it lacked was anything to choose between. There are twenty now:
+      `values-<loc>` for every entry, filled from the English source and checked by
+      `tools/check-translations.mjs` (key set, placeholders, quote escaping, double-escaped
+      entities)
 
 ## What "done" means
 

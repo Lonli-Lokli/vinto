@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- INVITATIONS, the Universal Link half.
+         The counterpart of the `autoVerify` App Link intent filter in `AndroidManifest.xml`, and
+         it works the same way round: iOS fetches
+         https://vinto.kupalinka.app/.well-known/apple-app-site-association and opens the app only
+         if that file names this team and bundle id.
+
+         THAT FILE IS NOT PUBLISHED YET (ship-and-operate 1.2), so today this entitlement changes
+         nothing a player would notice — an https invitation still opens the website, which is a
+         real page and a reasonable place to land. It is declared now rather than later because
+         adding it is a change of *provisioning*: the App ID grows a capability, the profile is
+         reissued, and doing that during a release is how a build stops signing on the afternoon
+         it was meant to ship. The file can then be published without touching the app at all.
+
+         `applinks:` only. This app claims no shared web credentials and no app-group storage. -->
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:vinto.kupalinka.app</string>
+    </array>
+</dict>
+</plist>

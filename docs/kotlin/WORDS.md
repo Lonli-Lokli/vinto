@@ -50,9 +50,36 @@ where asserting an English sentence says what it currently reads.
 
 That is what landed. The app is no longer half-translated: menus, settings, the score sheet,
 the help sheet, the spoken descriptions, the table's prompts, the move log **and the lesson**
-all follow the phone's language. What is not yet translated is a different thing and an easier
-one — there is still only a `values/strings.xml`, so adding `values-be/` and `values-uk/` is
-now a file each and no code at all, which is what this whole exercise was for.
+all follow the phone's language.
+
+### And then the languages arrived
+
+The sentence that used to end this section — "adding `values-be/` and `values-uk/` is now a file
+each and no code at all" — was the whole point of the exercise, and it has now been cashed in.
+There is a `values-<loc>/strings.xml` for **every one of the twenty entries in `Language.kt`**,
+and the selector in Settings that had nothing to choose between now has nineteen alternatives.
+
+`node tools/check-translations.mjs` holds them: same key set as the source, same placeholders per
+string, no Android-style `\'` (compose-resources draws the backslash — `StringEscapeTest` bans it
+too), no double-escaped entities, no bare `&`. It does **not** check that anything was actually
+translated, because "Vinto" legitimately stays "Vinto" and a tool that guessed would cry wolf.
+
+### The one that was translated and still came out English
+
+The "?" sheet was the exception nobody had spotted, and it was reported by a player rather than
+found by a test: *"some card explanations are not translated"*.
+
+The sentence around each card was a resource and did move with the language. What it was built
+FROM did not — `CardConfig.name`, `longDescription` and `helpText` are Kotlin constants in
+`shared/shapes`, so a Russian reader got a Russian frame with "Queen" and an English paragraph
+dropped into it. A translated template around untranslated nouns is the most convincing way to
+look translated and not be.
+
+They live in `strings.xml` now, read through `CardWords` (`card_name_*`, `card_long_*`,
+`card_help_*`). Nothing in `shared/shapes` changed: `CardConfig` still says a King is worth 0.
+**`shortDescription` did not move and must not** — it becomes `Card.actionText`, which is inside
+the canonical hash all 50 fixtures pin against TypeScript, and `CardCopyIsDataTest` fails loudly
+on anybody who tries. `CardWords` deliberately has no `cardShort()`: the absence is the guard.
 
 ### How big it actually is, measured
 

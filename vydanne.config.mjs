@@ -66,7 +66,25 @@ export default {
   // App Store Connect and vydanne does not touch money.
   iaps: [],
 
-  rating: '4+', // see the ageRating note below before trusting this
+  /**
+   * 4+, and every content question below is genuinely NONE.
+   *
+   * It was briefly not. For one pass this app declared `userGeneratedContent: true`, because
+   * online play took a typed nickname and a public room posted it to `/rooms` where strangers
+   * read it — text one player authors and others see, which is what Guideline 1.2 is about. The
+   * declaration was correct and the rating went up with it.
+   *
+   * **The feature changed rather than the answer.** Names are now minted from a fixed vocabulary
+   * (`shared/protocol`'s `Nickname.kt`): there is no text field anywhere in the app, and the room
+   * refuses any name its own vocabulary could not have produced — so the guarantee holds for the
+   * SERVICE and not merely for this build, which matters because a modified client can send
+   * anything. Nobody authors anything, so there is nothing to filter, report or block, and `false`
+   * is a true statement again.
+   *
+   * If a text field ever comes back, this is the field that has to change with it, and the 1.2
+   * obligations come back at the same time.
+   */
+  rating: '4+',
 
   // The two app-level facts that block **Add for Review** and that nothing else in vydanne sets.
   // `npm run store:appinfo` once per app; re-running is a no-op.
@@ -78,18 +96,28 @@ export default {
 
   // "Does the app contain, show or access third-party content?"
   //
-  // **UNSET ON PURPOSE, and this is a blocker rather than an oversight.** The four seat portraits
-  // in `composeApp/.../composeResources/drawable/avatar_*.png` are anthropomorphic ninja turtles
-  // named Leonardo, Raphael, Michelangelo and Donatello, nicknamed Leo, Raph, Mikey and Don
-  // (`RoomCore.BOT_NAMES`, `InitializeGame`, `SeatPlate.portraitFor`, and `beat_seats_title` in
-  // strings.xml, which puts "Raph, Mikey and Don" in front of the player). That is the Teenage
-  // Mutant Ninja Turtles cast, which Nickelodeon/Paramount owns — App Store Review 5.2 and Play's
-  // IP policy both refuse it, and the exposure is the developer's rather than the store's.
+  // **Answerable now, and it was the one field blocking submission.**
   //
-  // Answering this field either way before the art and the names are replaced would be making a
-  // claim about somebody else's property. Replace them, then set `contentRights: false` and the
-  // sentence is true. See the note at the foot of this file.
-  // contentRights: false,
+  // It used to be unset, with a long note explaining why: the four seat portraits were
+  // anthropomorphic ninja turtles named Leonardo, Raphael, Michelangelo and Donatello, nicknamed
+  // Leo, Raph, Mikey and Don, and those names reached `BOT_NAMES`, `initializeGame`,
+  // `SeatPlate.portraitFor` and the tutorial string `beat_seats_title`. One background read
+  // "SHELL SHOCK". That is the Teenage Mutant Ninja Turtles cast however it was arrived at, App
+  // Store Review 5.2 and Play's IP policy both refuse it, and screenshots of the table would have
+  // published it.
+  //
+  // What replaced them is original and generated in this repository: four flat emblems — a leaf,
+  // a flame, a crescent, a ridge — drawn from the deck's own palette, with the seats renamed Fern,
+  // Ember, Sky and Dune to match. Masters in `brand/avatars/`, converted to vector drawables by
+  // `tools/svg-to-drawable.mjs`, and `brand/avatars/_shared.md` records the whole reasoning.
+  // Nothing in the build is anybody else's any more, so `false` is now a true statement rather
+  // than a convenient one.
+  //
+  // The one piece of third-party *anything* left is the name VINTO itself, which is somebody
+  // else's game — and that is a licensing question about the app's subject, not third-party
+  // content shipped inside it. Every client says so on its first screen and links to
+  // <https://vinto.game>, which is what `AttributionTest` holds.
+  contentRights: false,
 
   // No sign-in wall anywhere — online play asks for a nickname, not an account — so App Review
   // needs no demo account. If that ever changes the credentials go in
@@ -200,6 +228,19 @@ export default {
     packageName: 'app.kupalinka.vinto',
     metadataDir: 'fastlane/metadata/android',
     defaultLocale: 'en-GB',
+    // The signed bundle `prerelease` uploads. A DIRECTORY, so it takes the newest build in it and
+    // there is no path to update on every release — the same shape as `ios.ipa` above.
+    //
+    // `androidApp`, not `composeApp`: since AGP 9 the application half lives in its own module,
+    // and `bundleRelease` is a task only that module has. Build it with the version stamped from
+    // git, never by hand:
+    //
+    //     ./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"
+    //
+    // See VERSIONING.md — Play refuses an upload whose versionCode does not strictly exceed the
+    // last one on the track, and the commit count is what guarantees that.
+    aab: './androidApp/build/outputs/bundle/release',
+
     // Stays a closed track. `production` is a refusal in vydanne, not a flag, and that is the
     // right shape: shipping to the public is a person pressing a button. Every store-mutating
     // command is a dry run until `--apply`, so a mistake here costs a diff and not a release.
@@ -207,53 +248,27 @@ export default {
   },
 
   /**
-   * WHAT IS STILL UNANSWERED, and why each is a person's call rather than a default.
+   * WHAT USED TO BE UNANSWERED HERE, and how each was answered. Both blocked submission; neither
+   * does now, and both were closed by changing the app rather than by choosing a kinder answer.
    *
-   * Three of the four blocks this note used to list are filled in above — `privacy`,
-   * `accessibility` and `export` — each against evidence named at the block. Two remain, and one
-   * of them stops the release.
+   * **1. `contentRights`.** The seat portraits were derivative of somebody else's characters. They
+   * are original and generated now (`brand/avatars/_shared.md`), so the field is `false` and true.
+   * The media pipeline is unblocked with it: `zdymak` was barred from running at all, because it
+   * would have baked the old art into every screenshot and into the App Preview.
    *
-   * **1. `contentRights`, and the art behind it. THIS BLOCKS SUBMISSION.**
+   * **2. `ageRating`, and the user-generated content behind it.** Online play used to take a typed
+   * nickname, and a public room posted it to `/rooms` where strangers read it. That is UGC, it
+   * obliges an app to ship filtering, reporting and blocking under Guideline 1.2, and it takes the
+   * rating off 4+.
    *
-   * The four seat portraits are ninja turtles called Leonardo, Raphael, Michelangelo and
-   * Donatello, nicknamed Leo, Raph, Mikey and Don. The names are not only in filenames: they are
-   * `BOT_NAMES` in `shared/room`, the seats `initializeGame` deals, the mapping in
-   * `SeatPlate.portraitFor`, and the string `beat_seats_title` — "Raph, Mikey and Don" — which the
-   * tutorial says to the player. Nickelodeon/Paramount owns that cast. App Store Review 5.2 and
-   * Play's IP policy both refuse it, screenshots of the table would publish it, and the liability
-   * lands on the developer rather than on the store.
+   * Three ways out were put to the product owner: build the moderation, hide the public list, or
+   * stop taking typed text at all. **The third was chosen**, and it is the only one that removes
+   * the category instead of managing it — hiding the public list would have shrunk the audience
+   * for a typed name without changing what it is. Names are minted from a shared vocabulary now,
+   * and the room refuses anything else, so the claim holds for the service rather than for the
+   * build.
    *
-   * Nothing in this file can answer around it. What has to change is narrower than "all of it",
-   * though, and it is worth being exact about which half:
-   *
-   *   THE ART IS THE PROBLEM. Copyright protects the character, not one drawing of it, so a
-   *   freshly generated picture of a ninja turtle called Michelangelo is a derivative work of the
-   *   character however it was made. Four PNGs.
-   *
-   *   THE SHORT NAMES ARE NOT, ON THEIR OWN. Leo, Raph, Mikey and Don are ordinary diminutives
-   *   and none is protectable by itself. What points at the property is the COMBINATION — those
-   *   four names on four turtles. Break the species and the names stop pointing anywhere, so the
-   *   short forms can stay in `BOT_NAMES`, in `SeatPlate` and in `beat_seats_title`.
-   *
-   *   THE FULL NAMES SHOULD GO with the turtles. Four Renaissance painters naming four cartoon
-   *   opponents is still the pointer even after the shells come off; `InitializeGame` should seat
-   *   the short forms as the real names.
-   *
-   * Until the portraits are replaced the media pipeline should not run at all: `zdymak` would bake
-   * them into every screenshot and into the App Preview, and the one screenshot on
-   * kupalinka.app/games/vinto is deliberately the home screen for the same reason.
-   *
-   * **2. `ageRating`.** `rating: '4+'` above is the intent, and the game itself supports it: no
-   * gambling, no violence, no chat. What is NOT settled is Apple's user-generated-content
-   * question. Online play takes a free-text nickname, `cleanNickname` filters CHARACTERS and
-   * length (1-16, letters/digits/space/`-_.'`) and nothing else, and a public room posts that
-   * nickname to `/rooms` where strangers read it. There is no word filter, no report path and no
-   * block. Guideline 1.2 asks for all three of an app with UGC. Two honest ways out, and both are
-   * decisions rather than code someone can add quietly:
-   *
-   *   - keep public rooms, and add filtering + a report route + a block; or
-   *   - ship 1.0 with code-only rooms, which removes the strangers and the surface with them.
-   *
-   * Answer that before `age-rating --apply`, because the questionnaire asks it directly.
+   * What is left is ordinary and named by `preflight`: the review contact (PII, so it lives in the
+   * gitignored `fastlane/metadata/review_information/`) and the screenshots.
    */
 };

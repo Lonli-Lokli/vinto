@@ -100,6 +100,27 @@ allprojects {
 
     tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         jvmTarget = "17"
+
+        /**
+         * `./gradlew detekt -PdetektFix` — let ktlint make the change instead of reporting it.
+         *
+         * `detekt-formatting` wraps ktlint, and ktlint knows how to *fix* most of what it finds:
+         * import order, wrapping, indentation, trailing commas, the spacing rules. Without this
+         * flag every one of those is a build failure that a person then applies by hand, from a
+         * message that says what is wrong and not where to put it — which is a slow way to be
+         * told an import belongs two lines up.
+         *
+         * **Off by default, on purpose.** A check that silently edits the tree is no longer a
+         * check: CI would rewrite files and pass, a pre-commit hook would change what is about to
+         * be committed after it was read, and a formatting rule nobody agreed to would land in
+         * somebody else's diff. So the plain `detekt` still fails, exactly as it did, and the
+         * fixing is a thing a person asks for by name.
+         *
+         * It only reaches rules that CAN be corrected — the ktlint-backed ones. detekt's own
+         * findings (a long method, an unnecessary pair of brackets) are still reported and still
+         * fail, because those are judgements rather than layout.
+         */
+        autoCorrect = providers.gradleProperty("detektFix").isPresent
         // detekt 2 dropped the `xml`, `txt` and `md` report types; what is left is html,
         // checkstyle and sarif. Only the HTML one is wanted — it is the artefact a person
         // opens after a failure — and the other two are off so a failing run does not also
@@ -174,6 +195,20 @@ allprojects {
 
         systemProperty("vinto.fixtures", rootProject.layout.projectDirectory.dir("fixtures").asFile.absolutePath)
         systemProperty("java.awt.headless", "true")
+
+        /**
+         * `./gradlew :composeApp:jvmTest --tests '*StoreShotsTest*' -PstoreShots --rerun`
+         *
+         * Passed through explicitly because a test runs in its OWN JVM: `-Dvinto.storeShots=true`
+         * on the command line sets the property on the *Gradle* daemon, where nothing reads it,
+         * and `StoreShotsTest` then quietly does nothing and reports success. That is a
+         * particularly annoying way to lose ten minutes, since the build is green either way.
+         *
+         * A Gradle property rather than an environment variable so it composes with the rest of
+         * the flags, and read as presence rather than value so `-PstoreShots=false` cannot mean
+         * two things.
+         */
+        systemProperty("vinto.storeShots", providers.gradleProperty("storeShots").isPresent.toString())
         testLogging {
             events("failed")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

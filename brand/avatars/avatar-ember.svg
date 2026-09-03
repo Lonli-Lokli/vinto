@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- EMBER — orange, a flame. The deck's crossing family (a card moving between two players). -->
+  <!-- The disc, the deck's ink ring, and the court cards' gold hairline just inside it.
+       Circles are arc paths because a vector drawable has no <circle> element. -->
+  <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#C25E10" stroke="#14181B" stroke-width="20"/>
+  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
+  <!-- Pointed at the top, a true semicircle at the bottom: the chord is exactly 2r, so the arc
+       flags cannot be got wrong. -->
+  <path d="M540 254 C566 372 648 452 648 566 A136 136 0 0 1 376 566 C376 496 430 470 452 410 C468 366 462 316 428 274 C498 288 536 340 540 420 C560 372 556 310 540 254 Z" fill="#F7F5EF"/>
+</svg>

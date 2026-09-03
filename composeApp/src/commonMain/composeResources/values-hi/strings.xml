@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">पत्ते फेंटे जा रहे हैं…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">कम पकड़ें। ज़्यादा जानें।</string>
+    <string name="home_solo_title">एकल खिलाड़ी · तीन बॉट · %1$s</string>
+    <string name="home_continue">जारी रखें</string>
+    <string name="home_new_game">नया खेल</string>
+    <string name="home_play">खेलें</string>
+    <string name="home_online">ऑनलाइन खेलें</string>
+    <string name="home_teach">कैसे खेलें</string>
+    <string name="home_settings">सेटिंग्स</string>
+    <string name="home_version">v%1$s</string>
+    <string name="home_unofficial">ताश के खेल VINTO के लिए एक अनौपचारिक ऐप। मूल खेल vinto.game पर है</string>
+    <string name="home_unofficial_action">vinto.game खोलें, ताश के खेल का आधिकारिक घर</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">ऑनलाइन खेलें</string>
+    <string name="online_nickname">मेज़ पर आपका नाम</string>
+    <string name="online_nickname_detail">बाकी सीटें यही देखती हैं। अलग नाम के लिए टैप करें। यह खाता नहीं है — कोई खाते नहीं हैं।</string>
+    <string name="online_code">रूम कोड</string>
+    <string name="online_code_detail">रूम खोलने वाले से मिले छह अक्षर।</string>
+    <string name="online_join">रूम में शामिल हों</string>
+    <string name="online_create">नया रूम खोलें</string>
+    <string name="online_offline">अभी नेटवर्क नहीं है। ऑनलाइन खेलने के लिए इसकी ज़रूरत है; एकल खिलाड़ी और पाठ हमेशा की तरह काम करते हैं।</string>
+    <string name="trouble_offline">रूम सेवा से संपर्क नहीं हो पा रहा। नेटवर्क जांचें और फिर कोशिश करें।</string>
+    <string name="trouble_no_such_room">इस कोड वाला कोई रूम नहीं है। छह अक्षर जांचें और फिर कोशिश करें।</string>
+    <string name="trouble_closed">ऑनलाइन खेल अभी शुरू नहीं हुआ है। एकल खिलाड़ी और पाठ हमेशा की तरह काम करते हैं।</string>
+    <string name="trouble_busy">वह मेज़ भरी हुई है। कोई और आज़माएं, या अपनी खुद बनाएं।</string>
+    <string name="trouble_refused">रूम सेवा ने इसे स्वीकार नहीं किया।</string>
+    <string name="trouble_broken">रूम सेवा में गड़बड़ी है। थोड़ी देर में फिर कोशिश करें।</string>
+    <string name="online_creating">रूम खोला जा रहा है…</string>
+    <string name="online_visibility">रूम किसे दिखेगा</string>
+    <string name="online_visibility_private">सिर्फ़ कोड से</string>
+    <string name="online_visibility_public">सार्वजनिक रूप से सूचीबद्ध</string>
+    <string name="online_visibility_detail">सूचीबद्ध रूम ब्राउज़ करने वाले किसी को भी दिखता है। निजी रूम सिर्फ़ कोड से पहुंचा जा सकता है।</string>
+    <string name="online_browse">सार्वजनिक रूम देखें</string>
+    <string name="online_open_detail">चार सीटें, साझा करने के लिए एक कोड, और जो न आए उसके लिए बॉट।</string>
+    <string name="online_join_detail">छह अक्षर, रूम खोलने वाले से।</string>
+    <string name="online_browse_detail">वे रूम जिनके मेज़बानों ने सूचीबद्ध होना चुना। कोई भी बैठ सकता है।</string>
+    <string name="online_open_title">रूम खोलें</string>
+    <string name="online_join_title">कोड से शामिल हों</string>
+    <string name="online_open_screen">रूम खोलें</string>
+    <string name="online_join_screen">कोड से शामिल हों</string>
+    <string name="online_back">वापस</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">सार्वजनिक रूम</string>
+    <string name="discover_looking">खुली मेज़ें खोजी जा रही हैं…</string>
+    <string name="discover_refresh">ताज़ा करें</string>
+    <string name="discover_quiet">अभी कोई सार्वजनिक रूम नहीं है। एक खोलें और यह यहां सूचीबद्ध हो जाएगा।</string>
+    <string name="discover_failed">रूम सेवा से संपर्क नहीं हो सका: %1$s</string>
+    <string name="discover_retry">फिर कोशिश करें</string>
+    <string name="discover_room_host">मेज़ पर %1$s</string>
+    <string name="discover_room_unnamed">खुली मेज़</string>
+    <string name="discover_seats">4 में से %1$d सीटें भरी</string>
+    <string name="discover_people">%1$d खेल रहे हैं</string>
+    <string name="discover_dealing">%1$d में पत्ते बंटेंगे</string>
+    <string name="discover_full">भरा हुआ</string>
+    <string name="discover_join">शामिल हों</string>
+    <string name="discover_room_summary">रूम %1$s, 4 में से %2$d सीटें भरी</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">किसी को आमंत्रित करें</string>
+    <string name="invite_subject">मेरे Vinto खेल में शामिल हों</string>
+    <string name="invite_body">मेरे Vinto खेल में शामिल हों: %1$s\n\nया ऐप खोलें और रूम कोड %2$s डालें</string>
+    <string name="invite_share">कोड साझा करें</string>
+    <string name="invite_copy">कोड कॉपी करें</string>
+    <string name="invite_copied">कॉपी हो गया</string>
+    <string name="invite_read_it_out">या इसे बोलकर बताएं: छह अक्षर, जिनमें O या I नहीं है।</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">रूम %1$s</string>
+    <string name="lobby_seat_open">खाली सीट</string>
+    <string name="lobby_seat_you">%1$s — आप</string>
+    <string name="lobby_add_bot">बॉट जोड़ें</string>
+    <string name="lobby_remove_bot">सीट %1$d का बॉट हटाएं</string>
+    <string name="lobby_leave">रूम छोड़ें</string>
+    <string name="lobby_connecting">रूम से जुड़ा जा रहा है…</string>
+    <string name="lobby_needs_human">खेल के लिए दो लोग चाहिए। कोड साझा करें — बाकी मेज़ बॉट भर सकते हैं।</string>
+    <string name="lobby_fill_seats">हर सीट खेलती है। खाली सीटें लोगों या बॉट से भरें, और पत्ते बंटने की उलटी गिनती खुद शुरू हो जाती है।</string>
+    <string name="lobby_counting_down">सब तैयार — %1$d में पत्ते बंटेंगे…</string>
+    <string name="lobby_offered_bots">कोई और नहीं आया, तो बॉट ने खाली सीटें ले ली हैं — %1$d में पत्ते बंटेंगे…। इंतज़ार जारी रखने के लिए एक हटाएं।</string>
+    <string name="lobby_over">रूम खत्म हो गया है।</string>
+    <string name="lobby_unreachable">उस रूम से संपर्क नहीं हो सका। कोड जांचें, या अपना कनेक्शन।</string>
+    <string name="lobby_retry">फिर कोशिश करें</string>
+    <string name="lobby_seat_working">यह सीट बदली जा रही है…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">जुड़ा हुआ</string>
+    <string name="net_connecting">जोड़ा जा रहा है…</string>
+    <string name="net_reconnecting">फिर से जोड़ा जा रहा है…</string>
+    <string name="net_closed">जुड़ाव टूट गया</string>
+    <string name="table_sending">आपकी चाल भेजी जा रही है…</string>
+    <string name="table_next_round_waiting">बाकियों के सहमत होने का इंतज़ार…</string>
+    <string name="online_session_over">सत्र समाप्त हो गया: %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">सेटिंग्स</string>
+
+    <string name="settings_group_game">खेल</string>
+    <string name="settings_group_feel">रूप और अनुभव</string>
+    <string name="settings_language">भाषा</string>
+    <string name="settings_language_detail">अभी अनुवाद नहीं हुआ? खेल अंग्रेज़ी में वापस चला जाता है, और किसी पत्ते के शब्द कभी नहीं बदलते।</string>
+    <string name="settings_language_device">डिवाइस के अनुसार</string>
+    <string name="settings_language_current">भाषा: %1$s</string>
+    <string name="settings_language_chosen">%1$s, चुनी गई</string>
+    <string name="settings_group_privacy">इस डिवाइस से क्या बाहर जाता है</string>
+    <string name="settings_group_about">बारे में</string>
+
+    <string name="settings_privacy">निजता</string>
+    <string name="settings_privacy_detail">क्या गिना जाता है, क्या नहीं, और इसे कैसे बंद करें।</string>
+    <string name="settings_terms">इस्तेमाल की शर्तें</string>
+    <string name="settings_terms_detail">आप क्या उम्मीद कर सकते हैं और आपसे क्या अपेक्षित है, इसका संक्षिप्त रूप।</string>
+    <string name="settings_contact">संपर्क करें</string>
+    <string name="settings_contact_detail">कोई गड़बड़ी, कोई विचार, या कोई खेल जो बिगड़ गया।</string>
+    <string name="settings_original">मूल खेल</string>
+    <string name="settings_original_detail">VINTO किसी और का ताश का खेल है, और यह उसके लिए एक अनौपचारिक ऐप है। खेल, उसके नियम और उसे बनाने वाले लोग vinto.game पर हैं।</string>
+    <string name="settings_studio">इस ऐप के बारे में</string>
+    <string name="settings_studio_detail">यह ऐप किसने बनाया, और क्या और बना है, और यह कैसे तैयार हुआ है।</string>
+    <string name="settings_rate">इस खेल को रेट करें</string>
+    <string name="settings_rate_detail">जहां से आपने इसे इंस्टॉल किया, वहां एक समीक्षा छोड़ें। यही एक चीज़ है जो एक छोटे खेल को खोजे जाने में मदद करती है।</string>
+    <string name="settings_open">खोलें</string>
+    <string name="settings_link_failed">इस डिवाइस पर कुछ भी इसे नहीं खोल सका। पता है %1$s</string>
+
+    <string name="settings_share">किसी को बताएं</string>
+    <string name="settings_share_detail">खेल किसी दोस्त को भेजें। चार सीटें, और तीन बॉट हो सकती हैं।</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — कम पकड़ने और ज़्यादा जानने का ताश का खेल। मुफ़्त, ब्राउज़र में, बिना साइन-अप के: %1$s</string>
+    <string name="settings_back">वापस</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">बॉट</string>
+    <string name="settings_bots_detail">तीनों अपनी चाल के बारे में कितना सोचते हैं।</string>
+    <string name="difficulty_easy">आसान</string>
+    <string name="difficulty_moderate">मध्यम</string>
+    <string name="difficulty_hard">कठिन</string>
+
+    <string name="settings_pace">गति</string>
+    <string name="settings_pace_detail">मेज़ पर जो हुआ वह कितनी जल्दी दिखाया जाता है। तीन बॉट एक टैप और अगले टैप के बीच अपनी बारी ले लेते हैं, और यह तय करता है कि आपको उन्हें देखने के लिए कितना समय मिलता है।</string>
+    <string name="pace_calm">शांत</string>
+    <string name="pace_steady">स्थिर</string>
+    <string name="pace_brisk">तेज़</string>
+
+    <string name="settings_theme">थीम</string>
+    <string name="settings_theme_detail">फेल्ट दोनों में हरा ही है। यह बाकी सब कुछ है।</string>
+    <string name="theme_system">सिस्टम</string>
+    <string name="theme_light">हल्की</string>
+    <string name="theme_dark">गहरी</string>
+
+    <string name="settings_motion">गति-प्रभाव</string>
+    <string name="settings_motion_detail">पत्ते उड़ें, या बस वहीं दिख जाएं जहां वे उतरते हैं। घटाया हुआ हर घेरा, फ़ैसला और ठहराव बनाए रखता है — खेल फिर भी बताया जाता है, बस हिलता नहीं। सिस्टम आपके डिवाइस की सुगमता सेटिंग का पालन करता है।</string>
+    <string name="motion_system">सिस्टम</string>
+    <string name="motion_full">पूरी</string>
+    <string name="motion_reduced">घटाई गई</string>
+
+    <string name="settings_sound">आवाज़</string>
+    <string name="settings_sound_detail">पत्ता बंटना, पत्ता उतरना, दंड, दौर का खत्म होना — और कुछ नहीं।</string>
+    <string name="settings_haptics">स्पर्श-प्रतिक्रिया</string>
+    <string name="settings_haptics_detail">जब कोई पत्ता छुआ जाए, कोई चाल चले, या कोई नियम लागू हो, तो अंगूठे के नीचे हल्का सा झटका।</string>
+    <string name="settings_analytics">गुमनाम गिनती</string>
+    <string name="settings_analytics_detail">कितने दौर खेले जाते हैं, और उनमें कितना समय लगता है। कभी आपका नाम, आपके रूम कोड या कुछ भी जो आप तक पहुंचा सके नहीं — जो हम भेजते हैं उसमें उनके लिए कोई जगह ही नहीं है। इसे बंद करने पर कुछ भी नहीं भेजा जाता।</string>
+    <string name="settings_on">चालू</string>
+    <string name="settings_off">बंद</string>
+
+    <string name="settings_saved_game">सहेजा गया खेल</string>
+    <string name="settings_saved_game_detail">एक दौर अभी चल रहा है। इसे भुलाना वापस नहीं किया जा सकता, और सत्र का चल रहा स्कोर भी इसके साथ चला जाएगा।</string>
+    <string name="settings_forget">इसे भुला दें</string>
+    <string name="settings_record">आपका रिकॉर्ड</string>
+    <string name="settings_record_detail">कितने दौर खेले, कितने जीते, आपका सबसे अच्छा हाथ और आपकी लगातार जीत। सिर्फ़ इस डिवाइस पर रखा जाता है — कहीं भेजा नहीं जाता।</string>
+    <string name="settings_forget_record">इसे मिटाएं</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">R%1$d / T%2$d</string>
+    <string name="table_draw">उठाएं</string>
+    <string name="table_discard">छोड़ें</string>
+    <string name="table_toss_in">टॉस-इन</string>
+    <string name="table_toss_in_timed">टॉस-इन · %1$ds</string>
+    <string name="toss_clock_moves_on">मेज़ %1$d सेकंड में आगे बढ़ेगी</string>
+    <string name="toss_more_time">और समय</string>
+    <string name="table_toss_in_summary">टॉस-इन विंडो, %1$s से मेल</string>
+    <string name="table_tossed">फेंके गए (%1$d)</string>
+    <string name="card_thrown_by">%1$s ने %2$s फेंका</string>
+    <string name="table_you">आप</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">आगे</string>
+    <string name="seat_pointed_turn">%1$s खेल रहे हैं</string>
+    <string name="seat_is_a_bot">एक बॉट</string>
+    <string name="seat_pointed_vinto">%1$s ने Vinto बोला</string>
+    <string name="seat_pointed_penalty">%1$s डेक से पत्ता ले रहे हैं</string>
+    <string name="seat_pointed_coalition">%1$s गठबंधन का नेतृत्व कर रहे हैं</string>
+    <string name="table_final_round">अंतिम दौर</string>
+    <string name="table_final_caller">बाकी सब मिलकर आपके खिलाफ़ एक हाथ खेलते हैं।</string>
+    <string name="table_final_leader">आप %1$s के खिलाफ़ गठबंधन का हाथ खेलते हैं।</string>
+    <string name="table_final_ally">%1$s, %2$s के खिलाफ़ गठबंधन का हाथ खेलते हैं।</string>
+    <string name="table_final_turns_left">खुलासे तक %1$d बारी</string>
+    <string name="table_final_last_turn">आखिरी बारी</string>
+    <string name="table_final_choosing">उन तीनों के बीच एक हाथ, %1$s के खिलाफ़।</string>
+    <string name="table_final_side_coalition">साथ में</string>
+    <string name="table_final_side_caller">पुकारा</string>
+    <string name="table_final_versus">बनाम</string>
+    <string name="table_final_leads">%1$s बाकियों से आगे हैं</string>
+    <string name="table_see_score">स्कोर देखें</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">समस्या बताएं</string>
+    <string name="header_settings">सेटिंग्स</string>
+    <string name="header_deck_left">डेक में %1$d पत्ते बचे हैं</string>
+    <string name="header_deck_badge">डेक में %1$d — इसका मतलब क्या है</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">डेक</string>
+    <string name="deck_body">उठाने के लिए %1$d पत्ते बचे हैं।\n\nजब यह खत्म हो जाता है, तो छोड़े गए पत्तों का ढेर वापस इसमें फेंटा जाता है और उस ढेर को देखकर किसी ने भी जो सीखा था वह बेकार हो जाता है — जिसमें आपने जो सीखा वह भी शामिल है। जब डेक लगभग खत्म हो, तो वह Vinto बोलने का सही समय है।</string>
+    <string name="deck_dismiss">समझ गया</string>
+
+    <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
+    <string name="card_described">%1$s, कीमत %2$d</string>
+    <string name="card_face_down">एक उल्टा पत्ता</string>
+    <string name="card_position">%1$s, पत्ता %2$d</string>
+    <string name="card_the_deck">डेक</string>
+    <string name="card_discarded">%1$s छोड़ा गया</string>
+    <string name="card_in_play">खेल में: %1$s</string>
+    <string name="rail_card_action">%1$s, कीमत %2$d: %3$s</string>
+    <string name="rail_card_plain">%1$s, कीमत %2$d</string>
+    <string name="rail_aiming_at">%1$s पर निशाना</string>
+    <string name="rail_aim_empty">अभी चुना जाने वाला पत्ता</string>
+    <string name="rail_aim_first">पहला</string>
+    <string name="rail_aim_second">दूसरा</string>
+    <string name="card_discarded_live">%1$s छोड़ा गया, कार्रवाई अनुपयोग</string>
+    <string name="card_in_hand">आपके हाथ में मौजूद पत्ता</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">दौर %1$d</string>
+    <string name="score_caller_won">Vinto का दावा सही निकला</string>
+    <string name="score_level">बराबरी — दावा सही निकला</string>
+    <string name="score_coalition_won">बाकियों ने दावे को मात दी</string>
+    <string name="score_deck_out">किसी ने नहीं पुकारा</string>
+    <string name="score_versus">Vinto %1$d बनाम उनका सबसे अच्छा %2$d</string>
+    <string name="score_versus_none">हर हाथ गिना गया, कुछ नहीं चुकाया गया</string>
+    <string name="score_role_caller">Vinto पुकारा</string>
+    <string name="score_role_best">बाकियों में सबसे अच्छा</string>
+    <string name="score_column_hand">हाथ</string>
+    <string name="score_column_round">दौर</string>
+    <string name="score_column_game">खेल</string>
+    <string name="score_you_called">आपने Vinto पुकारा, इसलिए आपका हाथ बाकियों में सबसे अच्छे के मुकाबले रखा गया।</string>
+    <string name="score_they_called">%1$s ने Vinto पुकारा, इसलिए उनका हाथ आपमें सबसे अच्छे के मुकाबले रखा गया।</string>
+    <string name="score_deck_ended">किसी ने Vinto नहीं पुकारा — डेक खत्म हो गया, इसलिए दौर समाप्त हुआ और हर हाथ गिना गया।</string>
+    <string name="score_next_round">अगला दौर बांटें</string>
+    <string name="score_stop">यहीं रुकें</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">समस्या बताएं</string>
+    <string name="report_body">मेज़ ने कुछ ऐसा किया जो नहीं करना चाहिए था? खेल को उसके साथ भेजें।\n\nजो भेजा जाता है वह है जिस बंटवारे से यह शुरू हुआ, उसके बाद की हर चाल, और हर एक के बाद एक चेकसम — यही काफ़ी है यह बिल्कुल यही खेल फिर से चलाने के लिए, यहां या वेब ऐप में, और वही गड़बड़ी होते देखने के लिए। कोई खाता नहीं, डिवाइस की कोई जानकारी नहीं, आपके बारे में कुछ नहीं।</string>
+    <string name="report_send">भेजें…</string>
+    <string name="report_copy">इसके बजाय कॉपी करें</string>
+    <string name="report_copied">क्लिपबोर्ड पर कॉपी हो गया</string>
+    <string name="report_dismiss">अभी नहीं</string>
+    <string name="report_subject">Vinto — समस्या रिपोर्ट</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="beat_only_look_title">आपको मिलने वाली एकमात्र झलक</string>
+    <string name="beat_only_look_body">दौर शुरू होने से पहले हर कोई अपने दो पत्ते एक बार देख सकता है। इसके बाद खेल याददाश्त का है: आपकी याददाश्त, बाकी तीन लोगों के खिलाफ़।</string>
+    <string name="beat_peeks_end_body">वे फिर से उल्टे हो जाते हैं — याद रखें वे कहां थे। बाकी सभी ने भी अपने दो पत्ते देख लिए हैं।</string>
+    <string name="beat_name_only_seen_title">सिर्फ़ वही बताएं जो आपने देखा है</string>
+    <string name="beat_name_only_seen_body">आपने यह पत्ता देखा है, तो आप जानते हैं यह क्या है। सही नाम बताएं तो उसकी कार्रवाई मुफ़्त में खेल सकते हैं। गलत बताएं तो एक दंड पत्ता लेना पड़ता है — इसलिए सिर्फ़ वही बताएं जिसके बारे में आप निश्चित हों।</string>
+    <string name="beat_toss_in_title">उस रैंक को रखने वाला कोई भी इसे फेंक सकता है</string>
+    <string name="beat_toss_in_body">जैसे ही कोई पत्ता ऊपर की ओर उतरता है, हर किसी को एक मौका मिलता है मेल खाता पत्ता निकालने का — और उसकी कार्रवाई इस्तेमाल करने का। गलत रैंक की कीमत एक दंड पत्ता है, और आप उस पत्ते के लिए बाहर हो जाते हैं — अगला पत्ता उतरने पर एक नया मौका मिलता है। जो पत्ता आपके खिलाफ़ गिना जाता है उसके लिए यह करने लायक है; King को रखने की कोई कीमत नहीं है।</string>
+    <string name="beat_watching_body">देखें वे क्या लेते हैं और क्या नीचे रखते हैं। यह, और नीचे की लाइन-दर-लाइन जानकारी, उनके हाथों के बारे में आप जो जान सकते हैं वह सब कुछ है।</string>
+    <string name="beat_watching_title">%1$s ने %2$s खेला — %3$s</string>
+    <string name="beat_do_not_guess_title">अंदाज़ा न लगाएं</string>
+    <string name="beat_do_not_guess_body">आपने यह पत्ता कभी नहीं देखा, तो इसका नाम बताना एक अंदाज़ा है, और गलत अंदाज़े की कीमत एक दंड पत्ता है। इसे बिना कुछ बोले नीचे रख दें।</string>
+    <string name="beat_coalition_leader_title">%1$s गठबंधन का हाथ खेल रहे हैं</string>
+    <string name="beat_coalition_leader_body">गठबंधन ने चुन लिया है किसका हाथ वह खेलेगा: आखिर में, सिर्फ़ %1$s का कुल आपके खिलाफ़ रखा जाएगा। बाकी दोनों अपनी आखिरी बारी उस हाथ को और कम करने में लगाते हैं — एक King उसमें से कोई बुरा पत्ता निकाल सकता है, एक Jack या Queen कोई बेहतर पत्ता उसमें ला सकते हैं — या यह पता लगाने में कि उसमें क्या है।</string>
+    <string name="beat_final_play_title">%1$s ने %2$s खेला</string>
+    <string name="beat_final_play_ace">एक Ace किसी एक खिलाड़ी को डेक से एक पत्ता उल्टा उठाने पर मजबूर करता है, और एक और पत्ता मतलब उनके खिलाफ़ एक और गिनती। यह अब आप पर नहीं आ सकता — पुकारने वाले के पत्ते पहुंच से बाहर हैं — इसलिए यह गठबंधन के ही किसी पर पड़ता है। देखें किसे उठाना पड़ता है।</string>
+    <string name="beat_final_play_king">एक King किसी पत्ते पर निशाना लगाता है और उसका नाम बताता है, और नाम सही होना चाहिए। सही: वह पत्ता जिस हाथ में था वहां से निकल जाता है और उसकी कार्रवाई खेली जाती है। गलत: सबको पता चल जाता है वह असल में क्या था, और नाम बताने वाला एक दंड पत्ता लेता है। खिलाड़ी वही पत्ता बताता है जो उसने देखा हो — अक्सर अपना ही, उससे छुटकारा पाने के लिए।</string>
+    <string name="beat_final_play_look">एक 9 या 10 किसी और के हाथ का एक पत्ता देखता है। अंतिम दौर में यही तरीका है जिससे गठबंधन जानता है वह क्या पकड़े है, क्योंकि आपका हाथ सीमा से बाहर है — और उनमें से एक जो सीखता है, वह सब इस्तेमाल कर सकते हैं।</string>
+    <string name="beat_final_play_other">देखें यह क्या करता है: यह एक ऐसा पत्ता है जो आपने अभी तक नहीं पकड़ा, और मेज़ के नीचे हाल की चालों का बक्सा बताता है क्या हुआ।</string>
+    <string name="beat_swap_them_title">उन्हें बदलें</string>
+    <string name="beat_swap_them_body">आपने दोनों देख लिए हैं। उनका पत्ता आपसे कम कीमत का है, तो बदल लें: आपका पत्ता उनके पास जाता है और उनका आपके पास आता है — और उसके बाद आप ठीक-ठीक जानते हैं आपके पास क्या है।</string>
+    <string name="beat_leave_them_title">उन्हें रहने दें</string>
+    <string name="beat_leave_them_body">आपने दोनों देख लिए हैं, और आपका पत्ता बेहतर है। बदलने से कुछ हासिल नहीं होगा, तो उन्हें वहीं वापस रख दें जहां थे।</string>
+    <string name="beat_call_now_title">पुकार दें</string>
+    <string name="beat_call_now_body">आप अपने हाथ का हर पत्ता जानते हैं, और मिलाकर वे शून्य या उससे कम हैं — इस मेज़ पर कोई भी आपसे नीचे खत्म नहीं कर सकता। Call Vinto दबाएं: बाकी सबको ठीक एक और बारी मिलती है, और फिर हर हाथ खुल जाता है।</string>
+    <string name="beat_you_called_title">आपने Vinto पुकारा</string>
+    <string name="beat_you_called_body">दौर आपकी शर्तों पर खत्म होता है। एम्बर, स्काई और ड्यून में से हर एक को एक और बारी मिलती है, और अब कोई आपके पत्तों को छू नहीं सकता। फिर हर हाथ पलटा जाता है और आपका हाथ उनमें सबसे अच्छे के मुकाबले रखा जाता है।</string>
+    <string name="beat_coalition_vs_you_title">अब वे एक साथ खेलते हैं</string>
+    <string name="beat_coalition_vs_you_body">जिन तीनों ने नहीं पुकारा वे गठबंधन हैं: एक-एक बारी, और सिर्फ़ उनका एक सबसे अच्छा हाथ आपसे मिलाया जाता है — तो यह एक टीम बनाम आपका एक हाथ है। असली मेज़ पर वे इस पर बात करते और जो जानते हैं वह साझा करते। देखें वे अपनी आखिरी बारी में क्या करते हैं: यहीं आप वे पत्ते देखते हैं जो आपने अभी तक नहीं पकड़े।</string>
+    <string name="beat_aim_it_title">निशाना लगाएं</string>
+    <string name="beat_aim_it_body">यह पत्ते की अपनी कार्रवाई है, और यह मुफ़्त है — इसे इस्तेमाल करने की कोई कीमत नहीं, और पत्ता बहरहाल ढेर पर चला जाता है।</string>
+    <string name="beat_remember_it_title">इसे याद रखें</string>
+    <string name="beat_remember_it_body">यही झलक ने आपको दिलाया। याद रखें यह कहां है और क्या है, फिर इसे वापस रख दें — अब से यह एक ऐसा पत्ता है जिसे आप जानते हैं, और खेल इन्हीं पर खेला जाता है।</string>
+    <string name="beat_give_up_worst_title">अपना सबसे बुरा पत्ता छोड़ें</string>
+    <string name="beat_give_up_worst_body">नया पत्ता उल्टा अंदर जाता है, और जिसकी जगह वह लेता है वह ढेर पर सीधा हो जाता है ताकि सब पढ़ सकें। वह पत्ता छोड़ें जिसे आप सबसे कम रखना चाहते हैं — जो सबसे ऊंचा है जिसके बारे में आप जानते हैं। अगर उसमें कोई कार्रवाई है और आप उसके बारे में निश्चित हैं, तो नीचे रखते वक़्त उसका नाम बताएं: उसकी कार्रवाई तब आपकी मुफ़्त में हो जाती है।</string>
+    <string name="beat_swap_blind_title">इसे किसी अनदेखे पत्ते से बदलें</string>
+    <string name="beat_swap_blind_body">आप जो भी जानते हैं वह इस पत्ते से बुरा नहीं है, तो इसे उनमें से किसी से बदलना जानकारी गंवाना होगा। इसके बजाय इसे किसी ऐसी जगह रखें जिसे आपने कभी नहीं देखा: एक अनदेखा पत्ता बुरा होने की संभावना बेहतर होने से ज़्यादा है, और किसी भी सूरत में आप बाद में अपना एक और पत्ता जान लेंगे।</string>
+    <string name="beat_nothing_worse_title">यहां कुछ भी बदलने लायक नहीं</string>
+    <string name="beat_nothing_worse_body">जो भी पत्ता आप जानते हैं वह इससे बेहतर है, और यह किसी अनदेखी जगह पर दांव लगाने के लिए बहुत ऊंचा है। वापस जाकर इसे फेंक दें — ढेर इसे ले सकता है।</string>
+    <string name="beat_keep_or_throw_title">इसे रखें या फेंकें</string>
+    <string name="beat_keep_or_throw_body">इसे अपने हाथ में रखें — उल्टा, अपने किसी पत्ते की जगह, जो सीधा ढेर पर चला जाता है — या इसे फेंक दें। आपके हाथ का हर पत्ता आपके खिलाफ़ गिना जाता है, तो कोई नीचा पत्ता रखने लायक है। अगर इसमें कोई कार्रवाई है, तो अभी इसे खेलना तीसरा विकल्प है, और इसे लेने की कोई कीमत नहीं है।</string>
+    <string name="beat_two_ways_to_start_title">बारी शुरू करने के दो तरीके</string>
+    <string name="beat_two_ways_to_start_body">डेक से, बिना देखे — या ढेर से, पर सिर्फ़ ऐसा कार्रवाई-पत्ता जिसे किसी ने इस्तेमाल न किया हो, और फिर आपको इसे रखने के बजाय तुरंत खेलना होगा।</string>
+    <string name="beat_every_turn_starts_title">हर बारी एक जैसे शुरू होती है</string>
+    <string name="beat_every_turn_starts_body">बारी एक पत्ता उठाने से शुरू होती है। डेक उल्टा है, तो जो मिलता है वह एक हैरानी है — यही जोखिम है जिसके लिए आपको चुकाया जा रहा है।</string>
+    <string name="beat_welcome_title">चार खिलाड़ी, हर एक को पांच पत्ते</string>
+    <string name="beat_welcome_body">हर पत्ता आपके खिलाफ़ गिना जाता है और सबसे नीचा हाथ जीतता है। आपके पांच पत्ते आपके सामने उल्टे पड़े हैं, और आप उन्हें देख नहीं सकते — खेल यही जानना है कि आपके पास क्या है। यह तीन असली प्रतिद्वंद्वियों के खिलाफ़ एक असली दौर है; कोच बस आपके साथ चलता है।</string>
+    <string name="beat_memory_title">अपने पत्ते जानें</string>
+    <string name="beat_memory_body">दौर शुरू होने से पहले आप अपने पांच में से दो देखेंगे, और बाकी तीन तभी जब कोई पत्ता आपको मौका दे। तो दौर इस पर खेला जाता है कि आपको क्या याद है: आपने कौन सी जगहें देखी हैं, और उनमें क्या है। इससे बदल जाता है कि कोई ऊंचा पत्ता कितना कीमती है। शुरुआत में, एक 9 या 10 जो आपको एक झलक दिलाता है, एक अच्छा सौदा है — आप जानते हैं यह क्या है, तो आप इसे नीचे रख सकते हैं और बाद में इसका नाम बता सकते हैं। जो पत्ता आपको दौर हरवाता है वह वही है जिसके बारे में आपने कभी पता नहीं लगाया।</string>
+    <string name="beat_cards_numbers_title">2 से 6 — साधारण पत्ते</string>
+    <string name="beat_cards_numbers_body">बिल्कुल उतनी ही कीमत जितना वे कहते हैं, और कुछ नहीं। किसी छोटे पत्ते को अच्छा पत्ता न समझ बैठें: जो हाथ दौर जीतता है उसका जोड़ आमतौर पर शून्य या उससे कम होता है — King, Joker, ज़्यादा से ज़्यादा एक Ace। कुछ देर के लिए 2 पर टिके रहना ठीक है; कोई भी साधारण पत्ता आखिर से पहले बदल देने लायक है।</string>
+    <string name="beat_cards_own_title">7 और 8 — अपना एक पत्ता देखें</string>
+    <string name="beat_cards_own_body">कीमत 7 और 8, जो आखिर में पकड़े रहने के लिए बहुत ज़्यादा है। इसके बदले आपको मिलती है अपने ही एक पत्ते की झलक — और यह खेल याददाश्त का है, तो जो पत्ता आपने देखा है वह उससे ज़्यादा कीमती है जो नहीं देखा। शुरुआत में एक को रखें अगर यह आपको एक झलक दिलाता है; एक बार जब सीखने को कुछ न बचे तो इसे बदलें और नाम बताएं।</string>
+    <string name="beat_cards_theirs_title">9 और 10 — उनका एक पत्ता देखें</string>
+    <string name="beat_cards_theirs_body">वही झलक, बस दूसरी तरफ़: किसी और के हाथ का एक पत्ता। याद रखें वह कहां था — दो बारी बाद यही बताता है कि पुकारें या नहीं, या Jack कहां लगाएं। कीमत 9 और 10, और फिर भी शुरुआत में लेने लायक: एक ऊंचा पत्ता जिसे आप जानते हैं आपके पास है, उसे नीचे रखा और नाम बताया जा सकता है, और जो नीचा पत्ता आप नहीं देख सकते वह बस एक अंदाज़ा है।</string>
+    <string name="beat_cards_jack_title">Jack — दो पत्ते बदलें, बिना देखे</string>
+    <string name="beat_cards_jack_body">कीमत 10। यह दो अलग-अलग खिलाड़ियों के दो पत्ते बदल देता है — कभी किसी के अपने दो नहीं — और कोई भी पहले दोनों को नहीं देखता। किसी ऐसे पत्ते को किसी और के हाथ में धकेलने के लिए अच्छा है जिसे आप जानते हैं बुरा है; किसी ऐसी चीज़ के साथ जिसे आप जानते हैं अच्छी है, यह एक जुआ है।</string>
+    <string name="beat_cards_queen_title">Queen — दो देखें, फिर तय करें</string>
+    <string name="beat_cards_queen_body">यह भी कीमत 10, और खेल का सबसे मज़बूत पत्ता: दो अलग-अलग खिलाड़ियों के कोई भी दो पत्ते देखें, और तभी तय करें कि उन्हें बदलना है या नहीं। Jack जुआ खेलता है। Queen जानती है।</string>
+    <string name="beat_cards_king_title">King — कीमत कुछ नहीं, और कुछ भी कर सकता है</string>
+    <string name="beat_cards_king_body">कीमत बिल्कुल शून्य, जो अकेले इसे रखने लायक बनाती है। इसकी कार्रवाई मेज़ पर किसी भी पत्ते पर निशाना लगाती है — आपका या किसी का भी — और उसका नाम बताती है। सही: वह पत्ता जिस हाथ में था वहां से निकल जाता है, और उसकी कार्रवाई आपकी हो जाती है। गलत: सबको पता चल जाता है वह असल में क्या था, और आप एक दंड पत्ता लेते हैं।</string>
+    <string name="beat_cards_king_name_title">आप जो नाम बताते हैं वही खेल पाते हैं</string>
+    <string name="beat_cards_king_name_body">तो असल में आप उन पत्तों में से एक कार्रवाई चुन रहे हैं जो आपने देखे हैं। 7 या 8 का नाम बताएं तो आपको अपना एक पत्ता देखने को मिलता है। Jack का नाम बताएं तो आपको उसकी बिना-देखे अदला-बदली मिलती है — और आप दोनों पत्ते चुनते हैं, यही तरीका है जिससे कोई देखा हुआ Joker आपके पास आता है और आपका सबसे बुरा पत्ता दूसरी तरफ़ जाता है। Queen का नाम बताएं तो बदलने से पहले आप दो पत्ते देखते हैं।</string>
+    <string name="beat_cards_king_whose_title">और किसका पत्ता आप नाम लेते हैं</string>
+    <string name="beat_cards_king_whose_body">जिसके पास भी वह हो, जिस पत्ते का आप नाम लेते हैं वह उसके हाथ से निकल जाता है। अपने 10 का नाम लेना आपके कुल से दस अंक हटा देता है; किसी विरोधी के Joker का नाम लेना उसका माइनस एक छीन लेता है और उसे एक बुरा पत्ता थमा देता है। एक King, दो काम — इनमें से कौन ज़्यादा मायने रखता है, यही पढ़ना है।</string>
+    <string name="beat_cards_odd_title">Ace और Joker</string>
+    <string name="beat_cards_odd_body">एक Ace की कीमत 1 है और जिसे आप चुनें उससे एक दंड पत्ता उठवाता है। एक Joker की कीमत माइनस एक है — डेक का सबसे अच्छा पत्ता, और जिसे कभी नहीं गंवाना चाहिए।</string>
+    <string name="beat_tour_title">डेक और ढेर</string>
+    <string name="beat_tour_body">पत्ते डेक से आते हैं। जो भी कोई फेंकता है वह उसके बगल में सीधा उतरता है, जहां पूरी मेज़ उसे पढ़ सकती है — आप भी।</string>
+    <string name="beat_seats_title">एम्बर, स्काई और ड्यून</string>
+    <string name="beat_seats_body">तीन बॉट, हर एक के पांच पत्ते जिन्हें वे आपसे बेहतर नहीं देख सकते। जो प्लेट हरी चमकती है वह जिसकी बारी है।</string>
+    <string name="beat_help_title">? हमेशा वहां है</string>
+    <string name="beat_help_body">यह बताता है कि आप किस पल में हैं और हर पत्ता क्या करता है। असली डिब्बे वाले खेल में इसी के लिए याद दिलाने वाले पत्ते आते हैं, हर खिलाड़ी के लिए एक — किसी से भी उम्मीद नहीं की जाती कि वह चौदह रैंक अपने दिमाग में रखे, यहां हो या किसी मेज़ पर।</string>
+    <string name="beat_coalition_title">बाकी सब एक साथ खेलते हैं</string>
+    <string name="beat_coalition_body">आप, और जिन दो ने नहीं पुकारा, गठबंधन हैं: एक-एक बारी, और सिर्फ़ आपका एक सबसे अच्छा हाथ पुकारने वाले से मिलाया जाता है — तो यह एक टीम बनाम एक हाथ है। असली मेज़ पर आप इस पर बात करते और जो जानते हैं साझा करते। कोई भी पुकारने वाले के पत्तों को छू नहीं सकता, और खेल आपको कोशिश भी नहीं करने देगा।</string>
+    <string name="beat_your_turn_to_call_title">आप भी इसे पुकार सकते हैं</string>
+    <string name="beat_your_turn_to_call_body">आपकी किसी भी बारी के अंत में, सुनहरा बटन वहां है: इसे दबाएं जब आपको लगे आपका हाथ मेज़ पर सबसे नीचा है। यह तब तक छुपा रहा जब तक आप सीख रहे थे क्योंकि यह सबके लिए दौर खत्म कर देता है — अब से यह दबाने के लिए आपका है, और इसे जल्दी दबाना ही ज़्यादातर लोग अपना पहला खेल हार जाने का तरीका है।</string>
+    <string name="beat_session_title">और यही एक दौर है</string>
+    <string name="beat_session_body">एक खेल कई दौर होते हैं, एक के बाद एक, अंक उनके बीच साथ चलते हैं, और पहले से तय समय पर खेला जाता है — आधा घंटा आम है। समय खत्म होने पर चल रहा दौर पूरा हो जाता है, और सबसे ज़्यादा अंक वाला पहले नंबर पर 5 खेल-अंक पाता है, दूसरा 3, तीसरा 2। एक दौर जो तीन से जीता गया वह उतना ही गिना जाता है चाहे आप उसे एक अंक से जीतें या बीस से।</string>
+    <string name="beat_scoring_title">हर हाथ खुल जाता है</string>
+    <string name="beat_scoring_body">पुकारने वाले का हाथ बाकी सबमें सबसे अच्छे हाथ से मिलाया जाता है। नीचा, और पुकारने वाला +3 लेता है जबकि बाकी सब 1-1 गंवाते हैं। बराबरी पुकारने वाले के पक्ष में गिनी जाती है: उसे +3, किसी का कुछ नहीं जाता। हारा हुआ, और पुकारने वाला 1 गंवाता है जबकि बाकी सब में से हर एक +3 लेता है।</string>
+    <string name="beat_vinto_body">यह इस बात का दांव है कि उनका हाथ मेज़ पर सबसे नीचा है। यह दौर खत्म कर देता है: बाकी सबको ठीक एक और बारी मिलती है, और फिर हर हाथ पलट दिया जाता है।</string>
+    <string name="beat_vinto_title">%1$s ने Vinto पुकारा</string>
+
+    <!-- The prefix on a toss-in window somebody else has already thrown into. -->
+    <string name="beat_toss_in_also">%1$s ने अभी एक फेंका। </string>
+    <string name="list_join_and"> और </string>
+    <string name="beat_vinto_somebody">कोई</string>
+    <string name="beat_strayed_body">आपकी मेज़, मेरी नहीं — यहां कोई चाल गलत नहीं होती। पाठ जहां आप ले जाएं वहीं से आगे बढ़ता है।</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">जो पत्ता सांस लेता है उसे अभी छुआ जा सकता है।</string>
+    <string name="gloss_toss">ढेरों के नीचे की चिप उस रैंक का नाम बताती है जिसके लिए विंडो खुली है।</string>
+    <string name="gloss_log">हर चाल इस बक्से में लिखी जाती है — जब पत्ते आपकी पढ़ने की रफ़्तार से तेज़ चलें तो इस पर एक नज़र डालें।</string>
+    <string name="gloss_badge">हरा अंक डेक में बचे पत्तों को गिनता है।</string>
+
+    <string name="teach_note">%1$s — कीमत %2$s। %3$s।</string>
+    <string name="teach_note_plain">%1$s — कीमत %2$s, और यह कुछ नहीं करता। अभी के लिए रखना ठीक है, और किसी के पुकारने से पहले इसे बदल देना बेहतर।</string>
+
+
+    <string name="teach_heading">खेल सीखना</string>
+    <string name="teach_finished_title">यही पूरा खेल है</string>
+    <string name="teach_finished_body">हर हाथ खुल जाता है और दौर का स्कोर बनता है। यहां आपने जो भी नियम देखा वह असली खेल में भी वैसे ही चलता है — इसका कोई अभ्यास संस्करण नहीं है।</string>
+    <string name="teach_watching">देखें वे क्या लेते हैं, और क्या वापस नीचे रखते हैं।</string>
+    <string name="teach_go_on">आगे बढ़ें</string>
+    <string name="teach_done">पूरा हुआ</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">अभी</string>
+    <string name="help_the_cards">पत्ते</string>
+    <string name="help_signals">मेज़ आपको क्या बता रही है</string>
+    <string name="help_group_numbers">अंक — जितना कहते हैं उतनी कीमत, और कुछ नहीं</string>
+    <string name="help_group_lookers">झलक दिखाने वाले — आपको याद रखने लायक पत्ता दिलाते हैं</string>
+    <string name="help_group_movers">हिलाने वाले — किसी पत्ते को कहीं और भेजते हैं</string>
+    <string name="help_group_odd">अनोखे पत्ते</string>
+    <string name="help_no_action">कोई कार्रवाई नहीं।</string>
+    <string name="help_card_worth">%1$s — कीमत %2$d</string>
+    <string name="help_closing">हाथ का हर पत्ता आपके खिलाफ़ गिना जाता है, तो सबसे कम जोड़ जीतता है। जब लगे आपका जोड़ सबसे कम है तब Vinto पुकारें — फिर बाकी सब मिलकर एक और बारी खेलते हैं, और सिर्फ़ उनका सबसे अच्छा हाथ आपसे मिलाया जाता है।</string>
+    <string name="stats_played">%1$d खेले</string>
+    <string name="stats_won">%1$d%% जीते</string>
+    <string name="stats_best">सबसे अच्छा %1$d</string>
+    <string name="stats_streak">लगातार %1$d</string>
+    <string name="stats_row">आपका रिकॉर्ड: %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <!-- The lesson's chapters, one progress dot each. -->
+    <string name="chapter_table">मेज़</string>
+    <string name="chapter_peek">आपकी दो झलकें</string>
+    <string name="chapter_draw">पत्ता उठाना</string>
+    <string name="chapter_keep">रखें या फेंकें</string>
+    <string name="chapter_declare">रैंक बताना</string>
+    <string name="chapter_actions">पत्ते क्या करते हैं</string>
+    <string name="chapter_toss">टॉस-इन</string>
+    <string name="chapter_vinto">Vinto पुकारना</string>
+    <string name="chapter_score">स्कोरिंग</string>
+    <string name="chapter_covered">%1$s — पूरा हुआ</string>
+    <string name="chapter_to_come">%1$s — अभी बाकी</string>
+    <string name="intro_part_covered">भाग %1$d, कुल %2$d में से — पढ़ा गया</string>
+    <string name="intro_part_to_come">भाग %1$d, कुल %2$d में से — अभी बाकी</string>
+
+    <!-- What the "?" explains. -->
+    <string name="explains_card_plain">%1$s। इसकी कीमत %2$d है। इसमें कोई कार्रवाई नहीं, तो यह सिर्फ़ आपके हाथ में या ढेर पर जा सकता है।</string>
+    <string name="explains_card_action">%1$s। इसकी कीमत %2$d है। %3$s। %4$s</string>
+    <string name="explains_setup">अपने दो पत्ते देखें और उन्हें याद रखें — दौर शुरू होते ही वे फिर से उल्टे हो जाते हैं। इसके बाद सब कुछ याददाश्त है।</string>
+    <string name="explains_scoring">हर हाथ खुला होता है। सबसे कम जोड़ दौर जीतता है; जिसने Vinto पुकारा उसे बाकी सबमें सबसे अच्छे हाथ के मुकाबले आंका जाता है।</string>
+    <string name="explains_toss_in">उसी रैंक का पत्ता रखने वाला कोई भी इसे फेंक सकता है, जिससे यह मुफ़्त में उनके हाथ से निकल जाता है। रैंक गलत हो तो एक दंड पत्ता लेना पड़ता है, और इस दौर में फिर से टॉस-इन नहीं किया जा सकता।</string>
+    <string name="explains_final_round">Vinto पुकारा जा चुका है। बाकी सब एक गठबंधन के तौर पर आखिरी बारी खेलते हैं, और सिर्फ़ उनका सबसे अच्छा हाथ पुकारने वाले के खिलाफ़ गिना जाता है।</string>
+    <string name="explains_turn">डेक से उठाएं, या छोड़े गए ढेर का ऊपरी पत्ता लें अगर वह ऐसा कार्रवाई-पत्ता है जिसे किसी ने नहीं खेला। जो आपका जोड़ घटाए उसे रखें; जब लगे आपका जोड़ सबसे कम है तब Vinto पुकारें।</string>
+
+    <string name="detail_card_does">%1$s, कीमत %2$d: %3$s</string>
+    <string name="detail_king_declared">King ने %1$s बताया: %2$s</string>
+    <string name="detail_tap_to_say">अपने किसी पत्ते पर टैप करें यह बताने के लिए कि आपको क्या लगता है यह क्या है।</string>
+    <string name="detail_table_talk">मेज़ की बात — गठबंधन आपकी बात मान लेता है, सही हो या गलत।</string>
+    <string name="detail_right_plays">सही होने पर इसकी कार्रवाई खेली जाती है; गलत होने पर एक पत्ता चुकाना पड़ता है।</string>
+    <string name="detail_wrong_costs">गलत होने पर एक दंड पत्ता चुकाना पड़ता है।</string>
+    <string name="detail_barred_card">आपने इस पत्ते पर गलत अंदाज़ा लगाया, तो आप इसके लिए बाहर हैं। अगला पत्ता उतरने पर एक नया मौका मिलेगा।</string>
+    <string name="detail_barred">आपने गलत अंदाज़ा लगाया, और अंतिम दौर में यह बाकी पूरे दौर के लिए है।</string>
+    <string name="detail_scored_against">%1$s ने Vinto पुकारा, तो दौर उनके हाथ के खिलाफ़ गिना गया।</string>
+    <string name="detail_deck_ran_out">डेक खत्म हो गया, तो दौर समाप्त हुआ और हर हाथ गिना गया।</string>
+
+    <!-- The line above the buttons: what the table is asking for. -->
+    <string name="ask_or"> या </string>
+    <string name="ask_look_at_two_of_yours">अपने दो पत्ते देखें</string>
+    <string name="ask_one_more_to_look_at">देखने के लिए एक और पत्ता</string>
+    <string name="ask_ready">जब आप तैयार हों</string>
+    <string name="ask_your_turn">आपकी बारी</string>
+    <string name="ask_you_drew">आपने %1$s उठाया</string>
+    <string name="ask_you_drew_unknown">आपने एक पत्ता उठाया</string>
+    <string name="ask_which_card_replaced">यह किस पत्ते की जगह लेगा?</string>
+    <string name="ask_name_what_you_put_down">जो पत्ता आप नीचे रख रहे हैं उसका नाम बताएं?</string>
+    <string name="ask_what_do_you_say">आप कहते हैं यह पत्ता क्या है?</string>
+    <string name="ask_say_and_play">बताएं यह क्या है, और उस पत्ते की कार्रवाई खेलें</string>
+    <string name="ask_look_at_one_of_yours">अपना एक पत्ता देखें</string>
+    <string name="ask_look_at_one_of_theirs">किसी और खिलाड़ी का एक पत्ता देखें</string>
+    <string name="ask_choose_any_card">कोई भी पत्ता चुनें</string>
+    <string name="ask_choose_two">दो अलग-अलग खिलाड़ियों के दो पत्ते चुनें</string>
+    <string name="ask_look_at_two">दो अलग-अलग खिलाड़ियों के दो पत्ते देखें</string>
+    <string name="ask_swap_them">इन्हें बदलें?</string>
+    <string name="ask_remember_it">इसे याद रखें</string>
+    <string name="ask_who_draws">कौन पत्ता उठाता है?</string>
+    <string name="ask_card_waiting">%1$s इंतज़ार में है</string>
+    <string name="ask_card_waiting_unknown">इंतज़ार</string>
+    <string name="ask_toss_in">%1$s नीचे गया — कोई मेल टॉस-इन करेंगे?</string>
+    <string name="ask_toss_in_barred">%1$s नीचे गया</string>
+    <string name="ask_waiting_for_others">बाकियों का इंतज़ार</string>
+    <string name="ask_watching">देख रहे हैं</string>
+    <string name="ask_somebody_playing">%1$s खेल रहे हैं</string>
+    <string name="ask_you_playing">आप खेल रहे हैं</string>
+    <string name="ask_who_plays_for_you">%1$s ने Vinto पुकारा। बाकियों की तरफ़ से कौन खेलेगा?</string>
+    <string name="ask_round_over">दौर खत्म</string>
+    <string name="ask_round_over_lowest">दौर खत्म — आप %1$d के साथ सबसे नीचे रहे</string>
+    <string name="ask_round_over_not_lowest">दौर खत्म — आप %1$d पर रहे, सबसे अच्छा %2$d था</string>
+
+    <!-- The buttons on the table. -->
+    <string name="choice_back">वापस</string>
+    <string name="choice_start_round">दौर शुरू करें</string>
+    <string name="choice_draw_card">पत्ता उठाएं</string>
+    <string name="choice_use_from_pile">%1$s इस्तेमाल करें</string>
+    <string name="choice_use_action">कार्रवाई इस्तेमाल करें</string>
+    <string name="choice_swap_cards">पत्ते बदलें</string>
+    <string name="choice_discard">छोड़ें</string>
+    <string name="choice_just_swap">बस बदलें</string>
+    <string name="choice_put_it_down">नीचे रखें</string>
+    <string name="choice_leave_them">उन्हें रहने दें</string>
+    <string name="choice_continue">जारी रखें</string>
+    <string name="choice_call_vinto">Vinto पुकारें</string>
+    <string name="choice_done">पूरा हुआ</string>
+
+    <!-- The move log. -->
+    <string name="log_you">आप</string>
+    <string name="log_drew_known">आपने %1$s उठाया</string>
+    <string name="log_drew_known_they">%1$s ने %2$s उठाया</string>
+    <string name="log_draw_you">आप एक पत्ता उठाते हैं</string>
+    <string name="log_draw_they">%1$s एक पत्ता उठाते हैं</string>
+    <string name="log_took">%1$s ने %2$s लिया</string>
+    <string name="log_took_unknown">%1$s ने ऊपर का पत्ता लिया</string>
+    <string name="log_swap_you">आप पत्ता %1$d बदलते हैं</string>
+    <string name="log_swap_they">%1$s पत्ता %2$d बदलते हैं</string>
+    <string name="log_swap_dropping_you">आप पत्ता %1$d बदलते हैं, %2$s छोड़ते हुए</string>
+    <string name="log_swap_dropping_they">%1$s पत्ता %2$d बदलते हैं, %3$s छोड़ते हुए</string>
+    <string name="log_throw_you">आप %1$s फेंक देते हैं</string>
+    <string name="log_throw_they">%1$s %2$s फेंक देते हैं</string>
+    <string name="log_throw_unknown_you">आप पत्ता फेंक देते हैं</string>
+    <string name="log_throw_unknown_they">%1$s पत्ता फेंक देते हैं</string>
+    <string name="log_play_you">आप %1$s खेलते हैं</string>
+    <string name="log_play_they">%1$s %2$s खेलते हैं</string>
+    <string name="log_play_unknown_you">आप पत्ता खेलते हैं</string>
+    <string name="log_play_unknown_they">%1$s पत्ता खेलते हैं</string>
+    <string name="log_tossed_in">%1$s ने %2$s टॉस-इन किया</string>
+    <string name="log_tossed_in_unknown">%1$s ने एक पत्ता टॉस-इन किया</string>
+    <string name="log_toss_in_missed">%1$s ने %2$s टॉस-इन किया — गलत, और इसकी कीमत एक दंड पत्ता रही</string>
+    <string name="log_toss_in_missed_unknown">%1$s ने गलत पत्ता टॉस-इन किया — एक दंड पत्ता</string>
+    <string name="log_called_vinto">%1$s ने Vinto पुकारा</string>
+    <string name="log_swapped_two">%1$s ने दो पत्ते बदले</string>
+    <string name="log_swapped_two_named">%1$s ने %2$s को %3$s से बदला</string>
+    <string name="log_left_alone">%1$s ने उन्हें रहने दिया</string>
+    <string name="log_declared">%1$s ने %2$s बताया</string>
+    <string name="log_made_draw_you">आपने %1$s को पत्ता उठवाया</string>
+    <string name="log_made_you_draw">%1$s ने आपको पत्ता उठवाया</string>
+    <string name="log_made_draw_they">%1$s ने %2$s को पत्ता उठवाया</string>
+    <string name="log_round_begins">दौर शुरू होता है</string>
+
+    <string name="help_counts_title">यह ऐप क्या गिनता है</string>
+    <string name="help_counts_body">सिर्फ़ गुमनाम गिनती: कितने दौर खेले जाते हैं, लोग कहां तक पहुंचते हैं, कोई मेज़ अटकी या नहीं, और एक रूम चलाने की क्या कीमत है। कभी आपका नाम, आपका रूम कोड, आपके हाथ में क्या है, या कुछ भी जो आप तक या आपके डिवाइस तक पहुंचाया जा सके नहीं — जो भेजा जाता है उसमें उनके लिए कोई जगह नहीं है। इसे सेटिंग्स में बंद किया जा सकता है, और जो ब्राउज़र ट्रैक न करने के लिए कहता है वह इसे आपके लिए खुद बंद कर देता है।</string>
+
+    <string name="signal_turn">सीट पर हरा घेरा</string>
+    <string name="signal_turn_meaning">किसकी बारी है। बारी आते ही यह चमकता है, क्योंकि तीन बॉट एक टैप और अगले टैप के बीच अपनी बारी ले सकते हैं।</string>
+    <string name="signal_vinto">सुनहरा घेरा</string>
+    <string name="signal_vinto_meaning">उस खिलाड़ी ने Vinto पुकारा है। बाकी दौर के लिए कोई उनके पत्तों को छू नहीं सकता।</string>
+    <string name="signal_penalty">लाल घेरा, और हाथ का हिचकना</string>
+    <string name="signal_penalty_meaning">अभी वहां एक दंड पत्ता उतरा है — गलत अंदाज़ा, या गलत टॉस-इन।</string>
+    <string name="signal_coalition">नीला घेरा</string>
+    <string name="signal_coalition_meaning">गठबंधन: Vinto पुकारने वाले को छोड़कर बाकी सब, उस एक हाथ के खिलाफ़ अपनी आखिरी बारी साथ में खेल रहे हैं।</string>
+    <string name="signal_live">छोड़े गए ढेर पर सुनहरा घेरा</string>
+    <string name="signal_live_meaning">उस पत्ते की कार्रवाई इस्तेमाल किए बिना ही इसे नीचे रखा गया, तो अगला खिलाड़ी उठाने की बजाय इसे ले और खेल सकता है। जिस पत्ते की कार्रवाई खेली जा चुकी है उस पर कोई घेरा नहीं होता।</string>
+    <string name="signal_tappable">जो पत्ता सांस लेता है</string>
+    <string name="signal_tappable_meaning">इसे अभी छुआ जा सकता है। अगर कुछ भी सांस नहीं ले रहा, तो मेज़ किसी और का इंतज़ार कर रही है।</string>
+    <string name="signal_reshuffle">पत्ते वापस डेक में समाते हुए</string>
+    <string name="signal_reshuffle_meaning">डेक खत्म हो गया, तो ढेर को वापस इसमें फेंटा गया। उस ढेर को देखकर किसी ने भी जो सीखा था वह अब पुराना पड़ चुका है।</string>
+    <string name="signal_peek">जो पत्ता बीच की ओर उठता है</string>
+    <string name="signal_peek_meaning">कोई इसे देख रहा है। सब देखते हैं *कौन सा* पत्ता देखा गया — सिर्फ़ जिस खिलाड़ी का हक है वही उसका मुंह देखता है।</string>
+
+
+    <!-- The cards, in words. -->
+    <string name="card_name_two">दो</string>
+    <string name="card_name_three">तीन</string>
+    <string name="card_name_four">चार</string>
+    <string name="card_name_five">पांच</string>
+    <string name="card_name_six">छह</string>
+    <string name="card_name_seven">सात</string>
+    <string name="card_name_eight">आठ</string>
+    <string name="card_name_nine">नौ</string>
+    <string name="card_name_ten">दस</string>
+    <string name="card_name_jack">गुलाम</string>
+    <string name="card_name_queen">बेगम</string>
+    <string name="card_name_king">बादशाह</string>
+    <string name="card_name_ace">इक्का</string>
+    <string name="card_name_joker">जोकर</string>
+
+    <string name="card_long_seven">अपना एक पत्ता देखें</string>
+    <string name="card_long_eight">अपना एक पत्ता देखें</string>
+    <string name="card_long_nine">किसी और खिलाड़ी का एक पत्ता देखें</string>
+    <string name="card_long_ten">किसी और खिलाड़ी का एक पत्ता देखें</string>
+    <string name="card_long_jack">दो अलग-अलग खिलाड़ियों के कोई भी दो उल्टे पत्ते बदलें</string>
+    <string name="card_long_queen">दो अलग-अलग खिलाड़ियों के कोई भी दो पत्ते देखें, फिर चाहें तो उन्हें बदलें</string>
+    <string name="card_long_king">किसी भी खिलाड़ी के पत्ते की दूसरी कार्रवाई बताएं (7-A)</string>
+    <string name="card_long_ace">किसी प्रतिद्वंद्वी को दंड पत्ता उठाने पर मजबूर करें</string>
+
+    <string name="card_help_two">मूल्य 2 वाला अंक पत्ता</string>
+    <string name="card_help_three">मूल्य 3 वाला अंक पत्ता</string>
+    <string name="card_help_four">मूल्य 4 वाला अंक पत्ता</string>
+    <string name="card_help_five">मूल्य 5 वाला अंक पत्ता</string>
+    <string name="card_help_six">मूल्य 6 वाला अंक पत्ता</string>
+    <string name="card_help_seven">अपने किसी पत्ते पर क्लिक करें उसे कुछ पल के लिए दिखाकर उसका मूल्य याद रखने के लिए। चाहें तो इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_eight">अपने किसी पत्ते पर क्लिक करें उसे कुछ पल के लिए दिखाकर उसका मूल्य याद रखने के लिए। चाहें तो इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_nine">किसी प्रतिद्वंद्वी के पत्ते पर क्लिक करें उसे कुछ पल के लिए दिखाकर उसका मूल्य देखने के लिए। चाहें तो इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_ten">किसी प्रतिद्वंद्वी के पत्ते पर क्लिक करें उसे कुछ पल के लिए दिखाकर उसका मूल्य देखने के लिए। चाहें तो इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_jack">अलग-अलग खिलाड़ियों के दो पत्ते चुनें उनकी जगह बदलने के लिए - आप अपने पत्ते या सिर्फ़ प्रतिद्वंद्वियों के पत्ते शामिल कर सकते हैं। एक ही खिलाड़ी के दो पत्ते नहीं चुने जा सकते। आप अपनी चुनाव दोबारा शुरू कर सकते हैं या इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_queen">1. अलग-अलग खिलाड़ियों के दो पत्ते देखें (आपके अपने या प्रतिद्वंद्वियों के हो सकते हैं, पर अलग-अलग खिलाड़ियों के होने चाहिए)\n2. दोनों पत्ते देखने के बाद, तय करें कि उन्हें बदलना है या नहीं</string>
+    <string name="card_help_king">चुनें कौन सी पत्ते की कार्रवाई करनी है: 7 (अपना देखें), 8 (अपना देखें), 9/10 (प्रतिद्वंद्वी का देखें), J (बदलें), Q (देखें और बदलें), A (उठवाएं)। आप बिना-कार्रवाई वाले पत्ते भी बता सकते हैं (2-6, K, जोकर)।</string>
+    <string name="card_help_ace">किसी प्रतिद्वंद्वी को चुनें उसे डेक से एक दंड पत्ता उठाने पर मजबूर करने के लिए। इससे उसके हाथ का आकार और पत्तों का जोड़ बढ़ जाता है। चाहें तो इस कार्रवाई को छोड़ सकते हैं।</string>
+    <string name="card_help_joker">मूल्य -1 वाला जोकर</string>
+</resources>

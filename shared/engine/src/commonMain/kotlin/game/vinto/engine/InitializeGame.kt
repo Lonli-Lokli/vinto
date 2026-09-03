@@ -95,6 +95,21 @@ fun createDeck(): List<Card> {
  * every player gets at setup, already spent. **This is the offline shape** (one human, three
  * bots) and online play needs seats assigned per joining client instead (D9, phase 9); it is
  * ported as-is so the deal matches TypeScript card for card.
+ *
+ * The name and the nickname are now the same word, where they used to be a full name and a
+ * short form ("Raphael"/"Raph"). Nothing displayed the long one — every screen shows the
+ * nickname — so it was a second name kept in step by hand for no reader, and it is gone with
+ * the cast it belonged to. The three here are the last three of `RoomCore.BOT_NAMES`; a room
+ * fills seat zero with the first, which offline is the human.
+ *
+ * **Renaming these is not free, and here is exactly what it costs.** `CorpusReplayTest` does
+ * not care: a recording carries its own `initialState` and `Replay` starts from it, so it
+ * replays the names TypeScript dealt whatever this function says today. `DealParityTest` very
+ * much does care — it re-deals every recorded seed and compares the hash against that same
+ * `initialState`, which is the only thing standing between this function and a Kotlin server
+ * dealing a different game from the same seed. A rename moves that hash, the corpus is frozen,
+ * and so the test flattens seat names on both sides before hashing and pins the names in a
+ * separate assertion. Read its `seatsNormalised` before renaming anything here.
  */
 private fun createPlayers(): List<PlayerState> = listOf(
     PlayerState(
@@ -108,15 +123,15 @@ private fun createPlayers(): List<PlayerState> = listOf(
         isVintoCaller = false,
         coalitionWith = emptyList(),
     ),
-    bot("bot-1", "Raphael", "Raph"),
-    bot("bot-2", "Michelangelo", "Mikey"),
-    bot("bot-3", "Donatello", "Don"),
+    bot("bot-1", "Ember"),
+    bot("bot-2", "Sky"),
+    bot("bot-3", "Dune"),
 )
 
-private fun bot(id: String, name: String, nickname: String) = PlayerState(
+private fun bot(id: String, name: String) = PlayerState(
     id = id,
     name = name,
-    nickname = nickname,
+    nickname = name,
     isHuman = false,
     isBot = true,
     cards = emptyList(),

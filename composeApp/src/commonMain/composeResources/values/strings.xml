@@ -45,7 +45,7 @@
     <!-- ================================================================ online -->
     <string name="online_screen_title">Play online</string>
     <string name="online_nickname">Your name at the table</string>
-    <string name="online_nickname_detail">What the other seats see. Not an account — there are none.</string>
+    <string name="online_nickname_detail">What the other seats see. Tap for a different one. Not an account — there are none.</string>
     <string name="online_code">Room code</string>
     <string name="online_code_detail">Six characters from whoever opened the room.</string>
     <string name="online_join">Join the room</string>
@@ -71,8 +71,6 @@
     <string name="online_open_screen">Open a room</string>
     <string name="online_join_screen">Join with a code</string>
     <string name="online_back">Back</string>
-    <string name="online_name_placeholder">Pick a name</string>
-    <string name="online_name_needed">Pick a name first — the other seats need something to call you.</string>
 
     <!-- The public-room browser. -->
     <string name="discover_title">Public rooms</string>
@@ -157,6 +155,8 @@
     <string name="settings_original_detail">VINTO is somebody else's card game, and this is an unofficial app for it. The game, its rules and the people who made it are at vinto.game.</string>
     <string name="settings_studio">About this app</string>
     <string name="settings_studio_detail">Who made this app, what else is on the shelf, and how it is put together.</string>
+    <string name="settings_rate">Rate this game</string>
+    <string name="settings_rate_detail">Leave a review on the store you installed it from. It is the one thing that helps a small game get found.</string>
     <string name="settings_open">Open</string>
     <string name="settings_link_failed">Nothing on this device opened that. The address is %1$s</string>
 
@@ -326,7 +326,7 @@
     <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance. Worth doing for a card that counts against you; a King costs nothing to hold.</string>
     <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
     <!-- Over a bot's action as it is played: who, which card, and the card's own description
-         from CARD_CONFIGS. "Mikey plays the Nine — Peek at one card of another player". -->
+         from CardWords. "Sky plays the Nine — Peek at one card of another player". -->
     <string name="beat_watching_title">%1$s plays the %2$s — %3$s</string>
     <string name="beat_do_not_guess_title">Do not guess</string>
     <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
@@ -344,7 +344,7 @@
     <string name="beat_call_now_title">Call it</string>
     <string name="beat_call_now_body">You know every card in your hand, and together they come to nothing or less — nobody at this table can finish below you. Press Call Vinto: everybody else gets exactly one more turn, and then every hand goes face up.</string>
     <string name="beat_you_called_title">You called Vinto</string>
-    <string name="beat_you_called_body">The round ends on your terms. Raph, Mikey and Don each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
+    <string name="beat_you_called_body">The round ends on your terms. Ember, Sky and Dune each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
     <string name="beat_coalition_vs_you_title">Now they play as one</string>
     <string name="beat_coalition_vs_you_body">The three who did not call are the coalition: one turn each, and only their single best hand is compared with yours — so it is a team against your one hand. At a real table they would talk it over and pool what they know. Watch what they do with their last turn: this is where you see the cards you have not held yet.</string>
     <string name="beat_aim_it_title">Aim it</string>
@@ -382,12 +382,12 @@
     <string name="beat_cards_king_name_title">What you name is what you get to play</string>
     <string name="beat_cards_king_name_body">So you are really choosing an action, out of the cards you have seen. Name a 7 or an 8 and you get a look at one of your own. Name a Jack and you get its blind swap — and you pick both cards, which is how a Joker you have spotted comes to you and your worst card goes the other way. Name a Queen and you look at two before deciding whether to trade.</string>
     <string name="beat_cards_king_whose_title">And whose card you name</string>
-    <string name="beat_cards_king_whose_body">Whoever was holding it, the card you name leaves their hand. Naming your own 10 takes ten points off your total; naming Don's Joker takes his minus one away and leaves him a card worse off. One King, two jobs — which of them matters more is the read.</string>
+    <string name="beat_cards_king_whose_body">Whoever was holding it, the card you name leaves their hand. Naming your own 10 takes ten points off your total; naming an opponent's Joker takes their minus one away and leaves them a card worse off. One King, two jobs — which of them matters more is the read.</string>
     <string name="beat_cards_odd_title">Ace and Joker</string>
     <string name="beat_cards_odd_body">An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is worth minus one — the best card in the deck, and the one never to give away.</string>
     <string name="beat_tour_title">The deck and the pile</string>
     <string name="beat_tour_body">Cards come off the deck. What anybody throws away lands face up beside it, where the whole table can read it — including you.</string>
-    <string name="beat_seats_title">Raph, Mikey and Don</string>
+    <string name="beat_seats_title">Ember, Sky and Dune</string>
     <string name="beat_seats_body">Three bots, each with five cards they can see no better than you can. The plate that lights up green is whoever's turn it is.</string>
     <string name="beat_help_title">The ? is always there</string>
     <string name="beat_help_body">It explains the moment you are in and what every card does. The boxed game comes with reminder cards for exactly this, one per player — nobody is expected to hold fourteen ranks in their head, here or at a table.</string>
@@ -566,7 +566,7 @@
          translated: a 7 is a 7 in every language this app will ever ship in.
 
          The paired `_you` / `_they` entries are the reason this file exists at all. English
-         wants "You draw" and "Raph draws" — one suffix — and Belarusian or Ukrainian wants
+         wants "You draw" and "Sky draws" — one suffix — and Belarusian or Ukrainian wants
          two different sentences. A translator handed the fragment "draws" cannot fix a half
          they were never given, so every conjugated line is written out in full, twice. -->
     <string name="log_you">You</string>
@@ -623,4 +623,55 @@
     <string name="signal_peek">A card that lifts towards the middle</string>
     <string name="signal_peek_meaning">Somebody is looking at it. Everyone sees *which* card was looked at — only the player entitled to it sees the face.</string>
 
+
+    <!-- The cards, in words.
+
+         These used to live in `CARD_CONFIGS` (shared/shapes) as Kotlin constants, which meant the
+         "?" sheet was a translated SENTENCE with English NOUNS dropped into it — the template moved
+         with the language and "Queen", "Peek at any two cards…" and the whole help paragraph did
+         not. Reported as "some card explanations are not translated in the ? dialog", which is
+         exactly what it was.
+
+         `shortDescription` is NOT here and must never be: it becomes `Card.actionText`, which is
+         inside the canonical hash all 50 fixtures pin against TypeScript. `CardCopyIsDataTest`
+         fails loudly if anybody moves it. Name, long description and help text are presentation
+         and were always translatable — they were simply in the wrong file. -->
+    <string name="card_name_two">Two</string>
+    <string name="card_name_three">Three</string>
+    <string name="card_name_four">Four</string>
+    <string name="card_name_five">Five</string>
+    <string name="card_name_six">Six</string>
+    <string name="card_name_seven">Seven</string>
+    <string name="card_name_eight">Eight</string>
+    <string name="card_name_nine">Nine</string>
+    <string name="card_name_ten">Ten</string>
+    <string name="card_name_jack">Jack</string>
+    <string name="card_name_queen">Queen</string>
+    <string name="card_name_king">King</string>
+    <string name="card_name_ace">Ace</string>
+    <string name="card_name_joker">Joker</string>
+
+    <string name="card_long_seven">Peek at one of your own cards</string>
+    <string name="card_long_eight">Peek at one of your own cards</string>
+    <string name="card_long_nine">Peek at one card of another player</string>
+    <string name="card_long_ten">Peek at one card of another player</string>
+    <string name="card_long_jack">Swap any two facedown cards from two different players</string>
+    <string name="card_long_queen">Peek at any two cards from two different players, then optionally swap them</string>
+    <string name="card_long_king">Declare another card action from any player (7-A)</string>
+    <string name="card_long_ace">Force an opponent to draw a penalty card</string>
+
+    <string name="card_help_two">Number card with value 2</string>
+    <string name="card_help_three">Number card with value 3</string>
+    <string name="card_help_four">Number card with value 4</string>
+    <string name="card_help_five">Number card with value 5</string>
+    <string name="card_help_six">Number card with value 6</string>
+    <string name="card_help_seven">Click on one of your cards to temporarily reveal it and memorize its value. You can skip this action if you prefer.</string>
+    <string name="card_help_eight">Click on one of your cards to temporarily reveal it and memorize its value. You can skip this action if you prefer.</string>
+    <string name="card_help_nine">Click on an opponent's card to temporarily reveal it and see its value. You can skip this action if you prefer.</string>
+    <string name="card_help_ten">Click on an opponent's card to temporarily reveal it and see its value. You can skip this action if you prefer.</string>
+    <string name="card_help_jack">Select two cards from different players to swap their positions - you can include your own cards or only opponents. You cannot select two cards from the same player. You can reset your selection or skip this action.</string>
+    <string name="card_help_queen">1. Peek at two cards from different players (can be your own or opponents, but must be from different players)\n2. After peeking both cards, decide whether to swap them</string>
+    <string name="card_help_king">Choose which card action to execute: 7 (peek own), 8 (peek own), 9/10 (peek opponent), J (swap), Q (peek &amp; swap), A (force draw). You can also declare non-action cards (2-6, K, Joker).</string>
+    <string name="card_help_ace">Select an opponent to force them to draw a penalty card from the deck. This increases their hand size and card total. You can skip this action if you prefer.</string>
+    <string name="card_help_joker">Joker with value -1</string>
 </resources>

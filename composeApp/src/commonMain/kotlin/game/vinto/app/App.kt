@@ -71,6 +71,14 @@ fun App(
      * is to let it send to something that records.
      */
     counting: Counting? = null,
+    /**
+     * A state to open in, for a store capture. Null in every real launch.
+     *
+     * The platform half of this handle is debug-only — an intent extra behind a `src/debug`
+     * source set on Android, a launch argument on iOS — so a release build has no way to reach
+     * it. [MarketingScene] carries the reasoning and the list of states.
+     */
+    marketing: String? = null,
 ) {
     var settings by remember { mutableStateOf(Settings()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Opening) }
@@ -91,7 +99,7 @@ fun App(
     fun enterRoom(code: String, nickname: String): Screen =
         roomScreen(connector, vault, appScope, code, nickname)
 
-    Startup(vault, sink, count, seeds, ::enterRoom) { loaded, where ->
+    Startup(vault, sink, count, seeds, marketing, ::enterRoom) { loaded, where ->
         settings = loaded
         screen = where
     }
@@ -447,6 +455,7 @@ private fun Startup(
     sink: Analytics,
     count: Counting,
     seeds: () -> Long,
+    marketing: String?,
     enterRoom: (String, String) -> Screen,
     onReady: (Settings, Screen) -> Unit,
 ) {
@@ -456,14 +465,43 @@ private fun Startup(
         count.record(AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU))
 
         val invited = roomCodeFrom(takeOpenedLink())
-        val where = if (invited != null) {
-            count.record(AnalyticsEvent.Funnel(FunnelStep.ROOM_JOINED, Surface.ONLINE))
-            enterRoom(invited, vault.identity { seeds() }.nickname)
-        } else {
-            Screen.Home(canContinue = vault.loadGame() != null)
+        val staged = MarketingScene.named(marketing)
+        val where = when {
+            // Ahead of the invitation, because a capture run passes no link and a machine
+            // running one has no business being diverted into somebody's room.
+            staged != null -> {
+                stagedScreen(staged, vault)
+            }
+            invited != null -> {
+                count.record(AnalyticsEvent.Funnel(FunnelStep.ROOM_JOINED, Surface.ONLINE))
+                enterRoom(invited, vault.identity { seeds() }.nickname)
+            }
+            else -> {
+                Screen.Home(canContinue = vault.loadGame() != null)
+            }
         }
         onReady(settings, where)
     }
+}
+
+/**
+ * Where each capture state opens.
+ *
+ * Two of the five are screens and cost nothing; two are a staged round at different moments;
+ * one is deliberately not staged at all. [MarketingScene] says why for each.
+ *
+ * Here rather than in `MarketingState.kt` only because `Screen` is private to this file — the
+ * navigation table is `App`'s business, and opening it up so marketing could name a screen
+ * would be the wrong thing to widen.
+ */
+private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = when (scene) {
+    // `canContinue` is asserted rather than read: the fuller menu is the one worth photographing,
+    // and a capture machine has no saved game.
+    MarketingScene.HOME -> Screen.Home(canContinue = true)
+    MarketingScene.TEACH -> Screen.Teaching
+    MarketingScene.TABLE -> Screen.Playing(stagedGame(vault, toTheEnd = false))
+    MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
+    MarketingScene.LOBBY -> Screen.Online
 }
 
 /**

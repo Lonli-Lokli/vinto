@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">VINTO</string>
+
+    <!-- ================================================================ opening -->
+    <string name="opening_shuffling">Mélange…</string>
+
+    <!-- ================================================================ home -->
+    <string name="home_tagline">Moins en main. Plus en tête.</string>
+    <string name="home_solo_title">Solo · trois bots · %1$s</string>
+    <string name="home_continue">Continuer</string>
+    <string name="home_new_game">Nouvelle partie</string>
+    <string name="home_play">Jouer</string>
+    <string name="home_online">Jouer en ligne</string>
+    <string name="home_teach">Comment jouer</string>
+    <string name="home_settings">Paramètres</string>
+    <string name="home_version">v%1$s</string>
+    <string name="home_unofficial">Une application non officielle du jeu de cartes VINTO. L’original se trouve sur vinto.game</string>
+    <string name="home_unofficial_action">Ouvrir vinto.game, le site officiel du jeu de cartes</string>
+
+    <!-- ================================================================ online -->
+    <string name="online_screen_title">Jouer en ligne</string>
+    <string name="online_nickname">Votre nom à la table</string>
+    <string name="online_nickname_detail">Ce que voient les autres places. Touchez pour en changer. Ce n’est pas un compte — il n’y en a pas.</string>
+    <string name="online_code">Code de la salle</string>
+    <string name="online_code_detail">Six caractères donnés par la personne qui a ouvert la salle.</string>
+    <string name="online_join">Rejoindre la salle</string>
+    <string name="online_create">Ouvrir une nouvelle salle</string>
+    <string name="online_offline">Pas de réseau pour le moment. Le jeu en ligne en a besoin ; le mode solo et la leçon fonctionnent normalement.</string>
+    <string name="trouble_offline">Aucune connexion au service des salles. Vérifiez le réseau et réessayez.</string>
+    <string name="trouble_no_such_room">Aucune salle avec ce code. Vérifiez les six caractères et réessayez.</string>
+    <string name="trouble_closed">Le jeu en ligne n’est pas encore ouvert. Le mode solo et la leçon fonctionnent normalement.</string>
+    <string name="trouble_busy">Cette table est complète. Essayez-en une autre, ou ouvrez la vôtre.</string>
+    <string name="trouble_refused">Le service des salles a refusé cette action.</string>
+    <string name="trouble_broken">Le service des salles rencontre un problème. Réessayez dans un instant.</string>
+    <string name="online_creating">Ouverture d’une salle…</string>
+    <string name="online_visibility">Qui peut trouver la salle</string>
+    <string name="online_visibility_private">Par code uniquement</string>
+    <string name="online_visibility_public">Répertoriée publiquement</string>
+    <string name="online_visibility_detail">Une salle répertoriée apparaît à quiconque parcourt la liste. Une salle privée n’est accessible que par son code.</string>
+    <string name="online_browse">Parcourir les salles publiques</string>
+    <string name="online_open_detail">Quatre places, un code à partager, et des bots pour celles et ceux qui ne viennent pas.</string>
+    <string name="online_join_detail">Six caractères, donnés par la personne qui a ouvert la salle.</string>
+    <string name="online_browse_detail">Les salles dont les hôtes ont choisi d’être répertoriés. Tout le monde peut s’installer.</string>
+    <string name="online_open_title">Ouvrir une salle</string>
+    <string name="online_join_title">Rejoindre avec un code</string>
+    <string name="online_open_screen">Ouvrir une salle</string>
+    <string name="online_join_screen">Rejoindre avec un code</string>
+    <string name="online_back">Retour</string>
+
+    <!-- The public-room browser. -->
+    <string name="discover_title">Salles publiques</string>
+    <string name="discover_looking">Recherche de tables ouvertes…</string>
+    <string name="discover_refresh">Actualiser</string>
+    <string name="discover_quiet">Aucune salle publique pour le moment. Ouvrez-en une et elle apparaîtra ici.</string>
+    <string name="discover_failed">Impossible de joindre le service des salles : %1$s</string>
+    <string name="discover_retry">Réessayer</string>
+    <string name="discover_room_host">%1$s à la table</string>
+    <string name="discover_room_unnamed">Table ouverte</string>
+    <string name="discover_seats">%1$d places sur 4 occupées</string>
+    <string name="discover_people">%1$d joueurs</string>
+    <string name="discover_dealing">Distribution dans %1$d</string>
+    <string name="discover_full">Complet</string>
+    <string name="discover_join">Rejoindre</string>
+    <string name="discover_room_summary">Salle %1$s, %2$d places sur 4 occupées</string>
+
+    <!-- Inviting somebody to the room you are in. -->
+    <string name="invite_title">Inviter quelqu’un</string>
+    <string name="invite_subject">Rejoignez ma partie de Vinto</string>
+    <string name="invite_body">Rejoignez ma partie de Vinto : %1$s\n\nOu ouvrez l’application et entrez le code de salle %2$s</string>
+    <string name="invite_share">Partager le code</string>
+    <string name="invite_copy">Copier le code</string>
+    <string name="invite_copied">Copié</string>
+    <string name="invite_read_it_out">Ou dictez-le : six caractères, sans O ni I.</string>
+
+    <!-- The lobby: who is in, what everybody is waiting for. -->
+    <string name="lobby_title">Salle %1$s</string>
+    <string name="lobby_seat_open">Place libre</string>
+    <string name="lobby_seat_you">%1$s — vous</string>
+    <string name="lobby_add_bot">Ajouter un bot</string>
+    <string name="lobby_remove_bot">Retirer le bot de la place %1$d</string>
+    <string name="lobby_leave">Quitter la salle</string>
+    <string name="lobby_connecting">Connexion à la salle…</string>
+    <string name="lobby_needs_human">Une partie a besoin de deux personnes. Partagez le code — des bots peuvent compléter la table.</string>
+    <string name="lobby_fill_seats">Chaque place compte. Remplissez les places vides avec des personnes ou des bots, et la distribution se lance d’elle-même.</string>
+    <string name="lobby_counting_down">Prêt — distribution dans %1$d…</string>
+    <string name="lobby_offered_bots">Personne d’autre n’est arrivé, alors des bots ont pris les places vides — distribution dans %1$d…. Retirez-en un pour continuer d’attendre.</string>
+    <string name="lobby_over">La salle a fermé.</string>
+    <string name="lobby_unreachable">Impossible de joindre cette salle. Vérifiez le code, ou votre connexion.</string>
+    <string name="lobby_retry">Réessayer</string>
+    <string name="lobby_seat_working">Modification de cette place…</string>
+
+    <!-- The connection, said in one word wherever the table is remote. -->
+    <string name="net_connected">Connecté</string>
+    <string name="net_connecting">Connexion…</string>
+    <string name="net_reconnecting">Reconnexion…</string>
+    <string name="net_closed">Déconnecté</string>
+    <string name="table_sending">Envoi de votre coup…</string>
+    <string name="table_next_round_waiting">En attente de l’accord des autres…</string>
+    <string name="online_session_over">La partie est terminée : %1$s</string>
+
+    <!-- ================================================================ settings -->
+    <string name="settings_title">Paramètres</string>
+
+    <string name="settings_group_game">Le jeu</string>
+    <string name="settings_group_feel">Apparence</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_detail">Pas encore traduit ? Le jeu revient à l’anglais, et les mots qu’une carte prononce ne changent jamais.</string>
+    <string name="settings_language_device">Suivre l’appareil</string>
+    <string name="settings_language_current">Langue : %1$s</string>
+    <string name="settings_language_chosen">%1$s, choisie</string>
+    <string name="settings_group_privacy">Ce qui quitte cet appareil</string>
+    <string name="settings_group_about">À propos</string>
+
+    <string name="settings_privacy">Confidentialité</string>
+    <string name="settings_privacy_detail">Ce qui est compté, ce qui ne l’est pas, et comment le désactiver.</string>
+    <string name="settings_terms">Conditions d’utilisation</string>
+    <string name="settings_terms_detail">La version courte de ce que vous pouvez attendre, et de ce qu’on attend de vous.</string>
+    <string name="settings_contact">Nous contacter</string>
+    <string name="settings_contact_detail">Un bug, une idée, ou une partie qui a mal tourné.</string>
+    <string name="settings_original">Le jeu original</string>
+    <string name="settings_original_detail">VINTO est le jeu de cartes de quelqu’un d’autre, et ceci en est une application non officielle. Le jeu, ses règles et ses créateurs se trouvent sur vinto.game.</string>
+    <string name="settings_studio">À propos de cette application</string>
+    <string name="settings_studio_detail">Qui a fait cette application, ce qu’il y a d’autre à découvrir, et comment elle est construite.</string>
+    <string name="settings_rate">Noter ce jeu</string>
+    <string name="settings_rate_detail">Laissez un avis sur la boutique où vous l’avez installée. C’est ce qui aide le plus un petit jeu à se faire connaître.</string>
+    <string name="settings_open">Ouvrir</string>
+    <string name="settings_link_failed">Rien sur cet appareil n’a pu ouvrir ce lien. L’adresse est %1$s</string>
+
+    <string name="settings_share">En parler</string>
+    <string name="settings_share_detail">Envoyez le jeu à un ami. Quatre places, dont trois peuvent être des bots.</string>
+    <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_body">Vinto — le jeu de cartes où l’on tient moins et sait plus. Gratuit, dans le navigateur, sans inscription : %1$s</string>
+    <string name="settings_back">Retour</string>
+    <string name="settings_version">Vinto v%1$s</string>
+
+    <string name="settings_bots">Bots</string>
+    <string name="settings_bots_detail">À quel point les trois bots réfléchissent à leur coup.</string>
+    <string name="difficulty_easy">Facile</string>
+    <string name="difficulty_moderate">Modéré</string>
+    <string name="difficulty_hard">Difficile</string>
+
+    <string name="settings_pace">Rythme</string>
+    <string name="settings_pace_detail">À quelle vitesse la table joue ce qui vient de se passer. Les trois bots jouent leur tour entre deux appuis, et c’est le temps que vous avez pour les observer.</string>
+    <string name="pace_calm">Calme</string>
+    <string name="pace_steady">Régulier</string>
+    <string name="pace_brisk">Vif</string>
+
+    <string name="settings_theme">Thème</string>
+    <string name="settings_theme_detail">Le tapis reste vert dans tous les cas. Ceci concerne tout ce qui l’entoure.</string>
+    <string name="theme_system">Système</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+
+    <string name="settings_motion">Mouvement</string>
+    <string name="settings_motion_detail">Que les cartes volent, ou apparaissent simplement là où elles atterrissent. Réduit conserve chaque anneau, chaque verdict et chaque pause — le jeu reste raconté, il ne bouge plus, c’est tout. Système suit le réglage d’accessibilité de votre appareil.</string>
+    <string name="motion_system">Système</string>
+    <string name="motion_full">Complet</string>
+    <string name="motion_reduced">Réduit</string>
+
+    <string name="settings_sound">Son</string>
+    <string name="settings_sound_detail">Une carte distribuée, une carte qui atterrit, une pénalité, la fin de la manche — et rien d’autre.</string>
+    <string name="settings_haptics">Vibrations</string>
+    <string name="settings_haptics_detail">Un petit à-coup sous le pouce quand une carte est touchée, qu’un coup se joue, ou qu’une règle s’applique.</string>
+    <string name="settings_analytics">Statistiques anonymes</string>
+    <string name="settings_analytics_detail">Combien de manches sont jouées, et combien de temps elles durent. Jamais votre nom, vos codes de salle, ni rien qui pourrait vous identifier — il n’y a nulle part où les placer dans ce que nous envoyons. Désactiver ceci n’envoie rien du tout.</string>
+    <string name="settings_on">Activé</string>
+    <string name="settings_off">Désactivé</string>
+
+    <string name="settings_saved_game">Partie enregistrée</string>
+    <string name="settings_saved_game_detail">Une manche est en cours. L’oublier est irréversible, et le score cumulé de la partie disparaît avec elle.</string>
+    <string name="settings_forget">Oublier</string>
+    <string name="settings_record">Votre bilan</string>
+    <string name="settings_record_detail">Manches jouées, combien vous en avez gagné, votre meilleure main et votre série. Conservé uniquement sur cet appareil — jamais envoyé nulle part.</string>
+    <string name="settings_forget_record">Effacer</string>
+
+    <!-- ================================================================ the table -->
+    <string name="table_round_turn">M%1$d / T%2$d</string>
+    <string name="table_draw">PIOCHE</string>
+    <string name="table_discard">DÉFAUSSE</string>
+    <string name="table_toss_in">Riposte</string>
+    <string name="table_toss_in_timed">Riposte · %1$ds</string>
+    <string name="toss_clock_moves_on">La table reprend dans %1$d s</string>
+    <string name="toss_more_time">Plus de temps</string>
+    <string name="table_toss_in_summary">Fenêtre de riposte : %1$s</string>
+    <string name="table_tossed">Riposté (%1$d)</string>
+    <string name="card_thrown_by">%1$s a jeté %2$s</string>
+    <string name="table_you">Vous</string>
+    <string name="table_vinto_mark">Vinto</string>
+    <string name="table_leads_mark">en tête</string>
+    <string name="seat_pointed_turn">%1$s joue</string>
+    <string name="seat_is_a_bot">un bot</string>
+    <string name="seat_pointed_vinto">%1$s a appelé Vinto</string>
+    <string name="seat_pointed_penalty">%1$s prend une carte dans la pioche</string>
+    <string name="seat_pointed_coalition">%1$s mène la coalition</string>
+    <string name="table_final_round">Manche finale</string>
+    <string name="table_final_caller">Tous les autres jouent une seule main à eux tous, contre la vôtre.</string>
+    <string name="table_final_leader">Vous jouez la main de la coalition contre %1$s.</string>
+    <string name="table_final_ally">%1$s joue la main de la coalition contre %2$s.</string>
+    <string name="table_final_turns_left">%1$d tours avant la révélation</string>
+    <string name="table_final_last_turn">dernier tour</string>
+    <string name="table_final_choosing">Une seule main à eux trois, contre %1$s.</string>
+    <string name="table_final_side_coalition">Ensemble</string>
+    <string name="table_final_side_caller">A appelé</string>
+    <string name="table_final_versus">contre</string>
+    <string name="table_final_leads">%1$s mène les autres</string>
+    <string name="table_see_score">Voir le score</string>
+
+    <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_report">Signaler un problème</string>
+    <string name="header_settings">Paramètres</string>
+    <string name="header_deck_left">%1$d cartes restantes dans la pioche</string>
+    <string name="header_deck_badge">%1$d dans la pioche — ce que ça signifie</string>
+
+    <!-- What the deck count means, when it is asked. -->
+    <string name="deck_title">La pioche</string>
+    <string name="deck_body">%1$d cartes restantes à piocher.\n\nQuand elle est épuisée, la défausse est remélangée dedans, et tout ce que chacun avait appris en observant cette pile ne vaut plus rien — y compris ce que vous aviez appris. Une manche où la pioche s’épuise est une manche où il faut appeler Vinto.</string>
+    <string name="deck_dismiss">Compris</string>
+
+    <!-- A card, for somebody who cannot see it. -->
+    <string name="card_described">%1$s, qui vaut %2$d</string>
+    <string name="card_face_down">une carte face cachée</string>
+    <string name="card_position">%1$s, carte %2$d</string>
+    <string name="card_the_deck">la pioche</string>
+    <string name="card_discarded">carte défaussée : %1$s</string>
+    <string name="card_in_play">en jeu : %1$s</string>
+    <string name="rail_card_action">%1$s, qui vaut %2$d : %3$s</string>
+    <string name="rail_card_plain">%1$s, qui vaut %2$d</string>
+    <string name="rail_aiming_at">visant %1$s</string>
+    <string name="rail_aim_empty">une carte encore à choisir</string>
+    <string name="rail_aim_first">Première</string>
+    <string name="rail_aim_second">Seconde</string>
+    <string name="card_discarded_live">carte défaussée : %1$s, action non utilisée</string>
+    <string name="card_in_hand">la carte dans votre main</string>
+
+    <!-- ================================================================ the score sheet -->
+    <string name="score_round">Manche %1$d</string>
+    <string name="score_caller_won">L’appel a tenu</string>
+    <string name="score_level">Égalité — l’appel a tenu</string>
+    <string name="score_coalition_won">Les autres ont battu l’appel</string>
+    <string name="score_deck_out">Personne n’a appelé</string>
+    <string name="score_versus">Vinto %1$d contre leur meilleur %2$d</string>
+    <string name="score_versus_none">Chaque main a compté, rien n’a été payé</string>
+    <string name="score_role_caller">a appelé Vinto</string>
+    <string name="score_role_best">meilleur des autres</string>
+    <string name="score_column_hand">main</string>
+    <string name="score_column_round">manche</string>
+    <string name="score_column_game">partie</string>
+    <string name="score_you_called">Vous avez appelé Vinto, votre main a donc été opposée à la meilleure des autres.</string>
+    <string name="score_they_called">%1$s a appelé Vinto, sa main a donc été opposée à la meilleure des vôtres.</string>
+    <string name="score_deck_ended">Personne n’a appelé Vinto — la pioche s’est épuisée, la manche s’est donc terminée et chaque main a été comptée.</string>
+    <string name="score_next_round">Distribuer la manche suivante</string>
+    <string name="score_stop">S’arrêter là</string>
+
+    <!-- ================================================================ bug report -->
+    <string name="report_title">Signaler un problème</string>
+    <string name="report_body">Quelque chose que la table a fait et qui n’aurait pas dû arriver ? Envoyez la partie avec.\n\nCe qui est envoyé, c’est la donne de départ, chaque coup depuis, et une somme de contrôle après chacun — de quoi rejouer cette partie exacte, ici ou dans l’application web, et voir le même problème se reproduire. Aucun compte, aucun détail sur l’appareil, rien sur vous.</string>
+    <string name="report_send">Envoyer…</string>
+    <string name="report_copy">Copier à la place</string>
+    <string name="report_copied">Copié dans le presse-papiers</string>
+    <string name="report_dismiss">Pas maintenant</string>
+    <string name="report_subject">Vinto — signalement de problème</string>
+
+    <!-- ================================================================ the lesson -->
+    <string name="beat_only_look_title">Le seul coup d’œil que vous aurez</string>
+    <string name="beat_only_look_body">Chacun peut regarder deux de ses propres cartes avant le début de la manche, une seule fois. À partir de là, tout est mémoire : la vôtre contre celle de trois autres personnes.</string>
+    <string name="beat_peeks_end_body">Elles retournent face cachée — souvenez-vous où elles étaient. Tous les autres ont eux aussi regardé deux des leurs.</string>
+    <string name="beat_name_only_seen_title">Ne nommez qu’une carte que vous avez vue</string>
+    <string name="beat_name_only_seen_body">Vous avez regardé cette carte, vous savez donc ce qu’elle est. Nommez-la juste et vous jouez son action gratuitement. Nommez-la mal et vous prenez une carte de pénalité — alors ne nommez qu’une carte dont vous êtes sûr.</string>
+    <string name="beat_toss_in_title">Quiconque détient cette valeur peut la jeter en riposte</string>
+    <string name="beat_toss_in_body">Dès qu’une carte tombe face visible, tout le monde a une chance de se débarrasser d’une carte semblable — et d’utiliser son action. Une mauvaise valeur vous coûte une carte de pénalité et vous exclut pour cette carte-là — la prochaine à tomber vous offre une nouvelle chance. Ça vaut le coup pour une carte qui compte contre vous ; un Roi ne coûte rien à garder.</string>
+    <string name="beat_watching_body">Regardez ce qu’ils prennent et ce qu’ils posent. Cela, et le détail ligne par ligne ici en dessous, c’est tout ce que vous saurez de leurs mains.</string>
+    <string name="beat_watching_title">%1$s joue le %2$s — %3$s</string>
+    <string name="beat_do_not_guess_title">Ne devinez pas</string>
+    <string name="beat_do_not_guess_body">Vous n’avez jamais regardé cette carte, la nommer serait donc deviner, et une mauvaise supposition vous coûte une carte de pénalité. Posez-la sans un mot.</string>
+    <string name="beat_coalition_leader_title">%1$s joue la main de la coalition</string>
+    <string name="beat_coalition_leader_body">La coalition a choisi quelle main elle joue : à la fin, seul le total de %1$s sera opposé au vôtre. Les deux autres passent leur dernier tour à faire baisser cette main — un Roi peut en retirer une mauvaise carte, un Valet ou une Dame peut en échanger une meilleure — ou à découvrir ce qu’elle contient.</string>
+    <string name="beat_final_play_title">%1$s joue le %2$s</string>
+    <string name="beat_final_play_ace">Un As force un joueur à piocher une carte face cachée, et une carte de plus, c’est une carte de plus qui compte contre lui. Il ne peut plus vous viser maintenant — les cartes de l’appelant sont hors de portée — il retombe donc du côté de la coalition. Regardez qui doit piocher.</string>
+    <string name="beat_final_play_king">Un Roi désigne une carte et la nomme, et le nom doit être juste. Juste : la carte quitte la main où elle était et son action est jouée. Faux : tout le monde voit ce qu’elle était vraiment, et celui qui a nommé pioche une carte de pénalité. On nomme une carte qu’on a vue — souvent une des siennes, pour s’en débarrasser.</string>
+    <string name="beat_final_play_look">Un 9 ou un 10 regarde une carte dans la main de quelqu’un d’autre. Dans la manche finale, c’est ainsi que la coalition découvre ce qu’elle détient, puisque la vôtre est hors limites — et ce que l’un d’eux apprend, ils peuvent tous s’en servir.</string>
+    <string name="beat_final_play_other">Regardez ce qu’elle fait : c’est une carte que vous n’avez pas encore eue en main, et l’encadré des derniers coups sous la table dit ce qui s’est passé.</string>
+    <string name="beat_swap_them_title">Échangez-les</string>
+    <string name="beat_swap_them_body">Vous avez vu les deux. La leur vaut moins que la vôtre, alors échangez : votre carte part vers eux et la leur vient à vous — et vous saurez exactement ce que vous tenez ensuite.</string>
+    <string name="beat_leave_them_title">Laissez-les</string>
+    <string name="beat_leave_them_body">Vous avez vu les deux, et la vôtre est la meilleure carte. Il n’y a rien à gagner à échanger, alors remettez-les où elles étaient.</string>
+    <string name="beat_call_now_title">Appelez</string>
+    <string name="beat_call_now_body">Vous connaissez chaque carte de votre main, et ensemble elles totalisent zéro ou moins — personne à cette table ne peut finir en dessous de vous. Appuyez sur Appeler Vinto : tous les autres jouent encore exactement un tour, puis chaque main est révélée.</string>
+    <string name="beat_you_called_title">Vous avez appelé Vinto</string>
+    <string name="beat_you_called_body">La manche se termine à vos conditions. Ember, Sky et Dune jouent chacun encore un tour, et personne ne peut plus toucher à vos cartes. Puis chaque main est révélée, et la vôtre est opposée à la meilleure des leurs.</string>
+    <string name="beat_coalition_vs_you_title">Maintenant, ils jouent comme un seul</string>
+    <string name="beat_coalition_vs_you_body">Les trois qui n’ont pas appelé forment la coalition : un tour chacun, et seule leur meilleure main sera comparée à la vôtre — c’est donc une équipe contre votre unique main. À une vraie table, ils en discuteraient et mettraient en commun ce qu’ils savent. Regardez ce qu’ils font de leur dernier tour : c’est là que vous voyez les cartes que vous n’avez pas encore eues.</string>
+    <string name="beat_aim_it_title">Visez</string>
+    <string name="beat_aim_it_body">C’est l’action propre de la carte, et elle est gratuite — elle ne vous coûte rien à utiliser, et la carte finit sur la pile dans tous les cas.</string>
+    <string name="beat_remember_it_title">Retenez-la</string>
+    <string name="beat_remember_it_body">Voilà ce que ce coup d’œil vous a offert. Fixez où elle se trouve et ce qu’elle est, puis reposez-la — désormais c’est une carte que vous connaissez, et le jeu se joue sur celles-là.</string>
+    <string name="beat_give_up_worst_title">Abandonnez votre pire carte</string>
+    <string name="beat_give_up_worst_body">La nouvelle carte entre face cachée, et celle qu’elle remplace part face visible sur la pile, lisible par tous. Abandonnez la carte que vous voulez le moins garder — la plus haute que vous connaissiez. Si elle a une action et que vous en êtes sûr, nommez-la en la posant : son action devient alors la vôtre, gratuitement.</string>
+    <string name="beat_swap_blind_title">Échangez-la contre une que vous n’avez pas vue</string>
+    <string name="beat_swap_blind_body">Rien de ce que vous connaissez n’est pire que cette carte, l’échanger contre l’une d’elles reviendrait donc à jeter du savoir. Placez-la plutôt dans un emplacement que vous n’avez jamais regardé : une carte inconnue a plus de chances d’être pire que meilleure, et de toute façon vous connaîtrez une carte de plus dans votre main ensuite.</string>
+    <string name="beat_nothing_worse_title">Rien ici ne mérite d’être remplacé</string>
+    <string name="beat_nothing_worse_body">Chaque carte que vous connaissez est meilleure que celle-ci, et elle est trop haute pour parier sur un emplacement inconnu. Revenez en arrière et jetez-la — la pile peut bien l’avoir.</string>
+    <string name="beat_keep_or_throw_title">Gardez-la ou jetez-la</string>
+    <string name="beat_keep_or_throw_body">Mettez-la dans votre main — face cachée, à la place d’une carte que vous possédez, qui part face visible sur la pile — ou jetez-la. Chaque carte de votre main compte contre vous, une carte basse vaut donc la peine d’être gardée. Si elle a une action, la jouer tout de suite est le troisième choix, et il ne vous coûte rien de le prendre.</string>
+    <string name="beat_two_ways_to_start_title">Deux façons de commencer un tour</string>
+    <string name="beat_two_ways_to_start_body">Dans la pioche, à l’aveugle — ou depuis la pile, mais seulement une carte d’action que personne n’a utilisée, et il faut alors la jouer aussitôt plutôt que la garder.</string>
+    <string name="beat_every_turn_starts_title">Chaque tour commence de la même façon</string>
+    <string name="beat_every_turn_starts_body">Un tour commence en prenant une carte. La pioche est face cachée, ce que vous obtenez est donc une surprise — c’est le risque pour lequel vous êtes payé.</string>
+    <string name="beat_welcome_title">Quatre joueurs, cinq cartes chacun</string>
+    <string name="beat_welcome_body">Chaque carte compte contre vous, et la main la plus basse gagne. Vos cinq cartes sont posées face cachée devant vous, et vous ne pouvez pas les regarder — le jeu, c’est de savoir ce que vous tenez. Ceci est une vraie manche contre trois vrais adversaires ; le guide ne fait que marcher à vos côtés.</string>
+    <string name="beat_memory_title">Connaissez vos propres cartes</string>
+    <string name="beat_memory_body">Vous verrez deux de vos cinq cartes avant le début de la manche, et les trois autres seulement si une carte vous le permet. La manche se joue donc sur ce dont vous vous souvenez : quels emplacements vous avez regardés, et ce qu’ils contiennent. Cela change la valeur d’une carte haute. Au début, un 9 ou un 10 qui vous offre un coup d’œil est un échange honnête — vous savez ce que c’est, vous pourrez donc la poser et la nommer plus tard. La carte qui vous fait perdre la manche est celle que vous n’avez jamais découverte.</string>
+    <string name="beat_cards_numbers_title">2 à 6 — cartes simples</string>
+    <string name="beat_cards_numbers_body">Elles valent exactement ce qu’elles indiquent, rien de plus. Ne confondez pas une petite carte avec une bonne carte : la main qui gagne une manche totalise généralement zéro ou moins — des Rois, des Jokers, un As tout au plus. Un 2 se garde bien un moment ; toute carte simple est à échanger avant la fin.</string>
+    <string name="beat_cards_own_title">7 et 8 — regardez une des vôtres</string>
+    <string name="beat_cards_own_body">Elles valent 7 et 8, ce qui est beaucoup à garder à la fin. Ce que vous obtenez en échange, c’est un coup d’œil sur une de vos propres cartes — et ce jeu, c’est de la mémoire, une carte que vous avez vue vaut donc plus qu’une carte que vous n’avez pas vue. Gardez-en une au début si elle vous offre un coup d’œil ; échangez-la et nommez-la une fois qu’il n’y a plus rien à apprendre.</string>
+    <string name="beat_cards_theirs_title">9 et 10 — regardez une des leurs</string>
+    <string name="beat_cards_theirs_body">Le même coup d’œil, tourné dans l’autre sens : une carte dans la main de quelqu’un d’autre. Retenez où elle était — deux tours plus tard, c’est ce qui vous dit s’il faut appeler, ou où viser avec un Valet. Elles valent 9 et 10, et valent encore la peine tôt dans la partie : une carte haute que vous savez tenir peut être posée et nommée, et une carte basse que vous ne voyez pas n’est qu’une supposition.</string>
+    <string name="beat_cards_jack_title">Valet — échange deux cartes, à l’aveugle</string>
+    <string name="beat_cards_jack_body">Il vaut 10. Il échange deux cartes appartenant à deux joueurs différents — jamais deux cartes d’une même personne — et personne ne les regarde avant. Utile pour glisser une carte que vous savez mauvaise dans la main de quelqu’un d’autre ; un pari avec tout ce que vous savez être bon.</string>
+    <string name="beat_cards_queen_title">Dame — regardez deux cartes, puis décidez</string>
+    <string name="beat_cards_queen_body">Elle vaut aussi 10, et c’est la carte la plus forte du jeu : regardez deux cartes au choix, chez deux joueurs différents, et ensuite seulement décidez si vous les échangez. Le Valet parie. La Dame sait.</string>
+    <string name="beat_cards_king_title">Roi — ne vaut rien, et fait tout</string>
+    <string name="beat_cards_king_body">Il ne vaut rien du tout, ce qui suffit à le rendre bon à garder. Son action désigne n’importe quelle carte sur la table — la vôtre ou celle de n’importe qui — et la nomme. Juste : cette carte quitte la main où elle était, et son action devient la vôtre à jouer. Faux : tout le monde voit ce qu’elle était vraiment, et vous prenez une carte de pénalité.</string>
+    <string name="beat_cards_king_name_title">Ce que vous nommez, c’est ce que vous jouez</string>
+    <string name="beat_cards_king_name_body">Vous choisissez donc en réalité une action, parmi les cartes que vous avez vues. Nommez un 7 ou un 8 et vous obtenez un coup d’œil sur une des vôtres. Nommez un Valet et vous obtenez son échange à l’aveugle — et vous choisissez les deux cartes, c’est ainsi qu’un Joker repéré vient à vous pendant que votre pire carte part dans l’autre sens. Nommez une Dame et vous regardez deux cartes avant de décider d’échanger.</string>
+    <string name="beat_cards_king_whose_title">Et à qui appartient la carte que vous nommez</string>
+    <string name="beat_cards_king_whose_body">Quel que soit celui qui la détenait, la carte que vous nommez quitte sa main. Nommer votre propre 10 retire dix points de votre total ; nommer le Joker d’un adversaire lui retire son moins un et le laisse avec une carte de moins bonne. Un Roi, deux usages — savoir lequel compte le plus, c’est là toute la lecture.</string>
+    <string name="beat_cards_odd_title">As et Joker</string>
+    <string name="beat_cards_odd_body">L’As vaut 1 et force qui vous choisissez à piocher une carte de pénalité. Le Joker vaut moins un — la meilleure carte du jeu, et celle qu’il ne faut jamais laisser partir.</string>
+    <string name="beat_tour_title">La pioche et la pile</string>
+    <string name="beat_tour_body">Les cartes viennent de la pioche. Ce que chacun jette atterrit face visible à côté, où toute la table peut le lire — vous y compris.</string>
+    <string name="beat_seats_title">Ember, Sky et Dune</string>
+    <string name="beat_seats_body">Trois bots, chacun avec cinq cartes qu’ils ne voient pas mieux que vous. La plaque qui s’allume en vert indique à qui c’est le tour.</string>
+    <string name="beat_help_title">Le ? est toujours là</string>
+    <string name="beat_help_body">Il explique le moment où vous êtes et ce que fait chaque carte. La boîte du jeu contient des cartes aide-mémoire pour exactement cela, une par joueur — personne n’est censé retenir quatorze valeurs par cœur, ici ou à une vraie table.</string>
+    <string name="beat_coalition_title">Tous les autres jouent comme un seul</string>
+    <string name="beat_coalition_body">Vous, et les deux qui n’ont pas appelé, formez la coalition : un tour chacun, et seule votre meilleure main sera comparée à celle de l’appelant — c’est donc une équipe contre une seule main. À une vraie table, vous en discuteriez et mettriez en commun ce que vous savez. Personne ne peut toucher aux cartes de l’appelant, et le jeu ne vous laissera même pas essayer.</string>
+    <string name="beat_your_turn_to_call_title">Vous pouvez appeler, vous aussi</string>
+    <string name="beat_your_turn_to_call_body">À la fin de n’importe lequel de vos tours, le bouton doré est là : appuyez dessus quand vous pensez que votre main est la plus basse de la table. Il était caché pendant votre apprentissage parce qu’il termine la manche pour tout le monde — à partir de maintenant, il est à vous, et l’appuyer trop tôt est la façon dont la plupart des gens perdent leur première partie.</string>
+    <string name="beat_session_title">Et voilà, c’est une manche</string>
+    <string name="beat_session_body">Une partie, ce sont des manches, l’une après l’autre, avec ces points reportés entre elles, jouées jusqu’à une durée fixée à l’avance — une demi-heure, en général. Une fois le temps écoulé, la manche en cours se termine, et celui qui a le plus de points arrive premier pour 5 points de partie, deuxième pour 3, troisième pour 2. Une manche gagnée de trois points compte pareil, que vous l’ayez gagnée d’un point ou de vingt.</string>
+    <string name="beat_scoring_title">Chaque main est révélée</string>
+    <string name="beat_scoring_body">La main de l’appelant est opposée à la meilleure main de tous les autres. Plus basse, et l’appelant prend +3 pendant que chacun des autres perd 1 point. À égalité, l’appelant gagne : +3 pour lui, rien de perdu par personne. Battu, et l’appelant perd 1 pendant que chacun des autres prend +3.</string>
+    <string name="beat_vinto_body">C’est le pari que sa main est la plus basse de la table. Cela met fin à la manche : tous les autres jouent encore exactement un tour, puis chaque main est retournée.</string>
+    <string name="beat_vinto_title">%1$s a appelé Vinto</string>
+
+    <string name="beat_toss_in_also">%1$s vient d’en riposter une. </string>
+    <string name="list_join_and"> et </string>
+    <string name="beat_vinto_somebody">Quelqu’un</string>
+    <string name="beat_strayed_body">Votre table, pas la mienne — rien ici n’est un mauvais coup. La leçon reprend où que vous l’emmeniez.</string>
+
+    <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
+    <string name="gloss_pulse">Une carte qui palpite peut être touchée maintenant.</string>
+    <string name="gloss_toss">Le jeton sous les piles indique la valeur pour laquelle la fenêtre est ouverte.</string>
+    <string name="gloss_log">Chaque coup est noté dans cet encadré — jetez-y un œil quand les cartes bougent plus vite que vous ne pouvez lire.</string>
+    <string name="gloss_badge">Le nombre vert compte ce qui reste dans la pioche.</string>
+
+    <string name="teach_note">%1$s — vaut %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s — vaut %2$s, et ne fait rien du tout. Bonne à garder pour l’instant, à échanger avant que quelqu’un n’appelle.</string>
+
+
+    <string name="teach_heading">Apprendre le jeu</string>
+    <string name="teach_finished_title">Voilà, c’est tout le jeu</string>
+    <string name="teach_finished_body">Chaque main est révélée et la manche est comptée. Chaque règle que vous avez rencontrée ici est une règle d’une vraie partie — il n’existe pas de version d’entraînement.</string>
+    <string name="teach_watching">Regardez ce qu’ils prennent, et ce qu’ils reposent.</string>
+    <string name="teach_go_on">Continuer</string>
+    <string name="teach_done">Terminé</string>
+
+    <!-- ================================================================ help -->
+    <string name="help_right_now">En ce moment</string>
+    <string name="help_the_cards">Les cartes</string>
+    <string name="help_signals">Ce que la table vous dit</string>
+    <string name="help_group_numbers">Chiffres — valent ce qu’ils indiquent, rien de plus</string>
+    <string name="help_group_lookers">Regardeuses — vous offrent une carte à retenir</string>
+    <string name="help_group_movers">Déplaceuses — mettent une carte ailleurs</string>
+    <string name="help_group_odd">Les particulières</string>
+    <string name="help_no_action">Aucune action.</string>
+    <string name="help_card_worth">%1$s — vaut %2$d</string>
+    <string name="help_closing">Chaque carte d’une main compte contre vous, le total le plus bas gagne donc. Appelez Vinto quand vous pensez que le vôtre est le plus bas — tous les autres jouent alors encore un tour ensemble, et seule leur meilleure main est comparée à la vôtre.</string>
+    <string name="stats_played">%1$d jouées</string>
+    <string name="stats_won">%1$d %% gagnées</string>
+    <string name="stats_best">meilleure %1$d</string>
+    <string name="stats_streak">%1$d d’affilée</string>
+    <string name="stats_row">Votre bilan : %1$s</string>
+    <string name="stats_separator"> · </string>
+
+    <!-- The lesson's chapters, one progress dot each. -->
+    <string name="chapter_table">La table</string>
+    <string name="chapter_peek">Vos deux coups d’œil</string>
+    <string name="chapter_draw">Prendre une carte</string>
+    <string name="chapter_keep">Garder ou jeter</string>
+    <string name="chapter_declare">Nommer une valeur</string>
+    <string name="chapter_actions">Ce que font les cartes</string>
+    <string name="chapter_toss">Riposter</string>
+    <string name="chapter_vinto">Appeler Vinto</string>
+    <string name="chapter_score">Le score</string>
+    <string name="chapter_covered">%1$s — vu</string>
+    <string name="chapter_to_come">%1$s — à venir</string>
+    <string name="intro_part_covered">Partie %1$d sur %2$d — lue</string>
+    <string name="intro_part_to_come">Partie %1$d sur %2$d — à venir</string>
+
+    <!-- What the "?" explains. -->
+    <string name="explains_card_plain">%1$s. Elle vaut %2$d. Elle n’a pas d’action, elle ne peut donc qu’aller dans votre main ou sur la pile.</string>
+    <string name="explains_card_action">%1$s. Elle vaut %2$d. %3$s. %4$s</string>
+    <string name="explains_setup">Regardez deux de vos propres cartes et retenez-les — elles retournent face cachée quand la manche commence. Tout ce qui suit est affaire de mémoire.</string>
+    <string name="explains_scoring">Chaque main est révélée. Le total le plus bas gagne la manche ; le joueur qui a appelé Vinto est comparé à la meilleure main de tous les autres.</string>
+    <string name="explains_toss_in">Quiconque détient une carte de la même valeur peut la riposter, ce qui la sort de sa main gratuitement. Si vous vous trompez de valeur, vous prenez une carte de pénalité et vous ne pouvez plus riposter pour cette manche.</string>
+    <string name="explains_final_round">Vinto a été appelé. Tous les autres jouent un dernier tour en tant que coalition, et seule leur meilleure main compte face à celle de l’appelant.</string>
+    <string name="explains_turn">Piochez dans la pioche, ou prenez le dessus de la défausse si c’est une carte d’action que personne n’a jouée. Gardez ce qui fait baisser votre total ; appelez Vinto quand vous pensez que le vôtre est le plus bas.</string>
+
+    <!-- The smaller line under the prompt. -->
+    <string name="detail_card_does">%1$s, qui vaut %2$d : %3$s</string>
+    <string name="detail_king_declared">Le Roi a déclaré un %1$s : %2$s</string>
+    <string name="detail_tap_to_say">Touchez une de vos cartes pour dire ce que vous pensez qu’elle est.</string>
+    <string name="detail_table_talk">Parole donnée — la coalition vous croit sur parole, juste ou fausse.</string>
+    <string name="detail_right_plays">Juste joue son action ; faux vous coûte une carte.</string>
+    <string name="detail_wrong_costs">Une erreur vous coûte une carte de pénalité.</string>
+    <string name="detail_barred_card">Vous vous êtes trompé sur cette carte, vous êtes donc exclu de celle-ci. La prochaine carte qui tombe offre une nouvelle chance.</string>
+    <string name="detail_barred">Vous vous êtes trompé, et dans la manche finale, c’est pour le reste de la manche.</string>
+    <string name="detail_scored_against">%1$s a appelé Vinto, la manche a donc été comptée contre sa main.</string>
+    <string name="detail_deck_ran_out">La pioche s’est épuisée, la manche s’est donc terminée et chaque main a été comptée.</string>
+
+    <!-- The line above the buttons: what the table is asking for. -->
+    <string name="ask_or"> ou </string>
+    <string name="ask_look_at_two_of_yours">Regardez deux de vos cartes</string>
+    <string name="ask_one_more_to_look_at">Encore une carte à regarder</string>
+    <string name="ask_ready">Prêt quand vous voulez</string>
+    <string name="ask_your_turn">À vous de jouer</string>
+    <string name="ask_you_drew">Vous avez pioché le %1$s</string>
+    <string name="ask_you_drew_unknown">Vous avez pioché une carte</string>
+    <string name="ask_which_card_replaced">Quelle carte remplace-t-elle ?</string>
+    <string name="ask_name_what_you_put_down">Nommez la carte que vous posez ?</string>
+    <string name="ask_what_do_you_say">Selon vous, quelle est cette carte ?</string>
+    <string name="ask_say_and_play">Dites ce que c’est, et jouez l’action de cette carte</string>
+    <string name="ask_look_at_one_of_yours">Regardez une de vos propres cartes</string>
+    <string name="ask_look_at_one_of_theirs">Regardez une carte d’un autre joueur</string>
+    <string name="ask_choose_any_card">Choisissez n’importe quelle carte</string>
+    <string name="ask_choose_two">Choisissez deux cartes, chez deux joueurs différents</string>
+    <string name="ask_look_at_two">Regardez deux cartes, chez deux joueurs différents</string>
+    <string name="ask_swap_them">Les échanger ?</string>
+    <string name="ask_remember_it">Retenez-la</string>
+    <string name="ask_who_draws">Qui pioche une carte ?</string>
+    <string name="ask_card_waiting">Le %1$s attend</string>
+    <string name="ask_card_waiting_unknown">En attente</string>
+    <string name="ask_toss_in">Le %1$s vient de tomber — riposter avec une carte identique ?</string>
+    <string name="ask_toss_in_barred">Le %1$s vient de tomber</string>
+    <string name="ask_waiting_for_others">En attente des autres</string>
+    <string name="ask_watching">Observation</string>
+    <string name="ask_somebody_playing">%1$s joue</string>
+    <string name="ask_you_playing">Vous jouez</string>
+    <string name="ask_who_plays_for_you">%1$s a appelé Vinto. Qui joue pour le reste d’entre vous ?</string>
+    <string name="ask_round_over">Manche terminée</string>
+    <string name="ask_round_over_lowest">Manche terminée — vous avez fini le plus bas, à %1$d</string>
+    <string name="ask_round_over_not_lowest">Manche terminée — vous avez fini à %1$d, le meilleur était %2$d</string>
+
+    <!-- The buttons on the table. -->
+    <string name="choice_back">Retour</string>
+    <string name="choice_start_round">Démarrer la manche</string>
+    <string name="choice_draw_card">Piocher</string>
+    <string name="choice_use_from_pile">Utiliser %1$s</string>
+    <string name="choice_use_action">Utiliser l’action</string>
+    <string name="choice_swap_cards">Échanger les cartes</string>
+    <string name="choice_discard">Défausser</string>
+    <string name="choice_just_swap">Juste échanger</string>
+    <string name="choice_put_it_down">Poser</string>
+    <string name="choice_leave_them">Laisser</string>
+    <string name="choice_continue">Continuer</string>
+    <string name="choice_call_vinto">Appeler Vinto</string>
+    <string name="choice_done">Terminé</string>
+
+    <!-- The move log. -->
+    <string name="log_you">Vous</string>
+    <string name="log_drew_known">Vous avez pioché le %1$s</string>
+    <string name="log_drew_known_they">%1$s a pioché le %2$s</string>
+    <string name="log_draw_you">Vous piochez une carte</string>
+    <string name="log_draw_they">%1$s pioche une carte</string>
+    <string name="log_took">%1$s a pris le %2$s</string>
+    <string name="log_took_unknown">%1$s a pris la carte du dessus</string>
+    <string name="log_swap_you">Vous échangez la carte %1$d</string>
+    <string name="log_swap_they">%1$s échange la carte %2$d</string>
+    <string name="log_swap_dropping_you">Vous échangez la carte %1$d, en laissant tomber le %2$s</string>
+    <string name="log_swap_dropping_they">%1$s échange la carte %2$d, en laissant tomber le %3$s</string>
+    <string name="log_throw_you">Vous jetez le %1$s</string>
+    <string name="log_throw_they">%1$s jette le %2$s</string>
+    <string name="log_throw_unknown_you">Vous jetez la carte</string>
+    <string name="log_throw_unknown_they">%1$s jette la carte</string>
+    <string name="log_play_you">Vous jouez le %1$s</string>
+    <string name="log_play_they">%1$s joue le %2$s</string>
+    <string name="log_play_unknown_you">Vous jouez la carte</string>
+    <string name="log_play_unknown_they">%1$s joue la carte</string>
+    <string name="log_tossed_in">%1$s a riposté avec le %2$s</string>
+    <string name="log_tossed_in_unknown">%1$s a riposté avec une carte</string>
+    <string name="log_toss_in_missed">%1$s a riposté avec le %2$s — à tort, ça lui a coûté une carte de pénalité</string>
+    <string name="log_toss_in_missed_unknown">%1$s a riposté avec la mauvaise carte — une carte de pénalité</string>
+    <string name="log_called_vinto">%1$s a appelé Vinto</string>
+    <string name="log_swapped_two">%1$s a échangé deux cartes</string>
+    <string name="log_swapped_two_named">%1$s a échangé %2$s avec %3$s</string>
+    <string name="log_left_alone">%1$s les a laissées telles quelles</string>
+    <string name="log_declared">%1$s a déclaré %2$s</string>
+    <string name="log_made_draw_you">Vous avez fait piocher %1$s</string>
+    <string name="log_made_you_draw">%1$s vous a fait piocher une carte</string>
+    <string name="log_made_draw_they">%1$s a fait piocher %2$s</string>
+    <string name="log_round_begins">la manche commence</string>
+
+    <string name="help_counts_title">Ce que cette application compte</string>
+    <string name="help_counts_body">Uniquement des statistiques anonymes : combien de manches sont jouées, jusqu’où les gens vont, si une table s’est bloquée, et ce que coûte une salle à faire tourner. Jamais votre nom, votre code de salle, le contenu de votre main, ni rien qui pourrait remonter jusqu’à vous ou votre appareil — il n’y a nulle part où les placer dans ce qui est envoyé. Ça peut être désactivé dans les Paramètres, et un navigateur qui demande à ne pas être suivi le désactive pour vous.</string>
+
+    <string name="signal_turn">Un anneau vert sur une place</string>
+    <string name="signal_turn_meaning">À qui c’est le tour. Il clignote quand le tour arrive, car trois bots peuvent jouer le leur entre deux appuis.</string>
+    <string name="signal_vinto">Un anneau doré</string>
+    <string name="signal_vinto_meaning">Ce joueur a appelé Vinto. Personne ne peut toucher à ses cartes pour le reste de la manche.</string>
+    <string name="signal_penalty">Un anneau rouge, et une main qui tressaille</string>
+    <string name="signal_penalty_meaning">Une carte de pénalité vient d’y atterrir — une mauvaise supposition, ou une mauvaise riposte.</string>
+    <string name="signal_coalition">Un anneau bleu</string>
+    <string name="signal_coalition_meaning">La coalition : tout le monde sauf celui qui a appelé Vinto, jouant leur dernier tour ensemble contre cette main unique.</string>
+    <string name="signal_live">Un anneau doré sur la défausse</string>
+    <string name="signal_live_meaning">Cette carte a été posée sans que son action soit utilisée, le prochain joueur peut donc la prendre et la jouer au lieu de piocher. Une carte dont l’action *a été* jouée n’a pas d’anneau.</string>
+    <string name="signal_tappable">Une carte qui palpite</string>
+    <string name="signal_tappable_meaning">Elle peut être touchée maintenant. Si rien ne palpite, la table attend quelqu’un d’autre.</string>
+    <string name="signal_reshuffle">Des cartes qui repartent balayer la pioche</string>
+    <string name="signal_reshuffle_meaning">La pioche s’est épuisée, la pile a donc été remélangée dedans. Tout ce que chacun avait appris en observant cette pile est désormais périmé.</string>
+    <string name="signal_peek">Une carte qui se soulève vers le centre</string>
+    <string name="signal_peek_meaning">Quelqu’un la regarde. Tout le monde voit *quelle* carte est regardée — seul le joueur qui y a droit en voit la face.</string>
+
+
+    <!-- The cards, in words. -->
+    <string name="card_name_two">Deux</string>
+    <string name="card_name_three">Trois</string>
+    <string name="card_name_four">Quatre</string>
+    <string name="card_name_five">Cinq</string>
+    <string name="card_name_six">Six</string>
+    <string name="card_name_seven">Sept</string>
+    <string name="card_name_eight">Huit</string>
+    <string name="card_name_nine">Neuf</string>
+    <string name="card_name_ten">Dix</string>
+    <string name="card_name_jack">Valet</string>
+    <string name="card_name_queen">Dame</string>
+    <string name="card_name_king">Roi</string>
+    <string name="card_name_ace">As</string>
+    <string name="card_name_joker">Joker</string>
+
+    <string name="card_long_seven">Regardez une de vos propres cartes</string>
+    <string name="card_long_eight">Regardez une de vos propres cartes</string>
+    <string name="card_long_nine">Regardez une carte d’un autre joueur</string>
+    <string name="card_long_ten">Regardez une carte d’un autre joueur</string>
+    <string name="card_long_jack">Échangez deux cartes face cachée, chez deux joueurs différents</string>
+    <string name="card_long_queen">Regardez deux cartes au choix, chez deux joueurs différents, puis échangez-les si vous le souhaitez</string>
+    <string name="card_long_king">Déclarez l’action d’une autre carte, chez n’importe quel joueur (7-A)</string>
+    <string name="card_long_ace">Forcez un adversaire à piocher une carte de pénalité</string>
+
+    <string name="card_help_two">Carte numérotée de valeur 2</string>
+    <string name="card_help_three">Carte numérotée de valeur 3</string>
+    <string name="card_help_four">Carte numérotée de valeur 4</string>
+    <string name="card_help_five">Carte numérotée de valeur 5</string>
+    <string name="card_help_six">Carte numérotée de valeur 6</string>
+    <string name="card_help_seven">Touchez une de vos cartes pour la révéler brièvement et mémoriser sa valeur. Vous pouvez ignorer cette action si vous préférez.</string>
+    <string name="card_help_eight">Touchez une de vos cartes pour la révéler brièvement et mémoriser sa valeur. Vous pouvez ignorer cette action si vous préférez.</string>
+    <string name="card_help_nine">Touchez la carte d’un adversaire pour la révéler brièvement et voir sa valeur. Vous pouvez ignorer cette action si vous préférez.</string>
+    <string name="card_help_ten">Touchez la carte d’un adversaire pour la révéler brièvement et voir sa valeur. Vous pouvez ignorer cette action si vous préférez.</string>
+    <string name="card_help_jack">Sélectionnez deux cartes chez des joueurs différents pour échanger leurs positions — vous pouvez inclure vos propres cartes ou choisir uniquement des adversaires. Vous ne pouvez pas sélectionner deux cartes du même joueur. Vous pouvez réinitialiser votre sélection ou ignorer cette action.</string>
+    <string name="card_help_queen">1. Regardez deux cartes chez des joueurs différents (les vôtres ou celles d’adversaires, mais chez deux joueurs différents)\n2. Une fois les deux cartes vues, décidez si vous les échangez</string>
+    <string name="card_help_king">Choisissez quelle action de carte exécuter : 7 (regarder une des vôtres), 8 (regarder une des vôtres), 9/10 (regarder celle d’un adversaire), V (échanger), D (regarder et échanger), A (forcer à piocher). Vous pouvez aussi déclarer des cartes sans action (2-6, R, Joker).</string>
+    <string name="card_help_ace">Sélectionnez un adversaire pour le forcer à piocher une carte de pénalité dans la pioche. Cela augmente sa main et son total. Vous pouvez ignorer cette action si vous préférez.</string>
+    <string name="card_help_joker">Joker de valeur -1</string>
+</resources>

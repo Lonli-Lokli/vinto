@@ -84,12 +84,12 @@ class SeatChoiceTest {
      *
      * The four the offline game deals do; a person who typed their name into a room does not,
      * and will not until seats can carry one over the wire. So the mapping has to be able to
-     * say *no* — the felt's `portraitFor` cannot, it falls back to Leonardo, and a stranger
-     * wearing Leonardo's face is worse than a stranger wearing none.
+     * say *no* — the felt's `portraitFor` cannot, it falls back to Fern, and a stranger
+     * wearing a seat's own emblem is worse than a stranger wearing none.
      */
     @Test
     fun theSeatsTheGameDealsHavePortraitsAndATypedNicknameDoesNot() {
-        listOf("You", "Raph", "Mikey", "Don").forEach { name ->
+        listOf("You", "Ember", "Sky", "Dune").forEach { name ->
             assertNotNull(portraitOrNull(name), "$name is a seat this game deals; it has a face")
         }
         assertNull(portraitOrNull("Volha"), "somebody who typed their name has no portrait yet")

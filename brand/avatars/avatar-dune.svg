@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- DUNE — dark gold, a ridge. Plain #C9A227 cannot hold paper on it, so this is the deck's
+       GOLD_DARK; the hairline above stays the brighter gold and the two read as one family. -->
+  <!-- The disc, the deck's ink ring, and the court cards' gold hairline just inside it.
+       Circles are arc paths because a vector drawable has no <circle> element. -->
+  <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#8A6D1B" stroke="#14181B" stroke-width="20"/>
+  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
+  <!-- A flat-based triangle. The most unlike-anything-else silhouette of the four, which is why
+       it is the one that is not organic. -->
+  <path d="M512 286 L760 730 L264 730 Z" fill="#F7F5EF"/>
+</svg>

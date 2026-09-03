@@ -42,10 +42,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
-import game.vinto.app.art.avatar_donatello
-import game.vinto.app.art.avatar_leonardo
-import game.vinto.app.art.avatar_michelangelo
-import game.vinto.app.art.avatar_raphael
+import game.vinto.app.art.avatar_dune
+import game.vinto.app.art.avatar_ember
+import game.vinto.app.art.avatar_fern
+import game.vinto.app.art.avatar_sky
 import game.vinto.app.art.seat_is_a_bot
 import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
@@ -289,38 +289,44 @@ fun SeatPlate(
 /**
  * The portrait for a seat, where the seat has one.
  *
- * Keyed on the name the engine deals, which is fixed: `initializeGame` always seats You,
- * Raphael, Michelangelo and Donatello in that order. Online the seats are people who typed
- * their own nicknames and **have no portrait at all** — not yet; nothing carries one over the
- * wire — which is what this returns null for.
+ * Keyed on the name the engine deals, which is fixed: `initializeGame` always seats You, Ember,
+ * Sky and Dune in that order, and a room fills its seats from the same list starting at Fern
+ * (`RoomCore.botName`). Online the seats are people who typed their own nicknames and **have no
+ * portrait at all** — not yet; nothing carries one over the wire — which is what this returns
+ * null for.
  *
  * That null is the whole reason this exists beside [portraitFor]. Somewhere that draws a
  * portrait *beside a name already on the screen* — the rail's seat buttons — can simply leave
  * it out, and a stranger with no face is honest. Somewhere that has a round hole to fill
  * whatever happens, like the felt's plate, needs a fallback, and that is [portraitFor]'s job.
+ *
+ * Matched on the whole name rather than a prefix. The old cast was matched with `startsWith`
+ * so that "Raph" and "Raphael" landed on one portrait, and the cost was that any stranger
+ * whose nickname happened to begin with those letters was handed a bot's face. These four
+ * names are the only forms there are, so the looser match buys nothing.
  */
-internal fun portraitOrNull(name: String): DrawableResource? = when {
-    name.startsWith("Raph") -> Res.drawable.avatar_raphael
-    name.startsWith("Mikey") || name.startsWith("Michel") -> Res.drawable.avatar_michelangelo
-    name.startsWith("Don") -> Res.drawable.avatar_donatello
-    name.startsWith("Leo") -> Res.drawable.avatar_leonardo
-    // The offline game's human seat is dealt as "You" and the felt draws Leonardo on it, so
+internal fun portraitOrNull(name: String): DrawableResource? = when (name) {
+    "Fern" -> Res.drawable.avatar_fern
+    "Ember" -> Res.drawable.avatar_ember
+    "Sky" -> Res.drawable.avatar_sky
+    "Dune" -> Res.drawable.avatar_dune
+    // The offline game's human seat is dealt as "You" and the felt draws Fern's leaf on it, so
     // this says the same rather than leaving the one seat in a solo game faceless.
-    name == "You" -> Res.drawable.avatar_leonardo
+    "You" -> Res.drawable.avatar_fern
     else -> null
 }
 
 /**
  * The portrait for a seat, whoever they are.
  *
- * Leonardo is the fallback, because the seat he plays is the one the offline game gives the
- * human: his portrait was filed as `avatar_you` and read as "a picture of the viewer", which
- * is true of exactly one game mode. Online the viewer is whoever typed their name in, and
- * seat zero can be Leonardo himself when the room fills it with a bot. The file is named for
- * the character now; the fallback is a separate decision that happens to land on him.
+ * Fern is the fallback, because the seat it marks is the one the offline game gives the human:
+ * the emblem was filed as `avatar_you` in an earlier life and read as "a picture of the
+ * viewer", which is true of exactly one game mode. Online the viewer is whoever typed their
+ * name in, and seat zero can be Fern itself when the room fills it with a bot. The file is
+ * named for the seat now; the fallback is a separate decision that happens to land on it.
  */
 internal fun portraitFor(name: String): DrawableResource =
-    portraitOrNull(name) ?: Res.drawable.avatar_leonardo
+    portraitOrNull(name) ?: Res.drawable.avatar_fern
 
 private val PlateTap = 44.dp
 

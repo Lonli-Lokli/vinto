@@ -276,7 +276,27 @@ nobody and look like it worked (DEPLOYMENT.md §7b is corrected). And **a langua
 is no longer blocked at all: `values-ru/` exists now, with 403 of the 404 strings, so the
 thing it was waiting for arrived.
 
-Everything here has been attempted and stopped for a reason that is not a missing decision:
+**Much of the table below has since been done**, in the pass that prepared both stores. Rather
+than rewrite every row, here is what changed — `openspec/changes/ship-and-operate/tasks.md` is
+the authoritative version and carries the detail:
+
+* **The upload key exists** (`keystore/vinto-upload.jks` + `keystore.properties`, both gitignored
+  and on one machine — *back them up*), so `bundleRelease` produces a signed .aab and the
+  assetlinks fingerprint is no longer hypothetical.
+* **Both `.well-known` files are written.** `apple-app-site-association` is complete;
+  `assetlinks.json` carries the upload key's fingerprint and still needs Google's app-signing one
+  added beside it once the Play Console shows it (`docs/kotlin/APP-LINKS.md`).
+* **The iOS app is a real submission target now** — an icon, an `Info.plist`, entitlements, a
+  privacy manifest and a generated `project.yml`, where before it had none of them. It archives
+  only once Xcode is signed into the developer account on the build machine.
+* **A language selector had nothing to select; it has nineteen alternatives now.** Every locale in
+  `Language.kt` has a `values-<loc>/strings.xml`.
+* **"Rate this app" ships**, pointing at listings that are not live yet — the reasoning that kept
+  it out is reversed in `ship-and-operate` 2.5.
+* **Both store listings are pushed.** Apple holds 1.0 with its copy, categories, content rights
+  and age rating; Play holds the listing and the icon. Neither has a build or screenshots yet.
+
+Everything below has been attempted and stopped for a reason that is not a missing decision:
 no credentials, no hardware, or no data yet. Each line names what would unblock it, so the
 person who has that thing can pick exactly their share up rather than re-deriving the list.
 

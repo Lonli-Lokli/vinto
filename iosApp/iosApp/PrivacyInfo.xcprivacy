@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Apple's privacy manifest. It must say the same thing as the App Privacy answers in
+        `vydanne.config.mjs` (`privacy.collected` / `privacy.tracking`) — those two are read by
+        different people at different times, and a disagreement between them is found during
+        review rather than here.
+
+        Vinto's list is wider than the rest of the portfolio's games, and the reason is the room:
+        Niva, Vodar and Palon have no server to talk to. Nothing below is linked to an identity,
+        because there is no account anywhere in this app to link it to.
+    -->
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <dict>
+            <!-- Anonymous counts. `AnalyticsPrivacyTest` walks the sealed event hierarchy by
+                 reflection and fails on any field that is not a number, a boolean or an enum, so
+                 a room code, a nickname or a token has nowhere to sit. Opt-OUT, in Settings. -->
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeProductInteraction</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- Sentry. `CrashReportTest` pins what rides along: the deal's gameId, the round and
+                 the turn. No identifier. -->
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeCrashData</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- The same pipe as the crashes. -->
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePerformanceData</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- The guest id (`Identity.mintGuestId` — "guest-" plus 32 hex digits), which
+                 persists in the vault and reaches the room as `ownerId`. It is minted on the
+                 device and tied to nothing, but it IS a persistent pseudonymous identifier and
+                 declaring otherwise would be false. It is what lets a dropped player reclaim
+                 their own seat, which is why it is App Functionality rather than Analytics. -->
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeUserID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- The nickname. Free text, 1–16 characters after `cleanNickname`, shown to everyone
+                 in the room and — for a public room — to strangers in the `/rooms` list. -->
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+    </array>
+
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <!-- `NSUserDefaults`, via `Storage.ios.kt`'s vault and `LocalAppLocale.ios.kt`. It
+                 holds this app's own settings, saved game, stats and seat token and nothing
+                 else — reason CA92.1, "access info from the app itself".
+
+                 This declaration is not optional paperwork: an upload without it is rejected
+                 with ITMS-91053, and the vault is reached on the first frame. -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

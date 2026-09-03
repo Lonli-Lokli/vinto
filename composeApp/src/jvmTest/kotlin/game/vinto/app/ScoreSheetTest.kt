@@ -32,9 +32,9 @@ class ScoreSheetTest {
 
     private val seats = listOf(
         "p1" to "You",
-        "p2" to "Raphael",
-        "p3" to "Michelangelo",
-        "p4" to "Donatello",
+        "p2" to "Ember",
+        "p3" to "Sky",
+        "p4" to "Dune",
     )
 
     private fun ComposeUiTest.sheetFor(hands: Map<String, Int>, caller: String?) {

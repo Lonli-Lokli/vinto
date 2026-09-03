@@ -1,5 +1,5 @@
-import SwiftUI
 import ComposeApp
+import SwiftUI
 
 /// Hosts the Compose UI. `MainViewControllerKt.MainViewController()` is the Kotlin function
 /// in `composeApp/src/iosMain/.../MainViewController.kt`, exported through the `ComposeApp`

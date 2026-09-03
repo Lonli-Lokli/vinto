@@ -1,0 +1,61 @@
+# SwiftLint — the Swift quality gate for the iOS app, and the analogue of detekt on the Kotlin
+# side. There is very little Swift here on purpose: an entry point, the Compose bridge, and the
+# two link handlers. That is the whole surface, so it can afford to be linted strictly.
+#
+#   swiftlint                 lint
+#   swiftlint --fix           autocorrect
+#
+# Install with `brew install swiftlint`. The Xcode build phase skips with a warning when it is
+# absent, so a contributor without it can still build.
+
+included:
+  - iosApp/iosApp
+
+excluded:
+  - build
+  - iosApp/build
+  - iosApp/iosApp.xcodeproj
+
+opt_in_rules:
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - joined_default_parameter
+  - literal_expression_end_indentation
+  - modifier_order
+  - multiline_parameters
+  - operator_usage_whitespace
+  - overridden_super_call
+  - prohibited_super_call
+  - redundant_nil_coalescing
+  - sorted_imports
+  - toggle_bool
+  - unavailable_function
+  - vertical_whitespace_closing_braces
+
+line_length:
+  # The Swift here is mostly comment, and the comments explain decisions rather than restating
+  # signatures — which runs long. Warn late, never error.
+  warning: 120
+  error: 200
+  ignores_comments: true
+
+identifier_name:
+  min_length: 1 # short, idiomatic names — `url`, `id`
+  excluded: [id, url]
+
+type_name:
+  min_length: 3
+  # `iOSApp` is the standard Xcode/KMP @main entry-struct name (lowercase leading `i`), and
+  # renaming it to satisfy a linter would make this project the odd one in the portfolio.
+  excluded: [iOSApp]
+
+reporter: "xcode"

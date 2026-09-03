@@ -35,7 +35,11 @@ class MainActivity : ComponentActivity() {
         // rather than arriving a frame later and pushing a screen the player did not ask for
         // on top of the one they were looking at.
         offerOpenedLink(intent?.dataString)
-        setContent { App() }
+        // A store-capture state, in the debug build only: `captureScene` reads an intent extra
+        // in `src/debug` and returns null from `src/release`, so the shipped binary has no
+        // reader at all. `MarketingScene` says what the states are and why this is a variant
+        // gate rather than an `if`.
+        setContent { App(marketing = captureScene(intent)) }
     }
 
     /**

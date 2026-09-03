@@ -615,10 +615,10 @@ card already wears the ring that says so. Aiming at a seat plate alone was a sma
 carrying a gold ring that also means "it is their turn".
 
 The portrait needs a mapping that can say **no**. `portraitFor` cannot: it falls back to
-Leonardo, which is right for the round hole in a felt plate and wrong here, because a stranger
-wearing Leonardo's face is worse than a stranger wearing none — and online a seat is whoever
-typed their name in, with no portrait to carry. So `portraitOrNull` is the honest half (the
-four the offline game deals, plus the "You" seat the felt already draws Leonardo on) and
+Fern, which is right for the round hole in a felt plate and wrong here, because a stranger
+wearing another seat's emblem is worse than a stranger wearing none — and online a seat is
+whoever typed their name in, with no portrait to carry. So `portraitOrNull` is the honest half
+(the four the offline game deals, plus the "You" seat the felt already draws Fern on) and
 `portraitFor` is the same thing with the fallback, for the felt.
 
 **And the card asking gives its column up**, as it does for an aim. The player drew the Ace,
