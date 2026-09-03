@@ -1,12 +1,19 @@
 package game.vinto.client
 
+import game.vinto.engine.CardView
+import game.vinto.engine.PendingActionView
 import game.vinto.engine.projectView
+import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
+import game.vinto.shapes.SwapCardPayload
+import game.vinto.shapes.TargetType
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -247,6 +254,71 @@ class TeachScriptTest {
             assertTrue(lesson.teaches is Teaches.Watching, "$lesson")
             assertEquals(null, lesson.point, "nothing to point at while somebody else plays")
         }
+    }
+
+    /**
+     * The coalition's play is explained as it happens: when the leader is named, and each
+     * time a member has an action card in play — held so the rule is read before the card
+     * does its work, once per rank. Built by hand because the bots' final round runs
+     * inside one dispatch on the JVM; the screen sees these frames one at a time.
+     */
+    @Test
+    fun theCoalitionsPlayIsExplainedAsItHappens() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val base = stateOf(session)
+        val raph = base.players[1]
+        val mikey = base.players[2]
+        val taught = talkedThrough(session).heard(
+            Lesson(Chapter.VINTO, Teaches.YouCalled, talkId = "you_called"),
+        ).heard(
+            Lesson(Chapter.VINTO, Teaches.CoalitionAgainstYou, talkId = "coalition_vs_you"),
+        )
+
+        val led = base.copy(phase = GamePhase.FINAL, vintoCallerId = me, coalitionLeaderId = raph.id)
+        val leader = assertNotNull(lessonFor(led, tableFor(led), taught, emptyMap()))
+        assertEquals(Teaches.CoalitionLeader(Speaker.Named(raph.nickname)), leader.teaches)
+        assertEquals(Target.Seat(raph.id), leader.point, "and points at whose hand it is")
+        assertEquals(Teaches.CoalitionLeader.ID, leader.talkId, "read, not done")
+
+        val king = Card(id = "K_0", rank = Rank.KING, value = 0, played = false)
+        val playing = led.copy(
+            pendingAction = PendingActionView(
+                playerId = mikey.id,
+                actionPhase = ActionPhase.SELECTING_TARGET,
+                from = PendingCardOrigin.DRAWING,
+                targetType = TargetType.DECLARE_ACTION,
+                card = CardView.Visible(king),
+                targets = emptyList(),
+            ),
+        )
+        val afterLeader = taught.heard(leader)
+        val play = assertNotNull(lessonFor(playing, tableFor(playing), afterLeader, emptyMap()))
+        assertEquals(Teaches.FinalPlay(Speaker.Named(mikey.nickname), Rank.KING), play.teaches)
+        assertEquals("final_K", play.talkId, "once per rank")
+        assertEquals(Target.Seat(mikey.id), play.point)
+
+        val again = lessonFor(playing, tableFor(playing), afterLeader.heard(play), emptyMap())
+        assertTrue(again?.teaches !is Teaches.FinalPlay, "a second King is not explained twice: $again")
+    }
+
+    /** A peek that has found its card says "remember it" over the Done button, not "aim it". */
+    @Test
+    fun aPeekedCardIsSomethingToRemember() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.SwapCard(SwapCardPayload(me, 1, Rank.EIGHT)))
+        session.dispatch(GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, me, 2)))
+
+        val view = stateOf(session)
+        val lesson = assertNotNull(lessonFor(view, tableFor(view), taught, session.rememberedHand()))
+        assertEquals(Teaches.RememberIt, lesson.teaches)
+        assertEquals(Target.Button(Label.Done), lesson.point)
     }
 
     /** The tour is finite: keep acknowledging and it hands the player back their table. */

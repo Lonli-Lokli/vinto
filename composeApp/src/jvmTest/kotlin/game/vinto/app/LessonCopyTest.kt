@@ -193,6 +193,29 @@ class LessonCopyTest {
         assertTrue(playing.contains("Peek at one card of another player"), "and what it does: $playing")
     }
 
+    /** Each of the three cards the coalition plays is explained by what it does. */
+    @Test
+    fun theCoalitionsCardsAreExplainedByWhatTheyDo() = runComposeUiTest {
+        val read = mutableStateOf(emptyList<String>())
+        setContent {
+            read.value = listOf(
+                taughtTitle(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)) ?: "",
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Raph"), Rank.ACE)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Mikey"), Rank.KING)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Don"), Rank.NINE)),
+                taughtBody(Teaches.CoalitionLeader(Speaker.Named("Raph"))),
+            )
+        }
+        waitForIdle()
+
+        val said = read.value
+        assertTrue(said[0].contains("Raph") && said[0].contains("Ace"), "who and what: ${said[0]}")
+        assertTrue(said[1].contains("draw a card"), "an Ace makes somebody draw: ${said[1]}")
+        assertTrue(said[2].contains("penalty card"), "a wrong name costs a card: ${said[2]}")
+        assertTrue(said[3].contains("looks at one card"), "a 9 looks: ${said[3]}")
+        assertTrue(said[4].contains("Raph"), "the leader is named: ${said[4]}")
+    }
+
     /** The call the round is built to end on says why the hand cannot be beaten. */
     @Test
     fun theCallNowBeatSaysWhyTheHandIsSafe() = runComposeUiTest {

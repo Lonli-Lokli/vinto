@@ -98,6 +98,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
+import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
@@ -593,8 +594,21 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
 private fun railCard(view: PlayerView, table: Table): CardView? {
     if (table.aim != null || table.seats.isNotEmpty()) return null
     if (!yourTurn(view)) return null
+    // A peek that has found its card shows *that* card, not the one that bought the look:
+    // the rail was holding up the 8 and saying what an 8 does while the Joker it had just
+    // turned over lay on the felt unexplained (product owner). The look is the news.
+    peekedCard(view)?.let { return it }
     (view.pendingAction?.card as? CardView.Visible)?.let { return it }
     return view.discardTop?.let { CardView.Visible(it) } ?: CardView.Hidden
+}
+
+/** The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at. */
+private fun peekedCard(view: PlayerView): CardView.Visible? {
+    val pending = view.pendingAction ?: return null
+    if (pending.playerId != view.viewerId) return null
+    val looks = pending.targetType == TargetType.OWN_CARD || pending.targetType == TargetType.OPPONENT_CARD
+    if (!looks) return null
+    return pending.targets.firstNotNullOfOrNull { it.card as? CardView.Visible }
 }
 
 /**

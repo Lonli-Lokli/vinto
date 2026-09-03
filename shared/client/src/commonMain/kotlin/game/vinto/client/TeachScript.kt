@@ -478,7 +478,7 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "coalition_vs_you",
     )
 
-    view.vintoCallerId == view.viewerId -> scoringTalk(view, taught)
+    view.vintoCallerId == view.viewerId -> finalRoundTalk(view, taught) ?: scoringTalk(view, taught)
 
     view.vintoCallerId != null && "vinto" !in taught.talked -> vintoTalk(view)
 
@@ -496,6 +496,48 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
     )
 
     else -> scoringTalk(view, taught)
+}
+
+/**
+ * The coalition's play, explained as it happens.
+ *
+ * Held over the felt at two moments: when the coalition names whose hand it plays, and each
+ * time one of them has an action card in play — the frame with the card engaged is drawn,
+ * the stage holds, the rule is read, and "Go on" lets the card do its work. Once per rank,
+ * so the Ace, the King and the 9 the taught round has the bots play are each explained
+ * exactly once, and a learner who wandered off the line still hears about whatever their
+ * bots happen to play.
+ */
+private fun finalRoundTalk(view: PlayerView, taught: Taught): Lesson? =
+    leaderTalk(view, taught) ?: playTalk(view, taught)
+
+private fun leaderTalk(view: PlayerView, taught: Taught): Lesson? {
+    val leader = view.coalitionLeaderId ?: return null
+    if (Teaches.CoalitionLeader.ID in taught.talked) return null
+    val who = view.players.firstOrNull { it.id == leader }?.nickname ?: return null
+    return Lesson(
+        chapter = Chapter.VINTO,
+        teaches = Teaches.CoalitionLeader(Speaker.Named(who)),
+        point = Target.Seat(leader),
+        talkId = Teaches.CoalitionLeader.ID,
+    )
+}
+
+private fun playTalk(view: PlayerView, taught: Taught): Lesson? {
+    if (view.phase != GamePhase.FINAL) return null
+    val pending = view.pendingAction ?: return null
+    if (pending.playerId == view.viewerId || pending.actionPhase != ActionPhase.SELECTING_TARGET) return null
+    val card = (pending.card as? CardView.Visible)?.card ?: return null
+    val who = view.players.firstOrNull { it.id == pending.playerId }?.nickname ?: return null
+    val beat = Teaches.FinalPlay(Speaker.Named(who), card.rank)
+    if (beat.id in taught.talked) return null
+
+    return Lesson(
+        chapter = Chapter.VINTO,
+        teaches = beat,
+        point = Target.Seat(pending.playerId),
+        talkId = beat.id,
+    )
 }
 
 /** The two beats over the face-up hands, whoever called. */
@@ -533,12 +575,13 @@ private fun acting(view: PlayerView, table: Table, memory: Map<Int, Card>): Less
     // A Queen that has looked at both its cards, asking whether to trade them.
     view.pendingAction?.targetType == TargetType.PEEK_THEN_SWAP -> queenDecision(view, table)
 
-    // A peek turned face up, waiting to be put down. It used to fall through to the
-    // keep-or-throw beat, whose words are about a drawn card.
-    table.choices.any { it.label is Label.PutItDown } -> Lesson(
+    // A peek turned face up, waiting to be put down — the table calls the button "Done".
+    // It used to fall through to the aiming beat, whose words are about choosing a target.
+    view.pendingAction?.targets?.isNotEmpty() == true &&
+        table.choices.any { it.label is Label.Done } -> Lesson(
         chapter = Chapter.ACTIONS,
         teaches = Teaches.RememberIt,
-        point = Target.Button(Label.PutItDown),
+        point = Target.Button(Label.Done),
     )
 
     // Anything else mid-action — a Jack with both cards chosen, say — is answered by its

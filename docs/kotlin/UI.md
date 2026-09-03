@@ -215,6 +215,17 @@ Peek at one card of another player", from `CARD_CONFIGS`. That line, and the fin
 Ace, King and 9, are the learner's only sight of the three cards the round never puts in
 their hand.
 
+**The coalition's play is explained as it happens.** Two more talk beats after the learner's
+call, held over the felt: when the coalition names whose hand it plays (`CoalitionLeader`),
+and each time a member has an action card in play (`FinalPlay`, once per rank) — the frame
+with the card engaged is drawn, the stage holds, the rule is read, and "Go on" lets the card
+do its work. The taught round has the bots play an Ace, a King and a 9 there, which are the
+three cards the learner never holds. The rail also shows the card a peek *turned up* rather
+than the card that bought the look (the 8 was held up and explained while the Joker it had
+found lay on the felt), and a spent discard keeps its face while the window it opened is
+still the viewer's to answer — a card back under "the 8 went down — toss in a match?" read
+as an empty pile — and turns over when they press Continue.
+
 **A talking coach is sized to leave its target uncovered.** It picks whichever end of the felt
 leaves more room clear of the pointer's target and shrinks its body to fit that room, down to
 a floor it scrolls inside. It used to pick an end by which half the target was in and keep the

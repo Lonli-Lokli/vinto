@@ -333,6 +333,13 @@
     <string name="beat_watching_title">%1$s plays the %2$s — %3$s</string>
     <string name="beat_do_not_guess_title">Do not guess</string>
     <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
+    <string name="beat_coalition_leader_title">%1$s plays the coalition’s hand</string>
+    <string name="beat_coalition_leader_body">The coalition has chosen whose hand it plays: at the end, only %1$s’s total is set against yours. The other two spend their last turn making that hand lower — a King can take a bad card out of it, a Jack or a Queen can trade a better one in — or finding out what is in it.</string>
+    <string name="beat_final_play_title">%1$s plays the %2$s</string>
+    <string name="beat_final_play_ace">An Ace makes one player draw a card from the deck, face down, and one more card is one more card counting against them. It cannot be aimed at you now — a caller’s cards are out of reach — so it lands on the coalition’s own side. Watch who has to draw.</string>
+    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it.</string>
+    <string name="beat_final_play_look">A 9 or a 10 looks at one card in somebody else’s hand. In the final round that is how the coalition finds out what it is holding, since yours is out of bounds — and what one of them learns, they may all use.</string>
+    <string name="beat_final_play_other">Watch what it does: this is a card you have not held yet, and the box of recent moves under the table says what happened.</string>
     <string name="beat_swap_them_title">Trade them</string>
     <string name="beat_swap_them_body">You have seen both. Theirs is worth less than yours, so swap: your card goes to them and theirs comes to you — and you know exactly what you are holding afterwards.</string>
     <string name="beat_leave_them_title">Leave them</string>

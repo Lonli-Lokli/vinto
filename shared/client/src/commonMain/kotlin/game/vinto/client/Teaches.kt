@@ -137,6 +137,30 @@ sealed interface Teaches {
         override val id = "coalition_vs_you"
     }
 
+    /**
+     * The coalition has chosen whose hand it plays. Said once the leader is named, over the
+     * final round, so the learner watches the other two work for that hand rather than
+     * three bots taking three unrelated turns.
+     */
+    data class CoalitionLeader(val who: Speaker) : Teaches {
+        override val id = ID
+
+        companion object {
+            const val ID = "coalition_leader"
+        }
+    }
+
+    /**
+     * A coalition member playing an action card in the final round, held while it is in
+     * play so the rule can be read before the card does its work. Once per rank: the
+     * taught round shows an Ace, a King and a 9, which are the three the learner never
+     * holds, and this is where they are explained (product owner: "fully show the
+     * coalition's play, explaining the rules while they are playing").
+     */
+    data class FinalPlay(val who: Speaker, val rank: Rank) : Teaches {
+        override val id = "final_${rank.serialName}"
+    }
+
     data object YourTurnToCall : Teaches {
         override val id = "your_turn_to_call"
     }

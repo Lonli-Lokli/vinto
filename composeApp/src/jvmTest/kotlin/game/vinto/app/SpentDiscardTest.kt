@@ -1,6 +1,9 @@
 package game.vinto.app
 
+import game.vinto.app.game.liesFaceDown
 import game.vinto.app.game.spent
+import game.vinto.client.teachingSession
+import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import kotlin.test.Test
@@ -29,6 +32,37 @@ class SpentDiscardTest {
     fun anUnplayedActionCardStaysFaceUp() {
         val eight = Card(id = "8_0", rank = Rank.EIGHT, value = 8, actionText = "peek", played = false)
         assertFalse(eight.spent(), "the next player may take it, so it has to be readable")
+    }
+
+    /**
+     * Not while the window it opened is still the viewer's to answer: "the 8 went down —
+     * toss in a match?" over a card back read as an empty pile. It turns over when they
+     * press Continue, which is the moment it is spent for them.
+     */
+    @Test
+    fun aPlayedCardStaysFaceUpWhileItsWindowIsStillYours() {
+        val eight = Card(id = "8_0", rank = Rank.EIGHT, value = 8, actionText = "peek", played = true)
+        val view = teachingSession().view.value
+        val window = ActiveTossIn(
+            ranks = listOf(Rank.EIGHT),
+            initiatorId = view.viewerId,
+            originalPlayerIndex = 0,
+            participants = emptyList(),
+            queuedActions = emptyList(),
+            waitingForInput = true,
+            playersReadyForNextTurn = emptyList(),
+        )
+
+        assertFalse(eight.liesFaceDown(view.copy(activeTossIn = window)), "still yours to throw into")
+        assertTrue(
+            eight.liesFaceDown(view.copy(activeTossIn = window.copy(playersReadyForNextTurn = listOf(view.viewerId)))),
+            "answered, so spent for you",
+        )
+        assertTrue(
+            eight.liesFaceDown(view.copy(activeTossIn = window.copy(ranks = listOf(Rank.KING)))),
+            "a window for another rank says nothing about this card",
+        )
+        assertTrue(eight.liesFaceDown(view.copy(activeTossIn = null)), "and no window at all")
     }
 
     @Test

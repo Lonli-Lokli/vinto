@@ -56,6 +56,8 @@ import game.vinto.app.art.beat_cards_queen_title
 import game.vinto.app.art.beat_cards_theirs_body
 import game.vinto.app.art.beat_cards_theirs_title
 import game.vinto.app.art.beat_coalition_body
+import game.vinto.app.art.beat_coalition_leader_body
+import game.vinto.app.art.beat_coalition_leader_title
 import game.vinto.app.art.beat_coalition_title
 import game.vinto.app.art.beat_coalition_vs_you_body
 import game.vinto.app.art.beat_coalition_vs_you_title
@@ -63,6 +65,11 @@ import game.vinto.app.art.beat_do_not_guess_body
 import game.vinto.app.art.beat_do_not_guess_title
 import game.vinto.app.art.beat_every_turn_starts_body
 import game.vinto.app.art.beat_every_turn_starts_title
+import game.vinto.app.art.beat_final_play_ace
+import game.vinto.app.art.beat_final_play_king
+import game.vinto.app.art.beat_final_play_look
+import game.vinto.app.art.beat_final_play_other
+import game.vinto.app.art.beat_final_play_title
 import game.vinto.app.art.beat_give_up_worst_body
 import game.vinto.app.art.beat_give_up_worst_title
 import game.vinto.app.art.beat_help_body
@@ -525,6 +532,13 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_title)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_title)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_title)
+    is Teaches.CoalitionLeader ->
+        stringResource(Res.string.beat_coalition_leader_title, speakerName(teaches.who))
+    is Teaches.FinalPlay -> stringResource(
+        Res.string.beat_final_play_title,
+        speakerName(teaches.who),
+        getCardConfig(teaches.rank).name,
+    )
     Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_title)
     Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_title)
     Teaches.CallNow -> stringResource(Res.string.beat_call_now_title)
@@ -590,6 +604,9 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_body)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_body)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_body)
+    is Teaches.CoalitionLeader ->
+        stringResource(Res.string.beat_coalition_leader_body, speakerName(teaches.who))
+    is Teaches.FinalPlay -> finalPlayBody(teaches.rank)
     Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_body)
     Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_body)
     Teaches.CallNow -> stringResource(Res.string.beat_call_now_body)
@@ -602,6 +619,22 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
 
     is Teaches.TossIn -> alsoThrewIn(teaches.alsoThrewIn) +
         stringResource(Res.string.beat_toss_in_body)
+}
+
+/**
+ * What a coalition member's card is about to do, by rank.
+ *
+ * Three the taught round has the bots play, each explained once; anything else a learner
+ * who wandered off the line sees their bots play gets the general line.
+ */
+@Composable
+private fun finalPlayBody(rank: Rank): String = when (rank) {
+    Rank.ACE -> stringResource(Res.string.beat_final_play_ace)
+    Rank.KING -> stringResource(Res.string.beat_final_play_king)
+    Rank.NINE, Rank.TEN -> stringResource(Res.string.beat_final_play_look)
+    Rank.SEVEN, Rank.EIGHT, Rank.JACK, Rank.QUEEN, Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE,
+    Rank.SIX, Rank.JOKER,
+    -> stringResource(Res.string.beat_final_play_other)
 }
 
 /**

@@ -1455,13 +1455,16 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
         return
     }
 
-    // A card whose action has been used lies face down. Face up, a played 8 looked exactly
-    // like one the next player could take, and a gold ring on the live ones was too quiet
-    // to say otherwise on a phone (product owner, from a real round). Turned over, the pile
-    // says "nothing here to take" in the one way a card can. What was played is still on
-    // the record — the log names it, the toss-in chip names its rank while the window is
-    // open, and a screen reader is told the rank and that its action is spent.
-    val spent = face.spent()
+    // A card whose action has been used lies face down — once the viewer is done with it.
+    // Face up, a played 8 looked exactly like one the next player could take, and a gold
+    // ring on the live ones was too quiet to say otherwise on a phone (product owner, from
+    // a real round). Turned over, the pile says "nothing here to take" in the one way a
+    // card can. But not while the toss-in window it opened is still the viewer's to answer:
+    // "the 8 went down — toss in a match?" over a card back read as an empty pile (product
+    // owner again). It turns over when they press Continue, which is the moment it is spent
+    // *for them*. What was played is still on the record — the log names it, and a screen
+    // reader is told the rank and that its action is spent.
+    val spent = face.liesFaceDown(view)
     CardFace(
         card = if (spent) CardView.Hidden else CardView.Visible(face),
         scale = sizes.theirs,
@@ -1493,6 +1496,17 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
  * too — it is exactly the card the next player may take.
  */
 internal fun Card.spent(): Boolean = actionText != null && played
+
+/**
+ * Whether the pile draws this card's back: spent, and the window it opened is no longer
+ * the viewer's to throw into — either it was never for this rank, or they have answered it.
+ */
+internal fun Card.liesFaceDown(view: PlayerView): Boolean {
+    if (!spent()) return false
+    val window = view.activeTossIn ?: return true
+    val mine = rank in window.ranks && view.viewerId !in window.playersReadyForNextTurn
+    return !mine
+}
 
 /**
  * The one card the discard pile shows.
