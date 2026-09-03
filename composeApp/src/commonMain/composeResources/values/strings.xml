@@ -283,9 +283,6 @@
     <string name="rail_aim_second">Second</string>
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">discarded %1$s, action unused</string>
-    <!-- The same card once its action has been played: it lies face down on the pile, so
-         the rank is said here and nowhere on the felt. -->
-    <string name="card_discarded_used">discarded %1$s, action used</string>
     <string name="card_in_hand">the card in your hand</string>
 
     <!-- ================================================================ the score sheet -->

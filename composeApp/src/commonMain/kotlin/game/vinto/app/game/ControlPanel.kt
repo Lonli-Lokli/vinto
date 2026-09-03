@@ -99,6 +99,7 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
+import game.vinto.shapes.actionIsLive
 import game.vinto.shapes.getCardConfig
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
@@ -591,7 +592,7 @@ private fun Choices(table: Table, onMove: (Move) -> Unit) {
  * play it and the rail would be showing it a fourth time. What is undecided is who, and the
  * answer to that is on the foot.
  */
-private fun railCard(view: PlayerView, table: Table): CardView? {
+internal fun railCard(view: PlayerView, table: Table): CardView? {
     if (table.aim != null || table.seats.isNotEmpty()) return null
     if (!yourTurn(view)) return null
     // A peek that has found its card shows *that* card, not the one that bought the look:
@@ -599,7 +600,13 @@ private fun railCard(view: PlayerView, table: Table): CardView? {
     // turned over lay on the felt unexplained (product owner). The look is the news.
     peekedCard(view)?.let { return it }
     (view.pendingAction?.card as? CardView.Visible)?.let { return it }
-    return view.discardTop?.let { CardView.Visible(it) } ?: CardView.Hidden
+    // With nothing in play the rail falls back to the top of the pile — but only face up
+    // when it is a card the player could take. A played 8 held up large beside "Your turn",
+    // with "Eight, worth 8: Peek at one of your own cards" under it, read as a card on
+    // offer, and it was not (product owner). The pile itself keeps its face: what went down
+    // is public and the whole table reads it. The rail is about *your* choice.
+    val top = view.discardTop ?: return CardView.Hidden
+    return if (top.actionIsLive()) CardView.Visible(top) else CardView.Hidden
 }
 
 /** The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at. */

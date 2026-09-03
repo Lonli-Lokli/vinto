@@ -222,9 +222,12 @@ with the card engaged is drawn, the stage holds, the rule is read, and "Go on" l
 do its work. The taught round has the bots play an Ace, a King and a 9 there, which are the
 three cards the learner never holds. The rail also shows the card a peek *turned up* rather
 than the card that bought the look (the 8 was held up and explained while the Joker it had
-found lay on the felt), and a spent discard keeps its face while the window it opened is
-still the viewer's to answer — a card back under "the 8 went down — toss in a match?" read
-as an empty pile — and turns over when they press Continue.
+found lay on the felt), and with nothing in play it shows the top of the pile face up **only
+when it is a card the player could take**: a played 8 held up large beside "Your turn", with
+"Peek at one of your own cards" under it, read as a card on offer. The pile itself always
+keeps its face — what went down is public and the whole table reads it; the rail is about
+the player's choice. (A first reading of that report turned the *pile's* card over instead,
+which on the next phone looked like an empty pile under "the 8 went down"; that is undone.)
 
 **A talking coach is sized to leave its target uncovered.** It picks whichever end of the felt
 leaves more room clear of the pointer's target and shrinks its body to fit that room, down to

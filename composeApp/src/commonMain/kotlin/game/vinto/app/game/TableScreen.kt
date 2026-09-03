@@ -61,7 +61,6 @@ import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
-import game.vinto.app.art.card_discarded_used
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_thrown_by
@@ -1455,18 +1454,8 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
         return
     }
 
-    // A card whose action has been used lies face down — once the viewer is done with it.
-    // Face up, a played 8 looked exactly like one the next player could take, and a gold
-    // ring on the live ones was too quiet to say otherwise on a phone (product owner, from
-    // a real round). Turned over, the pile says "nothing here to take" in the one way a
-    // card can. But not while the toss-in window it opened is still the viewer's to answer:
-    // "the 8 went down — toss in a match?" over a card back read as an empty pile (product
-    // owner again). It turns over when they press Continue, which is the moment it is spent
-    // *for them*. What was played is still on the record — the log names it, and a screen
-    // reader is told the rank and that its action is spent.
-    val spent = face.liesFaceDown(view)
     CardFace(
-        card = if (spent) CardView.Hidden else CardView.Visible(face),
+        card = CardView.Visible(face),
         scale = sizes.theirs,
         modifier = pile,
         state = CardState(
@@ -1476,36 +1465,12 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
             live = face.actionIsLive(),
         ),
         label = stringResource(
-            when {
-                face.actionIsLive() -> Res.string.card_discarded_live
-                spent -> Res.string.card_discarded_used
-                else -> Res.string.card_discarded
-            },
+            if (face.actionIsLive()) Res.string.card_discarded_live else Res.string.card_discarded,
             face.rank.serialName,
         ),
         // What does this one do — asked of the card itself, answered about the card itself.
         onClick = { onHelp(face.rank) },
     )
-}
-
-/**
- * Whether a card on the pile has had its action used, and so lies face down there.
- *
- * Only an action card can be spent: a plain 4 was never anything anybody could take, so
- * it stays face up where the whole table can read it. A 7 thrown away unplayed stays up
- * too — it is exactly the card the next player may take.
- */
-internal fun Card.spent(): Boolean = actionText != null && played
-
-/**
- * Whether the pile draws this card's back: spent, and the window it opened is no longer
- * the viewer's to throw into — either it was never for this rank, or they have answered it.
- */
-internal fun Card.liesFaceDown(view: PlayerView): Boolean {
-    if (!spent()) return false
-    val window = view.activeTossIn ?: return true
-    val mine = rank in window.ranks && view.viewerId !in window.playersReadyForNextTurn
-    return !mine
 }
 
 /**

@@ -231,7 +231,6 @@
     <string name="rail_aim_first">Первая</string>
     <string name="rail_aim_second">Вторая</string>
     <string name="card_discarded_live">сброшена %1$s, действие не использовано</string>
-    <string name="card_discarded_used">сброшена %1$s, действие использовано</string>
     <string name="card_in_hand">карта у вас в руке</string>
 
     <string name="score_round">Раунд %1$d</string>
