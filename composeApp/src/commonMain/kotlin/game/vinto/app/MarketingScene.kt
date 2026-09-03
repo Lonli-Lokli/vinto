@@ -73,8 +73,14 @@ enum class MarketingScene(val id: String) {
  *
  * Not [freshSeed]: a screenshot that changes on every run is a listing that has to be looked at
  * again on every release to see whether anything actually changed.
+ *
+ * **This particular number was searched for rather than picked.** The first pinned seed staged a
+ * round the player LOSES — 31 against the coalition's best 14 — which is honest and is a poor
+ * thing to put on a store page. This one calls Vinto on a hand of 5 against their best 16, so the
+ * score sheet a shopper sees reads "The Vinto call held". Nothing about the game is misrepresented
+ * by choosing which real deal to photograph; every number on that sheet is one the engine produced.
  */
-private const val MARKETING_SEED = 20_260_903L
+private const val MARKETING_SEED = 20_260_072L
 
 /**
  * The staged game behind [MarketingScene.TABLE] and [MarketingScene.SCORE].
