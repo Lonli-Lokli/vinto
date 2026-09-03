@@ -6,6 +6,7 @@ import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
 
@@ -248,11 +249,16 @@ private fun playing(view: PlayerView, table: Table, taught: Taught, memory: Map<
     val pending = (view.pendingAction?.card as? CardView.Visible)?.card
 
     val mine = view.pendingAction?.playerId == view.viewerId
-    val aiming = view.pendingAction?.actionPhase == ActionPhase.SELECTING_TARGET
+    // A card whose action is under way: aimed, or come from the hand at all — a card thrown
+    // in, or one a declaration turned up, arrives with its action already engaged even while
+    // the engine still calls its phase "choosing". Only a *drawn* card is ever being decided
+    // about, and it was the tossed 7's peek, offered as a swap, that found this out.
+    val engaged = view.pendingAction?.actionPhase == ActionPhase.SELECTING_TARGET ||
+        view.pendingAction?.from != PendingCardOrigin.DRAWING
 
     return when {
         // Aiming a card's action, or deciding what it showed: the engine is mid-action.
-        pending != null && mine && aiming -> acting(view, table, memory)
+        pending != null && mine && engaged -> acting(view, table, memory)
 
         // Choosing which of your own cards the drawn one replaces.
         pending != null && mine && table.taps.isNotEmpty() -> swapAdvice(view, table, memory, pending)
