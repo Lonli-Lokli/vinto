@@ -11,6 +11,7 @@ import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.hashGameState
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -182,6 +183,49 @@ class TeachingRoundTest {
         val scores = assertNotNull(view.scores)
         assertEquals(0, scores[me], "a 2, two Jokers and a King")
         assertEquals(scores.values.min(), scores[me], "the lowest hand at the table")
+    }
+
+    /**
+     * The coalition's whole final round reaches the table.
+     *
+     * The learner's call submits the call *and* the three bots' last turns as one batch, and
+     * in the taught round those turns are long: the director has every bot play its card
+     * rather than put it down, and each play opens a toss-in window that has to be closed.
+     * The animation queue drops a batch costing more than its budget — the right rule for a
+     * client that fell behind, and the end of the lesson if this batch ever crosses it, since
+     * everything the ending teaches is in it. It does not today, which is worth knowing
+     * rather than assuming: the ending went missing for a different reason
+     * (`StageStepsBeforeTheCoachTest`), and this was the case that ruled the queue out.
+     * `FinalRoundIsWatchedTest` is the same guard for an ordinary deal, where the budget was
+     * raised from 8 to 24 after a Vinto call went unwatched.
+     */
+    @Test
+    fun theCoalitionsWholeFinalRoundIsHandedToTheTable() = runTest {
+        val session = teachingSession()
+        Learner(session).follow()
+
+        // `frames` replays its last batch, and nothing is dispatched after the call.
+        val batch = session.frames.first()
+        assertEquals(GamePhase.SCORING, session.state.phase, "the round finished in that batch")
+
+        val played = batch.map { it.action }
+        assertTrue(
+            played.any { it is GameAction.CallVinto },
+            "this is meant to be the batch the learner's call produced: $played",
+        )
+        assertTrue(
+            played.any { it is GameAction.SelectActionTarget || it is GameAction.DeclareKingAction },
+            "and it must carry the coalition's play, which is what the ending teaches",
+        )
+
+        val queue = AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee })
+        queue.submit(batch)
+
+        assertEquals(
+            batch.size,
+            queue.pending,
+            "the taught final round has outgrown the budget: a learner would read the score",
+        )
     }
 
     /**

@@ -161,9 +161,20 @@ fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Un
  * the felt catches up — which, online, is the moment two people throw at once.
  */
 internal fun Table.withoutStaleTaps(shown: PlayerView, live: PlayerView): Table {
-    val me = shown.viewerId
-    val mineShown = shown.players.firstOrNull { it.id == me }?.cards
-    val mineLive = live.players.firstOrNull { it.id == me }?.cards
-    if (mineShown == mineLive) return this
-    return copy(taps = taps.filterKeys { it.playerId != me })
+    if (shown.showsTheSameHandAs(live)) return this
+    return copy(taps = taps.filterKeys { it.playerId != shown.viewerId })
+}
+
+/**
+ * Whether the hand drawn on screen is still the hand the engine holds.
+ *
+ * The one question two views of the same seat can be asked while the table is a move behind,
+ * and the answer decides everything addressed *by position*: which card a tap names, and
+ * which slot a coach's finger is over. False means the screen is drawing a hand that has
+ * since gained or lost a card, so every position after the change points at its neighbour.
+ */
+internal fun PlayerView.showsTheSameHandAs(live: PlayerView): Boolean {
+    val mine = players.firstOrNull { it.id == viewerId }?.cards
+    val theirs = live.players.firstOrNull { it.id == viewerId }?.cards
+    return mine == theirs
 }
