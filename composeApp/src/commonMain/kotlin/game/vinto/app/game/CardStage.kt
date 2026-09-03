@@ -699,8 +699,22 @@ fun CardStage(
             queue.submit(batch.tossedTogether())
             draining = true
 
+            // Whether the next move out of the queue is this batch's first — see the hold
+            // below, which is the one thing that treats it differently.
+            var opensTheBatch = true
+
             while (true) {
                 val frame = queue.next() ?: break
+
+                // Wait out whatever the coach is saying before showing the next move.
+                coaching.finishTalking(opensTheBatch)
+                opensTheBatch = false
+
+                // The beat where a person would be thinking. Without it, three bot turns are
+                // one long stream of cards with no way to tell whose move any of them was —
+                // and with it, a turn arriving *feels* like somebody taking one.
+                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
+                if (frame.hasSomethingToSee) lastActor = frame.actorId
 
                 // What this move is about to move and to reveal, marked before the table
                 // steps to it — see [prepareFor].
@@ -713,25 +727,6 @@ fun CardStage(
                 // finished it.
                 behind = frame.view
                 stage.tell(frame.said)
-
-                // Wait out whatever the coach is saying before playing this move.
-                //
-                // **After the step, not before it.** A session publishes the view its whole
-                // dispatch arrived at *before* it emits the frames for the moves that got
-                // there — it has to, the game really has moved on — so until the first move
-                // is stepped to, this screen is showing the end of the batch. A coach asked
-                // to hold at that instant is reading a round that is already over: at the
-                // end of a lesson it held the table on "that is the lesson", whose one
-                // button leaves, and the coalition's whole final round sat behind it unplayed
-                // (product owner, twice). Asked here, the coach is always reading the move it
-                // is about to explain, which is what every beat that holds was written for.
-                snapshotFlow(coaching.hold).first { !it }
-
-                // The beat where a person would be thinking. Without it, three bot turns are
-                // one long stream of cards with no way to tell whose move any of them was —
-                // and with it, a turn arriving *feels* like somebody taking one.
-                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
-                if (frame.hasSomethingToSee) lastActor = frame.actorId
 
                 for (scene in frame.scenes) {
                     // One frame first, so the table has re-laid-out and reported where things
@@ -818,6 +813,31 @@ fun CardStage(
 
         Pointer(stage = stage, target = coaching.pointer)
     }
+}
+
+/**
+ * Waits out whatever the coach is saying — unless this is the move that opens a batch.
+ *
+ * **Not before the first move.** A session publishes the view its whole dispatch arrived at
+ * *before* it emits the frames for the moves that got there — it has to, the game really has
+ * moved on, and the frames are how the screen catches up — so until the first move is stepped
+ * to, the screen is still showing the end of the batch. A coach asked to hold in that instant
+ * is reading a round that is already over: after a Vinto call the view published first is the
+ * *scored* one, so the lesson's coach decided the lesson was finished and held the table on an
+ * end card whose one button leaves, with the coalition's whole final round behind it unplayed
+ * (product owner, twice).
+ *
+ * Nothing is lost by not asking. A talking coach takes the table's taps away, so the only
+ * thing that can have produced a batch is the player acting — and acting is itself the answer
+ * to whatever the coach was saying.
+ *
+ * The other repair for this was to ask *after* the step instead, which puts `prepareFor` and
+ * the table's step above the think-pause — and that opens the gap a card is about to land in
+ * a beat before the card leaves, which is the blink that ordering exists to prevent.
+ */
+private suspend fun Coaching.finishTalking(opensTheBatch: Boolean) {
+    if (opensTheBatch) return
+    snapshotFlow(hold).first { !it }
 }
 
 /**
