@@ -790,18 +790,25 @@ private fun RecentActions(recent: List<Say>) {
  * answering when they played it. The rail kept every line of the round, which was a
  * transcript to scroll rather than a table to read; a turn starts where somebody draws or
  * takes from the pile, and the deal's own line starts everything over.
+ *
+ * **A copy, never a view.** [recent] is the stage's stepped log, a snapshot list the stage
+ * appends to as frames play, and the rail's box is composed inside a `BoxWithConstraints` —
+ * that is, during measure, some time after this ran. A `subList` of a snapshot list is a live
+ * view that checks the list has not moved since it was made, and by then it had:
+ * `SwapAnimationTest` met a `ConcurrentModificationException` on the first read. The fold
+ * that used to follow this call copied the view by accident; this copies it on purpose.
  */
 internal fun lastTurns(recent: List<Say>, turns: Int = TurnsKept): List<Say> {
     var starts = 0
     for (index in recent.indices.reversed()) {
         val entry = recent[index]
-        if (entry is Say.RoundBegins) return recent.subList(index, recent.size)
+        if (entry is Say.RoundBegins) return recent.subList(index, recent.size).toList()
         if (entry is Say.Drew || entry is Say.DrewKnown || entry is Say.Took) {
             starts++
-            if (starts == turns) return recent.subList(index, recent.size)
+            if (starts == turns) return recent.subList(index, recent.size).toList()
         }
     }
-    return recent
+    return recent.toList()
 }
 
 /** One line per run of moves by the same actor, joined by [LogJoin]; the table's own lines stand alone. */
