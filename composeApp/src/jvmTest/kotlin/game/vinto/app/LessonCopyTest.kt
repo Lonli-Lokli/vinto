@@ -173,6 +173,35 @@ class LessonCopyTest {
     }
 
     /**
+     * Somebody else's turn has no heading while they are deciding, and names the card and
+     * what it does the moment they play one — the learner's only sight of a 9, a King or an
+     * Ace at work is a bot's.
+     */
+    @Test
+    fun aBotPlayingACardIsNamedWithWhatTheCardDoes() = runComposeUiTest {
+        val read = mutableStateOf<Pair<String?, String?>?>(null)
+        setContent {
+            read.value = taughtTitle(Teaches.Watching()) to
+                taughtTitle(Teaches.Watching(Speaker.Named("Mikey"), Rank.NINE))
+        }
+        waitForIdle()
+
+        val (deciding, playing) = read.value!!
+        assertNull(deciding, "a bot merely deciding has no heading: $deciding")
+        assertTrue(playing!!.contains("Mikey"), "who: $playing")
+        assertTrue(playing.contains("Nine"), "which card: $playing")
+        assertTrue(playing.contains("Peek at one card of another player"), "and what it does: $playing")
+    }
+
+    /** The call the round is built to end on says why the hand cannot be beaten. */
+    @Test
+    fun theCallNowBeatSaysWhyTheHandIsSafe() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.CallNow) }
+        assertTrue(words.contains("nothing or less"), "the total: $words")
+        assertTrue(words.contains("one more turn"), "and what the call does: $words")
+    }
+
+    /**
      * A card met for the first time, in the game's own words — `CARD_CONFIGS`, the same copy
      * the help sheet shows, so the lesson cannot teach a rule the rest of the game does not
      * have. What moved to resources is the frame around them.

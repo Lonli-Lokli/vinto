@@ -7,6 +7,7 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
+import game.vinto.shapes.TargetType
 
 /**
  * The nine things there are to learn, in the order `VINTO_RULES.md` puts them.
@@ -208,24 +209,30 @@ fun lessonFor(
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
         )
 
-        table.ranks.isNotEmpty() -> Lesson(
-            chapter = Chapter.DECLARE,
-            teaches = Teaches.NameOnlySeen,
-            point = declarableRank(view, table)?.let { Target.Chip(it) },
+        table.ranks.isNotEmpty() -> naming(table, memory)
+
+        // Before the window it is offered in: the toss-in beat would otherwise say "throw
+        // in a match" over the one moment the round has been built to reach.
+        readyToCall(view, memory) && table.choices.any { it.label is Label.CallVinto } -> Lesson(
+            chapter = Chapter.VINTO,
+            teaches = Teaches.CallNow,
+            point = Target.Button(Label.CallVinto),
         )
 
         tossWindow(table) -> Lesson(
             chapter = Chapter.TOSS,
             teaches = Teaches.TossIn(alsoThrewIn(view)),
-            point = matchingOwnCard(view)?.let { Target.Place(it) }
+            point = matchingOwnCard(view, memory)?.let { Target.Place(it) }
                 ?: table.choices.firstOrNull()?.let { Target.Button(it.label) },
             gloss = glossOnce(taught, Gloss.TOSS),
         )
 
+        // No pointer. The hand used to point at the box of recent moves for as long as the
+        // gloss was unsaid, which on a phone is an arrow at a paragraph while three bots
+        // move cards over it (product owner). The gloss says where to look; that is enough.
         table.waiting -> Lesson(
             chapter = Chapter.DRAW,
-            teaches = Teaches.Watching,
-            point = Target.Furniture(Target.LOG).takeIf { "log" !in taught.glossed },
+            teaches = watching(view),
             gloss = glossOnce(taught, Gloss.LOG),
         )
 
@@ -244,12 +251,8 @@ private fun playing(view: PlayerView, table: Table, taught: Taught, memory: Map<
     val aiming = view.pendingAction?.actionPhase == ActionPhase.SELECTING_TARGET
 
     return when {
-        // Aiming a card's action at somebody: the engine is waiting for a target.
-        pending != null && mine && aiming && table.taps.isNotEmpty() -> Lesson(
-            chapter = Chapter.ACTIONS,
-            teaches = Teaches.AimIt,
-            point = worthLookingAt(view, table),
-        )
+        // Aiming a card's action, or deciding what it showed: the engine is mid-action.
+        pending != null && mine && aiming -> acting(view, table, memory)
 
         // Choosing which of your own cards the drawn one replaces.
         pending != null && mine && table.taps.isNotEmpty() -> swapAdvice(view, table, memory, pending)
@@ -454,6 +457,23 @@ private fun tableTour(view: PlayerView, taught: Taught): Lesson? = when {
 
 /** The end of the round, which is a different game from the one that came before it. */
 private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
+    // The round is built for the learner to be the caller (`TeachingDeal`), so this is the
+    // expected ending; the beats below it are for a learner who played on until a bot called.
+    view.vintoCallerId == view.viewerId && "you_called" !in taught.talked -> Lesson(
+        chapter = Chapter.VINTO,
+        teaches = Teaches.YouCalled,
+        talkId = "you_called",
+    )
+
+    view.vintoCallerId == view.viewerId && "coalition_vs_you" !in taught.talked -> Lesson(
+        chapter = Chapter.VINTO,
+        teaches = Teaches.CoalitionAgainstYou,
+        point = view.players.firstOrNull { it.id != view.viewerId }?.let { Target.Seat(it.id) },
+        talkId = "coalition_vs_you",
+    )
+
+    view.vintoCallerId == view.viewerId -> scoringTalk(view, taught)
+
     view.vintoCallerId != null && "vinto" !in taught.talked -> vintoTalk(view)
 
     view.vintoCallerId != null && "coalition" !in taught.talked -> Lesson(
@@ -469,6 +489,11 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "your_turn_to_call",
     )
 
+    else -> scoringTalk(view, taught)
+}
+
+/** The two beats over the face-up hands, whoever called. */
+private fun scoringTalk(view: PlayerView, taught: Taught): Lesson? = when {
     view.phase == GamePhase.SCORING && "scoring" in taught.talked &&
         "session" !in taught.talked -> Lesson(
         chapter = Chapter.SCORE,
@@ -483,6 +508,110 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
     )
 
     else -> null
+}
+
+/**
+ * A card's action under way: aiming it, looking at what it found, or deciding on a trade.
+ *
+ * Its own function because these three are one phase of the engine's — `SELECTING_TARGET`
+ * — told apart by what the table offers: cards to tap while a target is wanted, the two
+ * buttons of a Queen that has seen both its cards, and "put it down" over a peek.
+ */
+private fun acting(view: PlayerView, table: Table, memory: Map<Int, Card>): Lesson = when {
+    table.taps.isNotEmpty() -> Lesson(
+        chapter = Chapter.ACTIONS,
+        teaches = Teaches.AimIt,
+        point = worthLookingAt(view, table, memory),
+    )
+
+    // A Queen that has looked at both its cards, asking whether to trade them.
+    view.pendingAction?.targetType == TargetType.PEEK_THEN_SWAP -> queenDecision(view, table)
+
+    // A peek turned face up, waiting to be put down. It used to fall through to the
+    // keep-or-throw beat, whose words are about a drawn card.
+    table.choices.any { it.label is Label.PutItDown } -> Lesson(
+        chapter = Chapter.ACTIONS,
+        teaches = Teaches.RememberIt,
+        point = Target.Button(Label.PutItDown),
+    )
+
+    // Anything else mid-action — a Jack with both cards chosen, say — is answered by its
+    // first button, so the coach never goes quiet with a card in play.
+    else -> Lesson(
+        chapter = Chapter.ACTIONS,
+        teaches = Teaches.AimIt,
+        point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
+    )
+}
+
+/**
+ * Somebody else's turn, and what they are doing with it.
+ *
+ * Named when a bot has an action card engaged: the one line the shut coach shows then says
+ * "Mikey plays the 9 — Peek at one card of another player" as the 9 is being played, which
+ * is how the learner meets the cards the round never puts in their hand. A bot merely
+ * deciding about a drawn card is the plain beat, with no heading, as before.
+ */
+private fun watching(view: PlayerView): Teaches.Watching {
+    val pending = view.pendingAction ?: return Teaches.Watching()
+    if (pending.playerId == view.viewerId || pending.actionPhase != ActionPhase.SELECTING_TARGET) {
+        return Teaches.Watching()
+    }
+    val card = (pending.card as? CardView.Visible)?.card ?: return Teaches.Watching()
+    val who = view.players.firstOrNull { it.id == pending.playerId }?.nickname ?: return Teaches.Watching()
+    return Teaches.Watching(Speaker.Named(who), card.rank)
+}
+
+/**
+ * The card going down is being asked about: name it if you have seen it, and only then.
+ *
+ * The rank is read from what the player *remembers* of the slot the swap is about to empty,
+ * never from the view — after the setup peeks the view shows nothing, which is the same bug
+ * the swap advice had, and why the 7 went down unnamed in the first round anybody played
+ * (product owner). A slot they never looked at is a guess, and the beat says not to.
+ */
+private fun naming(table: Table, memory: Map<Int, Card>): Lesson {
+    val rank = declarableRank(table, memory)
+    return if (rank != null) {
+        Lesson(chapter = Chapter.DECLARE, teaches = Teaches.NameOnlySeen, point = Target.Chip(rank))
+    } else {
+        Lesson(
+            chapter = Chapter.DECLARE,
+            teaches = Teaches.DoNotGuess,
+            point = table.choices.firstOrNull { it.label is Label.JustSwap }?.let { Target.Button(it.label) },
+        )
+    }
+}
+
+/**
+ * Both cards looked at: trade when theirs is worth less than yours.
+ *
+ * The Queen shows its holder both cards, so this is one of the few places the coach can
+ * compare real values rather than remembered ones. `view.pendingAction.targets` carries the
+ * faces for the seat that played it.
+ */
+private fun queenDecision(view: PlayerView, table: Table): Lesson {
+    val targets = view.pendingAction?.targets.orEmpty()
+    val mine = targets.firstOrNull { it.playerId == view.viewerId }?.card as? CardView.Visible
+    val theirs = targets.firstOrNull { it.playerId != view.viewerId }?.card as? CardView.Visible
+    val trade = mine != null && theirs != null && theirs.card.value < mine.card.value
+    val wanted = if (trade) Label.SwapCards else Label.LeaveThem
+    return Lesson(
+        chapter = Chapter.ACTIONS,
+        teaches = if (trade) Teaches.SwapThem else Teaches.LeaveThem,
+        point = table.choices.firstOrNull { it.label == wanted }?.let { Target.Button(it.label) },
+    )
+}
+
+/**
+ * Whether the hand is one to call Vinto on: every card in it seen, and the total at or
+ * below zero. The taught round reaches exactly this at the end of the learner's second turn
+ * — two Jokers and two Kings — and the coach then points at the gold button.
+ */
+fun readyToCall(view: PlayerView, memory: Map<Int, Card>): Boolean {
+    val hand = view.players.firstOrNull { it.id == view.viewerId }?.cards ?: return false
+    if (hand.isEmpty() || hand.indices.any { it !in memory }) return false
+    return memory.values.sumOf { it.value } <= 0
 }
 
 private fun vintoTalk(view: PlayerView): Lesson {
@@ -519,13 +648,12 @@ private fun glossOnce(taught: Taught, gloss: Gloss): Gloss? =
  * points at one you have *not* seen. For anybody else's it takes the first on offer — every
  * card in an opponent's hand is equally unknown, which is the whole problem with them.
  */
-private fun worthLookingAt(view: PlayerView, table: Table): Target? {
-    val mine = view.players.first { it.id == view.viewerId }
-    val hand = mine.cards
+private fun worthLookingAt(view: PlayerView, table: Table, memory: Map<Int, Card>): Target? {
+    val me = view.viewerId
 
-    val unseen = table.taps.keys.firstOrNull { ref ->
-        ref.playerId == mine.id && hand.getOrNull(ref.position) !is CardView.Visible
-    }
+    // Unseen by the player's own memory, not by the view — the view shows none of your cards
+    // once the setup peeks are over, so read from it every slot looked equally unread.
+    val unseen = table.taps.keys.firstOrNull { ref -> ref.playerId == me && ref.position !in memory }
     val chosen = unseen ?: table.taps.keys.firstOrNull() ?: return null
 
     return Target.Place(Anchor.Seat(chosen.playerId, chosen.position))
@@ -619,24 +747,23 @@ private fun unknownOwn(view: PlayerView): Int? = view.players
  * coach that pointed at a rank the player had not peeked would be teaching them to guess,
  * which is the one thing this move punishes.
  */
-private fun declarableRank(view: PlayerView, table: Table): Rank? {
+private fun declarableRank(table: Table, memory: Map<Int, Card>): Rank? {
     val position = table.ranks.firstNotNullOfOrNull { choice ->
         ((choice.move as? Move.Send)?.action as? GameAction.SwapCard)?.payload?.position
     } ?: return null
 
-    val card = view.players.first { it.id == view.viewerId }.cards.getOrNull(position)
-    return (card as? CardView.Visible)?.card?.rank
+    return memory[position]?.rank
 }
 
-/** A card of the player's own that matches the open toss-in window, if they can see one. */
-private fun matchingOwnCard(view: PlayerView): Anchor? {
+/**
+ * A card of the player's own that matches the open toss-in window, if they remember one —
+ * and only one worth being rid of. A King costs nothing to hold, and throwing one in buys a
+ * declaration the learner then has to make; the coach does not send them there.
+ */
+private fun matchingOwnCard(view: PlayerView, memory: Map<Int, Card>): Anchor? {
     val wanted = view.activeTossIn?.ranks?.toSet() ?: return null
-    val you = view.players.first { it.id == view.viewerId }
-
-    val position = you.cards.indexOfFirst { card ->
-        (card as? CardView.Visible)?.card?.rank in wanted
-    }
-    return position.takeIf { it >= 0 }?.let { Anchor.Seat(you.id, it) }
+    val match = memory.entries.firstOrNull { (_, card) -> card.rank in wanted && card.value > 0 }
+    return match?.let { Anchor.Seat(view.viewerId, it.key) }
 }
 
 /**

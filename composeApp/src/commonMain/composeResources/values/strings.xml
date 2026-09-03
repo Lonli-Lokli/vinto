@@ -326,10 +326,27 @@
     <string name="beat_name_only_seen_title">Only name one you have seen</string>
     <string name="beat_name_only_seen_body">You looked at this card, so you know what it is. Name it right and you play its action for free. Name it wrong and you take a penalty card — so only name one you are sure of.</string>
     <string name="beat_toss_in_title">Anybody holding that rank may throw it in</string>
-    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance.</string>
+    <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance. Worth doing for a card that counts against you; a King costs nothing to hold.</string>
     <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
+    <!-- Over a bot's action as it is played: who, which card, and the card's own description
+         from CARD_CONFIGS. "Mikey plays the Nine — Peek at one card of another player". -->
+    <string name="beat_watching_title">%1$s plays the %2$s — %3$s</string>
+    <string name="beat_do_not_guess_title">Do not guess</string>
+    <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
+    <string name="beat_swap_them_title">Trade them</string>
+    <string name="beat_swap_them_body">You have seen both. Theirs is worth less than yours, so swap: your card goes to them and theirs comes to you — and you know exactly what you are holding afterwards.</string>
+    <string name="beat_leave_them_title">Leave them</string>
+    <string name="beat_leave_them_body">You have seen both, and yours is the better card. There is nothing to gain from a trade, so put them back where they were.</string>
+    <string name="beat_call_now_title">Call it</string>
+    <string name="beat_call_now_body">You know every card in your hand, and together they come to nothing or less — nobody at this table can finish below you. Press Call Vinto: everybody else gets exactly one more turn, and then every hand goes face up.</string>
+    <string name="beat_you_called_title">You called Vinto</string>
+    <string name="beat_you_called_body">The round ends on your terms. Raph, Mikey and Don each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
+    <string name="beat_coalition_vs_you_title">Now they play as one</string>
+    <string name="beat_coalition_vs_you_body">The three who did not call are the coalition: one turn each, and only their single best hand is compared with yours — so it is a team against your one hand. At a real table they would talk it over and pool what they know. Watch what they do with their last turn: this is where you see the cards you have not held yet.</string>
     <string name="beat_aim_it_title">Aim it</string>
     <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
+    <string name="beat_remember_it_title">Remember it</string>
+    <string name="beat_remember_it_body">That is what the look bought you. Fix where it lies and what it is, then put it back — from here on it is a card you know, and the game is played on those.</string>
     <string name="beat_give_up_worst_title">Give up your worst card</string>
     <string name="beat_give_up_worst_body">The new card goes in face down, and the one it replaces goes face up on the pile for everybody to read. Give up the card you least want to be holding — the highest one you know about. If it has an action and you are sure of it, name it as it goes down: its action is then yours for free.</string>
     <string name="beat_swap_blind_title">Trade it for one you have not seen</string>

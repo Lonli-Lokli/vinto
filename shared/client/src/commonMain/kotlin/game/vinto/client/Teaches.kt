@@ -1,5 +1,7 @@
 package game.vinto.client
 
+import game.vinto.shapes.Rank
+
 /**
  * One thing the lesson says, as a *message* rather than as two paragraphs of English.
  *
@@ -122,6 +124,19 @@ sealed interface Teaches {
         override val id = "coalition"
     }
 
+    /**
+     * The same two beats from the other chair: the learner called, so the three bots are the
+     * coalition and the learner is the one hand they play against. The round is planned for
+     * this to be the way it ends — see `TeachingDeal`.
+     */
+    data object YouCalled : Teaches {
+        override val id = "you_called"
+    }
+
+    data object CoalitionAgainstYou : Teaches {
+        override val id = "coalition_vs_you"
+    }
+
     data object YourTurnToCall : Teaches {
         override val id = "your_turn_to_call"
     }
@@ -164,12 +179,52 @@ sealed interface Teaches {
         }
     }
 
-    data object Watching : Teaches {
-        override val id = "watching"
+    /**
+     * Somebody else's turn.
+     *
+     * [who] and [playing] name a bot and the action card it has in play, when it has one —
+     * the coach's one line then says what a 9, a King or an Ace is doing as it is done,
+     * which is how the learner meets the three cards the round never puts in their hand.
+     * Both null while a bot is merely deciding, which has no heading, as before.
+     */
+    data class Watching(val who: Speaker? = null, val playing: Rank? = null) : Teaches {
+        override val id = ID
+
+        companion object {
+            const val ID = "watching"
+        }
+    }
+
+    /** The Queen has looked at both cards, and theirs is the better one: trade. */
+    data object SwapThem : Teaches {
+        override val id = "swap_them"
+    }
+
+    /** Or yours is: leave them where they are. */
+    data object LeaveThem : Teaches {
+        override val id = "leave_them"
+    }
+
+    /**
+     * Every card in the hand is one the learner has seen and the total is at or below zero.
+     * The round is planned to reach this at the end of their second turn.
+     */
+    data object CallNow : Teaches {
+        override val id = "call_now"
+    }
+
+    /** The card going down is one the learner never looked at: put it down without a word. */
+    data object DoNotGuess : Teaches {
+        override val id = "do_not_guess"
     }
 
     data object AimIt : Teaches {
         override val id = "aim_it"
+    }
+
+    /** A card turned up by a peek, being looked at: the moment it becomes something to remember. */
+    data object RememberIt : Teaches {
+        override val id = "remember_it"
     }
 
     data object GiveUpWorst : Teaches {

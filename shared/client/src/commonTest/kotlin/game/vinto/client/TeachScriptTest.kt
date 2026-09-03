@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.engine.projectView
+import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
@@ -125,10 +126,10 @@ class TeachScriptTest {
     }
 
     /**
-     * The swap advice, on the hand it was reported with: a 3 and a 7 peeked, a 4 drawn. The
-     * coach used to point at the 3 — it read the *view*, which hides what you have seen — so
-     * the trade it advised gave up a 3 for a 4 and learned nothing. The 7 is the card to give
-     * up: it is worse than the 4, and it is known, so it can be named as it goes down.
+     * The swap advice, on the shape of hand it was reported with: two cards peeked, a low one
+     * drawn. The coach used to point at the first card whatever it was — it read the *view*,
+     * which hides what you have seen. The worse of the two peeked is the card to give up: it
+     * is worse than the draw, and it is known, so it can be named as it goes down.
      */
     @Test
     fun theCardToGiveUpIsTheWorstOneThePlayerHasSeen() = runTest {
@@ -142,41 +143,110 @@ class TeachScriptTest {
 
         val memory = session.rememberedHand()
         assertEquals(setOf(0, 1), memory.keys, "the two peeks are what the player remembers")
-        assertEquals(Rank.SEVEN, memory.getValue(1).rank)
+        assertEquals(Rank.EIGHT, memory.getValue(1).rank)
 
         val view = stateOf(session)
         val lesson = assertNotNull(lessonFor(view, tableFor(view, Question.WhichSlot), taught, memory))
         assertEquals(Teaches.GiveUpWorst, lesson.teaches)
-        assertEquals(Target.Place(Anchor.Seat(me, 1)), lesson.point, "the 7, not the 3")
+        assertEquals(Target.Place(Anchor.Seat(me, 1)), lesson.point, "the 8, not the 7")
     }
 
     /**
-     * And when nothing the player knows is worse than the card in hand — a 3 and a Joker
-     * peeked, the same 4 drawn — the slot to take is one they have not looked at, because
-     * giving up a known 3 for a 4 is a trade that loses a point and learns nothing.
+     * And when nothing the player knows is worse than the card in hand — the Joker and a King
+     * peeked, a 2 drawn — the slot to take is one they have not looked at, because giving up a
+     * known King for a 2 is a trade that loses two points and learns nothing.
      */
     @Test
     fun withNothingWorseKnownTheSwapGoesIntoAnUnseenSlot() = runTest {
         val session = teachingSession()
         val me = session.playerId
         val taught = talkedThrough(session)
-        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 2)))
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 3)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
 
         val memory = session.rememberedHand()
-        assertEquals(Rank.JOKER, memory.getValue(3).rank, "the deal's Joker is where the lesson says")
+        assertEquals(Rank.JOKER, memory.getValue(2).rank, "the deal's Joker is where the lesson says")
 
         val view = stateOf(session)
         val lesson = assertNotNull(lessonFor(view, tableFor(view, Question.WhichSlot), taught, memory))
         assertEquals(Teaches.SwapBlind, lesson.teaches)
-        assertEquals(Target.Place(Anchor.Seat(me, 1)), lesson.point, "the first slot never looked at")
+        assertEquals(Target.Place(Anchor.Seat(me, 0)), lesson.point, "the first slot never looked at")
 
         // Before the slot is even asked for, the same reading points at Swap rather than Discard.
         val deciding = assertNotNull(lessonFor(view, tableFor(view), taught, memory))
         assertEquals(Teaches.KeepOrThrow, deciding.teaches)
         assertEquals(Target.Button(Label.SwapCards), deciding.point)
+    }
+
+    /**
+     * The card going down is named from memory, not from the view — the view shows none of
+     * your cards after the setup peeks, so the chip the coach pointed at was always null and
+     * the 7 went down unnamed in the first round anybody played (product owner). And a card
+     * the learner never looked at is a guess, which the coach says not to make.
+     */
+    @Test
+    fun theRankToNameIsReadFromMemoryAndAnUnseenCardIsNotGuessedAt() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        val memory = session.rememberedHand()
+        val view = stateOf(session)
+
+        val known = assertNotNull(lessonFor(view, tableFor(view, Question.CallRank(0)), taught, memory))
+        assertEquals(Teaches.NameOnlySeen, known.teaches)
+        assertEquals(Target.Chip(Rank.SEVEN), known.point, "the 7 in the first slot, which was peeked")
+
+        val unseen = assertNotNull(lessonFor(view, tableFor(view, Question.CallRank(3)), taught, memory))
+        assertEquals(Teaches.DoNotGuess, unseen.teaches)
+        assertEquals(Target.Button(Label.JustSwap), unseen.point, "put it down without a word")
+    }
+
+    /**
+     * A hand every card of which has been seen, adding up to nothing or less, is one to call
+     * on — and the coach says so over the window that offers the button, ahead of the toss-in
+     * beat that window would otherwise get.
+     */
+    @Test
+    fun aFullySeenHandAtZeroOrBelowIsOneToCallOn() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val view = stateOf(session)
+        val hand = view.players.first { it.id == me }.cards.indices
+
+        val joker = Card(id = "Joker1", rank = Rank.JOKER, value = -1, played = false)
+        val king = Card(id = "K_0", rank = Rank.KING, value = 0, played = false)
+        val four = Card(id = "4_0", rank = Rank.FOUR, value = 4, played = false)
+        assertTrue(readyToCall(view, hand.associateWith { if (it == 0) joker else king }), "two Jokers' worth")
+        assertTrue(!readyToCall(view, hand.associateWith { four }), "not on a hand of 4s")
+        assertTrue(!readyToCall(view, mapOf(0 to joker)), "and not with four cards never looked at")
+    }
+
+    /** Somebody else's turn points at nothing: the arrow at the log box was noise (product owner). */
+    @Test
+    fun watchingABotPointsAtNothing() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val taught = talkedThrough(session)
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+        session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
+
+        // The bots have moved on; whatever the table shows now is theirs or a window of theirs.
+        val view = stateOf(session)
+        val table = tableFor(view)
+        if (table.waiting) {
+            val lesson = assertNotNull(lessonFor(view, table, taught, session.rememberedHand()))
+            assertTrue(lesson.teaches is Teaches.Watching, "$lesson")
+            assertEquals(null, lesson.point, "nothing to point at while somebody else plays")
+        }
     }
 
     /** The tour is finite: keep acknowledging and it hands the player back their table. */
@@ -198,7 +268,7 @@ class TeachScriptTest {
         val me = session.playerId
         val taught = talkedThrough(session)
 
-        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
 
         val lesson = assertNotNull(teach(session, taught))
         assertEquals(

@@ -35,6 +35,8 @@ import game.vinto.app.art.ask_you_playing
 import game.vinto.app.art.ask_your_turn
 import game.vinto.app.art.beat_aim_it_body
 import game.vinto.app.art.beat_aim_it_title
+import game.vinto.app.art.beat_call_now_body
+import game.vinto.app.art.beat_call_now_title
 import game.vinto.app.art.beat_cards_jack_body
 import game.vinto.app.art.beat_cards_jack_title
 import game.vinto.app.art.beat_cards_king_body
@@ -55,6 +57,10 @@ import game.vinto.app.art.beat_cards_theirs_body
 import game.vinto.app.art.beat_cards_theirs_title
 import game.vinto.app.art.beat_coalition_body
 import game.vinto.app.art.beat_coalition_title
+import game.vinto.app.art.beat_coalition_vs_you_body
+import game.vinto.app.art.beat_coalition_vs_you_title
+import game.vinto.app.art.beat_do_not_guess_body
+import game.vinto.app.art.beat_do_not_guess_title
 import game.vinto.app.art.beat_every_turn_starts_body
 import game.vinto.app.art.beat_every_turn_starts_title
 import game.vinto.app.art.beat_give_up_worst_body
@@ -63,6 +69,8 @@ import game.vinto.app.art.beat_help_body
 import game.vinto.app.art.beat_help_title
 import game.vinto.app.art.beat_keep_or_throw_body
 import game.vinto.app.art.beat_keep_or_throw_title
+import game.vinto.app.art.beat_leave_them_body
+import game.vinto.app.art.beat_leave_them_title
 import game.vinto.app.art.beat_memory_body
 import game.vinto.app.art.beat_memory_title
 import game.vinto.app.art.beat_name_only_seen_body
@@ -72,6 +80,8 @@ import game.vinto.app.art.beat_nothing_worse_title
 import game.vinto.app.art.beat_only_look_body
 import game.vinto.app.art.beat_only_look_title
 import game.vinto.app.art.beat_peeks_end_body
+import game.vinto.app.art.beat_remember_it_body
+import game.vinto.app.art.beat_remember_it_title
 import game.vinto.app.art.beat_scoring_body
 import game.vinto.app.art.beat_scoring_title
 import game.vinto.app.art.beat_seats_body
@@ -81,6 +91,8 @@ import game.vinto.app.art.beat_session_title
 import game.vinto.app.art.beat_strayed_body
 import game.vinto.app.art.beat_swap_blind_body
 import game.vinto.app.art.beat_swap_blind_title
+import game.vinto.app.art.beat_swap_them_body
+import game.vinto.app.art.beat_swap_them_title
 import game.vinto.app.art.beat_toss_in_also
 import game.vinto.app.art.beat_toss_in_body
 import game.vinto.app.art.beat_toss_in_title
@@ -92,8 +104,11 @@ import game.vinto.app.art.beat_vinto_body
 import game.vinto.app.art.beat_vinto_somebody
 import game.vinto.app.art.beat_vinto_title
 import game.vinto.app.art.beat_watching_body
+import game.vinto.app.art.beat_watching_title
 import game.vinto.app.art.beat_welcome_body
 import game.vinto.app.art.beat_welcome_title
+import game.vinto.app.art.beat_you_called_body
+import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
 import game.vinto.app.art.card_position
@@ -486,6 +501,7 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     Teaches.NameOnlySeen -> stringResource(Res.string.beat_name_only_seen_title)
     is Teaches.TossIn -> stringResource(Res.string.beat_toss_in_title)
     Teaches.AimIt -> stringResource(Res.string.beat_aim_it_title)
+    Teaches.RememberIt -> stringResource(Res.string.beat_remember_it_title)
     Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_title)
     Teaches.SwapBlind -> stringResource(Res.string.beat_swap_blind_title)
     Teaches.NothingWorse -> stringResource(Res.string.beat_nothing_worse_title)
@@ -507,6 +523,12 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     Teaches.Seats -> stringResource(Res.string.beat_seats_title)
     Teaches.Help -> stringResource(Res.string.beat_help_title)
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_title)
+    Teaches.YouCalled -> stringResource(Res.string.beat_you_called_title)
+    Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_title)
+    Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_title)
+    Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_title)
+    Teaches.CallNow -> stringResource(Res.string.beat_call_now_title)
+    Teaches.DoNotGuess -> stringResource(Res.string.beat_do_not_guess_title)
     Teaches.YourTurnToCall -> stringResource(Res.string.beat_your_turn_to_call_title)
     Teaches.Session -> stringResource(Res.string.beat_session_title)
     Teaches.Scoring -> stringResource(Res.string.beat_scoring_title)
@@ -518,8 +540,21 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
             ?: stringResource(Res.string.beat_vinto_somebody),
     )
 
-    // The two with no heading, and the one that is an aside rather than a beat.
-    Teaches.PeeksEnd, Teaches.Watching, Teaches.Strayed -> null
+    // A bot with an action card engaged is named with what the card does — "Mikey plays the
+    // 9 — Peek at one card of another player" — which is how a learner meets the cards the
+    // round never puts in their hand. A bot merely deciding has no heading.
+    is Teaches.Watching -> teaches.playing?.let { rank ->
+        val config = getCardConfig(rank)
+        stringResource(
+            Res.string.beat_watching_title,
+            speakerName(teaches.who ?: Speaker.Nobody),
+            config.name,
+            config.longDescription,
+        )
+    }
+
+    // The one with no heading, and the one that is an aside rather than a beat.
+    Teaches.PeeksEnd, Teaches.Strayed -> null
 }
 
 /** A lesson beat's words. */
@@ -529,8 +564,9 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.OnlyLook -> stringResource(Res.string.beat_only_look_body)
     Teaches.PeeksEnd -> stringResource(Res.string.beat_peeks_end_body)
     Teaches.NameOnlySeen -> stringResource(Res.string.beat_name_only_seen_body)
-    Teaches.Watching -> stringResource(Res.string.beat_watching_body)
+    is Teaches.Watching -> stringResource(Res.string.beat_watching_body)
     Teaches.AimIt -> stringResource(Res.string.beat_aim_it_body)
+    Teaches.RememberIt -> stringResource(Res.string.beat_remember_it_body)
     Teaches.GiveUpWorst -> stringResource(Res.string.beat_give_up_worst_body)
     Teaches.SwapBlind -> stringResource(Res.string.beat_swap_blind_body)
     Teaches.NothingWorse -> stringResource(Res.string.beat_nothing_worse_body)
@@ -552,6 +588,12 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.Seats -> stringResource(Res.string.beat_seats_body)
     Teaches.Help -> stringResource(Res.string.beat_help_body)
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_body)
+    Teaches.YouCalled -> stringResource(Res.string.beat_you_called_body)
+    Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_body)
+    Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_body)
+    Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_body)
+    Teaches.CallNow -> stringResource(Res.string.beat_call_now_body)
+    Teaches.DoNotGuess -> stringResource(Res.string.beat_do_not_guess_body)
     Teaches.YourTurnToCall -> stringResource(Res.string.beat_your_turn_to_call_body)
     Teaches.Session -> stringResource(Res.string.beat_session_body)
     Teaches.Scoring -> stringResource(Res.string.beat_scoring_body)

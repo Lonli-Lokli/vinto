@@ -4,27 +4,54 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.Validation
 import game.vinto.engine.createDeck
 import game.vinto.engine.initializeTeachingGame
+import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
+import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
+import game.vinto.shapes.LeaderIdPayload
 import game.vinto.shapes.ParticipateInTossInPayload
+import game.vinto.shapes.PendingAction
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
+import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.random.Random
 
 /**
- * The deal every player is taught on.
+ * The deal every player is taught on — a round planned move by move.
  *
- * A lesson needs particular cards in particular places: something to peek at that pays off
- * later, a rank the player knowingly holds when a matching card goes down, an unused action
- * card left on the pile so taking from the discard can be shown, a Queen and a King to play,
- * an Ace sitting in somebody's hand to be found, and a Joker arriving on the last turn so the
- * round ends on the player's own good decision.
+ * The lesson is eight turns long and every one of them has a job, which is what the product
+ * owner asked for after playing the first version: a round in which the learner *does* each
+ * thing the game has once, watches the bots do the rest, and ends it by calling Vinto on a
+ * hand nothing can beat. In order:
+ *
+ *  1. **You** draw a 2 and swap it for the 8 you peeked, naming the 8 as it goes down — its
+ *     look is yours for free, and it finds your Joker.
+ *  2. **Raph** draws a 7 and puts it down; you throw in the 7 you peeked, and so does he, and
+ *     your 7's look finds your first King.
+ *  3. **Mikey** draws a 9 and plays it: he looks at one of your cards.
+ *  4. **Don** draws a Queen and throws it away unplayed, which leaves it on the pile for you.
+ *  5. **You** take the Queen off the pile — the second way to start a turn — look at your
+ *     one unread card, a King, and at Raph's first, his Joker, and trade. Every card in your
+ *     hand is now one you have seen, they add up to nothing, and both Jokers are yours: you
+ *     call, and nothing at the table can finish below you.
+ *  6. **Raph** draws an Ace and plays it: Mikey draws a penalty card.
+ *  7. **Mikey** draws a King and plays it, naming one of his own 6s, which leaves his hand.
+ *  8. **Don** draws a 9 and looks at one of Raph's cards. Then every hand goes face up.
+ *
+ * The arithmetic of the looks is the constraint that shaped the hand. A learner gets five
+ * looks at their own cards before the call — two at the setup, one from the 8 they name, one
+ * from the 7 they throw in, one from the Queen — and the coach only says "call" on a hand
+ * every card of which has been seen. A 2 swapped in counts as seen; a 7 thrown in is a slot
+ * gone. That is five looks for five slots, exactly, which is why the 7 and the 8 are the two
+ * cards the peeks find and why the drawn card is a 2 rather than anything the 8's look could
+ * have been better spent on.
  *
  * None of that survives a shuffle, and none of it is worth searching a seed for — the
  * constraints are joint over a dozen named positions, and a seed that satisfied them today
@@ -34,35 +61,44 @@ import kotlin.random.Random
  * shuffled.
  *
  * Positions 0–4 go to the player, 5–9 to Raph, 10–14 to Mikey, 15–19 to Don, and the rest is
- * the draw pile with position 20 on top.
+ * the draw pile with position 20 on top. The bots know their first two cards, as the deal
+ * gives every seat; the player peeks where the coach points, which is the first two.
  */
 internal object TeachingDeal {
 
-    /** The player's hand: a 7 and a Joker to peek at, an 8 to throw in later. */
-    private val YOURS = listOf(Rank.THREE, Rank.SEVEN, Rank.EIGHT, Rank.JOKER, Rank.FIVE)
+    /**
+     * The player's hand. A 7 and an 8 where the coach points the two peeks — the 8 to give
+     * up for the drawn 2 and name, the 7 to throw in on Raph's; a Joker for the 8's look to
+     * find; a King for the 7's; and a second King, the one card left unread, for the Queen
+     * to read and trade for Raph's Joker. The finished hand is a 2, two Jokers and a King:
+     * nothing, which no hand at the table can get under.
+     */
+    private val YOURS = listOf(Rank.SEVEN, Rank.EIGHT, Rank.JOKER, Rank.KING, Rank.KING)
 
-    /** Raph keeps a 3 he knows about, for the moment a bot throws one in. */
-    private val RAPH = listOf(Rank.TWO, Rank.THREE, Rank.ACE, Rank.KING, Rank.TWO)
+    /** Raph knows his Joker and his 7: the 7 he throws in beside yours, the Joker your Queen takes. */
+    private val RAPH = listOf(Rank.JOKER, Rank.SEVEN, Rank.TWO, Rank.THREE, Rank.TEN)
 
-    /** Mikey's King is what the Queen steals. */
-    private val MIKEY = listOf(Rank.KING, Rank.SIX, Rank.SIX, Rank.TEN, Rank.FOUR)
+    /** Mikey knows two 6s, so his King in the final round has a card it can safely name. */
+    private val MIKEY = listOf(Rank.SIX, Rank.SIX, Rank.KING, Rank.TEN, Rank.FOUR)
 
-    /** Don's Ace is found with a 9 and then declared by a King. */
-    private val DON = listOf(Rank.KING, Rank.ACE, Rank.TWO, Rank.TWO, Rank.SEVEN)
+    /** Don holds nothing the script needs — and nothing that would let him throw in early. */
+    private val DON = listOf(Rank.TWO, Rank.THREE, Rank.FIVE, Rank.TWO, Rank.SIX)
 
     /**
-     * The top of the deck, in the order the lesson needs it.
-     *
-     * Your draws are the 4 (a plain card to keep and declare), the Queen, the King, and
-     * finally the Joker in the final round. The bots' draws are the cards they put back down:
-     * a 6 to watch, an 8 you can match, a 9 left unused on the pile, and fillers.
+     * The top of the deck, one card per draw in the order above: your 2, Raph's 7, Mikey's
+     * 9, Don's Queen; then the final round — Raph's Ace, the 5 it makes Mikey draw, Mikey's
+     * King, Don's 9. Whatever is left falls in behind, for a learner who plays on instead of
+     * calling.
      */
     private val TOP = listOf(
-        Rank.FOUR, Rank.SIX, Rank.EIGHT, Rank.NINE,
-        Rank.QUEEN, Rank.FIVE, Rank.NINE, Rank.NINE,
-        Rank.KING, Rank.SIX, Rank.FIVE, Rank.THREE,
-        Rank.JOKER, Rank.ACE, Rank.FOUR, Rank.TEN,
-        Rank.THREE,
+        Rank.TWO,
+        Rank.SEVEN,
+        Rank.NINE,
+        Rank.QUEEN,
+        Rank.ACE,
+        Rank.FIVE,
+        Rank.KING,
+        Rank.NINE,
     )
 
     /**
@@ -70,7 +106,7 @@ internal object TeachingDeal {
      *
      * Built by taking the named ranks out of a real deck one at a time and letting whatever is
      * left fall in behind them, which is what makes it a permutation by construction rather
-     * than by hope. `TeachingDealTest` asserts it anyway — a stacked deck that is not a legal
+     * than by hope. `TeachingRoundTest` asserts it anyway — a stacked deck that is not a legal
      * deck is a silent rules change.
      */
     fun deck(): List<Card> {
@@ -95,9 +131,8 @@ internal object TeachingDeal {
  * the bots. It saves nothing: opening the lesson must not take somebody's half-played game
  * away.
  *
- * @param callVintoFromTurn which turn the director may have a bot call Vinto on. Late enough
- *   that the player has met a card's action and a toss-in window; early enough that the final
- *   round is reached while they are still paying attention.
+ * @param callVintoFromTurn the turn from which the director may have a bot call Vinto, for a
+ *   learner who did not call it themselves. Late enough that they have had every chance.
  */
 fun teachingSession(
     botDispatcher: CoroutineDispatcher? = null,
@@ -115,16 +150,13 @@ fun teachingSession(
 private const val TEACHING_SEED = 20_260_820L
 
 /**
- * The turn a bot calls Vinto on.
+ * The turn a bot calls Vinto on, if the player has not.
  *
- * `turnNumber` counts *turns*, not rotations — with four seats, the player takes turns 1, 5
- * and 9, and Don takes 4, 8 and 12. Twelve is therefore Don's third turn, by which point the
- * player has had three of their own: long enough to have drawn, kept, declared, played an
- * action and answered a toss-in window, and short enough that the ending arrives while all of
- * that is still fresh.
- *
- * The first version of this said 4, which is Don's *first* turn — the lesson called Vinto
- * before the player had taken a second one.
+ * The lesson wants the *player* to call, at the end of their second turn, on a hand of a 2,
+ * two Jokers and a King. A learner who plays on instead is not wrong, and the round must still
+ * end while they are paying attention: `turnNumber` counts turns, not rotations — with four
+ * seats the player takes 1, 5 and 9, and Don takes 4, 8 and 12 — so twelve is Don's third
+ * turn, after the player has had a third of their own.
  */
 private const val VINTO_ON_TURN = 12
 
@@ -132,9 +164,9 @@ private const val VINTO_ON_TURN = 12
  * Somebody deciding the bots' moves in place of the search.
  *
  * The deck says what a bot *draws*; it cannot say what a bot *does*, and the lesson needs
- * both — a 9 left unused on the pile so taking from the discard can be shown, and, at the
- * end, somebody calling Vinto so the final round and the coalition can be played rather than
- * described.
+ * both — a Queen left unplayed on the pile so taking from the discard can be shown, a 9 and a
+ * King and an Ace actually played so the learner sees what they do, and, if it comes to it,
+ * somebody calling Vinto so the round ends.
  *
  * A director returns an action for the state in front of it, or null to let the real bot
  * think. Whatever it returns still goes through `ActionValidator` exactly as an MCTS move
@@ -153,18 +185,18 @@ fun interface BotDirector {
 /**
  * The director for the lesson.
  *
- * Two jobs, and it keeps out of the way otherwise.
+ * **Bots draw, and then play or put down.** A directed bot never takes from the pile — the
+ * deck is written down card by card, and it only lands if every bot turn consumes exactly one
+ * card. What it drew it *plays* if it is a 9, a King or an Ace, each aimed by the script so the
+ * learner watches the three cards they have not held do their work; anything else goes face
+ * up on the pile, which is how the Queen the player is meant to take gets there. The King is
+ * aimed at a plain card the bot knows it holds and names correctly — a bot guessing would be
+ * demonstrating bad play, and a wrong guess draws a penalty card that shifts every scripted
+ * position after it.
  *
- * **Bots put their cards down.** Left to themselves the bots would swap good cards into their
- * hands, which is correct play and ruins every lesson that depends on what is on the pile —
- * the 8 you are meant to match, the 9 you are meant to take. So a directed bot holding a card
- * it drew discards it.
- *
- * **Don calls Vinto.** A bot will not do it on its own inside a short round: the rule wants
- * eight full rotations, a hand it knows entirely, and a total of zero or less. Waiting for
- * that is waiting forever, and the final round is half the game. So once the lesson has run
- * its course, Don calls it — a legal, validated, recorded action, taken on his own turn like
- * anybody else's.
+ * **Don calls Vinto**, late, if the player has not. A bot will not do it on its own inside a
+ * short round: the rule wants eight full rotations, a hand it knows entirely, and a total of
+ * zero or less.
  */
 internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirector {
 
@@ -175,12 +207,12 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
     private var demonstrated = false
 
     override fun nextAction(state: GameState): GameAction? {
-        // Don has called and the coalition needs a leader. Outside the lesson the bots hold
-        // this choice open for the human; here the script keeps moving, so the director
+        // Somebody has called and the coalition needs a leader. Outside the lesson the bots
+        // hold this choice open for the human; here the script keeps moving, so the director
         // nominates the first bot the way the runner used to.
         if (state.vintoCallerId != null && state.coalitionLeaderId == null) {
             state.players.firstOrNull { it.isBot && it.id != state.vintoCallerId }?.let {
-                return GameAction.SetCoalitionLeader(game.vinto.shapes.LeaderIdPayload(it.id))
+                return GameAction.SetCoalitionLeader(LeaderIdPayload(it.id))
             }
         }
 
@@ -192,13 +224,7 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
         // they hold, and on the teaching difficulty a belief can be honestly wrong — a wrong
         // toss draws a penalty card, and one extra draw shifts every scripted deck position
         // after it. One demonstrated toss-in is the lesson; the rest is choreography.
-        if (state.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE) {
-            val ready = state.activeTossIn?.playersReadyForNextTurn.orEmpty()
-            for (bot in state.players.filter { it.isBot && it.id !in ready }) {
-                val done = GameAction.PlayerTossInFinished(PlayerIdPayload(bot.id))
-                if (ActionValidator.validate(state, done) is Validation.Valid) return done
-            }
-        }
+        closeWindow(state)?.let { return it }
 
         val actor = state.players.getOrNull(state.currentPlayerIndex) ?: return null
         if (actor.isHuman) return null
@@ -209,39 +235,106 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
         }
 
         val pending = state.pendingAction
+            ?: return GameAction.DrawCard(PlayerIdPayload(actor.id))
+        if (pending.playerId != actor.id || pending.from != PendingCardOrigin.DRAWING) return null
 
-        // Every directed bot draws rather than takes.
-        //
-        // Two reasons, one per audience. For the player: the lesson claims there are two
-        // ways to start a turn, and the second — taking an unused action card off the pile —
-        // can only be *shown* if one is still there when the player's turn begins; left to
-        // themselves the bots take it first, correctly, since it is free value. For the
-        // deck: the deal is written down card by card, and it only lands if every bot turn
-        // consumes exactly one card — a bot free to take instead of draw shifts every
-        // position after it whenever the bot brain changes its mind, and the lesson breaks
-        // for reasons that have nothing to do with the lesson.
-        if (pending == null && actor.isBot) {
-            return GameAction.DrawCard(PlayerIdPayload(actor.id))
+        return when (pending.actionPhase) {
+            ActionPhase.CHOOSING_ACTION ->
+                if (worthPlaying(state, actor, pending.card.rank)) {
+                    GameAction.UseCardAction(PlayerIdPayload(actor.id))
+                } else {
+                    // Down it goes, face up, where the lesson can point at it.
+                    GameAction.DiscardCard(PlayerIdPayload(actor.id))
+                }
+
+            ActionPhase.SELECTING_TARGET -> aim(state, actor, pending)
         }
+    }
 
-        if (pending == null || pending.playerId != actor.id) return null
-        if (pending.from != PendingCardOrigin.DRAWING) return null
-
-        // Down it goes, face up, where the lesson can point at it.
-        return GameAction.DiscardCard(PlayerIdPayload(actor.id))
+    private fun closeWindow(state: GameState): GameAction? {
+        if (state.subPhase != GameSubPhase.TOSS_QUEUE_ACTIVE) return null
+        val ready = state.activeTossIn?.playersReadyForNextTurn.orEmpty()
+        for (bot in state.players.filter { it.isBot && it.id !in ready }) {
+            val done = GameAction.PlayerTossInFinished(PlayerIdPayload(bot.id))
+            if (ActionValidator.validate(state, done) is Validation.Valid) return done
+        }
+        return null
     }
 
     /**
-     * Whoever plays immediately before the person being taught.
+     * The three cards a bot plays rather than puts down, when the script can aim them.
      *
-     * Found by seat order rather than hard-coded, so it stays right if the deal ever puts the
-     * player somewhere other than seat zero.
+     * A 9 needs somebody to look at, an Ace somebody to make draw, and a King a card the bot
+     * knows well enough to name — without one of those the card is put down like any other,
+     * which is what keeps a learner who wanders off the line on a playable table.
      */
-    private fun seatBeforeThePlayer(state: GameState): String? {
-        val player = state.players.indexOfFirst { it.isHuman }.takeIf { it >= 0 } ?: return null
-        val before = (player - 1 + state.players.size) % state.players.size
-        return state.players[before].id
+    private fun worthPlaying(state: GameState, actor: PlayerState, rank: Rank): Boolean = when (rank) {
+        Rank.NINE, Rank.TEN -> watched(state, actor) != null
+        Rank.ACE -> victim(state, actor) != null
+        Rank.KING -> plainKnown(actor) != null
+        else -> false
     }
+
+    /** The scripted aim for a card the bot has chosen to play. */
+    private fun aim(state: GameState, actor: PlayerState, pending: PendingAction): GameAction? {
+        val me = actor.id
+        val first = pending.targets.firstOrNull()
+        return when (pending.card.rank) {
+            Rank.NINE, Rank.TEN ->
+                if (first == null) {
+                    val seat = watched(state, actor) ?: return null
+                    GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, seat.id, 0))
+                } else {
+                    GameAction.ConfirmPeek(PlayerIdPayload(me))
+                }
+
+            Rank.KING ->
+                if (first == null) {
+                    val position = plainKnown(actor) ?: return null
+                    GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, me, position))
+                } else {
+                    val rank = actor.cards.getOrNull(first.position)?.rank ?: return null
+                    GameAction.DeclareKingAction(DeclareKingActionPayload(me, rank))
+                }
+
+            Rank.ACE ->
+                if (first == null) {
+                    val seat = victim(state, actor) ?: return null
+                    GameAction.SelectActionTarget(SelectActionTargetPayload.Ace(me, seat.id))
+                } else {
+                    null
+                }
+
+            else -> null
+        }
+    }
+
+    /**
+     * Whose card a bot's 9 looks at: the learner's, so they watch it happen to them — unless
+     * the learner has called, when the rules put their cards out of reach and the look goes
+     * to the next seat round.
+     */
+    private fun watched(state: GameState, actor: PlayerState): PlayerState? {
+        val human = state.players.firstOrNull { it.isHuman }
+        if (human != null && human.id != state.vintoCallerId) return human
+        return nextSeat(state, actor)
+    }
+
+    /** Who a bot's Ace makes draw: the next seat round that the rules allow. */
+    private fun victim(state: GameState, actor: PlayerState): PlayerState? = nextSeat(state, actor)
+
+    /** The next seat after [actor] that is a bot and not the caller. */
+    private fun nextSeat(state: GameState, actor: PlayerState): PlayerState? {
+        val from = state.players.indexOfFirst { it.id == actor.id }.takeIf { it >= 0 } ?: return null
+        val count = state.players.size
+        return (1 until count)
+            .map { state.players[(from + it) % count] }
+            .firstOrNull { it.isBot && it.id != state.vintoCallerId }
+    }
+
+    /** A plain card the bot knows it holds — one a King can name with nothing to play after. */
+    private fun plainKnown(actor: PlayerState): Int? =
+        actor.knownCardPositions.firstOrNull { actor.cards.getOrNull(it)?.rank in PLAIN }
 
     /**
      * A bot throwing in a match, once.
@@ -291,5 +384,9 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
         if (state.turnNumber < callVintoFromTurn) return false
 
         return state.vintoCallerId == null && state.pendingAction == null
+    }
+
+    private companion object {
+        val PLAIN = setOf(Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX)
     }
 }

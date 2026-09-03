@@ -76,6 +76,7 @@ import game.vinto.client.chapterOf
 import game.vinto.client.heldStill
 import game.vinto.client.introStep
 import game.vinto.client.lessonFor
+import game.vinto.client.readyToCall
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
 import game.vinto.engine.mySeat
@@ -113,6 +114,9 @@ private val TalkMax = 260.dp
 
 /** What the felt has to keep, around the talking coach, before the body gives height up. */
 private val TalkChrome = 150.dp
+
+/** The least a talk body may shrink to, to stay clear of what it points at; it scrolls inside. */
+private val TalkMin = 72.dp
 
 /** Small enough to sit in a line of text, large enough to recognise on the felt. */
 private val NoteCard = 34.dp
@@ -207,12 +211,14 @@ fun TeachScreen(
             ),
             recent = log,
         ) { shown, told ->
+            // The coach reads the seat's own memory of its hand — what the player has seen,
+            // never what they have not — so "give up your worst card" can name one.
+            val memory = session.rememberedHand()
             val table = coaching.read(
                 shown = shown,
-                live = holder.tableFor(shown).beforeTheEnd(shown.vintoCallerId != null),
-                // The coach reads the seat's own memory of its hand — what the player has
-                // seen, never what they have not — so "give up your worst card" can name one.
-                memory = session.rememberedHand(),
+                live = holder.tableFor(shown)
+                    .beforeTheEnd(shown.vintoCallerId != null || readyToCall(shown, memory)),
+                memory = memory,
             )
             // Chapters reached, counted as the coach covers them. `Taught.chapters` only
             // grows, so its size is how far somebody got before they stopped.
@@ -281,12 +287,16 @@ private fun LessonTable(state: TableState, coaching: Coached, room: Room, hooks:
             coaching = coaching,
             finished = finished,
             slot = slot,
-            talkBody = room.talkBody,
+            talkBody = when (slot) {
+                is Slot.Top -> slot.body
+                is Slot.Bottom -> slot.body
+                is Slot.Band -> room.talkBody
+            },
             onDone = hooks.onDone,
             modifier = when (slot) {
                 is Slot.Band -> Modifier.inBand(slot.room)
-                Slot.Top -> overFelt(top = true, room.layout)
-                Slot.Bottom -> overFelt(top = false, room.layout)
+                is Slot.Top -> overFelt(top = true, room.layout)
+                is Slot.Bottom -> overFelt(top = false, room.layout)
             },
         )
     }
@@ -434,25 +444,39 @@ private fun ignoredThePointer(lesson: Lesson?, chosen: Label?): Boolean {
  * table has not been measured yet, or leaves no band worth the name, the top is the fallback.
  */
 private sealed interface Slot {
-    data object Top : Slot
-    data object Bottom : Slot
+    /** At an end of the felt, with a talk body of this height. */
+    data class Top(val body: Dp) : Slot
+    data class Bottom(val body: Dp) : Slot
 
     /** The room, in the stage's pixels: left and right edges, and the hand's top as bottom. */
     data class Band(val room: Rect) : Slot
 }
 
+/**
+ * Where a talking coach goes, and how tall it may be there.
+ *
+ * Whichever end of the felt leaves more room clear of the pointer's target, and a body that
+ * fits in that room — so the target stays uncovered. It used to pick an end by which half
+ * the target was in and keep the full body regardless, and on a phone whose felt is barely
+ * taller than the coach that put the seats beat over the very plate it was pointing at
+ * (product owner, twice). The body is the fixed height only for a beat that points at
+ * nothing: those are the card tour, where "Go on" staying put matters most.
+ */
 @Composable
 private fun slotFor(stage: Stage, lesson: Lesson?, view: PlayerView, room: Room, talking: Boolean): Slot {
     val density = LocalDensity.current
     if (talking) {
-        val target = lesson?.point ?: return Slot.Top
-        val rect = stage.boundsOf(target.key()) ?: return Slot.Top
-        val middle = with(density) { ((room.feltTop + room.feltBottom) / 2).toPx() }
-        return if (rect.center.y < middle) Slot.Bottom else Slot.Top
+        val target = lesson?.point ?: return Slot.Top(room.talkBody)
+        val rect = stage.boundsOf(target.key()) ?: return Slot.Top(room.talkBody)
+        val above = with(density) { rect.top.toDp() } - room.feltTop
+        val below = room.feltBottom - with(density) { rect.bottom.toDp() }
+        val body = { space: Dp -> minOf(room.talkBody, maxOf(TalkMin, space - TalkChrome - Pad)) }
+        return if (above >= below) Slot.Top(body(above)) else Slot.Bottom(body(below))
     }
 
-    val band = bandOf(stage, view, depth = with(density) { BandDepth.toPx() }) ?: return Slot.Top
-    return if (band.width >= with(density) { BandMin.toPx() }) Slot.Band(band) else Slot.Top
+    val band = bandOf(stage, view, depth = with(density) { BandDepth.toPx() })
+    val wide = band != null && band.width >= with(density) { BandMin.toPx() }
+    return if (band != null && wide) Slot.Band(band) else Slot.Top(room.talkBody)
 }
 
 /**
@@ -776,11 +800,12 @@ private fun Dot(filled: Boolean, said: String, size: Dp) {
  *
  * Calling Vinto on turn one is legal, irreversible, and the only deviation that cannot re-arm:
  * the round is simply over, with nothing taught. It is a landmine under somebody who cannot
- * yet know what the gold button does, so it is not offered until a bot has called and the
- * coach has explained what that means. From then on it is there like anything else.
+ * yet know what the gold button does, so it is not offered until the coach has something to
+ * say about it: the hand is one to call on — every card seen, the total at or below zero,
+ * which the taught round reaches at the end of the second turn — or a bot has called first.
  */
-private fun Table.beforeTheEnd(called: Boolean): Table =
-    if (called) this else copy(choices = choices.filterNot { it.tone == Tone.STAKES })
+private fun Table.beforeTheEnd(ready: Boolean): Table =
+    if (ready) this else copy(choices = choices.filterNot { it.tone == Tone.STAKES })
 
 private val TitleSize = 16.sp
 private val DetailSize = 13.sp
