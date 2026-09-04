@@ -1,0 +1,7 @@
+The game is now called Vinto!, and the three bots are the four elements — fire, water, earth and air — each drawn as an engraved mark rather than a portrait.
+
+Text now scales with the screen, so a tablet reads like a tablet instead of a stretched phone, either way up.
+
+Scoring corrections: a tie now pays the caller 2 rather than 3, and every player starts a session on 4 points.
+
+The home screen carries a link to the other games, and shows the build number beside the version.

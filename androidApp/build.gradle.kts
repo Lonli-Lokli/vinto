@@ -70,6 +70,39 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 }
 
+/**
+ * The build number: the git commit count, monotonic and needing no stored state, and the same
+ * number the iOS archive stamps in with `CURRENT_PROJECT_VERSION="$(Scripts/build-number.sh)"`.
+ * Play refuses an upload whose versionCode does not strictly exceed the last one on the track.
+ *
+ * `-PversionCode=` overrides it, which is what a shallow CI checkout needs: counting commits in a
+ * truncated clone is not monotonic. A tree with no git at all falls back to 1 rather than failing.
+ * `providers.exec` rather than a plain shell-out because the configuration cache is on.
+ */
+val buildNumber = (project.findProperty("versionCode") as String?)?.toIntOrNull()
+    ?: runCatching {
+        project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+            .standardOutput.asText.get().trim().toInt()
+    }.getOrDefault(1)
+
+/** The human semver, bumped by hand at a release. `VersionTest` holds it to `Version.kt`. */
+val MARKETING_VERSION = "1.0"
+
+/**
+ * What the AAB is actually CALLED.
+ *
+ * AGP names the artifact after the Gradle module, and every game in this portfolio calls that
+ * module `androidApp` or `composeApp` — so Vinto, Palon and Niva all emit `androidApp-release.aab`.
+ * That is not cosmetic: send two to a tester and the second silently overwrites the first, and a
+ * file found a week later cannot be identified without installing it.
+ *
+ * `vinto-1.0-402-release.aab`: which game, which marketing version, which build, which type.
+ * The same shape `game-dots` uses, for the same reason.
+ */
+base {
+    archivesName.set("vinto-$MARKETING_VERSION-$buildNumber")
+}
+
 android {
     namespace = "game.vinto.app"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
@@ -99,17 +132,13 @@ android {
         // `providers.exec` rather than a plain `"git".execute()`: the configuration cache is ON
         // in this build (gradle.properties says why), and shelling out at configuration time any
         // other way is a cache violation that fails the build rather than degrading it.
-        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull()
-            ?: runCatching {
-                project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
-                    .standardOutput.asText.get().trim().toInt()
-            }.getOrDefault(1)
+        versionCode = buildNumber
 
         // The human semver, bumped by hand at a release and deliberately NOT synced with iOS.
         // Stores gate uploads on the build number rising within a marketing version; they do not
         // care that two platforms share one, and forcing lockstep would mean burning a version on
         // one platform to match the other.
-        versionName = "1.0"
+        versionName = MARKETING_VERSION
     }
 
     compileOptions {
