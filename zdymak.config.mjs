@@ -52,12 +52,19 @@ export default {
       './tools/brand/card-renders/card_7.png',
       './tools/brand/card-renders/card_joker.png',
       './tools/brand/card-renders/card_q.png',
-      './tools/brand/card-renders/card_a.png',
     ],
-    fanX: 630,
-    fanY: 520,
-    fanHeight: 240,
-    fanSpread: 0.14,
+    // Raised and enlarged: at 240 tall and sitting on the baseline they left the whole middle of
+    // the graphic empty green, with the tops of the cards below the wordmark. Now they rise to
+    // the wordmark.s own line and run off the bottom edge, which is what makes them read as a
+    // hand on a table rather than as four stickers.
+    fanX: 622,
+    fanY: 400,
+    fanHeight: 250,
+    fanSpread: 0.09,
+
+    // The block hangs from the top by default, which left the bottom third of the left column
+    // empty while the cards filled the middle. Down 40 centres it against them.
+    textOffsetY: 40,
   },
 
   // Where captures land. One folder per platform, because a Play screenshot may not wear an
