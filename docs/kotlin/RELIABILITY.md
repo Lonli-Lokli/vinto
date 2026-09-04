@@ -145,6 +145,24 @@ wrong are all the same shape — symbols keyed on something the event does not c
 uuid, the instruction address, and the source map's *file name* are each that key, which is why
 the web upload runs **after** the deploy renames the script to `composeApp.<hash>.js`.
 
+**A build that cannot be symbolicated is not built.** All three paths used to warn and carry
+on when credentials were missing, so that somebody without Sentry access could still build. What
+that actually buys is a shipped release whose every crash is unreadable, behind a green pipeline
+saying nothing went wrong — which is worse than the release not existing. So each of them now
+fails instead, and `VINTO_ALLOW_UNSYMBOLICATED=1` is the single waiver across all three; it has
+to be typed, which makes skipping symbols a choice rather than an accident.
+
+Android is worth a note. `autoUploadProguardMapping` sounds like it guarantees the upload and
+does not: measured by running the task directly, an *invalid* token fails the build loudly, but
+*no credentials at all* makes it succeed in silence having uploaded nothing — and no credentials
+is exactly the case that happens, on a runner whose secret was never added. The check therefore
+runs before the upload rather than trusting it.
+
+The wasm name section is the one with no upload to refuse it, so `tools/check-wasm-names.mjs`
+reads the shipped binary's section table and fails the deploy if our names are gone. It is a
+single flag away from being off — and taking that flag out looks like a 432 KB saving rather than
+like turning off crash reports, which is why the check is on the artefact and not on the config.
+
 **Measure the frames, don't reason about them.** The web shapes were settled by throwing on
 purpose in the real production bundle, serving it, and reading Chrome's console. That reading
 found the bug: V8 puts a space before the paren, the JVM pattern does not allow one, and every

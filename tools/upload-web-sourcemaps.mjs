@@ -27,8 +27,11 @@
  * finds. So a developer keeps using the rc file, CI sets the environment variable, and neither
  * needs a branch here — the same rule the iOS dSYM upload follows.
  *
- * Absent credentials are a warning and exit 0, not a failure. A deploy that works must not start
- * failing because a telemetry secret is missing; the console says plainly what will be lost.
+ * **Absent credentials are a failure.** A deploy nobody can read a stack trace from is worse than
+ * a deploy that did not happen: the build goes out, people play it, it crashes, and every report
+ * is unreadable — with a green pipeline behind it saying nothing went wrong.
+ * `VINTO_ALLOW_UNSYMBOLICATED=1` waives it, and has to be typed. The Android and iOS halves
+ * follow the same rule.
  *
  * ## Upload it under the name that will actually be served
  *
@@ -76,13 +79,24 @@ if (!existsSync(map)) {
   process.exit(1);
 }
 
+const waived = !!process.env.VINTO_ALLOW_UNSYMBOLICATED;
 if (spawnSync('sentry-cli', ['--version'], { stdio: 'ignore' }).status !== 0) {
-  console.warn('warning: sentry-cli absent — web crashes will show minified JavaScript frames');
-  process.exit(0);
+  if (waived) {
+    console.warn('warning: VINTO_ALLOW_UNSYMBOLICATED is set and sentry-cli is absent — not uploaded');
+    process.exit(0);
+  }
+  console.error('sentry-cli is not installed, so this bundle\'s JavaScript frames would stay minified.');
+  console.error('Install it (npm i -g @sentry/cli), or set VINTO_ALLOW_UNSYMBOLICATED=1 to skip on purpose.');
+  process.exit(1);
 }
 if (!process.env.SENTRY_AUTH_TOKEN && !existsSync(join(homedir(), '.sentryclirc'))) {
-  console.warn('warning: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc — source maps not uploaded');
-  process.exit(0);
+  if (waived) {
+    console.warn('warning: VINTO_ALLOW_UNSYMBOLICATED is set and there are no credentials — not uploaded');
+    process.exit(0);
+  }
+  console.error('No SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the source map cannot reach Sentry.');
+  console.error('Set one of them, or set VINTO_ALLOW_UNSYMBOLICATED=1 to skip symbolication on purpose.');
+  process.exit(1);
 }
 
 // The official two-step flow: inject stamps a debug id into the bundle and its map so the pair

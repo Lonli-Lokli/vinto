@@ -117,6 +117,16 @@ jobs:
       - name: Build the Compose/Wasm client
         run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution
 
+      # The half of web symbolication that has no upload to fail.
+      #
+      # A wasm crash frame gets its Kotlin name from the module's own name section, which ships
+      # rather than being uploaded — so if it is ever dropped, nothing refuses anything. The build
+      # is 432 KB smaller, the site works, and every crash reads `wasm-function[15659]` forever.
+      # Checked in the artefact rather than in the build script, because what matters is what was
+      # published and not what was configured.
+      - name: 'Gate: the wasm still carries its Kotlin names'
+        run: node tools/check-wasm-names.mjs "$DIST"
+
       # Content-addressing, and this is the step the whole workflow exists around.
       #
       # The `kupalinka.app` zone's Browser Cache TTL *overrides* a weaker origin
@@ -154,16 +164,18 @@ jobs:
       # The wasm frames — the ones holding our own Kotlin — need nothing here. They carry their
       # names inside the module, because the build keeps the wasm name section.
       #
-      # Absent token is a warning, not a failure: a deploy must not start failing because a
-      # telemetry secret is missing, which is the rule every other telemetry path here follows.
+      # **A missing token fails the deploy.** It used to warn and carry on, and what that buys is
+      # a live site whose every crash report is unreadable, behind a green pipeline. Publishing
+      # something nobody can debug is worse than not publishing, so this stops.
       - name: Upload the JavaScript source map to Sentry
         if: ${{ !inputs.dryRun }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-            echo "::warning::No SENTRY_AUTH_TOKEN — web crashes will show minified JavaScript frames."
-            exit 0
+            echo "::error::No SENTRY_AUTH_TOKEN on this environment, so web crashes could not be read."
+            echo "::error::Add the secret (DEPLOYMENT.md), or run with dryRun to build without publishing."
+            exit 1
           fi
           npm install -g @sentry/cli@3
           node tools/upload-web-sourcemaps.mjs "$DIST"

@@ -127,18 +127,30 @@ targets:
           # branch here. Testing only for the rc file, as this did first, silently skipped every
           # upload on CI: the build stayed green and the symbols never arrived.
           #
-          # No-ops with a warning rather than failing when neither is present, so a contributor
-          # without credentials can still build.
+          # A RELEASE THAT CANNOT BE SYMBOLICATED DOES NOT GET BUILT. This used to warn and carry
+          # on, so that a contributor without credentials could still build; the cost of that is a
+          # shipped build whose every crash is hexadecimal, produced by a green build that said
+          # nothing was wrong. VINTO_ALLOW_UNSYMBOLICATED=1 is the way out, and it has to be
+          # typed — the default is to fail, and skipping symbols becomes a choice rather than an
+          # accident. The Android and web halves follow the same rule.
+          #
           # RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and
           # uploading them on every simulator build is how a Sentry project fills with symbols for
           # binaries that never shipped.
           if [ "$CONFIGURATION" != "Release" ]; then
             echo "note: $CONFIGURATION build — no dSYM upload"
+          elif [ -n "$VINTO_ALLOW_UNSYMBOLICATED" ]; then
+            echo "warning: VINTO_ALLOW_UNSYMBOLICATED is set — this build will not symbolicate"
           elif ! which sentry-cli >/dev/null 2>&1; then
-            echo "warning: sentry-cli absent — iOS crashes will not symbolicate"
-          elif [ -n "$SENTRY_AUTH_TOKEN" ] || [ -f "$HOME/.sentryclirc" ]; then
-            sentry-cli debug-files upload --org echo-xl --project vinto \
-              --include-sources "$DWARF_DSYM_FOLDER_PATH" || true
+            echo "error: sentry-cli absent, so this Release build's crashes would stay hexadecimal."
+            echo "error: install it, or set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbols."
+            exit 1
+          elif [ -z "$SENTRY_AUTH_TOKEN" ] && [ ! -f "$HOME/.sentryclirc" ]; then
+            echo "error: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the dSYMs cannot be uploaded."
+            echo "error: set one of them, or set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbols."
+            exit 1
           else
-            echo "warning: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc — dSYMs not uploaded"
+            # No `|| true`: an upload that fails is exactly the case this phase exists to catch.
+            sentry-cli debug-files upload --org echo-xl --project vinto \
+              --include-sources "$DWARF_DSYM_FOLDER_PATH"
           fi
