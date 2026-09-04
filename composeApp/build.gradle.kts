@@ -350,19 +350,21 @@ kotlin.sourceSets.commonMain.get().kotlin.srcDir(generateBuildInfo)
  * of types that Compose cannot prove stable across a module boundary.
  *
  *     ./gradlew :composeApp:assembleDebug -PcomposeMetrics
- *     # then read build/compose/reports/*-composables.txt
+ *     # then read the *-composables.txt files under build/compose/reports/
  *
  * Deliberately measurement only: no stability configuration file yet. Declaring a type stable
  * is a promise the compiler then trusts without checking, and making that promise about the
  * engine's state classes before reading a report would be guessing with the recomposition
  * correctness of the whole table as the stake.
  */
-// NOTHING MAY FOLLOW THIS BLOCK. Statements after `composeCompiler { }` in this script are
-// never executed — silently: the build succeeds, a `logger.lifecycle` after it prints
-// nothing, and a `tasks.register` after it leaves a task Gradle then reports as "not found in
-// project ':composeApp'". Bisected with probes on a run with the configuration cache off;
-// every block before it runs, and every statement after it does not. Half an hour went into
-// finding that out, so put new configuration **above** here.
+// Kotlin block comments NEST, and that once cost this file its tail. The KDoc above wrote a
+// glob as `reports/` + `*-composables.txt` with no space between them; that `/*` opened a
+// second comment, the `*/` below closed only the inner one, and everything after it —
+// `composeCompiler { }` included — was comment. Silently: the build succeeded, a
+// `logger.lifecycle` here printed nothing, and a `tasks.register` here left a task Gradle
+// reported as "not found in project ':composeApp'". It was first blamed on `composeCompiler`
+// itself, which is why that wrong explanation stood here for a while. `BuildScriptCommentsTest`
+// fails on it now rather than leaving it to be bisected a second time.
 composeCompiler {
     if (providers.gradleProperty("composeMetrics").isPresent) {
         reportsDestination.set(layout.buildDirectory.dir("compose/reports"))
