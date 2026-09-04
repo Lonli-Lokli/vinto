@@ -229,6 +229,18 @@ export default {
   // Google Play. Package-scoped: vydanne only ever touches this packageName.
   google: {
     packageName: 'app.kupalinka.vinto',
+
+
+    /**
+     * A draft app can only be given draft releases.
+     *
+     * This app has never been published, and Play refuses a `completed` release on any track but
+     * internal while that is true — "Only releases with status draft may be created on draft
+     * app.", which names neither the track nor the fix. So the release lands in Play Console and
+     * waits for a human to start the rollout, which is where an unpublished app's first one
+     * belongs. Drop this line the day the app is live and rollouts should begin on upload.
+     */
+    releaseStatus: 'draft',
     metadataDir: 'fastlane/metadata/android',
     defaultLocale: 'en-GB',
     // The signed bundle `prerelease` uploads. A DIRECTORY, so it takes the newest build in it and
@@ -244,10 +256,17 @@ export default {
     // last one on the track, and the commit count is what guarantees that.
     aab: './androidApp/build/outputs/bundle/release',
 
-    // Stays a closed track. `production` is a refusal in vydanne, not a flag, and that is the
-    // right shape: shipping to the public is a person pressing a button. Every store-mutating
-    // command is a dry run until `--apply`, so a mistake here costs a diff and not a release.
-    track: 'internal',
+    // THE CLOSED TRACK, always — `alpha` is Play's API name for it and the Console calls it
+    // "Closed testing". This line said `internal` while its comment claimed to be closed, and the
+    // two are different audiences: internal testing is capped at 100 addresses on a list and
+    // bypasses review, which makes it the track for checking that an upload works at all. Closed
+    // testing is where a build meets people who are going to play it, and it is the one this
+    // project ships to.
+    //
+    // `production` is a refusal in vydanne rather than a flag, and that is the right shape:
+    // shipping to the public is a person pressing a button. Every store-mutating command is a dry
+    // run until `--apply`, so a mistake here costs a diff and not a release.
+    track: 'alpha',
   },
 
   /**

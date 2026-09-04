@@ -25,7 +25,7 @@
     "play:preflight": "vydanne preflight --store google",
     "play:fill": "vydanne fill --store google",
     "play:internal": "VYDANNE_TRACK=internal vydanne prerelease --store google",
-    "play:closed": "VYDANNE_TRACK=alpha vydanne prerelease --store google",
+    "play:closed": "vydanne prerelease --store google",
     "store-assets": "zdymak build --clean && npm run store-bridge",
     "store-screenshots": "zdymak screenshots && npm run store-bridge",
     "store-previews": "zdymak reel",
