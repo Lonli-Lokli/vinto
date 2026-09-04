@@ -75,6 +75,26 @@ fun outcomeOf(scores: Map<String, Int>, callerId: String?): RoundOutcome {
 }
 
 /**
+ * The two totals a round was decided on, or null when there were none to compare.
+ *
+ * **This exists because the same `when` does not work in `composeApp`.** An exhaustive `when`
+ * over [RoundOutcome] whose branches read `caller`/`best` off the smart cast matches NOTHING on
+ * Kotlin/Native when it is written in another module — it throws `NoWhenBranchMatchedException`,
+ * which on iOS meant the score sheet blew up at the end of every round. A `when` over the same
+ * value whose branches do NOT touch the smart-cast properties matches perfectly, in the same
+ * function, three lines above. So it is the cast across the module boundary, not the matching.
+ *
+ * Here, in the module that declares the type, it works — `RoundOutcomeTest` runs on the iOS
+ * simulator and has always passed. Callers get a pair and never need a cast of their own.
+ */
+fun RoundOutcome.totals(): Pair<Int, Int>? = when (this) {
+    is RoundOutcome.CallerWon -> caller to best
+    is RoundOutcome.Level -> caller to best
+    is RoundOutcome.CoalitionWon -> caller to best
+    RoundOutcome.DeckRanOut -> null
+}
+
+/**
  * Whose hand the round was decided against: the lowest of the coalition's.
  *
  * A set rather than one id, because two players can tie on the same total and marking one of

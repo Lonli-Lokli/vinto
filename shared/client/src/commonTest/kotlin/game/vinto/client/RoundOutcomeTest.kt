@@ -2,6 +2,7 @@ package game.vinto.client
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * Which side won, and whose hand decided it.
@@ -64,5 +65,35 @@ class RoundOutcomeTest {
             bestCoalitionHands(hands + (caller to 1), caller),
             "the caller's own hand is never the coalition's best, however low it is",
         )
+    }
+
+    /**
+     * The totals every outcome carries, and the reason this lives here rather than at the screen.
+     *
+     * The score sheet used to pick these apart with its own `when` over [RoundOutcome]. In
+     * `composeApp` — a different module from the sealed type — an exhaustive `when` whose
+     * branches read `caller`/`best` off the smart cast MATCHES NOTHING on Kotlin/Native, so iOS
+     * threw `NoWhenBranchMatchedException` at the end of every round. A `when` over the same
+     * value whose branches do not touch the cast matched perfectly, three lines above it.
+     *
+     * This case runs on the JVM, on JS and on the iOS simulator, which is what makes it evidence
+     * rather than an assertion: the same `when` compiled beside its type is fine everywhere.
+     */
+    @Test
+    fun everyOutcomeReportsTheTotalsItWasDecidedOn() {
+        assertEquals(12 to 15, RoundOutcome.CallerWon(caller = 12, best = 15).totals())
+        assertEquals(12 to 12, RoundOutcome.Level(caller = 12, best = 12).totals())
+        assertEquals(12 to 4, RoundOutcome.CoalitionWon(caller = 12, best = 4).totals())
+
+        // The one outcome with nothing to compare: nobody called, so there is no pair.
+        assertNull(RoundOutcome.DeckRanOut.totals())
+    }
+
+    /** And it agrees with [outcomeOf], so the sheet's two lines cannot disagree. */
+    @Test
+    fun theTotalsMatchTheOutcomeTheyCameFrom() {
+        val hands = mapOf("me" to 5, "a" to 16, "b" to 16)
+        val totals = outcomeOf(hands, callerId = "me").totals()
+        assertEquals(5 to 16, totals, "the sheet would have printed a different pair from the verdict")
     }
 }
