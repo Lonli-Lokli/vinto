@@ -283,19 +283,38 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
         val watching = Table(prompt = Ask.SomebodyIsPlaying(playing(current, view)), waiting = true)
         // A coalition member waiting through the final round can still talk: tapping one of
         // their own cards opens the claim picker.
-        return if (mayDeclare(view)) {
-            watching.copy(
-                detail = Detail.TapACardToSayWhatItIs,
-                taps = me.cards.indices.associate { position ->
-                    CardRef(me.id, position) to Move.Ask(Question.DeclareRank(position))
-                },
-            ).showing(view)
-        } else {
+        val talk = declareTaps(view)
+        return if (talk.isEmpty()) {
             watching.showing(view)
+        } else {
+            watching.copy(detail = Detail.TapACardToSayWhatItIs, taps = talk).showing(view)
         }
     }
 
     return turnStartTable(view).showing(view)
+}
+
+/**
+ * The claim taps a coalition member's own hand carries — the whole of what "talking to your
+ * coalition" is in this app, since nothing a player types ever reaches another player.
+ *
+ * Offered on **both** kinds of turn in the final round, which is the correction. It used to
+ * be on the watching table alone, and the seat after the caller is on play the instant the
+ * leader is chosen — so a player who had just been asked to nominate somebody arrived at
+ * their own turn with no way to tell that somebody anything, and read the nomination as a
+ * promise the app had broken (product owner). Talking is not a turn: it costs nothing, takes
+ * none, and can be done as often as the player likes.
+ *
+ * Never for the caller, who has no coalition to talk to; and never inside a toss-in window,
+ * which is the one time a tap on your own hand already means something else — that table is
+ * built above both call sites and returns before either is reached.
+ */
+private fun declareTaps(view: PlayerView): Map<CardRef, Move> {
+    if (!mayDeclare(view)) return emptyMap()
+    val me = view.players.firstOrNull { it.id == view.viewerId } ?: return emptyMap()
+    return me.cards.indices.associate { position ->
+        CardRef(view.viewerId, position) to Move.Ask(Question.DeclareRank(position))
+    }
 }
 
 /** Table talk is for coalition members, during the final round, once a leader is chosen. */
@@ -408,7 +427,15 @@ private fun turnStartTable(view: PlayerView): Table {
         )
     }
 
-    return Table(prompt = Ask.YourTurn, choices = choices)
+    // Your own final-round turn is still a turn you can talk through, and the rule under the
+    // prompt is what says so — the taps are invisible until something names them.
+    val talk = declareTaps(view)
+    return Table(
+        prompt = Ask.YourTurn,
+        choices = choices,
+        taps = talk,
+        detail = Detail.TapACardToSayWhatItIs.takeIf { talk.isNotEmpty() },
+    )
 }
 
 // ---------------------------------------------------------------------------- the drawn card

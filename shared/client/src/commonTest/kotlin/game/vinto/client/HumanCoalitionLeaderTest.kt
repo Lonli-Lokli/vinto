@@ -179,6 +179,39 @@ class HumanCoalitionLeaderTest {
         assertEquals("Q", after.badges[CardRef(session.playerId, 0)])
     }
 
+    /**
+     * Reported from a phone. A bot called Vinto, the player was asked who plays for the rest
+     * of them, they nominated a bot — and then had to take their own turn anyway, with no way
+     * to tell that bot anything. Both halves of that are this app's fault rather than the
+     * rules': the coalition each take their own last turn and always did, and the one thing
+     * the player wanted to do — say what they are holding — was built, offered only while
+     * *watching*, and so unreachable on the one turn in the round that is theirs.
+     */
+    @Test
+    fun aCoalitionMemberCanStillTalkOnTheirOwnTurn() = runTest {
+        val session = LocalGameSession(
+            seed = 5L,
+            difficulty = Difficulty.MODERATE,
+            resuming = finalRound(callerId = "bot-2", leaderId = "bot-3", currentPlayerIndex = 0)
+                .copy(subPhase = GameSubPhase.IDLE),
+        )
+        val view = session.view.value
+        // Said first, so a fixture that drifted off the human's turn fails for that rather
+        // than passing vacuously on the watching table this test exists to bypass.
+        assertEquals(
+            session.playerId,
+            view.players[view.currentPlayerIndex].id,
+            "the fixture is not on the human's turn",
+        )
+
+        val table = tableFor(view)
+        val tap = table.taps[CardRef(session.playerId, 0)]
+        assertTrue(
+            tap is Move.Ask && tap.question == Question.DeclareRank(0),
+            "nothing to say on your own turn: ${table.taps}",
+        )
+    }
+
     @Test
     fun theVintoCallerGetsNoDeclareTaps() = runTest {
         // Here the human called Vinto. Their hand is frozen and out of the conversation.

@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -611,13 +613,30 @@ internal fun railCard(view: PlayerView, table: Table): CardView? {
     return if (top.actionIsLive()) CardView.Visible(top) else CardView.Hidden
 }
 
-/** The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at. */
+/**
+ * The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at.
+ *
+ * **Read off the hand, not off the target.** `PendingTargetView.card` looks like the obvious
+ * source and is always a back for a peek: the engine records a card on an `ActionTarget` only
+ * when it has to *move* one, so a Jack's two targets carry cards and a Seven's carry nothing.
+ * Asking the target was how this came to be dead code — the rail went on holding up the Seven
+ * while the Joker it had turned over lay on the felt unexplained, which is the thing this
+ * function exists to stop (product owner, a second time).
+ *
+ * The hand is where the projection puts a peeked card, for exactly one target and exactly one
+ * viewer (`revealedByCurrentAction`), so a face found here is one the redaction already
+ * allowed. Filling the target in instead would have been a change to `GameState` — and to
+ * every hash in the frozen corpus.
+ */
 private fun peekedCard(view: PlayerView): CardView.Visible? {
     val pending = view.pendingAction ?: return null
     if (pending.playerId != view.viewerId) return null
     val looks = pending.targetType == TargetType.OWN_CARD || pending.targetType == TargetType.OPPONENT_CARD
     if (!looks) return null
-    return pending.targets.firstNotNullOfOrNull { it.card as? CardView.Visible }
+    return pending.targets.firstNotNullOfOrNull { target ->
+        val seat = view.players.firstOrNull { it.id == target.playerId }
+        seat?.cards?.getOrNull(target.position) as? CardView.Visible
+    }
 }
 
 /**
@@ -773,9 +792,6 @@ private fun RecentActions(recent: List<Say>) {
     // lines rather than fewer, clipped.
     val lineHeight = with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
     val listState = rememberLazyListState()
-    LaunchedEffect(rendered.size) {
-        if (rendered.isNotEmpty()) listState.animateScrollToItem(rendered.lastIndex)
-    }
 
     // As deep as the rail can afford, and absent below one line: the rail hands this box what
     // its prompt and its buttons leave, and a log with no room for a line is a strip of well
@@ -784,6 +800,8 @@ private fun RecentActions(recent: List<Say>) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val lines = logDepth(room = maxHeight, lineHeight = lineHeight)
         if (lines < 1) return@BoxWithConstraints
+
+        KeepTheTailInView(listState, rendered, lines)
 
         Surface(
             shape = RoundedCornerShape(LogCorner),
@@ -807,6 +825,36 @@ private fun RecentActions(recent: List<Say>) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Keeps the eye at the foot of the well. Two corrections, both of which it took a phone to see.
+ *
+ * **Keyed on what the lines say, not how many there are.** A run of moves by one actor folds
+ * into a single line that grows in place, so the newest thing that happened routinely changes
+ * no count at all — an effect watching `rendered.size` sat still through the whole of a
+ * player's own turn, which is precisely the turn they are reading the box for.
+ *
+ * **And scrolled past the last line's top, not to it.** `animateScrollToItem` lands an item's
+ * *head* at the head of the box; for a folded line deeper than the well that shows its oldest
+ * half and leaves the newest below the fold. Whatever hangs over is taken off afterwards,
+ * once the layout knows how tall the line came out — it cannot be known before, because it
+ * depends on where the words wrapped.
+ *
+ * [depth] is a key rather than an argument: the well is re-measured when the rail's other
+ * tenants change, and a box that just got shallower has to find its foot again.
+ */
+@Composable
+private fun KeepTheTailInView(state: LazyListState, rendered: List<String>, depth: Int) {
+    LaunchedEffect(rendered, depth) {
+        if (rendered.isEmpty()) return@LaunchedEffect
+        state.animateScrollToItem(rendered.lastIndex)
+        val info = state.layoutInfo
+        val overhang = info.visibleItemsInfo.lastOrNull()
+            ?.let { it.offset + it.size - info.viewportEndOffset }
+            ?: 0
+        if (overhang > 0) state.animateScrollBy(overhang.toFloat())
     }
 }
 
