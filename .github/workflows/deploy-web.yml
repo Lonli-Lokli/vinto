@@ -131,9 +131,9 @@ jobs:
           cd "$DIST"
           hash=$(sha256sum composeApp.js | cut -c1-16)
           mv composeApp.js "composeApp.$hash.js"
-          # The source map travels with it, so a stale map cannot be served against a fresh
-          # script either. The `sourceMappingURL` comment inside the bundle is rewritten to
-          # match, or DevTools quietly fetches a map that is no longer there.
+          # The map is renamed alongside it, and the `sourceMappingURL` comment rewritten to
+          # match, so that sentry-cli can still pair the two a step below. The map itself is
+          # NOT published — the strip step deletes it, and this comment with it.
           mv composeApp.js.map "composeApp.$hash.js.map"
           sed -i "s|sourceMappingURL=composeApp.js.map|sourceMappingURL=composeApp.$hash.js.map|" "composeApp.$hash.js"
           # And the page. `WebShellTest` holds the `src` to a single plain attribute on one
@@ -142,6 +142,45 @@ jobs:
           grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
           echo "script=composeApp.$hash.js" >> "$GITHUB_OUTPUT"
           echo "Script is now composeApp.$hash.js"
+
+      # The JavaScript half of a web stack trace, made readable.
+      #
+      # **After the content-addressing above, and that ordering is the point.** Sentry matches an
+      # uploaded artifact to a frame by file name, and what a browser will report is
+      # `composeApp.<hash>.js` — so a map uploaded under the plain name matches nothing and the
+      # upload is wasted. It is the same failure as sending dSYMs for events that carry no
+      # addresses: symbols keyed on something no event contains.
+      #
+      # The wasm frames — the ones holding our own Kotlin — need nothing here. They carry their
+      # names inside the module, because the build keeps the wasm name section.
+      #
+      # Absent token is a warning, not a failure: a deploy must not start failing because a
+      # telemetry secret is missing, which is the rule every other telemetry path here follows.
+      - name: Upload the JavaScript source map to Sentry
+        if: ${{ !inputs.dryRun }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::warning::No SENTRY_AUTH_TOKEN — web crashes will show minified JavaScript frames."
+            exit 0
+          fi
+          npm install -g @sentry/cli@3
+          node tools/upload-web-sourcemaps.mjs "$DIST"
+
+      # And then the map does not ship.
+      #
+      # A source map is the original source. Serving one publishes every Kotlin file the web
+      # client was built from to anyone who opens the network tab, and this repository may not
+      # stay public. Sentry has it by now; the internet does not need it, which is Sentry's own
+      # advice as well.
+      #
+      # **Unconditional, and deliberately not gated on the token or on `dryRun`.** The upload
+      # above is allowed to be skipped when there are no credentials; this is not, because the
+      # failure mode of skipping it is publishing the source. It also runs before the measuring
+      # step below, so what that reports is what actually gets published.
+      - name: Keep the source maps out of what gets published
+        run: node tools/strip-web-sourcemaps.mjs "$DIST"
 
       # The address comes out of the committed configuration, so the verification below checks
       # the hostname this deploy is actually claiming rather than one assembled from a name.
@@ -182,31 +221,6 @@ jobs:
             echo ""
             echo "It would have gone to https://${{ steps.site.outputs.host }}."
           } >> "$GITHUB_STEP_SUMMARY"
-
-      # The JavaScript half of a web stack trace, made readable.
-      #
-      # **After the content-addressing above, and that ordering is the whole point.** Sentry
-      # matches an uploaded artifact to a frame by file name, and what a browser will report is
-      # `composeApp.<hash>.js` — so a map uploaded under the plain name matches nothing and the
-      # upload is wasted. It is the same failure as sending dSYMs for events that carry no
-      # addresses: symbols keyed on something no event contains.
-      #
-      # The wasm frames — the ones holding our own Kotlin — need nothing here. They carry their
-      # names inside the module, because the build keeps the wasm name section.
-      #
-      # Absent token is a warning, not a failure: a deploy must not start failing because a
-      # telemetry secret is missing, which is the rule every other telemetry path here follows.
-      - name: Upload the JavaScript source map to Sentry
-        if: ${{ !inputs.dryRun }}
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-            echo "::warning::No SENTRY_AUTH_TOKEN — web crashes will show minified JavaScript frames."
-            exit 0
-          fi
-          npm install -g @sentry/cli@2
-          node tools/upload-web-sourcemaps.mjs "$DIST"
 
       - name: Deploy the Worker
         if: ${{ !inputs.dryRun }}

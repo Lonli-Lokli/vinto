@@ -113,7 +113,7 @@ the same one three times:
 | Android | R8 `mapping.txt`, uploaded by the Sentry Gradle plugin. The event must **name the mapping's uuid** or the upload is ignored — read from `assets/sentry-debug-meta.properties`, not the manifest, since plugin 6.x | `ProguardUuid.android.kt`, `androidApp/build.gradle.kts` |
 | iOS | dSYMs, uploaded by a Release-only build phase. Sentry looks up the frame's `instruction_addr`, so **without addresses in the event an uploaded dSYM changes nothing** | `iosApp/project.yml` |
 | Web — wasm | The **WebAssembly name section**, kept in the module itself. `wasm-opt` strips it by default; `binaryenArguments.add("-g")` keeps it, at +432 KB gzipped. Nothing is uploaded and nothing has to match | `composeApp/build.gradle.kts` |
-| Web — JS glue | `composeApp.js.map`, uploaded to Sentry | `tools/upload-web-sourcemaps.mjs` |
+| Web — JS glue | `composeApp.js.map`, uploaded to Sentry and then **deleted before the deploy** | `tools/upload-web-sourcemaps.mjs`, `tools/strip-web-sourcemaps.mjs` |
 
 The web row is two rows on purpose. A browser stack has both kinds of frame, and **the wasm ones
 are the ones holding our code** — those read correctly with no upload at all, because the names
@@ -121,6 +121,21 @@ travel inside the `.wasm`. There is no upload that could replace them: Sentry sy
 WebAssembly from DWARF keyed by a `build_id` custom section, which Kotlin/Wasm does not emit,
 and it does not read wasm source maps. `vinto-kmp-composeApp.wasm.map` exists in the build and
 is of no use to Sentry.
+
+**A source map is the source, so it is uploaded and then removed.** It used to be published
+along with everything else in the dist, which handed every Kotlin file the web client was built
+from to anyone who opened the network tab. Sentry's own advice is to upload it and not serve it,
+and that is what happens now: the upload runs after the deploy has content-addressed the script,
+and `strip-web-sourcemaps.mjs` then deletes the `.map` and the `sourceMappingURL` comment
+that names it. That step is **unconditional** — never gated on the token or on a dry run —
+because the upload is allowed to be skipped when there are no credentials and this is not: losing
+symbolication is a bad day, and publishing what you meant to keep is not undoable. It checks its
+own work and fails the deploy if anything is left.
+
+What the browser still receives is the wasm **name section**: fully-qualified Kotlin function
+names, though no file, line, or source text. That is the price of a readable web crash, and it is
+the same bargain a symbol table makes in any shipped binary — but it is worth knowing about
+rather than discovering, if this ever stops being a public repository.
 
 Two things worth keeping in mind before touching any of it.
 

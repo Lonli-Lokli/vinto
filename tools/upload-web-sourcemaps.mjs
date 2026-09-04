@@ -4,8 +4,9 @@
  *
  *     node tools/upload-web-sourcemaps.mjs [dist-dir]
  *
- * Run after `./gradlew :composeApp:wasmJsBrowserDistribution`, and before or after the deploy —
- * it publishes nothing itself.
+ * Run after `./gradlew :composeApp:wasmJsBrowserDistribution`. It publishes nothing itself, and
+ * it is only half the job: **`strip-web-sourcemaps.mjs` has to run after it**, because a map
+ * that reaches Sentry must not also reach the public asset store.
  *
  * ## What this does and does not buy
  *
@@ -82,6 +83,18 @@ if (spawnSync('sentry-cli', ['--version'], { stdio: 'ignore' }).status !== 0) {
 if (!process.env.SENTRY_AUTH_TOKEN && !existsSync(join(homedir(), '.sentryclirc'))) {
   console.warn('warning: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc — source maps not uploaded');
   process.exit(0);
+}
+
+// The official two-step flow: inject stamps a debug id into the bundle and its map so the pair
+// is matched by content, then upload sends them. Sentry's own guidance leads with this rather
+// than with release-only uploads, and it costs nothing to follow — the debug id is a comment and
+// a few hundred bytes. It does not replace `--release` here: matching still happens by release
+// and file name, because this app builds its Sentry envelope by hand and so sends no
+// `debug_meta` for a sourcemap the way the JavaScript SDK would.
+const inject = spawnSync('sentry-cli', ['sourcemaps', 'inject', bundle, map], { stdio: 'inherit' });
+if (inject.status !== 0) {
+  console.error('sentry-cli sourcemaps inject failed');
+  process.exit(inject.status ?? 1);
 }
 
 // `~/` is how Sentry writes "whatever host served this". The frames carry an absolute URL
