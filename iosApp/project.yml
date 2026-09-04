@@ -121,16 +121,24 @@ targets:
           # has already sent one game's symbols into another game's project. `~/.sentryclirc`
           # here sets an org and deliberately no project.
           #
-          # No-ops with a warning rather than failing when sentry-cli or its credentials are
-          # absent, so a contributor without them can still build.
+          # ONE MECHANISM FOR A LAPTOP AND A RUNNER. sentry-cli reads its token from
+          # SENTRY_AUTH_TOKEN or from ~/.sentryclirc, whichever it finds — so a developer keeps
+          # using the rc file and CI sets the environment variable, and neither needs its own
+          # branch here. Testing only for the rc file, as this did first, silently skipped every
+          # upload on CI: the build stayed green and the symbols never arrived.
+          #
+          # No-ops with a warning rather than failing when neither is present, so a contributor
+          # without credentials can still build.
           # RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and
           # uploading them on every simulator build is how a Sentry project fills with symbols for
           # binaries that never shipped.
           if [ "$CONFIGURATION" != "Release" ]; then
             echo "note: $CONFIGURATION build — no dSYM upload"
-          elif which sentry-cli >/dev/null 2>&1 && [ -f "$HOME/.sentryclirc" ]; then
+          elif ! which sentry-cli >/dev/null 2>&1; then
+            echo "warning: sentry-cli absent — iOS crashes will not symbolicate"
+          elif [ -n "$SENTRY_AUTH_TOKEN" ] || [ -f "$HOME/.sentryclirc" ]; then
             sentry-cli debug-files upload --org echo-xl --project vinto \
               --include-sources "$DWARF_DSYM_FOLDER_PATH" || true
           else
-            echo "warning: sentry-cli or ~/.sentryclirc absent — iOS crashes will not symbolicate"
+            echo "warning: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc — dSYMs not uploaded"
           fi

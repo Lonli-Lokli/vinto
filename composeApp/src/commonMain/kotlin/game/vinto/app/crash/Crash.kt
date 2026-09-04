@@ -122,6 +122,14 @@ data class CrashReport(
     val message: String,
     val frames: List<String> = emptyList(),
     val place: CrashPlace = CrashPlace(),
+    /**
+     * The id of the R8 mapping this build was minified with, on Android and nowhere else.
+     *
+     * Sentry applies a mapping only to an event that names it, so without this the uploaded
+     * `mapping.txt` is never used and a release stack stays `a.b.c`. Null everywhere else, and
+     * on a debug build, where nothing is minified.
+     */
+    val proguardUuid: String? = null,
 )
 
 fun crashEnvelope(report: CrashReport): String = with(report) {
@@ -156,6 +164,12 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             append("""]}""")
         }
         append("""}]}}""")
+        // Which mapping to read this stack through. Sentry ignores an uploaded mapping unless the
+        // event names its uuid here, which is why the plugin injects one into the manifest.
+        proguardUuid?.let {
+            append(""","debug_meta":{"images":[{"type":"proguard","uuid":""")
+            append(json(it)).append("""}]}""")
+        }
     }
 
     val header = """{"event_id":"$eventId","sent_at":"$sentAtIso"}"""

@@ -87,6 +87,43 @@ class CrashFramesTest {
         assertTrue(body.contains(""""filename":"something the format changed under""""), body)
     }
 
+    /**
+     * The mapping id rides along, because an uploaded mapping is ignored without it.
+     *
+     * Sentry will not apply `mapping.txt` to an event that does not name the mapping's uuid, so
+     * this field is the difference between a readable release stack and `a.b.c`. The Sentry
+     * Gradle plugin injects the uuid into the Android manifest and `proguardUuid()` reads it —
+     * work the sentry-android SDK would do for us if this app had one.
+     */
+    @Test
+    fun anAndroidReportNamesTheMappingItShouldBeReadThrough() {
+        val body = crashEnvelope(report(uuid = "8c8d1f0e-0000-4000-8000-abcdefabcdef"))
+
+        assertTrue(body.contains(""""debug_meta""""), body)
+        assertTrue(body.contains(""""type":"proguard""""), body)
+        assertTrue(body.contains(""""uuid":"8c8d1f0e-0000-4000-8000-abcdefabcdef""""), body)
+    }
+
+    /** Everywhere else — iOS, desktop, web, and any debug build — there is no mapping to name. */
+    @Test
+    fun aReportWithNoMappingSendsNoDebugMeta() {
+        assertFalse(crashEnvelope(report(uuid = null)).contains("debug_meta"), "sent an empty image list")
+    }
+
+    private fun report(uuid: String?) = CrashReport(
+        eventId = "e1",
+        sentAtIso = "2026-09-04T00:00:00Z",
+        timestampSeconds = 1.0,
+        platform = "Android 36",
+        release = "vinto@1.0",
+        environment = "production",
+        surface = CrashSurface.MENU,
+        type = "IllegalStateException",
+        message = "boom",
+        frames = listOf("at game.vinto.app.Foo.bar(Foo.kt:1)"),
+        proguardUuid = uuid,
+    )
+
     private fun envelopeWith(frame: String) = crashEnvelope(
         CrashReport(
             eventId = "e1",

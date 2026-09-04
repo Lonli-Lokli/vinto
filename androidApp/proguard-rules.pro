@@ -31,19 +31,7 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# OUR OWN NAMES SURVIVE R8, so a release stack trace is readable as it stands.
-#
-# The alternative is the usual one: let R8 rename everything, upload `mapping.txt`, and let Sentry
-# put the names back. That does not work here, and the reason is specific rather than lazy — this
-# app posts a HAND-BUILT Sentry envelope (composeApp/.../crash/, and `design.md` §A9 for why there
-# is no SDK). Sentry applies a ProGuard mapping only to an event carrying
-# `debug_meta: {images: [{type: "proguard", uuid: …}]}`, and that uuid has to be generated at build
-# time and baked into the binary for the envelope to send. That is the machinery the Sentry Android
-# Gradle plugin exists to provide, and adopting a plugin to read our own class names back is a
-# large answer to a small question.
-#
-# `-keepnames` keeps the names and still lets R8 SHRINK — unused code goes either way, which is
-# where nearly all of the 10.3 MB -> 5.9 MB came from. Only our own package is kept; Kotlin,
-# Compose and AndroidX stay fully renamed, and their frames are marked `in_app: false` anyway, so
-# nobody reads them.
--keepnames class game.vinto.** { *; }
+# Names are NOT kept. R8 renames everything, and Sentry restores our names from the mapping the
+# Sentry Gradle plugin uploads (see androidApp/build.gradle.kts). We shipped `-keepnames
+# game.vinto.**` first, which also worked and cost 232 KB in every install; the mapping is the
+# recommended answer and the one the rest of the portfolio uses.

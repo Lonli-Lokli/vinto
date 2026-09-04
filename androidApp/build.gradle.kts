@@ -37,6 +37,21 @@ plugins {
      * thing that can see the gap is an APK on a device.
      */
     alias(libs.plugins.composeMultiplatform)
+
+    /**
+     * The Sentry Gradle plugin, for the R8 mapping and nothing else.
+     *
+     * It is the portfolio's standard answer — `game-deduction`, `game-dots` and `asilak` all
+     * apply it — and it is the recommended one because it does the half a build phase cannot: as
+     * well as uploading `mapping.txt` it injects the mapping's UUID into the manifest, which is
+     * the only thing that tells Sentry WHICH mapping belongs to a given event.
+     *
+     * `autoInstallation` is off. Everywhere else in the portfolio the plugin sits under the real
+     * sentry-android SDK; here the crash reporter is hand-built (`composeApp/.../crash`, and
+     * `design.md` §A9 for why), so letting the plugin add an SDK would ship a second reporter
+     * beside ours.
+     */
+    alias(libs.plugins.sentryAndroid)
 }
 
 // No `org.jetbrains.kotlin.android`: AGP 9 has built-in Kotlin support and refuses the plugin
@@ -269,4 +284,42 @@ tasks.matching {
         it.name.contains("lint", ignoreCase = true)
 }.configureEach {
     dependsOn(composeResourceAssets)
+}
+
+/**
+ * R8 mapping upload, so a minified release stack is readable.
+ *
+ * Without this a release frame is `a.b.c` and nothing more. The alternative we shipped first was
+ * `-keepnames game.vinto.**`, which kept our names at a cost of 232 KB — it worked, and this is
+ * better: full renaming comes back, and the names are restored by Sentry from the mapping instead
+ * of being carried in every install.
+ *
+ * **Uploading is not enough on its own.** Sentry applies a mapping only to an event that names the
+ * mapping's UUID in `debug_meta`. The plugin injects that UUID into the manifest as
+ * `io.sentry.proguard-uuid`; the SDK would read it automatically, and since this app has no SDK,
+ * `Crashes` reads it (see `ProguardUuid.android.kt`) and the envelope sends it. Both halves or
+ * neither — the same trap as iOS dSYMs, where uploading symbols achieves nothing unless the event
+ * carries instruction addresses.
+ *
+ * org and project are named here rather than left to `~/.sentryclirc`. That global default was
+ * once another app in the portfolio, so anything relying on it uploaded the wrong game's symbols.
+ *
+ * **Uploads run locally as well as on CI**, which is the point of using the plugin rather than a
+ * hand-rolled step: the auth token is read from `SENTRY_AUTH_TOKEN` or `~/.sentryclirc`, whichever
+ * exists, so one mechanism covers a developer's machine and a runner. With no token the upload is
+ * skipped rather than failed, so a contributor without credentials can still build a release.
+ */
+sentry {
+    org.set("echo-xl")
+    projectName.set("vinto")
+    autoUploadProguardMapping.set(true)
+
+    // A debug build is not minified, so there is no mapping to upload and nothing to read back.
+    ignoredBuildTypes.set(setOf("debug"))
+
+    // See the plugins block: this app reports crashes itself.
+    autoInstallation { enabled.set(false) }
+
+    // The mapping is enough to read a stack, and source context would upload the source itself.
+    includeSourceContext.set(false)
 }

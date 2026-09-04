@@ -99,6 +99,7 @@ class CrashReporter(
                 message = error.message ?: "no message",
                 frames = error.stackTraceToString().lines().drop(1).take(MAX_FRAMES).map { it.trim() },
                 place = place(),
+                proguardUuid = proguardUuid(),
             ),
         )
     }

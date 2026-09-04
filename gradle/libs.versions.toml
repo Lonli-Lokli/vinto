@@ -38,6 +38,7 @@ kover = "0.9.9"
 
 # Android API levels. minSdk 24 matches Compose Multiplatform's floor and covers ~97% of
 # devices; there is nothing in this app that would justify dropping older phones further.
+sentryGradle = "6.21.0"
 androidCompileSdk = "37"
 androidMinSdk = "24"
 androidTargetSdk = "37"
@@ -64,6 +65,7 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 
 [plugins]
+sentryAndroid = { id = "io.sentry.android.gradle", version.ref = "sentryGradle" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
