@@ -74,7 +74,7 @@ private const val SEAT_COUNT = 4
  *
  * They were "Bot 2" and "Bot 3", which is a slot number rather than an opponent, and it sat
  * next to real people's names. The four are the same three the offline game deals, plus
- * **Fern**, who never appears there because offline seat zero is the human. Online it can be a
+ * **Gale**, who never appears there because offline seat zero is the human. Online it can be a
  * bot, so it is in the list for exactly that case.
  *
  * Each name is the emblem on its seat's portrait — a leaf, a flame, a crescent, a ridge
@@ -85,7 +85,7 @@ private const val SEAT_COUNT = 4
  * By seat rather than in order taken, so the same seat is the same opponent every time and two
  * bots can never collide on a name. `portraitFor` in the client matches on these exactly.
  */
-private val BOT_NAMES = listOf("Fern", "Ember", "Sky", "Dune")
+private val BOT_NAMES = listOf("Gale", "Ember", "Tide", "Dune")
 
 internal fun botName(seatIndex: Int): String =
     BOT_NAMES.getOrElse(seatIndex) { "Bot ${seatIndex + 1}" }

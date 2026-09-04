@@ -2,7 +2,7 @@
 <resources>
 
     <!-- The name of the game. Not translated: it is what the game is called. -->
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Karılıyor…</string>
@@ -17,10 +17,12 @@
     <string name="home_online">Çevrimiçi oyna</string>
     <string name="home_teach">Nasıl oynanır</string>
     <string name="home_settings">Ayarlar</string>
-    <string name="home_version">s%1$s</string>
+    <string name="home_version">%1$s (%2$s)</string>
     <!-- The credit under the wordmark, on the first screen of every client. -->
-    <string name="home_unofficial">VINTO kart oyunu için resmi olmayan bir uygulama. Orijinali vinto.game adresinde</string>
+    <string name="home_unofficial">Resmi olmayan uygulama. Orijinali vinto.game adresinde</string>
     <string name="home_unofficial_action">Kart oyununun resmi adresi vinto.game'i aç</string>
+    <string name="home_other_games">Diğer oyunlar</string>
+    <string name="home_other_games_action">kupalinka.app'i aç, aynı yapımcının diğer oyunları</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Çevrimiçi oyna</string>
@@ -123,7 +125,7 @@
     <string name="settings_contact">İletişime geç</string>
     <string name="settings_contact_detail">Bir hata, bir fikir, ya da ters giden bir oyun.</string>
     <string name="settings_original">Orijinal oyun</string>
-    <string name="settings_original_detail">VINTO başkasının kart oyunudur, bu ise onun için resmi olmayan bir uygulamadır. Oyun, kuralları ve onu yapanlar vinto.game adresinde.</string>
+    <string name="settings_original_detail">Vinto! başkasının kart oyunudur, bu ise onun için resmi olmayan bir uygulamadır. Oyun, kuralları ve onu yapanlar vinto.game adresinde.</string>
     <string name="settings_studio">Bu uygulama hakkında</string>
     <string name="settings_studio_detail">Bu uygulamayı kim yaptı, rafta başka ne var, ve nasıl bir araya geldi.</string>
     <string name="settings_rate">Bu oyunu değerlendir</string>
@@ -295,7 +297,7 @@
     <string name="beat_call_now_title">Çağır</string>
     <string name="beat_call_now_body">Elindeki her kartı biliyorsun, ve toplamları sıfır ya da altında — bu masada kimse senin altına inemez. Vinto Çağır'a bas: diğer herkes tam olarak bir el daha oynar, sonra her el açılır.</string>
     <string name="beat_you_called_title">Vinto çağırdın</string>
-    <string name="beat_you_called_body">Tur senin koşullarınla bitiyor. Ember, Sky ve Dune birer el daha oynuyor, ve artık kimse kartlarına dokunamıyor. Sonra her el açılıyor ve seninki diğerlerinin en iyisine karşı değerlendiriliyor.</string>
+    <string name="beat_you_called_body">Tur senin koşullarınla bitiyor. Ember, Tide ve Dune birer el daha oynuyor, ve artık kimse kartlarına dokunamıyor. Sonra her el açılıyor ve seninki diğerlerinin en iyisine karşı değerlendiriliyor.</string>
     <string name="beat_coalition_vs_you_title">Şimdi tek bir taraf olarak oynuyorlar</string>
     <string name="beat_coalition_vs_you_body">Çağırmayan üç kişi koalisyondur: birer el, ve yalnızca en iyi tek elleri seninkiyle karşılaştırılır — yani bir takım senin tek eline karşı. Gerçek bir masada bunu konuşup bildiklerini paylaşırlardı. Son ellerinde ne yaptıklarını izle: burası henüz tutmadığın kartları göreceğin yer.</string>
     <string name="beat_aim_it_title">Hedefle</string>
@@ -338,7 +340,7 @@
     <string name="beat_cards_odd_body">Bir As, değeri 1'dir ve seçtiğin kişiyi bir ceza kartı çekmeye zorlar. Bir Joker eksi bir değerindedir — destedeki en iyi kart, ve asla vazgeçilmemesi gereken.</string>
     <string name="beat_tour_title">Deste ve yığın</string>
     <string name="beat_tour_body">Kartlar desteden gelir. Birinin attığı şey yanına yüzü açık düşer, tüm masanın okuyabileceği yerde — sen dahil.</string>
-    <string name="beat_seats_title">Ember, Sky ve Dune</string>
+    <string name="beat_seats_title">Ember, Tide ve Dune</string>
     <string name="beat_seats_body">Üç bot, her biri senden daha iyi göremediği beş karta sahip. Yeşil yanan plaka sırası gelen kişidir.</string>
     <string name="beat_help_title">? her zaman orada</string>
     <string name="beat_help_body">İçinde bulunduğun anı ve her kartın ne yaptığını açıklar. Kutulu oyun tam bunun için hatırlatma kartlarıyla gelir, oyuncu başına bir tane — burada ya da bir masada kimseden on dört değeri aklında tutması beklenmez.</string>

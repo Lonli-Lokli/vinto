@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Mélange…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">Jouer en ligne</string>
     <string name="home_teach">Comment jouer</string>
     <string name="home_settings">Paramètres</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Une application non officielle du jeu de cartes VINTO. L’original se trouve sur vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Application non officielle. L'original est sur vinto.game</string>
     <string name="home_unofficial_action">Ouvrir vinto.game, le site officiel du jeu de cartes</string>
+    <string name="home_other_games">Voir d'autres jeux</string>
+    <string name="home_other_games_action">Ouvrir kupalinka.app, les autres jeux du même auteur</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Jouer en ligne</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">Nous contacter</string>
     <string name="settings_contact_detail">Un bug, une idée, ou une partie qui a mal tourné.</string>
     <string name="settings_original">Le jeu original</string>
-    <string name="settings_original_detail">VINTO est le jeu de cartes de quelqu’un d’autre, et ceci en est une application non officielle. Le jeu, ses règles et ses créateurs se trouvent sur vinto.game.</string>
+    <string name="settings_original_detail">Vinto! est le jeu de cartes de quelqu’un d’autre, et ceci en est une application non officielle. Le jeu, ses règles et ses créateurs se trouvent sur vinto.game.</string>
     <string name="settings_studio">À propos de cette application</string>
     <string name="settings_studio_detail">Qui a fait cette application, ce qu’il y a d’autre à découvrir, et comment elle est construite.</string>
     <string name="settings_rate">Noter ce jeu</string>
@@ -288,7 +290,7 @@
     <string name="beat_call_now_title">Appelez</string>
     <string name="beat_call_now_body">Vous connaissez chaque carte de votre main, et ensemble elles totalisent zéro ou moins — personne à cette table ne peut finir en dessous de vous. Appuyez sur Appeler Vinto : tous les autres jouent encore exactement un tour, puis chaque main est révélée.</string>
     <string name="beat_you_called_title">Vous avez appelé Vinto</string>
-    <string name="beat_you_called_body">La manche se termine à vos conditions. Ember, Sky et Dune jouent chacun encore un tour, et personne ne peut plus toucher à vos cartes. Puis chaque main est révélée, et la vôtre est opposée à la meilleure des leurs.</string>
+    <string name="beat_you_called_body">La manche se termine à vos conditions. Ember, Tide et Dune jouent chacun encore un tour, et personne ne peut plus toucher à vos cartes. Puis chaque main est révélée, et la vôtre est opposée à la meilleure des leurs.</string>
     <string name="beat_coalition_vs_you_title">Maintenant, ils jouent comme un seul</string>
     <string name="beat_coalition_vs_you_body">Les trois qui n’ont pas appelé forment la coalition : un tour chacun, et seule leur meilleure main sera comparée à la vôtre — c’est donc une équipe contre votre unique main. À une vraie table, ils en discuteraient et mettraient en commun ce qu’ils savent. Regardez ce qu’ils font de leur dernier tour : c’est là que vous voyez les cartes que vous n’avez pas encore eues.</string>
     <string name="beat_aim_it_title">Visez</string>
@@ -331,7 +333,7 @@
     <string name="beat_cards_odd_body">L’As vaut 1 et force qui vous choisissez à piocher une carte de pénalité. Le Joker vaut moins un — la meilleure carte du jeu, et celle qu’il ne faut jamais laisser partir.</string>
     <string name="beat_tour_title">La pioche et la pile</string>
     <string name="beat_tour_body">Les cartes viennent de la pioche. Ce que chacun jette atterrit face visible à côté, où toute la table peut le lire — vous y compris.</string>
-    <string name="beat_seats_title">Ember, Sky et Dune</string>
+    <string name="beat_seats_title">Ember, Tide et Dune</string>
     <string name="beat_seats_body">Trois bots, chacun avec cinq cartes qu’ils ne voient pas mieux que vous. La plaque qui s’allume en vert indique à qui c’est le tour.</string>
     <string name="beat_help_title">Le ? est toujours là</string>
     <string name="beat_help_body">Il explique le moment où vous êtes et ce que fait chaque carte. La boîte du jeu contient des cartes aide-mémoire pour exactement cela, une par joueur — personne n’est censé retenir quatorze valeurs par cœur, ici ou à une vraie table.</string>

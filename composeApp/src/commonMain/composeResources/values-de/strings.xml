@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">Wird gemischt…</string>
 
@@ -13,9 +13,11 @@
     <string name="home_online">Online spielen</string>
     <string name="home_teach">Spielanleitung</string>
     <string name="home_settings">Einstellungen</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Eine inoffizielle App für das Kartenspiel VINTO. Das Original gibt es unter vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Inoffizielle App. Das Original gibt es auf vinto.game</string>
     <string name="home_unofficial_action">vinto.game öffnen, die offizielle Seite des Kartenspiels</string>
+    <string name="home_other_games">Weitere Spiele</string>
+    <string name="home_other_games_action">kupalinka.app öffnen – die anderen Spiele desselben Machers</string>
 
     <string name="online_screen_title">Online spielen</string>
     <string name="online_nickname">Ihr Name am Tisch</string>
@@ -112,7 +114,7 @@
     <string name="settings_contact">Kontakt aufnehmen</string>
     <string name="settings_contact_detail">Ein Fehler, eine Idee, oder ein Spiel, das schiefgelaufen ist.</string>
     <string name="settings_original">Das Originalspiel</string>
-    <string name="settings_original_detail">VINTO ist das Kartenspiel eines anderen Herstellers, und dies ist eine inoffizielle App dafür. Das Spiel, seine Regeln und die Menschen, die es gemacht haben, finden Sie unter vinto.game.</string>
+    <string name="settings_original_detail">Vinto! ist das Kartenspiel eines anderen Herstellers, und dies ist eine inoffizielle App dafür. Das Spiel, seine Regeln und die Menschen, die es gemacht haben, finden Sie unter vinto.game.</string>
     <string name="settings_studio">Über diese App</string>
     <string name="settings_studio_detail">Wer diese App gemacht hat, was sonst noch im Regal steht, und wie sie aufgebaut ist.</string>
     <string name="settings_rate">Dieses Spiel bewerten</string>
@@ -273,7 +275,7 @@
     <string name="beat_call_now_title">Rufen</string>
     <string name="beat_call_now_body">Sie kennen jede Karte in Ihrer Hand, und zusammen ergeben sie null oder weniger — niemand an diesem Tisch kann darunter enden. Vinto rufen drücken: Alle anderen bekommen genau noch einen Zug, dann werden alle Hände aufgedeckt.</string>
     <string name="beat_you_called_title">Sie haben Vinto gerufen</string>
-    <string name="beat_you_called_body">Die Runde endet zu Ihren Bedingungen. Ember, Sky und Dune bekommen jeweils noch einen Zug, und niemand darf jetzt Ihre Karten berühren. Dann werden alle Hände aufgedeckt, und Ihre wird der besten der anderen gegenübergestellt.</string>
+    <string name="beat_you_called_body">Die Runde endet zu Ihren Bedingungen. Ember, Tide und Dune bekommen jeweils noch einen Zug, und niemand darf jetzt Ihre Karten berühren. Dann werden alle Hände aufgedeckt, und Ihre wird der besten der anderen gegenübergestellt.</string>
     <string name="beat_coalition_vs_you_title">Jetzt spielen sie als eine</string>
     <string name="beat_coalition_vs_you_body">Die drei, die nicht gerufen haben, sind die Koalition: je ein Zug, und nur ihre eine beste Hand wird mit Ihrer verglichen — also ein Team gegen Ihre eine Hand. An einem echten Tisch würden sie sich absprechen und ihr Wissen bündeln. Achten Sie darauf, was sie mit ihrem letzten Zug tun: So sehen Sie die Karten, die Sie noch nicht in der Hand hatten.</string>
     <string name="beat_aim_it_title">Zielen</string>
@@ -316,7 +318,7 @@
     <string name="beat_cards_odd_body">Ein Ass ist 1 wert und lässt die gewählte Person eine Strafkarte ziehen. Ein Joker ist minus eins wert — die beste Karte im Stapel, und die, die man nie hergibt.</string>
     <string name="beat_tour_title">Der Stapel und die Ablage</string>
     <string name="beat_tour_body">Karten kommen vom Stapel. Was weggeworfen wird, landet offen daneben, wo der ganze Tisch es lesen kann — auch Sie.</string>
-    <string name="beat_seats_title">Ember, Sky und Dune</string>
+    <string name="beat_seats_title">Ember, Tide und Dune</string>
     <string name="beat_seats_body">Drei Bots, jeder mit fünf Karten, die sie ebenso wenig sehen können wie Sie. Grün leuchtet das Feld, dessen Zug gerade ist.</string>
     <string name="beat_help_title">Das ? ist immer da</string>
     <string name="beat_help_body">Es erklärt den aktuellen Moment und was jede Karte tut. Das Spiel in der Box liefert genau dafür Erinnerungskarten, eine pro Person — niemand soll sich vierzehn Ränge merken müssen, hier so wenig wie am echten Tisch.</string>

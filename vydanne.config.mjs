@@ -106,14 +106,17 @@ export default {
   // Store Review 5.2 and Play's IP policy both refuse it, and screenshots of the table would have
   // published it.
   //
-  // What replaced them is original and generated in this repository: four flat emblems — a leaf,
-  // a flame, a crescent, a ridge — drawn from the deck's own palette, with the seats renamed Fern,
-  // Ember, Sky and Dune to match. Masters in `brand/avatars/`, converted to vector drawables by
+  // What replaced them is original and generated in this repository: the four classical elements,
+  // each drawn as three engraved lines — fire standing up and wavering, water lying down and
+  // rolling, earth dead straight, air curling away — from the deck's own palette, with the seats
+  // named Ember, Tide, Dune and Gale to match. The elements are nobody's property; the drawings
+  // are this repository's own, and deliberately not a copy of any particular depiction of them.
+  // Masters in `brand/avatars/`, converted to vector drawables by
   // `tools/svg-to-drawable.mjs`, and `brand/avatars/_shared.md` records the whole reasoning.
   // Nothing in the build is anybody else's any more, so `false` is now a true statement rather
   // than a convenient one.
   //
-  // The one piece of third-party *anything* left is the name VINTO itself, which is somebody
+  // The one piece of third-party *anything* left is the name Vinto! itself, which is somebody
   // else's game — and that is a licensing question about the app's subject, not third-party
   // content shipped inside it. Every client says so on its first screen and links to
   // <https://vinto.game>, which is what `AttributionTest` holds.

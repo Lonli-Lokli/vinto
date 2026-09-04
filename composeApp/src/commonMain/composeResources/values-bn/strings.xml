@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">এলোমেলো করা হচ্ছে…</string>
 
@@ -13,9 +13,11 @@
     <string name="home_online">অনলাইনে খেলুন</string>
     <string name="home_teach">কীভাবে খেলবেন</string>
     <string name="home_settings">সেটিংস</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">কার্ড গেম VINTO-এর একটি অনানুষ্ঠানিক অ্যাপ। আসল গেমটি vinto.game-এ আছে</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">অনানুষ্ঠানিক অ্যাপ। মূলটি vinto.game-এ</string>
     <string name="home_unofficial_action">vinto.game খুলুন, কার্ড গেমটির অফিসিয়াল ঠিকানা</string>
+    <string name="home_other_games">অন্যান্য গেম</string>
+    <string name="home_other_games_action">kupalinka.app খুলুন — একই নির্মাতার অন্যান্য গেম</string>
 
     <string name="online_screen_title">অনলাইনে খেলুন</string>
     <string name="online_nickname">টেবিলে আপনার নাম</string>
@@ -112,7 +114,7 @@
     <string name="settings_contact">যোগাযোগ করুন</string>
     <string name="settings_contact_detail">কোনো ত্রুটি, কোনো ধারণা, অথবা এমন একটি খেলা যা ভুল হয়ে গেছে।</string>
     <string name="settings_original">আসল খেলা</string>
-    <string name="settings_original_detail">VINTO অন্য কারো তৈরি একটি কার্ড গেম, আর এটি তার একটি অনানুষ্ঠানিক অ্যাপ। খেলা, তার নিয়ম এবং যারা এটি তৈরি করেছেন তারা আছেন vinto.game-এ।</string>
+    <string name="settings_original_detail">Vinto! অন্য কারো তৈরি একটি কার্ড গেম, আর এটি তার একটি অনানুষ্ঠানিক অ্যাপ। খেলা, তার নিয়ম এবং যারা এটি তৈরি করেছেন তারা আছেন vinto.game-এ।</string>
     <string name="settings_studio">এই অ্যাপ সম্পর্কে</string>
     <string name="settings_studio_detail">এই অ্যাপ কে তৈরি করেছেন, তাক-এ আর কী আছে, আর এটি কীভাবে বানানো হয়েছে।</string>
     <string name="settings_rate">এই খেলাকে রেট করুন</string>
@@ -273,7 +275,7 @@
     <string name="beat_call_now_title">ডেকে দিন</string>
     <string name="beat_call_now_body">আপনার হাতের প্রতিটি তাস আপনার জানা, আর একসাথে সেগুলোর মূল্য শূন্য বা তার কম — এই টেবিলে কেউ আপনার চেয়ে কম দিয়ে শেষ করতে পারবেন না। Call Vinto চাপুন: বাকি সবাই ঠিক একটি করে পালা পাবেন, তারপর প্রতিটি হাত উন্মুক্ত হবে।</string>
     <string name="beat_you_called_title">আপনি Vinto ডেকেছেন</string>
-    <string name="beat_you_called_body">রাউন্ড শেষ হবে আপনার শর্তে। Ember, Sky আর Dune প্রত্যেকে একটি করে পালা পাবেন, আর এখন কেউ আপনার তাস স্পর্শ করতে পারবেন না। তারপর প্রতিটি হাত উল্টে দেখানো হবে আর আপনারটা তাদের সেরার বিপরীতে ধরা হবে।</string>
+    <string name="beat_you_called_body">রাউন্ড শেষ হবে আপনার শর্তে। Ember, Tide আর Dune প্রত্যেকে একটি করে পালা পাবেন, আর এখন কেউ আপনার তাস স্পর্শ করতে পারবেন না। তারপর প্রতিটি হাত উল্টে দেখানো হবে আর আপনারটা তাদের সেরার বিপরীতে ধরা হবে।</string>
     <string name="beat_coalition_vs_you_title">এখন তারা এক হয়ে খেলেন</string>
     <string name="beat_coalition_vs_you_body">যে তিনজন ডাকেননি তারাই কোয়ালিশন: প্রত্যেকে একটি করে পালা পান, আর শুধু তাদের একক সেরা হাতই আপনারটার সাথে তুলনা করা হয় — তাই এটা একটা দল বনাম আপনার একটি হাত। বাস্তব টেবিলে তারা আলোচনা করে জ্ঞান একসাথে করতেন। তাদের শেষ পালায় তারা কী করেন লক্ষ করুন: এখানেই আপনি সেই তাসগুলো দেখবেন যা এখনও আপনি ধরেননি।</string>
     <string name="beat_aim_it_title">লক্ষ্য করুন</string>

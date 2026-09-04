@@ -24,6 +24,15 @@ object Pages {
     /** A bug, an idea, or a round that went wrong. */
     const val CONTACT: String = "$STUDIO/contact"
 
+    /**
+     * The studio's other games.
+     *
+     * The fragment is not decoration: `kupalinka.app` is one page and `#games` is the section
+     * of it that lists them, so dropping it lands a curious player at the top of a page about
+     * the studio rather than on the shelf they were promised.
+     */
+    const val GAMES: String = "$STUDIO/#games"
+
     /** Where somebody sent the game ends up: the game itself, not the studio. */
     const val GAME: String = "https://$INVITE_HOST"
 

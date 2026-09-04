@@ -475,7 +475,7 @@ class ScreenContrastTest {
         val SEATS = listOf(
             "p1" to "You",
             "p2" to "Ember",
-            "p3" to "Sky",
+            "p3" to "Tide",
             "p4" to "Dune",
         )
 

@@ -87,7 +87,7 @@ class DealParityTest {
     @Test
     fun theSeatsAreNamedForTheirEmblems() {
         val dealt = initializeGame(seed = 42)
-        assertEquals(listOf("You", "Ember", "Sky", "Dune"), dealt.players.map { it.name })
+        assertEquals(listOf("You", "Ember", "Tide", "Dune"), dealt.players.map { it.name })
         assertEquals(dealt.players.map { it.name }, dealt.players.map { it.nickname })
     }
 

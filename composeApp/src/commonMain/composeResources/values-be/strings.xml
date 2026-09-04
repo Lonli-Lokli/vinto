@@ -16,7 +16,7 @@
 -->
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">Тасуем…</string>
 
@@ -28,9 +28,11 @@
     <string name="home_online">Гуляць анлайн</string>
     <string name="home_teach">Як гуляць</string>
     <string name="home_settings">Налады</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Неафіцыйны дадатак для карцёжнай гульні VINTO. Арыгінал — на vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Неафіцыйны дадатак. Арыгінал — на vinto.game</string>
     <string name="home_unofficial_action">Адкрыць vinto.game — афіцыйны сайт гульні</string>
+    <string name="home_other_games">Іншыя гульні</string>
+    <string name="home_other_games_action">Адкрыць kupalinka.app — іншыя гульні таго ж аўтара</string>
 
     <string name="online_screen_title">Гульня анлайн</string>
     <string name="online_nickname">Ваша імя за сталом</string>
@@ -127,7 +129,7 @@
     <string name="settings_contact">Напісаць нам</string>
     <string name="settings_contact_detail">Памылка, ідэя або партыя, якая пайшла не так.</string>
     <string name="settings_original">Арыгінальная гульня</string>
-    <string name="settings_original_detail">VINTO — не наша гульня. Гэта неафіцыйны дадатак для яе, а сама гульня, яе правілы і людзі, якія яе прыдумалі, — на vinto.game.</string>
+    <string name="settings_original_detail">Vinto! — не наша гульня. Гэта неафіцыйны дадатак для яе, а сама гульня, яе правілы і людзі, якія яе прыдумалі, — на vinto.game.</string>
     <string name="settings_studio">Пра гэты дадатак</string>
     <string name="settings_studio_detail">Хто зрабіў гэты дадатак, што яшчэ ёсць на паліцы і як ён уладкаваны.</string>
     <string name="settings_rate">Ацаніць гульню</string>

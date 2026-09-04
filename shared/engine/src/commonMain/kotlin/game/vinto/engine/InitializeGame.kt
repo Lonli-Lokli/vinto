@@ -124,7 +124,7 @@ private fun createPlayers(): List<PlayerState> = listOf(
         coalitionWith = emptyList(),
     ),
     bot("bot-1", "Ember"),
-    bot("bot-2", "Sky"),
+    bot("bot-2", "Tide"),
     bot("bot-3", "Dune"),
 )
 

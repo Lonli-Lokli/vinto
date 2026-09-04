@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">מערבבים…</string>
 
@@ -13,9 +13,11 @@
     <string name="home_online">לשחק אונליין</string>
     <string name="home_teach">איך משחקים</string>
     <string name="home_settings">הגדרות</string>
-    <string name="home_version">גרסה %1$s</string>
-    <string name="home_unofficial">אפליקציה לא רשמית למשחק הקלפים VINTO. המקור נמצא בכתובת vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">אפליקציה לא רשמית. המקור נמצא ב-vinto.game</string>
     <string name="home_unofficial_action">פתיחת vinto.game, האתר הרשמי של משחק הקלפים</string>
+    <string name="home_other_games">משחקים נוספים</string>
+    <string name="home_other_games_action">פתיחת kupalinka.app, המשחקים האחרים של אותו יוצר</string>
 
     <string name="online_screen_title">לשחק אונליין</string>
     <string name="online_nickname">השם שלכם בשולחן</string>
@@ -112,7 +114,7 @@
     <string name="settings_contact">יצירת קשר</string>
     <string name="settings_contact_detail">באג, רעיון, או משחק שהשתבש.</string>
     <string name="settings_original">המשחק המקורי</string>
-    <string name="settings_original_detail">VINTO הוא משחק קלפים של מישהו אחר, וזו אפליקציה לא רשמית עבורו. המשחק, הכללים שלו ומי שיצר אותו נמצאים בכתובת vinto.game.</string>
+    <string name="settings_original_detail">Vinto! הוא משחק קלפים של מישהו אחר, וזו אפליקציה לא רשמית עבורו. המשחק, הכללים שלו ומי שיצר אותו נמצאים בכתובת vinto.game.</string>
     <string name="settings_studio">על האפליקציה הזו</string>
     <string name="settings_studio_detail">מי יצר את האפליקציה הזו, מה עוד יש על המדף, ואיך היא בנויה.</string>
     <string name="settings_rate">דירוג המשחק</string>

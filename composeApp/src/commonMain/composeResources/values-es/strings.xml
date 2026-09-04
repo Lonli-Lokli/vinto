@@ -2,7 +2,7 @@
 <resources>
 
     <!-- The name of the game. Not translated: it is what the game is called. -->
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Barajando…</string>
@@ -17,10 +17,12 @@
     <string name="home_online">Jugar en línea</string>
     <string name="home_teach">Cómo se juega</string>
     <string name="home_settings">Ajustes</string>
-    <string name="home_version">v%1$s</string>
+    <string name="home_version">%1$s (%2$s)</string>
     <!-- The credit under the wordmark, on the first screen of every client. -->
-    <string name="home_unofficial">Una app no oficial del juego de cartas VINTO. El original está en vinto.game</string>
+    <string name="home_unofficial">App no oficial. El original está en vinto.game</string>
     <string name="home_unofficial_action">Abrir vinto.game, la casa oficial del juego de cartas</string>
+    <string name="home_other_games">Ver otros juegos</string>
+    <string name="home_other_games_action">Abrir kupalinka.app, los otros juegos del mismo autor</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Jugar en línea</string>
@@ -126,7 +128,7 @@
     <string name="settings_contact_detail">Un fallo, una idea, o una partida que salió mal.</string>
     <!-- The two rows that say whose game this is. -->
     <string name="settings_original">El juego original</string>
-    <string name="settings_original_detail">VINTO es el juego de cartas de otra persona, y esta es una app no oficial para jugarlo. El juego, sus reglas y quienes lo crearon están en vinto.game.</string>
+    <string name="settings_original_detail">Vinto! es el juego de cartas de otra persona, y esta es una app no oficial para jugarlo. El juego, sus reglas y quienes lo crearon están en vinto.game.</string>
     <string name="settings_studio">Acerca de esta app</string>
     <string name="settings_studio_detail">Quién hizo esta app, qué más hay en el catálogo, y cómo está construida.</string>
     <string name="settings_rate">Valora este juego</string>
@@ -299,7 +301,7 @@
     <string name="beat_call_now_title">Cántalo</string>
     <string name="beat_call_now_body">Conoces cada carta de tu mano, y juntas suman cero o menos — nadie en esta mesa puede acabar por debajo de ti. Pulsa Cantar Vinto: todos los demás juegan exactamente un turno más, y luego todas las manos quedan boca arriba.</string>
     <string name="beat_you_called_title">Cantaste Vinto</string>
-    <string name="beat_you_called_body">La ronda termina en tus condiciones. Ember, Sky y Dune juegan un turno más cada uno, y nadie puede tocar tus cartas ahora. Luego todas las manos se voltean y la tuya se pone contra la mejor de las suyas.</string>
+    <string name="beat_you_called_body">La ronda termina en tus condiciones. Ember, Tide y Dune juegan un turno más cada uno, y nadie puede tocar tus cartas ahora. Luego todas las manos se voltean y la tuya se pone contra la mejor de las suyas.</string>
     <string name="beat_coalition_vs_you_title">Ahora juegan como uno solo</string>
     <string name="beat_coalition_vs_you_body">Los tres que no cantaron son la coalición: un turno cada uno, y solo se compara con la tuya su mejor mano — así que es un equipo contra tu única mano. En una mesa real hablarían entre ellos y compartirían lo que saben. Fíjate en qué hacen con su último turno: aquí es donde ves las cartas que aún no has tenido.</string>
     <string name="beat_aim_it_title">Apúntala</string>
@@ -342,7 +344,7 @@
     <string name="beat_cards_odd_body">Un As vale 1 y hace que quien elijas robe una carta de penalización. Un Comodín vale menos uno — la mejor carta del mazo, y la que nunca hay que regalar.</string>
     <string name="beat_tour_title">El mazo y la pila</string>
     <string name="beat_tour_body">Las cartas salen del mazo. Lo que alguien tira cae boca arriba junto a él, donde toda la mesa puede leerlo — tú también.</string>
-    <string name="beat_seats_title">Ember, Sky y Dune</string>
+    <string name="beat_seats_title">Ember, Tide y Dune</string>
     <string name="beat_seats_body">Tres bots, cada uno con cinco cartas que ven no mejor que tú. La placa que se ilumina en verde es de quien juega.</string>
     <string name="beat_help_title">El ? siempre está ahí</string>
     <string name="beat_help_body">Explica el momento en que estás y qué hace cada carta. El juego de mesa trae cartas de recordatorio para justo esto, una por jugador — a nadie se le pide recordar catorce cartas de memoria, ni aquí ni en una mesa real.</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Mescolando le carte…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">Gioca online</string>
     <string name="home_teach">Come si gioca</string>
     <string name="home_settings">Impostazioni</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Un'app non ufficiale per il gioco di carte VINTO. L'originale è su vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">App non ufficiale. L'originale è su vinto.game</string>
     <string name="home_unofficial_action">Apri vinto.game, la pagina ufficiale del gioco di carte</string>
+    <string name="home_other_games">Altri giochi</string>
+    <string name="home_other_games_action">Apri kupalinka.app, gli altri giochi dello stesso autore</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Gioca online</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">Contattaci</string>
     <string name="settings_contact_detail">Un bug, un'idea, o una partita andata storta.</string>
     <string name="settings_original">Il gioco originale</string>
-    <string name="settings_original_detail">VINTO è il gioco di carte di qualcun altro, e questa è un'app non ufficiale per giocarlo. Il gioco, le sue regole e chi lo ha creato sono su vinto.game.</string>
+    <string name="settings_original_detail">Vinto! è il gioco di carte di qualcun altro, e questa è un'app non ufficiale per giocarlo. Il gioco, le sue regole e chi lo ha creato sono su vinto.game.</string>
     <string name="settings_studio">Informazioni su quest'app</string>
     <string name="settings_studio_detail">Chi ha creato quest'app, cos'altro c'è sullo scaffale, e come è fatta.</string>
     <string name="settings_rate">Valuta il gioco</string>
@@ -288,7 +290,7 @@
     <string name="beat_call_now_title">Chiamala</string>
     <string name="beat_call_now_body">Conosci ogni carta nella tua mano, e insieme arrivano a zero o meno — nessuno a questo tavolo può finire sotto di te. Premi Chiama Vinto: tutti gli altri hanno esattamente un altro turno, poi ogni mano viene scoperta.</string>
     <string name="beat_you_called_title">Hai chiamato Vinto</string>
-    <string name="beat_you_called_body">Il round finisce alle tue condizioni. Ember, Sky e Dune hanno ciascuno un altro turno, e ora nessuno può toccare le tue carte. Poi ogni mano viene scoperta e la tua viene confrontata con la migliore delle loro.</string>
+    <string name="beat_you_called_body">Il round finisce alle tue condizioni. Ember, Tide e Dune hanno ciascuno un altro turno, e ora nessuno può toccare le tue carte. Poi ogni mano viene scoperta e la tua viene confrontata con la migliore delle loro.</string>
     <string name="beat_coalition_vs_you_title">Ora giocano come una sola squadra</string>
     <string name="beat_coalition_vs_you_body">I tre che non hanno chiamato sono la coalizione: un turno ciascuno, e solo la loro singola mano migliore viene confrontata con la tua — quindi è una squadra contro la tua unica mano. A un tavolo vero ne parlerebbero e metterebbero insieme quello che sanno. Osserva cosa fanno con il loro ultimo turno: è qui che vedi le carte che non hai ancora avuto in mano.</string>
     <string name="beat_aim_it_title">Puntala</string>
@@ -331,7 +333,7 @@
     <string name="beat_cards_odd_body">L'Asso vale 1 e fa pescare una carta di penalità a chi scegli. Il Jolly vale meno uno — la carta migliore del mazzo, e quella da non regalare mai.</string>
     <string name="beat_tour_title">Il mazzo e la pila</string>
     <string name="beat_tour_body">Le carte arrivano dal mazzo. Quello che chiunque butta via atterra scoperto accanto ad esso, dove tutto il tavolo può leggerlo — te compreso.</string>
-    <string name="beat_seats_title">Ember, Sky e Dune</string>
+    <string name="beat_seats_title">Ember, Tide e Dune</string>
     <string name="beat_seats_body">Tre bot, ciascuno con cinque carte che vedono non meglio di quanto tu possa vedere le tue. La piastra che si illumina di verde è di chi ha il turno.</string>
     <string name="beat_help_title">Il ? è sempre lì</string>
     <string name="beat_help_body">Spiega il momento in cui ti trovi e cosa fa ogni carta. Il gioco in scatola include carte promemoria proprio per questo, una per giocatore — nessuno deve tenere quattordici valori a memoria, qui o a un tavolo vero.</string>

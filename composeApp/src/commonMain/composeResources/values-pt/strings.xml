@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">A baralhar…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">Jogar online</string>
     <string name="home_teach">Como jogar</string>
     <string name="home_settings">Definições</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Uma aplicação não oficial para o jogo de cartas VINTO. O original está em vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">App não oficial. O original está em vinto.game</string>
     <string name="home_unofficial_action">Abrir vinto.game, a página oficial do jogo de cartas</string>
+    <string name="home_other_games">Ver outros jogos</string>
+    <string name="home_other_games_action">Abrir kupalinka.app, os outros jogos do mesmo autor</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Jogar online</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">Contactar</string>
     <string name="settings_contact_detail">Um erro, uma ideia, ou um jogo que correu mal.</string>
     <string name="settings_original">O jogo original</string>
-    <string name="settings_original_detail">VINTO é um jogo de cartas de outras pessoas, e esta é uma aplicação não oficial para o jogar. O jogo, as suas regras e quem o criou estão em vinto.game.</string>
+    <string name="settings_original_detail">Vinto! é um jogo de cartas de outras pessoas, e esta é uma aplicação não oficial para o jogar. O jogo, as suas regras e quem o criou estão em vinto.game.</string>
     <string name="settings_studio">Sobre esta aplicação</string>
     <string name="settings_studio_detail">Quem fez esta aplicação, o que mais existe, e como foi construída.</string>
     <string name="settings_rate">Avaliar este jogo</string>
@@ -287,7 +289,7 @@
     <string name="beat_call_now_title">Chama</string>
     <string name="beat_call_now_body">Conheces todas as cartas da tua mão, e juntas somam zero ou menos — ninguém nesta mesa pode terminar abaixo de ti. Carrega em Chamar Vinto: todos os outros têm direito a exatamente mais uma jogada, e depois todas as mãos ficam viradas para cima.</string>
     <string name="beat_you_called_title">Chamaste Vinto</string>
-    <string name="beat_you_called_body">A ronda termina nos teus termos. Ember, Sky e Dune têm cada um mais uma jogada, e agora ninguém pode tocar nas tuas cartas. Depois todas as mãos são reveladas e a tua é comparada com a melhor das deles.</string>
+    <string name="beat_you_called_body">A ronda termina nos teus termos. Ember, Tide e Dune têm cada um mais uma jogada, e agora ninguém pode tocar nas tuas cartas. Depois todas as mãos são reveladas e a tua é comparada com a melhor das deles.</string>
     <string name="beat_coalition_vs_you_title">Agora jogam como um só</string>
     <string name="beat_coalition_vs_you_body">Os três que não chamaram são a coligação: uma jogada cada, e só a melhor mão deles é comparada com a tua — é uma equipa contra a tua única mão. Numa mesa real, falariam entre eles e juntariam o que sabem. Observa o que fazem com a última jogada: é aqui que vês as cartas que ainda não tiveste.</string>
     <string name="beat_aim_it_title">Aponta-a</string>
@@ -330,7 +332,7 @@
     <string name="beat_cards_odd_body">Um Ás vale 1 e faz quem escolheres tirar uma carta de penalização. Um Joker vale menos um — a melhor carta do baralho, e a que nunca deves entregar.</string>
     <string name="beat_tour_title">O baralho e a pilha</string>
     <string name="beat_tour_body">As cartas saem do baralho. O que alguém deita fora pousa virado para cima ao lado dele, onde toda a mesa o pode ler — incluindo tu.</string>
-    <string name="beat_seats_title">Ember, Sky e Dune</string>
+    <string name="beat_seats_title">Ember, Tide e Dune</string>
     <string name="beat_seats_body">Três bots, cada um com cinco cartas que veem tão mal como tu. A placa que acende a verde é a de quem está a jogar.</string>
     <string name="beat_help_title">O ? está sempre disponível</string>
     <string name="beat_help_body">Explica o momento em que estás e o que cada carta faz. O jogo de tabuleiro vem com cartas de lembrete exatamente para isto, uma por jogador — ninguém tem de guardar catorze valores de cabeça, aqui ou numa mesa a sério.</string>

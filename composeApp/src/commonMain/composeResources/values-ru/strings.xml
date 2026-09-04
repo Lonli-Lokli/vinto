@@ -4,7 +4,7 @@
 
     Три решения, принятые один раз и выдержанные по всему файлу:
 
-    * `app_name` здесь нет. «VINTO» — это имя игры, оно набрано шрифтом Cinzel, в котором
+    * `app_name` здесь нет. «Vinto!» — это имя игры, оно набрано шрифтом Cinzel, в котором
       только латиница, и `FontCoverageTest` это проверяет. Ключ отсутствует и подставляется
       из английского файла — так и задумано.
     * Достоинства карт (7, J, Q, K, туз, джокер) — это знаки на картах, а не слова: они
@@ -15,7 +15,7 @@
       и читается как обычная надпись в интерфейсе, а не как обрубленная фраза.
 -->
 <resources>
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">Тасуем…</string>
 
@@ -27,9 +27,11 @@
     <string name="home_online">Игра по сети</string>
     <string name="home_teach">Как играть</string>
     <string name="home_settings">Настройки</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Неофициальное приложение для карточной игры VINTO. Оригинал — на vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Неофициальное приложение. Оригинал — на vinto.game</string>
     <string name="home_unofficial_action">Открыть vinto.game — официальный сайт игры</string>
+    <string name="home_other_games">Другие игры</string>
+    <string name="home_other_games_action">Открыть kupalinka.app — другие игры того же автора</string>
 
     <string name="online_screen_title">Игра по сети</string>
     <string name="online_nickname">Ваше имя за столом</string>
@@ -126,7 +128,7 @@
     <string name="settings_contact">Написать нам</string>
     <string name="settings_contact_detail">Ошибка, идея или партия, которая пошла не так.</string>
     <string name="settings_original">Оригинальная игра</string>
-    <string name="settings_original_detail">VINTO — не наша игра. Это неофициальное приложение для неё, а сама игра, её правила и те, кто её придумал, — на vinto.game.</string>
+    <string name="settings_original_detail">Vinto! — не наша игра. Это неофициальное приложение для неё, а сама игра, её правила и те, кто её придумал, — на vinto.game.</string>
     <string name="settings_studio">Об этом приложении</string>
     <string name="settings_studio_detail">Кто сделал это приложение, что ещё есть на полке и как оно устроено.</string>
     <string name="settings_rate">Оценить игру</string>

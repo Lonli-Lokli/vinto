@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- EMBER — orange, a flame. The deck's crossing family (a card moving between two players). -->
+  <!-- EMBER — FIRE. Three lines that run UPWARD and waver: flame rises, so its lines stand up
+       where water's lie down. The vertical run is what separates fire from the other three at
+       44 dp, before colour is considered at all. -->
   <!-- The disc, the deck's ink ring, and the court cards' gold hairline just inside it.
        Circles are arc paths because a vector drawable has no <circle> element. -->
   <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#C25E10" stroke="#14181B" stroke-width="20"/>
   <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
-  <!-- Pointed at the top, a true semicircle at the bottom: the chord is exactly 2r, so the arc
-       flags cannot be got wrong. -->
-  <path d="M540 254 C566 372 648 452 648 566 A136 136 0 0 1 376 566 C376 496 430 470 452 410 C468 366 462 316 428 274 C498 288 536 340 540 420 C560 372 556 310 540 254 Z" fill="#F7F5EF"/>
+  <path d="M392 300 C338 384 446 440 392 512 C338 584 446 640 392 724" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
+  <path d="M512 288 C458 372 566 428 512 500 C458 572 566 628 512 712" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
+  <path d="M632 300 C578 384 686 440 632 512 C578 584 686 640 632 724" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
 </svg>

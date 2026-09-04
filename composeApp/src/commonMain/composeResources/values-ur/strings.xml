@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">پتے ملائے جا رہے ہیں…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">آن لائن کھیلیں</string>
     <string name="home_teach">کھیلنے کا طریقہ</string>
     <string name="home_settings">ترتیبات</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">VINTO کارڈ گیم کی ایک غیر سرکاری ایپ۔ اصل گیم vinto.game پر ہے</string>
-    <string name="home_unofficial_action">vinto.game کھولیں، کارڈ گیم VINTO کا سرکاری گھر</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">غیر سرکاری ایپ۔ اصل vinto.game پر ہے</string>
+    <string name="home_unofficial_action">vinto.game کھولیں، کارڈ گیم Vinto! کا سرکاری گھر</string>
+    <string name="home_other_games">دیگر گیمز دیکھیں</string>
+    <string name="home_other_games_action">kupalinka.app کھولیں، اسی بنانے والے کی دیگر گیمز</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">آن لائن کھیلیں</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">رابطہ کریں</string>
     <string name="settings_contact_detail">کوئی خرابی، کوئی خیال، یا کوئی کھیل جو بگڑ گیا۔</string>
     <string name="settings_original">اصل کھیل</string>
-    <string name="settings_original_detail">VINTO کسی اور کا کارڈ گیم ہے، اور یہ اس کی ایک غیر سرکاری ایپ ہے۔ کھیل، اس کے اصول اور اسے بنانے والے vinto.game پر ہیں۔</string>
+    <string name="settings_original_detail">Vinto! کسی اور کا کارڈ گیم ہے، اور یہ اس کی ایک غیر سرکاری ایپ ہے۔ کھیل، اس کے اصول اور اسے بنانے والے vinto.game پر ہیں۔</string>
     <string name="settings_studio">اس ایپ کے بارے میں</string>
     <string name="settings_studio_detail">یہ ایپ کس نے بنائی، شیلف پر اور کیا ہے، اور یہ کیسے تیار کی گئی۔</string>
     <string name="settings_rate">اس کھیل کو ریٹ کریں</string>

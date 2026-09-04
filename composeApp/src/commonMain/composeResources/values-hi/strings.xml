@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">पत्ते फेंटे जा रहे हैं…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">ऑनलाइन खेलें</string>
     <string name="home_teach">कैसे खेलें</string>
     <string name="home_settings">सेटिंग्स</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">ताश के खेल VINTO के लिए एक अनौपचारिक ऐप। मूल खेल vinto.game पर है</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">अनौपचारिक ऐप। मूल vinto.game पर है</string>
     <string name="home_unofficial_action">vinto.game खोलें, ताश के खेल का आधिकारिक घर</string>
+    <string name="home_other_games">अन्य गेम देखें</string>
+    <string name="home_other_games_action">kupalinka.app खोलें, इसी निर्माता के अन्य गेम</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">ऑनलाइन खेलें</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">संपर्क करें</string>
     <string name="settings_contact_detail">कोई गड़बड़ी, कोई विचार, या कोई खेल जो बिगड़ गया।</string>
     <string name="settings_original">मूल खेल</string>
-    <string name="settings_original_detail">VINTO किसी और का ताश का खेल है, और यह उसके लिए एक अनौपचारिक ऐप है। खेल, उसके नियम और उसे बनाने वाले लोग vinto.game पर हैं।</string>
+    <string name="settings_original_detail">Vinto! किसी और का ताश का खेल है, और यह उसके लिए एक अनौपचारिक ऐप है। खेल, उसके नियम और उसे बनाने वाले लोग vinto.game पर हैं।</string>
     <string name="settings_studio">इस ऐप के बारे में</string>
     <string name="settings_studio_detail">यह ऐप किसने बनाया, और क्या और बना है, और यह कैसे तैयार हुआ है।</string>
     <string name="settings_rate">इस खेल को रेट करें</string>

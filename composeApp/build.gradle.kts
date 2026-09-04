@@ -298,6 +298,9 @@ abstract class GenerateBuildInfo : DefaultTask() {
     @get:Input
     abstract val sentryDsn: Property<String>
 
+    @get:Input
+    abstract val buildNumber: Property<String>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -318,6 +321,13 @@ abstract class GenerateBuildInfo : DefaultTask() {
             | */
             |internal const val SENTRY_DSN: String = "${sentryDsn.get().replace("\"", "\\\"")}"
             |
+            |/**
+            | * The build number this was built from — the same commit count `androidApp` uses for
+            | * `versionCode` and `Scripts/build-number.sh` prints for the stores, so the number a
+            | * player reads back off the home screen is the one a crash report can be matched to.
+            | */
+            |internal const val BUILD_NUMBER: String = "${buildNumber.get()}"
+            |
             """.trimMargin(),
         )
     }
@@ -326,6 +336,15 @@ abstract class GenerateBuildInfo : DefaultTask() {
 val generateBuildInfo =
     tasks.register<GenerateBuildInfo>("generateBuildInfo") {
         description = "Writes the build-time constants a common source set cannot get from BuildConfig."
+        // The same source as androidApp's versionCode, deliberately: a build number that a
+        // player can read but nothing can be matched to is worse than none. `providers.exec`
+        // because the configuration cache is on and shelling out any other way fails the build.
+        buildNumber.set(
+            providers.gradleProperty("versionCode").orElse(
+                providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+                    .standardOutput.asText.map { it.trim() },
+            ).orElse("1"),
+        )
         sentryDsn.set(
             providers.gradleProperty("vinto.sentryDsn")
                 .orElse(providers.environmentVariable("VINTO_SENTRY_DSN"))

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">جارٍ الخلط…</string>
@@ -15,9 +15,11 @@
     <string name="home_online">العب عبر الإنترنت</string>
     <string name="home_teach">كيف تُلعب</string>
     <string name="home_settings">الإعدادات</string>
-    <string name="home_version">الإصدار %1$s</string>
-    <string name="home_unofficial">تطبيق غير رسمي للعبة الورق VINTO. النسخة الأصلية على vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">تطبيق غير رسمي. الأصل على vinto.game</string>
     <string name="home_unofficial_action">افتح vinto.game، الموقع الرسمي للعبة الورق</string>
+    <string name="home_other_games">ألعاب أخرى</string>
+    <string name="home_other_games_action">افتح kupalinka.app، الألعاب الأخرى للمطوّر نفسه</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">العب عبر الإنترنت</string>
@@ -120,7 +122,7 @@
     <string name="settings_contact">تواصل معنا</string>
     <string name="settings_contact_detail">خلل، فكرة، أو لعبة سارت على نحو خاطئ.</string>
     <string name="settings_original">اللعبة الأصلية</string>
-    <string name="settings_original_detail">VINTO لعبة ورق لأشخاص آخرين، وهذا تطبيق غير رسمي لها. اللعبة وقواعدها وصانعوها على vinto.game.</string>
+    <string name="settings_original_detail">Vinto! لعبة ورق لأشخاص آخرين، وهذا تطبيق غير رسمي لها. اللعبة وقواعدها وصانعوها على vinto.game.</string>
     <string name="settings_studio">حول هذا التطبيق</string>
     <string name="settings_studio_detail">من صنع هذا التطبيق، وماذا غيره متوفر، وكيف صُنع.</string>
     <string name="settings_rate">قيّم هذه اللعبة</string>

@@ -18,7 +18,7 @@
 -->
 <resources>
 
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">Тасуємо…</string>
 
@@ -30,9 +30,11 @@
     <string name="home_online">Грати онлайн</string>
     <string name="home_teach">Як грати</string>
     <string name="home_settings">Налаштування</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Неофіційний застосунок для карткової гри VINTO. Оригінал — на vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Неофіційний застосунок. Оригінал — на vinto.game</string>
     <string name="home_unofficial_action">Відкрити vinto.game — офіційний сайт гри</string>
+    <string name="home_other_games">Інші ігри</string>
+    <string name="home_other_games_action">Відкрити kupalinka.app — інші ігри того самого автора</string>
 
     <string name="online_screen_title">Гра онлайн</string>
     <string name="online_nickname">Ваше ім'я за столом</string>
@@ -129,7 +131,7 @@
     <string name="settings_contact">Написати нам</string>
     <string name="settings_contact_detail">Помилка, ідея або партія, що пішла не так.</string>
     <string name="settings_original">Оригінальна гра</string>
-    <string name="settings_original_detail">VINTO — не наша гра. Це неофіційний застосунок для неї, а сама гра, її правила та ті, хто її створив, — на vinto.game.</string>
+    <string name="settings_original_detail">Vinto! — не наша гра. Це неофіційний застосунок для неї, а сама гра, її правила та ті, хто її створив, — на vinto.game.</string>
     <string name="settings_studio">Про цей застосунок</string>
     <string name="settings_studio_detail">Хто зробив цей застосунок, що ще є на полиці, і як він влаштований.</string>
     <string name="settings_rate">Оцінити гру</string>

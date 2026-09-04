@@ -238,12 +238,12 @@ class LobbyRefusalsTest {
 
     @Test
     fun aBotIsNamedByItsSeatSoTwoNeverCollide() {
-        assertEquals(listOf("Fern", "Ember", "Sky", "Dune"), (0..3).map(::botName))
+        assertEquals(listOf("Gale", "Ember", "Tide", "Dune"), (0..3).map(::botName))
         assertEquals("Bot 8", botName(7), "a seat that does not exist still gets a name rather than a crash")
 
         var state = lobbyOfTwo()
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
-        assertEquals(listOf("Sky", "Dune"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
+        assertEquals(listOf("Tide", "Dune"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
     }
 }

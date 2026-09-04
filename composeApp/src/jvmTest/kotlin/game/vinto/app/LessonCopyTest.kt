@@ -158,8 +158,8 @@ class LessonCopyTest {
         val alone = read { taughtBody(Teaches.TossIn(emptyList())) }
         assertTrue(alone.startsWith("The moment"), "an empty prefix left something behind: $alone")
 
-        val watched = read { taughtBody(Teaches.TossIn(listOf("Ember", "Sky"))) }
-        assertTrue(watched.startsWith("Ember and Sky"), watched)
+        val watched = read { taughtBody(Teaches.TossIn(listOf("Ember", "Tide"))) }
+        assertTrue(watched.startsWith("Ember and Tide"), watched)
         assertTrue(watched.contains("The moment"), "the rest of the beat went missing: $watched")
     }
 
@@ -182,13 +182,13 @@ class LessonCopyTest {
         val read = mutableStateOf<Pair<String?, String?>?>(null)
         setContent {
             read.value = taughtTitle(Teaches.Watching()) to
-                taughtTitle(Teaches.Watching(Speaker.Named("Sky"), Rank.NINE))
+                taughtTitle(Teaches.Watching(Speaker.Named("Tide"), Rank.NINE))
         }
         waitForIdle()
 
         val (deciding, playing) = read.value!!
         assertNull(deciding, "a bot merely deciding has no heading: $deciding")
-        assertTrue(playing!!.contains("Sky"), "who: $playing")
+        assertTrue(playing!!.contains("Tide"), "who: $playing")
         assertTrue(playing.contains("Nine"), "which card: $playing")
         assertTrue(playing.contains("Peek at one card of another player"), "and what it does: $playing")
     }
@@ -201,7 +201,7 @@ class LessonCopyTest {
             read.value = listOf(
                 taughtTitle(Teaches.FinalPlay(Speaker.Named("Ember"), Rank.ACE)) ?: "",
                 taughtBody(Teaches.FinalPlay(Speaker.Named("Ember"), Rank.ACE)),
-                taughtBody(Teaches.FinalPlay(Speaker.Named("Sky"), Rank.KING)),
+                taughtBody(Teaches.FinalPlay(Speaker.Named("Tide"), Rank.KING)),
                 taughtBody(Teaches.FinalPlay(Speaker.Named("Dune"), Rank.NINE)),
                 taughtBody(Teaches.CoalitionLeader(Speaker.Named("Ember"))),
             )

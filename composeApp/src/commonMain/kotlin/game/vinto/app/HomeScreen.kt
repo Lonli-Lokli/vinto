@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
@@ -42,6 +43,8 @@ import game.vinto.app.art.card_back
 import game.vinto.app.art.home_continue
 import game.vinto.app.art.home_new_game
 import game.vinto.app.art.home_online
+import game.vinto.app.art.home_other_games
+import game.vinto.app.art.home_other_games_action
 import game.vinto.app.art.home_play
 import game.vinto.app.art.home_settings
 import game.vinto.app.art.home_solo_title
@@ -108,71 +111,114 @@ fun HomeScreen(
     canContinue: Boolean,
     go: HomeActions,
 ) {
-    Box(
+    // A column of two, not a box with something pinned over it. The footer used to be one short
+    // line and could safely overlay the menu; with a link beside it, it is a 44 dp tap target,
+    // and at `fontScale = 2` it covered the bottom buttons — a press meant for one of them landed
+    // on the footer instead, which `LobbyReachTest` caught by never reaching the online screen.
+    // Giving the menu the remaining height means the two can never be asked to share a pixel.
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                // Scrollable for the screen this menu was not drawn for: a phone on its
-                // side, where the fan, the panel and the buttons stand taller than the
-                // screen. On every other screen the content fits and the scroll is inert.
-                .verticalScroll(rememberScrollState())
-                .padding(Pad)
-                .widthIn(max = ColumnMax),
-            verticalArrangement = Arrangement.spacedBy(Gap),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Hero()
-
-            YourRecord()
-
-            SoloPanel(
-                difficulty = settings.difficulty,
-                canContinue = canContinue,
-                onContinue = go.continueGame,
-                onPlay = go.newGame,
-            )
-
-            // Not "coming soon" as a disabled button. The room and its server exist and the
-            // client that joins one does not, which is a real answer and worth giving when
-            // somebody asks — so the button works and says so.
-            GameButton(
-                label = stringResource(Res.string.home_online),
-                tone = ButtonTone.NEUTRAL,
-                onClick = go.online,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Gap),
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    // Scrollable for the screen this menu was not drawn for: a phone on its
+                    // side, where the fan, the panel and the buttons stand taller than the
+                    // screen. On every other screen the content fits and the scroll is inert.
+                    .verticalScroll(rememberScrollState())
+                    .padding(Pad)
+                    .widthIn(max = ColumnMax),
+                verticalArrangement = Arrangement.spacedBy(Gap),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                GameButton(
-                    label = stringResource(Res.string.home_teach),
-                    tone = ButtonTone.NEUTRAL,
-                    onClick = go.teach,
-                    modifier = Modifier.weight(1f),
+                Hero()
+
+                YourRecord()
+
+                SoloPanel(
+                    difficulty = settings.difficulty,
+                    canContinue = canContinue,
+                    onContinue = go.continueGame,
+                    onPlay = go.newGame,
                 )
+
+                // Not "coming soon" as a disabled button. The room and its server exist and the
+                // client that joins one does not, which is a real answer and worth giving when
+                // somebody asks — so the button works and says so.
                 GameButton(
-                    label = stringResource(Res.string.home_settings),
+                    label = stringResource(Res.string.home_online),
                     tone = ButtonTone.NEUTRAL,
-                    onClick = go.settings,
-                    modifier = Modifier.weight(1f),
+                    onClick = go.online,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Gap),
+                ) {
+                    GameButton(
+                        label = stringResource(Res.string.home_teach),
+                        tone = ButtonTone.NEUTRAL,
+                        onClick = go.teach,
+                        modifier = Modifier.weight(1f),
+                    )
+                    GameButton(
+                        label = stringResource(Res.string.home_settings),
+                        tone = ButtonTone.NEUTRAL,
+                        onClick = go.settings,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
 
+        Footer(modifier = Modifier.padding(bottom = Gap))
+    }
+}
+
+/**
+ * The build number, and the way to the rest of the shelf.
+ *
+ * The link sits here rather than in Settings because this corner is already the one place the
+ * screen talks about the app itself rather than about the round, and somebody who has just
+ * finished a game is the person most likely to want another one. It is a footnote, at footnote
+ * weight — a button would compete with "New game", which is not what this is for.
+ */
+@Composable
+private fun Footer(modifier: Modifier = Modifier) {
+    val open = stringResource(Res.string.home_other_games_action)
+    val quiet = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet)
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
-            text = stringResource(Res.string.home_version, VERSION),
+            text = stringResource(Res.string.home_version, VERSION, BUILD_NUMBER),
             fontSize = FootnoteSize,
-            color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Gap),
+            color = quiet,
+        )
+        Text(text = FOOTER_GAP, fontSize = FootnoteSize, color = quiet)
+        Text(
+            text = stringResource(Res.string.home_other_games),
+            fontSize = FootnoteSize,
+            color = quiet,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                // Outside the text, as the credit above does it: 12sp of words, 44dp of thumb.
+                .clickable(onClickLabel = open) { openUrl(Pages.GAMES) }
+                .heightIn(min = TapMin)
+                .wrapContentHeight(Alignment.CenterVertically)
+                .padding(horizontal = Tight),
         )
     }
 }
+
+/** Middle dot with its spaces, so the two footnotes read as one line and not as two labels. */
+private const val FOOTER_GAP = " · "
 
 /**
  * The wordmark, dealt in.
