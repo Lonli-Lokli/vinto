@@ -54,7 +54,15 @@ export default {
    * * Apple's codes are not the resource folder names. vydanne maps `ru` -> `ru`, `de` -> `de-DE`
    *   and so on; `localeMap` below is only for disagreements, and there are none yet.
    */
-  uiLocales: ['en', 'ru'],
+  // Every language the APP ships in, so the listing can be read by the same people the app can.
+  // It said ['en', 'ru'] while `values-*` held twenty: a German player got a German game behind an
+  // English store page, which is the half of localisation nobody sees until they are the one
+  // reading it. `vydanne locales` maps these to each store's own codes — Apple and Play disagree,
+  // and Play is the one with the surprises (`zh-CN`, `iw-IL`, `in-ID`).
+  uiLocales: [
+    'en', 'id', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr',
+    'be', 'ru', 'uk', 'he', 'ar', 'ur', 'hi', 'bn', 'ko', 'ja', 'zh',
+  ],
 
   metadataDir: 'fastlane/metadata',
 

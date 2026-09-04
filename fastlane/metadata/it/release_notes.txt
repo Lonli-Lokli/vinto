@@ -1,0 +1,9 @@
+Prima versione di Vinto.
+
+Cinque carte, due che hai visto, e tre avversari che stanno calcolando le loro nello stesso momento. Dichiara Vinto quando pensi di avere il punteggio più basso — se hai ragione, ci guadagni; se sbagli, lo paghi.
+
+Gioca in solitaria contro il computer a tre livelli di difficoltà, completamente offline. Oppure apri una stanza, invia sei caratteri, e chi li riceve è al tavolo — nessun account e nessuna registrazione, su telefono o nel browser.
+
+C'è un tutorial che ti fa giocare un round vero invece di spiegarti le regole, e puoi saltarlo.
+
+Grazie per aver giocato.

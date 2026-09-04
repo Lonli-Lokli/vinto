@@ -1,0 +1,9 @@
+Erste Version von Vinto.
+
+Fünf Karten, zwei davon kennen Sie, und drei Gegner, die zur gleichen Zeit ihre eigenen einschätzen. Rufen Sie Vinto, wenn Sie glauben, die niedrigste Hand zu haben — liegen Sie richtig, zahlt es sich aus, liegen Sie falsch, kostet es Sie.
+
+Spielen Sie solo gegen den Computer in drei Stärken, vollständig offline. Oder öffnen Sie einen Raum, schicken Sie sechs Zeichen los, und wer sie erhält, sitzt mit am Tisch — kein Konto und keine Anmeldung, auf dem Smartphone oder im Browser.
+
+Es gibt ein Tutorial, das Ihnen eine echte Runde austeilt, statt Ihnen die Regeln vorzulesen, und Sie können es überspringen.
+
+Danke fürs Spielen.
