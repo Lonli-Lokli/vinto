@@ -371,3 +371,18 @@ composeCompiler {
         metricsDestination.set(layout.buildDirectory.dir("compose/metrics"))
     }
 }
+
+/**
+ * Keep the WebAssembly name section, so a web crash names the function it happened in.
+ *
+ * The Kotlin compiler emits a name section; `wasm-opt` strips it by default, and that is where
+ * every Kotlin name in the web build was being lost. Without it a V8 stack frame can only say
+ * `wasm-function[12345]`, which is the same failure iOS had before `CrashFrame`: Sentry titles
+ * every crash after whichever frame they all share and two unrelated bugs arrive as one issue.
+ *
+ * `-g` is binaryen's "keep debug info". It adds no code — the section is pure names — so it
+ * cannot change behaviour, only size.
+ */
+tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>().configureEach {
+    binaryenArguments.add("-g")
+}

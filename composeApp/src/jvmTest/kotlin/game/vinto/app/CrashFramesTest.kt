@@ -110,6 +110,73 @@ class CrashFramesTest {
         assertFalse(crashEnvelope(report(uuid = null)).contains("debug_meta"), "sent an empty image list")
     }
 
+    /**
+     * The web build's own shape, measured rather than guessed.
+     *
+     * These four lines were read out of Chrome's console from the real production bundle — the
+     * one `wasmJsBrowserDistribution` writes, wasm-opt and all — by throwing on purpose at
+     * startup and printing `stackTraceToString()`. They are what a browser actually hands the
+     * reporter, and none of them matched either existing pattern: V8 puts a space before the
+     * paren, so every web frame was arriving as `Unparsed` and every web crash would have been
+     * titled after whichever line they all share.
+     *
+     * The Kotlin name is there at all only because the build keeps the wasm name section
+     * (`binaryenArguments.add("-g")`). Without it this frame reads `wasm-function[15659]` and
+     * there is nothing to name an issue after.
+     */
+    @Test
+    fun aWasmFrameCarriesItsKotlinFunction() {
+        val body = envelopeWith(
+            "at <vinto-kmp:composeApp>.game.vinto.app.main " +
+                "(http://localhost:8099/f57a9e63ad84e59b3a0e.wasm:wasm-function[15659]:0x564a6e)",
+        )
+
+        // The `<module>.` prefix is dropped: it repeats the wasm file, and leaving it on the
+        // function would put it in front of every symbol Sentry groups by.
+        assertTrue(body.contains(""""function":"game.vinto.app.main""""), body)
+        assertTrue(body.contains(""""package":"f57a9e63ad84e59b3a0e.wasm""""), body)
+        assertTrue(body.contains(""""instruction_addr":"0x564a6e""""), body)
+        assertTrue(body.contains(""""in_app":true"""), body)
+    }
+
+    /** Kotlin's own wasm frames are marked not-ours, so ours is the one Sentry surfaces. */
+    @Test
+    fun theWasmRuntimeIsNotMarkedAsOurs() {
+        val body = envelopeWith(
+            "at <vinto-kmp:composeApp>.kotlin.Throwable.<init>_2656 " +
+                "(http://localhost:8099/f57a9e63ad84e59b3a0e.wasm:wasm-function[1858]:0x201fe2)",
+        )
+
+        assertTrue(body.contains(""""function":"kotlin.Throwable.<init>_2656""""), body)
+        assertTrue(body.contains(""""in_app":false"""), body)
+    }
+
+    /**
+     * The JavaScript half of the same stack — the glue webpack minified.
+     *
+     * A column as well as a line, because that is what a source map is keyed on: Sentry cannot
+     * apply the uploaded `composeApp.js.map` to a frame that names only a line.
+     */
+    @Test
+    fun aBrowserJsFrameCarriesItsFileLineAndColumn() {
+        val body = envelopeWith("at kotlin.createJsError (http://localhost:8099/composeApp.js:2:500036)")
+
+        assertTrue(body.contains(""""function":"kotlin.createJsError""""), body)
+        assertTrue(body.contains(""""filename":"http://localhost:8099/composeApp.js""""), body)
+        assertTrue(body.contains(""""lineno":2"""), body)
+        assertTrue(body.contains(""""colno":500036"""), body)
+    }
+
+    /** V8 writes a frame with no function as bare location, and it still says where it was. */
+    @Test
+    fun anAnonymousBrowserFrameStillSaysWhereItWas() {
+        val body = envelopeWith("at http://localhost:8099/composeApp.js:2:531663")
+
+        assertTrue(body.contains(""""filename":"http://localhost:8099/composeApp.js""""), body)
+        assertTrue(body.contains(""""lineno":2"""), body)
+        assertTrue(body.contains(""""colno":531663"""), body)
+    }
+
     private fun report(uuid: String?) = CrashReport(
         eventId = "e1",
         sentAtIso = "2026-09-04T00:00:00Z",

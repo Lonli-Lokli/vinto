@@ -194,15 +194,33 @@ private fun StringBuilder.appendFrame(frame: CrashFrame) {
     append('{')
     when (frame) {
         is CrashFrame.Jvm -> {
-            append(""""function":""").append(json(frame.function))
+            append(FUNCTION_KEY).append(json(frame.function))
             append(""","filename":""").append(json(frame.file))
             frame.line?.let { append(""","lineno":""").append(it) }
         }
 
         is CrashFrame.Native -> {
-            append(""""function":""").append(json(frame.function))
+            append(FUNCTION_KEY).append(json(frame.function))
             append(""","package":""").append(json(frame.image))
             append(""","instruction_addr":""").append(json(frame.address))
+        }
+
+        // The name is the whole value here: with the wasm name section kept, this frame reads
+        // `game.vinto.app.main`, and without it there is nothing to name an issue after. The
+        // address is carried for completeness rather than for lookup — no wasm debug files are
+        // uploaded, because the names travel in the module itself.
+        is CrashFrame.Wasm -> {
+            append(FUNCTION_KEY).append(json(frame.function))
+            append(""","package":""").append(json(frame.module))
+            append(""","instruction_addr":""").append(json(frame.address))
+        }
+
+        // Line AND column, because that is the pair a JavaScript source map is keyed on.
+        is CrashFrame.Script -> {
+            frame.function?.let { append(FUNCTION_KEY).append(json(it)).append(',') }
+            append(""""filename":""").append(json(frame.file))
+            frame.line?.let { append(""","lineno":""").append(it) }
+            frame.column?.let { append(""","colno":""").append(it) }
         }
 
         // Nothing was understood, so the whole line goes where it always went. Sentry shows it
@@ -216,6 +234,9 @@ private fun StringBuilder.appendFrame(frame: CrashFrame) {
 /** The auth header Sentry's ingest wants. The key is write-only; see [parseDsn]. */
 fun sentryAuth(key: String): String =
     "Sentry sentry_version=7, sentry_key=$key, sentry_client=vinto-app/1"
+
+/** Written by every frame shape that has a name to give, which is all of them but a bare URL. */
+private const val FUNCTION_KEY = """"function":"""
 
 /** The shortest Unicode escape JSON accepts, so a control character is padded to it. */
 private const val UNICODE_ESCAPE_DIGITS = 4
