@@ -5,6 +5,7 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.ReduceResult
+import game.vinto.engine.STARTING_POINTS
 import game.vinto.engine.Validation
 import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
@@ -271,10 +272,15 @@ data class SessionState(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val readyForNext: List<Int> = emptyList(),
 ) {
     /** Cumulative round points, which is what the final ranking is made of. */
+    /**
+     * Cumulative round points, which is what the final ranking is made of — counted up from the
+     * starting score rather than from nothing, so a seat that has lost one round reads as behind
+     * and not as underwater.
+     */
     val standings: Map<String, Int>
         get() = rounds.flatMap { it.points.entries }
             .groupBy({ it.key }, { it.value })
-            .mapValues { (_, values) -> values.sum() }
+            .mapValues { (_, values) -> STARTING_POINTS + values.sum() }
 }
 
 /** A leaky bucket: tokens left, and when that was last computed. */

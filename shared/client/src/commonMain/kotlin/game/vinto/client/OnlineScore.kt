@@ -8,7 +8,7 @@ package game.vinto.client
  * with the next `between-rounds`, and a score sheet that waits for it is a score sheet that
  * opens empty. The pay is a pure function of the totals and the caller (`VINTO_RULES.md`
  * §Scoring), so the client computes it: caller at-or-under the best coalition hand pays the
- * caller +3 and each member −1; a tie pays the members 0; a coalition win pays them +3 and
+ * caller +3 and each member −1; a tie pays the caller +2 and the members 0; a coalition win pays them +3 and
  * the caller −1. A round nobody called (the deck ran out) pays nothing.
  *
  * `OnlineScoreTest` holds this against the engine's own `calculateRoundPoints` over whole
@@ -22,7 +22,11 @@ fun roundPoints(scores: Map<String, Int>, callerId: String?): Map<String, Int> {
 
     return scores.mapValues { (id, _) ->
         when {
-            id == callerId -> if (callerWins) CALLER_WIN else LOSS
+            id == callerId -> when {
+                caller == bestCoalition -> CALLER_TIE
+                callerWins -> CALLER_WIN
+                else -> LOSS
+            }
             !callerWins -> COALITION_WIN
             caller == bestCoalition -> 0
             else -> LOSS
@@ -31,6 +35,9 @@ fun roundPoints(scores: Map<String, Int>, callerId: String?): Map<String, Int> {
 }
 
 private const val CALLER_WIN = 3
+
+/** A draw is not a win, and pays the caller less than one. See `Scoring.kt`, which is the rule. */
+private const val CALLER_TIE = 2
 private const val COALITION_WIN = 3
 private const val LOSS = -1
 

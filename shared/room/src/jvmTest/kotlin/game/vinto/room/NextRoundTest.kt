@@ -1,5 +1,6 @@
 package game.vinto.room
 
+import game.vinto.engine.STARTING_POINTS
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
@@ -206,7 +207,10 @@ class NextRoundTest {
             ),
         )
 
-        assertEquals(mapOf("p1" to 6, "p2" to -2, "p3" to 2), session.standings)
+        assertEquals(
+            mapOf("p1" to 6 + STARTING_POINTS, "p2" to -2 + STARTING_POINTS, "p3" to 2 + STARTING_POINTS),
+            session.standings,
+        )
         assertEquals(emptyMap(), SessionState().standings, "no rounds, no points")
     }
 

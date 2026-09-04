@@ -33,7 +33,7 @@ class RoundOutcomeTest {
 
         // And it pays what the rules say it pays, which is not what a win pays.
         val points = roundPoints(level, caller)
-        assertEquals(3, points[caller], "the caller still takes +3 on a tie")
+        assertEquals(2, points[caller], "a tie pays the caller 2, where a win pays 3")
         assertEquals(0, points["p3"], "and the others take nothing, rather than losing one")
     }
 

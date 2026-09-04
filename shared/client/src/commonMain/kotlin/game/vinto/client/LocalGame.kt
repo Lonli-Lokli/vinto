@@ -1,5 +1,6 @@
 package game.vinto.client
 
+import game.vinto.engine.STARTING_POINTS
 import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.shapes.Difficulty
@@ -86,7 +87,7 @@ class LocalGame private constructor(
         if (finished.isOver) {
             val earned = calculateRoundPoints(finished.state.players, finished.state.vintoCallerId)
             standings = (standings.keys + earned.keys).associateWith { id ->
-                (standings[id] ?: 0) + (earned[id] ?: 0)
+                (standings[id] ?: STARTING_POINTS) + (earned[id] ?: 0)
             }
         }
 
