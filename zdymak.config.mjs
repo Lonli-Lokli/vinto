@@ -31,6 +31,33 @@ export default {
     endline: 'Call it, and hold the lowest hand.',
     endsub: 'Free · no ads · no account',
     logo: './tools/brand/vinto-mark.png',
+
+    // The mark is the V of the word, so the type has to sit against it rather than beside it.
+    // zdymak's default 26 is spacing for a logo that is a separate app icon; here it left a gap
+    // wide enough to read "V into!" as two things.
+    // A RATIO of the icon, so the join holds at 92px on the feature graphic and at 200px in the
+    // reel bookend. Negative because the mark has its own padding and the word has to sit inside
+    // it: at zdymak.s default the two read as "V into!" rather than as one word.
+    lockupGap: -0.2,
+
+    // The deck itself, fanned along the bottom. A feature graphic made of a logo, a tagline and
+    // a phone is the same graphic every game on the shelf has; these five cards are the one
+    // thing on it that could not belong to another game. They are the app's own art — the same
+    // faces `card_*.xml` draws — rather than something drawn for a store.
+    // Four, not the whole deck, and placed in the gap between the words and the phone: the
+    // tagline owns the left of this graphic and must not be drawn over. The hero is drawn after
+    // the fan, so the phone overlaps the right-hand card and the two read as one arrangement
+    // rather than as two things that happen to be on the same picture.
+    fan: [
+      './tools/brand/card-renders/card_7.png',
+      './tools/brand/card-renders/card_joker.png',
+      './tools/brand/card-renders/card_q.png',
+      './tools/brand/card-renders/card_a.png',
+    ],
+    fanX: 630,
+    fanY: 520,
+    fanHeight: 240,
+    fanSpread: 0.14,
   },
 
   // Where captures land. One folder per platform, because a Play screenshot may not wear an
