@@ -382,7 +382,7 @@
     <string name="help_card_worth">%1$s — vaut %2$d</string>
     <string name="help_closing">Chaque carte d’une main compte contre vous, le total le plus bas gagne donc. Appelez Vinto quand vous pensez que le vôtre est le plus bas — tous les autres jouent alors encore un tour ensemble, et seule leur meilleure main est comparée à la vôtre.</string>
     <string name="stats_played">%1$d jouées</string>
-    <string name="stats_won">%1$d %% gagnées</string>
+    <string name="stats_won">%1$d % gagnées</string>
     <string name="stats_best">meilleure %1$d</string>
     <string name="stats_streak">%1$d d’affilée</string>
     <string name="stats_row">Votre bilan : %1$s</string>

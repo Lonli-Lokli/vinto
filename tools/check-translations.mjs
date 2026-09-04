@@ -20,6 +20,10 @@
  *   * **Quote escapes.** compose-resources does NOT process Android's `\'`, so the backslash is
  *     drawn on screen. `StringEscapeTest` already fails the build on this; it is repeated here so
  *     a translator gets told by the tool they are running rather than by a Kotlin test suite.
+ *   * **A doubled percent sign.** `%%` is Android's escape for a literal `%`, and
+ *     compose-resources does not process it either — exactly as it does not process `\\'`. The
+ *     stats line read "66%% won" on a real store screenshot before anybody noticed, in all
+ *     twenty locales at once, because every translator faithfully copied the source's escape.
  *   * **Double-escaped entities.** `&amp;amp;` renders as "&amp;" — the classic result of escaping
  *     text that was already escaped, which is exactly what happens when a translation is copied
  *     out of the source file rather than written from it.
@@ -85,6 +89,7 @@ for (const dir of locales) {
     const got = placeholders(value).join(',');
     if (want !== got) problems.push(`${key}: placeholders [${got}] should be [${want}]`);
     if (/\\['"]/.test(value)) problems.push(`${key}: escapes a quote as \\' or \\" — compose-resources draws the backslash`);
+    if (value.includes('%%')) problems.push(`${key}: %% is an Android escape compose-resources draws literally — write a single %`);
     if (/&amp;(amp|lt|gt|quot|apos);/.test(value)) problems.push(`${key}: double-escaped entity`);
     // A bare `&` that is not the start of an entity fails the resource compiler.
     if (/&(?!(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/.test(value)) problems.push(`${key}: bare & (write &amp;)`);

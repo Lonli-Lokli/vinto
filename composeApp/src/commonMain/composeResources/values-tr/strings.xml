@@ -389,7 +389,7 @@
     <string name="help_card_worth">%1$s — değeri %2$d</string>
     <string name="help_closing">Bir elde her kart sana karşı sayar, o yüzden en düşük toplam kazanır. Seninkinin en düşük olduğunu düşündüğünde Vinto çağır — diğer herkes birlikte bir el daha oynar, ve yalnızca en iyi elleri seninkiyle karşılaştırılır.</string>
     <string name="stats_played">%1$d oynandı</string>
-    <string name="stats_won">%%%1$d kazanıldı</string>
+    <string name="stats_won">%1$d% kazanıldı</string>
     <string name="stats_best">en iyi %1$d</string>
     <string name="stats_streak">%1$d üst üste</string>
     <string name="stats_row">Kayıtların: %1$s</string>

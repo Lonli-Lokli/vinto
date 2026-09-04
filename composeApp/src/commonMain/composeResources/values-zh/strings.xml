@@ -365,7 +365,7 @@
     <string name="help_card_worth">%1$s——点数 %2$d</string>
     <string name="help_closing">手中的每张牌都算进你的总分，点数最低者获胜。当你觉得自己最低时喊 Vinto——其他所有人会再共同打一回合，只有他们之中最好的一手会拿来和你比较。</string>
     <string name="stats_played">已玩 %1$d 局</string>
-    <string name="stats_won">胜率 %1$d%%</string>
+    <string name="stats_won">胜率 %1$d%</string>
     <string name="stats_best">最佳 %1$d</string>
     <string name="stats_streak">连胜 %1$d 局</string>
     <string name="stats_row">你的战绩：%1$s</string>

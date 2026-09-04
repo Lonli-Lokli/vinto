@@ -365,7 +365,7 @@
     <string name="help_card_worth">%1$s — warta %2$d</string>
     <string name="help_closing">Każda karta w ręce liczy się na niekorzyść, więc wygrywa najniższa suma. Zawołaj Vinto, gdy wydaje się, że twoja jest najniższa — wtedy każdy inny gracz rozgrywa jeszcze jedną turę razem, a tylko ich najlepsza ręka zostaje porównana z twoją.</string>
     <string name="stats_played">rozegrane: %1$d</string>
-    <string name="stats_won">wygrane: %1$d%%</string>
+    <string name="stats_won">wygrane: %1$d%</string>
     <string name="stats_best">najlepsza %1$d</string>
     <string name="stats_streak">%1$d z rzędu</string>
     <string name="stats_row">Twoje statystyki: %1$s</string>

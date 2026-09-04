@@ -381,7 +381,7 @@
     <string name="help_card_worth">%1$s — بقيمة %2$d</string>
     <string name="help_closing">كل بطاقة في اليد تُحسب ضدك، فالمجموع الأقل يفوز. نادِ بـ Vinto حين تعتقد أن يدك هي الأقل — يلعب الجميع بعدها دورًا أخيرًا واحدًا معًا، وتُقارن أفضل يد بينهم بيدك فقط.</string>
     <string name="stats_played">%1$d جولة لُعبت</string>
-    <string name="stats_won">%1$d%% فوز</string>
+    <string name="stats_won">%1$d% فوز</string>
     <string name="stats_best">أفضل %1$d</string>
     <string name="stats_streak">%1$d متتالية</string>
     <string name="stats_row">سجلّك: %1$s</string>

@@ -383,7 +383,7 @@
     <string name="help_card_worth">%1$s — कीमत %2$d</string>
     <string name="help_closing">हाथ का हर पत्ता आपके खिलाफ़ गिना जाता है, तो सबसे कम जोड़ जीतता है। जब लगे आपका जोड़ सबसे कम है तब Vinto पुकारें — फिर बाकी सब मिलकर एक और बारी खेलते हैं, और सिर्फ़ उनका सबसे अच्छा हाथ आपसे मिलाया जाता है।</string>
     <string name="stats_played">%1$d खेले</string>
-    <string name="stats_won">%1$d%% जीते</string>
+    <string name="stats_won">%1$d% जीते</string>
     <string name="stats_best">सबसे अच्छा %1$d</string>
     <string name="stats_streak">लगातार %1$d</string>
     <string name="stats_row">आपका रिकॉर्ड: %1$s</string>

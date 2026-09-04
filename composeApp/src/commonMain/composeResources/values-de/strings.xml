@@ -365,7 +365,7 @@
     <string name="help_card_worth">%1$s — wert %2$d</string>
     <string name="help_closing">Jede Karte in der Hand zählt gegen Sie, die niedrigste Summe gewinnt also. Vinto rufen, wenn Sie glauben, die niedrigste zu haben — alle anderen spielen dann gemeinsam noch einen Zug, und nur ihre beste Hand wird mit Ihrer verglichen.</string>
     <string name="stats_played">%1$d gespielt</string>
-    <string name="stats_won">%1$d%% gewonnen</string>
+    <string name="stats_won">%1$d% gewonnen</string>
     <string name="stats_best">beste %1$d</string>
     <string name="stats_streak">%1$d in Folge</string>
     <string name="stats_row">Ihre Bilanz: %1$s</string>

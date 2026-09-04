@@ -60,9 +60,19 @@ class StoreShotsTest {
         // the same `MarketingScene` handle a device capture uses (`CaptureHandleTest`), which is
         // what stops these drifting from what a phone would actually show.
         MarketingScene.entries.forEachIndexed { i, scene ->
-            shoot(
-                "0${i + 1}-${scene.id}",
-            ) { App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id) }
+            shoot("0${i + 1}-${scene.id}", WIDE, HIGH, OUT_DIR) {
+                App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
+            }
+            // The same scenes on an iPad, because the App Store asks for them separately and
+            // `TableLayout.forScreen` has a landscape arrangement written for exactly this shape.
+            // Rendering rather than capturing: a simulator's `score` scene plays a whole round
+            // through MCTS and was still on the shuffling splash after 75 s of settle, so what it
+            // photographed was a splash screen. This is the same code drawing the same state, and
+            // it takes seconds.
+            File(PAD_DIR).mkdirs()
+            shoot("0${i + 1}-${scene.id}", PAD_WIDE, PAD_HIGH, PAD_DIR) {
+                App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
+            }
         }
 
         val written = out.listFiles { f -> f.extension == "png" }.orEmpty()
@@ -76,8 +86,8 @@ class StoreShotsTest {
      * Light only: a store listing wants one coherent set, and the dark screens are already
      * covered as goldens by [ScreenshotTest]. Swap the flag here if the listing ever wants them.
      */
-    private fun shoot(name: String, content: @Composable () -> Unit) {
-        ImageComposeScene(width = WIDE, height = HIGH, density = Density(DENSITY)) {
+    private fun shoot(name: String, wide: Int, high: Int, dir: String, content: @Composable () -> Unit) {
+        ImageComposeScene(width = wide, height = high, density = Density(DENSITY)) {
             VintoTheme(dark = false) { content() }
         }.use { scene ->
             // Fonts and card art arrive asynchronously, so the first frames are missing them.
@@ -89,7 +99,7 @@ class StoreShotsTest {
                 image = scene.render((it + 1) * WARM_STEP_NANOS)
             }
             val png = image.encodeToData(EncodedImageFormat.PNG) ?: error("$name did not encode")
-            File(OUT_DIR, "$name.png").writeBytes(png.bytes)
+            File(dir, "$name.png").writeBytes(png.bytes)
         }
     }
 
@@ -100,6 +110,11 @@ class StoreShotsTest {
         const val DENSITY = 3f
 
         const val OUT_DIR = "../marketing/captures/store"
+
+        /** App Store 13" iPad, portrait — the size Apple asks for and the one it scales from. */
+        const val PAD_WIDE = 2064
+        const val PAD_HIGH = 2752
+        const val PAD_DIR = "../marketing/captures/store-ipad"
         const val EXPECTED = 5
 
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */

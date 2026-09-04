@@ -380,7 +380,7 @@
     <string name="help_card_worth">%1$s — каштуе %2$d</string>
     <string name="help_closing">Кожная картка ў руцэ ідзе вам у мінус, так што перамагае найменшая сума. Абвяшчайце Vinto, калі вырашыце, што ваша найменшая: астатнія тады сыграюць яшчэ па адным хадзе разам, і з вашай параўнаюць толькі іх лепшую руку.</string>
     <string name="stats_played">Сыграна: %1$d</string>
-    <string name="stats_won">Перамог: %1$d%%</string>
+    <string name="stats_won">Перамог: %1$d%</string>
     <string name="stats_best">лепшая: %1$d</string>
     <string name="stats_streak">Запар: %1$d</string>
     <string name="stats_row">Ваша статыстыка: %1$s</string>

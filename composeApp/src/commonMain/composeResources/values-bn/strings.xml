@@ -365,7 +365,7 @@
     <string name="help_card_worth">%1$s — মূল্য %2$d</string>
     <string name="help_closing">হাতের প্রতিটি তাস আপনার বিরুদ্ধে গোনা হয়, তাই সবচেয়ে কম মোট জেতে। যখন মনে হয় আপনারটাই সবচেয়ে কম, তখন Vinto ডাকুন — এরপর বাকি সবাই মিলে একটি করে পালা খেলেন, আর শুধু তাদের সেরা হাতটি আপনারটার সাথে তুলনা করা হয়।</string>
     <string name="stats_played">%1$d খেলা</string>
-    <string name="stats_won">%1$d%% জেতা</string>
+    <string name="stats_won">%1$d% জেতা</string>
     <string name="stats_best">সেরা %1$d</string>
     <string name="stats_streak">পরপর %1$d</string>
     <string name="stats_row">আপনার রেকর্ড: %1$s</string>

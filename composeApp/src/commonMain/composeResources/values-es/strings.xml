@@ -397,7 +397,7 @@
     <string name="help_card_worth">%1$s — vale %2$d</string>
     <string name="help_closing">Cada carta en una mano suma en tu contra, así que gana el total más bajo. Canta Vinto cuando creas que la tuya es la más baja — todos los demás juegan entonces un turno más juntos, y solo se compara su mejor mano con la tuya.</string>
     <string name="stats_played">%1$d jugadas</string>
-    <string name="stats_won">%1$d%% ganadas</string>
+    <string name="stats_won">%1$d% ganadas</string>
     <string name="stats_best">mejor %1$d</string>
     <string name="stats_streak">%1$d seguidas</string>
     <string name="stats_row">Tu historial: %1$s</string>

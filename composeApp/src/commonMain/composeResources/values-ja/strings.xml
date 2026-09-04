@@ -389,7 +389,7 @@
     <string name="help_card_worth">%1$s — 価値%2$d</string>
     <string name="help_closing">手札のカードはすべて不利に数えられるので、合計が一番低い人が勝ちます。自分が一番低いと思ったらVintoを宣言しましょう — その後、他の全員がもう一手ずつ力を合わせてプレイし、彼らの最良の手だけがあなたと比べられます。</string>
     <string name="stats_played">%1$d回プレイ</string>
-    <string name="stats_won">勝率%1$d%%</string>
+    <string name="stats_won">勝率%1$d%</string>
     <string name="stats_best">ベスト%1$d</string>
     <string name="stats_streak">%1$d連勝</string>
     <string name="stats_row">あなたの記録: %1$s</string>

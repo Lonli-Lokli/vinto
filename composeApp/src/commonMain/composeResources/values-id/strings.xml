@@ -382,7 +382,7 @@
     <string name="help_card_worth">%1$s — bernilai %2$d</string>
     <string name="help_closing">Setiap kartu di tangan merugikan Anda, jadi total terendah yang menang. Panggil Vinto saat Anda yakin tangan Anda yang terendah — semua orang lain lalu bermain satu giliran lagi bersama, dan hanya tangan terbaik mereka yang diadu dengan Anda.</string>
     <string name="stats_played">%1$d dimainkan</string>
-    <string name="stats_won">%1$d%% menang</string>
+    <string name="stats_won">%1$d% menang</string>
     <string name="stats_best">terbaik %1$d</string>
     <string name="stats_streak">%1$d beruntun</string>
     <string name="stats_row">Rekam jejak Anda: %1$s</string>

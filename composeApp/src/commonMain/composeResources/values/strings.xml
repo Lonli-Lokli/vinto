@@ -454,7 +454,7 @@
          nothing sent anywhere — which is what lets it be personal at all, unlike the
          anonymous counts. Shown only once there is a round to show. -->
     <string name="stats_played">%1$d played</string>
-    <string name="stats_won">%1$d%% won</string>
+    <string name="stats_won">%1$d% won</string>
     <string name="stats_best">best %1$d</string>
     <string name="stats_streak">%1$d in a row</string>
     <string name="stats_row">Your record: %1$s</string>

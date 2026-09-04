@@ -364,7 +364,7 @@
     <string name="help_card_worth">%1$s — שווה %2$d</string>
     <string name="help_closing">כל קלף ביד נספר נגדכם, אז הסכום הנמוך ביותר מנצח. הכריזו Vinto כשאתם חושבים שלכם הוא הנמוך ביותר — אז כל השאר משחקים תור נוסף יחד, ורק היד הטובה ביותר שלהם נשקלת מול שלכם.</string>
     <string name="stats_played">%1$d סיבובים</string>
-    <string name="stats_won">%1$d%% ניצחונות</string>
+    <string name="stats_won">%1$d% ניצחונות</string>
     <string name="stats_best">הכי טוב %1$d</string>
     <string name="stats_streak">%1$d ברצף</string>
     <string name="stats_row">השיאים שלכם: %1$s</string>

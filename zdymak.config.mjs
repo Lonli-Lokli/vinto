@@ -23,7 +23,7 @@ export default {
     ink: '#0A2A1D', // FeltDarkBottom — the scrim and letterbox fill
     title: '#F2F5F0', // FeltInk
     sub: '#F2DFA6', // LeafGold
-    name: 'Vinto',
+    name: 'Vinto!',
     tagline: 'Hold less. Know more.', // the app's own tagline, not a new one invented for a store
     endline: 'Call it, and hold the lowest hand.',
     endsub: 'Free · no ads · no account',
@@ -93,7 +93,8 @@ export default {
     vignette: 0.3,
   },
 
-  sceneDur: 3.2, // 5 scenes ≈ 16s, inside Apple's 15–30s window with the crossfades
+  sceneDur: 3.5, // 5 scenes ≈ 16.2s after the crossfades eat into them — Apple's floor is 15s,
+  // and at 3.2 the finished reel came out 14.7s and was refused. Measured, not budgeted.
   xfade: 0.32,
 
   // `store-assets/<locale>/<target>/…` since zdymak 0.15. vydanne reads different roots, so

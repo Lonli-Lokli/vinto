@@ -378,7 +378,7 @@
     <string name="help_card_worth">%1$s — стоит %2$d</string>
     <string name="help_closing">Каждая карта в руке идёт вам в минус, так что побеждает самая младшая сумма. Объявляйте Винто, когда решите, что ваша младше всех: остальные сыграют ещё по одному ходу вместе, и с вашей сравнят только их лучшую руку.</string>
     <string name="stats_played">Сыграно: %1$d</string>
-    <string name="stats_won">Побед: %1$d%%</string>
+    <string name="stats_won">Побед: %1$d%</string>
     <string name="stats_best">лучшая: %1$d</string>
     <string name="stats_streak">Подряд: %1$d</string>
     <string name="stats_row">Ваша статистика: %1$s</string>

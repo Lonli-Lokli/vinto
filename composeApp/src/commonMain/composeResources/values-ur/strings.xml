@@ -381,7 +381,7 @@
     <string name="help_card_worth">%1$s — قیمت %2$d</string>
     <string name="help_closing">ہاتھ کا ہر پتہ آپ کے خلاف شمار ہوتا ہے، تو سب سے کم مجموعہ جیتتا ہے۔ جب آپ کو لگے آپ کا سب سے کم ہے تو Vinto کہیں — پھر باقی سب مل کر ایک اور چال کھیلتے ہیں، اور صرف ان کا بہترین ہاتھ آپ کے مقابل رکھا جاتا ہے۔</string>
     <string name="stats_played">%1$d کھیلے گئے</string>
-    <string name="stats_won">%1$d%% جیتے</string>
+    <string name="stats_won">%1$d% جیتے</string>
     <string name="stats_best">بہترین %1$d</string>
     <string name="stats_streak">%1$d لگاتار</string>
     <string name="stats_row">آپ کا ریکارڈ: %1$s</string>

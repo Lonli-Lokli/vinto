@@ -381,7 +381,7 @@
     <string name="help_card_worth">%1$s — vale %2$d</string>
     <string name="help_closing">Cada carta numa mão conta contra ti, por isso o total mais baixo ganha. Chama Vinto quando achares que a tua é a mais baixa — todos os outros jogam então mais uma jogada juntos, e só a melhor mão deles é comparada com a tua.</string>
     <string name="stats_played">%1$d jogadas</string>
-    <string name="stats_won">%1$d%% ganhas</string>
+    <string name="stats_won">%1$d% ganhas</string>
     <string name="stats_best">melhor %1$d</string>
     <string name="stats_streak">%1$d seguidas</string>
     <string name="stats_row">O teu registo: %1$s</string>

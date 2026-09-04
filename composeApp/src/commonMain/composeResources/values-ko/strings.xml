@@ -365,7 +365,7 @@
     <string name="help_card_worth">%1$s — %2$d점</string>
     <string name="help_closing">손에 있는 모든 카드는 당신에게 불리하게 셈해지니, 합이 가장 낮은 사람이 이겨요. 자기 손이 가장 낮다고 생각되면 Vinto를 외치세요 — 그러면 나머지 모두 한 턴씩 더 함께 두고, 그중 최고의 손만 당신과 비교돼요.</string>
     <string name="stats_played">%1$d회 플레이</string>
-    <string name="stats_won">%1$d%% 승리</string>
+    <string name="stats_won">%1$d% 승리</string>
     <string name="stats_best">최고 %1$d</string>
     <string name="stats_streak">%1$d연승</string>
     <string name="stats_row">내 기록: %1$s</string>
