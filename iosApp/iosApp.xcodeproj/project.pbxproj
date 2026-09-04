@@ -64,6 +64,7 @@
 				C263BE7E68B1B2B41CE2771C /* Build Kotlin framework */,
 				297B59D9CE634556D6007C40 /* Sources */,
 				1623B02D10928C8101C1F806 /* Resources */,
+				6C64E10F13BE52722A0D4B09 /* Upload dSYMs to Sentry */,
 			);
 			buildRules = (
 			);
@@ -123,6 +124,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		6C64E10F13BE52722A0D4B09 /* Upload dSYMs to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload dSYMs to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# What makes an iOS crash report readable. A Kotlin/Native frame reaches Sentry as an\n# ADDRESS — `instruction_addr`, see composeApp's CrashFrame.kt — and Sentry turns that\n# into a function and a line by looking it up in the dSYM uploaded from here. One dSYM\n# covers the Swift entry point and the whole ComposeApp framework.\n#\n# Neither half works alone, and that is worth knowing before debugging either: without\n# the addresses the dSYM has nothing to match, and without the dSYM the addresses stay\n# hexadecimal. The first real report (issue 7710776149) had neither.\n#\n# --org and --project are EXPLICIT and must stay so. sentry-cli does NOT infer them from\n# the DSN; with no flags it takes the global `[defaults]`, and in this portfolio that\n# has already sent one game's symbols into another game's project. `~/.sentryclirc`\n# here sets an org and deliberately no project.\n#\n# No-ops with a warning rather than failing when sentry-cli or its credentials are\n# absent, so a contributor without them can still build.\n# RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and\n# uploading them on every simulator build is how a Sentry project fills with symbols for\n# binaries that never shipped.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  echo \"note: $CONFIGURATION build — no dSYM upload\"\nelif which sentry-cli >/dev/null 2>&1 && [ -f \"$HOME/.sentryclirc\" ]; then\n  sentry-cli debug-files upload --org echo-xl --project vinto \\\n    --include-sources \"$DWARF_DSYM_FOLDER_PATH\" || true\nelse\n  echo \"warning: sentry-cli or ~/.sentryclirc absent — iOS crashes will not symbolicate\"\nfi\n";
+		};
 		C263BE7E68B1B2B41CE2771C /* Build Kotlin framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

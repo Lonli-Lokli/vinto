@@ -151,7 +151,7 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             // Sentry wants the newest frame last; a Kotlin stack trace is newest first.
             frames.asReversed().forEachIndexed { index, frame ->
                 if (index > 0) append(',')
-                append("""{"filename":""").append(json(frame)).append('}')
+                appendFrame(parseFrame(frame))
             }
             append("""]}""")
         }
@@ -160,6 +160,43 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
 
     val header = """{"event_id":"$eventId","sent_at":"$sentAtIso"}"""
     header + "\n" + """{"type":"event"}""" + "\n" + scrubReport(body)
+}
+
+/**
+ * One frame, in the fields Sentry reads for the shape it turned out to be.
+ *
+ * `in_app` is set on every frame rather than only on ours, because Sentry treats an ABSENT
+ * `in_app` as unknown and a `false` as "library" — and it is the false ones that let it fold
+ * Kotlin's and Compose's internals away and name the issue after our own topmost frame. The first
+ * real report was titled after `kotlin.Throwable#<init>`, which is where every crash begins and
+ * therefore tells nobody anything.
+ *
+ * A native frame carries `instruction_addr` and `package`, which is the pair a dSYM lookup needs;
+ * without them an uploaded dSYM has nothing to match against. A JVM frame carries the file and
+ * line, which is all Sentry needs when the build is not minified — and, once R8 is on, what a
+ * mapping file is applied to.
+ */
+private fun StringBuilder.appendFrame(frame: CrashFrame) {
+    append('{')
+    when (frame) {
+        is CrashFrame.Jvm -> {
+            append(""""function":""").append(json(frame.function))
+            append(""","filename":""").append(json(frame.file))
+            frame.line?.let { append(""","lineno":""").append(it) }
+        }
+
+        is CrashFrame.Native -> {
+            append(""""function":""").append(json(frame.function))
+            append(""","package":""").append(json(frame.image))
+            append(""","instruction_addr":""").append(json(frame.address))
+        }
+
+        // Nothing was understood, so the whole line goes where it always went. Sentry shows it
+        // verbatim, which is worse than a parsed frame and much better than a dropped one.
+        is CrashFrame.Unparsed -> append(""""filename":""").append(json(frame.raw))
+    }
+    append(""","in_app":""").append(frame.isOurs())
+    append('}')
 }
 
 /** The auth header Sentry's ingest wants. The key is write-only; see [parseDsn]. */

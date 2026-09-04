@@ -102,3 +102,35 @@ targets:
           export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 17)}"
           cd "$SRCROOT/.."
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
+
+    postBuildScripts:
+      - name: Upload dSYMs to Sentry
+        basedOnDependencyAnalysis: false
+        script: |
+          # What makes an iOS crash report readable. A Kotlin/Native frame reaches Sentry as an
+          # ADDRESS — `instruction_addr`, see composeApp's CrashFrame.kt — and Sentry turns that
+          # into a function and a line by looking it up in the dSYM uploaded from here. One dSYM
+          # covers the Swift entry point and the whole ComposeApp framework.
+          #
+          # Neither half works alone, and that is worth knowing before debugging either: without
+          # the addresses the dSYM has nothing to match, and without the dSYM the addresses stay
+          # hexadecimal. The first real report (issue 7710776149) had neither.
+          #
+          # --org and --project are EXPLICIT and must stay so. sentry-cli does NOT infer them from
+          # the DSN; with no flags it takes the global `[defaults]`, and in this portfolio that
+          # has already sent one game's symbols into another game's project. `~/.sentryclirc`
+          # here sets an org and deliberately no project.
+          #
+          # No-ops with a warning rather than failing when sentry-cli or its credentials are
+          # absent, so a contributor without them can still build.
+          # RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and
+          # uploading them on every simulator build is how a Sentry project fills with symbols for
+          # binaries that never shipped.
+          if [ "$CONFIGURATION" != "Release" ]; then
+            echo "note: $CONFIGURATION build — no dSYM upload"
+          elif which sentry-cli >/dev/null 2>&1 && [ -f "$HOME/.sentryclirc" ]; then
+            sentry-cli debug-files upload --org echo-xl --project vinto \
+              --include-sources "$DWARF_DSYM_FOLDER_PATH" || true
+          else
+            echo "warning: sentry-cli or ~/.sentryclirc absent — iOS crashes will not symbolicate"
+          fi
