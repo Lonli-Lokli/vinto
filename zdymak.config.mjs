@@ -23,7 +23,10 @@ export default {
     ink: '#0A2A1D', // FeltDarkBottom — the scrim and letterbox fill
     title: '#F2F5F0', // FeltInk
     sub: '#F2DFA6', // LeafGold
-    name: 'Vinto!',
+    // The mark IS the V, so the word carries on from it: the lockup reads "V into!" as one
+    // wordmark rather than showing a V and then spelling Vinto beside it, which said the letter
+    // twice. `graphic.mjs` sets the name 26px right of the logo, which is the join.
+    name: 'into!',
     tagline: 'Hold less. Know more.', // the app's own tagline, not a new one invented for a store
     endline: 'Call it, and hold the lowest hand.',
     endsub: 'Free · no ads · no account',
