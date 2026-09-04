@@ -33,9 +33,9 @@
     "store-promo": "zdymak reel --only play-promo",
     "store-bridge": "vydanne bridge",
     "store-specs": "zdymak specs",
-    "capture-ios": "zdymak capture --platform ios --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/ios",
-    "capture-ipad": "zdymak capture --platform ios --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/ios-ipad",
-    "capture-android": "zdymak capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby --out ./marketing/captures/android",
+    "capture-ios": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPhone 17 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --settle 45 --out ./marketing/captures/ios",
+    "capture-ipad": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby --settle 45 --out ./marketing/captures/ios-ipad",
+    "capture-android": "node ../zdymak/bin/zdymak.mjs capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby --settle 45 --out ./marketing/captures/android",
     "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun"
   },
   "devDependencies": {
