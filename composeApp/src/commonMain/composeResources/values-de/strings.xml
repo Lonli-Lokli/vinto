@@ -450,6 +450,19 @@
     <string name="label_plan_declare">Einen Rang benennen</string>
     <string name="label_plan_take_discard">Die Ablage nehmen</string>
     <string name="label_plan_clear">Löschen</string>
+    <string name="label_plan_shed">Einwerfen</string>
+    <string name="ask_which_rank_throw_in">Welchen Rang werfen Sie ein, wenn einer kommt?</string>
+    <string name="detail_shed_risk">Nur einen Rang, den Sie in Ihrer Hand gesehen haben: ein falscher Einwurf kostet eine Karte und schließt Sie für den Rest der Runde aus.</string>
+    <string name="detail_shed_risk_pushed">Ihre Hand ist die, auf die die Koalition setzt. Ein falscher Einwurf kostet sie eine Karte und schließt sie für den Rest der Runde aus — nur einwerfen, was Sie gesehen haben.</string>
+    <string name="detail_claim_was_wrong">Ein Schritt hier beruhte auf einer Behauptung, die sich inzwischen als falsch erwiesen hat. Das ist das Spiel, wie es funktioniert, kein Fehler: jemand hat sich eine Karte anders gemerkt, als sie liegt.</string>
+    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
+    <string name="board_outcome_wins">Unsere beste Hand %1$d gegen ihre %2$d: das gewinnt.</string>
+    <string name="board_outcome_level">Unsere beste Hand %1$d gegen ihre %2$d: gleichauf, und gleichauf zahlt an die rufende Person.</string>
+    <string name="board_outcome_loses">Unsere beste Hand %1$d gegen ihre %2$d: das reicht nicht.</string>
+    <string name="board_outcome_unseen">%1$d der Karten der rufenden Person hat niemand gesehen.</string>
+    <string name="board_verdict_wins">gewinnt</string>
+    <string name="board_verdict_level">gleichauf</string>
+    <string name="board_verdict_loses">reicht nicht</string>
     <string name="ask_what_will_you_do">Was machen Sie mit Ihrem Zug?</string>
     <string name="ask_what_should_they_do">Was soll %1$s mit dem Zug machen?</string>
     <string name="ask_which_rank_will_you_declare">Welchen Rang erklären Sie mit dem König?</string>

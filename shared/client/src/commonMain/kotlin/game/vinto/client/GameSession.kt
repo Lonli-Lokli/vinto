@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlanEdit
@@ -110,6 +111,15 @@ interface GameSession {
      * keeps a screen unable to tell the two apart.
      */
     val talk: SharedFlow<TableTalk>
+
+    /**
+     * Every card this round has turned face up for the table, in order: a wrong King, a failed
+     * toss-in, a Queen's look. Public for the moment they happened and private again after, so
+     * they are not in any view — but a plan built on a claim one of them contradicted is a plan
+     * built on nothing (design D9), and the reveal is the only referee the round has before
+     * scoring. Empty for a new round.
+     */
+    val reveals: StateFlow<List<PublicReveal>>
 
     /**
      * The coalition's shared plan as it stands, or null when none does.

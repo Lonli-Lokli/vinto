@@ -467,6 +467,11 @@
     <string name="label_plan_declare">Назвати достоїнство</string>
     <string name="label_plan_take_discard">Взяти зі скиду</string>
     <string name="label_plan_clear">Очистити</string>
+    <string name="label_plan_shed">Підкинути</string>
+    <string name="ask_which_rank_throw_in">Яке достоїнство підкинете, якщо воно випаде?</string>
+    <string name="detail_shed_risk">Лише те достоїнство, яке ви бачили у своїй руці: помилка коштує карти й закриває підкидання для вас до кінця раунду.</string>
+    <string name="detail_shed_risk_pushed">Ваша рука — та, яку коаліція висуває вперед. Помилка коштує їй карти й закриває підкидання для неї до кінця раунду — підкидайте лише те, що бачили.</string>
+    <string name="detail_claim_was_wrong">Цей крок спирався на твердження, яке карти відтоді спростували. Це не помилка, а гра, що працює правильно: хтось запам'ятав карту інакше, ніж вона лежить насправді.</string>
     <string name="ask_what_will_you_do">Що ви зробите цим ходом?</string>
     <string name="ask_what_should_they_do">Що %1$s має зробити своїм ходом?</string>
     <string name="ask_which_rank_will_you_declare">Яке достоїнство ви назвете Королем?</string>
@@ -486,6 +491,13 @@
     <string name="board_shed">%1$s підкине %2$s</string>
     <string name="board_edited_by">Востаннє змінено: %1$s</string>
     <string name="board_nod_yes">%1$s погоджується</string>
+    <string name="board_outcome_wins">Наша найкраща рука %1$d проти їхньої %2$d: це перемога.</string>
+    <string name="board_outcome_level">Наша найкраща рука %1$d проти їхньої %2$d: нічия, а нічия платить заявнику.</string>
+    <string name="board_outcome_loses">Наша найкраща рука %1$d проти їхньої %2$d: цього не вистачає.</string>
+    <string name="board_outcome_unseen">%1$d карт заявника, яких ще ніхто не бачив.</string>
+    <string name="board_verdict_wins">перемога</string>
+    <string name="board_verdict_level">нічия</string>
+    <string name="board_verdict_loses">не вистачає</string>
     <string name="board_nod_not_yet">%1$s ще не погоджується</string>
     <string name="board_lane">%1$s: %2$s</string>
     <string name="badge_disputed">спірна</string>

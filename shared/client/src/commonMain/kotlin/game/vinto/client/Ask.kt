@@ -93,6 +93,8 @@ sealed interface Ask {
 
     data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
 
+    data object WhichRankWillYouThrowIn : Ask
+
     // --- the end ------------------------------------------------------------------------------
 
     /**

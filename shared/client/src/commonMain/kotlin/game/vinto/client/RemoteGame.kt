@@ -472,6 +472,9 @@ class RemoteGameSession internal constructor(
     private val _plan = MutableStateFlow(initialPlan)
     override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
 
+    private val _reveals = MutableStateFlow<List<PublicReveal>>(emptyList())
+    override val reveals: StateFlow<List<PublicReveal>> = _reveals.asStateFlow()
+
     private val _view = MutableStateFlow(initialView)
     override val view: StateFlow<PlayerView> = _view.asStateFlow()
 
@@ -622,6 +625,7 @@ class RemoteGameSession internal constructor(
                 jumped = true
             } else {
                 val reveals = entry.revealed.map { PublicReveal(it.playerId, it.position, it.card) }
+                if (reveals.isNotEmpty()) _reveals.value = _reveals.value + reveals
                 batch += Frame(
                     entry.action,
                     scenesFor(entry.action, last, after, reveals),

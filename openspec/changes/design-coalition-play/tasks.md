@@ -410,27 +410,44 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       reduced would work locally and break online, which is the class of bug the `GameSession`
       seam exists to prevent
 - [x] 3.7 Rehearsal: play the plan back as an animation via `choreograph(action, before, after)`
-- [~] 3.8 The value readout — **computed in `shared/client` from standing claims, not from
+- [x] 3.8 The value readout — **computed in `shared/client` from standing claims, not from
       `CoalitionSearch.evaluate`**: the client does not depend on `shared/bot`, and the two
       agree because both read `believedAt`. `planOutcome` is done; the live update as the plan
       is edited lands with the composer
+      — **on screen:** the open board carries `Board.outcome` and says it as one sentence —
+      the two totals, whether that wins, level said as losing, and how many of the caller's
+      cards nobody has seen — recomputed from the board on every edit; the felt's plan line
+      carries the verdict word. `PlanBoardTest`, `CoalitionScreenTest`
 - [x] 3.9 Decay — a step whose card moved re-anchors silently; a step whose claim a public
       reveal contradicts is marked broken, with everything downstream of it
+      — **on screen now:** `GameSession.reveals` keeps what the round has turned face up, both
+      sessions feed it, and the board reads the plan against it: a broken lane is drawn in the
+      warning ink with a cross. A step naming an unspoken card — one's own, which the composer
+      allows — used to read as broken from the moment it was made; it stands as long as its
+      position does
 - [x] 3.10 Detection off the `PublicReveal` stream, in the client; the engine never compares a
       claim to a card
 - [ ] 3.11 A draw that beats the plan offers a re-plan rather than insisting on the agreed step
       — the re-plan is an ordinary edit through the same door (3.2a): unlocked lanes stay
       editable mid-round and any edit resets agreement, so this needs no second mechanism
-- [ ] 3.12 Copy for a broken plan that treats a wrong claim as the game working
+- [x] 3.12 Copy for a broken plan that treats a wrong claim as the game working
+      — `Detail.AClaimWasWrong` under the board's prompt whenever a lane is broken: "the game
+      working, not a mistake"
 - [~] 3.13 Bots edit the plan, replacing the step they own and saying why
       — **deliberately after 3.2c.** A bot that replaced a lane the moment a person set it would
       reset agreement in a loop; the bound on that is a decision, not a default
       — **half, with 2.5:** bots *seed* every empty lane, their own included. What is left is
       replacing a step after a person has set it, and saying why — the part that needs the bound
-- [ ] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
+- [~] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
       and the proposal that sets it up — "put down a 7". No conditional language (design D13a)
-- [ ] 3.15 The toss-in risk is shown to the hand the coalition is pushing: a wrong one costs a
+      — **the intent half:** "Throw in" on the open board opens the rank rail and puts a shed in
+      the viewer's own name; sheds are drawn on the board and only their owner takes one back;
+      the readout prices them. The proposal that sets one up — a lane step "put down a 7" — is
+      not a `Step` yet
+- [x] 3.15 The toss-in risk is shown to the hand the coalition is pushing: a wrong one costs a
       card and bars that seat for the rest of the round
+      — `Detail.ShedRisk(pushed)` under the shed rail: sharper for the viewer whose hand is the
+      coalition's lowest as far as the table has been told
 - [x] 3.16 The readout states an **outcome** — the coalition's best hand, the caller's believed
       total, how much of it is unseen, and whether the plan wins — with a level result shown as
       losing, since a tie pays the caller

@@ -86,6 +86,7 @@ import game.vinto.app.cardName
 import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
+import game.vinto.app.outcomeWords
 import game.vinto.app.said
 import game.vinto.app.speakerName
 import game.vinto.app.stepWords
@@ -104,7 +105,9 @@ import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
 import game.vinto.client.SeatChoice
+import game.vinto.client.ShedLine
 import game.vinto.client.Speaker
+import game.vinto.client.StepHealth
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -431,11 +434,13 @@ private fun PlanBoard(board: Board?, onMove: (Move) -> Unit) {
             color = Rail.inkDim,
         )
         board.lanes.forEach { lane -> LaneRow(lane, stage, onMove) }
-        board.sheds.forEach { shed ->
+        board.sheds.forEach { shed -> ShedRow(shed, onMove) }
+        board.outcome?.let { outcome ->
             Text(
-                text = stringResource(Res.string.board_shed, speakerName(shed.who), shed.rank.serialName),
+                text = outcomeWords(outcome),
                 fontSize = DetailSize,
-                color = Rail.ink,
+                fontWeight = FontWeight.Bold,
+                color = if (outcome.wins) Rail.ink else WarnInk,
             )
         }
         Nods(board)
@@ -449,23 +454,54 @@ private fun PlanBoard(board: Board?, onMove: (Move) -> Unit) {
     }
 }
 
-/** "Nina: swap your card 2 with Don's card 3", tappable where the plan may still change. */
+/**
+ * "Nina: swap your card 2 with Don's card 3", tappable where the plan may still change.
+ *
+ * A step whose claim a reveal has proved wrong is drawn in the warning ink with a cross, and
+ * the rail's detail says why (design D9). A step that followed its card is drawn as any other:
+ * the table watched the card go, so there is nothing to announce.
+ */
 @Composable
 private fun LaneRow(lane: LaneLine, stage: Stage, onMove: (Move) -> Unit) {
     val words = lane.step?.let { stepWords(it) } ?: stringResource(Res.string.board_your_call)
-    val line = stringResource(Res.string.board_lane, speakerName(lane.who), words)
+    val broken = lane.health == StepHealth.BROKEN
+    val mark = if (broken) "✗ " else ""
+    val line = mark + stringResource(Res.string.board_lane, speakerName(lane.who), words)
     val shown = if (lane.locked) "$line · " + stringResource(Res.string.board_in_play) else line
     val move = lane.move
     if (move != null) {
         GameButton(
             label = shown,
-            tone = ButtonTone.NEUTRAL,
+            tone = if (broken) ButtonTone.STAKES else ButtonTone.NEUTRAL,
             onClick = { onMove(move) },
             modifier = Modifier.fillMaxWidth().markedAs(stage, "lane:${speakerKey(lane.who)}"),
             compact = true,
         )
     } else {
-        Text(text = shown, fontSize = DetailSize, color = Rail.ink, modifier = Modifier.fillMaxWidth())
+        Text(
+            text = shown,
+            fontSize = DetailSize,
+            color = if (broken) WarnInk else Rail.ink,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** "Nina will throw in a 7", and a way to take it back for whoever said it. */
+@Composable
+private fun ShedRow(shed: ShedLine, onMove: (Move) -> Unit) {
+    val words = stringResource(Res.string.board_shed, speakerName(shed.who), shed.rank.serialName)
+    val move = shed.move
+    if (move != null) {
+        GameButton(
+            label = words,
+            tone = ButtonTone.NEUTRAL,
+            onClick = { onMove(move) },
+            modifier = Modifier.fillMaxWidth(),
+            compact = true,
+        )
+    } else {
+        Text(text = words, fontSize = DetailSize, color = Rail.ink)
     }
 }
 

@@ -467,6 +467,19 @@
     <string name="label_plan_declare">Declarar um valor</string>
     <string name="label_plan_take_discard">Tirar do descarte</string>
     <string name="label_plan_clear">Limpar</string>
+    <string name="label_plan_shed">Descartar</string>
+    <string name="ask_which_rank_throw_in">Que valor vais descartar se sair um?</string>
+    <string name="detail_shed_risk">Só um valor que já viste na tua mão: um descarte errado custa-te uma carta e impede-te de participar pelo resto da ronda.</string>
+    <string name="detail_shed_risk_pushed">A tua é a mão que a coligação está a apoiar. Um descarte errado custa-lhe uma carta e impede-a de participar pelo resto da ronda — descarta só o que já viste.</string>
+    <string name="detail_claim_was_wrong">Um passo aqui foi construído sobre uma afirmação que as cartas entretanto provaram errada. É o jogo a funcionar, não um erro: alguém recordava uma carta de forma diferente da que ela é.</string>
+    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
+    <string name="board_outcome_wins">A nossa melhor mão, %1$d, contra a deles, %2$d: isso vence.</string>
+    <string name="board_outcome_level">A nossa melhor mão, %1$d, contra a deles, %2$d: empate, e o empate paga a quem chamou.</string>
+    <string name="board_outcome_loses">A nossa melhor mão, %1$d, contra a deles, %2$d: isso não chega.</string>
+    <string name="board_outcome_unseen">%1$d das cartas de quem chamou que ninguém viu.</string>
+    <string name="board_verdict_wins">vence</string>
+    <string name="board_verdict_level">empate</string>
+    <string name="board_verdict_loses">não chega</string>
     <string name="ask_what_will_you_do">O que vais fazer na tua jogada?</string>
     <string name="ask_what_should_they_do">O que deve %1$s fazer na sua jogada?</string>
     <string name="ask_which_rank_will_you_declare">Que valor vais declarar com o Rei?</string>

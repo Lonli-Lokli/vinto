@@ -183,6 +183,9 @@ class LocalGameSession(
     private val _plan = MutableStateFlow<CoalitionPlan?>(null)
     override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
 
+    private val _reveals = MutableStateFlow<List<PublicReveal>>(emptyList())
+    override val reveals: StateFlow<List<PublicReveal>> = _reveals.asStateFlow()
+
     override suspend fun editPlan(edit: PlanEdit): String? {
         val caller = state.vintoCallerId
         if (state.phase != GamePhase.FINAL || caller == null) return refuse("there is no round to plan")
@@ -375,6 +378,7 @@ class LocalGameSession(
         // The bots watch the player play, exactly as they watch each other: every accepted
         // action feeds the runner's public-information model of the table.
         runner.observe(action, before, state)
+        if (revealed.isNotEmpty()) _reveals.value = _reveals.value + revealed
 
         publish()
         val line = narrate(action, before, state, playerId)
@@ -509,6 +513,7 @@ class LocalGameSession(
         }
 
         told.zip(lines) { move, line -> record(move.action, move.after, line) }
+        told.flatMap { it.revealed }.takeIf { it.isNotEmpty() }?.let { _reveals.value = _reveals.value + it }
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.

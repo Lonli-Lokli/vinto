@@ -5,6 +5,7 @@ import game.vinto.engine.PendingActionView
 import game.vinto.engine.PendingTargetView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Believed
@@ -301,6 +302,9 @@ sealed interface Question {
     /** Final round: the board is open. */
     data object ThePlan : Question
 
+    /** Final round: I am saying which rank I will throw in if one lands. */
+    data object Shedding : Question
+
     /**
      * Final round: I am composing what [seat] should do with their turn.
      *
@@ -373,7 +377,8 @@ fun tableFor(
     away: Set<String> = emptySet(),
     offered: TableTalk.Proposal? = null,
     plan: CoalitionPlan? = null,
-): Table = tableBody(view, question, plan, away)
+    reveals: List<PublicReveal> = emptyList(),
+): Table = tableBody(view, question, plan, away, reveals)
     .copy(away = away, planSummary = summaryFor(view, plan))
     .offering(offered, view)
 
@@ -419,8 +424,14 @@ private fun Table.offering(proposal: TableTalk.Proposal?, view: PlayerView): Tab
  * exit, rather than at each of the dozen returns below — a new branch that forgot it would
  * silently drop the label off a seat somebody had left.
  */
-@Suppress("ReturnCount")
-private fun tableBody(view: PlayerView, question: Question, plan: CoalitionPlan?, away: Set<String>): Table {
+@Suppress("ReturnCount", "LongParameterList")
+private fun tableBody(
+    view: PlayerView,
+    question: Question,
+    plan: CoalitionPlan?,
+    away: Set<String>,
+    reveals: List<PublicReveal>,
+): Table {
     val me = view.players.firstOrNull { it.id == view.viewerId }
         ?: return Table(prompt = Ask.Watching, waiting = true)
 
@@ -431,7 +442,7 @@ private fun tableBody(view: PlayerView, question: Question, plan: CoalitionPlan?
 
     // The board is open, or a lane of it is being composed. Above the window too: planning is
     // what the window is for, and both take the table over the way a claim does.
-    planTable(view, question, plan, away)?.let { return it.showing(view) }
+    planTable(view, question, plan, away, reveals)?.let { return it.showing(view) }
 
     // The coalition's window: talk only, and a way out of it. Before the round's first turn,
     // so it comes above every table below — a window a player cannot see or end is a stall.
@@ -472,12 +483,18 @@ private fun tableBody(view: PlayerView, question: Question, plan: CoalitionPlan?
  * asking. The caller may open the board to read it, and gets nothing to tap on it; only a
  * coalition member may compose.
  */
-private fun planTable(view: PlayerView, question: Question, plan: CoalitionPlan?, away: Set<String>): Table? =
-    when {
-        question is Question.ThePlan && view.phase == GamePhase.FINAL -> boardTable(view, plan, away)
-        question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan)
-        else -> null
-    }
+private fun planTable(
+    view: PlayerView,
+    question: Question,
+    plan: CoalitionPlan?,
+    away: Set<String>,
+    reveals: List<PublicReveal>,
+): Table? = when {
+    question is Question.ThePlan && view.phase == GamePhase.FINAL -> boardTable(view, plan, away, reveals)
+    question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan)
+    question is Question.Shedding && mayDeclare(view) -> sheddingTable(view)
+    else -> null
+}
 
 /**
  * The claim taps the final round carries — the whole of what "talking to your coalition" is in

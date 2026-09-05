@@ -104,6 +104,7 @@ import game.vinto.app.theme.feltLamp
 import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.rememberFeltWeave
+import game.vinto.app.verdictWord
 import game.vinto.client.Anchor
 import game.vinto.client.Badge
 import game.vinto.client.CardRef
@@ -599,7 +600,7 @@ private fun PlanLine(summary: PlanSummary, onMove: (Move) -> Unit) {
             summary.lanes,
             summary.agreed,
             summary.lanes,
-        )
+        ) + (summary.outcome?.let { " · " + verdictWord(it) } ?: "")
     }
     Row(
         modifier = Modifier

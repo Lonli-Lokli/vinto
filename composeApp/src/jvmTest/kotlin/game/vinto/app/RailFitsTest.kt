@@ -191,12 +191,12 @@ class RailFitsTest {
     }
 
     @Test
-    fun theOpenBoardsTwoChoicesAreWholeAtADoubledFont() {
+    fun theOpenBoardsThreeChoicesAreWholeAtADoubledFont() {
         val view = conferring()
         eachChoiceWhole(
             view,
             emptyList(),
-            setOf("Agree", "Back"),
+            setOf("Agree", "Throw in", "Back"),
             PHONE_W,
             PHONE_H,
             fontScale = 2f,

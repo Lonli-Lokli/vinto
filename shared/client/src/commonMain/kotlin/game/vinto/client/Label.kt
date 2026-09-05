@@ -130,4 +130,7 @@ sealed interface Label {
     data object PlanTakeTheDiscard : Label
 
     data object ClearLane : Label
+
+    /** "I will throw one in": open the rank rail for a shed on the board. */
+    data object PlanAShed : Label
 }

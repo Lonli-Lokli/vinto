@@ -62,6 +62,12 @@ sealed interface Detail {
 
     /** Propose, never command: the person on play decides. */
     data object APlanIsASuggestion : Detail
+
+    /** A step on the board was built on a claim the reveal has proved wrong (design D9). */
+    data object AClaimWasWrong : Detail
+
+    /** What a wrong throw costs; sharper when the viewer's hand is the one the coalition is pushing. */
+    data class ShedRisk(val pushed: Boolean) : Detail
 }
 
 /**

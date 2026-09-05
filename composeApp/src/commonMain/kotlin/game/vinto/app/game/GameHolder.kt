@@ -18,6 +18,7 @@ import game.vinto.client.Question
 import game.vinto.client.Table
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.TableTalk
 import kotlinx.coroutines.launch
@@ -47,6 +48,8 @@ class GameHolder(
     private val away: State<Set<String>> = mutableStateOf(emptySet()),
     /** The coalition's shared plan, as the session last had it; the board is drawn from it. */
     private val plan: State<CoalitionPlan?> = mutableStateOf(null),
+    /** What the round has turned face up so far, which is what tells a plan its claim was wrong. */
+    private val reveals: State<List<PublicReveal>> = mutableStateOf(emptyList()),
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
@@ -84,7 +87,7 @@ class GameHolder(
 
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
-    val table: Table get() = tableFor(view.value, question, away.value, offered, plan.value)
+    val table: Table get() = tableFor(view.value, question, away.value, offered, plan.value, reveals.value)
     val isOver: Boolean get() = session.isOver
 
     /**
@@ -95,7 +98,8 @@ class GameHolder(
      * offering the buttons of a position the player cannot see yet is how a game gets played
      * by accident.
      */
-    fun tableFor(view: PlayerView): Table = tableFor(view, question, away.value, offered, plan.value)
+    fun tableFor(view: PlayerView): Table =
+        tableFor(view, question, away.value, offered, plan.value, reveals.value)
 
     /** One sentence off the channel, for the holder to keep if it is addressed here. */
     fun heard(talk: TableTalk) {
@@ -173,6 +177,7 @@ fun rememberHolder(session: GameSession): GameHolder {
     val view = session.view.collectAsState()
     val away = session.away.collectAsState()
     val plan = session.plan.collectAsState()
+    val reveals = session.reveals.collectAsState()
 
     // The one place a local game and an online one both pass through, which is why the crash
     // reporter's address is written here rather than in each table screen. Cleared on the way
@@ -182,7 +187,7 @@ fun rememberHolder(session: GameSession): GameHolder {
     }
     Where.atTable(view.value)
 
-    val holder = remember(session) { GameHolder(session, view, away, plan) }
+    val holder = remember(session) { GameHolder(session, view, away, plan, reveals) }
 
     // The one place the talk channel becomes something a player can act on. A suggestion
     // addressed to this seat becomes the one-tap move at the top of the rail; everything else

@@ -561,6 +561,19 @@
     <string name="label_plan_declare">Declare a rank</string>
     <string name="label_plan_take_discard">Take the discard</string>
     <string name="label_plan_clear">Clear</string>
+    <string name="label_plan_shed">Throw in</string>
+    <string name="ask_which_rank_throw_in">Which rank will you throw in if one lands?</string>
+    <string name="detail_shed_risk">Only a rank you have seen in your hand: a wrong throw costs you a card and bars you for the rest of the round.</string>
+    <string name="detail_shed_risk_pushed">Yours is the hand the coalition is pushing. A wrong throw costs it a card and bars it for the rest of the round — throw in only what you have seen.</string>
+    <string name="detail_claim_was_wrong">A step here was built on a claim the cards have since proved wrong. That is the game working, not a mistake: somebody remembered a card differently from how it lies.</string>
+    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
+    <string name="board_outcome_wins">Our best hand %1$d against their %2$d: that wins.</string>
+    <string name="board_outcome_level">Our best hand %1$d against their %2$d: level, and level pays the caller.</string>
+    <string name="board_outcome_loses">Our best hand %1$d against their %2$d: that falls short.</string>
+    <string name="board_outcome_unseen">%1$d of the caller’s cards nobody has seen.</string>
+    <string name="board_verdict_wins">wins</string>
+    <string name="board_verdict_level">level</string>
+    <string name="board_verdict_loses">falls short</string>
     <string name="ask_what_will_you_do">What will you do with your turn?</string>
     <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>

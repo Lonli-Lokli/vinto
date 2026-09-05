@@ -478,6 +478,11 @@
     <string name="label_plan_declare">ランクを宣言</string>
     <string name="label_plan_take_discard">捨て札を取る</string>
     <string name="label_plan_clear">クリア</string>
+    <string name="label_plan_shed">投げ込む</string>
+    <string name="ask_which_rank_throw_in">どのランクが出たら投げ込みますか？</string>
+    <string name="detail_shed_risk">自分が手札で見たことのあるランクだけにしましょう。間違えるとペナルティカードを引き、このラウンドではもう投げ込めなくなります。</string>
+    <string name="detail_shed_risk_pushed">あなたの手は連合が推している手です。間違えるとその手にペナルティカードが加わり、このラウンドではもう投げ込めなくなります — 見たことのあるランクだけ投げ込みましょう。</string>
+    <string name="detail_claim_was_wrong">この手順は、その後カードが違うと証明した申告の上に組み立てられていました。これは不具合ではなくゲームの仕組み通りです — 誰かがカードを実際とは違う形で覚えていただけです。</string>
     <string name="ask_what_will_you_do">自分の手番で何をしますか？</string>
     <string name="ask_what_should_they_do">%1$sは自分の手番で何をすべきですか？</string>
     <string name="ask_which_rank_will_you_declare">キングでどのランクを宣言しますか？</string>
@@ -499,6 +504,13 @@
     <string name="board_nod_yes">%1$sが同意しました</string>
     <string name="board_nod_not_yet">%1$sはまだ同意していません</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="board_outcome_wins">こちらの最良の手%1$d対相手%2$d — 勝ちです。</string>
+    <string name="board_outcome_level">こちらの最良の手%1$d対相手%2$d — 同点で、同点は宣言者の勝ちになります。</string>
+    <string name="board_outcome_loses">こちらの最良の手%1$d対相手%2$d — それでは届きません。</string>
+    <string name="board_outcome_unseen">宣言者のカードのうち%1$d枚は誰も見ていません。</string>
+    <string name="board_verdict_wins">勝ち</string>
+    <string name="board_verdict_level">同点</string>
+    <string name="board_verdict_loses">届かず</string>
     <string name="badge_disputed">異議あり</string>
     <string name="badge_paired">対になっている、順不同</string>
     <string name="badge_right">正解</string>

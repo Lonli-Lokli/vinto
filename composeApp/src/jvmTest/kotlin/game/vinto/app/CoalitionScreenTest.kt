@@ -24,8 +24,10 @@ import game.vinto.client.spoken
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.engine.projectView
 import game.vinto.shapes.Card
+import game.vinto.shapes.CardAt
 import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.Difficulty
@@ -299,6 +301,46 @@ class CoalitionScreenTest {
     }
 
     @Test
+    fun theOpenBoardSaysWhetherThePlanWinsAndABrokenStepIsExplained() = runComposeUiTest {
+        // The readout is an outcome, not a number (design D8), and a step whose claim the cards
+        // proved wrong is said to be the game working (design D9).
+        val view = conferring()
+        val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate.id, Step.TakeTheDiscard)),
+            agreed = listOf(mate.id),
+            editedBy = mate.id,
+        )
+
+        val words = textsOn(view, plan = plan, question = Question.ThePlan)
+        assertTrue(
+            words.any { it.contains("Our best hand", ignoreCase = true) },
+            "the board does not say where the plan leaves the round: $words",
+        )
+
+        val five = Claim(mate.id, listOf(0), listOf(Rank.FIVE))
+        val claimed = view.copy(
+            players = view.players.map { seat -> if (seat.id == mate.id) seat.copy(claims = listOf(five)) else seat },
+        )
+        val broken = CoalitionPlan(
+            lanes = listOf(Lane(view.viewerId, Step.Swap(CardAt(view.viewerId, 0), CardAt(mate.id, 0, five)))),
+            agreed = listOf(view.viewerId),
+            editedBy = view.viewerId,
+        )
+        val nine = Card("turned", Rank.NINE, 9, played = false, actionText = null)
+        val told = textsOn(
+            claimed,
+            plan = broken,
+            question = Question.ThePlan,
+            reveals = listOf(PublicReveal(mate.id, 0, nine)),
+        )
+        assertTrue(
+            told.any { it.contains("the game working", ignoreCase = true) },
+            "a broken step is not explained as the game working: $told",
+        )
+    }
+
+    @Test
     fun agreeingIsOneTapUntilYouHave() = runComposeUiTest {
         val view = conferring()
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
@@ -452,8 +494,9 @@ class CoalitionScreenTest {
         recent: List<Say> = emptyList(),
         plan: CoalitionPlan? = null,
         question: Question = Question.None,
+        reveals: List<PublicReveal> = emptyList(),
     ): List<String> {
-        show(view, recent = recent, plan = plan, question = question)
+        show(view, recent = recent, plan = plan, question = question, reveals = reveals)
         return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text }
@@ -466,6 +509,7 @@ class CoalitionScreenTest {
         recent: List<Say> = emptyList(),
         plan: CoalitionPlan? = null,
         question: Question = Question.None,
+        reveals: List<PublicReveal> = emptyList(),
     ) {
         setContent {
             VintoTheme {
@@ -473,7 +517,14 @@ class CoalitionScreenTest {
                     TableScreen(
                         state = TableState(
                             view = view,
-                            table = tableFor(view, question = question, away = away, offered = offered, plan = plan),
+                            table = tableFor(
+                                view,
+                                question = question,
+                                away = away,
+                                offered = offered,
+                                plan = plan,
+                                reveals = reveals,
+                            ),
                             refusal = null,
                             recent = recent,
                             round = 1,

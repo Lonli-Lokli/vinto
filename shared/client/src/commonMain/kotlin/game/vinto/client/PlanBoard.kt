@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
@@ -9,6 +10,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
+import game.vinto.shapes.Shed
 import game.vinto.shapes.Step
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.coalitionInTurnOrder
@@ -36,6 +38,12 @@ data class Board(
     /** Every coalition member, and whether they have said yes to the board as it stands. */
     val nods: List<Nod>,
     val editedBy: Speaker?,
+    /**
+     * Where the plan would leave the round, from standing claims alone (design D8): the
+     * coalition's best hand, the caller's believed total, how much of it nobody has seen, and
+     * whether that wins — with level shown as losing, since a tie pays the caller.
+     */
+    val outcome: PlanOutcome? = null,
 )
 
 /**
@@ -54,6 +62,8 @@ data class PlanSummary(
     val mine: Boolean,
     /** Opening the board. Null for nobody: the caller may read a standing plan too. */
     val open: Move,
+    /** Whether the plan as it stands wins, from what the table has been told. See [Board.outcome]. */
+    val outcome: PlanOutcome? = null,
 )
 
 /**
@@ -63,7 +73,18 @@ data class PlanSummary(
  * opening the composer for that seat — and null where nothing may change it: the turn has
  * begun, or the viewer is the caller, who reads the board and edits none of it.
  */
-data class LaneLine(val who: Speaker, val step: StepLine?, val locked: Boolean, val move: Move?)
+data class LaneLine(
+    val who: Speaker,
+    val step: StepLine?,
+    val locked: Boolean,
+    val move: Move?,
+    /**
+     * How the step is bearing up (design D9): still pointing at its card, following a card that
+     * moved, or built on a claim a reveal has since proved wrong. The last is the game working,
+     * not a player failing, and the copy says so.
+     */
+    val health: StepHealth = StepHealth.LIVE,
+)
 
 /** A step in words a renderer can put into a sentence. Positions are one-based, as people count. */
 sealed interface StepLine {
@@ -72,7 +93,8 @@ sealed interface StepLine {
     data object TakeTheDiscard : StepLine
 }
 
-data class ShedLine(val who: Speaker, val rank: Rank)
+/** Somebody will throw in a rank if it lands. [move] takes it back, for the one who said it. */
+data class ShedLine(val who: Speaker, val rank: Rank, val move: Move? = null)
 
 /** One member's yes or not-yet. [away] because a seat a bot is covering nods for itself. */
 data class Nod(val who: Speaker, val agreed: Boolean, val away: Boolean)
@@ -88,7 +110,12 @@ enum class StepKind { SWAP, DECLARE }
  * it, and can tap nothing: talk is public (design D12) and the plan is built from public
  * claims, so there is nothing to hide, and nothing for them to change.
  */
-internal fun boardFor(view: PlayerView, plan: CoalitionPlan?, away: Set<String>): Board? {
+internal fun boardFor(
+    view: PlayerView,
+    plan: CoalitionPlan?,
+    away: Set<String>,
+    reveals: List<PublicReveal> = emptyList(),
+): Board? {
     val caller = view.vintoCallerId ?: return null
     if (view.phase != GamePhase.FINAL) return null
     val member = view.viewerId != caller
@@ -97,21 +124,34 @@ internal fun boardFor(view: PlayerView, plan: CoalitionPlan?, away: Set<String>)
     val coalition = coalitionInTurnOrder(view.players.map { it.id }, caller)
     val onPlay = view.players.getOrNull(view.currentPlayerIndex)?.id
     val agreed = plan?.agreed.orEmpty()
+    // Read against the table as it is now: a step follows its card in silence, and one whose
+    // claim a reveal contradicted is marked rather than repaired (design D9).
+    val reading = plan?.let { readPlan(view, it, reveals) }
 
     return Board(
         lanes = coalition.map { seat ->
             val lane = plan?.laneOf(seat)
+            val index = reading?.plan?.lanes?.indexOfFirst { it.seat == seat } ?: -1
+            val followed = reading?.plan?.lanes?.getOrNull(index) ?: lane
             val locked = lane?.locked == true
             LaneLine(
                 who = speakerFor(view, seat),
-                step = lane?.step?.let { stepLine(view, it) },
+                step = followed?.step?.let { stepLine(view, it) },
                 locked = locked,
                 move = Move.Ask(Question.Planning(seat)).takeIf { member && !locked && seat != onPlay },
+                health = reading?.health?.getOrNull(index) ?: StepHealth.LIVE,
             )
         },
-        sheds = plan?.sheds.orEmpty().map { ShedLine(speakerFor(view, it.seat), it.rank) },
+        sheds = plan?.sheds.orEmpty().map { shed ->
+            ShedLine(
+                who = speakerFor(view, shed.seat),
+                rank = shed.rank,
+                move = Move.Plan(PlanEdit.RemoveShed(shed)).takeIf { member && shed.seat == view.viewerId },
+            )
+        },
         nods = coalition.map { Nod(speakerFor(view, it), agreed = it in agreed, away = it in away) },
         editedBy = plan?.editedBy?.let { speakerFor(view, it) },
+        outcome = plan?.let { planOutcome(view, it) },
     )
 }
 
@@ -129,6 +169,7 @@ internal fun summaryFor(view: PlayerView, plan: CoalitionPlan?): PlanSummary? {
         agreed = plan?.agreed.orEmpty().count { it in coalition },
         mine = view.viewerId in plan?.agreed.orEmpty(),
         open = Move.Ask(Question.ThePlan),
+        outcome = plan?.takeUnless { it.isEmpty }?.let { planOutcome(view, it) },
     )
 }
 
@@ -137,19 +178,62 @@ internal fun summaryFor(view: PlayerView, plan: CoalitionPlan?): PlanSummary? {
  * yes to, "Agree". Back closes it. The log is not drawn under this table (the rail treats a
  * board like a rank grid), which is the price of a board a phone can hold.
  */
-internal fun boardTable(view: PlayerView, plan: CoalitionPlan?, away: Set<String>): Table {
-    val board = boardFor(view, plan, away) ?: return Table(Ask.Watching, waiting = true)
+internal fun boardTable(
+    view: PlayerView,
+    plan: CoalitionPlan?,
+    away: Set<String>,
+    reveals: List<PublicReveal> = emptyList(),
+): Table {
+    val board = boardFor(view, plan, away, reveals) ?: return Table(Ask.Watching, waiting = true)
     val member = view.viewerId != view.vintoCallerId
     val agreeable = member && plan != null && !plan.isEmpty && view.viewerId !in plan.agreed
     return Table(
         prompt = Ask.ThePlan,
-        detail = Detail.APlanIsASuggestion,
+        // A broken step is news, and it is the game working: somebody's memory was wrong.
+        detail = if (board.lanes.any { it.health == StepHealth.BROKEN }) {
+            Detail.AClaimWasWrong
+        } else {
+            Detail.APlanIsASuggestion
+        },
         choices = buildList {
             if (agreeable) add(Choice(Label.Agree, Move.Agree(true), Tone.PLAY))
+            if (member) add(Choice(Label.PlanAShed, Move.Ask(Question.Shedding)))
             add(Choice(Label.Back, Move.Ask(Question.None)))
         },
         board = board,
     )
+}
+
+/**
+ * "I hold one of these and I will throw it in if one lands" — a shed, said on the board.
+ *
+ * Shedding is the cheapest way to lower a hand in the game and costs no turn, so it is most of
+ * how a coalition plays its window (design D13a); but a wrong throw costs a card and, in the
+ * final round, bars the seat for the rest of it — and when the seat is the hand the coalition is
+ * pushing, that is the round. The rail says which of the two the viewer is looking at.
+ */
+internal fun sheddingTable(view: PlayerView): Table {
+    val me = view.viewerId
+    return Table(
+        prompt = Ask.WhichRankWillYouThrowIn,
+        detail = Detail.ShedRisk(pushed = isTheHandBeingPushed(view)),
+        choices = listOf(Choice(Label.Back, Move.Ask(Question.ThePlan))),
+        ranks = ALL_RANKS.map { rank -> RankChoice(rank, Move.Plan(PlanEdit.AddShed(Shed(me, rank)))) },
+    )
+}
+
+/**
+ * Whether the viewer's hand is the coalition's lowest as far as the table has been told — the
+ * one hand whose cards a wrong throw costs the round, not just a member.
+ */
+private fun isTheHandBeingPushed(view: PlayerView): Boolean {
+    val caller = view.vintoCallerId ?: return false
+    val coalition = view.players.filter { it.id != caller }
+    val believed = coalition.associate { seat ->
+        seat.id to seat.cards.indices.sumOf { believedValueAt(seat, it) }
+    }
+    val lowest = believed.values.minOrNull() ?: return false
+    return believed[view.viewerId] == lowest
 }
 
 internal fun stepLine(view: PlayerView, step: Step): StepLine = when (step) {

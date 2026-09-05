@@ -470,6 +470,19 @@
     <string name="label_plan_declare">إعلان رتبة</string>
     <string name="label_plan_take_discard">أخذ بطاقة التخلص</string>
     <string name="label_plan_clear">مسح</string>
+    <string name="label_plan_shed">رمي مطابق</string>
+    <string name="ask_which_rank_throw_in">ما الرتبة التي سترميها إن نزلت؟</string>
+    <string name="detail_shed_risk">فقط رتبة رأيتها في يدك: رمية خاطئة تكلّفك بطاقة وتمنعك لبقية الجولة.</string>
+    <string name="detail_shed_risk_pushed">يدك هي التي يدفعها التحالف. رمية خاطئة تكلّفها بطاقة وتمنعها لبقية الجولة — فارمِ فقط ما رأيته فعلًا.</string>
+    <string name="detail_claim_was_wrong">خطوة هنا بُنيت على قول أثبتت البطاقات خطأه لاحقًا. هذا عمل اللعبة كما ينبغي، لا خطأ: تذكّر أحدهم بطاقة على غير ما هي عليه.</string>
+
+    <string name="board_outcome_wins">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: هذا يفوز.</string>
+    <string name="board_outcome_level">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: تعادل، والتعادل يُدفَع فيه للمنادي.</string>
+    <string name="board_outcome_loses">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: هذا يقصّر.</string>
+    <string name="board_outcome_unseen">%1$d من بطاقات المنادي لم يرها أحد.</string>
+    <string name="board_verdict_wins">يفوز</string>
+    <string name="board_verdict_level">تعادل</string>
+    <string name="board_verdict_loses">يقصّر</string>
     <string name="ask_what_will_you_do">ماذا سيُفعل في دورك؟</string>
     <string name="ask_what_should_they_do">ماذا سيُفعل في دور %1$s؟</string>
     <string name="ask_which_rank_will_you_declare">ما الرتبة التي ستُعلَن بالملك في دورك؟</string>

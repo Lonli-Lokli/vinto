@@ -127,11 +127,19 @@ private fun follow(
 
     val anchor = at.anchor
     val here = view.players.firstOrNull { it.id == at.seat }
+    if (anchor == null) {
+        // Pointed at a position rather than at a card — the composer lets a member name their
+        // own unspoken card, and a bot its own. There is nothing to follow and nothing a reveal
+        // could contradict, so it stands as long as the position does. It used to read as
+        // broken from the moment it was made, which made every plan built on one's own hand
+        // arrive already in the warning colours.
+        val standing = here != null && at.position in here.cards.indices
+        return at to if (standing) StepHealth.LIVE else StepHealth.BROKEN
+    }
     val stillHere = here?.claims.orEmpty().any { claim ->
-        at.position in claim.positions && (anchor == null || sameThing(claim, anchor))
+        at.position in claim.positions && sameThing(claim, anchor)
     }
     if (stillHere) return at to StepHealth.LIVE
-    if (anchor == null) return at to StepHealth.BROKEN
 
     val moved = view.players.flatMap { seat ->
         seat.claims.mapNotNull { claim ->

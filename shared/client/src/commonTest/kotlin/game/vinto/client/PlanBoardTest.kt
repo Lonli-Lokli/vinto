@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
 import game.vinto.engine.projectView
 import game.vinto.shapes.Card
 import game.vinto.shapes.CardAt
@@ -16,6 +17,7 @@ import game.vinto.shapes.Pile
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
+import game.vinto.shapes.Shed
 import game.vinto.shapes.Step
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
@@ -250,6 +252,89 @@ class PlanBoardTest {
         assertEquals(PlanEdit.SetLane(nina, Step.TakeTheDiscard), take.edit)
         val clear = assertIs<Move.Plan>(table.choices.first { it.label == Label.ClearLane }.move)
         assertEquals(PlanEdit.ClearLane(nina), clear.edit)
+    }
+
+    // ------------------------------------------------------------------ the readout and the decay
+
+    @Test
+    fun theOpenBoardSaysWhereThePlanLeavesTheRoundAndTheFeltLineSaysTheVerdict() {
+        // The caller's two cards are unspoken, so the caller's believed total is nothing and
+        // both are unseen. A readout that stated "our best against their 0" as a fact would be
+        // lying by omission, which is why the outcome carries how much is unseen.
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(nina, Step.TakeTheDiscard)),
+            agreed = listOf(nina),
+            editedBy = nina,
+        )
+        val opened = tableFor(view(), question = Question.ThePlan, plan = plan)
+
+        val outcome = assertNotNull(assertNotNull(opened.board).outcome, "the board says nothing about the outcome")
+        assertEquals(2, outcome.unseen, "the caller's unspoken cards are not counted as unseen")
+        assertEquals(
+            outcome,
+            assertNotNull(tableFor(view(), plan = plan).planSummary).outcome,
+            "the felt line has no verdict",
+        )
+        assertNull(tableFor(view(), plan = null).planSummary?.outcome, "an empty board was given a verdict")
+    }
+
+    @Test
+    fun aStepBuiltOnAClaimTheRevealContradictedIsMarkedBrokenAndSaidSo() {
+        // Nina said her first card is a five; a King's wrong name turned it over as a nine. The
+        // swap on the board was built on the five, so it is built on nothing — and the rail says
+        // that is the game working, not a mistake (design D9).
+        val nineNotFive = PublicReveal(nina, 0, Card("nina-c0", Rank.NINE, 9, played = false, actionText = null))
+        val anchored = CardAt(nina, 0, Claim(nina, listOf(0), listOf(Rank.FIVE)))
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(me, Step.Swap(CardAt(me, 1), anchored))),
+            agreed = listOf(me),
+            editedBy = me,
+        )
+
+        val sound = tableFor(view(), question = Question.ThePlan, plan = plan)
+        assertEquals(StepHealth.LIVE, assertNotNull(sound.board).lanes.first { it.who == Speaker.You }.health)
+        assertEquals(Detail.APlanIsASuggestion, sound.detail)
+
+        val broken = tableFor(view(), question = Question.ThePlan, plan = plan, reveals = listOf(nineNotFive))
+        assertEquals(StepHealth.BROKEN, assertNotNull(broken.board).lanes.first { it.who == Speaker.You }.health)
+        assertEquals(Detail.AClaimWasWrong, broken.detail, "a broken step was not explained")
+    }
+
+    // ------------------------------------------------------------------ sheds
+
+    @Test
+    fun aShedIsOneRankOffTheRailInTheViewersOwnNameAndOnlyItsOwnerTakesItBack() {
+        val opened = tableFor(view(), question = Question.ThePlan)
+        assertTrue(opened.choices.any { it.label == Label.PlanAShed }, "no way to say what you will throw in")
+
+        val shedding = tableFor(view(), question = Question.Shedding)
+        assertEquals(Ask.WhichRankWillYouThrowIn, shedding.prompt)
+        val seven = assertIs<Move.Plan>(shedding.ranks.first { it.rank == Rank.SEVEN }.move)
+        assertEquals(PlanEdit.AddShed(Shed(me, Rank.SEVEN)), seven.edit, "a shed in somebody else's name")
+
+        val plan = CoalitionPlan(
+            sheds = listOf(Shed(me, Rank.SEVEN), Shed(nina, Rank.KING)),
+            agreed = listOf(me),
+            editedBy = me,
+        )
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        assertNotNull(board.sheds.first { it.who == Speaker.You }.move, "the viewer cannot take back their own shed")
+        assertNull(board.sheds.first { it.who == Speaker.Named("Bot3") }.move, "the viewer could take back Nina's shed")
+    }
+
+    @Test
+    fun theShedsRiskIsSharperForTheHandTheCoalitionIsPushing() {
+        // Don holds one unspoken card and everybody else two, so as far as the table has been
+        // told his is the lowest hand — the one the coalition is pushing — and mine is not.
+        val mine = tableFor(view(), question = Question.Shedding)
+        assertEquals(Detail.ShedRisk(pushed = false), mine.detail)
+
+        val dons = tableFor(view(viewer = don), question = Question.Shedding)
+        assertEquals(
+            Detail.ShedRisk(pushed = true),
+            dons.detail,
+            "the lowest hand was not warned it is the one being pushed",
+        )
     }
 
     // ------------------------------------------------------------------ the viewer's turn

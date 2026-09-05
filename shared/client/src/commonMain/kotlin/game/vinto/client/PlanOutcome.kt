@@ -135,6 +135,8 @@ private fun swap(hands: Map<String, List<Int>>, from: CardAt, to: CardAt): Map<S
 }
 
 /** What a position is worth as far as the table has been told; the deck's average otherwise. */
+internal fun believedValueAt(seat: PlayerSeatView, position: Int): Int = valueAt(seat, position)
+
 private fun valueAt(seat: PlayerSeatView, position: Int): Int {
     val believed = believedOnView(seat, position)
     return if (believed.sources.isEmpty()) UNSEEN_CARD else believed.value

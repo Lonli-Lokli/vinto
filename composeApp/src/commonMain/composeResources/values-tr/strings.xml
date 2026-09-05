@@ -477,6 +477,19 @@
     <string name="label_plan_declare">Bir değer söyle</string>
     <string name="label_plan_take_discard">Atım yığınından al</string>
     <string name="label_plan_clear">Temizle</string>
+    <string name="label_plan_shed">Bir değer at</string>
+    <string name="ask_which_rank_throw_in">Düşerse, hangi değeri atacaksın?</string>
+    <string name="detail_shed_risk">Yalnızca elinde gördüğün bir değer: yanlış bir atış sana bir ceza kartına mal olur ve tur boyunca seni dışlar.</string>
+    <string name="detail_shed_risk_pushed">Koalisyonun öne sürdüğü el seninki. Yanlış bir atış ona bir ceza kartına mal olur ve tur boyunca onu dışlar — yalnızca gördüğünü at.</string>
+    <string name="detail_claim_was_wrong">Buradaki bir adım, kartların sonradan yanlış çıkardığı bir iddiaya dayanıyordu. Bu bir hata değil, oyunun işleyişi: biri bir kartı gerçekte durduğundan farklı hatırlamış.</string>
+    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
+    <string name="board_outcome_wins">En iyi elimiz %1$d, onlarınkine karşı %2$d: bu kazanıyor.</string>
+    <string name="board_outcome_level">En iyi elimiz %1$d, onlarınkine karşı %2$d: berabere — ve berabere çağıranın lehinedir.</string>
+    <string name="board_outcome_loses">En iyi elimiz %1$d, onlarınkine karşı %2$d: bu geride kalıyor.</string>
+    <string name="board_outcome_unseen">Çağıranın %1$d kartını kimse görmedi.</string>
+    <string name="board_verdict_wins">kazanıyor</string>
+    <string name="board_verdict_level">berabere</string>
+    <string name="board_verdict_loses">geride kalıyor</string>
     <string name="ask_what_will_you_do">Sırada ne yapacaksın?</string>
     <string name="ask_what_should_they_do">%1$s sırasında ne yapmalı?</string>
     <string name="ask_which_rank_will_you_declare">Papaz ile hangi değeri söyleyeceksin?</string>

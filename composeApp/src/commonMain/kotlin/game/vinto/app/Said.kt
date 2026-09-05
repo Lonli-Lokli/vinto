@@ -31,6 +31,7 @@ import game.vinto.app.art.ask_what_should_they_do
 import game.vinto.app.art.ask_what_will_you_do
 import game.vinto.app.art.ask_which_card_replaced
 import game.vinto.app.art.ask_which_rank_should_they_declare
+import game.vinto.app.art.ask_which_rank_throw_in
 import game.vinto.app.art.ask_which_rank_will_you_declare
 import game.vinto.app.art.ask_which_way_round
 import game.vinto.app.art.ask_who_draws
@@ -123,12 +124,19 @@ import game.vinto.app.art.beat_you_called_body
 import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
+import game.vinto.app.art.board_outcome_level
+import game.vinto.app.art.board_outcome_loses
+import game.vinto.app.art.board_outcome_unseen
+import game.vinto.app.art.board_outcome_wins
 import game.vinto.app.art.board_owner_named
 import game.vinto.app.art.board_owner_you
 import game.vinto.app.art.board_step_declare
 import game.vinto.app.art.board_step_swap
 import game.vinto.app.art.board_step_take_discard
 import game.vinto.app.art.board_title
+import game.vinto.app.art.board_verdict_level
+import game.vinto.app.art.board_verdict_loses
+import game.vinto.app.art.board_verdict_wins
 import game.vinto.app.art.card_position
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
@@ -147,12 +155,15 @@ import game.vinto.app.art.detail_ace_hurts_your_side
 import game.vinto.app.art.detail_barred
 import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
+import game.vinto.app.art.detail_claim_was_wrong
 import game.vinto.app.art.detail_deck_ran_out
 import game.vinto.app.art.detail_king_declared
 import game.vinto.app.art.detail_plan_asks
 import game.vinto.app.art.detail_plan_is_a_suggestion
 import game.vinto.app.art.detail_right_plays
 import game.vinto.app.art.detail_scored_against
+import game.vinto.app.art.detail_shed_risk
+import game.vinto.app.art.detail_shed_risk_pushed
 import game.vinto.app.art.detail_table_talk
 import game.vinto.app.art.detail_tap_to_say
 import game.vinto.app.art.detail_wrong_costs
@@ -175,6 +186,7 @@ import game.vinto.app.art.label_done_talking
 import game.vinto.app.art.label_not_sure_which_way
 import game.vinto.app.art.label_plan_clear
 import game.vinto.app.art.label_plan_declare
+import game.vinto.app.art.label_plan_shed
 import game.vinto.app.art.label_plan_swap
 import game.vinto.app.art.label_plan_take_discard
 import game.vinto.app.art.label_standing_bin
@@ -248,6 +260,7 @@ import game.vinto.client.Detail
 import game.vinto.client.Explains
 import game.vinto.client.Gloss
 import game.vinto.client.Label
+import game.vinto.client.PlanOutcome
 import game.vinto.client.Say
 import game.vinto.client.Speaker
 import game.vinto.client.StepLine
@@ -437,6 +450,7 @@ fun labelled(label: Label): String = when (label) {
     Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
     Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
     Label.ClearLane -> stringResource(Res.string.label_plan_clear)
+    Label.PlanAShed -> stringResource(Res.string.label_plan_shed)
 }
 
 /**
@@ -477,6 +491,7 @@ fun asked(ask: Ask): String = when (ask) {
     Ask.WhichWayRound -> stringResource(Res.string.ask_which_way_round)
     Ask.SayWhatYouKnow -> stringResource(Res.string.ask_say_what_you_know)
     Ask.ThePlan -> stringResource(Res.string.board_title)
+    Ask.WhichRankWillYouThrowIn -> stringResource(Res.string.ask_which_rank_throw_in)
     is Ask.WhatShouldTheyDo ->
         aboutTurn(ask.who, Res.string.ask_what_will_you_do, Res.string.ask_what_should_they_do)
     is Ask.WhichRankShouldTheyDeclare -> aboutTurn(
@@ -562,6 +577,45 @@ fun detailed(detail: Detail): String = when (detail) {
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
     is Detail.ThePlanAsksYouTo -> stringResource(Res.string.detail_plan_asks, stepWords(detail.step))
     Detail.APlanIsASuggestion -> stringResource(Res.string.detail_plan_is_a_suggestion)
+    Detail.AClaimWasWrong -> stringResource(Res.string.detail_claim_was_wrong)
+    is Detail.ShedRisk -> if (detail.pushed) {
+        stringResource(Res.string.detail_shed_risk_pushed)
+    } else {
+        stringResource(Res.string.detail_shed_risk)
+    }
+}
+
+/**
+ * Where the plan would leave the round, as one sentence: the two totals and whether that wins.
+ *
+ * Level is said as losing, because a tie pays the caller; and how much of the caller's hand
+ * nobody has seen is said beside it, because a believed total without that is a number pretending
+ * to be information (design D8).
+ */
+@Composable
+fun outcomeWords(outcome: PlanOutcome): String {
+    val verdict = when {
+        outcome.wins -> stringResource(Res.string.board_outcome_wins, outcome.ourBest, outcome.theirBelieved)
+        outcome.level ->
+            stringResource(Res.string.board_outcome_level, outcome.ourBest, outcome.theirBelieved)
+        else -> stringResource(Res.string.board_outcome_loses, outcome.ourBest, outcome.theirBelieved)
+    }
+    return if (outcome.unseen == 0) {
+        verdict
+    } else {
+        verdict + " " + stringResource(
+            Res.string.board_outcome_unseen,
+            outcome.unseen,
+        )
+    }
+}
+
+/** The verdict alone, for the one-line summary on the felt. */
+@Composable
+fun verdictWord(outcome: PlanOutcome): String = when {
+    outcome.wins -> stringResource(Res.string.board_verdict_wins)
+    outcome.level -> stringResource(Res.string.board_verdict_level)
+    else -> stringResource(Res.string.board_verdict_loses)
 }
 
 /**

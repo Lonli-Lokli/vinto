@@ -3,6 +3,7 @@ package game.vinto.client
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.PublicSeat
+import game.vinto.protocol.RevealedCard
 import game.vinto.protocol.ServerMessage
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.Lane
@@ -71,6 +72,33 @@ class RemotePlanTest {
         wire.settle()
         assertNull(session.plan.value, "last round's plan was carried into the next")
 
+        wire.room.leave()
+    }
+
+    @Test
+    fun whatTheRoundTurnsFaceUpIsRememberedForThePlanToBeReadAgainst() = runTest {
+        // A reveal is public for the moment it happens and in no view afterwards; the session
+        // keeps the list, because a plan built on a claim one of them contradicted is built on
+        // nothing (design D9), and only the reveal can say so before scoring.
+        val wire = Wire(this)
+        wire.deliverJoined(view = wire.dealtView)
+        wire.settle()
+        val session = assertNotNull(wire.room.session.value)
+        assertTrue(session.reveals.value.isEmpty())
+
+        val other = wire.dealtView.players[1].id
+        val turned = RevealedCard(other, 0, wire.state.players[1].cards[0])
+        wire.deliver(
+            ServerMessage.Events(
+                events = listOf(botEntry(0, other, wire.dealtView).copy(revealed = listOf(turned))),
+                nextIndex = 1,
+                view = wire.dealtView,
+            ),
+        )
+        wire.settle()
+
+        assertEquals(1, session.reveals.value.size, "the reveal was not kept")
+        assertEquals(other, session.reveals.value.single().playerId)
         wire.room.leave()
     }
 
