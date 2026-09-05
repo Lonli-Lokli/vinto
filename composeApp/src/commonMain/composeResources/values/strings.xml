@@ -557,6 +557,7 @@
     <!-- The coalition's shared plan (design D7a): a board of parts agreed as a whole. -->
     <string name="label_agree">Agree</string>
     <string name="label_do_as_planned">Do as planned</string>
+    <string name="label_keep_it_instead">Keep it instead</string>
     <string name="label_plan_swap">Swap two cards</string>
     <string name="label_plan_declare">Declare a rank</string>
     <string name="label_plan_take_discard">Take the discard</string>
@@ -582,6 +583,9 @@
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
     <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
     <string name="detail_plan_asks">The plan: %1$s.</string>
+    <!-- The drawn card does more for the coalition than the plan's step would: %1$s the card's
+         name, %2$d the 1-based position of the viewer's card it should replace. -->
+    <string name="detail_draw_beats_plan">Your %1$s beats the plan: keep it in place of card %2$d.</string>
     <string name="detail_plan_is_a_suggestion">A plan is a suggestion. Whoever’s turn it is decides.</string>
     <string name="board_title">The plan</string>
     <string name="board_summary_empty">No plan yet — tap to plan together</string>

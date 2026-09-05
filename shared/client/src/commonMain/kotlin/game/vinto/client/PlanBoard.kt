@@ -9,6 +9,7 @@ import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Shed
@@ -406,11 +407,28 @@ private fun cardAt(view: PlayerView, ref: CardRef): CardAt {
 internal fun Table.planned(view: PlayerView, plan: CoalitionPlan?): Table {
     val step = plan?.laneOf(view.viewerId)?.step ?: return this
     val armed = armedMove(view, step)
-    val first = armed?.let { listOf(Choice(Label.DoAsPlanned, it, Tone.PLAY)) }.orEmpty()
+    val planned = armed?.let { listOf(Choice(Label.DoAsPlanned, it, Tone.PLAY)) }.orEmpty()
+
+    // A draw that beats the plan offers the re-plan rather than insisting (3.11): keeping the
+    // card comes first, the plan's step stays where it was, and the line under the prompt says
+    // which card the draw is worth more than.
+    val better = betterDraw(view, plan)
+    val keep = better?.let {
+        listOf(Choice(Label.KeepItInstead, Move.Ask(Question.WhichSlot), Tone.PLAY))
+    }.orEmpty()
     return copy(
-        detail = Detail.ThePlanAsksYouTo(stepLine(view, step)),
-        choices = first + choices,
+        detail = better?.let { Detail.YourDrawBeatsThePlan(it.rank, it.position) }
+            ?: Detail.ThePlanAsksYouTo(stepLine(view, step)),
+        choices = keep + planned + choices,
     )
+}
+
+/** The card the viewer has just drawn and is choosing about, when keeping it beats the plan. */
+private fun betterDraw(view: PlayerView, plan: CoalitionPlan): KeepInstead? {
+    if (view.subPhase != GameSubPhase.CHOOSING) return null
+    val pending = view.pendingAction?.takeIf { it.playerId == view.viewerId && it.canGoToHand } ?: return null
+    val rank = (pending.card as? CardView.Visible)?.card?.rank ?: return null
+    return keepingBeatsThePlan(view, plan, rank)
 }
 
 private fun Table.armedMove(view: PlayerView, step: Step): Move? = when (step) {

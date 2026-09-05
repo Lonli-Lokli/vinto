@@ -446,6 +446,7 @@
     <string name="label_done_talking">다 말했어요</string>
     <string name="label_agree">동의해요</string>
     <string name="label_do_as_planned">계획대로 할게요</string>
+    <string name="label_keep_it_instead">대신 이 카드를 쓸게요</string>
     <string name="label_plan_swap">카드 두 장 바꾸기</string>
     <string name="label_plan_declare">숫자 선언하기</string>
     <string name="label_plan_take_discard">버림패 가져오기</string>
@@ -469,6 +470,7 @@
     <string name="ask_which_rank_will_you_declare">킹으로 어떤 숫자를 선언할까요?</string>
     <string name="ask_which_rank_should_they_declare">%1$s는 킹으로 어떤 숫자를 선언해야 할까요?</string>
     <string name="detail_plan_asks">계획: %1$s.</string>
+    <string name="detail_draw_beats_plan">%1$s 카드가 계획보다 나아요. %2$d번 카드 대신 이 카드를 쓰세요.</string>
     <string name="detail_plan_is_a_suggestion">계획은 하나의 제안일 뿐이에요. 결정은 차례인 사람이 해요.</string>
     <string name="board_title">계획</string>
     <string name="board_summary_empty">아직 계획이 없어요 — 눌러서 함께 세워요</string>

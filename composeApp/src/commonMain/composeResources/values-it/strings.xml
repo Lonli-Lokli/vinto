@@ -468,6 +468,7 @@
     <string name="label_done_talking">Discussione conclusa</string>
     <string name="label_agree">D’accordo</string>
     <string name="label_do_as_planned">Fai come previsto</string>
+    <string name="label_keep_it_instead">Tienila invece</string>
     <string name="label_plan_swap">Scambia due carte</string>
     <string name="label_plan_declare">Dichiara un valore</string>
     <string name="label_plan_take_discard">Prendi lo scarto</string>
@@ -492,6 +493,7 @@
     <string name="ask_which_rank_will_you_declare">Quale valore dichiarerai con il Re?</string>
     <string name="ask_which_rank_should_they_declare">Quale valore dovrebbe dichiarare %1$s con il Re?</string>
     <string name="detail_plan_asks">Il piano: %1$s.</string>
+    <string name="detail_draw_beats_plan">La carta pescata, %1$s, batte il piano: tienila al posto della carta %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Un piano è un suggerimento. Decide chi ha il turno.</string>
     <string name="board_title">Il piano</string>
     <string name="board_summary_empty">Ancora nessun piano — tocca per pianificare insieme</string>

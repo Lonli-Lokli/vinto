@@ -446,6 +446,7 @@
     <string name="label_done_talking">Koniec rozmowy</string>
     <string name="label_agree">Zgadzam się</string>
     <string name="label_do_as_planned">Zrób zgodnie z planem</string>
+    <string name="label_keep_it_instead">Zatrzymaj tę kartę</string>
     <string name="label_plan_swap">Zamień dwie karty</string>
     <string name="label_plan_declare">Ogłoś rangę</string>
     <string name="label_plan_take_discard">Weź kartę ze stosu odrzuconych</string>
@@ -470,6 +471,7 @@
     <string name="ask_which_rank_will_you_declare">Jaką rangę ogłosisz Królem?</string>
     <string name="ask_which_rank_should_they_declare">Jaką rangę ogłosić Królem w turze %1$s?</string>
     <string name="detail_plan_asks">Plan: %1$s.</string>
+    <string name="detail_draw_beats_plan">Twoja karta %1$s jest lepsza niż plan: zatrzymaj ją zamiast karty %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Plan to tylko sugestia. Decyduje osoba, której jest tura.</string>
     <string name="board_title">Plan</string>
     <string name="board_summary_empty">Jeszcze bez planu — stuknij, aby zaplanować razem</string>

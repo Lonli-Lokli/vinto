@@ -466,6 +466,7 @@
     <string name="label_done_talking">انتهيت من الحديث</string>
     <string name="label_agree">أوافق</string>
     <string name="label_do_as_planned">لننفّذ الخطة</string>
+    <string name="label_keep_it_instead">الاحتفاظ بها بدلًا من ذلك</string>
     <string name="label_plan_swap">مبادلة بطاقتين</string>
     <string name="label_plan_declare">إعلان رتبة</string>
     <string name="label_plan_take_discard">أخذ بطاقة التخلص</string>
@@ -490,6 +491,7 @@
     <string name="ask_which_rank_will_you_declare">ما الرتبة التي ستُعلَن بالملك في دورك؟</string>
     <string name="ask_which_rank_should_they_declare">ما الرتبة التي ستُعلَن بالملك في دور %1$s؟</string>
     <string name="detail_plan_asks">الخطة: %1$s.</string>
+    <string name="detail_draw_beats_plan">بطاقة %1$s التي سحبتها أفضل من الخطة: احتفظ بها بدلًا من البطاقة رقم %2$d.</string>
     <string name="detail_plan_is_a_suggestion">الخطة اقتراح لا أكثر. القرار لمن يملك الدور.</string>
     <string name="board_title">الخطة</string>
     <string name="board_summary_empty">لا خطة بعد — اضغطوا للتخطيط معًا</string>

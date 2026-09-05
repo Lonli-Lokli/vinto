@@ -1425,5 +1425,5 @@ fun roundEndReason(view: PlayerView): RoundEndReason? = when {
 }
 
 /** A card taken from the discard pile must be played; only a drawn one may be kept. */
-private val PendingActionView.canGoToHand: Boolean
+internal val PendingActionView.canGoToHand: Boolean
     get() = from == PendingCardOrigin.DRAWING

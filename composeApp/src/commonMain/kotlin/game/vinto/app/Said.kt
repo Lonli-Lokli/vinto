@@ -157,6 +157,7 @@ import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
 import game.vinto.app.art.detail_claim_was_wrong
 import game.vinto.app.art.detail_deck_ran_out
+import game.vinto.app.art.detail_draw_beats_plan
 import game.vinto.app.art.detail_king_declared
 import game.vinto.app.art.detail_plan_asks
 import game.vinto.app.art.detail_plan_is_a_suggestion
@@ -183,6 +184,7 @@ import game.vinto.app.art.label_decline_suggestion
 import game.vinto.app.art.label_do_as_planned
 import game.vinto.app.art.label_do_as_suggested
 import game.vinto.app.art.label_done_talking
+import game.vinto.app.art.label_keep_it_instead
 import game.vinto.app.art.label_not_sure_which_way
 import game.vinto.app.art.label_plan_clear
 import game.vinto.app.art.label_plan_declare
@@ -446,6 +448,7 @@ fun labelled(label: Label): String = when (label) {
     Label.Done -> stringResource(Res.string.choice_done)
     Label.Agree -> stringResource(Res.string.label_agree)
     Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
+    Label.KeepItInstead -> stringResource(Res.string.label_keep_it_instead)
     Label.PlanASwap -> stringResource(Res.string.label_plan_swap)
     Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
     Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
@@ -576,6 +579,11 @@ fun detailed(detail: Detail): String = when (detail) {
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
     is Detail.ThePlanAsksYouTo -> stringResource(Res.string.detail_plan_asks, stepWords(detail.step))
+    is Detail.YourDrawBeatsThePlan -> stringResource(
+        Res.string.detail_draw_beats_plan,
+        cardName(detail.rank),
+        detail.position + 1,
+    )
     Detail.APlanIsASuggestion -> stringResource(Res.string.detail_plan_is_a_suggestion)
     Detail.AClaimWasWrong -> stringResource(Res.string.detail_claim_was_wrong)
     is Detail.ShedRisk -> if (detail.pushed) {

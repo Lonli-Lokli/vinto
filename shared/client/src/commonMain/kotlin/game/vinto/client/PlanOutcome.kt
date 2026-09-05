@@ -4,6 +4,7 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.getCardValue
 
@@ -69,6 +70,36 @@ fun planOutcome(view: PlayerView, plan: CoalitionPlan): PlanOutcome? {
         unseen = believed.count { it == null },
     )
 }
+
+/** Keeping a drawn card: what it is, and the viewer's position it would take. */
+internal data class KeepInstead(val rank: Rank, val position: Int)
+
+/**
+ * Whether keeping [drawn] does more for the coalition than the plan's step for the viewer's
+ * turn (task 3.11), measured the way the readout measures everything: the lowest coalition
+ * hand, from standing claims. The card goes where it saves the most — the viewer's
+ * highest-priced position, ties to the first — and the viewer's own lane is dropped from the
+ * plan, since a turn spent keeping a card is not spent on the step. Strictly better, or null:
+ * level is the plan's.
+ */
+internal fun keepingBeatsThePlan(view: PlayerView, plan: CoalitionPlan, drawn: Rank): KeepInstead? {
+    val me = view.viewerId
+    val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return null
+    if (me == caller.id) return null
+    val coalition = view.players.filter { it.id != caller.id }
+    val hands = coalition.associate { seat -> seat.id to seat.cards.indices.map { valueAt(seat, it) } }
+    val mine = hands[me] ?: return null
+    val position = mine.indices.maxByOrNull { mine[it] } ?: return null
+
+    val planned = lowest(applied(hands, plan, view))
+    val kept = mine.mapIndexed { at, value -> if (at == position) getCardValue(drawn) else value }
+    val keeping = hands + (me to kept)
+    val withoutMyLane = plan.copy(lanes = plan.lanes.filterNot { it.seat == me })
+    val keptBest = lowest(applied(keeping, withoutMyLane, view))
+    return KeepInstead(drawn, position).takeIf { keptBest < planned }
+}
+
+private fun lowest(hands: Map<String, List<Int>>): Int = hands.values.minOfOrNull { hand -> hand.sum() } ?: 0
 
 /**
  * The hands a plan would leave behind.

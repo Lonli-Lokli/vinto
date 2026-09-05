@@ -123,6 +123,9 @@ sealed interface Label {
     /** The viewer's own lane, on their turn, when the draw has made it legal. */
     data object DoAsPlanned : Label
 
+    /** Keep the drawn card rather than do the plan's step: the re-plan a good draw earns. */
+    data object KeepItInstead : Label
+
     data object PlanASwap : Label
 
     data object PlanADeclare : Label

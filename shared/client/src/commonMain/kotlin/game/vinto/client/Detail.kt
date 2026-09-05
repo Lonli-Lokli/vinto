@@ -60,6 +60,14 @@ sealed interface Detail {
     /** The viewer's own lane, under the prompt on their turn. */
     data class ThePlanAsksYouTo(val step: StepLine) : Detail
 
+    /**
+     * The card just drawn does more for the coalition than the plan's step for this turn would
+     * (task 3.11): kept in place of the viewer's card at [position], it leaves the coalition's
+     * lowest hand lower than the step does. The plan is a suggestion, and this is the one
+     * moment the table says so before the player finds out.
+     */
+    data class YourDrawBeatsThePlan(val rank: Rank, val position: Int) : Detail
+
     /** Propose, never command: the person on play decides. */
     data object APlanIsASuggestion : Detail
 

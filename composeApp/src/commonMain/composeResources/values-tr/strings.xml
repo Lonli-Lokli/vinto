@@ -473,6 +473,7 @@
     <string name="label_done_talking">Konuşmayı bitirdim</string>
     <string name="label_agree">Katılıyorum</string>
     <string name="label_do_as_planned">Planlandığı gibi yap</string>
+    <string name="label_keep_it_instead">Bunun yerine bunu tut</string>
     <string name="label_plan_swap">İki kartı değiştir</string>
     <string name="label_plan_declare">Bir değer söyle</string>
     <string name="label_plan_take_discard">Atım yığınından al</string>
@@ -497,6 +498,7 @@
     <string name="ask_which_rank_will_you_declare">Papaz ile hangi değeri söyleyeceksin?</string>
     <string name="ask_which_rank_should_they_declare">%1$s Papaz ile hangi değeri söylemeli?</string>
     <string name="detail_plan_asks">Plan: %1$s.</string>
+    <string name="detail_draw_beats_plan">%1$s planı geride bırakır: %2$d numaralı kartın yerine bunu tut.</string>
     <string name="detail_plan_is_a_suggestion">Plan bir öneridir. Karar, sırası kimdeyse onundur.</string>
     <string name="board_title">Plan</string>
     <string name="board_summary_empty">Henüz plan yok — birlikte planlamak için dokun</string>

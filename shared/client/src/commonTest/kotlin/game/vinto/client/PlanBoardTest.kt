@@ -402,6 +402,44 @@ class PlanBoardTest {
     }
 
     @Test
+    fun aDrawThatBeatsThePlanOffersKeepingItInstead() {
+        // 3.11: the plan is a suggestion, and a Joker in hand does more for the coalition's
+        // lowest hand than the swap the lane asks for — so the rail says so and offers the keep
+        // first, with the plan's own step still there to do.
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(me, swap(nina, 1, don, 0))),
+            agreed = listOf(nina),
+            editedBy = nina,
+        )
+        fun drew(rank: Rank) = projectView(
+            finalRound(
+                onPlay = me,
+                pending = game.vinto.shapes.PendingAction(
+                    card = card(rank, "drawn"),
+                    playerId = me,
+                    actionPhase = game.vinto.shapes.ActionPhase.CHOOSING_ACTION,
+                    from = game.vinto.shapes.PendingCardOrigin.DRAWING,
+                    targets = emptyList(),
+                ),
+                subPhase = GameSubPhase.CHOOSING,
+            ),
+            me,
+        )
+
+        val joker = tableFor(drew(Rank.JOKER), plan = plan)
+        assertEquals(Detail.YourDrawBeatsThePlan(Rank.JOKER, 0), joker.detail)
+        assertEquals(Label.KeepItInstead, joker.choices.first().label, "the better draw was not offered first")
+        assertEquals(Move.Ask(Question.WhichSlot), joker.choices.first().move)
+
+        val ten = tableFor(drew(Rank.TEN), plan = plan)
+        assertEquals(
+            Detail.ThePlanAsksYouTo(StepLine.Swap(Speaker.Named("Bot3"), 2, Speaker.Named("Bot4"), 1)),
+            ten.detail,
+        )
+        assertTrue(ten.choices.none { it.label == Label.KeepItInstead }, "a worse draw was offered over the plan")
+    }
+
+    @Test
     fun takingTheDiscardIsPreArmedWhenTheActionCardIsThere() {
         val plan = CoalitionPlan(lanes = listOf(Lane(me, Step.TakeTheDiscard)), agreed = listOf(nina), editedBy = nina)
         val table = tableFor(projectView(finalRound(onPlay = me, discardTop = Rank.JACK), me), plan = plan)

@@ -461,6 +461,7 @@
     <string name="label_done_talking">Усё сказана</string>
     <string name="label_agree">Пагадзіцца</string>
     <string name="label_do_as_planned">Зрабіць паводле плана</string>
+    <string name="label_keep_it_instead">Пакінуць яе замест гэтага</string>
     <string name="label_plan_swap">Памяняць дзве карткі</string>
     <string name="label_plan_declare">Абвясціць ранг</string>
     <string name="label_plan_take_discard">Узяць скід</string>
@@ -484,6 +485,7 @@
     <string name="ask_which_rank_will_you_declare">Які ранг вы абвесціце Каралём?</string>
     <string name="ask_which_rank_should_they_declare">Які ранг варта абвясціць %1$s Каралём?</string>
     <string name="detail_plan_asks">План: %1$s.</string>
+    <string name="detail_draw_beats_plan">%1$s лепш за план: пакіньце яе замест карты %2$d.</string>
     <string name="detail_plan_is_a_suggestion">План — толькі прапанова. Апошняе слова — за гульцом, чый ход.</string>
     <string name="board_title">План</string>
     <string name="board_summary_empty">Пакуль няма плана — націсніце, каб спланаваць разам</string>

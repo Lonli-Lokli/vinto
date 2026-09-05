@@ -435,9 +435,16 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       position does
 - [x] 3.10 Detection off the `PublicReveal` stream, in the client; the engine never compares a
       claim to a card
-- [ ] 3.11 A draw that beats the plan offers a re-plan rather than insisting on the agreed step
+- [x] 3.11 A draw that beats the plan offers a re-plan rather than insisting on the agreed step
       — the re-plan is an ordinary edit through the same door (3.2a): unlocked lanes stay
       editable mid-round and any edit resets agreement, so this needs no second mechanism
+      — **done:** while the viewer is choosing about a drawn card, the rail prices keeping it
+      the way the readout prices everything — the coalition's lowest hand from standing claims,
+      the card going to the viewer's highest-priced position, the viewer's own lane dropped
+      since a turn spent keeping is not spent on the step — and where that is strictly better
+      the line under the prompt says which card the draw beats and "Keep it instead" comes
+      first, with the plan's own step still there. Level is the plan's.
+      `PlanBoardTest.aDrawThatBeatsThePlanOffersKeepingItInstead`
 - [x] 3.12 Copy for a broken plan that treats a wrong claim as the game working
       — `Detail.AClaimWasWrong` under the board's prompt whenever a lane is broken: "the game
       working, not a mistake"
