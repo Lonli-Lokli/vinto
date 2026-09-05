@@ -124,6 +124,16 @@ class PlanEditTest {
     }
 
     @Test
+    fun aSwapIsBetweenTwoHands() {
+        // A Jack and a Queen both swap across two players; a step the engine could never play
+        // is not a plan, and the bots would be asked to agree to nothing.
+        assertEquals(
+            "a swap is between two hands",
+            refused(null, PlanEdit.SetLane(ann, Step.Swap(CardAt(bob, 0), CardAt(bob, 1))), by = ann),
+        )
+    }
+
+    @Test
     fun aStrangerHasNoSeatToPlanFrom() {
         refused(null, PlanEdit.SetLane(ann, swap(ann, bob)), by = "nobody-at-this-table")
         refused(null, PlanEdit.SetLane("nobody-at-this-table", swap(ann, bob)), by = ann)

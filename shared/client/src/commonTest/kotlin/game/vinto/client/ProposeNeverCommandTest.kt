@@ -159,8 +159,9 @@ class ProposeNeverCommandTest {
                     is Move.Send -> move.action.actorId
                     is Move.Say -> move.talk.by
                     is Move.Ask -> null
-                    // Neither names a seat: ending a window is not a move for anybody.
-                    Move.Done -> null
+                    // None of these names a seat: ending a window is not a move for anybody, and
+                    // a plan edit is one part of a shared board, checked at its own door.
+                    Move.Done, is Move.Plan, is Move.Agree -> null
                 }
                 assertTrue(
                     actor == null || actor == me,

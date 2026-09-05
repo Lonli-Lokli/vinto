@@ -227,6 +227,9 @@ fun CoalitionPlan?.edited(
             edit.step.cardsNamed().firstOrNull { it.seat !in coalition }?.let {
                 return PlanEditOutcome.Refused("a step may not touch the caller's cards")
             }
+            if (edit.step is Step.Swap && edit.step.from.seat == edit.step.to.seat) {
+                return PlanEditOutcome.Refused("a swap is between two hands")
+            }
             lanes[edit.seat] = Lane(seat = edit.seat, step = edit.step, locked = false)
         }
 

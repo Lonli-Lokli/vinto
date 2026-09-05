@@ -114,4 +114,20 @@ sealed interface Label {
 
     /** Acknowledge something the table has finished showing. */
     data object Done : Label
+
+    // --- the shared plan (design D7a) -------------------------------------------------------
+
+    /** Yes to the board as it stands. */
+    data object Agree : Label
+
+    /** The viewer's own lane, on their turn, when the draw has made it legal. */
+    data object DoAsPlanned : Label
+
+    data object PlanASwap : Label
+
+    data object PlanADeclare : Label
+
+    data object PlanTakeTheDiscard : Label
+
+    data object ClearLane : Label
 }

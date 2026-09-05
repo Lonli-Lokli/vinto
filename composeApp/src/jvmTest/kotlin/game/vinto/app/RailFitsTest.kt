@@ -22,14 +22,20 @@ import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
+import game.vinto.client.Question
 import game.vinto.client.Say
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Lane
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
+import game.vinto.shapes.Shed
+import game.vinto.shapes.Step
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -170,6 +176,46 @@ class RailFitsTest {
         eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, TALL_H, fontScale = 1f)
     }
 
+    @Test
+    fun theFourChoicesStayWholeWithABoardStandingAboveThem() {
+        // The board joins the foot: three lanes, the nods and "Agree". The buttons under it
+        // are still the way out of the window and must not be pushed under the screen's edge.
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 1f, plan = standingPlan(view))
+    }
+
+    @Test
+    fun theFourChoicesStayWholeWithABoardAtADoubledFont() {
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 2f, plan = standingPlan(view))
+    }
+
+    @Test
+    fun theOpenBoardsTwoChoicesAreWholeAtADoubledFont() {
+        val view = conferring()
+        eachChoiceWhole(
+            view,
+            emptyList(),
+            setOf("Agree", "Back"),
+            PHONE_W,
+            PHONE_H,
+            fontScale = 2f,
+            plan = standingPlan(view),
+            question = Question.ThePlan,
+        )
+    }
+
+    /** A plan with every lane filled and one nod short of agreed: the fullest the board gets. */
+    private fun standingPlan(view: PlayerView): CoalitionPlan {
+        val coalition = view.players.filter { it.id != view.vintoCallerId }.map { it.id }
+        return CoalitionPlan(
+            lanes = coalition.map { Lane(it, Step.Declare(Rank.KING)) },
+            sheds = listOf(Shed(coalition.first(), Rank.SEVEN)),
+            agreed = coalition.drop(1),
+            editedBy = coalition.first(),
+        )
+    }
+
     /** A final round somebody else called, with this seat's confer window open. */
     private fun conferring(): PlayerView {
         val whole = teachingSession().view.value
@@ -185,6 +231,7 @@ class RailFitsTest {
         eachChoiceWhole(view, said, CHOICES, width, height, fontScale)
     }
 
+    @Suppress("LongParameterList")
     private fun eachChoiceWhole(
         view: PlayerView,
         said: List<Say>,
@@ -192,6 +239,8 @@ class RailFitsTest {
         width: Dp,
         height: Dp,
         fontScale: Float,
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
     ) = runComposeUiTest {
         setContent {
             val density = LocalDensity.current.density
@@ -199,7 +248,7 @@ class RailFitsTest {
                 VintoTheme {
                     Box(modifier = Modifier.size(width, height)) {
                         TableScreen(
-                            state = TableState(view, tableFor(view), null, said, 1),
+                            state = TableState(view, tableFor(view, question = question, plan = plan), null, said, 1),
                             layout = TableLayout.forScreen(height),
                             onMove = {},
                             onHelp = {},

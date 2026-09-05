@@ -336,8 +336,8 @@ private class Learner(private val session: LocalGameSession) {
                     question = move.question
                 }
 
-                is Move.Say, Move.Done -> {
-                    // The lesson is a scripted round; nothing in it talks or confers.
+                is Move.Say, Move.Done, is Move.Plan, is Move.Agree -> {
+                    // The lesson is a scripted round; nothing in it talks, confers or plans.
                 }
 
                 is Move.Send -> {

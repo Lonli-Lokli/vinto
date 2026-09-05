@@ -27,7 +27,11 @@ import game.vinto.app.art.ask_toss_in_barred
 import game.vinto.app.art.ask_waiting_for_others
 import game.vinto.app.art.ask_watching
 import game.vinto.app.art.ask_what_do_you_say
+import game.vinto.app.art.ask_what_should_they_do
+import game.vinto.app.art.ask_what_will_you_do
 import game.vinto.app.art.ask_which_card_replaced
+import game.vinto.app.art.ask_which_rank_should_they_declare
+import game.vinto.app.art.ask_which_rank_will_you_declare
 import game.vinto.app.art.ask_which_way_round
 import game.vinto.app.art.ask_who_draws
 import game.vinto.app.art.ask_you_drew
@@ -117,6 +121,12 @@ import game.vinto.app.art.beat_you_called_body
 import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
+import game.vinto.app.art.board_owner_named
+import game.vinto.app.art.board_owner_you
+import game.vinto.app.art.board_step_declare
+import game.vinto.app.art.board_step_swap
+import game.vinto.app.art.board_step_take_discard
+import game.vinto.app.art.board_title
 import game.vinto.app.art.card_position
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
@@ -137,6 +147,8 @@ import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
 import game.vinto.app.art.detail_deck_ran_out
 import game.vinto.app.art.detail_king_declared
+import game.vinto.app.art.detail_plan_asks
+import game.vinto.app.art.detail_plan_is_a_suggestion
 import game.vinto.app.art.detail_right_plays
 import game.vinto.app.art.detail_scored_against
 import game.vinto.app.art.detail_table_talk
@@ -153,10 +165,16 @@ import game.vinto.app.art.gloss_badge
 import game.vinto.app.art.gloss_log
 import game.vinto.app.art.gloss_pulse
 import game.vinto.app.art.gloss_toss
+import game.vinto.app.art.label_agree
 import game.vinto.app.art.label_decline_suggestion
+import game.vinto.app.art.label_do_as_planned
 import game.vinto.app.art.label_do_as_suggested
 import game.vinto.app.art.label_done_talking
 import game.vinto.app.art.label_not_sure_which_way
+import game.vinto.app.art.label_plan_clear
+import game.vinto.app.art.label_plan_declare
+import game.vinto.app.art.label_plan_swap
+import game.vinto.app.art.label_plan_take_discard
 import game.vinto.app.art.label_standing_bin
 import game.vinto.app.art.label_standing_high
 import game.vinto.app.art.label_standing_low
@@ -230,11 +248,13 @@ import game.vinto.client.Gloss
 import game.vinto.client.Label
 import game.vinto.client.Say
 import game.vinto.client.Speaker
+import game.vinto.client.StepLine
 import game.vinto.client.Teaches
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.getCardName
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -409,6 +429,12 @@ fun labelled(label: Label): String = when (label) {
     Label.Continue -> stringResource(Res.string.choice_continue)
     Label.CallVinto -> stringResource(Res.string.choice_call_vinto)
     Label.Done -> stringResource(Res.string.choice_done)
+    Label.Agree -> stringResource(Res.string.label_agree)
+    Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
+    Label.PlanASwap -> stringResource(Res.string.label_plan_swap)
+    Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
+    Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
+    Label.ClearLane -> stringResource(Res.string.label_plan_clear)
 }
 
 /**
@@ -448,6 +474,14 @@ fun asked(ask: Ask): String = when (ask) {
     Ask.NameWhatYouArePuttingDown -> stringResource(Res.string.ask_name_what_you_put_down)
     Ask.WhichWayRound -> stringResource(Res.string.ask_which_way_round)
     Ask.SayWhatYouKnow -> stringResource(Res.string.ask_say_what_you_know)
+    Ask.ThePlan -> stringResource(Res.string.board_title)
+    is Ask.WhatShouldTheyDo ->
+        aboutTurn(ask.who, Res.string.ask_what_will_you_do, Res.string.ask_what_should_they_do)
+    is Ask.WhichRankShouldTheyDeclare -> aboutTurn(
+        ask.who,
+        Res.string.ask_which_rank_will_you_declare,
+        Res.string.ask_which_rank_should_they_declare,
+    )
     Ask.WhatDoYouSayThisCardIs -> stringResource(Res.string.ask_what_do_you_say)
     Ask.SayWhatItIsAndPlayIt -> stringResource(Res.string.ask_say_and_play)
     Ask.LookAtOneOfYourOwn -> stringResource(Res.string.ask_look_at_one_of_yours)
@@ -524,6 +558,46 @@ fun detailed(detail: Detail): String = when (detail) {
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
+    is Detail.ThePlanAsksYouTo -> stringResource(Res.string.detail_plan_asks, stepWords(detail.step))
+    Detail.APlanIsASuggestion -> stringResource(Res.string.detail_plan_is_a_suggestion)
+}
+
+/**
+ * A question about somebody's turn: the "you" form for the viewer's own, the named form for
+ * anybody else's. Two resources rather than one with a name in it, because "What will you do"
+ * and "What should Nina do" are different sentences in most of the nineteen languages.
+ */
+@Composable
+private fun aboutTurn(who: Speaker, yours: StringResource, theirs: StringResource): String =
+    if (who == Speaker.You) stringResource(yours) else stringResource(theirs, speakerName(who))
+
+/**
+ * One step of the plan, as a sentence fragment: what a lane asks its owner to do.
+ *
+ * The possessive is its own string per speaker rather than an apostrophe appended in code,
+ * because "your" and "Nina's" are different words in every language this renders into, and a
+ * translator handed "%1$s's" cannot fix the half they were not given.
+ */
+@Composable
+fun stepWords(step: StepLine): String = when (step) {
+    is StepLine.Swap -> stringResource(
+        Res.string.board_step_swap,
+        whose(step.fromWho),
+        step.fromSlot,
+        whose(step.toWho),
+        step.toSlot,
+    )
+
+    is StepLine.Declare -> stringResource(Res.string.board_step_declare, step.rank.serialName)
+    StepLine.TakeTheDiscard -> stringResource(Res.string.board_step_take_discard)
+}
+
+/** "your", or "Nina's": the owner of a card, as a sentence needs it. */
+@Composable
+internal fun whose(who: Speaker): String = when (who) {
+    Speaker.You -> stringResource(Res.string.board_owner_you)
+    is Speaker.Named -> stringResource(Res.string.board_owner_named, who.nickname)
+    Speaker.Nobody -> ""
 }
 
 /**

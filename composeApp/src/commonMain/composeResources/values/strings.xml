@@ -552,6 +552,35 @@
     <string name="label_standing_high">I am high</string>
     <string name="label_standing_bin">Bin me</string>
     <string name="label_done_talking">Done talking</string>
+    <!-- The coalition's shared plan (design D7a): a board of parts agreed as a whole. -->
+    <string name="label_agree">Agree</string>
+    <string name="label_do_as_planned">Do as planned</string>
+    <string name="label_plan_swap">Swap two cards</string>
+    <string name="label_plan_declare">Declare a rank</string>
+    <string name="label_plan_take_discard">Take the discard</string>
+    <string name="label_plan_clear">Clear</string>
+    <string name="ask_what_will_you_do">What will you do with your turn?</string>
+    <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
+    <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
+    <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
+    <string name="detail_plan_asks">The plan: %1$s.</string>
+    <string name="detail_plan_is_a_suggestion">A plan is a suggestion. Whoever’s turn it is decides.</string>
+    <string name="board_title">The plan</string>
+    <string name="board_summary_empty">No plan yet — tap to plan together</string>
+    <string name="board_summary">The plan: %1$d of %2$d turns set, %3$d of %4$d agreed</string>
+    <string name="board_your_call">your call</string>
+    <string name="board_in_play">in play</string>
+    <!-- The owner of a card, as a step's sentence needs it: "swap your card 2 with Nina’s card 3". -->
+    <string name="board_owner_you">your</string>
+    <string name="board_owner_named">%1$s’s</string>
+    <string name="board_step_swap">swap %1$s card %2$d with %3$s card %4$d</string>
+    <string name="board_step_declare">declare %1$s with a King</string>
+    <string name="board_step_take_discard">take the discard</string>
+    <string name="board_shed">%1$s will throw in a %2$s</string>
+    <string name="board_edited_by">last changed by %1$s</string>
+    <string name="board_nod_yes">%1$s agreed</string>
+    <string name="board_nod_not_yet">%1$s has not agreed yet</string>
+    <string name="board_lane">%1$s: %2$s</string>
     <string name="label_do_as_suggested">Do that</string>
     <string name="label_decline_suggestion">No, thanks</string>
     <string name="label_withdraw">Take it back</string>

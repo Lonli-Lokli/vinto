@@ -17,16 +17,20 @@ import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.Label
 import game.vinto.client.Move
+import game.vinto.client.Question
 import game.vinto.client.Say
 import game.vinto.client.spoken
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.Claim
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Lane
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Rank
+import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -187,6 +191,93 @@ class CoalitionScreenTest {
         }
     }
 
+    @Test
+    fun theBoardIsDrawnInWordsWithWhoHasAgreed() = runComposeUiTest {
+        // A plan a screen does not draw is a library, not a feature — the very defect the
+        // reviews kept finding one layer down. The lane's step, the nods and the last editor
+        // all have to be on the rail in the reader's own language.
+        val view = conferring()
+        val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate.id, Step.Declare(Rank.KING))),
+            agreed = listOf(mate.id),
+            editedBy = mate.id,
+        )
+
+        val words = textsOn(view, plan = plan, question = Question.ThePlan)
+
+        assertTrue(words.any { it.contains("declare K", ignoreCase = true) }, "the step is not in words: $words")
+        assertTrue(words.any { it.contains(mate.nickname) && it.contains("✓") }, "the nod is not drawn: $words")
+        assertTrue(words.any { it.contains("last changed by", ignoreCase = true) }, "no editor named: $words")
+    }
+
+    @Test
+    fun agreeingIsOneTapUntilYouHave() = runComposeUiTest {
+        val view = conferring()
+        val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate.id, Step.TakeTheDiscard)),
+            agreed = listOf(mate.id),
+            editedBy = mate.id,
+        )
+
+        // The whole word, not a substring: "3 of 3 agreed" and "Nina agreed" are on the board
+        // too, and neither is a button.
+        show(view, plan = plan, question = Question.ThePlan)
+        assertTrue(
+            onAllNodesWithText("Agree", ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "a plan stands and there is no way to say yes to it",
+        )
+
+        show(view, plan = plan.copy(agreed = listOf(mate.id, view.viewerId)), question = Question.ThePlan)
+        assertTrue(
+            onAllNodesWithText("Agree", ignoreCase = true).fetchSemanticsNodes().isEmpty(),
+            "asked to agree to a plan already agreed to",
+        )
+    }
+
+    @Test
+    fun theWindowOffersTheBoardAndAnEmptyLaneIsTheWayIntoTheComposer() = runComposeUiTest {
+        val view = conferring()
+        val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+
+        // The line is one tappable row, so its words are merged into one node: matched by text
+        // rather than read off the list of texts.
+        show(view, plan = null)
+        assertTrue(
+            onAllNodesWithText("No plan yet", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "the window has no way into the board",
+        )
+
+        val opened = textsOn(view, plan = null, question = Question.ThePlan)
+        assertTrue(
+            opened.any { it.contains(mate.nickname, ignoreCase = true) && it.contains("your call", ignoreCase = true) },
+            "an empty lane is not drawn, so nothing invites a plan: $opened",
+        )
+    }
+
+    @Test
+    fun yourOwnLaneIsUnderThePromptOnYourTurn() = runComposeUiTest {
+        val view = suggestedTo()
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(view.viewerId, Step.TakeTheDiscard)),
+            agreed = listOf(view.viewerId),
+            editedBy = view.viewerId,
+        )
+
+        val words = textsOn(view, plan = plan)
+
+        assertTrue(
+            words.any {
+                it.contains(
+                    "The plan:",
+                    ignoreCase = true,
+                ) && it.contains("take the discard", ignoreCase = true)
+            },
+            "the viewer's lane is not written on their turn: $words",
+        )
+    }
+
     /** One of each, spoken by [by] — the compiler is what keeps this list complete. */
     private fun wholePhrasebook(by: String, to: String): List<TableTalk> = listOf(
         TableTalk.Proposal(by, to, GameAction.DrawCard(PlayerIdPayload(to))),
@@ -220,8 +311,10 @@ class CoalitionScreenTest {
     private fun ComposeUiTest.textsOn(
         view: PlayerView,
         recent: List<Say> = emptyList(),
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
     ): List<String> {
-        show(view, recent = recent)
+        show(view, recent = recent, plan = plan, question = question)
         return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text }
@@ -232,6 +325,8 @@ class CoalitionScreenTest {
         away: Set<String> = emptySet(),
         offered: TableTalk.Proposal? = null,
         recent: List<Say> = emptyList(),
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
     ) {
         setContent {
             VintoTheme {
@@ -239,7 +334,7 @@ class CoalitionScreenTest {
                     TableScreen(
                         state = TableState(
                             view = view,
-                            table = tableFor(view, away = away, offered = offered),
+                            table = tableFor(view, question = question, away = away, offered = offered, plan = plan),
                             refusal = null,
                             recent = recent,
                             round = 1,

@@ -56,6 +56,12 @@ sealed interface Detail {
 
     /** Nobody called; the deck simply ran out. */
     data object TheDeckRanOut : Detail
+
+    /** The viewer's own lane, under the prompt on their turn. */
+    data class ThePlanAsksYouTo(val step: StepLine) : Detail
+
+    /** Propose, never command: the person on play decides. */
+    data object APlanIsASuggestion : Detail
 }
 
 /**

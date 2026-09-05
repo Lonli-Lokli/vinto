@@ -296,6 +296,16 @@ the person plays freely. The plan strip and the on-turn suggestion are separate 
 joined only by one feeding the other. This is what closes 2.2 without anything speaking a
 `Proposal`: the plan is the speaking half, and the receiving half was already built.
 
+**The board is a mode, and the way in is on the felt.** Two placements were tried and both
+failed a test that already existed. Beside the prompt, the board took the block's height and the
+log strip under it — where the bots' answers land — drew nothing. On the rail's foot, above the
+buttons, it pushed the four confer choices under the edge of a phone's screen. So the board
+takes the rail over only when opened, the way a claim or a King's rank rail does, and every
+final-round table carries one line on the felt's final-round banner instead: how much of the
+board is set and how many have nodded, with a tap that opens it. "Agree" sits on the foot beside
+"Back" while the board is open, so the confer window keeps its four buttons and the fit test
+that holds them.
+
 **Edits stay open mid-round** for unlocked lanes, through the same door, and reset agreement
 the same way. That is the re-plan 3.11 asks for, with no second mechanism. The lane of the seat
 on play is refused whether or not pacing has stamped it locked yet — a fresh lane for a turn in

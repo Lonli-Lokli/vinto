@@ -9,6 +9,7 @@ import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Believed
 import game.vinto.shapes.Claim
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.GameAction
@@ -16,6 +17,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingCardOrigin
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
@@ -112,6 +114,16 @@ data class Table(
      * app never adjudicates a claim while it could still matter.
      */
     val brokenClaims: Set<CardRef> = emptySet(),
+    /**
+     * The coalition's shared plan, open (design D7a): only while the player has the board up.
+     *
+     * A mode rather than a fixture of every table, because drawn beside the prompt it starved
+     * the log strip. Every final-round table carries [planSummary] instead, and that is the
+     * way in.
+     */
+    val board: Board? = null,
+    /** The plan in one line, with the tap that opens the board. Null outside a final round. */
+    val planSummary: PlanSummary? = null,
 )
 
 /** A card on the table: whose, and which slot. */
@@ -214,6 +226,18 @@ sealed interface Move {
      * nothing is claimed. It says only that this seat has stopped talking.
      */
     data object Done : Move
+
+    /**
+     * Change one part of the coalition's shared plan (design D7a).
+     *
+     * A fourth kind, because a plan is a fourth kind of thing: not game state, not a sentence,
+     * not a question the screen is asking itself — a shared draft the room keeps, which the
+     * door in `CoalitionPlan.edited` decides about. Every other seat sees the result.
+     */
+    data class Plan(val edit: PlanEdit) : Move
+
+    /** Yes or no to the plan as a whole. A yes is also [Done]: agreeing is how you finish talking. */
+    data class Agree(val agree: Boolean) : Move
 }
 
 /**
@@ -250,6 +274,21 @@ sealed interface Question {
         val about: String,
         val positions: List<Int> = emptyList(),
         val ranks: List<Rank> = emptyList(),
+    ) : Question
+
+    /** Final round: the board is open. */
+    data object ThePlan : Question
+
+    /**
+     * Final round: I am composing what [seat] should do with their turn.
+     *
+     * [kind] is which sort of step, once chosen; [from] the first card of a swap, once tapped.
+     * The answer is one `PlanEdit` for one lane — a part of the board, never the whole draft.
+     */
+    data class Planning(
+        val seat: String,
+        val kind: StepKind? = null,
+        val from: CardRef? = null,
     ) : Question
 }
 
@@ -311,8 +350,9 @@ fun tableFor(
     question: Question = Question.None,
     away: Set<String> = emptySet(),
     offered: TableTalk.Proposal? = null,
-): Table = tableBody(view, question)
-    .copy(away = away)
+    plan: CoalitionPlan? = null,
+): Table = tableBody(view, question, plan, away)
+    .copy(away = away, planSummary = summaryFor(view, plan))
     .offering(offered, view)
 
 /**
@@ -358,7 +398,7 @@ private fun Table.offering(proposal: TableTalk.Proposal?, view: PlayerView): Tab
  * silently drop the label off a seat somebody had left.
  */
 @Suppress("ReturnCount")
-private fun tableBody(view: PlayerView, question: Question): Table {
+private fun tableBody(view: PlayerView, question: Question, plan: CoalitionPlan?, away: Set<String>): Table {
     val me = view.players.firstOrNull { it.id == view.viewerId }
         ?: return Table(prompt = Ask.Watching, waiting = true)
 
@@ -366,6 +406,10 @@ private fun tableBody(view: PlayerView, question: Question): Table {
     if (view.phase == GamePhase.SETUP) {
         return setupTable(view, me.id, me.knownCardPositions).showing(view)
     }
+
+    // The board is open, or a lane of it is being composed. Above the window too: planning is
+    // what the window is for, and both take the table over the way a claim does.
+    planTable(view, question, plan, away)?.let { return it.showing(view) }
 
     // The coalition's window: talk only, and a way out of it. Before the round's first turn,
     // so it comes above every table below — a window a player cannot see or end is a stall.
@@ -382,7 +426,7 @@ private fun tableBody(view: PlayerView, question: Question): Table {
 
     val pending = view.pendingAction
     if (pending != null && pending.playerId == view.viewerId) {
-        return pendingTable(view, pending, question).showing(view)
+        return pendingTable(view, pending, question).planned(view, plan).showing(view)
     }
 
     val current = view.players.getOrNull(view.currentPlayerIndex)
@@ -398,8 +442,20 @@ private fun tableBody(view: PlayerView, question: Question): Table {
         }
     }
 
-    return turnStartTable(view).showing(view)
+    return turnStartTable(view).planned(view, plan).showing(view)
 }
+
+/**
+ * The board, open, or a lane of it being composed — or null when neither is what the screen is
+ * asking. The caller may open the board to read it, and gets nothing to tap on it; only a
+ * coalition member may compose.
+ */
+private fun planTable(view: PlayerView, question: Question, plan: CoalitionPlan?, away: Set<String>): Table? =
+    when {
+        question is Question.ThePlan && view.phase == GamePhase.FINAL -> boardTable(view, plan, away)
+        question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan)
+        else -> null
+    }
 
 /**
  * The claim taps the final round carries — the whole of what "talking to your coalition" is in
@@ -1009,7 +1065,7 @@ private fun aimedCard(view: PlayerView, target: PendingTargetView) = AimedCard(
 private fun whatItIs(pending: PendingActionView): Detail? =
     (pending.card as? CardView.Visible)?.card?.rank?.let(Detail::WhatTheCardDoes)
 
-private fun speakerFor(view: PlayerView, playerId: String): Speaker =
+internal fun speakerFor(view: PlayerView, playerId: String): Speaker =
     if (playerId == view.viewerId) {
         Speaker.You
     } else {

@@ -85,6 +85,14 @@ sealed interface Ask {
     /** The confer window: the coalition's moment before the round runs. */
     data object SayWhatYouKnow : Ask
 
+    // --- composing the plan --------------------------------------------------------------------
+
+    data object ThePlan : Ask
+
+    data class WhatShouldTheyDo(val who: Speaker) : Ask
+
+    data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
+
     // --- the end ------------------------------------------------------------------------------
 
     /**

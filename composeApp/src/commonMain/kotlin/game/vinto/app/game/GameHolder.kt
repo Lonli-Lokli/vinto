@@ -18,6 +18,7 @@ import game.vinto.client.Question
 import game.vinto.client.Table
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.TableTalk
 import kotlinx.coroutines.launch
 
@@ -44,6 +45,8 @@ class GameHolder(
      * that read `.value` would label the seat correctly once and then never again.
      */
     private val away: State<Set<String>> = mutableStateOf(emptySet()),
+    /** The coalition's shared plan, as the session last had it; the board is drawn from it. */
+    private val plan: State<CoalitionPlan?> = mutableStateOf(null),
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
@@ -81,7 +84,7 @@ class GameHolder(
 
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
-    val table: Table get() = tableFor(view.value, question, away.value, offered)
+    val table: Table get() = tableFor(view.value, question, away.value, offered, plan.value)
     val isOver: Boolean get() = session.isOver
 
     /**
@@ -92,7 +95,7 @@ class GameHolder(
      * offering the buttons of a position the player cannot see yet is how a game gets played
      * by accident.
      */
-    fun tableFor(view: PlayerView): Table = tableFor(view, question, away.value, offered)
+    fun tableFor(view: PlayerView): Table = tableFor(view, question, away.value, offered, plan.value)
 
     /** One sentence off the channel, for the holder to keep if it is addressed here. */
     fun heard(talk: TableTalk) {
@@ -135,6 +138,18 @@ class GameHolder(
                 }
             }
 
+            // Planning is talk-shaped: nothing waits on it and the answer is the board coming
+            // back, so neither is held behind `sending` either.
+            is Move.Plan -> {
+                refusal = session.editPlan(move.edit)
+                if (refusal == null) question = Question.None
+            }
+
+            is Move.Agree -> {
+                refusal = session.agreePlan(move.agree)
+                if (refusal == null) question = Question.None
+            }
+
             is Move.Send -> {
                 if (sending) return
                 sending = true
@@ -157,6 +172,7 @@ class GameHolder(
 fun rememberHolder(session: GameSession): GameHolder {
     val view = session.view.collectAsState()
     val away = session.away.collectAsState()
+    val plan = session.plan.collectAsState()
 
     // The one place a local game and an online one both pass through, which is why the crash
     // reporter's address is written here rather than in each table screen. Cleared on the way
@@ -166,7 +182,7 @@ fun rememberHolder(session: GameSession): GameHolder {
     }
     Where.atTable(view.value)
 
-    val holder = remember(session) { GameHolder(session, view, away) }
+    val holder = remember(session) { GameHolder(session, view, away, plan) }
 
     // The one place the talk channel becomes something a player can act on. A suggestion
     // addressed to this seat becomes the one-tap move at the top of the rail; everything else

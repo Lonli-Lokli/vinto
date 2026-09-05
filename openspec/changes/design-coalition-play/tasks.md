@@ -39,8 +39,12 @@
 > One pure door in `shared/shapes` decides what a legal edit is for the room and the solo
 > session alike; the bots answer for their own lanes; the board rides on every `events`,
 > `sync` and `joined` and there is no new server message. Built through to `GameSession`
-> and held by five new suites. What is **not** built is the screen — 3.2f — and with it the
-> viewer's own lane in the offered slot, which is what will finally close 2.2.
+> and held by five new suites. The screen followed in the same pass — 3.2f: the plan line on
+> the felt's final-round banner, the board as a mode with "Agree" beside "Back", the three-step
+> composer over the rail's own controls, and the viewer's lane written under the prompt and
+> pre-armed as "Do as planned" — in twenty-seven strings across every locale. That is what
+> closes 2.2. Two placements of the board failed existing tests before the third held, which
+> is recorded on 3.2f and in D7a.
 
 Three phases, ordered so each is usable on its own (design D14). Phase 1 improves local play by
 itself — today a person watches three silent bots pool information they cannot hear. Phase 2 is
@@ -306,15 +310,41 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
         out as one part and the copy waits for the room) and `SharedPlanTest` (a bot answers
         for its lane, the caller is refused, agreeing ends the window, the plan dies with the
         round)
-  - [ ] 3.2f The screens: the board with each part's last editor, the agreement row, "Agree"
+  - [x] 3.2f The screens: the board with each part's last editor, the agreement row, "Agree"
         beside "Done" in the confer window, and the viewer's own lane in the offered slot on
         their turn — which is what closes 2.2
+        — **built, with one correction to the wording above.** The board is a **mode**, not a
+        fixture of the rail: drawn beside the prompt it starved the log strip, where the bots'
+        answers land (`everySentenceTheCoalitionCanSpeakIsDrawnInTheLog` caught it), and on
+        the foot it pushed the four confer buttons under the edge of the screen
+        (`RailFitsTest`). So every final-round table carries one line on the felt's
+        final-round banner — "No plan yet — tap to plan together", or how much is set and how
+        many have nodded — and tapping it opens the board the way a claim opens the rank
+        picker: lanes in turn order with their step in words and the last editor, the nods,
+        "Agree" beside "Back" on the foot. A lane is a button where the door would accept an
+        edit and a line of text where it would not, so nothing can be tapped and then refused.
+        The composer is three kinds of step and no widget of its own: a swap is two taps on two
+        hands with the caller's cards never on offer and the first card shown in the aim
+        column, a declare is one rank off the rail, taking the discard is a button only while
+        there is an action card to take. The viewer's own lane is written under the prompt on
+        their turn and put first as "Do as planned" when the table's own controls already
+        offer the move — found among them, so legal by construction. Held by `PlanBoardTest`
+        (eleven cases), four screen tests in `CoalitionScreenTest` and three in
+        `RailFitsTest`. Twenty-seven strings, in every locale
 - [x] 3.3 A lane locks when its owner's turn begins; later lanes stay editable
       — **done (bf71c37).** The refusal only looked at the lanes that were *present*, so a locked lane could be deleted by omitting it — locking defeated by sending less. Every standing locked lane had to come back unchanged; with 3.2a the rule is simpler still, because an edit names one part: a locked lane cannot be the target of one. `ConferWindowTest.aLaneLocksWhenItsOwnersTurnBegins` had been proving this on a lane belonging to the **caller**: straight out of a call the caller is still the current player, because the window opens before the turn moves, so the test was encoding the hole. It winds on to a coalition member's turn now
-- [ ] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
+- [~] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
       caller's cards structurally absent
-- [ ] 3.5 The composer reuses the existing per-action targeting (taps, rank rail, seat grid)
+      — **half, with 3.2f:** the caller's cards are never tappable and the door refuses a step
+      that names them; a swap's cards are anchored to the standing claim where there is one.
+      What is *not* done is narrowing the palette to spoken-about cards — today any coalition
+      card can be named, which is honest (the plan is worth what the claims behind it are worth)
+      and is what the readout prices as unknown
+- [x] 3.5 The composer reuses the existing per-action targeting (taps, rank rail, seat grid)
       against a hypothetical state
+      — with 3.2f: the same card taps a Jack is aimed with, the same rail a King declares on,
+      the same aim column; against the view rather than a state, which is the correction D8
+      made for the rehearsal and holds here too
 - [x] 3.6 The ghost table after each step, by **transforming the view** — not by reducing. A
       client has no `GameState` and must not acquire one (design R1), so a composer that
       reduced would work locally and break online, which is the class of bug the `GameSession`

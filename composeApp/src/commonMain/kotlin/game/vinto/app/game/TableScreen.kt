@@ -10,6 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -59,6 +60,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
+import game.vinto.app.art.board_summary
+import game.vinto.app.art.board_summary_empty
+import game.vinto.app.art.board_title
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
@@ -98,6 +102,7 @@ import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.client.Anchor
 import game.vinto.client.CardRef
 import game.vinto.client.Move
+import game.vinto.client.PlanSummary
 import game.vinto.client.Say
 import game.vinto.client.Table
 import game.vinto.client.Target
@@ -193,7 +198,7 @@ fun TableScreen(
             // landscape the felt has no height to spare for a banner, and "who plays for
             // whom" is read next to the controls that ask what to do about it anyway.
             Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                FinalRoundLine(state.view)
+                FinalRoundLine(state.view, state.table.planSummary, onMove)
                 ControlPanel(
                     state = state,
                     onMove = onMove,
@@ -206,7 +211,7 @@ fun TableScreen(
         Column(modifier = modifier.fillMaxSize()) {
             TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
 
-            FinalRoundLine(state.view)
+            FinalRoundLine(state.view, state.table.planSummary, onMove)
 
             FeltTable(
                 state = state,
@@ -512,9 +517,13 @@ private fun TableHeader(
  *
  * Nothing is drawn before the coalition has picked who plays its hand, because until then the
  * sentence has no subject — and the panel is asking that very question.
+ *
+ * The coalition's plan lives here too, in one line with a tap (design D7a): this is where the
+ * coalition is already named, and the rail has no line to spare — beside the prompt the plan
+ * starved the log strip, and on the foot it pushed the buttons under the edge of the screen.
  */
 @Composable
-private fun FinalRoundLine(view: PlayerView) {
+private fun FinalRoundLine(view: PlayerView, plan: PlanSummary?, onMove: (Move) -> Unit) {
     if (view.phase == GamePhase.SCORING) return
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
 
@@ -565,7 +574,47 @@ private fun FinalRoundLine(view: PlayerView) {
             }
         }
 
+        plan?.let { PlanLine(it, onMove) }
         Sides(view, caller)
+    }
+}
+
+/** The plan in one line: how much of the board is set, how many have nodded, and the way in. */
+@Composable
+private fun PlanLine(summary: PlanSummary, onMove: (Move) -> Unit) {
+    val words = if (summary.lanesSet == 0) {
+        stringResource(Res.string.board_summary_empty)
+    } else {
+        stringResource(
+            Res.string.board_summary,
+            summary.lanesSet,
+            summary.lanes,
+            summary.agreed,
+            summary.lanes,
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = { onMove(summary.open) })
+            .markedAs(LocalStage.current, "choice:plan")
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(Res.string.board_title).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.gold,
+        )
+        Text(
+            words,
+            style = MaterialTheme.typography.labelMedium,
+            color = Rail.ink,
+            modifier = Modifier.weight(1f, fill = true),
+        )
     }
 }
 
