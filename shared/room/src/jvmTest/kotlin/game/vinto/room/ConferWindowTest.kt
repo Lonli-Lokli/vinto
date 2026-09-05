@@ -185,10 +185,21 @@ class ConferWindowTest {
     fun aLaneLocksWhenItsOwnersTurnBegins() {
         // A plan must not change under the hand of the person executing it. Later lanes stay
         // open, because the round is still going and better information keeps arriving.
-        val room = decodeRoom(finalRoundCalledBy(seat = 1))
-        val game = checkNotNull(room.game)
-        val onPlay = checkNotNull(game.players.getOrNull(game.currentPlayerIndex)).id
-        val other = game.players.first { it.id != onPlay && it.id != game.vintoCallerId }.id
+        // **Wound on to a coalition member's turn first.** Straight out of the call the caller
+        // is still the current player — the window opens before the turn moves — so a plan
+        // made here would have to name the caller's seat to lock anything, and the caller has
+        // no lane. The state this is about is the one after that: somebody in the coalition is
+        // playing, and their step is the one that must stop moving.
+        val called = decodeRoom(finalRoundCalledBy(seat = 1))
+        val dealt = checkNotNull(called.game)
+        val caller = checkNotNull(dealt.vintoCallerId)
+        val coalition = dealt.players.filter { it.id != caller }
+        val game = dealt.copy(currentPlayerIndex = dealt.players.indexOfFirst { it.id == coalition.first().id })
+        val room = called.copy(game = game)
+
+        val onPlay = coalition.first().id
+        val other = coalition.last().id
+        check(onPlay != other)
 
         val planned = editPlan(
             room,

@@ -1035,8 +1035,24 @@ internal fun editPlan(state: RoomState, token: String, plan: CoalitionPlan): Spo
         return Spoken(state, error = "the caller has no coalition to plan with")
     }
 
-    val locked = state.plan?.lanes.orEmpty().filter { it.locked }.map { it.seat }.toSet()
-    if (plan.lanes.any { it.seat in locked && it != state.plan?.lanes?.first { l -> l.seat == it.seat } }) {
+    // The spine, enforced rather than described. A lane belongs to a seat that is playing a
+    // turn in this round, and each seat has at most one — which is also where the *length*
+    // rule comes from: one lane per coalition member and no duplicates means a plan can never
+    // be longer than the round is. Stating it that way rather than as a number means there is
+    // no second place to update when the table size changes.
+    val coalition = game.players.map { it.id }.toSet() - game.vintoCallerId
+    if (plan.lanes.any { it.seat !in coalition }) {
+        return Spoken(state, error = "that seat is not playing a turn in this round")
+    }
+    if (plan.lanes.distinctBy { it.seat }.size != plan.lanes.size) {
+        return Spoken(state, error = "a seat can only have one lane")
+    }
+
+    // **Every** standing locked lane has to come back unchanged — not merely the ones the
+    // sender chose to include. Checking only what was present let a locked lane be deleted by
+    // omitting it, which is the thing locking exists to prevent, reachable by sending less.
+    val sent = plan.lanes.associateBy { it.seat }
+    if (state.plan?.lanes.orEmpty().any { it.locked && sent[it.seat] != it }) {
         return Spoken(state, error = "that turn has already started")
     }
 
