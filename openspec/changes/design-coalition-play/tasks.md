@@ -45,6 +45,16 @@
 > pre-armed as "Do as planned" — in twenty-seven strings across every locale. That is what
 > closes 2.2. Two placements of the board failed existing tests before the third held, which
 > is recorded on 3.2f and in D7a.
+>
+> **Fourth pass, same day — phase 1 closed.** The seven leftovers, each with a test: the
+> reveal marks every claim right or wrong at scoring, the caller's included; a badge shows its
+> speakers' faces and a dispute is drawn in the warning colours with both; the two halves of a
+> pair wear a link; bots answer a contradiction from their confidence; a bot caller's silence
+> has a test; the lesson explains the first dispute it sees and says a King cannot help the
+> caller. Three whole-game suites stalled on the way and taught two rules, now in D3b: whether
+> a bot acts must follow from state alone, and a claim is taken back by saying the card could
+> be any rank, never by re-declaring the hand without it. The fallback that had a bot with no
+> memory declare its real cards is gone.
 
 Three phases, ordered so each is usable on its own (design D14). Phase 1 improves local play by
 itself — today a person watches three silent bots pool information they cannot hear. Phase 2 is
@@ -121,8 +131,9 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 1.15d The "which way round?" control: two cards and two ranks give three answers — each
       pairing and **not sure** — with "not sure" one tap and not a mode; offered for exactly
       two cards
-- [ ] 1.15e The felt draws an unassigned claim as both ranks on both positions, visibly linked
+- [x] 1.15e The felt draws an unassigned claim as both ranks on both positions, visibly linked
       — **audit:** both positions get the same string; **nothing links them**
+      — **done:** `Badge.paired` and a link mark on both halves (`CoalitionScreenTest.theTwoHalvesOfAPairAreVisiblyLinked`)
 - [x] 1.15f Withdrawing a claim clears it, and teammates can see that it is gone
 - [x] 1.15g Bots declare from `CardMemory.confidence` rather than from a flattened
       `believedOwnCards`: exact where sure, unassigned where the pairing is not, silent where
@@ -131,8 +142,15 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       a toss-in, while its value still reaches the plan
 - [x] **Verify** 1.15i `CorpusReplayTest` — the widened claim must still never materialise in a
       recorded state
-- [ ] **Verify** 1.15j A low-difficulty bot with decayed memory declares less rather than
+- [x] **Verify** 1.15j A low-difficulty bot with decayed memory declares less rather than
       declaring wrongly
+      — `CoalitionHumanMemberTest.aDecayedMemoryDeclaresLessRatherThanWrongly`, with the memory's
+      grade pinned rather than hoped for: the real memory re-reads a bot's own known cards every
+      time it thinks, so decay by turn count alone cannot be arranged. It also removed the
+      **oracle fallback**: a bot whose memory had nothing declared its real cards off the
+      engine's record, so the bot with the worst memory had the claims that were always right.
+      It now says every card it read could be any rank — a vacuous claim belief reads past —
+      which leaves the trace that it has spoken without saying anything
 
 ### 1b″. Attribution and disagreement (design D3b)
 
@@ -145,12 +163,23 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 1.15n Combining: intersect where consistent, mark **disputed** and union where the
       intersection is empty; a second claim from the same seat replaces rather than disputes
 - [x] 1.15o A disputed card is unknown in rank on the same terms as an unassigned pair
-- [ ] 1.15p The table shows each claim's speaker without a tap, and draws a dispute distinctly
+- [x] 1.15p The table shows each claim's speaker without a tap, and draws a dispute distinctly
       — **audit:** **no speaker is shown anywhere** — `Table.badges` is a string per card and `composeApp` never reads `claims` or `sources`
       from a merely partial claim
-- [ ] 1.15q Bots declare what they have seen of **any** seat's cards, and answer a contradiction
+      — **done:** `Badge` carries text, speakers, dispute, pairing and verdict; the felt draws the
+      speakers' faces before the ranks, a dispute in the warning colours with both faces, and
+      reads the whole thing to a screen reader (`CoalitionScreenTest.aClaimWearsItsSpeakersFaceAndADisputeWearsBoth`)
+- [x] 1.15q Bots declare what they have seen of **any** seat's cards, and answer a contradiction
       — **audit:** bots declare about any seat; **nothing reads `Believed.disputed` or withdraws on contradiction**
       from `CardMemory.confidence` — withdraw where decayed, hold where not
+      — **done, with a rule learned the hard way.** `BotRunner.contradictionAction` answers each
+      new contradiction on the bot's own card once: standing is saying the same thing again,
+      letting go is saying the card could be any rank. Both are declarations, because *whether*
+      a bot acts has to follow from the state alone — a second runner with a different memory
+      drives the human seat in `FinishesTest`, and the room rebuilds its runner every request —
+      and "my hand minus that card" looped, since a declaration replaces only the claims it
+      overlaps. Three whole-game suites stalled until both were true. Held by
+      `aContradictedBotStandsWhereItsMemoryHoldsAndLetsGoWhereItHasDecayed`
 - [x] **Verify** 1.15r Two partial claims about one card narrow it; two inconsistent ones dispute
       it and neither is dropped
 - [x] **Verify** 1.15s No control anywhere resolves a dispute on a player's behalf
@@ -173,8 +202,11 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       — **wired both ways:** the room's driver collects `nextTalk` and the batch carries it in `ServerMessage.Events.said`; the once-per-turn mark lives in `RoomState.botTalkTurns`, because the runner is rebuilt every request
 - [x] 1.21 Bots declare what they have seen of the caller, and the `knownCallerCardIds` pooling
       out of `opponentKnowledge` is **deleted** from `CoalitionPlanner`
-- [ ] 1.22 A bot caller says nothing
+- [x] 1.22 A bot caller says nothing
       — **audit:** implemented in `nextTalk`; **no test holds it**
+      — `CoalitionHumanMemberTest.aBotCallerSaysNothing`: the caller holds the lowest hand, the
+      one seat that would otherwise say "mine is low", and says nothing across every sentence
+      the runner offers
 - [x] **Verify** 1.23 `node tools/check-translations.mjs` — every new string in every locale
       — 532 keys, 19 locales, all ok. Four of the nineteen came back describing the speaker's
       *height* rather than their hand (`Sono basso`, `Ich bin niedrig`), one said "I use"
@@ -223,15 +255,22 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 
 ### 1e. The reveal is the referee
 
-- [ ] 1.30 At scoring, standing claims are shown true or false — the caller's included
+- [x] 1.30 At scoring, standing claims are shown true or false — the caller's included
       — **audit:** `Table.brokenClaims` is computed at scoring and **read by nobody in `composeApp`**
+      — **done:** `Badge.verdict`, set only where the card is face up at scoring, drawn as a tick
+      or a cross in the warning colours (`HumanCoalitionMemberTest.theRevealRefereesEveryClaimTheCallersIncluded`,
+      `CoalitionScreenTest.atScoringEveryClaimIsShownRightOrWrongTheCallersIncluded`)
 
 ### 1f. What the rules review turned up (design D13a)
 
 - [x] 1.31 The Ace question in the final round says what an Ace does to a teammate and offers
       putting it down first, without removing a legal target
-- [ ] 1.32 The lesson teaches the coalition as it now is: claims (including "not sure"),
+- [x] 1.32 The lesson teaches the coalition as it now is: claims (including "not sure"),
       — **audit:** claims, "not sure", shedding and the untouchable caller are taught; **disagreement is not, and nothing says a King cannot help the caller**
+      — **done:** `Teaches.Disagreement`, said once the first time a dispute is on the table and
+      pointed at the seat wearing it (`TeachScriptTest.aDisputeIsExplainedOnceAndPointedAt`); and the
+      King's final-round beat now says the caller may not throw anything in, so a King only ever
+      empties the coalition's own hands. Seven strings in every locale
       disagreement, shedding by toss-in, and that a King cannot help the caller — replacing the
       leader beats retired in 1.7
 - [x] 1.33 Nothing in the channel blocks or nags: a player who says nothing plays the final

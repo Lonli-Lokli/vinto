@@ -158,7 +158,18 @@ data class Claim(
      * The two readings only differ once [positions] names more than one card.
      */
     val covering: Boolean = true,
-)
+) {
+    /**
+     * Whether this claim says anything at all: one that names every rank narrows nothing.
+     *
+     * It is how a speaker takes back what they said about **one** card without touching the
+     * rest: a declaration replaces the speaker's earlier claims that overlap it, so a claim of
+     * "any rank" on that card replaces the old word and leaves nothing to believe. Belief reads
+     * past it (`standingClaims`), and it stays in the state only as the trace that the seat
+     * has spoken for the hand.
+     */
+    val vacuous: Boolean get() = ranks.toSet().containsAll(ALL_RANKS)
+}
 
 @Serializable
 data class SerializedOpponentKnowledge(

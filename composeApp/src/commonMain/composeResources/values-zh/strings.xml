@@ -288,7 +288,7 @@
     <string name="beat_do_not_guess_body">你从未看过这张牌，报它就是在猜，猜错了要抽一张罚牌。什么都别说，直接放下。</string>
     <string name="beat_final_play_title">%1$s 打出了 %2$s</string>
     <string name="beat_final_play_ace">A 会让某个玩家从牌堆摸一张扣着的牌，多一张牌就多一份要算进总分的点数。它现在瞄不准你——判定者的手牌已不可触碰——所以只能落在联盟自己人身上。留意是谁要去摸牌。</string>
-    <string name="beat_final_play_king">国王指向一张牌并报出点数，报的必须准确。对了：那张牌离开原来的手牌，它的动作归国王使用。错了：所有人都会看到它真正是什么，报错的人要抽一张罚牌。玩家通常会报自己看过的牌——常常是自己的，为了甩掉它。</string>
+    <string name="beat_final_play_king">国王指向一张牌并报出点数，报的必须准确。对了：那张牌离开原来的手牌，它的动作归国王使用。错了：所有人都会看到它真正是什么，报错的人要抽一张罚牌。玩家通常会报自己看过的牌——常常是自己的，为了甩掉它。在最后一轮里，国王是联盟专属的工具：判定者不能跟打，所以无论它报出什么点数，都只能从联盟自己人的手里离开。</string>
     <string name="beat_final_play_look">9 或 10 能看一眼别人手上的一张牌。在最后一轮里，这正是联盟摸清自己手牌的办法，因为判定者的手牌已不可触碰——而其中一人知道的，所有人都能用。</string>
     <string name="beat_final_play_other">留意它做了什么：这是一张你还没拿过的牌，牌桌下方的最近操作记录会告诉你发生了什么。</string>
     <string name="beat_swap_them_title">换掉它们</string>
@@ -345,6 +345,8 @@
     <string name="beat_seats_body">三个电脑玩家，各有五张牌，他们看到的不比你多。亮绿灯的那块座位牌就是轮到谁了。</string>
     <string name="beat_help_title">"?" 始终都在</string>
     <string name="beat_help_body">它会解释你此刻所处的局面，以及每张牌的作用。实体版游戏也配有提示卡，一人一张，正是为此设计——无论是这里还是真实牌桌上，都没人指望你能把十四种点数全记在脑子里。</string>
+    <string name="beat_disagreement_title">两个人的记忆对不上</string>
+    <string name="beat_disagreement_body">两种说法碰到同一张牌，不可能都对，于是这张牌同时挂着两种说法，标为有争议。谁对谁错，游戏从不判定——揭牌的那一刻自会给出答案。在那之前，不妨想想谁的记忆更新：最后看过它的人，通常更可信。</string>
     <string name="beat_coalition_title">其他所有人联手出战</string>
     <string name="beat_your_turn_to_call_title">你也可以喊牌</string>
     <string name="beat_coalition_body">你，和另外两个没有喊牌的人，就是联盟：每人一个回合，只有你们当中最好的一手会拿来和喊牌者的手对抗——所以这是一队对一手牌。点按任意一张牌，说出你认为它是什么，哪怕你只记得两个点数却不知道哪张是哪张，也说出来。跟打一张牌不花你的回合，是压低一手牌最便宜的办法。谁都不能碰喊牌者的牌，游戏也不会让你尝试。</string>
@@ -469,6 +471,11 @@
     <string name="board_nod_yes">%1$s已同意</string>
     <string name="board_nod_not_yet">%1$s还没同意</string>
     <string name="board_lane">%1$s：%2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">有争议</string>
+    <string name="badge_paired">配对，顺序不明</string>
+    <string name="badge_right">对</string>
+    <string name="badge_wrong">错</string>
     <string name="label_do_as_suggested">这样做</string>
     <string name="label_decline_suggestion">不用，谢谢</string>
     <string name="label_withdraw">收回</string>

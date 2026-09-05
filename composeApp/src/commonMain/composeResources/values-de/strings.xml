@@ -288,7 +288,7 @@
     <string name="beat_do_not_guess_body">Sie haben diese Karte nie gesehen, also wäre eine Benennung nur geraten, und ein falscher Tipp kostet eine Strafkarte. Ohne Worte ablegen.</string>
     <string name="beat_final_play_title">%1$s spielt %2$s</string>
     <string name="beat_final_play_ace">Ein Ass lässt eine Person eine Karte verdeckt vom Stapel ziehen, und eine Karte mehr zählt eine Karte mehr gegen sie. Es kann jetzt nicht auf Sie gerichtet werden — die Karten der rufenden Person sind unerreichbar — also trifft es die eigene Seite der Koalition. Achten Sie darauf, wer ziehen muss.</string>
-    <string name="beat_final_play_king">Ein König zeigt auf eine Karte und benennt sie, und die Benennung muss stimmen. Richtig: Die Karte verlässt die Hand, in der sie lag, und ihre Aktion wird gespielt. Falsch: Alle sehen, was es wirklich war, und wer benannt hat, zieht eine Strafkarte. Benannt wird eine Karte, die man gesehen hat — oft die eigene, um sie loszuwerden.</string>
+    <string name="beat_final_play_king">Ein König zeigt auf eine Karte und benennt sie, und die Benennung muss stimmen. Richtig: Die Karte verlässt die Hand, in der sie lag, und ihre Aktion wird gespielt. Falsch: Alle sehen, was es wirklich war, und wer benannt hat, zieht eine Strafkarte. Benannt wird eine Karte, die man gesehen hat — oft die eigene, um sie loszuwerden. In der letzten Runde gehört ein König allein der Koalition: Die rufende Person darf nichts mehr dazulegen, also kann der genannte Rang nur aus den eigenen Händen der Koalition stammen.</string>
     <string name="beat_final_play_look">Eine 9 oder eine 10 zeigt eine Karte in einer fremden Hand. In der letzten Runde erfährt die Koalition so, was sie hält, da Ihre Karten tabu sind — und was einer erfährt, dürfen alle nutzen.</string>
     <string name="beat_final_play_other">Achten Sie darauf, was sie tut: Diese Karte hatten Sie noch nicht in der Hand, und das Feld mit den letzten Zügen unter dem Tisch zeigt, was passiert ist.</string>
     <string name="beat_swap_them_title">Tauschen</string>
@@ -345,6 +345,8 @@
     <string name="beat_seats_body">Drei Bots, jeder mit fünf Karten, die sie ebenso wenig sehen können wie Sie. Grün leuchtet das Feld, dessen Zug gerade ist.</string>
     <string name="beat_help_title">Das ? ist immer da</string>
     <string name="beat_help_body">Es erklärt den aktuellen Moment und was jede Karte tut. Das Spiel in der Box liefert genau dafür Erinnerungskarten, eine pro Person — niemand soll sich vierzehn Ränge merken müssen, hier so wenig wie am echten Tisch.</string>
+    <string name="beat_disagreement_title">Zwei erinnern sich unterschiedlich</string>
+    <string name="beat_disagreement_body">Zwei Behauptungen über dieselbe Karte können nicht beide stimmen, darum trägt die Karte beide, gekennzeichnet als Widerspruch. Das Spiel entscheidet nie, wer recht hat — erst beim Aufdecken am Ende klärt sich das. Bis dahin fragen Sie sich am besten, wessen Erinnerung frischer ist: Meist ist es die Person, die zuletzt hingesehen hat.</string>
     <string name="beat_coalition_title">Alle anderen spielen als eine</string>
     <string name="beat_your_turn_to_call_title">Auch Sie können rufen</string>
     <string name="beat_coalition_body">Sie und die beiden, die nicht gerufen haben, sind die Koalition: je ein Zug, und nur Ihre eine beste Hand wird mit der der rufenden Person verglichen — also ein Team gegen eine Hand. Tippen Sie auf eine beliebige Karte, um zu sagen, was Sie darin vermuten — und sagen Sie es auch dann, wenn Sie sich nur an die zwei Ränge erinnern, aber nicht, welcher wo liegt. Eine Karte einzuwerfen kostet Sie keinen Zug und ist der günstigste Weg, eine Hand zu senken. Niemand darf die Karten der rufenden Person berühren, und das Spiel lässt es gar nicht erst zu.</string>
@@ -469,6 +471,11 @@
     <string name="board_nod_yes">%1$s hat zugestimmt</string>
     <string name="board_nod_not_yet">%1$s hat noch nicht zugestimmt</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">strittig</string>
+    <string name="badge_paired">eine von zweien, Reihenfolge unbekannt</string>
+    <string name="badge_right">richtig</string>
+    <string name="badge_wrong">falsch</string>
     <string name="label_do_as_suggested">Das machen</string>
     <string name="label_decline_suggestion">Nein, danke</string>
     <string name="label_withdraw">Zurücknehmen</string>

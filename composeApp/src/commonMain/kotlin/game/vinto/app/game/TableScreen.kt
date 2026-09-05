@@ -60,6 +60,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
+import game.vinto.app.art.badge_disputed
+import game.vinto.app.art.badge_paired
+import game.vinto.app.art.badge_right
+import game.vinto.app.art.badge_wrong
 import game.vinto.app.art.board_summary
 import game.vinto.app.art.board_summary_empty
 import game.vinto.app.art.board_title
@@ -89,6 +93,7 @@ import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
+import game.vinto.app.speakerName
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.Wordmark
@@ -100,12 +105,15 @@ import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.client.Anchor
+import game.vinto.client.Badge
 import game.vinto.client.CardRef
 import game.vinto.client.Move
 import game.vinto.client.PlanSummary
 import game.vinto.client.Say
+import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
+import game.vinto.client.Verdict
 import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
@@ -1146,25 +1154,83 @@ private fun SeatCard(
             onClick = move?.let { { onMove(it) } },
         )
 
-        // A declared claim, worn on the card's corner: what its owner *says* it is, readable
-        // by every seat and exactly as trustworthy as the memory it came from. A label on
-        // the back — never the card itself, which stays hidden.
-        table.badges[ref]?.let { claim ->
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp),
-                shape = RoundedCornerShape(TableSizes.Corner),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-            ) {
-                Text(
-                    text = claim,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-                )
+        // A declared claim, worn on the card's corner: what somebody *says* it is, readable by
+        // every seat and exactly as trustworthy as the memory it came from. A label on the
+        // back — never the card itself, which stays hidden.
+        table.badges[ref]?.let { badge -> ClaimBadge(badge, Modifier.align(Alignment.TopEnd)) }
+    }
+}
+
+/**
+ * A claim on a card's back, and everything the table knows about it without a tap.
+ *
+ * The speakers' faces sit before the words, so a claim can be weighed at a glance — a badge
+ * from somebody who never read the card is visibly a guess. A **dispute** is drawn in the
+ * warning colours with both faces, because two people remembering a card differently is
+ * information and the app never decides between them. Half of a **pair** wears a link mark,
+ * and so does the other half, which is what says they are one statement. At **scoring** the
+ * reveal has refereed the claim, and the badge says so: a tick, or a cross in the warning
+ * colours — the caller's bluffs on exactly the same terms (design D12).
+ */
+@Composable
+private fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
+    val warn = badge.disputed || badge.verdict == Verdict.WRONG
+    val scheme = MaterialTheme.colorScheme
+    val fill = if (warn) scheme.errorContainer else scheme.secondaryContainer
+    val ink = if (warn) scheme.onErrorContainer else scheme.onSecondaryContainer
+    val mark = when (badge.verdict) {
+        Verdict.RIGHT -> "✓ "
+        Verdict.WRONG -> "✗ "
+        null -> if (badge.paired) "↔ " else ""
+    }
+    val standing = when {
+        badge.verdict == Verdict.RIGHT -> stringResource(Res.string.badge_right)
+        badge.verdict == Verdict.WRONG -> stringResource(Res.string.badge_wrong)
+        badge.disputed -> stringResource(Res.string.badge_disputed)
+        badge.paired -> stringResource(Res.string.badge_paired)
+        else -> null
+    }
+    // `map` is inline and `joinToString`'s transform is not, and only the first may call a
+    // composable — the names are resolved first and joined after.
+    val names = badge.speakers.map { speakerName(it) }.joinToString(", ")
+    val spoken = listOfNotNull(names.takeIf { it.isNotBlank() }, badge.text, standing).joinToString(": ")
+
+    Surface(
+        modifier = modifier.padding(2.dp).semantics(mergeDescendants = true) { contentDescription = spoken },
+        shape = RoundedCornerShape(TableSizes.Corner),
+        color = fill,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            badge.speakers.forEach { who ->
+                val name = when (who) {
+                    is Speaker.Named -> who.nickname
+                    Speaker.You, Speaker.Nobody -> null
+                }
+                // Your own face is on your plate already; a claim of yours wears no portrait.
+                portraitOrNull(name ?: "")?.let { portrait ->
+                    Image(
+                        painter = painterResource(portrait),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(BadgeFace).clip(CircleShape),
+                    )
+                }
             }
+            Text(
+                text = mark + badge.text,
+                style = MaterialTheme.typography.labelSmall,
+                color = ink,
+            )
         }
     }
 }
+
+/** A speaker's face on a claim badge: large enough to recognise, small enough for a card's corner. */
+private val BadgeFace = 10.dp
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable

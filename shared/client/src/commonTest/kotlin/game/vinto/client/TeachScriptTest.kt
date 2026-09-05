@@ -5,6 +5,7 @@ import game.vinto.engine.PendingActionView
 import game.vinto.engine.projectView
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
@@ -298,6 +299,45 @@ class TeachScriptTest {
 
         val again = lessonFor(playing, tableFor(playing), taught.heard(play), emptyMap())
         assertTrue(again?.teaches !is Teaches.FinalPlay, "a second King is not explained twice: $again")
+    }
+
+    /** The first dispute on the table is explained once, and the seat wearing it is pointed at. */
+    @Test
+    fun aDisputeIsExplainedOnceAndPointedAt() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val base = stateOf(session)
+        val raph = base.players[1]
+        val mikey = base.players[2]
+        val taught = talkedThrough(session).heard(
+            Lesson(Chapter.VINTO, Teaches.YouCalled, talkId = "you_called"),
+        ).heard(
+            Lesson(Chapter.VINTO, Teaches.CoalitionAgainstYou, talkId = "coalition_vs_you"),
+        )
+
+        val disputed = base.copy(
+            phase = GamePhase.FINAL,
+            vintoCallerId = me,
+            players = base.players.map { seat ->
+                if (seat.id == mikey.id) {
+                    seat.copy(
+                        claims = listOf(
+                            Claim(mikey.id, listOf(0), listOf(Rank.KING)),
+                            Claim(raph.id, listOf(0), listOf(Rank.SEVEN)),
+                        ),
+                    )
+                } else {
+                    seat
+                }
+            },
+        )
+
+        val lesson = assertNotNull(lessonFor(disputed, tableFor(disputed), taught, emptyMap()))
+        assertEquals(Teaches.Disagreement, lesson.teaches)
+        assertEquals(Target.Seat(mikey.id), lesson.point, "the disputed card's seat is not pointed at")
+
+        val again = lessonFor(disputed, tableFor(disputed), taught.heard(lesson), emptyMap())
+        assertTrue(again?.teaches !is Teaches.Disagreement, "a dispute is explained twice: $again")
     }
 
     /** A peek that has found its card says "remember it" over the Done button, not "aim it". */

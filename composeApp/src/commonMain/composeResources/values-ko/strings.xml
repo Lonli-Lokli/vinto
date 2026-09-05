@@ -288,7 +288,7 @@
     <string name="beat_do_not_guess_body">이 카드는 본 적이 없으니, 말하는 건 추측이고 틀리면 페널티 카드를 받아요. 말없이 내려놓으세요.</string>
     <string name="beat_final_play_title">%1$s가 %2$s를 플레이해요</string>
     <string name="beat_final_play_ace">Ace는 한 사람이 덱에서 카드를 뒤집힌 채로 뽑게 만들고, 카드 한 장이 늘어나면 그만큼 점수도 늘어요. 지금은 당신을 겨눌 수 없어요 — 선언자의 카드는 손댈 수 없으니까요 — 그래서 연합 쪽으로 향해요. 누가 뽑는지 지켜보세요.</string>
-    <string name="beat_final_play_king">King은 카드 하나를 가리키고 이름을 대는데, 정확해야 해요. 맞으면 그 카드는 손에서 빠져나가고 능력이 실행돼요. 틀리면 모두가 그게 무엇이었는지 보고, 말한 사람이 페널티 카드를 받아요. 보통은 자기가 이미 본 카드 — 흔히 자기 손에서 없애고 싶은 카드 — 를 말해요.</string>
+    <string name="beat_final_play_king">King은 카드 하나를 가리키고 이름을 대는데, 정확해야 해요. 맞으면 그 카드는 손에서 빠져나가고 능력이 실행돼요. 틀리면 모두가 그게 무엇이었는지 보고, 말한 사람이 페널티 카드를 받아요. 보통은 자기가 이미 본 카드 — 흔히 자기 손에서 없애고 싶은 카드 — 를 말해요. 마지막 라운드에선 King은 오직 연합만의 도구예요. 선언자는 아무것도 던져 넣을 수 없으니, 그 King이 부르는 숫자가 무엇이든 결국 연합의 손에서만 나갈 수 있어요.</string>
     <string name="beat_final_play_look">9나 10은 다른 사람 손의 카드 한 장을 봐요. 마지막 라운드에선 이게 연합이 자기 패를 알아내는 방법이에요 — 당신 손은 손댈 수 없으니까요 — 그리고 한 명이 안 것은 셋 모두 쓸 수 있어요.</string>
     <string name="beat_final_play_other">무슨 일이 일어나는지 지켜보세요 — 아직 당신이 쥐어보지 않은 카드고, 테이블 아래 최근 수 기록에 무슨 일이 있었는지 적혀 있어요.</string>
     <string name="beat_swap_them_title">바꾸세요</string>
@@ -345,6 +345,8 @@
     <string name="beat_seats_body">세 봇 모두 당신보다 더 잘 보지 못하는 다섯 장의 카드를 갖고 있어요. 초록색으로 빛나는 자리가 지금 차례인 사람이에요.</string>
     <string name="beat_help_title">?는 언제나 거기 있어요</string>
     <string name="beat_help_body">지금 상황과 모든 카드가 하는 일을 설명해요. 오리지널 보드게임에도 이걸 위한 리마인더 카드가 인원수만큼 딸려 와요 — 열네 개 숫자를 다 외우고 있으라는 게임은 없어요, 여기서든 실제 테이블에서든.</string>
+    <string name="beat_disagreement_title">둘의 기억이 서로 달라요</string>
+    <string name="beat_disagreement_body">한 카드에 대한 두 주장이 동시에 맞을 수는 없으니, 그 카드는 둘 다 붙인 채 이견 있음으로 표시돼요. 누가 맞는지 게임이 정하는 일은 없어요 — 끝에 카드가 뒤집히면서 그게 가려져요. 그때까지는 누구의 기억이 더 최신인지 생각해보세요. 대개는 가장 최근에 본 사람의 말이 맞아요.</string>
     <string name="beat_coalition_title">나머지 모두가 하나로 움직여요</string>
     <string name="beat_your_turn_to_call_title">당신도 선언할 수 있어요</string>
     <string name="beat_coalition_body">당신과, 선언하지 않은 나머지 두 명이 연합이에요: 한 사람당 한 턴씩, 그리고 여러분 중 가장 좋은 손 하나만 선언자의 손과 비교돼요 — 그러니 한 팀 대 한 손인 셈이죠. 어떤 카드든 탭해서 무엇이라 생각하는지 말하세요. 두 숫자만 기억하고 어느 게 어느 건지 모를 때도 그렇게 말하세요. 카드를 던져 넣어도 턴을 쓰지 않으니, 손을 가볍게 하는 가장 값싼 방법이에요. 누구도 선언자의 카드를 건드릴 수 없고, 게임이 시도조차 허락하지 않아요.</string>
@@ -469,6 +471,10 @@
     <string name="board_nod_yes">%1$s가 동의했어요</string>
     <string name="board_nod_not_yet">%1$s가 아직 동의하지 않았어요</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">이견 있음</string>
+    <string name="badge_paired">둘 중 하나, 순서 불명</string>
+    <string name="badge_right">맞음</string>
+    <string name="badge_wrong">틀림</string>
     <string name="label_do_as_suggested">그렇게 할게요</string>
     <string name="label_decline_suggestion">아니요, 괜찮아요</string>
     <string name="label_withdraw">되돌리기</string>

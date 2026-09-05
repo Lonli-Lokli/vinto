@@ -77,6 +77,14 @@ fun standingClaims(owner: PlayerState): List<Claim> {
     val claims = owner.claims ?: return emptyList()
     val standing = mutableListOf<Claim>()
     for (claim in claims) {
+        // Saying a card could be any rank is taking back what was said about it: the earlier
+        // word goes, and nothing is believed in its place.
+        if (claim.vacuous) {
+            standing.removeAll { earlier ->
+                earlier.by == claim.by && earlier.positions.any { it in claim.positions }
+            }
+            continue
+        }
         // A later claim supersedes any earlier one **from the same speaker that overlaps it**,
         // not merely one about the identical positions. Exact-list equality was the first
         // rule and it is wrong in a way a player reaches easily: say "these two are a King and

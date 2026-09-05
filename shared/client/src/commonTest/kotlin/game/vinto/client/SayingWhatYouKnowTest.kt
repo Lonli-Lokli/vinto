@@ -252,12 +252,15 @@ class SayingWhatYouKnowTest {
 
         // Both halves of the pair wear both candidates, so it reads as one statement.
         assertEquals(table.badges[CardRef(me, 0)], table.badges[CardRef(me, 2)])
-        assertTrue(table.badges.getValue(CardRef(me, 0)).contains("K"))
-        assertTrue(table.badges.getValue(CardRef(me, 0)).contains("A"))
+        assertTrue(table.badges.getValue(CardRef(me, 0)).text.contains("K"))
+        assertTrue(table.badges.getValue(CardRef(me, 0)).text.contains("A"))
+        assertTrue(table.badges.getValue(CardRef(me, 0)).paired, "the two halves of a pair are not linked")
 
-        // A disagreement is drawn differently from one person being unsure.
+        // A disagreement is drawn differently from one person being unsure, and names both.
         val disputed = table.badges.getValue(CardRef(mate, 0))
-        assertTrue(disputed.contains("?"), "a dispute reads like a partial claim: $disputed")
+        assertTrue(disputed.text.contains("?"), "a dispute reads like a partial claim: $disputed")
+        assertTrue(disputed.disputed)
+        assertEquals(2, disputed.speakers.size, "a dispute without both speakers: $disputed")
     }
 
     // ------------------------------------------------------------------ the reveal

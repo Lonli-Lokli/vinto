@@ -180,7 +180,12 @@ class HumanCoalitionMemberTest {
 
         // And the claim is worn as a badge on the card, for this seat and every other.
         val after = tableFor(session.view.value)
-        assertEquals("Q", after.badges[CardRef(session.playerId, 0)])
+        assertEquals("Q", after.badges[CardRef(session.playerId, 0)]?.text)
+        assertEquals(
+            listOf(Speaker.You),
+            after.badges[CardRef(session.playerId, 0)]?.speakers,
+            "a claim without its speaker",
+        )
     }
 
     /**
@@ -251,6 +256,41 @@ class HumanCoalitionMemberTest {
     }
 
     @Test
+    fun theRevealRefereesEveryClaimTheCallersIncluded() {
+        // Mid-round a claim is never checked; at scoring every hand is face up, and that is
+        // when a badge says whether its claim was right — which is what gives table talk a
+        // cost and an honest claim its worth (design D12). Bot-3's real card is a five.
+        val state = finalRound(
+            callerId = "bot-2",
+            leaderId = null,
+            currentPlayerIndex = 2,
+            declaredOnBot3 = mapOf(0 to Rank.FIVE),
+        ).let { round ->
+            round.copy(
+                players = round.players.map { seat ->
+                    if (seat.id == "bot-2") {
+                        // The caller bluffed: said its King was a two.
+                        seat.copy(claims = listOf(Claim("bot-2", listOf(0), listOf(Rank.TWO))))
+                    } else {
+                        seat
+                    }
+                },
+            )
+        }
+
+        val playing = tableFor(projectView(state, "human-1"))
+        assertNull(playing.badges[CardRef("bot-3", 0)]?.verdict, "a claim was judged before the reveal")
+
+        val scored = tableFor(projectView(state.copy(phase = GamePhase.SCORING), "human-1"))
+        assertEquals(Verdict.RIGHT, scored.badges[CardRef("bot-3", 0)]?.verdict, "a true claim was not marked right")
+        assertEquals(
+            Verdict.WRONG,
+            scored.badges[CardRef("bot-2", 0)]?.verdict,
+            "the caller's bluff was not marked wrong",
+        )
+    }
+
+    @Test
     fun declaredBadgesAppearOnEverySeatsTable() {
         val state = finalRound(
             callerId = "bot-2",
@@ -263,7 +303,7 @@ class HumanCoalitionMemberTest {
             val table = tableFor(projectView(state, seatId))
             assertEquals(
                 "5",
-                table.badges[CardRef("bot-3", 0)],
+                table.badges[CardRef("bot-3", 0)]?.text,
                 "seat $seatId cannot read bot-3's claim",
             )
         }

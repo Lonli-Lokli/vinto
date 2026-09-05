@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.engine.isBarredFromTossIn
+import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
@@ -25,6 +26,7 @@ import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
+import game.vinto.shapes.believedAt
 import kotlin.random.Random
 
 /**
@@ -174,6 +176,59 @@ class BotRunner(
         val speakers = state.players.filter { it.isBot && it.id != state.vintoCallerId }
         return speakers.firstNotNullOfOrNull { ownHandAction(state, it) }
             ?: speakers.firstNotNullOfOrNull { seenElsewhereAction(state, it) }
+            ?: speakers.firstNotNullOfOrNull { contradictionAction(state, it) }
+    }
+
+    /**
+     * A bot answers a contradiction from its confidence (design D3b).
+     *
+     * Somebody has said something about one of this bot's own cards that cannot square with
+     * what the bot said. The bot never consults the real card — that would make it an oracle
+     * rather than a teammate — it consults its **memory's grade**: where the card is still
+     * held above [TRUSTED_CONFIDENCE] it stands, and says nothing more; where the memory has
+     * decayed it takes that claim back.
+     *
+     * **Whether** it answers is a fact about the state; **what** it answers is memory's. A
+     * contradiction is new while somebody else's claim on the card stands *after* the bot's
+     * own — a declaration is appended, so the order of the standing claims is the order of the
+     * conversation — and the bot answers it once, with a declaration either way: standing is
+     * saying the same thing again, which moves its word to the end and closes the exchange;
+     * letting go is saying the card could be **any rank**, which replaces its earlier word and
+     * disputes nothing, since belief reads past it (`Claim.vacuous`). Both leave a trace, so
+     * two runners with different memories agree on who still owes an answer, and neither can
+     * be asked twice.
+     *
+     * "My hand minus that card" was the first shape of letting go and it looped: a declaration
+     * replaces only the earlier claims that overlap it, so the disputed word stayed standing and
+     * this answered it on every call — the stall three whole-game suites found.
+     *
+     * Only the bot's own hand consults confidence. What it has said of other hands came off
+     * the engine's own record of a peek (`opponentKnowledge`), which does not decay, so there
+     * it stands.
+     */
+    private fun contradictionAction(state: GameState, player: PlayerState): GameAction? {
+        if (player.claims.orEmpty().none { it.by == player.id }) return null
+
+        val unanswered = player.cards.indices.filter { position ->
+            val believed = believedAt(player, position)
+            val mine = believed.sources.indexOfLast { it.by == player.id }
+            val theirs = believed.sources.indexOfLast { it.by != player.id }
+            believed.disputed && mine >= 0 && mine < theirs
+        }
+        if (unanswered.isEmpty()) return null
+
+        val graded = serviceFor(player.id).gradedOwnCards(buildContext(state, player))
+        val answer = unanswered.map { position ->
+            val mine = believedAt(player, position).sources.last { it.by == player.id }
+            val confidence = graded[position]?.second ?: 0.0
+            if (confidence <= TRUSTED_CONFIDENCE) {
+                // `covering = false`: one card that is *one of* every rank, not fourteen cards.
+                Claim(player.id, listOf(position), ALL_RANKS, covering = false)
+            } else {
+                mine
+            }
+        }.distinct()
+        return GameAction.DeclareCards(DeclareCardsPayload(player.id, player.id, answer))
     }
 
     /** A bot's own hand, said once. */
@@ -185,7 +240,16 @@ class BotRunner(
         if (player.knownCardPositions.isEmpty()) return null
         if (player.claims.orEmpty().any { it.by == player.id }) return null
 
-        val claims = ownClaims(state, player)
+        // Always *something*, so that whether this bot still owes a declaration stays a fact
+        // about the state. Where memory has nothing to say for a card it read, the bot says the
+        // card could be any rank — a claim belief reads past (`Claim.vacuous`) that still marks
+        // the hand as spoken for. A silent bot would owe its declaration forever, and a second
+        // runner with a different memory would keep proposing it (`FinishesTest`).
+        val claims = ownClaims(state, player).ifEmpty {
+            player.knownCardPositions
+                .filter { it in player.cards.indices }
+                .map { Claim(player.id, listOf(it), ALL_RANKS, covering = false) }
+        }
         return claims.takeIf { it.isNotEmpty() }?.let {
             GameAction.DeclareCards(DeclareCardsPayload(player.id, player.id, it))
         }
@@ -276,14 +340,12 @@ class BotRunner(
             .gradedOwnCards(buildContext(state, player))
             .filterKeys { it in player.cards.indices }
 
-        // Memory came up entirely empty for a hand the table watched this bot read: it still
-        // owes the coalition an answer, and the seat's public record is the fallback.
-        if (graded.isEmpty()) {
-            return player.knownCardPositions
-                .filter { it in player.cards.indices }
-                .map { Claim(player.id, listOf(it), listOf(player.cards[it].rank)) }
-        }
-
+        // Memory come up empty for a hand the table watched this bot read is a hand the bot has
+        // forgotten, and it says nothing. It used to fall back to the engine's record of the
+        // seat's peeks and declare the real cards — an oracle wearing a teammate's face, and
+        // the one bot at the table whose claims were always right was the one with no memory
+        // at all. Silence is what design D3a asks for past the hazy floor, and it is what a
+        // person with the same memory would offer.
         val sure = graded.filterValues { it.second > TRUSTED_CONFIDENCE }
         val hazy = graded.filterValues { it.second in HAZY_CONFIDENCE..TRUSTED_CONFIDENCE }
 

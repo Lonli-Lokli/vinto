@@ -303,7 +303,7 @@
     <string name="beat_do_not_guess_body">Vous n’avez jamais regardé cette carte, la nommer serait donc deviner, et une mauvaise supposition vous coûte une carte de pénalité. Posez-la sans un mot.</string>
     <string name="beat_final_play_title">%1$s joue le %2$s</string>
     <string name="beat_final_play_ace">Un As force un joueur à piocher une carte face cachée, et une carte de plus, c’est une carte de plus qui compte contre lui. Il ne peut plus vous viser maintenant — les cartes de l’appelant sont hors de portée — il retombe donc du côté de la coalition. Regardez qui doit piocher.</string>
-    <string name="beat_final_play_king">Un Roi désigne une carte et la nomme, et le nom doit être juste. Juste : la carte quitte la main où elle était et son action est jouée. Faux : tout le monde voit ce qu’elle était vraiment, et celui qui a nommé pioche une carte de pénalité. On nomme une carte qu’on a vue — souvent une des siennes, pour s’en débarrasser.</string>
+    <string name="beat_final_play_king">Un Roi désigne une carte et la nomme, et le nom doit être juste. Juste : la carte quitte la main où elle était et son action est jouée. Faux : tout le monde voit ce qu’elle était vraiment, et celui qui a nommé pioche une carte de pénalité. On nomme une carte qu’on a vue — souvent une des siennes, pour s’en débarrasser. Dans la manche finale, un Roi est l’outil de la seule coalition : l’appelant ne peut plus rien y jeter en riposte, donc quelle que soit la valeur nommée, elle ne peut sortir que des mains de la coalition elle-même.</string>
     <string name="beat_final_play_look">Un 9 ou un 10 regarde une carte dans la main de quelqu’un d’autre. Dans la manche finale, c’est ainsi que la coalition découvre ce qu’elle détient, puisque la vôtre est hors limites — et ce que l’un d’eux apprend, ils peuvent tous s’en servir.</string>
     <string name="beat_final_play_other">Regardez ce qu’elle fait : c’est une carte que vous n’avez pas encore eue en main, et l’encadré des derniers coups sous la table dit ce qui s’est passé.</string>
     <string name="beat_swap_them_title">Échangez-les</string>
@@ -360,6 +360,8 @@
     <string name="beat_seats_body">Trois bots, chacun avec cinq cartes qu’ils ne voient pas mieux que vous. La plaque qui s’allume en vert indique à qui c’est le tour.</string>
     <string name="beat_help_title">Le ? est toujours là</string>
     <string name="beat_help_body">Il explique le moment où vous êtes et ce que fait chaque carte. La boîte du jeu contient des cartes aide-mémoire pour exactement cela, une par joueur — personne n’est censé retenir quatorze valeurs par cœur, ici ou à une vraie table.</string>
+    <string name="beat_disagreement_title">Deux personnes s’en souviennent différemment</string>
+    <string name="beat_disagreement_body">Deux affirmations sur une même carte ne peuvent pas être vraies toutes les deux, la carte porte donc les deux, marquées comme un désaccord. Le jeu ne tranche jamais qui a raison — les cartes se retournent à la fin et règlent la question. En attendant, demandez-vous quel souvenir est le plus frais : celui qui l’a regardée en dernier est généralement celui à croire.</string>
     <string name="beat_coalition_title">Tous les autres jouent comme un seul</string>
     <string name="beat_your_turn_to_call_title">Vous pouvez appeler, vous aussi</string>
     <string name="beat_coalition_body">Vous, et les deux qui n’ont pas appelé, êtes la coalition : un tour chacun, et seule votre meilleure main est comparée à celle de l’appelant — c’est donc une équipe contre une seule main. Touchez n’importe quelle carte pour dire ce que vous pensez qu’elle est, et dites-le même quand vous ne vous souvenez que des deux valeurs sans savoir laquelle est laquelle. Riposter ne vous coûte aucun tour et c’est le moyen le moins cher d’alléger une main. Personne ne peut toucher aux cartes de l’appelant, et le jeu ne vous laissera pas essayer.</string>
@@ -490,6 +492,11 @@
     <string name="board_nod_yes">%1$s est d’accord</string>
     <string name="board_nod_not_yet">%1$s n’est pas encore d’accord</string>
     <string name="board_lane">%1$s : %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">contestée</string>
+    <string name="badge_paired">l’une d’une paire, ordre inconnu</string>
+    <string name="badge_right">juste</string>
+    <string name="badge_wrong">fausse</string>
     <string name="label_do_as_suggested">Faites-le</string>
     <string name="label_decline_suggestion">Non, merci</string>
     <string name="label_withdraw">Retirer</string>

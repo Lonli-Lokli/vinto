@@ -164,6 +164,20 @@ Three rules, all of them the same rule:
   standing where it has not, and never consulting the real card. It reads as a teammate rather
   than as an oracle, and `CardMemory.confidence` is already there to drive it.
 
+  Two things about *how* it answers were found by three whole-game suites stalling. **Whether**
+  a bot acts must follow from the state alone, with only the content coming from memory: a
+  second runner with a different memory drives the human seat in `FinishesTest`, and the room
+  rebuilds its runner every request, so a bot whose obligations depended on what it happened to
+  remember would owe them forever to one runner and never to the other. So standing is an
+  action too — saying the same thing again, which moves the bot's word after the human's and
+  closes the exchange — and letting go is saying the card **could be any rank**, a vacuous
+  claim belief reads past (`Claim.vacuous`) that still replaces the bot's earlier word. "My
+  hand minus that card" was the first shape of letting go and it looped, because a declaration
+  replaces only the claims it overlaps. The same rule retired the **oracle fallback**: a bot
+  whose memory had nothing used to declare its real cards off the engine's record, so the bot
+  with the worst memory was the one whose claims were always right; it now says every card it
+  read could be anything.
+
 **Rejected: last-claim-wins.** It is the cheapest thing to build and it destroys the most
 interesting event in the channel — two people who both saw a card and remember it differently is
 information, and one of them can usually work out which is stale.

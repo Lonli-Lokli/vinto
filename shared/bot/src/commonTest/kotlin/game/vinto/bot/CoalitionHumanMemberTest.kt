@@ -12,9 +12,11 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.SerializedOpponentKnowledge
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
+import game.vinto.shapes.believedAt
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -204,6 +206,154 @@ class CoalitionHumanMemberTest {
 
         // Everybody has spoken; the next action is play, not more talk.
         assertTrue(runner.nextAction(state) !is GameAction.DeclareCards)
+    }
+
+    @Test
+    fun aBotCallerSaysNothing() {
+        // The caller's register can only be information or a bluff, and a bot has no model of
+        // when to bluff (design D12). Its hand is the lowest here, so it is exactly the seat
+        // that would otherwise say "mine is low".
+        val state = finalRound(
+            players = listOf(
+                seat("bot-caller", isHuman = false, ranks = listOf(Rank.JOKER)),
+                seat("human-1", isHuman = true, ranks = listOf(Rank.NINE)),
+                seat("bot-2", isHuman = false, ranks = listOf(Rank.KING, Rank.TWO)),
+                seat("bot-3", isHuman = false, ranks = listOf(Rank.FIVE)),
+            ),
+            callerId = "bot-caller",
+        ).copy(turnNumber = 3)
+
+        val runner = BotRunner(Difficulty.HARD, Random(1))
+        val said = generateSequence { runner.nextTalk(state) }.take(6).toList()
+
+        assertTrue(said.isNotEmpty(), "the coalition's bots had nothing to say at all")
+        assertTrue(said.none { it.by == "bot-caller" }, "the caller spoke: $said")
+    }
+
+    /**
+     * A runner whose bots remember exactly what a test says they do.
+     *
+     * The real memory re-reads a bot's own known cards every time it thinks, so its grade
+     * cannot be pinned by turn number alone; these tests are about what a bot *does* with a
+     * grade, and the grade is the input.
+     */
+    private fun runnerRemembering(graded: Map<Int, Pair<Rank, Double>>): BotRunner = BotRunner(
+        Difficulty.HARD,
+        Random(3),
+        serviceFactory = { difficulty, random ->
+            val real = BotDecisionServiceFactory.create(difficulty, random)
+            object : BotDecisionService by real {
+                override fun gradedOwnCards(context: BotDecisionContext) = graded
+            }
+        },
+    )
+
+    @Test
+    fun aContradictedBotStandsWhereItsMemoryHoldsAndLetsGoWhereItHasDecayed() {
+        // A bot that still holds the card above the trusted line stands by its King, and the
+        // dispute stays on the table for the reveal to settle. One whose memory of it has
+        // faded takes the claim back rather than defend a memory it no longer trusts — by
+        // saying the card could be any rank, which replaces its word and disputes nothing.
+        fun disputed(turn: Int): GameState {
+            val bot = seat("bot-1", isHuman = false, ranks = listOf(Rank.KING, Rank.TWO)).let { player ->
+                player.copy(
+                    claims = listOf(
+                        Claim("bot-1", listOf(0), listOf(Rank.KING)),
+                        Claim("bot-1", listOf(1), listOf(Rank.TWO)),
+                        Claim("human-1", listOf(0), listOf(Rank.SEVEN)),
+                    ),
+                )
+            }
+            return finalRound(
+                players = listOf(
+                    seat("human-caller", isHuman = true, ranks = listOf(Rank.KING)),
+                    seat("human-1", isHuman = true, ranks = listOf(Rank.NINE)),
+                    bot,
+                ),
+                callerId = "human-caller",
+            ).copy(turnNumber = turn)
+        }
+
+        // Standing is saying the same thing again: the King is repeated, not withdrawn, and the
+        // dispute stays for the reveal. Repeating it moves the bot's word after the human's, so
+        // the exchange is closed and the bot is not asked again.
+        val sure = runnerRemembering(mapOf(0 to (Rank.KING to 0.9), 1 to (Rank.TWO to 0.9)))
+        val stands = assertIs<GameAction.DeclareCards>(sure.nextAction(disputed(turn = 5)))
+        assertEquals("bot-1", stands.payload.playerId)
+        assertEquals(listOf(Claim("bot-1", listOf(0), listOf(Rank.KING))), stands.payload.claims)
+        val stood = GameEngineFacade.reduce(disputed(turn = 5), stands)
+        assertTrue(believedAt(stood.players.first { it.id == "bot-1" }, 0).disputed, "standing ended the dispute")
+        val onceMore = sure.nextAction(stood)
+        assertTrue(
+            onceMore !is GameAction.DeclareCards || onceMore.payload.playerId != "bot-1",
+            "the bot answered the same contradiction twice: $onceMore",
+        )
+
+        val letGo = runnerRemembering(mapOf(0 to (Rank.KING to 0.3), 1 to (Rank.TWO to 0.9)))
+            .nextAction(disputed(turn = 5))
+        val takenBack = assertIs<GameAction.DeclareCards>(letGo, "a faded card was defended")
+        assertEquals("bot-1", takenBack.payload.playerId)
+        assertEquals("bot-1", takenBack.payload.about)
+        val claim = takenBack.payload.claims.single()
+        assertEquals(listOf(0), claim.positions, "the wrong card was let go")
+        assertTrue(claim.vacuous, "letting go said something: ${claim.ranks}")
+
+        // And once let go, the dispute is over: the human's word stands alone and the bot is
+        // not asked again — which is what makes this an answer rather than a loop.
+        val after = GameEngineFacade.reduce(disputed(turn = 5), takenBack)
+        val believed = believedAt(after.players.first { it.id == "bot-1" }, 0)
+        assertEquals(setOf(Rank.SEVEN), believed.candidates)
+        assertTrue(!believed.disputed)
+        val again = runnerRemembering(mapOf(0 to (Rank.KING to 0.3), 1 to (Rank.TWO to 0.9))).nextAction(after)
+        assertTrue(
+            again !is GameAction.DeclareCards || again.payload.playerId != "bot-1",
+            "the bot answered the same contradiction twice: $again",
+        )
+    }
+
+    @Test
+    fun aDecayedMemoryDeclaresLessRatherThanWrongly() {
+        // Five cards read, and a memory that has faded unevenly: what the bot says shrinks to
+        // what it still holds — an exact claim where it is sure, one pair where it half
+        // remembers two, and nothing for the rest. It never reaches for the engine's record of
+        // what it once read to fill the gaps; that fallback made the bot with the worst memory
+        // the one whose claims were always right.
+        val hand = listOf(Rank.FIVE, Rank.JOKER, Rank.NINE, Rank.QUEEN, Rank.TWO)
+        val state = finalRound(
+            players = listOf(
+                seat("human-caller", isHuman = true, ranks = listOf(Rank.KING)),
+                seat("bot-1", isHuman = false, ranks = hand),
+                seat("bot-2", isHuman = false, ranks = listOf(Rank.TWO)),
+            ),
+            callerId = "human-caller",
+        )
+
+        val faded = runnerRemembering(
+            mapOf(
+                0 to (Rank.FIVE to 0.9),
+                1 to (Rank.JOKER to 0.3),
+                2 to (Rank.NINE to 0.3),
+                3 to (Rank.QUEEN to 0.1),
+            ),
+        ).nextAction(state)
+        val said = assertIs<GameAction.DeclareCards>(faded)
+        assertEquals("bot-1", said.payload.playerId)
+        assertEquals(
+            listOf(listOf(0), listOf(1, 2)),
+            said.payload.claims.map { it.positions },
+            "the bot spoke for cards it no longer holds: ${said.payload.claims}",
+        )
+        assertTrue(said.payload.claims.last().covering, "two half-remembered cards were not said as a pair")
+
+        // Memory gone entirely: the bot still speaks for its hand, because whether it owes a
+        // declaration is a fact about the state — but what it says is that every card it read
+        // could be anything, which belief reads past. Nothing is claimed, and nothing is read
+        // off the engine's record.
+        val gone = assertIs<GameAction.DeclareCards>(runnerRemembering(emptyMap()).nextAction(state))
+        assertEquals("bot-1", gone.payload.playerId)
+        assertTrue(gone.payload.claims.all { it.vacuous }, "an empty memory claimed a rank: ${gone.payload.claims}")
+        val spoken = GameEngineFacade.reduce(state, gone).players.first { it.id == "bot-1" }
+        assertTrue(hand.indices.all { believedAt(spoken, it).sources.isEmpty() }, "a vacuous claim was believed")
     }
 
     @Test

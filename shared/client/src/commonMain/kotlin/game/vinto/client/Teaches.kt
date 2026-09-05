@@ -138,6 +138,16 @@ sealed interface Teaches {
     }
 
     /**
+     * Two claims on one card that cannot both be true. Said once, the first time the table
+     * shows a dispute, because a badge in the warning colours with two faces on it is the one
+     * thing on the felt that nothing else has explained — and the rule it carries is the
+     * design's: the app never decides who is right, the reveal does.
+     */
+    data object Disagreement : Teaches {
+        override val id = "disagreement"
+    }
+
+    /**
      * A coalition member playing an action card in the final round, held while it is in
      * play so the rule can be read before the card does its work. Once per rank: the
      * taught round shows an Ace, a King and a 9, which are the three the learner never

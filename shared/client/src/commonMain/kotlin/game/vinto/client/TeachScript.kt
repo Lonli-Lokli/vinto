@@ -478,7 +478,8 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "coalition_vs_you",
     )
 
-    view.vintoCallerId == view.viewerId -> finalRoundTalk(view, taught) ?: scoringTalk(view, taught)
+    view.vintoCallerId == view.viewerId ->
+        disagreementTalk(view, taught) ?: finalRoundTalk(view, taught) ?: scoringTalk(view, taught)
 
     view.vintoCallerId != null && "vinto" !in taught.talked -> vintoTalk(view)
 
@@ -495,7 +496,27 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "your_turn_to_call",
     )
 
-    else -> scoringTalk(view, taught)
+    else -> disagreementTalk(view, taught) ?: scoringTalk(view, taught)
+}
+
+/**
+ * The first dispute on the table, pointed at.
+ *
+ * Whichever chair the learner is in: a coalition member's dispute is one to weigh before
+ * planning on it, and a caller watching two members disagree about a card is watching the
+ * coalition's one real weakness.
+ */
+private fun disagreementTalk(view: PlayerView, taught: Taught): Lesson? {
+    if (view.phase != GamePhase.FINAL || Teaches.Disagreement.id in taught.talked) return null
+    val disputed = view.players.firstOrNull { seat ->
+        seat.cards.indices.any { believedOnView(seat, it).disputed }
+    } ?: return null
+    return Lesson(
+        chapter = Chapter.VINTO,
+        teaches = Teaches.Disagreement,
+        point = Target.Seat(disputed.id),
+        talkId = Teaches.Disagreement.id,
+    )
 }
 
 /**

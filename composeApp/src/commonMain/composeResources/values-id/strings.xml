@@ -303,7 +303,7 @@
     <string name="beat_do_not_guess_body">Anda belum pernah melihat kartu ini, jadi menyebutkannya adalah tebakan, dan tebakan yang salah membuat Anda mengambil kartu penalti. Letakkan saja tanpa berkata apa-apa.</string>
     <string name="beat_final_play_title">%1$s memainkan %2$s</string>
     <string name="beat_final_play_ace">Ace membuat satu pemain mengambil kartu dari dek, tertutup, dan satu kartu lagi berarti satu poin lagi yang merugikan mereka. Kartu ini tidak bisa dibidikkan ke Anda sekarang — kartu pemanggil di luar jangkauan — jadi ia jatuh ke pihak koalisi sendiri. Perhatikan siapa yang harus mengambil kartu.</string>
-    <string name="beat_final_play_king">King membidik sebuah kartu dan menyebutkan namanya, dan namanya harus tepat. Benar: kartu itu keluar dari tangan tempatnya berada dan aksinya dimainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan penyebut namanya mengambil kartu penalti. Seorang pemain menyebutkan kartu yang pernah dilihatnya — sering kali salah satu kartunya sendiri, untuk melepaskannya.</string>
+    <string name="beat_final_play_king">King membidik sebuah kartu dan menyebutkan namanya, dan namanya harus tepat. Benar: kartu itu keluar dari tangan tempatnya berada dan aksinya dimainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan penyebut namanya mengambil kartu penalti. Seorang pemain menyebutkan kartu yang pernah dilihatnya — sering kali salah satu kartunya sendiri, untuk melepaskannya. Di ronde final, King adalah alat milik koalisi semata: pemanggil tidak boleh melempar kartu apa pun masuk, jadi pangkat apa pun yang disebutkan hanya bisa keluar dari tangan koalisi sendiri.</string>
     <string name="beat_final_play_look">9 atau 10 melihat satu kartu di tangan orang lain. Di ronde final itulah cara koalisi mengetahui apa yang sedang mereka pegang, karena kartu Anda di luar jangkauan — dan apa yang dipelajari salah satu dari mereka, boleh dipakai semuanya.</string>
     <string name="beat_final_play_other">Perhatikan apa yang terjadi: ini kartu yang belum pernah Anda pegang, dan kotak langkah terbaru di bawah meja menjelaskan apa yang terjadi.</string>
     <string name="beat_swap_them_title">Tukar</string>
@@ -360,6 +360,8 @@
     <string name="beat_seats_body">Tiga bot, masing-masing dengan lima kartu yang tidak bisa mereka lihat lebih baik dari Anda. Kursi yang menyala hijau adalah giliran siapa yang sedang berjalan.</string>
     <string name="beat_help_title">Tanda ? selalu ada</string>
     <string name="beat_help_body">Ia menjelaskan momen yang sedang Anda alami dan apa yang dilakukan setiap kartu. Permainan kotak fisiknya dilengkapi kartu pengingat untuk hal ini, satu per pemain — tidak ada yang diharapkan menghafal empat belas pangkat di kepala, di sini atau di meja sungguhan.</string>
+    <string name="beat_disagreement_title">Dua orang mengingatnya secara berbeda</string>
+    <string name="beat_disagreement_body">Dua klaim atas satu kartu tidak bisa sama-sama benar, jadi kartu itu menyandang keduanya, ditandai sebagai perselisihan. Permainan tidak pernah memutuskan siapa yang benar — kartu-kartu dibuka di akhir dan itulah yang menyelesaikannya. Sampai saat itu, tanyakan pada diri Anda ingatan siapa yang lebih segar: orang yang terakhir melihatnya biasanya yang paling bisa dipercaya.</string>
     <string name="beat_coalition_title">Semua yang lain bermain sebagai satu</string>
     <string name="beat_your_turn_to_call_title">Anda juga bisa memanggilnya</string>
     <string name="beat_coalition_body">Anda, dan dua orang yang tidak memanggil, adalah koalisi: satu giliran masing-masing, dan hanya tangan terbaik Anda yang dibandingkan dengan milik pemanggil — jadi ini tim melawan satu tangan. Ketuk kartu mana pun untuk menyebutkan menurut Anda kartu apa itu, dan katakan itu bahkan saat Anda hanya ingat dua pangkat tanpa tahu yang mana yang mana. Melempar masuk kartu tidak menghabiskan giliran Anda dan merupakan cara termurah untuk menurunkan sebuah tangan. Tidak ada yang boleh menyentuh kartu pemanggil, dan permainan tidak akan membiarkan Anda mencoba.</string>
@@ -490,6 +492,10 @@
     <string name="board_nod_yes">%1$s sudah setuju</string>
     <string name="board_nod_not_yet">%1$s belum setuju</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">diperselisihkan</string>
+    <string name="badge_paired">salah satu pasangan, urutan tidak diketahui</string>
+    <string name="badge_right">benar</string>
+    <string name="badge_wrong">salah</string>
     <string name="label_do_as_suggested">Lakukan itu</string>
     <string name="label_decline_suggestion">Tidak, terima kasih</string>
     <string name="label_withdraw">Tarik kembali</string>

@@ -310,7 +310,7 @@
     <string name="beat_do_not_guess_body">Bu karta hiç bakmadın, o yüzden söylemek tahmin olur, ve yanlış tahmin sana bir ceza kartına mal olur. Tek kelime etmeden bırak.</string>
     <string name="beat_final_play_title">%1$s %2$s oynuyor</string>
     <string name="beat_final_play_ace">Bir As bir oyuncuyu desteden yüzü kapalı bir kart çekmeye zorlar, ve bir kart daha ona karşı sayan bir kart daha demektir. Şimdi sana hedeflenemez — çağıranın kartları erişilmezdir — bu yüzden koalisyonun kendi tarafına iner. Kimin çekmek zorunda kaldığını izle.</string>
-    <string name="beat_final_play_king">Bir Papaz bir karta işaret eder ve adını söyler, ve adı doğru olmalıdır. Doğru: o kart bulunduğu elden çıkar ve eylemi oynanır. Yanlış: herkes onun gerçekte ne olduğunu görür, ve söyleyen bir ceza kartı çeker. Bir oyuncu gördüğü bir kartı söyler — genelde ondan kurtulmak için kendi kartlarından birini.</string>
+    <string name="beat_final_play_king">Bir Papaz bir karta işaret eder ve adını söyler, ve adı doğru olmalıdır. Doğru: o kart bulunduğu elden çıkar ve eylemi oynanır. Yanlış: herkes onun gerçekte ne olduğunu görür, ve söyleyen bir ceza kartı çeker. Bir oyuncu gördüğü bir kartı söyler — genelde ondan kurtulmak için kendi kartlarından birini. Son turda Papaz yalnızca koalisyonun aracıdır: çağıran hiçbir şey atamaz, o yüzden hangi değer söylenirse söylensin, o değer ancak koalisyonun kendi ellerinden çıkabilir.</string>
     <string name="beat_final_play_look">Bir 9 ya da 10 başka birinin elindeki bir karta bakar. Son turda koalisyon elindekini bu şekilde öğrenir, çünkü seninki erişim dışıdır — ve biri ne öğrenirse, hepsi kullanabilir.</string>
     <string name="beat_final_play_other">Ne yaptığını izle: bu senin henüz tutmadığın bir kart, ve masanın altındaki son hamleler kutusu ne olduğunu söylüyor.</string>
     <string name="beat_swap_them_title">Değiştir</string>
@@ -367,6 +367,8 @@
     <string name="beat_seats_body">Üç bot, her biri senden daha iyi göremediği beş karta sahip. Yeşil yanan plaka sırası gelen kişidir.</string>
     <string name="beat_help_title">? her zaman orada</string>
     <string name="beat_help_body">İçinde bulunduğun anı ve her kartın ne yaptığını açıklar. Kutulu oyun tam bunun için hatırlatma kartlarıyla gelir, oyuncu başına bir tane — burada ya da bir masada kimseden on dört değeri aklında tutması beklenmez.</string>
+    <string name="beat_disagreement_title">İkisi bunu farklı hatırlıyor</string>
+    <string name="beat_disagreement_body">Bir kart hakkında iki iddia birden doğru olamaz, o yüzden kart ikisini de üstünde taşır, tartışmalı diye işaretlenmiş halde. Oyun kimin haklı olduğuna asla karar vermez — kartlar sonunda açılır ve bunu çözer. O ana kadar kendine sor: kimin belleği daha taze? Ona en son bakan, genelde inanılacak kişidir.</string>
     <string name="beat_coalition_title">Diğer herkes tek bir taraf olarak oynuyor</string>
     <string name="beat_your_turn_to_call_title">Sen de çağırabilirsin</string>
     <string name="beat_coalition_body">Sen ve çağırmayan diğer ikisi koalisyonu oluşturuyorsunuz: birer el, ve sadece tek en iyi eliniz çağıranınkiyle karşılaştırılır — yani bir takım tek bir ele karşı. Ne olduğunu düşündüğünü söylemek için herhangi bir karta dokun, ve sadece iki değeri hatırlayıp hangisinin hangisi olduğunu bilmesen bile bunu söyle. Bir kart atmak elini harcamaz ve bir eli hafifletmenin en ucuz yolu budur. Kimse çağıranın kartlarına dokunamaz, ve oyun denemene bile izin vermez.</string>
@@ -496,6 +498,10 @@
     <string name="board_nod_yes">%1$s onayladı</string>
     <string name="board_nod_not_yet">%1$s henüz onaylamadı</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">tartışmalı</string>
+    <string name="badge_paired">bir çiftten biri, sırası belirsiz</string>
+    <string name="badge_right">doğru</string>
+    <string name="badge_wrong">yanlış</string>
     <string name="label_do_as_suggested">Öyle yap</string>
     <string name="label_decline_suggestion">Hayır, teşekkürler</string>
     <string name="label_withdraw">Geri al</string>

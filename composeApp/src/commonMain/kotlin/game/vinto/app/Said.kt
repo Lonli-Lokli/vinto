@@ -64,6 +64,8 @@ import game.vinto.app.art.beat_coalition_body
 import game.vinto.app.art.beat_coalition_title
 import game.vinto.app.art.beat_coalition_vs_you_body
 import game.vinto.app.art.beat_coalition_vs_you_title
+import game.vinto.app.art.beat_disagreement_body
+import game.vinto.app.art.beat_disagreement_title
 import game.vinto.app.art.beat_do_not_guess_body
 import game.vinto.app.art.beat_do_not_guess_title
 import game.vinto.app.art.beat_every_turn_starts_body
@@ -673,6 +675,7 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_title)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_title)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_title)
+    Teaches.Disagreement -> stringResource(Res.string.beat_disagreement_title)
     is Teaches.FinalPlay -> stringResource(
         Res.string.beat_final_play_title,
         speakerName(teaches.who),
@@ -742,6 +745,7 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_body)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_body)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_body)
+    Teaches.Disagreement -> stringResource(Res.string.beat_disagreement_body)
     is Teaches.FinalPlay -> finalPlayBody(teaches.rank)
     Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_body)
     Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_body)

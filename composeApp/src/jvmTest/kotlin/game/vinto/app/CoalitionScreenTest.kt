@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
@@ -23,15 +24,24 @@ import game.vinto.client.spoken
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.engine.projectView
+import game.vinto.shapes.Card
 import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.GameState
+import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Pile
 import game.vinto.shapes.PlayerIdPayload
+import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
+import game.vinto.shapes.getCardShortDescription
+import game.vinto.shapes.getCardValue
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -96,6 +106,83 @@ class CoalitionScreenTest {
         assertTrue(
             onAllNodesWithText("Q", substring = true).fetchSemanticsNodes().isNotEmpty(),
             "a standing claim is not drawn on the card it is about",
+        )
+    }
+
+    @Test
+    fun aClaimWearsItsSpeakersFaceAndADisputeWearsBoth() = runComposeUiTest {
+        // Without the speaker a badge is anonymous, and an anonymous claim attached to a shared
+        // prize is an invitation to claim low cards for yourself so the coalition pushes you.
+        val whole = teachingSession().view.value
+        val (mate, other) = whole.players.filter { it.id != whole.viewerId }.take(2)
+        val caller = whole.players.last { it.id != whole.viewerId && it.id != mate.id && it.id != other.id }
+        val disputed = whole.copy(
+            phase = GamePhase.FINAL,
+            vintoCallerId = caller.id,
+            players = whole.players.map { seat ->
+                if (seat.id == other.id) {
+                    seat.copy(
+                        claims = listOf(
+                            Claim(mate.id, listOf(0), listOf(Rank.KING)),
+                            Claim(whole.viewerId, listOf(0), listOf(Rank.SEVEN)),
+                        ),
+                    )
+                } else {
+                    seat
+                }
+            },
+        )
+
+        show(disputed)
+
+        val badge = onAllNodesWithContentDescription("K?7", substring = true).fetchSemanticsNodes()
+        assertTrue(badge.isNotEmpty(), "the dispute is not on the card")
+        val spoken = badge.first().config.getOrNull(SemanticsProperties.ContentDescription)?.first().orEmpty()
+        assertTrue(spoken.contains(mate.nickname), "the badge does not name who said K: $spoken")
+        assertTrue(spoken.contains("disputed"), "the badge does not say it is disputed: $spoken")
+    }
+
+    @Test
+    fun theTwoHalvesOfAPairAreVisiblyLinked() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val caller = whole.players.first { it.id != whole.viewerId }
+        val paired = whole.copy(
+            phase = GamePhase.FINAL,
+            vintoCallerId = caller.id,
+            players = whole.players.map { seat ->
+                if (seat.id == whole.viewerId) {
+                    seat.copy(
+                        claims = listOf(Claim(seat.id, listOf(0, 2), listOf(Rank.KING, Rank.ACE), covering = true)),
+                    )
+                } else {
+                    seat
+                }
+            },
+        )
+
+        show(paired)
+
+        val linked = onAllNodesWithText("↔", substring = true).fetchSemanticsNodes()
+        assertTrue(linked.size == 2, "a pair should link both cards, found ${linked.size}")
+    }
+
+    @Test
+    fun atScoringEveryClaimIsShownRightOrWrongTheCallersIncluded() = runComposeUiTest {
+        // The reveal is the referee (design D12): a tick or a cross on every badge once the
+        // hands are face up, the caller's bluff judged on the same terms as anyone's.
+        // A real scoring projection, because that is what turns every card face up — a view
+        // copied into the scoring phase would still hide them, and a hidden card is never judged.
+        val scored = projectView(scoringWithClaims(), "me")
+
+        show(scored)
+
+        assertTrue(
+            onAllNodesWithText("✗", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            "the caller's wrong claim is not marked wrong",
+        )
+        assertTrue(
+            onAllNodesWithText("✓", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            "a true claim is not marked right",
         )
     }
 
@@ -289,6 +376,58 @@ class CoalitionScreenTest {
         TableTalk.PlayFor(by, to),
         TableTalk.Answer(by, to, TableTalk.Answer.Says.YES),
     )
+
+    /**
+     * A round scored with two claims standing: the caller bluffed about its King, and the
+     * viewer told the truth about their nine.
+     */
+    private fun scoringWithClaims(): GameState {
+        fun card(rank: Rank, id: String) = Card(
+            id = id,
+            rank = rank,
+            value = getCardValue(rank),
+            played = false,
+            actionText = getCardShortDescription(rank).takeIf { it.isNotEmpty() },
+        )
+        fun seat(id: String, ranks: List<Rank>, claims: List<Claim>? = null) = PlayerState(
+            id = id,
+            name = id,
+            nickname = id,
+            isHuman = id == "me",
+            isBot = id != "me",
+            cards = ranks.mapIndexed { index, rank -> card(rank, "$id-c$index") },
+            knownCardPositions = ranks.indices.toList(),
+            isVintoCaller = id == "caller",
+            coalitionWith = if (id == "caller") emptyList() else listOf("me", "nina", "don") - id,
+            claims = claims,
+        )
+        return GameState(
+            gameId = "scored",
+            roundNumber = 1,
+            turnNumber = 20,
+            phase = GamePhase.SCORING,
+            subPhase = GameSubPhase.IDLE,
+            finalTurnTriggered = true,
+            players = listOf(
+                seat("me", listOf(Rank.NINE), claims = listOf(Claim("me", listOf(0), listOf(Rank.NINE)))),
+                seat("caller", listOf(Rank.KING), claims = listOf(Claim("caller", listOf(0), listOf(Rank.TWO)))),
+                seat("nina", listOf(Rank.FIVE)),
+                seat("don", listOf(Rank.SIX)),
+            ),
+            currentPlayerIndex = 1,
+            vintoCallerId = "caller",
+            coalitionLeaderId = null,
+            drawPile = Pile(emptyList()),
+            discardPile = Pile(listOf(card(Rank.THREE, "discard"))),
+            pendingAction = null,
+            activeTossIn = null,
+            turnActions = emptyList(),
+            roundActions = emptyList(),
+            roundFailedAttempts = emptyList(),
+            difficulty = Difficulty.MODERATE,
+            rngState = 0,
+        )
+    }
 
     /** A final round somebody else called, with this seat's confer window open. */
     private fun conferring(): PlayerView {

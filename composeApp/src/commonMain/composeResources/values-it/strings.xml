@@ -303,7 +303,7 @@
     <string name="beat_do_not_guess_body">Non hai mai visto questa carta, quindi nominarla è un'ipotesi, e un'ipotesi sbagliata costa una carta di penalità. Mettila giù senza dire nulla.</string>
     <string name="beat_final_play_title">%1$s gioca il %2$s</string>
     <string name="beat_final_play_ace">Un Asso fa pescare a un giocatore una carta dal mazzo, coperta, e una carta in più è una carta in più che conta contro di lui. Non può essere puntato contro di te ora — le carte di chi ha chiamato sono fuori portata — quindi ricade dalla parte della coalizione. Osserva chi deve pescare.</string>
-    <string name="beat_final_play_king">Un Re punta a una carta e la nomina, e il nome deve essere giusto. Giusto: la carta lascia la mano in cui si trovava e la sua azione viene giocata. Sbagliato: tutti vedono cosa fosse davvero, e chi ha nominato pesca una carta di penalità. Un giocatore nomina una carta che ha visto — spesso una delle proprie, per liberarsene.</string>
+    <string name="beat_final_play_king">Un Re punta a una carta e la nomina, e il nome deve essere giusto. Giusto: la carta lascia la mano in cui si trovava e la sua azione viene giocata. Sbagliato: tutti vedono cosa fosse davvero, e chi ha nominato pesca una carta di penalità. Un giocatore nomina una carta che ha visto — spesso una delle proprie, per liberarsene. Nel round finale un Re è uno strumento solo della coalizione: chi ha chiamato non può buttare nulla dentro, quindi qualunque valore venga nominato può uscire soltanto dalle mani della coalizione stessa.</string>
     <string name="beat_final_play_look">Un 9 o un 10 guarda una carta nella mano di qualcun altro. Nel round finale è così che la coalizione scopre cosa ha in mano, dato che la tua è fuori portata — e ciò che uno di loro impara, possono usarlo tutti.</string>
     <string name="beat_final_play_other">Osserva cosa fa: è una carta che non hai ancora avuto in mano, e il riquadro delle mosse recenti sotto il tavolo dice cosa è successo.</string>
     <string name="beat_swap_them_title">Scambiale</string>
@@ -360,6 +360,8 @@
     <string name="beat_seats_body">Tre bot, ciascuno con cinque carte che vedono non meglio di quanto tu possa vedere le tue. La piastra che si illumina di verde è di chi ha il turno.</string>
     <string name="beat_help_title">Il ? è sempre lì</string>
     <string name="beat_help_body">Spiega il momento in cui ti trovi e cosa fa ogni carta. Il gioco in scatola include carte promemoria proprio per questo, una per giocatore — nessuno deve tenere quattordici valori a memoria, qui o a un tavolo vero.</string>
+    <string name="beat_disagreement_title">Due di loro la ricordano diversamente</string>
+    <string name="beat_disagreement_body">Due affermazioni su una stessa carta non possono essere entrambe vere, quindi la carta porta entrambe, segnata come contestata. Il gioco non decide mai chi ha ragione — sono le carte, scoperte alla fine, a risolvere la questione. Fino ad allora, chiediti di chi è più fresca la memoria: di solito ha ragione chi l’ha vista per ultimo.</string>
     <string name="beat_coalition_title">Tutti gli altri giocano come una sola squadra</string>
     <string name="beat_your_turn_to_call_title">Puoi chiamarla anche tu</string>
     <string name="beat_coalition_body">Tu, e i due che non hanno chiamato, siete la coalizione: un turno ciascuno, e solo la vostra mano migliore viene confrontata con quella di chi ha chiamato — quindi è una squadra contro una sola mano. Tocca una carta qualsiasi per dire cosa pensi che sia, e dillo anche quando ricordi solo i due valori ma non quale sia quale. Buttare dentro una carta non ti costa il turno ed è il modo più economico per abbassare una mano. Nessuno può toccare le carte di chi ha chiamato, e il gioco non ti lascerà nemmeno provarci.</string>
@@ -492,6 +494,11 @@
     <string name="board_nod_yes">%1$s è d’accordo</string>
     <string name="board_nod_not_yet">%1$s non è ancora d’accordo</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">contestata</string>
+    <string name="badge_paired">una coppia, ordine sconosciuto</string>
+    <string name="badge_right">corretta</string>
+    <string name="badge_wrong">sbagliata</string>
     <string name="label_do_as_suggested">Fallo</string>
     <string name="label_decline_suggestion">No, grazie</string>
     <string name="label_withdraw">Ritira</string>

@@ -362,7 +362,7 @@
     <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
     <string name="beat_final_play_title">%1$s plays the %2$s</string>
     <string name="beat_final_play_ace">An Ace makes one player draw a card from the deck, face down, and one more card is one more card counting against them. It cannot be aimed at you now — a caller’s cards are out of reach — so it lands on the coalition’s own side. Watch who has to draw.</string>
-    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it.</string>
+    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it. In the final round a King is the coalition’s tool alone: the caller may not throw anything in, so whatever rank it names can only ever leave the coalition’s own hands.</string>
     <string name="beat_final_play_look">A 9 or a 10 looks at one card in somebody else’s hand. In the final round that is how the coalition finds out what it is holding, since yours is out of bounds — and what one of them learns, they may all use.</string>
     <string name="beat_final_play_other">Watch what it does: this is a card you have not held yet, and the box of recent moves under the table says what happened.</string>
     <string name="beat_swap_them_title">Trade them</string>
@@ -419,6 +419,8 @@
     <string name="beat_seats_body">Three bots, each with five cards they can see no better than you can. The plate that lights up green is whoever's turn it is.</string>
     <string name="beat_help_title">The ? is always there</string>
     <string name="beat_help_body">It explains the moment you are in and what every card does. The boxed game comes with reminder cards for exactly this, one per player — nobody is expected to hold fourteen ranks in their head, here or at a table.</string>
+    <string name="beat_disagreement_title">Two of them remember it differently</string>
+    <string name="beat_disagreement_body">Two claims on one card cannot both be true, so the card wears both, marked as a dispute. The game never decides who is right — the cards turn over at the end and settle it. Until then, ask yourself whose memory is fresher: the one who looked at it last is usually the one to believe.</string>
     <string name="beat_coalition_title">Everybody else plays as one</string>
     <string name="beat_coalition_body">You, and the two who did not call, are the coalition: one turn each, and only your single best hand is compared with the caller's — so it is a team against one hand. Tap any card to say what you think it is, and say so even when you only remember the two ranks and not which is which. Throwing a card in costs you no turn and is the cheapest way to lower a hand. Nobody may touch the caller's cards, and the game will not let you try.</string>
     <string name="beat_your_turn_to_call_title">You can call it too</string>
@@ -581,6 +583,11 @@
     <string name="board_nod_yes">%1$s agreed</string>
     <string name="board_nod_not_yet">%1$s has not agreed yet</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">disputed</string>
+    <string name="badge_paired">one of a pair, order unknown</string>
+    <string name="badge_right">right</string>
+    <string name="badge_wrong">wrong</string>
     <string name="label_do_as_suggested">Do that</string>
     <string name="label_decline_suggestion">No, thanks</string>
     <string name="label_withdraw">Take it back</string>

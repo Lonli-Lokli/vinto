@@ -87,9 +87,10 @@ data class Table(
     /**
      * Declared ranks worn by cards, for every seat to read: what a coalition member has
      * *claimed* a card to be. A label on the card back, never the card itself — a claim is
-     * only as good as the memory it came from.
+     * only as good as the memory it came from. Each carries who said it, whether two people
+     * disagree, whether it is half of a pair, and — at scoring only — whether it was right.
      */
-    val badges: Map<CardRef, String> = emptyMap(),
+    val badges: Map<CardRef, Badge> = emptyMap(),
     /**
      * The two cards a Jack or a Queen is being pointed at, for as long as it is being pointed.
      *
@@ -128,6 +129,27 @@ data class Table(
 
 /** A card on the table: whose, and which slot. */
 data class CardRef(val playerId: String, val position: Int)
+
+/**
+ * What a card wears on its back: the table's belief about it, and who put it there.
+ *
+ * [speakers] is what lets a claim be weighed without a tap — `knownCardPositions` is public,
+ * so a badge from somebody who never read the card is visibly a guess. [disputed] means two
+ * seats said things that cannot both be true, and the app never decides which; [paired] means
+ * this is half of a "these two, in either order" claim and the other half wears the same
+ * badge. [verdict] exists only at scoring, when the card is face up and the reveal has
+ * refereed the claim (design D12).
+ */
+data class Badge(
+    val text: String,
+    val speakers: List<Speaker>,
+    val disputed: Boolean = false,
+    val paired: Boolean = false,
+    val verdict: Verdict? = null,
+)
+
+/** How the reveal settled a claim. */
+enum class Verdict { RIGHT, WRONG }
 
 /**
  * A two-card action, half-aimed or fully aimed.
@@ -675,21 +697,26 @@ private fun mineHere(view: PlayerView, seat: PlayerSeatView, positions: List<Int
  * somebody is unsure or two people disagree, and a disputed card is marked as such rather than
  * quietly resolved — the app never decides which claimant was right.
  */
-private fun declaredBadges(view: PlayerView): Map<CardRef, String> =
+private fun declaredBadges(view: PlayerView): Map<CardRef, Badge> =
     view.players
         .flatMap { seat ->
             seat.cards.indices.mapNotNull { position ->
                 val believed = believedOnView(seat, position)
-                when {
-                    believed.sources.isEmpty() -> null
-                    believed.disputed ->
-                        CardRef(seat.id, position) to
-                            believed.candidates.joinToString("?") { it.serialName }
-
-                    else ->
-                        CardRef(seat.id, position) to
-                            believed.candidates.joinToString("/") { it.serialName }
-                }
+                if (believed.sources.isEmpty()) return@mapNotNull null
+                val separator = if (believed.disputed) "?" else "/"
+                // Refereed only where the card is actually face up: a claim about a card
+                // nobody can see is not wrong, and calling it so would be the app adjudicating.
+                val shown = (seat.cards[position] as? CardView.Visible)?.card
+                    ?.takeIf { view.phase == GamePhase.SCORING }
+                CardRef(seat.id, position) to Badge(
+                    text = believed.candidates.joinToString(separator) { it.serialName },
+                    speakers = believed.sources.map { speakerFor(view, it.by) }.distinct(),
+                    disputed = believed.disputed,
+                    paired = believed.sources.any { it.covering && it.positions.size > 1 },
+                    verdict = shown?.let { card ->
+                        if (card.rank in believed.candidates) Verdict.RIGHT else Verdict.WRONG
+                    },
+                )
             }
         }
         .toMap()
@@ -702,7 +729,8 @@ private fun declaredBadges(view: PlayerView): Map<CardRef, String> =
  * rule, so the table and the plan cannot come to different conclusions about a card.
  */
 internal fun believedOnView(seat: PlayerSeatView, position: Int): Believed {
-    val about = seat.claims.filter { position in it.positions }
+    // A claim naming every rank is a claim taken back (`Claim.vacuous`), and is not a source.
+    val about = seat.claims.filter { position in it.positions && !it.vacuous }
     // `ALL_RANKS`, not an empty set: a card nobody has spoken about is *every* rank, which is
     // the same as knowing nothing and is what `believedAt` returns for it. An empty set made
     // `Believed.value` divide by zero; every caller today happens to guard on `sources`, and

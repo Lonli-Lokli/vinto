@@ -314,7 +314,7 @@
     <string name="beat_do_not_guess_body">Nunca has visto esta carta, así que nombrarla es una apuesta, y una apuesta fallida te cuesta una carta de penalización. Suéltala sin decir nada.</string>
     <string name="beat_final_play_title">%1$s juega el %2$s</string>
     <string name="beat_final_play_ace">Un As hace que alguien robe una carta del mazo, boca abajo, y una carta más es una carta más en su contra. Ahora no puede apuntar hacia ti — las cartas de quien canta quedan fuera de alcance — así que cae del lado de la propia coalición. Fíjate en quién tiene que robar.</string>
-    <string name="beat_final_play_king">Un Rey apunta a una carta y la nombra, y el nombre tiene que ser correcto. Correcto: esa carta sale de la mano en la que estaba y se juega su acción. Incorrecto: todos ven qué era en realidad, y quien la nombró se lleva una carta de penalización. Se nombra una carta que se ha visto — a menudo una propia, para deshacerse de ella.</string>
+    <string name="beat_final_play_king">Un Rey apunta a una carta y la nombra, y el nombre tiene que ser correcto. Correcto: esa carta sale de la mano en la que estaba y se juega su acción. Incorrecto: todos ven qué era en realidad, y quien la nombró se lleva una carta de penalización. Se nombra una carta que se ha visto — a menudo una propia, para deshacerse de ella. En la ronda final el Rey es una herramienta solo de la coalición: quien cantó no puede lanzar nada, así que el rango que nombre solo puede salir de las manos de la propia coalición.</string>
     <string name="beat_final_play_look">Un 9 o un 10 mira una carta en la mano de otro. En la ronda final así es como la coalición descubre qué tiene, ya que la tuya está fuera de su alcance — y lo que uno aprende, todos pueden usarlo.</string>
     <string name="beat_final_play_other">Observa qué hace: esta es una carta que aún no has tenido, y el cuadro de jugadas recientes bajo la mesa dice qué pasó.</string>
     <string name="beat_swap_them_title">Cámbialas</string>
@@ -371,6 +371,8 @@
     <string name="beat_seats_body">Tres bots, cada uno con cinco cartas que ven no mejor que tú. La placa que se ilumina en verde es de quien juega.</string>
     <string name="beat_help_title">El ? siempre está ahí</string>
     <string name="beat_help_body">Explica el momento en que estás y qué hace cada carta. El juego de mesa trae cartas de recordatorio para justo esto, una por jugador — a nadie se le pide recordar catorce cartas de memoria, ni aquí ni en una mesa real.</string>
+    <string name="beat_disagreement_title">Dos lo recuerdan de forma distinta</string>
+    <string name="beat_disagreement_body">Dos versiones sobre una misma carta no pueden ser ambas ciertas, así que la carta lleva las dos, marcada como disputa. El juego nunca decide quién tiene razón — las cartas se voltean al final y lo resuelven. Hasta entonces, pregúntate cuál es el recuerdo más reciente: quien la miró en último lugar suele ser quien hay que creer.</string>
     <string name="beat_coalition_title">Los demás juegan como uno solo</string>
     <string name="beat_your_turn_to_call_title">Tú también puedes cantarlo</string>
     <string name="beat_coalition_body">Tú, junto con los dos que no cantaron, sois la coalición: un turno cada uno, y solo se compara vuestra mejor mano con la de quien cantó — así que es un equipo contra una mano. Toca cualquier carta para decir qué crees que es, y dilo incluso cuando solo recuerdes los dos palos pero no cuál es cuál. Lanzar una carta no te cuesta el turno y es la forma más barata de bajar una mano. Nadie puede tocar las cartas de quien cantó, y el juego no te dejará intentarlo.</string>
@@ -505,6 +507,10 @@
     <string name="board_nod_yes">%1$s está de acuerdo</string>
     <string name="board_nod_not_yet">%1$s aún no está de acuerdo</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">en disputa</string>
+    <string name="badge_paired">una de un par, orden desconocido</string>
+    <string name="badge_right">acertada</string>
+    <string name="badge_wrong">equivocada</string>
     <string name="label_do_as_suggested">Hazlo</string>
     <string name="label_decline_suggestion">No, gracias</string>
     <string name="label_withdraw">Retirarlo</string>

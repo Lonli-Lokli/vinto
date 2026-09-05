@@ -304,7 +304,7 @@
     <string name="beat_do_not_guess_body">このカードは見たことがないので、名乗るのは推測になり、外せばペナルティカードを引きます。何も言わずに置きましょう。</string>
     <string name="beat_final_play_title">%1$sが%2$sをプレイします</string>
     <string name="beat_final_play_ace">エースは指定した1人に山札から1枚伏せて引かせます。カードが1枚増えればその分不利になります。今のあなたには狙えません — 宣言者のカードには手が出せないためです — なので連合側の誰かに向けられます。誰が引かされるか見ておきましょう。</string>
-    <string name="beat_final_play_king">キングはカードを1枚指定し、その名を宣言します。正解でなければなりません。正解: そのカードは手を離れ、そのアクションが使われます。不正解: 実物が明らかになり、宣言した人がペナルティカードを引きます。宣言するのは自分が見たことのあるカード — 多くの場合、手放したい自分のカードです。</string>
+    <string name="beat_final_play_king">キングはカードを1枚指定し、その名を宣言します。正解でなければなりません。正解: そのカードは手を離れ、そのアクションが使われます。不正解: 実物が明らかになり、宣言した人がペナルティカードを引きます。宣言するのは自分が見たことのあるカード — 多くの場合、手放したい自分のカードです。最終ラウンドでは、キングは連合だけの道具です。宣言者は何も投げ込めないので、名指しされたランクが出てくるのは常に連合側の手からだけです。</string>
     <string name="beat_final_play_look">9か10は他の誰かの手のカードを1枚見ます。最終ラウンドでは、あなたの手には触れられない分、これが連合が自分たちの手を知る手段になります — そして1人が知ったことは全員が使えます。</string>
     <string name="beat_final_play_other">何が起こるか見ておきましょう。これはまだあなたが持ったことのないカードなので、テーブル下の履歴が起きたことを教えてくれます。</string>
     <string name="beat_swap_them_title">交換する</string>
@@ -361,6 +361,8 @@
     <string name="beat_seats_body">3人のボットで、それぞれ5枚のカードをあなたと同じようにしか見られません。緑に光る席が今の手番です。</string>
     <string name="beat_help_title">？はいつでもそこにあります</string>
     <string name="beat_help_body">今の状況と、それぞれのカードが何をするかを説明します。箱入りのゲームにはこのための備忘カードが1人1枚付属します — このアプリでも実際のテーブルでも、14のランクを全部覚えておく必要はありません。</string>
+    <string name="beat_disagreement_title">二人の記憶が食い違っています</string>
+    <string name="beat_disagreement_body">1枚のカードについて二つの主張が両方とも正しいことはないので、そのカードは両方をまとい、異議ありの印がつきます。ゲームはどちらが正しいかを判定しません — 最後にカードがめくられ、それが決着をつけます。それまでは、どちらの記憶が新しいか考えてみましょう。最後に見た人の記憶の方が、たいてい信じるに値します。</string>
     <string name="beat_coalition_title">他の全員がひとつになってプレイします</string>
     <string name="beat_your_turn_to_call_title">あなたも宣言できます</string>
     <string name="beat_coalition_body">あなたと、宣言していない残り2人が連合です。それぞれ1手番ずつで、あなたたちの最良の1つの手だけが宣言者の手と比べられます — つまりチーム対1つの手です。どのカードでもタップして、それが何だと思うか答えましょう。2つのランクは覚えていてもどちらがどちらか分からないときも、そう答えて構いません。カードを投げ込んでも手番は消費されず、手を軽くする最も安いやり方です。誰も宣言者のカードには触れられず、ゲームもそれを試させません。</string>
@@ -497,6 +499,10 @@
     <string name="board_nod_yes">%1$sが同意しました</string>
     <string name="board_nod_not_yet">%1$sはまだ同意していません</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">異議あり</string>
+    <string name="badge_paired">対になっている、順不同</string>
+    <string name="badge_right">正解</string>
+    <string name="badge_wrong">不正解</string>
     <string name="label_do_as_suggested">そうします</string>
     <string name="label_decline_suggestion">いいえ、結構です</string>
     <string name="label_withdraw">取り消す</string>

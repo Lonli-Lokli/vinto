@@ -288,7 +288,7 @@
     <string name="beat_do_not_guess_body">Ta karta nigdy nie została zobaczona, więc jej nazwanie to zgadywanie, a błędne zgadywanie kosztuje kartę karną. Odłóż ją bez słowa.</string>
     <string name="beat_final_play_title">%1$s gra kartę %2$s</string>
     <string name="beat_final_play_ace">As zmusza wskazanego gracza do dobrania karty z talii, zakrytej, a jedna karta więcej to jeden punkt więcej na niekorzyść. Teraz nie może być wycelowany w ciebie — karty wołającego są poza zasięgiem — więc trafia po stronie koalicji. Obserwuj, kto musi dobrać.</string>
-    <string name="beat_final_play_king">Król wskazuje kartę i ją nazywa — nazwa musi być trafna. Trafna: karta opuszcza rękę, w której leżała, a jej akcja zostaje rozegrana. Błędna: wszyscy widzą, czym karta naprawdę była, a nazywający dobiera kartę karną. Nazywana jest karta, którą ktoś już widział — często własna, by się jej pozbyć.</string>
+    <string name="beat_final_play_king">Król wskazuje kartę i ją nazywa — nazwa musi być trafna. Trafna: karta opuszcza rękę, w której leżała, a jej akcja zostaje rozegrana. Błędna: wszyscy widzą, czym karta naprawdę była, a nazywający dobiera kartę karną. Nazywana jest karta, którą ktoś już widział — często własna, by się jej pozbyć. W ostatniej rundzie Król jest narzędziem wyłącznie koalicji: wołający nie może niczego dorzucić, więc jakąkolwiek rangę Król nazwie, może ona opuścić tylko ręce samej koalicji.</string>
     <string name="beat_final_play_look">Dziewiątka lub Dziesiątka pozwala spojrzeć na jedną kartę w cudzej ręce. W ostatniej rundzie tak koalicja dowiaduje się, co trzyma, skoro twoje karty są poza zasięgiem — a to, czego dowie się jedno z nich, mogą wykorzystać wszyscy.</string>
     <string name="beat_final_play_other">Obserwuj, co ta karta robi: to jedna z tych, które jeszcze nie trafiły ci w rękę, a okno ostatnich ruchów pod stołem mówi, co się stało.</string>
     <string name="beat_swap_them_title">Wymień je</string>
@@ -345,6 +345,8 @@
     <string name="beat_seats_body">Trzy boty, każdy z pięcioma kartami, które widzą nie lepiej niż ty. Zielono podświetlona tabliczka pokazuje, czyja jest tura.</string>
     <string name="beat_help_title">Znak ? jest zawsze pod ręką</string>
     <string name="beat_help_body">Wyjaśnia bieżący moment gry i to, co robi każda karta. Wersja pudełkowa gry ma dokładnie do tego karty przypominające, po jednej na gracza — nikt nie musi trzymać w głowie czternastu rang, ani tutaj, ani przy stole.</string>
+    <string name="beat_disagreement_title">Dwoje z nich pamięta to inaczej</string>
+    <string name="beat_disagreement_body">Dwie sprzeczne opinie o jednej karcie nie mogą być prawdziwe naraz, więc karta nosi obie, oznaczone jako sporne. Gra nigdy nie rozstrzyga, kto ma rację — o tym decydują karty odkryte na końcu. Do tego czasu zadaj sobie pytanie, czyja pamięć jest świeższa: zwykle warto wierzyć temu, kto spojrzał na nią jako ostatni.</string>
     <string name="beat_coalition_title">Reszta gra jako jedno</string>
     <string name="beat_your_turn_to_call_title">Ty też możesz zawołać</string>
     <string name="beat_coalition_body">Ty i dwoje graczy, którzy nie zawołali, tworzycie koalicję: jedna tura na osobę, i tylko wasza jedna najlepsza ręka jest porównywana z ręką wołającego — więc to drużyna przeciwko jednej ręce. Stuknij dowolną kartę, aby powiedzieć, czym według ciebie jest — mów tak nawet wtedy, gdy pamiętasz tylko dwie rangi, ale nie wiesz, która jest którą. Dorzucenie karty nie kosztuje cię tury i to najtańszy sposób na obniżenie ręki. Nikt nie może dotknąć kart wołającego, a gra na to nie pozwoli.</string>
@@ -469,6 +471,10 @@
     <string name="board_nod_yes">%1$s zgadza się</string>
     <string name="board_nod_not_yet">%1$s jeszcze się nie zgadza</string>
     <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">sporna</string>
+    <string name="badge_paired">jedna z pary, kolejność nieznana</string>
+    <string name="badge_right">trafna</string>
+    <string name="badge_wrong">błędna</string>
     <string name="label_do_as_suggested">Zrób tak</string>
     <string name="label_decline_suggestion">Nie, dzięki</string>
     <string name="label_withdraw">Cofnij</string>
