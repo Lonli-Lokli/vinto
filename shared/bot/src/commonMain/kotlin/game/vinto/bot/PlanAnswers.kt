@@ -67,13 +67,23 @@ fun answerForLane(state: GameState, seat: String, step: Step?, askedBy: String):
     val before = minScore(hands.values.toList())
 
     val after = when (step) {
-        is Step.Swap -> hands.swapped(step)?.let { minScore(it.values.toList()) }
+        is Step.Swap -> {
+            val from = Slot(step.from.seat, step.from.position)
+            val to = Slot(step.to.seat, step.to.position)
+            if (hands.holds(from) && hands.holds(to)) {
+                minScore(hands.swapped(from, to).values.toList())
+            } else {
+                null
+            }
+        }
 
-        is Step.Declare -> minScore(
-            hands.values.map { hand -> hand.filterNot { it.rankKnown && it.rank == step.rank } },
-        )
+        is Step.Declare -> {
+            minScore(hands.values.map { hand -> hand.filterNot { it.rankKnown && it.rank == step.rank } })
+        }
 
-        Step.TakeTheDiscard -> before.takeIf { isTakeableAction(input.discardTop) }
+        Step.TakeTheDiscard -> {
+            before.takeIf { isTakeableAction(input.discardTop) }
+        }
     }
 
     return when {
@@ -83,17 +93,6 @@ fun answerForLane(state: GameState, seat: String, step: Step?, askedBy: String):
     }
 }
 
-/** The hands after a swap, or null when the step names a card that is not there. */
-private fun Map<String, List<PlanCard>>.swapped(step: Step.Swap): Map<String, List<PlanCard>>? {
-    val from = this[step.from.seat]?.getOrNull(step.from.position) ?: return null
-    val to = this[step.to.seat]?.getOrNull(step.to.position) ?: return null
-    return mapValues { (seat, hand) ->
-        hand.mapIndexed { position, card ->
-            when {
-                seat == step.from.seat && position == step.from.position -> to
-                seat == step.to.seat && position == step.to.position -> from
-                else -> card
-            }
-        }
-    }
-}
+/** Whether the hands have a card at [slot] at all: a step naming a card that is not there is unreadable. */
+internal fun Map<String, List<PlanCard>>.holds(slot: Slot): Boolean =
+    this[slot.seat]?.getOrNull(slot.position) != null

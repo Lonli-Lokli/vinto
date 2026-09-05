@@ -1,6 +1,7 @@
 package game.vinto.room
 
 import game.vinto.bot.BotRunner
+import game.vinto.bot.seedTheBoard
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PublicReveal
@@ -1573,14 +1574,20 @@ internal fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null)
 
     while (
         steps++ < MAX_BOT_STEPS &&
-        state.game?.phase != GamePhase.SCORING &&
-        !conferring(state)
+        state.game?.phase != GamePhase.SCORING
     ) {
         val game = state.game ?: break
 
         state = state.overhearing(runner, game, overheard)
 
-        val action = runner.nextAction(asPlayed(game, state.seats)) ?: break
+        // The window holds the bots' **turns**, never their declarations. A coalition confers
+        // in order to pool what it knows, so a window that silenced the bots would be a
+        // conversation with nothing in it — the people would be asked to plan against three
+        // hands nobody had described. The solo session has always let them through; online
+        // they used to arrive only once the window had closed, which is after the planning.
+        val action = runner.nextAction(asPlayed(game, state.seats))
+            ?.takeIf { !conferring(state) || it is GameAction.DeclareCards }
+            ?: break
         val actor = action.actorId
         val seat = state.seats.firstOrNull { it.playerId == actor }
 
@@ -1614,6 +1621,9 @@ internal fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null)
         state = state.copy(game = reduced, log = state.log + entry)
         trail += Step(entry, reduced, success.revealed)
     }
+
+    // After the loop, so the proposals are built on whatever the bots have just declared.
+    state = state.seedingTheBoard(overheard)
 
     return PlayedOut(state, trail, overheard)
 }
@@ -1698,6 +1708,28 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
  * the runner because the runner is rebuilt every request — a mark kept inside it would reset
  * between requests and three bots would narrate every one.
  */
+
+/**
+ * The bots' proposals on the shared board, while a person is in the coalition to read them.
+ *
+ * Idempotent: proposals fill empty lanes and stop once a person has edited the board, so calling
+ * this on every request costs nothing after the first. On the table *as played*, so a seat the
+ * room has taken over proposes as the bot it is.
+ */
+private fun RoomState.seedingTheBoard(into: MutableList<TableTalk>): RoomState {
+    val game = this.game ?: return this
+    if (game.phase != GamePhase.FINAL) return this
+    val somebodyToReadIt = seats.any { seat ->
+        seat.tokenHash != null && !seat.isBot && seat.playerId != game.vintoCallerId
+    }
+    if (!somebodyToReadIt) return this
+    val standing = plan ?: CoalitionPlan()
+    val seeded = seedTheBoard(asPlayed(game, seats), plan)
+    if (seeded.plan == standing) return this
+    into += seeded.said
+    return copy(plan = seeded.plan)
+}
+
 private fun RoomState.overhearing(
     runner: BotRunner,
     game: GameState,

@@ -447,19 +447,16 @@ class BotRunner(
      * which is precisely the back channel the claim model exists to close.
      */
     private fun askForACard(input: CoalitionPlanInput, me: String): TableTalk? {
-        val mine = input.members.firstOrNull { it.id == me } ?: return null
-        val worstOfMine = mine.cards.filter { it.rankKnown }.maxByOrNull { it.value } ?: return null
-
-        val wanted = input.members
-            .filter { it.id != me }
-            .flatMap { member ->
-                member.cards.mapIndexed { position, card -> Triple(member.id, position, card) }
-            }
-            .filter { (_, _, card) -> card.rankKnown && card.value < worstOfMine.value }
-            .minByOrNull { (_, _, card) -> card.value }
-            ?: return null
-
-        return TableTalk.GiveMe(me, wanted.first, wanted.second)
+        // The same measure the board's proposals use — the coalition's lowest hand after the
+        // trade — restricted to trades that bring a card into this hand.
+        val hands = input.members.associate { it.id to it.cards }
+        val swap = bestSwap(hands, input.members.map { it.id }) ?: return null
+        val theirs = when (me) {
+            swap.from.seat -> swap.to
+            swap.to.seat -> swap.from
+            else -> return null
+        }
+        return TableTalk.GiveMe(me, theirs.seat, theirs.position)
     }
 
     // ---------------------------------------------------------------- toss-in

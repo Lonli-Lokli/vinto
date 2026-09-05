@@ -167,7 +167,9 @@ class ConferWindowTest {
         val second = editPlan(first.state, TOKEN_A, PlanEdit.SetLane(ann, Step.Declare(Rank.KING)), START)
 
         assertNull(second.error)
-        assertEquals(Step.Declare(Rank.KING), second.state.plan?.lanes?.single()?.step)
+        // Ann's lane, not the only lane: the bots seed the board for her the moment the round
+        // is called, and their proposals stand beside hers.
+        assertEquals(Step.Declare(Rank.KING), second.state.plan?.lanes?.first { it.seat == ann }?.step)
     }
 
     @Test

@@ -55,6 +55,16 @@
 > a bot acts must follow from state alone, and a claim is taken back by saying the card could
 > be any rank, never by re-declaring the hand without it. The fallback that had a bot with no
 > memory declare its real cards is gone.
+>
+> **Fifth pass, same day — phase 2 closed by adoption.** 2.5 as written cannot be done: the
+> search plans as a seat with that seat's read cards as ground truth, so a line for a
+> teammate's turn would read the teammate's private cards. What a bot can honestly say about a
+> teammate's turn is a card movement, and the board is where a card movement goes. The bots now
+> **seed** the board: the trade that most lowers the coalition's lowest hand, one lane at a
+> time in turn order on one pooled picture, filling empty lanes only and stopping the moment a
+> person has edited anything. Online, the bots' declarations now arrive *during* the confer
+> window rather than after it, which the solo session had always allowed and the room had not
+> — the planning happens in the window, and it needs the picture the bots are about to speak.
 
 Three phases, ordered so each is usable on its own (design D14). Phase 1 improves local play by
 itself — today a person watches three silent bots pool information they cannot hear. Phase 2 is
@@ -292,9 +302,19 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 2.4 Bots evaluate a proposal with their own decision service, perform or decline, and say
       — **wired both ways:** `LocalGameSession.say` and the room's `sayEnvelopes` both route a proposal to the addressed bot, which answers with its own planner and makes its own move
       which
-- [ ] 2.5 Bots address proposals to teammates, read out of the line `CoalitionSearch` already
+- [x] 2.5 Bots address proposals to teammates, read out of the line `CoalitionSearch` already
       — **audit:** bots emit `GiveMe` from a two-line heuristic — **not read off the search's line**, which the review showed is not possible without reading a teammate's private cards
       plans for that member's turn
+      — **adopted (design D5, D7a).** The literal item cannot be done: the search plans *as* a
+      seat, with that seat's read cards as ground truth, so a line for a teammate's turn would
+      read the teammate's private cards. What a bot can honestly say about a teammate's turn is
+      a **card movement** from the shared picture, and the board is where that goes: the bots
+      **seed** the board — the trade that most lowers the coalition's lowest hand, one lane at
+      a time in turn order, each built on the lanes before it — proposing their own lanes from
+      their own picture and the first bot proposing a person's lane. They fill empty lanes only,
+      stop the moment a person has edited anything, and only bother while a person is in the
+      coalition, so nothing can loop and nothing is taken over. `GiveMe` now comes off the same
+      evaluation. Held by `BoardProposalsTest`, a room test and a session test
 - [x] 2.6 An accepted proposal pre-arms its owner's turn — aimed, one action to commit, every
       — **corrected:** pre-arming works in the model and is now drawn; unreachable because nothing speaks a `Proposal` (2.2), not because nothing listens for one
       — **reachable now (3.2f):** the viewer's own lane of the shared plan is what pre-arms the turn, as "Do as planned", found among the moves the table itself built
@@ -402,9 +422,11 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       — the re-plan is an ordinary edit through the same door (3.2a): unlocked lanes stay
       editable mid-round and any edit resets agreement, so this needs no second mechanism
 - [ ] 3.12 Copy for a broken plan that treats a wrong claim as the game working
-- [ ] 3.13 Bots edit the plan, replacing the step they own and saying why
+- [~] 3.13 Bots edit the plan, replacing the step they own and saying why
       — **deliberately after 3.2c.** A bot that replaced a lane the moment a person set it would
       reset agreement in a loop; the bound on that is a decision, not a default
+      — **half, with 2.5:** bots *seed* every empty lane, their own included. What is left is
+      replacing a step after a person has set it, and saying why — the part that needs the bound
 - [ ] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
       and the proposal that sets it up — "put down a 7". No conditional language (design D13a)
 - [ ] 3.15 The toss-in risk is shown to the hand the coalition is pushing: a wrong one costs a

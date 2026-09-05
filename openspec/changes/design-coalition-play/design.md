@@ -234,6 +234,15 @@ where, and that is exactly what `GiveMe` and `TakeThis` say. Concrete `Proposal`
 they always were: a move somebody can see is legal *now*, which in practice means one addressed
 to a seat already on play.
 
+**Once the board existed, the card movement had a place to go.** A lane's swap *is* a card
+movement, so the bots put their proposals on the board (D7a): the trade that most lowers the
+coalition's lowest hand, one lane at a time in turn order, each evaluated on the hands the
+earlier lanes would leave — the concentration play the search plays in private, said out loud a
+lane at a time. A bot proposes its own lane from its own picture and the first bot proposes a
+person's lane from the shared one. The bots **seed** and never fight: they fill empty lanes,
+stop the moment a person has edited anything, and only propose while a person is in the
+coalition to read it. Nothing loops, because every edit fills a lane and nothing empties one.
+
 ## D6. What is state, and what is only a message
 
 | | Where | Why |

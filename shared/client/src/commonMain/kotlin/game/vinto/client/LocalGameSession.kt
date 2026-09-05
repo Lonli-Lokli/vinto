@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.bot.BotRunner
 import game.vinto.bot.botsAnswering
+import game.vinto.bot.seedTheBoard
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PlayerView
@@ -469,6 +470,19 @@ class LocalGameSession(
         }
 
         overheard.forEach(::overhear)
+
+        // The bots' proposals on the board, for the person to read, agree to or change — built
+        // after the bots have declared, so the picture they are built on is the one the person
+        // sees. Fills empty lanes and stops once the person has edited anything, so it is cheap
+        // to repeat on every pass.
+        if (inACoalitionFinalRound()) {
+            val standing = _plan.value ?: CoalitionPlan()
+            val seeded = seedTheBoard(next, _plan.value)
+            if (seeded.plan != standing) {
+                _plan.value = seeded.plan
+                seeded.said.forEach(::overhear)
+            }
+        }
         if (moves == 0) return emptyList()
 
         // Choreographed from the *views*, not the states, so this is the same computation a

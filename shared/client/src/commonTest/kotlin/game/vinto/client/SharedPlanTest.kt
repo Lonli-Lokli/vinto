@@ -67,7 +67,8 @@ class SharedPlanTest {
             seat("human-1", isHuman = true, callerId, ranks = listOf(Rank.NINE)),
             seat("bot-2", isHuman = false, callerId, ranks = listOf(Rank.KING, Rank.TWO)),
             seat("bot-3", isHuman = false, callerId, ranks = listOf(Rank.FIVE)),
-            seat("bot-4", isHuman = false, callerId, ranks = listOf(Rank.SIX)),
+            // A King beside a six, so there is a trade worth proposing: the King into the low hand.
+            seat("bot-4", isHuman = false, callerId, ranks = listOf(Rank.KING, Rank.SIX)),
         ),
         currentPlayerIndex = listOf("human-1", "bot-2", "bot-3", "bot-4").indexOf(callerId),
         vintoCallerId = callerId,
@@ -94,7 +95,8 @@ class SharedPlanTest {
         val session = inTheWindow()
         session.dispatch(GameAction.Empty(JsonNull))
         assertNotNull(session.view.value.conferMsRemaining, "the fixture's window is not open")
-        assertNull(session.plan.value, "nothing has been planned yet")
+        // The bots have already put their proposals on the board; the person replaces one.
+        assertNotNull(session.plan.value, "the bots proposed nothing in the window")
 
         assertNull(session.editPlan(PlanEdit.SetLane("bot-4", Step.TakeTheDiscard)))
 
@@ -124,10 +126,11 @@ class SharedPlanTest {
     @Test
     fun agreeingIsHowThePersonFinishesTalking() = runTest {
         val session = inTheWindow()
-        session.dispatch(GameAction.Empty(JsonNull))
-        // The caller cannot be planned for, sheds included; and an empty board is nothing to agree to.
-        assertNotNull(session.editPlan(PlanEdit.AddShed(Shed("bot-2", Rank.SEVEN))), "the caller got a shed")
+        // Before the window opens nothing is on the board, and nothing is nothing to agree to.
         assertNotNull(session.agreePlan(agree = true), "an empty board was agreed to")
+        session.dispatch(GameAction.Empty(JsonNull))
+        // The caller cannot be planned for, sheds included.
+        assertNotNull(session.editPlan(PlanEdit.AddShed(Shed("bot-2", Rank.SEVEN))), "the caller got a shed")
 
         assertNull(session.editPlan(PlanEdit.SetLane("bot-4", Step.TakeTheDiscard)))
         assertNotNull(session.view.value.conferMsRemaining, "the window closed on an edit")
@@ -135,6 +138,20 @@ class SharedPlanTest {
         assertNull(session.agreePlan(agree = true))
         assertNull(session.view.value.conferMsRemaining, "agreeing did not end the window")
         assertTrue(session.plan.value?.agreed.orEmpty().contains("human-1"))
+    }
+
+    @Test
+    fun theBotsProposeOnTheBoardAndLeaveThePersonsEditsAlone() = runTest {
+        val session = inTheWindow()
+        session.dispatch(GameAction.Empty(JsonNull))
+
+        val seeded = assertNotNull(session.plan.value, "the bots proposed nothing in the window")
+        assertTrue(seeded.lanes.any { it.step != null }, "an empty board")
+        val botLane = seeded.lanes.first { it.step != null && it.seat != session.playerId }.seat
+
+        assertNull(session.editPlan(PlanEdit.ClearLane(botLane)))
+        session.dispatch(GameAction.Empty(JsonNull))
+        assertNull(session.plan.value?.laneOf(botLane), "the bots refilled a lane the person cleared")
     }
 
     @Test

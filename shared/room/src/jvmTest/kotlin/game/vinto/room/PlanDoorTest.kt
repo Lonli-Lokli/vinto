@@ -272,6 +272,51 @@ class PlanDoorTest {
         assertNotNull(edited.state.buckets[0], "the edit cost nothing")
     }
 
+    @Test
+    fun theBotsSeedTheBoardForThePeopleAndStopOnceAPersonHasEdited() {
+        // Two people in the coalition and two bots: the bots' proposals are on the board the
+        // first time the room drives them, and a lane a person clears stays clear.
+        // The one coalition bot is given a King it knows about, so there is a trade worth
+        // proposing whatever the deal dealt. Two people with five unread cards each are the
+        // lowest hands in the shared picture, and the only way to lower one is to bring a card
+        // worth less than an unread one into it — a King is worth nothing.
+        val room = decodeRoom(finalRoundCalledByABot())
+        val game = checkNotNull(room.game)
+        val bot = game.players.first { it.isBot && it.id != game.vintoCallerId }
+        val loaded = room.copy(
+            game = game.copy(
+                players = game.players.map { player ->
+                    if (player.id != bot.id) {
+                        player
+                    } else {
+                        player.copy(
+                            cards = player.cards.mapIndexed { i, card ->
+                                if (i == 0) {
+                                    card.copy(
+                                        rank = Rank.KING,
+                                        value = 0,
+                                    )
+                                } else {
+                                    card
+                                }
+                            },
+                            knownCardPositions = (player.knownCardPositions + 0).distinct(),
+                        )
+                    }
+                },
+            ),
+        )
+        val driven = playBotsTracked(loaded).state
+        val plan = assertNotNull(driven.plan, "the bots proposed nothing for a coalition with people in it")
+        assertTrue(plan.lanes.any { it.step != null }, "an empty board")
+
+        // Ann clears the proposal — whoever's lane it landed on — and it stays clear.
+        val lane = plan.lanes.first { it.step != null }.seat
+        val cleared = editPlan(driven, TOKEN_A, PlanEdit.ClearLane(lane), START).state
+        val again = playBotsTracked(cleared).state
+        assertNull(again.plan?.laneOf(lane), "the bots refilled a lane a person had cleared")
+    }
+
     private fun take(): Step = Step.TakeTheDiscard
 
     private fun seatId(state: String, seat: Int): String = checkNotNull(decodeRoom(state).seats[seat].playerId)
