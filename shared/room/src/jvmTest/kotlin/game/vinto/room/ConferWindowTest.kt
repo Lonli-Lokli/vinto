@@ -232,6 +232,26 @@ class ConferWindowTest {
         assertNull(played.plan, "last round's agreement was carried into the next")
     }
 
+    @Test
+    fun aTalkativeFinalRoundLeavesNoPlanInItsRecording() {
+        // Room state, never game state (design D6): a recording is the deal and the actions,
+        // and a coalition that planned and agreed all round must produce the same file as one
+        // that never spoke. Checked on the bytes, because a field that leaked would leak there.
+        val room = decodeRoom(finalRoundCalledBy(seat = 1))
+        val ann = checkNotNull(room.seats[0].playerId)
+
+        val planned = editPlan(room, TOKEN_A, PlanEdit.SetLane(ann, Step.TakeTheDiscard), START).state
+        val agreed = agreePlan(planned, TOKEN_A, agree = true)
+        assertNull(agreed.error)
+        val played = playRoundOut(encode(agreed.state), seed = 3, from = START + 3_000.0)
+        assertEquals(GamePhase.SCORING, decodeRoom(played).game?.phase, "the round never finished")
+
+        val recording = roundRecording(played, recordedAt = "2026-09-05T00:00:00Z")
+        for (leak in listOf("\"plan\"", "\"lanes\"", "\"agreed\"", "\"editedBy\"", "\"sheds\"")) {
+            assertFalse(leak in recording, "the recording carries $leak")
+        }
+    }
+
     /** The dealt room, moved into a final round called by [seat]. */
     private fun finalRoundCalledBy(seat: Int): String {
         val room = decodeRoom(dealtRoom())

@@ -242,7 +242,7 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 ## 2. Proposals
 
 - [x] 2.1 A proposal names a move and the seat that would make it, and is never reduced
-- [ ] 2.2 A proposal addressed to the viewer is a one-tap move; accepting dispatches an ordinary
+- [x] 2.2 A proposal addressed to the viewer is a one-tap move; accepting dispatches an ordinary
       — **corrected:** `heard()` *is* called — `rememberHolder`'s `LaunchedEffect` collects `session.talk` into it — and the two buttons are now drawn and tested (`CoalitionScreenTest`). What is missing is upstream: **nothing outside a test constructs a `Proposal`**, so `offered` is never set in the shipping app. Bots emit `GiveMe` by design (2.5); a person has no way to compose a move for somebody else, which was phase 3's composer. The receiving half is finished; the speaking half is the open question
       `GameAction` from the viewer's own seat
       — **and the answer (design D7a):** the plan is the speaking half. On a member's turn their
@@ -256,8 +256,9 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [ ] 2.5 Bots address proposals to teammates, read out of the line `CoalitionSearch` already
       — **audit:** bots emit `GiveMe` from a two-line heuristic — **not read off the search's line**, which the review showed is not possible without reading a teammate's private cards
       plans for that member's turn
-- [ ] 2.6 An accepted proposal pre-arms its owner's turn — aimed, one action to commit, every
+- [x] 2.6 An accepted proposal pre-arms its owner's turn — aimed, one action to commit, every
       — **corrected:** pre-arming works in the model and is now drawn; unreachable because nothing speaks a `Proposal` (2.2), not because nothing listens for one
+      — **reachable now (3.2f):** the viewer's own lane of the shared plan is what pre-arms the turn, as "Do as planned", found among the moves the table itself built
       other move still available
 - [x] **Verify** 2.7 No control anywhere acts for another seat, in any configuration,
       single-player included — a test in the spirit of `ValidatorImpersonationTest`
@@ -268,7 +269,7 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 3.1 The plan shape: ordered steps, each naming the seat whose turn it belongs to, at most
       — **done (bf71c37).** The shape existed and the length rule was only a comment: `editPlan` accepted any lanes for any seat, the caller included. A lane now belongs to a coalition seat and a seat has one lane, which makes the length rule a consequence rather than a number — so there is no second place to update when the table size changes. Held by `PlanDoorTest`
       as many lanes as there are turns left
-- [ ] 3.2 One shared draft per final round, editable by any coalition member and by bots, last
+- [x] 3.2 One shared draft per final round, editable by any coalition member and by bots, last
       edit standing; room-side, never in `GameState`, discarded at scoring
       — **decided (design D7a) and split.** The plan is a board of parts, agreed as a whole:
       an edit names one lane or one shed and the room merges it, so two people working on
@@ -373,10 +374,15 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       total, how much of it is unseen, and whether the plan wins — with a level result shown as
       losing, since a tie pays the caller
 - [ ] **Verify** 3.14 `ScreenContrastTest` — the rehearsal felt clears WCAG AA in both themes
-- [ ] **Verify** 3.15 The plan never appears in a round's recording; a talkative final round
+- [x] **Verify** 3.15 The plan never appears in a round's recording; a talkative final round
       replays to identical hashes
-- [ ] **Verify** 3.16 The composer offers no tap that would target the Vinto caller's cards
-- [ ] **Verify** 3.17 The strip is usable in phone portrait, at the largest supported font scale
+      — `ConferWindowTest.aTalkativeFinalRoundLeavesNoPlanInItsRecording`: planned, agreed, played
+      to scoring, and the recording's bytes carry none of the plan's fields; the recording's
+      own replay is `RoomRecordingTest`'s
+- [x] **Verify** 3.16 The composer offers no tap that would target the Vinto caller's cards
+      — `PlanBoardTest.aSwapIsTwoTapsOnTwoHandsAndNeverOnTheCallers`, and the door refuses the step besides (`PlanEditTest.aStepMayNotNameTheCallersCards`)
+- [x] **Verify** 3.17 The strip is usable in phone portrait, at the largest supported font scale
+      — `RailFitsTest`: the confer window's four choices stay whole with a full board standing, and the open board's own two, at a doubled font on the test phone
 
 ## Every phase ends with
 
@@ -394,5 +400,6 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       wrong digit with **every commit** and could never be green twice. `HomeScreen` takes the
       number as a parameter defaulting to the real one, and the goldens are regenerated pinned
 - [x] `node tools/check-translations.mjs`
-- [ ] `:shared:bot:jvmTest` including `SelfPlayGateTest` — every proposed action through
+- [x] `:shared:bot:jvmTest` including `SelfPlayGateTest` — every proposed action through
       `ActionValidator`, every game to `scoring`
+      — 189 tests green after the plan's wire landed
