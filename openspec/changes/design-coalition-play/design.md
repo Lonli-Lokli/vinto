@@ -250,9 +250,84 @@ nobody can predict, so every plan is stale after one turn — and the round is t
 re-planning cheap costs a fraction of what a conditional language costs and covers the same
 ground.
 
-One shared plan, not one per member: three competing plans is not a coalition deciding together,
-and last-edit-wins over one draft is what "we decide together" actually looks like. A lane locks
-when its owner's turn starts, so a plan cannot change under the hand of the person executing it.
+One shared plan, not one per member: three competing plans is not a coalition deciding together.
+A lane locks when its owner's turn starts, so a plan cannot change under the hand of the person
+executing it.
+
+### D7a. A board of parts, agreed as a whole
+
+**The plan is a shared board, and an edit names one part of it.** Any coalition member — never
+the caller — may set, replace or clear any lane, and add or remove any shed, whoever the part
+belongs to. The room merges the part into the standing plan. That is the grain the lock has
+(per lane) and the grain the UI has (one seat's turn at a time), and it is what stops two
+people working on different lanes overwriting each other: the first design here was
+"last edit stands over one whole draft", and a whole draft sent on every gesture loses the
+other person's lane every time two messages cross. The same lane edited by two people *is*
+last edit stands, which is the one case that rule was ever for.
+
+**Agreement is to the combined plan, not to a part.** The lanes only pay off together — a swap
+in one lane is worth something because of what the next lane does with it — so the coalition
+says yes to the board, not to a step. Every edit resets agreement to the editor alone, since a
+yes to a plan that no longer exists is not a yes; making the edit is agreeing to it, so the
+editor is not asked twice. The plan is **agreed** when every connected coalition human and
+every coalition bot has said yes. It is a recorded fact the person on play can see, which is
+what "we decide together" turned out to mean: last-edit-wins was a mechanism standing in for
+it.
+
+**Agreeing is how you finish talking.** Whoever has more to say says it first, then agrees;
+when the last member agrees the confer window closes and the first coalition turn starts.
+"Done" without agreeing still exists, for the member who has finished talking and does not
+agree. A plan that is not agreed when the window closes **stands as a suggestion**, showing who
+agreed. It is not voided: propose, never command (D5) applies to a plan as much as to a move,
+and the person on play decides.
+
+**Bots answer for their own lane and nothing else.** On an edit that touches a bot's lane, the
+bot runs the step through the same within-reach test `answerTo` applies to a single proposal,
+on the shared picture plus its own cards, and its yes or its refusal with a reason goes out as
+talk. An empty lane is a yes. A bot's no is D5 working, not a defect. A bot *editing* a lane is
+a later item: a bot that replaced a lane the moment a person set it would reset agreement in a
+loop, and that needs a bound designed rather than assumed.
+
+**The plan feeds the on-turn suggestion.** When a member's turn comes, their own lane is what
+the slot built for a proposal (tasks 2.2, 2.6) shows: the step as words, and the targets
+pre-armed when the draw or the discard top makes the step legal — a Jack or a Queen for a swap,
+a King for a declare, the unused action card for a take. Otherwise the ask shows as words and
+the person plays freely. The plan strip and the on-turn suggestion are separate pieces of UI,
+joined only by one feeding the other. This is what closes 2.2 without anything speaking a
+`Proposal`: the plan is the speaking half, and the receiving half was already built.
+
+**Edits stay open mid-round** for unlocked lanes, through the same door, and reset agreement
+the same way. That is the re-plan 3.11 asks for, with no second mechanism. The lane of the seat
+on play is refused whether or not pacing has stamped it locked yet — a fresh lane for a turn in
+progress is the same turn a moment earlier — which is why the door is told who is on play.
+
+**The wire.** Two client messages — one plan edit, and agree or disagree with the standing
+plan — and **no new server message**: the room answers an edit the way it answers `more-time`,
+with an empty `events` message per seat whose `plan` field carries the whole resulting board
+(three lanes at most) and whose `said` carries the bots' answers. Every `events`, `sync` and
+`joined` carries `plan` whenever one stands, so a lane locking on an ordinary action, a
+reconnect and an app restart all land on the present plan — the case D11 was fixed for. The
+broadcast is to **every seat, the caller included**: talk is public (D12), the plan is built
+only from public claims, and the caller cannot act on it. A plan edit spends from the same
+budget talk does, because it is broadcast to four sockets.
+
+**Solo holds a plan.** The rehearsal and the readout are the plan's value, and a person alone
+against three bots can still rehearse a line and watch the outcome; a composer reachable only
+online cannot be tried by a maintainer with one phone, and every Compose test runs on
+`LocalGameSession`. So the merge, the lock and the refusals are one pure function in
+`shared/shapes`, and both doors — the room's and the local session's — call it, exactly as both
+read one `GameAction.retired` (D2). The two cannot disagree about what a legal edit is.
+
+**Rejected: the plan as talk.** Sending each edit as a phrasebook sentence through the say
+door costs no new wire and puts the plan's history in the log strip for free, and it is the
+wrong shape for a stored, lockable draft: the room could refuse nothing, every client would
+re-derive the plan from sentence order, and a reconnect would lose it, because `said` is
+fire-and-forget and a sync carries no talk.
+
+**Rejected: agreement per lane by its owner.** Closer to how a single proposal works — the
+plan is settled when each executor has accepted their own part — and it is the fallback if
+unanimity proves too slow for a twenty-second window. Whole-plan agreement is what the lanes'
+interdependence wants.
 
 ## D8. Rehearse the plan; do not describe it
 

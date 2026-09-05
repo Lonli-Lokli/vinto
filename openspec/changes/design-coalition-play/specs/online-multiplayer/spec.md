@@ -57,7 +57,19 @@ claim SHALL, being information about the world that the engine already carries.
 ### Requirement: A plan is room state, not game state
 
 The room SHALL hold at most one coalition plan per final round, SHALL accept edits only from
-coalition members, and SHALL send every seat the same plan.
+coalition members — never from the Vinto caller — and SHALL send every seat the same plan, the
+caller's seat included.
+
+An edit SHALL name one part of the plan, and the room SHALL merge it into the standing plan;
+an edit naming a locked lane SHALL be refused. The room SHALL record who has agreed to the plan
+and who last edited it, SHALL reset agreement to the editor on every edit, and SHALL treat a
+member's agreement as that member being done conferring.
+
+The room SHALL send the standing plan on every `events`, `sync` and `joined` message, so that
+a lane locking on an ordinary action, a reconnect and a restarted app all land on the present
+plan. An edit that moves no card SHALL be answered as `more-time` is: an empty `events`
+message per seat carrying the plan and the bots' answers. A plan edit SHALL spend from the same
+budget table talk does.
 
 The plan SHALL be discarded when the round is scored, and SHALL NOT appear in the round's
 recording.

@@ -21,6 +21,7 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import game.vinto.shapes.actorId
@@ -268,6 +269,10 @@ class TwoClientGameTest {
                         sockets.firstOrNull { it.seat == seat }?.let { deliver(it, said) }
                     }
                 }
+                is ClientMessage.EditPlan, is ClientMessage.AgreePlan -> {
+                    planned(socket, message)
+                }
+
                 is ClientMessage.Resync -> {
                     deliver(socket, syncEnvelope(stateJson, socket.seat ?: -1, message.sinceIndex, now))
                 }
@@ -286,6 +291,28 @@ class TwoClientGameTest {
                 is ClientMessage.MoreTime -> {
                     moreTime(socket, message)
                 }
+            }
+        }
+
+        /** The board, or a refusal, the way the shim handles the two plan messages. */
+        private fun planned(socket: FakeSocket, message: ClientMessage) {
+            val token = socket.token!!
+            val envelopesJson = when (message) {
+                is ClientMessage.EditPlan -> editPlanEnvelopes(
+                    stateJson,
+                    message.token ?: token,
+                    ProtocolJson.encodeToString(PlanEdit.serializer(), message.edit),
+                    now,
+                )
+
+                is ClientMessage.AgreePlan -> agreePlanEnvelopes(stateJson, message.token ?: token, message.agree, now)
+                else -> return
+            }
+            val planned = decodeEnvelopes(envelopesJson)
+            if (planned.error != null) return
+            stateJson = encode(planned.state)
+            planned.messages.forEach { (seat, text) ->
+                sockets.firstOrNull { it.seat == seat }?.let { deliver(it, text) }
             }
         }
 

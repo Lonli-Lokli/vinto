@@ -215,7 +215,7 @@ private const val MORE_TIME_MS = 15_000.0
 private const val MAX_TOSS_EXTENSIONS = 2
 
 /** One refusal, worded once: several doors ask the same question. */
-private const val NO_GAME_YET = "the game has not started"
+internal const val NO_GAME_YET = "the game has not started"
 
 /** One refusal, worded once: three doors check the same credential. */
 internal const val NO_SEAT_FOR_TOKEN = "no seat holds that token"
@@ -1011,52 +1011,6 @@ private fun settleRound(state: RoomState, nowMs: Double): RoomState {
     } else {
         settled.copy(phase = RoomPhase.BETWEEN_ROUNDS)
     }
-}
-
-/**
- * One edit to the coalition's shared plan.
- *
- * Last edit wins, and any coalition member may make one: three competing plans is not a
- * coalition deciding together, and one draft everybody can reach is what deciding together
- * actually looks like.
- *
- * **A lane whose owner's turn has begun is not editable.** A plan must not change under the
- * hand of the person executing it — the rest stays open, because the round is still going and
- * better information keeps arriving.
- */
-internal fun editPlan(state: RoomState, token: String, plan: CoalitionPlan): Spoken {
-    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
-        ?: return Spoken(state, error = NO_SEAT_FOR_TOKEN)
-    val game = state.game ?: return Spoken(state, error = NO_GAME_YET)
-    if (game.phase != GamePhase.FINAL || game.vintoCallerId == null) {
-        return Spoken(state, error = "there is no round to plan")
-    }
-    if (seatEntry.playerId == game.vintoCallerId) {
-        return Spoken(state, error = "the caller has no coalition to plan with")
-    }
-
-    // The spine, enforced rather than described. A lane belongs to a seat that is playing a
-    // turn in this round, and each seat has at most one — which is also where the *length*
-    // rule comes from: one lane per coalition member and no duplicates means a plan can never
-    // be longer than the round is. Stating it that way rather than as a number means there is
-    // no second place to update when the table size changes.
-    val coalition = game.players.map { it.id }.toSet() - game.vintoCallerId
-    if (plan.lanes.any { it.seat !in coalition }) {
-        return Spoken(state, error = "that seat is not playing a turn in this round")
-    }
-    if (plan.lanes.distinctBy { it.seat }.size != plan.lanes.size) {
-        return Spoken(state, error = "a seat can only have one lane")
-    }
-
-    // **Every** standing locked lane has to come back unchanged — not merely the ones the
-    // sender chose to include. Checking only what was present let a locked lane be deleted by
-    // omitting it, which is the thing locking exists to prevent, reachable by sending less.
-    val sent = plan.lanes.associateBy { it.seat }
-    if (state.plan?.lanes.orEmpty().any { it.locked && sent[it.seat] != it }) {
-        return Spoken(state, error = "that turn has already started")
-    }
-
-    return Spoken(state.copy(plan = plan))
 }
 
 /**

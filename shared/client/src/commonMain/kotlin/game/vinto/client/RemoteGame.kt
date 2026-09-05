@@ -7,8 +7,10 @@ import game.vinto.protocol.LobbyView
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
 import kotlinx.coroutines.CancellationException
@@ -326,7 +328,8 @@ class RemoteRoom(
             // Reconnected mid-game: the session survives; ask for what it missed. The sync
             // that answers jumps the cursor and lands the table on the present.
             session != null -> fire(ClientMessage.Resync(session.cursor))
-            view != null -> _session.value = newSession(view, message.nextIndex)
+            // An app restarted mid-game: a new session, landing on the plan as it stands.
+            view != null -> _session.value = newSession(view, message.nextIndex, message.plan)
             else -> Unit // a lobby; the session appears with the deal
         }
     }
@@ -339,10 +342,11 @@ class RemoteRoom(
         _session.value = newSession(view, message.nextIndex)
     }
 
-    private fun newSession(view: PlayerView, nextIndex: Int) =
+    private fun newSession(view: PlayerView, nextIndex: Int, plan: CoalitionPlan? = null) =
         RemoteGameSession(
             initialView = view,
             initialNextIndex = nextIndex,
+            initialPlan = plan,
             token = ::token,
             sendText = ::sendOrSay,
         )
@@ -455,7 +459,18 @@ class RemoteGameSession internal constructor(
     initialNextIndex: Int,
     private val token: () -> String?,
     private val sendText: suspend (String) -> SendOutcome,
+    initialPlan: CoalitionPlan? = null,
 ) : GameSession {
+
+    /**
+     * The coalition's shared plan, as the room last sent it.
+     *
+     * Set from whichever message carries it — every `events`, `sync` and `joined` does — so a
+     * lane locking on an ordinary action, a reconnect and a restarted app all land on the
+     * present board. The room is the authority; nothing here edits the copy locally.
+     */
+    private val _plan = MutableStateFlow(initialPlan)
+    override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
 
     private val _view = MutableStateFlow(initialView)
     override val view: StateFlow<PlayerView> = _view.asStateFlow()
@@ -567,23 +582,31 @@ class RemoteGameSession internal constructor(
 
     override suspend fun say(talk: TableTalk): String? {
         if (talk.by != playerId) return "you may only speak as $playerId"
-        return when (
-            val outcome = sendText(
-                ProtocolJson.encodeToString(
-                    ClientMessage.serializer(),
-                    ClientMessage.Say(talk),
-                ),
-            )
-        ) {
+        return fireAndForget(ClientMessage.Say(talk))
+    }
+
+    /**
+     * One part of the plan, changed. The room merges it and the board comes back on an
+     * `events`; a refusal comes back as an `error` the session reports like any other.
+     */
+    override suspend fun editPlan(edit: PlanEdit): String? =
+        fireAndForget(ClientMessage.EditPlan(token(), edit))
+
+    override suspend fun agreePlan(agree: Boolean): String? =
+        fireAndForget(ClientMessage.AgreePlan(token(), agree))
+
+    /** Talk-shaped sends: nothing waits on them, and the room's answer is the broadcast. */
+    private suspend fun fireAndForget(message: ClientMessage): String? =
+        when (val outcome = sendText(ProtocolJson.encodeToString(ClientMessage.serializer(), message))) {
             is SendOutcome.Failed -> outcome.reason
             SendOutcome.Sent -> null
         }
-    }
 
     // ------------------------------------------------------------------ fed by RemoteRoom
 
     internal fun applyEvents(message: ServerMessage.Events) {
         _away.value = message.away.toSet()
+        _plan.value = message.plan
         // What the bots said while making these moves, in step with the moves it comments on.
         message.said.forEach(::heard)
         val fresh = message.events.filter { it.index >= cursor }
@@ -626,6 +649,7 @@ class RemoteGameSession internal constructor(
 
     internal fun applySync(message: ServerMessage.Sync) {
         _away.value = message.away.toSet()
+        _plan.value = message.plan
         cursor = maxOf(cursor, message.nextIndex)
         val landing = message.view ?: return
         deliver(listOf(landingFrame(landing)), bots = 0, landing = landing)
@@ -634,6 +658,8 @@ class RemoteGameSession internal constructor(
     /** `between-rounds`: the round is scored and this is where the table now stands. */
     internal fun landOn(view: PlayerView?, nextIndex: Int) {
         cursor = maxOf(cursor, nextIndex)
+        // Between rounds there is no plan: the room threw last round's away at scoring.
+        _plan.value = null
         view?.let { deliver(listOf(landingFrame(it)), bots = 0, landing = it) }
     }
 

@@ -1,7 +1,9 @@
 package game.vinto.client
 
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,6 +112,16 @@ interface GameSession {
     val talk: SharedFlow<TableTalk>
 
     /**
+     * The coalition's shared plan as it stands, or null when none does.
+     *
+     * A board of parts agreed as a whole (design D7a): lanes, sheds, who has agreed and who
+     * last edited. Room state and never game state, so it rides beside the view rather than in
+     * it — online it arrives on every `events`, `sync` and `joined`; in a solo game the session
+     * keeps it. Null before Vinto is called and again once the round is scored.
+     */
+    val plan: StateFlow<CoalitionPlan?>
+
+    /**
      * "I have said what I wanted to say."
      *
      * Closes the coalition's confer window for this seat. Online it ends when every connected
@@ -125,6 +137,24 @@ interface GameSession {
      * seat may say in a window.
      */
     suspend fun say(talk: TableTalk): String?
+
+    /**
+     * Changes one part of the plan: a lane set or cleared, a shed added or removed.
+     *
+     * Refused for the caller, for a seat outside the coalition and for a lane whose turn has
+     * begun — by `CoalitionPlan.edited`, the one function both sessions call, so a solo game and
+     * a room cannot disagree about what a legal edit is. Every edit resets agreement to the
+     * editor. Returns the refusal, or null.
+     */
+    suspend fun editPlan(edit: PlanEdit): String?
+
+    /**
+     * Yes or no to the plan as a whole.
+     *
+     * A yes also counts as [doneConferring]: agreeing is how you finish talking, so the last
+     * member to agree is what starts the round. Refused when there is nothing on the board.
+     */
+    suspend fun agreePlan(agree: Boolean): String?
 }
 
 /** Things that happen to a session which are not simply a new view. */

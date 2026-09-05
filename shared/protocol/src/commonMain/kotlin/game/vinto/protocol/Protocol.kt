@@ -1,7 +1,9 @@
 package game.vinto.protocol
 
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
@@ -56,6 +58,36 @@ sealed interface ClientMessage {
     @Serializable
     @SerialName("say")
     data class Say(val talk: TableTalk) : ClientMessage
+
+    /**
+     * One part of the coalition's shared plan, changed (design D7a).
+     *
+     * A part rather than the whole draft, so two members on different lanes cannot overwrite
+     * each other. Refused for the caller, for a seat outside the coalition and for a lane whose
+     * turn has begun; merged otherwise, with agreement reset to the editor. The room answers as
+     * it answers [MoreTime] — an empty `events` per seat whose `plan` is the whole board and
+     * whose `said` carries the bots' answers for their own lanes — and there is no `planned`
+     * message. Spends the same budget [Say] does, being broadcast to every socket.
+     */
+    @Serializable
+    @SerialName("edit-plan")
+    data class EditPlan(
+        val token: String? = null,
+        val edit: PlanEdit,
+    ) : ClientMessage
+
+    /**
+     * Yes or no to the standing plan as a whole.
+     *
+     * A yes also counts as [DoneConferring]: agreeing is how you finish talking, so the last
+     * member to agree is what starts the round.
+     */
+    @Serializable
+    @SerialName("agree-plan")
+    data class AgreePlan(
+        val token: String? = null,
+        val agree: Boolean,
+    ) : ClientMessage
 
     @Serializable
     @SerialName("join")
@@ -136,6 +168,8 @@ sealed interface ServerMessage {
         val nextIndex: Int,
         val lobby: LobbyView,
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
+        /** See [Sync.plan]. Here so an app restarted mid-final-round lands on the present plan. */
+        val plan: CoalitionPlan? = null,
     ) : ServerMessage
 
     /**
@@ -165,6 +199,8 @@ sealed interface ServerMessage {
          * which is what a strip wants.
          */
         val said: List<TableTalk> = emptyList(),
+        /** See [Sync.plan]. On every batch, because a lane locks on an ordinary action. */
+        val plan: CoalitionPlan? = null,
     ) : ServerMessage
 
     /**
@@ -191,6 +227,16 @@ sealed interface ServerMessage {
          * nothing extra.
          */
         val away: List<String> = emptyList(),
+        /**
+         * The coalition's shared plan as it stands, or absent when none does.
+         *
+         * Beside the view rather than in it, for the reason [away] is: the plan is room state
+         * and never game state (design D6), so it must not ride inside a `PlayerView` that the
+         * engine projects. The same board goes to every seat, the caller's included — it is
+         * built only from public claims. A client sets its copy from whichever message carries
+         * it, so a reconnect lands on the present plan rather than on the one it remembered.
+         */
+        val plan: CoalitionPlan? = null,
     ) : ServerMessage
 
     /** Somebody said something. Broadcast to every seat, the Vinto caller included. */

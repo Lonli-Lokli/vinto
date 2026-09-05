@@ -2,12 +2,11 @@ package game.vinto.room
 
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
-import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.Lane
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
@@ -162,14 +161,10 @@ class ConferWindowTest {
         val state = decodeRoom(finalRoundCalledBy(seat = 1))
         val ann = checkNotNull(state.seats[0].playerId)
 
-        val first = editPlan(state, TOKEN_A, CoalitionPlan(lanes = listOf(Lane(ann))))
+        val first = editPlan(state, TOKEN_A, PlanEdit.SetLane(ann, Step.TakeTheDiscard), START)
         assertNull(first.error)
 
-        val second = editPlan(
-            first.state,
-            TOKEN_A,
-            CoalitionPlan(lanes = listOf(Lane(ann, Step.Declare(Rank.KING)))),
-        )
+        val second = editPlan(first.state, TOKEN_A, PlanEdit.SetLane(ann, Step.Declare(Rank.KING)), START)
 
         assertNull(second.error)
         assertEquals(Step.Declare(Rank.KING), second.state.plan?.lanes?.single()?.step)
@@ -178,7 +173,8 @@ class ConferWindowTest {
     @Test
     fun theCallerHasNoCoalitionToPlanWith() {
         val state = decodeRoom(finalRoundCalledBy(seat = 1))
-        assertNotNull(editPlan(state, TOKEN_B, CoalitionPlan()).error)
+        val ann = checkNotNull(state.seats[0].playerId)
+        assertNotNull(editPlan(state, TOKEN_B, PlanEdit.SetLane(ann, Step.TakeTheDiscard), START).error)
     }
 
     @Test
@@ -194,22 +190,26 @@ class ConferWindowTest {
         val dealt = checkNotNull(called.game)
         val caller = checkNotNull(dealt.vintoCallerId)
         val coalition = dealt.players.filter { it.id != caller }
-        val game = dealt.copy(currentPlayerIndex = dealt.players.indexOfFirst { it.id == coalition.first().id })
-        val room = called.copy(game = game)
 
         val onPlay = coalition.first().id
         val other = coalition.last().id
         check(onPlay != other)
 
+        // Planned in the window, with the caller still on play — a seat whose turn has begun
+        // takes no fresh lane, which PlanDoorTest holds — and then the turn moves.
         val planned = editPlan(
-            room,
+            editPlan(called, TOKEN_A, PlanEdit.SetLane(onPlay, Step.TakeTheDiscard), START).state,
             TOKEN_A,
-            CoalitionPlan(lanes = listOf(Lane(onPlay), Lane(other))),
+            PlanEdit.SetLane(other, Step.TakeTheDiscard),
+            START,
         )
         assertNull(planned.error)
+        val moved = planned.state.copy(
+            game = dealt.copy(currentPlayerIndex = dealt.players.indexOfFirst { it.id == onPlay }),
+        )
 
         // Pacing is what notices whose turn it is, so an alarm is enough to lock it.
-        val after = decodeLifecycle(onAlarm(encode(planned.state), START + 2_000.0)).state
+        val after = decodeLifecycle(onAlarm(encode(moved), START + 2_000.0)).state
         val lanes = checkNotNull(after.plan).lanes
 
         assertTrue(lanes.first { it.seat == onPlay }.locked, "the turn in progress was left editable")
@@ -223,7 +223,7 @@ class ConferWindowTest {
         // it over would open the next round on somebody's stale agreement.
         val room = decodeRoom(finalRoundCalledBy(seat = 1))
         val ann = checkNotNull(room.seats[0].playerId)
-        val planned = editPlan(room, TOKEN_A, CoalitionPlan(lanes = listOf(Lane(ann)))).state
+        val planned = editPlan(room, TOKEN_A, PlanEdit.SetLane(ann, Step.TakeTheDiscard), START).state
         assertNotNull(planned.plan, "the fixture never got a plan to lose")
 
         val played = decodeRoom(playRoundOut(encode(planned), seed = 3, from = START + 3_000.0))

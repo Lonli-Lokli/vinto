@@ -1,6 +1,7 @@
 package game.vinto.room
 
 import game.vinto.bot.BotRunner
+import game.vinto.bot.botsAnswering
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
@@ -8,9 +9,15 @@ import game.vinto.engine.Validation
 import game.vinto.protocol.LoggedAction
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PlanEdit
+import game.vinto.shapes.PlanEditOutcome
 import game.vinto.shapes.Sha256
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
+import game.vinto.shapes.agreeing
+import game.vinto.shapes.coalitionInTurnOrder
+import game.vinto.shapes.edited
+import game.vinto.shapes.lockingLaneOf
 import kotlin.random.Random
 
 /**
@@ -148,13 +155,80 @@ internal fun doneConferring(state: RoomState, token: String): Spoken {
  *
  * Once locked, a lane stays locked. A turn does not un-begin.
  */
-internal fun RoomState.withLanesLocked(plan: CoalitionPlan): CoalitionPlan {
-    val onPlay = game?.let { it.players.getOrNull(it.currentPlayerIndex)?.id } ?: return plan
-    return plan.copy(
-        lanes = plan.lanes.map { lane ->
-            if (lane.seat == onPlay) lane.copy(locked = true) else lane
-        },
-    )
+internal fun RoomState.withLanesLocked(plan: CoalitionPlan): CoalitionPlan =
+    plan.lockingLaneOf(game?.let { it.players.getOrNull(it.currentPlayerIndex)?.id })
+
+/**
+ * One part of the coalition's shared plan, changed (design D7a).
+ *
+ * The rules — who may edit, what a lane may name, that a locked lane is not a target, that
+ * every edit resets agreement to the editor — are `CoalitionPlan.edited` in `shared/shapes`,
+ * and the solo session calls the same function. This door adds only what a room has and a solo
+ * game does not: a token to resolve, a budget to spend (an edit is broadcast to every socket,
+ * like a sentence), and bots on other seats whose answers for their own lanes ride back in
+ * [Spoken.talk].
+ */
+@Suppress("ReturnCount")
+internal fun editPlan(state: RoomState, token: String, edit: PlanEdit, nowMs: Double): Spoken {
+    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return Spoken(state, error = NO_SEAT_FOR_TOKEN)
+    val game = state.game ?: return Spoken(state, error = NO_GAME_YET)
+    val caller = game.vintoCallerId
+    if (game.phase != GamePhase.FINAL || caller == null) {
+        return Spoken(state, error = "there is no round to plan")
+    }
+    val editor = seatEntry.playerId
+    if (editor == null || editor == caller) {
+        return Spoken(state, error = "the caller has no coalition to plan with")
+    }
+
+    val spend = spendBudget(state, seatEntry.index, nowMs)
+    spend.retryAfterMs?.let {
+        return Spoken(spend.state, error = "too much planning", retryAfterMs = it)
+    }
+
+    val coalition = coalitionInTurnOrder(game.players.map { it.id }, caller)
+    val onPlay = game.players.getOrNull(game.currentPlayerIndex)?.id
+    val merged = when (val outcome = state.plan.edited(edit, editor, coalition, onPlay)) {
+        is PlanEditOutcome.Refused -> return Spoken(spend.state, error = outcome.reason)
+        is PlanEditOutcome.Edited -> outcome.plan
+    }
+
+    // The bots answer for their own lanes on the table *as played* — a seat the room has
+    // taken over is a bot to the driver (design D11), so it answers as one.
+    val played = asPlayed(game, state.seats)
+    val bots = played.players.filter { it.isBot && it.id != caller }.map { it.id }
+    val answered = botsAnswering(played, merged, edit, editor, bots)
+    return Spoken(spend.state.copy(plan = answered.plan), talk = answered.said)
+}
+
+/**
+ * Yes or no to the plan as a whole.
+ *
+ * A yes is also "I have said what I wanted to say": agreeing is how you finish talking, so the
+ * last connected member to agree is what closes the window and starts the round. A no is only a
+ * no — the member may still be talking. Either is refused when there is nothing on the board
+ * to have an opinion about.
+ */
+@Suppress("ReturnCount")
+internal fun agreePlan(state: RoomState, token: String, agree: Boolean): Spoken {
+    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return Spoken(state, error = NO_SEAT_FOR_TOKEN)
+    val game = state.game ?: return Spoken(state, error = NO_GAME_YET)
+    val caller = game.vintoCallerId
+    if (game.phase != GamePhase.FINAL || caller == null) {
+        return Spoken(state, error = "there is no round to plan")
+    }
+    val me = seatEntry.playerId
+    if (me == null || me == caller) {
+        return Spoken(state, error = "the caller has no coalition to plan with")
+    }
+    val plan = state.plan?.takeUnless { it.isEmpty }
+        ?: return Spoken(state, error = "there is nothing on the board to agree to")
+
+    val agreed = state.copy(plan = plan.agreeing(me, agree))
+    val stillTalking = !agree || !conferring(agreed) || seatEntry.index !in conferringHumans(agreed)
+    return if (stillTalking) Spoken(agreed) else doneConferring(agreed, token)
 }
 
 /**

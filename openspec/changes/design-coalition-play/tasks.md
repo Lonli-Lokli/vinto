@@ -30,6 +30,17 @@
 > closes the worst of it — it was written, rendered and translated into nineteen locales with
 > no button anywhere producing one, and it answers the coalition's only real question (whose
 > hand are we pushing?) in one tap. See 1.35.
+>
+> **Third pass, same day — the plan's wire, decided and built to the session.** The open
+> question 3.2 left was settled in discussion rather than by the first plausible option: the
+> plan is a **board of parts agreed as a whole** (design D7a) — anyone but the caller sets or
+> clears any lane, adds or removes any shed, the room merges the part, and the coalition says
+> yes to the board, with every edit resetting the yeses. Agreeing counts as done conferring.
+> One pure door in `shared/shapes` decides what a legal edit is for the room and the solo
+> session alike; the bots answer for their own lanes; the board rides on every `events`,
+> `sync` and `joined` and there is no new server message. Built through to `GameSession`
+> and held by five new suites. What is **not** built is the screen — 3.2f — and with it the
+> viewer's own lane in the offered slot, which is what will finally close 2.2.
 
 Three phases, ordered so each is usable on its own (design D14). Phase 1 improves local play by
 itself — today a person watches three silent bots pool information they cannot hear. Phase 2 is
@@ -230,6 +241,9 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [ ] 2.2 A proposal addressed to the viewer is a one-tap move; accepting dispatches an ordinary
       — **corrected:** `heard()` *is* called — `rememberHolder`'s `LaunchedEffect` collects `session.talk` into it — and the two buttons are now drawn and tested (`CoalitionScreenTest`). What is missing is upstream: **nothing outside a test constructs a `Proposal`**, so `offered` is never set in the shipping app. Bots emit `GiveMe` by design (2.5); a person has no way to compose a move for somebody else, which was phase 3's composer. The receiving half is finished; the speaking half is the open question
       `GameAction` from the viewer's own seat
+      — **and the answer (design D7a):** the plan is the speaking half. On a member's turn their
+      own lane is what the offered slot shows, pre-armed when the draw makes the step legal —
+      3.2f. Nothing has to construct a `Proposal` for that
 - [x] 2.3 Declining is possible and visible to the proposer
       — declining is reachable and a bot's answer is broadcast. A bot still never *originates* a `Proposal` — it asks for cards with `GiveMe`, which is the only thing its plan can honestly say about somebody else's turn
 - [x] 2.4 Bots evaluate a proposal with their own decision service, perform or decline, and say
@@ -251,10 +265,52 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       — **done (bf71c37).** The shape existed and the length rule was only a comment: `editPlan` accepted any lanes for any seat, the caller included. A lane now belongs to a coalition seat and a seat has one lane, which makes the length rule a consequence rather than a number — so there is no second place to update when the table size changes. Held by `PlanDoorTest`
       as many lanes as there are turns left
 - [ ] 3.2 One shared draft per final round, editable by any coalition member and by bots, last
-      — **audit:** `editPlan` exists room-side and is now enforced (3.1, 3.3), but has **no wire message, no client and no bot** touching it. A `ClientMessage.EditPlan` / `ServerMessage.Planned` pair, `editPlanEnvelopes`, and `plan`/`editPlan` on `GameSession` were drafted and **deliberately backed out unmerged**: the shape of that wire is a real decision — whole draft or patches, who it broadcasts to, whether a solo game holds one at all — and it belongs to the plan rather than ahead of it
       edit standing; room-side, never in `GameState`, discarded at scoring
+      — **decided (design D7a) and split.** The plan is a board of parts, agreed as a whole:
+      an edit names one lane or one shed and the room merges it, so two people working on
+      different lanes cannot overwrite each other; agreement is to the combined plan, reset to
+      the editor by every edit; a plan not agreed when the window closes stands as a
+      suggestion. "Whole draft or patches" was the wrong question — a whole draft sent on every
+      gesture loses the other person's lane whenever two messages cross, and the first cut of
+      this item was exactly that
+  - [x] 3.2a `PlanEdit` in `shared/shapes` — set a lane, clear a lane, add a shed, remove a
+        shed — and one pure `edited` that both doors call: the caller and any seat outside the
+        coalition are refused, a locked lane cannot be the target, one lane per seat, agreement
+        reset to the editor. The `GameAction.retired` shape (design D2): a rule both doors must
+        answer identically lives in neither. Held by `PlanEditTest`, fourteen cases on JVM, JS,
+        Wasm and the iOS simulator. The door is also told who is on play, and refuses a fresh
+        lane for that seat: locking is pacing's doing and runs after the fact
+  - [x] 3.2b The room's door takes a `PlanEdit`, not a whole plan; `agreePlan` records a yes or a
+        no, and a yes counts as done conferring — when the last connected member agrees, the
+        window closes and the bots play
+        — `PlanDoorTest` rewritten around parts: two members on different lanes both land, a
+        locked lane and a turn in progress refuse, an edit resets the others' yes, the first yes
+        marks a seat done and the last closes the window, a no is only a no, an unagreed board
+        survives the deadline as a suggestion, and the edit spends the talk budget
+  - [x] 3.2c Bots answer for their own lane on every edit that touches it, with the within-reach
+        test `answerTo` already applies to a single proposal, on the shared picture plus their
+        own cards; an empty lane is a yes; the answer goes out as talk
+        — `answerForLane` and `botsAnswering` in `shared/bot`, held by `LaneAnswerTest`: a
+        swap that lowers the lowest hand is a yes, one that raises it "leaves us worse", a step
+        naming a card that is not there is a no, only the bot whose lane was set speaks and
+        every bot's agreement is recorded regardless
+  - [x] 3.2d The wire: `edit-plan` and `agree-plan` in; `plan` on every `events`, `sync` and
+        `joined` whenever one stands; **no new server message** — an edit is answered the way
+        `more-time` is, with an empty `events` per seat carrying the board and the bots' answers.
+        Worker exports and the shim's two cases, which is where 1.17's first defect lived
+        — `PROTOCOL.md` now lists them, and the four talk messages it had never listed either;
+        its clocks table named the retired `leaderMsRemaining` and names `conferMsRemaining`
+  - [x] 3.2e `GameSession.plan`, `editPlan` and `agreePlan` on both sessions; the local session
+        calls the same `edited` and has its bots answer in-process
+        — `RemotePlanTest` (the board comes off events, sync and a mid-round join; an edit goes
+        out as one part and the copy waits for the room) and `SharedPlanTest` (a bot answers
+        for its lane, the caller is refused, agreeing ends the window, the plan dies with the
+        round)
+  - [ ] 3.2f The screens: the board with each part's last editor, the agreement row, "Agree"
+        beside "Done" in the confer window, and the viewer's own lane in the offered slot on
+        their turn — which is what closes 2.2
 - [x] 3.3 A lane locks when its owner's turn begins; later lanes stay editable
-      — **done (bf71c37).** The refusal only looked at the lanes that were *present*, so a locked lane could be deleted by omitting it — locking defeated by sending less. Every standing locked lane must now come back unchanged. `ConferWindowTest.aLaneLocksWhenItsOwnersTurnBegins` had been proving this on a lane belonging to the **caller**: straight out of a call the caller is still the current player, because the window opens before the turn moves, so the test was encoding the hole. It winds on to a coalition member's turn now
+      — **done (bf71c37).** The refusal only looked at the lanes that were *present*, so a locked lane could be deleted by omitting it — locking defeated by sending less. Every standing locked lane had to come back unchanged; with 3.2a the rule is simpler still, because an edit names one part: a locked lane cannot be the target of one. `ConferWindowTest.aLaneLocksWhenItsOwnersTurnBegins` had been proving this on a lane belonging to the **caller**: straight out of a call the caller is still the current player, because the window opens before the turn moves, so the test was encoding the hole. It winds on to a coalition member's turn now
 - [ ] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
       caller's cards structurally absent
 - [ ] 3.5 The composer reuses the existing per-action targeting (taps, rank rail, seat grid)
@@ -273,8 +329,12 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 3.10 Detection off the `PublicReveal` stream, in the client; the engine never compares a
       claim to a card
 - [ ] 3.11 A draw that beats the plan offers a re-plan rather than insisting on the agreed step
+      — the re-plan is an ordinary edit through the same door (3.2a): unlocked lanes stay
+      editable mid-round and any edit resets agreement, so this needs no second mechanism
 - [ ] 3.12 Copy for a broken plan that treats a wrong claim as the game working
 - [ ] 3.13 Bots edit the plan, replacing the step they own and saying why
+      — **deliberately after 3.2c.** A bot that replaced a lane the moment a person set it would
+      reset agreement in a loop; the bound on that is a decision, not a default
 - [ ] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
       and the proposal that sets it up — "put down a 7". No conditional language (design D13a)
 - [ ] 3.15 The toss-in risk is shown to the hand the coalition is pushing: a wrong one costs a

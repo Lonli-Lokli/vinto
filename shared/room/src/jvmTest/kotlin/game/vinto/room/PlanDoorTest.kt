@@ -1,46 +1,61 @@
 package game.vinto.room
 
+import game.vinto.protocol.ProtocolJson
+import game.vinto.protocol.ServerMessage
 import game.vinto.shapes.CardAt
-import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
-import game.vinto.shapes.Lane
+import game.vinto.shapes.PlanEdit
+import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
+import game.vinto.shapes.TableTalk
+import game.vinto.shapes.laneOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The door the shared plan comes through.
+ * The door the shared plan comes through — a **board of parts agreed as a whole** (design D7a).
  *
- * One draft per final round, edited by anybody in the coalition, last edit standing — so this
- * door is the only thing between "we decide together" and "anybody can write anything". The
- * rules it has to hold are all structural, because the *content* of a plan is a matter of
- * opinion and none of the room's business:
- *
- *  - **the spine is fixed** (design D7): the final round is one turn per coalition member, in
- *    table order after the caller, so a plan has at most that many lanes and each names a seat
- *    that is actually playing one
- *  - **the caller has no lane**, structurally rather than by a check at the point of use — the
- *    coalition may not touch the caller's cards, and a plan that could name their turn is a
- *    plan that could name their cards
- *  - **a locked lane cannot be edited *or dropped*.** Dropping was the hole: the refusal only
- *    looked at lanes that were present, so omitting the locked one deleted the step out from
- *    under the person already playing it
+ * The merge and the refusals are `CoalitionPlan.edited` in `shared/shapes`, tested there; what
+ * this holds is what a *room* adds around it: a token resolving to a seat, the caller refused,
+ * the budget spent, the bots answering for their own lanes, agreement doubling as done
+ * conferring, and the board riding on every message so a reconnect lands on it.
  */
 class PlanDoorTest {
 
     @Test
-    fun anybodyInTheCoalitionMayWriteTheOnePlan() {
+    fun anybodyInTheCoalitionMayEditOnePart() {
         val state = finalRoundCalledByABot()
-        val room = decodeRoom(state)
-        val mine = checkNotNull(room.seats[0].playerId)
+        val mine = seatId(state, 0)
 
-        val edited = editPlan(decodeRoom(state), TOKEN_A, oneLane(mine))
+        val edited = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(mine, take()), START)
 
         assertNull(edited.error)
-        assertEquals(1, edited.state.plan?.lanes?.size, "the plan did not land")
+        val plan = assertNotNull(edited.state.plan, "the plan did not land")
+        assertEquals(take(), plan.laneOf(mine)?.step)
+        assertEquals(listOf(mine), plan.agreed.filter { it == mine }, "making the edit is agreeing to it")
+        assertEquals(mine, plan.editedBy)
+    }
+
+    @Test
+    fun twoMembersOnDifferentLanesBothLand() {
+        // The whole point of a part rather than a draft: Ann and Bob each send their lane and
+        // neither send carries the other's, so nothing can be overwritten by crossing.
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
+        val bob = seatId(state, 1)
+
+        val first = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(ann, take()), START)
+        val second = editPlan(first.state, TOKEN_B, PlanEdit.SetLane(bob, Step.Declare(Rank.KING)), START)
+
+        assertNull(second.error)
+        val plan = assertNotNull(second.state.plan)
+        assertEquals(take(), plan.laneOf(ann)?.step, "Ann's lane was lost to Bob's edit")
+        assertEquals(Step.Declare(Rank.KING), plan.laneOf(bob)?.step)
     }
 
     @Test
@@ -51,115 +66,224 @@ class PlanDoorTest {
         val state = finalRoundCalledByABot()
         val caller = checkNotNull(decodeRoom(state).game?.vintoCallerId)
 
-        val edited = editPlan(decodeRoom(state), TOKEN_A, oneLane(caller))
+        val edited = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(caller, take()), START)
 
         assertNotNull(edited.error, "the coalition planned the caller's turn")
         assertNull(edited.state.plan, "and nothing was written")
     }
 
     @Test
+    fun aStepMayNotTouchTheCallersCards() {
+        val state = finalRoundCalledByABot()
+        val room = decodeRoom(state)
+        val mine = seatId(state, 0)
+        val caller = checkNotNull(room.game?.vintoCallerId)
+
+        val edited = editPlan(
+            room,
+            TOKEN_A,
+            PlanEdit.SetLane(mine, Step.Swap(CardAt(mine, 0), CardAt(caller, 0))),
+            START,
+        )
+
+        assertNotNull(edited.error, "a step reached for the caller's card")
+    }
+
+    @Test
     fun aLaneNamesASeatThatIsActuallyPlayingOne() {
         val state = finalRoundCalledByABot()
 
-        val edited = editPlan(decodeRoom(state), TOKEN_A, oneLane("nobody-at-this-table"))
+        val edited = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane("nobody-at-this-table", take()), START)
 
         assertNotNull(edited.error, "a lane was accepted for a seat that does not exist")
     }
 
     @Test
-    fun aPlanCannotHaveMoreLanesThanTheRoundHasTurns() {
-        // The spine is what makes a plan buildable at all — three lanes, order fixed. A plan
-        // with a lane per *card* would be a different feature wearing this one's shape.
+    fun aLockedLaneCannotBeSetOrCleared() {
+        // The turn in progress is the one step that must stop moving. An edit *names* its lane,
+        // so "not a target" is the whole check — where a whole-draft door had to notice the
+        // locked lane being left out.
         val state = finalRoundCalledByABot()
         val room = decodeRoom(state)
-        val mine = checkNotNull(room.seats[0].playerId)
+        val mine = seatId(state, 0)
+        val bob = seatId(state, 1)
 
-        val edited = editPlan(
-            decodeRoom(state),
-            TOKEN_A,
-            CoalitionPlan(lanes = List(9) { oneLane(mine).lanes.single() }),
-        )
+        // Planned in the window, with the caller still on play; then Bob's turn begins, and
+        // pacing — an alarm here — is what notices and locks his lane.
+        val planned = editPlan(room, TOKEN_A, PlanEdit.SetLane(bob, take()), START).state
+        val onBobsTurn = planned.copy(game = checkNotNull(planned.game).copy(currentPlayerIndex = 1))
+        val locked = decodeLifecycle(onAlarm(encode(onBobsTurn), START + 2_000.0)).state
+        assertTrue(locked.plan?.laneOf(bob)?.locked == true, "the fixture never locked the lane")
 
-        assertNotNull(edited.error, "a plan longer than the round was accepted")
+        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(bob, Step.Declare(Rank.KING)), START).error)
+        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.ClearLane(bob), START).error)
+        assertNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(mine, take()), START).error, "a later lane froze too")
     }
 
     @Test
-    fun aLockedLaneCannotBeDroppedByLeavingItOut() {
-        // The hole this closes: the refusal only ever looked at the lanes that were *present*,
-        // so omitting the locked one deleted the step out from under the seat already playing
-        // it — the exact thing locking exists to prevent, reachable by sending less.
+    fun aTurnInProgressCannotBeGivenAFreshLane() {
+        // Before pacing has stamped the lock: the seat on play right now is the same turn.
         val state = finalRoundCalledByABot(onPlay = 1)
-        val room = decodeRoom(state)
-        val mine = checkNotNull(room.seats[0].playerId)
-        val onPlay = checkNotNull(room.game?.let { it.players[it.currentPlayerIndex].id })
-        check(mine != onPlay) { "the point of this test is that the locked lane is somebody else's" }
+        val bob = seatId(state, 1)
 
-        val withLock = encode(
-            room.copy(
-                plan = CoalitionPlan(
-                    lanes = listOf(
-                        Lane(seat = onPlay, step = null, locked = true),
-                        Lane(seat = mine, step = null, locked = false),
-                    ),
-                ),
-            ),
+        assertNotNull(editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(bob, take()), START).error)
+    }
+
+    @Test
+    fun anEditResetsAgreementToTheEditor() {
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
+        val bob = seatId(state, 1)
+
+        val set = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(ann, take()), START).state
+        val agreed = agreePlan(set, TOKEN_B, agree = true).state
+        assertTrue(bob in checkNotNull(agreed.plan).agreed, "Bob's yes was not recorded")
+
+        val changed = editPlan(agreed, TOKEN_A, PlanEdit.SetLane(ann, Step.Declare(Rank.KING)), START).state
+        assertFalse(bob in checkNotNull(changed.plan).agreed, "a yes to a plan that no longer exists is not a yes")
+        assertTrue(ann in checkNotNull(changed.plan).agreed)
+    }
+
+    @Test
+    fun agreeingIsHowYouFinishTalking() {
+        // Two people in the coalition, the window open. The first yes marks that seat done;
+        // the second closes the window, exactly as two `done-conferring`s would.
+        val state = finalRoundCalledByABot()
+        val room = decodeRoom(state)
+        assertTrue(conferring(room), "the fixture's window is not open")
+        val ann = seatId(state, 0)
+
+        val set = editPlan(room, TOKEN_A, PlanEdit.SetLane(ann, take()), START).state
+        val one = agreePlan(set, TOKEN_A, agree = true)
+        assertNull(one.error)
+        assertTrue(conferring(one.state), "one yes closed a window two people were in")
+        assertEquals(listOf(0), one.state.conferReady)
+
+        val both = agreePlan(one.state, TOKEN_B, agree = true)
+        assertNull(both.error)
+        assertFalse(conferring(both.state), "the last yes did not close the window")
+    }
+
+    @Test
+    fun aNoIsOnlyANo() {
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
+
+        val set = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(ann, take()), START).state
+        val no = agreePlan(set, TOKEN_B, agree = false)
+
+        assertNull(no.error)
+        assertTrue(no.state.conferReady.isEmpty(), "a no was taken as done talking")
+        assertTrue(conferring(no.state))
+    }
+
+    @Test
+    fun anEmptyBoardIsNothingToAgreeTo() {
+        val state = finalRoundCalledByABot()
+        assertNotNull(agreePlan(decodeRoom(state), TOKEN_A, agree = true).error)
+    }
+
+    @Test
+    fun anUnagreedPlanStandsAsASuggestionWhenTheWindowCloses() {
+        // Propose, never command, applies to a plan too: the deadline ends the talking, not
+        // the board. The person on play sees what was suggested and who agreed, and decides.
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
+
+        val set = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(ann, take()), START).state
+        // The first alarm arms the window's deadline; the second is past it.
+        val armed = decodeLifecycle(onAlarm(encode(set), START)).state
+        assertTrue(conferring(armed), "the fixture's window closed on being armed")
+        val expired = decodeLifecycle(onAlarm(encode(armed), START + 60_000.0)).state
+
+        assertFalse(conferring(expired), "the deadline did not close the window")
+        val plan = assertNotNull(expired.plan, "the deadline voided the plan")
+        assertEquals(take(), plan.laneOf(ann)?.step)
+        assertEquals(listOf(ann), plan.agreed.filter { it == ann })
+    }
+
+    @Test
+    fun aBotAnswersForItsOwnLaneAndForNobodyElses() {
+        val state = finalRoundCalledByABot()
+        val room = decodeRoom(state)
+        val ann = seatId(state, 0)
+        val caller = checkNotNull(room.game?.vintoCallerId)
+        val bot = checkNotNull(room.seats.first { it.isBot && it.playerId != caller }.playerId)
+
+        // Setting the bot's lane gets an answer, addressed to whoever set it, and its yes or no
+        // is what its agreement follows.
+        val asked = editPlan(room, TOKEN_A, PlanEdit.SetLane(bot, take()), START)
+        val answer = assertIs<TableTalk.Answer>(asked.talk, "the bot said nothing about its own lane")
+        assertEquals(bot, answer.by)
+        assertEquals(ann, answer.to)
+        assertEquals(
+            answer.says == TableTalk.Answer.Says.YES,
+            bot in checkNotNull(asked.state.plan).agreed,
+            "the bot's agreement does not match what it said",
         )
 
-        val edited = editPlan(decodeRoom(withLock), TOKEN_A, oneLane(mine))
+        // Setting somebody else's lane: the bot re-answers in silence.
+        val elsewhere = editPlan(asked.state, TOKEN_A, PlanEdit.SetLane(ann, take()), START)
+        assertNull(elsewhere.talk, "a bot spoke about a lane that is not its own")
+    }
 
-        assertNotNull(edited.error, "a locked lane was dropped by omitting it")
-        assertTrue(
-            edited.state.plan?.lanes.orEmpty().any { it.seat == onPlay && it.locked },
-            "and the lock survived the attempt",
+    @Test
+    fun thePlanRidesOnEveryEventsAndSync() {
+        // A lane locks on an ordinary action and a reconnect lands on the present, so the board
+        // goes wherever the view goes rather than in a message of its own.
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
+        val edit = ProtocolJson.encodeToString(PlanEdit.serializer(), PlanEdit.SetLane(ann, take()))
+
+        val envelopes = decodeEnvelopes(editPlanEnvelopes(state, TOKEN_A, edit, START))
+        assertNull(envelopes.error)
+        assertEquals(
+            decodeRoom(state).seats.count { it.playerId != null },
+            envelopes.messages.size,
+            "not every seat was told",
+        )
+        envelopes.messages.values.forEach { text ->
+            val message = assertIs<ServerMessage.Events>(
+                ProtocolJson.decodeFromString(ServerMessage.serializer(), text),
+            )
+            assertTrue(message.events.isEmpty(), "an edit moved a card")
+            assertEquals(take(), message.plan?.laneOf(ann)?.step, "the board did not ride on the events")
+        }
+
+        val sync = ProtocolJson.decodeFromString(
+            ServerMessage.serializer(),
+            syncEnvelope(encode(envelopes.state), seat = 1, sinceIndex = 0, nowMs = START),
+        )
+        assertEquals(
+            take(),
+            assertIs<ServerMessage.Sync>(sync).plan?.laneOf(ann)?.step,
+            "a reconnect would lose the plan",
         )
     }
 
     @Test
-    fun anUnchangedLockedLaneMayBeResentBesideAnEdit() {
-        // The other half, and the commoner one: a client editing a later lane sends the whole
-        // plan back, locked lanes and all. Refusing that would make the plan uneditable the
-        // moment the first turn began.
-        val state = finalRoundCalledByABot(onPlay = 1)
-        val room = decodeRoom(state)
-        val mine = checkNotNull(room.seats[0].playerId)
-        val onPlay = checkNotNull(room.game?.let { it.players[it.currentPlayerIndex].id })
-        check(mine != onPlay)
-        val locked = Lane(seat = onPlay, step = null, locked = true)
+    fun aPlanEditSpendsTheTalkBudget() {
+        // Broadcast to every socket, so charged like a sentence rather than free.
+        val state = finalRoundCalledByABot()
+        val ann = seatId(state, 0)
 
-        val withLock = encode(room.copy(plan = CoalitionPlan(lanes = listOf(locked))))
+        val edited = editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(ann, take()), START)
 
-        val edited = editPlan(
-            decodeRoom(withLock),
-            TOKEN_A,
-            CoalitionPlan(lanes = listOf(locked, Lane(seat = mine, step = null, locked = false))),
-        )
-
-        assertNull(edited.error, "resending an unchanged locked lane was refused: ${edited.error}")
-        assertEquals(2, edited.state.plan?.lanes?.size)
+        assertNotNull(edited.state.buckets[0], "the edit cost nothing")
     }
 
-    /** A plan with one lane for [seat], carrying a step so it is not vacuously empty. */
-    private fun oneLane(seat: String) = CoalitionPlan(
-        lanes = listOf(
-            Lane(
-                seat = seat,
-                step = Step.Swap(
-                    from = CardAt(seat = seat, position = 0, anchor = null),
-                    to = CardAt(seat = seat, position = 1, anchor = null),
-                ),
-                locked = false,
-            ),
-        ),
-    )
+    private fun take(): Step = Step.TakeTheDiscard
+
+    private fun seatId(state: String, seat: Int): String = checkNotNull(decodeRoom(state).seats[seat].playerId)
 
     /**
      * A dealt room in a final round a *bot* called, so every human seat is in the coalition.
      *
-     * [onPlay] is named rather than inherited from the deal, because the two lock tests turn on
-     * whether the locked lane belongs to the editor or to somebody else — and a fixture that
-     * left that to the shuffle would pass or fail for reasons the test never states.
+     * Straight out of a call the caller is still on play — the window opens before the turn
+     * moves — so that is the default. [onPlay] names a coalition seat for the tests that are
+     * about a turn in progress, rather than leaving it to the shuffle.
      */
-    private fun finalRoundCalledByABot(onPlay: Int = 0): String {
+    private fun finalRoundCalledByABot(onPlay: Int? = null): String {
         val room = decodeRoom(dealtRoom())
         val game = checkNotNull(room.game)
         val caller = checkNotNull(room.seats.last { it.tokenHash == null }.playerId)
@@ -169,7 +293,7 @@ class PlanDoorTest {
                     phase = GamePhase.FINAL,
                     finalTurnTriggered = true,
                     vintoCallerId = caller,
-                    currentPlayerIndex = onPlay,
+                    currentPlayerIndex = onPlay ?: game.players.indexOfFirst { it.id == caller },
                     players = game.players.map { it.copy(isVintoCaller = it.id == caller) },
                 ),
             ),

@@ -132,10 +132,32 @@ single-player included.
 ### Requirement: The coalition shares one plan
 
 The coalition SHALL have at most one plan per final round, readable by every seat and editable
-by every coalition member — bots included — with the most recent edit standing.
+by every coalition member — bots included. An edit SHALL name **one part** of the plan — a lane
+set, replaced or cleared, or a shed added or removed — and SHALL be merged into the standing
+plan, so that two members editing different parts each see both edits. Two edits to the same
+part SHALL resolve as the most recent standing.
 
 A plan SHALL be a sequence of steps, each naming the seat whose turn it belongs to. It SHALL
 have at most as many lanes as there are turns left in the round.
+
+The plan SHALL carry who has **agreed** to it as a whole. Every edit SHALL reset agreement to
+the editor alone. A plan SHALL count as agreed when every connected coalition human and every
+coalition bot has agreed. Agreeing SHALL count as being done conferring. A plan that is not
+agreed when the confer window closes SHALL stand as a suggestion showing who agreed, and SHALL
+NOT be discarded.
+
+A coalition bot SHALL answer for its own lane whenever an edit touches it — agreeing where the
+step leaves the coalition's lowest hand no worse on the shared picture, declining with its
+reason otherwise — and SHALL agree silently to an empty lane. A bot SHALL NOT evaluate another
+seat's lane with that seat's private cards.
+
+On a member's own turn, the client SHALL show that member's own lane as the offered move, with
+the targets pre-armed when the drawn card or the discard top makes the step legal, and as words
+alone otherwise. Nothing SHALL require the member to take it.
+
+Solo play SHALL hold a plan under the same rules, so that the same screens work in both lives
+of `GameSession`; the rules for a legal edit SHALL live in one shared function both sessions
+call.
 
 A lane SHALL lock when its owner's turn begins, so that a plan cannot change under the hand of
 the person executing it; later lanes SHALL stay editable.
@@ -146,8 +168,24 @@ cards as a target for any move, the coalition being forbidden to touch them.
 
 #### Scenario: Two members edit the same plan
 
-- **WHEN** two coalition members each edit the plan during the confer window
+- **WHEN** two coalition members each edit a different lane during the confer window
 - **THEN** both see one plan carrying both edits, not two competing plans
+
+#### Scenario: An edit unsettles an agreement
+
+- **WHEN** every member has agreed and one of them replaces a lane
+- **THEN** the plan shows only the editor as agreed, and the others are asked again
+
+#### Scenario: The last yes starts the round
+
+- **WHEN** the last connected coalition member agrees to the plan during the confer window
+- **THEN** the window closes and the first coalition turn is played, with nobody having to say
+  "done" separately
+
+#### Scenario: A bot is asked to do something it would not
+
+- **WHEN** a member sets a bot's lane to a step that leaves the coalition's lowest hand higher
+- **THEN** the bot declines with its reason, is not counted as agreed, and the plan stands
 
 #### Scenario: A lane locks
 

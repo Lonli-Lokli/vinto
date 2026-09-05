@@ -6,6 +6,7 @@ import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RevealedCard
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.ServerMessage
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
@@ -181,6 +182,7 @@ fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): 
             nextIndex = state.nextIndex,
             view = view,
             away = awayPlayerIds(state),
+            plan = state.plan,
         ),
     )
 }
@@ -229,9 +231,69 @@ private fun eventsPerSeat(
                 view = view,
                 away = away,
                 said = said,
+                // On every batch, not only on an edit: a lane locks when its owner's turn
+                // begins, which is an ordinary action's doing, and the table has to see it.
+                plan = state.plan,
             ),
         )
     }
+}
+
+/**
+ * One part of the shared plan, changed, and the board sent back to every seat.
+ *
+ * Answered the way `more-time` is: an empty `events` message per seat, whose `plan` is the
+ * whole resulting board and whose `said` carries the answer of the bot whose lane was set.
+ * There is no `planned` message to add to the wire, and a client already knows how to take a
+ * plan off an `events`.
+ */
+fun editPlanEnvelopes(stateJson: String, token: String, editJson: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val edit = try {
+        ProtocolJson.decodeFromString(PlanEdit.serializer(), editJson)
+    } catch (failure: IllegalArgumentException) {
+        return VintoJson.encodeToString(
+            Envelopes.serializer(),
+            Envelopes(state, error = "unreadable plan edit: ${failure.message}"),
+        )
+    }
+
+    val spoken = editPlan(state, token, edit, nowMs)
+    if (spoken.error != null) {
+        return VintoJson.encodeToString(
+            Envelopes.serializer(),
+            Envelopes(spoken.state, error = spoken.error, retryAfterMs = spoken.retryAfterMs),
+        )
+    }
+    return VintoJson.encodeToString(
+        Envelopes.serializer(),
+        Envelopes(
+            spoken.state,
+            messages = eventsPerSeat(spoken.state, emptyList(), nowMs, listOfNotNull(spoken.talk)),
+        ),
+    )
+}
+
+/**
+ * One member's yes or no to the plan as a whole.
+ *
+ * A yes that closes the confer window plays the seats it was holding, exactly as
+ * [doneConferringEnvelopes] does; any other answer moves nothing and is broadcast as an empty
+ * `events` carrying the board.
+ */
+fun agreePlanEnvelopes(stateJson: String, token: String, agree: Boolean, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val said = agreePlan(state, token, agree)
+    if (said.error != null) {
+        return VintoJson.encodeToString(Envelopes(said.state, error = said.error))
+    }
+
+    val closedTheWindow = conferring(state) && !conferring(said.state)
+    val played = if (closedTheWindow) playBotsTracked(said.state) else PlayedOut(said.state, emptyList())
+    val settled = withPacing(played.state, nowMs)
+    return VintoJson.encodeToString(
+        Envelopes(settled, messages = eventsPerSeat(settled, played.steps, nowMs, played.said)),
+    )
 }
 
 /**

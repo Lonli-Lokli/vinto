@@ -2,11 +2,13 @@ package game.vinto.worker
 
 import game.vinto.protocol.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.addBot as coreAddBot
+import game.vinto.room.agreePlanEnvelopes as coreAgreePlanEnvelopes
 import game.vinto.room.alarmEnvelopes as coreAlarmEnvelopes
 import game.vinto.room.applyAction as coreApplyAction
 import game.vinto.room.applyActionEnvelopes as coreApplyActionEnvelopes
 import game.vinto.room.countdownMs as coreCountdownMs
 import game.vinto.room.doneConferringEnvelopes as coreDoneConferringEnvelopes
+import game.vinto.room.editPlanEnvelopes as coreEditPlanEnvelopes
 import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
@@ -115,6 +117,14 @@ fun sayEnvelopes(stateJson: String, token: String, talkJson: String, nowMs: Doub
 @JsExport
 fun doneConferringEnvelopes(stateJson: String, token: String, nowMs: Double): String =
     coreDoneConferringEnvelopes(stateJson, token, nowMs)
+
+@JsExport
+fun editPlanEnvelopes(stateJson: String, token: String, editJson: String, nowMs: Double): String =
+    coreEditPlanEnvelopes(stateJson, token, editJson, nowMs)
+
+@JsExport
+fun agreePlanEnvelopes(stateJson: String, token: String, agree: Boolean, nowMs: Double): String =
+    coreAgreePlanEnvelopes(stateJson, token, agree, nowMs)
 
 @JsExport
 fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String =

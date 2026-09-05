@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.bot.BotRunner
+import game.vinto.bot.botsAnswering
 import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.PlayerView
@@ -12,12 +13,19 @@ import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
 import game.vinto.shapes.Card
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.PlanEdit
+import game.vinto.shapes.PlanEditOutcome
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
+import game.vinto.shapes.agreeing
+import game.vinto.shapes.coalitionInTurnOrder
+import game.vinto.shapes.edited
+import game.vinto.shapes.lockingLaneOf
 import game.vinto.shapes.retired
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
@@ -165,6 +173,59 @@ class LocalGameSession(
     override val talk: SharedFlow<TableTalk> = _talk.asSharedFlow()
 
     /**
+     * The coalition's shared plan, kept here because a solo game has no room to keep it.
+     *
+     * Held under the same rules as the room's — `CoalitionPlan.edited` decides what a legal
+     * edit is for both — so the composer a person learns against three bots is the composer
+     * they meet online. The bots answer for their own lanes in-process, as the room's do.
+     */
+    private val _plan = MutableStateFlow<CoalitionPlan?>(null)
+    override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
+
+    override suspend fun editPlan(edit: PlanEdit): String? {
+        val caller = state.vintoCallerId
+        if (state.phase != GamePhase.FINAL || caller == null) return refuse("there is no round to plan")
+        if (caller == playerId) return refuse("the caller has no coalition to plan with")
+
+        val coalition = coalitionInTurnOrder(state.players.map { it.id }, caller)
+        val onPlay = state.players.getOrNull(state.currentPlayerIndex)?.id
+        val merged = when (val outcome = _plan.value.edited(edit, playerId, coalition, onPlay)) {
+            is PlanEditOutcome.Refused -> return refuse(outcome.reason)
+            is PlanEditOutcome.Edited -> outcome.plan
+        }
+
+        val bots = state.players.filter { it.isBot && it.id != caller }.map { it.id }
+        val answered = botsAnswering(state, merged, edit, playerId, bots)
+        _plan.value = answered.plan
+        answered.said?.let(::overhear)
+        return null
+    }
+
+    override suspend fun agreePlan(agree: Boolean): String? {
+        val caller = state.vintoCallerId
+        if (state.phase != GamePhase.FINAL || caller == null) return refuse("there is no round to plan")
+        if (caller == playerId) return refuse("the caller has no coalition to plan with")
+        val standing = _plan.value?.takeUnless { it.isEmpty }
+            ?: return refuse("there is nothing on the board to agree to")
+
+        _plan.value = standing.agreeing(playerId, agree)
+        // Agreeing is how you finish talking. A no is only a no.
+        return if (agree && conferring) doneConferring() else null
+    }
+
+    /**
+     * The board, kept in step with the table: the lane of whoever is on play locks, and a
+     * scored round has no plan — the room throws its away at scoring, and so does this.
+     */
+    private fun settlePlan() {
+        _plan.value = if (state.phase == GamePhase.SCORING) {
+            null
+        } else {
+            _plan.value?.lockingLaneOf(state.players.getOrNull(state.currentPlayerIndex)?.id)
+        }
+    }
+
+    /**
      * A solo game has no room to check anything, so the seat rule is checked here — the same
      * rule, in the one place, so a screen that tried to speak for a bot is refused exactly as
      * it would be online rather than working locally and failing on a real opponent.
@@ -196,6 +257,7 @@ class LocalGameSession(
             runner.observe(accepted, state, result.state)
             state = result.state
             _view.value = myView()
+            settlePlan()
         }
     }
 
@@ -468,6 +530,7 @@ class LocalGameSession(
     private fun publish() {
         val wasOver = _view.value.phase == GamePhase.SCORING
         _view.value = myView()
+        settlePlan()
 
         // On the transition alone: `publish` runs twice for a dispatch that the bots answer,
         // and a round does not end twice.
