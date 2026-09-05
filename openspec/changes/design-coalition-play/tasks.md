@@ -247,14 +247,14 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 
 ## 3. The plan
 
-- [ ] 3.1 The plan shape: ordered steps, each naming the seat whose turn it belongs to, at most
-      — **audit:** the shape exists; **"at most as many lanes as there are turns" is a comment** — `editPlan` accepts any lanes and any seat, the caller included
+- [x] 3.1 The plan shape: ordered steps, each naming the seat whose turn it belongs to, at most
+      — **done (bf71c37).** The shape existed and the length rule was only a comment: `editPlan` accepted any lanes for any seat, the caller included. A lane now belongs to a coalition seat and a seat has one lane, which makes the length rule a consequence rather than a number — so there is no second place to update when the table size changes. Held by `PlanDoorTest`
       as many lanes as there are turns left
 - [ ] 3.2 One shared draft per final round, editable by any coalition member and by bots, last
-      — **audit:** `editPlan` exists room-side with **no wire message, no client and no bot** touching it
+      — **audit:** `editPlan` exists room-side and is now enforced (3.1, 3.3), but has **no wire message, no client and no bot** touching it. A `ClientMessage.EditPlan` / `ServerMessage.Planned` pair, `editPlanEnvelopes`, and `plan`/`editPlan` on `GameSession` were drafted and **deliberately backed out unmerged**: the shape of that wire is a real decision — whole draft or patches, who it broadcasts to, whether a solo game holds one at all — and it belongs to the plan rather than ahead of it
       edit standing; room-side, never in `GameState`, discarded at scoring
-- [ ] 3.3 A lane locks when its owner's turn begins; later lanes stay editable
-      — **audit:** the flag is set; **the refusal compares whole lanes by equality**, so resending an unchanged step is refused while omitting a locked lane is accepted. Untested
+- [x] 3.3 A lane locks when its owner's turn begins; later lanes stay editable
+      — **done (bf71c37).** The refusal only looked at the lanes that were *present*, so a locked lane could be deleted by omitting it — locking defeated by sending less. Every standing locked lane must now come back unchanged. `ConferWindowTest.aLaneLocksWhenItsOwnersTurnBegins` had been proving this on a lane belonging to the **caller**: straight out of a call the caller is still the current player, because the window opens before the turn moves, so the test was encoding the hole. It winds on to a coalition member's turn now
 - [ ] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
       caller's cards structurally absent
 - [ ] 3.5 The composer reuses the existing per-action targeting (taps, rank rail, seat grid)
