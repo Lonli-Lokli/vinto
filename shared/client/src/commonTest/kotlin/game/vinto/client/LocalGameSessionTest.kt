@@ -64,6 +64,14 @@ class LocalGameSessionTest {
         var moves = 0
 
         while (!session.isOver && moves < MOVE_LIMIT) {
+            // The final round opens with a window for the coalition to confer, and the bots'
+            // turns hold while it is open. A driver standing in for the person in that seat
+            // has to do what they do: say when it has finished talking.
+            if (session.view.value.conferMsRemaining != null) {
+                session.doneConferring()
+                continue
+            }
+
             val action = person.nextAction(session.state.asIfEveryoneWereABot()) ?: break
             if (session.dispatch(action) != null) break
             moves++

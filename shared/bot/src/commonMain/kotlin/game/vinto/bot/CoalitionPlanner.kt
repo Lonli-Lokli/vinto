@@ -1,10 +1,12 @@
 package game.vinto.bot
 
 import game.vinto.shapes.ALL_RANKS
+import game.vinto.shapes.Believed
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.Rank
+import game.vinto.shapes.believedAt
 import game.vinto.shapes.getCardValue
 import kotlin.math.roundToInt
 
@@ -34,11 +36,18 @@ data class PlanCard(
     val value: Int,
     val played: Boolean,
     /**
-     * False for a card the plan holds only as an expectation — an undeclared teammate card
-     * or the acting member's own unread one. Its [rank] is a placeholder and must never
-     * drive a decision; every rank-consuming site in [CoalitionSearch] checks this flag.
+     * Whether [rank] may be *named* — declared with a King, matched in a toss-in, used as a
+     * memo key. False for a card the plan holds only as an expectation: an undeclared
+     * teammate's card, the acting member's own unread one, and a pair whose speaker has lost
+     * its order.
+     *
+     * [value] is a separate matter and is always usable. An unassigned King-and-Ace pair has
+     * no nameable rank and a perfectly good price; a Jack or a Queen is worth ten either way.
+     * That is why this is `rankKnown` and not `known`: every guard in [CoalitionSearch] is
+     * guarding a *rank*, and the shorter name invited a usable value to be thrown away with
+     * an unusable rank.
      */
-    val known: Boolean = true,
+    val rankKnown: Boolean = true,
 )
 
 data class CoalitionMember(val id: String, val isBot: Boolean, val cards: List<PlanCard>)
@@ -123,13 +132,23 @@ internal fun Card.toPlanCard() = PlanCard(id = id, rank = rank, value = value, p
  * Builds the planner's input from the authoritative state, or `null` when this is not a
  * coalition final round.
  *
- * What the plan may treat as known is exactly what the table has been told, never the real
- * hands: the acting member's own cards where it has actually read them, the ranks the other
- * members have *declared* out loud (`DECLARE_CARDS` — trusted at face value, and only as
- * reliable as the claimant's memory), and whatever any member has seen of the caller's hand,
- * pooled. Everything else rides as a `known = false` placeholder carrying the expected value
- * of an unseen card. A wrong claim makes the plan wrong, not the engine: every planner
- * output is position-based, so the real cards move and the line simply fails.
+ * What the plan may treat as known is exactly what the table has been **told**, never the real
+ * hands: the acting member's own cards where it has actually read them, and what anybody has
+ * *said* — about a teammate's hand or the caller's — through `DECLARE_CARDS`. Claims are taken
+ * at face value and are only as reliable as the claimant's memory. Everything else rides as a
+ * `rankKnown = false` placeholder carrying the expected value of an unseen card.
+ *
+ * The caller's cards used to be the exception: the plan pooled every coalition seat's private
+ * `opponentKnowledge` of them. That was the one thing the bots shared that a person had no way
+ * to say, and it is gone — a bot that has seen one of the caller's cards declares it, and the
+ * plan reads the claim like any other. One channel, the same for people and for bots.
+ *
+ * A claim need not be exact. An unassigned pair — "these two are a King and an Ace, and I have
+ * lost which is which" — prices both positions from its candidates, which is a far tighter
+ * distribution than an unseen card, while naming no rank the search may declare or match.
+ *
+ * A wrong claim makes the plan wrong, not the engine: every planner output is position-based,
+ * so the real cards move and the line simply fails.
  */
 fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): CoalitionPlanInput? {
     val callerId = state.vintoCallerId ?: return null
@@ -138,13 +157,25 @@ fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): Coalition
 
     val coalitionSeats = state.players.filter { it.id != callerId }
 
-    // Everything any member has seen of the caller's hand, pooled.
-    val knownCallerCardIds = coalitionSeats
-        .flatMap { it.opponentKnowledge?.get(callerId)?.knownCards?.values.orEmpty() }
-        .map { it.id }
-        .toSet()
-
-    val callerKnownValues = caller.cards.filter { it.id in knownCallerCardIds }.map { it.value }
+    // What the **coalition** has said about the caller's hand, and nothing else.
+    //
+    // The speaker filter is load-bearing and was missing: the validator lets the caller claim
+    // their own cards — bluffing is legitimate, and the reveal is what settles it — so without
+    // this a caller could tell the coalition their hand was thirty, and pull ranks out of the
+    // draw distribution by naming them. A bluff is for the other players to weigh, never an
+    // input to their planner.
+    val callerBelief = caller.cards.indices.map { position ->
+        believedAt(caller, position).let { believed ->
+            believed.copy(sources = believed.sources.filter { it.by != callerId })
+        }
+    }.map { believed ->
+        if (believed.sources.isEmpty()) {
+            Believed(ALL_RANKS.toSet(), disputed = false, sources = emptyList())
+        } else {
+            believed
+        }
+    }
+    val callerKnownValues = callerBelief.filter { it.sources.isNotEmpty() }.map { it.value }
     val callerUnknownCount = caller.cards.size - callerKnownValues.size
 
     // Anything the plan treats as seen is no longer a possible draw — and only that. Counting
@@ -155,19 +186,24 @@ fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): Coalition
         unseenCounts[rank] = maxOf(0, (unseenCounts[rank] ?: 0) - 1)
     }
     for (seat in coalitionSeats) {
-        if (seat.id == actingPlayerId) {
-            val declared = seat.declaredCards ?: emptyMap()
-            seat.cards.forEachIndexed { position, card ->
-                when {
-                    position in seat.knownCardPositions -> consume(card.rank)
-                    declared[position] != null -> consume(declared.getValue(position))
-                }
+        seat.cards.indices.forEach { position ->
+            val believed = believedAt(seat, position)
+            when {
+                // Its own read card is ground truth to the acting member alone.
+                seat.id == actingPlayerId && position in seat.knownCardPositions ->
+                    consume(seat.cards[position].rank)
+
+                // A claim narrow enough to name takes that rank out of the deck. A pair whose
+                // order is lost still names both cards between them, so both come out.
+                believed.rankKnown -> consume(believed.candidates.single())
+                believed.sources.any { it.covering && it.positions.first() == position } ->
+                    believed.candidates.forEach(::consume)
             }
-        } else {
-            seat.declaredCards?.values?.forEach { consume(it) }
         }
     }
-    caller.cards.filter { it.id in knownCallerCardIds }.forEach { consume(it.rank) }
+    callerBelief.forEach { believed ->
+        if (believed.rankKnown) consume(believed.candidates.single())
+    }
     state.discardPile.cards.forEach { consume(it.rank) }
     state.pendingAction?.card?.let { consume(it.rank) }
 
@@ -183,42 +219,41 @@ fun buildCoalitionPlanInput(state: GameState, actingPlayerId: String): Coalition
 
     fun unknownCard(seatId: String, position: Int) = PlanCard(
         id = "unknown-$seatId-$position",
-        // The rank is never read: `known = false` guards every rank-consuming site.
+        // The rank is never read: `rankKnown = false` guards every rank-consuming site.
         rank = Rank.SIX,
         value = expectedUnseenValue,
         played = false,
-        known = false,
+        rankKnown = false,
     )
 
-    fun declaredCard(seatId: String, position: Int, rank: Rank) = PlanCard(
-        id = "declared-$seatId-$position",
-        rank = rank,
-        value = getCardValue(rank),
+    /**
+     * A card the table has spoken about. Priced from what is left on the table's account of
+     * it, and nameable only where one rank survives — so an unassigned King-and-Ace pair
+     * plans at its value and declares nothing.
+     */
+    fun claimedCard(seatId: String, position: Int, believed: Believed) = PlanCard(
+        id = "claimed-$seatId-$position",
+        rank = believed.candidates.first(),
+        value = believed.value,
         played = false,
+        rankKnown = believed.rankKnown,
     )
 
     val members = coalitionSeats.map { seat ->
-        val declared = seat.declaredCards ?: emptyMap()
-        val cards =
-            if (seat.id == actingPlayerId) {
-                // The acting member's own read cards are ground truth; where it has *not*
-                // read a card, a standing public claim about it still counts — a Queen swap
-                // carries a teammate's declaration onto a card its new owner never saw.
-                seat.cards.mapIndexed { position, card ->
-                    when {
-                        position in seat.knownCardPositions -> card.toPlanCard()
-                        declared[position] != null ->
-                            declaredCard(seat.id, position, declared.getValue(position))
+        val cards = seat.cards.mapIndexed { position, card ->
+            val believed = believedAt(seat, position)
+            when {
+                // The acting member's own read cards are ground truth — to it alone.
+                seat.id == actingPlayerId && position in seat.knownCardPositions ->
+                    card.toPlanCard()
 
-                        else -> unknownCard(seat.id, position)
-                    }
-                }
-            } else {
-                seat.cards.mapIndexed { position, _ ->
-                    declared[position]?.let { rank -> declaredCard(seat.id, position, rank) }
-                        ?: unknownCard(seat.id, position)
-                }
+                // A standing public claim counts wherever it has not read the card itself: a
+                // Queen swap carries a teammate's claim onto a card its new owner never saw.
+                believed.sources.isNotEmpty() -> claimedCard(seat.id, position, believed)
+
+                else -> unknownCard(seat.id, position)
             }
+        }
         CoalitionMember(seat.id, seat.isBot, cards)
     }
 
@@ -368,7 +403,7 @@ fun planCoalitionTossIn(input: CoalitionPlanInput, ranks: List<Rank>): List<Int>
  * costs a penalty card and bars the seat for the round.
  */
 internal fun shouldTossCard(card: PlanCard): Boolean =
-    card.known && (card.value > 0 || card.rank == Rank.KING)
+    card.rankKnown && (card.value > 0 || card.rank == Rank.KING)
 
 internal fun handScore(hand: List<PlanCard>): Int = hand.sumOf { it.value }
 

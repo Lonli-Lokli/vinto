@@ -1,16 +1,21 @@
 package game.vinto.bot
 
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
+import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SerializedOpponentKnowledge
+import game.vinto.shapes.TableTalk
+import game.vinto.shapes.actorId
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -40,7 +45,7 @@ class CoalitionHumanMemberTest {
         isHuman = isHuman,
         cards = ranks.map(::card),
         knownCardPositions = knownPositions ?: if (isHuman) emptyList() else ranks.indices.toList(),
-    ).copy(declaredCards = declared)
+    ).copy(claims = declared?.map { Claim(id, listOf(it.key), listOf(it.value)) })
 
     private fun finalRound(
         players: List<PlayerState>,
@@ -84,7 +89,7 @@ class CoalitionHumanMemberTest {
         val input = buildCoalitionPlanInput(state, "bot-1")!!
         val human = input.members.first { it.id == "human-2" }
 
-        assertTrue(human.cards.none { it.known }, "an undeclared hand leaked into the plan")
+        assertTrue(human.cards.none { it.rankKnown }, "an undeclared hand leaked into the plan")
         assertTrue(human.cards.all { it.value >= 0 }, "the hidden Joker's value leaked")
         assertEquals(2, input.unseenCounts[Rank.JOKER], "the hidden Joker was counted as seen")
     }
@@ -105,7 +110,7 @@ class CoalitionHumanMemberTest {
         val input = buildCoalitionPlanInput(state, "bot-1")!!
         val claimed = input.members.first { it.id == "human-2" }.cards[0]
 
-        assertTrue(claimed.known)
+        assertTrue(claimed.rankKnown)
         assertEquals(Rank.TWO, claimed.rank)
         assertEquals(2, claimed.value)
     }
@@ -131,13 +136,18 @@ class CoalitionHumanMemberTest {
         )
 
         val input = buildCoalitionPlanInput(state, "bot-1")!!
-        assertTrue(input.members.first { it.id == "human-2" }.cards.none { it.known })
+        assertTrue(input.members.first { it.id == "human-2" }.cards.none { it.rankKnown })
     }
 
     // ------------------------------------------------------------ the runner's manners
 
     @Test
-    fun theRunnerHoldsTheLeaderChoiceWhenAHumanIsInTheCoalition() {
+    fun theRunnerNeverWaitsOnACoalitionNomination() {
+        // This used to assert the opposite: with a person in the coalition the runner returned
+        // null for *everything*, holding all bot play until a `SET_COALITION_LEADER` arrived
+        // from the client. The nomination is gone — it decided nothing, since the round is
+        // scored against the lowest coalition hand whoever holds it — so the only thing that
+        // behaviour can still do is stall a final round.
         val withHumanMember = finalRound(
             players = listOf(
                 seat("caller", isHuman = false, ranks = listOf(Rank.KING)),
@@ -148,9 +158,9 @@ class CoalitionHumanMemberTest {
             callerId = "caller",
             leaderId = null,
         )
-        assertNull(
+        assertNotNull(
             BotRunner(Difficulty.HARD, Random(1)).nextAction(withHumanMember),
-            "the bots must wait for the human to choose the leader",
+            "bot play was held waiting for a nomination nobody makes any more",
         )
 
         val botsOnly = finalRound(
@@ -164,7 +174,11 @@ class CoalitionHumanMemberTest {
             leaderId = null,
         )
         val action = BotRunner(Difficulty.HARD, Random(1)).nextAction(botsOnly)
-        assertTrue(action is GameAction.SetCoalitionLeader, "a bots-only coalition still auto-picks")
+        assertNotNull(action, "an all-bot coalition plays its final round")
+        assertTrue(
+            action !is GameAction.SetCoalitionLeader,
+            "nobody proposes a move the doors refuse",
+        )
     }
 
     @Test
@@ -205,7 +219,10 @@ class CoalitionHumanMemberTest {
 
         val action = BotRunner(Difficulty.HARD, Random(3)).nextAction(state)
         assertTrue(action is GameAction.DeclareCards)
-        assertEquals(mapOf(0 to Rank.FIVE, 1 to Rank.JOKER), action.payload.claims)
+        assertEquals(
+            listOf(listOf(Rank.FIVE), listOf(Rank.JOKER)),
+            action.payload.claims.sortedBy { it.positions.first() }.map { it.ranks },
+        )
     }
 
     @Test
@@ -230,7 +247,7 @@ class CoalitionHumanMemberTest {
             4 to Rank.TWO,
         )
 
-        fun declaredWithSeed(seed: Int): Map<Int, Rank>? {
+        fun declaredWithSeed(seed: Int): List<Claim>? {
             var current = state
             val runner = BotRunner(Difficulty.EASY, Random(seed))
             repeat(4) {
@@ -291,7 +308,10 @@ class CoalitionHumanMemberTest {
                 if (player.id == "bot-1") {
                     player.copy(
                         knownCardPositions = listOf(0, 1),
-                        declaredCards = mapOf(0 to Rank.TWO, 1 to Rank.FIVE),
+                        claims = listOf(
+                            Claim(player.id, listOf(0), listOf(Rank.TWO)),
+                            Claim(player.id, listOf(1), listOf(Rank.FIVE)),
+                        ),
                     )
                 } else {
                     player
@@ -301,6 +321,83 @@ class CoalitionHumanMemberTest {
         val informed = BotRunner(Difficulty.HARD, Random(5)).nextAction(read)
         assertTrue(informed is GameAction.ParticipateInTossIn, "a read matching card was not tossed")
         assertEquals(listOf(1), informed.payload.positions)
+    }
+
+    // ------------------------------------------------------------ answering a suggestion
+
+    @Test
+    fun aBotWeighsASuggestionWithItsOwnPlannerAndSaysWhichWay() {
+        // Propose, never command. A bot runs the move through its own planner and answers —
+        // and either way, the move it makes when it agrees is *its own*, not the proposer's.
+        val state = finalRound(
+            players = listOf(
+                seat("human-1", isHuman = true, ranks = listOf(Rank.KING)),
+                seat("bot-1", isHuman = false, ranks = listOf(Rank.FIVE, Rank.NINE)),
+                seat("bot-2", isHuman = false, ranks = listOf(Rank.TWO)),
+                seat("bot-3", isHuman = false, ranks = listOf(Rank.SIX)),
+            ),
+            callerId = "human-1",
+        )
+        val runner = BotRunner(Difficulty.HARD, Random(7))
+
+        val (move, answer) = runner.answerTo(
+            state,
+            TableTalk.Proposal("human-1", "bot-1", GameAction.DrawCard(PlayerIdPayload("bot-1"))),
+        )
+
+        assertEquals("bot-1", answer.by, "the answer is the answerer's own words")
+        assertEquals("human-1", (answer as TableTalk.Answer).to)
+        if (move != null) {
+            assertEquals("bot-1", move.actorId, "an accepted suggestion is the accepter's move")
+            assertEquals(TableTalk.Answer.Says.YES, answer.says)
+        } else {
+            assertTrue(answer.says != TableTalk.Answer.Says.YES, "declined but said yes")
+        }
+    }
+
+    @Test
+    fun aBotWillNotBeUsedToDriveAThirdSeat() {
+        // `Proposal(to = B, move = DrawCard(C))` would have B agree and the room play C's move
+        // — one seat driving another through a third's consent. The room does not seat-check
+        // its own bots, so nothing downstream would have caught it.
+        val state = finalRound(
+            players = listOf(
+                seat("human-1", isHuman = true, ranks = listOf(Rank.KING)),
+                seat("bot-1", isHuman = false, ranks = listOf(Rank.FIVE)),
+                seat("bot-2", isHuman = false, ranks = listOf(Rank.TWO)),
+                seat("bot-3", isHuman = false, ranks = listOf(Rank.SIX)),
+            ),
+            callerId = "human-1",
+        )
+
+        val (move, _) = BotRunner(Difficulty.HARD, Random(7)).answerTo(
+            state,
+            TableTalk.Proposal("human-1", "bot-1", GameAction.DrawCard(PlayerIdPayload("bot-2"))),
+        )
+
+        assertNull(move, "a bot agreed to make somebody else's move")
+    }
+
+    @Test
+    fun aBotRefusesASuggestionTheRulesWouldRefuseAnyway() {
+        val state = finalRound(
+            players = listOf(
+                seat("human-1", isHuman = true, ranks = listOf(Rank.KING)),
+                seat("bot-1", isHuman = false, ranks = listOf(Rank.FIVE)),
+                seat("bot-2", isHuman = false, ranks = listOf(Rank.TWO)),
+                seat("bot-3", isHuman = false, ranks = listOf(Rank.SIX)),
+            ),
+            callerId = "human-1",
+        )
+
+        // Not bot-1's turn, so the move is illegal for it whoever suggested it.
+        val (move, answer) = BotRunner(Difficulty.HARD, Random(7)).answerTo(
+            state,
+            TableTalk.Proposal("human-1", "bot-3", GameAction.DrawCard(PlayerIdPayload("bot-3"))),
+        )
+
+        assertNull(move, "a bot agreed to a move the validator would refuse")
+        assertEquals(TableTalk.Answer.Says.THAT_LEAVES_US_WORSE, (answer as TableTalk.Answer).says)
     }
 }
 

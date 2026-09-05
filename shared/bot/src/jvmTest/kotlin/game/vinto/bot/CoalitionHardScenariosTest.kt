@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
@@ -61,7 +62,7 @@ class CoalitionHardScenariosTest {
         knownCardPositions = ranks.indices.toList(),
         isVintoCaller = false,
         coalitionWith = memberIds,
-        declaredCards = ranks.mapIndexed { index, rank -> index to rank }.toMap(),
+        claims = ranks.mapIndexed { index, rank -> Claim(id, listOf(index), listOf(rank)) },
     )
 
     /**

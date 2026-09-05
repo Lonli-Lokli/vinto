@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import game.vinto.client.Question
 import game.vinto.client.Table
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.TableTalk
 import kotlinx.coroutines.launch
 
 /**
@@ -35,6 +37,13 @@ class GameHolder(
     // typing it here is what makes an online game the same screens over a different session.
     private val session: GameSession,
     private val view: State<PlayerView>,
+    /**
+     * Seats a bot is covering, collected by the screen so a change repaints.
+     *
+     * A `State` for the same reason [view] is one: the session publishes a flow, and a table
+     * that read `.value` would label the seat correctly once and then never again.
+     */
+    private val away: State<Set<String>> = mutableStateOf(emptySet()),
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
@@ -50,6 +59,17 @@ class GameHolder(
         private set
 
     /**
+     * The suggestion standing for this seat, if one is.
+     *
+     * Newest wins and there is only ever one: a rail offering three people's suggestions at
+     * once is a rail nobody reads, and the freshest is the one that knows most about the
+     * position. Cleared when it is acted on, declined, or a move lands — a suggestion about a
+     * table that has since moved is not a suggestion any more.
+     */
+    var offered: TableTalk.Proposal? by mutableStateOf(null)
+        private set
+
+    /**
      * Whether a move is on the wire and unanswered.
      *
      * Always false for a heartbeat in a local game, and worth drawing in a remote one: a tap
@@ -61,7 +81,7 @@ class GameHolder(
 
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
-    val table: Table get() = tableFor(view.value, question)
+    val table: Table get() = tableFor(view.value, question, away.value, offered)
     val isOver: Boolean get() = session.isOver
 
     /**
@@ -72,7 +92,12 @@ class GameHolder(
      * offering the buttons of a position the player cannot see yet is how a game gets played
      * by accident.
      */
-    fun tableFor(view: PlayerView): Table = tableFor(view, question)
+    fun tableFor(view: PlayerView): Table = tableFor(view, question, away.value, offered)
+
+    /** One sentence off the channel, for the holder to keep if it is addressed here. */
+    fun heard(talk: TableTalk) {
+        if (talk is TableTalk.Proposal && talk.to == session.playerId) offered = talk
+    }
 
     /**
      * Acts on whatever the player touched.
@@ -92,12 +117,33 @@ class GameHolder(
             // holds a *single* waiter for the answer it is expecting, so a second move sent
             // while the first is in flight replaces that waiter and the first hangs until it
             // times out. The player sees their own first move stall because they hurried it.
+            // Talk is not held behind `sending`. Nothing waits on a sentence — the room's
+            // answer to one is the broadcast — so making it queue behind a move in flight
+            // would mean a player who wanted to say "wait" had to wait first.
+            // Not held behind `sending` either: ending your share of a window is not a move,
+            // and a player who has finished talking should not wait on one.
+            is Move.Done -> {
+                refusal = session.doneConferring()
+                if (refusal == null) question = Question.None
+            }
+
+            is Move.Say -> {
+                refusal = session.say(move.talk)
+                if (refusal == null) {
+                    question = Question.None
+                    offered = null
+                }
+            }
+
             is Move.Send -> {
                 if (sending) return
                 sending = true
                 try {
                     refusal = session.dispatch(move.action)
-                    if (refusal == null) question = Question.None
+                    if (refusal == null) {
+                        question = Question.None
+                        offered = null
+                    }
                 } finally {
                     sending = false
                 }
@@ -110,6 +156,7 @@ class GameHolder(
 @Composable
 fun rememberHolder(session: GameSession): GameHolder {
     val view = session.view.collectAsState()
+    val away = session.away.collectAsState()
 
     // The one place a local game and an online one both pass through, which is why the crash
     // reporter's address is written here rather than in each table screen. Cleared on the way
@@ -119,7 +166,16 @@ fun rememberHolder(session: GameSession): GameHolder {
     }
     Where.atTable(view.value)
 
-    return remember(session) { GameHolder(session, view) }
+    val holder = remember(session) { GameHolder(session, view, away) }
+
+    // The one place the talk channel becomes something a player can act on. A suggestion
+    // addressed to this seat becomes the one-tap move at the top of the rail; everything else
+    // is already in the strip, because the session puts it there.
+    LaunchedEffect(session) {
+        session.talk.collect { holder.heard(it) }
+    }
+
+    return holder
 }
 
 /**

@@ -6,6 +6,7 @@ import game.vinto.room.alarmEnvelopes as coreAlarmEnvelopes
 import game.vinto.room.applyAction as coreApplyAction
 import game.vinto.room.applyActionEnvelopes as coreApplyActionEnvelopes
 import game.vinto.room.countdownMs as coreCountdownMs
+import game.vinto.room.doneConferringEnvelopes as coreDoneConferringEnvelopes
 import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
@@ -26,6 +27,7 @@ import game.vinto.room.removeBot as coreRemoveBot
 import game.vinto.room.resolveRoomCode as coreResolveRoomCode
 import game.vinto.room.resolveRoomCodeFor as coreResolveRoomCodeFor
 import game.vinto.room.roundRecording as coreRoundRecording
+import game.vinto.room.sayEnvelopes as coreSayEnvelopes
 import game.vinto.room.seatCount as coreSeatCount
 import game.vinto.room.seatForToken as coreSeatForToken
 import game.vinto.room.sessionMs as coreSessionMs
@@ -105,6 +107,14 @@ fun lobbyView(stateJson: String, nowMs: Double): String = coreLobbyView(stateJso
 @JsExport
 fun applyActionEnvelopes(stateJson: String, token: String, actionJson: String, nowMs: Double): String =
     coreApplyActionEnvelopes(stateJson, token, actionJson, nowMs)
+
+@JsExport
+fun sayEnvelopes(stateJson: String, token: String, talkJson: String, nowMs: Double): String =
+    coreSayEnvelopes(stateJson, token, talkJson, nowMs)
+
+@JsExport
+fun doneConferringEnvelopes(stateJson: String, token: String, nowMs: Double): String =
+    coreDoneConferringEnvelopes(stateJson, token, nowMs)
 
 @JsExport
 fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String =

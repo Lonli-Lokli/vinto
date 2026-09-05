@@ -14,7 +14,6 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.LeaderIdPayload
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.Pile
 import game.vinto.shapes.PlayerIdPayload
@@ -414,15 +413,6 @@ class TransformationMatrixTest {
             othersSee = "attend you vinto + say you; attend opp turn",
         ) {
             val play = Play().vintoCalled()
-            play.last()
-        },
-        Row(
-            "SET_COALITION_LEADER",
-            actorSees = "attend opp coalition",
-            othersSee = "attend opp coalition",
-        ) {
-            val play = Play().vintoCalled()
-            play.act(GameAction.SetCoalitionLeader(LeaderIdPayload(play.opp)))
             play.last()
         },
         Row(

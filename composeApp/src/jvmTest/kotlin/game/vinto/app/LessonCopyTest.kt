@@ -203,7 +203,6 @@ class LessonCopyTest {
                 taughtBody(Teaches.FinalPlay(Speaker.Named("Ember"), Rank.ACE)),
                 taughtBody(Teaches.FinalPlay(Speaker.Named("Tide"), Rank.KING)),
                 taughtBody(Teaches.FinalPlay(Speaker.Named("Dune"), Rank.NINE)),
-                taughtBody(Teaches.CoalitionLeader(Speaker.Named("Ember"))),
             )
         }
         waitForIdle()
@@ -213,7 +212,6 @@ class LessonCopyTest {
         assertTrue(said[1].contains("draw a card"), "an Ace makes somebody draw: ${said[1]}")
         assertTrue(said[2].contains("penalty card"), "a wrong name costs a card: ${said[2]}")
         assertTrue(said[3].contains("looks at one card"), "a 9 looks: ${said[3]}")
-        assertTrue(said[4].contains("Ember"), "the leader is named: ${said[4]}")
     }
 
     /** The call the round is built to end on says why the hand cannot be beaten. */

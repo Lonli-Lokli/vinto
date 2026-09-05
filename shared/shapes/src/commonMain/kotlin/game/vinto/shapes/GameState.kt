@@ -26,6 +26,20 @@ data class GameState(
     val currentPlayerIndex: Int,
 
     val vintoCallerId: String?,
+    /**
+     * Replay-only shape. **Always null in a game dealt today**, and nothing reads it.
+     *
+     * The coalition used to nominate a member to play its hand, and the nomination settled
+     * nothing: the round is scored against the *lowest* coalition hand whoever holds it, and
+     * the bots all declare before any coalition turn is played, so the planners already reach
+     * the same target from the same public claims. `SET_COALITION_LEADER` is refused by
+     * `ActionValidator` now.
+     *
+     * The field cannot go with it. Unlike `declaredCards` it carries no `@EncodeDefault(NEVER)`
+     * and no default, so it is written into **every** canonical state — including all 50
+     * recordings in `fixtures/recordings/`, whose hashes a second implementation computed and
+     * which cannot be regenerated. Removing it would move every one of them.
+     */
     val coalitionLeaderId: String?,
 
     val drawPile: Pile,
@@ -75,14 +89,75 @@ data class PlayerState(
     val opponentKnowledge: Map<String, SerializedOpponentKnowledge>? = null,
 
     /**
-     * Position → rank this player has *claimed* their card to be, out loud, during the
-     * final round — table talk, never checked against the real card, so a claim can be
-     * wrong. Kotlin-only: `null` (the TypeScript states' shape) is omitted from
-     * serialisation, which is what keeps the parity corpus hashes untouched; the engine
-     * normalises an emptied map back to `null` for the same reason.
+     * What the table has *said* about this player's cards, during the final round.
+     *
+     * Table talk, never checked against the real cards: a claim is speech, and a player
+     * declares from memory, which can be wrong. Every claim names the seat that **spoke** it,
+     * which is why these hang off the card's owner rather than the speaker — a coalition
+     * member may claim a teammate's card or the caller's, and storing that on the speaker
+     * would lose which card it was about.
+     *
+     * Kotlin-only, and held to the discipline that keeps it so: `@EncodeDefault(NEVER)` with
+     * `null` — the shape every parity recording has — restored the moment the list empties.
+     * No recorded state materialises the field, so the frozen hashes cannot move.
      */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val claims: List<Claim>? = null,
+
+    /**
+     * Retired, and kept only so a room already in flight still decodes.
+     *
+     * [claims] replaced it. `VintoJson` sets `ignoreUnknownKeys = false`, so a Durable Object
+     * holding a final round **with table talk on it** would meet an unknown `declaredCards`
+     * after a deploy and fail to read its own state — a live room bricked mid-game, for a
+     * field nobody needs any more. Accepting and ignoring it costs that room its standing
+     * claims and lets it play on, which is the right way round.
+     *
+     * Nothing reads it and nothing writes it: `@EncodeDefault(NEVER)` with a null default, so
+     * it is absent from every state this build produces and the corpus hashes are untouched.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    @Deprecated("Replaced by claims; kept so an in-flight room still decodes.")
     val declaredCards: Map<Int, Rank>? = null,
+)
+
+/**
+ * One thing somebody said about one player's cards.
+ *
+ * The shape carries **partial** knowledge on purpose, because an exact claim is the least
+ * common thing a person actually has ten turns after setup. What they have is the pair
+ * without the order — "those two are a King and an Ace, and I have lost which is which" — and
+ * a vocabulary that cannot say that forces a guess, which the coalition then plans on as
+ * though it were a fact.
+ *
+ * It is not a new idea in this codebase, either: `CardMemory` already carries a per-card
+ * `confidence` that `believedOwnCards` flattens away at the moment a bot speaks.
+ *
+ * | Said | [positions] | [ranks] | [covering] |
+ * | --- | --- | --- | --- |
+ * | "my third is a King" | `[3]` | `[K]` | `true` |
+ * | "these two are a King and an Ace, I forget which" | `[2, 4]` | `[K, A]` | `true` |
+ * | "it is a 2 or a 3" | `[3]` | `[2, 3]` | `false` |
+ * | "there is a Joker in here somewhere" | `[]` | `[Joker]` | `false` |
+ */
+@Serializable
+data class Claim(
+    /** The seat that said it — never inferred from whose cards these are. */
+    val by: String,
+    /**
+     * Which of the owner's positions this is about. Empty means "somewhere in this hand",
+     * which constrains no single position and is a statement about the hand as a whole.
+     */
+    val positions: List<Int>,
+    /** The ranks in play. One for an exact claim; two for a pair whose order is lost. */
+    val ranks: List<Rank>,
+    /**
+     * True when [ranks] is exactly what [positions] holds, in some order — "these two are a
+     * King and an Ace". False when each position is merely *one of* [ranks] — "it is low".
+     *
+     * The two readings only differ once [positions] names more than one card.
+     */
+    val covering: Boolean = true,
 )
 
 @Serializable

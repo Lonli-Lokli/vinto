@@ -1,6 +1,31 @@
 package game.vinto.shapes
 
 /**
+ * Actions the game no longer offers, which a live door refuses and a replay still applies.
+ *
+ * There is exactly one, and the reason it is a list rather than a deletion is the frozen
+ * corpus: 42 of the 50 recordings carry a `SET_COALITION_LEADER`, and `GameState`'s
+ * `coalitionLeaderId` — which has no `@EncodeDefault(NEVER)` — is inside every recorded
+ * state's canonical hash. Neither can be removed without moving hashes a second
+ * implementation computed and nothing can recompute.
+ *
+ * It cannot live in `ActionValidator` either: `GameEngine.reduce` validates before it
+ * dispatches, so a refusal there is a refusal on the replay path, and `CorpusReplayTest`
+ * rejects all 42. It lives here, beside [actorId], because it is the same kind of rule — what
+ * a door may accept — and because both doors have to read the same answer. A room and a solo
+ * game that disagreed about which moves exist would be two games.
+ *
+ * Why the nomination went: it decided nothing. The round is scored against the **lowest**
+ * coalition hand whoever holds it, `CoalitionSearch` scores the same, and every bot declares
+ * before any coalition turn is played — so the planners already reach one target from the
+ * same public claims. What it cost was a stall at the top of the final round and a hole in
+ * the seat boundary: naming nobody, it slipped the door's `actorId` check entirely, so the
+ * **Vinto caller** could nominate the coalition's leader.
+ */
+val GameAction.retired: Boolean
+    get() = this is GameAction.SetCoalitionLeader
+
+/**
  * Who an action claims to be from.
  *
  * The seat boundary is checked against this, both by the Durable Object (which maps a token

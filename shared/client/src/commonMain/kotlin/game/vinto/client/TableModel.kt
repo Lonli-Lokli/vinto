@@ -7,12 +7,13 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
+import game.vinto.shapes.Believed
+import game.vinto.shapes.Claim
 import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.LeaderIdPayload
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
@@ -20,6 +21,7 @@ import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.SwapCardPayload
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.TargetType
 import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.hasAction
@@ -94,6 +96,22 @@ data class Table(
      * how the rail knows whether it is drawing an aim or the card in play.
      */
     val aim: Aim? = null,
+    /**
+     * Seats a bot is covering because their person has gone.
+     *
+     * It cannot come off the view: `isHuman` is inside the canonical state hash, so the room
+     * never writes a takeover into the game state. Without it you are negotiating a final
+     * round with somebody who left.
+     */
+    val away: Set<String> = emptySet(),
+    /**
+     * Claims the reveal has just proved wrong, at scoring and nowhere else.
+     *
+     * Separate from [badges] rather than folded into their text, because being wrong is a
+     * different thing from what was said and the table draws it differently — and because the
+     * app never adjudicates a claim while it could still matter.
+     */
+    val brokenClaims: Set<CardRef> = emptySet(),
 )
 
 /** A card on the table: whose, and which slot. */
@@ -178,6 +196,24 @@ enum class Tone {
 sealed interface Move {
     data class Send(val action: GameAction) : Move
     data class Ask(val question: Question) : Move
+
+    /**
+     * Say something, rather than do something.
+     *
+     * A third kind because talk is a third kind: it changes no game state, nothing waits on
+     * it, and a refusal is a lost sentence rather than a lost move. Folding it into [Send]
+     * would have put a `TableTalk` where every call site expects a `GameAction` — and the
+     * whole point of design D6 is that those two are not the same thing.
+     */
+    data class Say(val talk: TableTalk) : Move
+
+    /**
+     * Finish conferring.
+     *
+     * Its own case rather than a `Say`, because it is not a sentence: nothing is broadcast and
+     * nothing is claimed. It says only that this seat has stopped talking.
+     */
+    data object Done : Move
 }
 
 /**
@@ -196,9 +232,29 @@ sealed interface Question {
     /** Slot chosen — do I call the rank of the card going out, and gamble on it? */
     data class CallRank(val position: Int) : Question
 
-    /** Final round: which rank do I *claim* my card at this position is? */
-    data class DeclareRank(val position: Int) : Question
+    /**
+     * Final round: I am saying what I believe about somebody's cards.
+     *
+     * Built up by tapping rather than composed as a sentence, because there is no text input
+     * in this game and because tapping the cards is how a person points at them anyway.
+     * [about] is whose hand, [positions] the cards touched so far, [ranks] the ranks named so
+     * far. One of each makes an exact claim; **two of each** leaves exactly one question — which
+     * way round — and that question has three answers of equal standing, the third being
+     * "not sure".
+     *
+     * "Not sure" is the whole point of the control, so it is one tap and never a mode. Ten
+     * turns after setup the pair without its order is the commonest thing a person actually
+     * has, and a vocabulary that cannot say it forces a guess the coalition then plans on.
+     */
+    data class Claiming(
+        val about: String,
+        val positions: List<Int> = emptyList(),
+        val ranks: List<Rank> = emptyList(),
+    ) : Question
 }
+
+/** How many cards a single claim may pair. Three would be six orderings, which nobody reads. */
+private const val CLAIM_PAIR = 2
 
 private const val SETUP_PEEKS = 2
 private const val TWO_TARGETS = 2
@@ -250,8 +306,59 @@ fun revealedTo(view: PlayerView): Set<CardRef> {
         .mapTo(mutableSetOf()) { CardRef(it.playerId, it.position) }
 }
 
+fun tableFor(
+    view: PlayerView,
+    question: Question = Question.None,
+    away: Set<String> = emptySet(),
+    offered: TableTalk.Proposal? = null,
+): Table = tableBody(view, question)
+    .copy(away = away)
+    .offering(offered, view)
+
+/**
+ * A move somebody has suggested to this seat, as something to accept or decline.
+ *
+ * The rule the whole design turns on lives here, in one line: accepting sends **the viewer's
+ * own** `GameAction`. A proposal carries no authority, is never validated as the proposer's
+ * and never reduced — what reaches the engine is the recipient's move, seat-bound like any
+ * other. That is what lets a person and a bot be addressed identically, and it is why nothing
+ * anywhere acts for another seat.
+ *
+ * Declining is offered beside it and is *said*, not swallowed: a proposal that could only be
+ * ignored would leave the proposer watching nothing happen and unable to tell whether it had
+ * even arrived.
+ */
+private fun Table.offering(proposal: TableTalk.Proposal?, view: PlayerView): Table {
+    if (proposal == null || proposal.to != view.viewerId) return this
+
+    // **First**, not appended. When the viewer's turn opens on a move they have already
+    // agreed to, that move is what they came to make — burying it under the ordinary
+    // openings would make an agreed suggestion slower to act on than an unagreed one, which
+    // is the wrong way round for the only thing here that saves anybody a decision.
+    //
+    // Every other move stays exactly where it was. Pre-arming aims the turn; it never
+    // narrows it, and a player who changes their mind between agreeing and playing has lost
+    // nothing.
+    return copy(
+        choices = listOf(
+            Choice(Label.DoAsSuggested, Move.Send(proposal.move)),
+            Choice(
+                Label.DeclineSuggestion,
+                Move.Say(
+                    TableTalk.Answer(view.viewerId, proposal.by, TableTalk.Answer.Says.NO),
+                ),
+            ),
+        ) + choices,
+    )
+}
+
+/**
+ * The table proper. Split from [tableFor] so that [Table.away] is applied once, at the single
+ * exit, rather than at each of the dozen returns below — a new branch that forgot it would
+ * silently drop the label off a seat somebody had left.
+ */
 @Suppress("ReturnCount")
-fun tableFor(view: PlayerView, question: Question = Question.None): Table {
+private fun tableBody(view: PlayerView, question: Question): Table {
     val me = view.players.firstOrNull { it.id == view.viewerId }
         ?: return Table(prompt = Ask.Watching, waiting = true)
 
@@ -260,15 +367,15 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
         return setupTable(view, me.id, me.knownCardPositions).showing(view)
     }
 
-    // The coalition has to choose who plays its hand before the final round can run.
-    val coalitionUndecided = view.vintoCallerId != null && view.coalitionLeaderId == null
-    if (coalitionUndecided && view.viewerId != view.vintoCallerId) {
-        return coalitionTable(view).showing(view)
+    // The coalition's window: talk only, and a way out of it. Before the round's first turn,
+    // so it comes above every table below — a window a player cannot see or end is a stall.
+    if (view.conferMsRemaining != null && mayDeclare(view)) {
+        return conferringTable(view).showing(view)
     }
 
-    // The player tapped one of their own cards to declare it: the rank picker.
-    if (question is Question.DeclareRank && mayDeclare(view)) {
-        return declareOwnCardTable(view, question.position).showing(view)
+    // The player is saying what they believe about somebody's cards.
+    if (question is Question.Claiming && mayDeclare(view)) {
+        return claimingTable(view, question).showing(view)
     }
 
     tossInTable(view)?.let { return it.showing(view) }
@@ -295,65 +402,308 @@ fun tableFor(view: PlayerView, question: Question = Question.None): Table {
 }
 
 /**
- * The claim taps a coalition member's own hand carries — the whole of what "talking to your
- * coalition" is in this app, since nothing a player types ever reaches another player.
+ * The claim taps the final round carries — the whole of what "talking to your coalition" is in
+ * this app, since nothing a player types ever reaches another player.
  *
- * Offered on **both** kinds of turn in the final round, which is the correction. It used to
- * be on the watching table alone, and the seat after the caller is on play the instant the
- * leader is chosen — so a player who had just been asked to nominate somebody arrived at
- * their own turn with no way to tell that somebody anything, and read the nomination as a
- * promise the app had broken (product owner). Talking is not a turn: it costs nothing, takes
- * none, and can be done as often as the player likes.
+ * **Any** seat's cards, not only the speaker's own. A member who peeked the caller's third
+ * card, or a teammate's, has somewhere to put it — which is what the bots always had through
+ * their own pooled sightings and a person did not.
  *
- * Never for the caller, who has no coalition to talk to; and never inside a toss-in window,
- * which is the one time a tap on your own hand already means something else — that table is
- * built above both call sites and returns before either is reached.
+ * Offered on **both** kinds of turn, which is the correction: talking is not a turn, so it
+ * costs none, takes none, and can be done as often as the player likes.
+ *
+ * Never for the caller, who has no coalition to inform and may speak only of their own hand;
+ * and never inside a toss-in window, which is the one time a tap on a card already means
+ * something else — that table is built above both call sites and returns before either.
  */
 private fun declareTaps(view: PlayerView): Map<CardRef, Move> {
     if (!mayDeclare(view)) return emptyMap()
-    val me = view.players.firstOrNull { it.id == view.viewerId } ?: return emptyMap()
-    return me.cards.indices.associate { position ->
-        CardRef(view.viewerId, position) to Move.Ask(Question.DeclareRank(position))
-    }
+    return view.players
+        .flatMap { seat ->
+            seat.cards.indices.map { position ->
+                CardRef(seat.id, position) to
+                    Move.Ask(Question.Claiming(seat.id, listOf(position)))
+            }
+        }
+        .toMap()
 }
 
-/** Table talk is for coalition members, during the final round, once a leader is chosen. */
+/**
+ * Table talk is for coalition members, for the whole of the final round.
+ *
+ * It used to wait on a leader being chosen, which made the retired vote the thing that
+ * *unlocked speech* — and the seat after the caller is on play the instant the round starts,
+ * so a player could arrive at their own turn with no way to tell anybody anything. Talking is
+ * not a turn: it costs none, takes none, and can be done as often as the player likes.
+ */
 private fun mayDeclare(view: PlayerView): Boolean =
     view.phase == GamePhase.FINAL &&
         view.vintoCallerId != null &&
-        view.viewerId != view.vintoCallerId &&
-        view.coalitionLeaderId != null
+        view.viewerId != view.vintoCallerId
 
-private fun declareOwnCardTable(view: PlayerView, position: Int): Table = Table(
-    prompt = Ask.WhatDoYouSayThisCardIs,
-    detail = Detail.TableTalkIsTakenOnTrust,
-    choices = listOf(Choice(Label.Back, Move.Ask(Question.None))),
-    ranks = ALL_RANKS.map { rank ->
-        RankChoice(
-            rank,
-            Move.Send(
-                GameAction.DeclareCards(DeclareCardsPayload(view.viewerId, mapOf(position to rank))),
-            ),
-        )
-    },
+/**
+ * The moment before the final round runs, which belongs to the coalition.
+ *
+ * Everything the round's talk needs is here: every card is tappable, so a claim about anybody
+ * can be made, and one button ends this seat's share of the window. It is a *table*, not a
+ * modal — the felt stays readable underneath, because what a coalition is deciding is written
+ * on it.
+ */
+private fun conferringTable(view: PlayerView): Table = Table(
+    prompt = Ask.SayWhatYouKnow,
+    detail = Detail.TapACardToSayWhatItIs,
+    // Where this hand stands, then the way out. The three come first because they are what the
+    // window is *for*: the coalition is scored on its lowest hand, and until the table knows
+    // whose that is, nothing else anybody says here can be acted on.
+    choices = TableTalk.Standing.Where.entries.map { where ->
+        Choice(Label.SayStanding(where), Move.Say(TableTalk.Standing(view.viewerId, where)))
+    } + Choice(Label.DoneTalking, Move.Done),
+    taps = declareTaps(view),
+    waiting = false,
 )
 
-/** Every standing claim, worn on the claimed card for the whole table to read. */
+/**
+ * Saying what you believe, built by tapping rather than composed as a sentence.
+ *
+ * The flow is three steps and the third only exists when it has to:
+ *
+ *  1. **cards** — tapping a card adds it to the claim, tapping it again takes it out. At most
+ *     [CLAIM_PAIR], because three cards is six orderings and nobody reads six;
+ *  2. **ranks** — the same rail a King declares with. One card wants one rank and sends at
+ *     once; two cards want two;
+ *  3. **which way round** — offered only for two cards and two ranks, as three answers of
+ *     equal standing: each pairing, and **not sure**.
+ *
+ * That third step is the reason the whole control exists. "These two are a King and an Ace and
+ * I have lost which is which" is what a person actually holds ten turns after setup, and a
+ * picker that could only say exact ranks would make them guess — after which the coalition
+ * plans on a coin toss dressed up as a fact. So "not sure" is one tap, sits beside the two
+ * orderings rather than under them, and is never a mode.
+ *
+ * A speaker may also take back what they said: a standing claim of their own offers
+ * [Label.Withdraw], which is information too — it tells teammates to stop planning on it.
+ */
+private fun claimingTable(view: PlayerView, question: Question.Claiming): Table {
+    val seat = view.players.firstOrNull { it.id == question.about } ?: return Table(Ask.Watching)
+    val picked = question.positions
+
+    // Two cards and two ranks: the only thing left to say is the order, and one of the
+    // answers is that there isn't one. Sorted, so "first" on a button means the left-hand
+    // card on the felt rather than whichever the player happened to tap first.
+    if (picked.size == CLAIM_PAIR && question.ranks.size == CLAIM_PAIR) {
+        return pairingTable(view, question, picked.sorted(), question.ranks)
+    }
+
+    return Table(
+        prompt = Ask.WhatDoYouSayThisCardIs,
+        detail = Detail.TableTalkIsTakenOnTrust,
+        choices = buildList {
+            if (mineHere(view, seat, picked)) {
+                add(Choice(Label.Withdraw, Move.Send(withdrawal(view.viewerId, seat.id))))
+            }
+            add(Choice(Label.Back, Move.Ask(Question.None)))
+        },
+        taps = claimTaps(seat, question, picked),
+        ranks = claimRanks(view, seat, question, picked),
+    )
+}
+
+/** Tapping a card adds it to the claim; tapping it again takes it back out. */
+private fun claimTaps(
+    seat: PlayerSeatView,
+    question: Question.Claiming,
+    picked: List<Int>,
+): Map<CardRef, Move> = seat.cards.indices
+    .mapNotNull { position ->
+        val next = if (position in picked) picked - position else picked + position
+        // Three cards would be six orderings, which is not a question anybody reads.
+        next.takeIf { it.size <= CLAIM_PAIR }?.let {
+            CardRef(seat.id, position) to Move.Ask(question.copy(positions = it))
+        }
+    }
+    .toMap()
+
+/**
+ * The rank rail: one card wants one rank and sends at once, two want two and then ask which
+ * way round.
+ */
+private fun claimRanks(
+    view: PlayerView,
+    seat: PlayerSeatView,
+    question: Question.Claiming,
+    picked: List<Int>,
+): List<RankChoice> {
+    if (picked.isEmpty()) return emptyList()
+    val wanted = picked.size
+
+    return ALL_RANKS.map { rank ->
+        val named = question.ranks + rank
+        RankChoice(
+            rank,
+            if (named.size < wanted || wanted > 1) {
+                Move.Ask(question.copy(ranks = named))
+            } else {
+                Move.Send(saying(view.viewerId, seat.id, Claim(view.viewerId, picked, named)))
+            },
+        )
+    }
+}
+
+/** The one question a pair leaves: which way round — or neither, which is an answer. */
+private fun pairingTable(
+    view: PlayerView,
+    question: Question.Claiming,
+    positions: List<Int>,
+    ranks: List<Rank>,
+): Table = Table(
+    prompt = Ask.WhichWayRound,
+    detail = Detail.TableTalkIsTakenOnTrust,
+    choices = listOf(
+        // An assigned pairing is simply two exact claims, and one action carries both — so
+        // "which way round" costs the same one tap that "not sure" does.
+        Choice(
+            Label.ThisWayRound(positions[0], ranks[0], positions[1], ranks[1]),
+            Move.Send(
+                saying(
+                    view.viewerId,
+                    question.about,
+                    exact(view.viewerId, positions[0], ranks[0]),
+                    exact(view.viewerId, positions[1], ranks[1]),
+                ),
+            ),
+        ),
+        Choice(
+            Label.ThisWayRound(positions[0], ranks[1], positions[1], ranks[0]),
+            Move.Send(
+                saying(
+                    view.viewerId,
+                    question.about,
+                    exact(view.viewerId, positions[0], ranks[1]),
+                    exact(view.viewerId, positions[1], ranks[0]),
+                ),
+            ),
+        ),
+        // Third, and equal: the answer most people actually have.
+        Choice(
+            Label.NotSureWhichWayRound,
+            Move.Send(
+                saying(
+                    view.viewerId,
+                    question.about,
+                    Claim(view.viewerId, positions, ranks, covering = true),
+                ),
+            ),
+        ),
+        Choice(Label.Back, Move.Ask(Question.None)),
+    ),
+)
+
+private fun saying(speaker: String, about: String, vararg claims: Claim) =
+    GameAction.DeclareCards(DeclareCardsPayload(speaker, about, claims.toList()))
+
+private fun exact(speaker: String, position: Int, rank: Rank) =
+    Claim(speaker, listOf(position), listOf(rank))
+
+/** An empty claim list is how a speaker takes back everything they said about a hand. */
+private fun withdrawal(speaker: String, about: String) =
+    GameAction.DeclareCards(DeclareCardsPayload(speaker, about, emptyList()))
+
+/** Whether the viewer has anything of their own standing on the cards they have picked. */
+private fun mineHere(view: PlayerView, seat: PlayerSeatView, positions: List<Int>): Boolean =
+    seat.claims.any { it.by == view.viewerId && it.positions.any { p -> p in positions } }
+
+/**
+ * What the table currently believes about each card, worn on the card for everyone to read.
+ *
+ * A card nobody has spoken about wears nothing. One rank means the table agrees; several mean
+ * somebody is unsure or two people disagree, and a disputed card is marked as such rather than
+ * quietly resolved — the app never decides which claimant was right.
+ */
 private fun declaredBadges(view: PlayerView): Map<CardRef, String> =
     view.players
         .flatMap { seat ->
-            seat.declaredCards.map { (position, rank) -> CardRef(seat.id, position) to rank.serialName }
+            seat.cards.indices.mapNotNull { position ->
+                val believed = believedOnView(seat, position)
+                when {
+                    believed.sources.isEmpty() -> null
+                    believed.disputed ->
+                        CardRef(seat.id, position) to
+                            believed.candidates.joinToString("?") { it.serialName }
+
+                    else ->
+                        CardRef(seat.id, position) to
+                            believed.candidates.joinToString("/") { it.serialName }
+                }
+            }
         }
         .toMap()
 
+/**
+ * [believedAt] over a *view*'s seat rather than a `PlayerState`.
+ *
+ * The engine's version takes the authoritative seat; a screen only ever has the redacted one,
+ * and the claims on it are already the standing ones the room chose to send. Same combining
+ * rule, so the table and the plan cannot come to different conclusions about a card.
+ */
+internal fun believedOnView(seat: PlayerSeatView, position: Int): Believed {
+    val about = seat.claims.filter { position in it.positions }
+    // `ALL_RANKS`, not an empty set: a card nobody has spoken about is *every* rank, which is
+    // the same as knowing nothing and is what `believedAt` returns for it. An empty set made
+    // `Believed.value` divide by zero; every caller today happens to guard on `sources`, and
+    // the next one would not have.
+    if (about.isEmpty()) return Believed(ALL_RANKS.toSet(), disputed = false, sources = emptyList())
+    val sets = about.map { it.ranks.toSet() }
+    val agreed = sets.reduce { left, right -> left intersect right }
+    return if (agreed.isEmpty()) {
+        Believed(sets.reduce { left, right -> left union right }, disputed = true, sources = about)
+    } else {
+        Believed(agreed, disputed = false, sources = about)
+    }
+}
+
 private fun Table.showing(view: PlayerView): Table {
     val revealed = revealedTo(view)
-    // A claim is worn on a card's back. Once the face is up — at scoring, every card — the
-    // card says what it is and the claim beside it is either the same word twice or a
-    // contradiction, and a player reading the reveal needs neither.
-    val badges = declaredBadges(view).filterKeys { it !in revealed }
-    return copy(revealed = revealed, help = helpFor(view), badges = badges)
+
+    // A claim is worn on a card's back, so mid-round it comes off the moment a face turns up:
+    // the card says what it is, and the claim beside it is either the same word twice or a
+    // contradiction nobody can act on yet.
+    //
+    // **Scoring is the exception, and it is the point.** Every hand goes face up at once, so
+    // that is when every claim can finally be checked — which is what gives table talk a cost
+    // and an honest claim its worth. Nothing is checked when it is *made*; the reveal is the
+    // referee, and it referees the caller's bluffs on exactly the same terms.
+    val settling = view.phase == GamePhase.SCORING
+    val badges = if (settling) declaredBadges(view) else declaredBadges(view).filterKeys { it !in revealed }
+
+    return copy(
+        revealed = revealed,
+        help = helpFor(view),
+        badges = badges,
+        brokenClaims = if (settling) claimsTheRevealContradicts(view) else emptySet(),
+    )
 }
+
+/**
+ * The claims the turned-over hands prove wrong.
+ *
+ * Only at scoring, and only where the card is actually visible — a claim is not "wrong"
+ * because nobody can see the card, and calling it wrong would be the app adjudicating, which
+ * it never does while a round is running.
+ *
+ * A partial claim counts as true if the real rank is among its candidates: "a King or a Queen"
+ * about a Queen was a useful thing to say, not a miss.
+ */
+private fun claimsTheRevealContradicts(view: PlayerView): Set<CardRef> =
+    view.players
+        .flatMap { seat ->
+            seat.cards.mapIndexedNotNull { position, card ->
+                val shown = (card as? CardView.Visible)?.card ?: return@mapIndexedNotNull null
+                val believed = believedOnView(seat, position)
+                CardRef(seat.id, position)
+                    .takeIf { believed.sources.isNotEmpty() && shown.rank !in believed.candidates }
+            }
+        }
+        .toSet()
 
 /**
  * What the "?" explains, for whatever is happening.
@@ -694,6 +1044,10 @@ private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
         )
     }
 
+/** An Ace in the final round can only cost the coalition, the caller being untouchable. */
+private fun aceIsATrap(view: PlayerView): Boolean =
+    view.phase == GamePhase.FINAL && view.vintoCallerId != null && view.viewerId != view.vintoCallerId
+
 /**
  * The only action that names a player rather than a card.
  *
@@ -717,7 +1071,16 @@ private fun forceDrawTable(view: PlayerView): Table = Table(
     // The rail no longer draws the Ace while it asks — the player drew it, read it and chose
     // to play it, and a fourth showing is not news — so the sentence carries what the picture
     // used to. Without this the question arrives with no statement of what saying yes does.
-    detail = Detail.WhatTheCardDoes(Rank.ACE),
+    //
+    // In the final round it says something more particular, because an Ace there is a trap:
+    // every legal target is a **teammate**, the caller being off limits, so it hands a penalty
+    // card to one's own side and can land on the very hand still able to win the round. The
+    // bots have always known — `CoalitionPlanner` never plays one from hand and puts a
+    // tossed-in one down rather than aiming it — and a person was asked the same question with
+    // no guidance and three bad answers.
+    detail = if (aceIsATrap(view)) Detail.AnAceOnlyHurtsYourOwnSide else Detail.WhatTheCardDoes(Rank.ACE),
+    // Putting it down leads, for the same reason. Every legal target stays on offer: the rule
+    // is the player's to break if they want it.
     choices = listOf(giveUp(view.viewerId)),
     seats = view.players.filter { it.id != view.viewerId }.map { seat ->
         SeatChoice(
@@ -875,33 +1238,6 @@ private fun vintoChoice(view: PlayerView, toss: ActiveTossIn, me: String): List<
 }
 
 // ---------------------------------------------------------------------------- endings
-
-/**
- * Somebody called Vinto, and everyone else now plays as one hand.
- *
- * Only the lowest coalition hand counts, so the coalition nominates whoever plays it. The
- * caller sits this out — it is their opponents organising against them.
- */
-private fun coalitionTable(view: PlayerView): Table {
-    val caller = view.players.firstOrNull { it.id == view.vintoCallerId }?.nickname ?: "Someone"
-
-    return Table(
-        prompt = Ask.WhoPlaysForYou(Speaker.Named(caller)),
-        // The viewer is among them: nominating yourself is a real answer, and it is the one
-        // the rail has to be able to say, since a player cannot tap their own plate to mean
-        // "me" and be sure that is what it meant.
-        seats = view.players
-            .filter { it.id != view.vintoCallerId }
-            .map { seat ->
-                SeatChoice(
-                    id = seat.id,
-                    nickname = seat.nickname,
-                    who = speakerFor(view, seat.id),
-                    move = Move.Send(GameAction.SetCoalitionLeader(LeaderIdPayload(seat.id))),
-                )
-            },
-    )
-}
 
 private fun scoringTable(view: PlayerView): Table {
     val mine = view.scores?.get(view.viewerId)

@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -62,7 +63,7 @@ class CoalitionFinalRoundTest {
         coalitionWith = if (isHuman) emptyList() else botIds,
         // And has already declared it truthfully — the scenarios pin the *play*, not the
         // declaration step, which CoalitionHumanMemberTest covers on its own.
-        declaredCards = if (isHuman) null else ranks.mapIndexed { i, r -> i to r }.toMap(),
+        claims = if (isHuman) null else ranks.mapIndexed { i, r -> Claim(id, listOf(i), listOf(r)) },
     )
 
     private fun total(player: PlayerState) = player.cards.sumOf { it.value }
@@ -413,7 +414,12 @@ class CoalitionFinalRoundTest {
         val misdeclared = base.copy(
             players = base.players.map { player ->
                 if (player.id == "bot-1") {
-                    player.copy(declaredCards = mapOf(0 to Rank.QUEEN, 1 to Rank.FIVE))
+                    player.copy(
+                        claims = listOf(
+                            Claim(player.id, listOf(0), listOf(Rank.QUEEN)),
+                            Claim(player.id, listOf(1), listOf(Rank.FIVE)),
+                        ),
+                    )
                 } else {
                     player
                 }

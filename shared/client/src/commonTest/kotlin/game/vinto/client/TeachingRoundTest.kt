@@ -336,6 +336,10 @@ private class Learner(private val session: LocalGameSession) {
                     question = move.question
                 }
 
+                is Move.Say, Move.Done -> {
+                    // The lesson is a scripted round; nothing in it talks or confers.
+                }
+
                 is Move.Send -> {
                     val refusal = session.dispatch(move.action)
                     assertEquals(null, refusal, "the coach pointed at a move the engine refused")

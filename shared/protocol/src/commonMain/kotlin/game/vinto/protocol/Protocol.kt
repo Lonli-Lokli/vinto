@@ -2,6 +2,7 @@ package game.vinto.protocol
 
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -34,6 +35,28 @@ sealed interface ClientMessage {
      * seats by token, idempotently, which is the whole reconnect story. No token means
      * "issue me one", and the answer is the one message that ever carries it raw.
      */
+    /**
+     * Table talk: one typed sentence from the phrasebook, carrying no text.
+     *
+     * Not an action, and deliberately a separate message rather than a `GameAction` — none of
+     * this is game state (design D6), so it must not reach the engine, a recording or a hash.
+     * The room checks the speaker against the socket's own seat exactly as it does an action's
+     * `actorId`, and caps how much one seat may say in a window.
+     */
+    /**
+     * "I have said what I wanted to say."
+     *
+     * Closes the coalition's confer window early, the moment every connected member has sent
+     * one — so three people who agree in five seconds are not held for twenty.
+     */
+    @Serializable
+    @SerialName("done-conferring")
+    data class DoneConferring(val token: String? = null) : ClientMessage
+
+    @Serializable
+    @SerialName("say")
+    data class Say(val talk: TableTalk) : ClientMessage
+
     @Serializable
     @SerialName("join")
     data class Join(
@@ -131,6 +154,17 @@ sealed interface ServerMessage {
         val events: List<EventEntry>,
         val nextIndex: Int,
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
+        /** See [Sync.away]. */
+        val away: List<String> = emptyList(),
+        /**
+         * What the bots said while making these moves.
+         *
+         * Carried **inside** the events message rather than as a message of its own, because
+         * a socket gets one prebuilt string per response: a separate `said` would need a list
+         * per seat and a second send. It also arrives in step with the moves it comments on,
+         * which is what a strip wants.
+         */
+        val said: List<TableTalk> = emptyList(),
     ) : ServerMessage
 
     /**
@@ -145,7 +179,24 @@ sealed interface ServerMessage {
         val events: List<EventEntry>,
         val nextIndex: Int,
         val view: PlayerView? = null,
+        /**
+         * The seats a bot is playing because their person has gone, by engine player id.
+         *
+         * It cannot ride on the [PlayerView]: `isHuman` and `isBot` are inside the canonical
+         * state hash, so the room deliberately never writes the takeover into the game — a
+         * round whose recording could not replay would be a worse bug than a missing label.
+         * This is the room telling the table what the state is not allowed to say.
+         *
+         * Empty by default, and omitted when empty, so a table with everybody present sends
+         * nothing extra.
+         */
+        val away: List<String> = emptyList(),
     ) : ServerMessage
+
+    /** Somebody said something. Broadcast to every seat, the Vinto caller included. */
+    @Serializable
+    @SerialName("said")
+    data class Said(val talk: TableTalk) : ServerMessage
 
     /** The lobby changed: somebody joined, left, or a bot was added or removed. Broadcast. */
     @Serializable

@@ -179,7 +179,7 @@ class StateHashTest {
     fun declarationsChangeTheHashDeterministically() {
         val declared = state(
             players = listOf(
-                player("p1").copy(declaredCards = mapOf(0 to Rank.QUEEN)),
+                player("p1").copy(claims = listOf(Claim("p2", listOf(0), listOf(Rank.QUEEN)))),
                 player("p2"),
                 player("p3"),
                 player("p4"),

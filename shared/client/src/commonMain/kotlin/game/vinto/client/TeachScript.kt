@@ -501,27 +501,17 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
 /**
  * The coalition's play, explained as it happens.
  *
- * Held over the felt at two moments: when the coalition names whose hand it plays, and each
- * time one of them has an action card in play — the frame with the card engaged is drawn,
- * the stage holds, the rule is read, and "Go on" lets the card do its work. Once per rank,
- * so the Ace, the King and the 9 the taught round has the bots play are each explained
- * exactly once, and a learner who wandered off the line still hears about whatever their
- * bots happen to play.
+ * Held over the felt each time one of them has an action card in play — the frame with the
+ * card engaged is drawn, the stage holds, the rule is read, and "Go on" lets the card do its
+ * work. Once per rank, so the Ace, the King and the 9 the taught round has the bots play are
+ * each explained exactly once, and a learner who wandered off the line still hears about
+ * whatever their bots happen to play.
+ *
+ * There used to be a beat here for the coalition naming whose hand it played. There is no
+ * such moment now: only the lowest hand counts, whoever holds it, so the coalition has
+ * nothing to name and the round starts the instant Vinto is called.
  */
-private fun finalRoundTalk(view: PlayerView, taught: Taught): Lesson? =
-    leaderTalk(view, taught) ?: playTalk(view, taught)
-
-private fun leaderTalk(view: PlayerView, taught: Taught): Lesson? {
-    val leader = view.coalitionLeaderId ?: return null
-    if (Teaches.CoalitionLeader.ID in taught.talked) return null
-    val who = view.players.firstOrNull { it.id == leader }?.nickname ?: return null
-    return Lesson(
-        chapter = Chapter.VINTO,
-        teaches = Teaches.CoalitionLeader(Speaker.Named(who)),
-        point = Target.Seat(leader),
-        talkId = Teaches.CoalitionLeader.ID,
-    )
-}
+private fun finalRoundTalk(view: PlayerView, taught: Taught): Lesson? = playTalk(view, taught)
 
 private fun playTalk(view: PlayerView, taught: Taught): Lesson? {
     if (view.phase != GamePhase.FINAL) return null

@@ -44,7 +44,6 @@ class MoveGeneratorTest {
         pendingCard: game.vinto.shapes.Card? = null,
         turnCount: Int = 20,
         vintoCallerId: String? = null,
-        coalitionLeaderId: String? = null,
         hiddenCards: Map<String, game.vinto.shapes.Card> = emptyMap(),
     ) = MctsGameState(
         players = players,
@@ -62,7 +61,6 @@ class MoveGeneratorTest {
         tossInRanks = tossInRanks,
         turnCount = turnCount,
         vintoCallerId = vintoCallerId,
-        coalitionLeaderId = coalitionLeaderId,
     )
 
     private fun seat(id: String, cards: Int = 4, knownCards: Map<Int, CardMemory> = emptyMap()) =
@@ -167,7 +165,6 @@ class MoveGeneratorTest {
             players,
             pendingCard = testCard(Rank.NINE, "9_0"),
             vintoCallerId = "caller",
-            coalitionLeaderId = "bot-1",
         )
 
         val moves = MoveGenerator.generateMoves(peekState)
@@ -187,7 +184,6 @@ class MoveGeneratorTest {
                 players,
                 pendingCard = testCard(Rank.NINE, "9_0"),
                 vintoCallerId = "caller",
-                coalitionLeaderId = "p2",
             ),
         )
         assertTrue(moves.any { move -> move.targets.any { it.playerId == "p2" } })

@@ -90,7 +90,6 @@ data class MctsGameState(
     val turnCount: Int = 0,
     val finalTurnTriggered: Boolean = false,
     val vintoCallerId: String? = null,
-    val coalitionLeaderId: String? = null,
     val opponentModeler: OpponentModeler? = null,
     val isTerminal: Boolean = false,
 ) {

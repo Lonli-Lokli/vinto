@@ -44,7 +44,6 @@ class CoalitionCooperationTest {
                 cards.mapIndexed { position, card -> "$id-$position" to card }
             }.toMap(),
             vintoCallerId = "human1",
-            coalitionLeaderId = "bot1",
             turnCount = 20,
             finalTurnTriggered = true,
         )

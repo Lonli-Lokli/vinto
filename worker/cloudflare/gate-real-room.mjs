@@ -266,7 +266,6 @@ let current = JSON.stringify(played.state);
 let clientActions = 0;
 let botActions = 0;
 let readyActions = 0;
-let leaderChoices = 0;
 
 const collectBots = (outcome) => {
   botActions += outcome.events.filter((e) => e.byBot).length;
@@ -282,33 +281,6 @@ for (let step = 0; step < 120; step++) {
   const room = parse(current);
   if (room.game.phase === 'scoring') break;
   lastPlaying = current;
-
-  // 0. A coalition leader the seated players owe.
-  //
-  // A bot's Vinto call with a person in the coalition holds *every* bot move — a toss-in
-  // window included — until that person names the leader: `BotRunner.nextAction` puts the
-  // choice ahead of everything else, and the room's only other way out is its twenty-second
-  // leader alarm, which this harness never fires. A client shows a prompt at that moment;
-  // the harness answers it the simplest way a person could, naming the first seated
-  // coalition member. Left out, a bot that finds a hand worth calling on inside the 120
-  // steps stops the table dead and the failure surfaces as a draw refused in a window.
-  if (room.game.vintoCallerId && !room.game.coalitionLeaderId) {
-    const member = room.seats.find(
-      (s) => s.tokenHash && s.playerId !== room.game.vintoCallerId,
-    );
-    if (member) {
-      try {
-        current = JSON.stringify(collectBots(act(current, member.index, {
-          type: 'SET_COALITION_LEADER', payload: { leaderId: member.playerId },
-        })).state);
-        leaderChoices++;
-        continue;
-      } catch (failure) {
-        check(`step ${step}: naming the coalition leader`, false, failure.message);
-        break;
-      }
-    }
-  }
 
   // 1. An open window that a seated player has not answered.
   const tossIn = room.game.activeTossIn;
@@ -376,9 +348,7 @@ for (let step = 0; step < 120; step++) {
 }
 
 check('the toss-in windows were answered by the seated players', readyActions > 0, `${readyActions}`);
-if (leaderChoices > 0) {
-  check('a bot\'s Vinto call was answered by a person naming the leader', leaderChoices === 1, `${leaderChoices}`);
-}
+
 
 const finalRoom = parse(current);
 check('the client got to play several turns', clientActions >= 4, `${clientActions} actions`);

@@ -178,9 +178,18 @@ class PacingTimeoutTest {
             moreTimeEnvelopes(encode(state), token, now),
         )
 
+    /**
+     * The room no longer waits on, or answers, a coalition nomination.
+     *
+     * It used to hold the final round for twenty seconds and then appoint the first coalition
+     * seat in table order if nobody spoke. The nomination decided nothing — the round is scored
+     * against the lowest coalition hand whoever holds it — so all the clock could buy was a
+     * stall at the top of the round. A room carrying an old deadline still decodes (the field
+     * is kept for exactly that) and simply never fires.
+     */
     @Test
-    fun theCoalitionGetsADefaultLeaderInTableOrder() {
-        // A final round stalled on the leader choice, built directly: the engine's own
+    fun aStaleLeaderDeadlineDoesNothing() {
+        // A final round built directly, the way the deleted test built it: the engine's own
         // tests cover reaching this position; this one covers what the room does about it.
         val dealt = initializeGame(7L, Difficulty.EASY)
         val players = dealt.players.mapIndexed { index, player ->
@@ -221,13 +230,11 @@ class PacingTimeoutTest {
         )
         val after = fired.state
 
-        // The first coalition seat in table order — the caller is seat 1, so seat 0 leads.
-        // Not a choice anybody made, but one everybody could predict.
-        assertEquals(players[0].id, after.game?.coalitionLeaderId)
-        assertNull(after.leaderDeadlineEpochMs)
-        val entry = after.log.firstOrNull { it.action is GameAction.SetCoalitionLeader }
-        assertNotNull(entry, "the appointment is on the log")
-        assertTrue(entry.byBot, "and marked as the room's own move")
+        assertNull(after.game?.coalitionLeaderId, "the room appointed a leader nobody asked for")
+        assertNull(
+            after.log.firstOrNull { it.action is GameAction.SetCoalitionLeader },
+            "a retired move reached the log",
+        )
     }
 
     // ------------------------------------------------------------------ plumbing

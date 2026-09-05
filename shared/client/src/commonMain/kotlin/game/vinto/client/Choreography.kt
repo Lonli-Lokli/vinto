@@ -505,9 +505,6 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
             Beat.Say(action.payload.playerId, "Vinto!"),
         )
 
-        is GameAction.SetCoalitionLeader ->
-            listOf(Beat.Attend(action.payload.leaderId, Attention.COALITION))
-
         else -> emptyList()
     }
 

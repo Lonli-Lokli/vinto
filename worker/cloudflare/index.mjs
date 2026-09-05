@@ -24,7 +24,8 @@ import {
   sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
-  applyActionEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
+  applyActionEnvelopes, sayEnvelopes, doneConferringEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope,
+  roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
   listPublicRooms, forgetRoom,
   registrySize, touchRoom,
@@ -805,6 +806,49 @@ export class Room {
         // message. The messages arrive prebuilt from Kotlin, one per seat, already redacted;
         // this layer looks up the socket's seat and sends the string as-is.
         return this.#sendPrebuilt(result.messages);
+      }
+
+      case 'done-conferring': {
+        // The coalition's window closes the moment every connected member has said so. It
+        // touches no game state of its own, but closing it releases the seats it was holding,
+        // so the answer carries whatever the bots then played.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before conferring' }));
+        }
+        const done = JSON.parse(doneConferringEnvelopes(stateJson, token, Date.now()));
+        if (done.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: done.error }));
+        }
+        await this.#save(JSON.stringify(done.state));
+        await this.#fileRecording(stateJson, done.state);
+        this.#observe(stateJson, done.state);
+        return this.#sendPrebuilt(done.messages);
+      }
+
+      case 'say': {
+        // Table talk. Checked like an action — the token names the seat, and the seat may
+        // only speak as itself — and charged to the same budget, because a sentence is
+        // broadcast to every socket and an uncapped one is a flood with extra steps. It
+        // touches no game state, so there is nothing to record and nothing to observe.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before talking' }));
+        }
+        const spoken = JSON.parse(
+          sayEnvelopes(stateJson, token, JSON.stringify(msg.talk ?? {}), Date.now()),
+        );
+        if (spoken.error) {
+          if (spoken.retryAfterMs) await this.#save(JSON.stringify(spoken.state));
+          return ws.send(JSON.stringify({
+            type: 'error',
+            message: spoken.error,
+            retryAfterMs: spoken.retryAfterMs ?? undefined,
+          }));
+        }
+        // The budget it spent has to be remembered, so this saves even though no game moved.
+        await this.#save(JSON.stringify(spoken.state));
+        return this.#sendPrebuilt(spoken.messages);
       }
 
       case 'resync': {

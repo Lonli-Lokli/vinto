@@ -30,6 +30,12 @@ sealed interface Detail {
     /** Setting up a King's declaration. */
     data object TapACardToSayWhatItIs : Detail
 
+    /**
+     * An Ace in the final round, where the caller is out of bounds and every legal target is
+     * therefore a teammate — including, possibly, the one hand still able to win the round.
+     */
+    data object AnAceOnlyHurtsYourOwnSide : Detail
+
     /** Declaring your hand to the coalition, who have no way to check. */
     data object TableTalkIsTakenOnTrust : Detail
 

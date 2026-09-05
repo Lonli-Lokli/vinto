@@ -21,6 +21,7 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import game.vinto.shapes.actorId
 import kotlinx.coroutines.async
@@ -89,6 +90,21 @@ class TwoClientGameTest {
             val room = decodeRoom(server.stateJson)
             if (room.phase != RoomPhase.PLAYING) break
             val game = assertNotNull(room.game)
+
+            // The final round opens with a window for the coalition to confer, and the bots
+            // hold while it is open. Two people at a table would say they were done; this
+            // harness says it for them — and then lets an alarm run, because closing the
+            // window is not itself a move and the seats it was holding still have to be
+            // played.
+            if (conferring(room)) {
+                val closed = closeConferAsEverybody(room, server.sockets.mapNotNull { it.token })
+                if (closed.conferredRound != null) {
+                    server.stateJson = decodeLifecycle(onAlarm(encode(closed), server.now))
+                        .state
+                        .let(::encode)
+                    continue
+                }
+            }
 
             server.now += MS_BETWEEN_MOVES
             val action = assertNotNull(person.nextAction(game.everySeatPlayable()))
@@ -171,7 +187,7 @@ class TwoClientGameTest {
     private class FakeRoomServer {
         var now: Double = START
         var stateJson: String = newRoom("room-$CODE", SEED.toDouble(), "easy", now)
-        private val sockets = mutableListOf<FakeSocket>()
+        val sockets = mutableListOf<FakeSocket>()
         private var minted = 0
 
         val connector = object : RoomConnector {
@@ -232,19 +248,55 @@ class TwoClientGameTest {
 
         private fun onMessage(socket: FakeSocket, text: String) {
             when (val message = ProtocolJson.decodeFromString(ClientMessage.serializer(), text)) {
-                is ClientMessage.Join -> join(socket, message)
-                is ClientMessage.Action -> action(socket, message)
-                is ClientMessage.Resync ->
+                is ClientMessage.Join -> { join(socket, message) }
+                is ClientMessage.Action -> { action(socket, message) }
+                is ClientMessage.DoneConferring -> {
+                    doneConferring(socket, message)
+                }
+
+                is ClientMessage.Say -> {
+                    val spoken = decodeEnvelopes(
+                        sayEnvelopes(
+                            stateJson,
+                            message.talk.by.let { socket.token!! },
+                            ProtocolJson.encodeToString(TableTalk.serializer(), message.talk),
+                            now,
+                        ),
+                    )
+                    stateJson = encode(spoken.state)
+                    spoken.messages.forEach { (seat, said) ->
+                        sockets.firstOrNull { it.seat == seat }?.let { deliver(it, said) }
+                    }
+                }
+                is ClientMessage.Resync -> {
                     deliver(socket, syncEnvelope(stateJson, socket.seat ?: -1, message.sinceIndex, now))
+                }
 
-                is ClientMessage.AddBot ->
+                is ClientMessage.AddBot -> {
                     lobbyChange(socket, addBot(stateJson, message.token ?: socket.token!!, now))
+                }
 
-                is ClientMessage.RemoveBot ->
+                is ClientMessage.RemoveBot -> {
                     lobbyChange(socket, removeBot(stateJson, message.token ?: socket.token!!, message.seat, now))
+                }
 
-                is ClientMessage.NextRound -> Unit // one round is this harness's scope
-                is ClientMessage.MoreTime -> moreTime(socket, message)
+                is ClientMessage.NextRound -> {
+                    Unit // one round is this harness's scope
+                }
+                is ClientMessage.MoreTime -> {
+                    moreTime(socket, message)
+                }
+            }
+        }
+
+        private fun doneConferring(socket: FakeSocket, message: ClientMessage.DoneConferring) {
+            val done = decodeEnvelopes(
+                doneConferringEnvelopes(stateJson, message.token ?: socket.token!!, now),
+            )
+            if (done.error != null) return
+            stateJson = encode(done.state)
+            done.messages.forEach { (seat, text) ->
+                sockets.firstOrNull { it.seat == seat }?.let { deliver(it, text) }
             }
         }
 

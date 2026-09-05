@@ -19,16 +19,18 @@ import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.looksMinted
 import game.vinto.protocol.mintNickname
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
-import game.vinto.shapes.LeaderIdPayload
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Prng
 import game.vinto.shapes.Sha256
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import game.vinto.shapes.actorId
+import game.vinto.shapes.retired
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -193,13 +195,14 @@ private const val MAX_BOT_STEPS = 200
 private const val TOSS_IN_MS = 15_000.0
 
 /**
- * How long the coalition may argue about its leader before the room appoints one (9.4).
+ * How long the coalition has to confer before the final round's first turn.
  *
- * A little longer than the toss-in, because it is a real decision — but not open-ended,
- * because the final round is the one part of the game the caller is entitled to see played
- * out. The default is deterministic: the first coalition seat in table order.
+ * The twenty seconds the leader vote used to hold, spent on the conversation instead of on a
+ * question that settled nothing. Bounded for the reason that one was: the final round is the
+ * part of the game the caller is entitled to see played out, and a coalition that will not
+ * stop talking must not be able to hold them there.
  */
-private const val LEADER_MS = 20_000.0
+private const val CONFER_MS = 20_000.0
 
 /**
  * What one "more time" request buys, and how many a single window will grant.
@@ -211,8 +214,11 @@ private const val LEADER_MS = 20_000.0
 private const val MORE_TIME_MS = 15_000.0
 private const val MAX_TOSS_EXTENSIONS = 2
 
+/** One refusal, worded once: several doors ask the same question. */
+private const val NO_GAME_YET = "the game has not started"
+
 /** One refusal, worded once: three doors check the same credential. */
-private const val NO_SEAT_FOR_TOKEN = "no seat holds that token"
+internal const val NO_SEAT_FOR_TOKEN = "no seat holds that token"
 
 // PlayerProfile, RoundResult, LoggedAction, RoomPhase, LobbySeat and LobbyView moved verbatim
 // to `shared/protocol` (game.vinto.protocol): they travel on the wire, so the client and the
@@ -438,13 +444,60 @@ data class RoomState(
 
     // --- pacing (migrate task 9.4) ---------------------------------------------------------
     //
-    // Wall-clock deadlines on the two situations where the whole table waits on a human:
-    // an open toss-in window, and the coalition's leader choice. Recomputed by `withPacing`
-    // after every change to the game; the running deadline is kept rather than refreshed, so
-    // unrelated actions do not push it back. Both are the room's business, never the
-    // engine's — the reducer has no clock, so the expiry arrives as an ordinary action.
+    // A wall-clock deadline on the situation where the whole table waits on a human: an open
+    // toss-in window. Recomputed by `withPacing` after every change to the game; a running
+    // deadline is kept rather than refreshed, so unrelated actions do not push it back. The
+    // room's business, never the engine's — the reducer has no clock, so the expiry arrives
+    // as an ordinary action.
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tossInDeadlineEpochMs: Double? = null,
+    /**
+     * Retired, and kept only so a room already in flight still decodes.
+     *
+     * It timed the coalition's leader vote, which is gone — the nomination decided nothing and
+     * the twenty seconds it bought were a stall at the top of the final round. Nothing writes
+     * it; it is always null in a room created today. `VintoJson` sets
+     * `ignoreUnknownKeys = false`, so dropping the field outright would make a deploy land on
+     * a live room's stored state and fail to read it.
+     */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val leaderDeadlineEpochMs: Double? = null,
+    /**
+     * The confer window: talk and planning before the final round's first turn.
+     *
+     * The slot the retired leader vote vacated, put to the thing people actually want to do
+     * with it. A coalition of three has one turn each and a shared hand to organise, and
+     * organising it after the first turn has been played is organising it too late.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val conferUntilEpochMs: Double? = null,
+    /** Seats that have said they are done conferring. Cleared when the window closes. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val conferReady: List<Int> = emptyList(),
+    /**
+     * The round whose window has already run, so it opens once and not once per action.
+     *
+     * A round number rather than a flag, because a session plays several and each gets its
+     * own window.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val conferredRound: Int? = null,
+    /**
+     * The coalition's shared plan, for this round only.
+     *
+     * **Room state, never game state** (design D6). It mutates no game, reaches no recording
+     * and touches no hash — a plan is what the coalition intends, and intent is not a fact
+     * about the table. Kept here rather than per-client so that everybody edits *one* draft:
+     * three competing plans is not a coalition deciding together.
+     *
+     * Thrown away when the round is scored, along with [conferredRound] — the next round is a
+     * new conversation.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val plan: CoalitionPlan? = null,
+    /**
+     * Turn number each bot last spoke on.
+     *
+     * In `RoomState` rather than in `BotRunner` because the runner is **rebuilt every
+     * request**: a "spoken this turn" mark kept inside it would reset between requests and the
+     * bots would say the same thing again on each one. Three bots narrating every request is
+     * a strip nobody reads, which is the thing the once-per-turn bound exists to prevent.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botTalkTurns: Map<String, Int> = emptyMap(),
     /**
      * How many extensions this toss-in window has been granted, reset when it closes.
      *
@@ -511,7 +564,7 @@ data class RoomState(
             lonelyUntilEpochMs,
             emptyUntilEpochMs,
             tossInDeadlineEpochMs,
-            leaderDeadlineEpochMs,
+            conferUntilEpochMs,
             finishedAtEpochMs?.plus(FINISHED_TTL_MS),
             if (phase == RoomPhase.LOBBY || phase == RoomPhase.STARTING) {
                 createdAtEpochMs + LOBBY_TTL_MS
@@ -815,14 +868,6 @@ private fun laggingHumans(state: RoomState): List<String> {
         .map { it.id }
 }
 
-/** Whether the final round is stalled on the coalition choosing its leader. */
-private fun awaitingLeader(state: RoomState): Boolean {
-    val game = state.game ?: return false
-    return game.phase == GamePhase.FINAL &&
-        game.vintoCallerId != null &&
-        game.coalitionLeaderId == null
-}
-
 /**
  * Recomputes the pacing deadlines from the game on the table.
  *
@@ -830,20 +875,33 @@ private fun awaitingLeader(state: RoomState): Boolean {
  * than refreshed — an unrelated action must not buy the lagging player more time. Applied
  * after everything that changes the game: an action, a deal, a takeover, an expiry.
  */
-private fun withPacing(state: RoomState, nowMs: Double): RoomState {
+internal fun withPacing(state: RoomState, nowMs: Double): RoomState {
     val playing = state.phase == RoomPhase.PLAYING
     val tossDeadline = if (playing && laggingHumans(state).isNotEmpty()) {
         state.tossInDeadlineEpochMs ?: (nowMs + TOSS_IN_MS)
     } else {
         null
     }
+    // A window that has run out of people is **closed**, not merely un-clocked. Nulling the
+    // deadline while leaving `conferredRound` unset let it mint a fresh twenty seconds the
+    // moment somebody reconnected — and again on the next reconnect, indefinitely. That is
+    // exactly the "coalition holding the caller" D10 exists to forbid, reached by dropping
+    // rather than by talking.
+    val conferUntil = when {
+        !playing -> null
+        conferring(state) -> state.conferUntilEpochMs ?: nowMs + CONFER_MS
+        else -> null
+    }
+    val conferred = if (!conferring(state) && state.conferUntilEpochMs != null) {
+        state.game?.roundNumber
+    } else {
+        state.conferredRound
+    }
     return state.copy(
         tossInDeadlineEpochMs = tossDeadline,
-        leaderDeadlineEpochMs = if (playing && awaitingLeader(state)) {
-            state.leaderDeadlineEpochMs ?: (nowMs + LEADER_MS)
-        } else {
-            null
-        },
+        conferUntilEpochMs = conferUntil,
+        conferredRound = conferred,
+        plan = state.plan?.let { state.withLanesLocked(it) },
         // A window's extensions die with it; the next window starts with a full allowance.
         tossInExtensions = if (tossDeadline == null) 0 else state.tossInExtensions,
     )
@@ -883,7 +941,7 @@ internal fun moreTimeApplied(stateJson: String, token: String): Applied {
 }
 
 /** What a bucket had to say: either a charge went through, or how long to wait. */
-private data class Spend(val state: RoomState, val retryAfterMs: Double?)
+internal data class Spend(val state: RoomState, val retryAfterMs: Double?)
 
 /**
  * Charges one action to a seat's budget.
@@ -892,7 +950,7 @@ private data class Spend(val state: RoomState, val retryAfterMs: Double?)
  * ticks: the object sleeps between messages, and the only clock it has is the one that arrives
  * with the next one.
  */
-private fun spendBudget(state: RoomState, seat: Int, nowMs: Double): Spend {
+internal fun spendBudget(state: RoomState, seat: Int, nowMs: Double): Spend {
     val bucket = state.buckets[seat] ?: Bucket(lastRefillMs = nowMs)
     val elapsedSeconds = maxOf(0.0, nowMs - bucket.lastRefillMs) / MILLIS_PER_SECOND
     val available = minOf(BUCKET_CAPACITY, bucket.tokens + elapsedSeconds * BUCKET_REFILL_PER_SECOND)
@@ -939,15 +997,50 @@ private fun settleRound(state: RoomState, nowMs: Double): RoomState {
     val recorded = recordRoundEnd(state)
     val sessionOver = recorded.session.endsAtEpochMs?.let { nowMs >= it } == true
 
+    // The round's conversation dies with the round. A plan is what a coalition intended for
+    // *that* hand, and the next one is a new conversation — carrying it over would have the
+    // table open on somebody else's stale agreement.
+    val settled = recorded.copy(plan = null, conferReady = emptyList())
+
     return if (sessionOver) {
-        recorded.copy(
+        settled.copy(
             phase = RoomPhase.FINISHED,
             game = null,
             finishedAtEpochMs = nowMs,
         )
     } else {
-        recorded.copy(phase = RoomPhase.BETWEEN_ROUNDS)
+        settled.copy(phase = RoomPhase.BETWEEN_ROUNDS)
     }
+}
+
+/**
+ * One edit to the coalition's shared plan.
+ *
+ * Last edit wins, and any coalition member may make one: three competing plans is not a
+ * coalition deciding together, and one draft everybody can reach is what deciding together
+ * actually looks like.
+ *
+ * **A lane whose owner's turn has begun is not editable.** A plan must not change under the
+ * hand of the person executing it — the rest stays open, because the round is still going and
+ * better information keeps arriving.
+ */
+internal fun editPlan(state: RoomState, token: String, plan: CoalitionPlan): Spoken {
+    val seatEntry = state.seats.firstOrNull { it.tokenHash == Sha256.hex(token) }
+        ?: return Spoken(state, error = NO_SEAT_FOR_TOKEN)
+    val game = state.game ?: return Spoken(state, error = NO_GAME_YET)
+    if (game.phase != GamePhase.FINAL || game.vintoCallerId == null) {
+        return Spoken(state, error = "there is no round to plan")
+    }
+    if (seatEntry.playerId == game.vintoCallerId) {
+        return Spoken(state, error = "the caller has no coalition to plan with")
+    }
+
+    val locked = state.plan?.lanes.orEmpty().filter { it.locked }.map { it.seat }.toSet()
+    if (plan.lanes.any { it.seat in locked && it != state.plan?.lanes?.first { l -> l.seat == it.seat } }) {
+        return Spoken(state, error = "that turn has already started")
+    }
+
+    return Spoken(state.copy(plan = plan))
 }
 
 /**
@@ -1110,7 +1203,15 @@ fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double):
         else -> nowMs + ROOM_TTL_MS
     }
 
-    val next = present.copy(seatGrace = grace, lonelyUntilEpochMs = lonely, emptyUntilEpochMs = empty)
+    // Pacing is recomputed here, because presence is exactly what decides who a window is
+    // waiting on. Without it a deadline outlives its situation: the last person in a
+    // conversation closes their tab and the table goes on holding twenty seconds for them.
+    // `withPacing` keeps a *running* deadline rather than refreshing it, so a seat coming back
+    // does not buy the table more time.
+    val next = withPacing(
+        present.copy(seatGrace = grace, lonelyUntilEpochMs = lonely, emptyUntilEpochMs = empty),
+        nowMs,
+    )
     return VintoJson.encodeToString(LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt))
 }
 
@@ -1159,10 +1260,20 @@ private fun offerBotsIfDue(state: RoomState, nowMs: Double): RoomState {
 fun onAlarm(stateJson: String, nowMs: Double): String =
     VintoJson.encodeToString(onAlarmTracked(stateJson, nowMs).result)
 
+/** What the room made of a sentence: a broadcast, or a refusal. */
+internal data class Spoken(
+    val state: RoomState,
+    val talk: TableTalk? = null,
+    val error: String? = null,
+    val retryAfterMs: Double? = null,
+)
+
 /** [onAlarm]'s outcome with the takeover branch's steps kept for the envelope builders. */
 internal data class TrackedAlarm(
     val result: LifecycleResult,
     val steps: List<Step> = emptyList(),
+    /** What the bots said while playing these steps. */
+    val said: List<TableTalk> = emptyList(),
 )
 
 @Suppress("ReturnCount")
@@ -1247,20 +1358,35 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
                 tookOver = expired.toList(),
             ),
             steps = played.steps,
+            said = played.said,
         )
     }
 
     // 7. Pacing (9.4): the table has out-waited a human, and the room moves for them.
-    if (due(state.tossInDeadlineEpochMs) || due(state.leaderDeadlineEpochMs)) {
-        return expirePacing(
-            state,
-            nowMs,
-            tossInDue = due(state.tossInDeadlineEpochMs),
-            leaderDue = due(state.leaderDeadlineEpochMs),
+    if (due(state.conferUntilEpochMs)) {
+        // Nobody is moved for and nothing is synthesised: the window simply ends, and the
+        // round it was holding gets played.
+        val closed = closeConfer(state)
+        val played = playBotsTracked(closed)
+        val next = withPacing(played.state, nowMs)
+        return TrackedAlarm(
+            LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt),
+            steps = played.steps,
+            said = played.said,
         )
     }
 
-    return TrackedAlarm(LifecycleResult(state, nextAlarmAtEpochMs = state.nextAlarmAt))
+    if (due(state.tossInDeadlineEpochMs)) {
+        return expirePacing(state, nowMs, tossInDue = true)
+    }
+
+    // 8. Nothing was due, but pacing is still recomputed before the object goes back to sleep.
+    //    A deadline exists exactly while its situation does, and the situation can have moved
+    //    since the last action — a person left, a turn began — with no action to notice it.
+    //    `withPacing` keeps a *running* deadline rather than refreshing it, so this cannot
+    //    hand anybody more time; what it does is stop one outliving what it was waiting for.
+    val paced = withPacing(state, nowMs)
+    return TrackedAlarm(LifecycleResult(paced, nextAlarmAtEpochMs = paced.nextAlarmAt))
 }
 
 /**
@@ -1272,7 +1398,6 @@ private fun expirePacing(
     state: RoomState,
     nowMs: Double,
     tossInDue: Boolean,
-    leaderDue: Boolean,
 ): TrackedAlarm {
     val synthesized = mutableListOf<GameAction>()
     if (tossInDue) {
@@ -1280,16 +1405,7 @@ private fun expirePacing(
             synthesized += GameAction.PlayerTossInFinished(PlayerIdPayload(it))
         }
     }
-    if (leaderDue && awaitingLeader(state)) {
-        // Deterministic default: the first coalition seat in table order. Not a choice
-        // anybody made, but one everybody can predict — which is what a default is for.
-        val game = state.game
-        game?.players?.firstOrNull { it.id != game.vintoCallerId }?.let {
-            synthesized += GameAction.SetCoalitionLeader(LeaderIdPayload(it.id))
-        }
-    }
-
-    var working = state.copy(tossInDeadlineEpochMs = null, leaderDeadlineEpochMs = null)
+    var working = state.copy(tossInDeadlineEpochMs = null)
     val steps = mutableListOf<Step>()
     for (action in synthesized) {
         // An action the window's closing has already made moot is skipped, not an error:
@@ -1313,6 +1429,7 @@ private fun expirePacing(
     return TrackedAlarm(
         LifecycleResult(working, nextAlarmAtEpochMs = working.nextAlarmAt),
         steps = steps + played.steps,
+        said = played.said,
     )
 }
 
@@ -1341,6 +1458,8 @@ internal data class Applied(
     val steps: List<Step> = emptyList(),
     val error: String? = null,
     val retryAfterMs: Double? = null,
+    /** What the bots said while playing these steps. */
+    val said: List<TableTalk> = emptyList(),
 )
 
 @Suppress("ReturnCount")
@@ -1371,12 +1490,20 @@ internal fun applyActionApplied(
     // No game, nothing to act on. A lobby refuses game actions rather than dealing one on
     // demand, or the countdown would be advisory.
     val game = charged.game
-        ?: return Applied(charged, error = "the game has not started")
+        ?: return Applied(charged, error = NO_GAME_YET)
 
     val action = try {
         VintoJson.decodeFromString(GameAction.serializer(), actionJson)
     } catch (failure: IllegalArgumentException) {
         return Applied(charged, error = "unreadable action: ${failure.message}")
+    }
+
+    // Retired moves, refused at the door rather than in the validator: `reduce` validates
+    // before it dispatches, so a rule there would refuse the frozen corpus too. The solo
+    // session's door reads the same `retired`, because a room and a local game that
+    // disagreed about which moves exist would be two games.
+    if (action.retired) {
+        return Applied(charged, error = "that move is no longer part of the game")
     }
 
     // The seat boundary, checked before the engine sees anything. An action whose payload
@@ -1416,6 +1543,7 @@ internal fun applyActionApplied(
     return Applied(
         withPacing(settled, nowMs),
         steps = listOf(Step(accepted, reduced, result.revealed)) + played.steps,
+        said = played.said,
     )
 }
 
@@ -1428,7 +1556,7 @@ internal fun applyActionApplied(
  */
 
 /** An accepted action with the states around it, for the bots' table model. */
-private data class ObservedMove(
+internal data class ObservedMove(
     val action: GameAction,
     val before: GameState,
     val after: GameState,
@@ -1446,14 +1574,24 @@ internal data class Step(
     val revealed: List<PublicReveal>,
 )
 
-internal data class PlayedOut(val state: RoomState, val steps: List<Step>)
+internal data class PlayedOut(
+    val state: RoomState,
+    val steps: List<Step>,
+    val said: List<TableTalk> = emptyList(),
+)
 
 private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomState =
     playBotsTracked(start, playerMove).state
 
-private fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null): PlayedOut {
+internal fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null): PlayedOut {
     if (start.game == null) return PlayedOut(start, emptyList())
 
+    // The confer window is checked **inside** the loop below rather than once before it. A bot
+    // calls Vinto from its own toss-in, which reduces in this very loop — so a check taken at
+    // the top reads a state where the final round has not started, and the bots then play the
+    // whole coalition round in the same request before anybody is offered a word. That is the
+    // exact failure the window exists to prevent, in the commonest case there is: a bot
+    // calling.
     val runner = BotRunner(start.difficulty, Random(start.seed))
     // The runner here is rebuilt per request, so its table model only spans the moves of
     // this request; the durable cross-request knowledge is the engine's `opponentKnowledge`.
@@ -1461,23 +1599,34 @@ private fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null):
     var state = start
     var steps = 0
     val trail = mutableListOf<Step>()
+    val overheard = mutableListOf<TableTalk>()
 
-    while (steps++ < MAX_BOT_STEPS && state.game?.phase != GamePhase.SCORING) {
+    while (
+        steps++ < MAX_BOT_STEPS &&
+        state.game?.phase != GamePhase.SCORING &&
+        !conferring(state)
+    ) {
         val game = state.game ?: break
-        val action = runner.nextAction(game) ?: break
+
+        state = state.overhearing(runner, game, overheard)
+
+        val action = runner.nextAction(asPlayed(game, state.seats)) ?: break
         val actor = action.actorId
         val seat = state.seats.firstOrNull { it.playerId == actor }
 
         // Three reasons to stop, all of them "this is not the room's move to make":
-        //  - it belongs to a seated *person*, whatever the runner thinks. `tokenHash`, not
-        //    `occupied`: since the lobby landed, an occupied seat may be a bot the room is
-        //    supposed to play, and using `occupied` here made the room refuse to move its
-        //    own bots — a game that stopped dead the first time a window opened;
+        //  - it belongs to a person who is **here**. Not `occupied`: since the lobby landed,
+        //    an occupied seat may be a bot the room is supposed to play, and using it made
+        //    the room refuse to move its own bots — a game that stopped dead the first time
+        //    a window opened. Nor `tokenHash` alone, which was the next thing tried and is
+        //    just as wrong in the other direction: a held seat is exactly what a
+        //    disconnected person's seat looks like, so the room marked a seat as taken over
+        //    and then went on waiting for whoever had left;
         //  - the validator refuses it, which would mean the room and its own driver
         //    disagreed about the rules;
         //  - the engine refuses it after validation, which should be impossible.
         val success = when {
-            seat != null && seat.tokenHash != null -> null
+            seat != null && seat.tokenHash != null && !seat.isBot -> null
             ActionValidator.validate(game, action) is Validation.Invalid -> null
             else -> GameEngine.reduce(game, action) as? ReduceResult.Success
         } ?: break
@@ -1496,7 +1645,7 @@ private fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null):
         trail += Step(entry, reduced, success.revealed)
     }
 
-    return PlayedOut(state, trail)
+    return PlayedOut(state, trail, overheard)
 }
 
 /**
@@ -1511,7 +1660,7 @@ fun viewForSeat(stateJson: String, seat: Int, nowMs: Double): String {
     val seatEntry = state.seats.getOrNull(seat)
         ?: return VintoJson.encodeToString(ViewResult(error = "unknown seat $seat"))
     val game = state.game
-        ?: return VintoJson.encodeToString(ViewResult(error = "the game has not started"))
+        ?: return VintoJson.encodeToString(ViewResult(error = NO_GAME_YET))
     val playerId = seatEntry.playerId
         ?: return VintoJson.encodeToString(ViewResult(error = "seat $seat has no player yet"))
 
@@ -1570,6 +1719,54 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
             botsOffered = state.countdownFromRoom && state.phase == RoomPhase.STARTING,
         ),
     )
+}
+
+/**
+ * Anything the bots have to say about the position, before they move in it.
+ *
+ * Bounded to one sentence per bot per *turn*, and the mark lives in `RoomState` rather than in
+ * the runner because the runner is rebuilt every request — a mark kept inside it would reset
+ * between requests and three bots would narrate every one.
+ */
+private fun RoomState.overhearing(
+    runner: BotRunner,
+    game: GameState,
+    into: MutableList<TableTalk>,
+): RoomState {
+    val sentence = runner.nextTalk(asPlayed(game, seats)) ?: return this
+    if (botTalkTurns[sentence.by] == game.turnNumber) return this
+    into += sentence
+    return copy(botTalkTurns = botTalkTurns + (sentence.by to game.turnNumber))
+}
+
+/**
+ * The game as the room's *driver* should read it: a seat a bot is playing reads as a bot.
+ *
+ * This is a lens and never a write. `dealRound` sets `isHuman`/`isBot` once, from
+ * `tokenHash != null`, and it must stay set that way, because both fields are inside the
+ * canonical state hash — moving them out of band would leave the round's own recording
+ * unable to replay to the state it ended in.
+ *
+ * So the room does not tell the engine that somebody left. It tells `BotRunner`, which is a
+ * decision-maker rather than an authority: it only needs to know whose move to propose, and
+ * what it proposes is then validated and reduced against the untouched state, exactly as the
+ * absent person's own client would have sent it.
+ *
+ * Without this the takeover was a label. `BotRunner.turnAction` returns null for a seat the
+ * engine records as a person, so a taken-over seat was flagged, announced on reconnect, and
+ * never played — and the final round, which is one turn per coalition member, stopped dead on
+ * whoever had dropped.
+ */
+internal fun asPlayed(game: GameState, seats: List<Seat>): GameState {
+    val players = game.players.mapIndexed { index, player ->
+        val playedByRoom = seats.getOrNull(index)?.isBot ?: player.isBot
+        if (player.isBot == playedByRoom) {
+            player
+        } else {
+            player.copy(isHuman = !playedByRoom, isBot = playedByRoom)
+        }
+    }
+    return if (players == game.players) game else game.copy(players = players)
 }
 
 /** Exposed for the gate harness; `SEAT_COUNT` is a design constant, not a setting. */

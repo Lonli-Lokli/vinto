@@ -138,13 +138,15 @@ sealed interface GameAction {
     }
 
     /**
-     * A coalition member says out loud what they believe their own cards are.
+     * A seat says out loud what it believes about somebody's cards — its own, a teammate's,
+     * or the Vinto caller's.
      *
      * **Kotlin-only; TypeScript has no equivalent.** Claims are table talk: public to every
      * seat, optional, partial, and — crucially — never checked against the real cards. A
-     * player declares from memory, and memory can be wrong. Each action merges its claims
-     * over the player's earlier ones; the engine drops a claim when the card it described
-     * moves. Never appears in a parity recording, so the corpus is untouched.
+     * player speaks from memory, and memory can be wrong. A seat's later claim about the same
+     * cards replaces its earlier one; the engine drops a claim when the card it described
+     * leaves, and carries it along when the table watches the card move. Never appears in a
+     * parity recording, so the corpus is untouched.
      */
     @Serializable
     data class DeclareCards(val payload: DeclareCardsPayload) : GameAction {
@@ -230,8 +232,21 @@ data class LeaderIdPayload(val leaderId: String)
  * Position → claimed rank. JSON carries the positions as string keys, which is fine: this
  * action is Kotlin-only and never crosses to the TypeScript replayer.
  */
+
+/**
+ * [playerId] is the **speaker**, which is what the seat boundary is checked against;
+ * [about] is whose cards are being described, and the two differ whenever a coalition
+ * member reports what they have seen of somebody else's hand.
+ *
+ * An empty [claims] withdraws everything the speaker has said about [about] — which is
+ * information in itself, and tells teammates to stop planning on it.
+ */
 @Serializable
-data class DeclareCardsPayload(val playerId: String, val claims: Map<Int, Rank>)
+data class DeclareCardsPayload(
+    val playerId: String,
+    val about: String,
+    val claims: List<Claim>,
+)
 
 @Serializable
 data class PositionPayload(val playerId: String, val position: Int)

@@ -6,6 +6,7 @@ import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RevealedCard
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.ServerMessage
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -67,7 +68,10 @@ fun applyActionEnvelopes(stateJson: String, token: String, actionJson: String, n
         )
     }
     return VintoJson.encodeToString(
-        Envelopes(applied.state, messages = eventsPerSeat(applied.state, applied.steps, nowMs)),
+        Envelopes(
+            applied.state,
+            messages = eventsPerSeat(applied.state, applied.steps, nowMs, applied.said),
+        ),
     )
 }
 
@@ -89,7 +93,7 @@ fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String {
     val remaining = remainingMs(state, nowMs)
     val messages = seated(state).associate { (seatIndex, playerId) ->
         val view = state.game?.let {
-            projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), leaderMsLeft(state, nowMs))
+            projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), conferMsLeft(state, nowMs))
         }
         val message = if (state.phase == RoomPhase.PLAYING) {
             ServerMessage.Started(view, state.nextIndex, standings = state.session.rounds)
@@ -117,7 +121,7 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String {
     val messages = when {
         result.started -> seated(state).associate { (seatIndex, playerId) ->
             val view = state.game?.let {
-                projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), leaderMsLeft(state, nowMs))
+                projectView(it, playerId, remaining, tossInMsLeft(state, nowMs), conferMsLeft(state, nowMs))
             }
             seatIndex to ProtocolJson.encodeToString(
                 ServerMessage.serializer(),
@@ -128,7 +132,7 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String {
         // The log grew ⇒ send events. Which alarm did the growing — a seat-grace takeover,
         // a pacing expiry — is the room's business; what a client needs is the same either
         // way: the actions, each with its view.
-        tracked.steps.isNotEmpty() -> eventsPerSeat(state, tracked.steps, nowMs)
+        tracked.steps.isNotEmpty() -> eventsPerSeat(state, tracked.steps, nowMs, tracked.said)
 
         else -> emptyMap()
     }
@@ -163,7 +167,7 @@ fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): 
                 id,
                 remainingMs(state, nowMs),
                 tossInMsLeft(state, nowMs),
-                leaderMsLeft(state, nowMs),
+                conferMsLeft(state, nowMs),
             )
         }
     }
@@ -176,15 +180,32 @@ fun syncEnvelope(stateJson: String, seat: Int, sinceIndex: Int, nowMs: Double): 
             },
             nextIndex = state.nextIndex,
             view = view,
+            away = awayPlayerIds(state),
         ),
     )
 }
 
+/**
+ * The seats a bot is playing on an absent person's behalf, as engine player ids.
+ *
+ * A seat that is a bot *and* still holds a token is somebody's seat being covered; a seat with
+ * no token is filler, which is nobody's and needs no label. The distinction is `Seat.isFiller`'s
+ * and it is the same one the lobby draws on.
+ */
+private fun awayPlayerIds(state: RoomState): List<String> =
+    state.seats.filter { it.isBot && it.tokenHash != null }.mapNotNull { it.playerId }
+
 /** An `events` message per seated seat, each entry carrying that seat's view of its step. */
-private fun eventsPerSeat(state: RoomState, steps: List<Step>, nowMs: Double): Map<Int, String> {
+private fun eventsPerSeat(
+    state: RoomState,
+    steps: List<Step>,
+    nowMs: Double,
+    said: List<TableTalk> = emptyList(),
+): Map<Int, String> {
     val remaining = remainingMs(state, nowMs)
     val tossLeft = tossInMsLeft(state, nowMs)
-    val leaderLeft = leaderMsLeft(state, nowMs)
+    val conferLeft = conferMsLeft(state, nowMs)
+    val away = awayPlayerIds(state)
     return seated(state).associate { (seatIndex, playerId) ->
         val entries = steps.map { step ->
             EventEntry(
@@ -193,16 +214,22 @@ private fun eventsPerSeat(state: RoomState, steps: List<Step>, nowMs: Double): M
                 playerId = step.logged.playerId,
                 action = step.logged.action,
                 byBot = step.logged.byBot,
-                view = projectView(step.after, playerId, remaining, tossLeft, leaderLeft),
+                view = projectView(step.after, playerId, remaining, tossLeft, conferLeft),
                 revealed = step.revealed.map { RevealedCard(it.playerId, it.position, it.card) },
             )
         }
         // The top-level view is where the batch *ends* — after settling, so a FINISHED room
         // sends its trail with a null destination and the client falls back to the entries.
-        val view = state.game?.let { projectView(it, playerId, remaining, tossLeft, leaderLeft) }
+        val view = state.game?.let { projectView(it, playerId, remaining, tossLeft, conferLeft) }
         seatIndex to ProtocolJson.encodeToString(
             ServerMessage.serializer(),
-            ServerMessage.Events(events = entries, nextIndex = state.nextIndex, view = view),
+            ServerMessage.Events(
+                events = entries,
+                nextIndex = state.nextIndex,
+                view = view,
+                away = away,
+                said = said,
+            ),
         )
     }
 }
@@ -227,6 +254,10 @@ fun moreTimeEnvelopes(stateJson: String, token: String, nowMs: Double): String {
 private fun seated(state: RoomState): List<Pair<Int, String>> =
     state.seats.mapNotNull { seat -> seat.playerId?.let { seat.index to it } }
 
+/** How long the coalition still has to confer, as a duration a phone can count down. */
+private fun conferMsLeft(state: RoomState, nowMs: Double): Long? =
+    state.conferUntilEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
+
 /** The session clock as a view carries it; the projection never reads one itself. */
 private fun remainingMs(state: RoomState, nowMs: Double): Long? =
     state.session.endsAtEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
@@ -235,5 +266,84 @@ private fun remainingMs(state: RoomState, nowMs: Double): Long? =
 private fun tossInMsLeft(state: RoomState, nowMs: Double): Long? =
     state.tossInDeadlineEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
 
-private fun leaderMsLeft(state: RoomState, nowMs: Double): Long? =
-    state.leaderDeadlineEpochMs?.let { maxOf(0.0, it - nowMs).toLong() }
+/**
+ * One sentence, checked and turned into a message for every seated socket.
+ *
+ * Broadcast to **everyone**, the Vinto caller included. That is faithful — the coalition
+ * confers out loud at a table — and it costs them nothing, because the caller has already had
+ * their turn and cannot act again. It is also better theatre: the one person the plan is
+ * against gets to watch it being made.
+ */
+fun sayEnvelopes(stateJson: String, token: String, talkJson: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val talk = try {
+        ProtocolJson.decodeFromString(TableTalk.serializer(), talkJson)
+    } catch (failure: IllegalArgumentException) {
+        return VintoJson.encodeToString(
+            Envelopes.serializer(),
+            Envelopes(state, error = "unreadable talk: ${failure.message}"),
+        )
+    }
+
+    val spoken = say(state, token, talk, nowMs)
+
+    // A suggestion addressed to a seat the room plays is answered by that bot, with the move
+    // it makes if it agrees — the same thing a solo game does, in the same place in the flow,
+    // so a person talking to a bot gets the same game whichever session they are in.
+    val answered = (spoken.talk as? TableTalk.Proposal)?.let { answerFromBots(spoken.state, it) }
+    if (answered != null && (answered.steps.isNotEmpty() || answered.said.isNotEmpty())) {
+        val settled = withPacing(answered.state, nowMs)
+        // One message per seat, so the suggestion travels in the same `said` list as the
+        // answer and the moves rather than as a second message the events would overwrite.
+        return VintoJson.encodeToString(
+            Envelopes.serializer(),
+            Envelopes(
+                state = settled,
+                messages = eventsPerSeat(
+                    settled,
+                    answered.steps,
+                    nowMs,
+                    listOf(talk) + answered.said,
+                ),
+            ),
+        )
+    }
+
+    val said: Map<Int, String> = spoken.talk?.let { sentence ->
+        val text = ProtocolJson.encodeToString(
+            ServerMessage.serializer(),
+            ServerMessage.Said(sentence),
+        )
+        seated(spoken.state).associate { (seatIndex, _) -> seatIndex to text }
+    }.orEmpty()
+
+    return VintoJson.encodeToString(
+        Envelopes.serializer(),
+        Envelopes(
+            state = spoken.state,
+            error = spoken.error,
+            retryAfterMs = spoken.retryAfterMs,
+            messages = said,
+        ),
+    )
+}
+
+/**
+ * One coalition member saying they have finished conferring.
+ *
+ * When that closes the window, the seats it was holding are played at once — closing is not
+ * itself a move, and a table that stopped talking should not then sit waiting for a clock.
+ */
+fun doneConferringEnvelopes(stateJson: String, token: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val said = doneConferring(state, token)
+    if (said.error != null) {
+        return VintoJson.encodeToString(Envelopes(said.state, error = said.error))
+    }
+
+    val played = playBotsTracked(said.state)
+    val settled = withPacing(played.state, nowMs)
+    return VintoJson.encodeToString(
+        Envelopes(settled, messages = eventsPerSeat(settled, played.steps, nowMs, played.said)),
+    )
+}

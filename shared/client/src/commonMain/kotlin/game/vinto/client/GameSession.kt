@@ -2,11 +2,19 @@ package game.vinto.client
 
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.TableTalk
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * A game, from the UI's point of view.
+ *
+ * Detekt reads this as a complex interface, and it is — but the complexity is the *game's*,
+ * not the interface's. Every member is something a screen genuinely needs and cannot get
+ * anywhere else: the view, the frames to animate, the log, what the table said, who is away,
+ * and the four things a player can do. Splitting it would put half of one game behind two
+ * types and make the seam it exists for — a screen unable to tell a solo game from an online
+ * one — something a caller had to assemble.
  *
  * The interface exists so that the UI cannot tell a local game from an online one. That is not
  * tidiness — it is design R1 made enforceable: single-player runs entirely on the device and
@@ -22,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
  * The surface is deliberately narrow: a view to render, actions to send, frames to animate,
  * and events for the things that are not state — a bot having moved, a round having ended.
  */
+@Suppress("ComplexInterface")
 interface GameSession {
 
     /** The seat this session plays. Everything rendered is from this player's side. */
@@ -47,6 +56,9 @@ interface GameSession {
      */
     val events: SharedFlow<SessionEvent>
 
+    /** Whether the game has finished; a session is done when this is true. */
+    val isOver: Boolean
+
     /**
      * Sends one action.
      *
@@ -71,8 +83,48 @@ interface GameSession {
     /** What has happened lately, in words, newest last. May stay empty where nobody narrates. */
     val log: StateFlow<List<Say>>
 
-    /** Whether the game has finished; a session is done when this is true. */
-    val isOver: Boolean
+    /**
+     * The seats a bot is covering because their person has gone, by player id.
+     *
+     * Not on the [PlayerView], and deliberately: `isHuman` and `isBot` are inside the
+     * canonical state hash, so the room never writes a takeover into the game — a round whose
+     * recording could not replay would be a worse bug than a missing label. This is the one
+     * thing about a seat the state is not allowed to say.
+     *
+     * Always empty for a solo game, which has nobody who could leave.
+     */
+    val away: StateFlow<Set<String>>
+
+    /**
+     * What the table has said, in the order it was said.
+     *
+     * A stream rather than a latest value, for the reason [events] is one: a burst of talk is
+     * several sentences and a flow that kept only the newest would drop the ones a strip is
+     * about to draw.
+     *
+     * None of it is game state — claims are, and travel as actions; this is the transient
+     * half (design D6) — so it never reaches a recording and never touches a hash. A solo
+     * game carries the bots' talk here just as a room carries everybody's, which is what
+     * keeps a screen unable to tell the two apart.
+     */
+    val talk: SharedFlow<TableTalk>
+
+    /**
+     * "I have said what I wanted to say."
+     *
+     * Closes the coalition's confer window for this seat. Online it ends when every connected
+     * member has said it, or on the room's own deadline; in a solo game the caller is a bot
+     * and nobody is being held, so it ends when the person says so and there is no clock.
+     */
+    suspend fun doneConferring(): String?
+
+    /**
+     * Says one thing. Returns the reason it was refused, or null.
+     *
+     * Refusals are ordinary: a seat may only speak as itself, and a room caps how much one
+     * seat may say in a window.
+     */
+    suspend fun say(talk: TableTalk): String?
 }
 
 /** Things that happen to a session which are not simply a new view. */

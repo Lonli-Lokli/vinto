@@ -31,10 +31,11 @@ import kotlin.test.assertTrue
  * works only for a player who remembers the legend, at the point in the game where they have
  * least attention to spare for remembering it.
  *
- * Three seats, three different sentences — and, since the roster landed, a fourth case: the
- * window between the call and the coalition choosing whose hand plays. The strip used to draw
- * **nothing at all** there, which is silence at the single most surprising moment in the game;
- * it now says what has happened and leaves the leader's name until there is one.
+ * Two chairs, two sentences. There were four: the coalition used to nominate a member to play
+ * its hand, so the strip named a leader, addressed them differently from the rest, and had a
+ * fourth line for the window before they were chosen. Only the lowest hand counts, whoever
+ * holds it, so there is nobody to nominate and the coalition reads one line from the call to
+ * the score.
  *
  * The strip also carries a line of portraits saying who is on which side. Those are checked by
  * their spoken description rather than by their text, because they have none — which is the
@@ -48,9 +49,7 @@ class CoalitionLineTest {
     fun theCallerIsToldTheTableHasClosedRanksAgainstThem() = runComposeUiTest {
         val whole = teachingSession().view.value
         val me = whole.viewerId
-        val ally = whole.players.first { it.id != me }
-
-        val said = linesOn(whole.copy(vintoCallerId = me, coalitionLeaderId = ally.id))
+        val said = linesOn(whole.copy(vintoCallerId = me))
 
         assertEquals(
             listOf("FINAL ROUND", "Everyone else plays one hand between them, against yours."),
@@ -60,56 +59,7 @@ class CoalitionLineTest {
     }
 
     @Test
-    fun theLeaderIsToldItIsTheirHandBeingPlayed() = runComposeUiTest {
-        val whole = teachingSession().view.value
-        val me = whole.viewerId
-        val caller = whole.players.first { it.id != me }
-
-        val said = linesOn(whole.copy(vintoCallerId = caller.id, coalitionLeaderId = me))
-
-        assertEquals(
-            listOf("FINAL ROUND", "You play the coalition’s hand against ${caller.nickname}."),
-            said,
-            "the seat whose hand decides the round is not told that it does",
-        )
-    }
-
-    @Test
-    fun everybodyElseIsToldWhoIsPlayingIt() = runComposeUiTest {
-        val whole = teachingSession().view.value
-        val me = whole.viewerId
-        val others = whole.players.filter { it.id != me }
-        val caller = others[0]
-        val leader = others[1]
-
-        val said = linesOn(whole.copy(vintoCallerId = caller.id, coalitionLeaderId = leader.id))
-
-        assertEquals(
-            listOf(
-                "FINAL ROUND",
-                "${leader.nickname} plays the coalition’s hand against ${caller.nickname}.",
-            ),
-            said,
-            "a coalition member is not told whose hand is carrying theirs",
-        )
-    }
-
-    @Test
-    fun anOrdinaryTurnIsNotAFinalRound() = runComposeUiTest {
-        assertTrue(linesOn(teachingSession().view.value).isEmpty(), "no call, no strip")
-    }
-
-    /**
-     * And the gap between the call and the coalition choosing is not silence.
-     *
-     * It used to be: the strip returned early when `coalitionLeaderId` was null, so the part
-     * of the final round before a leader exists drew nothing — no banner, no turn counter, no
-     * sides. The rules change when Vinto is called, not when the coalition organises itself,
-     * and a table that says nothing for the first part of the final round is quiet exactly
-     * when a player most needs telling.
-     */
-    @Test
-    fun theCallItselfIsAnnouncedBeforeALeaderIsChosen() = runComposeUiTest {
+    fun everyCoalitionMemberReadsTheSameLine() = runComposeUiTest {
         val whole = teachingSession().view.value
         val caller = whole.players.first { it.id != whole.viewerId }
 
@@ -118,11 +68,16 @@ class CoalitionLineTest {
         assertEquals(
             listOf(
                 "FINAL ROUND",
-                "One hand between the three of them, against ${caller.nickname}.",
+                "One hand between the three of you, against ${caller.nickname}.",
             ),
             said,
-            "the final round began and the table did not mention it",
+            "a coalition member is not told what the round now is",
         )
+    }
+
+    @Test
+    fun anOrdinaryTurnIsNotAFinalRound() = runComposeUiTest {
+        assertTrue(linesOn(teachingSession().view.value).isEmpty(), "no call, no strip")
     }
 
     /**
@@ -135,14 +90,12 @@ class CoalitionLineTest {
     fun theSidesAreSpokenAsWellAsDrawn() = runComposeUiTest {
         val whole = teachingSession().view.value
         val me = whole.viewerId
-        val others = whole.players.filter { it.id != me }
-        val caller = others[0]
-        val leader = others[1]
+        val caller = whole.players.first { it.id != me }
 
-        val spoken = describedOn(whole.copy(vintoCallerId = caller.id, coalitionLeaderId = leader.id))
+        val spoken = describedOn(whole.copy(vintoCallerId = caller.id))
 
         assertTrue(
-            spoken.any { it == "${leader.nickname} leads the others" },
+            spoken.any { it == "One hand between the three of you, against ${caller.nickname}." },
             "the roster is a legend a screen reader cannot read: $spoken",
         )
         assertTrue(
@@ -193,9 +146,8 @@ class CoalitionLineTest {
         /** What the strip can ever say, so nothing else on the table is mistaken for it. */
         val SENTENCES = listOf(
             "FINAL ROUND",
-            "coalition’s hand",
             "against yours",
-            "between the three of them",
+            "between the three of you",
         )
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp

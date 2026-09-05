@@ -114,17 +114,31 @@ fun handleSetCoalitionLeader(state: MutableGameState, action: GameAction.SetCoal
 }
 
 /**
- * DECLARE_CARDS — a coalition member claims out loud what their own cards are.
+ * DECLARE_CARDS — a seat says what it believes about somebody's cards.
  *
- * Claims merge over earlier ones, so a re-declared position is simply overwritten; nothing
- * here reads the real cards, because a claim is memory speaking, not the engine. The claims
- * are public state — every seat's view carries them.
+ * Stored against the cards' **owner**, carrying the speaker, because a claim can be about a
+ * teammate's hand or the caller's and the card is what it is about. A speaker's later claim
+ * about the same positions replaces its earlier one — changing your mind is not disagreeing
+ * with yourself — and an empty claim list withdraws everything that speaker had said about
+ * this hand, which is itself information.
+ *
+ * Nothing here reads the real cards. A claim is memory speaking, not the engine, and whether
+ * it was right is settled at the reveal like everything else.
  */
 fun handleDeclareCards(state: MutableGameState, action: GameAction.DeclareCards): Boolean {
-    val player = state.playerById(action.payload.playerId) ?: return false
-    val declared = player.declaredCards ?: mutableMapOf<Int, game.vinto.shapes.Rank>()
-        .also { player.declaredCards = it }
-    declared.putAll(action.payload.claims)
+    val owner = state.playerById(action.payload.about) ?: return false
+    val speaker = action.payload.playerId
+
+    // A speaker's new claim replaces any earlier claim of theirs that **overlaps** it. Not
+    // just one about the identical positions: correcting one half of a pair you had said you
+    // were unsure about is a correction, not a disagreement with yourself.
+    val touched = action.payload.claims.flatMap { it.positions }.toSet()
+    val kept = owner.claims.orEmpty().filterNot { standing ->
+        standing.by == speaker &&
+            (action.payload.claims.isEmpty() || standing.positions.any { it in touched })
+    }
+    val next = (kept + action.payload.claims.map { it.copy(by = speaker) }).toMutableList()
+    owner.claims = next.takeIf { it.isNotEmpty() }
     return true
 }
 

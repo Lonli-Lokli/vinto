@@ -68,20 +68,17 @@ import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.header_settings
+import game.vinto.app.art.table_away_mark
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
-import game.vinto.app.art.table_final_ally
 import game.vinto.app.art.table_final_caller
-import game.vinto.app.art.table_final_choosing
+import game.vinto.app.art.table_final_coalition
 import game.vinto.app.art.table_final_last_turn
-import game.vinto.app.art.table_final_leader
-import game.vinto.app.art.table_final_leads
 import game.vinto.app.art.table_final_round
 import game.vinto.app.art.table_final_side_caller
 import game.vinto.app.art.table_final_side_coalition
 import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_final_versus
-import game.vinto.app.art.table_leads_mark
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
@@ -520,19 +517,14 @@ private fun TableHeader(
 private fun FinalRoundLine(view: PlayerView) {
     if (view.phase == GamePhase.SCORING) return
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
-    val leader = view.players.firstOrNull { it.id == view.coalitionLeaderId }
 
-    // Drawn from the call onwards, including the window before a leader is chosen — which is
-    // where this used to `return` and show nothing at all. The rules change the moment Vinto
-    // is called, not the moment the coalition picks somebody, so a table that says nothing
-    // for the first part of the final round is silent exactly when it is most surprising.
-    val said = when {
-        caller.id == view.viewerId -> stringResource(Res.string.table_final_caller)
-        leader == null -> stringResource(Res.string.table_final_choosing, caller.nickname)
-        leader.id == view.viewerId ->
-            stringResource(Res.string.table_final_leader, caller.nickname)
-
-        else -> stringResource(Res.string.table_final_ally, leader.nickname, caller.nickname)
+    // Two lines, because there are two chairs to be in. There used to be four, keyed on who
+    // the coalition had nominated to play its hand — but only the lowest hand counts, whoever
+    // holds it, so there is nobody to nominate and nothing to say about it.
+    val said = if (caller.id == view.viewerId) {
+        stringResource(Res.string.table_final_caller)
+    } else {
+        stringResource(Res.string.table_final_coalition, caller.nickname)
     }
 
     Column(modifier = Modifier.fillMaxWidth().background(Rail.fill)) {
@@ -573,7 +565,7 @@ private fun FinalRoundLine(view: PlayerView) {
             }
         }
 
-        Sides(view, caller, leader?.id)
+        Sides(view, caller)
     }
 }
 
@@ -587,19 +579,20 @@ private fun FinalRoundLine(view: PlayerView) {
  *
  * So it is one line of portraits, which is the same information in a tenth of the room and
  * reads faster besides: three of the four players are bots the person has been watching for
- * ten minutes and knows by face before they know by name. The leader wears a gold ring,
- * because "who plays the hand" is the one thing about the coalition that is not obvious.
+ * ten minutes and knows by face before they know by name.
+ *
+ * One of the three used to wear a gold ring for leading the coalition. Nobody leads it: only
+ * the lowest hand counts, whoever holds it, so a ring would be marking a distinction the
+ * rules do not make.
  */
 @Composable
-private fun Sides(view: PlayerView, caller: PlayerSeatView, leaderId: String?) {
+private fun Sides(view: PlayerView, caller: PlayerSeatView) {
     // The caller arrives as a *seat* rather than an id, so there is nothing to look up and
     // nothing to be missing. Looking it up here worked — the only call site found it with a
     // `firstOrNull` first — and "it happens to be safe two frames up" is exactly the reasoning
     // that put a `first {}` on the felt in the first place. `PartialFunctionTest` refuses it.
     val coalition = view.players.filter { it.id != caller.id }
-    val leads = leaderId?.let { id -> view.players.firstOrNull { it.id == id }?.nickname }
-    val spoken = leads?.let { stringResource(Res.string.table_final_leads, it) }
-        ?: stringResource(Res.string.table_final_choosing, caller.nickname)
+    val spoken = stringResource(Res.string.table_final_coalition, caller.nickname)
 
     Row(
         modifier = Modifier
@@ -615,9 +608,7 @@ private fun Sides(view: PlayerView, caller: PlayerSeatView, leaderId: String?) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SideLabel(stringResource(Res.string.table_final_side_coalition), Rail.brand)
-        coalition.forEach { seat ->
-            Face(seat.nickname, ringed = seat.id == leaderId)
-        }
+        coalition.forEach { seat -> Face(seat.nickname, ringed = false) }
 
         Text(
             stringResource(Res.string.table_final_versus),
@@ -1016,7 +1007,7 @@ private fun Plate(
     val active = view.turnHolderId == seat.id
     val marks = buildList {
         if (seat.isVintoCaller) add(stringResource(Res.string.table_vinto_mark))
-        if (seat.id == view.coalitionLeaderId) add(stringResource(Res.string.table_leads_mark))
+        if (seat.id in table.away) add(stringResource(Res.string.table_away_mark))
         view.scores?.get(seat.id)?.let { add("$it") }
     }
     val tap = table.seats.firstOrNull { it.id == seat.id }?.move
