@@ -483,6 +483,9 @@
     <string name="board_verdict_wins">menang</string>
     <string name="board_verdict_level">seri</string>
     <string name="board_verdict_loses">belum cukup</string>
+    <string name="label_plan_rehearse">Lihat rencananya</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">Latihan — belum ada yang berpindah</string>
     <string name="ask_what_will_you_do">Apa yang akan Anda lakukan pada giliran Anda?</string>
     <string name="ask_what_should_they_do">Apa yang sebaiknya %1$s lakukan pada gilirannya?</string>
     <string name="ask_which_rank_will_you_declare">Nilai apa yang akan Anda umumkan dengan King?</string>

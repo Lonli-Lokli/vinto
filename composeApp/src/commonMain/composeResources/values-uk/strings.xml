@@ -498,6 +498,8 @@
     <string name="board_verdict_wins">перемога</string>
     <string name="board_verdict_level">нічия</string>
     <string name="board_verdict_loses">не вистачає</string>
+    <string name="label_plan_rehearse">Переглянути план</string>
+    <string name="table_rehearsal">РЕПЕТИЦІЯ — НІЧОГО НЕ РУХАЛОСЯ</string>
     <string name="board_nod_not_yet">%1$s ще не погоджується</string>
     <string name="board_lane">%1$s: %2$s</string>
     <string name="badge_disputed">спірна</string>

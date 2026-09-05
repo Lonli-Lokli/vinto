@@ -462,6 +462,9 @@
     <string name="board_verdict_wins">wygrywa</string>
     <string name="board_verdict_level">remis</string>
     <string name="board_verdict_loses">nie wystarcza</string>
+    <string name="label_plan_rehearse">Zobacz plan</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">Odtworzenie — nic się nie ruszyło</string>
     <string name="ask_what_will_you_do">Co zrobisz w swojej turze?</string>
     <string name="ask_what_should_they_do">Co zrobić w turze %1$s?</string>
     <string name="ask_which_rank_will_you_declare">Jaką rangę ogłosisz Królem?</string>

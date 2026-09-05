@@ -574,6 +574,9 @@
     <string name="board_verdict_wins">wins</string>
     <string name="board_verdict_level">level</string>
     <string name="board_verdict_loses">falls short</string>
+    <string name="label_plan_rehearse">Watch the plan</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">Rehearsal — nothing has moved</string>
     <string name="ask_what_will_you_do">What will you do with your turn?</string>
     <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>

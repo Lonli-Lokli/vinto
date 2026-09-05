@@ -511,6 +511,9 @@
     <string name="board_verdict_wins">勝ち</string>
     <string name="board_verdict_level">同点</string>
     <string name="board_verdict_loses">届かず</string>
+    <string name="label_plan_rehearse">プランを再生</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">リハーサル — 実際には動いていません</string>
     <string name="badge_disputed">異議あり</string>
     <string name="badge_paired">対になっている、順不同</string>
     <string name="badge_right">正解</string>

@@ -498,6 +498,8 @@
     <string name="board_verdict_wins">gana</string>
     <string name="board_verdict_level">empate</string>
     <string name="board_verdict_loses">se queda corto</string>
+    <string name="label_plan_rehearse">Ver el plan</string>
+    <string name="table_rehearsal">ENSAYO — NADA SE HA MOVIDO</string>
     <string name="ask_what_will_you_do">¿Qué harás en tu turno?</string>
     <string name="ask_what_should_they_do">¿Qué debería hacer %1$s en su turno?</string>
     <string name="ask_which_rank_will_you_declare">¿Qué rango declararás con el Rey?</string>

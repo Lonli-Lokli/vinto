@@ -462,6 +462,8 @@
     <string name="board_verdict_wins">জয়</string>
     <string name="board_verdict_level">সমান</string>
     <string name="board_verdict_loses">পিছিয়ে</string>
+    <string name="label_plan_rehearse">পরিকল্পনা দেখুন</string>
+    <string name="table_rehearsal">মহড়া — কিছুই সরানো হয়নি</string>
     <string name="ask_what_will_you_do">আপনার পালায় আপনি কী করবেন?</string>
     <string name="ask_what_should_they_do">%1$s তাঁর পালায় কী করবেন?</string>
     <string name="ask_which_rank_will_you_declare">King দিয়ে আপনি কোন র‌্যাংক ঘোষণা করবেন?</string>

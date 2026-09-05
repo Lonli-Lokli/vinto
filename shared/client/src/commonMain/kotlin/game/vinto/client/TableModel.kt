@@ -261,6 +261,12 @@ sealed interface Move {
 
     /** Yes or no to the plan as a whole. A yes is also [Done]: agreeing is how you finish talking. */
     data class Agree(val agree: Boolean) : Move
+
+    /**
+     * Watch the plan run (design D8): its steps played on the felt as ghosts, then the table
+     * snaps back. Nothing is sent anywhere and nothing changes; it is the board, read aloud.
+     */
+    data object Rehearse : Move
 }
 
 /**

@@ -393,13 +393,17 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
         `RailFitsTest`. Twenty-seven strings, in every locale
 - [x] 3.3 A lane locks when its owner's turn begins; later lanes stay editable
       — **done (bf71c37).** The refusal only looked at the lanes that were *present*, so a locked lane could be deleted by omitting it — locking defeated by sending less. Every standing locked lane had to come back unchanged; with 3.2a the rule is simpler still, because an edit names one part: a locked lane cannot be the target of one. `ConferWindowTest.aLaneLocksWhenItsOwnersTurnBegins` had been proving this on a lane belonging to the **caller**: straight out of a call the caller is still the current player, because the window opens before the turn moves, so the test was encoding the hole. It winds on to a coalition member's turn now
-- [~] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
+- [x] 3.4 The composer's palette: declared claims, own read cards, the discard top — and the
       caller's cards structurally absent
       — **half, with 3.2f:** the caller's cards are never tappable and the door refuses a step
       that names them; a swap's cards are anchored to the standing claim where there is one.
       What is *not* done is narrowing the palette to spoken-about cards — today any coalition
       card can be named, which is honest (the plan is worth what the claims behind it are worth)
       and is what the readout prices as unknown
+      — **done:** a swap may name a card somebody has claimed or one of the viewer's own they
+      have read, and nothing else; a King's rail on the board mutes every rank the table does
+      not know a coalition hand to hold. Saying what a card is puts it on the palette, which is
+      what makes declaring worth doing. `PlanBoardTest.thePaletteIsWhatHasBeenSaidAndWhatYouHaveRead`
 - [x] 3.5 The composer reuses the existing per-action targeting (taps, rank rail, seat grid)
       against a hypothetical state
       — with 3.2f: the same card taps a Jack is aimed with, the same rail a King declares on,
@@ -410,6 +414,10 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       reduced would work locally and break online, which is the class of bug the `GameSession`
       seam exists to prevent
 - [x] 3.7 Rehearsal: play the plan back as an animation via `choreograph(action, before, after)`
+      — **on screen now:** "Watch the plan" on the open board. The holder merges the ghost frames
+      into the stage's flow, the stage marks the felt as rehearsing while a ghost frame plays and
+      snaps back to the live table after, the felt carries a "Rehearsal — nothing has moved" line
+      in the final-round line's own dress, and the taps go away while the ghosts play
 - [x] 3.8 The value readout — **computed in `shared/client` from standing claims, not from
       `CoalitionSearch.evaluate`**: the client does not depend on `shared/bot`, and the two
       agree because both read `believedAt`. `planOutcome` is done; the live update as the plan
@@ -451,7 +459,8 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 3.16 The readout states an **outcome** — the coalition's best hand, the caller's believed
       total, how much of it is unseen, and whether the plan wins — with a level result shown as
       losing, since a tie pays the caller
-- [ ] **Verify** 3.14 `ScreenContrastTest` — the rehearsal felt clears WCAG AA in both themes
+- [x] **Verify** 3.14 `ScreenContrastTest` — the rehearsal felt clears WCAG AA in both themes
+      — `theFeltDuringARehearsalCanBeRead`, measured from the pixels with the stage rehearsing
 - [x] **Verify** 3.15 The plan never appears in a round's recording; a talkative final round
       replays to identical hashes
       — `ConferWindowTest.aTalkativeFinalRoundLeavesNoPlanInItsRecording`: planned, agreed, played

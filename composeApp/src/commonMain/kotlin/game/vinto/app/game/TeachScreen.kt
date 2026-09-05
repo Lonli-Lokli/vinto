@@ -197,7 +197,7 @@ fun TeachScreen(
         val room = Room(TableLayout.forScreen(maxWidth, maxHeight), maxHeight)
 
         CardStage(
-            frames = session.frames,
+            frames = holder.frames,
             live = holder.current,
             sizes = room.layout.sizes,
             // A lesson runs at a lesson's speed. Somebody who set the table to brisk did so

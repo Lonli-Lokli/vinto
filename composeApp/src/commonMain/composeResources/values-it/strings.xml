@@ -484,6 +484,9 @@
     <string name="board_verdict_wins">vince</string>
     <string name="board_verdict_level">pareggio</string>
     <string name="board_verdict_loses">non basta</string>
+    <string name="label_plan_rehearse">Rivedi il piano</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">PROVA — NIENTE SI È MOSSO</string>
     <string name="ask_what_will_you_do">Cosa farai con il tuo turno?</string>
     <string name="ask_what_should_they_do">Cosa dovrebbe fare %1$s con il suo turno?</string>
     <string name="ask_which_rank_will_you_declare">Quale valore dichiarerai con il Re?</string>

@@ -87,6 +87,7 @@ import game.vinto.app.art.table_final_side_caller
 import game.vinto.app.art.table_final_side_coalition
 import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_final_versus
+import game.vinto.app.art.table_rehearsal
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
@@ -207,6 +208,7 @@ fun TableScreen(
             // landscape the felt has no height to spare for a banner, and "who plays for
             // whom" is read next to the controls that ask what to do about it anyway.
             Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
+                RehearsalLine()
                 FinalRoundLine(state.view, state.table.planSummary, onMove)
                 ControlPanel(
                     state = state,
@@ -220,6 +222,7 @@ fun TableScreen(
         Column(modifier = modifier.fillMaxSize()) {
             TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
 
+            RehearsalLine()
             FinalRoundLine(state.view, state.table.planSummary, onMove)
 
             FeltTable(
@@ -585,6 +588,29 @@ private fun FinalRoundLine(view: PlayerView, plan: PlanSummary?, onMove: (Move) 
 
         plan?.let { PlanLine(it, onMove) }
         Sides(view, caller)
+    }
+}
+
+/**
+ * Over the felt while the plan is being played back (design D8): the cards moving are ghosts,
+ * and the one thing this line has to do is stop a player believing a plan has happened. Gold
+ * on the rail's fill, the final-round line's own dress, so it clears the same contrast bar.
+ */
+@Composable
+private fun RehearsalLine() {
+    if (!LocalStage.current.rehearsing) return
+    Row(
+        modifier = Modifier.fillMaxWidth().background(Rail.fill).padding(horizontal = 14.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            stringResource(Res.string.table_rehearsal).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.gold,
+            modifier = Modifier.semantics { heading() },
+        )
     }
 }
 

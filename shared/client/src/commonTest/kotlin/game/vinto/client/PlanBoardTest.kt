@@ -209,13 +209,20 @@ class PlanBoardTest {
 
     @Test
     fun aSwapIsTwoTapsOnTwoHandsAndNeverOnTheCallers() {
-        val first = tableFor(view(), question = Question.Planning(nina, StepKind.SWAP))
+        // The person has read their own second card, so it is on the palette beside Nina's
+        // claimed first; nothing else about their hand has been said.
+        val read = view(
+            finalRound().let { s ->
+                s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
+            },
+        )
+        val first = tableFor(read, question = Question.Planning(nina, StepKind.SWAP))
         assertEquals(Ask.ChooseTwoFromDifferentPlayers, first.prompt)
         assertTrue(first.taps.keys.none { it.playerId == caller }, "the caller's cards were on offer")
         assertTrue(first.taps.keys.any { it.playerId == nina } && first.taps.keys.any { it.playerId == me })
 
         val pickNina = assertIs<Move.Ask>(first.taps.getValue(CardRef(nina, 0)))
-        val second = tableFor(view(), question = pickNina.question)
+        val second = tableFor(read, question = pickNina.question)
         assertTrue(second.taps.keys.none { it.playerId == nina }, "the same hand was offered for the second card")
         assertEquals(1, second.aim?.first?.slot, "the first card is not shown in the aim column")
 
@@ -237,6 +244,32 @@ class PlanBoardTest {
         assertEquals(Ask.WhichRankShouldTheyDeclare(Speaker.Named("Bot4")), table.prompt)
         val king = assertIs<Move.Plan>(table.ranks.first { it.rank == Rank.KING }.move)
         assertEquals(PlanEdit.SetLane(don, Step.Declare(Rank.KING)), king.edit)
+        // Nina's five is the one rank the table knows a coalition hand to hold; the rest are
+        // there, muted, the way a King's own rail draws a rank with nothing to do.
+        assertTrue(!table.ranks.first { it.rank == Rank.FIVE }.muted, "a rank the coalition holds is muted")
+        assertTrue(table.ranks.first { it.rank == Rank.KING }.muted, "a rank nobody is known to hold is not muted")
+    }
+
+    @Test
+    fun thePaletteIsWhatHasBeenSaidAndWhatYouHaveRead() {
+        // Nina's first card is claimed; her second is not, and nothing has been said about the
+        // person's cards or Don's — so the only card a swap may name is Nina's first and, once
+        // the person has read one of their own, that one. Saying what a card is puts it on the
+        // palette, which is what makes declaring worth doing (design D7).
+        val nothingRead = tableFor(view(), question = Question.Planning(nina, StepKind.SWAP))
+        assertEquals(setOf(CardRef(nina, 0)), nothingRead.taps.keys, "an unspoken card was on the palette")
+
+        val read = view(
+            finalRound().let { s ->
+                s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
+            },
+        )
+        val mine = tableFor(read, question = Question.Planning(nina, StepKind.SWAP))
+        assertEquals(
+            setOf(CardRef(nina, 0), CardRef(me, 1)),
+            mine.taps.keys,
+            "a card of your own you have read is not on the palette",
+        )
     }
 
     @Test
@@ -298,6 +331,22 @@ class PlanBoardTest {
         val broken = tableFor(view(), question = Question.ThePlan, plan = plan, reveals = listOf(nineNotFive))
         assertEquals(StepHealth.BROKEN, assertNotNull(broken.board).lanes.first { it.who == Speaker.You }.health)
         assertEquals(Detail.AClaimWasWrong, broken.detail, "a broken step was not explained")
+    }
+
+    @Test
+    fun thePlanCanBeWatchedOnceItHasAStepToShow() {
+        // Watching beats reading (design D8), and there is nothing to watch on an empty board.
+        assertNull(assertNotNull(tableFor(view(), question = Question.ThePlan).board).rehearse)
+
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(nina, Step.TakeTheDiscard)),
+            agreed = listOf(nina),
+            editedBy = nina,
+        )
+        assertEquals(
+            Move.Rehearse,
+            assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board).rehearse,
+        )
     }
 
     // ------------------------------------------------------------------ sheds

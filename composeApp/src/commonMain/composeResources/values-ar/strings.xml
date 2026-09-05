@@ -483,6 +483,8 @@
     <string name="board_verdict_wins">يفوز</string>
     <string name="board_verdict_level">تعادل</string>
     <string name="board_verdict_loses">يقصّر</string>
+    <string name="label_plan_rehearse">مشاهدة الخطة</string>
+    <string name="table_rehearsal">بروفة — لا شيء تحرك</string>
     <string name="ask_what_will_you_do">ماذا سيُفعل في دورك؟</string>
     <string name="ask_what_should_they_do">ماذا سيُفعل في دور %1$s؟</string>
     <string name="ask_which_rank_will_you_declare">ما الرتبة التي ستُعلَن بالملك في دورك؟</string>

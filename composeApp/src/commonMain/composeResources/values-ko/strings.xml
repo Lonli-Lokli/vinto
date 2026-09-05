@@ -462,6 +462,8 @@
     <string name="board_verdict_wins">승리</string>
     <string name="board_verdict_level">동률</string>
     <string name="board_verdict_loses">부족</string>
+    <string name="label_plan_rehearse">계획 보기</string>
+    <string name="table_rehearsal">리허설 — 아직 아무것도 움직이지 않았어요</string>
     <string name="ask_what_will_you_do">이번 차례에 무엇을 할까요?</string>
     <string name="ask_what_should_they_do">%1$s는 이번 차례에 무엇을 해야 할까요?</string>
     <string name="ask_which_rank_will_you_declare">킹으로 어떤 숫자를 선언할까요?</string>

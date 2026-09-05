@@ -483,6 +483,9 @@
     <string name="board_verdict_wins">gagne</string>
     <string name="board_verdict_level">égalité</string>
     <string name="board_verdict_loses">ne suffit pas</string>
+    <string name="label_plan_rehearse">Revoir le plan</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">Répétition — rien n’a bougé</string>
     <string name="ask_what_will_you_do">Que ferez-vous de votre tour ?</string>
     <string name="ask_what_should_they_do">Que devrait faire %1$s de son tour ?</string>
     <string name="ask_which_rank_will_you_declare">Quelle valeur allez-vous déclarer avec le Roi ?</string>

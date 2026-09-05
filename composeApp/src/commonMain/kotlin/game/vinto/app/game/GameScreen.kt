@@ -122,7 +122,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
         LaunchedEffect(round) { game.dealShown() }
 
         CardStage(
-            frames = session.frames,
+            frames = holder.frames,
             live = holder.current,
             sizes = layout.sizes,
             pace = pace.scale,
@@ -142,7 +142,7 @@ fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -
                         round = round,
                     ),
                     layout = layout,
-                    onMove = act,
+                    onMove = act.unlessRehearsing(),
                     onHelp = help::show,
                     onSettings = onSettings,
                     // The whole game, in the format the replay harness already reads. A bug

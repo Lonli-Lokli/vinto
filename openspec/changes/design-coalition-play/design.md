@@ -397,6 +397,14 @@ Watch: `ScreenContrastTest` measures WCAG AA from each screen's own pixels, so t
 treatment of the rehearsal felt has to be designed against that from the start rather than
 discovered failing it.
 
+**As built.** A frame carries a `ghost` flag; the rehearsal's frames set it, the screen's holder
+merges them into the one flow the stage plays, and the stage marks itself rehearsing for as long
+as a ghost frame is on the felt and snaps back to the live table when the queue drains — so
+nothing a ghost shows outlives it. The "not real" treatment is a line over the felt in the
+final-round line's own dress, gold on the rail's fill, which is what let it clear the same
+contrast bar without a new colour; and the taps go away while the ghosts play, so a plan cannot
+be acted on as though it had happened.
+
 ## D9. Repair silently when the card moved; break loudly when the belief was wrong
 
 `ActionUtils` already carries a claim through a watched Jack or Queen swap, drops it when the

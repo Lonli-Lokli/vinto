@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.engine.CardView
+import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.shapes.ALL_RANKS
@@ -44,6 +45,8 @@ data class Board(
      * whether that wins — with level shown as losing, since a tie pays the caller.
      */
     val outcome: PlanOutcome? = null,
+    /** Watching the plan run, when there is a step to run. */
+    val rehearse: Move? = null,
 )
 
 /**
@@ -152,6 +155,7 @@ internal fun boardFor(
         nods = coalition.map { Nod(speakerFor(view, it), agreed = it in agreed, away = it in away) },
         editedBy = plan?.editedBy?.let { speakerFor(view, it) },
         outcome = plan?.let { planOutcome(view, it) },
+        rehearse = Move.Rehearse.takeIf { plan?.lanes.orEmpty().any { it.step != null } },
     )
 }
 
@@ -291,12 +295,19 @@ internal fun planningTable(view: PlayerView, question: Question.Planning, plan: 
 
         StepKind.SWAP -> swapPlanningTable(view, question)
 
+        // A King names a rank so that every coalition hand holding one throws it in. The ranks
+        // worth naming are the ones the table knows a coalition hand to hold — the rest are on
+        // the rail too, muted, as a King's own rail draws them.
         StepKind.DECLARE -> Table(
             prompt = Ask.WhichRankShouldTheyDeclare(who),
             detail = Detail.APlanIsASuggestion,
             choices = listOf(Choice(Label.Back, Move.Ask(question.copy(kind = null)))),
             ranks = ALL_RANKS.map { rank ->
-                RankChoice(rank, Move.Plan(PlanEdit.SetLane(seat.id, Step.Declare(rank))))
+                RankChoice(
+                    rank,
+                    Move.Plan(PlanEdit.SetLane(seat.id, Step.Declare(rank))),
+                    muted = rank !in ranksTheCoalitionIsKnownToHold(view),
+                )
             },
         )
     }
@@ -310,6 +321,11 @@ internal fun planningTable(view: PlayerView, question: Question.Planning, plan: 
  * then refused reads as a broken control rather than a rule. Once one card is picked, that
  * hand is out too, because a swap is between two different players. The card already picked
  * is drawn in the rail's aim column, as a Jack's first target is.
+ *
+ * **The palette is what has been said** (design D7): a card somebody has claimed, or one of
+ * the viewer's own they have read. A card nobody knows anything about is not on offer — a
+ * plan that moved it would be moving a guess — and that is what makes declaring worth doing:
+ * say what a card is, and it becomes something the coalition can plan with.
  */
 private fun swapPlanningTable(view: PlayerView, question: Question.Planning): Table {
     val caller = view.vintoCallerId
@@ -318,7 +334,7 @@ private fun swapPlanningTable(view: PlayerView, question: Question.Planning): Ta
     val taps = view.players
         .filter { it.id != caller && it.id != from?.playerId }
         .flatMap { hand ->
-            hand.cards.indices.map { position ->
+            hand.cards.indices.filter { spokenFor(view, hand, it) }.map { position ->
                 val ref = CardRef(hand.id, position)
                 ref to if (from == null) {
                     Move.Ask(question.copy(from = ref))
@@ -348,6 +364,26 @@ private fun swapPlanningTable(view: PlayerView, question: Question.Planning): Ta
  * watched swap (design D9). A card nobody has spoken about gets none, correctly: it was pointed
  * at by position and has nothing to follow.
  */
+
+/** A card the plan may name: claimed by somebody, or one of the viewer's own they have read. */
+private fun spokenFor(view: PlayerView, hand: PlayerSeatView, position: Int): Boolean {
+    val claimed = believedOnView(hand, position).sources.isNotEmpty()
+    val ownAndRead = hand.id == view.viewerId && position in hand.knownCardPositions
+    return claimed || ownAndRead
+}
+
+/** Every rank some coalition card is believed to be — the ranks a King on the board could empty. */
+private fun ranksTheCoalitionIsKnownToHold(view: PlayerView): Set<Rank> =
+    view.players
+        .filter { it.id != view.vintoCallerId }
+        .flatMap { hand ->
+            hand.cards.indices.flatMap { position ->
+                val believed = believedOnView(hand, position)
+                if (believed.rankKnown) believed.candidates else emptySet()
+            }
+        }
+        .toSet()
+
 private fun cardAt(view: PlayerView, ref: CardRef): CardAt {
     val hand = view.players.firstOrNull { it.id == ref.playerId }
     val anchor = hand?.let { believedOnView(it, ref.position).sources.firstOrNull() }

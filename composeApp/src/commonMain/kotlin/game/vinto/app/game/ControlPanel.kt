@@ -73,6 +73,7 @@ import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_in_play
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
+import game.vinto.app.art.label_plan_rehearse
 import game.vinto.app.art.rail_aim_empty
 import game.vinto.app.art.rail_aim_first
 import game.vinto.app.art.rail_aim_second
@@ -441,6 +442,17 @@ private fun PlanBoard(board: Board?, onMove: (Move) -> Unit) {
                 fontSize = DetailSize,
                 fontWeight = FontWeight.Bold,
                 color = if (outcome.wins) Rail.ink else WarnInk,
+            )
+        }
+        // Watching beats reading: the plan is played on the felt as ghosts, through the same
+        // choreography a real move gets, and the table snaps back after (design D8).
+        board.rehearse?.let { rehearse ->
+            GameButton(
+                label = stringResource(Res.string.label_plan_rehearse),
+                tone = ButtonTone.KEEP,
+                onClick = { onMove(rehearse) },
+                modifier = Modifier.fillMaxWidth().markedAs(stage, "choice:rehearse"),
+                compact = true,
             )
         }
         Nods(board)

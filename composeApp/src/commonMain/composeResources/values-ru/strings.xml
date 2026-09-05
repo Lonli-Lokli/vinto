@@ -475,6 +475,9 @@
     <string name="board_verdict_wins">победа</string>
     <string name="board_verdict_level">поровну</string>
     <string name="board_verdict_loses">не хватает</string>
+    <string name="label_plan_rehearse">Посмотреть план</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">РЕПЕТИЦИЯ — ничего не сдвинулось</string>
     <string name="ask_what_will_you_do">Что вы сделаете в свой ход?</string>
     <string name="ask_what_should_they_do">Что %1$s сделает в свой ход?</string>
     <string name="ask_which_rank_will_you_declare">Какое достоинство вы назовёте королём?</string>

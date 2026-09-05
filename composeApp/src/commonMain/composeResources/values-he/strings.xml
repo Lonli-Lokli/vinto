@@ -461,6 +461,9 @@
     <string name="board_verdict_wins">ניצחון</string>
     <string name="board_verdict_level">תיקו</string>
     <string name="board_verdict_loses">פיגור</string>
+    <string name="label_plan_rehearse">לצפות בתוכנית</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">חזרה — אף קלף לא זז</string>
     <string name="ask_what_will_you_do">מה תעשו בתור שלכם?</string>
     <string name="ask_what_should_they_do">מה %1$s צריכים לעשות בתור שלהם?</string>
     <string name="ask_which_rank_will_you_declare">איזו דרגה תכריזו עם המלך?</string>

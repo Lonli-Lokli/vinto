@@ -480,6 +480,8 @@
     <string name="board_verdict_wins">vence</string>
     <string name="board_verdict_level">empate</string>
     <string name="board_verdict_loses">não chega</string>
+    <string name="label_plan_rehearse">Ver o plano</string>
+    <string name="table_rehearsal">Ensaio — nada se moveu</string>
     <string name="ask_what_will_you_do">O que vais fazer na tua jogada?</string>
     <string name="ask_what_should_they_do">O que deve %1$s fazer na sua jogada?</string>
     <string name="ask_which_rank_will_you_declare">Que valor vais declarar com o Rei?</string>

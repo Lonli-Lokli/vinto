@@ -12,15 +12,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import game.vinto.app.crash.Where
 import game.vinto.app.theme.LocalFeedback
+import game.vinto.client.Frame
 import game.vinto.client.GameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.Table
+import game.vinto.client.rehearse
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.TableTalk
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 /**
@@ -54,8 +59,14 @@ class GameHolder(
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
 
-    /** What there is to see, for the stage to play. */
-    val frames get() = session.frames
+    /**
+     * What there is to see, for the stage to play: the session's frames, and the rehearsals
+     * this screen asks for — ghosts of moves that have not happened, played through the same
+     * choreography (design D8). Merged here so the stage has one flow, and so a solo game and
+     * an online one rehearse the same way.
+     */
+    private val rehearsals = MutableSharedFlow<List<Frame>>(extraBufferCapacity = 1)
+    val frames: Flow<List<Frame>> = merge(session.frames, rehearsals)
 
     var question: Question by mutableStateOf(Question.None)
         private set
@@ -152,6 +163,13 @@ class GameHolder(
             is Move.Agree -> {
                 refusal = session.agreePlan(move.agree)
                 if (refusal == null) question = Question.None
+            }
+
+            // Nothing leaves the phone: the plan is played back on this felt as ghosts, off the
+            // view this seat holds, and the stage snaps back to the live table after.
+            is Move.Rehearse -> {
+                val standing = plan.value ?: return
+                rehearsals.emit(rehearse(view.value, standing))
             }
 
             is Move.Send -> {

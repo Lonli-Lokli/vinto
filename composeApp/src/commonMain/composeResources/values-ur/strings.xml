@@ -478,6 +478,9 @@
     <string name="board_verdict_wins">جیت</string>
     <string name="board_verdict_level">برابر</string>
     <string name="board_verdict_loses">کم پڑ گیا</string>
+    <string name="label_plan_rehearse">منصوبہ دیکھیں</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">ریہرسل — کچھ بھی نہیں ہلا</string>
     <string name="ask_what_will_you_do">آپ اپنی باری میں کیا کریں گے؟</string>
     <string name="ask_what_should_they_do">%1$s اپنی باری میں کیا کرے؟</string>
     <string name="ask_which_rank_will_you_declare">آپ بادشاہ کے ساتھ کون سا درجہ بتائیں گے؟</string>

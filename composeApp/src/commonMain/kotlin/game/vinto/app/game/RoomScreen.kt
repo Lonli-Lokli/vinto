@@ -558,7 +558,7 @@ private fun RemoteGameScreen(
         val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
         CardStage(
-            frames = session.frames,
+            frames = holder.frames,
             live = holder.current,
             sizes = layout.sizes,
             pace = pace.scale,
@@ -575,7 +575,7 @@ private fun RemoteGameScreen(
                         round = standings.size + 1,
                     ),
                     layout = layout,
-                    onMove = act,
+                    onMove = act.unlessRehearsing(),
                     onHelp = { helpOpen = true },
                     onSettings = onSettings,
                     onReport = {},

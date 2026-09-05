@@ -462,6 +462,8 @@
     <string name="board_verdict_wins">赢</string>
     <string name="board_verdict_level">打平</string>
     <string name="board_verdict_loses">不够</string>
+    <string name="label_plan_rehearse">查看计划</string>
+    <string name="table_rehearsal">演练 — 一张牌都没动</string>
     <string name="ask_what_will_you_do">您这一轮打算怎么做？</string>
     <string name="ask_what_should_they_do">%1$s这一轮该怎么做？</string>
     <string name="ask_which_rank_will_you_declare">用国王声明哪个点数？</string>

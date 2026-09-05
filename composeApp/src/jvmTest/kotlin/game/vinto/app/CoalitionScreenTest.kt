@@ -2,6 +2,7 @@ package game.vinto.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -12,6 +13,8 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import game.vinto.app.game.LocalStage
+import game.vinto.app.game.Stage
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
@@ -341,6 +344,31 @@ class CoalitionScreenTest {
     }
 
     @Test
+    fun thePlanCanBeWatchedAndTheFeltSaysWhenItIsOnlyARehearsal() = runComposeUiTest {
+        // Watching beats reading (design D8) — and a player who thinks a plan happened is worse
+        // off than one who never planned, so the felt says it is a rehearsal while it plays.
+        val view = conferring()
+        val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate.id, Step.TakeTheDiscard)),
+            agreed = listOf(mate.id),
+            editedBy = mate.id,
+        )
+
+        show(view, plan = plan, question = Question.ThePlan)
+        assertTrue(
+            onAllNodesWithText("Watch the plan", ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "a plan with a step and no way to watch it",
+        )
+
+        show(view, plan = plan, rehearsing = true)
+        assertTrue(
+            onAllNodesWithText("Rehearsal", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "ghosts on the felt and nothing saying so",
+        )
+    }
+
+    @Test
     fun agreeingIsOneTapUntilYouHave() = runComposeUiTest {
         val view = conferring()
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
@@ -510,32 +538,35 @@ class CoalitionScreenTest {
         plan: CoalitionPlan? = null,
         question: Question = Question.None,
         reveals: List<PublicReveal> = emptyList(),
+        rehearsing: Boolean = false,
     ) {
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
-                    TableScreen(
-                        state = TableState(
-                            view = view,
-                            table = tableFor(
-                                view,
-                                question = question,
-                                away = away,
-                                offered = offered,
-                                plan = plan,
-                                reveals = reveals,
+                    CompositionLocalProvider(LocalStage provides Stage().apply { this.rehearsing = rehearsing }) {
+                        TableScreen(
+                            state = TableState(
+                                view = view,
+                                table = tableFor(
+                                    view,
+                                    question = question,
+                                    away = away,
+                                    offered = offered,
+                                    plan = plan,
+                                    reveals = reveals,
+                                ),
+                                refusal = null,
+                                recent = recent,
+                                round = 1,
                             ),
-                            refusal = null,
-                            recent = recent,
-                            round = 1,
-                        ),
-                        layout = TableLayout.forScreen(PHONE_H),
-                        onMove = {},
-                        onHelp = {},
-                        onSettings = {},
-                        onReport = {},
-                        onDeck = {},
-                    )
+                            layout = TableLayout.forScreen(PHONE_H),
+                            onMove = {},
+                            onHelp = {},
+                            onSettings = {},
+                            onReport = {},
+                            onDeck = {},
+                        )
+                    }
                 }
             }
         }

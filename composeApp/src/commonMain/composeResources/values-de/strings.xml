@@ -463,6 +463,9 @@
     <string name="board_verdict_wins">gewinnt</string>
     <string name="board_verdict_level">gleichauf</string>
     <string name="board_verdict_loses">reicht nicht</string>
+    <string name="label_plan_rehearse">Plan ansehen</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">PROBE — ES HAT SICH NICHTS BEWEGT</string>
     <string name="ask_what_will_you_do">Was machen Sie mit Ihrem Zug?</string>
     <string name="ask_what_should_they_do">Was soll %1$s mit dem Zug machen?</string>
     <string name="ask_which_rank_will_you_declare">Welchen Rang erklären Sie mit dem König?</string>

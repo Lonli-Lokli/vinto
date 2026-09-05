@@ -490,6 +490,8 @@
     <string name="board_verdict_wins">kazanıyor</string>
     <string name="board_verdict_level">berabere</string>
     <string name="board_verdict_loses">geride kalıyor</string>
+    <string name="label_plan_rehearse">Planı izle</string>
+    <string name="table_rehearsal">Prova — hiçbir şey hareket etmedi</string>
     <string name="ask_what_will_you_do">Sırada ne yapacaksın?</string>
     <string name="ask_what_should_they_do">%1$s sırasında ne yapmalı?</string>
     <string name="ask_which_rank_will_you_declare">Papaz ile hangi değeri söyleyeceksin?</string>

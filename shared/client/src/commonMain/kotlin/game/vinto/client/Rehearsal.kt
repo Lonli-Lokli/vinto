@@ -56,6 +56,7 @@ fun rehearse(view: PlayerView, plan: CoalitionPlan): List<Frame> {
             action = action,
             scenes = choreograph(action, staged, after),
             view = after,
+            ghost = true,
         )
         table = after
     }

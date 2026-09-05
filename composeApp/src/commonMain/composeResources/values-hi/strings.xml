@@ -483,6 +483,9 @@
     <string name="board_verdict_wins">जीत</string>
     <string name="board_verdict_level">बराबर</string>
     <string name="board_verdict_loses">कम पड़ा</string>
+    <string name="label_plan_rehearse">योजना देखें</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">पूर्वाभ्यास — कुछ नहीं हिला</string>
     <string name="ask_what_will_you_do">आप अपनी बारी में क्या करेंगे?</string>
     <string name="ask_what_should_they_do">%1$s को अपनी बारी में क्या करना चाहिए?</string>
     <string name="ask_which_rank_will_you_declare">King के साथ आप कौन-सी रैंक बताएंगे?</string>

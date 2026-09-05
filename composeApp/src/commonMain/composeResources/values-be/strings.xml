@@ -477,6 +477,8 @@
     <string name="board_verdict_wins">перамога</string>
     <string name="board_verdict_level">роўна</string>
     <string name="board_verdict_loses">не хапае</string>
+    <string name="label_plan_rehearse">Паглядзець план</string>
+    <string name="table_rehearsal">РЭПЕТЫЦЫЯ — нічога не зрушылася</string>
     <string name="ask_what_will_you_do">Што вы зробіце са сваім ходам?</string>
     <string name="ask_what_should_they_do">Што варта зрабіць %1$s са сваім ходам?</string>
     <string name="ask_which_rank_will_you_declare">Які ранг вы абвесціце Каралём?</string>

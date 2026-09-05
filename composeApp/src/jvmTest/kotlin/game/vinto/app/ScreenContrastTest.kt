@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PixelMap
@@ -29,6 +30,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.HelpSheet
+import game.vinto.app.game.LocalStage
+import game.vinto.app.game.Stage
 import game.vinto.app.game.StandingsSheet
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
@@ -147,6 +150,22 @@ class ScreenContrastTest {
         val view = teachingSession().view.value
         eachScheme { dark, scheme ->
             judged(scheme, shown(dark, "the table during setup") { table(view, Question.None) })
+        }
+    }
+
+    /** The felt with the plan playing back as ghosts: the one line that says nothing has moved. */
+    @Test
+    fun theFeltDuringARehearsalCanBeRead() {
+        val view = teachingSession().view.value
+        eachScheme { dark, scheme ->
+            judged(
+                scheme,
+                shown(dark, "the felt during a rehearsal") {
+                    CompositionLocalProvider(LocalStage provides Stage().apply { rehearsing = true }) {
+                        table(view, Question.None)
+                    }
+                },
+            )
         }
     }
 
