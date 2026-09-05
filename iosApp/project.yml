@@ -104,6 +104,35 @@ targets:
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
 
     postBuildScripts:
+      - name: Stamp build number
+        basedOnDependencyAnalysis: false
+        script: |
+          # Xcode's Product ▸ Archive cannot pass CURRENT_PROJECT_VERSION on a command line, and
+          # neither can `xcodebuild archive` without being told — so without this phase an archive
+          # ships the fallback above, the literal "1". The comment on CURRENT_PROJECT_VERSION says
+          # to "pass it on the archive command rather than editing this line", which is correct and
+          # is exactly the instruction that gets forgotten in the GUI.
+          #
+          # Vinto was the only game in the portfolio without this phase, and the cost of not having
+          # it is measured rather than argued: on 2026-09-04 Vodar 1.2 went to App Store Connect as
+          # BUILD 1, above a 131, and Apple accepted it because CFBundleVersion only has to be
+          # unique within a marketing version. Nothing failed. That binary cannot be traced to a
+          # commit, tagged, or symbolicated, and it is still in review.
+          #
+          # Release FAILS rather than warning: a build that stops is a five-minute problem, a build
+          # that ships an untraceable number is permanent. Debug warns, because a simulator run does
+          # not need a real number.
+          N="$("$SRCROOT/../Scripts/build-number.sh")" || N=""
+          if [ -n "$N" ] && [ "$N" != "1" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $N" "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+            echo "note: stamped CFBundleVersion=$N"
+          elif [ "$CONFIGURATION" = "Release" ]; then
+            echo "error: no build number — refusing to produce a Release binary that cannot be traced to a commit." >&2
+            echo "note: set BUILD_NUMBER=<n> if this tree genuinely has no history (exported source, CI)." >&2
+            exit 1
+          else
+            echo "warning: no build number; $CONFIGURATION keeps CFBundleVersion=$CURRENT_PROJECT_VERSION"
+          fi
       - name: Upload dSYMs to Sentry
         basedOnDependencyAnalysis: false
         script: |

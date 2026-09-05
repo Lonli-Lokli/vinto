@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The same rule for Android 11 and below, which reads `android:fullBackupContent` and does not
+    understand the newer <data-extraction-rules>. minSdk is 24, so this file is not decoration —
+    it covers every device from Nougat to Android 11.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="vinto.xml" />
+</full-backup-content>
